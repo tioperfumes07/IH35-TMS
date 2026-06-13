@@ -1,0 +1,30 @@
+{
+  "block_id": "MIGRATION-RUNNER-HARDEN",
+  "status": "BUILD",
+  "classification": "Infrastructure",
+  "phase": "Foundation",
+  "task": "Migration runner hardening - fail loud on unrecognized migration filenames to prevent silent skips",
+  "branch": "feat/migration-runner-harden",
+  "lane": "A",
+  "details": [
+    "Create import-safe pure module for filename validation",
+    "Add validateMigrationFilenames() to fail fast on bad filenames",
+    "Update db-migrate.mjs to import from single source of truth",
+    "Add verify:migration-runner-hardening CI gate"
+  ],
+  "allowed_files": [
+    "scripts/lib/migration-filename-validation.mjs",
+    "scripts/verify-migration-runner-hardening.mjs",
+    "scripts/db-migrate.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
+    ".env",
+    ".block-ready/MIGRATION-RUNNER-HARDEN.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:migration-runner-hardening"],
+  "financial_writes": false,
+  "note": "Infrastructure block - no production DB changes, no UI changes"
+}
