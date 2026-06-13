@@ -11,6 +11,7 @@ export const EXPENSE_CATEGORY_MAP_KIND_VALUES = [
   "insurance",
   "office",
   "other",
+  "cash_advance",
 ] as const;
 
 export type ExpenseCategoryMapKind = (typeof EXPENSE_CATEGORY_MAP_KIND_VALUES)[number];
