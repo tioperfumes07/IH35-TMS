@@ -1,0 +1,23 @@
+{
+  "block_id": "FIX-GUARD-M2-FK-DETECTION",
+  "status": "BUILD",
+  "classification": "FIX",
+  "phase": "CI",
+  "task": "Fix verify:m2-integrity-position-history FK detection: use pg_constraint (role-independent catalog) instead of information_schema.constraint_column_usage, which Postgres filters to tables the connecting role OWNS — returning 0 FKs as ih35_app and blocking local pushes, while passing in CI (owner role).",
+  "branch": "fix/guard-m2-fk-detection",
+  "lane": "A",
+  "details": [
+    "Root cause: the FK test joined through information_schema.constraint_column_usage, which only shows columns of REFERENCED tables the current role owns. As ih35_app (non-owner of identity.users/org.companies/maint.part/maint.position_set/mdata.units) the join collapsed to 0 even though maint.position_history has 5 FKs.",
+    "Fix: query pg_constraint WHERE conrelid='maint.position_history'::regclass AND contype='f'. Semantics unchanged — still throws on zero FKs; only detection is role-independent.",
+    "Verified as ih35_app: before = 0 FKs (FAIL 7/8), after = 5 FKs (PASS 8/8).",
+    "Per-block manifest named to match the branch (fix/guard-m2-fk-detection -> FIX-GUARD-M2-FK-DETECTION) so block-ready resolves it by branch; no edit to the frozen .block-ready.agent1.json (manifest-split-guard)."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-GUARD-M2-FK-DETECTION.json",
+    "scripts/verify-m2-integrity-position-history.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

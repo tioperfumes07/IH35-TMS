@@ -154,16 +154,19 @@ test("indexes exist", async (client) => {
 });
 
 // Test: Foreign key constraints exist
+// Detection uses pg_constraint (system catalog, visible regardless of role) instead of
+// information_schema.constraint_column_usage, which Postgres filters to tables the connecting
+// role OWNS. As ih35_app (non-owner of the referenced tables) that join returned 0 even though
+// the FKs exist — failing this guard locally while passing in CI (owner role). pg_constraint
+// reports the real count for any role.
 test("foreign key constraints exist", async (client) => {
   const result = await client.query(`
-    SELECT kcu.column_name, ccu.table_schema, ccu.table_name
-    FROM information_schema.table_constraints tc
-    JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
-    JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name
-    WHERE tc.table_schema = 'maint' AND tc.table_name = 'position_history'
-    AND tc.constraint_type = 'FOREIGN KEY'
+    SELECT conname
+    FROM pg_constraint
+    WHERE conrelid = 'maint.position_history'::regclass
+      AND contype = 'f'
   `);
-  const fks = result.rows.map(r => `${r.table_schema}.${r.table_name}(${r.column_name})`);
+  const fks = result.rows.map(r => r.conname);
   if (fks.length === 0) {
     throw new Error("No foreign key constraints found");
   }
