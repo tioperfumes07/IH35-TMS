@@ -1,0 +1,18 @@
+{
+  "block_id": "FEAT-SETTLEMENT-DEDUCTION-LEDGER-DDL",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "A3-SETTLEMENT-RECOVERY",
+  "task": "A3-1: additive ledger columns on driver_finance.driver_settlement_deductions (the KEEP ledger). Adds remaining_balance_cents bigint (NULLABLE, no default — required by zero-behavior-change; A3-2 owns NULL handling) and status text NOT NULL DEFAULT 'pending' with CHECK IN ('pending','partial','applied','deferred') (text+CHECK per repo convention, NOT a pg ENUM), plus invariant CHECK chk_dsd_remaining_range (remaining NULL or 0..amount_cents). Backfill (idempotent, IS NULL-guarded, no hardcoded UUIDs): unconsumed (applied_to_settlement_id IS NULL) -> status='pending', remaining_balance_cents=amount_cents; consumed -> status='applied', remaining_balance_cents=0. ZERO recovery-behavior change — columns only, consumed by A3-2. Tracker A3-1 row + Next-Blocks A3 split appended to this same PR once #924 (tracker) merges.",
+  "branch": "feat/settlement-deduction-ledger-ddl",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-SETTLEMENT-DEDUCTION-LEDGER-DDL.json",
+    "db/migrations/202606131400_settlement_deduction_ledger_columns.sql",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}
