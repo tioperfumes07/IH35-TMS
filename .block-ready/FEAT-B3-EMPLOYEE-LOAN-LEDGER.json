@@ -1,0 +1,30 @@
+{
+  "block_id": "FEAT-B3-EMPLOYEE-LOAN-LEDGER",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ACCOUNTING",
+  "task": "B3: wire the missing GL posting for the employee-loan / cash-advance disbursement on the existing 0138 driver_finance ledger. Adds a 'driver_advance' posting source type and a role-gated, audited, user-settable posting_date (document date). B5 calls the loan-create entry point later.",
+  "branch": "feat/b3-employee-loan-ledger",
+  "lane": "A",
+  "details": [
+    "REUSE the 0138 driver_finance stack (driver_liabilities + deduction_schedule + driver_advances) — no new ledger. createDriverCashAdvanceCore gains an optional liability_type (default 'advance', existing behavior unchanged); createEmployeeLoanCore books type='loan' with no linked bill (the no-trip/no-bill fallback).",
+    "Posting engine gains a 'driver_advance' source type + buildDriverAdvanceLines (Design 2): reads driver_finance.driver_advances directly → DEBIT QBO-149 Driver Cash Advance receivable (via B1 resolver, no hardcoding) / CREDIT creditAccountId (else company-default cash). Posts ONLY when disbursement_status='disbursed'. amount numeric dollars -> cents. assertBalanced + central transaction_source_links spine unchanged.",
+    "Migration 202606130445 adds driver_finance.driver_advances.posting_date (date, user-settable document/book date). Editable + role-gated via isOwnerOrAdmin (reused, not invented) + audited old/new via appendCrudAudit. disburseDriverAdvanceCore flips approved->disbursed, stamps disbursed_at + posting_date, then posts. editDriverAdvancePostingDate corrects it pre-disbursement (locked 409 after, no book divergence).",
+    "Two-date model (QBO-parity, Option A, zero extra DDL): document date = driver_advances.posting_date; matched/real date = bank.reconciliation_matches.matched_at (+ bank-txn date), stamped by the existing Banking matcher on the JE. The disbursement is already matchable as ledger_entry_kind='je' (match.service.ts discovers accounting.journal_entries) and attributable via transaction_source_links linked_object_type='driver_advance'. No bank_matched_date column added.",
+    "Validated: 9/9 unit tests (existing createDriverCashAdvanceCore unchanged, GL post additive + balanced, posting_date honored incl. back-date, role gate 403, audit old/new, edit lock 409); typecheck 0; CI_MIGRATION_TEST=1 verify:db:reset exit 0."
+  ],
+  "allowed_files": [
+    ".block-ready/FEAT-B3-EMPLOYEE-LOAN-LEDGER.json",
+    "db/migrations/202606130445_driver_advance_posting_date.sql",
+    "apps/backend/src/accounting/posting-engine.service.ts",
+    "apps/backend/src/cash-advances/cash-advance-create.ts",
+    "apps/backend/src/cash-advances/cash-advance-disburse.ts",
+    "apps/backend/src/accounting/__tests__/posting-engine-driver-advance.test.ts",
+    "apps/backend/src/cash-advances/__tests__/cash-advance-disburse.test.ts",
+    "apps/backend/src/cash-advances/__tests__/employee-loan-create.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}
