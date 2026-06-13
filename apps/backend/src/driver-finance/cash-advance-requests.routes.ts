@@ -17,6 +17,7 @@ import {
   officeDenyBodySchema,
 } from "./cash-advance-requests.service.js";
 import { escalateCashAdvanceRequestToOwner, listPendingOwnerApprovalCashAdvanceRequests, sendOwnerEscalationEmails } from "./cash-advance-owner-approval.service.js";
+import { emitDriverRequestViewedOnce } from "./driver-request-spine-emit.js";
 import { notifyOwnersCashAdvanceSubmitted } from "../notifications/dispatcher.js";
 
 const companyQuerySchema = z.object({
@@ -216,7 +217,21 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const detail = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${parsedQuery.data.operating_company_id}'`);
-      return getCashAdvanceRequestDetail(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
+      const d = await getCashAdvanceRequestDetail(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
+      // B4: record the FIRST office view of this request (accountability response-time signal).
+      // Only office reviewers reach here (canReviewCashAdvanceRequest gate above); idempotent.
+      if (d) {
+        await emitDriverRequestViewedOnce(client, {
+          operating_company_id: parsedQuery.data.operating_company_id,
+          request_id: parsedParams.data.id,
+          request_type: "cash_advance",
+          source_table: "driver_finance.cash_advance_requests",
+          actor_type: "user",
+          actor_user_id: user.uuid,
+          actor_role: String(user.role ?? "") || null,
+        });
+      }
+      return d;
     });
     if (!detail) return reply.code(404).send({ error: "not_found" });
     return detail;
@@ -241,6 +256,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
         operatingCompanyId: parsedQuery.data.operating_company_id,
         requestId: parsedParams.data.id,
         actorUserId: user.uuid,
+        actorRole: String(user.role ?? "") || undefined,
         body: parsedBody.data,
       });
     });
@@ -274,6 +290,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
         operatingCompanyId: parsedQuery.data.operating_company_id,
         requestId: parsedParams.data.id,
         actorUserId: user.uuid,
+        actorRole: String(user.role ?? "") || undefined,
         body: parsedBody.data,
       });
     });

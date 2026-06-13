@@ -1,0 +1,30 @@
+{
+  "block_id": "FEAT-B4-DRIVER-REQUEST-AUDIT-TIMELINE",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DRIVER-FINANCE",
+  "task": "B4: append-only driver-request accountability timeline on the existing immutable spine (events.event_log). Captures requested/viewed/approved/denied/posted with actor + role + timestamp per step, plus a response-time reporting view (elapsed between steps). Net-new 'viewed' (first office open) + 'posted' (money links back to the request).",
+  "branch": "feat/b4-driver-request-audit-timeline",
+  "lane": "A",
+  "details": [
+    "Option A (host on events.event_log, no new audit table). New emit helper driver-request-spine-emit.ts emits via events.log_event(): event_type 'request.<step>' (valid_event_type ^[a-z]+\\.[a-z_]+$), subject_type 'task' (valid_subject_type enum), driver qualifier in payload.request_type + source_table/source_reference_id. Sets app.current_operating_company_id (event_log RLS key; log_event is SECURITY INVOKER) before emit.",
+    "Lifecycle wiring (additive, existing behavior unchanged): requested (createCashAdvanceRequest, actor=driver), approved/denied (approve/denyCashAdvanceRequest, actor=office user+role threaded from the route), viewed (GET :id detail, office-only, idempotent once-per-request), posted (cash-advance-disburse after postSourceTransaction succeeds, reverse-linked via linked_advance_id, best-effort post-commit).",
+    "actor + role captured per step from user.role (Owner/Administrator/Dispatcher/Accountant/Driver). Elapsed time computed at read in the view, not stored.",
+    "Migration 202606130521 adds views.driver_request_timeline (security_invoker=true) pivoting request.* spine events into the 5 step timestamps + per-step actor/role + response-time gaps (requested->viewed, viewed->decision, requested->decision, approved->posted). DDL = CREATE VIEW + GRANT SELECT to ih35_app only; no new tables/columns. Generic via source_table/source_reference_id for future diesel/repair/expense requests.",
+    "Forward-only (no backfill of cash_advance_request_audit / audit.append_event / outbox). Validated: 4/4 emit unit tests (each step actor+role+linkage, viewed idempotent), 1/1 view DB test (elapsed correct), typecheck 0, CI_MIGRATION_TEST=1 verify:db:reset 0, existing cash-advance/disburse suites green."
+  ],
+  "allowed_files": [
+    ".block-ready/FEAT-B4-DRIVER-REQUEST-AUDIT-TIMELINE.json",
+    "db/migrations/202606130521_driver_request_timeline_view.sql",
+    "apps/backend/src/driver-finance/driver-request-spine-emit.ts",
+    "apps/backend/src/driver-finance/cash-advance-requests.service.ts",
+    "apps/backend/src/driver-finance/cash-advance-requests.routes.ts",
+    "apps/backend/src/cash-advances/cash-advance-disburse.ts",
+    "apps/backend/src/driver-finance/__tests__/driver-request-spine-emit.test.ts",
+    "apps/backend/src/driver-finance/__tests__/driver-request-timeline-view.db.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}

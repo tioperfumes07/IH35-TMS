@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars } from "../cash-advances/cash-advance-create.js";
+import { emitDriverRequestSpineEvent } from "./driver-request-spine-emit.js";
+
+// B4: driver-request timeline source identity (generic so future request types reuse it).
+const CASH_ADVANCE_REQUEST_TYPE = "cash_advance";
+const CASH_ADVANCE_REQUEST_SOURCE_TABLE = "driver_finance.cash_advance_requests";
 
 export type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -197,6 +202,18 @@ export async function createCashAdvanceRequest(
     actorName,
   });
 
+  // B4: timeline 'requested' step onto the spine (actor = the driver who submitted).
+  await emitDriverRequestSpineEvent(client, "requested", {
+    operating_company_id: args.operatingCompanyId,
+    request_id: requestId,
+    request_type: CASH_ADVANCE_REQUEST_TYPE,
+    source_table: CASH_ADVANCE_REQUEST_SOURCE_TABLE,
+    actor_type: "driver",
+    actor_user_id: args.actorUserId,
+    actor_role: "Driver",
+    payload: { display_id: displayId, submitted_via: input.submitted_via },
+  });
+
   await appendCrudAudit(
     client,
     args.actorUserId,
@@ -381,6 +398,7 @@ export async function approveCashAdvanceRequest(
     operatingCompanyId: string;
     requestId: string;
     actorUserId: string;
+    actorRole?: string; // B4: acting office role (Owner/Administrator/...) for the timeline
     body: z.infer<typeof officeApproveBodySchema>;
   }
 ) {
@@ -452,6 +470,17 @@ export async function approveCashAdvanceRequest(
     linked_advance_id: core.advanceId,
     display_id: updated.display_id,
   });
+  // B4: timeline 'approved' step onto the spine (actor = the office user + role).
+  await emitDriverRequestSpineEvent(client, "approved", {
+    operating_company_id: args.operatingCompanyId,
+    request_id: args.requestId,
+    request_type: CASH_ADVANCE_REQUEST_TYPE,
+    source_table: CASH_ADVANCE_REQUEST_SOURCE_TABLE,
+    actor_type: "user",
+    actor_user_id: args.actorUserId,
+    actor_role: args.actorRole ?? null,
+    payload: { linked_advance_id: core.advanceId, advance_display_id: core.displayId },
+  });
   await enqueueDriverFinanceOutbox(client, "driver_finance.cash_advance_request.approved", {
     operating_company_id: args.operatingCompanyId,
     request_id: args.requestId,
@@ -482,6 +511,7 @@ export async function denyCashAdvanceRequest(
     operatingCompanyId: string;
     requestId: string;
     actorUserId: string;
+    actorRole?: string; // B4: acting office role for the timeline
     body: z.infer<typeof officeDenyBodySchema>;
   }
 ) {
@@ -532,6 +562,17 @@ export async function denyCashAdvanceRequest(
   await appendCrudAudit(client, args.actorUserId, "driver_finance.cash_advance_request.denied", {
     request_id: args.requestId,
     display_id: updated.display_id,
+  });
+  // B4: timeline 'denied' step onto the spine (actor = the office user + role).
+  await emitDriverRequestSpineEvent(client, "denied", {
+    operating_company_id: args.operatingCompanyId,
+    request_id: args.requestId,
+    request_type: CASH_ADVANCE_REQUEST_TYPE,
+    source_table: CASH_ADVANCE_REQUEST_SOURCE_TABLE,
+    actor_type: "user",
+    actor_user_id: args.actorUserId,
+    actor_role: args.actorRole ?? null,
+    payload: { denial_reason: reason },
   });
   await enqueueDriverFinanceOutbox(client, "driver_finance.cash_advance_request.denied", {
     operating_company_id: args.operatingCompanyId,
