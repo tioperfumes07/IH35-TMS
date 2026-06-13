@@ -52,7 +52,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | 1 | A | A3 — Settlement recovery fix (wire capped net-floor ledger) | Only live path that can mishandle real money | HIGH | M | B5 (done) | 🟡 ORPHANED |
 | 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | 🟡 PARTIAL |
 | 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
-| 4 | B | B1 — /inventory parts 404 (repoint to /api/v1/maintenance/parts) | Visibly broken live page; trivial; independent | LOW-MED | XS | none | ❌ BROKEN |
+| 4 | B | B1 — /inventory parts 404 (repoint to /api/v1/maintenance/parts) | Visibly broken live page; trivial; independent | LOW-MED | XS | none | ✅ DONE — PR __B1PR__ |
 | 5 | B | UNVERIFIED reconcile pass (DIR-G/H, BLOCK-11, CA-04, GAP-76, F3) | Make tracker fully trustworthy | LOW | S | none | 🟡 confirm |
 | 6 | B | Commit tracker → this file (Markdown) + xlsx export | Living, version-controlled doc | LOW | S | step 5 | THIS PR |
 | 7 | C | Diesel-code request type (request→approve→inbox) | Highest ops value; reuses B4 timeline + B6 inbox | — | M | B4/B6 | ❌ empty tab |
@@ -76,7 +76,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | A1 | AI-4 periods init | Accounting/Periods | PARTIAL | Seed half-done + flag-gated | TRK + 2025 + H2-2026; confirm PERIODS_INIT_ENABLED in prod |
 | A2 | BLOCK-01 depreciation | Accounting/Fixed Assets | NOT BUILT | No fixed-asset accounting | Asset register + schedule + monthly posting |
 | A3 | Block-F settlement auto-deduct (capped ledger) | Driver-Finance | ORPHANED (money risk) | Ledger written but never read | Wire capped path or delete dead ledger; current path has no net-floor cap |
-| B1 | /inventory parts → 404 | Inventory | BROKEN | Page calls missing endpoint | Repoint to /api/v1/maintenance/parts or build route |
+| B1 | /inventory parts → 404 | Inventory | ✅ DONE (PR __B1PR__) | Page called a missing endpoint | FIXED: repointed Parts & Stock page + create drawer to the real /api/v1/maintenance/parts (single source of truth, frontend-only, field-mapped) |
 | C1 | QBO prod credentials | QBO | ENV-BLOCKED | Intuit approval (P7-T4) | prod creds |
 | C2 | Twilio/WhatsApp | Notifications | ENV-BLOCKED | Meta verification (P7-T3) | external approval |
 | D2 | Bank reconcile-commit writes | Accounting | PARTIAL | Read done; commit gated | enable commit; confirm advance→bank-txn match |

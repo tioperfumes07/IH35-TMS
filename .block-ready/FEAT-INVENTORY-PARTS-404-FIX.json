@@ -1,0 +1,20 @@
+{
+  "block_id": "FEAT-INVENTORY-PARTS-404-FIX",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "B1-INVENTORY-FIX",
+  "task": "B1: fix the /inventory Parts & Stock page that called a non-existent /api/v1/inventory/parts endpoint (404). Frontend-only repoint to the real /api/v1/maintenance/parts route (single source of truth = maintenance.parts_inventory; no new backend, no DB, no duplication). GET maps the endpoint's row shape onto the page columns via a pure unit-tested mapper (mapMaintenancePartsToInventoryRows: qty_on_hand->on_hand_qty, part_number->sku, derive status); create drawer POSTs to /api/v1/maintenance/parts with company in the query string and the createSchema body mapping. Dropped two columns with no backing data (category, reorder_point, assigned_to) — no fake data. Tracker B1 row updated in this PR.",
+  "branch": "feat/inventory-parts-404-fix",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-INVENTORY-PARTS-404-FIX.json",
+    "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx",
+    "apps/frontend/src/pages/inventory/InventoryPartsStockPage.test.ts",
+    "apps/frontend/src/pages/inventory/PartCreateDrawer.tsx",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
