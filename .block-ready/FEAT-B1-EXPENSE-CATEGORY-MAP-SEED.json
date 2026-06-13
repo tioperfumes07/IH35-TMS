@@ -1,0 +1,25 @@
+{
+  "block_id": "FEAT-B1-EXPENSE-CATEGORY-MAP-SEED",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ACCOUNTING",
+  "task": "B1: populate accounting.expense_category_account_map (10 category->account mappings x active operating companies TRANSP+TRK) + add cash_advance category_kind. Makes the posting resolver functional.",
+  "branch": "feat/b1-expense-category-map-seed",
+  "lane": "A",
+  "details": [
+    "Extend category_kind CHECK via the 0221 named DROP+ADD pattern: add 'cash_advance', preserve all 10 existing values (incl. 'revenue' from 0221).",
+    "Seed 10 mappings x active companies (TRANSP+TRK; USMCA inactive) via INSERT...SELECT cross-join; account_id FKs into catalogs.accounts (real UUIDs); category_code=category_kind; posting_side debit (escrow=credit); EXISTS-guarded + ON CONFLICT DO NOTHING.",
+    "escrow -> parent Damage Claim Escrow (QBO-1150040187); per-driver escrow sub-account is B9.",
+    "GRANT to ih35_app only; RLS/policy/trigger already from 0218.",
+    "Validated: CI_MIGRATION_TEST=1 npm run verify:db:reset -> exit 0; functional seed test 20 rows (2 companies x 10), escrow=credit, cash_advance accepted, idempotent.",
+    "Per-block manifest named to match the branch so block-ready resolves it by branch; the frozen .block-ready.agent1.json is NOT modified (manifest-split-guard compliant)."
+  ],
+  "allowed_files": [
+    ".block-ready/FEAT-B1-EXPENSE-CATEGORY-MAP-SEED.json",
+    "db/migrations/202606130146_expense_category_map_cash_advance_and_seed.sql"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
