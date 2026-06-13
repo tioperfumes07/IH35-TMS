@@ -1,0 +1,28 @@
+{
+  "block_id": "FEAT-B2-POSTING-ENGINE-CASH-ADVANCE",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ACCOUNTING",
+  "task": "B2: teach the posting engine the cash_advance source type so an approved advance posts a real, balanced, traceable journal entry (not just a deduction). Engine-only; the approve-path call is B5.",
+  "branch": "feat/b2-posting-engine-cash-advance",
+  "lane": "A",
+  "details": [
+    "PostingSourceType + validation list gain 'cash_advance'; buildCashAdvanceLines modeled on buildBillPaymentLines.",
+    "DEBIT = B1-mapped cash_advance account via resolveAccountForCategory(opco,'cash_advance','cash_advance') (no hardcoding). CREDIT = optional credit_account_id passed by caller (B5), else company-default cash-like account (bill_payment fallback).",
+    "Posts only when cash_advance_requests.status='approved'; amount = requested_amount_cents. New error code ADVANCE_NOT_POSTING_ELIGIBLE (added to the markBatchFailed exclusion list like the other *_NOT_POSTING_ELIGIBLE codes).",
+    "Resolver TS union EXPENSE_CATEGORY_MAP_KIND_VALUES gains 'cash_advance' (B1 added it to the DB CHECK; the TS union lagged).",
+    "Balanced via the existing assertBalanced guard (unmodified); audit spine emitted centrally by postSourceTransaction (transaction_source_links) — no separate emit. cash_advance intentionally excluded from batch backfill.",
+    "Did NOT change invoice/bill/customer_payment/bill_payment behavior; credit_account_id is optional so existing callers are untouched. No schema change.",
+    "Unit test (mocked DB + resolvers) proves: balanced debit==credit>0, DEBIT=resolved cash_advance account, CREDIT=passed account when provided / default when omitted, source_id linked, refuses non-approved."
+  ],
+  "allowed_files": [
+    ".block-ready/FEAT-B2-POSTING-ENGINE-CASH-ADVANCE.json",
+    "apps/backend/src/accounting/posting-engine.service.ts",
+    "apps/backend/src/accounting/expense-category-map/resolver.service.ts",
+    "apps/backend/src/accounting/__tests__/posting-engine-cash-advance.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

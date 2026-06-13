@@ -1,7 +1,8 @@
 import { withCurrentUser } from "../auth/db.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 
-export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment";
+export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance";
 export type PostingPurpose = "initial_post" | "reversal";
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
@@ -31,6 +32,10 @@ type PostSourceInput = {
   source_transaction_id: string;
   source_transaction_line_id?: string | null;
   posting_purpose?: PostingPurpose;
+  // Optional credit (cash/bank) account for cash_advance postings. When omitted, the
+  // company-default cash-like account is used (same fallback as bill_payment). B5's approve
+  // path passes the operator-chosen source account here. Ignored by other source types.
+  credit_account_id?: string | null;
 };
 
 type ReverseBatchInput = {
@@ -56,6 +61,7 @@ export type PostingErrorCode =
   | "PERIOD_LOCKED"
   | "UNBALANCED_ENTRY"
   | "ACCOUNT_MAPPING_MISSING"
+  | "ADVANCE_NOT_POSTING_ELIGIBLE"
   | "BILL_LINE_ACCOUNT_UNRESOLVED";
 
 export class PostingEngineError extends Error {
@@ -83,7 +89,7 @@ const INVOICE_ELIGIBLE_STATUSES = new Set(["sent", "partial", "paid", "factored"
 const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
 function assertKnownSourceType(value: string): asserts value is PostingSourceType {
-  if (!["invoice", "bill", "customer_payment", "bill_payment"].includes(value)) {
+  if (!["invoice", "bill", "customer_payment", "bill_payment", "cash_advance"].includes(value)) {
     throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source_transaction_type: ${value}`);
   }
 }
@@ -753,16 +759,92 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
   };
 }
 
+// Cash advance posting (modeled on buildBillPaymentLines):
+//   DEBIT  the cash_advance mapped account (B1 expense_category_account_map, resolved by
+//          category + operating_company_id — never hardcoded).
+//   CREDIT the operator-chosen source/bank account (creditAccountId, passed by B5's approve
+//          path) or, when omitted, the company-default cash-like account (bill_payment fallback).
+// Posts only when status='approved'. The central postSourceTransaction emits the audit spine
+// (transaction_source_links) and assertBalanced enforces debit==credit.
+async function buildCashAdvanceLines(
+  client: DbClient,
+  operatingCompanyId: string,
+  sourceId: string,
+  creditAccountId: string | null
+): Promise<PostingDraft> {
+  const requestRes = await client.query<{
+    id: string;
+    requested_amount_cents: string;
+    status: string;
+    posting_date: string;
+  }>(
+    `
+      SELECT
+        id::text,
+        requested_amount_cents::bigint,
+        status::text,
+        COALESCE(reviewed_at, submitted_at, created_at)::date::text AS posting_date
+      FROM driver_finance.cash_advance_requests
+      WHERE operating_company_id = $1::uuid
+        AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const request = requestRes.rows[0];
+  if (!request) throw new PostingEngineError("SOURCE_NOT_FOUND", "Cash advance request not found");
+  if (request.status !== "approved") {
+    throw new PostingEngineError(
+      "ADVANCE_NOT_POSTING_ELIGIBLE",
+      `Cash advance request is not posting-eligible (status=${request.status})`
+    );
+  }
+
+  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
+  const debitAccountId = mapped.account_id;
+
+  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  if (!creditAccount) {
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for cash advance is missing");
+  }
+
+  const amount = Number(request.requested_amount_cents);
+  const label = `Cash advance ${sourceId}`;
+  return {
+    postingDate: request.posting_date,
+    memo: `${label} posting`,
+    lines: [
+      {
+        account_id: debitAccountId,
+        debit_or_credit: "debit",
+        amount_cents: amount,
+        description: `${label} driver advance`,
+        source_transaction_line_id: null,
+      },
+      {
+        account_id: creditAccount,
+        debit_or_credit: "credit",
+        amount_cents: amount,
+        description: `${label} cash`,
+        source_transaction_line_id: null,
+      },
+    ],
+  };
+}
+
 async function buildPostingDraft(
   client: DbClient,
   sourceType: PostingSourceType,
   operatingCompanyId: string,
-  sourceId: string
+  sourceId: string,
+  creditAccountId: string | null = null
 ): Promise<PostingDraft> {
   if (sourceType === "invoice") return buildInvoiceLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill") return buildBillLines(client, operatingCompanyId, sourceId);
   if (sourceType === "customer_payment") return buildCustomerPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source type: ${sourceType}`);
 }
 
@@ -825,7 +907,13 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
       );
       if (existing) return existing;
 
-      const draft = await buildPostingDraft(client, sourceType, input.operating_company_id, sourceId);
+      const draft = await buildPostingDraft(
+        client,
+        sourceType,
+        input.operating_company_id,
+        sourceId,
+        input.credit_account_id ?? null
+      );
       await ensureOpenPeriod(client, input.operating_company_id, draft.postingDate);
       assertBalanced(draft.lines);
 
@@ -903,7 +991,12 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
   } catch (error) {
     if (!(error instanceof PostingEngineError)) {
       await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
-    } else if (error.code !== "INVOICE_NOT_POSTING_ELIGIBLE" && error.code !== "BILL_NOT_POSTING_ELIGIBLE" && error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE") {
+    } else if (
+      error.code !== "INVOICE_NOT_POSTING_ELIGIBLE" &&
+      error.code !== "BILL_NOT_POSTING_ELIGIBLE" &&
+      error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE" &&
+      error.code !== "ADVANCE_NOT_POSTING_ELIGIBLE"
+    ) {
       await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
     }
     throw error;
@@ -1139,7 +1232,9 @@ export async function runPostingEngineMvpBackfill(input: BackfillInput, actor: A
     };
   });
 
-  const sourceOrder: PostingSourceType[] = ["invoice", "bill", "customer_payment", "bill_payment"];
+  // cash_advance is intentionally excluded from batch backfill — it posts via B5's explicit
+  // approve path (which supplies the credit account), not this unposted-source sweep.
+  const sourceOrder = ["invoice", "bill", "customer_payment", "bill_payment"] as const;
   for (const sourceType of sourceOrder) {
     for (const sourceId of ids[sourceType]) {
       try {
