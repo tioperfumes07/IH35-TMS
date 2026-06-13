@@ -40,7 +40,10 @@ export async function disburseDriverAdvanceCore(
   companyId: string,
   input: DisburseDriverAdvanceInput
 ): Promise<DriverAdvanceMutationResult> {
-  if (!isOwnerOrAdmin(actorRole)) return FORBIDDEN;
+  // B5: the role gate applies to BACK-DATING only. Any authorized approver (the approve route
+  // already gates who may approve) may disburse at today's date; setting an explicit
+  // posting_date (back-dating) requires Owner/Administrator.
+  if (input.posting_date != null && !isOwnerOrAdmin(actorRole)) return FORBIDDEN;
 
   const phase1 = await withCurrentUser(actorUserUuid, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
