@@ -10,6 +10,8 @@ import {
   denyCashAdvanceRequest,
   driverCreateCashAdvanceRequestSchema,
   getCashAdvanceRequestDetail,
+  getCashAdvanceRequestTimeline,
+  previewCashAdvanceCascade,
   listCashAdvanceRequests,
   listMyCashAdvanceRequests,
   listPendingCashAdvanceRequests,
@@ -236,6 +238,46 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     });
     if (!detail) return reply.code(404).send({ error: "not_found" });
     return detail;
+  });
+
+  // B6: read-only dry run of the B5 cascade — what "Approve & post" will do (branch + linked
+  // load/bill + resolved GL account), WITHOUT posting. Reuses the live branch-detection logic.
+  app.get("/api/v1/driver-finance/cash-advance-requests/:id/cascade-preview", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const parsedParams = uuidParamsSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const preview = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SET LOCAL app.operating_company_id = '${parsedQuery.data.operating_company_id}'`);
+      return previewCashAdvanceCascade(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
+    });
+    if ("error" in preview) return reply.code(404).send({ error: preview.error });
+    return preview;
+  });
+
+  // B6: read-only B4 accountability timeline for one request (5 steps + actor/role + elapsed).
+  app.get("/api/v1/driver-finance/cash-advance-requests/:id/timeline", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const parsedParams = uuidParamsSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const timeline = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SET LOCAL app.operating_company_id = '${parsedQuery.data.operating_company_id}'`);
+      return getCashAdvanceRequestTimeline(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
+    });
+    return { timeline };
   });
 
   app.post("/api/v1/driver-finance/cash-advance-requests/:id/approve", async (req, reply) => {

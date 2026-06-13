@@ -1,0 +1,23 @@
+{
+  "block_id": "FEAT-B6-DRIVER-INBOX-UI",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "DRIVER-INBOX-B6",
+  "task": "B6 Driver Inbox UI inside Driver Hub Home. (1) Approve action uses the OFFICE cascade API (/cash-advance-requests/:id/approve = the B5 branch-detect+post), not the hub deduction-only path. (2) New GET /cash-advance-requests/:id/timeline serving views.driver_request_timeline (B4). (3) New read-only GET /cash-advance-requests/:id/cascade-preview — pure dry-run of B5 branch detection + resolved GL account, NO writes. Refactor: extracted detectCashAdvanceCascadeBranch shared by approveCashAdvanceRequest (live) and previewCashAdvanceCascade (dry-run) — pure refactor, live money path behavior IDENTICAL (proven by the unchanged cash-advance-approve-cascade.test.ts). Frontend: DriverInbox.tsx with Cash advances tab fully built (navy banner tabs-with-counts per approved preview), pay-from dropdown feeds B5 credit_account_id; Load updates/Repairs/Complaints are empty-state placeholders (no fake data). No DDL (timeline view from B4, preview is read-only).",
+  "branch": "feat/b6-driver-inbox-ui",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-B6-DRIVER-INBOX-UI.json",
+    "apps/backend/src/driver-finance/cash-advance-requests.service.ts",
+    "apps/backend/src/driver-finance/cash-advance-requests.routes.ts",
+    "apps/backend/src/driver-finance/__tests__/cash-advance-cascade-preview.test.ts",
+    "apps/frontend/src/api/cashAdvanceRequests.ts",
+    "apps/frontend/src/api/cash-advance-requests-office-api.test.ts",
+    "apps/frontend/src/components/driver-inbox/DriverInbox.tsx",
+    "apps/frontend/src/pages/home/DriverHubPage.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
