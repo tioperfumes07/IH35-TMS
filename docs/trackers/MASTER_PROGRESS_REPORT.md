@@ -49,7 +49,9 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 
 | Order | Wave | Block / Item | Why now | Risk | Effort | Depends on | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | A | A3 — Settlement recovery fix (wire capped net-floor ledger) | Only live path that can mishandle real money | HIGH | M | B5 (done) | 🟡 ORPHANED |
+| 1 | A | A3-1 ledger DDL (remaining_balance_cents + status) | — | — | — | — | ✅ DONE — merged #925 |
+| 1 | A | A3-2 capped recovery ENGINE + 6 locked tests (pure) | Only live path that can mishandle real money | HIGH | M | A3-1 (done) | 🟢 ENGINE BUILT — PR __A32PR__ · live-path wiring/GL/cutover GATED behind GUARD + A3-3 shadow-run |
+| 1 | A | A3-3 shadow-run cutover (old vs new agree) + GL restructure | Gates actually paying from the new path | HIGH | M | A3-2 | ⏸ PARKED (depends on A3-2 + GUARD decisions) |
 | 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR #927 (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
 | 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
 | 4 | B | B1 — /inventory parts 404 (repoint to /api/v1/maintenance/parts) | Visibly broken live page; trivial; independent | LOW-MED | XS | none | ✅ DONE — PR #926 |
@@ -75,7 +77,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 |---|---|---|---|---|---|
 | A1 | AI-4 periods init | Accounting/Periods | ✅ SEED SHIPPED (PR #927) | Seed extended to full coverage | DONE: TRANSP Jul–Dec 2026 + all 2025, TRK all 2025+2026 (portable code-resolved, generate_series, gated). Remaining ops step: enable PERIODS_INIT_ENABLED in prod (read-only prod flag check still pending) |
 | A2 | BLOCK-01 depreciation | Accounting/Fixed Assets | NOT BUILT | No fixed-asset accounting | Asset register + schedule + monthly posting |
-| A3 | Block-F settlement auto-deduct (capped ledger) | Driver-Finance | ORPHANED (money risk) | Ledger written but never read | Wire capped path or delete dead ledger; current path has no net-floor cap |
+| A3 | Block-F settlement auto-deduct (capped ledger) | Driver-Finance | 🟢 ENGINE BUILT (PR __A32PR__) | A3-1 DDL merged (#925); A3-2 pure engine + 6 locked tests built | Live-path wiring (delete blunt), postSettlement GL draw-down to QBO-149, escrow floor policy, override DDL, and cutover are GATED — see A3-2 preflight-of-record for the 4 GUARD decisions; no real paycheck changes until A3-3 shadow-run |
 | B1 | /inventory parts → 404 | Inventory | ✅ DONE (PR #926) | Page called a missing endpoint | FIXED: repointed Parts & Stock page + create drawer to the real /api/v1/maintenance/parts (single source of truth, frontend-only, field-mapped) |
 | C1 | QBO prod credentials | QBO | ENV-BLOCKED | Intuit approval (P7-T4) | prod creds |
 | C2 | Twilio/WhatsApp | Notifications | ENV-BLOCKED | Meta verification (P7-T3) | external approval |

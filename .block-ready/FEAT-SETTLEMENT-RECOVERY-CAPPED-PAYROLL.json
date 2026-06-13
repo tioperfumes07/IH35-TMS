@@ -1,0 +1,21 @@
+{
+  "block_id": "FEAT-SETTLEMENT-RECOVERY-CAPPED-PAYROLL",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "A3-SETTLEMENT-RECOVERY",
+  "task": "A3-2: the net-floor-capped, partial-to-floor advance-recovery ENGINE for driver settlements. Adds a PURE engine (payroll/settlement-capped-recovery.ts: computeCappedAdvanceRecovery) — floor=max(gross*pct/100,cents), available=gross-floor, partial-to-floor (recoverable=min(remaining,room)), status applied/partial/deferred, NULL remaining=amount_cents (A3-1 lock), optional owner override (targetRecoverCents/allowBelowFloor), never net-negative. Adds the 6 LOCKED tests (negative-impossible, floor-respected, partial-exact, carry-forward x3, double-recovery-impossible, books-reconcile). Sets remaining_balance_cents=amount_cents on insert in BOTH ledger writers (deductions.service.ts + escrow-deduction-pending.service.ts; additive, no recovery-behavior change). SAFETY: does NOT wire the engine into live computeSettlement, does NOT delete the blunt path, does NOT change postSettlement GL — those money-path mutations + the GL draw-down to QBO-149 + escrow floor policy + override-DDL are GATED behind GUARD decisions + the A3-3 shadow-run (see preflight-of-record). No real paycheck changes in this PR.",
+  "branch": "feat/settlement-recovery-capped-payroll",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-SETTLEMENT-RECOVERY-CAPPED-PAYROLL.json",
+    "apps/backend/src/payroll/settlement-capped-recovery.ts",
+    "apps/backend/src/payroll/__tests__/settlement-capped-recovery.test.ts",
+    "apps/backend/src/driver-finance/deductions.service.ts",
+    "apps/backend/src/driver-finance/escrow-deduction-pending.service.ts",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
