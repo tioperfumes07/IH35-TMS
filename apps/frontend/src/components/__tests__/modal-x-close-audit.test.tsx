@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Modal } from "../Modal";
 import { FaultRuleModal } from "../maintenance/FaultRuleModal";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
@@ -18,6 +18,10 @@ function wrap(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={client}>{ui}</QueryClientProvider>;
 }
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("modal x-close audit", () => {
   it("shared Modal: clicking X calls onClose", () => {
