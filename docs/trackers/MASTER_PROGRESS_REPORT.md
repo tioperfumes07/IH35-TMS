@@ -53,7 +53,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR #927 (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
 | 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
 | 4 | B | B1 — /inventory parts 404 (repoint to /api/v1/maintenance/parts) | Visibly broken live page; trivial; independent | LOW-MED | XS | none | ✅ DONE — PR #926 |
-| 5 | B | UNVERIFIED reconcile pass (DIR-G/H, BLOCK-11, CA-04, GAP-76, F3) | Make tracker fully trustworthy | LOW | S | none | 🟡 confirm |
+| 5 | B | UNVERIFIED reconcile pass (DIR-G/H, BLOCK-11, CA-04, GAP-76, F3) | Make tracker fully trustworthy | LOW | S | none | ✅ DONE — PR __UVPR__ |
 | 6 | B | Commit tracker → this file (Markdown) + xlsx export | Living, version-controlled doc | LOW | S | step 5 | THIS PR |
 | 7 | C | Diesel-code request type (request→approve→inbox) | Highest ops value; reuses B4 timeline + B6 inbox | — | M | B4/B6 | ❌ empty tab |
 | 8 | C | B7 — Driver-inbox reporting (resume; paused) | Preflighted; cross-request analytics; pure read | — | M | B4/B6 | PAUSED |
@@ -226,12 +226,12 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 80 | Phase 4 — Cycles | DIR-D / P6-T1117… | Lists routing + 40 concrete catalog routes + segment tabs | DONE | DONE |  |  | commit 90b6bdd |
 | 81 | Phase 4 — Cycles | DIR-E / P6-T1117… | Load-bookended settlement + expense-to-load + QBO sync obser… | DONE | DONE |  | samePR#26→#78 | PR #26, migrations 0143+0144 |
 | 82 | Phase 4 — Cycles | DIR-F / P6-T1117… | Responsive shell + ESC modal + SaveDropdown + Users invite (… | DONE | DONE |  |  | PR #25 → 7b54bd2 |
-| 83 | Phase 4 — Cycles | DIR-G / P6-T1117… | DIR-F follow-up: 6 remaining modals + responsive sweep + tes… | IN FLIGHT | IN FLIGHT |  |  | Agent 2 commit ea4d4b5  / UNVERIFIED — confirm by hand |
-| 84 | Phase 4 — Cycles | DIR-H / P6-T1117… | Work Order PDFs + mandatory validation + R2 photo + vendor b… | DISPATCHED | DISPATCHED |  |  | Directive ready, pending paste  / UNVERIFIED — confirm by hand |
-| 85 | Phase 4 — Cycles | DIR-I | Customer email templates + invoice PDF auto-delivery | ON DECK | ON DECK |  |  | / UNVERIFIED — confirm by hand |
-| 86 | Phase 4 — Cycles | DIR-J | OCR parsing of rate confirmation PDFs | ON DECK | ON DECK |  |  | / UNVERIFIED — confirm by hand |
-| 87 | Phase 4 — Cycles | DIR-K | Server-side PDF generation via puppeteer | ON DECK | ON DECK |  |  | / UNVERIFIED — confirm by hand |
-| 88 | Phase 4 — Cycles | DIR-M | Backup/DR plan doc for Ch.11 DIP | ON DECK | ON DECK |  |  | / UNVERIFIED — confirm by hand |
+| 83 | Phase 4 — Cycles | DIR-G / P6-T1117… | DIR-F follow-up: 6 remaining modals + responsive sweep + tes… | IN FLIGHT | SUPERSEDED |  |  | DIR-G modals/responsive delivered via #462 (nested-modal), #398/#437 (A15 modal audit) — no standalone DIR-G PR |
+| 84 | Phase 4 — Cycles | DIR-H / P6-T1117… | Work Order PDFs + mandatory validation + R2 photo + vendor b… | DISPATCHED | SUPERSEDED |  |  | DIR-H WO-PDF/validation/AP-bill delivered via #262 (WO PDF path), #272 (WO modal), #312 (WO→AP) — no standalone DIR-H PR |
+| 85 | Phase 4 — Cycles | DIR-I | Customer email templates + invoice PDF auto-delivery | ON DECK | ON DECK |  |  | still pending — no merged PR (DIR-I) |
+| 86 | Phase 4 — Cycles | DIR-J | OCR parsing of rate confirmation PDFs | ON DECK | ON DECK |  |  | still pending — no merged PR (DIR-J) |
+| 87 | Phase 4 — Cycles | DIR-K | Server-side PDF generation via puppeteer | ON DECK | ON DECK |  |  | still pending — no merged PR (DIR-K) |
+| 88 | Phase 4 — Cycles | DIR-M | Backup/DR plan doc for Ch.11 DIP | ON DECK | ON DECK |  |  | still pending — no merged PR (DIR-M) |
 | | **▼ Data Sovereignty (P1)** | | | | | | | |
 | 89 | Data Sovereignty (P1) | DS-1 | Verify QBO mirror (T11.20.6.1) data integrity | SUPERSEDED | SUPERSEDED |  |  | Superseded 2026-05-21. See DS Remediation |
 | 90 | Data Sovereignty (P1) | DS-2 | QBO mirror reconciliation report | SUPERSEDED | SUPERSEDED |  |  | Superseded 2026-05-21 |
@@ -453,7 +453,7 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 276 | DS Remediation | DS-REMEDIATE-8 | DS-5 mirror metadata contract alignment | DONE | DONE |  |  | PR #168 (33a3a41). Migrations 0204-0210 |
 | 277 | DS Remediation | DS-REMEDIATE-8.1 | Replace GENERATED columns with real columns (fix) | DONE | DONE |  |  | PR #171. Fix on top of DS-REM-8 |
 | 278 | DS Remediation | DS-REMEDIATE-9 | Samsara remote count helper | DONE | DONE |  |  | PR #169. Closed all DS-REM-4 finding categories |
-| 279 | DS Remediation | DS-REMEDIATE-10 | Outbox infrastructure consolidation (post-series cleanup) | DRAFTED | DRAFTED |  |  | 2-3 day structural block. Highest risk in queue. PAUSE-heavy  / UNVERIFIED — confirm by hand |
+| 279 | DS Remediation | DS-REMEDIATE-10 | Outbox infrastructure consolidation (post-series cleanup) | DRAFTED | DRAFTED |  |  | still pending — no merged PR (DS-REMEDIATE-10) |
 | 280 | DS Remediation | DS-REMEDIATE-11 | Samsara TRANSP config canonicalization + 94-live counter ten… | DONE | DONE |  |  | PR #176 (2906b603). Migration 0215 + 3 CI guards |
 | 281 | DS Remediation | DS-REMEDIATE-12 | Backend startup migration-drift guard + CI assertion | DONE | DONE |  |  | PR #177 (94af33e). Caught 136 unledgered migrations on first prod boot |
 | 282 | DS Remediation | DS-REMEDIATE-13 | Audit table canonical-name fix (audit.audit_events) | DONE | DONE |  |  | PR #181 (e3aa7c2). Migration 0216 |
@@ -520,7 +520,7 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 334 | Phase 8 — Sunday 5/31 Foll… | CURSOR-GH-AUTH-R… | Re-auth Cursor's gh CLI (HTTP 401 after #345 merge) | PENDING | PENDING |  |  | gh auth refresh -h github.com -s repo,workflow,read:org |
 | 335 | Phase 8 — Sunday 5/31 Foll… | LIVE-UI-VISUAL-V… | Walk /dispatch /drivers /maintenance to confirm 87 units / 8… | PENDING | PENDING |  |  | Verify Sunday 5/31 data lands in UI |
 | | **▼ Phase 8 Audit Findings** | | | | | | | |
-| 336 | Phase 8 Audit Findings | P8-AUDIT-CUST-BI… | Fix /customers/{id}/billing-summary 500 error | IN FLIGHT | IN FLIGHT |  |  | CURSOR-A working on feat/customer-detail-billing-summary-fix as A8. Dispatched 9:25 PM CST 6/2.  / UNVERIFIED — confirm by hand |
+| 336 | Phase 8 Audit Findings | P8-AUDIT-CUST-BI… | Fix /customers/{id}/billing-summary 500 error | IN FLIGHT | DONE |  |  | DONE — merged #386 (A8 customers billing-summary fix) |
 | 337 | Phase 8 Audit Findings | P8-AUDIT-NESTED-… | Fix nested-box modal pattern (WO Details header ×2, Customer… | DONE | DONE |  |  | From 2026-05-24 audit P1 · PR #462 · merged + LIVE 2026-06-04 |
 | 338 | Phase 8 Audit Findings | P8-AUDIT-PROD-ST… | Remove 13+ stub strings rendering in production | DONE | DONE |  |  | From 2026-05-24 audit P2 · PR #471 · merged + LIVE 2026-06-04 |
 | 339 | Phase 8 Audit Findings | P8-AUDIT-TEST-DA… | Remove TEST-DRIVER/TEST-CUSTOMER/seed-test-driver leak from … | DONE | DONE |  |  | From 2026-05-24 audit P2 · PR #469 · merged + LIVE 2026-06-04 |
@@ -622,10 +622,10 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | | **▼ Phase N — Tuesday Night Wave (continued)** | | | | | | | |
 | 422 | Phase N — Tuesday Night Wa… | #75-A13-BANKING-… | Banking driver escrow counter label clarify | DONE | DONE |  |  | PR #395 SHA fa22868 merged + deployed LIVE 12:27 AM CST |
 | | **▼ Wave 1 Queued (paste-ready in /mnt/user-data/outputs/)** | | | | | | | |
-| 423 | Phase N — Tuesday Night Wa… | #76-A14-WAVE1-HO… | Home Record Expense → modal (not navigate) | IN FLIGHT | IN FLIGHT |  |  | P2 · branch feat/home-record-expense-modal-consistency  / UNVERIFIED — confirm by hand |
+| 423 | Phase N — Tuesday Night Wa… | #76-A14-WAVE1-HO… | Home Record Expense → modal (not navigate) | IN FLIGHT | DONE |  |  | DONE — merged #396 (A14 Record Expense modal) |
 | 424 | Phase N — Tuesday Night Wa… | #77-A15-WAVE1-GE… | Audit all *Modal.tsx for X close | PENDING | PENDING |  |  | P2 · branch chore/generic-modal-x-close-audit |
 | 425 | Phase N — Tuesday Night Wa… | #78-A16-WAVE1-TE… | Archive TEST-DRIVER/TEST-CUSTOMER/seed-* | PENDING | PENDING |  |  | P2 · branch fix/test-seed-data-archive · mig 0320 |
-| 426 | Phase N — Tuesday Night Wa… | #79-B12-WAVE1-DR… | Filter Safety Safety pseudo-user | IN FLIGHT | IN FLIGHT |  |  | P2 · branch fix/driver-safety-pseudo-user-cleanup  / UNVERIFIED — confirm by hand |
+| 426 | Phase N — Tuesday Night Wa… | #79-B12-WAVE1-DR… | Filter Safety Safety pseudo-user | IN FLIGHT | DONE |  |  | DONE — merged #397 (B12 exclude pseudo-users) |
 | 427 | Phase N — Tuesday Night Wa… | #80-B13-WAVE1-FU… | Restore Loves card sync | PENDING | PENDING |  |  | P1 · branch fix/fuel-loves-sync-restore-v2 |
 | 428 | Phase N — Tuesday Night Wa… | #81-B14-WAVE1-CU… | Clear Late-pay/Medium auto-applied defaults | PENDING | PENDING |  |  | P2 · branch fix/customer-vendor-default-classifications · mig 0325 |
 | 429 | Phase N — Tuesday Night Wa… | #82-B15-WAVE1-BA… | Restore Amex + Wells Fargo Plaid sync | PENDING | PENDING |  |  | P1 · branch fix/bank-plaid-sync-restore |
@@ -797,7 +797,7 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 590 | Tier4 | BLOCK-28 Vendor-… | Reduce vendor lock-in surface | IN FLIGHT | DONE | 2026-06-08 |  | PR #811 — CI GREEN  / merged #811(a39fa454f) |
 | 591 | Tier4 | BLOCK-29 Known-L… | Known limits register | IN FLIGHT | DONE | 2026-06-08 |  | PR #813 — CI GREEN  / merged #813(4223885da) |
 | 592 | Tier2 | BLOCK-10 RLS-Tes… | Cross-tenant RLS test gate | IN FLIGHT | DONE | 2026-06-09 |  | PR #801 — CI RED -1, fix before merge  / merged #801(c68b2845e) |
-| 593 | Tier2 | BLOCK-11 Audit-C… | Mutation audit coverage | IN FLIGHT | IN FLIGHT |  |  | PR #803 — CI pending  / UNVERIFIED — confirm by hand |
+| 593 | Tier2 | BLOCK-11 Audit-C… | Mutation audit coverage | IN FLIGHT | PENDING |  |  | STILL PENDING — PR #803 never merged; mutation-audit-coverage block unshipped (spine emit covered separately via #886/#889/#890/#901) |
 | 594 | Tier2.5 | BLOCK-14 Mexico-… | Mexico operations | IN FLIGHT | DONE | 2026-06-08 |  | PR #804 — CI RED -3, fix before merge  / merged #804(1fcd67364) |
 | 595 | Tier2.5 | BLOCK-15 Mechani… | Internal mechanic shop | IN FLIGHT | DONE | 2026-06-08 |  | PR #805 — CI RED -3, fix before merge  / merged #805(1007d9c92) |
 | 596 | Tier4 | BLOCK-26 Partiti… | Table partitioning | IN FLIGHT | DONE | 2026-06-09 |  | PR #809 — CI RED -2, fix before merge  / merged #809(a67a3ef7e) |
@@ -819,10 +819,10 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 610 | AcctIntegrity | AI-4 Periods ini… | Periods initialization | MISSING | MISSING |  |  | Bookkeeper-gated |
 | 611 | AcctIntegrity | AI-5 Role bindin… | Routes + UI + 0223 exist (seed TBD) | DONE | DONE |  |  | Seed TBD |
 | | **▼ CA Series — QBO Parity** | | | | | | | |
-| 612 | QBO Parity | CA-04 New/Edit d… | New/Edit account drawer (number optional, is_locked, opening… | IN FLIGHT | IN FLIGHT |  |  | Migration slot 202606080230; account_number drop-NOT-NULL keep-UNIQUE  / UNVERIFIED — confirm by hand |
+| 612 | QBO Parity | CA-04 New/Edit d… | New/Edit account drawer (number optional, is_locked, opening… | IN FLIGHT | DONE |  |  | DONE — merged #815 (acct-ca04 Account Drawer; was the recorded gate-violation self-merge) |
 | 613 | QBO Parity | CA-05 Account re… | Per-account register (running balance ledger) | PENDING | PENDING |  |  | After CA-04 |
 | 614 | QBO Parity | CA-06 Audit hist… | Account audit history tab | PENDING | PENDING |  |  | After CA-04/05 |
-| 615 | GAP | GAP-76 Deadhead … | Deadhead mile optimizer | IN FLIGHT | IN FLIGHT |  |  | PR #812  / UNVERIFIED — confirm by hand |
+| 615 | GAP | GAP-76 Deadhead … | Deadhead mile optimizer | IN FLIGHT | DONE |  |  | DONE — merged #844 (GAP-76 deadhead optimizer; original #812 was closed/superseded) |
 | | **▼ BLOCKS EXECUTION ORDER — WAVE 0 — IN FLIGHT NOW (merge green, fix red)** | | | | | | | |
 | 616 | Wave 0 | TIER29 Known-Lim… | Doc: known limits register | IN FLIGHT | DONE | 2026-06-08 | samePR#813→#59… | PR #813 — GREEN — order 1  / merged #813(4223885da) |
 | 617 | Wave 0 | TIER28 Vendor-Lo… | Reduce vendor lock-in surface | IN FLIGHT | DONE | 2026-06-08 | samePR#811→#59… | PR #811 — GREEN — order 2  / merged #811(a39fa454f) |
@@ -834,27 +834,27 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 623 | Wave 0 | BLOCK05 Circuit-… | Breakers on external calls | IN FLIGHT | DONE | 2026-06-08 | DUP→#584 | PR #800 — GREEN — order 8  / merged #800(0fcc12da9) |
 | 624 | Wave 0 | CLOSURE-11 maint… | Full maintenance services impl | IN FLIGHT | DONE | 2026-06-08 | samePR#799→#60… | PR #799 — GREEN — order 9  / merged #799(92dabde3f) |
 | 625 | Wave 0 | CLOSURE-12 payro… | Full payroll integration impl | IN FLIGHT | DONE | 2026-06-08 | samePR#795→#60… | PR #795 — GREEN — order 10  / merged #795(d6ee890b1) |
-| 626 | Wave 0 | BLOCK11 Audit-Co… | Mutation audit coverage | IN FLIGHT | IN FLIGHT |  | DUP→#593 | PR #803 — CI PENDING — order 11  / UNVERIFIED — confirm by hand |
+| 626 | Wave 0 | BLOCK11 Audit-Co… | Mutation audit coverage | IN FLIGHT | PENDING |  | DUP→#593 | STILL PENDING — #803 unmerged (DUP of #593) |
 | 627 | Wave 0 | BLOCK10 RLS-Test… | Cross-tenant RLS test gate — fix CI | IN FLIGHT | DONE | 2026-06-09 | DUP→#592 | PR #801 — RED -1 — order 12  / merged #801(c68b2845e) |
 | 628 | Wave 0 | CLOSURE-13 USMCA… | 3rd-carrier USMCA — fix CI | IN FLIGHT | DONE | 2026-06-08 | DUP→#605 | PR #797 — RED -1 — order 13  / merged #797(44bf98543) |
 | 629 | Wave 0 | TIER26 Partition | Table partitioning — fix CI | IN FLIGHT | DONE | 2026-06-09 | samePR#809→#59… | PR #809 — RED -2 — order 14  / merged #809(a67a3ef7e) |
 | 630 | Wave 0 | TIER14 Mexico-Op… | Mexico operations — fix CI | IN FLIGHT | DONE | 2026-06-08 | samePR#804→#59… | PR #804 — RED -3 — order 15  / merged #804(1fcd67364) |
 | 631 | Wave 0 | TIER15 Mechanic-… | Internal mechanic shop — fix CI | IN FLIGHT | DONE | 2026-06-08 | samePR#805→#59… | PR #805 — RED -3 — order 16  / merged #805(1007d9c92) |
 | 632 | Wave 0 | CLOSURE-10 maint… | Full parts catalog impl — fix CI | IN FLIGHT | DONE | 2026-06-09 | samePR#798→#60… | PR #798 — RED -3 — order 17  / merged #798(9dff6b749) |
-| 633 | Wave 0 | GAP-76 Deadhead … | Deadhead mile optimizer | IN FLIGHT | IN FLIGHT |  | DUP→#615 | PR #812 — in flight — order 18  / UNVERIFIED — confirm by hand |
+| 633 | Wave 0 | GAP-76 Deadhead … | Deadhead mile optimizer | IN FLIGHT | DONE |  | DUP→#615 | DONE — merged #844 (DUP of #615) |
 | | **▼ WAVE 1 — TIER GAPS NOT YET DISPATCHED (financial safety)** | | | | | | | |
 | 634 | Wave 1 | BLOCK-01 Depreci… | Fixed-asset depreciation schedule + posting | PENDING | PENDING |  | DUP→#597 | Order 19 |
 | 635 | Wave 1 | BLOCK-19 Audit-H… | Tamper-evident audit hash chain | PENDING | PENDING |  | DUP→#599 | Order 20 |
 | 636 | Wave 1 | BLOCK-24 1099-An… | Annual 1099 generation | PENDING | PENDING |  | DUP→#600 | Order 21 |
 | 637 | Wave 1 | BLOCK-25 Consoli… | Multi-entity financial consolidation | PENDING | PENDING |  | DUP→#601 | Order 22 |
-| 638 | Wave 1 | BLOCK-06 Outbox-… | Confirm/add dead-letter recovery for outbox | NEEDS CONFIRM | NEEDS CONFIRM |  |  | Order 23  / UNVERIFIED — confirm by hand |
+| 638 | Wave 1 | BLOCK-06 Outbox-… | Confirm/add dead-letter recovery for outbox | NEEDS CONFIRM | NEEDS CONFIRM |  |  | still pending — outbox DLQ unconfirmed; #174 did partial outbox work (BLOCK-06) |
 | | **▼ WAVE 2 — ACCOUNTING INTEGRITY (make it QuickBooks-safe)** | | | | | | | |
 | 639 | Wave 2 | AI-1b Closed-per… | The real gap | PENDING | PENDING |  |  | Order 24 |
 | 640 | Wave 2 | AI-3b Financial … | Unbalanced JE / orphan bill / orphan payment in existing cro… | PENDING | PENDING |  |  | Order 25 |
 | 641 | Wave 2 | AI-4 Periods ini… | Bookkeeper-gated | PENDING | PENDING |  | DUP→#610 | Order 26 |
 | 642 | Wave 2 | AI-2b Recon cron… | Confirm-or-add | PENDING | PENDING |  |  | Order 27 |
 | | **▼ WAVE 3 — CA + DISPATCH FRONTIER** | | | | | | | |
-| 643 | Wave 3 | CA-04 New/Edit d… | Number optional, is_locked, opening balance | IN FLIGHT | IN FLIGHT |  | DUP→#612 | Order 28  / UNVERIFIED — confirm by hand |
+| 643 | Wave 3 | CA-04 New/Edit d… | Number optional, is_locked, opening balance | IN FLIGHT | DONE |  | DUP→#612 | DONE — merged #815 (DUP of #612) |
 | 644 | Wave 3 | CA-05 Per-accoun… | Running balance ledger | PENDING | PENDING |  |  | Order 29 |
 | 645 | Wave 3 | CA-06 Account au… | Audit history | PENDING | PENDING |  |  | Order 30 |
 | 646 | Wave 3 | Block 8 Cross-Bo… | Customs + compliance gate | PENDING | PENDING |  |  | Order 31 |
