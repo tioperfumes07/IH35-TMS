@@ -58,7 +58,13 @@ export const SIDEBAR_ITEM_IDS = [
 
 export type SidebarItemId = (typeof SIDEBAR_ITEM_IDS)[number];
 
-export const SIDEBAR_DEFAULT_ORDER: readonly SidebarItemId[] = SIDEBAR_ITEM_IDS;
+// "eld" + "finance" are placeholder/stub pages (no real backend) — hidden from nav so there
+// are no dead-end pages. Item configs + routes are KEPT (code not deleted); restore by
+// removing them from this filter. (GUARD answer sheet #27/#28.)
+const NAV_HIDDEN_STUB_IDS: readonly SidebarItemId[] = ["eld", "finance"];
+export const SIDEBAR_DEFAULT_ORDER: readonly SidebarItemId[] = SIDEBAR_ITEM_IDS.filter(
+  (id) => !NAV_HIDDEN_STUB_IDS.includes(id),
+);
 
 const DEFAULT_ORDER_SET = new Set<string>(SIDEBAR_DEFAULT_ORDER);
 
@@ -246,7 +252,8 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       if (role === "Owner") {
         rows.push(
           { label: "Migration Status", to: "/admin/migration-status" },
-          { label: "Integrity checks", to: "/admin/integrity" },
+          // "Integrity checks" (/admin/integrity) hidden — endpoint unshipped; module-specific
+          // integrity dashboards already exist. Route kept; restore link when backend lands. (#29)
           { label: "Error monitor", to: "/admin/error-monitor" }
         );
       }
