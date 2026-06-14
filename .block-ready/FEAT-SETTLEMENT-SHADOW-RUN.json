@@ -1,0 +1,21 @@
+{
+  "block_id": "FEAT-SETTLEMENT-SHADOW-RUN",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "A3-SETTLEMENT-RECOVERY",
+  "task": "A3-3: read-only / compute-only shadow comparison of OLD blunt recovery vs NEW capped-ledger recovery, per real settlement, with NO writes (no settlement updates, no ledger updates, no GL posting). settlement-shadow.service.ts: classifyRecoveryDifference (pure — agree / a_avoids_below_floor / b_recovers_leaked / c_unexplained-must-be-0) + runSettlementShadow (reads settlements in the period, computes both paths via the existing engine, classifies, aggregates). Read-only GET /api/v1/payroll/settlement-shadow-run (role-gated Owner/Administrator/Accountant/SuperAdmin, withCompanyScope). Tests: the 4 classification buckets + a read-only runner asserting zero INSERT/UPDATE/DELETE. This is the evidence Jorge reviews before manually flipping SETTLEMENT_CAPPED_RECOVERY_ENABLED. Does NOT flip the flag. No migration.",
+  "branch": "feat/settlement-shadow-run",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-SETTLEMENT-SHADOW-RUN.json",
+    "apps/backend/src/payroll/settlement-shadow.service.ts",
+    "apps/backend/src/payroll/settlement-shadow.routes.ts",
+    "apps/backend/src/payroll/__tests__/settlement-shadow.test.ts",
+    "apps/backend/src/index.ts",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
