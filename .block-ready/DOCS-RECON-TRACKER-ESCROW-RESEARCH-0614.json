@@ -11,7 +11,9 @@
     "docs/trackers/MASTER_PROGRESS_REPORT.md",
     "docs/specs/DRIVER-ESCROW-RESEARCH.md",
     "scripts/export-tracker-xlsx.mjs",
+    ".gitignore",
     "package.json",
+    "package-lock.json",
     "docs/trackers/exports/*.xlsx",
     "docs/trackers/exports/IH35-TMS-MASTER-TRACKER-2026-06-14-v27.xlsx"
   ],
