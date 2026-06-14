@@ -1,0 +1,18 @@
+{
+  "block_id": "DOCS-RECON-TRACKER-ESCROW-RESEARCH-0614",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "RECON-RECONCILE",
+  "task": "Docs-only, no code/DDL. (1) Reconcile MASTER_PROGRESS_REPORT.md against a full read-only recon of the entire block set vs LIVE CODE — Wave-4 rows 650-680 now carry verified verdict (col6) + evidence (col7); A3 rows updated for full-series-merged + prod flag ON; #935 marked merged + #936 stale-dup closed; a dated FULL BLOCK-SET RECON summary added at top with ALREADY-DONE / GENUINELY-PENDING (SAFE-ADDITIVE|FINANCE-GATED|DATA-MUTATION) / CONTRADICTIONS lists. (2) Add docs/specs/DRIVER-ESCROW-RESEARCH.md — driver-escrow research/accounting findings (McLeod/Alvys models, liability sub-ledger GL, 49 CFR 376.12(k) truth-in-leasing, full lifecycle, open questions) grounding the future B9 $25/load escrow deduction engine; mirrors the advance-side research that grounded A3. Safe to merge. No app code, no migration, no money path.",
+  "branch": "docs/recon-tracker-escrow-research-0614",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-RECON-TRACKER-ESCROW-RESEARCH-0614.json",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md",
+    "docs/specs/DRIVER-ESCROW-RESEARCH.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
