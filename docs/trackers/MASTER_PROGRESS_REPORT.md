@@ -34,9 +34,9 @@ Safe-additive blocks built non-stop after the recon; each its own PR, Jorge merg
 
 | Block | What | Status | PR |
 |---|---|---|---|
-| B | Create-Task UI — "+ Create Task" button on Task Board + create modal (assignee/date/title/description/category/priority) calling existing POST /api/v1/tasks | ✅ BUILT | this PR |
-| C | Dispatch "Planners" dead-handler fix — give parent nav a default target | ⏳ queued | — |
-| Exporter-C | 3 GitHub/computed xlsx tabs (02 New Since v24, 03 Full Merged PRs, 05 Functional Audit) | ⏳ queued | — |
+| B | Create-Task UI — "+ Create Task" button on Task Board + create modal (assignee/date/title/description/category/priority) calling existing POST /api/v1/tasks | ✅ BUILT | #940 |
+| C | Dispatch "Planners" — NOT a dead handler: intentional click-to-toggle dropdown (locked decision #728 + test). "Navigate on click" reverses #728 → ⛔ GATED, awaiting Jorge (C-1/C-2/C-3) | ⛔ DECISION | — |
+| Exporter-C | GitHub xlsx tabs: 02 New Since v24 (108 PRs, #>813) + 03 Full Merged PRs (887) pulled via gh; 10 tabs total in v26 order. 05 Functional Audit = placeholder (source TBD, flagged) | ✅ BUILT | this PR |
 | P | Best-Bank (genuinely-empty safe block) | ⏳ queued | — |
 | F | Reefer 15-min poller cron | ⏳ queued | — |
 | E | Samsara live-mileage ingest cron | ⏳ queued | — |
