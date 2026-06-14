@@ -34,19 +34,21 @@ describe("DispatchSubnav planner reachability + click-nav (Task 1)", () => {
     );
   }
 
-  it("Planning menu is closed until clicked, then stays open (click-to-toggle, not hover)", () => {
+  it("C-1 split: Planning LABEL navigates to /dispatch/planners/loads; CHEVRON click-toggles the submenu (#728 preserved)", () => {
     renderNav();
-    const planningBtn = screen.getByRole("menuitem", { name: /Planning/i });
-    // hidden initially
+    // label is now a navigable link to the default planner (it does NOT toggle the menu)
+    const planningLabel = screen.getByRole("menuitem", { name: "Planning" });
+    expect(planningLabel).toHaveAttribute("href", "/dispatch/planners/loads");
+    // submenu stays hidden until the CHEVRON is clicked (click-to-toggle, NOT hover — locked #728)
+    const chevron = screen.getByRole("button", { name: /Planning submenu/i });
     expect(screen.queryByRole("menuitem", { name: "Driver Planner" })).not.toBeInTheDocument();
-    // click opens — and the previously-hidden planners are now reachable
-    fireEvent.click(planningBtn);
+    fireEvent.click(chevron);
     expect(screen.getByRole("menuitem", { name: "Driver Planner" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Truck Planner" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Loads Planner" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Planner Calendar" })).toBeInTheDocument();
-    // mouse-out does NOT close it (persistent) — clicking the trigger again toggles closed
-    fireEvent.click(planningBtn);
+    // persistent: clicking the chevron again toggles it closed (not a hover-close)
+    fireEvent.click(chevron);
     expect(screen.queryByRole("menuitem", { name: "Driver Planner" })).not.toBeInTheDocument();
   });
 });

@@ -1,0 +1,20 @@
+{
+  "block_id": "FEAT-DISPATCH-PLANNERS-SPLIT-NAV",
+  "status": "BUILD",
+  "classification": "FEATURE",
+  "phase": "SAFE-ADDITIVE-QUEUE",
+  "task": "Safe-additive Block 1 (C-1) — Dispatch Planners split control. The 'Planning' parent was an intentional click-to-toggle dropdown (locked decision #728), not a dead handler. Per Jorge's C-1 decision: split the parent — the LABEL becomes a <Link> navigating to /dispatch/planners/loads; the CHEVRON stays the click-toggle that opens the persistent submenu. Both coexist; #728 preserved. Added .nav-split CSS so label+chevron read as one item; mirror existing styling, no redesign. Updated DispatchSubnav.planners.test.tsx to assert BOTH (label has href, chevron toggles) — extended the #728 assertion, did not delete it. Other dropdown parents (Settlements/Documents, no href) unchanged. Frontend-only, additive, no money path, no migration. Tracker also marks the safe-additive queue + recon DONE-confirmations.",
+  "branch": "feat/dispatch-planners-split-nav",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-DISPATCH-PLANNERS-SPLIT-NAV.json",
+    "apps/frontend/src/components/dispatch/DispatchSubnav.tsx",
+    "apps/frontend/src/components/dispatch/DispatchSubnav.planners.test.tsx",
+    "apps/frontend/src/components/forms/shared/HoverDropdownNav.css",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

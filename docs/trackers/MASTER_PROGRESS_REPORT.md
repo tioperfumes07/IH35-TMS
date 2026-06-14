@@ -35,11 +35,30 @@ Safe-additive blocks built non-stop after the recon; each its own PR, Jorge merg
 | Block | What | Status | PR |
 |---|---|---|---|
 | B | Create-Task UI — "+ Create Task" button on Task Board + create modal (assignee/date/title/description/category/priority) calling existing POST /api/v1/tasks | ✅ BUILT | #940 |
-| C | Dispatch "Planners" — NOT a dead handler: intentional click-to-toggle dropdown (locked decision #728 + test). "Navigate on click" reverses #728 → ⛔ GATED, awaiting Jorge (C-1/C-2/C-3) | ⛔ DECISION | — |
-| Exporter-C | GitHub xlsx tabs: 02 New Since v24 (108 PRs, #>813) + 03 Full Merged PRs (887) pulled via gh; 10 tabs total in v26 order. 05 Functional Audit = placeholder (source TBD, flagged) | ✅ BUILT | this PR |
-| P | Best-Bank (genuinely-empty safe block) | ⏳ queued | — |
-| F | Reefer 15-min poller cron | ⏳ queued | — |
-| E | Samsara live-mileage ingest cron | ⏳ queued | — |
+| C | Dispatch "Planners" → **C-1 split control** (Jorge): label = Link to /dispatch/planners/loads (navigates), chevron keeps the click-toggle submenu (locked #728 preserved); test asserts both | ✅ BUILT | this PR |
+| Exporter-C | GitHub xlsx tabs: 02 New Since v24 (108 PRs, #>813) + 03 Full Merged PRs (887) pulled via gh; 10 tabs total in v26 order. 05 Functional Audit = placeholder (source TBD, flagged) | ✅ BUILT | #941 |
+| P | Best-Bank — ❌ DROPPED (Jorge: zero spec, no real need; will spec later if needed) | ❌ DROPPED | — |
+| F | Reefer 15-min poller cron | ✅ BUILT | #942 |
+| E | Samsara mileage → E-3 odometer-history (gated behind mileage-model design #943) | ⏸ gated (doc) | — |
+
+## ⚙️ Safe-additive queue — GUARD answer sheet (2026-06-14)
+
+Built non-stop, default mode, each its own PR (Jorge merges as they land). No money path, no migration. (Planners C-1 = #1, tracked in the auto-mode table above.)
+
+| # | Block | Status | PR |
+|---|---|---|---|
+| 1 | Dispatch Planners C-1 (split control) | ✅ BUILT | this PR |
+| 2 | load-update request type | ⏳ queued | — |
+| 3 | complaint request type | ⏳ queued | — |
+| 4 | Q · docs-upload UI | ⏳ queued | — |
+| 5 | AF · help-article scaffold stubs | ⏳ queued | — |
+| 6 | B7 · driver-inbox reporting | ⏳ queued | — |
+| 7 | K/AL · classes bulk-edit (batch-PATCH + multi-select) | ⏳ queued | — |
+| 8 | stub-page hides (/finance×3, /eld, /admin/integrity, /banking/uncategorized) | ⏳ queued | — |
+| 9 | RLS-coverage audit doc | ⏳ queued | — |
+
+**Confirmed DONE 2026-06-14 (recon — tracker cleanup):** AI-1b closed-period write-lock (#816) · AI-3b financial probes (#816) · T11.21.x fuel/accounting/fleet catalog tables (Block G, 60 catalogs) · P5-T2 recon workspace.
+**Dropped:** Best-Bank (no spec) · Block Z driver-CSV import (Samsara is the driver source).
 
 ## Reconciliation snapshot
 
