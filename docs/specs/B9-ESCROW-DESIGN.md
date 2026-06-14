@@ -128,6 +128,26 @@ A **draw** spends a driver's escrow against a disclosed trigger:
 
 ---
 
+## 9A. Escrow management screen (UI — Jorge-approved 2026-06-14)
+
+Visual design approved (02-ESCROW-SCREEN-LOCKED). This holds the **screen**; §3–§7 hold the **posting/logic**. Build to match, wired to the existing infra (§1), gated, GUARD-verifies.
+
+**Header:** "Driver Escrow — $25/load held as security deposit · refundable on separation" + a **"flag OFF — not yet live"** badge (ships gated, `ESCROW_DEDUCTION_ENABLED` default OFF).
+
+**Tabs:** By driver · All transactions · Refund queue · Settings.
+
+**KPI cards:** Default/load ($25) · Cap per driver ($2,500) · Total held · Refund clock (60d default).
+
+**By-driver table:** Driver · Balance · Cap · **Status** (capped / accruing / refund-due-in-Nd) · Actions (Draw · Refund).
+- **Click a driver row → drill into that driver's full transaction ledger** (date · load number · type [deduction/draw/refund] · amount · running balance). *(Jorge: "if we click on it, it takes us to all transactions, showing date, load numbers, etc.")*
+- Status badges reflect real state: **capped** (at $2,500), **accruing**, **refund-due-in-Nd** (post-termination clock).
+
+**Draw panel:** reason dropdown (full draw-trigger list, §2 rule 3) + amount + **"Submit for approval"** + note "requires Manager/Accountant/Owner approval · every move posts to GL + audit log".
+
+**Design tokens:** dark topbar + sidebar, green accent `#16A34A`. The Approve power is the Permissions-block `Approve` for the Escrow module (hard-coded Manager/Accountant/Owner until that block ships — see `docs/specs/PERMISSIONS-DESIGN.md`).
+
+---
+
 ## 10. Open questions for Jorge
 
 1. **Editable-at-the-moment amount (rule #1):** who can edit the per-load $25 at settlement — same approver set (manager/accountant/owner), or the settlement creator? Audited either way.
