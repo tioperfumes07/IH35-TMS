@@ -1,0 +1,26 @@
+{
+  "block_id": "FEAT-DRIVER-INBOX-REPORTING",
+  "status": "BUILD",
+  "classification": "FEATURE",
+  "phase": "SAFE-ADDITIVE-QUEUE",
+  "task": "Safe-additive Block 6 (B7) — read-only driver-inbox reporting. New GET /api/v1/driver-finance/inbox-reporting?operating_company_id&from&to (role-gated Owner/Admin/Manager/Accountant/Dispatcher, withCompanyScope) aggregating the B4 timeline view (views.driver_request_timeline: seconds_requested_to_viewed / seconds_requested_to_decision) joined to cash_advance_requests: summary + per-driver time-to-view, time-to-approve, approval-rate, total approved advance volume. New page /driver-hub/reporting (date-range filter + summary cards + per-driver table + CSV export) linked from the Driver Hub header (canReview only). READ-ONLY: no mutations, no money path, no migration (reads existing data). advance-volume-by-TRIP listed in not_computed (driver_advances has no load FK) per Jorge's ship-the-rest rule.",
+  "branch": "feat/driver-inbox-reporting",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-DRIVER-INBOX-REPORTING.json",
+    ".gitignore",
+    "apps/backend/src/driver-finance/inbox-reporting.service.ts",
+    "apps/backend/src/driver-finance/inbox-reporting.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/driverInboxReporting.ts",
+    "apps/frontend/src/pages/home/DriverHubReportingPage.tsx",
+    "apps/frontend/src/pages/home/DriverHubPage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/nav-integrity-allowlist.json",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

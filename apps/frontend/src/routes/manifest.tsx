@@ -156,6 +156,7 @@ import { DocsHomePage } from "../pages/docs/DocsHomePage";
 import { EldPage } from "../pages/eld/EldPage";
 import { CashFlowPage } from "../pages/cash-flow/CashFlowPage";
 import { DriverHubPage } from "../pages/home/DriverHubPage";
+import { DriverHubReportingPage } from "../pages/home/DriverHubReportingPage";
 import { UserDetailPage } from "../pages/UserDetail";
 import { UsersPage } from "../pages/Users";
 import { VendorsPage } from "../pages/Vendors";
@@ -768,6 +769,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriverHubPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-hub/reporting"
+          element={
+            <ProtectedRoute>
+              <DriverHubReportingPage />
             </ProtectedRoute>
           }
         />
