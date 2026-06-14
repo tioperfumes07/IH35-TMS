@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH5-BANKRUPTCY-MODELER",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for Finance Hub FH-5 (Bankruptcy Calculator/Modeler) -- most complex + sensitive, build last. TRANSP's Chapter 11 plan is CONFIRMED (reorganized terms are real). Select all loans/assets/debts, enter reorganized terms (new balances/rates/amortization schedules via FH-3). Two outputs: (1) ongoing TRACKER plan-vs-actuals, (2) BENEFIT ANALYSIS before-vs-after (old vs new total obligation, interest saved, monthly-payment delta). Central design fork documented: do confirmed reorganized balances POST to live books, live in modeling layer, or BOTH (recommended: book once with accountant + keep modeler for tracking). Any posting gated (flag default OFF, preview-first, balance-or-fail, GUARD-reviewed, audited, with accountant, never auto-fired). Data model (bankruptcy.plans/obligations/plan_schedules), access-restricted (Owner/Accountant, ties to Permissions block), sensitivity handling, open questions for Jorge+counsel, gated build sequence. NO code, no DDL, no posting. VOID != DELETE. Designed live with Jorge + bankruptcy counsel + GUARD before any code.",
+  "branch": "docs/fh5-bankruptcy-modeler",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH5-BANKRUPTCY-MODELER.json",
+    "docs/specs/FH-5-BANKRUPTCY-MODELER-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
