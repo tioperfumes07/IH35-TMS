@@ -50,8 +50,8 @@ Built non-stop, default mode, each its own PR (Jorge merges as they land). No mo
 | 1 | Dispatch Planners C-1 (split control) | ✅ BUILT | this PR |
 | 2 | load-update request type | ⏳ queued | — |
 | 3 | complaint request type | ⏳ queued | — |
-| 4 | Q · docs-upload UI — "Upload document" button on Documents page → existing UploadModal generalized to support STANDALONE uploads (entity props now optional; no entity_links = standalone); uses existing docs upload API (requestUploadUrl/confirmUpload/R2); refetches list. No backend change | ✅ BUILT | this PR |
-| 5 | AF · help-article scaffold stubs | ⏳ queued | — |
+| 4 | Q · docs-upload UI — "Upload document" button on Documents page → existing UploadModal generalized to support STANDALONE uploads (entity props now optional; no entity_links = standalone); uses existing docs upload API (requestUploadUrl/confirmUpload/R2); refetches list. No backend change | ✅ BUILT | #949 |
+| 5 | AF · help-article scaffold stubs — new "Module Guides" category + 8 stub articles (Maintenance/Fuel/Safety/Drivers/Catalogs/Factoring/425C/Driver-PWA) in docs/help/module-*.md: title + section headers + "content TBD — Jorge fills". Structure only, no real copy | ✅ BUILT | this PR |
 | 6 | B7 · driver-inbox reporting | ⏳ queued | — |
 | 7 | K/AL · classes bulk-edit (batch-PATCH + multi-select) | ⏳ queued | — |
 | 8 | stub-page hides — eld + finance(×3) removed from sidebar order, "Integrity checks" link removed; routes/configs KEPT (reversible). /banking/uncategorized was already not nav-linked | ✅ BUILT | this PR |
