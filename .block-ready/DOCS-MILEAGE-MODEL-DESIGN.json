@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-MILEAGE-MODEL-DESIGN",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "MILEAGE-MODEL",
+  "task": "Docs-only design/grounding spec for the mileage build blocks — no code, no DDL, no migration, no money path. Authors docs/specs/MILEAGE-MODEL-DESIGN.md: three mileage types (short/HHG→pay, practical→billing, actual/Samsara→profitability), three sources, per-load mileage fields each with a source (MANUAL|PCMILER|SAMSARA), E-3 unit_odometer_readings table, IFTA per-unit/jurisdiction/quarter rollup (TX base, Mexico non-IFTA), fuel+repair linkage for cost-per-mile, AllWays-Track report catalog, actual-miles derivation (odometer-delta vs Samsara Trip API), open questions, and a phased PC*Miler plan (manual now → API later, identical schema). Grounded in live code (mdata.miles_basis 0019, mdata.loads 0034, ifta-state-gallons-aggregator). Jorge reviews before any code. Safe to merge.",
+  "branch": "docs/mileage-model-design",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-MILEAGE-MODEL-DESIGN.json",
+    "docs/specs/MILEAGE-MODEL-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
