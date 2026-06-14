@@ -1,0 +1,20 @@
+{
+  "block_id": "FEAT-DRIVER-ESCROW-SUBACCOUNT-V2",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "DRIVER-SUBACCOUNT-PROVISION",
+  "task": "Per-driver ESCROW (liability) sub-account auto-provision — the liability half, STOP-DECISION #1 resolved (asset side merged in #933). On driver-profile creation, auto-create 'Damage Claim Escrow- <Driver Name>' nested under the UNPREFIXED, year-agnostic canonical parent 'Damage Claim Escrow' (QBO-1150040187, Liability) — NOT '2026-Damage Claim Escrow'. Fires in the SAME driver-create hook as the merged asset side, so both sub-accounts are created together on hire. PORTABLE: parent resolved by NAME + account_type(Liability) + top-level, NEVER a hardcoded UUID. IDEMPOTENT: skips if the sub-account exists (name + parent). is_postable=true; account_number/qbo_account_id NULL. Best-effort + NON-FATAL: missing parent (TRK) = graceful no-op, audited, never fails driver creation. TRANSP-scoped; USMCA excluded. Mirrors #933 tests. BULK Excel backfill remains GATED on STOP-DECISION #2. Financial — account-creation SQL in the PR. No migration.",
+  "branch": "feat/driver-escrow-subaccount-v2",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-DRIVER-ESCROW-SUBACCOUNT-V2.json",
+    "apps/backend/src/accounting/driver-subaccount-provision.service.ts",
+    "apps/backend/src/accounting/__tests__/driver-escrow-subaccount-provision.test.ts",
+    "apps/backend/src/mdata/drivers.routes.ts",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
