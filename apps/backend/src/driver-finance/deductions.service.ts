@@ -99,9 +99,13 @@ export async function createSettlementDeduction(
         reason,
         applied_to_settlement_id,
         created_by_user_id,
-        source_pending_id
+        source_pending_id,
+        remaining_balance_cents
       )
-      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7)
+      -- A3-2: initialise the carry-forward balance to the full amount on insert (status defaults to
+      -- 'pending'). The recovery engine treats NULL as = amount_cents (A3-1 lock); this just makes
+      -- new rows explicit going forward. $4 = amount_cents.
+      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $4)
       RETURNING ${RETURNING_COLUMNS}
     `,
     [

@@ -395,9 +395,13 @@ export async function approvePendingDeduction(
           reason,
           applied_to_settlement_id,
           created_by_user_id,
-          source_pending_id
+          source_pending_id,
+          remaining_balance_cents
         )
-        VALUES ($1, $2, 'escrow_load_abandonment', $3, $4, NULL, $5, $6)
+        -- A3-2: initialise the carry-forward balance to the full amount on insert ($3 = amount_cents).
+        -- NOTE: escrow's recovery floor policy is NOT yet wired through the capped engine — see the
+        -- A3-2 preflight-of-record (escrow may need its own floor / different GL credit account).
+        VALUES ($1, $2, 'escrow_load_abandonment', $3, $4, NULL, $5, $6, $3)
         RETURNING id
       `,
       [
