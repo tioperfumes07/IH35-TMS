@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH6-TAX-MANAGER",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for Finance Hub FH-6 (Tax Manager) + FH-6a (property-tax rendition). Per-year tax register for Jorge's real list: personal property tax split across Webb County / City of Laredo / Laredo Community College / UISD (verify LISD too), Texas Franchise, Texas IRP (per-unit apportioned), IFTA (surface the existing mileage engine, don't duplicate). Each tax: amount, due date, paying account, configurable penalty-interest rate, auto-accrue penalty when overdue, auto-generate yearly (recurring). GATED posting (accrue Dr Tax Expense/Cr Tax Payable, penalty Dr Penalty Exp/Cr Payable, pay Dr Payable/Cr Cash, flag default OFF, preview-first, balance-or-fail, closed-period guard). Per-unit IRP/property splits via FH-7. FH-6a rendition pulls FH-1 asset declared values (editable per asset per year, audited) -> per-asset list submitted to taxing authorities. Data model (tax.tax_types/taxing_entities/tax_records/penalty_accruals), open questions, gated build sequence. NO code, no DDL, no posting. VOID != DELETE. Designed live with Jorge + GUARD-verifies-vs-QuickBooks before merge.",
+  "branch": "docs/fh6-tax-manager",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH6-TAX-MANAGER.json",
+    "docs/specs/FH-6-TAX-MANAGER-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
