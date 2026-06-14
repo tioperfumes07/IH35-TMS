@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH3-AMORTIZATION-ENGINE",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for Finance Hub FH-3 (Amortization Schedule Engine). Closes the QBO gap (QBO has no built-in amortization engine). Generates + STORES amortization schedules for FH-2 loans and standalone/intangible amortization: per period payment#/due date/payment/principal/interest/remaining balance. Documents the exact fixed-payment (French) amortization math with final-payment rounding-residual absorption (closes to zero), balloon/interest-only support, 0% case. GATED per-payment posting (Dr Note Payable principal / Dr Interest Expense / Cr Cash, flag default OFF, idempotent, preview-first, balance-or-fail). Re-generatable on refinance/term change (old schedule retained + future periods voided per VOID!=DELETE, audited). Data model (finance.loans/amortization_schedules/amortization_periods), Amortization-tab screen, what-already-exists, open questions, gated build sequence. NO code, no DDL, no posting. Designed live with Jorge + GUARD-verifies-vs-QuickBooks before merge.",
+  "branch": "docs/fh3-amortization-engine",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH3-AMORTIZATION-ENGINE.json",
+    "docs/specs/FH-3-AMORTIZATION-ENGINE-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
