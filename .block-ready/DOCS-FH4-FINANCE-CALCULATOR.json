@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH4-FINANCE-CALCULATOR",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for Finance Hub FH-4 (Finance Calculator). PURE CALCULATION, no posting, no GL, no money path. Model-before-commit: enter price/down/rate/term -> monthly payment, total interest, payoff date, amortization preview (same shared fixed-payment math as FH-3, so calculator and real schedule never disagree). Scenario modeling (compare two+ rate/term options with deltas). Hand-off button pre-fills the FH-2 Loan Wizard ('use these numbers to create the loan') -- the calculator itself creates nothing. Open questions (persist named scenarios?, lease-vs-buy?, APR?), low-risk build sequence. NO code. Part of the gated Finance Hub; GUARD reviews the math against the FH-3 engine.",
+  "branch": "docs/fh4-finance-calculator",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH4-FINANCE-CALCULATOR.json",
+    "docs/specs/FH-4-FINANCE-CALCULATOR-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
