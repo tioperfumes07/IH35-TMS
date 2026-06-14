@@ -6,7 +6,8 @@ export type HelpCategory =
   | "Driver Settlements"
   | "Banking & Reconciliation"
   | "Reports"
-  | "Account & Billing";
+  | "Account & Billing"
+  | "Module Guides";
 
 export type HelpArticleMeta = {
   slug: string;
@@ -30,6 +31,15 @@ const HELP_MANIFEST: HelpArticleMeta[] = [
   { slug: "scheduled-reports", title: "Scheduled reports", category: "Reports" },
   { slug: "account-security", title: "Account security and passwords", category: "Account & Billing" },
   { slug: "data-import-wizard", title: "Bulk data import", category: "Account & Billing" },
+  // Module Guides — scaffold stubs (content TBD, Jorge fills); bodies in docs/help/module-*.md
+  { slug: "module-maintenance", title: "Maintenance", category: "Module Guides" },
+  { slug: "module-fuel", title: "Fuel", category: "Module Guides" },
+  { slug: "module-safety", title: "Safety", category: "Module Guides" },
+  { slug: "module-drivers", title: "Drivers", category: "Module Guides" },
+  { slug: "module-catalogs", title: "Catalogs & Lists", category: "Module Guides" },
+  { slug: "module-factoring", title: "Factoring", category: "Module Guides" },
+  { slug: "module-form-425c", title: "Form 425C", category: "Module Guides" },
+  { slug: "module-driver-pwa", title: "Driver App (PWA)", category: "Module Guides" },
 ];
 
 function resolveBody(slug: string): string {
@@ -56,6 +66,7 @@ export function helpArticlesByCategory(): Record<HelpCategory, HelpArticleMeta[]
     "Banking & Reconciliation",
     "Reports",
     "Account & Billing",
+    "Module Guides",
   ] as HelpCategory[]) {
     out[c] = [];
   }

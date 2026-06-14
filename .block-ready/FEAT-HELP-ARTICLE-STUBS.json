@@ -1,0 +1,26 @@
+{
+  "block_id": "FEAT-HELP-ARTICLE-STUBS",
+  "status": "BUILD",
+  "classification": "FEATURE",
+  "phase": "SAFE-ADDITIVE-QUEUE",
+  "task": "Safe-additive Block 5 — help-article scaffold stubs (frontend-only docs, no money path, no migration). Help is frontend-only (per CLAUDE.md). Adds a new 'Module Guides' HelpCategory + 8 stub articles for the modules with no help content (Maintenance/Fuel/Safety/Drivers/Catalogs/Factoring/425C/Driver-PWA): each a structured shell (title + Overview/Key-tasks/Tips/FAQ section headers + 'content TBD — Jorge fills'), bodies in docs/help/module-*.md, manifest entries in helpCenterContent.ts, and 'Module Guides' added to the category-order array. STRUCTURE ONLY — no real copy (per Jorge).",
+  "branch": "feat/help-article-stubs",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-HELP-ARTICLE-STUBS.json",
+    "apps/frontend/src/help/helpCenterContent.ts",
+    "docs/help/module-maintenance.md",
+    "docs/help/module-fuel.md",
+    "docs/help/module-safety.md",
+    "docs/help/module-drivers.md",
+    "docs/help/module-catalogs.md",
+    "docs/help/module-factoring.md",
+    "docs/help/module-form-425c.md",
+    "docs/help/module-driver-pwa.md",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
