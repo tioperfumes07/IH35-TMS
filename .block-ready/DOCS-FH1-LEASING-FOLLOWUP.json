@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH1-LEASING-FOLLOWUP",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only follow-up to FH-1 (already merged) adding the inter-company leasing relationship per locked decision #5. Adds section 1.4: asset module is multi-entity; TRK (owner/lessor, owner_operating_company_id) holds title + books depreciation; TRANSP/USMCA (lessee) books lease expense via FH-8; lessor TRK books lease income; intercompany pair eliminates on consolidation. Build sequencing: build asset/leasing capability now (multi-entity), activate for TRK/USMCA once software built out (TRK static, no live data yet); operational finance built+tested on TRANSP first; both QBO-connected; QBO stays parallel until software surpasses it (nothing exposed). Also adds owner_operating_company_id to the fixed_assets.assets data-model row. NO code, no DDL, no posting. Single-file edit to docs/specs/FH-1-FIXED-ASSETS-DEPRECIATION-DESIGN.md.",
+  "branch": "docs/fh1-leasing-followup",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH1-LEASING-FOLLOWUP.json",
+    "docs/specs/FH-1-FIXED-ASSETS-DEPRECIATION-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
