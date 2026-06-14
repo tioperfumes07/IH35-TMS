@@ -13,6 +13,7 @@
   },
   "scripts": {
     "prepare": "husky",
+    "export:tracker": "node scripts/export-tracker-xlsx.mjs",
     "branch:rebuild-linear": "node scripts/branch-rebuild-linear.mjs",
     "branch:precheck-push": "node scripts/branch-precheck-push.mjs",
     "branch:safe-switch": "node scripts/branch-safe-switch.mjs",

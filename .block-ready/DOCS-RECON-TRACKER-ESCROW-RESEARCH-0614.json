@@ -9,7 +9,11 @@
   "allowed_files": [
     ".block-ready/DOCS-RECON-TRACKER-ESCROW-RESEARCH-0614.json",
     "docs/trackers/MASTER_PROGRESS_REPORT.md",
-    "docs/specs/DRIVER-ESCROW-RESEARCH.md"
+    "docs/specs/DRIVER-ESCROW-RESEARCH.md",
+    "scripts/export-tracker-xlsx.mjs",
+    "package.json",
+    "docs/trackers/exports/*.xlsx",
+    "docs/trackers/exports/IH35-TMS-MASTER-TRACKER-2026-06-14-v27.xlsx"
   ],
   "runtime_path": "docs",
   "db_required": false,
