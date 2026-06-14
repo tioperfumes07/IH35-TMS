@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH1-FIXED-ASSETS-DEPRECIATION",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for Finance Hub FH-1 (Fixed Assets + Depreciation) — the foundation block. Closes the QBO gap: QBO does NOT auto-post depreciation (its Advanced fixed-asset module computes a schedule but the user posts JEs manually). FH-1 = asset register (add one/bulk/import) + per-asset depreciation schedule engine (straight-line, 150DB, DDB, bonus/Section 179) + back-dating with prior-accumulated-depreciation + half-month convention + GATED cron that auto-posts Dr Depreciation Expense / Cr Accumulated Depreciation on the 1st (flag default OFF, idempotent, preview-first, double-entry balances or fails). Land non-depreciating. Asset lifecycle acquisition->depreciation->disposal with gain/loss. Data model (fixed_assets.assets/asset_classes/depreciation_schedules/disposals), screen (GUARD mocks), open questions, gated build sequence. Supersedes the earlier standalone DEPRECIATION note. NO code, no DDL, no posting, no cron. VOID != DELETE. Designed live with Jorge + GUARD-verifies-vs-QuickBooks before merge.",
+  "branch": "docs/fh1-fixed-assets-depreciation",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH1-FIXED-ASSETS-DEPRECIATION.json",
+    "docs/specs/FH-1-FIXED-ASSETS-DEPRECIATION-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
