@@ -174,14 +174,18 @@ Replicate Jorge's existing report set so he keeps his reporting muscle memory. E
 
 ---
 
-## 6. Open questions for Jorge
+## 6. Answered — decisions LOCKED (2026-06-14)
 
-1. **Actual miles — odometer-delta or Samsara Trip API?** *(rec: ECU odometer-delta primary, Trip-API GPS fallback — §3.)*
-2. **Fuel-by-state capture — how?** Is the per-transaction **state** coming from a fuel-card integration (Love's / Relay / Comdata) automatically, or entered manually? IFTA gallons-by-state quality depends on this. *(The `ifta-state-gallons-aggregator` exists; confirm its input feed.)*
-3. **Confirm TX is the IFTA base jurisdiction.**
-4. **Manual mileage entry — directly on the load, or a Rate-Calc-style stop-list mini-tool** mirroring AllWays Track (city/state/zip/country grid + Practical/Shortest toggle → Total Miles)? *(rec: ship the simple editable load fields as the MVP, then the stop-list mini-tool for parity + to capture per-stop jurisdictions that feed IFTA.)* **[PC\*Miler access RESOLVED — phased manual → API.]**
-5. **Unit-swap handling** on a single load (mid-haul truck change) — sum per-unit odometer segments? Confirm this is a real scenario to support v1.
-6. **Driver/customer basis overrides per load** — `drivers.pay_basis` and `customers.default_billing_miles_basis` exist as defaults; do we allow a per-load override (and audit it) in v1?
+All six open questions are resolved by Jorge. These are binding for the build sequence (§7).
+
+1. **Actual miles → ECU odometer-delta PRIMARY, Samsara GPS Trip-API FALLBACK.** Stamp `actual_miles_source` = `SAMSARA` (ECU delta) vs `SAMSARA_GPS` (trip-API fallback). *(accepted rec — §3.)*
+2. **Fuel-by-state → AUTOMATIC from fuel-card feeds.** Relay and any card carries purchase **location/address/state**, so `ifta-state-gallons-aggregator` reads the state per transaction automatically. **ALSO (new, from now on):** the fuel **state/location** is a **REQUIRED captured field at point of entry** — on **diesel-code approval** AND any **fuel expense**. This is a **SHARED data point with the Relay-internal-bank design** — build the captured field ONCE; both IFTA (gallons-by-state) and Relay reconciliation read it. *(Build task: confirm/point the aggregator's input feed at this captured field.)*
+3. **IFTA base jurisdiction = TEXAS (TX).** Confirmed.
+4. **Manual entry → simple editable load fields as the v1 MVP.** The AllWays-style stop-list mini-tool (city/state/zip/country grid + Practical/Shortest toggle → Total Miles) is a **later follow-up** (also feeds per-stop jurisdictions). *(accepted rec.)* **[PC\*Miler access RESOLVED — phased manual → API.]**
+5. **Unit-swap on a single load → SUPPORTED in v1.** When a load changes trucks mid-haul, **sum per-unit odometer segments** for `actual_miles`.
+6. **Per-load basis override → ALLOWED in v1.** A load may override `drivers.pay_basis` / `customers.default_billing_miles_basis`; the override is **audited** (`load.mileage_basis_overridden` event).
+
+> **CROSS-LINK:** the fuel **location/state capture** (answer 2) is shared with the **Relay-internal-bank design** (diesel-code approval / fuel expense carry load/driver/(reefer-hours)/STATE+LOCATION). Build the captured field once; used by both IFTA and Relay reconciliation.
 
 ---
 
