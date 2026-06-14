@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH7-UNIT-ALLOCATION",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for Finance Hub FH-7 (shared Unit Allocation control). Cross-cutting, NOT tax-only: a reusable control to assign/divide any expense/bill across one-or-many trucks/units (even split / by % / by entered amount). REUSE the existing already-generic insurance allocation infra (verified in repo): frontend components/allocation/ (BillAllocationPanel, AllocationMethodPicker, AllocationPreviewTable, types.ts), backend accounting/allocation.ts resolveAllocation() + bills.routes.ts POST /bills/{id}/allocate, table accounting.bill_unit_allocation (methods equal/by_value/by_miles/manual_pct). Gap FH-7 closes: add manual_amount method (by entered $/unit), generalize callers so FH-6 taxes (property/IRP) reuse it, add per-unit cost-of-ownership/profitability reporting rollup, editable+audited. Do NOT build a second allocation system. Open questions, low-net-new build sequence. NO code, no DDL. GUARD verifies the generalization preserves insurance behavior.",
+  "branch": "docs/fh7-unit-allocation",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH7-UNIT-ALLOCATION.json",
+    "docs/specs/FH-7-UNIT-ALLOCATION-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
