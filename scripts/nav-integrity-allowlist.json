@@ -417,6 +417,10 @@
     {
       "path": "/dispatch/layovers/driver/:driverUuid",
       "reason": "GAP-28 per-driver layover history; drilldown from layover board, not top-level subnav"
+    },
+    {
+      "path": "/driver-hub/reporting",
+      "reason": "B7 driver-inbox reporting; deep-link from Driver Hub header (reviewers only), not a subnav tab"
     }
   ],
   "URL_SYNC_DEFERRED": [

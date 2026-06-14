@@ -27,3 +27,7 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 # Office/Excel lock files (created while a workbook is open; never commit)
 ~$*
 **/~$*
+
+# Working copies of the generated tracker xlsx (e.g. "... v27 jorge.xlsx" / "... copy.xlsx").
+# The canonical generated file has no space; working copies do. Never commit working copies.
+docs/trackers/exports/* *
