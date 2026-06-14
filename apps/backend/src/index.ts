@@ -384,6 +384,7 @@ import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
 import { registerSettlementShadowRoutes } from "./payroll/settlement-shadow.routes.js";
+import { registerDriverSubAccountBackfillRoutes } from "./accounting/driver-subaccount-backfill.routes.js";
 import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js";
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
 import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.routes.js";
@@ -859,6 +860,7 @@ async function main() {
   await registerVehicleDriverPairingRoutes(app);
   await registerPayrollDriverSettlementRoutes(app);
   await registerSettlementShadowRoutes(app);
+  await registerDriverSubAccountBackfillRoutes(app);
   await registerPayrollAggregatedRoutes(app);
 
   try {
