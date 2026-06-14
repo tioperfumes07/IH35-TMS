@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-MILEAGE-MODEL-ANSWERS",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "MILEAGE-MODEL",
+  "task": "Docs-only follow-up to the merged mileage design (#943). Replaces MILEAGE-MODEL-DESIGN.md §6 'Open questions' with Jorge's LOCKED answers: (1) actual miles = ECU odometer-delta primary / Samsara GPS trip-API fallback; (2) fuel-by-state automatic from fuel-card feeds + a NEW required state/location capture at diesel-code approval and any fuel expense, shared with the Relay-internal-bank design; (3) IFTA base = TX; (4) simple editable load fields v1, stop-list mini-tool later; (5) unit-swap supported (sum per-unit odometer segments); (6) per-load basis override allowed + audited. Adds the cross-link note (fuel location/state field built once, shared by IFTA + Relay). No code, no migration, no money path.",
+  "branch": "docs/mileage-model-answers",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-MILEAGE-MODEL-ANSWERS.json",
+    "docs/specs/MILEAGE-MODEL-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
