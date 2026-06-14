@@ -7,6 +7,27 @@
 
 **Every future block's PR MUST update its own row's `Reconciled Status` (+ `Reconcile Note`) in this file, in the SAME PR.** The tracker therefore never drifts from `main`. No separate tracker-only commits; no self-merge — Jorge merges. When a block ships, flip its row to `DONE`, add the PR# + merge SHA to the note, and (if it was in §Next Blocks) drop it from that queue.
 
+## 🔎 FULL BLOCK-SET RECON — 2026-06-14 (verified vs LIVE CODE, not tracker claims)
+
+GUARD ran a complete read-only recon across the entire block set (B1–B10, A3 series, Wave-4 rows 650–680, N1–N20 roadmap) against live code/PRs/migrations. The tracker had shown both false-PENDING and false-DONE. Reconciled verdicts are now in each row (Wave-4: col6=verdict, col7=evidence). Summary:
+
+**1. ALREADY DONE (do NOT rebuild) — evidence in rows:**
+B1–B6 (#918–#923) · A3-1/2/3 full series (#925/#929/#930/#931/#932) + flag ON in prod · driver sub-account asset #933 / escrow #934 / backfill-dry-run #935 (#936 stale-dup closed) · Block U Fuel-subnav · Block V Dispatch-subnav · Block H url-canonicalize (#389) · Block J equip-dedup (#391) · Block C Trailer-profile · Block D Parts-catalog · Block I lists-counts (#393) · Block AM Loves (#399) · Block AN Plaid (#402) · Block AA test-seed-archive (#400/#910) · Block AP PM-schedule · Block AR Factoring (#904) · Block AG Form-425C · Block AH Safety (LOCKED) · Block AS modal-audit (#398/#916) · Block AK escrow-counter (#395) · Block AI last-login (#394) · Block AQ safety-pseudo-user (#397) · Block O default-classifications (#401) · QBO vendors-push (#390) · QBO COA-push (#392).
+
+**2. GENUINELY PENDING:**
+- _SAFE-ADDITIVE (auto-buildable):_ Block P Best-Bank (no code) · Block F reefer 15-min poller cron · Block E Samsara live-mileage ingest cron · Block G catalog stub-fill (~27 stubs) · Block Q docs-upload frontend UI · Block AF help articles (~8 modules) · B7 driver-inbox reporting · request types diesel/repair/load-update/complaint.
+- _FINANCE-GATED (needs Jorge):_ B9 $25/load escrow deduction · B10 settlement confirm/skip · expense request type · Block L QBO master-entity push/bidi · A3-CUTOVER (remove legacy blunt path) · B8 money-spine CI guards.
+- _DATA-MUTATION (needs Jorge + plan):_ Block Z driver-CSV import (parser exists, no user route) · (Block J/AA/O already shipped as reversible archive migrations).
+- _LOCKED-PAGE:_ none pending (Block AH/AQ already done; any Safety change needs preview).
+
+**3. CONTRADICTIONS / UNKNOWNS (human call):**
+- Block L "QBO bidi": pull shipped (#500/#501/#503), master push partial — confirm remaining scope.
+- Block-A "187 drift": detection/remediation shipped piecemeal (#177/#878), no formal closeout PR.
+- Block G "34 stubs": 27 stub markers found vs 34 claimed — confirm which catalogs to fill.
+- B10 vs "Lane A Block 13": FinesDeductionsCard stub references "Block 13 ships" — naming overlap, confirm they're the same.
+- MD-5-19-RECONCILE: no code artifact matches — clarify expected closeout.
+- Driver-escrow research spec authored 2026-06-14 (docs/specs/DRIVER-ESCROW-RESEARCH.md) — grounds B9 deduction engine; not yet a row.
+
 ## Reconciliation snapshot
 
 | Metric | v24 snapshot (2026-06-08) | LIVE now (2026-06-13) |
@@ -53,7 +74,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | 1 | A | A3-2 capped recovery ENGINE + 6 locked tests (pure) | Only live path that can mishandle real money | HIGH | M | A3-1 (done) | ✅ ENGINE merged #929 |
 | 1 | A | A3-2 live-path WIRING (flag-gated, cash-advance only) + override DDL | Wires engine into computeSettlement behind SETTLEMENT_CAPPED_RECOVERY_ENABLED (default OFF) | HIGH | M | #929 | ✅ WIRING merged #930 (flag OFF = byte-identical) |
 | 1 | A | A3-2 GL — FALLBACK paired JE at POST (Dr expense / Cr QBO-149) + post-time ledger | Asset draw-down so books reconcile; verify-first proved option-a (bill rewire) not clean | HIGH | M | #930 | ✅ merged #931 — recovery applied at POST (ledger + paired JE atomic); recovery=0→no JE; flag OFF until A3-3 |
-| 1 | A | A3-3 shadow-run (old vs new compared, read-only) | Evidence Jorge flips the flag on | HIGH | M | A3-2 (#929/#930/#931) | 🟢 BUILT — PR #932 · GET /api/v1/payroll/settlement-shadow-run compares both paths per settlement, classifies (a)avoids-below-floor / (b)recovers-leaked / (c)unexplained-must-be-0. NO writes. Jorge reviews → flips the flag manually |
+| 1 | A | A3-3 shadow-run (old vs new compared, read-only) | Evidence Jorge flips the flag on | HIGH | M | A3-2 (#929/#930/#931) | 🟢 BUILT — PR #932 · GET /api/v1/payroll/settlement-shadow-run compares both paths per settlement, classifies (a)avoids-below-floor / (b)recovers-leaked / (c)unexplained-must-be-0. NO writes. Shadow-run executed (24 seeded drivers, 0 unexplained) → ✅ FLAG FLIPPED ON in prod 2026-06-14 (lib.feature_flags SETTLEMENT_CAPPED_RECOVERY_ENABLED default_enabled=true, read-back confirmed). ⚠️ A3-CUTOVER pending: legacy blunt path still present in driver-settlement.service.ts |
 | 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR #927 (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
 | 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
 | 4 | B | B1 — /inventory parts 404 (repoint to /api/v1/maintenance/parts) | Visibly broken live page; trivial; independent | LOW-MED | XS | none | ✅ DONE — PR #926 |
@@ -75,7 +96,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | — | F | DRIVER-ESCROW-LIABILITY-SUBACCOUNTS (research + design first) | Truth-in-leasing per-driver escrow accounting | MED | L | A3 series | ⏸ PARKED — auto-create a LIABILITY sub-account (driver's name) under the escrow control parent (verify exact parent name in LIVE QBO — 'Escrow' or 'Escrow 2026', do NOT guess). Escrow = driver's money (refundable on separation if no fines/damage). SEPARATE from A3 (liability vs QBO-149 asset). Preview-gated if it touches a locked page. |
 | — | F | DRIVER-SUBACCOUNT-AUTO-PROVISION — ASSET side | Per-driver advance sub-account on hire | MED | M | A3 series | ✅ merged #933 · on driver create, auto-create "Driver Cash Advance- <Name>" under the canonical parent (resolved by NAME, never UUID); idempotent; best-effort. Live-CoA verified: catalogs.accounts is global=TRANSP chart; TRK has no parents; USMCA excluded. |
 | — | F | DRIVER-SUBACCOUNT-AUTO-PROVISION — ESCROW side (STOP #1 resolved) | Per-driver escrow liability sub-account on hire | MED | M | #933 | ✅ merged #934 · DECISION #1 LOCKED: nest under UNPREFIXED "Damage Claim Escrow" (QBO-1150040187, Liability). Auto-create "Damage Claim Escrow- <Name>" in the SAME hire hook; resolved by NAME+Liability (never UUID); idempotent; best-effort; TRANSP-scoped. |
-| — | F | DRIVER-SUBACCOUNT-BULK-BACKFILL — DRY-RUN | Preview existing-driver sub-account gaps | MED | M | #933/#934 | 🟢 BUILT (dry-run only) — PR #935 · GET /api/v1/payroll/driver-subaccount-backfill/dry-run reports per driver {asset/escrow: CREATE\|SKIP-exists\|SKIP-no-parent} + totals, reusing the SHARED planDriverSubAccount (extracted; both provisioners now call it). ZERO writes in dry-run (tested). apply=true defaults OFF + not exposed via any endpoint. ⛔ STOP-DECISION #2 — real mass-create against prod is Jorge's explicit manual go with his spreadsheet after reviewing a dry-run. |
+| — | F | DRIVER-SUBACCOUNT-BULK-BACKFILL — DRY-RUN | Preview existing-driver sub-account gaps | MED | M | #933/#934 | ✅ MERGED #935 (deployed live 9e58a93e, route 401-gated; #936 stale-dup CLOSED 6/14) · GET /api/v1/payroll/driver-subaccount-backfill/dry-run reports per driver {asset/escrow: CREATE\|SKIP-exists\|SKIP-no-parent} + totals, reusing the SHARED planDriverSubAccount (extracted; both provisioners now call it). ZERO writes in dry-run (tested). apply=true defaults OFF + not exposed via any endpoint. ⛔ STOP-DECISION #2 — real mass-create against prod is Jorge's explicit manual go with his spreadsheet after reviewing a dry-run. |
 
 ## Pending Queue (live, grouped)
 
@@ -83,7 +104,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 |---|---|---|---|---|---|
 | A1 | AI-4 periods init | Accounting/Periods | ✅ SEED SHIPPED (PR #927) | Seed extended to full coverage | DONE: TRANSP Jul–Dec 2026 + all 2025, TRK all 2025+2026 (portable code-resolved, generate_series, gated). Remaining ops step: enable PERIODS_INIT_ENABLED in prod (read-only prod flag check still pending) |
 | A2 | BLOCK-01 depreciation | Accounting/Fixed Assets | NOT BUILT | No fixed-asset accounting | Asset register + schedule + monthly posting |
-| A3 | Block-F settlement auto-deduct (capped ledger) | Driver-Finance | 🟢 ENGINE BUILT (PR #929) | A3-1 DDL merged (#925); A3-2 pure engine + 6 locked tests built | Live-path wiring (delete blunt), postSettlement GL draw-down to QBO-149, escrow floor policy, override DDL, and cutover are GATED — see A3-2 preflight-of-record for the 4 GUARD decisions; no real paycheck changes until A3-3 shadow-run |
+| A3 | Block-F settlement auto-deduct (capped ledger) | Driver-Finance | ✅ FULL SERIES MERGED + FLAG ON (PROD) | A3-1 DDL #925 · A3-2 engine #929 · wiring #930 · GL paired-JE #931 · A3-3 shadow #932 — all merged | ✅ Flag SETTLEMENT_CAPPED_RECOVERY_ENABLED flipped ON in prod 2026-06-14 (read-back confirmed); shadow-run had 0 unexplained. ⚠️ A3-CUTOVER pending (FINANCE-GATED): remove legacy blunt recovery path from driver-settlement.service.ts lines ~197-220 + reconcile first real recovered settlements |
 | B1 | /inventory parts → 404 | Inventory | ✅ DONE (PR #926) | Page called a missing endpoint | FIXED: repointed Parts & Stock page + create drawer to the real /api/v1/maintenance/parts (single source of truth, frontend-only, field-mapped) |
 | C1 | QBO prod credentials | QBO | ENV-BLOCKED | Intuit approval (P7-T4) | prod creds |
 | C2 | Twilio/WhatsApp | Notifications | ENV-BLOCKED | Meta verification (P7-T3) | external approval |
@@ -869,38 +890,38 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 647 | Wave 3 | Driver Hub page | Requests / Communications / Live data | PENDING | DONE |  |  | Order 32  / matched merged PR by Task-ID |
 | 648 | Wave 3 | Sidebar-V2 (23-a… | +driver-hub #5, +cash-flow #10, drivers→Driver Profile #7 | PENDING | PENDING |  |  | Order 33 |
 | 649 | Wave 3 | Block 16 Density… | Density + nav correction (preview-gated, last) | PENDING | PENDING |  |  | Order 34 |
-| | **▼ WAVE 4 — v23 FEATURE BACKLOG STILL PENDING (P0 first)** | | | | | | | |
-| 650 | Wave 4 | Block U FUEL sub… | 8 tabs all render Planner — P0 | PENDING | PENDING |  |  | Order 35 |
-| 651 | Wave 4 | Block V DISPATCH… | 5 tabs render hub — P0 | PENDING | PENDING |  |  | Order 36 |
-| 652 | Wave 4 | Block H URL unde… | P0 | PENDING | PENDING |  |  | Order 37 |
-| 653 | Wave 4 | Block J Equipmen… | DRY-VAN/DRY_VAN — P0 | PENDING | PENDING |  |  | Order 38 |
-| 654 | Wave 4 | Block C Trailer … | HIGH | PENDING | PENDING |  |  | Order 39 |
-| 655 | Wave 4 | Block D Parts Ca… | HIGH | PENDING | PENDING |  |  | Order 40 |
-| 656 | Wave 4 | Block E Services… | Samsara mi + 12k/mo — HIGH | PENDING | PENDING |  |  | Order 41 |
-| 657 | Wave 4 | Block F Reefer H… | 15-min polls — HIGH | PENDING | PENDING |  |  | Order 42 |
-| 658 | Wave 4 | Block G Catalog … | 34 stubs — P1 | PENDING | PENDING |  |  | Order 43 |
-| 659 | Wave 4 | Block I LISTS he… | 6/8 wrong — P1 | PENDING | PENDING |  |  | Order 44 |
-| 660 | Wave 4 | Block L QBO bidi… | COA/cust/vend local-only — P1 | PENDING | PENDING |  |  | Order 45 |
-| 661 | Wave 4 | Block AM Loves c… | P1 | PENDING | PENDING |  |  | Order 46 |
-| 662 | Wave 4 | Block AN Plaid s… | Amex/Wells — P1 | PENDING | PENDING |  |  | Order 47 |
-| 663 | Wave 4 | Block Q DOCS upl… | P1 | PENDING | PENDING |  |  | Order 48 |
-| 664 | Wave 4 | Block AA Archive… | P1 | PENDING | PENDING |  |  | Order 49 |
-| 665 | Wave 4 | Block AP MAINT s… | P2 | PENDING | PENDING |  |  | Order 50 |
-| 666 | Wave 4 | Block AR Factori… | P2 | PENDING | PENDING |  |  | Order 51 |
-| 667 | Wave 4 | Block Z Driver C… | CSV — P2 | PENDING | PENDING |  |  | Order 52 |
-| 668 | Wave 4 | Block AG 425C pr… | P2 | PENDING | PENDING |  |  | Order 53 |
-| 669 | Wave 4 | Block K/AL Class… | P2 | PENDING | PENDING |  |  | Order 54 |
-| 670 | Wave 4 | Block O Customer… | P2 | PENDING | PENDING |  |  | Order 55 |
-| 671 | Wave 4 | Block AQ 'Safety… | P2 | PENDING | PENDING |  |  | Order 56 |
-| 672 | Wave 4 | Block AO MAINT P… | Needs Block E — P2 | PENDING | PENDING |  |  | Order 57 |
-| 673 | Wave 4 | Block AF Help ar… | 8 modules — P2 | PENDING | PENDING |  |  | Order 58 |
-| 674 | Wave 4 | Block AH SAFETY … | P2 | PENDING | PENDING |  |  | Order 59 |
-| 675 | Wave 4 | Block AS Generic… | P2 | PENDING | PENDING |  |  | Order 60 |
-| 676 | Wave 4 | Block AK Bank es… | P3 | PENDING | PENDING |  |  | Order 61 |
-| 677 | Wave 4 | Block P 'Best Ba… | P3 | PENDING | PENDING |  |  | Order 62 |
-| 678 | Wave 4 | Block AI User la… | P3 | PENDING | PENDING |  |  | Order 63 |
-| 679 | Wave 4 | Block-A Migratio… | 187 drift — foundation | PENDING | PENDING |  |  | Order 64 |
-| 680 | Wave 4 | MD-5-19-RECONCIL… | Audit close | PENDING | PENDING |  |  | Order 65 |
+| | **▼ WAVE 4 — v23 FEATURE BACKLOG · RECONCILED vs LIVE CODE 2026-06-14 (col5=orig claim, col6=verified verdict, col7=evidence)** | | | | | | | |
+| 650 | Wave 4 | Block U FUEL sub… | 8 tabs all render Planner — P0 | PENDING | DONE | FuelPlannerHome.tsx renders distinct content per tab (home/planner/relay/settings/expense_map/history/loves/compliance) — stale claim |  | Order 35 |
+| 651 | Wave 4 | Block V DISPATCH… | 5 tabs render hub — P0 | PENDING | DONE | each /dispatch route → distinct page (AssignmentHistory/AtRisk/Detention/Border/Late/Geofences/Pod/Ocr) — stale claim |  | Order 36 |
+| 652 | Wave 4 | Block H URL unde… | P0 | PENDING | DONE | url-canonicalize.ts wired App.tsx:8 + tests, PR #389 (safe: redirects only known hyphen routes) |  | Order 37 |
+| 653 | Wave 4 | Block J Equipmen… | DRY-VAN/DRY_VAN — P0 | PENDING | DONE | DATA-MUT shipped: mig 0318 dedup→archive, PR #391 |  | Order 38 |
+| 654 | Wave 4 | Block C Trailer … | HIGH | PENDING | DONE | TrailerProfilePage.tsx route /fleet/trailers/:id |  | Order 39 |
+| 655 | Wave 4 | Block D Parts Ca… | HIGH | PENDING | DONE | MaintenancePartsCatalog.tsx + OemPartsCatalog.tsx + InventoryPartsStockPage |  | Order 40 |
+| 656 | Wave 4 | Block E Services… | Samsara mi + 12k/mo — HIGH | PENDING | PARTIAL | service intervals exist (eta-calculator.ts, 12k default); NO live Samsara mileage ingest cron |  | Order 41 |
+| 657 | Wave 4 | Block F Reefer H… | 15-min polls — HIGH | PENDING | PARTIAL | reefer-hours tables/routes/UI (mig 0366); NO 15-min poller cron (manual ingest only) |  | Order 42 |
+| 658 | Wave 4 | Block G Catalog … | 34 stubs — P1 | PENDING | PARTIAL | ~27/106 list pages still stub markers; prioritize which catalogs to fill |  | Order 43 |
+| 659 | Wave 4 | Block I LISTS he… | 6/8 wrong — P1 | PENDING | DONE | lists-counts.routes.ts + useModuleCount.ts, PR #393 |  | Order 44 |
+| 660 | Wave 4 | Block L QBO bidi… | COA/cust/vend local-only — P1 | PENDING | PARTIAL | FIN: PULL done (#500/#501/#503); master-entity push/bidi incomplete — needs scope call |  | Order 45 |
+| 661 | Wave 4 | Block AM Loves c… | P1 | PENDING | DONE | PR #399 (loves-card-import cron + status) |  | Order 46 |
+| 662 | Wave 4 | Block AN Plaid s… | Amex/Wells — P1 | PENDING | DONE | PR #402 (plaid-transactions-sync + status) |  | Order 47 |
+| 663 | Wave 4 | Block Q DOCS upl… | P1 | PENDING | PARTIAL | backend attachments.routes.ts + R2 done; NO frontend upload UI |  | Order 48 |
+| 664 | Wave 4 | Block AA Archive… | P1 | PENDING | DONE | DATA-MUT shipped: mig 0320 test-seed archive, PR #400/#910 |  | Order 49 |
+| 665 | Wave 4 | Block AP MAINT s… | P2 | PENDING | DONE | pm-schedule.routes.ts + PmSchedulePage.tsx |  | Order 50 |
+| 666 | Wave 4 | Block AR Factori… | P2 | PENDING | DONE | FIN: PR #904, full factoring/ dir (packet/reserve/Faro-CSV) |  | Order 51 |
+| 667 | Wave 4 | Block Z Driver C… | CSV — P2 | PENDING | PARTIAL | DATA-MUT: parseDriverRosterCsv internal-only (backfill); no user import route |  | Order 52 |
+| 668 | Wave 4 | Block AG 425C pr… | P2 | PENDING | DONE | Form425CHome.tsx (TX Form 425C) + api/form425c.ts |  | Order 53 |
+| 669 | Wave 4 | Block K/AL Class… | P2 | PENDING | PARTIAL | ClassesCatalog read view; bulk-edit/write path incomplete |  | Order 54 |
+| 670 | Wave 4 | Block O Customer… | P2 | PENDING | DONE | DATA-MUT shipped: mig 0325, PR #401 (default-classification cleanup) |  | Order 55 |
+| 671 | Wave 4 | Block AQ 'Safety… | P2 | PENDING | DONE | PR #397 (driver-safety pseudo-user query filter) |  | Order 56 |
+| 672 | Wave 4 | Block AO MAINT P… | Needs Block E — P2 | PENDING | PARTIAL | pm-auto-engine cron registered; depends on Block E service intervals |  | Order 57 |
+| 673 | Wave 4 | Block AF Help ar… | 8 modules — P2 | PENDING | PARTIAL | helpCenterContent.ts has 12 articles; ~8 modules still missing content |  | Order 58 |
+| 674 | Wave 4 | Block AH SAFETY … | P2 | PENDING | DONE | LOCKED-PAGE: safety module complete + locked per CLAUDE.md §7 (no further adds) |  | Order 59 |
+| 675 | Wave 4 | Block AS Generic… | P2 | PENDING | DONE | PR #398/#916 (modal X-close audit standardized) |  | Order 60 |
+| 676 | Wave 4 | Block AK Bank es… | P3 | PENDING | DONE | PR #395 (bank driver-escrow counter label clarify) |  | Order 61 |
+| 677 | Wave 4 | Block P 'Best Ba… | P3 | PENDING | NOT-BUILT | SAFE-ADDITIVE: no code found (grep "best bank" = 0) — genuinely pending |  | Order 62 |
+| 678 | Wave 4 | Block AI User la… | P3 | PENDING | DONE | PR #394 (users.last_login_at populate + render) |  | Order 63 |
+| 679 | Wave 4 | Block-A Migratio… | 187 drift — foundation | PENDING | PARTIAL | drift detect/remediate shipped #177/#878; no formal Block-A closeout PR |  | Order 64 |
+| 680 | Wave 4 | MD-5-19-RECONCIL… | Audit close | PENDING | UNKNOWN | reconciliation-worker.service.ts exists; no MD-5-19 closeout artifact identified — needs human call |  | Order 65 |
 | | **▼ WAVE 5 — HARDENING SWEEPS (interleaved)** | | | | | | | |
 | 681 | Wave 5 | Block N RLS cros… | Companion to BLOCK-10 | PENDING | PENDING |  |  | Order 66 |
 | 682 | Wave 5 | Block M Audit-lo… | Mutation routes — companion to BLOCK-11 | PENDING | PENDING |  |  | Order 67 |
