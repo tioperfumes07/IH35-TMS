@@ -55,7 +55,7 @@ Built non-stop, default mode, each its own PR (Jorge merges as they land). No mo
 | 6 | B7 · driver-inbox reporting | ⏳ queued | — |
 | 7 | K/AL · classes bulk-edit (batch-PATCH + multi-select) | ⏳ queued | — |
 | 8 | stub-page hides — eld + finance(×3) removed from sidebar order, "Integrity checks" link removed; routes/configs KEPT (reversible). /banking/uncategorized was already not nav-linked | ✅ BUILT | this PR |
-| 9 | RLS-coverage audit doc | ⏳ queued | — |
+| 9 | RLS-coverage audit doc — docs/specs/RLS-COVERAGE-AUDIT.md: ~333 tenant tables, 8 CRITICAL (no RLS, e.g. safety.internal_fines), ~48 money + ~7 PII RISKY (verify vs pg_policies first); existing guard #406-baseline. NO fixes | ✅ BUILT | this PR |
 
 **Confirmed DONE 2026-06-14 (recon — tracker cleanup):** AI-1b closed-period write-lock (#816) · AI-3b financial probes (#816) · T11.21.x fuel/accounting/fleet catalog tables (Block G, 60 catalogs) · P5-T2 recon workspace.
 **Dropped:** Best-Bank (no spec) · Block Z driver-CSV import (Samsara is the driver source).
