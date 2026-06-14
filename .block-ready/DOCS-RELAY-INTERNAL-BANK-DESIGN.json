@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-RELAY-INTERNAL-BANK-DESIGN",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for the gated Relay internal-bank + diesel-code build (Section D #2). Captures Jorge's exact Relay workflow: Relay as a PRE-FUNDED internal bank account (no credit), WF->Relay transfers post as credits, every withdrawal (diesel code/toll/scale) posts as a debit expense ON THE DAY GENERATED, whole feed uploaded + matched via standard bank reconciliation (two-date principle). Documents the diesel-code request flow (driver requests -> dispatcher approves in Driver Hub -> code delivered + expense auto-created carrying load/driver/reefer-hours/STATE+LOCATION). Phase 1 manual typed code (editable, audited); Phase 2 Relay API auto-issue (source MANUAL|RELAY_API field, mirrors PC*Miler/Samsara phasing). STATE+LOCATION is the SAME field IFTA needs (build once, shared with MILEAGE-MODEL-DESIGN). Account model, category map, recon, audit (VOID != DELETE), open questions for Jorge, gated build sequence. NO code, no DDL, no posting, no money path. Designed live with Jorge + GUARD-reviewed before merge.",
+  "branch": "docs/relay-internal-bank-design",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-RELAY-INTERNAL-BANK-DESIGN.json",
+    "docs/specs/RELAY-INTERNAL-BANK-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
