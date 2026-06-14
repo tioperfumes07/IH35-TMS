@@ -100,6 +100,27 @@ Paired at report time with **fuel gallons by state** from the existing `apps/bac
 
 ---
 
+## 1A. Load mileage lifecycle — CORRECTED & LOCKED (2026-06-14)
+
+**Correction to §1/§2 (Jorge's exact workflow):** the three mile numbers are **NOT all entered on one screen** — they fire at **different points in the load lifecycle** and drive **different documents at different times**.
+
+| Lifecycle event | Mile number | Drives | When |
+|---|---|---|---|
+| **Load wizard** (dispatcher creates load + addresses) | practical (+ short) captured | — | Phase 2 PC\*Miler auto-fills **practical + short** from the addresses; Phase 1 manual entry |
+| **Confirm load + assign driver** | **SHORT** | **VENDOR BILL** (driver-as-vendor = driver pay) | the moment the driver is assigned |
+| **Load closed + delivered** | **PRACTICAL** | **CUSTOMER INVOICE** (billing / rate-per-mile) | at delivery |
+| Continuous telematics | **ACTUAL** (Samsara ECU/GPS) | profitability only — **NOT entered, NOT invoiced** | streams in |
+
+**Key corrections vs the earlier preview:**
+- The load screen is **NOT** "enter all three numbers." On the LOAD, the dispatcher's mileage input is for **invoicing (practical)**. **SHORT** miles drive the **driver-settlement side** (the **vendor bill at assignment**). **ACTUAL** is automatic (Samsara).
+- **Timing matters:** short → **vendor bill at ASSIGNMENT**; practical → **customer invoice at DELIVERY**. Build the triggers at those **two lifecycle events — not as one save**.
+
+**True-profitability view (Jorge's analysis lens):** on the load/trip, surface (for Jorge, not invoiced) **charged practical miles vs actually-driven Samsara miles**, and the resulting **true $/actual-mile vs quoted $/practical-mile** — how Jorge sees real per-trip profit and real charge-per-mile.
+
+→ This refines §2's source table (the *timing* column below) and §7 build-step 2 (load mileage fields acquire the two lifecycle triggers: short→bill@assign, practical→invoice@deliver).
+
+---
+
 ## 2. Source of each number (the single most important table)
 
 | Number | Phase 1 source | Phase 2 source | Stored where | Use |
@@ -192,7 +213,7 @@ All six open questions are resolved by Jorge. These are binding for the build se
 ## 7. Proposed build sequence (document, do NOT build)
 
 1. **E-3 odometer history** — `telematics.unit_odometer_readings` + a projector that writes ECU/GPS odometer from `samsara_vehicles.raw_payload` (reuses the existing Samsara sync; also unblocks Block E/AO service intervals).
-2. **Load mileage fields + manual-entry UI + source tracking** — `loads.{short,practical,actual}_miles` (+ `*_source`, `mileage_route_setting`), audited edit endpoint (Owner/Admin/Accountant), AllWays-style entry on the load. *(Phase-1 manual.)*
+2. **Load mileage fields + the lifecycle triggers (§1A) + manual entry + source tracking** — `loads.{short,practical,actual}_miles` (+ `*_source`, `mileage_route_setting`), audited edit endpoint (Owner/Admin/Accountant). Wire the two lifecycle triggers, NOT one save: **short → vendor bill at driver assignment**, **practical → customer invoice at delivery**. *(Phase-1 manual entry; practical entered in the load wizard.)*
 3. **Actual miles from Samsara** — odometer-delta per load (Trip-API fallback) → `loads.actual_miles`.
 4. **IFTA rollup + reports** — `ifta_jurisdiction_miles` + gallons-by-state → the §4 report catalog + the §5 quarterly return.
 5. **PC\*Miler integration** (when API acquired) — auto-fills `short_miles`/`practical_miles` from the stop list + route toggle, flips their `source` to `PCMILER`; manual override stays (audited). **Schema unchanged from step 2.**

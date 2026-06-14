@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-MILEAGE-LIFECYCLE-CORRECTION",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "MILEAGE-MODEL",
+  "task": "Docs-only correction to MILEAGE-MODEL-DESIGN.md per Jorge's locked lifecycle (03-MILEAGE-LIFECYCLE-LOCKED). Adds §1A 'Load mileage lifecycle': the three mile numbers fire at DIFFERENT lifecycle points, not one screen — practical (+short) captured in the load wizard; SHORT drives the VENDOR BILL at driver assignment (driver pay); PRACTICAL drives the CUSTOMER INVOICE at delivery; ACTUAL streams from Samsara for profitability (not entered/invoiced). Two lifecycle triggers, not one save (short→bill@assign, practical→invoice@deliver). Adds the true-profitability view (charged practical vs driven actual → true $/actual-mile vs quoted $/practical-mile). Updates §7 build-step 2 accordingly. No code, no migration, no money path.",
+  "branch": "docs/mileage-lifecycle-correction",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-MILEAGE-LIFECYCLE-CORRECTION.json",
+    "docs/specs/MILEAGE-MODEL-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
