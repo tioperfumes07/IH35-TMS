@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-B9-ESCROW-DESIGN",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for the gated B9 driver-escrow-deduction build (Section D #1). Captures Jorge's 9 LOCKED rules ($25/load editable, $2,500 cap, editable draw-trigger catalog, never-negative floor-skip-carry, per-driver 45/60/90 refund clock default 60, audit every move, the 3 GL postings, manager/accountant/owner approver, flag default OFF) + W-2 interest-waived. Grounds the build on EXISTING infra (escrow_balances/escrow_ledger/escrow_deductions_pending, accounting.escrow_accounts/postings, per-driver Damage-Claim-Escrow sub-accounts #934, A3 floor + paired-JE) so it extends rather than duplicates. Lists dependencies (Roles & Permissions block for the approver check — hard-code until it ships), open questions, and a gated build sequence. NO code, no DDL, no posting. Build is approved but designed live with Jorge + GUARD-reviewed before merge.",
+  "branch": "docs/b9-escrow-design",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-B9-ESCROW-DESIGN.json",
+    "docs/specs/B9-ESCROW-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
