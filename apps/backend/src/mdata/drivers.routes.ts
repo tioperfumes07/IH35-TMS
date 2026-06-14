@@ -10,6 +10,7 @@ import { findReturningDriverMatches } from "./driver-returning-detection.routes.
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
 import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
 import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
+import { provisionDriverAdvanceSubAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { registerDriverPdfExportRoutes } from "./driver-pdf-export.routes.js";
 import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "./driver-pseudo-user.js";
@@ -624,6 +625,31 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           ]
         );
         const row = res.rows[0];
+
+        // DRIVER-SUBACCOUNT-AUTO-PROVISION (asset side): create "Driver Cash Advance- <Name>" under the
+        // canonical parent. Best-effort + idempotent: a missing parent (e.g. TRK's chart) is a graceful
+        // no-op, and any error must NOT fail driver creation. The escrow (liability) sub-account is gated
+        // on STOP-DECISION #1 (escrow-parent choice) and intentionally not provisioned here yet.
+        try {
+          if (resolvedOperatingCompanyId) {
+            await provisionDriverAdvanceSubAccount(client, {
+              operatingCompanyId: resolvedOperatingCompanyId,
+              driverId: String(row.id),
+              driverName: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(),
+              actorUserId: authUser.uuid,
+            });
+          }
+        } catch (err) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "catalogs.accounts.auto_provision_failed",
+            { resource_type: "mdata.drivers", resource_id: String(row.id), error: String((err as Error)?.message ?? err) },
+            "warning",
+            "DRIVER-SUBACCOUNT-AUTO-PROVISION"
+          ).catch(() => undefined);
+        }
+
         let inviteUrl: string | null = null;
         let inviteExpiresAt: string | null = null;
 

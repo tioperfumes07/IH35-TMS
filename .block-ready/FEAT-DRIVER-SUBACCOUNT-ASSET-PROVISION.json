@@ -1,0 +1,20 @@
+{
+  "block_id": "FEAT-DRIVER-SUBACCOUNT-ASSET-PROVISION",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "DRIVER-SUBACCOUNT-PROVISION",
+  "task": "Per-driver ASSET sub-account auto-provision (the part NOT gated on STOP-DECISION #1). On driver-profile creation (POST /api/v1/mdata/drivers), auto-create 'Driver Cash Advance- <Driver Name>' (matching the live precedent format) nested under the canonical 'Driver Cash Advance' parent in catalogs.accounts. PORTABLE: parent resolved by NAME + account_type + top-level (stable business key), NEVER a hardcoded UUID. IDEMPOTENT: skips if the sub-account already exists (name + parent). is_postable=true, account_number/qbo_account_id NULL (assigned on QBO sync). Best-effort + non-fatal: a missing parent (e.g. TRK's chart, which has no Driver Cash Advance) is a graceful no-op and never fails driver creation. The LIABILITY/escrow sub-account is GATED on STOP-DECISION #1 (which escrow parent: '2026-Damage Claim Escrow' vs unprefixed 'Damage Claim Escrow'); the BULK Excel backfill is GATED on STOP-DECISION #2 (no mass creation against real data). Financial — account-creation SQL shown. No migration.",
+  "branch": "feat/driver-subaccount-asset-provision",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-DRIVER-SUBACCOUNT-ASSET-PROVISION.json",
+    "apps/backend/src/accounting/driver-subaccount-provision.service.ts",
+    "apps/backend/src/accounting/__tests__/driver-subaccount-provision.test.ts",
+    "apps/backend/src/mdata/drivers.routes.ts",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
