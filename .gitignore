@@ -23,3 +23,7 @@ recovery-artifacts/
 docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 # CI trigger
 .cursor/rules/
+
+# Office/Excel lock files (created while a workbook is open; never commit)
+~$*
+**/~$*
