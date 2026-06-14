@@ -10,7 +10,7 @@ import { findReturningDriverMatches } from "./driver-returning-detection.routes.
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
 import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
 import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
-import { provisionDriverAdvanceSubAccount } from "../accounting/driver-subaccount-provision.service.js";
+import { provisionDriverAdvanceSubAccount, provisionDriverEscrowSubAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { registerDriverPdfExportRoutes } from "./driver-pdf-export.routes.js";
 import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "./driver-pseudo-user.js";
@@ -626,18 +626,21 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         );
         const row = res.rows[0];
 
-        // DRIVER-SUBACCOUNT-AUTO-PROVISION (asset side): create "Driver Cash Advance- <Name>" under the
-        // canonical parent. Best-effort + idempotent: a missing parent (e.g. TRK's chart) is a graceful
-        // no-op, and any error must NOT fail driver creation. The escrow (liability) sub-account is gated
-        // on STOP-DECISION #1 (escrow-parent choice) and intentionally not provisioned here yet.
+        // DRIVER-SUBACCOUNT-AUTO-PROVISION: create BOTH per-driver sub-accounts together on hire —
+        //   ASSET     "Driver Cash Advance- <Name>"   under "Driver Cash Advance" (QBO-149)
+        //   LIABILITY "Damage Claim Escrow- <Name>"   under "Damage Claim Escrow" (QBO-1150040187)
+        // Best-effort + idempotent: a missing parent (e.g. TRK's chart) is a graceful no-op, and any
+        // error must NOT fail driver creation.
         try {
           if (resolvedOperatingCompanyId) {
-            await provisionDriverAdvanceSubAccount(client, {
+            const provisionArgs = {
               operatingCompanyId: resolvedOperatingCompanyId,
               driverId: String(row.id),
               driverName: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(),
               actorUserId: authUser.uuid,
-            });
+            };
+            await provisionDriverAdvanceSubAccount(client, provisionArgs);
+            await provisionDriverEscrowSubAccount(client, provisionArgs);
           }
         } catch (err) {
           await appendCrudAudit(
