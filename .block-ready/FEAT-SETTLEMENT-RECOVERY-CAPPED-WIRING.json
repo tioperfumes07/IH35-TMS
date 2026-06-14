@@ -1,0 +1,21 @@
+{
+  "block_id": "FEAT-SETTLEMENT-RECOVERY-CAPPED-WIRING",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "A3-SETTLEMENT-RECOVERY",
+  "task": "A3-2 live-path WIRING (engine merged in #929). Wires computeSettlement to the capped engine behind SETTLEMENT_CAPPED_RECOVERY_ENABLED (DEFAULT OFF). Flag OFF = legacy blunt path, byte-identical (flag-off-identical test). Flag ON = consume cash_advance_repayment ledger rows ONLY (escrow explicitly excluded), partial-to-floor via the merged engine, persist ledger updates (remaining_balance_cents / status partial|applied|deferred / applied_to_settlement_id only when fully applied). Migration 202606131600 = cutover flag (default OFF) + override columns (recover_override_cents/by/reason on payroll.driver_settlements, additive idempotent). GATED / NOT in this PR: the postSettlement GL asset draw-down to QBO-149 — option (a) is NOT clean against the current NET bill, STOPPED to show the before/after (clean = Dr wage expense / Cr QBO-149). Flag stays OFF until that GL ships + the A3-3 shadow-run proves agreement. No real paycheck changes. Two parked tracker blocks added (escrow sub-accounts; driver sub-account auto-provision).",
+  "branch": "feat/settlement-recovery-capped-wiring",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-SETTLEMENT-RECOVERY-CAPPED-WIRING.json",
+    "db/migrations/202606131600_settlement_capped_recovery_flag_and_override.sql",
+    "apps/backend/src/payroll/driver-settlement.service.ts",
+    "apps/backend/src/payroll/__tests__/settlement-recovery-wiring.test.ts",
+    "apps/backend/src/payroll/__tests__/driver-settlement.test.ts",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}

@@ -2,6 +2,13 @@ import { withCurrentUser } from "../auth/db.js";
 import { createBill, payBill } from "../accounting/bills.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { depositEscrow, openEscrow } from "../accounting/escrow/service.js";
+import { resolveSettlementMinNet } from "../driver-finance/settlement-deduction-cap.service.js";
+import { resolveAccountForCategory } from "../accounting/expense-category-map/resolver.service.js";
+import {
+  computeCappedAdvanceRecovery,
+  type CappedRecoveryPlan,
+  type PendingDeduction,
+} from "./settlement-capped-recovery.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -109,7 +116,21 @@ async function loadSettlementByPeriod(client: DbClient, input: ComputeSettlement
   return res.rows[0] ?? null;
 }
 
-async function buildDraftLines(client: DbClient, input: ComputeSettlementInput): Promise<SettlementLineDraft[]> {
+/** A3-2 cutover flag. OFF (default) = legacy blunt path; ON = capped-ledger engine. */
+async function settlementCappedRecoveryEnabled(client: DbClient): Promise<boolean> {
+  const res = await client.query<{ default_enabled: boolean }>(
+    `SELECT default_enabled FROM lib.feature_flags WHERE flag_key = 'SETTLEMENT_CAPPED_RECOVERY_ENABLED' LIMIT 1`
+  );
+  return Boolean(res.rows[0]?.default_enabled);
+}
+
+export type DraftLinesResult = {
+  lines: SettlementLineDraft[];
+  /** Present only when the capped path ran (flag ON). Drives ledger persistence in computeSettlement. */
+  recoveryPlan: CappedRecoveryPlan | null;
+};
+
+export async function buildDraftLines(client: DbClient, input: ComputeSettlementInput): Promise<DraftLinesResult> {
   const earningsAccountId = await resolveRoleAccount(client, input.operatingCompanyId, "expense_default");
   const deductionAccountId = await resolveRoleAccount(client, input.operatingCompanyId, "ap_control");
 
@@ -169,8 +190,13 @@ async function buildDraftLines(client: DbClient, input: ComputeSettlementInput):
     });
   }
 
-  const advances = await client.query<{ deductions_cents: number | null }>(
-    `
+  const capped = await settlementCappedRecoveryEnabled(client);
+
+  if (!capped) {
+    // ---- LEGACY blunt path (flag OFF) — byte-identical to pre-A3-2. ----
+    // Sums approved cash_advance_requests reviewed in-period; no floor, no carry-forward.
+    const advances = await client.query<{ deductions_cents: number | null }>(
+      `
       SELECT COALESCE(SUM(requested_amount_cents), 0)::bigint AS deductions_cents
       FROM driver_finance.cash_advance_requests
       WHERE operating_company_id = $1::uuid
@@ -178,20 +204,78 @@ async function buildDraftLines(client: DbClient, input: ComputeSettlementInput):
         AND status = 'approved'
         AND reviewed_at::date BETWEEN $3::date AND $4::date
     `,
-    [input.operatingCompanyId, input.driverId, input.periodStart, input.periodEnd]
-  );
-  const deductionsCents = Math.max(0, asCents(advances.rows[0]?.deductions_cents));
-  if (deductionsCents > 0) {
-    lines.push({
-      line_type: "advance_recovery",
-      description: "Cash advance recovery",
-      amount_cents: -deductionsCents,
-      load_id: null,
-      posting_account_id: deductionAccountId,
-    });
+      [input.operatingCompanyId, input.driverId, input.periodStart, input.periodEnd]
+    );
+    const deductionsCents = Math.max(0, asCents(advances.rows[0]?.deductions_cents));
+    if (deductionsCents > 0) {
+      lines.push({
+        line_type: "advance_recovery",
+        description: "Cash advance recovery",
+        amount_cents: -deductionsCents,
+        load_id: null,
+        posting_account_id: deductionAccountId,
+      });
+    }
+    return { lines, recoveryPlan: null };
   }
 
-  return lines;
+  // ---- NEW capped-ledger path (flag ON) — cash_advance_repayment ledger rows ONLY. ----
+  // Escrow (escrow_load_abandonment) is explicitly EXCLUDED: it keeps its own automatic deduction
+  // and its own liability GL, untouched by A3.
+  const grossCents = lines.filter((line) => line.amount_cents > 0).reduce((sum, line) => sum + line.amount_cents, 0);
+  const floor = await resolveSettlementMinNet(
+    client as unknown as Parameters<typeof resolveSettlementMinNet>[0],
+    input.driverId,
+    input.operatingCompanyId
+  );
+  const floorCents = Math.max(Math.round((grossCents * floor.pct) / 100), floor.cents);
+
+  const pendingRes = await client.query<{
+    id: string;
+    amount_cents: string | number;
+    remaining_balance_cents: string | number | null;
+    deduction_type: string;
+  }>(
+    `
+      SELECT id::text,
+             amount_cents::bigint AS amount_cents,
+             remaining_balance_cents::bigint AS remaining_balance_cents,
+             deduction_type
+      FROM driver_finance.driver_settlement_deductions
+      WHERE operating_company_id = $1::uuid
+        AND driver_id = $2::uuid
+        AND deduction_type = 'cash_advance_repayment'
+        AND applied_to_settlement_id IS NULL
+        AND status IN ('pending', 'partial', 'deferred')
+      ORDER BY created_at ASC, id ASC
+      FOR UPDATE
+    `,
+    [input.operatingCompanyId, input.driverId]
+  );
+  const pending: PendingDeduction[] = pendingRes.rows.map((r) => ({
+    id: String(r.id),
+    amount_cents: asCents(r.amount_cents),
+    remaining_balance_cents: r.remaining_balance_cents == null ? null : asCents(r.remaining_balance_cents),
+    deduction_type: r.deduction_type,
+  }));
+
+  const recoveryPlan = computeCappedAdvanceRecovery({ grossCents, floorCents, pending });
+
+  if (recoveryPlan.allocations.length > 0) {
+    // Recovery line posting account = the cash-advance ASSET (QBO-149) being drawn down (never hardcoded).
+    const mapped = await resolveAccountForCategory(input.operatingCompanyId, "cash_advance", "cash_advance");
+    for (const a of recoveryPlan.allocations) {
+      lines.push({
+        line_type: "advance_recovery",
+        description: "Cash advance recovery (capped)",
+        amount_cents: -a.recovered_cents,
+        load_id: null,
+        posting_account_id: mapped.account_id,
+      });
+    }
+  }
+
+  return { lines, recoveryPlan };
 }
 
 export async function computeSettlement(input: ComputeSettlementInput, userId: string) {
@@ -212,7 +296,7 @@ export async function computeSettlement(input: ComputeSettlementInput, userId: s
       };
     }
 
-    const lines = await buildDraftLines(client, normalizedInput);
+    const { lines, recoveryPlan } = await buildDraftLines(client, normalizedInput);
     const grossCents = lines.filter((line) => line.amount_cents > 0).reduce((sum, line) => sum + line.amount_cents, 0);
     const deductionsCents = Math.abs(
       lines.filter((line) => line.amount_cents < 0).reduce((sum, line) => sum + line.amount_cents, 0)
@@ -272,6 +356,39 @@ export async function computeSettlement(input: ComputeSettlementInput, userId: s
           line.posting_account_id,
         ]
       );
+    }
+
+    // A3-2: persist the capped-recovery ledger updates (flag ON only — recoveryPlan is null when OFF,
+    // so this is a no-op on the legacy path). The pending rows were SELECT ... FOR UPDATE in the same
+    // transaction, so this is race-safe. applied_to_settlement_id is stamped ONLY when fully recovered;
+    // partials keep it NULL with status 'partial'; rows with no room are 'deferred' (carried forward).
+    // NOTE: the matching GL asset draw-down (Cr QBO-149) is intentionally NOT wired here yet — it is
+    // gated on the GL-mechanism decision (see A3-2 preflight-of-record). The flag MUST stay OFF until
+    // that ships, so this persistence never runs against a real (posted) settlement before then.
+    if (recoveryPlan) {
+      for (const a of recoveryPlan.allocations) {
+        await client.query(
+          `
+            UPDATE driver_finance.driver_settlement_deductions
+               SET remaining_balance_cents = $2::bigint,
+                   status = $3,
+                   applied_to_settlement_id = CASE WHEN $4 THEN $5::uuid ELSE applied_to_settlement_id END,
+                   updated_at = now()
+             WHERE id = $1::uuid
+          `,
+          [a.deduction_id, a.new_remaining_cents, a.new_status, a.fully_applied, settlementId]
+        );
+      }
+      for (const d of recoveryPlan.deferred) {
+        await client.query(
+          `
+            UPDATE driver_finance.driver_settlement_deductions
+               SET status = 'deferred', updated_at = now()
+             WHERE id = $1::uuid
+          `,
+          [d.deduction_id]
+        );
+      }
     }
 
     const settlement = await loadSettlementByPeriod(client, normalizedInput);
