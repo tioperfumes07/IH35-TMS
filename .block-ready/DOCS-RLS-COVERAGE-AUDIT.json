@@ -1,0 +1,18 @@
+{
+  "block_id": "DOCS-RLS-COVERAGE-AUDIT",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "SAFE-ADDITIVE-QUEUE",
+  "task": "Safe-additive Block 9 — RLS coverage audit (docs-only, GUARD #33 / Wave-5 Block N). docs/specs/RLS-COVERAGE-AUDIT.md: read-only inventory of tenant-scoped tables (operating_company_id) and whether each enforces an RLS policy keyed on the tenant. Money + PII first. Reports 8 CRITICAL (no RLS at all, incl safety.internal_fines), ~48 money RISKY + ~7 PII RISKY (ENABLE RLS but no verified policy), ~129 operational RISKY, ~113 global-by-design (not gaps); existing guard verify-rls-migration-scan.mjs (#406 baseline) only checks ENABLE not policy presence. Includes a methodology caveat (verify vs live pg_policies before remediation) + a prioritized next-steps list. NO fixes, no code, no migration.",
+  "branch": "docs/rls-coverage-audit",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-RLS-COVERAGE-AUDIT.json",
+    "docs/specs/RLS-COVERAGE-AUDIT.md",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
