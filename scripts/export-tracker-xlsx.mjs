@@ -21,6 +21,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ExcelJS from "exceljs";
+import { execFileSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "docs/trackers/MASTER_PROGRESS_REPORT.md");
@@ -87,6 +88,41 @@ function groupLabel(cells) {
   return null;
 }
 
+// ---- GitHub PR data (Option C tabs 02 / 03) ----
+const V24_BASELINE_PR = 813; // v24 snapshot baseline (snapshot fact: "Merged since #813")
+function fetchMergedPRs() {
+  try {
+    const raw = execFileSync(
+      "gh",
+      ["pr", "list", "--state", "merged", "--limit", "2000", "--json", "number,title,mergedAt,mergeCommit"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
+    );
+    return JSON.parse(raw)
+      .map((p) => ({
+        number: p.number,
+        title: p.title ?? "",
+        mergeDate: (p.mergedAt ?? "").slice(0, 10),
+        mergeTime: (p.mergedAt ?? "").slice(11, 19),
+        sha: (p.mergeCommit?.oid ?? "").slice(0, 8),
+        domain: (p.title ?? "").match(/^\w+\(([^)]+)\)/)?.[1] ?? "—",
+      }))
+      .sort((a, b) => a.number - b.number);
+  } catch {
+    return null; // gh unavailable/unauthed at export time — tabs render a note instead
+  }
+}
+const prs = fetchMergedPRs();
+const NEW_SINCE_V24_ROWS = prs
+  ? prs.filter((p) => p.number > V24_BASELINE_PR).map((p) => [`#${p.number}`, p.mergeDate, p.mergeTime, p.sha, p.domain, p.title, "merged"])
+  : [["—", "—", "—", "—", "—", "GitHub data unavailable at export time (gh not authed) — re-run with gh available", "—"]];
+const ALL_MERGED_ROWS = prs
+  ? prs.map((p) => [`#${p.number}`, p.mergeDate, p.mergeTime, p.sha, p.title])
+  : [["—", "—", "—", "—", "GitHub data unavailable at export time (gh not authed) — re-run with gh available"]];
+// 05 Functional Audit has no programmatic source (hand-curated in v26); flagged for Jorge.
+const FUNCTIONAL_AUDIT_ROWS = [
+  ["(source TBD)", "—", "v26's Functional-completeness audit was hand-curated; not derivable from the markdown or GitHub. Define a source to auto-populate this tab."],
+];
+
 // ---- sheet config (matches v26 tab names + columns) ----
 const SHEETS = [
   {
@@ -110,6 +146,22 @@ const SHEETS = [
     group: true,
   },
   {
+    name: "02 New Since v24",
+    banner: "NEW SINCE v24 — merged PRs (#>813)",
+    subtitle: `pulled from GitHub at generate time (${date})`,
+    headers: ["PR #", "Merge Date", "Merge Time", "SHA", "Domain", "Title", "Status"],
+    widths: [8, 12, 11, 11, 16, 56, 10],
+    rows: NEW_SINCE_V24_ROWS,
+  },
+  {
+    name: "03 Full Merged PRs",
+    banner: "FULL MERGED-PR RECORD (sorted by PR #)",
+    subtitle: `pulled from GitHub at generate time (${date})`,
+    headers: ["PR #", "Merge Date", "Merge Time", "SHA", "Title"],
+    widths: [8, 12, 11, 11, 70],
+    rows: ALL_MERGED_ROWS,
+  },
+  {
     name: "04 Pending Queue",
     needle: "Pending Queue",
     banner: "PENDING QUEUE — live ground truth",
@@ -123,6 +175,14 @@ const SHEETS = [
     subtitle: "Money-risk first → books-safety → cheap P0 → trust cleanup → features",
     headers: ["Order", "Wave", "Block / Item", "Why now", "Risk if skipped", "Effort", "Depends on", "Status today"],
     widths: [7, 6, 34, 40, 18, 8, 16, 60],
+  },
+  {
+    name: "05 Functional Audit",
+    banner: "FUNCTIONAL-COMPLETENESS AUDIT",
+    subtitle: "source TBD — flagged for Jorge (not in markdown/GitHub)",
+    headers: ["Area", "State", "Evidence / Gap"],
+    widths: [26, 16, 70],
+    rows: FUNCTIONAL_AUDIT_ROWS,
   },
   {
     name: "06 Net-New Request Types",
@@ -170,7 +230,7 @@ function styleSub(ws, row, ncols, text) {
 }
 
 for (const cfg of SHEETS) {
-  const section = findSection(sections, cfg.needle);
+  const section = cfg.needle ? findSection(sections, cfg.needle) : null;
   const ncols = cfg.headers.length;
   const ws = wb.addWorksheet(cfg.name);
 
@@ -189,7 +249,7 @@ for (const cfg of SHEETS) {
   });
   r++;
 
-  const body = section ? tableBody(section.lines) : [];
+  const body = cfg.rows ?? (section ? tableBody(section.lines) : []);
   for (const cells of body) {
     const g = cfg.group ? groupLabel(cells) : null;
     if (g) {
@@ -236,4 +296,8 @@ console.log(
   `[export:tracker] wrote ${path.relative(ROOT, outFile)} — ${wb.worksheets.length} sheets ` +
     `(${wb.worksheets.map((w) => w.name).join(", ")}), ${version}, ${date}`
 );
-console.log("[export:tracker] DEFERRED (Option C, next PR): 02 New Since v24, 03 Full Merged PRs, 05 Functional Audit (need GitHub data pull).");
+console.log(
+  prs
+    ? `[export:tracker] 02 New Since v24 (${NEW_SINCE_V24_ROWS.length}) + 03 Full Merged PRs (${ALL_MERGED_ROWS.length}) pulled from GitHub. 05 Functional Audit: source TBD (flagged for Jorge).`
+    : "[export:tracker] WARNING: gh unavailable — 02/03 rendered a placeholder note. Re-run with gh authed to populate GitHub tabs."
+);

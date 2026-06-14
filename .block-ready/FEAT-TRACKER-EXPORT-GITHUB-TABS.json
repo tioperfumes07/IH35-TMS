@@ -1,0 +1,23 @@
+{
+  "block_id": "FEAT-TRACKER-EXPORT-GITHUB-TABS",
+  "status": "BUILD",
+  "classification": "TOOLING",
+  "phase": "AUTO-MODE-QUEUE",
+  "task": "Exporter Option C — add the GitHub/computed tabs to scripts/export-tracker-xlsx.mjs so v27 has all 10 v26 tabs in order. 02 New Since v24 (merged PRs #>813) and 03 Full Merged PRs (all, sorted) are pulled live via `gh pr list` (graceful note if gh unavailable). 05 Functional Audit is added as a placeholder — its v26 source was hand-curated and has no markdown/GitHub source (flagged for Jorge). Regenerates v27 (10 sheets). Tooling-only, no app code, no money path. STACKED on Block B (feat/task-board-create-task-ui) so the auto-mode build-queue tracker table is present; B's files are therefore in the origin/main..HEAD range and whitelisted here.",
+  "branch": "feat/tracker-export-github-tabs",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-TRACKER-EXPORT-GITHUB-TABS.json",
+    ".block-ready/FEAT-TASK-BOARD-CREATE-TASK-UI.json",
+    "apps/frontend/src/components/tasks/CreateTaskModal.tsx",
+    "apps/frontend/src/pages/tasks/TaskBoardPage.tsx",
+    "scripts/export-tracker-xlsx.mjs",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md",
+    "docs/trackers/exports/*.xlsx",
+    "docs/trackers/exports/IH35-TMS-MASTER-TRACKER-2026-06-14-v27.xlsx"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
