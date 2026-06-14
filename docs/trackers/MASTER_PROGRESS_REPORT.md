@@ -28,6 +28,19 @@ B1–B6 (#918–#923) · A3-1/2/3 full series (#925/#929/#930/#931/#932) + flag 
 - ✅ MD-5-19-RECONCILE → **DROPPED.** Stale orphan, zero code/PR/commit references, flagged ~30-40% redundant at intake. Row removed (was Wave-4 #680/Order 65).
 - ℹ️ Driver-escrow research spec authored 2026-06-14 (docs/specs/DRIVER-ESCROW-RESEARCH.md) — grounds B9 deduction engine.
 
+## ⚙️ Auto-mode build queue (2026-06-14)
+
+Safe-additive blocks built non-stop after the recon; each its own PR, Jorge merges as they land.
+
+| Block | What | Status | PR |
+|---|---|---|---|
+| B | Create-Task UI — "+ Create Task" button on Task Board + create modal (assignee/date/title/description/category/priority) calling existing POST /api/v1/tasks | ✅ BUILT | this PR |
+| C | Dispatch "Planners" dead-handler fix — give parent nav a default target | ⏳ queued | — |
+| Exporter-C | 3 GitHub/computed xlsx tabs (02 New Since v24, 03 Full Merged PRs, 05 Functional Audit) | ⏳ queued | — |
+| P | Best-Bank (genuinely-empty safe block) | ⏳ queued | — |
+| F | Reefer 15-min poller cron | ⏳ queued | — |
+| E | Samsara live-mileage ingest cron | ⏳ queued | — |
+
 ## Reconciliation snapshot
 
 | Metric | v24 snapshot (2026-06-08) | LIVE now (2026-06-13) |
