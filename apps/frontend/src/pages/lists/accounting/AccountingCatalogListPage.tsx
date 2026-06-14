@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { Button } from "../../../components/Button";
@@ -24,6 +24,9 @@ type Props = {
   readOnly?: boolean;
   metadataFields?: AccountingMetadataField[];
   metadataSummary?: (row: AccountingCatalogRow) => string;
+  // Opt-in (Block 7): multi-select checkboxes + a caller-rendered bulk-action bar.
+  enableBulkSelect?: boolean;
+  bulkBar?: (ctx: { selectedIds: string[]; rows: AccountingCatalogRow[]; clearSelection: () => void; refetch: () => void }) => ReactNode;
 };
 
 function statusPillClass(isActive: boolean) {
@@ -40,6 +43,8 @@ export function AccountingCatalogListPage({
   readOnly = false,
   metadataFields,
   metadataSummary,
+  enableBulkSelect = false,
+  bulkBar,
 }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -48,6 +53,16 @@ export function AccountingCatalogListPage({
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const bulkEnabled = enableBulkSelect && Boolean(bulkBar);
+  const toggleId = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const clearSelection = () => setSelectedIds(new Set());
 
   const query = useQuery({
     queryKey: ["catalogs", "accounting", displayName, companyId, search, status],
@@ -100,10 +115,30 @@ export function AccountingCatalogListPage({
         </SelectCombobox>
       </div>
 
+      {bulkEnabled && selectedIds.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded border border-blue-200 bg-blue-50 p-2 text-sm">
+          <span className="font-semibold text-blue-800">{selectedIds.size} selected</span>
+          {bulkBar!({ selectedIds: [...selectedIds], rows, clearSelection, refetch: () => void query.refetch() })}
+          <button type="button" className="ml-auto text-xs font-semibold text-blue-700 underline" onClick={clearSelection}>
+            Clear
+          </button>
+        </div>
+      ) : null}
+
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
+              {bulkEnabled ? (
+                <th className="w-8 px-3 py-2 text-left">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all"
+                    checked={rows.length > 0 && rows.every((r) => selectedIds.has(r.id))}
+                    onChange={(e) => setSelectedIds(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())}
+                  />
+                </th>
+              ) : null}
               <th className="px-3 py-2 text-left">{codeLabel}</th>
               <th className="px-3 py-2 text-left">Display Name</th>
               <th className="px-3 py-2 text-left">Details</th>
@@ -121,6 +156,11 @@ export function AccountingCatalogListPage({
                   setModalOpen(true);
                 }}
               >
+                {bulkEnabled ? (
+                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" aria-label={`Select ${row.display_name}`} checked={selectedIds.has(row.id)} onChange={() => toggleId(row.id)} />
+                  </td>
+                ) : null}
                 <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code || "—"}</td>
                 <td className="px-3 py-2">{row.display_name}</td>
                 <td className="px-3 py-2 text-xs text-slate-600">{metadataSummary ? metadataSummary(row) : row.description || "—"}</td>
