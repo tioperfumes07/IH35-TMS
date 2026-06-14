@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-PERMISSIONS-DESIGN",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for the foundational Roles & Permissions block (Jorge-approved UI lock 01-PERMISSIONS-LOCKED). QuickBooks-style module x action grid (View/Create/Edit/Void/Delete/Approve), per-role + per-user overrides, locked roles (Owner/Manager/Accountant/Bookkeeper/Dispatcher/Safety + custom). Captures the cross-cutting VOID-vs-DELETE rule (financial txns voided via reversing entry + kept with audit, never deleted; Void its own permission; Delete Owner-only). Grounds it in existing UserRole + partial void support, defines the data model (roles/role_permissions/user_permission_overrides/audit, all is_active+audit), the can()/requireApprover enforcement seam that B9 (#948) and money-flag flips depend on, the approved visual, open questions (role reconciliation, void scope), and a gated build sequence. NO code, no DDL, no posting.",
+  "branch": "docs/permissions-design",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-PERMISSIONS-DESIGN.json",
+    "docs/specs/PERMISSIONS-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
