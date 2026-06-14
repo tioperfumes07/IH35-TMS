@@ -7,6 +7,7 @@ import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { PreviewModal } from "../components/documents/PreviewModal";
+import { UploadModal } from "../components/documents/UploadModal";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
@@ -42,6 +43,7 @@ export function DocumentsPage() {
   const [search, setSearch] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [selectedPreviewFile, setSelectedPreviewFile] = useState<DocsFile | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const isOwnerOrAdmin = user?.role === "Owner" || user?.role === "Administrator";
   const isOwner = user?.role === "Owner";
@@ -103,7 +105,28 @@ export function DocumentsPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="All Documents" subtitle="Company-wide documents library" />
+      <PageHeader
+        title="All Documents"
+        subtitle="Company-wide documents library"
+        actions={
+          <button
+            type="button"
+            onClick={() => setUploadOpen(true)}
+            className="rounded bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d]"
+          >
+            Upload document
+          </button>
+        }
+      />
+      {uploadOpen ? (
+        <UploadModal
+          onClose={() => setUploadOpen(false)}
+          onUploadSuccess={() => {
+            setUploadOpen(false);
+            void filesQuery.refetch();
+          }}
+        />
+      ) : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-4">
         <div className="space-y-1">

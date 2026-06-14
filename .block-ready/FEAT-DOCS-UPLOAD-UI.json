@@ -1,0 +1,19 @@
+{
+  "block_id": "FEAT-DOCS-UPLOAD-UI",
+  "status": "BUILD",
+  "classification": "FEATURE",
+  "phase": "SAFE-ADDITIVE-QUEUE",
+  "task": "Safe-additive Block 4 — docs-upload UI on the Documents page (frontend-only, additive, no money path, no migration). The Documents page (docs.files) listed + filtered docs but had NO upload control. The docs upload backend (requestUploadUrl/confirmUpload + R2) and an UploadModal already existed but only for entity-linked uploads. Generalized components/documents/UploadModal.tsx to make entityType/entityId/entityName OPTIONAL — when omitted, requestUploadUrl is called with no entity_links = a STANDALONE document (which the page already filters for); backward-compatible for the 2 existing callers (Onboarding, Inspections). Added an 'Upload document' button to the Documents PageHeader that opens the standalone modal and refetches the list on success. No backend change; categories via existing listFileCategories() (all).",
+  "branch": "feat/docs-upload-ui",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-DOCS-UPLOAD-UI.json",
+    "apps/frontend/src/components/documents/UploadModal.tsx",
+    "apps/frontend/src/pages/Documents.tsx",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
