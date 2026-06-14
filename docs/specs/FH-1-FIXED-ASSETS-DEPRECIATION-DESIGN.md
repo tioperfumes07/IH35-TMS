@@ -5,7 +5,11 @@
 **Date:** 2026-06-14
 **Part of:** the **Finance Hub** (FH-1…FH-6), delivered as **one hub with 6 tabs** (Fixed Assets · Loans · Amortization · Calculator · Taxes · Bankruptcy) — Jorge-approved interactive preview. FH-1 is the **foundation** — the asset register + depreciation engine that FH-2 (Loan Wizard) and FH-3 (Amortization) build on. **Supersedes** the earlier standalone DEPRECIATION design note.
 
-**Jorge's locked answers (2026-06-14):** methods = **straight-line + accelerated (declining-balance) + Section 179 / bonus** (occasional full-first-year) — build these, assume no others. Asset classes = **vehicles only: trucks · trailers · cars** (no buildings; land kept as a non-depreciating guard if ever added). Useful life = **default 5 years, editable per asset, overridable to 1 year** (for §179/bonus full-year write-off).
+**Jorge's locked answers (2026-06-14):**
+- **BASIS — BOOK ONLY (locked).** Track **book** depreciation only: **default 5-year straight-line** in the books. The **CPA handles tax-basis** depreciation (accelerated / 150DB / DDB / Section 179 / bonus / occasional 1-year write-off) **externally at filing** — these are NOT built into the app's book schedule. **One schedule per asset = the book schedule.** Do NOT build a dual book+tax schedule. This matches how Jorge actually operates.
+- **Method field kept** on the asset (**default straight-line**) for future flexibility, but **build straight-line first** — it is the only book method needed now. The declining-balance / §179 / bonus math in §3 is documented as **reference (tax-basis, CPA-external, out of app scope)**, not a build target.
+- Asset classes = **vehicles only: trucks · trailers · cars** (no buildings; land kept as a non-depreciating guard if ever added).
+- Useful life = **default 5 years, editable per asset**.
 **Grounds:** QBO behavior research (below) + the locked accounting principles (double-entry must balance or fail; VOID ≠ DELETE; every table `is_active` + soft-delete + audit columns; money-adjacent ships flag-OFF). All amounts integer cents; rates stored as exact decimals.
 
 ---
@@ -35,8 +39,8 @@ QuickBooks Online does **not** auto-post depreciation. Findings:
 | Asset **class** | **vehicles only (locked): trucks · trailers · cars** — editable catalog; land kept as a non-depreciating guard if ever added |
 | Purchase price | original cost basis (integer cents) |
 | Purchase date | acquisition date |
-| **Depreciation method** | straight-line / accelerated (150DB or DDB) / bonus-or-§179 (§3) |
-| **Useful life** | **default 5 years, editable per asset, overridable to 1 year** (§179/bonus); stored as months |
+| **Depreciation method** | **straight-line (book — the only built method)**; field kept, default SL, for future book methods. Tax-basis methods (§3 reference) are CPA-external |
+| **Useful life** | **default 5 years, editable per asset**; stored as months |
 | **Salvage value** | residual at end of life (cents) |
 | **Depreciation start date** | placed-in-service date (drives the half-month convention, §4) |
 | **GL accounts** (3) | **Asset** account · **Accumulated-Depreciation** (contra-asset) · **Depreciation-Expense** — resolved from the class default, overridable per asset |
@@ -61,22 +65,22 @@ acquisition  →  depreciation (monthly, gated auto-post)  →  disposal / sale
 
 ---
 
-## 3. Depreciation methods (match QBO + auto-post)
+## 3. Depreciation methods
 
-**Locked set (Jorge):** straight-line + accelerated (declining-balance) + §179/bonus — the four formulas below cover these (150DB and DDB are the two accelerated variants). All documented with exact math; **book-basis** in v1 (tax-basis is an open question — §8). Monthly granularity (annual ÷ 12, convention-adjusted). Default useful life **5 years** unless overridden (1 year for §179/bonus).
+> **BOOK ONLY (locked):** the app builds **§3.1 straight-line** as the single book method. §3.2–§3.4 (150DB / DDB / bonus-§179) are documented **for reference only** — they are **tax-basis** methods the **CPA applies externally at filing**, NOT built into the app's book schedule. Kept here so the design is complete and a future book-method need has the math ready.
 
-**Depreciable base** = `purchase_price − salvage_value` (except declining-balance, which ignores salvage until it would dip below it).
+**Depreciable base** = `purchase_price − salvage_value` (except declining-balance, which ignores salvage until it would dip below it). Monthly granularity (annual ÷ 12, convention-adjusted). Default useful life **5 years**.
 
-### 3.1 Straight-line (SL)
-`annual = (cost − salvage) / useful_life_years` → `monthly = annual / 12`. Equal each period until book value = salvage.
+### 3.1 Straight-line (SL) — THE book method (built)
+`annual = (cost − salvage) / useful_life_years` → `monthly = annual / 12`. Equal each period until book value = salvage. At default 5-year life: `monthly = (cost − salvage) / 60`.
 
-### 3.2 150% declining balance (150DB)
+### 3.2 150% declining balance (150DB) — *reference only (tax-basis, CPA-external)*
 `rate = 1.5 / useful_life_years`. `period_depr = book_value_begin × rate / 12`. Ignores salvage in the formula; **stop** when book value would drop below salvage (clamp the final entries). Common to **switch to SL** when SL on remaining life yields a larger deduction — document the switch-to-SL toggle (QBO/IRS MACRS convention).
 
-### 3.3 Double-declining balance (DDB / 200DB)
+### 3.3 Double-declining balance (DDB / 200DB) — *reference only (tax-basis, CPA-external)*
 Same as 150DB with `rate = 2.0 / useful_life_years`. Same salvage clamp + optional switch-to-SL.
 
-### 3.4 Bonus / Section 179 (full first-year)
+### 3.4 Bonus / Section 179 (full first-year) — *reference only (tax-basis, CPA-external)*
 First-year **full expense** (up to the asset's depreciable basis): the whole basis posts in the placed-in-service period (or per the elected amount); remaining periods = 0. Document the §179 dollar cap / income limitation as **inputs Jorge supplies** (we don't hardcode IRS limits — they change yearly; configurable + a "consult accountant" note).
 
 > Each method's formula is stored with the schedule so a regenerated schedule is reproducible and auditable.
@@ -129,9 +133,8 @@ All tenant-scoped (`operating_company_id`), RLS-enforced; new schema → grants 
 
 ## 8. Open questions for Jorge
 
-**Answered + locked (2026-06-14):** methods = SL + accelerated + §179/bonus · classes = vehicles only (trucks/trailers/cars) · useful life = default 5y, override 1y, editable per asset. Still open:
+**Answered + locked (2026-06-14):** **basis = BOOK ONLY** (default 5y straight-line; CPA handles tax-basis externally — no dual schedule) · book method = **straight-line** (field kept, default SL) · classes = vehicles only (trucks/trailers/cars) · useful life = default 5y, editable per asset. Still open:
 
-- **(b)** **Book-basis only**, or **book AND tax-basis** depreciation (two parallel schedules)? (Big scope fork; most small carriers = book only, accountant handles tax basis.)
 - **(d)** Convention — confirm **half-month** default (vs mid-month / half-year).
 - **(e)** Which **entity first** — TRANSP (QBO-connected) then TRK?
 - **(f)** For disposals, a single **Gain/Loss on Disposal** account or split gain vs loss accounts?
@@ -141,7 +144,7 @@ All tenant-scoped (`operating_company_id`), RLS-enforced; new schema → grants 
 ## 9. Gated build sequence (migrations need accept-edits + show-the-migration-first)
 
 1. Asset register tables + class catalog + CRUD (add-one / bulk / import).
-2. Depreciation **schedule engine** (the 4 methods + back-dating + convention) — compute + store, **no posting**.
+2. Depreciation **schedule engine** (**straight-line book method** + back-dating + convention) — compute + store, **no posting**.
 3. Register + schedule **screens** (GUARD-mocked, Jorge-approved).
 4. **Auto-post cron** behind `FIXED_ASSET_AUTOPOST_ENABLED` (default OFF) + preview + idempotency + period-close guard.
 5. **Disposal/sale** flow + gain/loss posting.
