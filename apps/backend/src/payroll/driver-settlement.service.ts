@@ -4,6 +4,7 @@ import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js"
 import { depositEscrow, openEscrow } from "../accounting/escrow/service.js";
 import { resolveSettlementMinNet } from "../driver-finance/settlement-deduction-cap.service.js";
 import { resolveAccountForCategory } from "../accounting/expense-category-map/resolver.service.js";
+import { createJournalEntry } from "../accounting/journal-entries.service.js";
 import {
   computeCappedAdvanceRecovery,
   type CappedRecoveryPlan,
@@ -358,38 +359,12 @@ export async function computeSettlement(input: ComputeSettlementInput, userId: s
       );
     }
 
-    // A3-2: persist the capped-recovery ledger updates (flag ON only — recoveryPlan is null when OFF,
-    // so this is a no-op on the legacy path). The pending rows were SELECT ... FOR UPDATE in the same
-    // transaction, so this is race-safe. applied_to_settlement_id is stamped ONLY when fully recovered;
-    // partials keep it NULL with status 'partial'; rows with no room are 'deferred' (carried forward).
-    // NOTE: the matching GL asset draw-down (Cr QBO-149) is intentionally NOT wired here yet — it is
-    // gated on the GL-mechanism decision (see A3-2 preflight-of-record). The flag MUST stay OFF until
-    // that ships, so this persistence never runs against a real (posted) settlement before then.
-    if (recoveryPlan) {
-      for (const a of recoveryPlan.allocations) {
-        await client.query(
-          `
-            UPDATE driver_finance.driver_settlement_deductions
-               SET remaining_balance_cents = $2::bigint,
-                   status = $3,
-                   applied_to_settlement_id = CASE WHEN $4 THEN $5::uuid ELSE applied_to_settlement_id END,
-                   updated_at = now()
-             WHERE id = $1::uuid
-          `,
-          [a.deduction_id, a.new_remaining_cents, a.new_status, a.fully_applied, settlementId]
-        );
-      }
-      for (const d of recoveryPlan.deferred) {
-        await client.query(
-          `
-            UPDATE driver_finance.driver_settlement_deductions
-               SET status = 'deferred', updated_at = now()
-             WHERE id = $1::uuid
-          `,
-          [d.deduction_id]
-        );
-      }
-    }
+    // A3-2: the capped-recovery LEDGER UPDATES + the QBO-149 draw-down JE are applied at POST time
+    // (postSettlement), NOT here. computeSettlement only PREVIEWS the recovery as advance_recovery
+    // line(s); the advance is only "consumed" (ledger decremented + asset drawn down) when the
+    // settlement is actually posted/paid — keeping the ledger and the GL atomic and avoiding a
+    // ledger decrement on an abandoned draft. `recoveryPlan` is intentionally unused here.
+    void recoveryPlan;
 
     const settlement = await loadSettlementByPeriod(client, normalizedInput);
     if (!settlement) throw new Error("driver_settlement_read_after_write_failed");
@@ -518,6 +493,97 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
         { userId, role: "Accountant" }
       );
     }
+    // A3-2 (FALLBACK PAIRED JE, flag ON only): apply the capped cash-advance recovery at POST time.
+    // The Bill + BillPayment above are UNCHANGED (net bill, QBO-synced). Here we (1) decrement the
+    // ledger and (2) post ONE balanced paired JE that grosses-up the under-recognized expense and
+    // draws down the QBO-149 asset:  Dr Wages/Settlement expense $Y / Cr QBO-149 $Y.
+    // Net GL across bill+payment+JE = Dr expense (N+Y=GROSS) / Cr QBO-149 Y / Cr cash N.
+    // Ordering: the ledger UPDATEs run on `client` (this settlement transaction) and are staged BEFORE
+    // createJournalEntry; if the JE throws, this transaction rolls them back (failure-consistent — the
+    // same sequential-commit pattern the Bill+BillPayment above already use). recovery = 0 -> no JE.
+    if (await settlementCappedRecoveryEnabled(client)) {
+      const grossCents = asCents(settlement.gross_cents);
+      const floor = await resolveSettlementMinNet(
+        client as unknown as Parameters<typeof resolveSettlementMinNet>[0],
+        settlement.driver_id,
+        input.operatingCompanyId
+      );
+      const floorCents = Math.max(Math.round((grossCents * floor.pct) / 100), floor.cents);
+
+      const pendingRes = await client.query<{
+        id: string;
+        amount_cents: string | number;
+        remaining_balance_cents: string | number | null;
+        deduction_type: string;
+      }>(
+        `
+          SELECT id::text,
+                 amount_cents::bigint AS amount_cents,
+                 remaining_balance_cents::bigint AS remaining_balance_cents,
+                 deduction_type
+          FROM driver_finance.driver_settlement_deductions
+          WHERE operating_company_id = $1::uuid
+            AND driver_id = $2::uuid
+            AND deduction_type = 'cash_advance_repayment'
+            AND applied_to_settlement_id IS NULL
+            AND status IN ('pending', 'partial', 'deferred')
+          ORDER BY created_at ASC, id ASC
+          FOR UPDATE
+        `,
+        [input.operatingCompanyId, settlement.driver_id]
+      );
+      const plan = computeCappedAdvanceRecovery({
+        grossCents,
+        floorCents,
+        pending: pendingRes.rows.map((r) => ({
+          id: String(r.id),
+          amount_cents: asCents(r.amount_cents),
+          remaining_balance_cents: r.remaining_balance_cents == null ? null : asCents(r.remaining_balance_cents),
+          deduction_type: r.deduction_type,
+        })),
+      });
+
+      const recoveredCents = plan.totalRecoveredCents;
+      if (recoveredCents > 0) {
+        // (1) Ledger updates — staged in THIS transaction.
+        for (const a of plan.allocations) {
+          await client.query(
+            `
+              UPDATE driver_finance.driver_settlement_deductions
+                 SET remaining_balance_cents = $2::bigint,
+                     status = $3,
+                     applied_to_settlement_id = CASE WHEN $4 THEN $5::uuid ELSE applied_to_settlement_id END,
+                     updated_at = now()
+               WHERE id = $1::uuid
+            `,
+            [a.deduction_id, a.new_remaining_cents, a.new_status, a.fully_applied, settlement.id]
+          );
+        }
+        for (const d of plan.deferred) {
+          await client.query(
+            `UPDATE driver_finance.driver_settlement_deductions SET status = 'deferred', updated_at = now() WHERE id = $1::uuid`,
+            [d.deduction_id]
+          );
+        }
+
+        // (2) Paired balanced JE — Dr settlement expense / Cr QBO-149 (never hardcoded).
+        const qbo149 = await resolveAccountForCategory(input.operatingCompanyId, "cash_advance", "cash_advance");
+        await createJournalEntry(
+          {
+            operating_company_id: input.operatingCompanyId,
+            entry_date: paymentDate,
+            memo: `Driver settlement ${settlement.id} — cash advance recovery (asset draw-down)`,
+            source: "auto",
+            postings: [
+              { account_id: expenseAccountId, debit_or_credit: "debit", amount_cents: recoveredCents, description: "Settlement expense gross-up" },
+              { account_id: qbo149.account_id, debit_or_credit: "credit", amount_cents: recoveredCents, description: "Driver cash advance recovery" },
+            ],
+          },
+          { userId, role: "system" }
+        );
+      }
+    }
+
     const updatedRes = await client.query<DriverSettlementRow>(
       `
         UPDATE payroll.driver_settlements

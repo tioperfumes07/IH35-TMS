@@ -1,0 +1,19 @@
+{
+  "block_id": "FEAT-SETTLEMENT-RECOVERY-GL-JE",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "A3-SETTLEMENT-RECOVERY",
+  "task": "A3-2 GL — FALLBACK paired JE (Option B locked; verify-first proved the single multi-line bill is not clean — createBill is single-account + would rewire the QBO bill-sync/drift-guard). Recovery is now applied at POST time in postSettlement (not draft): re-runs the capped engine vs the settlement gross (cash_advance_repayment only, FOR UPDATE), decrements the ledger (remaining_balance_cents/status/applied_to_settlement_id) staged in the settlement transaction, then posts ONE balanced paired JE via the existing createJournalEntry: Dr settlement expense $Y / Cr QBO-149 (resolveAccountForCategory('cash_advance','cash_advance'), never hardcoded). The Bill+BillPayment + QBO-sync chain is UNCHANGED. Moved #930's draft-time ledger persistence to post (computeSettlement now preview-only) so ledger+GL are co-located/atomic and there is no abandoned-draft hole; JE failure rolls back the staged ledger updates (failure-consistent, same pattern as the existing bill/payment). Invariants tested: recovery=0->no JE (byte-identical), flag OFF unchanged, balanced JE, books-reconcile (ledger decrement == QBO-149 credit), atomic rollback. Flag stays DEFAULT OFF until A3-3 shadow-run. Escrow OUT. No migration (flag/override shipped in #930).",
+  "branch": "feat/settlement-recovery-gl-je",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-SETTLEMENT-RECOVERY-GL-JE.json",
+    "apps/backend/src/payroll/driver-settlement.service.ts",
+    "apps/backend/src/payroll/__tests__/settlement-recovery-post-je.test.ts",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
