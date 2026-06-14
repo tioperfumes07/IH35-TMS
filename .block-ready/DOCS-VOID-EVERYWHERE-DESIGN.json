@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-VOID-EVERYWHERE-DESIGN",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for the VOID-EVERYWHERE cross-cutting block (finance build package construction block #1, BUILD FIRST). Financial transactions are VOIDED not deleted (mirrors QuickBooks): void marks status=VOIDED, posts an equal-and-opposite reversing GL entry (net effect zero), keeps the record visible with stamp+reason+actor+timestamp; idempotent. Delete is a separate Owner-only action for never-should-have-existed records. Scope = every GL-posting entity (bills/expenses/invoices/JEs/settlements + escrow/loan/tax/depreciation/bankruptcy as they ship) via ONE shared mechanic. Permissions LOCKED: VOID = Owner+Accountant, DELETE = Owner only, Bookkeeper create/edit only (hard-code with clean Permissions swap-in seam). Closed-period handling respects AI-1b #816 write-lock. UI: distinct Void action + required-reason modal (GUARD mocks). Data model: status + void metadata + reversing_journal_entry_id, shared reversing-entry helper over createJournalEntry (balance-or-fail). Open questions, gated build sequence. NO code, no DDL, no posting. Designed live with Jorge + GUARD-verifies-reversing-entry-diff before merge.",
+  "branch": "docs/void-everywhere-design",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-VOID-EVERYWHERE-DESIGN.json",
+    "docs/specs/VOID-EVERYWHERE-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
