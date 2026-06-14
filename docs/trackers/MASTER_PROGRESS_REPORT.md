@@ -50,7 +50,8 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | Order | Wave | Block / Item | Why now | Risk | Effort | Depends on | Status |
 |---|---|---|---|---|---|---|---|
 | 1 | A | A3-1 ledger DDL (remaining_balance_cents + status) | — | — | — | — | ✅ DONE — merged #925 |
-| 1 | A | A3-2 capped recovery ENGINE + 6 locked tests (pure) | Only live path that can mishandle real money | HIGH | M | A3-1 (done) | 🟢 ENGINE BUILT — PR #929 · live-path wiring/GL/cutover GATED behind GUARD + A3-3 shadow-run |
+| 1 | A | A3-2 capped recovery ENGINE + 6 locked tests (pure) | Only live path that can mishandle real money | HIGH | M | A3-1 (done) | ✅ ENGINE merged #929 |
+| 1 | A | A3-2 live-path WIRING (flag-gated, cash-advance only) + override DDL | Wires engine into computeSettlement behind SETTLEMENT_CAPPED_RECOVERY_ENABLED (default OFF) | HIGH | M | #929 | 🟢 WIRING BUILT — PR __WPR__ · flag OFF = byte-identical (tested) · GL draw-down to QBO-149 STOPPED for your decision (option-a not clean vs NET bill) · no paycheck change until A3-3 |
 | 1 | A | A3-3 shadow-run cutover (old vs new agree) + GL restructure | Gates actually paying from the new path | HIGH | M | A3-2 | ⏸ PARKED (depends on A3-2 + GUARD decisions) |
 | 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR #927 (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
 | 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
@@ -70,6 +71,8 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | 17 | E | BLOCK-25 multi-entity consolidation | Consolidated statements | MED | L | periods+entities | PENDING |
 | 18 | E | BLOCK-01 depreciation (register+schedule+posting) | Largest financial gap left | MED | L | CoA | ❌ NOT BUILT |
 | 19 | E | USMCA master-data writes / activation | Deferred until July 2026 | LOW | M | — | DEFERRED |
+| — | F | DRIVER-ESCROW-LIABILITY-SUBACCOUNTS (research + design first) | Truth-in-leasing per-driver escrow accounting | MED | L | A3 series | ⏸ PARKED — auto-create a LIABILITY sub-account (driver's name) under the escrow control parent (verify exact parent name in LIVE QBO — 'Escrow' or 'Escrow 2026', do NOT guess). Escrow = driver's money (refundable on separation if no fines/damage). SEPARATE from A3 (liability vs QBO-149 asset). Preview-gated if it touches a locked page. |
+| — | F | DRIVER-SUBACCOUNT-AUTO-PROVISION (research + live-CoA verify first) | Per-driver named sub-accounts on hire | MED | L | A3 series | ⏸ PARKED — on driver-profile creation auto-create TWO named sub-accounts: (1) LIABILITY under escrow parent, (2) ASSET under 'Driver Cash Advance' (QBO-149). Verify parent names in LIVE QBO (do NOT guess). Portable (resolve parents by stable account key, not UUID — B1-seed lesson) + idempotent. Plus a BULK BACKFILL path (Excel upload) for existing drivers. Feeds escrow deductions → driver escrow liability; A3-2 recovery → driver advance asset. Preview-gated if it touches a locked page. |
 
 ## Pending Queue (live, grouped)
 

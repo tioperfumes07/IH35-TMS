@@ -37,6 +37,8 @@ describe("driver settlement engine (Block-22)", () => {
 
     mocked.queryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("SELECT set_config('app.operating_company_id'")) return { rows: [] };
+      // A3-2: cutover flag OFF => legacy blunt path (these fixtures assert the legacy behavior).
+      if (sql.includes("feature_flags")) return { rows: [{ default_enabled: false }] };
       if (sql.includes("FROM payroll.driver_settlements") && sql.includes("pay_period_start") && sql.includes("LIMIT 1")) {
         if (sql.includes("FOR UPDATE")) return { rows: [] };
         if (!insertedLines.length) return { rows: [] };
@@ -116,6 +118,8 @@ describe("driver settlement engine (Block-22)", () => {
 
     mocked.queryMock.mockImplementation(async (sql: string) => {
       if (sql.includes("SELECT set_config('app.operating_company_id'")) return { rows: [] };
+      // A3-2: cutover flag OFF => legacy blunt path (these fixtures assert the legacy behavior).
+      if (sql.includes("feature_flags")) return { rows: [{ default_enabled: false }] };
       if (sql.includes("FROM payroll.driver_settlements") && sql.includes("FOR UPDATE")) {
         return {
           rows: [
