@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH2-LOAN-WIZARD",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for Finance Hub FH-2 (Loan Wizard, 'create everything'). Closes the QBO gap (loan-for-asset setup is a manual multi-step process). One form -> all transactions: inputs (asset(s), purchase price, down payment, from-account, loan amount, rate, term, first-payment date, lender). Auto-creates (gated, preview-first, on confirm): (a) Note Payable liability account, (b) FH-1 fixed asset(s) + depreciation schedule, (c) down-payment cash transaction, (d) FH-3 amortization schedule, (e) balanced opening JE (Dr Asset / Cr Note Payable / Cr Cash, balance-or-fail). Trade-in/fees/taxes capitalize into asset basis (QBO guidance); trade-in can dispose an existing asset. Multiple assets on one loan (finance.loan_assets split). Wizard run audit record. Consumes FH-1 + FH-3. NO code, no DDL, no posting. VOID != DELETE. Flag LOAN_WIZARD_ENABLED default OFF. Designed live with Jorge + GUARD-verifies-vs-QuickBooks before merge.",
+  "branch": "docs/fh2-loan-wizard",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH2-LOAN-WIZARD.json",
+    "docs/specs/FH-2-LOAN-WIZARD-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
