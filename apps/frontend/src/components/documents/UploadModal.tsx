@@ -15,9 +15,11 @@ import { useToast } from "../Toast";
 import { useQuery } from "@tanstack/react-query";
 
 type UploadModalProps = {
-  entityType: FileEntityType;
-  entityId: string;
-  entityName: string;
+  // Optional: when omitted, the upload is a STANDALONE document (no entity link) —
+  // used by the Documents page. Existing entity callers pass all three (unchanged).
+  entityType?: FileEntityType;
+  entityId?: string;
+  entityName?: string;
   parentFileId?: string;
   onClose: () => void;
   onUploadSuccess: () => void;
@@ -78,7 +80,7 @@ export function UploadModal({
   const abortUploadRef = useRef<(() => void) | null>(null);
 
   const categoriesQuery = useQuery({
-    queryKey: ["file-categories", entityType],
+    queryKey: ["file-categories", entityType ?? "all"],
     queryFn: () => listFileCategories(entityType).then((result) => result.categories.filter((category) => category.is_active)),
   });
 
@@ -138,7 +140,8 @@ export function UploadModal({
             mime_type: selectedFile.type || "application/octet-stream",
             size_bytes: selectedFile.size,
             category_id: categoryId,
-            entity_links: [{ entity_type: entityType, entity_id: entityId }],
+            // standalone upload (Documents page) sends no entity link
+            ...(entityType && entityId ? { entity_links: [{ entity_type: entityType, entity_id: entityId }] } : {}),
           });
 
       await uploadWithProgress(uploadInit.presigned_url, selectedFile, setProgress, (abortFn) => {
@@ -167,7 +170,7 @@ export function UploadModal({
   }
 
   return (
-    <Modal open onClose={onClose} title={parentFileId ? `Upload New Version - ${entityName}` : `Upload Document - ${entityName}`}>
+    <Modal open onClose={onClose} title={`${parentFileId ? "Upload New Version" : "Upload Document"}${entityName ? ` - ${entityName}` : ""}`}>
       <form className="space-y-3" onSubmit={handleSubmit}>
         <div
           onDragOver={(event) => {

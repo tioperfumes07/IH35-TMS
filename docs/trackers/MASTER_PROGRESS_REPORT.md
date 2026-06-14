@@ -50,7 +50,7 @@ Built non-stop, default mode, each its own PR (Jorge merges as they land). No mo
 | 1 | Dispatch Planners C-1 (split control) | ✅ BUILT | this PR |
 | 2 | load-update request type | ⏳ queued | — |
 | 3 | complaint request type | ⏳ queued | — |
-| 4 | Q · docs-upload UI | ⏳ queued | — |
+| 4 | Q · docs-upload UI — "Upload document" button on Documents page → existing UploadModal generalized to support STANDALONE uploads (entity props now optional; no entity_links = standalone); uses existing docs upload API (requestUploadUrl/confirmUpload/R2); refetches list. No backend change | ✅ BUILT | this PR |
 | 5 | AF · help-article scaffold stubs | ⏳ queued | — |
 | 6 | B7 · driver-inbox reporting | ⏳ queued | — |
 | 7 | K/AL · classes bulk-edit (batch-PATCH + multi-select) | ⏳ queued | — |
