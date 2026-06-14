@@ -1,4 +1,4 @@
-# IH35-TMS — Master Progress Report (Reconciled, v26)
+# IH35-TMS — Master Progress Report (Reconciled, v27)
 
 > **SOURCE OF TRUTH.** This Markdown file is the living tracker. The Excel export in [`exports/`](exports/) is generated from it — do not hand-edit the xlsx as the master.
 > Generated **2026-06-13 13:01:33 CDT** by read-only repo + GitHub reconciliation.
@@ -7,7 +7,7 @@
 
 **Every future block's PR MUST update its own row's `Reconciled Status` (+ `Reconcile Note`) in this file, in the SAME PR.** The tracker therefore never drifts from `main`. No separate tracker-only commits; no self-merge — Jorge merges. When a block ships, flip its row to `DONE`, add the PR# + merge SHA to the note, and (if it was in §Next Blocks) drop it from that queue.
 
-## 🔎 FULL BLOCK-SET RECON — 2026-06-14 (verified vs LIVE CODE, not tracker claims)
+## 🔎 FULL BLOCK-SET RECON — 2026-06-14 (verified vs LIVE CODE, not tracker claims) · CONTRADICTIONS 5/5 RESOLVED
 
 GUARD ran a complete read-only recon across the entire block set (B1–B10, A3 series, Wave-4 rows 650–680, N1–N20 roadmap) against live code/PRs/migrations. The tracker had shown both false-PENDING and false-DONE. Reconciled verdicts are now in each row (Wave-4: col6=verdict, col7=evidence). Summary:
 
@@ -15,18 +15,18 @@ GUARD ran a complete read-only recon across the entire block set (B1–B10, A3 s
 B1–B6 (#918–#923) · A3-1/2/3 full series (#925/#929/#930/#931/#932) + flag ON in prod · driver sub-account asset #933 / escrow #934 / backfill-dry-run #935 (#936 stale-dup closed) · Block U Fuel-subnav · Block V Dispatch-subnav · Block H url-canonicalize (#389) · Block J equip-dedup (#391) · Block C Trailer-profile · Block D Parts-catalog · Block I lists-counts (#393) · Block AM Loves (#399) · Block AN Plaid (#402) · Block AA test-seed-archive (#400/#910) · Block AP PM-schedule · Block AR Factoring (#904) · Block AG Form-425C · Block AH Safety (LOCKED) · Block AS modal-audit (#398/#916) · Block AK escrow-counter (#395) · Block AI last-login (#394) · Block AQ safety-pseudo-user (#397) · Block O default-classifications (#401) · QBO vendors-push (#390) · QBO COA-push (#392).
 
 **2. GENUINELY PENDING:**
-- _SAFE-ADDITIVE (auto-buildable):_ Block P Best-Bank (no code) · Block F reefer 15-min poller cron · Block E Samsara live-mileage ingest cron · Block G catalog stub-fill (~27 stubs) · Block Q docs-upload frontend UI · Block AF help articles (~8 modules) · B7 driver-inbox reporting · request types diesel/repair/load-update/complaint.
-- _FINANCE-GATED (needs Jorge):_ B9 $25/load escrow deduction · B10 settlement confirm/skip · expense request type · Block L QBO master-entity push/bidi · A3-CUTOVER (remove legacy blunt path) · B8 money-spine CI guards.
+- _SAFE-ADDITIVE (auto-buildable):_ Block P Best-Bank (no code) · Block F reefer 15-min poller cron · Block E Samsara live-mileage ingest cron · Block Q docs-upload frontend UI · Block AF help articles (~8 modules) · B7 driver-inbox reporting · request types diesel/repair/load-update/complaint.
+- _FINANCE-GATED (needs Jorge):_ B9 $25/load escrow deduction · B10-SETTLEMENT-CONFIRM (settlement-level confirm/skip-all; distinct from Block-13 DISP-FINES-DEDUCT load-level, DONE) · expense request type · A3-CUTOVER (remove legacy blunt path) · B8 money-spine CI guards · _future:_ QBO-INVOICE-BILL-PULL (+ optional conflict-resolution UI) — spun out of Block L, not scoped.
 - _DATA-MUTATION (needs Jorge + plan):_ Block Z driver-CSV import (parser exists, no user route) · (Block J/AA/O already shipped as reversible archive migrations).
 - _LOCKED-PAGE:_ none pending (Block AH/AQ already done; any Safety change needs preview).
 
-**3. CONTRADICTIONS / UNKNOWNS (human call):**
-- Block L "QBO bidi": pull shipped (#500/#501/#503), master push partial — confirm remaining scope.
-- Block-A "187 drift": detection/remediation shipped piecemeal (#177/#878), no formal closeout PR.
-- Block G "34 stubs": 27 stub markers found vs 34 claimed — confirm which catalogs to fill.
-- B10 vs "Lane A Block 13": FinesDeductionsCard stub references "Block 13 ships" — naming overlap, confirm they're the same.
-- MD-5-19-RECONCILE: no code artifact matches — clarify expected closeout.
-- Driver-escrow research spec authored 2026-06-14 (docs/specs/DRIVER-ESCROW-RESEARCH.md) — grounds B9 deduction engine; not yet a row.
+**3. CONTRADICTIONS — RESOLVED 2026-06-14 (5/5, decisions locked by Jorge):**
+- ✅ Block L "QBO bidi" → **DONE.** Master data is fully bidirectional: PULL #500/#501/#503 + PUSH #192/#194/#195/#197 (accounts/customers/vendors/items). Invoices/bills push-only (#199/#201) by design. Invoice/bill PULL + conflict-resolution UI are OUT of scope → spun out as new future block QBO-INVOICE-BILL-PULL.
+- ✅ Block-A "187 drift" → **DONE.** Detection #177 (startup drift guard + CI assertion) + remediation #878 (re-homed 5 migrations); `verify:startup-migration-drift-guard` passes. Closeout note only — nothing was missing.
+- ✅ Block G "34 stubs" → **DONE.** 0 real stubs; 60 catalog pages implemented; the 27 grep hits were false-positives (TODO/placeholder strings in working pages); real stub routes purged in #518 + CI guard `verify:no-stub-catalog-pages`. Supersedes the earlier PARTIAL estimate.
+- ✅ B10 vs "Lane A Block 13" → **DISTINCT (naming collision).** Block 13 (DISP-FINES-DEDUCT, load-level fines/escrow card) = DONE (#762). B10 (settlement-level confirm/skip-all) = PENDING, FINANCE-GATED, sequence after B9. Orphaned `dispatch/drawer-tabs/FinesDeductionsCard.tsx` "Block 13 ships" stub flagged for later code cleanup (not now).
+- ✅ MD-5-19-RECONCILE → **DROPPED.** Stale orphan, zero code/PR/commit references, flagged ~30-40% redundant at intake. Row removed (was Wave-4 #680/Order 65).
+- ℹ️ Driver-escrow research spec authored 2026-06-14 (docs/specs/DRIVER-ESCROW-RESEARCH.md) — grounds B9 deduction engine.
 
 ## Reconciliation snapshot
 
@@ -899,9 +899,9 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 655 | Wave 4 | Block D Parts Ca… | HIGH | PENDING | DONE | MaintenancePartsCatalog.tsx + OemPartsCatalog.tsx + InventoryPartsStockPage |  | Order 40 |
 | 656 | Wave 4 | Block E Services… | Samsara mi + 12k/mo — HIGH | PENDING | PARTIAL | service intervals exist (eta-calculator.ts, 12k default); NO live Samsara mileage ingest cron |  | Order 41 |
 | 657 | Wave 4 | Block F Reefer H… | 15-min polls — HIGH | PENDING | PARTIAL | reefer-hours tables/routes/UI (mig 0366); NO 15-min poller cron (manual ingest only) |  | Order 42 |
-| 658 | Wave 4 | Block G Catalog … | 34 stubs — P1 | PENDING | PARTIAL | ~27/106 list pages still stub markers; prioritize which catalogs to fill |  | Order 43 |
+| 658 | Wave 4 | Block G Catalog … | 34 stubs — P1 | PENDING | DONE | 0 real stubs; 60 catalog pages implemented; 27 grep hits were TODO/placeholder false-positives in working pages; real stub routes purged #518 + CI guard verify:no-stub-catalog-pages (supersedes prior PARTIAL) |  | Order 43 |
 | 659 | Wave 4 | Block I LISTS he… | 6/8 wrong — P1 | PENDING | DONE | lists-counts.routes.ts + useModuleCount.ts, PR #393 |  | Order 44 |
-| 660 | Wave 4 | Block L QBO bidi… | COA/cust/vend local-only — P1 | PENDING | PARTIAL | FIN: PULL done (#500/#501/#503); master-entity push/bidi incomplete — needs scope call |  | Order 45 |
+| 660 | Wave 4 | Block L QBO bidi… | COA/cust/vend local-only — P1 | PENDING | DONE | Master data fully bidirectional: PULL #500/#501/#503 + PUSH #192/#194/#195/#197 (accounts/customers/vendors/items); invoices/bills push-only #199/#201 by design. Invoice/bill PULL + conflict-resolution UI OUT of scope → spun out as QBO-INVOICE-BILL-PULL (row 680) |  | Order 45 |
 | 661 | Wave 4 | Block AM Loves c… | P1 | PENDING | DONE | PR #399 (loves-card-import cron + status) |  | Order 46 |
 | 662 | Wave 4 | Block AN Plaid s… | Amex/Wells — P1 | PENDING | DONE | PR #402 (plaid-transactions-sync + status) |  | Order 47 |
 | 663 | Wave 4 | Block Q DOCS upl… | P1 | PENDING | PARTIAL | backend attachments.routes.ts + R2 done; NO frontend upload UI |  | Order 48 |
@@ -920,8 +920,8 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 676 | Wave 4 | Block AK Bank es… | P3 | PENDING | DONE | PR #395 (bank driver-escrow counter label clarify) |  | Order 61 |
 | 677 | Wave 4 | Block P 'Best Ba… | P3 | PENDING | NOT-BUILT | SAFE-ADDITIVE: no code found (grep "best bank" = 0) — genuinely pending |  | Order 62 |
 | 678 | Wave 4 | Block AI User la… | P3 | PENDING | DONE | PR #394 (users.last_login_at populate + render) |  | Order 63 |
-| 679 | Wave 4 | Block-A Migratio… | 187 drift — foundation | PENDING | PARTIAL | drift detect/remediate shipped #177/#878; no formal Block-A closeout PR |  | Order 64 |
-| 680 | Wave 4 | MD-5-19-RECONCIL… | Audit close | PENDING | UNKNOWN | reconciliation-worker.service.ts exists; no MD-5-19 closeout artifact identified — needs human call |  | Order 65 |
+| 679 | Wave 4 | Block-A Migratio… | 187 drift — foundation | PENDING | DONE | Detection #177 (startup drift guard + CI assertion) + remediation #878 (re-homed 5 migrations to db/migrations/); verify:startup-migration-drift-guard passes. Closeout — nothing was missing |  | Order 64 |
+| 680 | Wave 4 | QBO-INVOICE-BILL-PULL | spun out of Block L — future, NOT scoped | PARKED | PARKED | invoice/bill QBO→TMS pull + optional conflict-resolution UI; FINANCE-GATED when scoped. (Replaces dropped row MD-5-19-RECONCILE: stale orphan, zero code/PR/commit refs, ~30-40% redundant at intake) |  | Order 65 |
 | | **▼ WAVE 5 — HARDENING SWEEPS (interleaved)** | | | | | | | |
 | 681 | Wave 5 | Block N RLS cros… | Companion to BLOCK-10 | PENDING | PENDING |  |  | Order 66 |
 | 682 | Wave 5 | Block M Audit-lo… | Mutation routes — companion to BLOCK-11 | PENDING | PENDING |  |  | Order 67 |
