@@ -1,0 +1,20 @@
+{
+  "block_id": "FEAT-REEFER-HOURS-POLL-CRON",
+  "status": "BUILD",
+  "classification": "FEATURE",
+  "phase": "AUTO-MODE-QUEUE",
+  "task": "Block F — reefer hours 15-minute poller cron (additive backend, no money path). The ingest (ingestReeferHoursFromSamsaraForCompany) and reefer-hours tables/routes/UI already existed (mig 0366) but ingest was only reachable via a manual POST. Adds cron/reefer-hours-poll.cron.ts: node-cron */15 per active Samsara-enabled tenant, mirrors samsara-positions-cron exactly (withLuciaBypass, tenant-context guard, set_config, per-tenant audit events, wrapBackgroundJobTick). Env-gated via ENABLE_REEFER_HOURS_POLL_CRON. Registered in index.ts after samsara-positions-cron. Includes a unit test. No DB migration, no money path.",
+  "branch": "feat/reefer-hours-poll-cron",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-REEFER-HOURS-POLL-CRON.json",
+    "apps/backend/src/cron/reefer-hours-poll.cron.ts",
+    "apps/backend/src/cron/reefer-hours-poll.cron.test.ts",
+    "apps/backend/src/index.ts",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

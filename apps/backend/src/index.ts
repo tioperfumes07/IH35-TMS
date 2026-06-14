@@ -290,6 +290,7 @@ import { initializeSamsaraWebhookProjectionCron } from "./cron/samsara-webhook-p
 import { initializeSamsaraRemoteCountCollectorCron } from "./cron/samsara-remote-count-collector.cron.js";
 import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron.js";
 import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js";
+import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeBankReconAutoMatchCron } from "./cron/bank-recon-auto-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
@@ -946,6 +947,13 @@ async function main() {
     app.log.info("[STARTUP] samsara-positions-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-positions-cron failed");
+  }
+
+  try {
+    initializeReeferHoursPollCron(app);
+    app.log.info("[STARTUP] reefer-hours-poll-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] reefer-hours-poll-cron failed");
   }
 
   try {
