@@ -51,7 +51,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 |---|---|---|---|---|---|---|---|
 | 1 | A | A3-1 ledger DDL (remaining_balance_cents + status) | — | — | — | — | ✅ DONE — merged #925 |
 | 1 | A | A3-2 capped recovery ENGINE + 6 locked tests (pure) | Only live path that can mishandle real money | HIGH | M | A3-1 (done) | ✅ ENGINE merged #929 |
-| 1 | A | A3-2 live-path WIRING (flag-gated, cash-advance only) + override DDL | Wires engine into computeSettlement behind SETTLEMENT_CAPPED_RECOVERY_ENABLED (default OFF) | HIGH | M | #929 | 🟢 WIRING BUILT — PR __WPR__ · flag OFF = byte-identical (tested) · GL draw-down to QBO-149 STOPPED for your decision (option-a not clean vs NET bill) · no paycheck change until A3-3 |
+| 1 | A | A3-2 live-path WIRING (flag-gated, cash-advance only) + override DDL | Wires engine into computeSettlement behind SETTLEMENT_CAPPED_RECOVERY_ENABLED (default OFF) | HIGH | M | #929 | 🟢 WIRING BUILT — PR #930 · flag OFF = byte-identical (tested) · GL draw-down to QBO-149 STOPPED for your decision (option-a not clean vs NET bill) · no paycheck change until A3-3 |
 | 1 | A | A3-3 shadow-run cutover (old vs new agree) + GL restructure | Gates actually paying from the new path | HIGH | M | A3-2 | ⏸ PARKED (depends on A3-2 + GUARD decisions) |
 | 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR #927 (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
 | 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
