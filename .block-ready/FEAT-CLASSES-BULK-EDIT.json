@@ -1,0 +1,21 @@
+{
+  "block_id": "FEAT-CLASSES-BULK-EDIT",
+  "status": "BUILD",
+  "classification": "FEATURE",
+  "phase": "SAFE-ADDITIVE-QUEUE",
+  "task": "Safe-additive Block 7 — classes bulk-edit (additive, no migration, no money path). Backend: new POST /api/v1/catalogs/classes/bulk (op deactivate|reparent, ids[], parent_class_id?) role-gated (isCatalogWriteRole), each row audited via appendCrudAudit, self-reference guarded; single-record CRUD unchanged. Frontend: opt-in multi-select on the shared AccountingCatalogListPage (new enableBulkSelect + bulkBar props — checkbox column + select-all + bulk-action bar) used ONLY by Classes (the other 14 accounting catalogs unaffected); ClassesListPage renders a bulk bar with Deactivate-selected + Re-parent (class picker) calling bulkUpdateClasses. NOT CSV. No migration.",
+  "branch": "feat/classes-bulk-edit",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-CLASSES-BULK-EDIT.json",
+    "apps/backend/src/catalogs/classes.routes.ts",
+    "apps/frontend/src/api/catalogs-accounting.ts",
+    "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx",
+    "apps/frontend/src/pages/lists/accounting/ClassesListPage.tsx",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

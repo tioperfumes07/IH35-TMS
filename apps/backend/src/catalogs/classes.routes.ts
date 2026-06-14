@@ -34,6 +34,13 @@ const updateBodySchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
+// Block 7 — bulk edit: deactivate or re-parent the selected classes.
+const bulkBodySchema = z.object({
+  op: z.enum(["deactivate", "reparent"]),
+  ids: z.array(z.string().uuid()).min(1).max(200),
+  parent_class_id: z.string().uuid().nullable().optional(),
+});
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -239,6 +246,62 @@ export async function registerClassRoutes(app: FastifyInstance) {
       const code = (err as { code?: string }).code;
       const constraint = (err as { constraint?: string }).constraint;
       if (code === "23505") return reply.code(409).send({ error: mapClassConflict(constraint), field: constraint ?? null });
+      if (code === "23503") return reply.code(400).send({ error: "invalid_parent_class_id" });
+      throw err;
+    }
+  });
+
+  app.post("/api/v1/catalogs/classes/bulk", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsed = bulkBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const { op, ids, parent_class_id } = parsed.data;
+    if (op === "reparent" && parent_class_id && ids.includes(parent_class_id)) {
+      return reply.code(400).send({ error: "cannot_self_reference" });
+    }
+    try {
+      const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        let count = 0;
+        for (const id of ids) {
+          if (op === "deactivate") {
+            const res = await client.query(
+              `UPDATE catalogs.classes SET deactivated_at = now(), updated_by_user_id = $2
+               WHERE id = $1 AND deactivated_at IS NULL RETURNING id`,
+              [id, authUser.uuid]
+            );
+            if (res.rows[0]) {
+              await appendCrudAudit(client, authUser.uuid, "catalogs.classes.updated", {
+                resource_id: id,
+                resource_type: "catalogs.classes",
+                changes: { deactivated_at: { from: null, to: "now()" } },
+                bulk_op: "deactivate",
+              });
+              count += 1;
+            }
+          } else {
+            const res = await client.query(
+              `UPDATE catalogs.classes SET parent_class_id = $2::uuid, updated_by_user_id = $3
+               WHERE id = $1 RETURNING id`,
+              [id, parent_class_id ?? null, authUser.uuid]
+            );
+            if (res.rows[0]) {
+              await appendCrudAudit(client, authUser.uuid, "catalogs.classes.updated", {
+                resource_id: id,
+                resource_type: "catalogs.classes",
+                changes: { parent_class_id: { to: parent_class_id ?? null } },
+                bulk_op: "reparent",
+              });
+              count += 1;
+            }
+          }
+        }
+        return count;
+      });
+      return { updated };
+    } catch (err) {
+      const code = (err as { code?: string }).code;
       if (code === "23503") return reply.code(400).send({ error: "invalid_parent_class_id" });
       throw err;
     }

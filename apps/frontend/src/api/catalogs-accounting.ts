@@ -88,3 +88,15 @@ export const expenseCategoriesCatalogClient = createAccountingCatalogClient("exp
 export const paymentMethodsCatalogClient = createAccountingCatalogClient("payment-methods");
 export const taxCodesCatalogClient = createAccountingCatalogClient("tax-codes");
 export const currencyCodesCatalogClient = createAccountingCatalogClient("currency-codes");
+
+// Block 7 — bulk edit for Classes (deactivate / re-parent selected).
+export function bulkUpdateClasses(payload: {
+  op: "deactivate" | "reparent";
+  ids: string[];
+  parent_class_id?: string | null;
+}) {
+  return apiRequest<{ updated: number }>("/api/v1/catalogs/classes/bulk", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
