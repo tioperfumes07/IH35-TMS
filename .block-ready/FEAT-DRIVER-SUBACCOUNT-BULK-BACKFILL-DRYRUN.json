@@ -1,0 +1,22 @@
+{
+  "block_id": "FEAT-DRIVER-SUBACCOUNT-BULK-BACKFILL-DRYRUN",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "DRIVER-SUBACCOUNT-PROVISION",
+  "task": "Bulk backfill DRY-RUN for the per-driver asset + escrow sub-accounts (the per-hire path is #933 asset / #934 escrow). Extracted the shared idempotent resolve/skip decision planDriverSubAccount into the provision service (both provisioners now call it — no duplicated logic, no UUID hardcoding) and reused it in the backfill. runDriverSubAccountBackfill iterates the company's existing drivers (or an explicit list for the Excel/CSV path) and reports per driver {asset_subaccount, escrow_subaccount: CREATE|SKIP-exists|SKIP-no-parent} + totals. DEFAULT MODE = DRY-RUN: apply !== true performs ZERO writes (asserted in tests). The write path (apply=true) defaults OFF and is NOT exposed via any endpoint. Read-only GET /api/v1/payroll/driver-subaccount-backfill/dry-run (role-gated, withCompanyScope, apply hard-coded false). CSV roster parser accepted for the later Jorge-provided spreadsheet. STOP-DECISION #2 — the real mass-create against prod is Jorge's explicit manual go after reviewing a dry-run preview; NOT runnable in this block. Financial. No migration.",
+  "branch": "feat/driver-subaccount-bulk-backfill-dryrun",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-DRIVER-SUBACCOUNT-BULK-BACKFILL-DRYRUN.json",
+    "apps/backend/src/accounting/driver-subaccount-provision.service.ts",
+    "apps/backend/src/accounting/driver-subaccount-backfill.service.ts",
+    "apps/backend/src/accounting/driver-subaccount-backfill.routes.ts",
+    "apps/backend/src/accounting/__tests__/driver-subaccount-backfill.test.ts",
+    "apps/backend/src/index.ts",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

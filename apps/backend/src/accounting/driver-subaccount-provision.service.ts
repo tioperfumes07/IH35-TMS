@@ -47,6 +47,41 @@ export async function resolveCanonicalParentAccount(
   return res.rows[0]?.id ?? null;
 }
 
+/**
+ * The single source of the idempotent resolve/skip decision, shared by the per-driver provisioners
+ * AND the bulk backfill (no duplicated logic): resolve the canonical parent by name+type, then check
+ * whether the named sub-account already exists under it. NO writes.
+ */
+export type SubAccountPlan =
+  | { action: "create"; parentId: string; subAccountName: string }
+  | { action: "skip_exists"; parentId: string; existingId: string; subAccountName: string }
+  | { action: "skip_no_parent"; subAccountName: string };
+
+export async function planDriverSubAccount(
+  client: DbClient,
+  args: { parentName: string; parentType: string; subAccountName: string }
+): Promise<SubAccountPlan> {
+  const parentId = await resolveCanonicalParentAccount(client, {
+    accountName: args.parentName,
+    accountType: args.parentType,
+  });
+  if (!parentId) return { action: "skip_no_parent", subAccountName: args.subAccountName };
+
+  const existing = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM catalogs.accounts
+      WHERE account_name = $1
+        AND parent_account_id = $2::uuid
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [args.subAccountName, parentId]
+  );
+  if (existing.rows[0]) return { action: "skip_exists", parentId, existingId: existing.rows[0].id, subAccountName: args.subAccountName };
+  return { action: "create", parentId, subAccountName: args.subAccountName };
+}
+
 /** "Driver Cash Advance- <Driver Name>" — matches the live precedent format exactly. */
 export function driverAdvanceSubAccountName(driverName: string): string {
   return `${DRIVER_ADVANCE_PARENT_NAME}- ${driverName.trim()}`;
@@ -69,25 +104,14 @@ export async function provisionDriverAdvanceSubAccount(
 ): Promise<ProvisionResult> {
   const name = driverAdvanceSubAccountName(input.driverName);
 
-  const parentId = await resolveCanonicalParentAccount(client, {
-    accountName: DRIVER_ADVANCE_PARENT_NAME,
-    accountType: "Asset",
+  const plan = await planDriverSubAccount(client, {
+    parentName: DRIVER_ADVANCE_PARENT_NAME,
+    parentType: "Asset",
+    subAccountName: name,
   });
-  if (!parentId) return { created: false, reason: "parent_not_found" };
-
-  // Idempotency: same name under the same parent already present.
-  const existing = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      WHERE account_name = $1
-        AND parent_account_id = $2::uuid
-        AND deactivated_at IS NULL
-      LIMIT 1
-    `,
-    [name, parentId]
-  );
-  if (existing.rows[0]) return { created: false, reason: "already_exists", accountId: existing.rows[0].id };
+  if (plan.action === "skip_no_parent") return { created: false, reason: "parent_not_found" };
+  if (plan.action === "skip_exists") return { created: false, reason: "already_exists", accountId: plan.existingId };
+  const parentId = plan.parentId;
 
   const ins = await client.query<{ id: string }>(
     `
@@ -140,24 +164,14 @@ export async function provisionDriverEscrowSubAccount(
 ): Promise<ProvisionResult> {
   const name = driverEscrowSubAccountName(input.driverName);
 
-  const parentId = await resolveCanonicalParentAccount(client, {
-    accountName: DRIVER_ESCROW_PARENT_NAME,
-    accountType: "Liability",
+  const plan = await planDriverSubAccount(client, {
+    parentName: DRIVER_ESCROW_PARENT_NAME,
+    parentType: "Liability",
+    subAccountName: name,
   });
-  if (!parentId) return { created: false, reason: "parent_not_found" };
-
-  const existing = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      WHERE account_name = $1
-        AND parent_account_id = $2::uuid
-        AND deactivated_at IS NULL
-      LIMIT 1
-    `,
-    [name, parentId]
-  );
-  if (existing.rows[0]) return { created: false, reason: "already_exists", accountId: existing.rows[0].id };
+  if (plan.action === "skip_no_parent") return { created: false, reason: "parent_not_found" };
+  if (plan.action === "skip_exists") return { created: false, reason: "already_exists", accountId: plan.existingId };
+  const parentId = plan.parentId;
 
   const ins = await client.query<{ id: string }>(
     `
