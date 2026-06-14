@@ -1,0 +1,19 @@
+{
+  "block_id": "FEAT-TASK-BOARD-CREATE-TASK-UI",
+  "status": "BUILD",
+  "classification": "FEATURE",
+  "phase": "AUTO-MODE-QUEUE",
+  "task": "Block B — Create-Task UI (additive, frontend-only, no money path). The Task Board displayed tasks but had no create action. Adds a '+ Create Task' button to the Task Board PageHeader and a CreateTaskModal (title, assignee from listUsers, scheduled date, category, priority, description) that calls the EXISTING POST /api/v1/tasks via createTask() and invalidates the planner query so the grid refreshes. No backend change (endpoint + tasks.task table already exist). No layout redesign of the board. Uses '+ Create' vocab per locked UI convention. Status defaults to Pending (not a create field).",
+  "branch": "feat/task-board-create-task-ui",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-TASK-BOARD-CREATE-TASK-UI.json",
+    "apps/frontend/src/components/tasks/CreateTaskModal.tsx",
+    "apps/frontend/src/pages/tasks/TaskBoardPage.tsx",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
