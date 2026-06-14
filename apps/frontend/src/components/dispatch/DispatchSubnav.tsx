@@ -31,6 +31,7 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   { label: "Factoring", href: "/accounting/factoring", badgeKey: "factoring" },
   {
     label: "Planning",
+    href: "/dispatch/planners/loads",
     children: [
       { label: "Driver Planner", href: "/dispatch/planners/driver" },
       { label: "Truck Planner", href: "/dispatch/planners/truck" },
@@ -239,21 +240,34 @@ function DropdownColumn({
     <li role="none" className="nav-item-with-dropdown">
       {/* Click-to-toggle persistent menu (overrides locked-decision #728 hover pattern per Jorge).
           Opens on click, STAYS open until an item is chosen, an outside click, or Escape. */}
-      <div>
+      <div className="nav-split">
+        {item.href ? (
+          // C-1 split control: the LABEL navigates to the default planner; the CHEVRON keeps the
+          // click-to-toggle persistent submenu (locked decision #728 preserved — see test).
+          <Link role="menuitem" to={item.href} className={parentActive ? "active" : undefined}>
+            {item.label}
+            {groupBadgeTotal > 0 ? <CountBadge count={groupBadgeTotal} /> : null}
+          </Link>
+        ) : null}
         <button
           ref={btnRef}
           type="button"
-          role="menuitem"
+          role={item.href ? undefined : "menuitem"}
           aria-haspopup="true"
           aria-expanded={open}
           aria-controls={menuId}
-          className={parentActive ? "active" : undefined}
+          aria-label={item.href ? `${item.label} submenu` : undefined}
+          className={!item.href && parentActive ? "active" : undefined}
           id={`${menuId}-trigger`}
           onClick={() => (open ? setOpen(false) : show())}
           onKeyDown={onButtonKeyDown}
         >
-          {item.label}
-          {groupBadgeTotal > 0 ? <CountBadge count={groupBadgeTotal} /> : null}
+          {item.href ? null : (
+            <>
+              {item.label}
+              {groupBadgeTotal > 0 ? <CountBadge count={groupBadgeTotal} /> : null}
+            </>
+          )}
           <ChevronDown size={12} aria-hidden />
         </button>
         {open ? (

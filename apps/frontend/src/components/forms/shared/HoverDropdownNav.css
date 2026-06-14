@@ -41,6 +41,20 @@
   border-bottom-color: var(--color-text-primary);
 }
 
+/* C-1 split control: a navigable label (Link) + a click-toggle chevron (button)
+   sit flush so they read as a single nav item. */
+.nav-item-with-dropdown .nav-split {
+  display: inline-flex;
+  align-items: stretch;
+}
+.nav-item-with-dropdown .nav-split > a[role="menuitem"] {
+  padding-right: var(--space-2);
+}
+.nav-item-with-dropdown .nav-split > button {
+  padding-left: var(--space-2);
+  gap: 0;
+}
+
 .nav-dropdown {
   position: absolute;
   top: 100%;
