@@ -55,7 +55,7 @@ export function USMCAActivationPanel() {
     mutationFn: (requested_state: ActivationState) =>
       apiRequest("/api/v1/usmca/activation/transition", {
         method: "POST",
-        body: JSON.stringify({ requested_state }),
+        body: { requested_state },
       }),
     onSuccess: () => {
       pushToast("State transition successful", "success");
@@ -68,7 +68,7 @@ export function USMCAActivationPanel() {
     mutationFn: ({ item_id, completed }: { item_id: string; completed: boolean }) =>
       apiRequest("/api/v1/usmca/activation/checklist-item", {
         method: "PATCH",
-        body: JSON.stringify({ item_id, completed }),
+        body: { item_id, completed },
       }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["usmca", "activation"] }),
   });

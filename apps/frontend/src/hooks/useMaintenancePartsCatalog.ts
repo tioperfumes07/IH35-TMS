@@ -55,7 +55,7 @@ export function useCreateMaintPart(_operatingCompanyId: string) {
     mutationFn: (body: Omit<MaintPartRow, "id" | "created_at"> & { operating_company_id: string }) =>
       apiRequest<MaintPartRow>("/api/v1/catalogs/maintenance/parts-master", {
         method: "POST",
-        body: JSON.stringify(body),
+        body,
       }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["catalogs", "maintenance", "parts-master"] }),
   });

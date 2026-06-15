@@ -1,0 +1,21 @@
+{
+  "block_id": "FIX-DOUBLE-STRINGIFY-SWEEP-NONMONEY",
+  "branch": "fix/double-stringify-sweep-nonmoney",
+  "phase": "BUGFIX",
+  "task": "Final double-stringify sweep (sibling of the task-create #970 and money-path #971 fixes) — the remaining NON-money api clients. Same root cause: these passed body: JSON.stringify(...) to apiRequest, which already does the single JSON.stringify, so the body double-encoded to a quoted JSON string and the server would 400 'expected object, received string' on use. Fix (frontend only, no migration): pass the RAW OBJECT in compliance.createComplianceRule, document-alerts.updateDocumentAlertRule + acknowledgeDocumentAlert, useMaintenancePartsCatalog (parts-master create), USMCAActivationPanel (transition + checklist-item), and the safety anomaly RuleEditor (seed-defaults) + AnomalyDashboard (resolve). Adds api/nonmoney-double-stringify.test.ts asserting the compliance + document-alert bodies are objects. After this, a full-frontend scan shows ZERO remaining apiRequest+JSON.stringify double-stringify sites.",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/FIX-DOUBLE-STRINGIFY-SWEEP-NONMONEY.json",
+    "apps/frontend/src/api/compliance.ts",
+    "apps/frontend/src/api/document-alerts.ts",
+    "apps/frontend/src/api/nonmoney-double-stringify.test.ts",
+    "apps/frontend/src/hooks/useMaintenancePartsCatalog.ts",
+    "apps/frontend/src/pages/admin/USMCAActivationPanel.tsx",
+    "apps/frontend/src/pages/safety/anomaly/RuleEditor.tsx",
+    "apps/frontend/src/pages/safety/anomaly/AnomalyDashboard.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

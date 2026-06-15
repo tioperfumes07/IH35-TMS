@@ -14,7 +14,7 @@ export function RuleEditor({ operatingCompanyId, isOwner }: Props) {
     ),
   });
   const seed = useMutation({
-    mutationFn: () => apiRequest("/api/safety/anomaly/seed-defaults", { method: "POST", body: JSON.stringify({ operating_company_id: operatingCompanyId }) }),
+    mutationFn: () => apiRequest("/api/safety/anomaly/seed-defaults", { method: "POST", body: { operating_company_id: operatingCompanyId } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["anomaly-rules"] }),
   });
   if (!isOwner) return <p className="p-3 text-sm text-gray-600">Owner access required to edit rules.</p>;

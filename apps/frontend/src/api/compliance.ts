@@ -49,7 +49,7 @@ export function fetchComplianceLog(operatingCompanyId: string) {
 export function createComplianceRule(payload: Record<string, unknown>) {
   return apiRequest<{ rule: Record<string, unknown> }>("/api/v1/compliance/notification-rules", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
