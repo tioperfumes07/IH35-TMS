@@ -167,8 +167,8 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         `
           SELECT
             COUNT(*)::int AS total_units,
-            COUNT(*) FILTER (WHERE status = 'active')::int AS active_units,
-            COUNT(*) FILTER (WHERE status IN ('shop', 'in_shop'))::int AS in_shop_units,
+            COUNT(*) FILTER (WHERE status = 'InService')::int AS active_units,
+            COUNT(*) FILTER (WHERE status = 'InMaintenance')::int AS in_shop_units,
             COUNT(*) FILTER (WHERE COALESCE(is_oos, false))::int AS out_of_service_units,
             COALESCE(AVG(EXTRACT(YEAR FROM age(now(), COALESCE(acquired_date::timestamp, created_at)))), 0)::numeric AS avg_age_years
           FROM mdata.units
