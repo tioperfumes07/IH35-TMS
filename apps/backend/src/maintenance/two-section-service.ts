@@ -403,30 +403,53 @@ async function copyToAccountingLines(
             ]
           );
         })()
-      : await client.query<{ id: string }>(
-          `
-            INSERT INTO ${destinationTable} (
-              ${destinationFkColumn}, line_sequence, amount, description, section, parent_line_uuid,
-              expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-            RETURNING id
-          `,
-          [
-            destinationId,
-            sequence,
-            asNumber(row.amount),
-            row.description,
-            row.section,
-            parentMapped,
-            row.expense_category_uuid,
-            row.service_item_uuid,
-            row.part_uuid,
-            row.labor_rate_uuid,
-            row.part_location_codes ?? null,
-            row.id,
-          ]
-        );
+      : await (async () => {
+          // GAP-EXPENSES Phase 1.5 (expense branch only): integer cents is the source of
+          // truth on accounting.expense_lines; `amount` (dollars) is a synchronized mirror
+          // (amount = amount_cents/100), kept for one release then dropped in
+          // CLEANUP-EXPENSE-LINES-DROP-AMOUNT-DOLLARS.
+          const amountCents = Math.round(asNumber(row.amount) * 100);
+          return client.query<{ id: string }>(
+            `
+              INSERT INTO accounting.expense_lines (
+                expense_id, line_sequence, amount_cents, amount, description, section, parent_line_uuid,
+                expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+              RETURNING id
+            `,
+            [
+              destinationId,
+              sequence,
+              amountCents,
+              amountCents / 100,
+              row.description,
+              row.section,
+              parentMapped,
+              row.expense_category_uuid,
+              row.service_item_uuid,
+              row.part_uuid,
+              row.labor_rate_uuid,
+              row.part_location_codes ?? null,
+              row.id,
+            ]
+          );
+        })();
     idMap.set(row.id, String(insert.rows[0]?.id ?? ""));
+  }
+
+  // GAP-EXPENSES Phase 1.5 (expense branch only): reconcile the parent header total to the
+  // lines just written, in this same transaction (app makes the state coherent; the deferred
+  // constraint trigger is the fail-loud backstop, inert until Phase 2 sets posting_status).
+  if (destinationTable === "accounting.expense_lines") {
+    await client.query(
+      `
+        UPDATE accounting.expenses
+        SET total_amount_cents = COALESCE(
+              (SELECT SUM(amount_cents) FROM accounting.expense_lines WHERE expense_id = $1), 0)
+        WHERE id = $1
+      `,
+      [destinationId]
+    );
   }
 }
 

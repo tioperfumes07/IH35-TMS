@@ -284,6 +284,7 @@
     "verify:qbo-sync-health-tenant-scope": "node scripts/verify-qbo-sync-health-tenant-scope.mjs",
     "verify:no-test-units-in-prod": "node scripts/verify-no-test-units-in-prod.mjs",
     "verify:expenses-cents-void": "node scripts/verify-expenses-cents-and-void-not-delete.mjs",
+    "verify:expense-balance-invariant": "node scripts/verify-expense-balance-invariant.mjs",
     "verify:qbo-customer-sync-tenant-chain": "node scripts/verify-qbo-customer-sync-tenant-chain.mjs",
     "verify:qbo-conflict-detection-tenant-scope": "node scripts/verify-qbo-conflict-detection-tenant-scope.mjs",
     "verify:qbo-webhook-fail-closed": "node scripts/verify-qbo-webhook-fail-closed.mjs",

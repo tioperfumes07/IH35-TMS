@@ -9,6 +9,18 @@
 
 ---
 
+## GUARD rulings (locked 2026-06-15) + one builder correction
+1. **Mechanism = Option A**, invariant **unconditional, no carve-out:** `<gate> ⇒ total_amount_cents = SUM(expense_lines.amount_cents)`. Inert in 1.5 (nothing GL-posts). Phase-2 DoD: every GL-posted expense carries ≥1 line; direct/un-sourced synthesize one line to a required default category.
+2. **Gate on posted = yes**, fire on the post transition + on UPDATE of posted rows/lines (no post-then-mutate evasion). Triggers on **both** tables.
+3. **`amount` mirror = synchronized:** writer sets `amount_cents` (source of truth) **and** `amount = amount_cents/100` in the same write, one release; drop in a **tracked** cleanup, block ID assigned now → **`CLEANUP-EXPENSE-LINES-DROP-AMOUNT-DOLLARS`**.
+4. **WO writer sets `total_amount_cents = sum(lines)`** in the same transaction as the line writes; trigger is the fail-loud backstop.
+5. **bill_lines symmetry:** diff to the shared `copyToAccountingLines` must be expense-branch-only; both branches shown; GUARD verifies bill non-regression independently on branch.
+
+**⚠️ BUILDER CORRECTION to ruling 2 — the gate column (flagged for GUARD confirmation).**
+GUARD said gate on `status='posted'` and "nothing posts in 1.5 → inert." **Verified against the merged Phase-1 code, that is NOT inert:** the route writes `status='posted'` on **every** expense (`expenses.routes.ts:124`; `status` means *finalized* per the §2b reconciliation — GL state lives in `posting_status`). Gating on `status='posted'` would fire on every route insert and **reject every line-less / split-transaction expense**, breaking the live route. The column genuinely inert until GL posting is **`posting_status`** (defaults `'unposted'`; set `'posted'` only by Phase-2 posting). **The migration gates on `posting_status='posted'`** — honoring GUARD's *intent* (inert in 1.5, bites at GL posting, no carve-out) with the correct column. Confirm or override.
+
+---
+
 ## 0. Why this block (the unit seam — verified)
 - `accounting.expenses.total_amount_cents` = integer **cents** (Phase 1, Gate 2).
 - `accounting.expense_lines.amount` = `numeric(12,2)` **dollars** (`NOT NULL DEFAULT 0`; defined in `0050`/`0123`; **confirmed on prod via gated read**).
