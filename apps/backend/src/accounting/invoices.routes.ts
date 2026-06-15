@@ -9,6 +9,7 @@ import { buildInvoiceFromLoad } from "./from-load.js";
 import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { auditVoid, canVoid, isVoidEnforcementEnabled, postVoidReversal, type VoidReversalResult } from "./void.service.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -574,6 +575,36 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (!current) return { code: 404 as const, error: "invoice_not_found" };
       if (String(current.status) === "paid") return { code: 409 as const, error: "invoice_paid_cannot_void" };
       if (String(current.status) === "void") return { code: 409 as const, error: "invoice_already_void" };
+
+      // VOID-EVERYWHERE (gated): when ON, post the equal-and-opposite reversing JE first (same transaction =
+      // atomic with the status flip), enforce VOID = Owner+Accountant and a required reason. When OFF (default),
+      // behaviour is unchanged — status flip + audit only, no reversing entry.
+      const flagOn = await isVoidEnforcementEnabled(client, query.data.operating_company_id, user.uuid);
+      let reversal: VoidReversalResult = {
+        reversal_journal_entry_id: null,
+        reversal_date: null,
+        closed_period_reversal: false,
+        reversed_line_count: 0,
+      };
+      if (flagOn) {
+        if (!canVoid(user.role)) return { code: 403 as const, error: "forbidden_void_owner_or_accountant_only" };
+        if (!body.data.reason || !body.data.reason.trim()) return { code: 400 as const, error: "void_reason_required" };
+        const rawDate = current.issue_date as unknown;
+        const originalDate =
+          typeof rawDate === "string" ? rawDate.slice(0, 10) : new Date(rawDate as string).toISOString().slice(0, 10);
+        reversal = await postVoidReversal(
+          client,
+          {
+            operatingCompanyId: query.data.operating_company_id,
+            entityType: "invoice",
+            entityId: params.data.id,
+            originalDate,
+            memo: `Void reversal of invoice ${params.data.id}: ${body.data.reason}`,
+          },
+          { userId: user.uuid }
+        );
+      }
+
       await client.query(
         `
           UPDATE accounting.invoices
@@ -586,19 +617,28 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `,
         [params.data.id, body.data.reason ?? null, user.uuid]
       );
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.invoices.voided",
-        {
-          resource_type: "accounting.invoices",
-          resource_id: params.data.id,
-          operating_company_id: query.data.operating_company_id,
-          reason: body.data.reason ?? null,
-        },
-        "warning",
-        "P3-T11.20.2-INVOICE-FLOW"
-      );
+      if (flagOn) {
+        await auditVoid(client, user.uuid, "invoice", {
+          operatingCompanyId: query.data.operating_company_id,
+          entityId: params.data.id,
+          reason: body.data.reason ?? "",
+          reversal,
+        });
+      } else {
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "accounting.invoices.voided",
+          {
+            resource_type: "accounting.invoices",
+            resource_id: params.data.id,
+            operating_company_id: query.data.operating_company_id,
+            reason: body.data.reason ?? null,
+          },
+          "warning",
+          "P3-T11.20.2-INVOICE-FLOW"
+        );
+      }
       await enqueueTmsInvoicePushRequested(client, {
         operating_company_id: query.data.operating_company_id,
         invoice_id: params.data.id,
