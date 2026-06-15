@@ -101,6 +101,7 @@ import { registerDriverFinanceSettlementHtmlRoutes } from "./driver-finance/sett
 import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-bills.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
+import { registerEscrowDeductionPendingRoutes } from "./driver-finance/escrow-deduction-pending.routes.js";
 import { registerCashAdvanceRequestRoutes } from "./driver-finance/cash-advance-requests.routes.js";
 import { registerDriverInboxReportingRoutes } from "./driver-finance/inbox-reporting.routes.js";
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
@@ -705,6 +706,7 @@ async function main() {
   await registerDriverFinanceDriverBillsRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
+  await registerEscrowDeductionPendingRoutes(app);
   await registerOwnerApprovalPortalRoutes(app);
   await registerCashAdvanceRequestRoutes(app);
   registerDriverInboxReportingRoutes(app);
