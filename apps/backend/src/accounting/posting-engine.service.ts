@@ -2,7 +2,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 
-export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance";
+export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense";
 export type PostingPurpose = "initial_post" | "reversal";
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
@@ -62,7 +62,8 @@ export type PostingErrorCode =
   | "UNBALANCED_ENTRY"
   | "ACCOUNT_MAPPING_MISSING"
   | "ADVANCE_NOT_POSTING_ELIGIBLE"
-  | "BILL_LINE_ACCOUNT_UNRESOLVED";
+  | "BILL_LINE_ACCOUNT_UNRESOLVED"
+  | "EXPENSE_NOT_POSTING_ELIGIBLE";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -89,7 +90,7 @@ const INVOICE_ELIGIBLE_STATUSES = new Set(["sent", "partial", "paid", "factored"
 const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
 function assertKnownSourceType(value: string): asserts value is PostingSourceType {
-  if (!["invoice", "bill", "customer_payment", "bill_payment", "cash_advance", "driver_advance"].includes(value)) {
+  if (!["invoice", "bill", "customer_payment", "bill_payment", "cash_advance", "driver_advance", "expense"].includes(value)) {
     throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source_transaction_type: ${value}`);
   }
 }
@@ -641,6 +642,140 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
   };
 }
 
+// GAP-EXPENSES Phase 2 Step 3 — expense → balanced JE (cash-basis primary). Mirrors buildBillLines.
+// DR each expense_line (category → resolveBillCategoryAccount → uncategorized_expense role → fail loud);
+// a direct line-less expense's single uncategorized expense_lines row is synthesized by the post action
+// BEFORE this runs (so total = SUM(lines) holds). CR cash (payment_account_uuid) else AP-with-vendor;
+// orphan guard (no payment account AND no vendor) fails loud. amounts are integer cents already.
+async function buildExpenseLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const expRes = await client.query<{
+    id: string;
+    status: string;
+    posting_status: string;
+    transaction_date: string;
+    total_amount_cents: number | null;
+    payment_account_uuid: string | null;
+    vendor_uuid: string | null;
+    memo: string | null;
+    expense_number: string | null;
+  }>(
+    `
+      SELECT id::text, status::text, posting_status::text, transaction_date::text,
+             total_amount_cents::bigint, payment_account_uuid::text, vendor_uuid::text, memo, expense_number
+      FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const exp = expRes.rows[0];
+  if (!exp) throw new PostingEngineError("SOURCE_NOT_FOUND", "Expense not found");
+  if (exp.status === "void" || exp.posting_status === "reversed") {
+    throw new PostingEngineError("EXPENSE_NOT_POSTING_ELIGIBLE", "Voided/reversed expense is not posting-eligible");
+  }
+
+  const lineRows = await client.query<{
+    id: string | null;
+    line_sequence: number | null;
+    amount_cents: number | null;
+    description: string | null;
+    expense_category_uuid: string | null;
+  }>(
+    `
+      SELECT id::text, line_sequence, amount_cents::bigint, description, expense_category_uuid::text
+      FROM accounting.expense_lines
+      WHERE expense_id = $1::uuid
+      ORDER BY line_sequence ASC
+    `,
+    [sourceId]
+  );
+
+  const uncategorizedAccount = await resolveRoleAccountOptional(client, operatingCompanyId, "uncategorized_expense");
+  const debitLines: PostingLineDraft[] = [];
+  const accountResolutionTrace: Array<Record<string, unknown>> = [];
+
+  if (lineRows.rows.length === 0) {
+    // Safety net: a direct expense should have had its uncategorized line synthesized by the post
+    // action. If it reached here line-less, DR the uncategorized account for the header total.
+    const totalCents = exp.total_amount_cents != null ? Number(exp.total_amount_cents) : 0;
+    if (!uncategorizedAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "uncategorized_expense role account is unresolved");
+    debitLines.push({
+      account_id: uncategorizedAccount,
+      debit_or_credit: "debit",
+      amount_cents: totalCents,
+      description: exp.memo ?? "Uncategorized expense",
+      source_transaction_line_id: null,
+      relationship_role: "expense_uncategorized_synthesized",
+    });
+    accountResolutionTrace.push({ expense_line_id: null, method: "synthesized_uncategorized", account_id: uncategorizedAccount });
+  } else {
+    for (const row of lineRows.rows) {
+      const amountCents = row.amount_cents != null ? Number(row.amount_cents) : 0;
+      let accountId: string | null = null;
+      let method: string | null = null;
+      if (row.expense_category_uuid) {
+        accountId = await resolveBillCategoryAccount(client, row.expense_category_uuid);
+        if (accountId) method = "expense_category_mapping";
+      }
+      if (!accountId && uncategorizedAccount) {
+        accountId = uncategorizedAccount;
+        method = "uncategorized_role";
+      }
+      if (!accountId) {
+        throw new PostingEngineError(
+          "ACCOUNT_MAPPING_MISSING",
+          `Expense line ${row.id ?? row.line_sequence ?? "unknown"} has no resolvable debit account`
+        );
+      }
+      accountResolutionTrace.push({ expense_line_id: row.id, line_sequence: row.line_sequence, method, account_id: accountId });
+      debitLines.push({
+        account_id: accountId,
+        debit_or_credit: "debit",
+        amount_cents: amountCents,
+        description: row.description ?? `Expense line ${row.line_sequence ?? ""}`.trim(),
+        source_transaction_line_id: row.id ?? null,
+        relationship_role: method === "uncategorized_role" ? "expense_uncategorized" : null,
+      });
+    }
+  }
+
+  const totalDebit = debitLines.reduce((sum, line) => sum + line.amount_cents, 0);
+
+  // CREDIT side — CASH-BASIS PRIMARY: bank/cash when a payment account is set; else AP-with-vendor (accrual exception).
+  let creditAccount: string | null;
+  let creditRole: string;
+  if (exp.payment_account_uuid) {
+    creditAccount = exp.payment_account_uuid; // a catalogs.accounts id (the bank/cash account)
+    creditRole = "expense_cash_payment";
+  } else if (exp.vendor_uuid) {
+    creditAccount = await resolveApAccountForCompany(client, operatingCompanyId);
+    creditRole = "expense_ap";
+    if (!creditAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account (ap_control) is unresolved for the accrual expense path");
+  } else {
+    // ORPHAN GUARD: no payment account AND no vendor → fail loud (no orphan payable).
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Expense has neither a payment account nor a vendor — cannot post (no orphan payable)");
+  }
+
+  const label = exp.expense_number ? `Expense ${exp.expense_number}` : `Expense ${sourceId}`;
+  return {
+    postingDate: exp.transaction_date,
+    memo: `${label} posting`,
+    lines: [
+      ...debitLines,
+      {
+        account_id: creditAccount,
+        debit_or_credit: "credit",
+        amount_cents: totalDebit,
+        description: `${label} ${creditRole === "expense_ap" ? "AP" : "payment"}`,
+        source_transaction_line_id: null,
+        relationship_role: creditRole,
+      },
+    ],
+    accountResolutionTrace,
+  };
+}
+
 async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const paymentRes = await client.query<{
     id: string;
@@ -929,6 +1064,7 @@ async function buildPostingDraft(
 ): Promise<PostingDraft> {
   if (sourceType === "invoice") return buildInvoiceLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill") return buildBillLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "expense") return buildExpenseLines(client, operatingCompanyId, sourceId);
   if (sourceType === "customer_payment") return buildCustomerPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
