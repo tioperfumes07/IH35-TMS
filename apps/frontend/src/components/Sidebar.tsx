@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -7,13 +7,7 @@ import { getUserPreferences, patchUserPreferences } from "../api/safety";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
-import {
-  getSidebarFlyoutItems,
-  resolveSidebarOrder,
-  SIDEBAR_ITEM_META,
-  type SidebarItemId,
-} from "./layout/sidebar-config";
-import { SidebarFlyoutMenu } from "./SidebarFlyoutMenu";
+import { resolveSidebarOrder, SIDEBAR_ITEM_META } from "./layout/sidebar-config";
 
 type SidebarProps = {
   role: UserRole;
@@ -25,7 +19,6 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
   const location = useLocation();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
-  const [hoverId, setHoverId] = useState<SidebarItemId | null>(null);
 
   const prefsQuery = useQuery({
     queryKey: ["user", "preferences"],
@@ -88,15 +81,9 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
             const forceReportsActive = meta.id === "reports" && location.pathname.startsWith("/reports/");
             const forceAccountingActive = meta.id === "accounting" && location.pathname.startsWith("/accounting");
             const forceActive = forceReportsActive || forceAccountingActive;
-            const flyoutItems = getSidebarFlyoutItems(meta.id, role);
             const showMaintBadge = meta.badgeKey === "maintenance_severe" && severeBadgeCount > 0;
             return (
-              <div
-                key={meta.id}
-                className="relative w-full"
-                onMouseEnter={() => setHoverId(meta.id)}
-                onMouseLeave={() => setHoverId((current) => (current === meta.id ? null : current))}
-              >
+              <div key={meta.id} className="w-full">
                 <NavLink
                   to={meta.to}
                   data-tour={meta.dataTour}
@@ -129,13 +116,6 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                     </>
                   )}
                 </NavLink>
-                <SidebarFlyoutMenu
-                  open={hoverId === meta.id}
-                  title={meta.label}
-                  items={flyoutItems}
-                  onOpen={() => setHoverId(meta.id)}
-                  onClose={() => setHoverId((current) => (current === meta.id ? null : current))}
-                />
               </div>
             );
           })}
