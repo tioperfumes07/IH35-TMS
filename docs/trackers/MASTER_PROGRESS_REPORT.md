@@ -1,4 +1,4 @@
-# IH35-TMS — Master Progress Report (Reconciled, v27)
+# IH35-TMS — Master Progress Report (Reconciled, v28)
 
 > **SOURCE OF TRUTH.** This Markdown file is the living tracker. The Excel export in [`exports/`](exports/) is generated from it — do not hand-edit the xlsx as the master.
 > Generated **2026-06-13 13:01:33 CDT** by read-only repo + GitHub reconciliation.
@@ -1064,7 +1064,95 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 785 | Driver-Finance | #921 | feat(driver-finance): B4 driver-request accountability timel… |  | DONE | 2026-06-13 |  | merge 318ca7392  / merged+live |
 | 786 | Driver-Finance | #922 | feat(driver-finance): B5 cash-advance approve cascade (capst… |  | DONE | 2026-06-13 |  | merge 1866e0753  / merged+live |
 | 787 | Other | #923 | B6 — Driver Inbox UI (cascade-preview + timeline endpoints) |  | DONE | 2026-06-13 |  | merge 49638a7a4  / merged+live |
-| 788 | Accounting | #1019 | fix(accounting): COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE — point uncategorized_expense role at QBO #25; soft-retire redundant #6999 seed |  | PR-OPEN (STOP, Jorge merges) | 2026-06-15 |  | FINANCIAL Tier 2; idempotent fail-safe reconcile + recurrence guard; GUARD prod-query is the correctness gate post-deploy |
+| | **▼ v28 ADDENDUM — 87 merged PRs (#924 → #1018) folded in from GitHub · reconciled 2026-06-15** | | | | | | | |
+| 788 | Other | #924 | chore(tracker): in-repo living master tracker (Markdown source of truth) |  | DONE | 2026-06-13 |  | merge fd90879ab  / merged+live |
+| 789 | Driver-Finance | #925 | feat(driver-finance): A3-1 settlement-deduction ledger columns (additive, D… |  | DONE | 2026-06-13 |  | merge 6fc92db58  / merged+live |
+| 790 | Maintenance | #926 | fix(inventory): B1 repoint Parts & Stock to real /maintenance/parts (404 fix) |  | DONE | 2026-06-13 |  | merge 8e921623d  / merged+live |
+| 791 | Accounting | #927 | feat(accounting): AI-4 extend period seed — TRANSP+TRK × 2025+2026 (gated, … |  | DONE | 2026-06-13 |  | merge 99df90d74  / merged+live |
+| 792 | Other | #928 | chore(tracker): reconcile UNVERIFIED rows vs merged-PR record (docs-only) |  | DONE | 2026-06-13 |  | merge acfb2cd17  / merged+live |
+| 793 | Accounting | #929 | feat(payroll): A3-2 capped advance-recovery engine + 6 locked tests (pure; … |  | DONE | 2026-06-14 |  | merge 49926ce28  / merged+live |
+| 794 | Accounting | #930 | feat(payroll): A3-2 live-path wiring (flag-gated, default OFF) + cutover fl… |  | DONE | 2026-06-14 |  | merge 6d4b5cfbe  / merged+live |
+| 795 | Accounting | #931 | feat(payroll): A3-2 GL — fallback paired JE at post (Dr expense / Cr QBO-14… |  | DONE | 2026-06-14 |  | merge 71367ad38  / merged+live |
+| 796 | Accounting | #932 | feat(payroll): A3-3 settlement shadow-run (read-only OLD vs NEW recovery co… |  | DONE | 2026-06-14 |  | merge 0d60b65d8  / merged+live |
+| 797 | Accounting | #933 | feat(accounting): driver ASSET sub-account auto-provision on hire (escrow g… |  | DONE | 2026-06-14 |  | merge 7bb67827a  / merged+live |
+| 798 | Accounting | #934 | feat(accounting): driver ESCROW sub-account auto-provision on hire (decisio… |  | DONE | 2026-06-14 |  | merge 894e3af9e  / merged+live |
+| 799 | Accounting | #935 | feat(accounting): driver sub-account bulk backfill — DRY-RUN only (STOP #2 … |  | DONE | 2026-06-14 |  | merge 9e58a93e0  / merged+live |
+| 800 | Other | #937 | docs(recon): reconcile master tracker vs live code + driver-escrow research… |  | DONE | 2026-06-14 |  | merge 378b3fe35  / merged+live |
+| 801 | Other | #938 | docs(recon): 5 recon resolutions + multi-tab md→xlsx tracker exporter (v26 … |  | DONE | 2026-06-14 |  | merge 45c4bdd4e  / merged+live |
+| 802 | Other | #939 | fix(export): multi-tab tracker exporter matching v26 format (follow-up to #… |  | DONE | 2026-06-14 |  | merge 93b60c5f7  / merged+live |
+| 803 | Tasks | #940 | feat(tasks): Block B — Create-Task UI on Task Board |  | DONE | 2026-06-14 |  | merge 0baf8afc7  / merged+live |
+| 804 | Other | #941 | feat(export): Exporter-C — GitHub tabs (02/03) for the tracker xlsx (all 10… |  | DONE | 2026-06-14 |  | merge d4c85abe5  / merged+live |
+| 805 | Maintenance | #942 | feat(maintenance): Block F — reefer hours 15-minute poller cron |  | DONE | 2026-06-14 |  | merge a3e4fadf6  / merged+live |
+| 806 | Docs | #943 | docs(mileage): mileage-model design + grounding spec (phased PC*Miler) |  | DONE | 2026-06-14 |  | merge 1190e44a1  / merged+live |
+| 807 | Dispatch | #944 | feat(dispatch): Block 1 (C-1) — Planners split-control nav |  | DONE | 2026-06-14 |  | merge 5ac8e9c19  / merged+live |
+| 808 | Nav | #945 | feat(nav): Block 8 — hide stub/placeholder pages from sidebar |  | DONE | 2026-06-14 |  | merge fa0f57f19  / merged+live |
+| 809 | Docs | #946 | docs(mileage): §6 answered — lock Jorge's 6 mileage decisions |  | DONE | 2026-06-14 |  | merge 465d3564a  / merged+live |
+| 810 | CI/Infra | #947 | docs(security): Block 9 — RLS coverage audit (inventory, no fixes) |  | DONE | 2026-06-14 |  | merge 74dcb8feb  / merged+live |
+| 811 | Finance | #948 | docs(finance): B9 escrow-deduction design spec (gated build, locked rules) |  | DONE | 2026-06-14 |  | merge 3b69ce46d  / merged+live |
+| 812 | Docs | #949 | feat(docs): Block 4 — docs-upload UI on the Documents page |  | DONE | 2026-06-14 |  | merge 5b876330d  / merged+live |
+| 813 | Docs | #950 | feat(help): Block 5 — module-guide help stubs (structure only) |  | DONE | 2026-06-14 |  | merge 80d09aefe  / merged+live |
+| 814 | Driver-Finance | #951 | feat(driver-finance): Block 6 (B7) — driver-inbox reporting (read-only) |  | DONE | 2026-06-14 |  | merge d7c2b8717  / merged+live |
+| 815 | Catalogs | #952 | feat(catalogs): Block 7 — classes bulk-edit (batch-PATCH + multi-select) |  | DONE | 2026-06-14 |  | merge 5ac90ef99  / merged+live |
+| 816 | Finance | #953 | docs(finance): Roles & Permissions design spec (foundational, VOID vs DELETE) |  | DONE | 2026-06-14 |  | merge 7fa266d0a  / merged+live |
+| 817 | Docs | #954 | docs(mileage): §1A lifecycle correction — short@assign-bill, practical@deli… |  | DONE | 2026-06-14 |  | merge 1301ff7bd  / merged+live |
+| 818 | Finance | #955 | docs(finance): B9 §9A — escrow management screen (UI, Jorge-approved) |  | DONE | 2026-06-14 |  | merge c377e582c  / merged+live |
+| 819 | Finance | #956 | docs(finance): RELAY internal-bank + diesel-code design spec (Section D #2) |  | DONE | 2026-06-14 |  | merge 00694203a  / merged+live |
+| 820 | Finance | #957 | docs(finance): FH-1 Fixed Assets + Depreciation design spec (Finance … |  | DONE | 2026-06-14 |  | merge 5dac3741d  / merged+live |
+| 821 | Finance | #958 | docs(finance): FH-3 Amortization Schedule Engine design spec (Finance Hub) |  | DONE | 2026-06-14 |  | merge f2218ed3e  / merged+live |
+| 822 | Finance | #959 | docs(finance): FH-2 Loan Wizard design spec (Finance Hub centerpiece) |  | DONE | 2026-06-14 |  | merge 62d43fd89  / merged+live |
+| 823 | Finance | #960 | docs(finance): FH-4 Finance Calculator design spec (Finance Hub) |  | DONE | 2026-06-14 |  | merge c2ca4029a  / merged+live |
+| 824 | Finance | #961 | docs(finance): FH-6 Tax Manager + FH-6a rendition design spec (Finance Hub) |  | DONE | 2026-06-14 |  | merge 2847cd5f7  / merged+live |
+| 825 | Finance | #962 | docs(finance): FH-7 shared Unit Allocation control design spec (Finance Hub) |  | DONE | 2026-06-14 |  | merge 3ee3bbe13  / merged+live |
+| 826 | Finance | #963 | docs(finance): FH-5 Bankruptcy Modeler design spec (Finance Hub, build last) |  | DONE | 2026-06-14 |  | merge df5ecae61  / merged+live |
+| 827 | Finance | #964 | docs(finance): VOID-EVERYWHERE cross-cutting design spec (build packa… |  | DONE | 2026-06-14 |  | merge d9404f677  / merged+live |
+| 828 | Finance | #965 | docs(finance): FH-8 Lease Contract + Unit Picker design spec (Legal<-… |  | DONE | 2026-06-15 |  | merge 79dafe902  / merged+live |
+| 829 | Finance | #966 | docs(finance): FH-1 Fixed Assets + Depreciation design spec (Finance … |  | DONE | 2026-06-15 |  | merge a75d2d14b  / merged+live |
+| 830 | Finance | #967 | docs(finance): FH-1 follow-up — inter-company leasing (owner vs opera… |  | DONE | 2026-06-15 |  | merge aaa33424c  / merged+live |
+| 831 | Finance | #968 | docs(finance): apply answered questions to FH-2 (trade-in) + FH-6 (ta… |  | DONE | 2026-06-15 |  | merge ae66deed7  / merged+live |
+| 832 | Finance | #969 | docs(finance): FH-5 — posting decision LOCKED (POST TO BOOKS) |  | DONE | 2026-06-15 |  | merge c0d4bd677  / merged+live |
+| 833 | Tasks | #970 | fix(tasks): task-create 400 — stop double-stringifying the request body |  | DONE | 2026-06-15 |  | merge ae4135a02  / merged+live |
+| 834 | Finance | #971 | fix(finance): stop double-stringifying money-path request bodies |  | DONE | 2026-06-15 |  | merge ba3f11950  / merged+live |
+| 835 | Finance | #972 | docs(finance): VOID-EVERYWHERE — cash\|accrual basis for reversing-ent… |  | DONE | 2026-06-15 |  | merge 14e4966bf  / merged+live |
+| 836 | Accounting | #973 | feat(accounting): VOID-EVERYWHERE PR-1 — gated void engine for invoices + j… |  | DONE | 2026-06-15 |  | merge 3ead2e837  / merged+live |
+| 837 | Nav | #974 | fix(nav): remove left-sidebar hover fly-out dropdown (block 17) |  | DONE | 2026-06-15 |  | merge fb6ea1471  / merged+live |
+| 838 | CI/Infra | #975 | fix(api): stop double-stringifying request bodies in the remaining no… |  | DONE | 2026-06-15 |  | merge 499a34552  / merged+live |
+| 839 | Accounting | #976 | feat(accounting): D5 Account Register — read-only per-account running-balan… |  | DONE | 2026-06-15 |  | merge 47b8d6b04  / merged+live |
+| 840 | Accounting | #977 | feat(accounting): VOID-EVERYWHERE PR-2 — gated void engine for bills (AP mi… |  | DONE | 2026-06-15 |  | merge be3323ed7  / merged+live |
+| 841 | Finance | #978 | docs(finance): VOID-EVERYWHERE PR-3/PR-4 design — expenses + settlements vo… |  | DONE | 2026-06-15 |  | merge 68bb77fdb  / merged+live |
+| 842 | Tasks | #979 | fix(tasks): Create Task 500/42501 — RLS scope sets the wrong GUC name |  | DONE | 2026-06-15 |  | merge 1ea68ee8f  / merged+live |
+| 843 | Tasks | #980 | fix(tasks): planner 500/42P01 — join identity.users, not non-existent users… |  | DONE | 2026-06-15 |  | merge 287107aa0  / merged+live |
+| 844 | Drivers | #981 | fix(drivers): deactivate sets status='Inactive' (driver stayed Active after… |  | DONE | 2026-06-15 |  | merge c7fcd97af  / merged+live |
+| 845 | Driver-Finance | #982 | fix(driver-finance): mount orphaned escrow-deductions-pending routes (404) |  | DONE | 2026-06-15 |  | merge 6c50ba8a9  / merged+live |
+| 846 | Customers | #984 | fix(customers): QBO customer-sync returned HTML (raw relative fetch -> wron… |  | DONE | 2026-06-15 |  | merge 0d1f408c7  / merged+live |
+| 847 | Fleet | #985 | fix(units): deactivate sets status='OutOfService' (mirror of driver deactiv… |  | DONE | 2026-06-15 |  | merge d65dddb60  / merged+live |
+| 848 | Insurance | #986 | fix(insurance): asset coverage 404'd for every unit (unit-id vs asset-id mi… |  | DONE | 2026-06-15 |  | merge e3022787f  / merged+live |
+| 849 | Maintenance | #987 | fix(maintenance): fleet-table KPIs 500 — non-existent unit_status enum values |  | DONE | 2026-06-15 |  | merge ced807e0f  / merged+live |
+| 850 | Dispatch | #988 | fix(dispatch): mount orphaned load settlement-summary route (404) |  | DONE | 2026-06-15 |  | merge bdbd74494  / merged+live |
+| 851 | Maintenance | #989 | fix(maintenance): WO list shows unit_number, not raw unit UUID |  | DONE | 2026-06-15 |  | merge 3fe701e46  / merged+live |
+| 852 | Maintenance | #990 | fix(maintenance): dashboard KPIs 500 — second unit_status 'active' enum bug |  | DONE | 2026-06-15 |  | merge 6dd54c878  / merged+live |
+| 853 | CI/Infra | #992 | fix(routes): mount 7 orphaned non-financial routes the frontend calls (404s) |  | DONE | 2026-06-15 |  | merge b3820999f  / merged+live |
+| 854 | CI/Infra | #993 | chore(ci): guard against orphaned routes (kills the 404-from-unmounted-rout… |  | DONE | 2026-06-15 |  | merge 953f44447  / merged+live |
+| 855 | Accounting | #994 | fix(escrow): drop dead /driver-finance/escrow call (404 on every Escrow Rec… |  | DONE | 2026-06-15 |  | merge c8c69ab8d  / merged+live |
+| 856 | CI/Infra | #995 | fix(routes): mount 4 more orphaned non-financial routes (batch 2) |  | DONE | 2026-06-15 |  | merge 9f4763530  / merged+live |
+| 857 | CI/Infra | #996 | chore(ci): guard against invalid enum literals (22P02) + fix 2 it surfaced |  | DONE | 2026-06-15 |  | merge cd33f9215  / merged+live |
+| 858 | Drivers | #997 | fix(drivers): rehire validation walks the full chain (not just immediate pr… |  | DONE | 2026-06-15 |  | merge 487dad2bb  / merged+live |
+| 859 | Maintenance | #998 | fix(maintenance): cap-12/cap-13 workers query mdata.units by non-existent o… |  | DONE | 2026-06-15 |  | merge dd73ae0d0  / merged+live |
+| 860 | Migrations | #999 | fix(migrations): repair safety.fines→civil_fines (#0050 ordering collision)… |  | DONE | 2026-06-15 |  | merge 1a3293af8  / merged+live |
+| 861 | CI/Infra | #1001 | chore(ci): bump actions/checkout from 4 to 6 |  | DONE | 2026-06-15 |  | merge 7f53d845b  / merged+live |
+| 862 | CI/Infra | #1002 | chore(ci): bump actions/setup-node from 4 to 6 |  | DONE | 2026-06-15 |  | merge a306559d7  / merged+live |
+| 863 | Accounting | #1005 | docs(accounting): GAP-EXPENSES-MODULE-COMPLETION design — verified, A1/A2 f… |  | DONE | 2026-06-15 |  | merge 954f3fee5  / merged+live |
+| 864 | Accounting | #1006 | feat(accounting): GAP-EXPENSES Phase 1 — accounting.expenses header (A1-sta… |  | DONE | 2026-06-15 |  | merge 184da5a6c  / merged+live |
+| 865 | Accounting | #1007 | docs(accounting): GAP-EXPENSES Phase 1.5 design — expense_lines cents… |  | DONE | 2026-06-15 |  | merge 46610e844  / merged+live |
+| 866 | Accounting | #1008 | feat(accounting): GAP-EXPENSES Phase 1.5 — cents reconciliation + hard tota… |  | DONE | 2026-06-15 |  | merge c6c57b712  / merged+live |
+| 867 | Maintenance | #1009 | test(maintenance): cover copyToAccountingLines bill branch (Phase 1.5 follo… |  | DONE | 2026-06-15 |  | merge 846c5ff42  / merged+live |
+| 868 | Accounting | #1010 | docs(accounting): GAP-EXPENSES Phase 2 design — expense → GL posting + reve… |  | DONE | 2026-06-15 |  | merge e2c76b653  / merged+live |
+| 869 | Insurance | #1011 | fix(insurance): policy_unit has no is_active column — use removed_at (42703… |  | DONE | 2026-06-15 |  | merge 5448ca26f  / merged+live |
+| 870 | CI/Infra | #1012 | chore(deps): bump form-data from 4.0.5 to 4.0.6 |  | DONE | 2026-06-15 |  | merge c2a545dcc  / merged+live |
+| 871 | CI/Infra | #1013 | chore(deps): bump js-yaml from 4.1.1 to 4.2.0 |  | DONE | 2026-06-15 |  | merge a980876be  / merged+live |
+| 872 | Accounting | #1015 | feat(accounting): GAP-EXPENSES Phase 2 Step 2 — Uncategorized-Expenses seed… |  | DONE | 2026-06-15 |  | merge f41b2e256  / merged+live |
+| 873 | Finance | #1017 | feat(finance): FH-1 Fixed Assets — Step 1 data model (fixed_assets sc… |  | DONE | 2026-06-15 |  | merge d2a7fc8dc  / merged+live |
+| 874 | Accounting | #1018 | feat(accounting): GAP-EXPENSES Phase 2 Step 3 — expense → GL posting … |  | DONE | 2026-06-15 |  | merge 863a9f109  / merged+live |
+| 875 | Accounting | #1019 | fix(accounting): COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE — uncategorized_expense role → QBO #25; soft-retire #6999 seed |  | DONE | 2026-06-15 |  | merge c6fd71e42  / merged+live; GUARD prod-query (condition 3) still owed |
 
 ---
-*Reconciled 2026-06-13 13:01:33 CDT. Full merged-PR record (871 PRs) and per-sheet detail in the [xlsx export](exports/).*
+*Reconciled 2026-06-15 CDT (v28). 875 task rows; full merged-PR record auto-pulled from GitHub into tabs 02/03 at export time. Tab 05 Functional Audit is hand-curated (v26) and does NOT refresh on export. Per-sheet detail in the [xlsx export](exports/).*
