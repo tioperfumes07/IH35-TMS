@@ -8,8 +8,10 @@
  * Design context (see migration header for full detail):
  *   - bill_lines has NO operating_company_id column → isolation is derived from
  *     its parent accounting.bills.operating_company_id.
- *   - expense_lines has no operating_company_id AND its parent accounting.expenses
- *     does not exist in prod/CI → policy is deny-by-default (lucia bypass only).
+ *   - expense_lines has no operating_company_id → isolation is derived from its
+ *     parent accounting.expenses.operating_company_id. The parent header was
+ *     authored in 202606151300 (GAP-EXPENSES Phase 1); the policy was re-pointed
+ *     from deny-by-default to parent-isolation, mirroring bill_lines.
  *
  * Runs only in CI (GITHUB_ACTIONS=true) where a migrated Postgres is available,
  * matching the existing accounting DB integration suites.
@@ -35,8 +37,11 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
   const secondaryBillId = randomUUID();
   const primaryLineId = randomUUID();
   const secondaryLineId = randomUUID();
-  const expenseLineId = randomUUID();
-  const orphanExpenseId = randomUUID();
+  const driverId = randomUUID();
+  const primaryExpenseId = randomUUID();
+  const secondaryExpenseId = randomUUID();
+  const primaryExpenseLineId = randomUUID();
+  const secondaryExpenseLineId = randomUUID();
 
   async function withBypass<T>(fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
@@ -113,9 +118,29 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
         `INSERT INTO accounting.bill_lines (id, bill_id, line_sequence, amount, description) VALUES ($1::uuid, $2::uuid, 1, 200.00, $3)`,
         [secondaryLineId, secondaryBillId, `secondary-${suffix}`]
       );
+      // expense_lines isolate THROUGH their parent accounting.expenses (authored in
+      // 202606151300). Seed a driver + one parent expense per tenant, then a line each.
+      await db.query(
+        `INSERT INTO mdata.drivers (id, first_name, last_name, phone) VALUES ($1::uuid, 'RLS', 'Fixture', $2)`,
+        [driverId, `+1000${suffix.slice(0, 7)}`]
+      );
+      await db.query(
+        `INSERT INTO accounting.expenses (id, operating_company_id, driver_uuid, transaction_date, total_amount_cents, status)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, 5000, 'posted')`,
+        [primaryExpenseId, primaryCompanyId, driverId]
+      );
+      await db.query(
+        `INSERT INTO accounting.expenses (id, operating_company_id, driver_uuid, transaction_date, total_amount_cents, status)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, 7000, 'posted')`,
+        [secondaryExpenseId, secondaryCompanyId, driverId]
+      );
       await db.query(
         `INSERT INTO accounting.expense_lines (id, expense_id, line_sequence, amount, description) VALUES ($1::uuid, $2::uuid, 1, 50.00, $3)`,
-        [expenseLineId, orphanExpenseId, `expense-${suffix}`]
+        [primaryExpenseLineId, primaryExpenseId, `expense-primary-${suffix}`]
+      );
+      await db.query(
+        `INSERT INTO accounting.expense_lines (id, expense_id, line_sequence, amount, description) VALUES ($1::uuid, $2::uuid, 1, 70.00, $3)`,
+        [secondaryExpenseLineId, secondaryExpenseId, `expense-secondary-${suffix}`]
       );
     });
   });
@@ -124,7 +149,9 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
     if (!db) return;
     await withBypass(async () => {
       await db.query(`DELETE FROM accounting.bill_lines WHERE id = ANY($1::uuid[])`, [[primaryLineId, secondaryLineId]]);
-      await db.query(`DELETE FROM accounting.expense_lines WHERE id = $1::uuid`, [expenseLineId]);
+      await db.query(`DELETE FROM accounting.expense_lines WHERE id = ANY($1::uuid[])`, [[primaryExpenseLineId, secondaryExpenseLineId]]);
+      await db.query(`DELETE FROM accounting.expenses WHERE id = ANY($1::uuid[])`, [[primaryExpenseId, secondaryExpenseId]]);
+      await db.query(`DELETE FROM mdata.drivers WHERE id = $1::uuid`, [driverId]);
       await db.query(`DELETE FROM accounting.bills WHERE id = ANY($1::uuid[])`, [[primaryBillId, secondaryBillId]]);
       if (createdSecondaryCompany) {
         await db.query(`DELETE FROM org.companies WHERE id = $1::uuid`, [secondaryCompanyId]);
@@ -222,23 +249,24 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
     expect(caught?.code).toBe("42501"); // insufficient_privilege — RLS WITH CHECK violation
   });
 
-  it("expense_lines are invisible to any scoped (non-bypass) session, but visible under bypass", async () => {
-    const scopedCount = await withScope(primaryCompanyId, async () => {
-      const res = await db.query<{ c: string }>(
-        `SELECT count(*)::text AS c FROM accounting.expense_lines WHERE id = $1::uuid`,
-        [expenseLineId]
+  it("expense_lines isolate through their parent expense (scoped sees only own; bypass sees all)", async () => {
+    const primaryVisible = await withScope(primaryCompanyId, async () => {
+      const res = await db.query<{ id: string }>(
+        `SELECT id FROM accounting.expense_lines WHERE id = ANY($1::uuid[])`,
+        [[primaryExpenseLineId, secondaryExpenseLineId]]
       );
-      return Number(res.rows[0]?.c ?? -1);
+      return res.rows.map((r) => r.id);
     });
-    expect(scopedCount).toBe(0);
+    expect(primaryVisible).toContain(primaryExpenseLineId);
+    expect(primaryVisible).not.toContain(secondaryExpenseLineId);
 
     const bypassCount = await withBypass(async () => {
       const res = await db.query<{ c: string }>(
-        `SELECT count(*)::text AS c FROM accounting.expense_lines WHERE id = $1::uuid`,
-        [expenseLineId]
+        `SELECT count(*)::text AS c FROM accounting.expense_lines WHERE id = ANY($1::uuid[])`,
+        [[primaryExpenseLineId, secondaryExpenseLineId]]
       );
       return Number(res.rows[0]?.c ?? -1);
     });
-    expect(bypassCount).toBe(1);
+    expect(bypassCount).toBe(2);
   });
 });

@@ -1,0 +1,22 @@
+{
+  "block_id": "FEAT-EXPENSES-PHASE1-FOUNDATION",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "GAP-EXPENSES",
+  "task": "GAP-EXPENSES-MODULE-COMPLETION Phase 1 (A1-staged foundation). Authors the dormant parent header accounting.expenses so the existing POST /api/v1/expenses route (which already INSERTs into accounting.expenses, guarded by relationExists) stops returning 501. Schema reconciled column-by-column to the real route + the accounting.bills template: total_amount_cents bigint (integer-cents money spine, Gate 2 -- the route drops body.amount_cents/100 and stores amount_cents directly); driver_uuid uuid NOT NULL (route requires driver_id); vendor_uuid nullable; status (draft|posted|void) split from posting_status (unposted|posted|reversed) -- document lifecycle vs GL state, route writes status='posted'(=finalized); A1-ready GL hooks journal_entry_id/reversed_by_je_id/posted_at carried now (null/unposted) so Phase 2 GL posting is an additive turn-on, not a schema rewrite, with JE-side source_transaction_type staying source-of-truth; expense_number nullable (per-load LOADNUMBER-seq set post-attribution); is_active + deleted_at soft-delete + created/updated audit cols. RLS ENABLE+FORCE with SELECT/INSERT/UPDATE policies only; GRANT SELECT,INSERT,UPDATE then explicit REVOKE DELETE (void-not-delete; deletes also blocked by FORCE RLS + absence of a DELETE policy). expense_lines.expense_id FK ON DELETE RESTRICT; expense_lines RLS re-pointed from deny-by-default (migration 202606080040, created when the parent did not exist) to parent-isolation now that accounting.expenses exists. GL posting is OFF (Phase 2); the VOID OPERATION is NOT built in Phase 1 (columns only -- no throwaway status-flip). Branch-tested on the ephemeral verify DB: full chain applies from scratch with this last, idempotent re-run SKIPs all, verified table/RLS/grants(no DELETE)/FK RESTRICT/lines-policy-via-parent. Financial cluster: GUARD verifies on-branch; never self-merge. Phase 2 (expense posting source + balanced JE + reversing-JE void) and Phase 3 (QBO Purchase sync) are separate gated blocks; a focused expense_lines.amount->amount_cents unit-reconciliation lands the total=sum invariant before Phase 2.",
+  "branch": "feat/expenses-phase1-foundation",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-EXPENSES-PHASE1-FOUNDATION.json",
+    "db/migrations/202606151300_expenses_header_phase1_foundation.sql",
+    "apps/backend/src/accounting/expenses.routes.ts",
+    "apps/backend/src/accounting/__tests__/bill-expense-lines-rls.db.test.ts",
+    "scripts/verify-expenses-cents-and-void-not-delete.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
