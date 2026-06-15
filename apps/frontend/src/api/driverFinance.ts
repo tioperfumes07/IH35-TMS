@@ -246,18 +246,11 @@ function timelineToAttempts(
     }));
 }
 
-/** Company escrow roster for Safety Escrow Record tab (A23-8). */
+/** Company escrow roster for Safety Escrow Record tab (A23-8).
+ *  Assembled from the existing /api/v1/banking/escrow-visualizer endpoint (+ debt + timeline).
+ *  The old /api/v1/driver-finance/escrow primary call was removed — that endpoint was never built,
+ *  so it 404'd on every page load and always fell through to this path anyway. */
 export async function listEscrowRecords(companyId: string) {
-  const primary = await apiRequest<{ records?: EscrowRecordRow[]; forfeit_attempts?: EscrowForfeitAttempt[] }>(
-    `/api/v1/driver-finance/escrow?${q(companyId)}`
-  ).catch(() => null);
-  if (primary?.records) {
-    return {
-      records: primary.records,
-      forfeit_attempts: primary.forfeit_attempts ?? [],
-    };
-  }
-
   const { getEscrowDriverBalances, getEscrowDriverTimeline } = await import("./banking");
   const { drivers } = await getEscrowDriverBalances(companyId);
   const forfeitAttempts: EscrowForfeitAttempt[] = [];
