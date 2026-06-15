@@ -85,6 +85,9 @@ jobs:
       - name: Verify FH-1 fixed-assets data model (Tier 3)
         run: npm run verify:fh1-fixed-assets
 
+      - name: Verify FH-2 Loan Wizard no-posting boundary (Tier 3)
+        run: npm run verify:fh2-no-posting
+
       - name: Verify expense GL posting (GAP-EXPENSES Phase 2 Step 3)
         run: npm run verify:expense-gl-posting
 
