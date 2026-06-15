@@ -24,7 +24,7 @@ GUARD's decisions doc named the COA table `accounting.coa_account`. **Verified, 
 |---|---|---|
 | 1 | **Seed "Uncategorized Expenses" account + `uncategorized_expense` ROLE** (not reuse `expense_default`) | Seed one global row in `catalogs.accounts` (type `Expense`, postable) + per-company `uncategorized_expense` role (§2). Resolver = `resolveRoleAccountOptional(client, oci, "uncategorized_expense")`. *(Note: a generic `expense_default` role is already defined+unseeded and used as a bill fallback; GUARD chose the named role for QBO-style P&L visibility.)* |
 | 2 | **DB feature-flag `EXPENSE_GL_POSTING_ENABLED`** (default OFF) | Mirror `VOID_FLAG_KEY`/`isEnabled` (`void.service.ts:104`, `lib/feature-flags/service.js`). Per-tenant, instantly reversible. |
-| 3 | **Cash (`payment_account_uuid`) else AP-with-vendor; orphan guard; accountant sign-off** | CR resolves directly via the header `payment_account_uuid` (a `catalogs.accounts` id — **no cash role needed**, closing GUARD's open item); else AP via `resolveApAccountForCompany` **carrying the vendor**. No payment acct **and** no vendor → **FAIL LOUD** (§3). |
+| 3 | **CASH-BASIS PRIMARY** (✅ accountant-confirmed): CR bank/cash (`payment_account_uuid`) is the default/dominant path; AP-with-vendor is the rare accrual exception; orphan guard | CR resolves directly via the header `payment_account_uuid` (a `catalogs.accounts` id — **no cash role needed**). AP path kept for the rare deferred case only. No payment acct **and** no vendor → **FAIL LOUD** (§3). TRANSP cash basis incl. MOR. |
 | 4 | **Owner + Accountant post** | Reuse `canVoid` role set (`void.service.ts:40`). |
 | 5 | **Explicit "Post to GL" action** (not auto-post) | New gated `POST /api/v1/expenses/:id/post` → `postSourceTransaction({source_transaction_type:'expense'})`. |
 | 6 | **Both direct AND WO-sourced** | One `buildExpenseLines` handles both (direct = header only → synthesize one uncategorized line; WO = real `expense_lines`). |
@@ -36,12 +36,14 @@ GUARD's decisions doc named the COA table `accounting.coa_account`. **Verified, 
 3. **CHECK widening:** `chart_of_accounts_roles_role_check` currently allows 11 roles (incl. `expense_default`) but **not `uncategorized_expense`** → the migration must DROP+re-ADD the CHECK with `uncategorized_expense` added. The typed `COA_ROLE_VALUES` (`coa-roles/resolver.service.ts`) must also gain `'uncategorized_expense'` (code, ships with the posting step).
 4. **Fail-loud:** at posting time, if `uncategorized_expense` is unresolved for a company → `ACCOUNT_MAPPING_MISSING` (no silent default).
 
-## 3. Decision #3 — credit side + orphan guard (needs accountant sign-off before the flag flips)
-`buildExpenseLines` credit line:
-- **Payment account set** (header `payment_account_uuid`) → CR that cash/bank `catalogs.accounts` id (QBO "Expense", paid).
-- **Else** → CR **AP** (`resolveApAccountForCompany`) **and the posting must carry the vendor** (header `vendor_uuid`) so AP aging stays meaningful (QBO "Bill", owed).
-- **Orphan guard (HARD):** no `payment_account_uuid` **and** no `vendor_uuid` → **FAIL LOUD** (`PostingEngineError`, no orphan payable).
-- **Accountant sign-off required** on this DR/CR treatment before `EXPENSE_GL_POSTING_ENABLED` flips on (pure accounting policy).
+## 3. Decision #3 — credit side (CASH-BASIS PRIMARY) + orphan guard — ✅ accountant gate CLEARED
+**LOCKED (accountant-confirmed 2026-06-15): TRANSP reports CASH BASIS** for both internal books **and** the bankruptcy Monthly Operating Report (the two are consistent — no internal-vs-court conflict). The cash-when-paid-else-AP rule is textbook-correct (QuickBooks pay-now=Expense/credit cash, pay-later=Bill/credit AP; GAAP double-entry debit-expense/credit-cash-or-AP; McLeod runs AP as a review-before-post "voucher"). See [[expense-gl-cash-basis-decision]].
+
+`buildExpenseLines` credit line — **cash is the PRIMARY/default path, not an equal fork:**
+- **PRIMARY (cash basis, dominant flow):** payment account set (header `payment_account_uuid`) → **CR the bank/cash `catalogs.accounts` id**. Bank-feed-driven: a transaction in the feed is already paid → posts cash-basis by nature (debit expense, credit bank). This is the default and the overwhelming majority of postings.
+- **AP path = accrual exception, NOT the default:** only the rare deferred case (no payment account, vendor present) → CR **AP** (`resolveApAccountForCompany`) **carrying the vendor**. On cash basis we do **not** book payables-as-expenses by default — keep the path in the engine, but it is not the primary flow.
+- **Orphan guard (HARD, safety net):** no `payment_account_uuid` **and** no `vendor_uuid` → **FAIL LOUD** (`PostingEngineError`, no orphan payable). On the bank-feed path it rarely fires (feed items always carry a payment account) — good.
+- **Uncategorized Expenses** = the **holding bucket** for un-categorized bank-feed items (categorize-then-post, decision #5); visible on the P&L as the cleanup list (QBO behavior).
 
 ## 4. POSTING FLOW (mirror `buildBillLines`) — STEP 3, behind the flag
 `apps/backend/src/accounting/posting-engine.service.ts`:
@@ -107,7 +109,7 @@ COMMIT;
 - **STEP 1 (this doc):** reconcile to locked decisions + resolve the COA drift. ✅
 - **STEP 2:** the seed migration (§7), SHOWN — Jorge approves → branch-test on `ci-migration-test` via the existing runner → **builder STOPS** → GUARD verifies independently → Jorge merges. **No posting logic in Step 2.**
 - **STEP 3 (only after Step 2 approved + verified):** posting engine (`'expense'` source, `buildExpenseLines`, balanced JE) + reversing-JE void, behind `EXPENSE_GL_POSTING_ENABLED` (OFF). Separate gated block.
-- **Open items:** (a) ✅ **CONFIRMED** seed→`catalogs.accounts` (Jorge, 2026-06-15). (b) ⏳ **PENDING** accountant sign-off on §3 cash-else-AP + orphan guard — *design it, do not enable it.* (c) ✅ **VERIFIED** ON CONFLICT target = partial unique index `uq_coa_roles_company_role_active` `(operating_company_id, role) WHERE is_active = true`. (d) ⏳ **PENDING** final `account_number` (Jorge gives it to fit the COA numbering scheme; `'6999'` is a placeholder).
+- **Open items:** (a) ✅ **CONFIRMED** seed→`catalogs.accounts` (Jorge, 2026-06-15). (b) ✅ **CLEARED** — accountant gate satisfied: **TRANSP = cash basis, internal books + MOR consistent** (cash-basis-primary locked into §3). (c) ✅ **VERIFIED** ON CONFLICT target = partial unique index `uq_coa_roles_company_role_active` `(operating_company_id, role) WHERE is_active = true`. (d) ⏳ **PENDING** final `account_number` (Jorge gives it to fit the COA scheme; `'6999'` placeholder) — needed at Step 2, not now.
 - **Process LOCKED:** design/SQL shown → Jorge approves → branch-test → builder STOPS → GUARD verifies independently → Jorge merges → deploy → GUARD verifies on prod. Flag flips ON only after Jorge's post-verify say-so. Never cleanup2-fresh; no credentials in chat.
 
 ## 9. TEST PLAN (built with each step)
