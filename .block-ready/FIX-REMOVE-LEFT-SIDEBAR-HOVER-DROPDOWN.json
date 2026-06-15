@@ -1,0 +1,15 @@
+{
+  "block_id": "FIX-REMOVE-LEFT-SIDEBAR-HOVER-DROPDOWN",
+  "branch": "fix/remove-left-sidebar-hover-dropdown",
+  "phase": "UI-CLEANUP",
+  "task": "Finance-build block 17: remove the LEFT main sidebar hover/fly-out dropdown (outstanding cleanup; locked sidebar design = 20 flat items, click-navigate only, no hover fly-out). Surgical removal in apps/frontend/src/components/Sidebar.tsx: delete the hoverId state, the onMouseEnter/onMouseLeave handlers on the item wrapper, the <SidebarFlyoutMenu> render, and the now-unused imports (useState, getSidebarFlyoutItems, SidebarItemId, SidebarFlyoutMenu). Click navigation (NavLink), active-route highlight, the maintenance severe badge, and the locked 20-item order are all preserved. UI-only, no migration, no money-path, no route deletion (child routes still exist + are still rendered by the router; getSidebarFlyoutItems left in config). SidebarFlyoutMenu.tsx left in place (no longer imported). Frontend tsc clean; the 2 pre-existing active-state Sidebar tests fail identically before and after (unrelated jsdom quirk).",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/FIX-REMOVE-LEFT-SIDEBAR-HOVER-DROPDOWN.json",
+    "apps/frontend/src/components/Sidebar.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
