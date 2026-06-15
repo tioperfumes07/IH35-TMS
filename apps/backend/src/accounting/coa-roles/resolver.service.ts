@@ -10,6 +10,7 @@ export const COA_ROLE_VALUES = [
   "sales_tax_payable",
   "cash_basis_adjustment_equity",
   "retained_earnings",
+  "uncategorized_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

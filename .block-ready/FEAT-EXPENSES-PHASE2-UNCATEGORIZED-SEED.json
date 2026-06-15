@@ -1,0 +1,21 @@
+{
+  "block_id": "FEAT-EXPENSES-PHASE2-UNCATEGORIZED-SEED",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "GAP-EXPENSES",
+  "task": "GAP-EXPENSES Phase 2 Step 2 — the safe foundation seed (NO posting logic). Migration 202606151500 seeds one global 'Uncategorized Expenses' account (#6999, account_type='Expense', is_postable=true) in catalogs.accounts (the GL posting CoA; VERIFIED journal_entry_postings.account_id + chart_of_accounts_roles.account_id both FK catalogs.accounts; accounting.coa_account is the QBO mirror, not seeded here) + a per-company uncategorized_expense role in accounting.chart_of_accounts_roles for each active org.companies row (mirrors ap_control), and widens chart_of_accounts_roles_role_check (was 11 roles incl. expense_default, no uncategorized_expense) to add it. The role seed's ON CONFLICT uses the VERIFIED partial unique index uq_coa_roles_company_role_active (operating_company_id, role) WHERE is_active=true. COA_ROLE_VALUES (coa-roles/resolver.service.ts) gains 'uncategorized_expense' so resolveRoleAccountOptional can resolve it. Additive, idempotent, rollback noted. Accountant gate cleared: TRANSP = cash basis (books + MOR). Validated locally (applies clean, account seeds 6999/Expense/postable). EXPENSE_GL_POSTING_ENABLED stays OFF; this seed changes no behavior on its own (no posting until Step 3). FINANCIAL/guard_required: builder authors + SHOWS SQL → Jorge approves → branch-test on ci-migration-test → builder STOPS → GUARD verifies independently → Jorge merges. Never self-merge.",
+  "branch": "feat/expenses-phase2-uncategorized-seed",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-EXPENSES-PHASE2-UNCATEGORIZED-SEED.json",
+    "db/migrations/202606151500_expense_uncategorized_account_and_role.sql",
+    "apps/backend/src/accounting/coa-roles/resolver.service.ts",
+    "scripts/verify-uncategorized-expense-seed.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
