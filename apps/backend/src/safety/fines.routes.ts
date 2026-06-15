@@ -124,7 +124,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT *
-          FROM safety.civil_fines
+          FROM safety.fines
           WHERE ${filters.join(" AND ")}
           ORDER BY issued_date DESC, created_at DESC
           LIMIT 500
@@ -146,7 +146,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.civil_fines WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT * FROM safety.fines WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows[0] ?? null;
@@ -167,7 +167,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const fine = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          INSERT INTO safety.civil_fines (
+          INSERT INTO safety.fines (
             operating_company_id, subject_type, subject_driver_id, issued_by_authority, jurisdiction, violation_code,
             violation_description, issued_date, amount_cents, related_load_id, related_unit_id, source_doc_id, notes,
             created_by_user_id, updated_by_user_id
@@ -200,7 +200,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           user.uuid,
           "safety.fine.created",
           {
-            resource_type: "safety.civil_fines",
+            resource_type: "safety.fines",
             resource_id: created.id,
             operating_company_id: query.data.operating_company_id,
             subject_type: created.subject_type,
@@ -247,7 +247,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
       values.push(params.data.id, query.data.operating_company_id);
       const res = await client.query(
         `
-          UPDATE safety.civil_fines
+          UPDATE safety.fines
           SET ${sets.join(", ")}
           WHERE id = $${values.length - 1}
             AND operating_company_id = $${values.length}
@@ -262,7 +262,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           user.uuid,
           "safety.fine.updated",
           {
-            resource_type: "safety.civil_fines",
+            resource_type: "safety.fines",
             resource_id: row.id,
             operating_company_id: query.data.operating_company_id,
             changes: payload,
@@ -292,7 +292,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         const fineRes = await client.query(
           `
             SELECT *
-            FROM safety.civil_fines
+            FROM safety.fines
             WHERE id = $1
               AND operating_company_id = $2
             LIMIT 1
@@ -363,7 +363,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
 
         const fineUpdateRes = await client.query(
           `
-            UPDATE safety.civil_fines
+            UPDATE safety.fines
             SET converted_to_liability_id = $2,
                 converted_at = now(),
                 converted_by_user_id = $3,
@@ -422,7 +422,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          UPDATE safety.civil_fines
+          UPDATE safety.fines
           SET status = 'contested',
               notes = COALESCE($3, notes),
               updated_by_user_id = $4
@@ -452,7 +452,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          UPDATE safety.civil_fines
+          UPDATE safety.fines
           SET status = 'dismissed',
               notes = COALESCE($3, notes),
               updated_by_user_id = $4
@@ -482,7 +482,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          UPDATE safety.civil_fines
+          UPDATE safety.fines
           SET amount_cents = $3,
               status = 'reduced',
               notes = COALESCE(notes || E'\n', '') || $4,
@@ -513,7 +513,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          UPDATE safety.civil_fines
+          UPDATE safety.fines
           SET paid_via_bank_transaction_id = $3,
               paid_date = $4::date,
               paid_amount_cents = $5,
@@ -539,7 +539,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           user.uuid,
           "safety.fine.payment_linked",
           {
-            resource_type: "safety.civil_fines",
+            resource_type: "safety.fines",
             resource_id: row.id,
             bank_transaction_id: body.data.bank_transaction_id,
             paid_amount_cents: body.data.paid_amount_cents,
@@ -553,7 +553,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           user.uuid,
           "safety.fine.paid",
           {
-            resource_type: "safety.civil_fines",
+            resource_type: "safety.fines",
             resource_id: row.id,
             paid_amount_cents: body.data.paid_amount_cents,
             operating_company_id: query.data.operating_company_id,
