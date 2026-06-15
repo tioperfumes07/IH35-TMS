@@ -315,9 +315,12 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const offsetIdx = values.length;
       const rowsRes = await client.query(
         `
-          SELECT w.*${laborSelect}
+          SELECT w.*${laborSelect}, wu.unit_number AS unit_number,
+                 NULLIF(TRIM(CONCAT_WS(' ', wd.first_name, wd.last_name)), '') AS driver_name
           FROM maintenance.work_orders w
           ${laborJoin}
+          LEFT JOIN mdata.units wu ON wu.id = w.unit_id
+          LEFT JOIN mdata.drivers wd ON wd.id = w.driver_id
           WHERE ${where.join(" AND ")}${segmentClause}
           ${orderBy}
           LIMIT $${limitIdx} OFFSET $${offsetIdx}
