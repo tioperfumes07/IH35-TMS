@@ -119,7 +119,7 @@ export function WorkOrdersTable({
                   </Link>
                 </td>
                 <td className="px-2 py-1">{row.source_type ?? "—"}</td>
-                <td className="truncate px-2 py-1">{row.unit_id}</td>
+                <td className="truncate px-2 py-1">{row.unit_number ?? row.unit_id}</td>
                 <td className="truncate px-2 py-1">{row.driver_id ?? "—"}</td>
                 <td className="truncate px-2 py-1">{row.external_vendor_id ?? "—"}</td>
                 <td className="truncate px-2 py-1">{row.status}</td>
