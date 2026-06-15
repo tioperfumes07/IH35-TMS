@@ -29,7 +29,7 @@ export async function listActiveUnitIds(
       SELECT id::text AS id
       FROM mdata.units
       WHERE operating_company_id = $1
-        AND status = 'Active'
+        AND status = 'InService'
         AND deactivated_at IS NULL
       ORDER BY unit_number
     `,
