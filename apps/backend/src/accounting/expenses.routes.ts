@@ -6,6 +6,11 @@ import { currentAuthUser, validationError, withCompanyScope } from "../accountin
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { postSourceTransaction, reversePostedSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
+import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+
+export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -398,6 +403,144 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
       throw error;
     }
+  });
+
+  // GAP-EXPENSES Phase 2 Step 3 — explicit "Post to GL" (gated EXPENSE_GL_POSTING_ENABLED, default OFF).
+  app.post("/api/v1/expenses/:expenseId/post", async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error" });
+    const body = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const oci = body.data.operating_company_id;
+    const expenseId = params.data.expenseId;
+
+    // Step A (own tx): flag + role + eligibility; synthesize the uncategorized line for a direct
+    // (line-less) expense so total_amount_cents = SUM(expense_lines.amount_cents) holds at the flip.
+    const pre = await withCompanyScope(user.uuid, oci, async (client) => {
+      if (!(await isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: oci, user_uuid: String(user.uuid) }))) {
+        return { kind: "disabled" as const };
+      }
+      if (!canVoid(String(user.role ?? ""))) return { kind: "forbidden" as const }; // post = Owner + Accountant (decision 4)
+      const r = await client.query(
+        `SELECT e.posting_status, e.status, e.total_amount_cents::text, e.payment_account_uuid::text, e.vendor_uuid::text,
+                (SELECT count(*) FROM accounting.expense_lines l WHERE l.expense_id = e.id)::int AS line_count
+         FROM accounting.expenses e WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid LIMIT 1`,
+        [expenseId, oci]
+      );
+      const exp = r.rows[0] as
+        | { posting_status: string; status: string; total_amount_cents: string; payment_account_uuid: string | null; vendor_uuid: string | null; line_count: number }
+        | undefined;
+      if (!exp) return { kind: "not_found" as const };
+      if (exp.status === "void") return { kind: "not_eligible" as const };
+      if (exp.posting_status !== "unposted") return { kind: "already_posted" as const };
+      // orphan guard (decision 3): no payment account AND no vendor → reject (no orphan payable). Clean 409 here;
+      // buildExpenseLines keeps the same guard as the engine-level backstop.
+      if (!exp.payment_account_uuid && !exp.vendor_uuid) return { kind: "orphan" as const };
+      if (exp.line_count === 0) {
+        const cents = Number(exp.total_amount_cents);
+        await client.query(
+          `INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount_cents, amount, description)
+           VALUES ($1::uuid, 1, $2, $3, 'Uncategorized')`,
+          [expenseId, cents, cents / 100]
+        );
+      }
+      return { kind: "ok" as const };
+    });
+    if (pre.kind === "disabled") return reply.code(409).send({ error: "expense_posting_not_enabled" });
+    if (pre.kind === "forbidden") return reply.code(403).send({ error: "forbidden_owner_or_accountant_only" });
+    if (pre.kind === "not_found") return reply.code(404).send({ error: "expense_not_found" });
+    if (pre.kind === "not_eligible") return reply.code(409).send({ error: "expense_not_posting_eligible" });
+    if (pre.kind === "already_posted") return reply.code(409).send({ error: "expense_already_posted" });
+    if (pre.kind === "orphan") return reply.code(409).send({ error: "expense_orphan_no_payment_account_or_vendor" });
+
+    // Step B: post the balanced JE (own tx, idempotent — re-post returns the existing batch).
+    let journalEntryId: string;
+    try {
+      const posting = await postSourceTransaction(
+        { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
+        { userId: String(user.uuid) }
+      );
+      journalEntryId = posting.journal_entry_id;
+    } catch (err) {
+      if (err instanceof PostingEngineError) {
+        if (err.code === "ACCOUNT_MAPPING_MISSING") return reply.code(409).send({ error: "expense_account_mapping_missing", detail: err.message });
+        if (err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
+        if (err.code === "EXPENSE_NOT_POSTING_ELIGIBLE") return reply.code(409).send({ error: "expense_not_posting_eligible" });
+      }
+      throw err;
+    }
+
+    // Step C: flip the header to posted — Phase-1.5 gate passes (total = sum after synthesis).
+    await withCompanyScope(user.uuid, oci, async (client) => {
+      await client.query(
+        `UPDATE accounting.expenses
+         SET posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
+         WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
+        [expenseId, journalEntryId, oci]
+      );
+      await appendCrudAudit(client, user.uuid, "expense.posted", { expense_id: expenseId, journal_entry_id: journalEntryId }, "info");
+    });
+    return reply.code(200).send({ expense_id: expenseId, posting_status: "posted", journal_entry_id: journalEntryId });
+  });
+
+  // VOID = reversing JE (posted) / status flip (unposted). Gated VOID_ENFORCEMENT_ENABLED, Owner+Accountant, reason required.
+  app.post("/api/v1/expenses/:expenseId/void", async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error" });
+    const body = z.object({ operating_company_id: z.string().uuid(), reason: z.string().trim().min(1) }).safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const oci = body.data.operating_company_id;
+    const expenseId = params.data.expenseId;
+
+    const pre = await withCompanyScope(user.uuid, oci, async (client) => {
+      if (!(await isVoidEnforcementEnabled(client, oci, String(user.uuid)))) return { kind: "disabled" as const };
+      if (!canVoid(String(user.role ?? ""))) return { kind: "forbidden" as const };
+      const r = await client.query(
+        `SELECT posting_status, status FROM accounting.expenses WHERE id=$1::uuid AND operating_company_id=$2::uuid LIMIT 1`,
+        [expenseId, oci]
+      );
+      const exp = r.rows[0] as { posting_status: string; status: string } | undefined;
+      if (!exp) return { kind: "not_found" as const };
+      if (exp.status === "void" || exp.posting_status === "reversed") return { kind: "already_void" as const };
+      return { kind: "ok" as const, posting_status: exp.posting_status };
+    });
+    if (pre.kind === "disabled") return reply.code(409).send({ error: "void_not_enabled" });
+    if (pre.kind === "forbidden") return reply.code(403).send({ error: "forbidden_owner_or_accountant_only" });
+    if (pre.kind === "not_found") return reply.code(404).send({ error: "expense_not_found" });
+    if (pre.kind === "already_void") return reply.code(409).send({ error: "expense_already_void" });
+
+    let reversingJeId: string | null = null;
+    if (pre.posting_status === "posted") {
+      try {
+        const rev = await reversePostedSourceTransaction(
+          { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
+          { userId: String(user.uuid) }
+        );
+        reversingJeId = rev.journal_entry_id;
+      } catch (err) {
+        if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
+        throw err;
+      }
+    }
+
+    await withCompanyScope(user.uuid, oci, async (client) => {
+      await client.query(
+        `UPDATE accounting.expenses
+         SET status='void',
+             posting_status = CASE WHEN posting_status='posted' THEN 'reversed' ELSE posting_status END,
+             reversed_by_je_id = COALESCE($2::uuid, reversed_by_je_id),
+             voided_at=now(), voided_by_user_id=$3::uuid, void_reason=$4, updated_at=now()
+         WHERE id=$1::uuid AND operating_company_id=$5::uuid`,
+        [expenseId, reversingJeId, user.uuid, body.data.reason, oci]
+      );
+      await appendCrudAudit(client, user.uuid, "expense.voided",
+        { expense_id: expenseId, reversing_journal_entry_id: reversingJeId, reason: body.data.reason }, "warning");
+    });
+    return reply.code(200).send({ expense_id: expenseId, status: "void", reversing_journal_entry_id: reversingJeId });
   });
 }
 

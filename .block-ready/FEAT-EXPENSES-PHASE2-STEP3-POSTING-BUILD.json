@@ -1,0 +1,23 @@
+{
+  "block_id": "FEAT-EXPENSES-PHASE2-STEP3-POSTING-BUILD",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "GAP-EXPENSES",
+  "task": "GAP-EXPENSES Phase 2 Step 3 (TIER 1) — expense → GL posting engine + reversing-JE void, ALL behind EXPENSE_GL_POSTING_ENABLED (default OFF). posting-engine.service.ts: PostingSourceType += 'expense' + runtime assertKnownSourceType list + buildPostingDraft dispatch + NEW buildExpenseLines (mirror buildBillLines): DR each expense_line (amount_cents) via expense_category_uuid → resolveBillCategoryAccount → uncategorized_expense role (#1015 seed) → fail loud; CASH-BASIS PRIMARY credit = payment_account_uuid (a catalogs.accounts id) when set, else AP (ap_control) carrying the vendor; ORPHAN GUARD (no payment account AND no vendor → ACCOUNT_MAPPING_MISSING, no orphan payable). expenses.routes.ts: explicit POST /expenses/:id/post (gated EXPENSE_GL_POSTING_ENABLED; Owner+Accountant via canVoid; idempotent; orphan pre-check returns clean 409; synthesizes ONE uncategorized accounting.expense_lines row for a direct line-less expense BEFORE the posting_status='posted' flip so the Phase-1.5 gate total=SUM(lines) passes; sets posting_status='posted', posted_at, journal_entry_id) + POST /expenses/:id/void (gated VOID_ENFORCEMENT_ENABLED, Owner+Accountant, reason required; posted → reversePostedSourceTransaction reversing JE, posting_status='reversed', reversed_by_je_id; unposted → status flip; un-suppressable audit). Migration 202606151700 registers EXPENSE_GL_POSTING_ENABLED default OFF (no behavior change). DB test expense-gl-posting.db.test.ts proves balanced JE (DR uncategorized, CR bank, SUM debit=credit) + orphan guard (no JE posted). Static guard verify-expense-gl-posting.mjs (CI) locks the source wiring + cash CR + orphan guard + gated Post action + reversing-JE void + flag OFF. Flag OFF = byte-identical to today. Bill path untouched (#1009 stays green). FLAGGED (pre-existing, out of scope): markBatchFailed ON CONFLICT (operating_company_id, idempotency_key) has no matching unique constraint → masks failure-path errors for ALL source types; orphan endpoint pre-check sidesteps it. Branch-tested on ci-migration-test, left applied for GUARD's single balanced-JE query. Tier 1: builder STOPS; GUARD verifies independently; Jorge merges; flag flips ON only after prod verification.",
+  "branch": "feat/expenses-phase2-step3-posting-build",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-EXPENSES-PHASE2-STEP3-POSTING-BUILD.json",
+    "db/migrations/202606151700_expense_gl_posting_flag.sql",
+    "apps/backend/src/accounting/posting-engine.service.ts",
+    "apps/backend/src/accounting/expenses.routes.ts",
+    "apps/backend/src/accounting/__tests__/expense-gl-posting.db.test.ts",
+    "scripts/verify-expense-gl-posting.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
