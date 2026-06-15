@@ -1,0 +1,17 @@
+{
+  "block_id": "FEAT-VOID-EVERYWHERE-PR4",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "VOID-EVERYWHERE",
+  "task": "VOID-EVERYWHERE PR-4 (gated, default OFF, NO migration). Adds void to Expenses. Per the locked answer, expenses do NOT post to the GL, so the void is the CLEAN case: a pure status flip + permission + required reason + audit, with NO reversing journal entry (unlike bills/invoices in PR-1/PR-2). New endpoint POST /api/v1/expenses/:expenseId/void in expenses.routes.ts: gated behind VOID_ENFORCEMENT_ENABLED (isVoidEnforcementEnabled) -- when OFF the endpoint is inert (409 void_not_enabled, no behaviour change in prod); when ON it enforces VOID = Owner+Accountant (canVoid, Administrator excluded), requires a reason, idempotency-guards (409 expense_already_void), flips accounting.expenses.status to 'void' (updated_at set defensively via columnExists since the table is adaptively shaped), and writes the void to the audit spine (appendCrudAudit accounting.expenses.voided, severity warning -- the canonical who/what/when/reason record). NO reversing JE, NO postVoidReversal, NO GL read, NO VoidableEntityType change. No migration: status column already exists; reason/actor/timestamp live in the audit spine, not new expense columns. Reuses canVoid + isVoidEnforcementEnabled from void.service.ts (PR-1). Gated financial -- show Jorge the money-path diff; never self-merge. Does NOT touch advances (PR-3, needs block-if-linked design) or settlements.",
+  "branch": "feat/void-everywhere-pr4-expenses",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-VOID-EVERYWHERE-PR4.json",
+    "apps/backend/src/accounting/expenses.routes.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

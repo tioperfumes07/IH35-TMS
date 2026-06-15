@@ -6,6 +6,7 @@ import { currentAuthUser, validationError, withCompanyScope } from "../accountin
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -87,6 +88,11 @@ const reattributeBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   new_load_id: z.string().uuid(),
   reason: z.string().trim().min(5).max(500),
+});
+
+const voidExpenseBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  reason: z.string().trim().min(3).max(500),
 });
 
 export async function registerExpenseRoutes(app: FastifyInstance) {
@@ -396,6 +402,68 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
       throw error;
     }
+  });
+
+  // VOID-EVERYWHERE PR-4 (gated). Expenses do NOT post to the GL, so a void is a pure status flip +
+  // permission + required reason + audit — NO reversing journal entry. Gated behind
+  // VOID_ENFORCEMENT_ENABLED (default OFF): when OFF the endpoint is inert (feature not enabled).
+  // Reason + actor + timestamp live in the audit spine (the canonical void record per VOID-EVERYWHERE).
+  app.post("/api/v1/expenses/:expenseId/void", async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const parsed = voidExpenseBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const body = parsed.data;
+
+    const result = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+      const flagOn = await isVoidEnforcementEnabled(client, body.operating_company_id, user.uuid);
+      if (!flagOn) return { code: 409 as const, error: "void_not_enabled" };
+      if (!canVoid(user.role)) return { code: 403 as const, error: "forbidden_void_owner_or_accountant_only" };
+      if (!body.reason.trim()) return { code: 400 as const, error: "void_reason_required" };
+
+      if (!(await relationExists(client, "accounting.expenses"))) return { code: 404 as const, error: "expense_not_found" };
+
+      const cur = await client.query(
+        `SELECT id::text AS id, status FROM accounting.expenses WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [params.data.expenseId, body.operating_company_id]
+      );
+      const expense = cur.rows[0] as { id: string; status: string } | undefined;
+      if (!expense) return { code: 404 as const, error: "expense_not_found" };
+      if (String(expense.status) === "void" || String(expense.status) === "voided") {
+        return { code: 409 as const, error: "expense_already_void" };
+      }
+
+      // Status flip only (no GL). Set updated_at defensively — accounting.expenses is adaptively shaped.
+      const hasUpdatedAt = await columnExists(client, "accounting", "expenses", "updated_at");
+      await client.query(
+        `UPDATE accounting.expenses SET status = 'void'${hasUpdatedAt ? ", updated_at = now()" : ""}
+         WHERE id = $1 AND operating_company_id = $2`,
+        [params.data.expenseId, body.operating_company_id]
+      );
+
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "accounting.expenses.voided",
+        {
+          resource_type: "accounting.expenses",
+          resource_id: params.data.expenseId,
+          operating_company_id: body.operating_company_id,
+          void_reason: body.reason,
+          voided_by_user_id: user.uuid,
+          engine: "VOID-EVERYWHERE-PR4",
+        },
+        "warning",
+        "VOID-EVERYWHERE-PR4"
+      );
+      return { code: 200 as const, data: { id: params.data.expenseId, status: "void" } };
+    });
+
+    if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    return result.data;
   });
 }
 
