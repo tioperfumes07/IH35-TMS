@@ -92,6 +92,7 @@ export const ACCOUNTING_CLEAN_TABS = [
   { label: "Settlements",             to: "/driver-finance/settlements" },
   { label: "Factoring",               to: "/accounting/factoring" },
   { label: "Journal Entries",         to: "/accounting/journal-entries" },
+  { label: "Account Register",        to: "/accounting/account-register" },
   { label: "Find Transactions",       to: "/banking/qbo-sync-queue" },
   { label: "Reports",                 to: "/reports" },
   { label: "Settings",                to: "/accounting/settings/expense-category-map" },
