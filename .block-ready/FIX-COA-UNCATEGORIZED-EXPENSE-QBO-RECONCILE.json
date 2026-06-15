@@ -1,0 +1,21 @@
+{
+  "block_id": "FIX-COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "GAP-EXPENSES",
+  "task": "BUGFIX COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE — the #1015 seed created catalogs.accounts #6999 'Uncategorized Expenses' (qbo_account_id NULL), which duplicates QBO's live 'Uncategorized Expense' #25 (qbo_account_id='25'). Posting into a non-QBO bucket would drift / push a duplicate at Phase-3 QBO sync. One forward, idempotent migration (202606151800) repoints TRANSP's accounting.chart_of_accounts_roles uncategorized_expense role at the QBO-linked #25 (selected by qbo_account_id, not a hardcoded UUID) and soft-retires #6999 (deactivated_at + is_postable=false; NO DELETE — record preserved, nothing has posted to it, posting is flag-OFF). FAIL-SAFE: #6999 is retired ONLY inside the IF-branch where #25 was found AND the role was repointed, in ONE transaction — if #25 is absent the migration is a clean no-op, never leaving the role pointing at a just-deactivated account. GUARD-verified on PROD: #25 id 4cec8ed2..., #6999 id 1fde9c7f.... Recurrence guard scripts/verify-uncategorized-expense-mapping.mjs asserts the uncategorized_expense role resolves to a QBO-linked account (never a NULL-QBO bucket) and that #6999 is soft-retired, not DELETEd. FINANCIAL Tier 2 (additive, zero behavior change — EXPENSE_GL_POSTING_ENABLED stays OFF). No app code. Clean-apply validated on local docker (CI-ephemeral equivalent). CI ephemeral Postgres is the apply + idempotency gate (condition 1); GUARD's prod query is the mandatory correctness gate post-deploy (condition 3): PASS = role resolves to 4cec8ed2 / #QBO-25 and #6999 shows deactivated_at set. STOP before merge — Jorge merges. Never self-merge.",
+  "branch": "fix/coa-uncategorized-expense-qbo-reconcile",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE.json",
+    "db/migrations/202606151800_coa_uncategorized_expense_qbo_reconcile.sql",
+    "scripts/verify-uncategorized-expense-mapping.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}

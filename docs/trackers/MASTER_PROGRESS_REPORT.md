@@ -1064,6 +1064,7 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 785 | Driver-Finance | #921 | feat(driver-finance): B4 driver-request accountability timel… |  | DONE | 2026-06-13 |  | merge 318ca7392  / merged+live |
 | 786 | Driver-Finance | #922 | feat(driver-finance): B5 cash-advance approve cascade (capst… |  | DONE | 2026-06-13 |  | merge 1866e0753  / merged+live |
 | 787 | Other | #923 | B6 — Driver Inbox UI (cascade-preview + timeline endpoints) |  | DONE | 2026-06-13 |  | merge 49638a7a4  / merged+live |
+| 788 | Accounting | #1019 | fix(accounting): COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE — point uncategorized_expense role at QBO #25; soft-retire redundant #6999 seed |  | PR-OPEN (STOP, Jorge merges) | 2026-06-15 |  | FINANCIAL Tier 2; idempotent fail-safe reconcile + recurrence guard; GUARD prod-query is the correctness gate post-deploy |
 
 ---
 *Reconciled 2026-06-13 13:01:33 CDT. Full merged-PR record (871 PRs) and per-sheet detail in the [xlsx export](exports/).*

@@ -288,6 +288,7 @@
     "verify:uncategorized-expense-seed": "node scripts/verify-uncategorized-expense-seed.mjs",
     "verify:fh1-fixed-assets": "node scripts/verify-fh1-fixed-assets.mjs",
     "verify:expense-gl-posting": "node scripts/verify-expense-gl-posting.mjs",
+    "verify:uncategorized-expense-mapping": "node scripts/verify-uncategorized-expense-mapping.mjs",
     "verify:no-policy-unit-is-active": "node scripts/verify-no-policy-unit-is-active.mjs",
     "verify:qbo-customer-sync-tenant-chain": "node scripts/verify-qbo-customer-sync-tenant-chain.mjs",
     "verify:qbo-conflict-detection-tenant-scope": "node scripts/verify-qbo-conflict-detection-tenant-scope.mjs",
