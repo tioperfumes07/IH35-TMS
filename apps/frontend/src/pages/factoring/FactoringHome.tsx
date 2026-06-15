@@ -487,13 +487,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                   if (faroCsvText.trim()) {
                     await apiRequest(`/api/v1/factoring/import/faro`, {
                       method: "POST",
-                      body: JSON.stringify({
+                      body: {
                         operating_company_id: companyId,
                         csv_text: faroCsvText,
                         statement_date: faroStatementDate,
                         statement_reference: faroStatementRef || "daily",
                         source_filename: faroFileName || undefined,
-                      }),
+                      },
                     });
                   } else {
                     const lines = JSON.parse(faroLinesJson) as Array<Record<string, unknown>>;
