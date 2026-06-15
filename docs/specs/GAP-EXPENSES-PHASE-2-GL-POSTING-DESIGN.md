@@ -86,7 +86,9 @@ SELECT c.id, 'uncategorized_expense', a.id, true
 FROM org.companies c
 CROSS JOIN (SELECT id FROM catalogs.accounts WHERE account_name='Uncategorized Expenses' AND account_type='Expense' LIMIT 1) a
 WHERE c.is_active
-ON CONFLICT (operating_company_id, role) DO NOTHING;   -- confirm the exact unique key at build
+-- VERIFIED unique key = PARTIAL index uq_coa_roles_company_role_active
+--   (operating_company_id, role) WHERE is_active = true → the ON CONFLICT must carry that predicate:
+ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING;
 
 COMMIT;
 ```
@@ -105,7 +107,7 @@ COMMIT;
 - **STEP 1 (this doc):** reconcile to locked decisions + resolve the COA drift. ✅
 - **STEP 2:** the seed migration (§7), SHOWN — Jorge approves → branch-test on `ci-migration-test` via the existing runner → **builder STOPS** → GUARD verifies independently → Jorge merges. **No posting logic in Step 2.**
 - **STEP 3 (only after Step 2 approved + verified):** posting engine (`'expense'` source, `buildExpenseLines`, balanced JE) + reversing-JE void, behind `EXPENSE_GL_POSTING_ENABLED` (OFF). Separate gated block.
-- **Open for confirmation:** (a) COA-drift resolution (§0) — confirm seed→`catalogs.accounts`; (b) accountant sign-off on §3 DR/CR; (c) the `chart_of_accounts_roles` unique key for the ON CONFLICT; (d) final account_number.
+- **Open items:** (a) ✅ **CONFIRMED** seed→`catalogs.accounts` (Jorge, 2026-06-15). (b) ⏳ **PENDING** accountant sign-off on §3 cash-else-AP + orphan guard — *design it, do not enable it.* (c) ✅ **VERIFIED** ON CONFLICT target = partial unique index `uq_coa_roles_company_role_active` `(operating_company_id, role) WHERE is_active = true`. (d) ⏳ **PENDING** final `account_number` (Jorge gives it to fit the COA numbering scheme; `'6999'` is a placeholder).
 - **Process LOCKED:** design/SQL shown → Jorge approves → branch-test → builder STOPS → GUARD verifies independently → Jorge merges → deploy → GUARD verifies on prod. Flag flips ON only after Jorge's post-verify say-so. Never cleanup2-fresh; no credentials in chat.
 
 ## 9. TEST PLAN (built with each step)
