@@ -16,7 +16,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 
 export const VOID_FLAG_KEY = "VOID_ENFORCEMENT_ENABLED";
 
-export type VoidableEntityType = "invoice" | "journal_entry";
+export type VoidableEntityType = "invoice" | "journal_entry" | "bill";
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -135,19 +135,20 @@ async function readOriginalGlPostings(
     );
     return res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
   }
-  // invoice: GL lines posted by the posting engine carry the source linkage on journal_entry_postings.
+  // invoice / bill: GL lines posted by the posting engine carry the source linkage on
+  // journal_entry_postings (source_transaction_type matches the posting-engine source type).
   const res = await client.query<GlPostingRow>(
     `
       SELECT account_id::text, class_id::text, entity_uuid::text,
              debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
-        AND source_transaction_type = 'invoice'
+        AND source_transaction_type = $3
         AND source_transaction_id = $2
         AND posting_batch_id IS NOT NULL
       ORDER BY line_sequence ASC
     `,
-    [operatingCompanyId, entityId]
+    [operatingCompanyId, entityId, entityType]
   );
   return res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
 }
@@ -243,7 +244,12 @@ export async function auditVoid(
     reversal: VoidReversalResult;
   }
 ): Promise<void> {
-  const resourceType = entityType === "invoice" ? "accounting.invoices" : "accounting.journal_entries";
+  const resourceTypeByEntity: Record<VoidableEntityType, string> = {
+    invoice: "accounting.invoices",
+    journal_entry: "accounting.journal_entries",
+    bill: "accounting.bills",
+  };
+  const resourceType = resourceTypeByEntity[entityType];
   await appendCrudAudit(
     client,
     actorUserId,
@@ -257,9 +263,9 @@ export async function auditVoid(
       reversal_date: params.reversal.reversal_date,
       closed_period_reversal: params.reversal.closed_period_reversal,
       voided_by_user_id: actorUserId,
-      engine: "VOID-EVERYWHERE-PR1",
+      engine: "VOID-EVERYWHERE-PR2",
     },
     "warning",
-    "VOID-EVERYWHERE-PR1"
+    "VOID-EVERYWHERE-PR2"
   );
 }

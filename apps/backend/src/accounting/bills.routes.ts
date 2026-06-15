@@ -244,7 +244,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/bills/:id/void", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (String(user.role ?? "") !== "Owner") return reply.code(403).send({ error: "forbidden_owner_only" });
+    // Role is enforced inside voidBill (flag-aware): Owner-only when the void engine is OFF,
+    // Owner+Accountant when it is ON (VOID-EVERYWHERE PR-2).
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -253,7 +254,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     try {
-      await voidBill(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid));
+      await voidBill(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid), {
+        role: user.role,
+      });
       void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
@@ -268,7 +271,12 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       return { ok: true };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_void_failed");
+      if (message === "forbidden_owner_only" || message === "forbidden_void_owner_or_accountant_only") {
+        return reply.code(403).send({ error: message });
+      }
+      if (message === "void_reason_required") return reply.code(400).send({ error: message });
       if (message === "bill_not_found") return reply.code(404).send({ error: message });
+      if (message === "bill_already_void") return reply.code(409).send({ error: message });
       if (message === "bill_has_payments_cannot_void") return reply.code(409).send({ error: message });
       throw error;
     }

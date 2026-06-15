@@ -1,0 +1,21 @@
+{
+  "block_id": "FEAT-VOID-EVERYWHERE-PR2",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "VOID-EVERYWHERE",
+  "task": "VOID-EVERYWHERE PR-2 (gated, default OFF, NO migration). Extends the PR-1 shared void engine to Bills -- the AP mirror of the invoice (AR) wiring. void.service.ts: VoidableEntityType gains 'bill'; readOriginalGlPostings reads the bill's posted GL lines by source_transaction_type='bill' (the posting-engine source type from buildBillLines); auditVoid maps bill -> accounting.bills. bills.service.ts voidBill becomes flag-aware (same shape as the invoice route): flag OFF = unchanged legacy behaviour (Owner-only, status flip to 'void' + revoked_at/revoked_by/revoked_reason + crud audit, no reversing entry); flag ON = enforce VOID=Owner+Accountant + required reason, post the equal-and-opposite reversing JE on the SAME transaction client (closed-period routed to the current open period via accounting.closed_period_cutoff), then mark VOIDED + audit spine. Adds an idempotency guard (a bill already voided cannot be voided again). bills.routes.ts /void drops its hard Owner-only pre-check (role now enforced in the flag-aware service) and maps the new errors (403 forbidden_*; 400 void_reason_required; 409 bill_already_void). No schema change: bills already carry status + revoked_at/revoked_by_user_id/revoked_reason + bill_date; reversal linkage lives in the audit spine + the reversing JE, exactly like invoices. Unit test adds the bill-shaped reversal case (DR Expense/CR AP -> net zero, class+vendor preserved). Build/test on TRANSP. GUARD verifies the bill reversing-entry diff vs QuickBooks before merge; never self-merge. PR-3 extends the same engine to Expenses; PR-4 to Settlements.",
+  "branch": "feat/void-everywhere-pr2-bills",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-VOID-EVERYWHERE-PR2.json",
+    "apps/backend/src/accounting/void.service.ts",
+    "apps/backend/src/accounting/void.service.test.ts",
+    "apps/backend/src/accounting/bills.service.ts",
+    "apps/backend/src/accounting/bills.routes.ts",
+    "apps/backend/src/insurance/policy-bill-schedule.service.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
