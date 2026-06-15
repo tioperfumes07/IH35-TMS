@@ -105,7 +105,9 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           return { unavailable: true as const };
         }
 
-        const totalAmount = body.amount_cents / 100;
+        // Money stays on the integer-cents spine (Gate 2 / GAP-EXPENSES Phase 1):
+        // store amount_cents directly into accounting.expenses.total_amount_cents.
+        // No floating dollars on the money path.
 
         const hasVendor = await columnExists(client, "accounting", "expenses", "vendor_uuid");
         const driverColumn = (await columnExists(client, "accounting", "expenses", "driver_uuid"))
@@ -118,8 +120,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const hasLoadId = await columnExists(client, "accounting", "expenses", "load_id");
         const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
 
-        const columns: string[] = ["operating_company_id", "status", "transaction_date", "total_amount"];
-        const values: unknown[] = [body.operating_company_id, "posted", body.expense_date, totalAmount];
+        const columns: string[] = ["operating_company_id", "status", "transaction_date", "total_amount_cents"];
+        const values: unknown[] = [body.operating_company_id, "posted", body.expense_date, body.amount_cents];
 
         if (hasVendor) {
           columns.push(`vendor_uuid`);
