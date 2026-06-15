@@ -79,6 +79,9 @@ jobs:
       - name: Verify expense balance invariant (GAP-EXPENSES Phase 1.5)
         run: npm run verify:expense-balance-invariant
 
+      - name: Verify uncategorized-expense seed (GAP-EXPENSES Phase 2 Step 2)
+        run: npm run verify:uncategorized-expense-seed
+
       - name: Verify no insurance policy_unit.is_active refs (42703 guard)
         run: npm run verify:no-policy-unit-is-active
 
