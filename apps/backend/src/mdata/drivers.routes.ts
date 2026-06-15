@@ -394,9 +394,48 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             return { error: "prior_driver_identity_mismatch" as const };
           }
 
+          // Hardening: require prior_driver_id to be the MOST-RECENT terminated record in this
+          // identity's full rehire chain — not an older link. Walk the whole chain by identity
+          // (curp / cdl), not just the immediate prior. Linking to a non-tip record would fork the
+          // chain (two drivers pointing at the same prior) and miscount rehires.
+          const tipFilters: string[] = [];
+          const tipValues: unknown[] = [];
+          const ncurp = b.curp?.trim().toUpperCase();
+          const ncdlNumber = b.cdl_number?.trim().toUpperCase();
+          const ncdlState = b.cdl_state?.trim().toUpperCase();
+          if (ncurp) {
+            tipValues.push(ncurp);
+            tipFilters.push(`upper(trim(curp)) = $${tipValues.length}`);
+          }
+          if (ncdlNumber && ncdlState) {
+            tipValues.push(ncdlNumber);
+            tipValues.push(ncdlState);
+            tipFilters.push(
+              `(upper(trim(cdl_number)) = $${tipValues.length - 1} AND upper(trim(cdl_state)) = $${tipValues.length})`
+            );
+          }
+          let chainTip: { id: string; rehire_count: number | null } = priorDriver;
+          if (tipFilters.length > 0) {
+            const tipRes = await client.query<{ id: string; rehire_count: number | null }>(
+              `
+                SELECT id, rehire_count
+                FROM mdata.drivers
+                WHERE status = 'Terminated'
+                  AND (${tipFilters.join(" OR ")})
+                ORDER BY rehire_count DESC NULLS LAST, created_at DESC
+                LIMIT 1
+              `,
+              tipValues
+            );
+            chainTip = tipRes.rows[0] ?? priorDriver;
+          }
+          if (String(chainTip.id) !== String(priorDriver.id)) {
+            return { error: "prior_driver_not_most_recent_in_chain" as const };
+          }
+
           rehireState.prior_driver_id = priorDriver.id;
           rehireState.is_rehire = true;
-          rehireState.rehire_count = Number(priorDriver.rehire_count ?? 0) + 1;
+          rehireState.rehire_count = Number(chainTip.rehire_count ?? priorDriver.rehire_count ?? 0) + 1;
           rehireState.matched_via = matchedVia;
         }
 
@@ -816,6 +855,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         if (created.error === "prior_driver_not_found") return reply.code(404).send({ error: "prior_driver_not_found" });
         if (created.error === "prior_driver_not_terminated") return reply.code(400).send({ error: "prior_driver_not_terminated" });
         if (created.error === "prior_driver_identity_mismatch") return reply.code(400).send({ error: "prior_driver_identity_mismatch" });
+        if (created.error === "prior_driver_not_most_recent_in_chain")
+          return reply.code(409).send({ error: "prior_driver_not_most_recent_in_chain" });
         if (created.error === "override_required_for_rehire") return reply.code(400).send({ error: "override_required_for_rehire" });
       }
 
