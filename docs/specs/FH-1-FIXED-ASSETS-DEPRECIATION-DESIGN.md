@@ -50,6 +50,15 @@ QuickBooks Online does **not** auto-post depreciation. Findings:
 ### 1.3 Land exception
 **Land does NOT depreciate** (locked, per research). Class `land` → no schedule, no posting; register still tracks cost/basis for the balance sheet.
 
+### 1.4 Inter-company leasing — owner entity vs operating entity (locked decision #5)
+
+The asset module is **multi-entity** and must model that **TRK (IH 35 Trucking LLC) OWNS the assets and LEASES them to TRANSP (and later USMCA).** This splits where things book:
+
+- Each asset carries an **`owner_operating_company_id`** (the **lessor — TRK**, which holds title). The asset register + **depreciation book at the OWNER (TRK)** — TRK depreciates what it owns.
+- The **operating/lessee entity (TRANSP)** does **not** depreciate the asset; it books a **lease expense** (the monthly inter-company bill — see **FH-8 Lease Contract**, which generates that bill TRANSP→TRK and allocates per unit via FH-7).
+- The **lessor (TRK)** books **lease income**; on **consolidation** the intercompany lease expense (TRANSP) and income (TRK) **eliminate** — flag for the CONSOLIDATION design.
+- **Build sequencing (locked):** build the asset/leasing capability **now** (multi-entity, present in code), but it is **activated for TRK/USMCA once the software is built out** — TRK is largely static (little day-to-day movement) so there is no live data to test against yet; verify against TRK's QBO when activated. Operational finance (void, escrow, settlements, expenses) is built+tested on **TRANSP first** (where the live data is). Both TRK and TRANSP are QBO-connected; QBO stays in **parallel use** until the software surpasses it — nothing is exposed.
+
 ---
 
 ## 2. Asset lifecycle
@@ -112,7 +121,7 @@ Assets already in service must continue correctly — mirror QBO's **prior depre
 
 ## 6. Data model (additions — each `is_active` + soft-delete + audit cols; finalize in session)
 
-- **`fixed_assets.assets`** — the register (all §1.2 fields + status acquisition/active/disposed). FK VIN→`mdata.units` where applicable; GL account FKs → `catalogs.accounts`.
+- **`fixed_assets.assets`** — the register (all §1.2 fields + status acquisition/active/disposed). FK VIN→`mdata.units` where applicable; GL account FKs → `catalogs.accounts`. **`owner_operating_company_id`** = the lessor/title-holder (TRK) — depreciation books here (§1.4); distinct from the operating/lessee entity (TRANSP) that books the lease expense via FH-8.
 - **`fixed_assets.asset_classes`** — editable class catalog (default method, default useful life, default GL accounts per class).
 - **`fixed_assets.depreciation_schedules`** — one row per asset per period: period #, period date, depreciation amount, accumulated-to-date, book-value-end, method snapshot, `posted_journal_entry_id`, `posted_at`. Regeneratable; old rows retained on change (audited).
 - **`fixed_assets.disposals`** — disposal date, proceeds, gain/loss, JE link.
