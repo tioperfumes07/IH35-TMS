@@ -12,6 +12,15 @@ type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
+// Tasks RLS scope. The W1B tasks.* tables (task/status_history/note) gate on the LEGACY
+// `app.current_operating_company_id` GUC, while tasks.task_type uses the STANDARD
+// `app.operating_company_id`. Set BOTH (transaction-local, parameterized) so every tasks.* policy
+// resolves on the same connection — otherwise INSERT into tasks.task fails WITH CHECK (RLS 42501)
+// because the GUC the policy reads is empty. (Follow-up: a gated migration could standardize the
+// tasks.task policy onto `app.operating_company_id`; until then we set both here.)
+const SET_TASK_SCOPE_SQL =
+  `SELECT set_config('app.operating_company_id', $1, true), set_config('app.current_operating_company_id', $1, true)`;
+
 const ListTasksQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   assigned_to: z.string().uuid().optional(),
@@ -84,7 +93,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const input = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await client.query(SET_TASK_SCOPE_SQL, [input.operating_company_id]);
 
       let sql = `
         SELECT t.task_id, t.category, t.status, t.title, t.description,
@@ -126,7 +135,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const query = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${query.operating_company_id}'`);
+      await client.query(SET_TASK_SCOPE_SQL, [query.operating_company_id]);
 
       const sql = `
         SELECT t.task_id, t.category, t.status, t.title, t.priority, t.scheduled_date,
@@ -170,7 +179,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const input = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await client.query(SET_TASK_SCOPE_SQL, [input.operating_company_id]);
 
       const sql = `
         INSERT INTO tasks.task (operating_company_id, category, title, description,
@@ -208,7 +217,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
       if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
       const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
-      await client.query(`SET LOCAL app.operating_company_id = '${ocId}'`);
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
 
       const updates: string[] = ["status = $1"];
       const params: (string | number | null)[] = [input.status, id];
@@ -238,7 +247,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
       if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
       const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
-      await client.query(`SET LOCAL app.operating_company_id = '${ocId}'`);
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
 
       const sql = `
         SELECT t.*, u.email as assigned_to_email, ab.email as assigned_by_email
@@ -261,7 +270,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = z.object({ operating_company_id: z.string().uuid() }).safeParse(request.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query(SET_TASK_SCOPE_SQL, [parsed.data.operating_company_id]);
       const res = await (client as Queryable).query(
         `SELECT id, name, is_active FROM tasks.task_type WHERE operating_company_id = $1 AND is_active = true ORDER BY name`,
         [parsed.data.operating_company_id]
@@ -278,7 +287,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await client.query(SET_TASK_SCOPE_SQL, [input.operating_company_id]);
       const res = await (client as Queryable).query(
         `INSERT INTO tasks.task_type (operating_company_id, name) VALUES ($1, $2) ON CONFLICT (operating_company_id, name) DO UPDATE SET is_active = true RETURNING id, name, is_active`,
         [input.operating_company_id, input.name]
@@ -299,7 +308,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
       if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
       const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
-      await client.query(`SET LOCAL app.operating_company_id = '${ocId}'`);
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
       const res = await (client as Queryable).query(
         `UPDATE tasks.task SET progress_pct = $1, updated_at = NOW() WHERE task_id = $2 RETURNING task_id, progress_pct`,
         [parsed.data.progress_pct, id]
