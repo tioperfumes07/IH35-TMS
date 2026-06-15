@@ -1094,7 +1094,7 @@ async function markBatchFailed(
           updated_at
         )
         VALUES ($1::uuid, 'failed', $2, $3, $4, $5::uuid, now(), now())
-        ON CONFLICT (operating_company_id, idempotency_key)
+        ON CONFLICT (operating_company_id, idempotency_key) WHERE idempotency_key IS NOT NULL
         DO UPDATE SET batch_status = 'failed', updated_at = now()
       `,
       [operatingCompanyId, sourceType, sourceId, idempotencyKey, actor.userId]
@@ -1213,15 +1213,21 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
       };
     });
   } catch (error) {
-    if (!(error instanceof PostingEngineError)) {
-      await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
-    } else if (
-      error.code !== "INVOICE_NOT_POSTING_ELIGIBLE" &&
-      error.code !== "BILL_NOT_POSTING_ELIGIBLE" &&
-      error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE" &&
-      error.code !== "ADVANCE_NOT_POSTING_ELIGIBLE"
-    ) {
-      await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
+    // Failure-recording must NEVER mask the original posting error. If markBatchFailed
+    // itself throws (e.g. its own SQL/RLS issue), preserve and rethrow the original.
+    try {
+      if (!(error instanceof PostingEngineError)) {
+        await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
+      } else if (
+        error.code !== "INVOICE_NOT_POSTING_ELIGIBLE" &&
+        error.code !== "BILL_NOT_POSTING_ELIGIBLE" &&
+        error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE" &&
+        error.code !== "ADVANCE_NOT_POSTING_ELIGIBLE"
+      ) {
+        await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
+      }
+    } catch (recordError) {
+      console.error("[posting-engine] markBatchFailed failed; preserving original error", recordError);
     }
     throw error;
   }

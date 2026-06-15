@@ -1,0 +1,18 @@
+{
+  "block_id": "FIX-STEP3-POSTING-BALANCED-JE-PROOF",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "GAP-EXPENSES",
+  "task": "Step 3 (expense → GL posting) balanced-JE proof + two posting-engine robustness fixes uncovered while obtaining it. (1) markBatchFailed used a BARE 'ON CONFLICT (operating_company_id, idempotency_key)' that cannot infer the PARTIAL unique index uq_posting_batches_company_idempotency_key (WHERE idempotency_key IS NOT NULL) → 42P10 at plan time, so the failure-recorder itself crashed and MASKED every real posting error. Fixed by carrying the partial-index predicate in the ON CONFLICT. (2) postSourceTransaction's catch now wraps the markBatchFailed call so failure-recording can never mask the ORIGINAL posting error. Hardened the CI-gated DB test (expense-gl-posting.db.test.ts) to assert: balanced JE SUM(debit)=SUM(credit)=5000, CR=bank (cash-basis), batch_status='posted'; markBatchFailed RECORDS a 'failed' batch WITHOUT masking the original error; orphan guard (no payment account AND no vendor) fails loud with no JE. Proven green on ci-migration-test (pool + seed client on the SAME direct URL). The earlier failure was a TEST-HARNESS connection mismatch (engine pool reads DATABASE_URL; only DATABASE_DIRECT_URL was set) — NOT a product bug and NOT a fixture-data patch. EXPENSE_GL_POSTING_ENABLED STAYS OFF; the flag flip is a separate Tier-1 step after GUARD signs off. FINANCIAL / money-path: branch-test → GUARD verify → Jorge merges. NO self-merge / NO auto-merge.",
+  "branch": "fix/step3-posting-balanced-je-proof",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-STEP3-POSTING-BALANCED-JE-PROOF.json",
+    "apps/backend/src/accounting/posting-engine.service.ts",
+    "apps/backend/src/accounting/__tests__/expense-gl-posting.db.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}

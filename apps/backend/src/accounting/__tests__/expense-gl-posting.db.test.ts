@@ -74,6 +74,9 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
     try {
       await bypass(async () => {
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE account_id = ANY($1::uuid[])`, [[uncatAccountId, cashAccountId]]);
+        // role may resolve to an existing account on a data-bearing branch — also clean by source
+        await db.query(`DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type='expense'`, [createdExpenseIds]);
+        await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id = ANY($1) AND source_transaction_type='expense'`, [createdExpenseIds]);
         await db.query(`DELETE FROM accounting.expense_lines WHERE expense_id = ANY($1::uuid[])`, [createdExpenseIds]);
         await db.query(`DELETE FROM accounting.expenses WHERE id = ANY($1::uuid[])`, [createdExpenseIds]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND role='uncategorized_expense'`, [companyId]);
@@ -124,6 +127,34 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
       [result.journal_entry_id]
     );
     expect(credit[0].account_id).toBe(cashAccountId); // cash-basis: CR bank
+    // step-4 proof: the batch is recorded as posted (JE-balance trigger + Phase-1.5 gate did not raise)
+    const batch = await scopedRead<{ bs: string }>(
+      `SELECT batch_status AS bs FROM accounting.posting_batches WHERE id = $1::uuid`,
+      [result.posting_batch_id]
+    );
+    expect(batch[0].bs).toBe("posted");
+  });
+
+  it("markBatchFailed records a 'failed' batch WITHOUT masking the original error (no 42P10 / FK)", async () => {
+    // A post that fails inside the engine must (a) surface the ORIGINAL error, not markBatchFailed's
+    // own SQL error, and (b) leave a recorded 'failed' batch.
+    const id = await seedExpense({ paymentAccount: null, vendor: null, lines: [1500] });
+    let caught: unknown = null;
+    try {
+      await postSourceTransaction(
+        { operating_company_id: companyId, source_transaction_type: "expense", source_transaction_id: id },
+        { userId }
+      );
+    } catch (e) { caught = e; }
+    expect(caught).toBeTruthy();
+    // the original posting error surfaced — NOT a markBatchFailed ON CONFLICT / FK mask
+    expect(String((caught as Error)?.message ?? "")).not.toMatch(/posting_batches|ON CONFLICT|foreign key/i);
+    const failed = await scopedRead<{ c: string }>(
+      `SELECT count(*)::text AS c FROM accounting.posting_batches
+       WHERE source_transaction_id = $1 AND source_transaction_type = 'expense' AND batch_status = 'failed'`,
+      [id]
+    );
+    expect(Number(failed[0].c)).toBeGreaterThanOrEqual(1); // markBatchFailed recorded the failure without throwing
   });
 
   it("orphan guard: no payment account AND no vendor → fails loud (no orphan payable)", async () => {
