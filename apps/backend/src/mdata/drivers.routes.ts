@@ -1256,19 +1256,27 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       if (!oldRow) return null;
 
       let deactivatedAt = oldRow.deactivated_at as string | null;
+      let newStatus = oldRow.status as string | null;
       let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
       if (!wasAlreadyDeactivated) {
+        // Set status -> 'Inactive' in the SAME update as deactivated_at. Every UI surface
+        // (badge, Status field, Active/Inactive tab filter) reads the text `status` column, not
+        // deactivated_at — so writing only deactivated_at left drivers reading "Active" forever.
+        // Preserve a 'Terminated' status (a stronger, deliberate end-state) rather than downgrade it.
         const res = await client.query(
           `
             UPDATE mdata.drivers
-            SET deactivated_at = now(), updated_by_user_id = $2
+            SET deactivated_at = now(),
+                status = CASE WHEN status = 'Terminated' THEN status ELSE 'Inactive'::mdata.driver_status END,
+                updated_by_user_id = $2
             WHERE id = $1
               AND deactivated_at IS NULL
-            RETURNING id, deactivated_at
+            RETURNING id, deactivated_at, status
           `,
           [parsedParams.data.id, authUser.uuid]
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
+        newStatus = (res.rows[0]?.status as string | undefined) ?? newStatus;
         wasAlreadyDeactivated = false;
       }
 
@@ -1307,7 +1315,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         was_already_deactivated: wasAlreadyDeactivated,
       });
 
-      return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
+      return { id: oldRow.id, deactivated_at: deactivatedAt, status: newStatus, was_already_deactivated: wasAlreadyDeactivated };
     });
     if (!deactivated) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return deactivated;
