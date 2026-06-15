@@ -64,6 +64,15 @@ import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerAttachmentsRoutes } from "./documents/attachments.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerLoadSettlementSummaryRoutes } from "./dispatch/load-settlement-summary.routes.js";
+// Orphan-route mounts (batch 1, non-financial) — these route files existed and the frontend calls
+// them, but they were never registered (404). Verified uncalled + collision-free before mounting.
+import { registerLoadProfitabilityRoutes } from "./dispatch/load-profitability.routes.js";
+import { registerLoadGeofenceTimelineRoutes } from "./dispatch/load-geofence-timeline.routes.js";
+import { registerDriverCommunicationsRoutes } from "./drivers/communications.routes.js";
+import { registerMaintenancePartsMasterRoutes } from "./catalogs/maintenance/parts.routes.js";
+import { registerMaintenanceServicesCatalogRoutes } from "./catalogs/maintenance/services.routes.js";
+import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
+import { registerEdiRoutes } from "./integrations/edi/edi.routes.js";
 import { registerLoadsBulkRoutes } from "./dispatch/loads-bulk.routes.js";
 import { registerDispatchCancelLoadRoutes } from "./dispatch/cancel-load.routes.js";
 import { registerDispatchSheetHtmlRoutes } from "./dispatch/dispatch-sheet.routes.js";
@@ -663,6 +672,14 @@ async function main() {
   await registerAttachmentsRoutes(app);
   await registerDispatchLoadRoutes(app);
   await registerLoadSettlementSummaryRoutes(app);
+  // Orphan-route mounts (batch 1, non-financial) — see import block above.
+  await registerLoadProfitabilityRoutes(app);
+  await registerLoadGeofenceTimelineRoutes(app);
+  await registerDriverCommunicationsRoutes(app);
+  await registerMaintenancePartsMasterRoutes(app);
+  await registerMaintenanceServicesCatalogRoutes(app);
+  await registerDamagePhotoEvidenceRoutes(app);
+  await registerEdiRoutes(app);
   await registerLoadsBulkRoutes(app);
   await registerDispatchCancelLoadRoutes(app);
   await registerDispatchSheetHtmlRoutes(app);
