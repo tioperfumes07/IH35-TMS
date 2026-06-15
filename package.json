@@ -66,6 +66,7 @@
     "verify:geofence-recon": "node scripts/verify-geofence-recon.mjs",
     "verify:booking-gap-analytics": "node scripts/verify-booking-gap-analytics.mjs",
     "verify:canonical-schema-names": "node scripts/verify-canonical-schema-names.mjs",
+    "verify:no-orphan-routes": "node scripts/verify-no-orphan-routes.mjs",
     "verify:test-insert-columns": "node scripts/verify-test-insert-columns.mjs",
     "verify:schema-usage-grants": "node scripts/verify-schema-usage-grants.mjs",
     "verify:border-geofence-seed": "node scripts/verify-border-geofence-seed.mjs",
