@@ -737,15 +737,25 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
     const coverage = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // Resolve the asset by EITHER an mdata.assets.id OR an mdata.units.id. The fleet/insurance UI
+      // passes unit.id, but mdata.assets has its own PK and links to units only by unit_code =
+      // units.unit_number (see migration 0262). Looking up assets.id = unit.id matched nothing -> 404
+      // for every unit. Resolve through unit_code so a unit id works, while still accepting an asset id.
       const assetRes = await client.query(
         `
-          SELECT id::text, unit_code, asset_type, status
-          FROM mdata.assets
-          WHERE tenant_id = $1::uuid AND id = $2::uuid
+          SELECT a.id::text, a.unit_code, a.asset_type, a.status
+          FROM mdata.assets a
+          WHERE a.tenant_id = $1::uuid
+            AND (
+              a.id = $2::uuid
+              OR a.unit_code IN (SELECT u.unit_number FROM mdata.units u WHERE u.id = $2::uuid)
+            )
+          LIMIT 1
         `,
         [query.data.operating_company_id, params.data.id]
       );
-      if (!assetRes.rows[0]) return null;
+      const assetRow = assetRes.rows[0] as { id: string } | undefined;
+      if (!assetRow) return null;
 
       const coveragesRes = await client.query(
         `
@@ -764,7 +774,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             AND pu.asset_id = $2::uuid
           ORDER BY p.coverage_type ASC, p.expiry_date ASC
         `,
-        [query.data.operating_company_id, params.data.id]
+        [query.data.operating_company_id, assetRow.id]
       );
 
       const coveredTypes = new Set(
