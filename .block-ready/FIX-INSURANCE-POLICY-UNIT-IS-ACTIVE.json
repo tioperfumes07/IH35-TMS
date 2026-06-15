@@ -1,0 +1,20 @@
+{
+  "block_id": "FIX-INSURANCE-POLICY-UNIT-IS-ACTIVE",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
+  "phase": "BUGFIX",
+  "task": "Insurance create/units 500 fix. insurance.policy_unit has NO is_active column (active state = removed_at IS NULL; verified on prod via GUARD + reproduced on ci-migration-test: ERROR 42703 column \"is_active\" does not exist). policy.routes.ts referenced policy_unit.is_active in 4 SQL statements, throwing 42703 -> HTTP 500 on every unit add / unit list (per-asset coverage) / unit remove, which is why the create flow (policy header then add units) failed. Fix (insurance-only, policy.routes.ts): the two existence/list SELECTs now derive (removed_at IS NULL) AS is_active; reactivate UPDATE drops `is_active = true` (keeps removed_at = NULL); remove UPDATE drops `is_active = false` (keeps removed_at = now()). No is_active column added anywhere; matches the file's existing removed_at IS NULL usage. Recurrence guard scripts/verify-no-policy-unit-is-active.mjs (wired into package.json + ci.yml) fails CI if any backtick SQL string referencing policy_unit uses is_active as a column (the derived `AS is_active` alias is allowed; is_active on other tables like accounting.expenses is unaffected). Backend code change, non-financial: builder STOPS; GUARD light-checks the diff; Jorge merges.",
+  "branch": "fix/insurance-policy-unit-is-active",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-INSURANCE-POLICY-UNIT-IS-ACTIVE.json",
+    "apps/backend/src/insurance/policy.routes.ts",
+    "scripts/verify-no-policy-unit-is-active.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

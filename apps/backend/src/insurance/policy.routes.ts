@@ -440,7 +440,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       type ExistingUnit = { id: string; is_active: boolean };
       const existingRes = await client.query(
         `
-          SELECT id::text, is_active
+          SELECT id::text, (removed_at IS NULL) AS is_active
           FROM insurance.policy_unit
           WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND asset_id = $3::uuid
           FOR UPDATE
@@ -462,7 +462,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       let unitRow: Record<string, unknown>;
       if (existing && !existing.is_active) {
         const upd = await client.query(
-          `UPDATE insurance.policy_unit SET is_active = true, removed_at = NULL, insured_value_cents = $4, updated_at = now()
+          `UPDATE insurance.policy_unit SET removed_at = NULL, insured_value_cents = $4, updated_at = now()
            WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND id = $3::uuid
            RETURNING id::text, policy_id::text, asset_id::text, insured_value_cents::bigint, removed_at::text, created_at::text, updated_at::text`,
           [body.operating_company_id, params.data.policy_id, existing.id, body.insured_value_cents]
@@ -537,7 +537,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
 
       type UnitRow = { id: string; asset_id: string; is_active: boolean };
       const unitRes = await client.query(
-        `SELECT id::text, asset_id::text, is_active
+        `SELECT id::text, asset_id::text, (removed_at IS NULL) AS is_active
          FROM insurance.policy_unit
          WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND id = $3::uuid
          FOR UPDATE`,
@@ -554,7 +554,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       const activeCount = Math.max(1, Number((countRes.rows[0] as { count?: number } | undefined)?.count ?? 1));
 
       await client.query(
-        `UPDATE insurance.policy_unit SET removed_at = now(), is_active = false, updated_at = now()
+        `UPDATE insurance.policy_unit SET removed_at = now(), updated_at = now()
          WHERE tenant_id = $1::uuid AND id = $2::uuid`,
         [query.data.operating_company_id, unit.id]
       );
