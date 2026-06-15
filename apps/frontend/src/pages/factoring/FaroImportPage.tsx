@@ -49,13 +49,13 @@ export function FaroImportPage() {
       if (!selectedCompanyId) throw new Error("company_required");
       return apiRequest<PreviewResponse | CommitResponse>(`/api/v1/factoring/import/faro`, {
         method: "POST",
-        body: JSON.stringify({
+        body: {
           operating_company_id: selectedCompanyId,
           csv_text: csvText,
           statement_date: statementDate,
           source_filename: fileName || undefined,
           preview_only: previewOnly,
-        }),
+        },
       });
     },
     onSuccess: (data) => {

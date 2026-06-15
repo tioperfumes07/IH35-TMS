@@ -1,0 +1,21 @@
+{
+  "block_id": "FIX-FINANCE-DOUBLE-STRINGIFY-SWEEP",
+  "branch": "fix/finance-double-stringify-sweep",
+  "phase": "ACCOUNTING",
+  "task": "Money-path double-stringify sweep (sibling of FIX-TASK-CREATE-DOUBLE-STRINGIFY). Same root cause: these api clients pre-stringified the body with JSON.stringify(...) while apiRequest (api/client.ts) already does the single JSON.stringify(options.body), so the body double-encoded to '\"{...}\"' and the server would 400 'expected object, received string'. Fix (frontend only, no migration): pass the RAW OBJECT to apiRequest in the money-path callers -- accounting reconciliation match/unmatch, classes bulk-update, auto-deduction policies create/patch, team-split config create, and the two factoring Faro import callers. Adds api/finance-double-stringify.test.ts asserting the reconciliation + bulk-classes request bodies are objects. Non-money sibling files (compliance, document-alerts, maintenance parts, usmca activation, safety anomaly) are left for a separate lower-priority sweep.",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/FIX-FINANCE-DOUBLE-STRINGIFY-SWEEP.json",
+    "apps/frontend/src/api/accounting.ts",
+    "apps/frontend/src/api/catalogs-accounting.ts",
+    "apps/frontend/src/api/finance-double-stringify.test.ts",
+    "apps/frontend/src/hooks/useAutoDeductionPolicies.ts",
+    "apps/frontend/src/hooks/useTeamSplits.ts",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    "apps/frontend/src/pages/factoring/FaroImportPage.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

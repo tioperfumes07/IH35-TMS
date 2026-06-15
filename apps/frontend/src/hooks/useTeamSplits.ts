@@ -57,7 +57,7 @@ export function useTeamSplits(operatingCompanyId: string | null) {
     mutationFn: (input: CreateTeamSplitConfigInput) =>
       apiRequest<{ config: TeamSplitConfig }>(withCompanyQuery("/api/v1/team-splits/configs", operatingCompanyId!), {
         method: "POST",
-        body: JSON.stringify(input),
+        body: input,
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });

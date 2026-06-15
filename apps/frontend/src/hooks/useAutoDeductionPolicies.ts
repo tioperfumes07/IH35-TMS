@@ -70,7 +70,7 @@ export function useAutoDeductionPolicyMutations(operatingCompanyId: string) {
     mutationFn: (body: CreateAutoDeductionPolicyInput) =>
       apiRequest<{ policy: AutoDeductionPolicy }>(withCompanyQuery("/api/v1/auto-deductions/policies", operatingCompanyId), {
         method: "POST",
-        body: JSON.stringify(body),
+        body,
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
   });
@@ -79,7 +79,7 @@ export function useAutoDeductionPolicyMutations(operatingCompanyId: string) {
     mutationFn: ({ id, body }: { id: string; body: PatchAutoDeductionPolicyInput }) =>
       apiRequest<{ policy: AutoDeductionPolicy }>(withCompanyQuery(`/api/v1/auto-deductions/policies/${id}`, operatingCompanyId), {
         method: "PATCH",
-        body: JSON.stringify(body),
+        body,
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
   });

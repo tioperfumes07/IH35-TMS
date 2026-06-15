@@ -97,6 +97,6 @@ export function bulkUpdateClasses(payload: {
 }) {
   return apiRequest<{ updated: number }>("/api/v1/catalogs/classes/bulk", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }

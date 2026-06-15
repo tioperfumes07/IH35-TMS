@@ -1451,7 +1451,7 @@ export function matchAccountingReconciliation(input: {
 }) {
   return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(
     `/api/v1/accounting/reconciliation/match`,
-    { method: "POST", body: JSON.stringify(input) }
+    { method: "POST", body: input }
   );
 }
 
@@ -1463,7 +1463,7 @@ export function unmatchAccountingReconciliation(input: {
 }) {
   return apiRequest<{ ok: boolean }>(`/api/v1/accounting/reconciliation/unmatch`, {
     method: "PATCH",
-    body: JSON.stringify(input),
+    body: input,
   });
 }
 
