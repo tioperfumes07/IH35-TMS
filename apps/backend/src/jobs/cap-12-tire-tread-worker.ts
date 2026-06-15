@@ -28,7 +28,7 @@ export async function listActiveUnitIds(
     `
       SELECT id::text AS id
       FROM mdata.units
-      WHERE operating_company_id = $1
+      WHERE (owner_company_id = $1 OR currently_leased_to_company_id = $1)
         AND status = 'InService'
         AND deactivated_at IS NULL
       ORDER BY unit_number
