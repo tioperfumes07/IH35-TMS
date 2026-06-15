@@ -51,6 +51,9 @@ jobs:
       - name: verify:no-orphan-routes
         run: npm run verify:no-orphan-routes
 
+      - name: verify:enum-literals
+        run: npm run verify:enum-literals
+
       - name: verify:arch-design
         run: npm run verify:arch-design
 
