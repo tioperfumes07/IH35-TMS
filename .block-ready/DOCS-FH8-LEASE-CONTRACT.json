@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH8-LEASE-CONTRACT",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only design spec for Finance Hub FH-8 (Lease Contract + Unit Picker, Legal<->Finance, reuses FH-7). Lease agreement created in the Legal module; a unit picker (FH-7 shared control, third caller alongside insurance + property tax) selects all units being leased into the contract, each with a lease amount + a contract total. On finalize, Finance generates the recurring monthly bill and the FH-7 per-unit allocation disburses cost per unit. Inter-company: TRK (lessor, owns units) -> TRANSP/USMCA (lessee); depreciation books at owner TRK, lease expense at lessee TRANSP, lease income at TRK; bill is TRANSP->TRK (consolidation eliminates). Data model (lease_contracts owner/lessee/total_monthly/document_ref, lease_contract_units = FH-7 allocation), monthly recurring bill (reuse FH-6 scheduler pattern), Legal-module reuse (extend existing apps/*/legal), screen (GUARD mocks, FH-7 styling), open questions, gated build sequence. Do NOT build a new unit picker. NO code, no DDL, no posting. VOID != DELETE. Flag LEASE_CONTRACT_BILLING_ENABLED default OFF. Designed live with Jorge + GUARD-verifies-vs-QuickBooks before merge.",
+  "branch": "docs/fh8-lease-contract",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH8-LEASE-CONTRACT.json",
+    "docs/specs/FH-8-LEASE-CONTRACT-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
