@@ -1,0 +1,16 @@
+{
+  "block_id": "FIX-TASK-CREATE-DOUBLE-STRINGIFY",
+  "branch": "fix/task-create-double-stringify",
+  "phase": "TASKS",
+  "task": "Prod 400 fix: task-create POST sent a double-stringified body ('\"{...}\"') so the server rejected with 400 'expected object, received string'. Root cause: api/tasks.ts pre-stringified the body with JSON.stringify(...) while apiRequest (api/client.ts) already does the single JSON.stringify(options.body). Fix (frontend only, no migration): pass the RAW OBJECT to apiRequest in createTask + createTaskType + updateTaskProgress so the client performs the single stringify and the outgoing body is a bare object (starts with '{', not '\"{'). Adds api/tasks.test.ts regression asserting the request body is an object.",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/FIX-TASK-CREATE-DOUBLE-STRINGIFY.json",
+    "apps/frontend/src/api/tasks.ts",
+    "apps/frontend/src/api/tasks.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

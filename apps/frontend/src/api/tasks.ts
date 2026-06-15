@@ -71,16 +71,18 @@ export async function fetchTaskTypes(operating_company_id: string) {
 }
 
 export async function createTaskType(operating_company_id: string, name: string) {
-  return apiRequest<{ type: TaskType }>("/api/v1/tasks/types", { method: "POST", body: JSON.stringify({ operating_company_id, name }) });
+  // Pass the raw object; apiRequest does the single JSON.stringify. (Double-stringify => 400 "expected object, received string".)
+  return apiRequest<{ type: TaskType }>("/api/v1/tasks/types", { method: "POST", body: { operating_company_id, name } });
 }
 
 export async function createTask(input: CreateTaskInput) {
-  return apiRequest<{ task: Task }>("/api/v1/tasks", { method: "POST", body: JSON.stringify(input) });
+  // Pass the raw object; apiRequest does the single JSON.stringify. (Double-stringify => 400 "expected object, received string".)
+  return apiRequest<{ task: Task }>("/api/v1/tasks", { method: "POST", body: input });
 }
 
 export async function updateTaskProgress(task_id: string, progress_pct: number) {
   return apiRequest<{ task: { task_id: string; progress_pct: number } }>(`/api/v1/tasks/${task_id}/progress`, {
     method: "PATCH",
-    body: JSON.stringify({ progress_pct }),
+    body: { progress_pct },
   });
 }
