@@ -48,6 +48,9 @@ jobs:
       - name: verify:canonical-schema-names
         run: npm run verify:canonical-schema-names
 
+      - name: verify:no-orphan-routes
+        run: npm run verify:no-orphan-routes
+
       - name: verify:arch-design
         run: npm run verify:arch-design
 
