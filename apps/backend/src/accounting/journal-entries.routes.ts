@@ -142,7 +142,9 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
       return result;
     } catch (error) {
       const message = String((error as Error)?.message ?? "journal_entry_void_failed");
-      if (message === "forbidden_owner_only") return reply.code(403).send({ error: message });
+      if (message === "forbidden_owner_only" || message === "forbidden_void_owner_or_accountant_only")
+        return reply.code(403).send({ error: message });
+      if (message === "void_reason_required") return reply.code(400).send({ error: message });
       if (message === "journal_entry_not_found") return reply.code(404).send({ error: message });
       if (message === "journal_entry_already_voided") return reply.code(409).send({ error: message });
       throw error;

@@ -1,0 +1,22 @@
+{
+  "block_id": "FEAT-VOID-EVERYWHERE-PR1",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "VOID-EVERYWHERE",
+  "task": "VOID-EVERYWHERE PR-1 (foundation, gated default OFF). Adds the shared void engine wired to Invoices + Journal Entries. Migration registers feature flag VOID_ENFORCEMENT_ENABLED (default OFF) only -- no schema/posting change in prod until Jorge flips it. void.service.ts: pure helpers canVoid (Owner+Accountant only, Administrator excluded), canDelete (Owner only), resolveReversalDate (QBO-grounded: original date if its period open, current open period if closed -- never rewrite a closed period), flipPostingsForReversal + assertBalanced (equal-and-opposite, balance-or-fail), plus postVoidReversal/auditVoid that run on the CALLER's transaction client (atomic with the status flip). voidJournalEntry (journal-entries.service.ts) and the invoice void route (invoices.routes.ts) become flag-aware: flag OFF = unchanged legacy behaviour (status flip + audit, Owner-only for JE); flag ON = post reversing JE (closed-period routed to current open period via accounting.closed_period_cutoff) + mark VOIDED + audit spine, VOID=Owner+Accountant + required reason. Reuses createJournalEntry-style insert, appendCrudAudit, isEnabled, accounting.closed_period_cutoff. Unit tests cover permissions + the reversal-date rule + the balanced reversal. Build/test on TRANSP. GUARD verifies the closed-period reversal logic vs QuickBooks before merge; never self-merge. PR-2 extends the same service to bills/settlements/expenses.",
+  "branch": "feat/void-everywhere-pr1",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-VOID-EVERYWHERE-PR1.json",
+    "db/migrations/202606141200_void_enforcement_flag.sql",
+    "apps/backend/src/accounting/void.service.ts",
+    "apps/backend/src/accounting/void.service.test.ts",
+    "apps/backend/src/accounting/journal-entries.service.ts",
+    "apps/backend/src/accounting/journal-entries.routes.ts",
+    "apps/backend/src/accounting/invoices.routes.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}

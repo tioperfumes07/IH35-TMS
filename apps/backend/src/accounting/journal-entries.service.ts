@@ -3,6 +3,13 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
+import {
+  auditVoid,
+  canVoid,
+  isVoidEnforcementEnabled,
+  postVoidReversal,
+  type VoidReversalResult,
+} from "./void.service.js";
 
 type JournalEntrySource = "manual" | "auto";
 type JournalEntryStatus = "posted" | "voided";
@@ -187,12 +194,22 @@ export async function voidJournalEntry(
   voidReason: string,
   actor: { userId: string; role: string }
 ) {
-  if (actor.role !== "Owner") throw new Error("forbidden_owner_only");
   const result = await withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const existingRes = await client.query<{ id: string; status: JournalEntryStatus }>(
+
+    // VOID-EVERYWHERE (gated): when ON, void posts an equal-and-opposite reversing JE and VOID = Owner+Accountant.
+    // When OFF (default), behaviour is unchanged — Owner-only status flip, no reversing entry.
+    const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, actor.userId);
+    if (flagOn) {
+      if (!canVoid(actor.role)) throw new Error("forbidden_void_owner_or_accountant_only");
+      if (!voidReason || !voidReason.trim()) throw new Error("void_reason_required");
+    } else if (actor.role !== "Owner") {
+      throw new Error("forbidden_owner_only");
+    }
+
+    const existingRes = await client.query<{ id: string; status: JournalEntryStatus; entry_date: string }>(
       `
-        SELECT id, status
+        SELECT id, status, entry_date::text AS entry_date
         FROM accounting.journal_entries
         WHERE id = $1
           AND operating_company_id = $2
@@ -204,6 +221,26 @@ export async function voidJournalEntry(
     const existing = existingRes.rows[0];
     if (!existing) throw new Error("journal_entry_not_found");
     if (existing.status === "voided") throw new Error("journal_entry_already_voided");
+
+    let reversal: VoidReversalResult = {
+      reversal_journal_entry_id: null,
+      reversal_date: null,
+      closed_period_reversal: false,
+      reversed_line_count: 0,
+    };
+    if (flagOn) {
+      reversal = await postVoidReversal(
+        client,
+        {
+          operatingCompanyId,
+          entityType: "journal_entry",
+          entityId: journalEntryId,
+          originalDate: existing.entry_date,
+          memo: `Void reversal of journal entry ${journalEntryId}: ${voidReason}`,
+        },
+        { userId: actor.userId }
+      );
+    }
 
     await client.query(
       `
@@ -219,6 +256,21 @@ export async function voidJournalEntry(
       `,
       [journalEntryId, operatingCompanyId, actor.userId, voidReason]
     );
+
+    if (flagOn) {
+      await auditVoid(client, actor.userId, "journal_entry", {
+        operatingCompanyId,
+        entityId: journalEntryId,
+        reason: voidReason,
+        reversal,
+      });
+      return {
+        ok: true,
+        reversal_journal_entry_id: reversal.reversal_journal_entry_id,
+        reversal_date: reversal.reversal_date,
+        closed_period_reversal: reversal.closed_period_reversal,
+      };
+    }
 
     await appendCrudAudit(
       client,
