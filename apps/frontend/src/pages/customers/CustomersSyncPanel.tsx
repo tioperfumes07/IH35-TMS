@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "../../api/client";
 
 type CustomersSyncStatus = {
   total_local: number;
@@ -10,24 +11,16 @@ type CustomersSyncStatus = {
   last_reconcile_at: string | null;
 };
 
+// Use apiRequest (not raw fetch): it targets the API host via VITE_API_BASE_URL, sends auth
+// cookies (credentials: include), and parses JSON. A raw relative fetch resolved against the
+// static frontend host in prod, which served index.html (HTML) -> JSON.parse crash / red banner.
 async function fetchCustomersStatus(operatingCompanyId: string): Promise<CustomersSyncStatus> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  const res = await fetch(`/api/v1/qbo-sync/customers/status?${params}`);
-  if (!res.ok) {
-    const detail = res.status === 401 ? "Sign in required" : `HTTP ${res.status}`;
-    throw new Error(`Failed to load customers sync status (${detail})`);
-  }
-  return res.json() as Promise<CustomersSyncStatus>;
+  return apiRequest<CustomersSyncStatus>(`/api/v1/qbo-sync/customers/status?${params}`);
 }
 
 async function postCustomersAction(path: string, operatingCompanyId: string) {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ operating_company_id: operatingCompanyId }),
-  });
-  if (!res.ok) throw new Error(`Customers sync action failed (${res.status})`);
-  return res.json();
+  return apiRequest(path, { method: "POST", body: { operating_company_id: operatingCompanyId } });
 }
 
 function formatRelative(iso: string | null) {
