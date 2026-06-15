@@ -210,6 +210,7 @@ For IS/IT (internal):
 | **Bills (AP)** | Vendor bills with payment status | Phase 5 (currently QBO) |
 | **Invoices (AR)** | Customer invoices with factoring status | Phase 5 |
 | **Journal Entries** | All JE with manual JE attestation | Phase 5 |
+| **Account Register** | Per-account running-balance ledger + audit history (read-only; D5/CA-05) | Phase 5 |
 | **Posting Templates** | WF-053 cross-module posting service config | Phase 5 |
 | **Allocations** | Multi-unit cost allocation (Section 3.14) | Phase 5 |
 | **Customer Credits / Chargebacks** | Memo + chargeback workflow (P5-T6) | Phase 5 |

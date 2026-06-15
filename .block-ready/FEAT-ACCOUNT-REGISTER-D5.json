@@ -1,0 +1,24 @@
+{
+  "block_id": "FEAT-ACCOUNT-REGISTER-D5",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ACCOUNTING",
+  "task": "D5 / CA-05 + CA-06: read-only per-account register (running-balance ledger over the chart of accounts) + audit-history tab, in the Accounting module, matching the existing accounting page tokens (tab row, KPI cards, white-card tables). NO migration, no posting, no money path. Backend: account-register.service.ts (buildRegisterRows pure running-balance math; getAccountRegister reuses accounting.fn_account_balances_as_of for opening balance + normal-balance side, walks journal_entry_postings joined to journal_entries in [from,to] excluding voided, natural-sign running balance) + account-register.routes.ts (GET /api/v1/accounting/account-register, autoloaded, Owner/Administrator/Manager/Accountant, withCompanyScope) + unit test for the debit/credit-normal running-balance math. Frontend: api/account-register.ts + AccountRegisterPage.tsx (account selector via listCoaAccountsForJe, date range + presets, KPI cards Balance/Debits/Credits/#txns, register table, collapsed Filter popover with type + memo/ref search + active chips, CSV export, Audit-history tab reusing the existing listAccountingAuditTrail endpoint) + tab added to ACCOUNTING_CLEAN_TABS + route in routes/manifest.tsx + architectural-design doc tab row. nav-integrity OK; backend build + frontend tsc clean.",
+  "branch": "feat/account-register-d5",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-ACCOUNT-REGISTER-D5.json",
+    "apps/backend/src/accounting/account-register.service.ts",
+    "apps/backend/src/accounting/account-register.routes.ts",
+    "apps/backend/src/accounting/account-register.service.test.ts",
+    "apps/frontend/src/api/account-register.ts",
+    "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
+    "apps/frontend/src/pages/accounting/subnav-manifest.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

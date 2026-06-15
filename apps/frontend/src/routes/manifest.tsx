@@ -222,6 +222,7 @@ import { VendorBalancesPage } from "../pages/accounting/VendorBalancesPage";
 import { ManualJEListPage } from "../pages/accounting/ManualJEListPage";
 import { BillPaymentsListPage } from "../pages/accounting/BillPaymentsListPage";
 import { JournalEntryDetailPage } from "../pages/accounting/journal-entries/JournalEntryDetailPage";
+import { AccountRegisterPage } from "../pages/accounting/AccountRegisterPage";
 import { AccountingPreSettlementsPage } from "../pages/accounting/AccountingPreSettlementsPage";
 import { PayrollAggregatedPage } from "../pages/accounting/PayrollAggregatedPage";
 import { ExpenseCategoryMapPage } from "../pages/accounting/ExpenseCategoryMapPage";
@@ -3063,6 +3064,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ManualJEListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/account-register"
+          element={
+            <ProtectedRoute>
+              <AccountRegisterPage />
             </ProtectedRoute>
           }
         />
