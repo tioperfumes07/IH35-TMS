@@ -86,3 +86,23 @@ describe("VOID-EVERYWHERE — reversing postings (equal & opposite, net zero)", 
     );
   });
 });
+
+describe("VOID-EVERYWHERE PR-2 — bill void reverses AP correctly (same engine as invoices/JEs)", () => {
+  // A typical posted bill: DR Expense, CR Accounts Payable.
+  const billPosting = [
+    { account_id: "expense", class_id: "drv1", entity_uuid: "vendor1", debit_or_credit: "debit" as const, amount_cents: 45000, description: "Fuel bill", line_sequence: 1 },
+    { account_id: "accounts_payable", class_id: null, entity_uuid: "vendor1", debit_or_credit: "credit" as const, amount_cents: 45000, description: "AP", line_sequence: 2 },
+  ];
+
+  it("voiding a bill credits the expense and debits AP back out (net zero)", () => {
+    const reversed = flipPostingsForReversal(billPosting);
+    // Expense was debited on the bill -> reversal credits it back.
+    expect(reversed[0]).toMatchObject({ account_id: "expense", debit_or_credit: "credit", amount_cents: 45000 });
+    // AP was credited on the bill -> reversal debits it back (clears the payable).
+    expect(reversed[1]).toMatchObject({ account_id: "accounts_payable", debit_or_credit: "debit", amount_cents: 45000 });
+    // Class/vendor linkage is preserved so the reversal nets against the same dimensions.
+    expect(reversed[0].class_id).toBe("drv1");
+    expect(reversed[0].entity_uuid).toBe("vendor1");
+    expect(() => assertBalanced(reversed)).not.toThrow();
+  });
+});

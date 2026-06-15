@@ -113,7 +113,7 @@ async function voidCommittedBills(billIds: string[], operatingCompanyId: string,
   const orphaned: string[] = [];
   for (const billId of billIds) {
     try {
-      await voidBill(operatingCompanyId, billId, "insurance_policy_bill_schedule_rollback", userId);
+      await voidBill(operatingCompanyId, billId, "insurance_policy_bill_schedule_rollback", userId, { system: true });
     } catch {
       orphaned.push(billId);
     }

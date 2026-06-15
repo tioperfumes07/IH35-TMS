@@ -3,6 +3,13 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
+import {
+  auditVoid,
+  canVoid,
+  isVoidEnforcementEnabled,
+  postVoidReversal,
+  type VoidReversalResult,
+} from "./void.service.js";
 
 type BillStatus = "open" | "partial" | "paid" | "voided";
 type PaymentMethod = "check" | "ach" | "wire" | "cash" | "credit_card";
@@ -696,9 +703,37 @@ export async function payBill(input: PayBillInput, userId: string) {
   return payment;
 }
 
-export async function voidBill(operatingCompanyId: string, billId: string, reason: string, userId: string) {
+// VOID-EVERYWHERE PR-2 — wire the shared void engine into bills (same mechanic as invoices/JEs).
+// When the flag is ON: VOID = Owner + Accountant, a reason is required, and an equal-and-opposite
+// reversing JE is posted on the SAME transaction (atomic with the status flip). When OFF (default):
+// behaviour is unchanged — Owner-only, status flip + audit, no reversing entry.
+export type VoidBillOptions = {
+  /** Caller's role (route-initiated voids). Enforced unless `system` is true. */
+  role?: string | null;
+  /** Trusted internal rollback (e.g. insurance schedule). Bypasses the role gate; the flag still drives reversal. */
+  system?: boolean;
+};
+
+export async function voidBill(
+  operatingCompanyId: string,
+  billId: string,
+  reason: string,
+  userId: string,
+  opts: VoidBillOptions = {}
+) {
   const result = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+
+    const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
+    if (!opts.system) {
+      if (flagOn) {
+        if (!canVoid(opts.role)) throw new Error("forbidden_void_owner_or_accountant_only");
+        if (!reason || !reason.trim()) throw new Error("void_reason_required");
+      } else if (String(opts.role ?? "") !== "Owner") {
+        throw new Error("forbidden_owner_only");
+      }
+    }
+
     const billRes = await client.query<BillRow>(
       `
         SELECT *
@@ -713,6 +748,7 @@ export async function voidBill(operatingCompanyId: string, billId: string, reaso
     const billRaw = billRes.rows[0];
     if (!billRaw) throw new Error("bill_not_found");
     const bill = normalizeBill(billRaw);
+    if (bill.status === "voided") throw new Error("bill_already_void");
 
     const paymentsRes = await client.query<{ count: number }>(
       `
@@ -725,6 +761,28 @@ export async function voidBill(operatingCompanyId: string, billId: string, reaso
       [billId, operatingCompanyId]
     );
     if (Number(paymentsRes.rows[0]?.count ?? 0) > 0) throw new Error("bill_has_payments_cannot_void");
+
+    // Post the reversing JE BEFORE the status flip so both land atomically on this client.
+    let reversal: VoidReversalResult = {
+      reversal_journal_entry_id: null,
+      reversal_date: null,
+      closed_period_reversal: false,
+      reversed_line_count: 0,
+    };
+    if (flagOn) {
+      const originalDate = String(billRaw.bill_date).slice(0, 10);
+      reversal = await postVoidReversal(
+        client,
+        {
+          operatingCompanyId,
+          entityType: "bill",
+          entityId: billId,
+          originalDate,
+          memo: `Void reversal of bill ${billId}: ${reason}`,
+        },
+        { userId }
+      );
+    }
 
     await client.query(
       `
@@ -739,19 +797,29 @@ export async function voidBill(operatingCompanyId: string, billId: string, reaso
       `,
       [billId, operatingCompanyId, userId, reason]
     );
-    await appendCrudAudit(
-      client,
-      userId,
-      "accounting.bill.voided",
-      {
-        resource_type: "accounting.bills",
-        resource_id: bill.id,
-        operating_company_id: operatingCompanyId,
+
+    if (flagOn) {
+      await auditVoid(client, userId, "bill", {
+        operatingCompanyId,
+        entityId: billId,
         reason,
-      },
-      "warning",
-      "P5-D2-BILL-PAYMENT"
-    );
+        reversal,
+      });
+    } else {
+      await appendCrudAudit(
+        client,
+        userId,
+        "accounting.bill.voided",
+        {
+          resource_type: "accounting.bills",
+          resource_id: bill.id,
+          operating_company_id: operatingCompanyId,
+          reason,
+        },
+        "warning",
+        "P5-D2-BILL-PAYMENT"
+      );
+    }
     return { ok: true };
   });
   await withCurrentUser(userId, async (client) => {
