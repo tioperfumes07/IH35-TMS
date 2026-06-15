@@ -133,6 +133,12 @@ import { registerSafetyAudit425cRoutes } from "./safety/audit-425c.routes.js";
 import { registerSafetyBackgroundChecksRoutes } from "./safety/background-checks.routes.js";
 import { registerDriverSchedulerRoutes } from "./safety/driver-scheduler.routes.js";
 import { registerSafetyDriverDocumentsRoutes } from "./safety/driver-documents.routes.js";
+// Orphan-route mounts (batch 2, non-financial) — frontend calls these, never registered (404).
+// Verified uncalled + collision-free. (425C/IFTA exhibits + fuel-fraud held as financial-adjacent.)
+import { registerCap12TireTreadRoutes } from "./integrations/samsara/cap-12-tire-tread/routes.js";
+import { registerCap13BrakeWearRoutes } from "./integrations/samsara/cap-13-brake-wear/routes.js";
+import { registerReportCategoryCatalogRoutes } from "./reports/categories/routes.js";
+import { registerPhotoComparisonRoutes } from "./safety/photo-comparison/routes.js";
 import { registerSafetyDriverProfileRoutes } from "./safety/driver-profile.routes.js";
 import { registerSafetyFinesRoutes } from "./safety/fines.routes.js";
 import { registerSafetyCompanyViolationsRoutes } from "./safety/company-violations.routes.js";
@@ -748,6 +754,11 @@ async function main() {
   await registerSafetyBackgroundChecksRoutes(app);
   await registerDriverSchedulerRoutes(app);
   await registerSafetyDriverDocumentsRoutes(app);
+  // Orphan-route mounts (batch 2, non-financial) — see import block above.
+  await registerCap12TireTreadRoutes(app);
+  await registerCap13BrakeWearRoutes(app);
+  await registerReportCategoryCatalogRoutes(app);
+  await registerPhotoComparisonRoutes(app);
   await registerSafetyDriverProfileRoutes(app);
   await registerSafetyFinesRoutes(app);
   await registerSafetyCompanyViolationsRoutes(app);
