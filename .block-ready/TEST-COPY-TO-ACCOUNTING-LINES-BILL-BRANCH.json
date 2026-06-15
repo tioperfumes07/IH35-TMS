@@ -1,0 +1,17 @@
+{
+  "block_id": "TEST-COPY-TO-ACCOUNTING-LINES-BILL-BRANCH",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
+  "phase": "GAP-EXPENSES",
+  "task": "Follow-up to GAP-EXPENSES Phase 1.5 (#1008): add the bill-branch regression guard GUARD's checklist item (d) flagged as missing. Test-only, no schema/runtime change. apps/backend/src/maintenance/__tests__/two-section-bill-write.test.ts drives the real bill path (autoCreateBillFromWO -> copyToAccountingLines '-> accounting.bill_lines') with a mock client and asserts the bill write is unchanged by Phase 1.5: bill_lines INSERT writes the dollar `amount` column NOT amount_cents, keeps its account-resolution columns (category_kind/category_code/account_id), and the Phase-1.5 expense-only additions (total_amount_cents reconciliation; expense_lines INSERT) do NOT run on the bill path. Closes the coverage gap so a future writer regression leaking the cents treatment into bills is caught.",
+  "branch": "test/copy-to-accounting-lines-bill-branch",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/TEST-COPY-TO-ACCOUNTING-LINES-BILL-BRANCH.json",
+    "apps/backend/src/maintenance/__tests__/two-section-bill-write.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
