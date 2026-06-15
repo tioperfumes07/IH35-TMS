@@ -38,6 +38,7 @@ export type WorkOrder = {
   wo_type: WorkOrderType;
   status: WorkOrderStatus;
   unit_id: string;
+  unit_number?: string | null;
   driver_id?: string | null;
   load_id?: string | null;
   repair_location?: string | null;
