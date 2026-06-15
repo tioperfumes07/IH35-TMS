@@ -1,0 +1,20 @@
+{
+  "block_id": "FEAT-FH1-FIXED-ASSETS-DATA-MODEL",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "FINANCE-HUB",
+  "task": "FH-1 Fixed Assets + Depreciation — Step 1: the asset-register DATA MODEL only (NO posting, NO cron). TIER 3 (FH-module build-out behind its own OFF flag → ship on green CI, Jorge merges, no GUARD ceremony). Migration 202606151600 creates the new fixed_assets schema with 4 tenant-scoped tables: asset_classes (per-company class catalog: default method/useful-life/GL accounts; depreciates flag for the land guard), assets (the register: §1.2 fields incl. owner_operating_company_id = lessor/TRK title-holder, unit_id → mdata.units reuse, GL account FKs → catalogs.accounts, prior_accumulated_depreciation for back-dated, status acquisition|active|disposed, integer cents), depreciation_schedules (one row per asset per period: amount/accumulated/book-value-end + method_snapshot + posted_journal_entry_id; partial unique on active period; regeneratable), disposals (proceeds/gain_loss/JE link). All is_active + soft-delete + audit cols, RLS ENABLE+FORCE scoped operating_company_id, GRANTs to ih35_app per CLAUDE.md §15 (USAGE + table + DEFAULT PRIVILEGES). Registers FIXED_ASSET_AUTOPOST_ENABLED in lib.feature_flags default OFF (isEnabled returns false either way). NO depreciation/disposal posting in this step (later gated). BOOK-ONLY (5y straight-line). Validated locally (applies clean; 4 tables, RLS forced, flag registered). Static guard verify-fh1-fixed-assets.mjs locks schema+tables+grants+RLS+flag and forbids posting logic in this step. Open §8 items flagged in the spec (convention, entity-first, gain/loss split) — affect later steps, not this schema. Jorge merges on green; never self-merge.",
+  "branch": "feat/fh1-fixed-assets-data-model",
+  "lane": "B",
+  "allowed_files": [
+    ".block-ready/FEAT-FH1-FIXED-ASSETS-DATA-MODEL.json",
+    "db/migrations/202606151600_fh1_fixed_assets_data_model.sql",
+    "scripts/verify-fh1-fixed-assets.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
