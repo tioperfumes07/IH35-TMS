@@ -15,6 +15,9 @@ const ROOT = path.resolve(__dirname, "..");
 const ALLOW_REL_SQL = new Set([
   "db/migrations/0050_safety_gaps_fill.sql",
   "db/migrations/0050_two_section_v5_and_safety_restructure.sql",
+  // The forward repair migration that COMPLETES the rename on prod (the 0050 ordering collision
+  // left safety.fines un-renamed). It must reference safety.fines to rename it.
+  "db/migrations/202606151200_repair_safety_0050_ordering_collision.sql",
 ]);
 
 /** Qualified legacy identifier — catches SQL + TS string literals */
