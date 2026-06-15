@@ -54,7 +54,7 @@ All five are shown in a **PREVIEW** (the exact accounts + amounts + the JE) **be
 ## 3. Trade-in, fees, taxes (per QBO guidance)
 
 - **Fees & taxes** (sales tax, doc fees, delivery) **capitalize into the asset's original value** — they increase the Dr Asset basis, not separate expenses (matches QBO fixed-asset guidance). Depreciation then runs on the full capitalized basis.
-- **Trade-in:** the trade-in credit reduces cash/financed need; if a trade-in **disposes an existing FH-1 asset**, the wizard includes that asset's **disposal** (reverse its book value, post gain/loss — FH-1 §2) in the same preview.
+- **Trade-in (LOCKED, 2026-06-14):** a trade-in **REDUCES the cost of the new truck** — net the trade-in value **against the new asset's capitalized cost / the loan amount** (a lower Dr Asset basis and lower financed principal), **not** a separately inflated asset. If the old asset also needs disposal accounting, handle that **via FH-1 disposal** (reverse its book value, post gain/loss — FH-1 §2) in the same preview — but the trade-in **VALUE itself reduces the new asset/loan** per Jorge.
 
 ---
 

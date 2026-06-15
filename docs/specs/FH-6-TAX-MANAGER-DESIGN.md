@@ -23,16 +23,17 @@ A **per-year tax register**: every tax Jorge pays, tracked with **amount, due da
 | **Texas IRP** (apportioned registration) | per-unit apportioned plates → natural **FH-7 per-unit allocation** |
 | **IFTA** | already modeled in the mileage/fuel work — **surface here** (link, don't duplicate the engine) |
 
-### 1.1 Personal property tax — taxing entities (Laredo/Webb)
-Split across: **Webb County · City of Laredo · Laredo Community College · United Independent School District (UISD)**.
-- ⚠️ **Open item (a):** verify whether **Laredo ISD (LISD)** *also* applies in addition to UISD — Jorge is unsure if both. Model the entity list as an **editable catalog** so adding/removing LISD is a data change, not a code change.
+### 1.1 Personal property tax — taxing entities (Laredo/Webb; LOCKED: location-based, vendor-like)
+Split across the actual jurisdictions, e.g. **Webb County · City of Laredo · Laredo Community College · United Independent School District (UISD)** (or **Laredo ISD** — see below).
+- **LOCKED (2026-06-14):** the **taxing entity is selected by the truck YARD's jurisdiction as of JANUARY 1** of the tax year. (That resolves the UISD-vs-LISD question — it depends on where the yard sits on Jan 1, not a fixed choice.) Whichever ISD/county/city covers the yard's location applies.
+- **Taxing entities behave like VENDORS** — a **selectable/editable list** (not a fixed enum), so jurisdictions are added/changed as data. The personal-property tax is **TRK's** (TRK owns the assets).
 
 ---
 
 ## 2. Data model (additions — each `is_active` + soft-delete + audit cols; finalize in session)
 
 - **`tax.tax_types`** — editable catalog: code, label, category (property/franchise/irp/ifta/other), **default due-date rule**, **penalty rule** (rate + grace period), default expense + liability GL accounts, recurrence (annual). Seed §1.
-- **`tax.taxing_entities`** — for property tax, the jurisdiction list (Webb County, City of Laredo, LCC, UISD, [LISD?]) — editable.
+- **`tax.taxing_entities`** — for property tax, the jurisdiction list (Webb County, City of Laredo, LCC, UISD/LISD per yard) — **editable, vendor-like**; resolved by the **yard's jurisdiction on Jan 1** (§1.1).
 - **`tax.tax_records`** — one per (tax_type, year[, entity]): amount, due date, paying account, status (accrued/paid/overdue/void), accrued_journal_entry_id, paid_at. The yearly auto-generation creates these.
 - **`tax.penalty_accruals`** — penalty interest accrued on an overdue record (rate snapshot, days overdue, amount, JE link).
 - Flag `TAX_MANAGER_AUTOPOST_ENABLED` in `lib.feature_flags`, default OFF. Tenant-scoped, RLS; new schema → grants per CLAUDE.md §15.
@@ -92,7 +93,7 @@ The **rendition** = the per-asset declared-value list Jorge submits to the city/
 
 ## 8. Open questions for Jorge
 
-- **(a)** Does **LISD** apply in addition to **UISD** for personal property tax? (the one verification.)
+- **(a)** ~~Does LISD apply in addition to UISD?~~ **ANSWERED (2026-06-14):** taxing entity = the **yard's jurisdiction on Jan 1** (UISD vs LISD depends on yard location); entities are vendor-like and editable (§1.1).
 - **(b)** **Every tax type** you pay beyond the four listed (any local/permit/weight-distance/UCR/HVUT-2290)?
 - **(c)** Each tax's **penalty rule** — rate + grace period (esp. the Texas property-tax statutory penalty+interest schedule).
 - **(d)** IRP & property tax — split **per unit** (via FH-7), or tracked as one lump? (drives FH-7 coupling.)

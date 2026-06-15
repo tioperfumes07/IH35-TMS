@@ -1,0 +1,18 @@
+{
+  "block_id": "DOCS-FINANCE-ANSWERED-QS-FOLLOWUP",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only follow-up applying Jorge's answered questions (Finance Build Package-4, 11-ANSWERED-QUESTIONS) to two already-merged finance specs. FH-2 Loan Wizard: trade-in REDUCES the new truck's capitalized cost / loan amount (net against purchase price), NOT a separately inflated asset; old-asset disposal still via FH-1. FH-6 Tax Manager: personal-property taxing entity is LOCATION-BASED -- selected by the truck YARD's jurisdiction as of January 1 (resolves UISD vs LISD); taxing entities behave like VENDORS (selectable/editable list, not fixed enum); personal property tax is TRK's. Resolves FH-6 open question (a). NO code, no DDL, no posting. Edits docs/specs/FH-2-LOAN-WIZARD-DESIGN.md + docs/specs/FH-6-TAX-MANAGER-DESIGN.md.",
+  "branch": "docs/finance-answered-qs-followup",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FINANCE-ANSWERED-QS-FOLLOWUP.json",
+    "docs/specs/FH-2-LOAN-WIZARD-DESIGN.md",
+    "docs/specs/FH-6-TAX-MANAGER-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
