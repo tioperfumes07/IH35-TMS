@@ -53,11 +53,14 @@ Per the construction-block lock + `PERMISSIONS-DESIGN.md`:
 
 ---
 
-## 4. Closed-period handling
+## 4. Closed-period handling + cash vs accrual basis (LOCKED: support BOTH)
 
-- A void of an item in an **open** period posts the reversing entry **in that period** (or the void date) per normal rules.
+**Basis is a setting, not hard-coded (locked, 2026-06-14).** Jorge uses **CASH** for taxes and produces **BOTH cash and accrual** reports for banks. So the reporting **basis (cash | accrual) is a setting**, reports run on either, and the **void reversing-entry date / period behavior follows the basis + the closed-period rules** — do **NOT** hard-code one basis. (This aligns with the existing `?basis=cash|accrual` accounting-report contract, CLAUDE.md §Block-20.) QBO is **active on TRANSP** (14 payment terms incl. quick-pay; factored-freight).
+
+- A void of an item in an **open** period posts the reversing entry **in that period** (or the void date) per the active basis.
 - A void of an **already-paid / closed-period** item: **block, or require Owner override**, per the existing **closed-period write-lock (AI-1b #816)**. The reversing entry must respect the period lock — never silently write into a closed period.
-- **Open item (a):** confirm with Jorge/accountant — when voiding a closed-period transaction, post the reversal into the **current open period** (the usual QBO behavior) vs requiring an Owner override to reopen. Recommend: reversal into the current open period with an explicit note linking back to the original period.
+- **Verify the exact reversing-date behavior against QuickBooks during the design session** (Jorge: "we should check QuickBooks") — **GUARD confirms vs QBO before building the void-reversal date logic.**
+- **Open item (a):** when voiding a closed-period transaction, post the reversal into the **current open period** (usual QBO behavior) vs requiring an Owner override to reopen — confirm per basis. Recommend: reversal into the current open period with a note linking back to the original period.
 
 ---
 
