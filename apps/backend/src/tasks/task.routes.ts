@@ -136,7 +136,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
           t.progress_pct, t.task_type_id, tt.name as task_type_name,
           t.start_time, t.location, t.notes
         FROM tasks.task t
-        LEFT JOIN users.users u ON u.user_id = t.assigned_to_user_id
+        LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
         LEFT JOIN tasks.task_type tt ON tt.id = t.task_type_id
         WHERE t.operating_company_id = $1 AND t.is_active = true
           AND t.scheduled_date BETWEEN $2 AND $3
@@ -243,8 +243,8 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       const sql = `
         SELECT t.*, u.email as assigned_to_email, ab.email as assigned_by_email
         FROM tasks.task t
-        LEFT JOIN users.users u ON u.user_id = t.assigned_to_user_id
-        LEFT JOIN users.users ab ON ab.user_id = t.assigned_by_user_id
+        LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
+        LEFT JOIN identity.users ab ON ab.id = t.assigned_by_user_id
         WHERE t.task_id = $1 AND t.is_active = true
       `;
       const result = await (client as Queryable).query(sql, [id]);
