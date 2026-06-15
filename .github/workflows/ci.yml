@@ -76,6 +76,9 @@ jobs:
       - name: Verify expenses cents spine + void-not-delete (GAP-EXPENSES Phase 1)
         run: npm run verify:expenses-cents-void
 
+      - name: Verify expense balance invariant (GAP-EXPENSES Phase 1.5)
+        run: npm run verify:expense-balance-invariant
+
       - name: Migration runner hardening guard
         run: npm run verify:migration-runner-hardening
 

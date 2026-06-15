@@ -1,0 +1,23 @@
+{
+  "block_id": "FEAT-EXPENSES-PHASE1-5-BUILD",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "GAP-EXPENSES",
+  "task": "GAP-EXPENSES Phase 1.5 -- expense_lines cents reconciliation + the hard 'balances or fails hard' total=sum invariant, landed BEFORE Phase 2 GL posting. Migration 202606151400 adds accounting.expense_lines.amount_cents bigint (+ idempotent backfill round(amount*100); prod empty = nil backfill) and the deferred constraint trigger pair mirroring accounting.ensure_journal_entry_balanced / trg_check_journal_entry_balanced: a single function accounting.ensure_expense_total_matches_lines() (TG_TABLE_NAME-aware) enforces, UNCONDITIONALLY (no carve-out), that a GL-posted expense's stored total_amount_cents equals SUM(expense_lines.amount_cents). GATE = posting_status='posted' (GL state), NOT status='posted' -- GUARD-confirmed correction: the Phase-1 route writes status='posted' on every expense (=finalized), so gating on status would fire on every insert and reject line-less/split-tx expenses, breaking the live route; posting_status defaults 'unposted' and is set 'posted' only by Phase-2 posting -> the trigger is INERT in 1.5 and bites at GL posting. Line-side trigger on expense_lines fires AFTER INSERT OR UPDATE OR DELETE (mirrors the JE postings trigger); header-side trigger on accounting.expenses fires AFTER INSERT OR UPDATE OF total_amount_cents, posting_status -- INSERT coverage closes the one-shot line-less-posted hole; both DEFERRABLE INITIALLY DEFERRED. Writer reconciliation (two-section-service.ts copyToAccountingLines, EXPENSE BRANCH ONLY -- bill branch provably untouched): writes amount_cents (source of truth) + synchronized amount = amount_cents/100, and sets the parent total_amount_cents = SUM(amount_cents) in the same transaction (app makes state coherent; trigger is the fail-loud backstop). amount (dollars) kept as a synchronized read-only mirror this release; dropped later under tracked block CLEANUP-EXPENSE-LINES-DROP-AMOUNT-DOLLARS. Reader audit (verified): zero live readers of accounting.expense_lines.amount; the export/report operating_expense_lines are the GL-derived P&L structure, not the table. DB test expense-balance-invariant.db.test.ts proves all 6 GUARD cases incl. one-shot-insert (INSERT coverage), post-then-mutate (header + line), gate-inert, and bill non-regression (triggers live only on expense tables). Static guard verify-expense-balance-invariant.mjs locks the posting_status gate + deferred-trigger + writer reconciliation against regression. Branch-tested on ci-migration-test via the existing runner. Financial cluster: builder STOPS; GUARD verifies independently (checklist a-g); never self-merge.",
+  "branch": "feat/expenses-phase1.5-build",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-EXPENSES-PHASE1-5-BUILD.json",
+    "db/migrations/202606151400_expense_lines_cents_and_balance_invariant.sql",
+    "apps/backend/src/maintenance/two-section-service.ts",
+    "apps/backend/src/accounting/__tests__/expense-balance-invariant.db.test.ts",
+    "docs/specs/GAP-EXPENSES-PHASE-1.5-UNIT-RECONCILIATION-DESIGN.md",
+    "scripts/verify-expense-balance-invariant.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
