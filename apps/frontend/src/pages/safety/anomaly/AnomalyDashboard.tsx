@@ -24,7 +24,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
   });
   const resolve = useMutation({
     mutationFn: ({ uuid, notes }: { uuid: string; notes: string }) =>
-      apiRequest(`/api/safety/anomaly/alerts/${uuid}/resolve`, { method: "PATCH", body: JSON.stringify({ status: "resolved", notes }) }),
+      apiRequest(`/api/safety/anomaly/alerts/${uuid}/resolve`, { method: "PATCH", body: { status: "resolved", notes } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["anomaly-alerts"] }),
   });
   const rows = q.data?.alerts ?? [];

@@ -56,14 +56,14 @@ export function updateDocumentAlertRule(
 ) {
   return apiRequest<{ document_alert_rule: DocumentAlertRule }>(
     `/api/v1/drivers/document-alert-rules/${ruleId}?${q(operatingCompanyId)}`,
-    { method: "PATCH", body: JSON.stringify(body) }
+    { method: "PATCH", body }
   );
 }
 
 export function acknowledgeDocumentAlert(eventId: string, operatingCompanyId: string, note?: string) {
   return apiRequest<{ event: { id: string } }>(
     `/api/v1/drivers/document-alerts/${eventId}/acknowledge?${q(operatingCompanyId)}`,
-    { method: "POST", body: JSON.stringify({ note: note ?? "" }) }
+    { method: "POST", body: { note: note ?? "" } }
   );
 }
 
