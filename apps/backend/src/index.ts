@@ -40,6 +40,11 @@ import { registerIdentityRoutes } from "./identity/users.routes.js";
 import { registerCompanyContextRoutes } from "./identity/company-context.routes.js";
 import { registerPasswordResetRoutes } from "./identity/password-reset.routes.js";
 import { registerNotificationPreferenceRoutes } from "./identity/notification-prefs.routes.js";
+import { registerNotificationListRoutes } from "./notifications/list.routes.js";
+import { registerNotificationUnreadCountRoutes } from "./notifications/unread-count.routes.js";
+import { registerNotificationStreamRoutes } from "./notifications/stream.routes.js";
+import { registerNotificationRoutes } from "./notifications/notifications.routes.js";
+import { registerNotificationPreferencesRoutes } from "./notifications/notification-preferences.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
 import { registerIdentityApplicantRoutes } from "./identity/applicants.routes.js";
@@ -609,6 +614,13 @@ async function main() {
   await registerCompanyContextRoutes(app);
   await registerPasswordResetRoutes(app);
   await registerNotificationPreferenceRoutes(app);
+  // Notifications module (bell): list, unread-count, SSE stream, read/dismiss/mark-all, preferences.
+  // These route files existed but were never registered — the SSE stream 503'd and the bell endpoints 404'd.
+  await registerNotificationListRoutes(app);
+  await registerNotificationUnreadCountRoutes(app);
+  await registerNotificationStreamRoutes(app);
+  await registerNotificationRoutes(app);
+  await registerNotificationPreferencesRoutes(app);
   await registerUserPreferencesRoutes(app);
   await registerWorkflowRoutes(app);
   await registerIdentityApplicantRoutes(app);
