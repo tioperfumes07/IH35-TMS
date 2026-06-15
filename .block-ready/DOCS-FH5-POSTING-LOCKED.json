@@ -1,0 +1,17 @@
+{
+  "block_id": "DOCS-FH5-POSTING-LOCKED",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "FINANCE-DESIGN-PREVIEW",
+  "task": "Docs-only follow-up to the merged FH-5 Bankruptcy Modeler spec, applying Jorge's LOCKED posting decision (2026-06-14): POST TO BOOKS. The confirmed Chapter 11 reorganized balances/rates become the actual GL (not modeling-only). Removes the former open A/B/A+B fork; locks: build the posting path AND the plan-vs-actual tracker + benefit view on top. Per reorganized debt: book balance adjustment (old->new) + re-rate/re-amortize via FH-3 (retain pre-reorg schedule, audited). Restatement JE treatment / effective date (plan confirmation/effective date) / fresh-start accounting determined WITH the accountant -- software executes their spec, does not invent bankruptcy accounting. Posting deliberate, gated (BANKRUPTCY_POST_ADJUSTMENTS_ENABLED default OFF), preview-first, balance-or-fail, GUARD-verified vs QuickBooks, never auto-fired. Resolves FH-5 open question (a). NO code, no DDL, no posting. Edits docs/specs/FH-5-BANKRUPTCY-MODELER-DESIGN.md.",
+  "branch": "docs/fh5-posting-locked",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-FH5-POSTING-LOCKED.json",
+    "docs/specs/FH-5-BANKRUPTCY-MODELER-DESIGN.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

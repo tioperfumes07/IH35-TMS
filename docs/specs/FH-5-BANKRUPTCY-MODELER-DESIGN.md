@@ -15,7 +15,7 @@ A tool to model the **confirmed Chapter 11 reorganization** and **track the plan
 1. **Ongoing TRACKER** — plan vs actuals as payments are made.
 2. **BENEFIT ANALYSIS** — before-vs-after: old total obligation vs new, **interest saved**, **monthly-payment delta**.
 
-**The central design fork (open decision, §2):** because the plan is *confirmed*, the reorganized balances are real liabilities. Do they **POST to the live books**, or live in a **modeling/tracking layer** that mirrors the plan? **Recommendation:** do **both deliberately** — book the confirmed plan's adjusted balances **once, with the accountant** (a deliberate, gated, GUARD-reviewed adjustment), **and** keep the modeler view for ongoing tracking + benefit analysis. Decide the posting mechanics in the design session.
+**Posting decision — LOCKED (Jorge, 2026-06-14): POST TO BOOKS.** The confirmed Chapter 11 reorganized balances/rates **become the actual GL** — adjusted liability balances, new rates, new amortization schedules booked as real entries (not modeling-only). **Build BOTH:** (1) the **posting path** that books the confirmed-plan adjustments to the GL, AND (2) the **plan-vs-actual tracker + benefit-analysis** view on top. The posting is **deliberate, gated, GUARD-verified, preview-first, balance-or-fail, never auto-fired**, and the exact entries / effective date / fresh-start treatment are determined **WITH Jorge's accountant** — the software executes what the accountant specifies; it does not invent the bankruptcy accounting. See §2.
 
 ---
 
@@ -28,15 +28,16 @@ A tool to model the **confirmed Chapter 11 reorganization** and **track the plan
 
 ---
 
-## 2. Posting model — the central fork (decide with accountant + counsel)
+## 2. Posting model — LOCKED: POST TO BOOKS (build the posting path + the tracker on top)
 
-| Option | What it does | Trade-off |
-|---|---|---|
-| **A — Modeling layer only** | Reorganized terms live in FH-5 tables; books unchanged; tracker compares plan vs actual GL | Safe, zero GL risk; but books don't reflect the confirmed adjusted liabilities |
-| **B — Post the confirmed adjustments** | A deliberate, gated, accountant-reviewed set of JEs restates the liabilities to plan balances (e.g. Dr old liability / Cr new liability / Dr-or-Cr gain-or-loss on restructuring per the plan) | Books reflect reality; but it's a sensitive, one-time, high-care posting |
-| **A + B (recommended)** | Book the confirmed plan **once** (Option B, with accountant), **and** keep the modeler/tracker (Option A) for ongoing plan-vs-actual + benefit analysis | Best of both; the modeler is read/analysis, the posting is a separate gated deliberate act |
+**Decision (Jorge, 2026-06-14):** the confirmed reorganized balances/rates **POST TO THE BOOKS** — the reorganized numbers become the **actual GL**. Build **both**: the **posting path** AND the **tracker/benefit** view on top.
 
-**Locked guardrails regardless of option:** any GL posting here is **gated** (flag default OFF), **preview-first**, **balance-or-fail**, **GUARD-reviewed**, **audited**, and **done with the accountant** — never auto-fired. VOID ≠ DELETE.
+**The posting (per reorganized debt):**
+- **Book the balance adjustment** old balance → new balance, and **re-rate / re-amortize** via FH-3 — **retain the pre-reorg schedule** (audited), the new schedule supersedes.
+- The restatement JEs (e.g. Dr old liability / Cr new liability / Dr-or-Cr gain-or-loss on restructuring) and the **effective date** (plan confirmation / effective date) and any **fresh-start accounting** treatment are **determined WITH Jorge's accountant** in the design session. **The software executes what the accountant specifies — it does NOT invent the bankruptcy accounting.**
+- Runs **once per confirmed adjustment**, with **preview**; **balance-or-fail**.
+
+**Locked guardrails:** every GL posting here is **gated** (flag default OFF), **preview-first**, **balance-or-fail**, **GUARD-verified vs QuickBooks before it posts**, **audited**, and **never auto-fired**. VOID ≠ DELETE.
 
 ---
 
@@ -63,7 +64,7 @@ A tool to model the **confirmed Chapter 11 reorganization** and **track the plan
 - **`bankruptcy.plans`** — case/plan header (entity = TRANSP, confirmation date, status), access-restricted.
 - **`bankruptcy.obligations`** — one row per loan/asset-debt/claim in the plan: link to source (FH-3 loan / FH-1 asset / debt), **before** snapshot, **after** (plan) terms, plan class.
 - **`bankruptcy.plan_schedules`** — the reorganized amortization (via FH-3 engine) per obligation.
-- (If Option B) link to the **posted restatement JE(s)**.
+- Link to the **posted restatement JE(s)** (posting is locked — §2) + the superseded pre-reorg amortization schedule.
 - Flag `BANKRUPTCY_MODELER_ENABLED` default OFF; any posting behind a separate `BANKRUPTCY_POST_ADJUSTMENTS_ENABLED` default OFF. **Access-restricted** (sensitive legal data) — tie to the Roles & Permissions block. Tenant-scoped, RLS; new schema → grants per CLAUDE.md §15.
 
 ---
@@ -78,8 +79,8 @@ A tool to model the **confirmed Chapter 11 reorganization** and **track the plan
 
 ## 7. Open questions for Jorge (+ counsel)
 
-- **(a)** Posting model — **A / B / A+B** (recommended)? Do the confirmed reorganized balances post to the books, or stay in the modeling layer?
-- **(b)** If posting: the exact restructuring JE treatment (gain/loss on debt restructuring) — accountant + counsel define.
+- **(a)** ~~Posting model A/B/A+B?~~ **ANSWERED + LOCKED (2026-06-14): POST TO BOOKS** — build the posting path + the tracker on top (§2).
+- **(b)** The exact restructuring JE treatment (gain/loss on debt restructuring), **effective date** (plan confirmation/effective date), and any **fresh-start accounting** — **accountant + counsel define**; the software executes their spec.
 - **(c)** Which obligations are in scope — all loans/assets/debts, or a defined set of plan claims?
 - **(d)** Who may see the Bankruptcy tab (Owner only? + Accountant?) — sensitivity level.
 - **(e)** Source of "actuals" for the tracker — GL postings, or a separate plan-payment log?
@@ -92,6 +93,6 @@ A tool to model the **confirmed Chapter 11 reorganization** and **track the plan
 2. Reorganized **schedules via FH-3** engine.
 3. **Benefit analysis** (pure calc — before vs after).
 4. **Tracker** (plan vs actuals from GL/FH-3 postings).
-5. **(Decision-gated) posting** of confirmed adjustments behind `BANKRUPTCY_POST_ADJUSTMENTS_ENABLED` (default OFF) + preview + accountant sign-off + GUARD review.
+5. **Posting path (LOCKED — post to books)** for confirmed adjustments behind `BANKRUPTCY_POST_ADJUSTMENTS_ENABLED` (default OFF): per-debt balance restatement (old→new) + re-rate/re-amortize via FH-3 (retain pre-reorg schedule) + preview + accountant-specified entries/effective-date/fresh-start + GUARD-verify-vs-QBO + balance-or-fail.
 
 All money-path/sensitive; GUARD verifies; design session with Jorge **and counsel** before code.
