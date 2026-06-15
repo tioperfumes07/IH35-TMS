@@ -286,6 +286,7 @@
     "verify:expenses-cents-void": "node scripts/verify-expenses-cents-and-void-not-delete.mjs",
     "verify:expense-balance-invariant": "node scripts/verify-expense-balance-invariant.mjs",
     "verify:uncategorized-expense-seed": "node scripts/verify-uncategorized-expense-seed.mjs",
+    "verify:fh1-fixed-assets": "node scripts/verify-fh1-fixed-assets.mjs",
     "verify:no-policy-unit-is-active": "node scripts/verify-no-policy-unit-is-active.mjs",
     "verify:qbo-customer-sync-tenant-chain": "node scripts/verify-qbo-customer-sync-tenant-chain.mjs",
     "verify:qbo-conflict-detection-tenant-scope": "node scripts/verify-qbo-conflict-detection-tenant-scope.mjs",
