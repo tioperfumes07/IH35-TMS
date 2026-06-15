@@ -409,7 +409,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at
+          SELECT id, deactivated_at, status
           FROM mdata.units
           WHERE id = $1
           LIMIT 1
@@ -420,19 +420,30 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       if (!oldRow) return null;
 
       let deactivatedAt = oldRow.deactivated_at as string | null;
+      let newStatus = oldRow.status as string | null;
       let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
       if (!wasAlreadyDeactivated) {
+        // Set status in the SAME update as deactivated_at — the units list/badge read the `status`
+        // column, so writing only deactivated_at left units reading their old (active) status. There is
+        // no 'Inactive' member in mdata.unit_status; 'OutOfService' is the deactivated state. Preserve
+        // terminal/archive states (Sold/Totaled/Transferred/Damaged) rather than downgrade them.
         const res = await client.query(
           `
             UPDATE mdata.units
-            SET deactivated_at = now(), updated_by_user_id = $2
+            SET deactivated_at = now(),
+                status = CASE
+                  WHEN status IN ('Sold','Totaled','Transferred','Damaged') THEN status
+                  ELSE 'OutOfService'::mdata.unit_status
+                END,
+                updated_by_user_id = $2
             WHERE id = $1
               AND deactivated_at IS NULL
-            RETURNING id, deactivated_at
+            RETURNING id, deactivated_at, status
           `,
           [parsedParams.data.id, authUser.uuid]
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
+        newStatus = (res.rows[0]?.status as string | undefined) ?? newStatus;
         wasAlreadyDeactivated = false;
       }
 
@@ -442,7 +453,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         was_already_deactivated: wasAlreadyDeactivated,
       });
 
-      return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
+      return { id: oldRow.id, deactivated_at: deactivatedAt, status: newStatus, was_already_deactivated: wasAlreadyDeactivated };
     });
     if (!deactivated) return reply.code(404).send({ error: "mdata_unit_not_found" });
     return deactivated;
