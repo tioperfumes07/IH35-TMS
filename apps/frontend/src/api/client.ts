@@ -1,12 +1,24 @@
 export class ApiError extends Error {
   status: number;
   data: unknown;
+  retryAfter: number | null;
 
-  constructor(status: number, data: unknown) {
-    super(`API request failed with status ${status}`);
+  constructor(status: number, data: unknown, retryAfter: number | null = null) {
+    super(
+      status === 429
+        ? `Too many requests — please wait ${retryAfter ?? "a few"} second${retryAfter === 1 ? "" : "s"} and try again.`
+        : `API request failed with status ${status}`
+    );
     this.status = status;
     this.data = data;
+    this.retryAfter = retryAfter;
   }
+}
+
+function retryAfterSeconds(response: Response): number | null {
+  if (response.status !== 429) return null;
+  const raw = Number(response.headers.get("Retry-After"));
+  return Number.isFinite(raw) && raw > 0 ? raw : null;
 }
 
 type RequestOptions = {
@@ -57,7 +69,7 @@ export async function apiRequestFormData<T>(path: string, formData: FormData, me
   const isJson = response.headers.get("content-type")?.includes("application/json");
   const payload = isJson ? await response.json() : await response.text();
   if (!response.ok) {
-    throw new ApiError(response.status, payload);
+    throw new ApiError(response.status, payload, retryAfterSeconds(response));
   }
   return payload as T;
 }
@@ -85,7 +97,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const payload = isJson ? await response.json() : await response.text();
 
   if (!response.ok) {
-    throw new ApiError(response.status, payload);
+    throw new ApiError(response.status, payload, retryAfterSeconds(response));
   }
 
   return payload as T;
