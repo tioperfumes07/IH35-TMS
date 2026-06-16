@@ -124,17 +124,18 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
   const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "";
 
   const counters = useMemo(() => {
-    const trucks = allRows.filter((r) => r.kind === "truck");
-    const trailers = allRows.filter((r) => r.kind === "trailer");
+    const sourceRows = rowsQuery.data?.rows ?? [];
+    const trucks = sourceRows.filter((r) => r.kind === "truck");
+    const trailers = sourceRows.filter((r) => r.kind === "trailer");
     return {
-      total: allRows.length,
+      total: sourceRows.length,
       trucks: trucks.length,
       trailers: trailers.length,
-      active: allRows.filter((r) => r.status === "InService").length,
-      inShop: allRows.filter((r) => r.status === "InMaintenance").length,
-      outOfService: allRows.filter((r) => r.status === "OutOfService").length,
+      active: sourceRows.filter((r) => r.status === "InService").length,
+      inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
+      outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
     };
-  }, [allRows]);
+  }, [rowsQuery.data?.rows]);
 
   const patchParams = (mutate: (params: URLSearchParams) => void) => {
     setSearchParams(
