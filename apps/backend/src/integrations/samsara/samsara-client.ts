@@ -13,6 +13,7 @@ export type SamsaraConfig = {
 
 export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
+export type SamsaraTrailer = { id: string; raw: Record<string, unknown> };
 export type SamsaraHosLog = { startedAt: string; endedAt: string | null; hosStatusType: string };
 export type SamsaraHosDriverLogs = { driverId: string; logs: SamsaraHosLog[] };
 export type SamsaraVehicleLocation = {
@@ -200,7 +201,7 @@ async function fetchSamsaraLocationsPage(token: string, after: string | null): P
   return { data, hasNextPage, cursor };
 }
 
-async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fleet/vehicles", after: string | null): Promise<{
+async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers", after: string | null): Promise<{
   data: Record<string, unknown>[];
   hasNextPage: boolean;
   cursor: string | null;
@@ -346,6 +347,29 @@ export class SamsaraClient {
     try {
       for (let page = 0; page < 50; page += 1) {
         const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/vehicles", after);
+        for (const row of data) {
+          if (typeof row.id === "string" && row.id.trim().length > 0) {
+            out.push({ id: row.id.trim(), raw: row });
+          }
+        }
+        if (!hasNextPage || !cursor) break;
+        after = cursor;
+      }
+    } catch {
+      return [];
+    }
+    return out;
+  }
+
+  /** Real trailers (GET /fleet/trailers) — distinct Samsara resource from vehicles. */
+  async listTrailers(): Promise<SamsaraTrailer[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: SamsaraTrailer[] = [];
+    let after: string | null = null;
+    try {
+      for (let page = 0; page < 50; page += 1) {
+        const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/trailers", after);
         for (const row of data) {
           if (typeof row.id === "string" && row.id.trim().length > 0) {
             out.push({ id: row.id.trim(), raw: row });
