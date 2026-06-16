@@ -1,7 +1,14 @@
-# CASH-FORECAST-MANUAL — "Manual Daily Prediction" tab (firewalled)
+# CASH-FORECAST-MANUAL — "Manual Daily Projections" tab (firewalled)
 
-**SHOW-FIRST spec. No migration, no code this turn.** For Jorge's review.
-Audited live on `main` (`b210767e`), 2026-06-16.
+**FINALIZED spec (decisions locked 2026-06-16). Implemented behind OFF flag `CASH_FORECAST_ENABLED`.**
+
+### Locked decisions
+- New tab label: **"Manual Daily Projections"**.
+- Existing "Daily prediction" tab renamed → **"Projected (Auto)"** (Jorge approved touching it).
+- Opening balance: separate **`forecast.opening_balance`** table (editable current cash); running
+  projected balance carries continuously day to day from it.
+- Pickers: read-only snapshot of CoA / units / drivers / trucks / trailers — store `ref_kind` +
+  `ref_label` (TEXT) + `ref_external_id` (plain text/uuid), **NO FK**.
 
 ---
 

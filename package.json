@@ -64,6 +64,7 @@
     "ops:replay-missing-migrations": "node scripts/runbook-replay-missing-migrations.mjs",
     "verify:pre-commit": "node scripts/verify-pre-commit.mjs",
     "verify:unit-retire-open-wo-gate": "node scripts/verify-unit-retire-open-wo-gate.mjs",
+    "verify:cash-forecast-firewall": "node scripts/verify-cash-forecast-firewall.mjs",
     "verify:geofence-recon": "node scripts/verify-geofence-recon.mjs",
     "verify:booking-gap-analytics": "node scripts/verify-booking-gap-analytics.mjs",
     "verify:canonical-schema-names": "node scripts/verify-canonical-schema-names.mjs",
