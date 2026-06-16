@@ -168,6 +168,7 @@ export function LoanWizardPage() {
               </div>
               <div>
                 <div className="font-medium text-slate-700">Opening journal entry</div>
+                <div className="overflow-x-auto">
                 <table className="mt-1 w-full text-xs">
                   <tbody>
                     {preview.opening_journal_entry.lines.map((l, i) => (
@@ -184,6 +185,7 @@ export function LoanWizardPage() {
                     </tr>
                   </tbody>
                 </table>
+                </div>
               </div>
               <p className="text-xs text-slate-400">
                 Preview only — posting these entries is a separate, owner-gated step (not enabled here).
