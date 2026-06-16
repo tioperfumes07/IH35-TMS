@@ -1,9 +1,8 @@
 import { useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { getArrivingSoon } from "../api/maintenance";
-import { getUserPreferences, patchUserPreferences } from "../api/safety";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
@@ -17,24 +16,12 @@ type SidebarProps = {
 
 export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProps) {
   const location = useLocation();
-  const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
 
-  const prefsQuery = useQuery({
-    queryKey: ["user", "preferences"],
-    queryFn: getUserPreferences,
-    staleTime: 60_000,
-  });
-
-  const resetOrderMutation = useMutation({
-    mutationFn: () => patchUserPreferences({ sidebar_order: null }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["user", "preferences"] }),
-  });
-
-  const prefsRecord = prefsQuery.data?.preferences as Record<string, unknown> | undefined;
-  const hasSidebarOverride = Array.isArray(prefsRecord?.sidebar_order);
-
-  const order = useMemo(() => resolveSidebarOrder(role, prefsRecord), [role, prefsRecord]);
+  // Uniform sidebar order for every operator — single source of truth is SIDEBAR_DEFAULT_ORDER.
+  // Order does not depend on per-user prefs or role (Jorge 2026-06-16). Item *visibility* is still
+  // permission-gated below via `visibleRoles`.
+  const order = useMemo(() => resolveSidebarOrder(), []);
 
   const severeArrivingSoonQuery = useQuery({
     queryKey: ["sidebar", "maintenance-severe-badge", selectedCompanyId ?? ""],
@@ -119,17 +106,6 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
               </div>
             );
           })}
-
-          {hasSidebarOverride ? (
-            <button
-              type="button"
-              className="mt-1 px-1 text-center text-[9px] font-medium uppercase leading-tight text-white/70 underline decoration-white/30 hover:text-white"
-              disabled={resetOrderMutation.isPending}
-              onClick={() => void resetOrderMutation.mutateAsync()}
-            >
-              Reset nav order
-            </button>
-          ) : null}
         </div>
       </aside>
     </>

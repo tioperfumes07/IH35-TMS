@@ -133,6 +133,27 @@ if (!PENDING_IDS.has("cash-flow") && rawSet.has("cash-flow")) {
   }
 }
 
+// UNIFORM-ORDER CONTRACT (Jorge 2026-06-16): SIDEBAR_DEFAULT_ORDER is the SINGLE source of truth for
+// order. resolveSidebarOrder must NOT depend on per-user prefs (`sidebar_order`) or per-role ordering.
+const resolveMatch = src.match(/export\s+function\s+resolveSidebarOrder\b[\s\S]*?\n}/);
+if (!resolveMatch) {
+  errors.push("uniform-order: could not find resolveSidebarOrder() in sidebar-config.ts");
+} else {
+  const body = resolveMatch[0];
+  if (!/return\s*\[\s*\.\.\.SIDEBAR_DEFAULT_ORDER\s*\]/.test(body)) {
+    errors.push("uniform-order: resolveSidebarOrder must `return [...SIDEBAR_DEFAULT_ORDER]` (canonical order for all users)");
+  }
+  if (/sidebar_order/.test(body)) {
+    errors.push("uniform-order: resolveSidebarOrder must NOT read `sidebar_order` (per-user override removed)");
+  }
+}
+if (/\bSIDEBAR_ROLE_ORDER\b/.test(src)) {
+  errors.push("uniform-order: SIDEBAR_ROLE_ORDER must not exist — role-based ordering was removed (order is uniform for all roles)");
+}
+if (/\bmergeSidebarOrder\b|\bparseUserOverride\b/.test(src)) {
+  errors.push("uniform-order: mergeSidebarOrder/parseUserOverride must not exist — per-user/role order merging was removed");
+}
+
 if (errors.length > 0) {
   console.error(
     `verify-sidebar-contract FAIL — SIDEBAR_ITEM_IDS has drifted from the locked ${EXPECTED_LENGTH}-item array:`
@@ -147,6 +168,9 @@ if (errors.length > 0) {
 
 console.log(
   `verify-sidebar-contract OK — SIDEBAR_ITEM_IDS has ${rawItems.length} items, insurance at index ${EXPECTED_INSURANCE_INDEX}, factoring at index ${EXPECTED_FACTORING_INDEX}.`
+);
+console.log(
+  "  uniform-order: resolveSidebarOrder returns SIDEBAR_DEFAULT_ORDER for all users (no per-user/per-role override)."
 );
 console.log(
   `  additive check: ${LOCKED_ORDER.length - PENDING_IDS.size}/${LOCKED_ORDER.length} locked ids present (${PENDING_IDS.size} pending: ${[...PENDING_IDS].join(", ")})`
