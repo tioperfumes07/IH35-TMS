@@ -6,6 +6,7 @@
  */
 import { z } from "zod";
 import { buildAmortizationSchedule, classifyLoanType, type AmortizationRow } from "../loan-wizard/loan-math.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -83,6 +84,23 @@ export async function createLoanWithSchedule(
       [input.operating_company_id, loanId, r.period, r.date, r.payment_cents, r.principal_cents, r.interest_cents, r.balance_cents, actorUserId]
     );
   }
+
+  // Audit the loan creation (mutating service must emit to the audit spine).
+  await appendCrudAudit(
+    client,
+    actorUserId,
+    "finance.loan.created",
+    {
+      loan_id: loanId,
+      operating_company_id: input.operating_company_id,
+      name: input.name,
+      original_principal_cents: input.original_principal_cents,
+      interest_rate_bps: input.interest_rate_bps,
+      term_months: input.term_months,
+      amortization_rows: rows.length,
+    },
+    "info"
+  );
 
   return {
     loan: {
