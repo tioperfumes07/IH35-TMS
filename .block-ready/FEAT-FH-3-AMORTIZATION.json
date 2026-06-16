@@ -1,0 +1,29 @@
+{
+  "block_id": "FEAT-FH-3-AMORTIZATION",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
+  "phase": "FINANCE-HUB",
+  "task": "FH-3 Amortization Schedule Engine (Tier 3). Create loans + generate/store amortization schedules. New schema finance.* (finance.loans + finance.loan_amortization_rows, RLS ENABLE+FORCE, grants, audit cols). Reuses FH-2 loan-math (buildAmortizationSchedule) for the math. Persists to finance.* ONLY — performs NO GL posting (no accounting.* writes, no posting engine). Posting the principal/interest split (Dr Note Payable / Dr Interest / Cr cash) is a LATER gated step behind FINANCE_HUB_AMORTIZATION_POST_ENABLED; the posted/journal columns exist as forward hooks. Entire feature gated behind FINANCE_HUB_AMORTIZATION_ENABLED (migration 202606160100 registers both flags default OFF): routes 404 feature_disabled when OFF; frontend tab/page hidden when OFF. Boundary enforced by scripts/verify-fh3-no-posting.mjs. CI-gated DB test proves the schedule persists balanced (principal sums to loan, ends at 0, nothing posted). Stacked on FH-2 (imports loan-wizard/loan-math.ts); rebase onto main after #1023 merges. Additive-only; ship on green, Jorge merges.",
+  "branch": "feat/fh-3-amortization",
+  "lane": "B",
+  "allowed_files": [
+    ".block-ready/FEAT-FH-3-AMORTIZATION.json",
+    "db/migrations/202606160100_fh3_amortization_data_model.sql",
+    "apps/backend/src/finance/amortization/amortization.service.ts",
+    "apps/backend/src/finance/amortization/routes.ts",
+    "apps/backend/src/finance/amortization/__tests__/amortization.db.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/financeAmortization.ts",
+    "apps/frontend/src/pages/finance/AmortizationPage.tsx",
+    "apps/frontend/src/pages/finance/FinanceModuleTabs.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-fh3-no-posting.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}

@@ -3,6 +3,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_LOAN_WIZARD_FLAG } from "../../api/financeLoanWizard";
 import { FINANCE_HUB_CALCULATOR_FLAG } from "../../api/financeCalculator";
+import { FINANCE_HUB_AMORTIZATION_FLAG } from "../../api/financeAmortization";
 
 const baseTabs = [
   { id: "overview", label: "Overview", to: "/finance" },
@@ -18,10 +19,12 @@ export function FinanceModuleTabs() {
   // Loan Wizard tab only appears once its OFF-by-default flag is enabled (Tier-3 gate).
   const { enabled: loanWizardEnabled } = useFeatureFlag(FINANCE_HUB_LOAN_WIZARD_FLAG, selectedCompanyId ?? undefined);
   const { enabled: calculatorEnabled } = useFeatureFlag(FINANCE_HUB_CALCULATOR_FLAG, selectedCompanyId ?? undefined);
+  const { enabled: amortizationEnabled } = useFeatureFlag(FINANCE_HUB_AMORTIZATION_FLAG, selectedCompanyId ?? undefined);
   const tabs = [
     ...baseTabs,
     ...(loanWizardEnabled ? [{ id: "loan-wizard", label: "Loan Wizard", to: "/finance/loan-wizard" }] : []),
     ...(calculatorEnabled ? [{ id: "calculator", label: "Calculator", to: "/finance/calculator" }] : []),
+    ...(amortizationEnabled ? [{ id: "amortization", label: "Amortization", to: "/finance/amortization" }] : []),
   ];
 
   return (
