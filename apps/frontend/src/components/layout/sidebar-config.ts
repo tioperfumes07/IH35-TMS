@@ -281,6 +281,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         // NAV_HIDDEN_STUB_IDS so this submenu never renders; the visible nav stays byte-identical.
         // The Loan Wizard's visible entry point is the flag-gated tab in FinanceModuleTabs.
         { label: "Loan Wizard", to: "/finance/loan-wizard" },
+        { label: "Calculator", to: "/finance/calculator" },
       ];
     case "inventory":
       return [
