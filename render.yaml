@@ -19,7 +19,7 @@ services:
     staticPublishPath: apps/frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://ih35-tms.onrender.com
+        value: https://api.ih35dispatch.com
 
   - type: static
     name: ih35-tms-driver
@@ -27,7 +27,7 @@ services:
     staticPublishPath: apps/driver-pwa/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://ih35-tms.onrender.com
+        value: https://api.ih35dispatch.com
     routes:
       - type: rewrite
         source: /*
