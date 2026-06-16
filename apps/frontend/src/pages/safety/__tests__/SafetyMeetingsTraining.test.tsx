@@ -53,6 +53,7 @@ describe("SafetyMeetingsPage", () => {
     vi.spyOn(safetyApi, "createSafetyMeeting").mockResolvedValue({ event: { id: "meeting-2" } } as never);
     vi.spyOn(safetyApi, "syncSafetyMeetingAttendance").mockResolvedValue({ event: { id: "att-1" } } as never);
     vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({
+      total: 0,
       drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver", status: "Active" } as never],
     });
   });
@@ -97,6 +98,7 @@ describe("TrainingProgramsPage", () => {
     });
     vi.spyOn(safetyApi, "createSafetyTrainingRecord").mockResolvedValue({ id: "rec-1" });
     vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({
+      total: 0,
       drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver", status: "Active" } as never],
     });
   });
@@ -132,6 +134,7 @@ describe("TrainingRecordsPage", () => {
     });
     vi.spyOn(safetyApi, "createSafetyTrainingRecord").mockResolvedValue({ id: "rec-2" });
     vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({
+      total: 0,
       drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver", status: "Active" } as never],
     });
   });
