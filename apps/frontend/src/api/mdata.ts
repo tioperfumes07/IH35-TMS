@@ -1132,7 +1132,14 @@ export function listLocations(params: CompanyScopedListParams = {}) {
 }
 
 export function listUnits(
-  params: { status?: string; search?: string; operating_company_id?: string | null; limit?: number; offset?: number } = {}
+  params: {
+    status?: string;
+    search?: string;
+    operating_company_id?: string | null;
+    limit?: number;
+    offset?: number;
+    include?: "trailers";
+  } = {}
 ) {
   const query = new URLSearchParams();
   if (params.status && params.status !== "All") query.set("status", params.status);
@@ -1140,6 +1147,9 @@ export function listUnits(
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
   if (params.limit != null) query.set("limit", String(params.limit));
   if (params.offset != null) query.set("offset", String(params.offset));
+  // include=trailers returns the UNIFIED fleet (trucks from mdata.units + trailers from mdata.equipment),
+  // each row tagged kind:"truck"|"trailer" and already deactivated_at-filtered.
+  if (params.include) query.set("include", params.include);
   const qs = query.toString();
   // total = real server-side count (GO-LIVE Block 1A) so the Fleet UI can page through the FULL fleet.
   return apiRequest<{ units: unknown[]; total?: number }>(`/api/v1/mdata/units${qs ? `?${qs}` : ""}`);
