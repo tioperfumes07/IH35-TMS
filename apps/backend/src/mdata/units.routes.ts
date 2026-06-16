@@ -163,7 +163,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       return { units };
     }
 
-    const units = await withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
       if (type) {
@@ -183,9 +183,13 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         const idx = values.length;
         filters.push(`(owner_company_id = $${idx} OR currently_leased_to_company_id = $${idx})`);
       }
+      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const countRes = await client.query<{ total: number }>(
+        `SELECT count(*)::int AS total FROM mdata.units ${whereClause}`,
+        values
+      );
       values.push(limit);
       values.push(offset);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
           SELECT
@@ -201,10 +205,10 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows, total: countRes.rows[0]?.total ?? 0 };
     });
 
-    return { units };
+    return { units: result.rows, total: result.total };
   });
 
   app.post("/api/v1/mdata/units", async (req, reply) => {

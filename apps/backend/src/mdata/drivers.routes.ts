@@ -225,7 +225,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if (include_system && !isOwnerOrAdmin(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
-    const drivers = await withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [EXCLUDE_ARCHIVED_DRIVERS_SQL];
       if (!include_system) {
@@ -246,9 +246,13 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         values.push(operating_company_id);
         filters.push(`operating_company_id = $${values.length}`);
       }
+      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const countRes = await client.query<{ total: number }>(
+        `SELECT count(*)::int AS total FROM mdata.drivers ${whereClause}`,
+        values
+      );
       values.push(limit);
       values.push(offset);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
           SELECT
@@ -271,10 +275,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows, total: countRes.rows[0]?.total ?? 0 };
     });
 
-    return { drivers };
+    return { drivers: result.rows, total: result.total };
   });
 
   app.get("/api/v1/mdata/drivers/me", async (req, reply) => {
