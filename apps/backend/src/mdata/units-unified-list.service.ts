@@ -5,6 +5,15 @@ type PgClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
 
+/**
+ * Demo/phantom hygiene (E1): never surface seeded TEST/DEMO rows or the phantom
+ * `SAM-*` Samsara dual-write rows in fleet dropdowns or the Fleet roster. Static
+ * literal patterns (no user input) so they're safe to inline.
+ */
+function excludeDemoPhantomSql(col: string): string {
+  return `(${col} NOT ILIKE 'SAM-%' AND ${col} NOT ILIKE 'TEST%' AND ${col} NOT ILIKE '%DEMO%')`;
+}
+
 export type UnifiedFleetRow = {
   id: string;
   kind: "truck" | "trailer";
@@ -61,7 +70,7 @@ export async function fetchUnifiedFleetList(
   }
 ): Promise<UnifiedFleetRow[]> {
   const truckValues: unknown[] = [];
-  const truckFilters: string[] = ["deactivated_at IS NULL"];
+  const truckFilters: string[] = ["deactivated_at IS NULL", excludeDemoPhantomSql("unit_number")];
   if (options.type) {
     truckFilters.push(truckTypeSqlFilter(options.type));
   }
@@ -81,7 +90,7 @@ export async function fetchUnifiedFleetList(
   }
 
   const trailerValues: unknown[] = [];
-  const trailerFilters: string[] = ["deactivated_at IS NULL"];
+  const trailerFilters: string[] = ["deactivated_at IS NULL", excludeDemoPhantomSql("equipment_number")];
   if (options.type) {
     trailerFilters.push(trailerTypeSqlFilter(options.type, trailerValues));
   }
