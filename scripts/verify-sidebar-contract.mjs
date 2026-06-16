@@ -26,6 +26,7 @@ const LOCKED_ORDER = [
   "maintenance",
   "safety",
   "drivers",
+  "fleet",
   "insurance",
   "legal",
   "eld",

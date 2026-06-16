@@ -7,6 +7,8 @@ import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../component
 
 type Props = {
   operatingCompanyId: string;
+  // /fleet home opts into active-only by default; Maintenance keeps showing all.
+  defaultActiveOnly?: boolean;
 };
 
 type UnifiedUnitRow = FleetRow & {
@@ -14,12 +16,40 @@ type UnifiedUnitRow = FleetRow & {
   type: string;
 };
 
-function KpiCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+// Trucks/Trailers/Company sub-tabs (unit_class). "company" is the future company-vehicle
+// class — empty for now (cars get their own class later), shown but with no rows yet.
+const KIND_TABS: Array<{ key: string; label: string }> = [
+  { key: "", label: "All" },
+  { key: "truck", label: "Trucks" },
+  { key: "trailer", label: "Trailers" },
+  { key: "company", label: "Company Vehicles" },
+];
+
+function KpiCard({
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: string | number;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const cls = `rounded border px-2 py-1 text-left text-[11px] ${
+    active ? "border-slate-500 bg-slate-50" : "border-gray-200 bg-white"
+  }`;
+  const inner = (
+    <>
       <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="font-semibold">{value}</div>
-    </div>
+    </>
+  );
+  if (!onClick) return <div className={cls}>{inner}</div>;
+  return (
+    <button type="button" onClick={onClick} aria-pressed={Boolean(active)} className={`${cls} hover:bg-gray-50`}>
+      {inner}
+    </button>
   );
 }
 
@@ -28,9 +58,14 @@ function buildUnitsUrl(operatingCompanyId: string, typeFilter: string): string {
   return `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500${typeParam}`;
 }
 
-export function FleetTablePage({ operatingCompanyId }: Props) {
+export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const typeFilter = parseFleetTypeFilter(searchParams);
+  const kindFilter = searchParams.get("kind") ?? "";
+  const rawStatus = searchParams.get("status");
+  // Absent status → default (active-only on /fleet, all in Maintenance). "all" → no status filter.
+  const effectiveStatus = rawStatus == null ? (defaultActiveOnly ? "InService" : "") : rawStatus === "all" ? "" : rawStatus;
+  const activeOnly = effectiveStatus === "InService";
 
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "kpis", operatingCompanyId],
@@ -70,48 +105,59 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
     out_of_service_units: 0,
     avg_age_years: 0,
   };
-  const rows: FleetRow[] = rowsQuery.data?.rows ?? [];
+  const allRows = useMemo(() => (rowsQuery.data?.rows ?? []) as UnifiedUnitRow[], [rowsQuery.data?.rows]);
+
+  // Client-side kind sub-tab + status (KPI/toggle) filtering on top of the server type filter.
+  const rows = useMemo(
+    () =>
+      allRows.filter((r) => {
+        if (kindFilter && r.kind !== kindFilter) return false;
+        if (effectiveStatus && r.status !== effectiveStatus) return false;
+        return true;
+      }),
+    [allRows, kindFilter, effectiveStatus]
+  );
+
   const totalVehicleCount =
-    typeFilter !== "" ? (totalRowsQuery.data?.rows.length ?? 0) : (rowsQuery.data?.rows.length ?? 0);
+    typeFilter !== "" ? (totalRowsQuery.data?.rows.length ?? 0) : allRows.length;
   const filteredCount = rows.length;
-  const hasActiveFilter = typeFilter !== "";
+  const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "";
 
   const counters = useMemo(() => {
-    const sourceRows = rowsQuery.data?.rows ?? [];
-    const trucks = sourceRows.filter((r) => r.kind === "truck");
-    const trailers = sourceRows.filter((r) => r.kind === "trailer");
+    const trucks = allRows.filter((r) => r.kind === "truck");
+    const trailers = allRows.filter((r) => r.kind === "trailer");
     return {
-      total: sourceRows.length,
+      total: allRows.length,
       trucks: trucks.length,
       trailers: trailers.length,
-      active: sourceRows.filter((r) => r.status === "InService").length,
-      inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
-      outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
+      active: allRows.filter((r) => r.status === "InService").length,
+      inShop: allRows.filter((r) => r.status === "InMaintenance").length,
+      outOfService: allRows.filter((r) => r.status === "OutOfService").length,
     };
-  }, [rowsQuery.data?.rows]);
+  }, [allRows]);
 
-  const setTypeFilter = (nextType: string) => {
+  const patchParams = (mutate: (params: URLSearchParams) => void) => {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
-        if (!nextType) params.delete("type");
-        else params.set("type", nextType);
+        mutate(params);
         return params;
       },
       { replace: true }
     );
   };
 
-  const clearFilters = () => {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        params.delete("type");
-        return params;
-      },
-      { replace: true }
-    );
-  };
+  const setTypeFilter = (nextType: string) =>
+    patchParams((params) => (nextType ? params.set("type", nextType) : params.delete("type")));
+  const setKind = (nextKind: string) =>
+    patchParams((params) => (nextKind ? params.set("kind", nextKind) : params.delete("kind")));
+  const setStatus = (nextStatus: string) => patchParams((params) => params.set("status", nextStatus));
+  const clearFilters = () =>
+    patchParams((params) => {
+      params.delete("type");
+      params.delete("kind");
+      params.delete("status");
+    });
 
   return (
     <div className="space-y-2">
@@ -119,15 +165,43 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
         Total Fleet: {counters.total} · Trucks: {counters.trucks} · Trailers: {counters.trailers}
       </div>
 
+      {/* Sub-tabs: Trucks / Trailers / Company Vehicles (unit_class) */}
+      <div className="flex flex-wrap gap-1" role="tablist" aria-label="Fleet sub-tabs">
+        {KIND_TABS.map((tab) => (
+          <button
+            key={tab.key || "all"}
+            type="button"
+            role="tab"
+            aria-selected={kindFilter === tab.key}
+            onClick={() => setKind(tab.key)}
+            className={`rounded border px-2 py-1 text-xs font-semibold ${
+              kindFilter === tab.key ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Clickable KPIs — each filters the roster by status; Total clears the status filter. */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
-        <KpiCard label="Total Units" value={counters.total} />
-        <KpiCard label="Active" value={counters.active} />
-        <KpiCard label="In-Shop" value={counters.inShop} />
-        <KpiCard label="Out-of-Service" value={counters.outOfService} />
+        <KpiCard label="Total Units" value={counters.total} active={effectiveStatus === ""} onClick={() => setStatus("all")} />
+        <KpiCard label="Active" value={counters.active} active={effectiveStatus === "InService"} onClick={() => setStatus("InService")} />
+        <KpiCard label="In-Shop" value={counters.inShop} active={effectiveStatus === "InMaintenance"} onClick={() => setStatus("InMaintenance")} />
+        <KpiCard
+          label="Out-of-Service"
+          value={counters.outOfService}
+          active={effectiveStatus === "OutOfService"}
+          onClick={() => setStatus("OutOfService")}
+        />
         <KpiCard label="Avg Age" value={`${Number(kpis.avg_age_years ?? 0).toFixed(1)} y`} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs">
+        <label className="flex items-center gap-1 font-semibold text-gray-700">
+          <input type="checkbox" checked={activeOnly} onChange={(e) => setStatus(e.target.checked ? "InService" : "all")} />
+          Active only
+        </label>
         <label htmlFor="fleet-type-filter" className="font-semibold text-gray-700">
           Type
         </label>
@@ -162,9 +236,11 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
         <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           <div className="font-semibold">{hasActiveFilter ? "No fleet rows match this filter" : "No fleet rows yet"}</div>
           <div className="mt-1 text-xs">
-            {hasActiveFilter
-              ? "Try another type or clear filters to see all vehicles."
-              : "Trucks and trailers appear here once assigned to this operating company."}
+            {kindFilter === "company"
+              ? "Company vehicles (cars/pickups) get their own class — none are tracked here yet."
+              : hasActiveFilter
+                ? "Try another type or clear filters to see all vehicles."
+                : "Trucks and trailers appear here once assigned to this operating company."}
           </div>
         </div>
       ) : (

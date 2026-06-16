@@ -126,6 +126,7 @@ import { FactorAdmin } from "../pages/factoring/FactorAdmin";
 import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
 import { FaroImportPage } from "../pages/factoring/FaroImportPage";
 import { VehicleProfilePage } from "../pages/fleet/VehicleProfilePage";
+import { FleetHomePage } from "../pages/fleet/FleetHomePage";
 import { TrailerProfilePage } from "../pages/fleet/TrailerProfilePage";
 import { TransfersInProgressPage } from "../pages/fleet/TransfersInProgressPage";
 import { ComplianceDashboardPage } from "../pages/compliance/ComplianceDashboardPage";
@@ -3332,6 +3333,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <TransfersInProgressPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fleet"
+          element={
+            <ProtectedRoute>
+              <FleetHomePage />
             </ProtectedRoute>
           }
         />
