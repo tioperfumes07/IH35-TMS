@@ -58,7 +58,8 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     "00000000-0000-4000-8000-000000000000";
   const unitsQuery = useQuery({
     queryKey: ["book-load-units", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }),
+    // Unified fleet: trucks (mdata.units) + trailers (mdata.equipment), kind-tagged + active-filtered.
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, include: "trailers", limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
   const driversQuery = useQuery({
@@ -71,7 +72,14 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     queryFn: () => listDriverTeams(String(operatingCompanyId)),
     enabled: Boolean(operatingCompanyId),
   });
-  const units = (unitsQuery.data?.units ?? []).map((row, index) => toUnitOption(row, index));
+  const fleet = unitsQuery.data?.units ?? [];
+  // Bug #5: Truck dropdown shows ONLY trucks (mdata.units); Trailer dropdown ONLY trailers (mdata.equipment).
+  const trucks = fleet
+    .filter((row) => (row as { kind?: string }).kind !== "trailer")
+    .map((row, index) => toUnitOption(row, index));
+  const trailers = fleet
+    .filter((row) => (row as { kind?: string }).kind === "trailer")
+    .map((row, index) => toUnitOption(row, index));
   const drivers = (driversQuery.data?.drivers ?? []).map((row, index) => toDriverOption(row, index));
   const toggles = [
     { field: "requires_reefer_fuel", label: "Reefer fuel" },
@@ -102,7 +110,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           input={
             <SelectCombobox {...register("assigned_unit_id")} className="h-7 w-full text-xs">
               <option value="">{unitsQuery.isLoading ? "Loading units..." : "Select truck unit"}</option>
-              {units.map((unit) => (
+              {trucks.map((unit) => (
                 <option key={unit.id} value={unit.id}>
                   {unit.label}
                 </option>
@@ -115,7 +123,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           input={
             <SelectCombobox {...register("assigned_trailer_unit_id")} className="h-7 w-full text-xs">
               <option value="">{unitsQuery.isLoading ? "Loading units..." : "Select trailer unit"}</option>
-              {units.map((unit) => (
+              {trailers.map((unit) => (
                 <option key={`trailer-${unit.id}`} value={unit.id}>
                   {unit.label}
                 </option>
