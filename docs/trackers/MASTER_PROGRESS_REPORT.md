@@ -598,49 +598,49 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 349 | Packet 2 Phase A | #03-Block-AE | ELD tab style normalize to underline | DONE | DONE |  |  | PR #356 merged + deployed. fix/eld-tab-style-normalize. |
 | 350 | Packet 2 Phase A | #04-Block-AB | Internal language comprehensive scrub (9 locations) | DONE | DONE |  |  | PR #357 merged + deployed. fix/internal-language-comprehensive-scrub. |
 | | **▼ Packet 2 Phase B — P0 Sub-Nav Fixes** | | | | | | | |
-| 351 | Packet 2 Phase B | #05-Block-U | FUEL sub-nav routing fix (all 8 sub-tabs broken) | PENDING | PENDING |  |  | P0. Branch: fix/fuel-subnav-routing. |
-| 352 | Packet 2 Phase B | #06-Block-V | DISPATCH sub-nav routing fix (all 5 sub-tabs broken) | PENDING | PENDING |  |  | P0. Branch: fix/dispatch-subnav-routing. |
+| 351 | Packet 2 Phase B | #05-Block-U | FUEL sub-nav routing fix (all 8 sub-tabs broken) | PENDING | DONE |  |  | P0. Branch: fix/fuel-subnav-routing.  / reconciled 2026-06-15 DONE-DRIFT: #817 FuelPlannerHome distinct routes |
+| 352 | Packet 2 Phase B | #06-Block-V | DISPATCH sub-nav routing fix (all 5 sub-tabs broken) | PENDING | DONE |  |  | P0. Branch: fix/dispatch-subnav-routing.  / reconciled 2026-06-15 DONE-DRIFT: #818 dispatch subnav pages (AtRisk/Detention/...) |
 | | **▼ Packet 1 Phase C — Vehicle/Trailer/Parts/Services/Reefer** | | | | | | | |
 | 353 | Packet 1 Phase C | #07-Block-P | Best Bay Logsitcis customer name typo fix | PENDING | PENDING |  |  | P3. Branch: fix/customer-typo-best-bay-logistics. 1 migration row UPDATE. |
-| 354 | Packet 1 Phase C | #08-Block-A | Migration ledger cleanup (187 migrations drift) | PENDING | PENDING |  |  | Foundation. Branch: chore/migration-ledger-cleanup. |
-| 355 | Packet 2 Phase C | #09-Block-AA | Seed-test-driver users archive (4 rows @seed.invalid) | PENDING | PENDING |  |  | P1. Branch: fix/users-seed-test-purge-v2. Supersedes Block S. |
+| 354 | Packet 1 Phase C | #08-Block-A | Migration ledger cleanup (187 migrations drift) | PENDING | DONE |  |  | Foundation. Branch: chore/migration-ledger-cleanup.  / reconciled 2026-06-15 DONE-DRIFT: #177 startup-drift-guard + #878 re-home migrations |
+| 355 | Packet 2 Phase C | #09-Block-AA | Seed-test-driver users archive (4 rows @seed.invalid) | PENDING | DONE |  |  | P1. Branch: fix/users-seed-test-purge-v2. Supersedes Block S.  / reconciled 2026-06-15 DONE-DRIFT: #400/#910 mig 0320 archive_test_seed_data |
 | 356 | Packet 1 Phase C | #10-Block-B | Vehicle Profile page (Fleet rows clickable) | DONE | DONE |  |  | SUPERSEDED-AND-SHIPPED by Block-11 PR #362 (SHA 5eefda5) + Block-12 PR #363 (SHA bbc13fc) + hotfixes PR #364 (a1ddfba) + PR #365 (da0d12e). Full vehicle profile live 2026-06-02. |
-| 357 | Packet 1 Phase C | #11-Block-C | Trailer Profile page (with TYPE field) | PENDING | PENDING |  |  | HIGH VALUE. Branch: feat/trailer-profile-page. |
-| 358 | Packet 1 Phase C | #12-Block-D | Parts Catalog by brand research (Peterbilt/Freightliner/Mack… | PENDING | PENDING |  |  | HIGH VALUE. Branch: feat/parts-catalog-by-brand. |
+| 357 | Packet 1 Phase C | #11-Block-C | Trailer Profile page (with TYPE field) | PENDING | DONE |  |  | HIGH VALUE. Branch: feat/trailer-profile-page.  / reconciled 2026-06-15 DONE-DRIFT: #368/#404 TrailerProfilePage.tsx |
+| 358 | Packet 1 Phase C | #12-Block-D | Parts Catalog by brand research (Peterbilt/Freightliner/Mack… | PENDING | DONE |  |  | HIGH VALUE. Branch: feat/parts-catalog-by-brand.  / reconciled 2026-06-15 DONE-DRIFT: #407 MaintenancePartsCatalog.tsx |
 | 359 | Packet 1 Phase C | #13-Block-E | Services Catalog + ETA engine (Samsara mileage + 12k mi/mo d… | PENDING | PENDING |  |  | HIGH VALUE. Branch: feat/services-catalog-eta-engine. |
 | 360 | Packet 1 Phase C | #14-Block-F | Reefer Hours tracking (Samsara 15-min polls) | PENDING | PENDING |  |  | HIGH VALUE. Branch: feat/reefer-hours-tracking. |
 | | **▼ Packet 2 Phase D — P1 Bug Cleanup + KPI Consistency** | | | | | | | |
 | 361 | Packet 2 Phase D | #15-Block-Y | HOME Driver day-summaries red error fix | DONE | DONE |  |  | PR #379 SHA 5c9a9e1 merged + deployed 8:22 PM CST 6/2. Rebased onto f94d54a → d06722f → merged at 5c9a9e1. A7. |
 | 362 | Packet 2 Phase D | #16-Block-AJ | Samsara live positions on dispatch map fix | DONE | DONE |  |  | PR #378 SHA f94d54a merged + deployed 8:02 PM CST 6/2. Migration 0315 cron-not-running fix. B6. Stale rebase a0945fb force-pushed. |
 | 363 | Packet 2 Phase D | #17-Block-AC | KPI consistency reconciliation (3 contradictions) | DONE | DONE |  |  | PR #383 SHA 585ad74 merged + deployed 9:32 PM CST 6/2. B7 = #17-Block-AC. |
-| 364 | Packet 2 Phase D | #18-Block-AK | Bank Driver Escrow counter label clarify | PENDING | PENDING |  |  | P3. Branch: fix/bank-driver-escrow-counter-clarify. |
+| 364 | Packet 2 Phase D | #18-Block-AK | Bank Driver Escrow counter label clarify | PENDING | DONE |  |  | P3. Branch: fix/bank-driver-escrow-counter-clarify.  / reconciled 2026-06-15 DONE-DRIFT: #395 escrow counter label |
 | 365 | Packet 2 Phase D | #19-Block-X | HOME Record Expense modal consistency | PENDING | PENDING |  |  | P2. Branch: fix/home-record-expense-modal-consistency. |
 | | **▼ Packet 1 Phase E — Catalog Purge + URL/Header Normalize** | | | | | | | |
-| 366 | Packet 1 Phase E | #20-Block-G | Catalog stub purge — replace 34 stubs | PENDING | PENDING |  |  | P1. Branch: feat/lists-catalog-stub-purge. |
-| 367 | Packet 1 Phase E | #21-Block-H | URL routing normalize (underscore->hyphen 301) | PENDING | PENDING |  |  | P0. Branch: fix/lists-url-routing-normalize. |
-| 368 | Packet 1 Phase E | #22-Block-I | LISTS hub header counts fix (6 of 8 wrong) | PENDING | PENDING |  |  | P1. Branch: fix/lists-header-counts-from-source. |
-| 369 | Packet 1 Phase E | #23-Block-J | Equipment Types deduplication (DRY-VAN/DRY_VAN) | PENDING | PENDING |  |  | P0. Branch: fix/equipment-types-dedup. |
+| 366 | Packet 1 Phase E | #20-Block-G | Catalog stub purge — replace 34 stubs | PENDING | DONE |  |  | P1. Branch: feat/lists-catalog-stub-purge.  / reconciled 2026-06-15 DONE-DRIFT: #518 verify-no-stub-catalog-pages.mjs |
+| 367 | Packet 1 Phase E | #21-Block-H | URL routing normalize (underscore->hyphen 301) | PENDING | DONE |  |  | P0. Branch: fix/lists-url-routing-normalize.  / reconciled 2026-06-15 DONE-DRIFT: #389/#819 routes/url-canonicalize.ts (wired App.tsx) |
+| 368 | Packet 1 Phase E | #22-Block-I | LISTS hub header counts fix (6 of 8 wrong) | PENDING | DONE |  |  | P1. Branch: fix/lists-header-counts-from-source.  / reconciled 2026-06-15 DONE-DRIFT: #393 lists-counts.routes.ts |
+| 369 | Packet 1 Phase E | #23-Block-J | Equipment Types deduplication (DRY-VAN/DRY_VAN) | PENDING | DONE |  |  | P0. Branch: fix/equipment-types-dedup.  / reconciled 2026-06-15 DONE-DRIFT: #391 mig 0318 equipment_types_canonical_dedup |
 | 370 | Packet 1 Phase E | #24-Block-K | Classes data quality remediation | PENDING | PENDING |  |  | P2. Branch: fix/acct-classes-data-quality. |
 | 371 | Packet 2 Phase E | #25-Block-AL | Classes bulk-edit UI + COA cleanup (expanded K) | PENDING | PENDING |  |  | P2. Branch: fix/acct-classes-map-visible-cleanup. |
 | | **▼ Packet 1+2 Phase F — Integration Sync Restoration** | | | | | | | |
-| 372 | Packet 1 Phase F | #26-Block-L | QBO bidirectional sync drift fix | PENDING | PENDING |  |  | P1. Branch: fix/qbo-sync-bidirectional-drift-fix. |
-| 373 | Packet 2 Phase F | #27-Block-AM | Loves card sync restore | PENDING | PENDING |  |  | P1. Branch: fix/fuel-loves-sync-restore-v2. Supersedes Block M. |
-| 374 | Packet 2 Phase F | #28-Block-AN | Plaid sync restore (root cause + display) | PENDING | PENDING |  |  | P1. Branch: fix/bank-plaid-sync-restore. Supersedes Block R. |
-| 375 | Packet 1 Phase F | #29-Block-O | Customer/vendor default classifications cleanup | PENDING | PENDING |  |  | P2. Branch: fix/customer-vendor-default-classifications. |
+| 372 | Packet 1 Phase F | #26-Block-L | QBO bidirectional sync drift fix | PENDING | DONE |  |  | P1. Branch: fix/qbo-sync-bidirectional-drift-fix.  / reconciled 2026-06-15 DONE-DRIFT: master-data PUSH #192/#194/#195/#197 + PULL #500/#501/#503 (invoice/bill PULL parked row 680) |
+| 373 | Packet 2 Phase F | #27-Block-AM | Loves card sync restore | PENDING | DONE |  |  | P1. Branch: fix/fuel-loves-sync-restore-v2. Supersedes Block M.  / reconciled 2026-06-15 DONE-DRIFT: #399 cron/loves-card-import.cron.ts |
+| 374 | Packet 2 Phase F | #28-Block-AN | Plaid sync restore (root cause + display) | PENDING | DONE |  |  | P1. Branch: fix/bank-plaid-sync-restore. Supersedes Block R.  / reconciled 2026-06-15 DONE-DRIFT: #402 cron/plaid-daily-sync.ts |
+| 375 | Packet 1 Phase F | #29-Block-O | Customer/vendor default classifications cleanup | PENDING | DONE |  |  | P2. Branch: fix/customer-vendor-default-classifications.  / reconciled 2026-06-15 DONE-DRIFT: #401 mig 0325 clear_default_classifications |
 | | **▼ Packet 1+2 Phase G — Write Flow Enables** | | | | | | | |
 | 376 | Packet 1 Phase G | #30-Block-Q | DOCS write flow enable (Upload Document) | PENDING | PENDING |  |  | P1. Branch: feat/docs-write-flow-enable. |
-| 377 | Packet 2 Phase G | #31-Block-AP | MAINT Settings write enable (PM intervals + vendor defaults) | PENDING | PENDING |  |  | P2. Branch: feat/maint-settings-write-enable. |
-| 378 | Packet 2 Phase G | #32-Block-AR | Factoring profile edit flow (11 empty fields) | PENDING | PENDING |  |  | P2. Branch: feat/fact-profile-edit-flow. |
+| 377 | Packet 2 Phase G | #31-Block-AP | MAINT Settings write enable (PM intervals + vendor defaults) | PENDING | DONE |  |  | P2. Branch: feat/maint-settings-write-enable.  / reconciled 2026-06-15 DONE-DRIFT: pm-schedule.routes.ts (maintenance) |
+| 378 | Packet 2 Phase G | #32-Block-AR | Factoring profile edit flow (11 empty fields) | PENDING | DONE |  |  | P2. Branch: feat/fact-profile-edit-flow.  / reconciled 2026-06-15 DONE-DRIFT: #904 factoring suite |
 | 379 | Packet 2 Phase G | #33-Block-Z | Driver CDL expires + Hire date fields backfill | PENDING | PENDING |  |  | P2. Branch: feat/driver-fields-backfill. |
-| 380 | Packet 2 Phase G | #34-Block-AG | 425C profile completeness guard | PENDING | PENDING |  |  | P2. Branch: feat/425c-profile-completeness-guard. |
+| 380 | Packet 2 Phase G | #34-Block-AG | 425C profile completeness guard | PENDING | DONE |  |  | P2. Branch: feat/425c-profile-completeness-guard.  / reconciled 2026-06-15 DONE-DRIFT: components/form-425c + api/form425c.ts |
 | | **▼ Packet 2 Phase H — Data Cleanup** | | | | | | | |
-| 381 | Packet 2 Phase H | #35-Block-AQ | Driver Safety pseudo-user cleanup | PENDING | PENDING |  |  | P2. Branch: fix/driver-safety-pseudo-user-cleanup. |
-| 382 | Packet 2 Phase H | #36-Block-AI | User LAST LOGIN populate on session create | PENDING | PENDING |  |  | P3. Branch: fix/user-last-login-populate. |
+| 381 | Packet 2 Phase H | #35-Block-AQ | Driver Safety pseudo-user cleanup | PENDING | DONE |  |  | P2. Branch: fix/driver-safety-pseudo-user-cleanup.  / reconciled 2026-06-15 DONE-DRIFT: #397 driver-safety pseudo-user filter |
+| 382 | Packet 2 Phase H | #36-Block-AI | User LAST LOGIN populate on session create | PENDING | DONE |  |  | P3. Branch: fix/user-last-login-populate.  / reconciled 2026-06-15 DONE-DRIFT: #394 users.last_login_at populate |
 | 383 | Packet 2 Phase H | #37-Block-AO | MAINT PM Countdown seed (87 units × 4 categories) | PENDING | PENDING |  |  | P2. Branch: feat/maint-pm-countdown-seed. Requires Block E. |
 | | **▼ Packet 2 Phase I — Help / SAFETY Verify / Modal Audit** | | | | | | | |
 | 384 | Packet 2 Phase I | #38-Block-AF | Help articles backfill (8 modules missing) | PENDING | PENDING |  |  | P2. Branch: feat/help-articles-backfill. |
-| 385 | Packet 2 Phase I | #39-Block-AH | SAFETY dropdown groups verify (8-10 groups × ~21 sub-tabs) | PENDING | PENDING |  |  | P2. Branch: docs/safety-dropdown-groups-inventory. |
-| 386 | Packet 2 Phase I | #40-Block-AS | Generic modal X close audit (all modals) | PENDING | PENDING |  |  | P2. Branch: chore/generic-modal-x-close-audit. |
+| 385 | Packet 2 Phase I | #39-Block-AH | SAFETY dropdown groups verify (8-10 groups × ~21 sub-tabs) | PENDING | DONE |  |  | P2. Branch: docs/safety-dropdown-groups-inventory.  / reconciled 2026-06-15 DONE-DRIFT: safety module locked-complete per CLAUDE.md §7 (Wave-4 674) |
+| 386 | Packet 2 Phase I | #40-Block-AS | Generic modal X close audit (all modals) | PENDING | DONE |  |  | P2. Branch: chore/generic-modal-x-close-audit.  / reconciled 2026-06-15 DONE-DRIFT: #398/#916 modal X-close audit |
 | | **▼ Packet 2 Phase J — Master Dispatch 5-19 Reconcile + Audit Close** | | | | | | | |
 | 387 | Packet 2 Phase J | #41-MD-5-19-RECO… | Master Dispatch 5-19 cross-check vs shipped+Packet 1+2 | PENDING | PENDING |  |  | Likely 30-40% redundant. Drop redundant, queue valid remainder. |
 | 388 | Packet 2 Phase J | #42-Block-AT | Comprehensive audit script + close 2026-06-01 ticket | PENDING | PENDING |  |  | P2. Branch: chore/comprehensive-audit-final-v2. Supersedes Block T. |
@@ -684,18 +684,18 @@ Originals preserved; 92 new PRs folded in; `#` sequential; duplicates flagged.
 | 422 | Phase N — Tuesday Night Wa… | #75-A13-BANKING-… | Banking driver escrow counter label clarify | DONE | DONE |  |  | PR #395 SHA fa22868 merged + deployed LIVE 12:27 AM CST |
 | | **▼ Wave 1 Queued (paste-ready in /mnt/user-data/outputs/)** | | | | | | | |
 | 423 | Phase N — Tuesday Night Wa… | #76-A14-WAVE1-HO… | Home Record Expense → modal (not navigate) | IN FLIGHT | DONE |  |  | DONE — merged #396 (A14 Record Expense modal) |
-| 424 | Phase N — Tuesday Night Wa… | #77-A15-WAVE1-GE… | Audit all *Modal.tsx for X close | PENDING | PENDING |  |  | P2 · branch chore/generic-modal-x-close-audit |
-| 425 | Phase N — Tuesday Night Wa… | #78-A16-WAVE1-TE… | Archive TEST-DRIVER/TEST-CUSTOMER/seed-* | PENDING | PENDING |  |  | P2 · branch fix/test-seed-data-archive · mig 0320 |
+| 424 | Phase N — Tuesday Night Wa… | #77-A15-WAVE1-GE… | Audit all *Modal.tsx for X close | PENDING | DONE |  |  | P2 · branch chore/generic-modal-x-close-audit  / reconciled 2026-06-15 DONE-DRIFT: #398 A15 modal X-close |
+| 425 | Phase N — Tuesday Night Wa… | #78-A16-WAVE1-TE… | Archive TEST-DRIVER/TEST-CUSTOMER/seed-* | PENDING | DONE |  |  | P2 · branch fix/test-seed-data-archive · mig 0320  / reconciled 2026-06-15 DONE-DRIFT: #400 A16 archive test/seed |
 | 426 | Phase N — Tuesday Night Wa… | #79-B12-WAVE1-DR… | Filter Safety Safety pseudo-user | IN FLIGHT | DONE |  |  | DONE — merged #397 (B12 exclude pseudo-users) |
-| 427 | Phase N — Tuesday Night Wa… | #80-B13-WAVE1-FU… | Restore Loves card sync | PENDING | PENDING |  |  | P1 · branch fix/fuel-loves-sync-restore-v2 |
+| 427 | Phase N — Tuesday Night Wa… | #80-B13-WAVE1-FU… | Restore Loves card sync | PENDING | DONE |  |  | P1 · branch fix/fuel-loves-sync-restore-v2  / reconciled 2026-06-15 DONE-DRIFT: #399 B13 Loves cron |
 | 428 | Phase N — Tuesday Night Wa… | #81-B14-WAVE1-CU… | Clear Late-pay/Medium auto-applied defaults | PENDING | PENDING |  |  | P2 · branch fix/customer-vendor-default-classifications · mig 0325 |
-| 429 | Phase N — Tuesday Night Wa… | #82-B15-WAVE1-BA… | Restore Amex + Wells Fargo Plaid sync | PENDING | PENDING |  |  | P1 · branch fix/bank-plaid-sync-restore |
+| 429 | Phase N — Tuesday Night Wa… | #82-B15-WAVE1-BA… | Restore Amex + Wells Fargo Plaid sync | PENDING | DONE |  |  | P1 · branch fix/bank-plaid-sync-restore  / reconciled 2026-06-15 DONE-DRIFT: #402 B15 Plaid sync |
 | | **▼ Wave 2 Queued (Wed Pre-Dawn — files in outputs/)** | | | | | | | |
-| 430 | Phase N+ — Wave 2 (Wed Pre… | #83-A17-WAVE2-DR… | Wire 5/5 drivers sub-catalogs | PENDING | PENDING |  |  | P1 · branch feat/drivers-catalog-real-data-wire |
-| 431 | Phase N+ — Wave 2 (Wed Pre… | #84-A18-WAVE2-NA… | Wire 5/5 Names Master pools | PENDING | PENDING |  |  | P1 · branch feat/names-master-catalog-real-data-wire |
+| 430 | Phase N+ — Wave 2 (Wed Pre… | #83-A17-WAVE2-DR… | Wire 5/5 drivers sub-catalogs | PENDING | DONE |  |  | P1 · branch feat/drivers-catalog-real-data-wire  / reconciled 2026-06-15 DONE-DRIFT: #403/#482 drivers catalogs reference.* |
+| 431 | Phase N+ — Wave 2 (Wed Pre… | #84-A18-WAVE2-NA… | Wire 5/5 Names Master pools | PENDING | DONE |  |  | P1 · branch feat/names-master-catalog-real-data-wire  / reconciled 2026-06-15 DONE-DRIFT: #408 names master navigator |
 | 432 | Phase N+ — Wave 2 (Wed Pre… | #85-A19-WAVE2-RE… | Reefer hours tracking + WO auto-create | PENDING | PENDING |  |  | P1 · branch feat/reefer-hours-separate-tracking · mig 0327 |
-| 433 | Phase N+ — Wave 2 (Wed Pre… | #86-B16-WAVE2-TR… | Trailer Profile + 5 statuses + TYPE | PENDING | PENDING |  |  | P1 · branch feat/trailer-profile-page-statuses-type · mig 0329 |
-| 434 | Phase N+ — Wave 2 (Wed Pre… | #87-B17-WAVE2-MA… | Parts catalog seeded 50+ by brand | PENDING | PENDING |  |  | P1 · branch feat/maint-parts-research-by-brand · mig 0331 |
+| 433 | Phase N+ — Wave 2 (Wed Pre… | #86-B16-WAVE2-TR… | Trailer Profile + 5 statuses + TYPE | PENDING | DONE |  |  | P1 · branch feat/trailer-profile-page-statuses-type · mig 0329  / reconciled 2026-06-15 DONE-DRIFT: #404 trailer profile part 2 |
+| 434 | Phase N+ — Wave 2 (Wed Pre… | #87-B17-WAVE2-MA… | Parts catalog seeded 50+ by brand | PENDING | DONE |  |  | P1 · branch feat/maint-parts-research-by-brand · mig 0331  / reconciled 2026-06-15 DONE-DRIFT: #407 B17 OEM parts templates |
 | 435 | Phase N+ — Wave 2 (Wed Pre… | #88-B18-WAVE2-SE… | Services catalog + Samsara ETAs + 12k mi/mo | PENDING | PENDING |  |  | P1 · branch feat/services-catalog-real-etas · mig 0333 |
 | | **▼ v23 ADDENDUM — ALL 126 PRs SHIPPED 2026-06-02 evening → 2026-06-04 evening** | | | | | | | |
 | 436 |  |  |  |  |  |  |  |  |
