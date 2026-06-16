@@ -80,6 +80,9 @@ const LEGACY_DIRECT_SAMSARA = new Set([
   "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
   "apps/backend/src/integrations/samsara/remote-count-collector.ts",
   "apps/backend/src/integrations/samsara/samsara-client.ts",
+  // HOS pull is a per-driver duty-log POLL written into hos.duty_status_events (not a cached-read tier
+  // consumer), so it uses SamsaraClient directly like the other master-sync/positions polls.
+  "apps/backend/src/integrations/samsara/samsara-hos-pull.service.ts",
   "apps/backend/src/telematics/dashcam.service.ts",
 ]);
 
