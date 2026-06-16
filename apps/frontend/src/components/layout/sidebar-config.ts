@@ -281,11 +281,8 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         // NAV_HIDDEN_STUB_IDS so this submenu never renders; the visible nav stays byte-identical.
         // The Loan Wizard's visible entry point is the flag-gated tab in FinanceModuleTabs.
         { label: "Loan Wizard", to: "/finance/loan-wizard" },
-<<<<<<< HEAD
         { label: "Calculator", to: "/finance/calculator" },
-=======
         { label: "Amortization", to: "/finance/amortization" },
->>>>>>> fcb80b24 (feat(finance): FH-3 Amortization engine — create loans + store schedules, gated OFF (Tier 3))
       ];
     case "inventory":
       return [
