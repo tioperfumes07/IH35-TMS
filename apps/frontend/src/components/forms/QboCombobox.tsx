@@ -136,7 +136,7 @@ export function QboCombobox({
             <div className="px-2 py-2 text-xs text-red-600">Could not load suggestions.</div>
           ) : null}
           {!resultsQuery.isLoading && trimmedQuery.length < MIN_CHARS_TO_SEARCH ? (
-            <div className="px-2 py-2 text-xs text-gray-600">Keep typing to search ({MIN_CHARS_TO_SEARCH}+ chars, 250ms debounce).</div>
+            <div className="px-2 py-2 text-xs text-gray-600">Type at least {MIN_CHARS_TO_SEARCH} letters to search.</div>
           ) : null}
           {!resultsQuery.isLoading && trimmedQuery.length >= MIN_CHARS_TO_SEARCH && rows.length === 0 ? (
             <div className="px-2 py-2 text-xs text-gray-600">No matches. Will be saved as free text.</div>

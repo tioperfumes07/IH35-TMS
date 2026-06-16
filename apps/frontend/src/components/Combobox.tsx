@@ -115,6 +115,24 @@ export function Combobox({
     return () => document.removeEventListener("mousedown", onDocumentClick);
   }, []);
 
+  // Single-open coordinator (app-wide): only one Combobox stays open at a time. When this one
+  // opens it broadcasts its id; every other currently-open Combobox (which has a live listener
+  // while open) hears it and closes. Complements the outside-click/Escape handlers above.
+  useEffect(() => {
+    if (!open) return;
+    function onOtherOpen(event: Event) {
+      const openedId = (event as CustomEvent<string>).detail;
+      if (openedId !== listboxId) {
+        setOpen(false);
+        setQuery("");
+        setActiveIndex(-1);
+      }
+    }
+    window.addEventListener("ih35:combobox-open", onOtherOpen);
+    window.dispatchEvent(new CustomEvent("ih35:combobox-open", { detail: listboxId }));
+    return () => window.removeEventListener("ih35:combobox-open", onOtherOpen);
+  }, [open, listboxId]);
+
   useEffect(() => {
     if (!open) {
       setActiveIndex(-1);
