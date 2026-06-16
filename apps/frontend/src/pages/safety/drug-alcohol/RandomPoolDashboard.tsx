@@ -5,6 +5,7 @@
  * FMCSA Part 382 §382.305 — 10% drug / 10% alcohol quarterly minimums.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../../api/client";
 
 type PoolDraw = {
   uuid: string;
@@ -33,7 +34,7 @@ async function fetchDrawHistory(companyId: string): Promise<PoolDraw[]> {
 }
 
 async function triggerDraw(companyId: string): Promise<PoolDraw> {
-  const res = await fetch("/api/safety/drug-alcohol/random-pool/draw", {
+  const res = await fetch(resolveApiUrl("/api/safety/drug-alcohol/random-pool/draw"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

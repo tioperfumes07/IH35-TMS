@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -12,7 +13,7 @@ type MigrationHealth = {
 };
 
 async function fetchMigrationHealth(): Promise<{ status: number; body: MigrationHealth }> {
-  const res = await fetch("/api/v1/admin/health/migrations", { credentials: "include" });
+  const res = await fetch(resolveApiUrl("/api/v1/admin/health/migrations"), { credentials: "include" });
   const body = (await res.json()) as MigrationHealth;
   return { status: res.status, body };
 }
@@ -36,7 +37,7 @@ export function MigrationStatusPage() {
   async function copySql(name: string) {
     setCopyError(null);
     try {
-      const res = await fetch(`/api/v1/admin/migrations/file?name=${encodeURIComponent(name)}`, {
+      const res = await fetch(resolveApiUrl(`/api/v1/admin/migrations/file?name=${encodeURIComponent(name)}`), {
         credentials: "include",
       });
       const payload = (await res.json()) as { sql?: string; error?: string };

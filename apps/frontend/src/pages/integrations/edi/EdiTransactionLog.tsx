@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../../api/client";
 import { useMemo, useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -18,7 +19,7 @@ type EdiMessage = {
 async function fetchMessages(companyId: string, status?: string): Promise<EdiMessage[]> {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (status) params.set("status", status);
-  const res = await fetch(`/api/integrations/edi/messages?${params}`, { credentials: "include" });
+  const res = await fetch(resolveApiUrl(`/api/integrations/edi/messages?${params}`), { credentials: "include" });
   if (!res.ok) throw new Error("Failed to load EDI messages");
   const data = (await res.json()) as { messages: EdiMessage[] };
   return data.messages ?? [];

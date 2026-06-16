@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 import { useState } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -19,7 +20,7 @@ type LaunchToggle = {
 };
 
 async function fetchLaunchToggles(): Promise<{ toggles: LaunchToggle[] }> {
-  const res = await fetch("/api/v1/admin/launch-toggles", { credentials: "include" });
+  const res = await fetch(resolveApiUrl("/api/v1/admin/launch-toggles"), { credentials: "include" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -29,7 +30,7 @@ async function postToggleAction(
   action: "launch" | "rollback",
   notes?: string
 ): Promise<unknown> {
-  const res = await fetch(`/api/v1/admin/launch-toggles/${carrierId}/${action}`, {
+  const res = await fetch(resolveApiUrl(`/api/v1/admin/launch-toggles/${carrierId}/${action}`), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

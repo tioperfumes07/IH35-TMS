@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -49,7 +50,7 @@ export function BorderCrossingWizardPage() {
     setError(null);
     try {
       const plannedIso = new Date(form.plannedDate).toISOString();
-      const res = await fetch("/api/v1/border-crossing/wizard", {
+      const res = await fetch(resolveApiUrl("/api/v1/border-crossing/wizard"), {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

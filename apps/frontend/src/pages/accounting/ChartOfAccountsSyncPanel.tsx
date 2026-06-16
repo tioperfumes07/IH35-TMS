@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 import { useState } from "react";
 
 type CoaSyncStatus = {
@@ -13,7 +14,7 @@ type CoaSyncStatus = {
 
 async function fetchCoaStatus(operatingCompanyId: string): Promise<CoaSyncStatus> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  const res = await fetch(`/api/v1/qbo-sync/chart-of-accounts/status?${params}`);
+  const res = await fetch(resolveApiUrl(`/api/v1/qbo-sync/chart-of-accounts/status?${params}`));
   if (!res.ok) throw new Error("Failed to load CoA sync status");
   return res.json() as Promise<CoaSyncStatus>;
 }

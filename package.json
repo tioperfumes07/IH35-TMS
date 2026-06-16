@@ -422,6 +422,7 @@
     "verify:cert-expiry-tracking": "node scripts/verify-cert-expiry-tracking.mjs",
     "verify:cmd-k-quick-switcher": "node scripts/verify-cmd-k-quick-switcher.mjs",
     "verify:mobile-responsive-audit": "node scripts/verify-mobile-responsive-audit.mjs",
+    "verify:no-raw-frontend-api-fetch": "node scripts/verify-no-raw-frontend-api-fetch.mjs",
     "verify:feature-flags": "node scripts/verify-feature-flags.mjs",
     "verify:dispatcher-home": "node scripts/verify-dispatcher-home.mjs",
     "verify:cap-14-cargo-sensors": "node scripts/verify-cap-14-cargo-sensors.mjs",

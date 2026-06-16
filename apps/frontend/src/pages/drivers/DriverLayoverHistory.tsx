@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface LayoverRow {
@@ -38,7 +39,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
 
   const billableMutation = useMutation({
     mutationFn: async ({ uuid, billable }: { uuid: string; billable: boolean }) => {
-      const res = await fetch(`/api/v1/dispatch/layovers/${uuid}/mark-billable`, {
+      const res = await fetch(resolveApiUrl(`/api/v1/dispatch/layovers/${uuid}/mark-billable`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

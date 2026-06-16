@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 
@@ -10,7 +11,7 @@ type ObservabilityStatus = {
 };
 
 async function fetchObservabilityStatus(): Promise<ObservabilityStatus> {
-  const res = await fetch("/api/v1/admin/observability", { credentials: "include" });
+  const res = await fetch(resolveApiUrl("/api/v1/admin/observability"), { credentials: "include" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return (await res.json()) as ObservabilityStatus;
 }

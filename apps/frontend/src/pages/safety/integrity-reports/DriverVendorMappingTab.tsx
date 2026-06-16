@@ -1,14 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 async function fetchSnapshot() {
-  const res = await fetch("/api/integrations/integrity/driver-vendor-mapping", { credentials: "include" });
+  const res = await fetch(resolveApiUrl("/api/integrations/integrity/driver-vendor-mapping"), { credentials: "include" });
   if (!res.ok) throw new Error("fetch_failed");
   return res.json();
 }
 
 async function triggerScan(operatingCompanyId: string) {
-  const res = await fetch("/api/integrations/integrity/driver-vendor-mapping/scan", {
+  const res = await fetch(resolveApiUrl("/api/integrations/integrity/driver-vendor-mapping/scan"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

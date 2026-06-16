@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { OFFLINE_PREVIEW_BANNER } from "../../lib/prodEmptyStateCopy";
 import { AllocationMethodPicker } from "./AllocationMethodPicker";
 import { AllocationPreviewTable } from "./AllocationPreviewTable";
@@ -42,7 +43,7 @@ function previewEqual(totalCents: number, assets: AllocationAssetOption[]): Allo
 
 async function fetchAssets(companyId: string): Promise<AllocationAssetOption[]> {
   const params = new URLSearchParams({ operating_company_id: companyId, limit: "250" });
-  const response = await fetch(`/api/v1/assets?${params.toString()}`, { credentials: "include" });
+  const response = await fetch(resolveApiUrl(`/api/v1/assets?${params.toString()}`), { credentials: "include" });
   if (!response.ok) throw new Error(`asset list failed (${response.status})`);
   const payload = (await response.json()) as {
     assets?: Array<{ id: string; unit_code: string; insured_value_cents?: number | null }>;
@@ -60,7 +61,7 @@ async function allocateBill(
   body: AllocateBillRequest
 ): Promise<AllocateBillResponse> {
   const params = new URLSearchParams({ operating_company_id: companyId });
-  const response = await fetch(`/api/v1/accounting/bills/${billId}/allocate?${params.toString()}`, {
+  const response = await fetch(resolveApiUrl(`/api/v1/accounting/bills/${billId}/allocate?${params.toString()}`), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
