@@ -386,6 +386,7 @@ import { registerAdminObservabilityRoutes } from "./admin/observability.routes.j
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
 import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/routes.js";
 import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
+import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
 import { registerDriverManagerRoleHomeRoutes } from "./driver-manager/role-views/routes.js";
 import { initializeTodaysAttentionWorker, stopTodaysAttentionWorker } from "./jobs/todays-attention-worker.js";
@@ -596,6 +597,10 @@ async function main() {
   await registerVendorsSyncRoutes(app);
   await registerQboSyncDriftDashboardRoutes(app);
   await registerAccountingCatalogLookupRoutes(app);
+  // Block F: firewalled manual cash forecast — OFF by default until CASH_FORECAST_ENABLED=true.
+  if (process.env.CASH_FORECAST_ENABLED === "true") {
+    await registerCashForecastManualRoutes(app);
+  }
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
   await registerQboSyncConflictDetectionRoutes(app);

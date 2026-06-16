@@ -5,17 +5,22 @@ import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DailyPredictionTab } from "./tabs/DailyPredictionTab";
 import { ActualVsProjectedTab } from "./tabs/ActualVsProjectedTab";
+import { ManualDailyProjectionsTab } from "./tabs/ManualDailyProjectionsTab";
+import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { CASH_FORECAST_ENABLED_FLAG } from "../../api/forecast";
 
-type CashFlowTabId = "daily_prediction" | "actual_vs_projected";
-
-const TABS: { id: CashFlowTabId; label: string }[] = [
-  { id: "daily_prediction", label: "Daily prediction" },
-  { id: "actual_vs_projected", label: "Actual vs Projected" },
-];
+type CashFlowTabId = "daily_prediction" | "actual_vs_projected" | "manual_daily_projections";
 
 export function CashFlowPage() {
   const [activeTab, setActiveTab] = useState<CashFlowTabId>("daily_prediction");
   const { selectedCompanyId } = useCompanyContext();
+  // Block F: the hand-entered tab only appears once its OFF-by-default flag is on.
+  const { enabled: manualForecastEnabled } = useFeatureFlag(CASH_FORECAST_ENABLED_FLAG, selectedCompanyId ?? undefined);
+  const TABS: { id: CashFlowTabId; label: string }[] = [
+    { id: "daily_prediction", label: "Projected (Auto)" },
+    { id: "actual_vs_projected", label: "Actual vs Projected" },
+    ...(manualForecastEnabled ? [{ id: "manual_daily_projections" as const, label: "Manual Daily Projections" }] : []),
+  ];
 
   if (!selectedCompanyId) {
     return (
@@ -45,6 +50,9 @@ export function CashFlowPage() {
       )}
       {activeTab === "actual_vs_projected" && (
         <ActualVsProjectedTab operatingCompanyId={selectedCompanyId} />
+      )}
+      {activeTab === "manual_daily_projections" && manualForecastEnabled && (
+        <ManualDailyProjectionsTab operatingCompanyId={selectedCompanyId} />
       )}
     </div>
   );

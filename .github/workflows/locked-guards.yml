@@ -102,6 +102,9 @@ jobs:
       - name: verify:unit-retire-open-wo-gate
         run: npm run verify:unit-retire-open-wo-gate
 
+      - name: verify:cash-forecast-firewall
+        run: npm run verify:cash-forecast-firewall
+
       - name: verify:booking-unit-ownership-fallback
         run: npm run verify:booking-unit-ownership-fallback
 
