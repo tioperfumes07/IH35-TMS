@@ -3,7 +3,7 @@ import { z } from "zod";
 import { withCompanyScope } from "../../accounting/shared.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { sendZodValidation } from "../../lib/zod-http-error.js";
-import { syncSamsaraDriversMaster, syncSamsaraVehiclesMaster } from "./samsara-master-sync.service.js";
+import { syncSamsaraDriversMaster, syncSamsaraVehiclesMaster, syncSamsaraTrailersMaster } from "./samsara-master-sync.service.js";
 
 function officeRole(role: string) {
   return ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"].includes(role);
@@ -37,7 +37,16 @@ export async function registerSamsaraMasterSyncRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendZodValidation(reply, parsed.error);
 
     const out = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
-      return syncSamsaraVehiclesMaster(client, parsed.data.operating_company_id);
+      const vehicles = await syncSamsaraVehiclesMaster(client, parsed.data.operating_company_id);
+      const trailers = await syncSamsaraTrailersMaster(client, parsed.data.operating_company_id);
+      return {
+        added: vehicles.added + trailers.added,
+        updated: vehicles.updated + trailers.updated,
+        removed: vehicles.removed + trailers.removed,
+        errors: [...vehicles.errors, ...trailers.errors],
+        vehicles,
+        trailers,
+      };
     });
     return out;
   });

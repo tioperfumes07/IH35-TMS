@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
-import { syncSamsaraDriversMaster, syncSamsaraVehiclesMaster } from "../integrations/samsara/samsara-master-sync.service.js";
+import { syncSamsaraDriversMaster, syncSamsaraVehiclesMaster, syncSamsaraTrailersMaster } from "../integrations/samsara/samsara-master-sync.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
@@ -96,6 +96,7 @@ export function initializeSamsaraMasterSyncCron(app: FastifyInstance) {
               }
               await syncSamsaraDriversMaster(client, operatingCompanyId);
               await syncSamsaraVehiclesMaster(client, operatingCompanyId);
+              await syncSamsaraTrailersMaster(client, operatingCompanyId);
             }
           });
         },
