@@ -86,8 +86,8 @@ describeIntegration("expense total=sum balance invariant (real Postgres)", () =>
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
     await db.query(
-      `INSERT INTO mdata.drivers (id, first_name, last_name, phone) VALUES ($1::uuid,'INV','Fixture',$2)`,
-      [driverId, `+1001${suffix.slice(0, 7)}`]
+      `INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone) VALUES ($1::uuid,$3::uuid,'INV','Fixture',$2)`,
+      [driverId, `+1001${suffix.slice(0, 7)}`, companyId]
     );
     await db.query("COMMIT");
   });

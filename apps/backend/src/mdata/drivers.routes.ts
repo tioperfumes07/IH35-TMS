@@ -601,6 +601,18 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           );
         }
 
+        // DRIVER ENTITY DEFAULT (business rule): a driver must never be entity-less. TRANSP
+        // (IH 35 Transportation) is the only driver-bearing entity (TRK is asset-holder, USMCA
+        // inactive). When the caller did not supply an operating company, default to TRANSP by its
+        // stable code (never a hardcoded uuid). The mdata.drivers.operating_company_id NOT NULL
+        // constraint is the hard backstop if even this resolves null.
+        if (!resolvedOperatingCompanyId) {
+          const transpRes = await client.query<{ id: string }>(
+            `SELECT id FROM org.companies WHERE code = 'TRANSP' LIMIT 1`
+          );
+          resolvedOperatingCompanyId = transpRes.rows[0]?.id ?? null;
+        }
+
         const res = await client.query(
           `
             INSERT INTO mdata.drivers (

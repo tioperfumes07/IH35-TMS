@@ -358,6 +358,9 @@ jobs:
       - name: Verify mdata list endpoints return a real total (no source truncation)
         run: npm run verify:mdata-list-pagination
 
+      - name: Verify driver entity default (never entity-less)
+        run: npm run verify:driver-entity-default
+
       - name: Verify feature flags contract
         run: npm run verify:feature-flags
 
