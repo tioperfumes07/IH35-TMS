@@ -277,6 +277,10 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Overview", to: "/finance" },
         { label: "Projections", to: "/finance/projections" },
         { label: "Scenarios", to: "/finance/scenarios" },
+        // FH-2 Loan Wizard — route reachability for nav-integrity. The "finance" module is in
+        // NAV_HIDDEN_STUB_IDS so this submenu never renders; the visible nav stays byte-identical.
+        // The Loan Wizard's visible entry point is the flag-gated tab in FinanceModuleTabs.
+        { label: "Loan Wizard", to: "/finance/loan-wizard" },
       ];
     case "inventory":
       return [

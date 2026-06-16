@@ -17,6 +17,7 @@
     "apps/frontend/src/api/financeLoanWizard.ts",
     "apps/frontend/src/pages/finance/LoanWizardPage.tsx",
     "apps/frontend/src/pages/finance/FinanceModuleTabs.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
     "apps/frontend/src/routes/manifest.tsx",
     "scripts/verify-fh2-no-posting.mjs",
     "package.json",
