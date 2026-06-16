@@ -10,7 +10,20 @@ import i18n from "./i18n";
 
 void i18n;
 
-const queryClient = new QueryClient();
+// GO-LIVE #15 (429): without defaults, every component mount + window-focus refetched, so the same
+// provider GETs (sync-health, qbo, preferences, notifications, identity/me) fired many times per load
+// and overran the edge per-IP rate limit — a following status-change WRITE then tipped to 429. Sane
+// defaults (cache + dedupe identical keys, no refetch-on-focus) cut the volume so writes stay under it.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
