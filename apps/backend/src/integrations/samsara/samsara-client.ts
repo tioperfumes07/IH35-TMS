@@ -13,6 +13,8 @@ export type SamsaraConfig = {
 
 export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
+export type SamsaraHosLog = { startedAt: string; endedAt: string | null; hosStatusType: string };
+export type SamsaraHosDriverLogs = { driverId: string; logs: SamsaraHosLog[] };
 export type SamsaraVehicleLocation = {
   id: string;
   latitude: number;
@@ -272,6 +274,52 @@ export class SamsaraClient {
       }
     } catch {
       return [];
+    }
+    return out;
+  }
+
+  /** HOS/ELD duty logs per driver for a time window (GET /fleet/hos/logs). Scope confirmed live. */
+  async listHosLogs(startTimeIso: string, endTimeIso: string): Promise<SamsaraHosDriverLogs[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: SamsaraHosDriverLogs[] = [];
+    let after: string | null = null;
+    try {
+      for (let page = 0; page < 50; page += 1) {
+        const url = new URL(`${SAMSARA_API_BASE}/fleet/hos/logs`);
+        url.searchParams.set("startTime", startTimeIso);
+        url.searchParams.set("endTime", endTimeIso);
+        if (after) url.searchParams.set("after", after);
+        const res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
+        if (!res.ok) break;
+        const json = (await res.json()) as {
+          data?: unknown;
+          pagination?: { endCursor?: string; hasNextPage?: boolean };
+        };
+        const data = Array.isArray(json.data) ? json.data : [];
+        for (const row of data) {
+          const rec = row as Record<string, unknown>;
+          const driver = rec.driver as { id?: unknown } | undefined;
+          const driverId = driver && typeof driver.id === "string" ? driver.id.trim() : "";
+          if (!driverId) continue;
+          const rawLogs = Array.isArray(rec.hosLogs) ? rec.hosLogs : [];
+          const logs = rawLogs
+            .map((l) => l as Record<string, unknown>)
+            .map((l) => ({
+              startedAt: typeof l.logStartTime === "string" ? l.logStartTime : null,
+              endedAt: typeof l.logEndTime === "string" ? l.logEndTime : null,
+              hosStatusType: typeof l.hosStatusType === "string" ? l.hosStatusType : null,
+            }))
+            .filter((l): l is SamsaraHosLog => Boolean(l.startedAt) && Boolean(l.hosStatusType));
+          if (logs.length > 0) out.push({ driverId, logs });
+        }
+        const hasNext = Boolean(json.pagination?.hasNextPage);
+        const cursor = json.pagination?.endCursor ?? null;
+        if (!hasNext || !cursor) break;
+        after = cursor;
+      }
+    } catch {
+      return out;
     }
     return out;
   }

@@ -310,6 +310,7 @@ import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js"
 import { initializeSamsaraWebhookProjectionCron } from "./cron/samsara-webhook-projection.cron.js";
 import { initializeSamsaraRemoteCountCollectorCron } from "./cron/samsara-remote-count-collector.cron.js";
 import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron.js";
+import { initializeSamsaraHosPullCron } from "./cron/samsara-hos-pull.cron.js";
 import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js";
 import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
@@ -1005,6 +1006,13 @@ async function main() {
     }
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-master-sync-cron failed");
+  }
+
+  try {
+    initializeSamsaraHosPullCron(app);
+    app.log.info("[STARTUP] samsara-hos-pull-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] samsara-hos-pull-cron failed");
   }
 
   try {
