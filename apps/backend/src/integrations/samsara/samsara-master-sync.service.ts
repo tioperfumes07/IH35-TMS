@@ -507,6 +507,10 @@ export async function syncSamsaraTrailersMaster(client: PgClient, operatingCompa
     const equipmentType = mapSamsaraTrailerType(raw);
     const equipmentNumber = typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : null;
 
+    // Per-row SAVEPOINT: the sync runs inside one transaction, so a failed upsert
+    // (e.g. a VIN that already exists under another entity) would otherwise abort
+    // every following row. Roll back just this row and keep going.
+    await client.query("SAVEPOINT trailer_row");
     try {
       // Match an existing row by Samsara id OR VIN — VIN match also UPGRADES a
       // phantom SAM-* DryVan to its real trailer identity in place.
@@ -563,8 +567,10 @@ export async function syncSamsaraTrailersMaster(client: PgClient, operatingCompa
         );
         added += 1;
       }
+      await client.query("RELEASE SAVEPOINT trailer_row");
     } catch (e) {
-      // No silent retries — record the exact failure per row and continue.
+      // Roll back just this row so the transaction stays usable; record the failure.
+      await client.query("ROLLBACK TO SAVEPOINT trailer_row").catch(() => {});
       errors.push(`trailer_upsert_failed:${t.id}:${String((e as Error)?.message ?? e)}`);
     }
   }

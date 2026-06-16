@@ -530,14 +530,31 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         assetId: input.assigned_unit_id,
       });
       if (!coverage.asset_exists) {
-        return {
-          kind: "error",
-          status: 400,
-          payload: { error: "invalid_unit_for_company" },
-        };
-      }
-
-      if (!coverage.is_covered) {
+        // The insurance asset registry (mdata.assets) does not always mirror the
+        // operational fleet (mdata.units). The truck dropdown lists units by
+        // owner/leased company; fall back to that SAME ownership criteria so a real
+        // company truck isn't rejected just because it lacks an asset-registry row.
+        // (Follow-up: backfill mdata.assets from mdata.units for insurance coverage.)
+        const ownedRes = await client.query(
+          `
+            SELECT 1
+            FROM mdata.units
+            WHERE id = $1::uuid
+              AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+              AND deactivated_at IS NULL
+            LIMIT 1
+          `,
+          [input.assigned_unit_id, input.operating_company_id]
+        );
+        if (!ownedRes.rows[0]) {
+          return {
+            kind: "error",
+            status: 400,
+            payload: { error: "invalid_unit_for_company" },
+          };
+        }
+        // Valid company unit with no registry row → no coverage to evaluate; continue.
+      } else if (!coverage.is_covered) {
         const warning = {
           unit_id: input.assigned_unit_id,
           as_of_date: coverage.as_of_date,
