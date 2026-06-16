@@ -58,10 +58,12 @@ export const SIDEBAR_ITEM_IDS = [
 
 export type SidebarItemId = (typeof SIDEBAR_ITEM_IDS)[number];
 
-// "eld" + "finance" are placeholder/stub pages (no real backend) — hidden from nav so there
-// are no dead-end pages. Item configs + routes are KEPT (code not deleted); restore by
-// removing them from this filter. (GUARD answer sheet #27/#28.)
-const NAV_HIDDEN_STUB_IDS: readonly SidebarItemId[] = ["eld", "finance"];
+// "eld" is a placeholder/stub page (no real backend) — hidden from nav so there are no dead-end pages.
+// "finance" (the Finance Hub) is NOW SURFACED: the hub is built and works (Overview/Projections/Scenarios
+// render; Loan Wizard/Calculator/Amortization are flag-gated tabs inside it), and the flag-route fix
+// (#1033) made its checks resolve. It was orphaned with no sidebar door; un-hidden here (additive),
+// landing below FACT / above CUSTOMERS per the order array. Item configs + routes are KEPT.
+const NAV_HIDDEN_STUB_IDS: readonly SidebarItemId[] = ["eld"];
 export const SIDEBAR_DEFAULT_ORDER: readonly SidebarItemId[] = SIDEBAR_ITEM_IDS.filter(
   (id) => !NAV_HIDDEN_STUB_IDS.includes(id),
 );
@@ -110,7 +112,7 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   tasks: { id: "tasks", label: "TASKS", Icon: CheckSquare, to: "/tasks" },
   "cash-flow": { id: "cash-flow", label: "CASH FLOW", Icon: LineChart, to: "/cash-flow" },
   settlements: { id: "settlements", label: "SETTLEMENTS", Icon: Receipt, to: "/driver-finance/settlements" },
-  finance: { id: "finance", label: "FINANCE", Icon: TrendingUp, to: "/finance" },
+  finance: { id: "finance", label: "FINANCE HUB", Icon: TrendingUp, to: "/finance" },
   inventory: { id: "inventory", label: "INVENTORY", Icon: Package, to: "/inventory" },
   users: {
     id: "users",
@@ -277,9 +279,9 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Overview", to: "/finance" },
         { label: "Projections", to: "/finance/projections" },
         { label: "Scenarios", to: "/finance/scenarios" },
-        // FH-2 Loan Wizard — route reachability for nav-integrity. The "finance" module is in
-        // NAV_HIDDEN_STUB_IDS so this submenu never renders; the visible nav stays byte-identical.
-        // The Loan Wizard's visible entry point is the flag-gated tab in FinanceModuleTabs.
+        // Finance Hub is now surfaced (un-hidden); this submenu renders. Loan Wizard / Calculator /
+        // Amortization remain flag-gated TABS inside FinanceModuleTabs, so their flyout links are
+        // route-reachability entries here while their visibility is controlled by the flags.
         { label: "Loan Wizard", to: "/finance/loan-wizard" },
         { label: "Calculator", to: "/finance/calculator" },
         { label: "Amortization", to: "/finance/amortization" },
