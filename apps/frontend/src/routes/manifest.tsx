@@ -361,6 +361,7 @@ import { FinanceOverviewPage } from "../pages/finance/FinanceOverviewPage";
 import { FinanceProjectionsPage } from "../pages/finance/FinanceProjectionsPage";
 import { LoanWizardPage } from "../pages/finance/LoanWizardPage";
 import { CalculatorPage } from "../pages/finance/CalculatorPage";
+import { AmortizationPage } from "../pages/finance/AmortizationPage";
 import { FinanceScenariosPage } from "../pages/finance/FinanceScenariosPage";
 
 // Inventory module (SIDEBAR-V2-REORG-25)
@@ -3386,6 +3387,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/finance/scenarios" element={<ProtectedRoute><FinanceScenariosPage /></ProtectedRoute>} />
         <Route path="/finance/loan-wizard" element={<ProtectedRoute><LoanWizardPage /></ProtectedRoute>} />
         <Route path="/finance/calculator" element={<ProtectedRoute><CalculatorPage /></ProtectedRoute>} />
+        <Route path="/finance/amortization" element={<ProtectedRoute><AmortizationPage /></ProtectedRoute>} />
         {/* Inventory module (SIDEBAR-V2-REORG-25) */}
         <Route path="/inventory" element={<ProtectedRoute><InventoryPartsStockPage /></ProtectedRoute>} />
         <Route path="/inventory/assignments" element={<ProtectedRoute><InventoryAssignmentsPage /></ProtectedRoute>} />

@@ -248,6 +248,7 @@ import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.rou
 import { registerCashFlowModuleRoutes } from "./cash-flow/cash-flow.routes.js";
 import { registerFinanceLoanWizardRoutes } from "./finance/loan-wizard/routes.js";
 import { registerFinanceCalculatorRoutes } from "./finance/calculator/routes.js";
+import { registerFinanceAmortizationRoutes } from "./finance/amortization/routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
 import { registerDriverAuditEventsRoutes } from "./audit/driver-events.routes.js";
 import { registerSpineEventsRoutes } from "./audit/spine-events.routes.js";
@@ -870,6 +871,7 @@ async function main() {
   await registerCashFlowModuleRoutes(app);
   await registerFinanceLoanWizardRoutes(app);
   await registerFinanceCalculatorRoutes(app);
+  await registerFinanceAmortizationRoutes(app);
   await registerAuditRoutes(app);
   await registerDriverAuditEventsRoutes(app);
   await registerSpineEventsRoutes(app);

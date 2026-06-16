@@ -91,6 +91,9 @@ jobs:
       - name: Verify FH-4 Calculator no-posting boundary (Tier 3)
         run: npm run verify:fh4-no-posting
 
+      - name: Verify FH-3 Amortization no-posting boundary (Tier 3)
+        run: npm run verify:fh3-no-posting
+
       - name: Verify expense GL posting (GAP-EXPENSES Phase 2 Step 3)
         run: npm run verify:expense-gl-posting
 
