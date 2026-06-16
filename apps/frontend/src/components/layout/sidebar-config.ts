@@ -282,6 +282,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         // The Loan Wizard's visible entry point is the flag-gated tab in FinanceModuleTabs.
         { label: "Loan Wizard", to: "/finance/loan-wizard" },
         { label: "Calculator", to: "/finance/calculator" },
+        { label: "Amortization", to: "/finance/amortization" },
       ];
     case "inventory":
       return [
