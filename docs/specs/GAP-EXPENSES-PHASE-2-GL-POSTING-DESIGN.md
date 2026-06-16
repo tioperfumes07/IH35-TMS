@@ -9,20 +9,20 @@
 ---
 
 ## 0. ⚠️ COA-TABLE DRIFT — RESOLVED against real code + prod-mirror (was the #1 open item)
-GUARD's decisions doc named the COA table `accounting.coa_account`. **Verified, that is the QBO mirror, not the posting CoA:**
+GUARD's decisions doc named the COA table `catalogs.accounts`. **Verified, that is the QBO mirror, not the posting CoA:**
 - **`catalogs.accounts` is the canonical GL chart-of-accounts** the posting engine + roles use:
   - `journal_entry_postings.account_id` → `REFERENCES catalogs.accounts(id)` (0092:27, 0123:2465).
   - `chart_of_accounts_roles.account_id` → `REFERENCES catalogs.accounts(id)` (0223:21).
   - `resolveMappedRoleAccount` literally `JOIN catalogs.accounts a ON a.id = car.account_id`.
-- **`accounting.coa_account` is the QBO mirror** (`0265_ps_mirror`: `qbo_id NUMERIC NOT NULL, UNIQUE(tenant_id, qbo_id)`) — Phase-3 sync territory, **not** where posting reads accounts.
+- **`catalogs.accounts` is the QBO mirror** (`0265_ps_mirror`: `qbo_id NUMERIC NOT NULL, UNIQUE(tenant_id, qbo_id)`) — Phase-3 sync territory, **not** where posting reads accounts.
 - **`catalogs.accounts` is GLOBAL (no tenant column);** per-company-ness lives entirely in `chart_of_accounts_roles (operating_company_id, role, account_id)`. Verified on prod-mirror: `ap_control` for both TRANSP (`91e0bf0a`) and `b49a737b` points at the **same** "Accounts Payable" row (`distinct_accounts=1, companies=2`). Same for `ar_control`/`undeposited_funds`.
 
-**→ The decision-#1 seed goes into `catalogs.accounts` (one global row) + a per-company role in `chart_of_accounts_roles`** — mirroring the existing `ap_control` pattern, NOT `accounting.coa_account` and NOT a per-company account row. **GUARD/Jorge: confirm this resolution.**
+**→ The decision-#1 seed goes into `catalogs.accounts` (one global row) + a per-company role in `chart_of_accounts_roles`** — mirroring the existing `ap_control` pattern, NOT `catalogs.accounts` and NOT a per-company account row. **GUARD/Jorge: confirm this resolution.**
 
 ## 1. LOCKED DECISIONS (reconciled) — each mapped to verified code
 | # | Locked decision | Verified anchor / how it lands |
 |---|---|---|
-| 1 | **Seed "Uncategorized Expenses" account + `uncategorized_expense` ROLE** (not reuse `expense_default`) | Seed one global row in `catalogs.accounts` (type `Expense`, postable) + per-company `uncategorized_expense` role (§2). Resolver = `resolveRoleAccountOptional(client, oci, "uncategorized_expense")`. *(Note: a generic `expense_default` role is already defined+unseeded and used as a bill fallback; GUARD chose the named role for QBO-style P&L visibility.)* |
+| 1 | **Seed "Uncategorized Expenses" account + `uncategorized_expense` ROLE** (not reuse `uncategorized_expense`) | Seed one global row in `catalogs.accounts` (type `Expense`, postable) + per-company `uncategorized_expense` role (§2). Resolver = `resolveRoleAccountOptional(client, oci, "uncategorized_expense")`. *(Note: a generic `uncategorized_expense` role is already defined+unseeded and used as a bill fallback; GUARD chose the named role for QBO-style P&L visibility.)* |
 | 2 | **DB feature-flag `EXPENSE_GL_POSTING_ENABLED`** (default OFF) | Mirror `VOID_FLAG_KEY`/`isEnabled` (`void.service.ts:104`, `lib/feature-flags/service.js`). Per-tenant, instantly reversible. |
 | 3 | **CASH-BASIS PRIMARY** (✅ accountant-confirmed): CR bank/cash (`payment_account_uuid`) is the default/dominant path; AP-with-vendor is the rare accrual exception; orphan guard | CR resolves directly via the header `payment_account_uuid` (a `catalogs.accounts` id — **no cash role needed**). AP path kept for the rare deferred case only. No payment acct **and** no vendor → **FAIL LOUD** (§3). TRANSP cash basis incl. MOR. |
 | 4 | **Owner + Accountant post** | Reuse `canVoid` role set (`void.service.ts:40`). |
@@ -33,7 +33,7 @@ GUARD's decisions doc named the COA table `accounting.coa_account`. **Verified, 
 **Two parts, both idempotent, additive, per the verified pattern:**
 1. One global account in `catalogs.accounts`: `account_name='Uncategorized Expenses'`, `account_type='Expense'`, `is_postable=true` — created only if absent.
 2. A per-company `uncategorized_expense` role in `chart_of_accounts_roles` for each **active** company, pointing at that account (mirrors `ap_control`).
-3. **CHECK widening:** `chart_of_accounts_roles_role_check` currently allows 11 roles (incl. `expense_default`) but **not `uncategorized_expense`** → the migration must DROP+re-ADD the CHECK with `uncategorized_expense` added. The typed `COA_ROLE_VALUES` (`coa-roles/resolver.service.ts`) must also gain `'uncategorized_expense'` (code, ships with the posting step).
+3. **CHECK widening:** `chart_of_accounts_roles_role_check` currently allows 11 roles (incl. `uncategorized_expense`) but **not `uncategorized_expense`** → the migration must DROP+re-ADD the CHECK with `uncategorized_expense` added. The typed `COA_ROLE_VALUES` (`coa-roles/resolver.service.ts`) must also gain `'uncategorized_expense'` (code, ships with the posting step).
 4. **Fail-loud:** at posting time, if `uncategorized_expense` is unresolved for a company → `ACCOUNT_MAPPING_MISSING` (no silent default).
 
 ## 3. Decision #3 — credit side (CASH-BASIS PRIMARY) + orphan guard — ✅ accountant gate CLEARED
@@ -72,7 +72,7 @@ BEGIN;
 ALTER TABLE accounting.chart_of_accounts_roles DROP CONSTRAINT IF EXISTS chart_of_accounts_roles_role_check;
 ALTER TABLE accounting.chart_of_accounts_roles ADD CONSTRAINT chart_of_accounts_roles_role_check
   CHECK (role IN ('ar_control','ap_control','cash_clearing','undeposited_funds','revenue_default',
-    'expense_default','factor_reserve_default','escrow_liability_default','sales_tax_payable',
+    'uncategorized_expense','factor_reserve_default','escrow_liability_default','sales_tax_payable',
     'cash_basis_adjustment_equity','retained_earnings','uncategorized_expense'));
 
 -- 2. one global "Uncategorized Expenses" account in catalogs.accounts (the posting CoA), if absent
