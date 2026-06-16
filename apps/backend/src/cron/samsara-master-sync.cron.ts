@@ -94,9 +94,30 @@ export function initializeSamsaraMasterSyncCron(app: FastifyInstance) {
                 });
                 continue;
               }
-              await syncSamsaraDriversMaster(client, operatingCompanyId);
-              await syncSamsaraVehiclesMaster(client, operatingCompanyId);
-              await syncSamsaraTrailersMaster(client, operatingCompanyId);
+              // The whole tick runs inside one withLuciaBypass BEGIN..COMMIT, so a DB
+              // error in any single sync (e.g. a VIN collision in the vehicle upsert)
+              // would abort the transaction and skip the rest. Isolate each sync in a
+              // SAVEPOINT so one failure can't take down the others.
+              const syncs: Array<{ name: string; run: () => Promise<unknown> }> = [
+                { name: "drivers", run: () => syncSamsaraDriversMaster(client, operatingCompanyId) },
+                { name: "vehicles", run: () => syncSamsaraVehiclesMaster(client, operatingCompanyId) },
+                { name: "trailers", run: () => syncSamsaraTrailersMaster(client, operatingCompanyId) },
+              ];
+              for (const sync of syncs) {
+                await client.query(`SAVEPOINT samsara_${sync.name}`);
+                try {
+                  await sync.run();
+                  await client.query(`RELEASE SAVEPOINT samsara_${sync.name}`);
+                } catch (error) {
+                  await client.query(`ROLLBACK TO SAVEPOINT samsara_${sync.name}`).catch(() => {});
+                  await appendCronAuditEvent(client, "cron_sync_failed", "warning", {
+                    cron_name: CRON_NAME,
+                    operating_company_id: operatingCompanyId,
+                    sync: sync.name,
+                    reason: String((error as Error)?.message ?? error),
+                  });
+                }
+              }
             }
           });
         },
