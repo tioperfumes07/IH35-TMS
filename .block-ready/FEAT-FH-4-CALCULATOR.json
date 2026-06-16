@@ -1,0 +1,29 @@
+{
+  "block_id": "FEAT-FH-4-CALCULATOR",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
+  "phase": "FINANCE-HUB",
+  "task": "FH-4 Finance Calculator (Tier 3). PURE modeling-only: monthly payment, total interest, payoff date, amortization preview, and side-by-side scenario compare. Reuses FH-2 loan-math. Writes NOTHING and never posts — no DB writes at all. Thin pure compute endpoint POST /api/v1/finance/calculator/compute, gated behind FINANCE_HUB_CALCULATOR_ENABLED (migration 202606160200 registers it default OFF): route 404s when OFF; frontend tab/page hidden when OFF (route registered in the hidden finance submenu for nav-integrity; visible nav byte-identical; preview tables wrapped in overflow-x-auto for the mobile audit). 'Use these -> create loan' links to FH-2. Boundary enforced by scripts/verify-fh4-no-posting.mjs (fails on posting_batches / journal_entry_postings / writes to accounting|finance.* / posting engine). Pure unit tests prove payment/interest/payoff + scenario compare (shorter term = higher payment, less total interest) + 0% case + down>=price rejection. Additive-only; posting engine / EXPENSE_GL_POSTING_ENABLED untouched. Ship on green, Jorge merges.",
+  "branch": "feat/fh-4-calculator",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FEAT-FH-4-CALCULATOR.json",
+    "db/migrations/202606160200_fh4_calculator_flag.sql",
+    "apps/backend/src/finance/calculator/calculator.service.ts",
+    "apps/backend/src/finance/calculator/routes.ts",
+    "apps/backend/src/finance/calculator/__tests__/calculator.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/financeCalculator.ts",
+    "apps/frontend/src/pages/finance/CalculatorPage.tsx",
+    "apps/frontend/src/pages/finance/FinanceModuleTabs.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-fh4-no-posting.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}

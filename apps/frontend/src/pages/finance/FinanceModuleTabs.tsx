@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_LOAN_WIZARD_FLAG } from "../../api/financeLoanWizard";
+import { FINANCE_HUB_CALCULATOR_FLAG } from "../../api/financeCalculator";
 
 const baseTabs = [
   { id: "overview", label: "Overview", to: "/finance" },
@@ -16,9 +17,12 @@ export function FinanceModuleTabs() {
   const { selectedCompanyId } = useCompanyContext();
   // Loan Wizard tab only appears once its OFF-by-default flag is enabled (Tier-3 gate).
   const { enabled: loanWizardEnabled } = useFeatureFlag(FINANCE_HUB_LOAN_WIZARD_FLAG, selectedCompanyId ?? undefined);
-  const tabs = loanWizardEnabled
-    ? [...baseTabs, { id: "loan-wizard", label: "Loan Wizard", to: "/finance/loan-wizard" }]
-    : baseTabs;
+  const { enabled: calculatorEnabled } = useFeatureFlag(FINANCE_HUB_CALCULATOR_FLAG, selectedCompanyId ?? undefined);
+  const tabs = [
+    ...baseTabs,
+    ...(loanWizardEnabled ? [{ id: "loan-wizard", label: "Loan Wizard", to: "/finance/loan-wizard" }] : []),
+    ...(calculatorEnabled ? [{ id: "calculator", label: "Calculator", to: "/finance/calculator" }] : []),
+  ];
 
   return (
     <div className="border-b border-gray-200">
