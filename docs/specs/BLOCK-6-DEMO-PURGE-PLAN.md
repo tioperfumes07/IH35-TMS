@@ -4,6 +4,23 @@
 tomorrow's real-data dispatch starts clean. **Mutates real prod rows → mandatory GUARD eyeball +
 Jorge OK before anything runs (like 2E #1041). Nothing self-merges.**
 
+## ⚠️ GUARD PRE-CHECK FINDINGS (2026-06-16) — corrections to v1 of this plan
+1. **"3 RIVERS LOGISTICS" IS LIKELY REAL — DO NOT ARCHIVE THE CUSTOMER.** It has a real email
+   (jeane@3riverslogistics.com), Late-pay/FMCSA tags, and sits among real freight brokers (AMPLIFY,
+   Bennet, Bieri, BM2, CarrierHawk…) in a real 1209-customer QBO roster. It was only *suspected* demo
+   because it appeared next to `DEMO-L00x` loads. **The DEMO marker is on the LOADS, not the customer.**
+   `customer_name ILIKE '3 Rivers%'` is REMOVED from the customer predicate. **OPEN — Jorge's explicit
+   call:** real (leave customer, purge only its `DEMO-L00x` loads) vs demo (archive it).
+2. **FALSE-ZERO PITFALL:** `mdata/customers?...&limit=500` returns **HTTP 400** (param rejected), so any
+   "0 active" from that form is a false zero, NOT real data. **Count at the DB, or via the page's
+   working request (`limit=50`).** Re-report real per-table active counts.
+3. **CONFIRMED SAFE targets:** 4 active `TEST-TRUCK-1/2/3/4` in `mdata.units`.
+4. **Still need from GUARD (real DB counts, working request):** equipment (confirm SAM-* phantom rows
+   actually EXIST before archiving any), vendors, loads (`DEMO-L%`), work orders; and the demo-driver
+   list (Juan / Maria / Carlos / Ana **"Demo"** seen earlier).
+
+**STATUS: migration NOT to be built until (a) real counts reported and (b) Jorge's 3-Rivers decision.**
+
 ## Method (reuse migration 0320's proven pattern)
 - **Void-not-delete / reversible:** set the table's soft-delete column, never `DELETE`. Every archived
   id is recorded in a ledger table (mirror `migration.test_seed_archive_ledger_0320`) so the purge is
@@ -30,13 +47,16 @@ Scope = **only what 0320 did NOT cover** (0320 already archived `mdata.drivers`,
 Run each with `SET app.operating_company_id` set (RLS), per operating company.
 
 ```sql
--- 1. mdata.customers (pattern + named "3 Rivers")
+-- 1. mdata.customers (PATTERN ONLY — 3 Rivers REMOVED, it's real pending Jorge's call)
 SELECT count(*) AS demo_customers FROM mdata.customers
 WHERE archived_at IS NULL AND (
      customer_name ILIKE 'TEST-%' OR customer_name ILIKE 'seed-%'
   OR COALESCE(customer_code,'') ILIKE 'TEST-%' OR COALESCE(customer_code,'') ILIKE 'seed-%'
-  OR customer_name ILIKE '3 Rivers%'          -- NAMED demo — confirm exact name with Jorge
 );
+
+-- 1b. demo DRIVERS (named "Demo" — Juan/Maria/Carlos/Ana Demo; reuse 0320's archived_at on drivers)
+SELECT count(*) AS demo_drivers FROM mdata.drivers
+WHERE archived_at IS NULL AND (first_name ILIKE '%Demo%' OR last_name ILIKE '%Demo%');
 
 -- 2. mdata.units (TEST-TRUCK-3 etc.)
 SELECT count(*) AS demo_units FROM mdata.units
@@ -50,12 +70,11 @@ WHERE deactivated_at IS NULL AND (
       AND EXISTS (SELECT 1 FROM mdata.units u WHERE u.samsara_vehicle_id = mdata.equipment.samsara_vehicle_id))
 );
 
--- 4. mdata.loads (test load numbers OR loads for demo customers)
+-- 4. mdata.loads — DEMO-L00x marker is on the LOADS (this is what made 3 Rivers look demo)
 SELECT count(*) AS demo_loads FROM mdata.loads
 WHERE soft_deleted_at IS NULL AND (
-     load_number ILIKE 'TEST-%' OR load_number ILIKE 'seed-%'
-  OR customer_id IN (SELECT id FROM mdata.customers WHERE customer_name ILIKE 'TEST-%'
-                       OR customer_name ILIKE 'seed-%' OR customer_name ILIKE '3 Rivers%')
+     load_number ILIKE 'DEMO-L%' OR load_number ILIKE 'DEMO-%'
+  OR load_number ILIKE 'TEST-%'  OR load_number ILIKE 'seed-%'
 );
 
 -- 5. mdata.vendors
@@ -81,11 +100,15 @@ Two options for Jorge:
   active units. Revisit post-go-live.
 Recommend (a) for a clean slate unless Jorge prefers minimal schema change tonight.
 
-## NAMED-ROW gaps needing GUARD/Jorge confirmation (don't match TEST-/seed-)
-- `mdata.customers`: exact name of **"3 Rivers Logistics"** (and any other manually-entered demo customers).
-- **Demo drivers**: 0320 archived TEST-/seed- drivers only. If demo drivers with real-looking names are
-  still live, GUARD lists them → add `mdata.drivers` (reuse 0320's `archived_at`) to this pass.
-- Any demo loads/vendors with real-looking names.
+## OPEN decisions / confirmations (updated after GUARD pre-check)
+- **3 Rivers Logistics — Jorge's call (BLOCKING):** real (leave customer; purge only its `DEMO-L00x`
+  loads) **or** demo (archive customer). Default assumption per GUARD: **REAL — do not archive.**
+- **Demo drivers:** confirmed pattern is name `%Demo%` (Juan/Maria/Carlos/Ana "Demo"). GUARD reports the
+  exact count via working request (`limit=50`) / DB.
+- **Equipment SAM-* phantom:** CONFIRM these rows actually exist (real DB count) before the migration
+  includes them — do not archive a predicate that matches zero / matches real assets.
+- **All counts:** must come from the DB or the `limit=50` working request — NOT `limit=500` (HTTP 400 →
+  false zero).
 
 ## STEP 3 — post-purge verification (GUARD)
 - Full-DB scan: `DEMO*` / `TEST*` / `3 Rivers` / SAM-phantom → **ZERO active (non-archived) rows**.
