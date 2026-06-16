@@ -68,8 +68,6 @@ export const SIDEBAR_DEFAULT_ORDER: readonly SidebarItemId[] = SIDEBAR_ITEM_IDS.
   (id) => !NAV_HIDDEN_STUB_IDS.includes(id),
 );
 
-const DEFAULT_ORDER_SET = new Set<string>(SIDEBAR_DEFAULT_ORDER);
-
 export type SidebarFlyoutLink = { label: string; to: string };
 
 export type SidebarItemMeta = {
@@ -82,7 +80,7 @@ export type SidebarItemMeta = {
   badgeKey?: "maintenance_severe";
 };
 
-/** Per-item presentation + routes. Order is controlled only by `SIDEBAR_DEFAULT_ORDER` / role / user prefs. */
+/** Per-item presentation + routes. Order is controlled ONLY by `SIDEBAR_DEFAULT_ORDER` (uniform for all users; no per-user or per-role override). */
 export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   home: { id: "home", label: "HOME", Icon: Home, to: "/app/homepage", dataTour: "tour-nav-home" },
   maintenance: {
@@ -125,44 +123,15 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   help: { id: "help", label: "HELP", Icon: CircleHelp, to: "/help" },
 };
 
-export function mergeSidebarOrder(preferred: readonly SidebarItemId[], defaults: readonly SidebarItemId[]): SidebarItemId[] {
-  const seen = new Set<SidebarItemId>();
-  const out: SidebarItemId[] = [];
-  for (const id of preferred) {
-    if (!DEFAULT_ORDER_SET.has(id) || seen.has(id)) continue;
-    seen.add(id);
-    out.push(id);
-  }
-  for (const id of defaults) {
-    if (seen.has(id)) continue;
-    seen.add(id);
-    out.push(id);
-  }
-  return out;
-}
-
-function parseUserOverride(raw: unknown): SidebarItemId[] | null {
-  if (!Array.isArray(raw) || raw.length === 0) return null;
-  const ids = raw.filter((x): x is SidebarItemId => typeof x === "string" && DEFAULT_ORDER_SET.has(x));
-  return ids.length > 0 ? ids : null;
-}
-
-/** Role-first ordering; remaining ids append from `SIDEBAR_DEFAULT_ORDER`. Owner / Administrator / SuperAdmin use defaults only (no entry here). */
-export const SIDEBAR_ROLE_ORDER: Partial<Record<UserRole, readonly SidebarItemId[]>> = {
-  Mechanic: ["home", "maintenance", "fuel", "drivers", "driver-hub", "safety", "lists", "docs", "eld", "reports", "users", "help"],
-  Dispatcher: ["home", "dispatch", "drivers", "driver-hub", "fuel", "safety", "maintenance", "customers", "vendors", "lists", "reports", "help"],
-  Accountant: ["home", "accounting", "bank", "factoring", "vendors", "customers", "drivers", "fuel", "reports", "lists", "form_425", "legal", "docs", "help"],
-  Safety: ["home", "safety", "drivers", "maintenance", "dispatch", "fuel", "lists", "reports", "help", "users"],
-  Manager: ["home", "dispatch", "drivers", "maintenance", "fuel", "customers", "vendors", "safety", "lists", "reports", "help", "users"],
-};
-
-export function resolveSidebarOrder(role: UserRole, preferences: Record<string, unknown> | undefined): SidebarItemId[] {
-  const override = parseUserOverride(preferences?.sidebar_order);
-  if (override) return mergeSidebarOrder(override, SIDEBAR_DEFAULT_ORDER);
-
-  const roleFirst = SIDEBAR_ROLE_ORDER[role];
-  if (roleFirst?.length) return mergeSidebarOrder(roleFirst, SIDEBAR_DEFAULT_ORDER);
-
+/**
+ * UNIFORM sidebar order (Jorge, 2026-06-16): `SIDEBAR_DEFAULT_ORDER` is the SINGLE source of truth for
+ * order — identical for every operator. Order does NOT depend on per-user prefs (`sidebar_order`) or on
+ * role. Per-user customization and role-based ordering were removed so every account sees the same rail.
+ * Permission-based VISIBILITY of individual items (`visibleRoles`) is unaffected — that controls *which*
+ * items appear, not their order. Params are accepted (and ignored) only for call-site/test compatibility.
+ * Enforced by scripts/verify-sidebar-contract.mjs.
+ */
+export function resolveSidebarOrder(_role?: UserRole, _preferences?: Record<string, unknown>): SidebarItemId[] {
   return [...SIDEBAR_DEFAULT_ORDER];
 }
 

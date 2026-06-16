@@ -79,6 +79,16 @@ describe("Sidebar", () => {
     expect(iconCount).toBe(expected.length);
   });
 
+  it("resolves the canonical order regardless of role or saved sidebar_order (uniform for all users)", () => {
+    const canonical = resolveSidebarOrder();
+    // a saved per-user override must be IGNORED
+    expect(resolveSidebarOrder("Owner" as UserRole, { sidebar_order: ["help", "home", "reports"] })).toEqual(canonical);
+    // a non-Owner role must NOT reorder the rail
+    expect(resolveSidebarOrder("Dispatcher" as UserRole, undefined)).toEqual(canonical);
+    expect(resolveSidebarOrder("Accountant" as UserRole, { sidebar_order: ["bank"] })).toEqual(canonical);
+    expect(resolveSidebarOrder("Mechanic" as UserRole, undefined)).toEqual(canonical);
+  });
+
   it("uses uppercase 10px labels and active item weight 600", () => {
     render(
       <MemoryRouter initialEntries={["/home"]}>
