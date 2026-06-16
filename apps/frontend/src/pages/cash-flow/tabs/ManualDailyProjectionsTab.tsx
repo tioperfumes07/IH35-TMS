@@ -10,6 +10,8 @@ import {
   type ForecastEntry,
   type ForecastRefKind,
 } from "../../../api/forecast";
+import { DatePicker } from "../../../components/forms/DatePicker";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 function fmtCents(c: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((c || 0) / 100);
@@ -21,7 +23,7 @@ type FormState = {
   id: string | null;
   entry_date: string;
   direction: "income" | "expense";
-  amount: string;
+  amount_cents: number | null;
   party_name: string;
   invoice_no: string;
   category: string;
@@ -35,7 +37,7 @@ const emptyForm = (): FormState => ({
   id: null,
   entry_date: "",
   direction: "income",
-  amount: "",
+  amount_cents: null,
   party_name: "",
   invoice_no: "",
   category: "",
@@ -50,7 +52,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [form, setForm] = useState<FormState>(emptyForm());
-  const [openingInput, setOpeningInput] = useState<string>("");
+  const [openingDraft, setOpeningDraft] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const entriesKey = ["forecast", "entries", operatingCompanyId, from || "all", to || "all"];
@@ -71,7 +73,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const amountCents = Math.round(Number(form.amount || 0) * 100);
+      const amountCents = form.amount_cents ?? 0;
       if (!form.entry_date) throw new Error("Date is required");
       if (!Number.isFinite(amountCents) || amountCents < 0) throw new Error("Amount must be ≥ 0");
       const payload = {
@@ -107,10 +109,10 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     mutationFn: () =>
       putForecastOpeningBalance({
         operating_company_id: operatingCompanyId,
-        amount_cents: Math.round(Number(openingInput || 0) * 100),
+        amount_cents: openingDraft ?? 0,
       }),
     onSuccess: () => {
-      setOpeningInput("");
+      setOpeningDraft(null);
       void qc.invalidateQueries({ queryKey: ["forecast", "opening", operatingCompanyId] });
     },
   });
@@ -143,7 +145,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       id: e.id,
       entry_date: e.entry_date,
       direction: e.direction,
-      amount: String((e.amount_cents || 0) / 100),
+      amount_cents: e.amount_cents,
       party_name: e.party_name ?? "",
       invoice_no: e.invoice_no ?? "",
       category: e.category ?? "",
@@ -159,18 +161,17 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         <span className="text-[11px] font-semibold text-gray-600">Opening cash (current): </span>
         <span className="font-semibold">{fmtCents(openingCents)}</span>
         <span className="ml-3 inline-flex items-center gap-1">
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Set opening $"
-            className="h-7 w-32 rounded border border-gray-300 px-2"
-            value={openingInput}
-            onChange={(e) => setOpeningInput(e.target.value)}
+          <MoneyInput
+            valueCents={openingDraft}
+            onChangeCents={setOpeningDraft}
+            placeholder="Set opening"
+            ariaLabel="Opening cash"
+            className="w-32"
           />
           <button
             type="button"
             className="h-7 rounded border border-gray-300 bg-white px-2 font-semibold hover:bg-gray-50"
-            disabled={openingMutation.isPending || openingInput === ""}
+            disabled={openingMutation.isPending || openingDraft === null}
             onClick={() => openingMutation.mutate()}
           >
             Save
@@ -180,9 +181,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
 
       <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2">
         <label className="font-semibold text-gray-600">From</label>
-        <input type="date" className="h-7 rounded border border-gray-300 px-2" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <DatePicker value={from} onChange={setFrom} className="w-36" placeholder="From date" />
         <label className="font-semibold text-gray-600">To</label>
-        <input type="date" className="h-7 rounded border border-gray-300 px-2" value={to} onChange={(e) => setTo(e.target.value)} />
+        <DatePicker value={to} onChange={setTo} className="w-36" placeholder="To date" />
         {(from || to) && (
           <button type="button" className="h-7 rounded border border-gray-300 bg-white px-2 hover:bg-gray-50" onClick={() => { setFrom(""); setTo(""); }}>
             Clear
@@ -192,12 +193,12 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
 
       {/* Inline create / edit */}
       <div className="grid grid-cols-2 gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-4 lg:grid-cols-6">
-        <input type="date" className="h-7 rounded border border-gray-300 px-2" value={form.entry_date} onChange={(e) => setForm({ ...form, entry_date: e.target.value })} />
+        <DatePicker value={form.entry_date} onChange={(v) => setForm({ ...form, entry_date: v })} placeholder="Date" />
         <select className="h-7 rounded border border-gray-300 px-2" value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value as "income" | "expense" })}>
           <option value="income">Income</option>
           <option value="expense">Expense</option>
         </select>
-        <input type="number" step="0.01" placeholder="Amount $" className="h-7 rounded border border-gray-300 px-2" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+        <MoneyInput valueCents={form.amount_cents} onChangeCents={(c) => setForm({ ...form, amount_cents: c })} placeholder="Amount" ariaLabel="Amount" />
         <input placeholder="Party (free text)" className="h-7 rounded border border-gray-300 px-2" value={form.party_name} onChange={(e) => setForm({ ...form, party_name: e.target.value })} />
         <input placeholder="Invoice #" className="h-7 rounded border border-gray-300 px-2" value={form.invoice_no} onChange={(e) => setForm({ ...form, invoice_no: e.target.value })} />
         <input placeholder="Category" className="h-7 rounded border border-gray-300 px-2" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
