@@ -101,3 +101,24 @@ the Trailers sub-tab content on phantom data.
 ## Acceptance / next step
 GUARD + Jorge review findings (1–7) + this proposal. **No source/migration/sidebar change made.**
 **PAUSED for Jorge's placement decision (A)** (A1 / A2 / A3) before any build block is written.
+
+---
+
+## APPROVED DECISION (Jorge, 2026-06-16) — placement A3 + Fleet home built
+
+Jorge authorized the **locked-sidebar exception** for a single new top-level item, superseding
+the prior "sidebar locked / no Fleet item" rule **for this item only**:
+
+- **C1 — Nav:** new top-level `fleet` item, label **FLEET**, icon `Container` (lucide), route `/fleet`,
+  inserted **after `drivers` (DRIVER PROFILE) and before `insurance`** in `SIDEBAR_DEFAULT_ORDER`
+  (27 items). `visibleRoles` = all office roles (Owner, Administrator, SuperAdmin, Manager,
+  Accountant, Dispatcher, Safety, Mechanic) — **Driver excluded**. Contract guard
+  `verify-sidebar-contract.mjs` `LOCKED_ORDER` updated to match.
+- **C2 — Home:** `/fleet` (`pages/fleet/FleetHomePage.tsx`) reuses the shared `FleetTablePage`
+  (the same component the Maintenance "Fleet table" sub-tab renders — additive, both kept).
+  Adds: **clickable KPI cards** (Total/Active/In-Shop/OOS filter the roster by status),
+  **Trucks/Trailers/Company Vehicles sub-tabs** (Company = future class, empty for now),
+  **Active-only toggle** (default active on `/fleet`; Maintenance unchanged via `defaultActiveOnly` prop).
+  Rows click through to the canonical `/fleet/units/:id` profile.
+- **Out of scope / dependency:** real Trailers populate via the Samsara trailer sync (2F / tracker 886,
+  shipped separately in E2). Company-vehicle class is deferred.
