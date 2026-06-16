@@ -411,6 +411,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       listDrivers({
         status: "All",
         search,
+        limit: 200, // GO-LIVE Block 1A: fetch the full roster (was capped at 50) so the DataTable pager + KPIs reflect the real total
       }).then((result) => result.drivers),
   });
 
