@@ -22,6 +22,12 @@ import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
 import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
+import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
+
+// Load Wizard V5 (Block H): compact, denser layout behind an OFF-by-default flag. The
+// old layout stays the default until LOAD_WIZARD_V5 is enabled. V5 changes are visual
+// density only — the submit payload is byte-identical.
+export const LOAD_WIZARD_V5_FLAG = "LOAD_WIZARD_V5";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
 import { AccessorialEditor } from "../../../components/dispatch/AccessorialEditor";
 import {
@@ -135,12 +141,23 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 .blw-collapse-bar:hover{background:#f0f2f5}
 .blw-collapse-plus{width:16px;height:16px;border-radius:3px;background:#16203a;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
 .blw-note{font-size:9.5px;color:#8a93a1}
+/* Load Wizard V5 — compact density (visual only; gated by LOAD_WIZARD_V5). */
+[data-wizard-v5="on"] .blw-sec-hd{padding:4px 9px}
+[data-wizard-v5="on"] .blw-collapse-bar{padding:5px 9px}
+[data-wizard-v5="on"] input:not([type="checkbox"]):not([type="radio"]),
+[data-wizard-v5="on"] select{height:24px;font-size:11px}
+[data-wizard-v5="on"] .p-3{padding:7px}
+[data-wizard-v5="on"] .gap-3{gap:7px}
+[data-wizard-v5="on"] .gap-2{gap:5px}
+[data-wizard-v5="on"] .space-y-3>*+*{margin-top:7px}
+[data-wizard-v5="on"] .space-y-2>*+*{margin-top:4px}
 `;
 
 export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, templatePrefillJson }: Props) {
   const auth = useAuth();
   const { pushToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
+  const { enabled: wizardV5 } = useFeatureFlag(LOAD_WIZARD_V5_FLAG, operatingCompanyId);
 
   const [gateBanner, setGateBanner] = useState<{
     type: "advisory" | "hard_block" | "hos_block";
@@ -538,6 +555,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     >
       <div
         ref={panelRef}
+        data-wizard-v5={wizardV5 ? "on" : undefined}
         className="flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1260px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
         style={{ width: "100%" }}
         onMouseDown={(e) => e.stopPropagation()}
