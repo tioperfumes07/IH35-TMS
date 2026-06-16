@@ -99,6 +99,9 @@ jobs:
       - name: verify:wo-status-transitions
         run: npm run verify:wo-status-transitions
 
+      - name: verify:unit-retire-open-wo-gate
+        run: npm run verify:unit-retire-open-wo-gate
+
       - name: verify:block-ready-c5-no-duplicate-arch-design
         run: npm run verify:block-ready-c5-no-duplicate-arch-design
 

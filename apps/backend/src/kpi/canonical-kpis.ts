@@ -45,6 +45,20 @@ export async function countOpenMaintenanceWorkOrders(client: Queryable, operatin
   return Number(res.rows[0]?.count ?? 0);
 }
 
+/** Open WOs for ONE unit — the retire/sell gate (WF-064). Reuses the canonical open-status list. */
+export async function countOpenWorkOrdersForUnit(client: Queryable, unitId: string): Promise<number> {
+  const res = await client.query<{ count: number }>(
+    `
+      SELECT count(*)::int AS count
+      FROM maintenance.work_orders
+      WHERE unit_id = $1::uuid
+        AND status IN (${statusList(OPEN_MAINTENANCE_WO_STATUSES)})
+    `,
+    [unitId]
+  );
+  return Number(res.rows[0]?.count ?? 0);
+}
+
 /** PM alerts due (open or acknowledged) — Maintenance "PM Due" tile. */
 export async function countPmDueAlerts(client: Queryable, operatingCompanyId: string): Promise<number> {
   const res = await client.query<{ count: number }>(
