@@ -609,7 +609,7 @@ export function DispatchBoard({
             onCapExceeded={(message) => pushToast(message, "error")}
           >
             {(selectCtx) => (
-              <table className="min-w-full text-left text-sm">
+              <table className="w-full text-left text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
                   <tr>
                     <th className="w-10 px-2 py-2">

@@ -173,7 +173,7 @@ export function DispatchList({
           onCapExceeded={bulkSelection?.onCapExceeded}
         >
           {(selectCtx) => (
-        <table className="min-w-full text-left text-sm">
+        <table className="w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
               {bulkSelection ? (
