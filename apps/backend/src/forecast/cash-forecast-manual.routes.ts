@@ -4,6 +4,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withOperatingCompanyScope } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 // FIREWALL: this module is the hand-entered cash projection. It must NEVER import
 // accounting/finance/reports, post to the GL, or FK into another schema. Enforced by
@@ -94,7 +95,12 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
          b.data.party_name ?? null, b.data.invoice_no ?? null, b.data.category ?? null, b.data.memo ?? null,
          b.data.ref_kind ?? null, b.data.ref_label ?? null, b.data.ref_external_id ?? null, user.uuid]
       );
-      return res.rows[0];
+      const created = res.rows[0];
+      await appendCrudAudit(client, user.uuid, "forecast.cash_entry.created", {
+        resource_id: created?.id,
+        resource_type: "forecast.cash_entries",
+      });
+      return created;
     });
     return reply.code(201).send(row);
   });
@@ -128,7 +134,14 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
           WHERE id = $${values.length} AND deactivated_at IS NULL RETURNING *`,
         values
       );
-      return res.rows[0] ?? null;
+      const row = res.rows[0] ?? null;
+      if (row) {
+        await appendCrudAudit(client, user.uuid, "forecast.cash_entry.updated", {
+          resource_id: p.data.id,
+          resource_type: "forecast.cash_entries",
+        });
+      }
+      return row;
     });
     if (!updated) return reply.code(404).send({ error: "not_found" });
     return updated;
@@ -149,7 +162,14 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
           WHERE id = $1 AND deactivated_at IS NULL RETURNING id`,
         [p.data.id, user.uuid]
       );
-      return res.rows[0] ?? null;
+      const row = res.rows[0] ?? null;
+      if (row) {
+        await appendCrudAudit(client, user.uuid, "forecast.cash_entry.deleted", {
+          resource_id: p.data.id,
+          resource_type: "forecast.cash_entries",
+        });
+      }
+      return row;
     });
     if (!deleted) return reply.code(404).send({ error: "not_found" });
     return { ok: true };
@@ -190,6 +210,10 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
          RETURNING operating_company_id, amount_cents, as_of_date, updated_at`,
         [b.data.operating_company_id, b.data.amount_cents, b.data.as_of_date ?? null, user.uuid]
       );
+      await appendCrudAudit(client, user.uuid, "forecast.opening_balance.updated", {
+        resource_id: b.data.operating_company_id,
+        resource_type: "forecast.opening_balance",
+      });
       return res.rows[0];
     });
     return row;
