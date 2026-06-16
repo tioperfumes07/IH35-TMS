@@ -50,14 +50,14 @@ ALTER TABLE forecast.opening_balance ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS forecast_cash_entries_rls ON forecast.cash_entries;
 CREATE POLICY forecast_cash_entries_rls ON forecast.cash_entries
   FOR ALL
-  USING (operating_company_id = current_setting('app.operating_company_id', true)::uuid)
-  WITH CHECK (operating_company_id = current_setting('app.operating_company_id', true)::uuid);
+  USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 DROP POLICY IF EXISTS forecast_opening_balance_rls ON forecast.opening_balance;
 CREATE POLICY forecast_opening_balance_rls ON forecast.opening_balance
   FOR ALL
-  USING (operating_company_id = current_setting('app.operating_company_id', true)::uuid)
-  WITH CHECK (operating_company_id = current_setting('app.operating_company_id', true)::uuid);
+  USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 -- Runtime grants for ih35_app (new schema is not covered by migration 0065's array).
 GRANT USAGE ON SCHEMA forecast TO ih35_app;
