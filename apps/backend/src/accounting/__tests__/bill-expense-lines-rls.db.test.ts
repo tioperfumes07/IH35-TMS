@@ -121,8 +121,8 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
       // expense_lines isolate THROUGH their parent accounting.expenses (authored in
       // 202606151300). Seed a driver + one parent expense per tenant, then a line each.
       await db.query(
-        `INSERT INTO mdata.drivers (id, first_name, last_name, phone) VALUES ($1::uuid, 'RLS', 'Fixture', $2)`,
-        [driverId, `+1000${suffix.slice(0, 7)}`]
+        `INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone) VALUES ($1::uuid, $3::uuid, 'RLS', 'Fixture', $2)`,
+        [driverId, `+1000${suffix.slice(0, 7)}`, primaryCompanyId]
       );
       await db.query(
         `INSERT INTO accounting.expenses (id, operating_company_id, driver_uuid, transaction_date, total_amount_cents, status)

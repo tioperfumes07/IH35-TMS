@@ -65,7 +65,7 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
          ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
         [companyId, uncatAccountId]
       );
-      await db.query(`INSERT INTO mdata.drivers (id, first_name, last_name, phone) VALUES ($1::uuid,'GL','Post',$2)`, [driverId, `+1002${suffix.slice(0,7)}`]);
+      await db.query(`INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone) VALUES ($1::uuid,$3::uuid,'GL','Post',$2)`, [driverId, `+1002${suffix.slice(0,7)}`, companyId]);
     });
   });
 
