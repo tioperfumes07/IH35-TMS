@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 import { useState } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -22,13 +23,13 @@ type BootstrapResult = {
 };
 
 async function fetchHiddenCarriers(): Promise<{ carriers: HiddenCarrier[] }> {
-  const res = await fetch("/api/v1/admin/carrier-bootstrap/hidden-carriers", { credentials: "include" });
+  const res = await fetch(resolveApiUrl("/api/v1/admin/carrier-bootstrap/hidden-carriers"), { credentials: "include" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
 async function runBootstrap(body: { template_carrier_code: string; target_carrier_code: string }): Promise<BootstrapResult> {
-  const res = await fetch("/api/v1/admin/carrier-bootstrap/run", {
+  const res = await fetch(resolveApiUrl("/api/v1/admin/carrier-bootstrap/run"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

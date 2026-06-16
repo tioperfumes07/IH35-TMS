@@ -352,6 +352,9 @@ jobs:
       - name: Verify mobile responsive audit contract
         run: npm run verify:mobile-responsive-audit
 
+      - name: Verify no raw relative frontend /api fetch (cross-origin base-URL guard)
+        run: npm run verify:no-raw-frontend-api-fetch
+
       - name: Verify feature flags contract
         run: npm run verify:feature-flags
 

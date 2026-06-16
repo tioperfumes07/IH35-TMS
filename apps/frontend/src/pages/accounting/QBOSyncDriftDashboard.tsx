@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 
@@ -33,7 +34,7 @@ type DashboardPayload = {
 
 async function fetchDashboard(operatingCompanyId: string): Promise<DashboardPayload> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  const res = await fetch(`/api/v1/qbo-sync/drift-dashboard?${params}`);
+  const res = await fetch(resolveApiUrl(`/api/v1/qbo-sync/drift-dashboard?${params}`));
   if (!res.ok) throw new Error("Failed to load QBO sync drift dashboard");
   return res.json() as Promise<DashboardPayload>;
 }
@@ -43,7 +44,7 @@ async function resolveDrift(
   operatingCompanyId: string,
   resolution_action: "accept_local" | "accept_qbo" | "manual_merge_recorded"
 ) {
-  const res = await fetch(`/api/v1/qbo-sync/drift-log/${driftId}/resolve`, {
+  const res = await fetch(resolveApiUrl(`/api/v1/qbo-sync/drift-log/${driftId}/resolve`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ operating_company_id: operatingCompanyId, resolution_action }),

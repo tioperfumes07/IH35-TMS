@@ -4,6 +4,7 @@
  * Consumes POST /api/safety/drug-alcohol/tests.
  */
 import { useState } from "react";
+import { resolveApiUrl } from "../../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type TestType = "pre_employment" | "random" | "post_accident" | "reasonable_suspicion" | "return_to_duty" | "follow_up";
@@ -34,7 +35,7 @@ async function postScheduleTest(companyId: string, payload: {
   test_kind: TestKind;
   scheduled_at?: string;
 }) {
-  const res = await fetch("/api/safety/drug-alcohol/tests", {
+  const res = await fetch(resolveApiUrl("/api/safety/drug-alcohol/tests"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

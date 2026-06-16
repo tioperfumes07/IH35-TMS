@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { listSettlements } from "../../api/driverFinance";
@@ -79,7 +80,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
     for (const file of evidenceFiles) {
       const form = new FormData();
       form.append("file", file);
-      const uploadRes = await fetch("/api/v1/docs/files/upload", { method: "POST", body: form, credentials: "include" });
+      const uploadRes = await fetch(resolveApiUrl("/api/v1/docs/files/upload"), { method: "POST", body: form, credentials: "include" });
       if (uploadRes.ok) {
         const uploaded = (await uploadRes.json()) as { id?: string; document_id?: string };
         const docId = uploaded.id ?? uploaded.document_id;

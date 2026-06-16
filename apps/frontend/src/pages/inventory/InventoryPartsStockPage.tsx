@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "../../components/Button";
@@ -62,7 +63,7 @@ export function InventoryPartsStockPage() {
     queryKey: ["inventory", "parts", operatingCompanyId],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      const res = await fetch(`/api/v1/maintenance/parts?operating_company_id=${operatingCompanyId}`);
+      const res = await fetch(resolveApiUrl(`/api/v1/maintenance/parts?operating_company_id=${operatingCompanyId}`));
       if (!res.ok) throw new Error("Failed to fetch parts");
       const data = (await res.json()) as { rows?: MaintenancePartRow[] };
       return { parts: mapMaintenancePartsToInventoryRows(data.rows ?? []) };

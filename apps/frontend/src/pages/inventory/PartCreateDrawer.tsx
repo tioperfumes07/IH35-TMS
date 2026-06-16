@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Button } from "../../components/Button";
@@ -28,7 +29,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
       // B1: create against the real maintenance.parts_inventory backend (no /api/v1/inventory/parts route exists).
       // Company id goes in the query string (the POST handler reads it from req.query); map this drawer's
       // field names onto the maintenance createSchema (sku -> part_number, on_hand_qty -> qty_on_hand, etc.).
-      const res = await fetch(`/api/v1/maintenance/parts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`, {
+      const res = await fetch(resolveApiUrl(`/api/v1/maintenance/parts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

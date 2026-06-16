@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 async function fetchPositions(companyId: string) {
-  const res = await fetch(`/api/integrations/samsara/positions/active-loads?operating_company_id=${companyId}`, {
+  const res = await fetch(resolveApiUrl(`/api/integrations/samsara/positions/active-loads?operating_company_id=${companyId}`), {
     credentials: "include",
   });
   if (!res.ok) throw new Error("fetch_failed");

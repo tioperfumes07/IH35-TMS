@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 
 export type PortOfEntry = {
   id: string;
@@ -52,14 +53,14 @@ export const initialWizardForm: WizardFormState = {
 };
 
 export async function fetchPortsOfEntry(): Promise<PortOfEntry[]> {
-  const res = await fetch("/api/v1/border-crossing/ports-of-entry", { credentials: "include" });
+  const res = await fetch(resolveApiUrl("/api/v1/border-crossing/ports-of-entry"), { credentials: "include" });
   if (!res.ok) throw new Error("Failed to load ports of entry");
   const data = (await res.json()) as { ports: PortOfEntry[] };
   return data.ports;
 }
 
 export async function fetchWaitTimes(cbpPortCode: string): Promise<WaitTimeRow[]> {
-  const res = await fetch(`/api/v1/border-crossing/wait-times?cbp_port_code=${encodeURIComponent(cbpPortCode)}`, {
+  const res = await fetch(resolveApiUrl(`/api/v1/border-crossing/wait-times?cbp_port_code=${encodeURIComponent(cbpPortCode)}`), {
     credentials: "include",
   });
   if (!res.ok) return [];

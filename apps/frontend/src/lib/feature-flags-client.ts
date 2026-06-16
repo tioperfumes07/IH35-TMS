@@ -1,3 +1,5 @@
+import { resolveApiUrl } from "../api/client";
+
 type FlagCheckResponse = { flag_key: string; enabled: boolean };
 
 type FlagRecord = {
@@ -32,7 +34,7 @@ export async function fetchFeatureFlag(
 ): Promise<boolean> {
   const params = new URLSearchParams({ key: flagKey });
   if (operatingCompanyId) params.set("operating_company_id", operatingCompanyId);
-  const res = await fetch(`/api/feature-flags/check?${params.toString()}`, { credentials: "include" });
+  const res = await fetch(resolveApiUrl(`/api/feature-flags/check?${params.toString()}`), { credentials: "include" });
   if (!res.ok) throw new Error(`feature_flag_check_failed:${res.status}`);
   const payload = (await res.json()) as FlagCheckResponse;
   return Boolean(payload.enabled);
@@ -78,7 +80,7 @@ export function stopFeatureFlagRefresh() {
 }
 
 export async function fetchAllFeatureFlags(): Promise<{ flags: FlagRecord[]; overrides: OverrideRecord[] }> {
-  const res = await fetch("/api/feature-flags", { credentials: "include" });
+  const res = await fetch(resolveApiUrl("/api/feature-flags"), { credentials: "include" });
   if (!res.ok) throw new Error(`feature_flags_list_failed:${res.status}`);
   return res.json();
 }
@@ -89,7 +91,7 @@ export async function createFeatureFlag(body: {
   default_enabled?: boolean;
   rollout_pct?: number;
 }) {
-  const res = await fetch("/api/feature-flags", {
+  const res = await fetch(resolveApiUrl("/api/feature-flags"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -104,7 +106,7 @@ export async function updateFeatureFlag(
   flagKey: string,
   body: { description?: string; default_enabled?: boolean; rollout_pct?: number }
 ) {
-  const res = await fetch(`/api/feature-flags/${encodeURIComponent(flagKey)}`, {
+  const res = await fetch(resolveApiUrl(`/api/feature-flags/${encodeURIComponent(flagKey)}`), {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -122,7 +124,7 @@ export async function setFeatureFlagOverride(body: {
   enabled: boolean;
   expires_at?: string;
 }) {
-  const res = await fetch("/api/feature-flags/overrides", {
+  const res = await fetch(resolveApiUrl("/api/feature-flags/overrides"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -134,7 +136,7 @@ export async function setFeatureFlagOverride(body: {
 }
 
 export async function deleteFeatureFlagOverride(uuid: string) {
-  const res = await fetch(`/api/feature-flags/overrides/${encodeURIComponent(uuid)}`, {
+  const res = await fetch(resolveApiUrl(`/api/feature-flags/overrides/${encodeURIComponent(uuid)}`), {
     method: "DELETE",
     credentials: "include",
   });

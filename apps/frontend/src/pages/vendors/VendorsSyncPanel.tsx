@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../api/client";
 
 type VendorsSyncStatus = {
   total_local: number;
@@ -12,7 +13,7 @@ type VendorsSyncStatus = {
 
 async function fetchVendorsStatus(operatingCompanyId: string): Promise<VendorsSyncStatus> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  const res = await fetch(`/api/v1/qbo-sync/vendors/status?${params}`);
+  const res = await fetch(resolveApiUrl(`/api/v1/qbo-sync/vendors/status?${params}`));
   if (!res.ok) {
     const detail = res.status === 401 ? "Sign in required" : `HTTP ${res.status}`;
     throw new Error(`Failed to load vendors sync status (${detail})`);

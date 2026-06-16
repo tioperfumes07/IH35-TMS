@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { Link } from "react-router-dom";
 import { OFFLINE_PREVIEW_BANNER } from "../../lib/prodEmptyStateCopy";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -51,7 +52,7 @@ function summarize(rows: AssetRow[]): AssetSummary {
 
 async function fetchAssetRows(companyId: string): Promise<AssetRow[]> {
   const params = new URLSearchParams({ operating_company_id: companyId, limit: "250" });
-  const response = await fetch(`/api/v1/assets/list?${params.toString()}`, { credentials: "include" });
+  const response = await fetch(resolveApiUrl(`/api/v1/assets/list?${params.toString()}`), { credentials: "include" });
   if (!response.ok) throw new Error(`asset list request failed (${response.status})`);
   const payload = (await response.json()) as { rows?: AssetRow[] };
   return payload.rows ?? [];

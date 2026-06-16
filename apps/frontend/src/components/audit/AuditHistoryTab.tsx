@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { useState, useCallback } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, Download, AlertTriangle } from "lucide-react";
 
@@ -177,7 +178,7 @@ export function AuditHistoryTab({ operatingCompanyId, entityType, entityId }: Au
   const { data, isLoading, error } = useQuery({
     queryKey: ["audit-events", entityType, entityId, filters],
     queryFn: async () => {
-      const res = await fetch(`/api/v1/audit/events-list?${buildQueryString()}`);
+      const res = await fetch(resolveApiUrl(`/api/v1/audit/events-list?${buildQueryString()}`));
       if (!res.ok) throw new Error("Failed to fetch audit events");
       return res.json() as Promise<{ events: AuditEvent[]; total_count: number }>;
     },

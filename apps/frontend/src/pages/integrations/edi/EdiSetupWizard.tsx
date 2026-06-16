@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { resolveApiUrl } from "../../../api/client";
 import { useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useToast } from "../../../components/Toast";
@@ -13,7 +14,7 @@ type EdiPartner = {
 };
 
 async function fetchPartners(companyId: string): Promise<EdiPartner[]> {
-  const res = await fetch(`/api/integrations/edi/partners?operating_company_id=${companyId}`, {
+  const res = await fetch(resolveApiUrl(`/api/integrations/edi/partners?operating_company_id=${companyId}`), {
     credentials: "include",
   });
   if (!res.ok) throw new Error("Failed to load EDI partners");
@@ -22,7 +23,7 @@ async function fetchPartners(companyId: string): Promise<EdiPartner[]> {
 }
 
 async function createPartner(body: Record<string, unknown>) {
-  const res = await fetch("/api/integrations/edi/partners", {
+  const res = await fetch(resolveApiUrl("/api/integrations/edi/partners"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

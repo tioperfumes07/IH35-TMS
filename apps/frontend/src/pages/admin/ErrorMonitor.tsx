@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -11,7 +12,7 @@ type BufferedErrorRecord = {
 };
 
 async function fetchRecentErrors(): Promise<{ errors: BufferedErrorRecord[] }> {
-  const res = await fetch("/api/v1/admin/error-monitor/recent", { credentials: "include" });
+  const res = await fetch(resolveApiUrl("/api/v1/admin/error-monitor/recent"), { credentials: "include" });
   const body = (await res.json()) as { errors?: BufferedErrorRecord[]; error?: string };
   if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
   return { errors: Array.isArray(body.errors) ? body.errors : [] };
