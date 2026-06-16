@@ -7,6 +7,8 @@ export function listDrivers(params: {
   search?: string;
   operating_company_id?: string | null;
   include_system?: boolean;
+  limit?: number;
+  offset?: number;
 }) {
   const query = new URLSearchParams();
   if (params.status && params.status !== "All") {
@@ -16,9 +18,14 @@ export function listDrivers(params: {
   if (params.search) query.set("search", params.search);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
   if (params.include_system) query.set("include_system", "true");
+  if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.offset != null) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ drivers: Driver[] }>(`/api/v1/mdata/drivers${qs ? `?${qs}` : ""}`).then((payload) => ({
+  // total = real server-side count for the same filters (so the UI can page through the FULL roster,
+  // not just the default-50 first page). See GO-LIVE Block 1A.
+  return apiRequest<{ drivers: Driver[]; total?: number }>(`/api/v1/mdata/drivers${qs ? `?${qs}` : ""}`).then((payload) => ({
     drivers: params.include_system ? payload.drivers : filterHumanDrivers(payload.drivers),
+    total: payload.total ?? payload.drivers.length,
   }));
 }
 
@@ -1124,13 +1131,18 @@ export function listLocations(params: CompanyScopedListParams = {}) {
   return apiRequest<{ locations: unknown[] }>(`/api/v1/mdata/locations${qs ? `?${qs}` : ""}`);
 }
 
-export function listUnits(params: { status?: string; search?: string; operating_company_id?: string | null } = {}) {
+export function listUnits(
+  params: { status?: string; search?: string; operating_company_id?: string | null; limit?: number; offset?: number } = {}
+) {
   const query = new URLSearchParams();
   if (params.status && params.status !== "All") query.set("status", params.status);
   if (params.search) query.set("search", params.search);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+  if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.offset != null) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ units: unknown[] }>(`/api/v1/mdata/units${qs ? `?${qs}` : ""}`);
+  // total = real server-side count (GO-LIVE Block 1A) so the Fleet UI can page through the FULL fleet.
+  return apiRequest<{ units: unknown[]; total?: number }>(`/api/v1/mdata/units${qs ? `?${qs}` : ""}`);
 }
 
 export type QboVendorCandidate = {
