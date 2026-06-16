@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { patchUnit } from "../../api/mdata";
+import { ApiError } from "../../api/client";
 
 type Status = "InService" | "OutOfService" | "InMaintenance" | "Sold" | "Damaged" | "Transferred";
 
@@ -72,8 +73,18 @@ export function StatusChangeModal({
       await patchUnit(unitId, body);
       onSaved();
       onClose();
-    } catch {
-      setError("Failed to save status.");
+    } catch (err) {
+      if (
+        err instanceof ApiError &&
+        err.status === 409 &&
+        (err.data as { error?: string } | null)?.error === "E_UNIT_HAS_OPEN_WO"
+      ) {
+        const n = (err.data as { open_wo_count?: number } | null)?.open_wo_count ?? 0;
+        const verb = targetStatus === "Sold" ? "sell" : "transfer";
+        setError(`Cannot ${verb} — ${n} open work order(s); close them first.`);
+      } else {
+        setError("Failed to save status.");
+      }
     } finally {
       setPending(false);
     }

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { countOpenWorkOrdersForUnit } from "../kpi/canonical-kpis.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { buildUnitAggregate } from "./unit-aggregate.service.js";
 import { registerUnitDefaultDriverRoutes } from "./unit-default-driver.routes.js";
@@ -137,6 +138,8 @@ async function resolveAssetCompanyIds(
 }
 
 const ARCHIVE_STATUSES = new Set(["Sold", "Transferred", "Damaged"]);
+// WF-064: statuses blocked when the unit has an open work order (Sold/Transferred only).
+const RETIRE_GATE_STATUSES = new Set(["Sold", "Transferred"]);
 
 export async function registerUnitsRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/units", async (req, reply) => {
@@ -334,6 +337,18 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const ownerViolation = ownerOnlyPatchViolation(authUser.role, b as Record<string, unknown>);
     if (ownerViolation) {
       return reply.code(403).send({ error: "owner_only_field", field: ownerViolation });
+    }
+
+    // WF-064 retire gate: a unit with an OPEN work order cannot be Sold or Transferred.
+    // Damaged / OutOfService are intentionally NOT gated — those routinely coincide with an
+    // open WO by design (accident/repair).
+    if ("status" in b && typeof b.status === "string" && RETIRE_GATE_STATUSES.has(b.status)) {
+      const openWoCount = await withCurrentUser(authUser.uuid, (client) =>
+        countOpenWorkOrdersForUnit(client, parsedParams.data.id)
+      );
+      if (openWoCount > 0) {
+        return reply.code(409).send({ error: "E_UNIT_HAS_OPEN_WO", open_wo_count: openWoCount });
+      }
     }
 
     const setParts: string[] = [];
