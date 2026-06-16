@@ -4,6 +4,51 @@
 tomorrow's real-data dispatch starts clean. **Mutates real prod rows → mandatory GUARD eyeball +
 Jorge OK before anything runs (like 2E #1041). Nothing self-merges.**
 
+## ✅ PASS 1 DONE — migration #1048 (merged 2026-06-16, GUARD eyeball PASS + Jorge OK)
+`db/migrations/202606161700_block6_archive_demo_test_data.sql` soft-archived: 4 demo drivers
+(`%Demo%`→`archived_at`), 5 DEMO-L loads (`soft_deleted_at`), 4 TEST-TRUCK units
+(`deactivated_at`). 3 Rivers + all customers + 77 real drivers UNTOUCHED. Reversible via
+`migration.block6_demo_purge_ledger` (13 rows). Local run + GUARD prod baseline both confirmed.
+
+## ⏭️ PASS 2 (FOLLOW-UP) — equipment / vendors / work_orders — count-first, then gated migration
+Run these at the DB / Neon console (**NOT `limit=500` — it 400s → false zero**). Count + list to
+eyeball BEFORE archiving (the 3-Rivers lesson: confirm each row is truly demo, never archive real assets).
+
+```sql
+-- EQUIPMENT: SAM-* phantom (truck mis-synced as trailer, per 2F) + TEST- ; ACTIVE only
+SELECT
+  count(*) FILTER (WHERE equipment_number ILIKE 'TEST-%') AS test_equipment,
+  count(*) FILTER (WHERE samsara_vehicle_id IS NOT NULL
+           AND EXISTS (SELECT 1 FROM mdata.units u WHERE u.samsara_vehicle_id = e.samsara_vehicle_id)) AS phantom_sam
+FROM mdata.equipment e WHERE e.deactivated_at IS NULL;
+SELECT id, equipment_number, equipment_type, samsara_vehicle_id FROM mdata.equipment e
+WHERE e.deactivated_at IS NULL
+  AND (equipment_number ILIKE 'TEST-%'
+       OR (samsara_vehicle_id IS NOT NULL
+           AND EXISTS (SELECT 1 FROM mdata.units u WHERE u.samsara_vehicle_id = e.samsara_vehicle_id)))
+ORDER BY equipment_number;
+
+-- VENDORS: TEST-/seed- ; ACTIVE only
+SELECT count(*) AS demo_vendors FROM mdata.vendors
+WHERE deactivated_at IS NULL AND (vendor_name ILIKE 'TEST-%' OR vendor_name ILIKE 'seed-%');
+SELECT id, vendor_name FROM mdata.vendors
+WHERE deactivated_at IS NULL AND (vendor_name ILIKE 'TEST-%' OR vendor_name ILIKE 'seed-%') ORDER BY vendor_name;
+
+-- WORK ORDERS: tied to demo units (TEST-) or TEST display_id (WO has no load link)
+SELECT count(*) AS demo_work_orders FROM maintenance.work_orders wo
+WHERE COALESCE(wo.display_id,'') ILIKE '%TEST%'
+   OR wo.unit_id IN (SELECT id FROM mdata.units WHERE unit_number ILIKE 'TEST-%');
+SELECT wo.id, wo.display_id, wo.status, wo.unit_id FROM maintenance.work_orders wo
+WHERE COALESCE(wo.display_id,'') ILIKE '%TEST%'
+   OR wo.unit_id IN (SELECT id FROM mdata.units WHERE unit_number ILIKE 'TEST-%') ORDER BY wo.display_id;
+```
+
+**PASS 2 migration notes:** equipment + vendors have `deactivated_at` (same pattern as #1048).
+`maintenance.work_orders` has **no soft-delete column** (only `status`/`display_id`/`unit_id`) → the
+follow-up must `ALTER TABLE maintenance.work_orders ADD COLUMN IF NOT EXISTS archived_at timestamptz`
+then archive. Same ledger (`migration.block6_demo_purge_ledger`), gated (GUARD counts → Jorge OK).
+Phantom SAM-* relates to deferred 2F (tracker row 886) — equipment phantom cleanup belongs here.
+
 ## ⚠️ GUARD PRE-CHECK FINDINGS (2026-06-16) — corrections to v1 of this plan
 1. **"3 RIVERS LOGISTICS" IS LIKELY REAL — DO NOT ARCHIVE THE CUSTOMER.** It has a real email
    (jeane@3riverslogistics.com), Late-pay/FMCSA tags, and sits among real freight brokers (AMPLIFY,
