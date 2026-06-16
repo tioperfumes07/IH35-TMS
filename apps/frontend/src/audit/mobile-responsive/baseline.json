@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "GAP-91 initial baseline (189 known issues — fix blocks per module)",
+  "note": "GAP-91 initial baseline (189 known issues \u2014 fix blocks per module)",
   "issues": [
     {
       "id": "input-under-44px:apps/frontend/src/pages/Customers.tsx",
@@ -2269,6 +2269,54 @@
       },
       "suggested_fix": "See gap-91 spec",
       "owner_module": "driver-pwa"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/forms/DatePicker.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/forms/DatePicker.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/forms/MoneyInput.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/forms/MoneyInput.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/forms/MoneyInput.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/forms/MoneyInput.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/forms/TimePicker.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/forms/TimePicker.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
+      "owner_module": "office-tms"
     }
   ]
 }
