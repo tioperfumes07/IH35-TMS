@@ -393,7 +393,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "operating_company_id_required" });
     }
 
-    const customers = await withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
       const filters: string[] = [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL];
@@ -413,9 +413,13 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       }
       values.push(resolvedOperatingCompanyId);
       filters.push(`operating_company_id = $${values.length}`);
+      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const countRes = await client.query<{ total: number }>(
+        `SELECT count(*)::int AS total FROM mdata.customers ${whereClause}`,
+        values
+      );
       values.push(limit);
       values.push(offset);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const orderClause =
         searchContainsIdx && searchPrefixIdx
           ? `
@@ -444,7 +448,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       const mapped = res.rows.map((row) => mapCustomerRow(row, canReadTaxId(authUser.role)));
       const customerIds = mapped.map((row) => String(row["id"] ?? ""));
       const relationshipScores = await relationshipScoreByCustomerId(client, resolvedOperatingCompanyId, customerIds);
-      return mapped.map((row) => {
+      const enriched = mapped.map((row) => {
         const score = relationshipScores.get(String(row["id"] ?? ""));
         return {
           ...row,
@@ -453,8 +457,9 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           relationship_score_computed_at: score?.computed_at ?? null,
         };
       });
+      return { rows: enriched, total: countRes.rows[0]?.total ?? 0 };
     });
-    return { customers };
+    return { customers: result.rows, total: result.total };
   });
 
   app.post("/api/v1/mdata/customers", async (req, reply) => {

@@ -137,7 +137,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "operating_company_id_required" });
     }
 
-    const vendors = await withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
       const filters: string[] = [];
@@ -154,9 +154,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       }
       values.push(resolvedOperatingCompanyId);
       filters.push(`operating_company_id = $${values.length}`);
+      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const countRes = await client.query<{ total: number }>(
+        `SELECT count(*)::int AS total FROM mdata.vendors ${whereClause}`,
+        values
+      );
       values.push(limit);
       values.push(offset);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
           SELECT
@@ -185,9 +189,9 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows.map((row) => scrubVendorProjectionSource(row as Record<string, unknown>));
+      return { rows: res.rows.map((row) => scrubVendorProjectionSource(row as Record<string, unknown>)), total: countRes.rows[0]?.total ?? 0 };
     });
-    return { vendors };
+    return { vendors: result.rows, total: result.total };
   });
 
   app.post("/api/v1/mdata/vendors", async (req, reply) => {
