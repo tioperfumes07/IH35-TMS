@@ -1,0 +1,30 @@
+{
+  "block_id": "FEAT-FH-2-LOAN-WIZARD",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
+  "phase": "FINANCE-HUB",
+  "task": "FH-2 Loan Wizard — Finance Hub centerpiece, PREVIEW/COMPUTE-ONLY (Tier 3). One form computes the full preview-first draft set a financed asset purchase would create: loan record (Note Payable long-term / Loan Payable current by term), fixed asset + straight-line depreciation schedule, down-payment, amortization schedule, and a BALANCED opening JE (Dr asset / Cr note payable / Cr cash — balances or fails). ZERO ledger writes: loan-math.ts + preview.service.ts are PURE (no DB client); the route only validates + flag-checks + returns the computed preview as data. Entire feature gated behind its own new OFF flag FINANCE_HUB_LOAN_WIZARD_ENABLED (migration 202606160000 registers it default false) — route returns 404 feature_disabled when OFF; frontend tab/page hidden when OFF. Structural boundary enforced by scripts/verify-fh2-no-posting.mjs (FAILS on posting_batches / journal_entry_postings / INSERT|UPDATE|DELETE accounting.* / posting-engine calls in any FH-2 file). Pure unit tests prove SUM(debits)=SUM(credits) on the previewed opening JE + amortization/depreciation correctness (no DB). POSTING is a DEFERRED, separate Tier-1 PR behind this same flag with full GUARD ceremony — explicitly NOT in this PR. Additive-only; no posting engine / EXPENSE_GL_POSTING_ENABLED / shipped-module behavior touched. Ship on green CI, Jorge merges.",
+  "branch": "feat/fh-2-loan-wizard",
+  "lane": "B",
+  "allowed_files": [
+    ".block-ready/FEAT-FH-2-LOAN-WIZARD.json",
+    "db/migrations/202606160000_fh2_loan_wizard_flag.sql",
+    "apps/backend/src/finance/loan-wizard/loan-math.ts",
+    "apps/backend/src/finance/loan-wizard/preview.service.ts",
+    "apps/backend/src/finance/loan-wizard/routes.ts",
+    "apps/backend/src/finance/loan-wizard/__tests__/loan-math.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/financeLoanWizard.ts",
+    "apps/frontend/src/pages/finance/LoanWizardPage.tsx",
+    "apps/frontend/src/pages/finance/FinanceModuleTabs.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-fh2-no-posting.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}

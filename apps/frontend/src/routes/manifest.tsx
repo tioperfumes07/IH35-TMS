@@ -359,6 +359,7 @@ import { TasksReportPage } from "../pages/tasks/TasksReportPage";
 // Finance module (SIDEBAR-V2-REORG-25)
 import { FinanceOverviewPage } from "../pages/finance/FinanceOverviewPage";
 import { FinanceProjectionsPage } from "../pages/finance/FinanceProjectionsPage";
+import { LoanWizardPage } from "../pages/finance/LoanWizardPage";
 import { FinanceScenariosPage } from "../pages/finance/FinanceScenariosPage";
 
 // Inventory module (SIDEBAR-V2-REORG-25)
@@ -3382,6 +3383,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/finance" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />
         <Route path="/finance/projections" element={<ProtectedRoute><FinanceProjectionsPage /></ProtectedRoute>} />
         <Route path="/finance/scenarios" element={<ProtectedRoute><FinanceScenariosPage /></ProtectedRoute>} />
+        <Route path="/finance/loan-wizard" element={<ProtectedRoute><LoanWizardPage /></ProtectedRoute>} />
         {/* Inventory module (SIDEBAR-V2-REORG-25) */}
         <Route path="/inventory" element={<ProtectedRoute><InventoryPartsStockPage /></ProtectedRoute>} />
         <Route path="/inventory/assignments" element={<ProtectedRoute><InventoryAssignmentsPage /></ProtectedRoute>} />

@@ -1,6 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { FINANCE_HUB_LOAN_WIZARD_FLAG } from "../../api/financeLoanWizard";
 
-const tabs = [
+const baseTabs = [
   { id: "overview", label: "Overview", to: "/finance" },
   { id: "projections", label: "Projections", to: "/finance/projections" },
   { id: "scenarios", label: "Scenarios", to: "/finance/scenarios" },
@@ -10,6 +13,12 @@ export function FinanceModuleTabs() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const { selectedCompanyId } = useCompanyContext();
+  // Loan Wizard tab only appears once its OFF-by-default flag is enabled (Tier-3 gate).
+  const { enabled: loanWizardEnabled } = useFeatureFlag(FINANCE_HUB_LOAN_WIZARD_FLAG, selectedCompanyId ?? undefined);
+  const tabs = loanWizardEnabled
+    ? [...baseTabs, { id: "loan-wizard", label: "Loan Wizard", to: "/finance/loan-wizard" }]
+    : baseTabs;
 
   return (
     <div className="border-b border-gray-200">
