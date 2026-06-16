@@ -350,6 +350,10 @@
       "reason": "Samsara driver import — integration sync; spine emit on driver create route"
     },
     {
+      "file": "apps/backend/src/integrations/samsara/samsara-hos-pull.service.ts",
+      "reason": "HOS duty-status projection from Samsara — idempotent INSERT...ON CONFLICT into append-only hos.duty_status_events; telematics pipeline, audited at cron tick (cron_samsara_hos_pull_tick)"
+    },
+    {
       "file": "apps/backend/src/integrations/samsara/engine-faults/fault-handler.service.ts",
       "reason": "Engine fault handler — telematics pipeline, spine via maintenance-spine-emit"
     },
