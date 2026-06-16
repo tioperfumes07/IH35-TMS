@@ -191,7 +191,7 @@ export function LoadTemplatePicker({ operatingCompanyId, onSelectTemplate }: Pic
     <label className="flex flex-col text-[10px] font-semibold text-gray-700">
       Load from template
       <SelectCombobox
-        className="mt-0.5 h-8 rounded border border-gray-300 px-2 text-sm font-normal"
+        className="mt-0.5 font-normal"
         defaultValue=""
         disabled={q.isLoading || templates.length === 0}
         onChange={(e) => {

@@ -36,14 +36,14 @@ describe("QboCombobox", () => {
     );
 
     await user.click(screen.getByPlaceholderText(/Type to search QuickBooks/));
-    expect(screen.getByText(/Keep typing to search/)).toBeInTheDocument();
+    expect(screen.getByText(/Type at least 2 letters to search/)).toBeInTheDocument();
 
     await user.type(screen.getByPlaceholderText(/Type to search QuickBooks/), "a");
-    expect(screen.getByText(/Keep typing to search/)).toBeInTheDocument();
+    expect(screen.getByText(/Type at least 2 letters to search/)).toBeInTheDocument();
 
     await user.type(screen.getByPlaceholderText(/Type to search QuickBooks/), "b");
     await waitFor(() => {
-      expect(screen.queryByText(/Keep typing to search/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Type at least 2 letters to search/)).not.toBeInTheDocument();
     });
   });
 });
