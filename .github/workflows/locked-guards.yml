@@ -154,3 +154,6 @@ jobs:
 
       - name: verify:soft-delete-list-filter
         run: npm run verify:soft-delete-list-filter
+
+      - name: verify:manual-projection-sum
+        run: npm run verify:manual-projection-sum
