@@ -110,6 +110,9 @@ jobs:
 
       - name: verify:cash-forecast-opening-excludes-credit
         run: npm run verify:cash-forecast-opening-excludes-credit
+
+      - name: verify:cash-flow-auto-opening-excludes-credit
+        run: npm run verify:cash-flow-auto-opening-excludes-credit
       - name: verify:booking-driver-names
         run: npm run verify:booking-driver-names
 
