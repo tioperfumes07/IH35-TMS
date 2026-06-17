@@ -47,13 +47,20 @@ type KanbanColumnDef = {
   showDwell?: boolean;
 };
 
+// DISPATCH-REDESIGN Part D — Jorge's 10 lanes, exact order. "Cancelled" is KEPT as a
+// collapsed 11th lane (additive-only: never delete a lane). Two splits — Awaiting vs Booked
+// unassigned, and Loaded vs In transit — depend on the same Samsara geofence/late-detection
+// feed that HOS/OOS/cash-ETA are gated on; until that feed is confirmed they separate
+// best-effort by status (Loaded stays empty unless a "departed pickup" signal arrives).
 const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
-  { key: "pending", title: "Pending", statuses: ["draft", "booked", "planned", "unassigned"], dropStatus: "planned" },
+  { key: "awaiting_assignment", title: "Awaiting assignment", statuses: ["draft", "planned", "unassigned"], dropStatus: "planned" },
+  { key: "booked_unassigned", title: "Booked unassigned", statuses: ["booked"], dropStatus: "booked" },
   { key: "assigned", title: "Assigned", statuses: ["assigned", "assigned_not_dispatched"], dropStatus: "assigned" },
-  { key: "en_route", title: "En Route", statuses: ["dispatched"], dropStatus: "dispatched" },
-  { key: "at_pickup", title: "At Pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true },
-  { key: "loaded", title: "Loaded", statuses: ["in_transit"], dropStatus: "in_transit" },
-  { key: "at_delivery", title: "At Delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true },
+  { key: "dispatched", title: "Dispatched", statuses: ["dispatched"], dropStatus: "dispatched" },
+  { key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true },
+  { key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit" },
+  { key: "in_transit", title: "In transit", statuses: ["in_transit"], dropStatus: "in_transit" },
+  { key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true },
   { key: "delivered", title: "Delivered", statuses: ["delivered", "delivered_pending_docs"], dropStatus: "delivered" },
   { key: "completed", title: "Completed", statuses: ["invoiced", "paid", "closed", "completed_docs_received"], dropStatus: "closed" },
   {
@@ -75,19 +82,29 @@ function resolveKanbanColumnKey(load: DispatchLoadRow): string {
   const pickupGeo = extras.pickup_geofence_state ?? null;
   const deliveryGeo = extras.delivery_geofence_state ?? null;
   const geofence = extras.geofence_state ?? null;
+  const hasAssignment = Boolean(load.assigned_unit_id || load.assigned_primary_driver_id);
 
+  // Pre-dispatch: an assigned-but-not-yet-dispatched load belongs in "Assigned", even if its
+  // status is still draft/booked/planned (status lags the assignment action).
+  if (["draft", "planned", "unassigned", "booked"].includes(status) && hasAssignment) {
+    return "assigned";
+  }
+
+  // Geofence overrides (held feed — only fire when the feed actually populates these states).
   if (status === "dispatched" && (pickupGeo === "at" || pickupGeo === "dwelling" || geofence === "at" || geofence === "dwelling")) {
     return "at_pickup";
   }
   if (status === "in_transit" && (deliveryGeo === "at" || deliveryGeo === "dwelling")) {
     return "at_delivery";
   }
-  if (status === "dispatched" && (pickupGeo === "approaching" || geofence === "approaching")) {
-    return "en_route";
+  // "Loaded" = departed pickup but not yet rolling toward delivery. Needs the geofence
+  // "departed" signal to separate from "In transit"; until then in_transit → In transit lane.
+  if (status === "in_transit" && (pickupGeo === "departed" || geofence === "departed")) {
+    return "loaded";
   }
 
   const group = KANBAN_STATUS_GROUPS.find((entry) => entry.statuses.includes(status));
-  return group?.key ?? "pending";
+  return group?.key ?? "awaiting_assignment";
 }
 
 function groupLoadsByColumn(loads: DispatchLoadRow[]) {
@@ -303,14 +320,61 @@ function KanbanDispatchCard({
   );
 }
 
+// DISPATCH-REDESIGN Part D — ~40px compact card so all 32 trucks fit on one screen.
+// Single dense row: status dot · Unit/Driver · Load # · lane · on-time dot. Still draggable.
+// The detailed card is preserved (density toggle) — additive, nothing removed.
+function KanbanCompactCard({
+  load,
+  hasActiveGeofenceBreach,
+  onClick,
+}: {
+  load: KanbanLoad;
+  hasActiveGeofenceBreach?: boolean;
+  onClick: (id: string) => void;
+}) {
+  const draggableEnabled = canDragLoad(load.status);
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: load.id,
+    data: { loadId: load.id, status: load.status },
+    disabled: !draggableEnabled,
+  });
+  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+  const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => onClick(load.id)}
+      title={`${load.load_number} · ${driverUnitLabel(load)} · ${lane}`}
+      className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-[11px] shadow-sm transition hover:bg-gray-50 ${
+        isDragging ? "opacity-60" : ""
+      } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+      data-testid={`kanban-compact-card-${load.load_number}`}
+      data-kanban-card-compact="true"
+    >
+      <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
+      <span className="min-w-0 flex-1 truncate font-semibold text-gray-900">{driverUnitLabel(load)}</span>
+      <span className="shrink-0 font-mono text-[10px] text-gray-500">{load.load_number}</span>
+      <span className="hidden min-w-0 max-w-[120px] shrink truncate text-gray-500 sm:inline">{lane}</span>
+      {hasActiveGeofenceBreach ? <span className="shrink-0 text-red-600" title="Geofence breach">◆</span> : null}
+      {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
+    </div>
+  );
+}
+
 function KanbanDispatchColumn({
   column,
   loads,
+  density,
   activeGeofenceBreachVehicleIds,
   onLoadClick,
 }: {
   column: KanbanColumnDef;
   loads: DispatchLoadRow[];
+  density: "compact" | "detailed";
   activeGeofenceBreachVehicleIds?: Set<string>;
   onLoadClick: (loadId: string) => void;
 }) {
@@ -327,23 +391,36 @@ function KanbanDispatchColumn({
     );
   }
 
+  const compact = density === "compact";
   return (
-    <section className="min-w-[290px] flex-1 rounded border border-gray-200 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
+    <section
+      className={`${compact ? "min-w-[200px]" : "min-w-[290px]"} flex-1 rounded border border-gray-200 bg-white p-2`}
+      data-testid={`kanban-column-${column.key}`}
+    >
       <header className="mb-2 flex items-center justify-between border-b border-gray-100 pb-2">
         <h3 className="text-sm font-semibold text-gray-700">{column.title}</h3>
         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
       </header>
-      <div ref={setNodeRef} className={`max-h-[68vh] space-y-2 overflow-y-auto rounded p-1 ${isOver ? "bg-blue-50" : "bg-transparent"}`}>
+      <div ref={setNodeRef} className={`max-h-[68vh] ${compact ? "space-y-1" : "space-y-2"} overflow-y-auto rounded p-1 ${isOver ? "bg-blue-50" : "bg-transparent"}`}>
         {loads.length === 0 ? <div className="rounded border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
-        {loads.map((load) => (
-          <KanbanDispatchCard
-            key={load.id}
-            load={readExtras(load)}
-            columnKey={column.key}
-            hasActiveGeofenceBreach={Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id))}
-            onClick={onLoadClick}
-          />
-        ))}
+        {loads.map((load) =>
+          compact ? (
+            <KanbanCompactCard
+              key={load.id}
+              load={readExtras(load)}
+              hasActiveGeofenceBreach={Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id))}
+              onClick={onLoadClick}
+            />
+          ) : (
+            <KanbanDispatchCard
+              key={load.id}
+              load={readExtras(load)}
+              columnKey={column.key}
+              hasActiveGeofenceBreach={Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id))}
+              onClick={onLoadClick}
+            />
+          )
+        )}
       </div>
     </section>
   );
@@ -351,6 +428,8 @@ function KanbanDispatchColumn({
 
 export function DispatchKanban({ loads, activeGeofenceBreachVehicleIds, loading, onLoadClick, onStatusDrop, listError }: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
+  // Part D — default to compact so the whole fleet (32 trucks) fits without scrolling.
+  const [density, setDensity] = useState<"compact" | "detailed">("compact");
   const { pushToast } = useToast();
 
   useEffect(() => {
@@ -358,6 +437,10 @@ export function DispatchKanban({ loads, activeGeofenceBreachVehicleIds, loading,
   }, [loads]);
 
   const grouped = useMemo(() => groupLoadsByColumn(optimisticLoads), [optimisticLoads]);
+  // Fleet out-of-service strip (Part D). No fleet-OOS feed reaches this board yet, so we
+  // surface breakdown loads best-effort and flag that the full OOS feed is held — same gate
+  // as HOS/geofence. Once Jorge wires the OOS source this strip lists every down unit.
+  const outOfServiceLoads = useMemo(() => optimisticLoads.filter(isBreakdown), [optimisticLoads]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const activeId = event.active.id;
@@ -401,16 +484,68 @@ export function DispatchKanban({ loads, activeGeofenceBreachVehicleIds, loading,
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-2" data-testid="dispatch-kanban-board">
-        {KANBAN_STATUS_GROUPS.map((group) => (
-          <KanbanDispatchColumn
-            key={group.key}
-            column={group}
-            loads={grouped.get(group.key) ?? []}
-            activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
-            onLoadClick={onLoadClick}
-          />
-        ))}
+      <div className="relative" data-testid="dispatch-kanban-board">
+        <div className="mb-2 flex items-center justify-end gap-1 text-[11px]">
+          <span className="text-gray-500">Density</span>
+          {(["compact", "detailed"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setDensity(mode)}
+              className={`rounded border px-2 py-0.5 font-semibold capitalize ${
+                density === mode ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+              data-testid={`kanban-density-${mode}`}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {KANBAN_STATUS_GROUPS.map((group) => (
+            <KanbanDispatchColumn
+              key={group.key}
+              column={group}
+              loads={grouped.get(group.key) ?? []}
+              density={density}
+              activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
+              onLoadClick={onLoadClick}
+            />
+          ))}
+        </div>
+
+        {/* Part D — Fleet out-of-service strip, pinned at the bottom of the board. */}
+        <section
+          className="sticky bottom-0 mt-2 rounded border border-amber-200 bg-amber-50 p-2"
+          data-testid="dispatch-kanban-oos-strip"
+        >
+          <header className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-800">Fleet out of service</h3>
+            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-amber-700">{outOfServiceLoads.length}</span>
+          </header>
+          {outOfServiceLoads.length === 0 ? (
+            <p className="mt-1 text-[11px] italic text-amber-700">
+              Full fleet out-of-service feed pending — no units flagged.
+            </p>
+          ) : (
+            <div className="mt-1 flex flex-wrap gap-2">
+              {outOfServiceLoads.map((load) => (
+                <button
+                  key={load.id}
+                  type="button"
+                  onClick={() => onLoadClick(load.id)}
+                  className="flex items-center gap-2 rounded border border-amber-300 bg-white px-2 py-1 text-[11px] hover:bg-amber-100"
+                >
+                  <span className="text-red-600" aria-hidden>▲</span>
+                  <span className="font-semibold text-gray-900">{driverUnitLabel(load)}</span>
+                  <span className="font-mono text-[10px] text-gray-500">{load.load_number}</span>
+                  <span className="rounded bg-red-100 px-1.5 text-[10px] font-semibold text-red-800">Breakdown</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </DndContext>
   );
