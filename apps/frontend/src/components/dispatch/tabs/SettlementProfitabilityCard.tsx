@@ -20,8 +20,10 @@ type Props = {
   currencyCode: "USD" | "MXN";
 };
 
-function money(cents: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(cents / 100);
+function money(cents: number | null | undefined, currency?: string | null) {
+  // Never construct NumberFormat with a null amount or a blank currency (both throw).
+  if (cents == null || Number.isNaN(Number(cents))) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD", maximumFractionDigits: 0 }).format(Number(cents) / 100);
 }
 
 function Row({ label, cents, currency, negative = false }: { label: string; cents: number; currency: string; negative?: boolean }) {
