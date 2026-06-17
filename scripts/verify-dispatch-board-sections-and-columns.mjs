@@ -51,4 +51,23 @@ for (const title of ["Awaiting assignment", "Booked", "Out of service"]) {
   if (!src.includes(`"${title}"`)) fail(`missing section title: ${title}`);
 }
 
+// 4b. Partition PREDICATE, not just titles: Awaiting = isUnassignedLoad (no truck), Booked =
+// !isUnassignedLoad. Guards against the inverted isBookedReserved basis that put unassigned loads
+// under "Booked".
+const sectionsDecl = src.indexOf("const LIST_SECTIONS");
+// Start at the array LITERAL (`}> = [`) so the type annotation's `DispatchLoadRow[];` doesn't end
+// the slice early on its `];`.
+const sectionsStart = src.indexOf("}> = [", sectionsDecl);
+const sectionsEnd = src.indexOf("];", sectionsStart);
+const sectionsBlock = sectionsStart >= 0 && sectionsEnd >= 0 ? src.slice(sectionsStart, sectionsEnd) : "";
+if (!sectionsBlock.includes("loads.filter(isUnassignedLoad)")) {
+  fail("Awaiting assignment must partition on isUnassignedLoad (loads with no truck assigned)");
+}
+if (!sectionsBlock.includes("!isUnassignedLoad(load)")) {
+  fail("Booked must partition on !isUnassignedLoad");
+}
+if (sectionsBlock.includes("isBookedReserved")) {
+  fail("LIST_SECTIONS must NOT use the inverted isBookedReserved basis");
+}
+
 console.log("PASS verify-dispatch-board-sections-and-columns");

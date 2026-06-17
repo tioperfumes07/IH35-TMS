@@ -103,6 +103,10 @@ function isAssignedLoad(load: DispatchLoadRow) {
 
 // DISPATCH-REDESIGN Part C — the three List/Table sections. Each section's rows() is a pure
 // partition of the already-sorted/filtered loads so no row is lost and ordering is preserved.
+// AWAITING ASSIGNMENT = loads with NO truck assigned (the pending population, isUnassignedLoad);
+// BOOKED = everything that has a truck / is in progress. (The earlier isBookedReserved basis was
+// inverted — it put reserved-unassigned loads under "Awaiting" but the rest under "Booked", so an
+// unassigned load showed under Booked. GUARD-confirmed live.)
 // "Out of service" is a fleet/unit status with no load-level source yet, so it renders a
 // placeholder (held, like the HOS columns) until Jorge confirms the OOS feed.
 const LIST_SECTIONS: Array<{
@@ -111,8 +115,8 @@ const LIST_SECTIONS: Array<{
   rows: (loads: DispatchLoadRow[]) => DispatchLoadRow[];
   placeholder?: string;
 }> = [
-  { key: "awaiting", title: "Awaiting assignment", rows: (loads) => loads.filter(isBookedReserved) },
-  { key: "booked", title: "Booked", rows: (loads) => loads.filter((load) => !isBookedReserved(load)) },
+  { key: "awaiting", title: "Awaiting assignment", rows: (loads) => loads.filter(isUnassignedLoad) },
+  { key: "booked", title: "Booked", rows: (loads) => loads.filter((load) => !isUnassignedLoad(load)) },
   { key: "oos", title: "Out of service", rows: () => [], placeholder: "Fleet out-of-service feed pending — no units flagged." },
 ];
 
