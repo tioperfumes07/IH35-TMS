@@ -613,6 +613,7 @@
     "verify:fleet-bulk-soft-delete": "node scripts/verify-fleet-bulk-soft-delete.mjs",
     "verify:factoring-sidebar-nav": "node scripts/verify-factoring-sidebar-nav.mjs",
     "verify:table-controls-shared": "node scripts/verify-table-controls-shared.mjs",
+    "verify:dispatch-filter-toolbar": "node scripts/verify-dispatch-filter-toolbar.mjs",
     "verify:form-input-density": "node scripts/verify-form-input-density.mjs"
   },
   "dependencies": {
