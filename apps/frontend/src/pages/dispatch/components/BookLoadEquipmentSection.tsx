@@ -3,6 +3,7 @@ import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-
 import { listDrivers, listDriverTeams, listUnits } from "../../../api/mdata";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { OptimalDriversPanel } from "../../../components/dispatch/OptimalDriversPanel";
+import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHosClocks";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -50,6 +51,7 @@ function toDriverOption(row: unknown, index: number): Option {
 export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId }: Props) {
   const assignmentMode = watch ? watch("assignment_mode") : "solo";
   const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "") : "";
+  const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "") : "";
   const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
   const hazmat = watch ? Boolean(watch("hazmat")) : false;
@@ -163,6 +165,14 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
+      {/* DISPATCH-UI-REFINE-2 ITEM 3 — driver HOS from the in-app store (#1109), shown before assigning.
+          Team driver clocks appear too in Team mode. "No HOS data" until the Samsara HOS pull is seeded. */}
+      {primaryDriverId ? (
+        <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS" />
+      ) : null}
+      {assignmentMode === "team" && secondaryDriverId ? (
+        <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
+      ) : null}
       {operatingCompanyId && pickupStop?.city ? (
         <OptimalDriversPanel
           loadId={optimizerLoadKey}

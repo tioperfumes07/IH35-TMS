@@ -42,7 +42,7 @@ export function BookLoadStopsSection({ control, register }: Props) {
                 {index % 2 === 0 ? "PICKUP" : "DELIVERY"}
               </span>
               <span className="font-mono text-[10px] text-gray-500">STOP-{index + 1}</span>
-              <span className="flex-1 truncate text-gray-800">{`${currentStops[index]?.address_line1 ?? "Address pending"}`}</span>
+              <span className="flex-1 truncate text-gray-800">{`${currentStops[index]?.address_full || currentStops[index]?.address_line1 || "Address pending"}`}</span>
               <span className="text-[10px] text-gray-500">
                 {formatStopDate(currentStops[index]?.scheduled_arrival_at)}
               </span>
@@ -61,6 +61,25 @@ export function BookLoadStopsSection({ control, register }: Props) {
             </div>
             {expandedRows[field.id] ? (
               <div className="mt-2 grid grid-cols-1 gap-2 border-t border-gray-200 pt-2 md:grid-cols-2">
+                {/* DISPATCH-UI-REFINE-2 ITEM 4 — single full-width address line (interim, pre-PC*MILER).
+                    The parsed Address/City/State/Country fields below are KEPT (additive) for when
+                    PC*MILER parsing lands; this one line is the visible primary entry. */}
+                <div className="md:col-span-2">
+                  <Field
+                    label="Address (one line)"
+                    input={
+                      <input
+                        {...register(`stops.${index}.address_full`)}
+                        data-stop-address-oneline="true"
+                        placeholder="123 Main St, Laredo, TX 78040, USA"
+                        className="h-7 w-full rounded border border-gray-300 px-2 text-xs"
+                      />
+                    }
+                  />
+                </div>
+                <div className="md:col-span-2 -mb-1 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-400">
+                  Parsed location (kept for PC*MILER)
+                </div>
                 <Field
                   label="Type"
                   input={
@@ -127,6 +146,7 @@ export function BookLoadStopsSection({ control, register }: Props) {
             city: "",
             state: "",
             country: "USA",
+            address_full: "",
             address_line1: "",
             scheduled_arrival_at: "",
             time_window_type: "appointment",

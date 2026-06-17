@@ -56,6 +56,11 @@ type KanbanLoadExtras = {
 
 type KanbanLoad = DispatchLoadRow & KanbanLoadExtras;
 
+// DISPATCH-UI-REFINE-2 ITEM 1 — three densities (additive). Standard is the default.
+type KanbanDensity = "compact" | "standard" | "detailed";
+const KANBAN_DENSITIES: readonly KanbanDensity[] = ["compact", "standard", "detailed"] as const;
+const KANBAN_DEFAULT_DENSITY: KanbanDensity = "standard";
+
 type KanbanColumnDef = {
   key: string;
   title: string;
@@ -157,6 +162,20 @@ function driverUnitLabel(load: DispatchLoadRow): string {
   if (!driver && !unit) return "Unassigned";
   if (driver && unit) return `${driver} · ${unit}`;
   return driver ?? unit ?? "Unassigned";
+}
+
+// DISPATCH-UI-REFINE-2 ITEM 2 — UNIT-FIRST cards. Any load that has a unit shows the UNIT NUMBER as
+// the primary (bold) line; the LOAD # drops to a muted secondary line. Loads with no unit (e.g. Booked
+// unassigned) keep the load # primary. Awaiting-assignment cards are already unit-first (synthetic).
+function cardPrimaryLabel(load: DispatchLoadRow): string {
+  return load.assigned_unit_number || load.load_number;
+}
+function cardSecondaryLoadNumber(load: DispatchLoadRow): string | null {
+  // Only surface the load # as a secondary line when the unit already occupies the primary line.
+  return load.assigned_unit_number ? load.load_number : null;
+}
+function driverNameLabel(load: DispatchLoadRow): string {
+  return load.assigned_primary_driver_name || "Unassigned";
 }
 
 function onTimeChipClass(load: DispatchLoadRow): string {
@@ -290,13 +309,19 @@ function KanbanDispatchCard({
       data-testid={`kanban-card-${load.load_number}`}
     >
       <div className="absolute inset-y-0 right-0 w-1 rounded-r bg-gray-400" />
+      {/* DISPATCH-UI-REFINE-2 ITEM 2 — unit primary, load # secondary (when a unit is assigned). */}
       <div className="flex items-center justify-between gap-2">
-        <div className="font-semibold text-gray-900">{load.load_number}</div>
+        <div className="font-semibold text-gray-900" data-kanban-card-primary="unit">{cardPrimaryLabel(load)}</div>
         <div className="text-sm">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</div>
       </div>
+      {cardSecondaryLoadNumber(load) ? (
+        <div className="font-mono text-[11px] text-gray-500" data-kanban-card-secondary="load-number">
+          {cardSecondaryLoadNumber(load)}
+        </div>
+      ) : null}
 
       <div className="mt-1 text-xs text-gray-600">{lane}</div>
-      <div className="mt-1 text-xs font-medium text-gray-800">{driverUnitLabel(load)}</div>
+      <div className="mt-1 text-xs font-medium text-gray-800">{driverNameLabel(load)}</div>
 
       <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-gray-600">
         <span className="rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-700">{mode}</span>
@@ -386,6 +411,66 @@ function KanbanCompactCard({
   );
 }
 
+// DISPATCH-UI-REFINE-2 ITEM 1 — STANDARD density (the default): exactly 2 lines. Line 1 = primary
+// (unit-first, on-time dot, flag); line 2 = secondary (load # · driver · lane). No origin→dest sentence,
+// no "FTL — —" filler row, no "Unknown" badge row. Sits between Compact (1 line) and Detailed (~5 lines).
+function KanbanStandardCard({
+  load,
+  hasActiveGeofenceBreach,
+  onClick,
+}: {
+  load: KanbanLoad;
+  hasActiveGeofenceBreach?: boolean;
+  onClick: (id: string) => void;
+}) {
+  const draggableEnabled = canDragLoad(load.status);
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: load.id,
+    data: { loadId: load.id, status: load.status },
+    disabled: !draggableEnabled,
+  });
+  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+  const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
+  const secondaryLoad = cardSecondaryLoadNumber(load);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => onClick(load.id)}
+      title={`${cardPrimaryLabel(load)} · ${load.load_number} · ${lane}`}
+      className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-[11px] shadow-sm transition hover:bg-gray-50 ${
+        isDragging ? "opacity-60" : ""
+      } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+      data-testid={`kanban-standard-card-${load.load_number}`}
+      data-kanban-card-standard="true"
+    >
+      {/* line 1 — primary: unit-first */}
+      <div className="flex items-center gap-2">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
+        <span className="min-w-0 flex-1 truncate font-semibold text-gray-900" data-kanban-card-primary="unit">
+          {cardPrimaryLabel(load)}
+        </span>
+        {hasActiveGeofenceBreach ? <span className="shrink-0 text-red-600" title="Geofence breach">◆</span> : null}
+        {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
+        <span className="shrink-0 text-sm">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</span>
+      </div>
+      {/* line 2 — secondary: load # · driver · lane */}
+      <div className="flex items-center gap-1.5 truncate text-[10px] text-gray-500">
+        {secondaryLoad ? (
+          <span className="shrink-0 font-mono" data-kanban-card-secondary="load-number">
+            {secondaryLoad}
+          </span>
+        ) : null}
+        <span className="min-w-0 max-w-[110px] shrink truncate">{driverNameLabel(load)}</span>
+        <span className="min-w-0 shrink truncate">· {lane}</span>
+      </div>
+    </div>
+  );
+}
+
 function KanbanDispatchColumn({
   column,
   loads,
@@ -395,7 +480,7 @@ function KanbanDispatchColumn({
 }: {
   column: KanbanColumnDef;
   loads: DispatchLoadRow[];
-  density: "compact" | "detailed";
+  density: KanbanDensity;
   activeGeofenceBreachVehicleIds?: Set<string>;
   onLoadClick: (loadId: string) => void;
 }) {
@@ -412,36 +497,37 @@ function KanbanDispatchColumn({
     );
   }
 
-  const compact = density === "compact";
+  const detailed = density === "detailed";
+  const minWidth = density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]";
   return (
     <section
-      className={`${compact ? "min-w-[200px]" : "min-w-[290px]"} flex-1 rounded border border-gray-200 bg-white p-2`}
+      className={`${minWidth} flex-1 rounded border border-gray-200 bg-white p-2`}
       data-testid={`kanban-column-${column.key}`}
     >
       <header className="mb-2 flex items-center justify-between border-b border-gray-100 pb-2">
         <h3 className="text-sm font-semibold text-gray-700">{column.title}</h3>
         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
       </header>
-      <div ref={setNodeRef} className={`max-h-[68vh] ${compact ? "space-y-1" : "space-y-2"} overflow-y-auto rounded p-1 ${isOver ? "bg-blue-50" : "bg-transparent"}`}>
+      <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded p-1 ${isOver ? "bg-blue-50" : "bg-transparent"}`}>
         {loads.length === 0 ? <div className="rounded border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
-        {loads.map((load) =>
-          compact ? (
-            <KanbanCompactCard
-              key={load.id}
-              load={readExtras(load)}
-              hasActiveGeofenceBreach={Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id))}
-              onClick={onLoadClick}
-            />
-          ) : (
+        {loads.map((load) => {
+          const breach = Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id));
+          if (density === "compact") {
+            return <KanbanCompactCard key={load.id} load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} />;
+          }
+          if (density === "standard") {
+            return <KanbanStandardCard key={load.id} load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} />;
+          }
+          return (
             <KanbanDispatchCard
               key={load.id}
               load={readExtras(load)}
               columnKey={column.key}
-              hasActiveGeofenceBreach={Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id))}
+              hasActiveGeofenceBreach={breach}
               onClick={onLoadClick}
             />
-          )
-        )}
+          );
+        })}
       </div>
     </section>
   );
@@ -449,8 +535,9 @@ function KanbanDispatchColumn({
 
 export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreachVehicleIds, loading, onLoadClick, onStatusDrop, listError }: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
-  // Part D — default to compact so the whole fleet (32 trucks) fits without scrolling.
-  const [density, setDensity] = useState<"compact" | "detailed">("compact");
+  // DISPATCH-UI-REFINE-2 ITEM 1 — default to STANDARD (2-line) density. Compact (1-line) + Detailed
+  // (~5-line) remain available via the toggle (additive). Standard balances fleet density vs readability.
+  const [density, setDensity] = useState<KanbanDensity>(KANBAN_DEFAULT_DENSITY);
   const { pushToast } = useToast();
 
   useEffect(() => {
@@ -510,7 +597,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
       <div className="relative" data-testid="dispatch-kanban-board">
         <div className="mb-2 flex items-center justify-end gap-1 text-[11px]">
           <span className="text-gray-500">Density</span>
-          {(["compact", "detailed"] as const).map((mode) => (
+          {KANBAN_DENSITIES.map((mode) => (
             <button
               key={mode}
               type="button"
