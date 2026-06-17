@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 export type PeriodPreset =
   | "this_week"
@@ -223,20 +224,18 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
       {/* From / To — content-width, not stretchy */}
       <div className="flex items-center gap-1">
         <span className="text-xs text-gray-500">From</span>
-        <input
-          type="date"
+        <DatePicker
           className="h-[28px] px-2 text-xs border rounded bg-white"
           value={value.from}
-          onChange={(e) => handleFrom(e.target.value)}
+          onChange={(next) => handleFrom(next)}
         />
       </div>
       <div className="flex items-center gap-1">
         <span className="text-xs text-gray-500">To</span>
-        <input
-          type="date"
+        <DatePicker
           className="h-[28px] px-2 text-xs border rounded bg-white"
           value={value.to}
-          onChange={(e) => handleTo(e.target.value)}
+          onChange={(next) => handleTo(next)}
         />
       </div>
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -177,21 +178,19 @@ export function MaintKpiDashboardPage() {
         <div className="flex flex-wrap items-end gap-2 text-xs">
           <label className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase text-slate-500">From</span>
-            <input
-              type="date"
+            <DatePicker
               className="rounded border border-gray-300 px-2 py-1"
               value={periodStart}
-              onChange={(e) => setPeriodStart(e.target.value)}
+              onChange={(next) => setPeriodStart(next)}
               data-testid="maint-kpi-filter-start"
             />
           </label>
           <label className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase text-slate-500">To</span>
-            <input
-              type="date"
+            <DatePicker
               className="rounded border border-gray-300 px-2 py-1"
               value={periodEnd}
-              onChange={(e) => setPeriodEnd(e.target.value)}
+              onChange={(next) => setPeriodEnd(next)}
               data-testid="maint-kpi-filter-end"
             />
           </label>

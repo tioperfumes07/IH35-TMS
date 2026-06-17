@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { confirmUpload, requestUploadUrl } from "../../../api/docs";
 import {
@@ -321,20 +322,18 @@ export function InspectionsPage() {
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
               <span className="text-xs text-gray-600">Scheduled date</span>
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
                 value={draft.scheduled_date}
-                onChange={(e) => setDraft((d) => ({ ...d, scheduled_date: e.target.value }))}
+                onChange={(next) => setDraft((d) => ({ ...d, scheduled_date: next }))}
               />
             </label>
             <label className="block">
               <span className="text-xs text-gray-600">Inspection date</span>
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
                 value={draft.inspection_date}
-                onChange={(e) => setDraft((d) => ({ ...d, inspection_date: e.target.value }))}
+                onChange={(next) => setDraft((d) => ({ ...d, inspection_date: next }))}
               />
             </label>
           </div>

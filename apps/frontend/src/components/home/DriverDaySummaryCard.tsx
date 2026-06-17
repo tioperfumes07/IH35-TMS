@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDriverDaySummary, type HomeDriverDaySummaryRow } from "../../api/home";
 
@@ -42,10 +43,9 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
           <h3 className="text-sm font-semibold text-slate-900">Driver day-summaries</h3>
           <p className="text-xs text-slate-500">Miles, on-duty hours, fuel stops, and arrival timeliness</p>
         </div>
-        <input
-          type="date"
+        <DatePicker
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(next) => setDate(next)}
           className="rounded border border-slate-300 px-2 py-1 text-xs"
         />
       </div>

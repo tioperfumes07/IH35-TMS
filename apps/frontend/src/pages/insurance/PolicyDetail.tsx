@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -165,20 +166,18 @@ export function PolicyDetail() {
             </label>
             <label className="text-xs font-semibold text-slate-600">
               Effective date
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
                 value={effectiveDate}
-                onChange={(event) => setEffectiveDate(event.target.value)}
+                onChange={(next) => setEffectiveDate(next)}
               />
             </label>
             <label className="text-xs font-semibold text-slate-600">
               Expiry date
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
                 value={expiryDate}
-                onChange={(event) => setExpiryDate(event.target.value)}
+                onChange={(next) => setExpiryDate(next)}
               />
             </label>
             <div className="flex items-end gap-2">

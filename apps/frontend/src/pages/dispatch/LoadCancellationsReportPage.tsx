@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -82,20 +83,18 @@ export function LoadCancellationsReportPage() {
       <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-4">
         <label className="text-xs text-gray-600">
           From
-          <input
+          <DatePicker
             className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
-            type="date"
             value={range.from}
-            onChange={(event) => setRange((prev) => ({ ...prev, from: event.target.value }))}
+            onChange={(next) => setRange((prev) => ({ ...prev, from: next }))}
           />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <input
+          <DatePicker
             className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
-            type="date"
             value={range.to}
-            onChange={(event) => setRange((prev) => ({ ...prev, to: event.target.value }))}
+            onChange={(next) => setRange((prev) => ({ ...prev, to: next }))}
           />
         </label>
         <label className="text-xs text-gray-600">

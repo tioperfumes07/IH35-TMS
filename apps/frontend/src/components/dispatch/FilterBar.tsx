@@ -1,4 +1,5 @@
 import { Combobox } from "../Combobox";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../Button";
 import type { LoadStatus } from "../../api/loads";
 import { STATUS_LABEL } from "./constants";
@@ -150,19 +151,17 @@ export function FilterBar({ value, onChange, companies, customers, drivers, onCl
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Date From</label>
-          <input
-            type="date"
+          <DatePicker
             value={value.dateFrom}
-            onChange={(event) => onChange({ ...value, dateFrom: event.target.value })}
+            onChange={(next) => onChange({ ...value, dateFrom: next })}
             className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
           />
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Date To</label>
-          <input
-            type="date"
+          <DatePicker
             value={value.dateTo}
-            onChange={(event) => onChange({ ...value, dateTo: event.target.value })}
+            onChange={(next) => onChange({ ...value, dateTo: next })}
             className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
           />
         </div>

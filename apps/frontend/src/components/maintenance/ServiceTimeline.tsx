@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -69,21 +70,19 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <label className="text-gray-600">
             From
-            <input
-              type="date"
+            <DatePicker
               className="ml-1 rounded border border-gray-300 px-1 py-0.5"
               value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
+              onChange={(next) => setFromDate(next)}
               data-testid="service-timeline-from-date"
             />
           </label>
           <label className="text-gray-600">
             To
-            <input
-              type="date"
+            <DatePicker
               className="ml-1 rounded border border-gray-300 px-1 py-0.5"
               value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
+              onChange={(next) => setToDate(next)}
               data-testid="service-timeline-to-date"
             />
           </label>
