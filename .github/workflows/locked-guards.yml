@@ -203,6 +203,9 @@ jobs:
       - name: verify:currency-format-guarded
         run: npm run verify:currency-format-guarded
 
+      - name: verify:unit-inactivate-path
+        run: npm run verify:unit-inactivate-path
+
       - name: verify:awaiting-truck-driver-hos
         run: npm run verify:awaiting-truck-driver-hos
 

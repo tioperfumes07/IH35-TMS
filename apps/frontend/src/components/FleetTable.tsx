@@ -178,20 +178,27 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
   // endpoints (units + equipment). NEVER a hard delete — the record is always retained. Inactive
   // is a separate dimension from the 5 operational statuses (Active/Sold/Transferred/Damaged/OOS).
   const inactivateMutation = useMutation({
+    // Isolate per-unit failures (Promise.allSettled) so ONE failing /deactivate can't reject the
+    // whole batch and freeze the page — a partial result is reported and the error surfaced.
     mutationFn: async (targets: FleetRow[]) => {
-      let affected = 0;
-      for (const row of targets) {
-        const resource = row.kind === "trailer" ? "equipment" : "units";
-        await apiRequest(`/api/v1/mdata/${resource}/${row.id}/deactivate`, { method: "POST", body: {} });
-        affected += 1;
-      }
-      return affected;
+      const results = await Promise.allSettled(
+        targets.map((row) => {
+          const resource = row.kind === "trailer" ? "equipment" : "units";
+          return apiRequest(`/api/v1/mdata/${resource}/${row.id}/deactivate`, { method: "POST", body: {} });
+        })
+      );
+      const ok = results.filter((r) => r.status === "fulfilled").length;
+      const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+      const firstError = failures[0]?.reason;
+      return { ok, failed: failures.length, firstError };
     },
-    onSuccess: (count) => {
-      pushToast(`${count} unit(s) inactivated`, "success");
+    onSuccess: ({ ok, failed, firstError }) => {
+      if (ok > 0) pushToast(`${ok} unit(s) inactivated${failed ? ` · ${failed} failed` : ""}`, failed ? "error" : "success");
+      else pushToast(`Inactivate failed: ${firstError instanceof Error ? firstError.message : "server error"}`, "error");
       selection.clear();
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
     },
+    // allSettled never rejects, but keep onError as a backstop so a thrown error can't hang the UI.
     onError: (error) => pushToast(error instanceof Error ? error.message : "Bulk inactivate failed", "error"),
   });
 
@@ -199,19 +206,20 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
   // equipment both accept deactivated_at:null). Soft-delete is reversible — never a hard op.
   const reactivateMutation = useMutation({
     mutationFn: async (targets: FleetRow[]) => {
-      let affected = 0;
-      for (const row of targets) {
-        if (row.kind === "trailer") {
-          await patchTrailer(row.id, operatingCompanyId, { deactivated_at: null });
-        } else {
-          await patchUnit(row.id, { deactivated_at: null });
-        }
-        affected += 1;
-      }
-      return affected;
+      const results = await Promise.allSettled(
+        targets.map((row) =>
+          row.kind === "trailer"
+            ? patchTrailer(row.id, operatingCompanyId, { deactivated_at: null })
+            : patchUnit(row.id, { deactivated_at: null })
+        )
+      );
+      const ok = results.filter((r) => r.status === "fulfilled").length;
+      const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+      return { ok, failed: failures.length, firstError: failures[0]?.reason };
     },
-    onSuccess: (count) => {
-      pushToast(`${count} unit(s) reactivated`, "success");
+    onSuccess: ({ ok, failed, firstError }) => {
+      if (ok > 0) pushToast(`${ok} unit(s) reactivated${failed ? ` · ${failed} failed` : ""}`, failed ? "error" : "success");
+      else pushToast(`Reactivate failed: ${firstError instanceof Error ? firstError.message : "server error"}`, "error");
       selection.clear();
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
     },
