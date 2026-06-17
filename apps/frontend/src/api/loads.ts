@@ -56,6 +56,11 @@ export type DispatchLoadRow = {
   driver_instructions_file_id?: string | null;
   first_pickup_city: string | null;
   first_delivery_city: string | null;
+  // ETA-MODEL BLOCK 1 — two-date delivery model (scheduling/forecast only).
+  scheduled_delivery_date?: string | null;
+  predicted_delivery_date?: string | null;
+  effective_delivery_date?: string | null;
+  delivery_late_vs_appt?: boolean;
   geofence_ready?: boolean;
   flag_code: string;
   created_at: string;

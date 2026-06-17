@@ -88,6 +88,38 @@ function laneSummary(load: DispatchLoadRow) {
   return toRouteSummary(load.first_pickup_city, load.first_delivery_city);
 }
 
+function formatApptDate(value?: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// ETA-MODEL BLOCK 1 — Delivery cell shows the destination city PLUS the effective delivery date
+// (= predicted if confirmed-late, else scheduled appt). When predicted > scheduled it turns amber
+// with a "late vs appt" tag; hover shows BOTH dates. The scheduled appt is never overwritten.
+function renderDeliveryCell(load: DispatchLoadRow) {
+  const city = load.first_delivery_city ?? "—";
+  const effective = formatApptDate(load.effective_delivery_date);
+  const scheduled = formatApptDate(load.scheduled_delivery_date);
+  const predicted = formatApptDate(load.predicted_delivery_date);
+  const late = Boolean(load.delivery_late_vs_appt);
+  return (
+    <div className="flex flex-col leading-tight">
+      <span>{city}</span>
+      {effective ? (
+        <span
+          className={late ? "font-medium text-amber-700" : "text-gray-500"}
+          title={`Scheduled appt: ${scheduled ?? "—"}${predicted ? ` · Predicted: ${predicted}` : ""}`}
+        >
+          {effective}
+          {late ? " · late vs appt" : ""}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function isUnassignedLoad(load: DispatchLoadRow) {
   return !load.assigned_unit_id;
 }
@@ -596,7 +628,7 @@ export function DispatchBoard({
     { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
     { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
-    { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
+    { key: "delivery", header: "Delivery", cell: (load) => renderDeliveryCell(load) },
     { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
     {
       key: "cargo_temp",

@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
+import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -566,6 +567,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             END AS assigned_primary_driver_name,
             sp.city AS first_pickup_city,
             sd.city AS first_delivery_city,
+            ${effectiveDeliverySelectSql("l", "sd")},
             EXISTS (
               SELECT 1
               FROM geo.geofences g
