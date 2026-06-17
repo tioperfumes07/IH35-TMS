@@ -25,6 +25,17 @@ const batchQuerySchema = z.object({
     .refine((ids) => ids.every((id) => /^[0-9a-fA-F-]{36}$/.test(id)), "driver_ids must be uuids"),
 });
 
+// Batched last-known GPS positions for the dispatch board (keyed by load).
+const batchLoadQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  load_ids: z
+    .string()
+    .min(1)
+    .transform((raw) => Array.from(new Set(raw.split(",").map((id) => id.trim()).filter(Boolean))))
+    .refine((ids) => ids.length > 0 && ids.length <= 200, "load_ids must contain 1–200 ids")
+    .refine((ids) => ids.every((id) => /^[0-9a-fA-F-]{36}$/.test(id)), "load_ids must be uuids"),
+});
+
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -186,6 +197,63 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
         };
       }
       return { clocks_by_driver: clocksByDriver };
+    });
+
+    return payload;
+  });
+
+  // Batched last-known GPS positions for the dispatch board's Live GPS column — one call returns
+  // the latest in-app position (from integrations.samsara_vehicle_positions) for every visible
+  // load's assigned unit. Per-entity scoped. Replaces the hardcoded null stub on the board.
+  app.get("/api/v1/dispatch/load-positions", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    const query = batchLoadQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const payload = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
+
+      // Latest position per load via its assigned unit. Confined to this entity's loads + positions.
+      const res = await client.query<{
+        load_id: string;
+        lat: number;
+        lng: number;
+        speed_mph: number | null;
+        recorded_at: string;
+        stale: boolean;
+      }>(
+        `
+          SELECT
+            l.id::text AS load_id,
+            p.lat,
+            p.lng,
+            p.speed_mph,
+            p.recorded_at::text AS recorded_at,
+            (p.recorded_at < now() - interval '15 minutes') AS stale
+          FROM mdata.loads l
+          JOIN integrations.samsara_vehicle_positions p
+            ON p.unit_uuid = l.assigned_unit_id
+            AND p.operating_company_id = l.operating_company_id
+          WHERE l.operating_company_id = $1::uuid
+            AND l.id = ANY($2::uuid[])
+            AND l.assigned_unit_id IS NOT NULL
+        `,
+        [query.data.operating_company_id, query.data.load_ids]
+      );
+
+      const positionsByLoad: Record<string, { lat: number; lng: number; speed_mph: number | null; recorded_at: string; stale: boolean }> = {};
+      for (const row of res.rows) {
+        positionsByLoad[row.load_id] = {
+          lat: row.lat,
+          lng: row.lng,
+          speed_mph: row.speed_mph,
+          recorded_at: row.recorded_at,
+          stale: row.stale,
+        };
+      }
+      return { positions_by_load: positionsByLoad };
     });
 
     return payload;
