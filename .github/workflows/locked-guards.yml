@@ -140,6 +140,9 @@ jobs:
       - name: verify:insurance-policy-unit-columns
         run: npm run verify:insurance-policy-unit-columns
 
+      - name: verify:insurance-dashboard-routes-registered
+        run: npm run verify:insurance-dashboard-routes-registered
+
       - name: verify:safety-rls-coverage
         run: npm run verify:safety-rls-coverage
 

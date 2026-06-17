@@ -497,6 +497,22 @@ export function getAssetInsuranceCoverage(assetId: string, operatingCompanyId: s
   return insuranceCoverageGapApi.getAssetCoverage(assetId, operatingCompanyId);
 }
 
+export type InsuranceDashboardSummary = {
+  total_active_policies: number;
+  policies_expiring_30d: number;
+  coverage_gap_count: number;
+  recent_coi_requests: number;
+  open_claims: number;
+  open_lawsuits: number;
+};
+
+// Single aggregate for the insurance dashboard KPI cards (replaces the old 6-query fan-out).
+export function getInsuranceSummary(operatingCompanyId: string) {
+  return apiRequest<{ summary: InsuranceDashboardSummary }>(
+    `/api/v1/insurance/summary?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`
+  );
+}
+
 export function listInsuranceCoiRequests(params: {
   operating_company_id: string;
   customer_id?: string;
