@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { ResizableTh } from "../../../components/shared/ResizableTh";
-import { useColumnWidths } from "../../../hooks/useColumnWidths";
+import { TableHeaderCell, useTablePref } from "../../../components/table";
 import type { RunnerColumn } from "./runner-config";
 
 type Props = {
@@ -29,8 +28,8 @@ function formatCell(value: unknown, format: RunnerColumn["format"]) {
 export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" }: Props) {
   const [sortKey, setSortKey] = useState<string>("");
   const [direction, setDirection] = useState<"asc" | "desc" | "none">("none");
-  const defaultWidths = Object.fromEntries(columns.map((column) => [column.key, 140]));
-  const { widths, setWidth, minWidth, maxWidth } = useColumnWidths(tableId, defaultWidths);
+  const { widths, setColumnWidth } = useTablePref(tableId, { pageSize: 50 });
+  const colWidth = (key: string) => widths[key] ?? 140;
 
   const sortedRows = useMemo(() => {
     if (!sortKey || direction === "none") return rows;
@@ -72,25 +71,18 @@ export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" 
         <thead className="bg-slate-50">
           <tr className="border-b border-slate-200 text-slate-600">
             {columns.map((column) => (
-              <ResizableTh
+              <TableHeaderCell
                 key={column.key}
-                columnId={column.key}
-                width={widths[column.key] ?? 140}
-                minWidth={minWidth}
-                maxWidth={maxWidth}
-                onWidthChange={(id, w) => setWidth(id, w)}
-                align={column.align === "right" ? "right" : column.align === "center" ? "center" : "left"}
-                className="px-3 py-2 font-semibold"
-              >
-                {column.sortable ? (
-                  <button type="button" onClick={() => toggleSort(column.key)} className="inline-flex items-center gap-1">
-                    {column.label}
-                    {sortKey === column.key ? (direction === "asc" ? "▲" : direction === "desc" ? "▼" : "") : ""}
-                  </button>
-                ) : (
-                  column.label
-                )}
-              </ResizableTh>
+                columnKey={column.key}
+                label={column.label}
+                sortable={Boolean(column.sortable)}
+                sortKey={direction === "none" ? null : sortKey}
+                sortDir={direction === "none" ? "asc" : direction}
+                onToggleSort={toggleSort}
+                width={colWidth(column.key)}
+                onResize={setColumnWidth}
+                className={`font-semibold ${column.align === "right" ? "text-right" : column.align === "center" ? "text-center" : ""}`}
+              />
             ))}
           </tr>
         </thead>
@@ -107,7 +99,7 @@ export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" 
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    style={{ width: widths[column.key] ?? 140, maxWidth: widths[column.key] ?? 140 }}
+                    style={{ width: colWidth(column.key), maxWidth: colWidth(column.key) }}
                     className={`truncate px-3 py-2 text-slate-700 ${column.align === "right" ? "text-right" : column.align === "center" ? "text-center" : "text-left"}`}
                   >
                     {formatCell(row[column.key], column.format)}
