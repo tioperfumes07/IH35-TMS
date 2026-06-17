@@ -22,8 +22,11 @@ for (const rel of REQUIRED_RESIZABLE_SURFACES) {
     continue;
   }
   const source = fs.readFileSync(full, "utf8");
-  if (rel.endsWith("RunnerTable.tsx") && !source.includes("ResizableTh")) {
-    failures.push(`${rel} (must import/use ResizableTh)`);
+  // RunnerTable must keep a resizable header — either the legacy ResizableTh OR the shared
+  // TableHeaderCell (GLOBAL-TABLE-CONTROLS rollout swapped ResizableTh → TableHeaderCell,
+  // which provides the same drag-resize + persisted widths via useTablePref).
+  if (rel.endsWith("RunnerTable.tsx") && !source.includes("ResizableTh") && !source.includes("TableHeaderCell")) {
+    failures.push(`${rel} (must use ResizableTh or the shared TableHeaderCell)`);
   }
 }
 
