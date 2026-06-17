@@ -7,12 +7,14 @@ const repoRoot = process.cwd();
 
 const REQUIRED = [
   {
+    // ResizableTh OR the shared TableHeaderCell — both give a resizable tabular grid
+    // (GLOBAL-TABLE-CONTROLS rollout replaced ResizableTh with TableHeaderCell).
     file: "apps/frontend/src/pages/customers/CustomersListView.tsx",
-    markers: ["data-customers-list-view", "ResizableTh", "BulkActionBar"],
+    markers: ["data-customers-list-view", "ResizableTh|TableHeaderCell", "BulkActionBar"],
   },
   {
     file: "apps/frontend/src/pages/vendors/VendorsListView.tsx",
-    markers: ["data-vendors-list-view", "ResizableTh", "BulkActionBar"],
+    markers: ["data-vendors-list-view", "ResizableTh|TableHeaderCell", "BulkActionBar"],
   },
   {
     file: "apps/frontend/src/pages/Customers.tsx",
@@ -38,7 +40,9 @@ for (const req of REQUIRED) {
   }
   const source = fs.readFileSync(full, "utf8");
   for (const marker of req.markers) {
-    if (!source.includes(marker)) {
+    // A marker may list alternatives separated by "|" (any-of). Accept if any present.
+    const ok = marker.split("|").some((alt) => source.includes(alt));
+    if (!ok) {
       failures.push(`${req.file} (missing marker: ${marker})`);
     }
   }

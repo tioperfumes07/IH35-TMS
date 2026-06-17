@@ -49,6 +49,21 @@ if (fleet) {
   }
 }
 
+// Customers + Vendors list views must also reuse the shared component (no per-page re-fork).
+for (const consumer of [
+  "apps/frontend/src/pages/customers/CustomersListView.tsx",
+  "apps/frontend/src/pages/vendors/VendorsListView.tsx",
+]) {
+  let src = "";
+  try { src = readFileSync(consumer, "utf8"); } catch { failures.push(`${consumer}: missing`); continue; }
+  if (!/from "\.\.\/\.\.\/components\/table"/.test(src)) {
+    failures.push(`${consumer}: must import the shared toolbar from components/table (no re-fork)`);
+  }
+  if (/useColumnWidths|ResizableTh/.test(src)) {
+    failures.push(`${consumer}: still uses bespoke useColumnWidths/ResizableTh — should use shared TableHeaderCell`);
+  }
+}
+
 if (failures.length) {
   console.error("verify:table-controls-shared — FAIL");
   for (const f of failures) console.error("  - " + f);
