@@ -27,6 +27,16 @@ const COMMIT = args.has("--commit");
 const INCLUDE_PENDING = args.has("--include-pending");
 const TRANSP = dataset.operating_company_id;
 
+// AW appt times are bare local Laredo timestamps ("2026-06-12T09:00:00", no offset). The book-load
+// schema requires an offset-bearing ISO datetime. Laredo is US Central (CDT = -05:00 in summer). Append
+// the offset if missing; pass through anything already offset/Z-suffixed. (Forward-compatible: if AW ever
+// emits offsets, this is a no-op.)
+function toOffsetIso(dt) {
+  if (!dt || typeof dt !== "string") return undefined;
+  if (/[zZ]$|[+-]\d{2}:\d{2}$/.test(dt)) return dt;
+  return `${dt}-05:00`;
+}
+
 // AW load -> the EXACT body POST /api/v1/dispatch/loads expects (DispatchBookLoadPayload).
 // customer_id / assigned_unit_id / assigned_primary_driver_id are UUIDs resolved at COMMIT time
 // against TRANSP (find-or-create customer by broker name; match driver/unit by name/number). In a
@@ -40,7 +50,7 @@ function toBookLoadPayload(load) {
       state: load.pickup_state,
       company_name: load.pickup_location_name ?? undefined,
       time_window_type: "appointment",
-      appointment_start_at: load.scheduled_pickup_appt_at,
+      appointment_start_at: toOffsetIso(load.scheduled_pickup_appt_at),
     },
     {
       stop_type: "delivery",
@@ -49,7 +59,7 @@ function toBookLoadPayload(load) {
       state: load.delivery_state,
       company_name: load.delivery_location_name ?? undefined,
       time_window_type: "appointment",
-      appointment_start_at: load.scheduled_delivery_appt_at,
+      appointment_start_at: toOffsetIso(load.scheduled_delivery_appt_at),
     },
   ];
   return {
@@ -142,11 +152,81 @@ if (!baseUrl || !token) {
   console.error("\nREFUSING --commit: IMPORT_BASE_URL and IMPORT_SESSION_TOKEN must both be set. No write performed.\n");
   process.exit(2);
 }
-console.error("\n--commit requested. This writes PROD load data via POST /api/v1/dispatch/loads.");
-console.error("Customer/driver/unit resolution against TRANSP happens here. Run only with Jorge's explicit authorization.\n");
-// Intentionally not auto-executing bulk POSTs inline: the resolver (find-or-create customer, match
-// driver/unit) is wired by the operator at authorization time against the live endpoints so each
-// resolution is reviewable. This guard-rail keeps an un-reviewed bulk prod write from happening by
-// accident even when the flag + creds are present.
-console.error("Resolver/POST step is intentionally operator-gated — see scripts/aw-load-import/MAPPING.md.");
-process.exit(3);
+console.error("\n--commit requested. Writing PROD load data via POST /api/v1/dispatch/loads (TRANSP only).");
+console.error(`Loads to write: ${toImport.length}. STOP-ON-ERROR: the first failure aborts the rest.\n`);
+
+// Authed JSON fetch over the Lucia session cookie. The token is NEVER logged (only used in the header).
+const apiBase = baseUrl.replace(/\/$/, "");
+async function api(method, path, body) {
+  const res = await fetch(`${apiBase}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json", Cookie: `ih35_session=${token}` },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const raw = await res.text();
+  let json = null;
+  try { json = raw ? JSON.parse(raw) : null; } catch { json = raw; }
+  if (!res.ok) {
+    const detail = typeof json === "string" ? json : JSON.stringify(json);
+    throw new Error(`${method} ${path} → HTTP ${res.status} ${detail}`);
+  }
+  return json;
+}
+
+const norm = (s) => String(s ?? "").trim().toLowerCase();
+
+// Find-or-create the broker as a TRANSP customer (per-entity; never commingle TRK/USMCA).
+async function resolveCustomerId(brokerName) {
+  const q = new URLSearchParams({ operating_company_id: TRANSP, search: brokerName, active_only: "false" });
+  const found = await api("GET", `/api/v1/mdata/customers?${q.toString()}`);
+  const list = found?.customers ?? [];
+  const exact = list.find((c) => norm(c.name) === norm(brokerName));
+  if (exact) return { id: exact.id, created: false };
+  const created = await api("POST", "/api/v1/mdata/customers", { name: brokerName, operating_company_id: TRANSP });
+  const id = created?.id ?? created?.customer?.id;
+  if (!id) throw new Error(`customer create returned no id for "${brokerName}"`);
+  return { id, created: true };
+}
+// Match an existing TRANSP unit by number (never create equipment from an import).
+async function resolveUnitId(truckNumber) {
+  if (!truckNumber) return undefined;
+  const q = new URLSearchParams({ operating_company_id: TRANSP, search: truckNumber });
+  const found = await api("GET", `/api/v1/mdata/units?${q.toString()}`);
+  const m = (found?.units ?? []).find((u) => norm(u.unit_number) === norm(truckNumber));
+  if (!m) throw new Error(`unit not found for truck "${truckNumber}" — create the unit first, then re-run`);
+  return m.id;
+}
+// Match an existing TRANSP driver by full name (never create drivers from an import).
+async function resolveDriverId(driverName) {
+  if (!driverName) return undefined;
+  const q = new URLSearchParams({ operating_company_id: TRANSP, search: driverName });
+  const found = await api("GET", `/api/v1/mdata/drivers?${q.toString()}`);
+  const list = found?.drivers ?? [];
+  const m = list.find((d) => norm(`${d.first_name} ${d.last_name}`) === norm(driverName));
+  if (!m) throw new Error(`driver not found for "${driverName}" — create the driver first, then re-run`);
+  return m.id;
+}
+
+let written = 0;
+for (const l of toImport) {
+  const label = l.aw_load_number ?? `WO ${l.wo_number}`;
+  try {
+    const { id: customerId, created } = await resolveCustomerId(l.broker_customer_name);
+    const payload = toBookLoadPayload(l);
+    delete payload._aw; // provenance block — not part of the create schema
+    payload.customer_id = customerId;
+    payload.assigned_unit_id = await resolveUnitId(l.truck_unit);
+    payload.assigned_primary_driver_id = await resolveDriverId(l.primary_driver_name);
+    if (l.team_driver_name) payload.assigned_secondary_driver_id = await resolveDriverId(l.team_driver_name);
+    const load = await api("POST", "/api/v1/dispatch/loads", payload);
+    const loadId = load?.id ?? load?.load?.id ?? "(created)";
+    written += 1;
+    console.log(`  ✓ ${label} → load ${loadId} · customer ${created ? "CREATED" : "matched"} · ${l.truck_unit}/${l.primary_driver_name} · ${usd(l.rate_cents)}`);
+  } catch (e) {
+    console.error(`\n  ✗ ${label} FAILED: ${e.message}`);
+    console.error(`  STOP-ON-ERROR — ${written}/${toImport.length} loads written before this. Fix the cause and re-run; created customers/loads from this run already exist, so re-running re-creates them (no idempotency key on loads) — prefer trimming the dataset to the remaining loads.`);
+    process.exit(4);
+  }
+}
+console.log(`\n✓ COMMIT complete: ${written}/${toImport.length} loads written to TRANSP (${TRANSP}). Rated total ${usd(ratedSumCents)}.`);
+process.exit(0);

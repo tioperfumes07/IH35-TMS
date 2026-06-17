@@ -45,3 +45,18 @@ bad load data — per-load figures stand as extracted. The dry-run now confirms 
 Present mapping + dry-run → Jorge reviews → GUARD verifies dry-run output matches AW source →
 **only then** Jorge authorizes `--commit` (sets `IMPORT_BASE_URL` + `IMPORT_SESSION_TOKEN`). After
 commit, verify the 11 (10) land with correct rates/customers/dates/per-entity scope.
+
+## Commit (IMPLEMENTED 2026-06-17) — one command for future imports
+
+`--commit` now runs the resolver + POST loop (no longer operator-stubbed):
+```
+IMPORT_BASE_URL=https://api.ih35dispatch.com IMPORT_SESSION_TOKEN=<owner ih35_session cookie> \
+  node scripts/aw-load-import/import-aw-loads.mjs --commit
+```
+Per load, in order: **find-or-create customer** by broker name (TRANSP only) → **match unit** by number
+(must already exist — never creates equipment) → **match primary/team driver** by full name (must already
+exist) → **POST /api/v1/dispatch/loads** (the existing `bookLoad` path; no parallel INSERT). Auth = the
+Lucia `ih35_session` cookie from `IMPORT_SESSION_TOKEN` (never logged). Appointment times are emitted with
+the Laredo CDT offset (`-05:00`). **STOP-ON-ERROR:** the first failure aborts the rest and prints the exact
+cause + how many were written; fix and re-run (loads have no idempotency key, so trim the dataset to the
+remaining loads before re-running). Dry-run remains the default and writes nothing.
