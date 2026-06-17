@@ -1,14 +1,13 @@
-import { useMemo, useState } from "react";
+import { useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import type { VendorOption } from "../../api/mdata";
 import { bulkUpdate } from "../../api/bulk";
 import { BulkActionBar } from "../../components/bulk/BulkActionBar";
 import { TableSelection, TableSelectionHeader } from "../../components/bulk/TableSelection";
-import { ResizableTh } from "../../components/shared/ResizableTh";
+import { TableControls, Paginator, TableHeaderCell, useTableController, type TableColumn } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useBulkSelection } from "../../hooks/useBulkSelection";
-import { useColumnWidths } from "../../hooks/useColumnWidths";
 import { parseVendorNotes } from "../../lib/vendorProfileMeta";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -24,17 +23,26 @@ function vendorQualityLabel(notes: string | null | undefined) {
   return { label: "Medium", className: "bg-amber-100 text-amber-800" };
 }
 
-const COLUMNS = [
-  { id: "name", label: "Name", defaultWidth: 180 },
-  { id: "email", label: "Email", defaultWidth: 160 },
-  { id: "phone", label: "Phone", defaultWidth: 120 },
-  { id: "vendor_type", label: "Vendor Type", defaultWidth: 120 },
-  { id: "open_balance", label: "Open Balance", defaultWidth: 110, align: "right" as const },
-  { id: "quality", label: "Quality", defaultWidth: 100 },
-  { id: "fmcsa", label: "FMCSA Authority", defaultWidth: 120 },
-  { id: "last_txn", label: "Last Transaction", defaultWidth: 110 },
-  { id: "created", label: "Created", defaultWidth: 100 },
+// Shared data-grid columns (GLOBAL-TABLE-CONTROLS). "Name" is the always-visible anchor.
+const COLUMNS: TableColumn[] = [
+  { key: "name", label: "Name", alwaysVisible: true },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
+  { key: "vendor_type", label: "Vendor Type" },
+  { key: "open_balance", label: "Open Balance" },
+  { key: "quality", label: "Quality" },
+  { key: "fmcsa", label: "FMCSA Authority" },
+  { key: "last_txn", label: "Last Transaction" },
+  { key: "created", label: "Created" },
 ];
+
+function vendorSearchText(v: VendorOption): string {
+  return [v.name, v.email, v.vendor_code].filter(Boolean).join(" ");
+}
+
+function isCarrier(v: VendorOption): boolean {
+  return String(v.vendor_type ?? "").toLowerCase().includes("carrier");
+}
 
 type Props = {
   companyId: string;
@@ -47,26 +55,36 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const selection = useBulkSelection();
-  const [pageSize] = useState(50);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortBalanceDesc, setSortBalanceDesc] = useState(true);
 
-  const defaultWidths = Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth]));
-  const { widths, setWidth, minWidth, maxWidth } = useColumnWidths("vendors-list-view", defaultWidths);
+  // Stable sort accessor (depends on the open-balance map).
+  const sortValue = useCallback(
+    (v: VendorOption, key: string): string | number | null => {
+      switch (key) {
+        case "name": return v.name ?? null;
+        case "email": return v.email ?? null;
+        case "phone": return v.phone ?? null;
+        case "vendor_type": return v.vendor_type ?? null;
+        case "open_balance": return openByVendorId.get(v.id) ?? 0;
+        case "quality": return vendorQualityLabel(v.notes).label;
+        case "fmcsa": return isCarrier(v) ? 1 : 0;
+        case "last_txn": return v.updated_at ?? null;
+        case "created": return v.created_at ?? null;
+        default: return null;
+      }
+    },
+    [openByVendorId]
+  );
 
-  const sorted = useMemo(() => {
-    const rows = [...vendors];
-    rows.sort((a, b) => {
-      const balA = openByVendorId.get(a.id) ?? 0;
-      const balB = openByVendorId.get(b.id) ?? 0;
-      return sortBalanceDesc ? balB - balA : balA - balB;
-    });
-    return rows;
-  }, [vendors, openByVendorId, sortBalanceDesc]);
+  const table = useTableController<VendorOption>({
+    rows: vendors,
+    columns: COLUMNS,
+    tableKey: "vendors",
+    searchText: vendorSearchText,
+    sortValue,
+    defaultPageSize: 50,
+  });
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const safePage = Math.min(currentPage, totalPages);
-  const pageRows = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const pageRows = table.paged;
   const pageRowIds = pageRows.map((row) => row.id);
 
   const bulkMutation = useMutation({
@@ -82,8 +100,44 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
 
   const selectedIds = () => Array.from(selection.selectedIds);
 
+  const renderCell = (key: string, vendor: VendorOption) => {
+    switch (key) {
+      case "name":
+        return (
+          <Link to={`/vendors/${vendor.id}`} className="text-sky-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+            {vendor.name}
+          </Link>
+        );
+      case "email": return vendor.email ?? "—";
+      case "phone": return vendor.phone ?? "—";
+      case "vendor_type": return vendor.vendor_type ?? "—";
+      case "open_balance": return fmtMoney(openByVendorId.get(vendor.id) ?? 0);
+      case "quality": {
+        const q = vendorQualityLabel(vendor.notes);
+        return <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${q.className}`}>{q.label}</span>;
+      }
+      case "fmcsa": return isCarrier(vendor) ? "Carrier" : "—";
+      case "last_txn": return vendor.updated_at ? new Date(vendor.updated_at).toLocaleDateString() : "—";
+      case "created": return vendor.created_at ? new Date(vendor.created_at).toLocaleDateString() : "—";
+      default: return "—";
+    }
+  };
+
   return (
     <div className="space-y-2" data-vendors-list-view="true" data-bulk-selectable="true" data-entity-type="vendors">
+      <TableControls
+        search={table.search}
+        onSearchChange={table.setSearch}
+        searchPlaceholder="Search name, code, email…"
+        filteredCount={table.filteredCount}
+        totalCount={vendors.length}
+        columns={COLUMNS}
+        hidden={table.hidden}
+        onToggleColumn={table.toggleColumn}
+        pageSize={table.pageSize}
+        onPageSizeChange={table.setPageSize}
+      />
+
       <BulkActionBar
         {...selection.bulkActionBarProps(
           [
@@ -110,16 +164,6 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
         )}
       />
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          className="text-xs font-semibold text-sky-700 hover:underline"
-          onClick={() => setSortBalanceDesc((prev) => !prev)}
-        >
-          Sort: Open Balance {sortBalanceDesc ? "↓" : "↑"}
-        </button>
-      </div>
-
       <TableSelection
         rows={pageRows}
         getId={(row) => row.id}
@@ -141,69 +185,49 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
                       cap={selection.cap}
                     />
                   </th>
-                  {COLUMNS.map((col) => (
-                    <ResizableTh
-                      key={col.id}
-                      columnId={col.id}
-                      width={widths[col.id] ?? col.defaultWidth}
-                      minWidth={minWidth}
-                      maxWidth={maxWidth}
-                      onWidthChange={(id, w) => setWidth(id, w)}
-                      align={col.align}
-                    >
-                      {col.label}
-                    </ResizableTh>
+                  {table.visibleColumns.map((col) => (
+                    <TableHeaderCell
+                      key={col.key}
+                      columnKey={col.key}
+                      label={col.label}
+                      sortKey={table.sortKey}
+                      sortDir={table.sortDir}
+                      onToggleSort={table.toggleSort}
+                      width={table.widths[col.key]}
+                      onResize={table.setColumnWidth}
+                    />
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {pageRows.map((vendor) => {
-                  const quality = vendorQualityLabel(vendor.notes);
-                  const open = openByVendorId.get(vendor.id) ?? 0;
-                  const isCarrier = String(vendor.vendor_type ?? "").toLowerCase().includes("carrier");
-                  return (
-                    <tr
-                      key={vendor.id}
-                      className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                      onClick={() => onSelectVendor?.(vendor.id)}
-                    >
-                      <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          aria-label={`Select ${vendor.name}`}
-                          checked={isSelected(vendor.id)}
-                          onChange={() => toggle(vendor.id)}
-                        />
+                {pageRows.map((vendor) => (
+                  <tr
+                    key={vendor.id}
+                    className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
+                    onClick={() => onSelectVendor?.(vendor.id)}
+                  >
+                    <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${vendor.name}`}
+                        checked={isSelected(vendor.id)}
+                        onChange={() => toggle(vendor.id)}
+                      />
+                    </td>
+                    {table.visibleColumns.map((col) => (
+                      <td
+                        key={col.key}
+                        style={table.widths[col.key] ? { width: table.widths[col.key] } : undefined}
+                        className={`truncate px-2 py-2 ${col.key === "open_balance" ? "text-right" : ""} ${col.key === "name" ? "font-medium" : ""}`}
+                      >
+                        {renderCell(col.key, vendor)}
                       </td>
-                      <td style={{ width: widths.name }} className="truncate px-2 py-2 font-medium">
-                        <Link to={`/vendors/${vendor.id}`} className="text-sky-700 hover:underline" onClick={(e) => e.stopPropagation()}>
-                          {vendor.name}
-                        </Link>
-                      </td>
-                      <td style={{ width: widths.email }} className="truncate px-2 py-2">{vendor.email ?? "—"}</td>
-                      <td style={{ width: widths.phone }} className="truncate px-2 py-2">{vendor.phone ?? "—"}</td>
-                      <td style={{ width: widths.vendor_type }} className="truncate px-2 py-2">{vendor.vendor_type ?? "—"}</td>
-                      <td style={{ width: widths.open_balance }} className="truncate px-2 py-2 text-right">{fmtMoney(open)}</td>
-                      <td style={{ width: widths.quality }} className="truncate px-2 py-2">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${quality.className}`}>
-                          {quality.label}
-                        </span>
-                      </td>
-                      <td style={{ width: widths.fmcsa }} className="truncate px-2 py-2">
-                        {isCarrier ? "Carrier" : "—"}
-                      </td>
-                      <td style={{ width: widths.last_txn }} className="truncate px-2 py-2">
-                        {vendor.updated_at ? new Date(vendor.updated_at).toLocaleDateString() : "—"}
-                      </td>
-                      <td style={{ width: widths.created }} className="truncate px-2 py-2">
-                        {vendor.created_at ? new Date(vendor.created_at).toLocaleDateString() : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
+                    ))}
+                  </tr>
+                ))}
                 {pageRows.length === 0 ? (
                   <tr>
-                    <td colSpan={COLUMNS.length + 1} className="px-3 py-6 text-center text-gray-500">
+                    <td colSpan={table.visibleColumns.length + 1} className="px-3 py-6 text-center text-gray-500">
                       No vendors found.
                     </td>
                   </tr>
@@ -214,22 +238,7 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
         )}
       </TableSelection>
 
-      <div className="flex items-center justify-between text-xs text-gray-600">
-        <span>
-          Showing {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, sorted.length)} of {sorted.length}
-        </span>
-        <div className="flex gap-2">
-          <button type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={safePage <= 1} onClick={() => setCurrentPage((p) => p - 1)}>
-            Previous
-          </button>
-          <span>
-            Page {safePage} / {totalPages}
-          </span>
-          <button type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={safePage >= totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
-            Next
-          </button>
-        </div>
-      </div>
+      <Paginator page={table.page} pageCount={table.pageCount} onPageChange={table.setPage} />
     </div>
   );
 }
