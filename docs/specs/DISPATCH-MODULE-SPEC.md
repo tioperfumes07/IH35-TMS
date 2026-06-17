@@ -1,6 +1,8 @@
 # IH35-TMS — Dispatch Module Spec (consolidated)
 LOCKED 2026-06-08 | supersedes scattered dispatch notes; additive to existing dispatch code
 
+> 🔒 **Mileage two-number rule** (see `MILEAGE-MODEL-DESIGN.md` §0.1): each load stores **practical_miles** (→ customer invoice RPM, $3.00/mi floor) and **shortest_miles** (→ driver pay). Book Load §C stops are the geocode/route source (`PCMILER-GEOCODE` / `PCMILER-ROUTING`). Never substitute one mile number for the other.
+
 ## Views (segmented toggle + top-bar)
 - Overview (command center, default) — KPIs + 6 clickable panels (Unassigned units, Round-trip exposure, At-Risk, Detention, Border, Out-of-service); every row shows unit + driver + load.
 - Load Board = Kanban with TRUE states: Pending → Assigned → En Route → At Pickup → Loaded → At Delivery → Delivered (Samsara + driver PWA + dispatcher + geofence drive transitions). Completed/Cancelled terminal.
