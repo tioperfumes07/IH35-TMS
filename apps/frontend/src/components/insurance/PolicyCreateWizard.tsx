@@ -42,6 +42,7 @@ type Step1 = {
 
 type Step3 = {
   total_premium: string;
+  down_payment: string;
   term_months: string;
   allocation_method: AllocationMethod;
 };
@@ -91,6 +92,7 @@ const INITIAL_STEP1: Step1 = {
 
 const INITIAL_STEP3: Step3 = {
   total_premium: "",
+  down_payment: "",
   term_months: "12",
   allocation_method: "equal_split",
 };
@@ -168,6 +170,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   }, [open]);
 
   const premiumCents = useMemo(() => parsePremiumCents(step3.total_premium) ?? 0, [step3.total_premium]);
+  const downPaymentCents = useMemo(() => parsePremiumCents(step3.down_payment) ?? 0, [step3.down_payment]);
   const termMonths = useMemo(() => {
     const v = Number(step3.term_months);
     return Number.isInteger(v) && v > 0 ? v : 0;
@@ -226,6 +229,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         effective_date: step1.effective_date,
         expiry_date: step1.expiry_date,
         total_premium_cents: premiumCents,
+        down_payment_cents: downPaymentCents,
         term_months: termMonths,
         allocation_method: step3.allocation_method,
         unit_ids: selectedUnitIds,
@@ -407,6 +411,16 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
                   className="w-full rounded border border-gray-300 px-2 py-1"
                   value={step3.total_premium}
                   onChange={(e) => setStep3((s) => ({ ...s, total_premium: e.target.value }))}
+                />
+              </Field>
+              <Field label="Down Payment (USD)">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  value={step3.down_payment}
+                  onChange={(e) => setStep3((s) => ({ ...s, down_payment: e.target.value }))}
                 />
               </Field>
               <Field label="Term (months) *" error={step3Errors.term_months}>
