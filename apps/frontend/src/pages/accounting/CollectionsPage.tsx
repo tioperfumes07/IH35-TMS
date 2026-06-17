@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -190,7 +191,7 @@ export function CollectionsPage() {
                 </label>
                 <label className="text-xs text-gray-600">
                   Next action date
-                  <input type="date" value={nextActionDate} onChange={(event) => setNextActionDate(event.target.value)} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+                  <DatePicker value={nextActionDate} onChange={(next) => setNextActionDate(next)} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
                 </label>
                 <div className="flex items-end justify-end">
                   <Button size="sm" onClick={() => logContactMutation.mutate()} disabled={!companyId || !selectedTask || !contactNotes.trim() || logContactMutation.isPending}>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listJournalEntries, voidJournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -70,8 +71,8 @@ export function ManualJEListPage() {
           <option value="posted">Posted</option>
           <option value="voided">Voided</option>
         </SelectCombobox>
-        <input type="date" className="h-8 rounded border border-gray-300 px-2" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-        <input type="date" className="h-8 rounded border border-gray-300 px-2" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+        <DatePicker className="h-8 rounded border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
+        <DatePicker className="h-8 rounded border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
         <input
           className="h-8 rounded border border-gray-300 px-2"
           placeholder="Account ID (optional)"

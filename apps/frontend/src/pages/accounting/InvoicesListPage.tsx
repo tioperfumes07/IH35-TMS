@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowRightCircle } from "lucide-react";
@@ -167,11 +168,11 @@ export function InvoicesListPage() {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             From issue date
-            <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             To issue date
-            <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
           </label>
         </div>
         <div className="mt-2 flex items-center gap-3 text-xs text-gray-600">

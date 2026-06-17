@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getMultiEntityAccountingSummary } from "../../api/accounting";
 import { listMyCompanies } from "../../api/org";
@@ -78,9 +79,9 @@ export function MultiEntityAccountingPage() {
           </div>
           <div className="space-y-2">
             <label className="block text-xs text-gray-500">Start</label>
-            <input type="date" value={start} onChange={(event) => setStart(event.target.value)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+            <DatePicker value={start} onChange={(next) => setStart(next)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
             <label className="block text-xs text-gray-500">End</label>
-            <input type="date" value={end} onChange={(event) => setEnd(event.target.value)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+            <DatePicker value={end} onChange={(next) => setEnd(next)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
           </div>
           <div className="flex items-end">
             <Button

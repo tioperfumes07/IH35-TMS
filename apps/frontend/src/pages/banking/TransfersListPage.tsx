@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getPlaidBankAccounts, getTransfer, listTransfers, revokeTransfer, type TransferType } from "../../api/banking";
@@ -86,11 +87,11 @@ export function TransfersListPage() {
       <div className="grid grid-cols-1 gap-3 rounded border border-gray-200 bg-white p-3 md:grid-cols-6">
         <label className="text-xs text-gray-600">
           From
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </label>
         <label className="text-xs text-gray-600">
           Type

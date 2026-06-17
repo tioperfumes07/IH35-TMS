@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   bulkCategorizeBankTransactions,
@@ -335,11 +336,11 @@ export function BankTxCategorizationPage() {
           </div>
           <label className="block text-xs">
             From
-            <input type="date" className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+            <DatePicker className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={dateFrom} onChange={(next) => setDateFrom(next)} />
           </label>
           <label className="block text-xs">
             To
-            <input type="date" className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+            <DatePicker className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={dateTo} onChange={(next) => setDateTo(next)} />
           </label>
           <label className="block text-xs">
             Amount min (USD)

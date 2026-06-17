@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -195,11 +196,11 @@ export function AccountRegisterPage() {
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           From
-          <input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPreset("custom"); }} className={inputCls} />
+          <DatePicker value={fromDate} onChange={(next) => { setFromDate(next); setPreset("custom"); }} className={inputCls} />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           To
-          <input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setPreset("custom"); }} className={inputCls} />
+          <DatePicker value={toDate} onChange={(next) => { setToDate(next); setPreset("custom"); }} className={inputCls} />
         </label>
         <div className="relative">
           <button

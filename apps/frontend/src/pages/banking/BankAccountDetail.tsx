@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -158,24 +159,22 @@ export function BankAccountDetailPage() {
         <div className="mb-3 flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">Start date</label>
-            <input
-              type="date"
+            <DatePicker
               value={startDate}
-              onChange={(event) => {
+              onChange={(next) => {
                 setOffset(0);
-                setStartDate(event.target.value);
+                setStartDate(next);
               }}
               className="rounded border border-gray-300 px-2 py-1 text-sm"
             />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">End date</label>
-            <input
-              type="date"
+            <DatePicker
               value={endDate}
-              onChange={(event) => {
+              onChange={(next) => {
                 setOffset(0);
-                setEndDate(event.target.value);
+                setEndDate(next);
               }}
               className="rounded border border-gray-300 px-2 py-1 text-sm"
             />

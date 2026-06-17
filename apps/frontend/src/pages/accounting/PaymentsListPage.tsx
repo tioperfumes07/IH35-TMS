@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listPayments, type Payment, type PaymentMethod } from "../../api/accounting";
@@ -136,11 +137,11 @@ export function PaymentsListPage() {
         <div className="grid grid-cols-2 gap-2">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             From
-            <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             To
-            <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
           </label>
         </div>
       </div>
