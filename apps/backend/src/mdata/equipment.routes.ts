@@ -537,7 +537,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at
+          SELECT id, deactivated_at, owner_company_id, currently_leased_to_company_id
           FROM mdata.equipment
           WHERE id = $1
           LIMIT 1
@@ -546,6 +546,15 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
+
+      // Set the tenant session context the same way the working equipment writes (bulk-update) do,
+      // BEFORE the UPDATE — otherwise the equipment RLS check rejects the soft-delete row (42501,
+      // "new row violates row-level security policy"). Scope to the row's own company (per-entity).
+      const tenantCompanyId =
+        (oldRow.currently_leased_to_company_id as string | null) ?? (oldRow.owner_company_id as string | null);
+      if (tenantCompanyId) {
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [tenantCompanyId]);
+      }
 
       let deactivatedAt = oldRow.deactivated_at as string | null;
       let wasAlreadyDeactivated = oldRow.deactivated_at !== null;

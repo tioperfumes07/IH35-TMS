@@ -620,6 +620,7 @@
     "verify:dispatch-live-gps-wired": "node scripts/verify-dispatch-live-gps-wired.mjs",
     "verify:currency-format-guarded": "node scripts/verify-currency-format-guarded.mjs",
     "verify:unit-inactivate-path": "node scripts/verify-unit-inactivate-path.mjs",
+    "verify:equipment-deactivate-rls": "node scripts/verify-equipment-deactivate-rls.mjs",
     "verify:awaiting-truck-driver-hos": "node scripts/verify-awaiting-truck-driver-hos.mjs",
     "verify:load-import-dry-run-default": "node scripts/verify-load-import-dry-run-default.mjs",
     "verify:load-delivery-dates-separated": "node scripts/verify-load-delivery-dates-separated.mjs",
