@@ -4,6 +4,17 @@
 Companion specs in this folder: `QBO_PARITY_UI_SYSTEM.md` (v1), `QBO_PARITY_UI_SYSTEM_v2_v3.md`, `VISUALS_FIRST_V1.md`, `00_INDEX.md`.
 Governance: see `docs/lockdown/00_LOCKED_DECISIONS.md` §7 + memory `financial-cluster-gate`.
 
+## 2026-06-17 SESSION UPDATE (PRs #1059–#1094)
+**Merged:** Manual Projections summing-bug fix (#1084) + auto-tab −$5.5M cash-anomaly fix (#1088);
+SOFT-DELETE end-to-end (Customers/Vendors/Fleet filters + Inactivate/Reactivate + `include_inactive` #1077/#1078/#1090/#1091);
+GLOBAL-TABLE-CONTROLS shared data-grid on Fleet (gear/paging/search/list-filters/bulk-inactivate #1086; sort+resize #1092);
+QB-DATES sweep (~250 inputs, #1075–#1083, insurance #1094); DENSITY-SWEEP-QB (93 inputs → h-9, #1085/#1089);
+factoring nav fix (#1087); clickable KPIs (#1093); fleet edit-save (#1069); booking fixes (#1062/#1073).
+**In flight:** #1092/#1093/#1094 + Customers/Vendors table-controls rollout (agents).
+**Held for Jorge:** Part B forecast snapshot migration (prepared); TASK-DURATION migration; insurance down-payment field;
+payment/posting-form dates. **Needs input:** insurance dashboard-500 exact error payload.
+Full dated tracker exported to Desktop: `IH35-TMS-MASTER-TRACKER-2026-06-17.md`.
+
 ## 0. GOVERNANCE — financial-cluster gate (REAFFIRMED)
 - **Financial cluster** = anything touching `accounting.*` OR `catalogs.accounts` (schema OR data), any `db/migrations/*.sql`, posting/GL, balances, periods, reconcile-commit, reclassify-apply, role/GRANT changes, opening balances.
 - These are **policy (i) ALWAYS**: branch → `tsc -b` + migration locally → show Jorge `diff --staged --stat` + full SQL → WAIT for explicit "OK to merge" → only then merge. **NEVER self-merge. No exceptions.**
