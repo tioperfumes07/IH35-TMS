@@ -29,15 +29,25 @@ if (!script.includes("/api/v1/dispatch/loads")) fail("must target the existing P
 // Real SQL insert = uppercase INTO + table + opening paren (prose mentioning "insert" won't match).
 if (/INSERT\s+INTO\s+mdata\.\w+\s*\(/.test(script)) fail("must NOT open a parallel INSERT into mdata.* — use bookLoad");
 
-// 4. Dataset integrity: 11 loads, TRANSP, honored gaps.
+// 4. Dataset integrity: 11 loads, TRANSP. Both honored gaps are now FILLED (Jorge-confirmed 2026-06-17):
+//    13378 rate = $4,000 (was blank in the AW source — retains the no_rate_in_aw PROVENANCE flag); 13380
+//    keyed (was blank AW id, WO 77225 — retains the confirm_aw_load_id_before_commit PROVENANCE flag).
+//    Every load is now rated + keyed; the total LOCKS to the Jorge-confirmed $48,998.00 so it can't drift.
 const ds = JSON.parse(read("scripts/aw-load-import/aw-open-loads-2026-06-17.json"));
 if (ds.operating_company_id !== "91e0bf0a-133f-4ce8-a734-2586cfa66d96") fail("dataset must be scoped to TRANSP");
 if (!Array.isArray(ds.loads) || ds.loads.length !== 11) fail(`expected 11 loads, found ${ds.loads?.length}`);
-const zero = ds.loads.filter((l) => l.rate_cents === 0);
-if (zero.length !== 1 || zero[0].aw_load_number !== "13378") fail("13378 must be the single zero-rate load (no invented number)");
-if (!zero[0].flags.includes("no_rate_in_aw")) fail("13378 must carry the no_rate_in_aw flag");
-const pending = ds.loads.filter((l) => !l.aw_load_number);
-if (pending.length !== 1 || pending[0].wo_number !== "77225") fail("77225 must be the single blank-AW-id load, keyed on WO");
-if (!pending[0].flags.includes("confirm_aw_load_id_before_commit")) fail("77225 must be flagged to confirm AW id before commit");
+// Gaps filled — no zero-rate loads, no blank AW ids remain.
+if (ds.loads.some((l) => !l.rate_cents || l.rate_cents <= 0)) fail("every load must be rated (gaps filled — no zero-rate loads)");
+if (ds.loads.some((l) => !l.aw_load_number)) fail("every load must have an aw_load_number (13380 keyed — no blank AW ids)");
+// Provenance flags retained on the two previously-gapped loads.
+const l13378 = ds.loads.find((l) => l.aw_load_number === "13378");
+if (!l13378 || !l13378.flags.includes("no_rate_in_aw")) fail("13378 must retain the no_rate_in_aw provenance flag");
+if (l13378.rate_cents !== 400000) fail("13378 rate must be the Jorge-confirmed $4,000.00 (400000 cents)");
+const l13380 = ds.loads.find((l) => l.aw_load_number === "13380");
+if (!l13380 || l13380.wo_number !== "77225") fail("13380 must be the WO-77225 load (formerly blank AW id)");
+if (!l13380.flags.includes("confirm_aw_load_id_before_commit")) fail("13380 must retain the confirm_aw_load_id_before_commit provenance flag");
+// Total reconcile lock — Jorge-confirmed $48,998.00 across all 11.
+const total = ds.loads.reduce((s, l) => s + (l.rate_cents || 0), 0);
+if (total !== 4899800) fail(`rate total must reconcile to $48,998.00 (4899800 cents), found ${total}`);
 
 console.log("PASS verify-load-import-dry-run-default");

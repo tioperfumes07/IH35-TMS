@@ -90,10 +90,11 @@ const trailers = distinct(all.map((l) => l.trailer_aw_ref));
 const drivers = distinct([...all.map((l) => l.primary_driver_name), ...all.map((l) => l.team_driver_name)]);
 const ratedLoads = all.filter((l) => l.rate_cents > 0);
 const ratedSumCents = ratedLoads.reduce((s, l) => s + l.rate_cents, 0);
-// Expected rated total — RECONCILED 2026-06-17 to $44,998.00 across the 10 rated loads. The earlier
-// "$42,998.00" was a summary addition error in the source message, NOT bad load data; per-load
-// figures stand as extracted. This matches the line-item sum, so no mismatch is flagged.
-const statedTotalCents = 4499800;
+// Expected rated total — RECONCILED 2026-06-17 to $48,998.00 across all 11 rated loads (Jorge-confirmed).
+// = the prior $44,998.00 (10 loads) + $4,000.00 for load 13378 (rate was blank in the AW source, now keyed)
+// + load 13380 (WO 77225, aw_load_number was blank, now keyed at its $6,300.00 — already counted once
+// 13380 is keyed). Earlier "$42,998.00" was a summary addition error, not bad load data.
+const statedTotalCents = 4899800;
 const zeroRate = all.filter((l) => l.rate_cents === 0);
 const usd = (c) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
@@ -111,7 +112,7 @@ console.log(`  rated loads .................. ${ratedLoads.length}   line-item s
 console.log(`  zero-rate loads (flagged) .... ${zeroRate.length}  [${zeroRate.map((l) => l.aw_load_number).join(", ")}]`);
 
 if (ratedSumCents === statedTotalCents) {
-  console.log(`\n  ✓ RECONCILED: rated total ${usd(ratedSumCents)} (10 loads) matches the confirmed expected total. The earlier $42,998.00 was a summary addition error, not bad load data.`);
+  console.log(`\n  ✓ RECONCILED: rated total ${usd(ratedSumCents)} (11 loads) matches the Jorge-confirmed expected total ($48,998.00 = prior $44,998.00 + $4,000.00 for 13378's filled rate).`);
 } else {
   console.log(`\n  ⚠ RECONCILE MISMATCH: line-item rated sum ${usd(ratedSumCents)} ≠ expected ${usd(statedTotalCents)} (Δ ${usd(ratedSumCents - statedTotalCents)}). Surfaced for Jorge — NOT auto-resolved.`);
 }
