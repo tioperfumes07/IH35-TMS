@@ -619,6 +619,7 @@
     "verify:dispatch-hos-columns-wired": "node scripts/verify-dispatch-hos-columns-wired.mjs",
     "verify:load-import-dry-run-default": "node scripts/verify-load-import-dry-run-default.mjs",
     "verify:load-delivery-dates-separated": "node scripts/verify-load-delivery-dates-separated.mjs",
+    "verify:cash-eta-audit-append-only": "node scripts/verify-cash-eta-audit-append-only.mjs",
     "verify:form-input-density": "node scripts/verify-form-input-density.mjs"
   },
   "dependencies": {
