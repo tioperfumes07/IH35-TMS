@@ -81,6 +81,7 @@ export function VendorsPage() {
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [listStatus, setListStatus] = useState<"active" | "inactive" | "all">("active");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -107,9 +108,18 @@ export function VendorsPage() {
     enabled: Boolean(companyId),
   });
 
+  // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
+  // mirroring the Driver Deactivate pattern. Defaults to Active.
+  const visibleVendors = useMemo(() => {
+    const all = vendorsQuery.data ?? [];
+    if (listStatus === "all") return all;
+    if (listStatus === "inactive") return all.filter((vendor) => vendor.deactivated_at != null);
+    return all.filter((vendor) => vendor.deactivated_at == null);
+  }, [vendorsQuery.data, listStatus]);
+
   const vendorsSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const rows = (vendorsQuery.data ?? []).filter((vendor) => {
+    const rows = visibleVendors.filter((vendor) => {
       if (!q) return true;
       return (
         vendor.name.toLowerCase().includes(q) ||
@@ -122,7 +132,7 @@ export function VendorsPage() {
       return sortByName === "name_asc" ? cmp : -cmp;
     });
     return rows;
-  }, [vendorsQuery.data, search, sortByName]);
+  }, [visibleVendors, search, sortByName]);
 
   const selectedVendor = useMemo(() => {
     const exact = vendorsSorted.find((vendor) => vendor.id === selectedVendorId);
@@ -196,21 +206,35 @@ export function VendorsPage() {
         title="Vendors"
         subtitle="Vendor list and transactions"
         actions={
-          <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="vendors">
-            <button
-              type="button"
-              className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
-              onClick={() => setViewMode("list")}
-            >
-              List view
-            </button>
-            <button
-              type="button"
-              className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
-              onClick={() => setViewMode("master-detail")}
-            >
-              Master-detail
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="vendors">
+              <button
+                type="button"
+                className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setViewMode("list")}
+              >
+                List view
+              </button>
+              <button
+                type="button"
+                className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setViewMode("master-detail")}
+              >
+                Master-detail
+              </button>
+            </div>
+            <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="vendors">
+              {(["active", "inactive", "all"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`rounded px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  onClick={() => setListStatus(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
           </div>
         }
       />
@@ -228,7 +252,7 @@ export function VendorsPage() {
       ) : (
       <div className="flex gap-3">
         <VendorListSidebar
-          vendors={vendorsQuery.data ?? []}
+          vendors={visibleVendors}
           totalCount={vendorsSorted.length}
           page={sidebarPage}
           pageSize={sidebarPageSize}

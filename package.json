@@ -600,7 +600,8 @@
     "verify:load-test-baseline": "node scripts/verify-load-test-baseline.mjs",
     "verify:deadhead-optimizer": "node scripts/verify-deadhead-optimizer.mjs",
     "verify:a7-audit-per-entity-tabs": "node scripts/verify-a7-audit-per-entity-tabs.mjs",
-    "verify:d1-settlement-approval": "node scripts/verify-d1-settlement-approval.mjs"
+    "verify:d1-settlement-approval": "node scripts/verify-d1-settlement-approval.mjs",
+    "verify:soft-delete-list-filter": "node scripts/verify-soft-delete-list-filter.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
