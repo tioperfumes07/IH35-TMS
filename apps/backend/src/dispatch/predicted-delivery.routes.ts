@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 // PROJECTED-CASH-FOLLOWS-ETA (Phase 7, BLOCK 2) — dispatcher CONFIRM of a proposed predicted
 // delivery date. A proposed ETA slip surfaces in the At-Risk queue; the dispatcher reviews and
@@ -77,6 +78,15 @@ export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
          VALUES ($1::uuid, $2::uuid, $3::timestamptz, $4::timestamptz, $5::text[], $6::uuid)`,
         [body.data.operating_company_id, params.data.load_id, oldDate, body.data.new_predicted_date, body.data.triggering_signals, user.uuid]
       );
+
+      // Universal spine audit (in addition to the domain forecast.predicted_delivery_changes row).
+      await appendCrudAudit(client, user.uuid, "predicted_delivery.confirmed", {
+        record_id: params.data.load_id,
+        operating_company_id: body.data.operating_company_id,
+        old_predicted_date: oldDate,
+        new_predicted_date: body.data.new_predicted_date,
+        triggering_signals: body.data.triggering_signals,
+      });
 
       return { kind: "ok" as const, load_id: params.data.load_id, old_predicted_date: oldDate, new_predicted_date: body.data.new_predicted_date };
     });
