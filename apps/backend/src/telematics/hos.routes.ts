@@ -12,6 +12,19 @@ const paramsSchema = z.object({
   driver_id: z.string().uuid(),
 });
 
+// Batched fleet HOS for the dispatch board — one call returns the cycle clocks for every visible
+// driver, so the board's "Hrs available (cycle)" / "Hrs to reset" columns light up without an
+// N+1 fan-out. Per-entity scoped; reuses the in-app HOS store (no Samsara, no separate feed).
+const batchQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  driver_ids: z
+    .string()
+    .min(1)
+    .transform((raw) => Array.from(new Set(raw.split(",").map((id) => id.trim()).filter(Boolean))))
+    .refine((ids) => ids.length > 0 && ids.length <= 200, "driver_ids must contain 1–200 ids")
+    .refine((ids) => ids.every((id) => /^[0-9a-fA-F-]{36}$/.test(id)), "driver_ids must be uuids"),
+});
+
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -136,6 +149,45 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
     });
 
     if (!payload) return reply.code(404).send({ error: "driver_not_found" });
+    return payload;
+  });
+
+  // Batched cycle clocks for the dispatch board (read-only). Returns only the two values the
+  // board needs per driver plus the status flag for green/amber. Drivers not in this entity are
+  // simply absent from the map (RLS + operating_company filter prevent cross-entity reads).
+  app.get("/api/v1/dispatch/hos-clocks", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    const query = batchQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const payload = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
+
+      // Confine to drivers that actually belong to this operating company.
+      const driverRes = await client.query<{ id: string }>(
+        `
+          SELECT id::text AS id
+          FROM mdata.drivers
+          WHERE operating_company_id = $1::uuid
+            AND id = ANY($2::uuid[])
+        `,
+        [query.data.operating_company_id, query.data.driver_ids]
+      );
+
+      const clocksByDriver: Record<string, { cycle_remaining_min: number; cycle_reset_in_min: number | null; status: string }> = {};
+      for (const row of driverRes.rows) {
+        const clocks = await getCurrentClocks(client, query.data.operating_company_id, row.id);
+        clocksByDriver[row.id] = {
+          cycle_remaining_min: clocks.cycle_remaining_min,
+          cycle_reset_in_min: clocks.cycle_reset_in_min,
+          status: clocks.status,
+        };
+      }
+      return { clocks_by_driver: clocksByDriver };
+    });
+
     return payload;
   });
 }

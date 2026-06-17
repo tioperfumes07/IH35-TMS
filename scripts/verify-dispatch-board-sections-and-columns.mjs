@@ -39,10 +39,11 @@ if (foundKeys.join(",") !== expectedOrder.join(",")) {
   fail(`column order drifted.\n  expected: ${expectedOrder.join(",")}\n  found:    ${foundKeys.join(",")}`);
 }
 
-// 3. HOS columns render a held placeholder (no live feed wired).
-if (!src.includes("const hosCell")) fail("hosCell placeholder helper missing (HOS feed must stay held)");
-if (!/hrs_available[\s\S]{0,120}hosCell/.test(src)) fail("hrs_available must use hosCell placeholder");
-if (!/hrs_to_reset[\s\S]{0,120}hosCell/.test(src)) fail("hrs_to_reset must use hosCell placeholder");
+// 3. HOS columns are WIRED to the in-app HOS store (feed resolved 2026-06-17 — /safety/hos
+//    cycle clocks, not Samsara). They must bind to the real cycle-clock renderers.
+if (!/hrs_available[\s\S]{0,120}renderHosAvailable/.test(src)) fail("hrs_available must bind to renderHosAvailable (in-app HOS store)");
+if (!/hrs_to_reset[\s\S]{0,120}renderHosToReset/.test(src)) fail("hrs_to_reset must bind to renderHosToReset (in-app HOS store)");
+if (src.includes("Driver HOS feed pending")) fail("HOS placeholder 'feed pending' must be removed — the feed is resolved/wired");
 
 // 4. Three List/Table sections, exact titles.
 if (!src.includes("LIST_SECTIONS")) fail("LIST_SECTIONS partition missing");

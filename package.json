@@ -616,6 +616,7 @@
     "verify:dispatch-filter-toolbar": "node scripts/verify-dispatch-filter-toolbar.mjs",
     "verify:dispatch-board-sections-and-columns": "node scripts/verify-dispatch-board-sections-and-columns.mjs",
     "verify:dispatch-kanban-lanes-and-density": "node scripts/verify-dispatch-kanban-lanes-and-density.mjs",
+    "verify:dispatch-hos-columns-wired": "node scripts/verify-dispatch-hos-columns-wired.mjs",
     "verify:form-input-density": "node scripts/verify-form-input-density.mjs"
   },
   "dependencies": {

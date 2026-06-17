@@ -17,6 +17,11 @@ export type HosClocks = {
   window_remaining_min: number;
   break_remaining_min: number;
   cycle_remaining_min: number;
+  // Minutes until the 70h/8-day cycle begins recovering — i.e. when the OLDEST on-duty segment
+  // still inside the rolling 8-day window rolls off and those hours come back. null when there is
+  // no on-duty time in the window (nothing to recover; full cycle available). This is the
+  // dispatch "Hrs to reset" value, derived from the 8-day on-duty summary (no Samsara, no feed).
+  cycle_reset_in_min: number | null;
   last_reset_at: string | null;
   status: "ok" | "warning_1hr" | "warning_15min" | "violation";
 };
@@ -80,6 +85,7 @@ export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date =
       window_remaining_min: FOURTEEN_HOURS_MIN,
       break_remaining_min: EIGHT_HOURS_MIN,
       cycle_remaining_min: CYCLE_70_EIGHT_DAYS_MIN,
+      cycle_reset_in_min: null,
       last_reset_at: null,
       status: "ok",
     };
@@ -123,11 +129,21 @@ export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date =
 
   const cycleWindowStart = new Date(asOf.getTime() - EIGHT_DAYS_MS);
   let cycleOnDuty = 0;
+  let earliestOnDutyInWindow: Date | null = null;
   for (const event of sorted) {
     if (!isOnDutyForCycle(event.duty_status)) continue;
     const segmentEnd = event.end < asOf ? event.end : asOf;
+    if (overlapMinutes(event.start, segmentEnd, cycleWindowStart, asOf) <= 0) continue;
     cycleOnDuty += overlapMinutes(event.start, segmentEnd, cycleWindowStart, asOf);
+    // The recovering edge is where the segment actually sits inside the window.
+    const inWindowStart = event.start > cycleWindowStart ? event.start : cycleWindowStart;
+    if (!earliestOnDutyInWindow || inWindowStart < earliestOnDutyInWindow) earliestOnDutyInWindow = inWindowStart;
   }
+  // Hrs to reset: when the oldest in-window on-duty time ages out of the 8-day window, the cycle
+  // starts recovering. Floor at 0; null when there is no on-duty time in the window.
+  const cycleResetInMin = earliestOnDutyInWindow
+    ? Math.max(0, Math.floor((earliestOnDutyInWindow.getTime() + EIGHT_DAYS_MS - asOf.getTime()) / 60000))
+    : null;
 
   const driveRemaining = Math.max(0, Math.floor(ELEVEN_HOURS_MIN - drivingSinceReset));
   const windowElapsed = minutesBetween(resetBase, asOf);
@@ -144,6 +160,7 @@ export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date =
     window_remaining_min: windowRemaining,
     break_remaining_min: breakRemaining,
     cycle_remaining_min: cycleRemaining,
+    cycle_reset_in_min: cycleResetInMin,
     last_reset_at: lastResetAt ? lastResetAt.toISOString() : null,
     status,
   };

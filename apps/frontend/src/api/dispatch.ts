@@ -272,6 +272,20 @@ export function getDriverHosStatus(driverId: string, operatingCompanyId: string)
   );
 }
 
+export type DispatchHosClock = {
+  cycle_remaining_min: number;
+  cycle_reset_in_min: number | null;
+  status: "ok" | "warning_1hr" | "warning_15min" | "violation";
+};
+
+// Batched cycle clocks for the dispatch board's "Hrs available (cycle)" / "Hrs to reset" columns.
+// In-app HOS store (no Samsara). Returns a map keyed by driver id; absent driver = no data.
+export function getDispatchHosClocks(operatingCompanyId: string, driverIds: string[]) {
+  return apiRequest<{ clocks_by_driver: Record<string, DispatchHosClock> }>(
+    `/api/v1/dispatch/hos-clocks?operating_company_id=${encodeURIComponent(operatingCompanyId)}&driver_ids=${encodeURIComponent(driverIds.join(","))}`
+  );
+}
+
 export function createDispatchLoad(payload: DispatchBookLoadPayload) {
   return apiRequest<Record<string, unknown>>("/api/v1/dispatch/loads", { method: "POST", body: payload });
 }

@@ -194,5 +194,8 @@ jobs:
       - name: verify:dispatch-kanban-lanes-and-density
         run: npm run verify:dispatch-kanban-lanes-and-density
 
+      - name: verify:dispatch-hos-columns-wired
+        run: npm run verify:dispatch-hos-columns-wired
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density
