@@ -557,17 +557,19 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         // whose equipment_update WITH CHECK passes. So write an explicit timestamp and reuse it for the
         // response instead of returning the now-invisible row. (drivers/customers deactivates never hit this
         // because their select policies have no `deactivated_at IS NULL` gate.) RLS stays ON; per-entity.
-        const nowIso = new Date().toISOString();
         await client.query(
           `
             UPDATE mdata.equipment
-            SET deactivated_at = $2, updated_by_user_id = $3
+            SET deactivated_at = now(), updated_by_user_id = $2
             WHERE id = $1
               AND deactivated_at IS NULL
           `,
-          [parsedParams.data.id, nowIso, authUser.uuid]
+          [parsedParams.data.id, authUser.uuid]
         );
-        deactivatedAt = nowIso;
+        // now() is transaction-scoped (constant for the whole txn), so reading it back here returns the
+        // exact value just written — DB-authoritative — without re-reading the now-SELECT-invisible row.
+        const tsRes = await client.query(`SELECT now() AS deactivated_at`);
+        deactivatedAt = (tsRes.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
       }
 
       await appendCrudAudit(client, authUser.uuid, "mdata.equipment.deactivated", {

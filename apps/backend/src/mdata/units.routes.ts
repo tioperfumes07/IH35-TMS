@@ -456,19 +456,21 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         // the row we already read and reuse them for the response — never RETURNING a soft-deleted row.
         const terminalStatuses = new Set(["Sold", "Totaled", "Transferred", "Damaged"]);
         newStatus = terminalStatuses.has(String(oldRow.status)) ? (oldRow.status as string) : "OutOfService";
-        const nowIso = new Date().toISOString();
         await client.query(
           `
             UPDATE mdata.units
-            SET deactivated_at = $2,
-                status = $3::mdata.unit_status,
-                updated_by_user_id = $4
+            SET deactivated_at = now(),
+                status = $2::mdata.unit_status,
+                updated_by_user_id = $3
             WHERE id = $1
               AND deactivated_at IS NULL
           `,
-          [parsedParams.data.id, nowIso, newStatus, authUser.uuid]
+          [parsedParams.data.id, newStatus, authUser.uuid]
         );
-        deactivatedAt = nowIso;
+        // now() is transaction-scoped (constant for the whole txn), so reading it back here returns the
+        // exact value just written — DB-authoritative — without re-reading the now-SELECT-invisible row.
+        const tsRes = await client.query(`SELECT now() AS deactivated_at`);
+        deactivatedAt = (tsRes.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
       }
 
       await appendCrudAudit(client, authUser.uuid, "mdata.units.deactivated", {
