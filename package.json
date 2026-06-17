@@ -618,6 +618,7 @@
     "verify:dispatch-kanban-lanes-and-density": "node scripts/verify-dispatch-kanban-lanes-and-density.mjs",
     "verify:dispatch-hos-columns-wired": "node scripts/verify-dispatch-hos-columns-wired.mjs",
     "verify:dispatch-live-gps-wired": "node scripts/verify-dispatch-live-gps-wired.mjs",
+    "verify:currency-format-guarded": "node scripts/verify-currency-format-guarded.mjs",
     "verify:awaiting-truck-driver-hos": "node scripts/verify-awaiting-truck-driver-hos.mjs",
     "verify:load-import-dry-run-default": "node scripts/verify-load-import-dry-run-default.mjs",
     "verify:load-delivery-dates-separated": "node scripts/verify-load-delivery-dates-separated.mjs",

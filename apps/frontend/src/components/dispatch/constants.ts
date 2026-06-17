@@ -42,8 +42,12 @@ export const FLAG_EMOJI_BY_CODE: Record<string, string> = {
   BLACK: "⚫",
 };
 
-export function formatMoneyCents(valueCents: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(valueCents / 100);
+export function formatMoneyCents(valueCents: number | null | undefined, currency?: string | null) {
+  // No-load rows (truck-centric "Awaiting assignment") have no rate/currency — render an em dash.
+  // Never call Intl.NumberFormat with a null amount or a missing currency code (both throw and
+  // crashed the whole List/Table grid via the error boundary).
+  if (valueCents == null || Number.isNaN(Number(valueCents))) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(Number(valueCents) / 100);
 }
 
 export function toRouteSummary(pickup?: string | null, delivery?: string | null) {
