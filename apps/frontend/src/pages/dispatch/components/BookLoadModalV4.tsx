@@ -916,7 +916,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                 <span className="blw-sec-meta">1 pickup · 1 delivery</span>
               </div>
               <div className="space-y-2 p-3">
-                <BookLoadStopsSection control={form.control as never} register={form.register as never} />
+                <BookLoadStopsSection control={form.control as never} register={form.register as never} setValue={form.setValue as never} />
                 <MilesStrip practical={milesPractical} shortest={milesShortest} deadhead={milesDeadhead} ratePerMile={ratePerMile} />
                 <p className="blw-note">Shortest miles (highlighted) used for driver pay. Practical used for fuel planning and ETA.</p>
                 <div className="hidden">

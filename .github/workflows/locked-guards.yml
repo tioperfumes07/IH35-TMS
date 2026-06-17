@@ -212,6 +212,12 @@ jobs:
       - name: verify:cors-allows-put
         run: npm run verify:cors-allows-put
 
+      - name: verify:pcmiler-key-not-exposed
+        run: npm run verify:pcmiler-key-not-exposed
+
+      - name: verify:pcmiler-flag-gated
+        run: npm run verify:pcmiler-flag-gated
+
       - name: verify:deactivation-trap-fix
         run: npm run verify:deactivation-trap-fix
 

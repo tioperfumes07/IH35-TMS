@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { useFieldArray, Controller, type Control, type UseFormRegister } from "react-hook-form";
+import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
+import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
 
 type Props = {
   control: Control<any>;
   register: UseFormRegister<any>;
+  setValue?: UseFormSetValue<any>;
 };
 
-export function BookLoadStopsSection({ control, register }: Props) {
+export function BookLoadStopsSection({ control, register, setValue }: Props) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "stops",
@@ -61,18 +63,32 @@ export function BookLoadStopsSection({ control, register }: Props) {
             </div>
             {expandedRows[field.id] ? (
               <div className="mt-2 grid grid-cols-1 gap-2 border-t border-gray-200 pt-2 md:grid-cols-2">
-                {/* DISPATCH-UI-REFINE-2 ITEM 4 — single full-width address line (interim, pre-PC*MILER).
-                    The parsed Address/City/State/Country fields below are KEPT (additive) for when
-                    PC*MILER parsing lands; this one line is the visible primary entry. */}
+                {/* DISPATCH-UI-REFINE-2 ITEM 4 + PCMILER-GEOCODE — single full-width address line. When
+                    PCMILER_ENABLED is ON, this becomes a Trimble geocoding autocomplete; selecting a result
+                    populates the parsed Address/City/State/Country fields below (kept additive in #1134).
+                    Flag OFF → plain editable text (identical to #1134), no Trimble call. */}
                 <div className="md:col-span-2">
                   <Field
                     label="Address (one line)"
                     input={
-                      <input
-                        {...register(`stops.${index}.address_full`)}
-                        data-stop-address-oneline="true"
-                        placeholder="123 Main St, Laredo, TX 78040, USA"
-                        className="h-7 w-full rounded border border-gray-300 px-2 text-xs"
+                      <Controller
+                        control={control}
+                        name={`stops.${index}.address_full`}
+                        render={({ field }) => (
+                          <AddressGeocodeInput
+                            value={field.value ?? ""}
+                            onChange={field.onChange}
+                            onResolve={(r) => {
+                              if (r.address_line1) setValue?.(`stops.${index}.address_line1`, r.address_line1, { shouldDirty: true });
+                              if (r.city) setValue?.(`stops.${index}.city`, r.city, { shouldDirty: true });
+                              if (r.state) setValue?.(`stops.${index}.state`, r.state, { shouldDirty: true });
+                              if (r.country) setValue?.(`stops.${index}.country`, r.country, { shouldDirty: true });
+                            }}
+                            placeholder="123 Main St, Laredo, TX 78040, USA"
+                            className="h-7 w-full rounded border border-gray-300 px-2 text-xs"
+                            dataAttrs={{ "data-stop-address-oneline": "true" }}
+                          />
+                        )}
                       />
                     }
                   />
