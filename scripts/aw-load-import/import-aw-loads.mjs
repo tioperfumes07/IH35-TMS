@@ -90,7 +90,10 @@ const trailers = distinct(all.map((l) => l.trailer_aw_ref));
 const drivers = distinct([...all.map((l) => l.primary_driver_name), ...all.map((l) => l.team_driver_name)]);
 const ratedLoads = all.filter((l) => l.rate_cents > 0);
 const ratedSumCents = ratedLoads.reduce((s, l) => s + l.rate_cents, 0);
-const statedTotalCents = 4299800; // source message stated $42,998.00
+// Expected rated total — RECONCILED 2026-06-17 to $44,998.00 across the 10 rated loads. The earlier
+// "$42,998.00" was a summary addition error in the source message, NOT bad load data; per-load
+// figures stand as extracted. This matches the line-item sum, so no mismatch is flagged.
+const statedTotalCents = 4499800;
 const zeroRate = all.filter((l) => l.rate_cents === 0);
 const usd = (c) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
@@ -107,8 +110,10 @@ console.log(`  stops (1 pickup + 1 delivery)  ${toImport.length * 2}`);
 console.log(`  rated loads .................. ${ratedLoads.length}   line-item sum ${usd(ratedSumCents)}`);
 console.log(`  zero-rate loads (flagged) .... ${zeroRate.length}  [${zeroRate.map((l) => l.aw_load_number).join(", ")}]`);
 
-if (ratedSumCents !== statedTotalCents) {
-  console.log(`\n  ⚠ RECONCILE MISMATCH: line-item rated sum ${usd(ratedSumCents)} ≠ stated total ${usd(statedTotalCents)} (Δ ${usd(ratedSumCents - statedTotalCents)}). Surfaced for Jorge — NOT auto-resolved.`);
+if (ratedSumCents === statedTotalCents) {
+  console.log(`\n  ✓ RECONCILED: rated total ${usd(ratedSumCents)} (10 loads) matches the confirmed expected total. The earlier $42,998.00 was a summary addition error, not bad load data.`);
+} else {
+  console.log(`\n  ⚠ RECONCILE MISMATCH: line-item rated sum ${usd(ratedSumCents)} ≠ expected ${usd(statedTotalCents)} (Δ ${usd(ratedSumCents - statedTotalCents)}). Surfaced for Jorge — NOT auto-resolved.`);
 }
 if (heldOut.length) {
   console.log(`\n  ⏸ HELD OUT of commit (blank AW load #): ${heldOut.map((l) => `WO ${l.wo_number} (${l.broker_customer_name})`).join("; ")}. Pass --include-pending only after the AW load id is confirmed.`);

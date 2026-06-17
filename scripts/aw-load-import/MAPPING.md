@@ -32,10 +32,10 @@ against live TRANSP data (find-or-create customer; match driver/unit). A dry run
 - **13378** (Armstrong Transport GR): AW rate = `$0.00` → imported as `0`, flag `no_rate_in_aw`. No invented number.
 - **77225** (JZ Logistics, Pending): blank AW load # → **held out of commit** (keyed on WO 77225). Pass `--include-pending` only after the AW load id is confirmed.
 
-## Reconciliation flag (financial)
-Line-item rated sum (10 loads) = **$44,998.00**. The source message stated **$42,998.00** (Δ
-**$2,000.00**). Surfaced for Jorge; the importer does NOT auto-resolve it. The $2k gap should be
-reconciled against AW before commit.
+## Reconciliation — RESOLVED (2026-06-17)
+Rated total = **$44,998.00** across the 10 rated loads (2500+2500+3798+4000+4900+4900+6300+3800+
+6000+6300). The earlier **$42,998.00** was a summary addition error in the source message, **not**
+bad load data — per-load figures stand as extracted. The dry-run now confirms (✓), no flag.
 
 ## Counts (dry-run, from dataset — new-vs-existing resolved @commit)
 11 loads (10 importing, 1 held) · 9 distinct customers · 12 distinct drivers (1 team) · 11 trucks

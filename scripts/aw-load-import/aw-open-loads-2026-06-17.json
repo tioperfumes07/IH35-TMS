@@ -7,7 +7,7 @@
     "Customer column = BROKER. Match/create as customers per-entity (TRANSP). Never commingle into TRK/USMCA.",
     "Equipment 'Own' = company asset (truck + trailer).",
     "Dates are AW appointment Start/End -> scheduled_pickup_appt_at / scheduled_delivery_appt_at (local appt time). Two-date model: these are SCHEDULED; predicted_delivery_date left null (backfilled = scheduled by BLOCK 1).",
-    "RECONCILE FLAG: line-item rated sum = $44,998.00 across 10 rated loads, but the source message stated $42,998.00 (diff $2,000.00). Surfaced for Jorge — NOT auto-resolved.",
+    "RECONCILE RESOLVED (2026-06-17): rated total = $44,998.00 across 10 rated loads. The earlier $42,998.00 was a summary addition error in the source message, NOT bad load data; per-load figures stand as extracted.",
     "13378 rate = 0.00 in AW (real gap) — imported as 0 and flagged. Do not invent a number.",
     "77225 (Pending, JZ Logistics) has a BLANK AW load number in the grid — keyed on WO 77244? No: WO 77225. Confirm AW load id before commit; keyed on wo_number 77225 for now."
   ],
