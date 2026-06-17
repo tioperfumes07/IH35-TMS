@@ -29,6 +29,7 @@ export type UnifiedFleetRow = {
   is_oos?: boolean;
   vehicle_type?: string | null;
   equipment_type?: string | null;
+  deactivated_at?: string | null;
 };
 
 export function buildReeferSummary(row: Record<string, unknown>): string | null {
@@ -65,12 +66,16 @@ export async function fetchUnifiedFleetList(
     status?: string;
     search?: string;
     type?: FleetTypeFilter;
+    /** When true, also return soft-deleted (deactivated_at IS NOT NULL) units so they
+     *  can be viewed and reactivated. Widens the fetch ONLY — tenant/RLS scope unchanged. */
+    include_inactive?: boolean;
     limit: number;
     offset: number;
   }
 ): Promise<UnifiedFleetRow[]> {
   const truckValues: unknown[] = [];
-  const truckFilters: string[] = ["deactivated_at IS NULL", excludeDemoPhantomSql("unit_number")];
+  const truckFilters: string[] = [excludeDemoPhantomSql("unit_number")];
+  if (!options.include_inactive) truckFilters.push("deactivated_at IS NULL");
   if (options.type) {
     truckFilters.push(truckTypeSqlFilter(options.type));
   }
@@ -90,7 +95,8 @@ export async function fetchUnifiedFleetList(
   }
 
   const trailerValues: unknown[] = [];
-  const trailerFilters: string[] = ["deactivated_at IS NULL", excludeDemoPhantomSql("equipment_number")];
+  const trailerFilters: string[] = [excludeDemoPhantomSql("equipment_number")];
+  if (!options.include_inactive) trailerFilters.push("deactivated_at IS NULL");
   if (options.type) {
     trailerFilters.push(trailerTypeSqlFilter(options.type, trailerValues));
   }
@@ -122,7 +128,8 @@ export async function fetchUnifiedFleetList(
         is_oos,
         vehicle_type,
         owner_company_id,
-        currently_leased_to_company_id
+        currently_leased_to_company_id,
+        deactivated_at
       FROM mdata.units
       WHERE ${truckFilters.join(" AND ")}
       ORDER BY unit_number ASC NULLS LAST
@@ -144,7 +151,8 @@ export async function fetchUnifiedFleetList(
         reefer_year,
         reefer_brand,
         owner_company_id,
-        currently_leased_to_company_id
+        currently_leased_to_company_id,
+        deactivated_at
       FROM mdata.equipment
       WHERE ${trailerFilters.join(" AND ")}
       ORDER BY equipment_number ASC NULLS LAST
@@ -167,6 +175,7 @@ export async function fetchUnifiedFleetList(
     operating_company_id: operatingCompanyId,
     is_oos: Boolean(row.is_oos),
     vehicle_type: row.vehicle_type != null ? String(row.vehicle_type) : null,
+    deactivated_at: row.deactivated_at != null ? String(row.deactivated_at) : null,
   }));
 
   const trailers: UnifiedFleetRow[] = trailerRes.rows.map((row) => ({
@@ -182,6 +191,7 @@ export async function fetchUnifiedFleetList(
     reefer_summary: buildReeferSummary(row),
     operating_company_id: operatingCompanyId,
     equipment_type: row.equipment_type != null ? String(row.equipment_type) : null,
+    deactivated_at: row.deactivated_at != null ? String(row.deactivated_at) : null,
   }));
 
   const merged = [...trucks, ...trailers].sort((a, b) =>

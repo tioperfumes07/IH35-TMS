@@ -119,6 +119,9 @@ jobs:
       - name: verify:booking-unit-ownership-fallback
         run: npm run verify:booking-unit-ownership-fallback
 
+      - name: verify:fleet-include-inactive-scope
+        run: npm run verify:fleet-include-inactive-scope
+
       - name: verify:block-ready-c5-no-duplicate-arch-design
         run: npm run verify:block-ready-c5-no-duplicate-arch-design
 
