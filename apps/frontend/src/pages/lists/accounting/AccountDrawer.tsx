@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import {
   createCatalogAccount,
@@ -356,11 +357,10 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               </FieldLabel>
 
               <FieldLabel label="Balance As Of">
-                <input
-                  type="date"
+                <DatePicker
                   value={form.opening_balance_as_of}
                   disabled={readOnly}
-                  onChange={(e) => setField("opening_balance_as_of", e.target.value)}
+                  onChange={(next) => setField("opening_balance_as_of", next)}
                   className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
                 />
               </FieldLabel>

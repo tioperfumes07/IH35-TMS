@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { useState, useCallback } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, Download, AlertTriangle } from "lucide-react";
@@ -252,17 +253,15 @@ export function AuditHistoryTab({ operatingCompanyId, entityType, entityId }: Au
           ))}
         </select>
 
-        <input
-          type="date"
+        <DatePicker
           value={filters.from}
-          onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))}
+          onChange={(next) => setFilters((f) => ({ ...f, from: next }))}
           className="text-xs px-2 py-1 border rounded bg-white"
         />
 
-        <input
-          type="date"
+        <DatePicker
           value={filters.to}
-          onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))}
+          onChange={(next) => setFilters((f) => ({ ...f, to: next }))}
           className="text-xs px-2 py-1 border rounded bg-white"
         />
 

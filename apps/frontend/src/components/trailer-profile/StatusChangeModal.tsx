@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { putTrailerStatus, type TrailerStatus } from "../../api/fleet-trailers";
@@ -133,18 +134,17 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         </label>
         <label className="block">
           Effective date
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 w-full rounded border px-2 py-1"
             value={effectiveDate}
-            onChange={(e) => setEffectiveDate(e.target.value)}
+            onChange={(next) => setEffectiveDate(next)}
           />
         </label>
         {targetStatus === "Sold" ? (
           <>
             <label className="block">
               Sold date *
-              <input type="date" className="mt-1 w-full rounded border px-2 py-1" value={soldDate} onChange={(e) => setSoldDate(e.target.value)} />
+              <DatePicker className="mt-1 w-full rounded border px-2 py-1" value={soldDate} onChange={(next) => setSoldDate(next)} />
             </label>
             <label className="block">
               Sold to
@@ -160,7 +160,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           <>
             <label className="block">
               Transferred date *
-              <input type="date" className="mt-1 w-full border px-2 py-1" value={transferredDate} onChange={(e) => setTransferredDate(e.target.value)} />
+              <DatePicker className="mt-1 w-full border px-2 py-1" value={transferredDate} onChange={(next) => setTransferredDate(next)} />
             </label>
             <label className="block">
               Entity *
@@ -176,7 +176,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           <>
             <label className="block">
               Damage date *
-              <input type="date" className="mt-1 w-full border px-2 py-1" value={damageDate} onChange={(e) => setDamageDate(e.target.value)} />
+              <DatePicker className="mt-1 w-full border px-2 py-1" value={damageDate} onChange={(next) => setDamageDate(next)} />
             </label>
             <label className="block">
               Description *
@@ -188,7 +188,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           <>
             <label className="block">
               OOS date *
-              <input type="date" className="mt-1 w-full border px-2 py-1" value={oosDate} onChange={(e) => setOosDate(e.target.value)} />
+              <DatePicker className="mt-1 w-full border px-2 py-1" value={oosDate} onChange={(next) => setOosDate(next)} />
             </label>
             <label className="block">
               OOS reason *

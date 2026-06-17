@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getDocsFoundationKpis, listDocsFoundation, type DocsFoundationRow, type FileEntityType } from "../../api/docs";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -101,11 +102,10 @@ export function DocsHomePage() {
           </label>
           <label className="space-y-1 text-xs font-semibold text-gray-600">
             Expiration before
-            <input
-              type="date"
+            <DatePicker
               value={expiresBefore}
-              onChange={(event) => {
-                setExpiresBefore(event.target.value);
+              onChange={(next) => {
+                setExpiresBefore(next);
                 setPage(1);
               }}
               className="h-9 w-full rounded border border-gray-300 px-2 text-sm font-normal"

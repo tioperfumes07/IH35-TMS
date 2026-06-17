@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useState } from "react";
 import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../Button";
@@ -30,21 +31,19 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-end gap-2">
         <label className="text-xs text-gray-600">
           From
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
             value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={(next) => setFromDate(next)}
             data-testid="driver-load-history-filter-from"
           />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
             value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={(next) => setToDate(next)}
             data-testid="driver-load-history-filter-to"
           />
         </label>

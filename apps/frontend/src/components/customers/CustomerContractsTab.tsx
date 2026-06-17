@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createCustomerContract,
@@ -238,19 +239,17 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
             <div className="grid grid-cols-2 gap-2">
               <label className="block text-sm">
                 <span className="mb-1 block text-xs font-semibold text-gray-600">Effective date</span>
-                <input
-                  type="date"
+                <DatePicker
                   value={meta.effective_date}
-                  onChange={(e) => setMeta((m) => ({ ...m, effective_date: e.target.value }))}
+                  onChange={(next) => setMeta((m) => ({ ...m, effective_date: next }))}
                   className="h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
                 />
               </label>
               <label className="block text-sm">
                 <span className="mb-1 block text-xs font-semibold text-gray-600">Expiration date</span>
-                <input
-                  type="date"
+                <DatePicker
                   value={meta.expiration_date}
-                  onChange={(e) => setMeta((m) => ({ ...m, expiration_date: e.target.value }))}
+                  onChange={(next) => setMeta((m) => ({ ...m, expiration_date: next }))}
                   className="h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
                 />
               </label>

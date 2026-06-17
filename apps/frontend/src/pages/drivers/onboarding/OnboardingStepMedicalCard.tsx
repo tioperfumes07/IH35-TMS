@@ -1,4 +1,5 @@
 import { OnboardingDocUploadField } from "./OnboardingDocUploadField";
+import { DatePicker } from "../../../components/forms/DatePicker";
 
 type MedicalCardStepProps = {
   expiresAt: string;
@@ -23,12 +24,11 @@ export function OnboardingStepMedicalCard({
     <div data-testid="onboarding-step-medical-card" className="space-y-4">
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-slate-700">Medical card expiry</span>
-        <input
-          type="date"
+        <DatePicker
           className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
           value={expiresAt}
           disabled={disabled}
-          onChange={(e) => onChangeExpiry(e.target.value)}
+          onChange={(next) => onChangeExpiry(next)}
         />
       </label>
       <OnboardingDocUploadField
