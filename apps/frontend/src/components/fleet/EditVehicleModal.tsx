@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useToast } from "../../components/Toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { patchUnit } from "../../api/mdata";
@@ -159,15 +160,22 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
   const showReeferTab = hasReeferLinkage(unit, reefer);
   const currentStatus = String(draft.status ?? unit?.status ?? rowPreview?.status ?? "InService");
 
+  // Initialize draft/baseline exactly once per open so a background refetch can never
+  // reset the form and wipe the user's edits (which silently emptied dirtyCount).
+  const initializedRef = useRef(false);
   useEffect(() => {
-    if (!unit) return;
+    if (!open) initializedRef.current = false;
+  }, [open]);
+  useEffect(() => {
+    if (!unit || initializedRef.current) return;
     const next: Record<string, string | boolean> = {};
     for (const def of FIELD_DEFS) {
       next[def.key] = normalizeValue(unit[def.key], def.type);
     }
     setBaseline(next);
     setDraft(next);
-  }, [unit?.id]);
+    initializedRef.current = true;
+  }, [unit]);
 
   const visibleTabs = useMemo(
     () => EDIT_VEHICLE_MODAL_TABS.filter((tab) => tab !== "Reefer" || showReeferTab),
@@ -191,6 +199,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
     return patch;
   }, [draft, baseline]);
 
+  const { pushToast } = useToast();
   const saveMutation = useMutation({
     mutationFn: () => patchUnit(unitId!, patchPayload),
     onSuccess: () => {
@@ -199,6 +208,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
       onSaved?.();
       onClose();
     },
+    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to save unit", "error"),
   });
 
   const setField = useCallback((key: string, value: string | boolean) => {
@@ -333,8 +343,14 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
           <Button
             variant="primary"
             type="button"
-            disabled={dirtyCount === 0 || saveMutation.isPending || !unitId}
-            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || !unitId}
+            onClick={() => {
+              if (Object.keys(patchPayload).length === 0) {
+                onClose();
+                return;
+              }
+              saveMutation.mutate();
+            }}
           >
             Save Changes ({dirtyCount} fields modified)
           </Button>
