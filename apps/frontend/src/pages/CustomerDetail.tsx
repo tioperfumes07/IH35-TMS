@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DatePicker } from "../components/forms/DatePicker";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -1616,7 +1617,7 @@ export function CustomerDetailPage() {
                 <div className="grid gap-2 md:grid-cols-2">
                   <label className="block">
                     Payment date
-                    <input type="date" className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payDate} onChange={(e) => setPayDate(e.target.value)} />
+                    <DatePicker className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payDate} onChange={setPayDate} />
                   </label>
                   <label className="block">
                     Amount (USD)

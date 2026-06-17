@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DatePicker } from "../components/forms/DatePicker";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -1458,10 +1459,9 @@ export function DriverDetailPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Qualified date</label>
-            <input
-              type="date"
+            <DatePicker
               value={newQualificationForm.qualified_at}
-              onChange={(event) => setNewQualificationForm((current) => ({ ...current, qualified_at: event.target.value }))}
+              onChange={(value) => setNewQualificationForm((current) => ({ ...current, qualified_at: value }))}
               className="rounded border border-gray-300 px-2 py-2 text-sm"
             />
           </div>
@@ -1691,10 +1691,9 @@ export function DriverDetailPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Effective from</label>
-            <input
-              type="date"
+            <DatePicker
               value={rateChangeForm.effective_from}
-              onChange={(event) => setRateChangeForm((current) => ({ ...current, effective_from: event.target.value }))}
+              onChange={(value) => setRateChangeForm((current) => ({ ...current, effective_from: value }))}
               className="rounded border border-gray-300 px-2 py-2 text-sm"
             />
           </div>
