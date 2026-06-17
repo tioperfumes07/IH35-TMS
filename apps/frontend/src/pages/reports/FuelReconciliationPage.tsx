@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -120,11 +121,11 @@ export function FuelReconciliationPage() {
       <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           From
-          <input type="date" className="mt-1 block h-9 rounded border px-2" value={period.start} onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))} />
+          <DatePicker className="mt-1 block h-9 rounded border px-2" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <input type="date" className="mt-1 block h-9 rounded border px-2" value={period.end} onChange={(e) => setPeriod((p) => ({ ...p, end: e.target.value }))} />
+          <DatePicker className="mt-1 block h-9 rounded border px-2" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
         </label>
         <Button size="sm" onClick={() => setApplied({ ...period })}>
           Apply

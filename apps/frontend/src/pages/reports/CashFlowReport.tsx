@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -41,7 +42,7 @@ export function CashFlowReport() {
       <div className="flex flex-wrap items-end gap-3 rounded border bg-white p-4">
         <label className="text-sm">
           As of
-          <input type="date" className="ml-2 rounded border px-2 py-1" value={asOf} onChange={(e) => setAsOf(e.target.value)} />
+          <DatePicker className="ml-2 rounded border px-2 py-1" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <Button onClick={() => setApplied(asOf)}>Apply</Button>
       </div>

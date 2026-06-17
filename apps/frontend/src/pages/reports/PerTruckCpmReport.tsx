@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -60,11 +61,11 @@ export function PerTruckCpmReport() {
       <div className="flex flex-wrap items-end gap-3 rounded border bg-white p-4">
         <label className="text-sm">
           From
-          <input type="date" className="ml-2 rounded border px-2 py-1" value={period.from} onChange={(e) => setPeriod((p) => ({ ...p, from: e.target.value }))} />
+          <DatePicker className="ml-2 rounded border px-2 py-1" value={period.from} onChange={(next) => setPeriod((p) => ({ ...p, from: next }))} />
         </label>
         <label className="text-sm">
           To
-          <input type="date" className="ml-2 rounded border px-2 py-1" value={period.to} onChange={(e) => setPeriod((p) => ({ ...p, to: e.target.value }))} />
+          <DatePicker className="ml-2 rounded border px-2 py-1" value={period.to} onChange={(next) => setPeriod((p) => ({ ...p, to: next }))} />
         </label>
         <Button onClick={() => setApplied(period)}>Apply</Button>
       </div>

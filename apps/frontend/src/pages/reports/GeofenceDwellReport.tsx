@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -107,20 +108,18 @@ export function GeofenceDwellReport() {
         <div className="grid gap-3 md:grid-cols-4">
           <label className="text-xs text-slate-700">
             Start
-            <input
-              type="date"
+            <DatePicker
               className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
               value={periodStart}
-              onChange={(event) => setPeriodStart(event.target.value)}
+              onChange={(next) => setPeriodStart(next)}
             />
           </label>
           <label className="text-xs text-slate-700">
             End
-            <input
-              type="date"
+            <DatePicker
               className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
               value={periodEnd}
-              onChange={(event) => setPeriodEnd(event.target.value)}
+              onChange={(next) => setPeriodEnd(next)}
             />
           </label>
           <label className="text-xs text-slate-700">

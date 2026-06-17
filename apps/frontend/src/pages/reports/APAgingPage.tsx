@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { exportApAging, getApAgingReport, type APAgingRow } from "../../api/reports";
@@ -170,7 +171,7 @@ export function APAgingPage() {
       <div className="no-print grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-4">
         <label className="text-xs text-gray-600">
           As-of date
-          <input type="date" className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={asOf} onChange={(e) => setAsOf(e.target.value)} />
+          <DatePicker className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <label className="text-xs text-gray-600">
           Vendor contains

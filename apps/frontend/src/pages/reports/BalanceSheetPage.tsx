@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -113,7 +114,7 @@ export function BalanceSheetPage() {
         <BasisSelector value={basis} onChange={setBasis} />
         <label className="text-xs text-gray-600">
           As-of date
-          <input type="date" className="mt-1 block h-9 rounded border border-gray-300 px-2" value={asOf} onChange={(event) => setAsOf(event.target.value)} />
+          <DatePicker className="mt-1 block h-9 rounded border border-gray-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <Button size="sm" onClick={() => setAppliedAsOf(asOf)}>
           Apply

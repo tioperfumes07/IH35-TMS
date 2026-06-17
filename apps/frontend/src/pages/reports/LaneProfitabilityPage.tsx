@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
@@ -194,20 +195,18 @@ export function LaneProfitabilityPage() {
           <>
             <label className="text-xs text-gray-600">
               Start
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
                 value={customStart}
-                onChange={(e) => setCustomStart(e.target.value)}
+                onChange={(next) => setCustomStart(next)}
               />
             </label>
             <label className="text-xs text-gray-600">
               End
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
                 value={customEnd}
-                onChange={(e) => setCustomEnd(e.target.value)}
+                onChange={(next) => setCustomEnd(next)}
               />
             </label>
           </>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -179,20 +180,18 @@ export function CustomerProfitabilityPage() {
         </label>
         <label className="text-xs text-gray-600">
           From
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block h-9 rounded border border-gray-300 px-2"
             value={period.start}
-            onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))}
+            onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block h-9 rounded border border-gray-300 px-2"
             value={period.end}
-            onChange={(e) => setPeriod((p) => ({ ...p, end: e.target.value }))}
+            onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />
         </label>
         <Button size="sm" onClick={applyFilters}>
