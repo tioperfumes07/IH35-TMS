@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
@@ -159,20 +160,18 @@ export function LegalMatterNewPage() {
             </label>
             <label className="text-xs text-gray-600">
               Next hearing (date)
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
                 value={form.next_hearing_date}
-                onChange={(e) => setForm((f) => ({ ...f, next_hearing_date: e.target.value }))}
+                onChange={(next) => setForm((f) => ({ ...f, next_hearing_date: next }))}
               />
             </label>
             <label className="text-xs text-gray-600">
               Statute of limitations (date)
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
                 value={form.statute_of_limitations_at}
-                onChange={(e) => setForm((f) => ({ ...f, statute_of_limitations_at: e.target.value }))}
+                onChange={(next) => setForm((f) => ({ ...f, statute_of_limitations_at: next }))}
               />
             </label>
             <label className="text-xs text-gray-600 md:col-span-2">

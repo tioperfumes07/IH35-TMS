@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { useQuery } from "@tanstack/react-query";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Download, AlertTriangle } from "lucide-react";
 import { listAuditEvents, type AuditEventListItem } from "../../api/audit";
@@ -174,20 +175,18 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
       <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded border">
         <label className="text-xs text-gray-600">
           From
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
             value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={(next) => setFromDate(next)}
           />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
             value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={(next) => setToDate(next)}
           />
         </label>
         <label className="text-xs text-gray-600">

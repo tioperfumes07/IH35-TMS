@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -55,10 +56,10 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
   return (
     <div>
       <div className="flex gap-3 mb-4">
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
+        <DatePicker value={from} onChange={(next) => setFrom(next)}
           className="border rounded px-2 py-1 text-sm" />
         <span className="self-center text-gray-400">—</span>
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
+        <DatePicker value={to} onChange={(next) => setTo(next)}
           className="border rounded px-2 py-1 text-sm" />
       </div>
       {isLoading && <p className="text-gray-400 text-sm">Loading...</p>}

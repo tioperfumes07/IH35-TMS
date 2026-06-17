@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { legalContractsApi, type LegalContractStatus } from "../../../api/legal-contracts";
@@ -169,8 +170,8 @@ export function LegalContractInstancesPage() {
             <option value="other">Other</option>
           </SelectCombobox>
           <div className="grid grid-cols-2 gap-2 xl:col-span-2">
-            <input value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} type="date" className="h-9 rounded border border-gray-300 px-2 text-sm" />
-            <input value={dateTo} onChange={(event) => setDateTo(event.target.value)} type="date" className="h-9 rounded border border-gray-300 px-2 text-sm" />
+            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded border border-gray-300 px-2 text-sm" />
+            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded border border-gray-300 px-2 text-sm" />
           </div>
         </div>
       </div>

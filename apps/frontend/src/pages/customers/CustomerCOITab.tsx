@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMemo, useState } from "react";
 import {
   createInsuranceCoiRequest,
@@ -153,11 +154,10 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
           </label>
           <label className="block text-xs">
             Expires At (optional)
-            <input
-              type="date"
+            <DatePicker
               className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
               value={requestExpiresAt}
-              onChange={(event) => setRequestExpiresAt(event.target.value)}
+              onChange={(next) => setRequestExpiresAt(next)}
             />
           </label>
           <label className="block text-xs md:col-span-2">
@@ -244,11 +244,10 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
           </label>
           <label className="block text-xs">
             Expires At
-            <input
-              type="date"
+            <DatePicker
               className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
               value={editExpiresAt}
-              onChange={(event) => setEditExpiresAt(event.target.value)}
+              onChange={(next) => setEditExpiresAt(next)}
             />
           </label>
           <label className="block text-xs md:col-span-2">

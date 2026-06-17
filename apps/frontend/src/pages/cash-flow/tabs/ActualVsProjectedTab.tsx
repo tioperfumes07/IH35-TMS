@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
@@ -82,19 +83,17 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
         <label className="flex items-center gap-2 text-sm text-gray-600">
           From:
-          <input
-            type="date"
+          <DatePicker
             value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={(next) => setFrom(next)}
             className="rounded border border-gray-200 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none"
           />
         </label>
         <label className="flex items-center gap-2 text-sm text-gray-600">
           To:
-          <input
-            type="date"
+          <DatePicker
             value={to}
-            onChange={(e) => setTo(e.target.value)}
+            onChange={(next) => setTo(next)}
             className="rounded border border-gray-200 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none"
           />
         </label>
