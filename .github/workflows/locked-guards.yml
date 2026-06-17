@@ -203,5 +203,8 @@ jobs:
       - name: verify:load-delivery-dates-separated
         run: npm run verify:load-delivery-dates-separated
 
+      - name: verify:cash-eta-audit-append-only
+        run: npm run verify:cash-eta-audit-append-only
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density
