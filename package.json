@@ -605,6 +605,7 @@
     "verify:soft-delete-list-filter": "node scripts/verify-soft-delete-list-filter.mjs",
     "verify:manual-projection-sum": "node scripts/verify-manual-projection-sum.mjs",
     "verify:fleet-bulk-soft-delete": "node scripts/verify-fleet-bulk-soft-delete.mjs",
+    "verify:factoring-sidebar-nav": "node scripts/verify-factoring-sidebar-nav.mjs",
     "verify:table-controls-shared": "node scripts/verify-table-controls-shared.mjs"
   },
   "dependencies": {

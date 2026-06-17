@@ -161,5 +161,8 @@ jobs:
       - name: verify:fleet-bulk-soft-delete
         run: npm run verify:fleet-bulk-soft-delete
 
+      - name: verify:factoring-sidebar-nav
+        run: npm run verify:factoring-sidebar-nav
+
       - name: verify:table-controls-shared
         run: npm run verify:table-controls-shared
