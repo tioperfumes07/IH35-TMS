@@ -1,0 +1,115 @@
+{
+  "source": "awtrack.com Open Loads — rates GUARD-read from each load detail (Customer Invoices & Charges)",
+  "captured_at": "2026-06-17T04:00:00-05:00",
+  "operating_company_id": "91e0bf0a-133f-4ce8-a734-2586cfa66d96",
+  "operating_company_code": "TRANSP",
+  "notes": [
+    "Customer column = BROKER. Match/create as customers per-entity (TRANSP). Never commingle into TRK/USMCA.",
+    "Equipment 'Own' = company asset (truck + trailer).",
+    "Dates are AW appointment Start/End -> scheduled_pickup_appt_at / scheduled_delivery_appt_at (local appt time). Two-date model: these are SCHEDULED; predicted_delivery_date left null (backfilled = scheduled by BLOCK 1).",
+    "RECONCILE FLAG: line-item rated sum = $44,998.00 across 10 rated loads, but the source message stated $42,998.00 (diff $2,000.00). Surfaced for Jorge — NOT auto-resolved.",
+    "13378 rate = 0.00 in AW (real gap) — imported as 0 and flagged. Do not invent a number.",
+    "77225 (Pending, JZ Logistics) has a BLANK AW load number in the grid — keyed on WO 77244? No: WO 77225. Confirm AW load id before commit; keyed on wo_number 77225 for now."
+  ],
+  "loads": [
+    {
+      "aw_load_number": "13362", "wo_number": "406320", "status": "dispatched",
+      "primary_driver_name": "Luis Armando Sosa Perez", "team_driver_name": null,
+      "truck_unit": "T148", "trailer_aw_ref": "10209", "trailer_type": "53' Reefer", "equipment_owned": true,
+      "pickup_city": "Kingsport", "pickup_state": "TN", "pickup_location_name": "Ridgefields Kingsport",
+      "delivery_city": "Delran", "delivery_state": "NJ", "delivery_location_name": "Domtar C/O CTX Logistics",
+      "scheduled_pickup_appt_at": "2026-06-12T09:00:00", "scheduled_delivery_appt_at": "2026-06-15T08:00:00",
+      "broker_customer_name": "Chariot Logistics", "rate_cents": 250000, "flags": []
+    },
+    {
+      "aw_load_number": "13370", "wo_number": "12958562", "status": "dispatched",
+      "primary_driver_name": "Hugo Gaytan Sarabia", "team_driver_name": null,
+      "truck_unit": "T173", "trailer_aw_ref": "10876", "trailer_type": "53' Reefer", "equipment_owned": true,
+      "pickup_city": "Rochester", "pickup_state": "MN", "pickup_location_name": "Kroger PACE Dairy / MN Rochester Cheese",
+      "delivery_city": "Houston", "delivery_state": "TX", "delivery_location_name": "Kroger Houston-034A",
+      "scheduled_pickup_appt_at": "2026-06-15T08:00:00", "scheduled_delivery_appt_at": "2026-06-17T08:00:00",
+      "broker_customer_name": "HG Logistics", "rate_cents": 250000, "flags": []
+    },
+    {
+      "aw_load_number": "13371", "wo_number": "26175", "status": "dispatched",
+      "primary_driver_name": "Genaro Guerrero Chavez", "team_driver_name": null,
+      "truck_unit": "T174", "trailer_aw_ref": "10518", "trailer_type": "53' Reefer", "equipment_owned": true,
+      "pickup_city": "Lebanon", "pickup_state": "IN", "pickup_location_name": "NewCold Lebanon",
+      "delivery_city": "Taunton", "delivery_state": "MA", "delivery_location_name": "PFS Boston",
+      "scheduled_pickup_appt_at": "2026-06-15T08:00:00", "scheduled_delivery_appt_at": "2026-06-17T08:00:00",
+      "broker_customer_name": "Fords Fast Freight Logistics LLC", "rate_cents": 379800, "flags": []
+    },
+    {
+      "aw_load_number": "13372", "wo_number": "262533", "status": "dispatched",
+      "primary_driver_name": "Sukhdeep Singh", "team_driver_name": "Jose Modesto Vazquez Hernandez",
+      "truck_unit": "T163", "trailer_aw_ref": "10224", "trailer_type": "53' Reefer", "equipment_owned": true,
+      "pickup_city": "Bolingbrook", "pickup_state": "IL", "pickup_location_name": "DC Windham Pkwy",
+      "delivery_city": "Shrewsbury", "delivery_state": "MA", "delivery_location_name": "SCF Central 015",
+      "scheduled_pickup_appt_at": "2026-06-15T08:00:00", "scheduled_delivery_appt_at": "2026-06-17T12:00:00",
+      "broker_customer_name": "Shram Logistics Solutions", "rate_cents": 400000, "flags": ["team_load"]
+    },
+    {
+      "aw_load_number": "13373", "wo_number": null, "status": "dispatched",
+      "primary_driver_name": "Jose Alfredo Cazares Meneses", "team_driver_name": null,
+      "truck_unit": "T147", "trailer_aw_ref": "FB-56710", "trailer_type": "53' Flatbed", "equipment_owned": true,
+      "pickup_city": "Laredo", "pickup_state": "TX", "pickup_location_name": "Semares",
+      "delivery_city": "Edison", "delivery_state": "NJ", "delivery_location_name": "Global Manufacturing, Inc",
+      "scheduled_pickup_appt_at": "2026-06-16T08:00:00", "scheduled_delivery_appt_at": "2026-06-19T08:00:00",
+      "broker_customer_name": "Semares Forwarding Services", "rate_cents": 490000, "flags": ["no_wo_number"]
+    },
+    {
+      "aw_load_number": "13374", "wo_number": null, "status": "dispatched",
+      "primary_driver_name": "Neftali Coronado Urbano", "team_driver_name": null,
+      "truck_unit": "T176", "trailer_aw_ref": "FB-56210", "trailer_type": "53' Flatbed", "equipment_owned": true,
+      "pickup_city": "Laredo", "pickup_state": "TX", "pickup_location_name": "Semares",
+      "delivery_city": "Edison", "delivery_state": "NJ", "delivery_location_name": "Global Manufacturing, Inc",
+      "scheduled_pickup_appt_at": "2026-06-16T08:00:00", "scheduled_delivery_appt_at": "2026-06-19T08:00:00",
+      "broker_customer_name": "Semares Forwarding Services", "rate_cents": 490000, "flags": ["no_wo_number"]
+    },
+    {
+      "aw_load_number": "13375", "wo_number": "77244", "status": "dispatched",
+      "primary_driver_name": "Leonel Antonio Morales", "team_driver_name": null,
+      "truck_unit": "T171", "trailer_aw_ref": "10202", "trailer_type": "53' Reefer", "equipment_owned": true,
+      "pickup_city": "Laredo", "pickup_state": "TX", "pickup_location_name": "Alder Laredo",
+      "delivery_city": "Wharton", "delivery_state": "NJ", "delivery_location_name": "DMI",
+      "scheduled_pickup_appt_at": "2026-06-16T08:00:00", "scheduled_delivery_appt_at": "2026-06-19T09:00:00",
+      "broker_customer_name": "JZ Logistics LLC", "rate_cents": 630000, "flags": []
+    },
+    {
+      "aw_load_number": "13376", "wo_number": "8392153", "status": "dispatched",
+      "primary_driver_name": "Jesus Armando Morales Leal", "team_driver_name": null,
+      "truck_unit": "T144", "trailer_aw_ref": "10215", "trailer_type": "53' Reefer", "equipment_owned": true,
+      "pickup_city": "Michigan City", "pickup_state": "IN", "pickup_location_name": "OnLine - Indiana",
+      "delivery_city": "South Windsor", "delivery_state": "CT", "delivery_location_name": "South Windsor DC",
+      "scheduled_pickup_appt_at": "2026-06-16T10:00:00", "scheduled_delivery_appt_at": "2026-06-17T22:00:00",
+      "broker_customer_name": "Allen Lund Company", "rate_cents": 380000, "flags": []
+    },
+    {
+      "aw_load_number": "13377", "wo_number": "0060407", "status": "dispatched",
+      "primary_driver_name": "Ruben Pedro Perez Garcia", "team_driver_name": null,
+      "truck_unit": "T161", "trailer_aw_ref": "10870", "trailer_type": "53' Reefer", "equipment_owned": true,
+      "pickup_city": "Laredo", "pickup_state": "TX", "pickup_location_name": "Kotick Cold",
+      "delivery_city": "Upper Marlboro", "delivery_state": "MD", "delivery_location_name": "C & C Meat Sales, Inc.",
+      "scheduled_pickup_appt_at": "2026-06-16T08:00:00", "scheduled_delivery_appt_at": "2026-06-19T08:00:00",
+      "broker_customer_name": "AB Global Logistics, Inc", "rate_cents": 600000, "flags": []
+    },
+    {
+      "aw_load_number": "13378", "wo_number": "4424066-1", "status": "dispatched",
+      "primary_driver_name": "Jorge Luis Infante Corona", "team_driver_name": null,
+      "truck_unit": "T177", "trailer_aw_ref": "FB-56208", "trailer_type": "53' Flatbed", "equipment_owned": true,
+      "pickup_city": "Sayreville", "pickup_state": "NJ", "pickup_location_name": "OEG Building Materials",
+      "delivery_city": "Round Rock", "delivery_state": "TX", "delivery_location_name": null,
+      "scheduled_pickup_appt_at": "2026-06-16T08:00:00", "scheduled_delivery_appt_at": "2026-06-18T08:00:00",
+      "broker_customer_name": "Armstrong Transport GR", "rate_cents": 0, "flags": ["no_rate_in_aw"]
+    },
+    {
+      "aw_load_number": null, "wo_number": "77225", "status": "pending",
+      "primary_driver_name": "Jose Gerardo Ruiz Flores", "team_driver_name": null,
+      "truck_unit": "T164", "trailer_aw_ref": "10222", "trailer_type": "53' Reefer", "equipment_owned": true,
+      "pickup_city": "Laredo", "pickup_state": "TX", "pickup_location_name": "Alder Laredo",
+      "delivery_city": "Wharton", "delivery_state": "NJ", "delivery_location_name": "DMI",
+      "scheduled_pickup_appt_at": "2026-06-16T08:00:00", "scheduled_delivery_appt_at": "2026-06-19T08:00:00",
+      "broker_customer_name": "JZ Logistics LLC", "rate_cents": 630000, "flags": ["missing_aw_load_number", "confirm_aw_load_id_before_commit"]
+    }
+  ]
+}

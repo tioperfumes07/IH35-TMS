@@ -197,5 +197,8 @@ jobs:
       - name: verify:dispatch-hos-columns-wired
         run: npm run verify:dispatch-hos-columns-wired
 
+      - name: verify:load-import-dry-run-default
+        run: npm run verify:load-import-dry-run-default
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density
