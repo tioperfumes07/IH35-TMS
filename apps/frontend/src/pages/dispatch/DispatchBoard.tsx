@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
-import { listUnitsWithoutLoad, listActiveLoadTriSignals, getDispatchHosClocks, type TriSignalRow, type UnitsWithoutLoad, type DispatchHosClock } from "../../api/dispatch";
+import { listUnitsWithoutLoad, listActiveLoadTriSignals, getDispatchHosClocks, getDispatchLoadPositions, type TriSignalRow, type UnitsWithoutLoad, type DispatchHosClock } from "../../api/dispatch";
 import type { DispatchListProps } from "../../components/dispatch/DispatchList";
 import {
   BulkActionBar,
@@ -360,6 +360,21 @@ export function DispatchBoard({
 
   const hosClockByDriver = hosClocksQuery.data?.clocks_by_driver ?? {};
 
+  // Live GPS — last-known position per visible load (in-app Samsara store), one batched call.
+  // Replaces the hardcoded null stub so the Live GPS column shows real coordinates when present.
+  const visibleLoadIds = useMemo(
+    () => sortedLoads.filter((load) => load.assigned_unit_id).map((load) => load.id).sort(),
+    [sortedLoads]
+  );
+  const loadPositionsQuery = useQuery({
+    queryKey: ["dispatch-board", "load-positions", companyId, visibleLoadIds],
+    queryFn: () => getDispatchLoadPositions(companyId, visibleLoadIds),
+    enabled: Boolean(companyId) && visibleLoadIds.length > 0,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+  const positionByLoad = loadPositionsQuery.data?.positions_by_load ?? {};
+
   const bookedLoads = useMemo(() => sortedLoads.filter(isBookedReserved), [sortedLoads]);
   const assignedLoads = useMemo(() => sortedLoads.filter(isAssignedLoad), [sortedLoads]);
   const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
@@ -648,7 +663,7 @@ export function DispatchBoard({
     },
     { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
     { key: "status_signal", header: "Status signal", cell: (load) => renderTriSignalCell(load) },
-    { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={null} loadId={load.id} /> },
+    { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={positionByLoad[load.id] ?? null} loadId={load.id} /> },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
   ];

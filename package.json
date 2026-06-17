@@ -617,6 +617,7 @@
     "verify:dispatch-board-sections-and-columns": "node scripts/verify-dispatch-board-sections-and-columns.mjs",
     "verify:dispatch-kanban-lanes-and-density": "node scripts/verify-dispatch-kanban-lanes-and-density.mjs",
     "verify:dispatch-hos-columns-wired": "node scripts/verify-dispatch-hos-columns-wired.mjs",
+    "verify:dispatch-live-gps-wired": "node scripts/verify-dispatch-live-gps-wired.mjs",
     "verify:load-import-dry-run-default": "node scripts/verify-load-import-dry-run-default.mjs",
     "verify:load-delivery-dates-separated": "node scripts/verify-load-delivery-dates-separated.mjs",
     "verify:cash-eta-audit-append-only": "node scripts/verify-cash-eta-audit-append-only.mjs",
