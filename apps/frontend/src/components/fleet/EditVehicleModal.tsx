@@ -7,6 +7,7 @@ import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { FieldSet } from "../forms/FieldSet";
 import { FormField } from "../forms/FormField";
+import { DatePicker } from "../../components/forms/DatePicker";
 import type { FleetRow } from "../FleetTable";
 
 export const EDIT_VEHICLE_MODAL_TABS = [
@@ -248,10 +249,13 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
         </select>
       );
     }
+    if (def.type === "date") {
+      return <DatePicker id={def.key} value={String(value ?? "")} onChange={(v) => setField(def.key, v)} />;
+    }
     return (
       <input
         id={def.key}
-        type={def.type === "number" ? "number" : def.type === "date" ? "date" : "text"}
+        type={def.type === "number" ? "number" : "text"}
         className={inputClass}
         value={String(value)}
         onChange={(e) => setField(def.key, e.target.value)}
