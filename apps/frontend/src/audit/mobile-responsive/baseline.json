@@ -2377,6 +2377,78 @@
       },
       "suggested_fix": "Dense office UI (CLAUDE.md \u00a710)",
       "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/FleetTable.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/FleetTable.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/table/ColumnChooser.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/table/ColumnChooser.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/table/ColumnChooser.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/table/ColumnChooser.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/table/Paginator.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/table/Paginator.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/table/Paginator.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/table/Paginator.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/table/TableSearch.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/table/TableSearch.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
     }
   ]
 }
