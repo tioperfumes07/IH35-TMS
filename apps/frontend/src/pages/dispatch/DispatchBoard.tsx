@@ -139,8 +139,9 @@ function isAssignedLoad(load: DispatchLoadRow) {
 // BOOKED = everything that has a truck / is in progress. (The earlier isBookedReserved basis was
 // inverted — it put reserved-unassigned loads under "Awaiting" but the rest under "Booked", so an
 // unassigned load showed under Booked. GUARD-confirmed live.)
-// "Out of service" is a fleet/unit status with no load-level source yet, so it renders a
-// placeholder (held, like the HOS columns) until Jorge confirms the OOS feed.
+// "In shop" = units DOWN for maintenance/repair. Distinct from the pinned bottom "Fleet OOS" strip
+// (units actually out of service). No load-level in-shop source yet, so it renders a placeholder
+// (held, like the HOS columns) until the maintenance/in-shop feed is confirmed.
 const LIST_SECTIONS: Array<{
   key: string;
   title: string;
@@ -149,7 +150,7 @@ const LIST_SECTIONS: Array<{
 }> = [
   { key: "awaiting", title: "Awaiting assignment", rows: (loads) => loads.filter(isUnassignedLoad) },
   { key: "booked", title: "Booked", rows: (loads) => loads.filter((load) => !isUnassignedLoad(load)) },
-  { key: "oos", title: "Out of service", rows: () => [], placeholder: "Fleet out-of-service feed pending — no units flagged." },
+  { key: "in_shop", title: "In shop", rows: () => [], placeholder: "In-shop (maintenance) feed pending — no units flagged." },
 ];
 
 function sortUnassignedFirst(loads: DispatchLoadRow[]) {
@@ -558,7 +559,7 @@ export function DispatchBoard({
         <Fragment key={load.id}>
           <tr onClick={() => onRowClick(load.id)} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50">
             {showBulk ? (
-              <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+              <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
                 <input
                   type="checkbox"
                   aria-label={`Select load ${load.load_number}`}
@@ -573,7 +574,7 @@ export function DispatchBoard({
               </td>
             ) : null}
             {columns.map((column) => (
-              <td key={column.key} className="px-3 py-2 text-[11px]">
+              <td key={column.key} className="px-3 py-1 text-[11px] leading-tight">
                 {column.cell(boardLoad)}
               </td>
             ))}
@@ -719,7 +720,7 @@ export function DispatchBoard({
                       />
                     </th>
                     {columns.map((column) => (
-                      <th key={column.key} className="px-3 py-2">
+                      <th key={column.key} className="px-3 py-1.5">
                         {column.header}
                       </th>
                     ))}
@@ -763,7 +764,7 @@ export function DispatchBoard({
                                   onClick={() => onRowClick(load.id)}
                                   className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
                                 >
-                                  <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+                                  <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
                                     <input
                                       type="checkbox"
                                       aria-label={`Select load ${load.load_number}`}
@@ -772,7 +773,7 @@ export function DispatchBoard({
                                     />
                                   </td>
                                   {columns.map((column) => (
-                                    <td key={column.key} className="px-3 py-2 text-[11px]">
+                                    <td key={column.key} className="px-3 py-1 text-[11px] leading-tight">
                                       {column.cell(boardLoad)}
                                     </td>
                                   ))}
