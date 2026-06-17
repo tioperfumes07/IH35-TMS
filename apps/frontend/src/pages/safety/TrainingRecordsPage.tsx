@@ -154,13 +154,12 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           </label>
           <label className="block text-xs text-slate-600">
             Completed date
-            <input
-              type="date"
+            <DatePicker
               value={completedAt}
-              onChange={(event) => setCompletedAt(event.target.value)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              onChange={setCompletedAt}
+              max={new Date().toISOString().slice(0, 10)}
+              className="mt-1 block w-full"
               data-testid="training-record-completed"
-              required
             />
           </label>
           <label className="block text-xs text-slate-600">

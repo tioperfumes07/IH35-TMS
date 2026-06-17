@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSafetyMeeting,
@@ -182,13 +183,12 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
         >
           <label className="block text-xs text-slate-600">
             Date
-            <input
-              type="date"
+            <DatePicker
               value={meetingDate}
-              onChange={(event) => setMeetingDate(event.target.value)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              onChange={setMeetingDate}
+              max={new Date().toISOString().slice(0, 10)}
+              className="mt-1 block w-full"
               data-testid="safety-meeting-date"
-              required
             />
           </label>
           <label className="block text-xs text-slate-600">

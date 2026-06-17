@@ -10,6 +10,10 @@ type Props = {
   disabled?: boolean;
   id?: string;
   placeholder?: string;
+  /** Inclusive bounds as "YYYY-MM-DD"; out-of-range days are disabled in the calendar. */
+  max?: string;
+  min?: string;
+  "data-testid"?: string;
 };
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
@@ -26,7 +30,8 @@ function parseISO(v: string): { y: number; m: number; d: number } | null {
   return { y: Number(mt[1]), m: Number(mt[2]) - 1, d: Number(mt[3]) };
 }
 
-export function DatePicker({ value, onChange, className = "", disabled, id, placeholder }: Props) {
+export function DatePicker({ value, onChange, className = "", disabled, id, placeholder, max, min, "data-testid": dataTestId }: Props) {
+  const isOutOfRange = (iso: string) => Boolean((max && iso > max) || (min && iso < min));
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const parsed = parseISO(value);
@@ -71,7 +76,7 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
   };
 
   return (
-    <div className={`relative ${className}`} ref={ref}>
+    <div className={`relative ${className}`} ref={ref} data-testid={dataTestId}>
       <button
         id={id}
         type="button"
@@ -99,19 +104,30 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
               d == null ? (
                 <div key={i} />
               ) : (
-                <button
-                  key={i}
-                  type="button"
-                  className={`rounded py-1 text-xs hover:bg-slate-100 ${
-                    parsed && parsed.d === d && parsed.m === viewM && parsed.y === viewY ? "bg-slate-700 text-white hover:bg-slate-700" : ""
-                  }`}
-                  onClick={() => {
-                    onChange(toISO(viewY, viewM, d));
-                    setOpen(false);
-                  }}
-                >
-                  {d}
-                </button>
+                (() => {
+                  const iso = toISO(viewY, viewM, d);
+                  const outOfRange = isOutOfRange(iso);
+                  const selected = parsed && parsed.d === d && parsed.m === viewM && parsed.y === viewY;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      disabled={outOfRange}
+                      className={`rounded py-1 text-xs ${
+                        outOfRange
+                          ? "cursor-not-allowed text-gray-300"
+                          : `hover:bg-slate-100 ${selected ? "bg-slate-700 text-white hover:bg-slate-700" : ""}`
+                      }`}
+                      onClick={() => {
+                        if (outOfRange) return;
+                        onChange(iso);
+                        setOpen(false);
+                      }}
+                    >
+                      {d}
+                    </button>
+                  );
+                })()
               )
             )}
           </div>
