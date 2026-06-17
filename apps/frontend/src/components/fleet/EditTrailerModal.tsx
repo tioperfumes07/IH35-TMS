@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { patchTrailer } from "../../api/fleet-trailers";
 import { useToast } from "../../components/Toast";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { FormField } from "../forms/FormField";
@@ -178,12 +179,10 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
             />
           </FormField>
           <FormField label="US expiration" name="us_insurance_expiration">
-            <input
+            <DatePicker
               id="us_insurance_expiration"
-              type="date"
-              className={inputClass}
               value={draft.us_insurance_expiration ?? ""}
-              onChange={(e) => set("us_insurance_expiration", e.target.value)}
+              onChange={(v) => set("us_insurance_expiration", v)}
             />
           </FormField>
         </FieldSet>
