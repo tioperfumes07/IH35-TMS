@@ -105,6 +105,9 @@ jobs:
       - name: verify:cash-forecast-firewall
         run: npm run verify:cash-forecast-firewall
 
+      - name: verify:cash-forecast-opening-excludes-credit
+        run: npm run verify:cash-forecast-opening-excludes-credit
+
       - name: verify:booking-unit-ownership-fallback
         run: npm run verify:booking-unit-ownership-fallback
 

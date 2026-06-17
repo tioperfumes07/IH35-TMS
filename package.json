@@ -65,6 +65,7 @@
     "verify:pre-commit": "node scripts/verify-pre-commit.mjs",
     "verify:unit-retire-open-wo-gate": "node scripts/verify-unit-retire-open-wo-gate.mjs",
     "verify:cash-forecast-firewall": "node scripts/verify-cash-forecast-firewall.mjs",
+    "verify:cash-forecast-opening-excludes-credit": "node scripts/verify-cash-forecast-opening-excludes-credit.mjs",
     "verify:booking-unit-ownership-fallback": "node scripts/verify-booking-unit-ownership-fallback.mjs",
     "verify:geofence-recon": "node scripts/verify-geofence-recon.mjs",
     "verify:booking-gap-analytics": "node scripts/verify-booking-gap-analytics.mjs",

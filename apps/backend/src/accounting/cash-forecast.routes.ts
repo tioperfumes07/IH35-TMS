@@ -157,6 +157,10 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
           FROM banking.bank_accounts
           WHERE operating_company_id = $1::uuid
             AND is_active = true
+            -- Opening CASH = depository balances only. Credit cards / lines of credit
+            -- carry debt (negative balances) and are liabilities, not cash on hand —
+            -- including them wrongly dragged opening cash to -$5.5M (CASH-ANOMALY).
+            AND COALESCE(account_type, '') NOT ILIKE '%credit%'
         `,
         [query.data.operating_company_id]
       );
