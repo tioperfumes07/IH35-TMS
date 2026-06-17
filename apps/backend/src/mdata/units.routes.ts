@@ -51,6 +51,8 @@ const listQuerySchema = z.object({
   search: z.string().trim().min(1).max(100).optional(),
   operating_company_id: z.string().uuid().optional(),
   include: z.enum(["trailers"]).optional(),
+  // Soft-delete visibility: include deactivated units so they can be viewed + reactivated.
+  include_inactive: z.coerce.boolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -147,7 +149,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
-    const { limit, offset, status, type, search, operating_company_id, include } = parsedQuery.data;
+    const { limit, offset, status, type, search, operating_company_id, include, include_inactive } = parsedQuery.data;
 
     if (include === "trailers") {
       const units = await withCurrentUser(authUser.uuid, async (client) => {
@@ -161,6 +163,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           type,
           search,
           operating_company_id,
+          include_inactive,
         });
       });
       return { units };

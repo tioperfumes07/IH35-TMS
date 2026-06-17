@@ -110,11 +110,17 @@ jobs:
 
       - name: verify:cash-forecast-opening-excludes-credit
         run: npm run verify:cash-forecast-opening-excludes-credit
+
+      - name: verify:cash-flow-auto-opening-excludes-credit
+        run: npm run verify:cash-flow-auto-opening-excludes-credit
       - name: verify:booking-driver-names
         run: npm run verify:booking-driver-names
 
       - name: verify:booking-unit-ownership-fallback
         run: npm run verify:booking-unit-ownership-fallback
+
+      - name: verify:fleet-include-inactive-scope
+        run: npm run verify:fleet-include-inactive-scope
 
       - name: verify:block-ready-c5-no-duplicate-arch-design
         run: npm run verify:block-ready-c5-no-duplicate-arch-design
@@ -160,6 +166,9 @@ jobs:
 
       - name: verify:fleet-bulk-soft-delete
         run: npm run verify:fleet-bulk-soft-delete
+
+      - name: verify:factoring-sidebar-nav
+        run: npm run verify:factoring-sidebar-nav
 
       - name: verify:table-controls-shared
         run: npm run verify:table-controls-shared

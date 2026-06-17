@@ -67,8 +67,10 @@
     "verify:fleet-edit-save-wired": "node scripts/verify-fleet-edit-save-wired.mjs",
     "verify:cash-forecast-firewall": "node scripts/verify-cash-forecast-firewall.mjs",
     "verify:cash-forecast-opening-excludes-credit": "node scripts/verify-cash-forecast-opening-excludes-credit.mjs",
+    "verify:cash-flow-auto-opening-excludes-credit": "node scripts/verify-cash-flow-auto-opening-excludes-credit.mjs",
     "verify:booking-driver-names": "node scripts/verify-booking-driver-names.mjs",
     "verify:booking-unit-ownership-fallback": "node scripts/verify-booking-unit-ownership-fallback.mjs",
+    "verify:fleet-include-inactive-scope": "node scripts/verify-fleet-include-inactive-scope.mjs",
     "verify:geofence-recon": "node scripts/verify-geofence-recon.mjs",
     "verify:booking-gap-analytics": "node scripts/verify-booking-gap-analytics.mjs",
     "verify:canonical-schema-names": "node scripts/verify-canonical-schema-names.mjs",
@@ -605,6 +607,7 @@
     "verify:soft-delete-list-filter": "node scripts/verify-soft-delete-list-filter.mjs",
     "verify:manual-projection-sum": "node scripts/verify-manual-projection-sum.mjs",
     "verify:fleet-bulk-soft-delete": "node scripts/verify-fleet-bulk-soft-delete.mjs",
+    "verify:factoring-sidebar-nav": "node scripts/verify-factoring-sidebar-nav.mjs",
     "verify:table-controls-shared": "node scripts/verify-table-controls-shared.mjs",
     "verify:form-input-density": "node scripts/verify-form-input-density.mjs"
   },
