@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
-import { listUnitsWithoutLoad, listActiveLoadTriSignals, type TriSignalRow, type UnitsWithoutLoad } from "../../api/dispatch";
+import { listUnitsWithoutLoad, listActiveLoadTriSignals, getDispatchHosClocks, type TriSignalRow, type UnitsWithoutLoad, type DispatchHosClock } from "../../api/dispatch";
 import type { DispatchListProps } from "../../components/dispatch/DispatchList";
 import {
   BulkActionBar,
@@ -163,6 +163,13 @@ function isAtRiskOfLate(load: DispatchLoadRow) {
   );
 }
 
+function formatHoursMinutes(totalMinutes: number) {
+  const safe = Math.max(0, Math.floor(totalMinutes));
+  const hours = Math.floor(safe / 60);
+  const minutes = safe % 60;
+  return `${hours}h ${minutes}m`;
+}
+
 function linehaulCents(load: BoardLoad) {
   if (typeof load.linehaul_cents === "number" && load.linehaul_cents > 0) return load.linehaul_cents;
   return load.rate_total_cents;
@@ -294,6 +301,27 @@ export function DispatchBoard({
   );
 
   const sortedLoads = useMemo(() => sortUnassignedFirst(effectiveLoads), [effectiveLoads]);
+
+  // HOS wiring — the visible drivers' cycle clocks, fetched in ONE batched call from the in-app
+  // HOS store (the same service behind /safety/hos; no Samsara, no separate feed). Feeds the
+  // "Hrs available (cycle)" and "Hrs to reset" columns.
+  const visibleDriverIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const load of sortedLoads) {
+      if (load.assigned_primary_driver_id) ids.add(load.assigned_primary_driver_id);
+    }
+    return Array.from(ids).sort();
+  }, [sortedLoads]);
+
+  const hosClocksQuery = useQuery({
+    queryKey: ["dispatch-board", "hos-clocks", companyId, visibleDriverIds],
+    queryFn: () => getDispatchHosClocks(companyId, visibleDriverIds),
+    enabled: Boolean(companyId) && visibleDriverIds.length > 0,
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+
+  const hosClockByDriver = hosClocksQuery.data?.clocks_by_driver ?? {};
 
   const bookedLoads = useMemo(() => sortedLoads.filter(isBookedReserved), [sortedLoads]);
   const assignedLoads = useMemo(() => sortedLoads.filter(isAssignedLoad), [sortedLoads]);
@@ -526,13 +554,44 @@ export function DispatchBoard({
   // Live GPS · Risk · Status. Lane is split into Pickup (City, ST) + Delivery (City, ST).
   // HOS columns (Hrs available / Hrs to reset) render "—" until the data-source feed is
   // confirmed (Samsara HOS/ELD vs driver-PWA) — wiring is HELD per Jorge.
-  const hosCell = () => <span className="text-gray-400" title="Driver HOS feed pending">—</span>;
+  // HOS cells — bound to the in-app HOS store via the batched cycle-clock query. Green when
+  // healthy, amber when low (approaching the cycle cap), red at 0 — mirrors how /safety/hos flags
+  // "Approaching 11h drive cap". "—" when the load has no driver or the clock isn't loaded yet.
+  const hosClockFor = (load: BoardLoad): DispatchHosClock | null =>
+    load.assigned_primary_driver_id ? hosClockByDriver[load.assigned_primary_driver_id] ?? null : null;
+
+  const renderHosAvailable = (load: BoardLoad) => {
+    const clock = hosClockFor(load);
+    if (!load.assigned_primary_driver_id) return <span className="text-gray-300">—</span>;
+    if (!clock) return <span className="text-gray-400" title="Loading HOS…">—</span>;
+    const low = clock.cycle_remaining_min <= 0;
+    const warn = !low && (clock.cycle_remaining_min <= 480 || clock.status !== "ok");
+    const tone = low ? "text-red-700" : warn ? "text-amber-700" : "text-emerald-700";
+    return (
+      <span className={`font-semibold ${tone}`} title={`70-hour cycle hours available${clock.status !== "ok" ? ` · ${clock.status}` : ""}`}>
+        {formatHoursMinutes(clock.cycle_remaining_min)}
+      </span>
+    );
+  };
+
+  const renderHosToReset = (load: BoardLoad) => {
+    const clock = hosClockFor(load);
+    if (!load.assigned_primary_driver_id) return <span className="text-gray-300">—</span>;
+    if (!clock) return <span className="text-gray-400" title="Loading HOS…">—</span>;
+    if (clock.cycle_reset_in_min == null) return <span className="text-gray-400" title="No cycle hours in the 8-day window">—</span>;
+    const tone = clock.cycle_remaining_min <= 480 ? "text-amber-700" : "text-gray-600";
+    return (
+      <span className={tone} title="Hours until the oldest on-duty time rolls off the 8-day window and the cycle recovers">
+        {formatHoursMinutes(clock.cycle_reset_in_min)}
+      </span>
+    );
+  };
   const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
-    { key: "hrs_available", header: "Hrs available", cell: hosCell },
-    { key: "hrs_to_reset", header: "Hrs to reset", cell: hosCell },
+    { key: "hrs_available", header: "Hrs available", cell: (load) => renderHosAvailable(load) },
+    { key: "hrs_to_reset", header: "Hrs to reset", cell: (load) => renderHosToReset(load) },
     { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
