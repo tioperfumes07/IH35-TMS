@@ -431,7 +431,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at, status
+          SELECT id, deactivated_at, status, owner_company_id, currently_leased_to_company_id
           FROM mdata.units
           WHERE id = $1
           LIMIT 1
@@ -440,6 +440,15 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
+
+      // Set the tenant session context before the UPDATE (same as the working unit bulk-update) so
+      // the units RLS check passes — otherwise the soft-delete row is rejected (42501). Per-entity:
+      // scope to the unit's own company.
+      const tenantCompanyId =
+        (oldRow.currently_leased_to_company_id as string | null) ?? (oldRow.owner_company_id as string | null);
+      if (tenantCompanyId) {
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [tenantCompanyId]);
+      }
 
       let deactivatedAt = oldRow.deactivated_at as string | null;
       let newStatus = oldRow.status as string | null;

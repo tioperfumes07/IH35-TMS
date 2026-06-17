@@ -206,6 +206,9 @@ jobs:
       - name: verify:unit-inactivate-path
         run: npm run verify:unit-inactivate-path
 
+      - name: verify:equipment-deactivate-rls
+        run: npm run verify:equipment-deactivate-rls
+
       - name: verify:awaiting-truck-driver-hos
         run: npm run verify:awaiting-truck-driver-hos
 
