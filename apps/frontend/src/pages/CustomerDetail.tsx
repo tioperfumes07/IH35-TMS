@@ -14,6 +14,8 @@ import {
   createCustomerQualityEvent,
   createCustomerContact,
   deactivateCustomerLane,
+  deactivateCustomer,
+  reactivateCustomer,
   deactivateCustomerContact,
   getCustomerBillingSummary,
   getCustomerDetail,
@@ -587,6 +589,27 @@ export function CustomerDetailPage() {
     },
   });
 
+  // Soft-delete (Inactivate / Reactivate) — never hard-delete a master record.
+  const inactivateCustomerMutation = useMutation({
+    mutationFn: () => deactivateCustomer(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      pushToast("Customer inactivated", "success");
+    },
+    onError: () => pushToast("Failed to inactivate customer", "error"),
+  });
+
+  const reactivateCustomerMutation = useMutation({
+    mutationFn: () => reactivateCustomer(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      pushToast("Customer reactivated", "success");
+    },
+    onError: () => pushToast("Failed to reactivate customer", "error"),
+  });
+
   const verifyFmcsaMutation = useMutation({
     mutationFn: () => verifyCustomerFmcsa(id),
     onSuccess: () => {
@@ -907,7 +930,18 @@ export function CustomerDetailPage() {
         subtitle={customer.customer_code ?? "No code"}
         actions={
           !editMode ? (
-            <Button onClick={() => setEditModalOpen(true)}>Edit</Button>
+            <div className="flex items-center gap-2">
+              {customer.deactivated_at == null ? (
+                <Button variant="secondary" onClick={() => inactivateCustomerMutation.mutate()} loading={inactivateCustomerMutation.isPending}>
+                  Inactivate
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={() => reactivateCustomerMutation.mutate()} loading={reactivateCustomerMutation.isPending}>
+                  Reactivate
+                </Button>
+              )}
+              <Button onClick={() => setEditModalOpen(true)}>Edit</Button>
+            </div>
           ) : (
             <Button onClick={() => void saveCustomer()} loading={updateCustomerMutation.isPending}>
               Save

@@ -265,6 +265,28 @@ export function VendorDetailPage() {
     onError: (error) => pushToast(String((error as Error).message ?? "Failed to save vendor profile"), "error"),
   });
 
+  // Soft-delete (Inactivate / Reactivate) — never hard-delete a master record.
+  // Vendors have no dedicated /deactivate route; toggle the canonical deactivated_at via PATCH.
+  const inactivateVendorMutation = useMutation({
+    mutationFn: () => updateVendor(id, { deactivated_at: new Date().toISOString() }),
+    onSuccess: async () => {
+      pushToast("Vendor inactivated", "success");
+      await queryClient.invalidateQueries({ queryKey: ["vendor", id] });
+      await queryClient.invalidateQueries({ queryKey: ["vendors"] });
+    },
+    onError: () => pushToast("Failed to inactivate vendor", "error"),
+  });
+
+  const reactivateVendorMutation = useMutation({
+    mutationFn: () => updateVendor(id, { deactivated_at: null }),
+    onSuccess: async () => {
+      pushToast("Vendor reactivated", "success");
+      await queryClient.invalidateQueries({ queryKey: ["vendor", id] });
+      await queryClient.invalidateQueries({ queryKey: ["vendors"] });
+    },
+    onError: () => pushToast("Failed to reactivate vendor", "error"),
+  });
+
   useEffect(() => {
     const v = vendorQuery.data;
     if (!v) return;
@@ -329,9 +351,20 @@ export function VendorDetailPage() {
         ]}
         subtitle={vendor.vendor_type}
         actions={
-          <span className={`rounded px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-emerald-100 text-emerald-700"}`}>
-            {vendor.deactivated_at ? "Inactive" : "Active"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`rounded px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-emerald-100 text-emerald-700"}`}>
+              {vendor.deactivated_at ? "Inactive" : "Active"}
+            </span>
+            {vendor.deactivated_at ? (
+              <Button variant="secondary" onClick={() => reactivateVendorMutation.mutate()} loading={reactivateVendorMutation.isPending}>
+                Reactivate
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => inactivateVendorMutation.mutate()} loading={inactivateVendorMutation.isPending}>
+                Inactivate
+              </Button>
+            )}
+          </div>
         }
       />
       {reworkSignalCount > 0 ? (
