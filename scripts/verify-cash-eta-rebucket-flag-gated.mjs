@@ -34,4 +34,12 @@ if (!/isEnabled\(client, "CASH_FOLLOWS_ETA_ENABLED"/.test(route)) fail("route mu
 // 4. Forecast-only: helper writes nothing (it's a SELECT expression, no DML/accounting).
 if (/(INSERT|UPDATE|DELETE)\b/i.test(helper)) fail("projected-cash-date helper must be read-only (no DML)");
 
+// 5. ALL projected-income consumers re-bucket under the flag — not just getDailyPrediction:
+//    the 7-day strip and Actual-vs-Projected too (each default OFF / byte-identical).
+if (!/buildSevenDayStrip\([\s\S]{0,80}cashFollowsEta/.test(svc)) fail("getDailyPrediction must pass cashFollowsEta to the 7-day strip");
+if (!/async function buildSevenDayStrip\([\s\S]{0,160}cashFollowsEta = false/.test(svc)) fail("buildSevenDayStrip must accept a default-OFF cashFollowsEta");
+if (!/export async function getActualVsProjected\([\s\S]{0,400}cashFollowsEta = false/.test(svc)) fail("getActualVsProjected must accept a default-OFF cashFollowsEta");
+const reAvpGate = /getActualVsProjected\(client[\s\S]{0,200}cashFollowsEta\)/;
+if (!reAvpGate.test(route)) fail("the actual-vs-projected route must pass cashFollowsEta");
+
 console.log("PASS verify-cash-eta-rebucket-flag-gated");

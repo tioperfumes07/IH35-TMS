@@ -273,7 +273,7 @@ export async function getDailyPrediction(
     openingCashCents !== null ? openingCashCents + predictedNetCents : null;
 
   // 7-day predicted-net strip (current date + next 6 days)
-  const sevenDayStrip = await buildSevenDayStrip(client, operatingCompanyId, date);
+  const sevenDayStrip = await buildSevenDayStrip(client, operatingCompanyId, date, cashFollowsEta);
 
   return {
     date,
@@ -291,10 +291,37 @@ export async function getDailyPrediction(
 async function buildSevenDayStrip(
   client: Queryable,
   operatingCompanyId: string,
-  startDate: string
+  startDate: string,
+  cashFollowsEta = false
 ): Promise<SevenDayEntry[]> {
   const strip: SevenDayEntry[] = [];
   const base = new Date(startDate + "T00:00:00Z");
+  // BLOCK 2 (flag ON): bucket the strip's income by projected_cash_date instead of the delivery
+  // appointment. OFF (default) keeps the current correlated subquery byte-identical.
+  const incomeSubquery = cashFollowsEta
+    ? `(
+          SELECT SUM(COALESCE(l.rate_total_cents, 0))
+          FROM mdata.loads l
+          LEFT JOIN mdata.customers c ON c.id = l.customer_id
+          LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+          LEFT JOIN LATERAL (
+            SELECT scheduled_arrival_at FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type = 'delivery'
+            ORDER BY sequence_number DESC LIMIT 1
+          ) fd ON true
+          WHERE l.operating_company_id = $1
+            AND ${ACTIVE_LOAD_FILTER}
+            AND ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
+        )`
+    : `(
+          SELECT SUM(COALESCE(l.rate_total_cents, 0))
+          FROM mdata.loads l
+          JOIN mdata.load_stops ls
+            ON ls.load_id = l.id AND ls.stop_type = 'delivery'
+            AND ls.scheduled_arrival_at::date = $2::date
+          WHERE l.operating_company_id = $1
+            AND ${ACTIVE_LOAD_FILTER}
+        )`;
   for (let i = 0; i < 7; i++) {
     const d = new Date(base);
     d.setUTCDate(d.getUTCDate() + i);
@@ -304,15 +331,7 @@ async function buildSevenDayStrip(
     const netRow = await client.query<{ income_cents: number; expense_cents: number }>(
       `
       SELECT
-        COALESCE((
-          SELECT SUM(COALESCE(l.rate_total_cents, 0))
-          FROM mdata.loads l
-          JOIN mdata.load_stops ls
-            ON ls.load_id = l.id AND ls.stop_type = 'delivery'
-            AND ls.scheduled_arrival_at::date = $2::date
-          WHERE l.operating_company_id = $1
-            AND ${ACTIVE_LOAD_FILTER}
-        ), 0)::int AS income_cents,
+        COALESCE(${incomeSubquery}, 0)::int AS income_cents,
         COALESCE((
           SELECT SUM(GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0))
           FROM accounting.bills b
@@ -337,11 +356,36 @@ export async function getActualVsProjected(
   client: Queryable,
   operatingCompanyId: string,
   from: string,
-  to: string
+  to: string,
+  // BLOCK 2 (flag ON): bucket the PROJECTED side by projected_cash_date. Default OFF keeps the
+  // current delivery-appointment bucketing byte-identical.
+  cashFollowsEta = false
 ): Promise<ActualVsProjectedResult> {
-  // Projected income: gross rate for loads delivering in range
-  const projIncomeRows = await client.query<{ delivery_date: string; projected_income_cents: number }>(
+  // Projected income: gross rate for loads, bucketed by delivery appt (OFF) or projected_cash_date (ON).
+  const projIncomeSql = cashFollowsEta
+    ? `
+    WITH lp AS (
+      SELECT
+        COALESCE(l.rate_total_cents, 0) AS rate_total_cents,
+        ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS bucket_date
+      FROM mdata.loads l
+      LEFT JOIN mdata.customers c ON c.id = l.customer_id
+      LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+      LEFT JOIN LATERAL (
+        SELECT scheduled_arrival_at FROM mdata.load_stops
+        WHERE load_id = l.id AND stop_type = 'delivery'
+        ORDER BY sequence_number DESC LIMIT 1
+      ) fd ON true
+      WHERE l.operating_company_id = $1
+        AND ${ACTIVE_LOAD_FILTER}
+    )
+    SELECT bucket_date::text AS delivery_date, SUM(rate_total_cents)::int AS projected_income_cents
+    FROM lp
+    WHERE bucket_date BETWEEN $2::date AND $3::date
+    GROUP BY bucket_date
+    ORDER BY bucket_date
     `
+    : `
     SELECT
       ls.scheduled_arrival_at::date::text AS delivery_date,
       SUM(COALESCE(l.rate_total_cents, 0))::int AS projected_income_cents
@@ -353,7 +397,9 @@ export async function getActualVsProjected(
       AND ${ACTIVE_LOAD_FILTER}
     GROUP BY ls.scheduled_arrival_at::date
     ORDER BY ls.scheduled_arrival_at::date
-    `,
+    `;
+  const projIncomeRows = await client.query<{ delivery_date: string; projected_income_cents: number }>(
+    projIncomeSql,
     [operatingCompanyId, from, to]
   );
 
