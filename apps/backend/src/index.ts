@@ -388,6 +388,7 @@ import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
 import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/routes.js";
 import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
 import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
+import { registerGeocodingRoutes } from "./integrations/trimble/geocoding.routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
 import { registerDriverManagerRoleHomeRoutes } from "./driver-manager/role-views/routes.js";
 import { initializeTodaysAttentionWorker, stopTodaysAttentionWorker } from "./jobs/todays-attention-worker.js";
@@ -605,6 +606,9 @@ async function main() {
   // rendered while every /api/v1/forecast/* write 404'd (opening-balance + income/expense saves). Register
   // unconditionally like every other route; frontend visibility stays controlled by the DB feature flag.
   await registerCashForecastManualRoutes(app);
+  // PC*MILER/Trimble geocoding proxy — always mounts; PCMILER_ENABLED flag is checked inside the handler
+  // (registration must NOT depend on an env var — that 404'd the forecast routes). Key stays server-side.
+  await registerGeocodingRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
   await registerQboSyncConflictDetectionRoutes(app);
