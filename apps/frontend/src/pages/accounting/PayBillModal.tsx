@@ -5,6 +5,8 @@ import { getAllAccounts } from "../../api/banking";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { DatePicker } from "../../components/forms/DatePicker";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 type Props = {
   open: boolean;
@@ -23,16 +25,6 @@ const METHOD_OPTIONS: Array<{ value: BillPaymentMethod; label: string }> = [
   { value: "credit_card", label: "Credit Card" },
 ];
 
-function toDollars(cents: number) {
-  return (Math.max(0, Number(cents) || 0) / 100).toFixed(2);
-}
-
-function toCents(value: string) {
-  const amount = Number(value || "0");
-  if (!Number.isFinite(amount) || amount <= 0) return 0;
-  return Math.round(amount * 100);
-}
-
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
@@ -40,7 +32,7 @@ function money(cents: number) {
 export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClose, onSaved }: Props) {
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
   const [paymentMethod, setPaymentMethod] = useState<BillPaymentMethod>("check");
-  const [amountDollars, setAmountDollars] = useState("0.00");
+  const [amountCents, setAmountCents] = useState<number | null>(0);
   const [fromBankAccountId, setFromBankAccountId] = useState("");
   const [checkNumber, setCheckNumber] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
@@ -63,7 +55,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
     if (!open || !bill) return;
     setPaymentDate(new Date().toISOString().slice(0, 10));
     setPaymentMethod("check");
-    setAmountDollars(toDollars(remainingCents));
+    setAmountCents(remainingCents);
     setFromBankAccountId(String(accountsQuery.data?.accounts?.[0]?.id ?? ""));
     setCheckNumber("");
     setReferenceNumber("");
@@ -71,7 +63,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
     setError(null);
   }, [open, bill, remainingCents, accountsQuery.data?.accounts]);
 
-  const amountCents = toCents(amountDollars);
+  const payAmountCents = amountCents ?? 0;
   const needsBankAccount = paymentMethod === "check" || paymentMethod === "ach" || paymentMethod === "wire" || paymentMethod === "credit_card";
 
   return (
@@ -84,11 +76,11 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
           onSubmit={async (event) => {
             event.preventDefault();
             setError(null);
-            if (amountCents <= 0) {
+            if (payAmountCents <= 0) {
               setError("Payment amount must be greater than zero.");
               return;
             }
-            if (amountCents > remainingCents) {
+            if (payAmountCents > remainingCents) {
               setError("Payment amount cannot exceed remaining bill balance.");
               return;
             }
@@ -104,7 +96,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             try {
               await payVendorBill(bill.id, operatingCompanyId, {
                 payment_date: paymentDate,
-                amount_cents: amountCents,
+                amount_cents: payAmountCents,
                 payment_method: paymentMethod,
                 from_bank_account_id: needsBankAccount ? fromBankAccountId : undefined,
                 check_number: paymentMethod === "check" ? checkNumber : undefined,
@@ -136,7 +128,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment date
-              <input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+              <DatePicker value={paymentDate} onChange={setPaymentDate} className="text-[13px]" />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment method
@@ -150,7 +142,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment amount (USD)
-              <input value={amountDollars} onChange={(event) => setAmountDollars(event.target.value)} inputMode="decimal" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+              <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Payment amount" />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Remaining
@@ -205,12 +197,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                     <td className="px-2 py-1.5">{money(bill.paid_cents)}</td>
                     <td className="px-2 py-1.5 font-semibold text-red-700">{money(remainingCents)}</td>
                     <td className="px-2 py-1.5">
-                      <input
-                        value={amountDollars}
-                        onChange={(event) => setAmountDollars(event.target.value)}
-                        inputMode="decimal"
-                        className="h-8 w-24 rounded border border-gray-300 px-2 text-[13px]"
-                      />
+                      <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Payment amount" className="w-24" />
                     </td>
                   </tr>
                 </tbody>
