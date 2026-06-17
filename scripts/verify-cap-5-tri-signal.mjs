@@ -73,7 +73,10 @@ read("apps/frontend/src/pages/dispatch/TriSignalHoverDetail.tsx");
 const board = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
 contains("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", board, [
   { pattern: /TriSignalPill/, label: "TriSignalPill wired" },
-  { pattern: /Status Signal/, label: "Status Signal column header" },
+  // Case-tolerant on the second word: the DISPATCH-REDESIGN column model renamed the header to
+  // "Status signal" (sentence case) per Jorge's spec. The contract is that the column exists and
+  // is wired to TriSignalPill — its casing is cosmetic.
+  { pattern: /Status [Ss]ignal/, label: "Status signal column header" },
   { pattern: /listActiveLoadTriSignals/, label: "batch tri-signal fetch" },
 ]);
 
