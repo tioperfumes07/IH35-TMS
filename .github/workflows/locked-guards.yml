@@ -209,6 +209,21 @@ jobs:
       - name: verify:equipment-deactivate-rls
         run: npm run verify:equipment-deactivate-rls
 
+      - name: verify:dispatch-kanban-densities
+        run: npm run verify:dispatch-kanban-densities
+
+      - name: verify:dispatch-card-unit-first
+        run: npm run verify:dispatch-card-unit-first
+
+      - name: verify:bookload-section-b-hos
+        run: npm run verify:bookload-section-b-hos
+
+      - name: verify:bookload-stop-address-oneline
+        run: npm run verify:bookload-stop-address-oneline
+
+      - name: verify:dispatch-list-hos-columns
+        run: npm run verify:dispatch-list-hos-columns
+
       - name: verify:awaiting-truck-driver-hos
         run: npm run verify:awaiting-truck-driver-hos
 

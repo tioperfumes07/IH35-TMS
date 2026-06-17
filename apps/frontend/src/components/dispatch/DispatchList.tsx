@@ -7,6 +7,8 @@ import { ListErrorState } from "../ListErrorState";
 import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants";
 import { InTransitEtaChip } from "./InTransitEtaChip";
 import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
+import { DriverHosClockCells, DriverHosStatusDot } from "./hos/DriverHosClocks";
+import { HOS_COLUMNS } from "./hos/hosClocks";
 import { TableSelection, TableSelectionHeader } from "../bulk";
 import { InlineUnitPicker } from "./InlineUnitPicker";
 import { InlineDriverPicker } from "./InlineDriverPicker";
@@ -194,7 +196,9 @@ export function DispatchList({
                 ["delivery", "Delivery"],
                 ["unit", "Unit"],
                 ["driver", "Driver"],
-                ["hos", "HOS"],
+                // DISPATCH-UI-REFINE-2 ITEM 5 — 6 Samsara-standard HOS columns replace the single HOS
+                // placeholder, in the same block position (after Driver). Net grid widens by +5.
+                ...HOS_COLUMNS.map((c) => [`hos_${c.key}`, c.label] as [string, string]),
                 ["status", "Status"],
                 ["progress", "Progress"],
                 ...(showEtaColumn ? [["eta", "ETA"] as const] : []),
@@ -218,7 +222,7 @@ export function DispatchList({
             {loading
               ? Array.from({ length: Math.max(4, limit / 10) }).map((_, idx) => (
                   <tr key={idx} className="border-b border-gray-100">
-                    <td colSpan={(showEtaColumn ? 13 : 12) + (bulkSelection ? 1 : 0)} className="px-3 py-3 text-gray-400">
+                    <td colSpan={(showEtaColumn ? 18 : 17) + (bulkSelection ? 1 : 0)} className="px-3 py-3 text-gray-400">
                       Loading loads...
                     </td>
                   </tr>
@@ -233,7 +237,7 @@ export function DispatchList({
                       openPreSettlement.first_load_id !== load.id &&
                       !["delivered", "delivered_pending_docs", "completed_docs_received", "closed", "paid", "invoiced", "cancelled"].includes(load.status)
                   );
-                  const colSpan = (showEtaColumn ? 13 : 12) + (bulkSelection ? 1 : 0);
+                  const colSpan = (showEtaColumn ? 18 : 17) + (bulkSelection ? 1 : 0);
                   return (
                   <Fragment key={load.id}>
                   <tr
@@ -306,14 +310,16 @@ export function DispatchList({
                           }
                         />
                       ) : (
-                        <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
+                        <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name inline-flex items-center gap-1.5">
+                          {/* DISPATCH-UI-REFINE-2 ITEM 5 — HOS duty/health dot next to the driver name. */}
+                          <DriverHosStatusDot driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
                           {load.assigned_primary_driver_name ?? "Unassigned"}
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2">
-                      <DriverHosPill driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
-                    </td>
+                    {/* DISPATCH-UI-REFINE-2 ITEM 5 — 6 HOS clock cells (Drive/Shift/Break/Cycle/Stop By/
+                        Resume At) from the in-app HOS store; "—" until ingestion lands. */}
+                    <DriverHosClockCells driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1">
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
