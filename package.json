@@ -69,6 +69,7 @@
     "verify:cash-forecast-opening-excludes-credit": "node scripts/verify-cash-forecast-opening-excludes-credit.mjs",
     "verify:booking-driver-names": "node scripts/verify-booking-driver-names.mjs",
     "verify:booking-unit-ownership-fallback": "node scripts/verify-booking-unit-ownership-fallback.mjs",
+    "verify:fleet-include-inactive-scope": "node scripts/verify-fleet-include-inactive-scope.mjs",
     "verify:geofence-recon": "node scripts/verify-geofence-recon.mjs",
     "verify:booking-gap-analytics": "node scripts/verify-booking-gap-analytics.mjs",
     "verify:canonical-schema-names": "node scripts/verify-canonical-schema-names.mjs",
