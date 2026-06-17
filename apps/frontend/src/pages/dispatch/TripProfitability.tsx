@@ -10,6 +10,7 @@
  * Read-only. No new financial code.
  */
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadProfit";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -96,20 +97,18 @@ export function TripProfitability() {
       <section className="flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white p-3">
         <label className="text-sm">
           From
-          <input
-            type="date"
+          <DatePicker
             className="ml-2 rounded border px-2 py-1"
             value={period.start}
-            onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))}
+            onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           />
         </label>
         <label className="text-sm">
           To
-          <input
-            type="date"
+          <DatePicker
             className="ml-2 rounded border px-2 py-1"
             value={period.end}
-            onChange={(e) => setPeriod((p) => ({ ...p, end: e.target.value }))}
+            onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />
         </label>
         <button

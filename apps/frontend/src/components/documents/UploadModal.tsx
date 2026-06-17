@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { ApiError } from "../../api/client";
 import {
   confirmUpload,
@@ -227,10 +228,9 @@ export function UploadModal({
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Document Date</label>
-            <input
-              type="date"
+            <DatePicker
               value={documentDate}
-              onChange={(event) => setDocumentDate(event.target.value)}
+              onChange={(next) => setDocumentDate(next)}
               className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
             />
           </div>

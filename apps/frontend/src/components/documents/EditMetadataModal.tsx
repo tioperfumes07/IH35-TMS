@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import { listFileCategories, updateFileMetadata, type DocsFile, type FileEntityType } from "../../api/docs";
@@ -82,10 +83,9 @@ export function EditMetadataModal({ file, entityType, onClose, onSaveSuccess }: 
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Document Date</label>
-            <input
-              type="date"
+            <DatePicker
               value={documentDate}
-              onChange={(event) => setDocumentDate(event.target.value)}
+              onChange={(next) => setDocumentDate(next)}
               className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
             />
           </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 
 interface CrossingEvent {
@@ -49,19 +50,17 @@ export function BorderCrossingHistory() {
       <div className="flex gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-          <input
-            type="date"
+          <DatePicker
             value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={(next) => setFrom(next)}
             className="border rounded px-3 py-1.5 text-sm"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-          <input
-            type="date"
+          <DatePicker
             value={to}
-            onChange={(e) => setTo(e.target.value)}
+            onChange={(next) => setTo(next)}
             className="border rounded px-3 py-1.5 text-sm"
           />
         </div>

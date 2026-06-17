@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { listDispatchAssignmentHistory } from "../../api/dispatch";
@@ -56,11 +57,11 @@ export function AssignmentHistoryPage() {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">From</label>
-          <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="rounded border px-2 py-2 text-sm" />
+          <DatePicker value={from} onChange={(next) => setFrom(next)} className="rounded border px-2 py-2 text-sm" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">To</label>
-          <input type="date" value={to} onChange={(event) => setTo(event.target.value)} className="rounded border px-2 py-2 text-sm" />
+          <DatePicker value={to} onChange={(next) => setTo(next)} className="rounded border px-2 py-2 text-sm" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Reason contains</label>
