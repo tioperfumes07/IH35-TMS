@@ -12,6 +12,7 @@ import {
 } from "../../../api/forecast";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { sumCents, toCents, computeProjectionTotals } from "./manualProjectionMath";
 
 function fmtCents(c: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((c || 0) / 100);
@@ -108,7 +109,7 @@ function ProjectionPanel({
       ref_label: e.ref_label ?? "",
     });
 
-  const total = entries.reduce((s, e) => s + e.amount_cents, 0);
+  const total = sumCents(entries);
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white">
@@ -192,10 +193,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const entries = useMemo(() => entriesQuery.data?.entries ?? [], [entriesQuery.data?.entries]);
   const income = useMemo(() => entries.filter((e) => e.direction === "income"), [entries]);
   const expense = useMemo(() => entries.filter((e) => e.direction === "expense"), [entries]);
-  const totalIncome = income.reduce((s, e) => s + e.amount_cents, 0);
-  const totalExpense = expense.reduce((s, e) => s + e.amount_cents, 0);
-  const net = totalIncome - totalExpense;
-  const openingCents = openingQuery.data?.amount_cents ?? 0;
+  const { incomeCents: totalIncome, expenseCents: totalExpense, netCents: net } = computeProjectionTotals(entries);
+  const openingCents = toCents(openingQuery.data?.amount_cents);
   const projectedClosing = openingCents + net;
   const netPositive = net >= 0;
 
