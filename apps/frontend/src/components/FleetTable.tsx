@@ -6,7 +6,7 @@ import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection }
 import { useToast } from "./Toast";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
-import { TableControls, Paginator, useTableController, type TableColumn } from "./table";
+import { TableControls, Paginator, TableHeaderCell, useTableController, type TableColumn } from "./table";
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
 
@@ -73,6 +73,20 @@ function fleetSearchText(row: FleetRow): string {
   return [row.unit_number, row.vin, row.make, row.model].filter(Boolean).join(" ");
 }
 
+// Stable per-column sort value (module-level for memo stability).
+function fleetSortValue(row: FleetRow, key: string): string | number | null {
+  switch (key) {
+    case "unit_number": return row.unit_number ?? null;
+    case "vin": return row.vin ?? null;
+    case "type": return displayType(row);
+    case "make_model": return `${row.make ?? ""} ${row.model ?? ""}`.trim();
+    case "year": return row.year != null ? Number(row.year) : null;
+    case "status": return row.status ?? null;
+    case "dot_oo": return row.kind === "trailer" ? null : row.is_oos ? 1 : 0;
+    default: return null;
+  }
+}
+
 export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftDeleteFilterChange }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -108,6 +122,7 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
     columns: FLEET_COLUMNS,
     tableKey: "fleet",
     searchText: fleetSearchText,
+    sortValue: fleetSortValue,
     defaultPageSize: 50,
   });
 
@@ -383,13 +398,18 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
                       ariaLabel="Select all units on this page"
                     />
                   </th>
-                  <th className="px-2 py-1">Unit</th>
-                  {isVisible("vin") ? <th className="px-2 py-1">VIN</th> : null}
-                  {isVisible("type") ? <th className="px-2 py-1">Type</th> : null}
-                  {isVisible("make_model") ? <th className="px-2 py-1">Make/Model</th> : null}
-                  {isVisible("year") ? <th className="px-2 py-1">Year</th> : null}
-                  {isVisible("status") ? <th className="px-2 py-1">Status</th> : null}
-                  {isVisible("dot_oo") ? <th className="px-2 py-1">DOT O/O</th> : null}
+                  {FLEET_COLUMNS.filter((c) => isVisible(c.key)).map((c) => (
+                    <TableHeaderCell
+                      key={c.key}
+                      columnKey={c.key}
+                      label={c.label}
+                      sortKey={table.sortKey}
+                      sortDir={table.sortDir}
+                      onToggleSort={table.toggleSort}
+                      width={table.widths[c.key]}
+                      onResize={table.setColumnWidth}
+                    />
+                  ))}
                   <th className="w-14 px-2 py-1">Edit</th>
                 </tr>
               </thead>

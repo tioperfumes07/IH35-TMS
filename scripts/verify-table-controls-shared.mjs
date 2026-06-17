@@ -11,12 +11,25 @@ const REQUIRED = [
   "apps/frontend/src/components/table/ColumnChooser.tsx",
   "apps/frontend/src/components/table/Paginator.tsx",
   "apps/frontend/src/components/table/TableSearch.tsx",
+  "apps/frontend/src/components/table/TableHeaderCell.tsx",
   "apps/frontend/src/components/table/useTableController.ts",
   "apps/frontend/src/components/table/useTablePref.ts",
   "apps/frontend/src/components/table/index.ts",
 ];
 for (const f of REQUIRED) {
   if (!existsSync(f)) failures.push(`${f}: missing (shared table control component)`);
+}
+
+// Global table features (sort + resize) must live in the shared component, not per-page.
+const controller = existsSync(REQUIRED[5]) ? readFileSync("apps/frontend/src/components/table/useTableController.ts", "utf8") : "";
+if (controller && (!/toggleSort/.test(controller) || !/sortValue/.test(controller))) {
+  failures.push("useTableController.ts: click-header sort (toggleSort/sortValue) must be in the shared controller");
+}
+const pref = existsSync("apps/frontend/src/components/table/useTablePref.ts")
+  ? readFileSync("apps/frontend/src/components/table/useTablePref.ts", "utf8")
+  : "";
+if (pref && !/setColumnWidth/.test(pref)) {
+  failures.push("useTablePref.ts: column resize (setColumnWidth/widths) must be in the shared pref hook");
 }
 
 // Fleet must consume the shared component, not re-implement it.

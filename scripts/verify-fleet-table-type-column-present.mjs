@@ -7,7 +7,11 @@ const repoRoot = process.cwd();
 const targetFile = path.join(repoRoot, "apps/frontend/src/components/FleetTable.tsx");
 const source = fs.readFileSync(targetFile, "utf8");
 
-if (!source.includes(">Type<")) {
+// The Type column may render as a literal <th>Type</th> OR via the shared TableHeaderCell
+// driven by the FLEET_COLUMNS registry ({ key: "type", label: "Type" }). Accept either.
+const hasTypeHeader =
+  source.includes(">Type<") || /key:\s*"type",\s*label:\s*"Type"/.test(source);
+if (!hasTypeHeader) {
   console.error("[verify-fleet-table-type-column-present] FleetTable.tsx missing Type column header");
   process.exit(1);
 }
