@@ -67,7 +67,11 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${query.data.operating_company_id}'`);
-      return getActualVsProjected(client, query.data.operating_company_id, query.data.from, query.data.to);
+      const cashFollowsEta = await isEnabled(client, "CASH_FOLLOWS_ETA_ENABLED", {
+        operating_company_id: query.data.operating_company_id,
+        user_uuid: user.uuid,
+      });
+      return getActualVsProjected(client, query.data.operating_company_id, query.data.from, query.data.to, cashFollowsEta);
     });
     return reply.send(result);
   });
