@@ -428,70 +428,61 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
-    // DIAGNOSTIC (TEMP — same as equipment deactivate; units STILL 500 after #1131). Isolate the UPDATE and
-    // the audit in separate SAVEPOINTs; report which throws 42501 + the row's company membership vs
-    // org.user_accessible_company_ids() (entity-independence test). Surfaced in the 500 body for GUARD.
-    const errFields = (e: unknown) => {
-      const x = e as { code?: string; message?: string; table?: string; schema?: string; column?: string; constraint?: string; where?: string; routine?: string; detail?: string };
-      return { code: x?.code, message: x?.message, table: x?.table, schema: x?.schema, column: x?.column, constraint: x?.constraint, where: x?.where, routine: x?.routine, detail: x?.detail };
-    };
-    const diag: Record<string, unknown> = { authUserRole: authUser.role, unitId: parsedParams.data.id };
-    const found = await withCurrentUser(authUser.uuid, async (client) => {
-      const probe = await client.query(
-        `SELECT u.id::text                                                         AS id,
-                u.status::text                                                     AS status,
-                current_setting('app.current_user_id', true)                       AS app_current_user_id,
-                identity.current_user_role()::text                                 AS current_user_role,
-                identity.is_lucia_bypass()                                         AS is_lucia_bypass,
-                current_user::text                                                 AS db_session_user,
-                u.deactivated_at::text                                             AS deactivated_at,
-                u.owner_company_id::text                                           AS owner_company_id,
-                u.currently_leased_to_company_id::text                             AS leased_to_company_id,
-                (u.owner_company_id IN (SELECT org.user_accessible_company_ids())) AS owner_in_accessible,
-                (u.currently_leased_to_company_id IN (SELECT org.user_accessible_company_ids())) AS leased_in_accessible,
-                (SELECT array_agg(c::text) FROM org.user_accessible_company_ids() c) AS accessible_company_ids
-         FROM mdata.units u WHERE u.id = $1 LIMIT 1`,
+    const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      const oldRes = await client.query(
+        `
+          SELECT id, deactivated_at, status
+          FROM mdata.units
+          WHERE id = $1
+          LIMIT 1
+        `,
         [parsedParams.data.id]
       );
-      const row = (probe.rows[0] as Record<string, unknown> | undefined) ?? null;
-      diag.probe = row;
-      if (!row) return false;
+      const oldRow = oldRes.rows[0] ?? null;
+      if (!oldRow) return null;
 
-      const terminalStatuses = new Set(["Sold", "Totaled", "Transferred", "Damaged"]);
-      const newStatus = terminalStatuses.has(String(row.status)) ? String(row.status) : "OutOfService";
-      const runIsolated = async (name: string, fn: () => Promise<unknown>) => {
-        await client.query(`SAVEPOINT ${name}`);
-        try {
-          await fn();
-          await client.query(`RELEASE SAVEPOINT ${name}`);
-          return null;
-        } catch (e) {
-          await client.query(`ROLLBACK TO SAVEPOINT ${name}`).catch(() => {});
-          return errFields(e);
-        }
-      };
-
-      diag.updateError = await runIsolated("sp_update", () =>
-        client.query(
-          `UPDATE mdata.units SET deactivated_at = now(), status = $2::mdata.unit_status, updated_by_user_id = $3 WHERE id = $1 AND deactivated_at IS NULL`,
+      const wasAlreadyDeactivated = oldRow.deactivated_at !== null;
+      let deactivatedAt = oldRow.deactivated_at as string | null;
+      let newStatus = oldRow.status as string | null;
+      if (!wasAlreadyDeactivated) {
+        // Set status in the SAME update as deactivated_at — the units list/badge read the `status`
+        // column, so writing only deactivated_at left units reading their old (active) status. There is
+        // no 'Inactive' member in mdata.unit_status; 'OutOfService' is the deactivated state. Preserve
+        // terminal/archive states (Sold/Totaled/Transferred/Damaged) rather than downgrade them.
+        //
+        // Soft-delete WITHOUT RETURNING. units_select's USING requires `deactivated_at IS NULL`, so the
+        // mutated row is SELECT-invisible; `UPDATE ... RETURNING` re-reads it under the SELECT policy
+        // (ExecWithCheckOptions) → 42501 even for an Owner. Compute the new status/timestamp app-side from
+        // the row we already read and reuse them for the response — never RETURNING a soft-deleted row.
+        const terminalStatuses = new Set(["Sold", "Totaled", "Transferred", "Damaged"]);
+        newStatus = terminalStatuses.has(String(oldRow.status)) ? (oldRow.status as string) : "OutOfService";
+        await client.query(
+          `
+            UPDATE mdata.units
+            SET deactivated_at = now(),
+                status = $2::mdata.unit_status,
+                updated_by_user_id = $3
+            WHERE id = $1
+              AND deactivated_at IS NULL
+          `,
           [parsedParams.data.id, newStatus, authUser.uuid]
-        )
-      );
-      diag.auditError = await runIsolated("sp_audit", () =>
-        appendCrudAudit(client, authUser.uuid, "mdata.units.deactivated", {
-          resource_id: parsedParams.data.id,
-          resource_type: "mdata.units",
-          diagnostic: true,
-        })
-      );
-      return true;
+        );
+        // now() is transaction-scoped (constant for the whole txn), so reading it back here returns the
+        // exact value just written — DB-authoritative — without re-reading the now-SELECT-invisible row.
+        const tsRes = await client.query(`SELECT now() AS deactivated_at`);
+        deactivatedAt = (tsRes.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
+      }
+
+      await appendCrudAudit(client, authUser.uuid, "mdata.units.deactivated", {
+        resource_id: oldRow.id,
+        resource_type: "mdata.units",
+        was_already_deactivated: wasAlreadyDeactivated,
+      });
+
+      return { id: oldRow.id, deactivated_at: deactivatedAt, status: newStatus, was_already_deactivated: wasAlreadyDeactivated };
     });
-    if (!found) return reply.code(404).send({ error: "mdata_unit_not_found", diagnostic: diag });
-    if (diag.updateError || diag.auditError) {
-      req.log?.error({ diag }, "units_deactivate_per_statement_diag");
-      return reply.code(500).send({ error: "units_deactivate_failed", diagnostic: diag });
-    }
-    return { id: parsedParams.data.id, deactivated_at: new Date().toISOString(), was_already_deactivated: false, diagnostic: diag };
+    if (!deactivated) return reply.code(404).send({ error: "mdata_unit_not_found" });
+    return deactivated;
   });
 
   app.post("/api/v1/mdata/units/:id/quick-availability", async (req, reply) => {
