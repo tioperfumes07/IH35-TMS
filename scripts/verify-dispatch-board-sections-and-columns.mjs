@@ -48,29 +48,21 @@ if (src.includes("Driver HOS feed pending")) fail("HOS placeholder 'feed pending
 // 4. Three List/Table sections, exact titles. The 3rd is "In shop" (units down for maintenance) —
 // distinct from the pinned bottom "Fleet OOS" strip (units actually out of service); no duplicate
 // "Out of service" label in the table.
-if (!src.includes("LIST_SECTIONS")) fail("LIST_SECTIONS partition missing");
+if (!src.includes("SECTION_META")) fail("SECTION_META (section titles) missing");
 for (const title of ["Awaiting assignment", "Booked", "In shop"]) {
   if (!src.includes(`"${title}"`)) fail(`missing section title: ${title}`);
 }
 if (/title:\s*"Out of service"/.test(src)) fail('in-table 3rd section must be "In shop", not "Out of service" (no duplicate label)');
 
-// 4b. Partition PREDICATE, not just titles: Awaiting = isUnassignedLoad (no truck), Booked =
-// !isUnassignedLoad. Guards against the inverted isBookedReserved basis that put unassigned loads
-// under "Booked".
-const sectionsDecl = src.indexOf("const LIST_SECTIONS");
-// Start at the array LITERAL (`}> = [`) so the type annotation's `DispatchLoadRow[];` doesn't end
-// the slice early on its `];`.
-const sectionsStart = src.indexOf("}> = [", sectionsDecl);
-const sectionsEnd = src.indexOf("];", sectionsStart);
-const sectionsBlock = sectionsStart >= 0 && sectionsEnd >= 0 ? src.slice(sectionsStart, sectionsEnd) : "";
-if (!sectionsBlock.includes("loads.filter(isUnassignedLoad)")) {
-  fail("Awaiting assignment must partition on isUnassignedLoad (loads with no truck assigned)");
+// 4b. TRUCK-CENTRIC partition (Jorge 2026-06-17): Awaiting = active fleet roster minus loaded
+// trucks (unitsWithoutLoad → unitToBoardRow), NOT loads.filter. Booked = active loads.
+if (!src.includes("unitToBoardRow")) fail("Awaiting must render trucks via unitToBoardRow (roster-derived)");
+if (!/awaitingRows\s*=\s*unassignedUnits\.map\(unitToBoardRow\)/.test(src)) {
+  fail("Awaiting rows must be unassignedUnits.map(unitToBoardRow) (truck roster minus loaded), not loads.filter");
 }
-if (!sectionsBlock.includes("!isUnassignedLoad(load)")) {
-  fail("Booked must partition on !isUnassignedLoad");
+if (/key:\s*"awaiting"[\s\S]{0,80}loads\.filter\(isUnassignedLoad\)/.test(src)) {
+  fail("Awaiting must NOT be derived from loads.filter — it is truck-derived now");
 }
-if (sectionsBlock.includes("isBookedReserved")) {
-  fail("LIST_SECTIONS must NOT use the inverted isBookedReserved basis");
-}
+if (!src.includes("enabled: Boolean(companyId),")) fail("unitsWithoutLoad must load in every mode (not just assignment) for the truck-derived Awaiting section");
 
 console.log("PASS verify-dispatch-board-sections-and-columns");

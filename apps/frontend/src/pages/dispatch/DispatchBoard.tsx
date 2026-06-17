@@ -133,25 +133,34 @@ function isAssignedLoad(load: DispatchLoadRow) {
   return Boolean(load.assigned_unit_id);
 }
 
-// DISPATCH-REDESIGN Part C — the three List/Table sections. Each section's rows() is a pure
-// partition of the already-sorted/filtered loads so no row is lost and ordering is preserved.
-// AWAITING ASSIGNMENT = loads with NO truck assigned (the pending population, isUnassignedLoad);
-// BOOKED = everything that has a truck / is in progress. (The earlier isBookedReserved basis was
-// inverted — it put reserved-unassigned loads under "Awaiting" but the rest under "Booked", so an
-// unassigned load showed under Booked. GUARD-confirmed live.)
-// "In shop" = units DOWN for maintenance/repair. Distinct from the pinned bottom "Fleet OOS" strip
-// (units actually out of service). No load-level in-shop source yet, so it renders a placeholder
-// (held, like the HOS columns) until the maintenance/in-shop feed is confirmed.
-const LIST_SECTIONS: Array<{
-  key: string;
-  title: string;
-  rows: (loads: DispatchLoadRow[]) => DispatchLoadRow[];
-  placeholder?: string;
-}> = [
-  { key: "awaiting", title: "Awaiting assignment", rows: (loads) => loads.filter(isUnassignedLoad) },
-  { key: "booked", title: "Booked", rows: (loads) => loads.filter((load) => !isUnassignedLoad(load)) },
-  { key: "in_shop", title: "In shop", rows: () => [], placeholder: "In-shop (maintenance) feed pending — no units flagged." },
+// DISPATCH-REDESIGN Part C — TRUCK-CENTRIC sections (Jorge clarification 2026-06-17):
+// AWAITING ASSIGNMENT = every ACTIVE TRUCK with NO load right now (the fleet roster minus loaded
+//   trucks — derived from unitsWithoutLoad, NOT loads.filter). One row per truck; Unit/Trailer/
+//   Driver/HOS populated, load fields "—".
+// BOOKED = loads that have a truck (one row per load).
+// IN SHOP = trucks down for maintenance/repair (placeholder; distinct from the pinned Fleet OOS
+//   strip = trucks fully out of service). A truck appears in exactly one place.
+const SECTION_META: Array<{ key: string; title: string; placeholder?: string }> = [
+  { key: "awaiting", title: "Awaiting assignment" },
+  { key: "booked", title: "Booked" },
+  { key: "in_shop", title: "In shop", placeholder: "In-shop (maintenance) feed pending — no units flagged." },
 ];
+
+// A truck-without-a-load rendered as a board row: Unit (+Driver/Trailer when known) populated, all
+// load-specific cells fall through to "—". id is prefixed "unit:" so row-click is a no-op (no load
+// to open yet). Driver/HOS populate once the roster read exposes the unit's default driver.
+function unitToBoardRow(unit: UnitsWithoutLoad): BoardLoad {
+  return {
+    id: `unit:${unit.id}`,
+    assigned_unit_id: unit.id,
+    assigned_unit_number: unit.unit_number,
+    assigned_primary_driver_id: null,
+    assigned_primary_driver_name: unit.driver_name || null,
+    trailer_number: unit.trailer_number ?? null,
+    load_number: "",
+    status: "unassigned",
+  } as unknown as BoardLoad;
+}
 
 function sortUnassignedFirst(loads: DispatchLoadRow[]) {
   return [...loads].sort((a, b) => {
@@ -292,7 +301,9 @@ export function DispatchBoard({
   const unitsWithoutLoadQuery = useQuery({
     queryKey: ["dispatch-board", "units-without-load", companyId],
     queryFn: () => listUnitsWithoutLoad(companyId),
-    enabled: Boolean(companyId) && boardMode === "assignment",
+    // Needed in every mode now — the List/Table "Awaiting assignment" section is truck-derived
+    // (active fleet roster minus loaded trucks), not loads.filter.
+    enabled: Boolean(companyId),
     staleTime: 30_000,
   });
 
@@ -363,6 +374,18 @@ export function DispatchBoard({
   const bookedLoads = useMemo(() => sortedLoads.filter(isBookedReserved), [sortedLoads]);
   const assignedLoads = useMemo(() => sortedLoads.filter(isAssignedLoad), [sortedLoads]);
   const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
+
+  // TRUCK-CENTRIC List/Table sections. Awaiting = roster minus loaded trucks (one row per truck);
+  // Booked = active loads (one row per load); In shop = held placeholder. Every active truck lands
+  // in exactly one place: unloaded trucks in Awaiting, loaded trucks via their load in Booked.
+  const boardSections = useMemo(() => {
+    const awaitingRows = unassignedUnits.map(unitToBoardRow);
+    const bookedRows = sortedLoads;
+    return SECTION_META.map((meta) => ({
+      ...meta,
+      rows: meta.key === "awaiting" ? awaitingRows : meta.key === "booked" ? bookedRows : [],
+    }));
+  }, [unassignedUnits, sortedLoads]);
 
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
@@ -739,8 +762,8 @@ export function DispatchBoard({
                     // every row lands in exactly one section. "Out of service" is a fleet/unit
                     // status (not a load status) so it renders a placeholder pending Jorge's
                     // fleet-OOS data source — same hold pattern as the HOS columns.
-                    LIST_SECTIONS.map((section) => {
-                      const rows = section.rows(sortedLoads);
+                    boardSections.map((section) => {
+                      const rows = section.rows;
                       return (
                         <Fragment key={section.key}>
                           <tr className="border-b border-gray-200 bg-gray-100">
@@ -761,8 +784,8 @@ export function DispatchBoard({
                             return (
                               <Fragment key={load.id}>
                                 <tr
-                                  onClick={() => onRowClick(load.id)}
-                                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+                                  onClick={() => { if (!String(load.id).startsWith("unit:")) onRowClick(load.id); }}
+                                  className={`border-b border-gray-100 hover:bg-gray-50 ${String(load.id).startsWith("unit:") ? "" : "cursor-pointer"}`}
                                 >
                                   <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
                                     <input
