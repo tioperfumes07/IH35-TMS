@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import {
@@ -250,11 +251,10 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Filed Date *</span>
-            <input
-              type="date"
+            <DatePicker
               className="w-full rounded border border-gray-300 px-2 py-1"
               value={form.filed_date}
-              onChange={(event) => updateField("filed_date", event.target.value)}
+              onChange={(next) => updateField("filed_date", next)}
             />
             {fieldErrors.filed_date ? <span className="text-xs text-red-700">{fieldErrors.filed_date}</span> : null}
           </label>

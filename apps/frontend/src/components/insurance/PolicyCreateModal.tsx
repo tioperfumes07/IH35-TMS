@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError, apiRequest } from "../../api/client";
 import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicyStatus } from "../../api/insurance";
@@ -349,22 +350,20 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Effective Date *</span>
-            <input
-              type="date"
+            <DatePicker
               className="w-full rounded border border-gray-300 px-2 py-1"
               value={form.effective_date}
-              onChange={(event) => updateField("effective_date", event.target.value)}
+              onChange={(next) => updateField("effective_date", next)}
             />
             {fieldErrors.effective_date ? <span className="text-xs text-red-700">{fieldErrors.effective_date}</span> : null}
           </label>
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Expiry Date *</span>
-            <input
-              type="date"
+            <DatePicker
               className="w-full rounded border border-gray-300 px-2 py-1"
               value={form.expiry_date}
-              onChange={(event) => updateField("expiry_date", event.target.value)}
+              onChange={(next) => updateField("expiry_date", next)}
             />
             {fieldErrors.expiry_date ? <span className="text-xs text-red-700">{fieldErrors.expiry_date}</span> : null}
           </label>
