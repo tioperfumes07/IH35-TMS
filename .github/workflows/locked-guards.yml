@@ -209,6 +209,9 @@ jobs:
       - name: verify:equipment-deactivate-rls
         run: npm run verify:equipment-deactivate-rls
 
+      - name: verify:cors-allows-put
+        run: npm run verify:cors-allows-put
+
       - name: verify:deactivation-trap-fix
         run: npm run verify:deactivation-trap-fix
 

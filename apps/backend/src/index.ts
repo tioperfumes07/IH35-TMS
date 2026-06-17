@@ -555,7 +555,7 @@ async function main() {
       return cb(new Error("CORS: origin not allowed"), false);
     },
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Idempotency-Key"],
   });
   await app.register(cookie);

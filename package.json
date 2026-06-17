@@ -621,6 +621,7 @@
     "verify:currency-format-guarded": "node scripts/verify-currency-format-guarded.mjs",
     "verify:unit-inactivate-path": "node scripts/verify-unit-inactivate-path.mjs",
     "verify:equipment-deactivate-rls": "node scripts/verify-equipment-deactivate-rls.mjs",
+    "verify:cors-allows-put": "node scripts/verify-cors-allows-put.mjs",
     "verify:dispatch-kanban-densities": "node scripts/verify-dispatch-kanban-densities.mjs",
     "verify:dispatch-card-unit-first": "node scripts/verify-dispatch-card-unit-first.mjs",
     "verify:bookload-section-b-hos": "node scripts/verify-bookload-section-b-hos.mjs",
