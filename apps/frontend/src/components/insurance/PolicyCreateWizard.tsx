@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createPolicyWithBills,
@@ -303,19 +304,17 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               </select>
             </Field>
             <Field label="Effective Date *" error={step1Errors.effective_date}>
-              <input
-                type="date"
+              <DatePicker
                 className="w-full rounded border border-gray-300 px-2 py-1"
                 value={step1.effective_date}
-                onChange={(e) => setStep1((s) => ({ ...s, effective_date: e.target.value }))}
+                onChange={(next) => setStep1((s) => ({ ...s, effective_date: next }))}
               />
             </Field>
             <Field label="Expiry Date *" error={step1Errors.expiry_date}>
-              <input
-                type="date"
+              <DatePicker
                 className="w-full rounded border border-gray-300 px-2 py-1"
                 value={step1.expiry_date}
-                onChange={(e) => setStep1((s) => ({ ...s, expiry_date: e.target.value }))}
+                onChange={(next) => setStep1((s) => ({ ...s, expiry_date: next }))}
               />
             </Field>
             <Field label="Insurer Email" error={step1Errors.insurer_email}>
