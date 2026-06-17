@@ -188,5 +188,8 @@ jobs:
       - name: verify:dispatch-filter-toolbar
         run: npm run verify:dispatch-filter-toolbar
 
+      - name: verify:dispatch-board-sections-and-columns
+        run: npm run verify:dispatch-board-sections-and-columns
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density

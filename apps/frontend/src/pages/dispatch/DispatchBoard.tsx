@@ -16,7 +16,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { addLoadToPreSettlement, listOpenPreSettlements, type OpenPreSettlement } from "../../api/driverFinance";
-import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
+import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
 import { InTransitEtaChip } from "../../components/dispatch/InTransitEtaChip";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
@@ -100,6 +100,21 @@ function isBookedReserved(load: DispatchLoadRow) {
 function isAssignedLoad(load: DispatchLoadRow) {
   return Boolean(load.assigned_unit_id);
 }
+
+// DISPATCH-REDESIGN Part C — the three List/Table sections. Each section's rows() is a pure
+// partition of the already-sorted/filtered loads so no row is lost and ordering is preserved.
+// "Out of service" is a fleet/unit status with no load-level source yet, so it renders a
+// placeholder (held, like the HOS columns) until Jorge confirms the OOS feed.
+const LIST_SECTIONS: Array<{
+  key: string;
+  title: string;
+  rows: (loads: DispatchLoadRow[]) => DispatchLoadRow[];
+  placeholder?: string;
+}> = [
+  { key: "awaiting", title: "Awaiting assignment", rows: (loads) => loads.filter(isBookedReserved) },
+  { key: "booked", title: "Booked", rows: (loads) => loads.filter((load) => !isBookedReserved(load)) },
+  { key: "oos", title: "Out of service", rows: () => [], placeholder: "Fleet out-of-service feed pending — no units flagged." },
+];
 
 function sortUnassignedFirst(loads: DispatchLoadRow[]) {
   return [...loads].sort((a, b) => {
@@ -505,15 +520,28 @@ export function DispatchBoard({
     });
   };
 
-  const listColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
-    { key: "load", header: "Load", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
-    { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
+  // DISPATCH-REDESIGN Part B — ONE shared column model so List renders the SAME grid as
+  // Table. Order: Unit · Trailer · Driver · Hrs available (cycle) · Hrs to reset · Load # ·
+  // Customer · Commodity · Pickup · Delivery · WO # · Cargo temp · Linehaul · Status signal ·
+  // Live GPS · Risk · Status. Lane is split into Pickup (City, ST) + Delivery (City, ST).
+  // HOS columns (Hrs available / Hrs to reset) render "—" until the data-source feed is
+  // confirmed (Samsara HOS/ELD vs driver-PWA) — wiring is HELD per Jorge.
+  const hosCell = () => <span className="text-gray-400" title="Driver HOS feed pending">—</span>;
+  const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
+    { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
-    { key: "status_signal", header: "Status Signal", cell: (load) => renderTriSignalCell(load) },
+    { key: "hrs_available", header: "Hrs available", cell: hosCell },
+    { key: "hrs_to_reset", header: "Hrs to reset", cell: hosCell },
+    { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
+    { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
+    { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
+    { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
+    { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
+    { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
     {
       key: "cargo_temp",
-      header: "Cargo Temp",
+      header: "Cargo temp",
       cell: (load) => (
         <CargoTempBadge
           loadId={load.id}
@@ -522,41 +550,16 @@ export function DispatchBoard({
         />
       ),
     },
-    { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
-    { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
+    { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
+    { key: "status_signal", header: "Status signal", cell: (load) => renderTriSignalCell(load) },
     { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={null} loadId={load.id} /> },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
   ];
 
-  const tableColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
-    { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
-    { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
-    { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
-    { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
-    { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
-    { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
-    {
-      key: "cargo_temp",
-      header: "Cargo Temp",
-      cell: (load) => (
-        <CargoTempBadge
-          loadId={load.id}
-          operatingCompanyId={load.operating_company_id}
-          reefer={isReeferCommodity(load.commodity)}
-        />
-      ),
-    },
-    { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
-    { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
-    { key: "flag", header: "Flag", cell: (load) => FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪" },
-    { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
-    { key: "status_signal", header: "Status Signal", cell: (load) => renderTriSignalCell(load) },
-    { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
-    { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={null} loadId={load.id} /> },
-    { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
-    { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
-  ];
+  // List and Table share the same column model (the grid look is identical).
+  const listColumns = boardColumns;
+  const tableColumns = boardColumns;
 
   const renderListOrTable = (columns: typeof listColumns) => {
     if (listError) {
@@ -635,29 +638,54 @@ export function DispatchBoard({
                       </td>
                     </tr>
                   ) : (
-                    sortedLoads.map((load) => {
-                      const boardLoad = readBoardLoad(load);
+                    // DISPATCH-REDESIGN Part C — three labeled sections inside ONE table so the
+                    // shared column sort/resize stays global across all rows. No load is dropped:
+                    // every row lands in exactly one section. "Out of service" is a fleet/unit
+                    // status (not a load status) so it renders a placeholder pending Jorge's
+                    // fleet-OOS data source — same hold pattern as the HOS columns.
+                    LIST_SECTIONS.map((section) => {
+                      const rows = section.rows(sortedLoads);
                       return (
-                        <Fragment key={load.id}>
-                          <tr
-                            onClick={() => onRowClick(load.id)}
-                            className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                          >
-                            <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
-                              <input
-                                type="checkbox"
-                                aria-label={`Select load ${load.load_number}`}
-                                checked={selectCtx.isSelected(load.id)}
-                                onChange={() => selectCtx.toggle(load.id)}
-                              />
+                        <Fragment key={section.key}>
+                          <tr className="border-b border-gray-200 bg-gray-100">
+                            <td colSpan={columns.length + 1} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                              {section.title}
+                              <span className="ml-2 rounded-full bg-white px-1.5 text-[10px] font-bold text-gray-500">{rows.length}</span>
                             </td>
-                            {columns.map((column) => (
-                              <td key={column.key} className="px-3 py-2 text-[11px]">
-                                {column.cell(boardLoad)}
-                              </td>
-                            ))}
                           </tr>
-                          {renderPreSettlementPrompt(load, columns.length + 1)}
+                          {section.placeholder && rows.length === 0 ? (
+                            <tr className="border-b border-gray-100">
+                              <td colSpan={columns.length + 1} className="px-3 py-2 text-[11px] italic text-gray-400">
+                                {section.placeholder}
+                              </td>
+                            </tr>
+                          ) : null}
+                          {rows.map((load) => {
+                            const boardLoad = readBoardLoad(load);
+                            return (
+                              <Fragment key={load.id}>
+                                <tr
+                                  onClick={() => onRowClick(load.id)}
+                                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+                                >
+                                  <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+                                    <input
+                                      type="checkbox"
+                                      aria-label={`Select load ${load.load_number}`}
+                                      checked={selectCtx.isSelected(load.id)}
+                                      onChange={() => selectCtx.toggle(load.id)}
+                                    />
+                                  </td>
+                                  {columns.map((column) => (
+                                    <td key={column.key} className="px-3 py-2 text-[11px]">
+                                      {column.cell(boardLoad)}
+                                    </td>
+                                  ))}
+                                </tr>
+                                {renderPreSettlementPrompt(load, columns.length + 1)}
+                              </Fragment>
+                            );
+                          })}
                         </Fragment>
                       );
                     })
