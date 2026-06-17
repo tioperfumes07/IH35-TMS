@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
@@ -6,6 +6,7 @@ import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection }
 import { useToast } from "./Toast";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
+import { TableControls, Paginator, useTableController, type TableColumn } from "./table";
 
 export type FleetRow = {
   id: string;
@@ -29,6 +30,17 @@ type Props = {
 
 const FLEET_SELECTION_CAP = 100;
 
+// Column registry for the gear/column-chooser. "Unit" is always visible (anchor column).
+const FLEET_COLUMNS: TableColumn[] = [
+  { key: "unit_number", label: "Unit", alwaysVisible: true },
+  { key: "vin", label: "VIN" },
+  { key: "type", label: "Type" },
+  { key: "make_model", label: "Make/Model" },
+  { key: "year", label: "Year" },
+  { key: "status", label: "Status" },
+  { key: "dot_oo", label: "DOT O/O" },
+];
+
 function deriveVehicleType(row: FleetRow): string {
   if (row.kind === "trailer") {
     return row.equipment_type?.trim() || row.type?.trim() || "Trailer";
@@ -49,6 +61,11 @@ function fleetProfilePath(row: FleetRow): string {
   return `/fleet/units/${row.id}`;
 }
 
+// Stable searchable text per row (module-level so the controller's memo stays stable).
+function fleetSearchText(row: FleetRow): string {
+  return [row.unit_number, row.vin, row.make, row.model].filter(Boolean).join(" ");
+}
+
 export function FleetTable({ operatingCompanyId, rows }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -56,7 +73,40 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editingRow, setEditingRow] = useState<FleetRow | null>(null);
 
-  const pageRowIds = useMemo(() => rows.map((row) => row.id), [rows]);
+  // List-filter dropdowns (separate from the bulk-EDIT dropdowns of the same name).
+  const [statusFilter, setStatusFilter] = useState("");
+  const [typeListFilter, setTypeListFilter] = useState("");
+
+  const statusOptions = useMemo(
+    () => Array.from(new Set(rows.map((r) => String(r.status ?? "")).filter(Boolean))).sort(),
+    [rows]
+  );
+  const typeOptions = useMemo(
+    () => Array.from(new Set(rows.map(displayType))).sort(),
+    [rows]
+  );
+
+  const listFiltered = useMemo(
+    () =>
+      rows.filter((r) => {
+        if (statusFilter && String(r.status ?? "") !== statusFilter) return false;
+        if (typeListFilter && displayType(r) !== typeListFilter) return false;
+        return true;
+      }),
+    [rows, statusFilter, typeListFilter]
+  );
+
+  const table = useTableController<FleetRow>({
+    rows: listFiltered,
+    columns: FLEET_COLUMNS,
+    tableKey: "fleet",
+    searchText: fleetSearchText,
+    defaultPageSize: 50,
+  });
+
+  const pageRows = table.paged;
+  // select-all targets ONLY the current filtered page — never the whole hidden fleet.
+  const pageRowIds = useMemo(() => pageRows.map((row) => row.id), [pageRows]);
   const vehicleTypes = useMemo(() => Array.from(new Set(rows.map(deriveVehicleType))), [rows]);
 
   const selection = useBulkSelection({
@@ -102,7 +152,28 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
       ),
   });
 
-  const bulkApplying = truckBulkMutation.isPending || trailerBulkMutation.isPending;
+  // BULK INACTIVATE = soft-delete (canonical deactivated_at), reusing the per-unit /deactivate
+  // endpoints (units + equipment). NEVER a hard delete — the record is always retained. Inactive
+  // is a separate dimension from the 5 operational statuses (Active/Sold/Transferred/Damaged/OOS).
+  const inactivateMutation = useMutation({
+    mutationFn: async (targets: FleetRow[]) => {
+      let affected = 0;
+      for (const row of targets) {
+        const resource = row.kind === "trailer" ? "equipment" : "units";
+        await apiRequest(`/api/v1/mdata/${resource}/${row.id}/deactivate`, { method: "POST", body: {} });
+        affected += 1;
+      }
+      return affected;
+    },
+    onSuccess: (count) => {
+      pushToast(`${count} unit(s) inactivated`, "success");
+      selection.clear();
+      void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
+    },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Bulk inactivate failed", "error"),
+  });
+
+  const bulkApplying = truckBulkMutation.isPending || trailerBulkMutation.isPending || inactivateMutation.isPending;
 
   const applyBulk = async (patch: BulkApplyPayload) => {
     const trucks = selectedRows.filter((row) => row.kind !== "trailer");
@@ -156,8 +227,54 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
     }
   };
 
+  const onInactivateSelected = useCallback(() => {
+    if (selectedRows.length === 0) return;
+    if (!window.confirm(`Inactivate ${selectedRows.length} selected unit(s)? This soft-deletes them (reversible) — the records are retained.`)) {
+      return;
+    }
+    inactivateMutation.mutate(selectedRows);
+  }, [selectedRows, inactivateMutation]);
+
+  const isVisible = (key: string) => table.isColumnVisible(key);
+
   return (
     <div className="space-y-2">
+      <TableControls
+        search={table.search}
+        onSearchChange={table.setSearch}
+        searchPlaceholder="Search Unit #, VIN, Make/Model…"
+        filteredCount={table.filteredCount}
+        totalCount={rows.length}
+        columns={FLEET_COLUMNS}
+        hidden={table.hidden}
+        onToggleColumn={table.toggleColumn}
+        pageSize={table.pageSize}
+        onPageSizeChange={table.setPageSize}
+      >
+        <select
+          aria-label="Filter by status"
+          className="h-8 rounded border border-gray-300 px-2 text-[12px]"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All statuses</option>
+          {statusOptions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter by type"
+          className="h-8 rounded border border-gray-300 px-2 text-[12px]"
+          value={typeListFilter}
+          onChange={(e) => setTypeListFilter(e.target.value)}
+        >
+          <option value="">All types</option>
+          {typeOptions.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+      </TableControls>
+
       <BulkActionBar
         selectedCount={selection.count}
         selectedLabel={`Selected: ${selection.count} units`}
@@ -171,10 +288,18 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
           onApply={applyBulk}
           applying={bulkApplying}
         />
+        <button
+          type="button"
+          className="rounded border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+          disabled={bulkApplying || selection.count === 0}
+          onClick={onInactivateSelected}
+        >
+          Inactivate selected
+        </button>
       </BulkActionBar>
 
       <TableSelection
-        rows={rows}
+        rows={pageRows}
         getId={(row) => row.id}
         selectedIds={selection.selectedIds}
         onSelectionChange={selection.setSelectedIds}
@@ -198,17 +323,17 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
                     />
                   </th>
                   <th className="px-2 py-1">Unit</th>
-                  <th className="px-2 py-1">VIN</th>
-                  <th className="px-2 py-1">Type</th>
-                  <th className="px-2 py-1">Make/Model</th>
-                  <th className="px-2 py-1">Year</th>
-                  <th className="px-2 py-1">Status</th>
-                  <th className="px-2 py-1">DOT O/O</th>
+                  {isVisible("vin") ? <th className="px-2 py-1">VIN</th> : null}
+                  {isVisible("type") ? <th className="px-2 py-1">Type</th> : null}
+                  {isVisible("make_model") ? <th className="px-2 py-1">Make/Model</th> : null}
+                  {isVisible("year") ? <th className="px-2 py-1">Year</th> : null}
+                  {isVisible("status") ? <th className="px-2 py-1">Status</th> : null}
+                  {isVisible("dot_oo") ? <th className="px-2 py-1">DOT O/O</th> : null}
                   <th className="w-14 px-2 py-1">Edit</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
+                {pageRows.map((row) => (
                   <tr
                     key={row.id}
                     className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
@@ -223,12 +348,16 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
                       />
                     </td>
                     <td className="px-2 py-1">{String(row.unit_number ?? row.id ?? "—")}</td>
-                    <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td>
-                    <td className="truncate px-2 py-1">{displayType(row)}</td>
-                    <td className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>
-                    <td className="px-2 py-1">{String(row.year ?? "—")}</td>
-                    <td className="px-2 py-1">{String(row.status ?? "—")}</td>
-                    <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
+                    {isVisible("vin") ? <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td> : null}
+                    {isVisible("type") ? <td className="truncate px-2 py-1">{displayType(row)}</td> : null}
+                    {isVisible("make_model") ? (
+                      <td className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>
+                    ) : null}
+                    {isVisible("year") ? <td className="px-2 py-1">{String(row.year ?? "—")}</td> : null}
+                    {isVisible("status") ? <td className="px-2 py-1">{String(row.status ?? "—")}</td> : null}
+                    {isVisible("dot_oo") ? (
+                      <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
+                    ) : null}
                     <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
@@ -249,6 +378,8 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
           </div>
         )}
       </TableSelection>
+
+      <Paginator page={table.page} pageCount={table.pageCount} onPageChange={table.setPage} />
 
       <EditVehicleModal
         open={editingUnitId !== null}

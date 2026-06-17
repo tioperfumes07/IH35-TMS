@@ -157,3 +157,9 @@ jobs:
 
       - name: verify:manual-projection-sum
         run: npm run verify:manual-projection-sum
+
+      - name: verify:fleet-bulk-soft-delete
+        run: npm run verify:fleet-bulk-soft-delete
+
+      - name: verify:table-controls-shared
+        run: npm run verify:table-controls-shared
