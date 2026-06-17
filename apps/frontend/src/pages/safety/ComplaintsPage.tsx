@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createComplaint, getComplaints } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -42,7 +43,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-7">
-        <input type="date" value={form.complaint_date} onChange={(e) => setForm((v) => ({ ...v, complaint_date: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
+        <DatePicker value={form.complaint_date} onChange={(next) => setForm((v) => ({ ...v, complaint_date: next }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <SelectCombobox value={form.complainant_type} onChange={(e) => setForm((v) => ({ ...v, complainant_type: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
           <option value="driver">driver</option>
           <option value="customer">customer</option>

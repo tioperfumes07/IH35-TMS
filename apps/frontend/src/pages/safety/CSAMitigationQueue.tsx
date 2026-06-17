@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
@@ -140,11 +141,10 @@ export function CSAMitigationQueuePage() {
           </label>
           <label className="flex flex-col gap-1">
             <span>Due date</span>
-            <input
-              type="date"
+            <DatePicker
               value={dueDate}
               className="rounded border border-gray-300 px-2 py-1"
-              onChange={(event) => setDueDate(event.target.value)}
+              onChange={(next) => setDueDate(next)}
             />
           </label>
           <button

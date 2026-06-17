@@ -4,6 +4,7 @@
  * Consumes POST /api/safety/drug-alcohol/tests.
  */
 import { useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -126,11 +127,10 @@ export function TestSchedulingPanel({ companyId }: Props) {
 
         <label className="block text-xs text-slate-600">
           Scheduled Date (optional)
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm"
             value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
+            onChange={(next) => setScheduledAt(next)}
           />
         </label>
       </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
 
@@ -42,20 +43,18 @@ export function IdvrPage({ operatingCompanyId }: Props) {
       <div className="grid gap-2 rounded border border-gray-200 bg-white px-3 py-2 md:grid-cols-4">
         <label className="text-[11px] text-slate-600">
           From
-          <input
-            type="date"
+          <DatePicker
             value={fromDate}
-            onChange={(event) => setFromDate(event.target.value)}
+            onChange={(next) => setFromDate(next)}
             className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
             data-testid="idvr-filter-from"
           />
         </label>
         <label className="text-[11px] text-slate-600">
           To
-          <input
-            type="date"
+          <DatePicker
             value={toDate}
-            onChange={(event) => setToDate(event.target.value)}
+            onChange={(next) => setToDate(next)}
             className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
             data-testid="idvr-filter-to"
           />

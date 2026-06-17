@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDotInspection, followUpDotInspectionEvent, getDotInspections, listDotInspectionEvents } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -48,7 +49,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
-        <input value={form.inspection_date} type="date" onChange={(e) => setForm((v) => ({ ...v, inspection_date: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
+        <DatePicker value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.inspector_name} placeholder="Inspector name" onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.inspection_level} type="number" min={1} max={6} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <SelectCombobox value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">

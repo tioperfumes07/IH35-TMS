@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createDotInspection, listDotInspections, uploadDotInspectionPdf, voidDotInspection } from "../../../api/safetyV64";
@@ -67,7 +68,7 @@ export function DOTInspectionsTab() {
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-9">
-        <input className="rounded border border-gray-300 px-2 py-1 text-xs" type="date" value={form.inspection_date} onChange={(e) => setForm((v) => ({ ...v, inspection_date: e.target.value }))} />
+        <DatePicker className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="driver_id" value={form.driver_id} onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))} />
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="unit_id" value={form.unit_id} onChange={(e) => setForm((v) => ({ ...v, unit_id: e.target.value }))} />
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Inspector" value={form.inspector_name} onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} />
