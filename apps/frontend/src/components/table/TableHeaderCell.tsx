@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { SortDir } from "./useTableController";
 
@@ -33,7 +33,7 @@ export function TableHeaderCell({
   const active = sortKey === columnKey;
 
   const startResize = useCallback(
-    (e: React.MouseEvent) => {
+    (e: ReactMouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
       const startX = e.clientX;
