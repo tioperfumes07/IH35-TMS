@@ -188,6 +188,9 @@ jobs:
       - name: verify:dispatch-filter-toolbar
         run: npm run verify:dispatch-filter-toolbar
 
+      - name: verify:dispatch-board-sections-and-columns
+        run: npm run verify:dispatch-board-sections-and-columns
+
       - name: verify:dispatch-kanban-lanes-and-density
         run: npm run verify:dispatch-kanban-lanes-and-density
 
