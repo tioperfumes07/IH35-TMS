@@ -866,6 +866,20 @@ export function updateCustomer(id: string, body: UpdateCustomerInput) {
   return apiRequest<Customer>(`/api/v1/mdata/customers/${id}`, { method: "PATCH", body });
 }
 
+// Canonical soft-delete (mirrors the Driver Deactivate pattern): hits the dedicated
+// /deactivate endpoint which sets deactivated_at + emits the deactivation audit event
+// and TMS push. Reactivate has no dedicated route — PATCH deactivated_at:null instead.
+export function deactivateCustomer(id: string) {
+  return apiRequest<{ id: string; deactivated_at: string | null; was_already_deactivated: boolean }>(
+    `/api/v1/mdata/customers/${id}/deactivate`,
+    { method: "POST", body: {} }
+  );
+}
+
+export function reactivateCustomer(id: string) {
+  return updateCustomer(id, { deactivated_at: null });
+}
+
 export function getCustomerDetail(id: string, operatingCompanyId?: string | null) {
   const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
   return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail${query}`);
