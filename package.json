@@ -621,6 +621,8 @@
     "verify:load-delivery-dates-separated": "node scripts/verify-load-delivery-dates-separated.mjs",
     "verify:cash-eta-audit-append-only": "node scripts/verify-cash-eta-audit-append-only.mjs",
     "verify:mdp-single-row": "node scripts/verify-mdp-single-row.mjs",
+    "verify:cash-eta-forecast-only": "node scripts/verify-cash-eta-forecast-only.mjs",
+    "verify:cash-eta-audit-logged": "node scripts/verify-cash-eta-audit-logged.mjs",
     "verify:form-input-density": "node scripts/verify-form-input-density.mjs"
   },
   "dependencies": {

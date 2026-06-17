@@ -406,6 +406,7 @@ import { initializeSearchIndexerIncremental } from "./jobs/search-indexer-increm
 import { registerUniversalSearchRoutes } from "./search/universal/routes.js";
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
+import { registerPredictedDeliveryRoutes } from "./dispatch/predicted-delivery.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
 import { registerSettlementShadowRoutes } from "./payroll/settlement-shadow.routes.js";
@@ -906,6 +907,7 @@ async function main() {
   await registerDailyTasksRoutes(app);
   await app.register(taskRoutes, { prefix: "/api/v1/tasks" });
   await registerTelematicsHosRoutes(app);
+  await registerPredictedDeliveryRoutes(app);
   await registerVehicleDriverPairingRoutes(app);
   await registerPayrollDriverSettlementRoutes(app);
   await registerSettlementShadowRoutes(app);

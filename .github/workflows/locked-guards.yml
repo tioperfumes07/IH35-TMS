@@ -209,5 +209,11 @@ jobs:
       - name: verify:mdp-single-row
         run: npm run verify:mdp-single-row
 
+      - name: verify:cash-eta-forecast-only
+        run: npm run verify:cash-eta-forecast-only
+
+      - name: verify:cash-eta-audit-logged
+        run: npm run verify:cash-eta-audit-logged
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density
