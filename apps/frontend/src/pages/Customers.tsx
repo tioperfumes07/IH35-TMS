@@ -108,6 +108,7 @@ export function CustomersPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [listStatus, setListStatus] = useState<"active" | "inactive" | "all">("active");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -186,9 +187,18 @@ export function CustomersPage() {
     enabled: Boolean(companyId),
   });
 
+  // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
+  // mirroring the Driver Deactivate pattern. Defaults to Active.
+  const visibleCustomers = useMemo(() => {
+    const all = customersQuery.data ?? [];
+    if (listStatus === "all") return all;
+    if (listStatus === "inactive") return all.filter((customer) => customer.deactivated_at != null);
+    return all.filter((customer) => customer.deactivated_at == null);
+  }, [customersQuery.data, listStatus]);
+
   const customersSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const rows = (customersQuery.data ?? []).filter((customer) => {
+    const rows = visibleCustomers.filter((customer) => {
       if (!q) return true;
       return (
         customer.name.toLowerCase().includes(q) ||
@@ -201,7 +211,7 @@ export function CustomersPage() {
       return sortByName === "name_asc" ? cmp : -cmp;
     });
     return rows;
-  }, [customersQuery.data, search, sortByName]);
+  }, [visibleCustomers, search, sortByName]);
 
   const selectedCustomer = useMemo(() => {
     const exact = customersSorted.find((customer) => customer.id === selectedCustomerId);
@@ -286,6 +296,18 @@ export function CustomersPage() {
                 Master-detail
               </button>
             </div>
+            <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="customers">
+              {(["active", "inactive", "all"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`rounded px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  onClick={() => setListStatus(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
             <ActionButton onClick={() => setCreateOpen(true)}>
               + Create Customer
             </ActionButton>
@@ -306,7 +328,7 @@ export function CustomersPage() {
       ) : (
       <div className="flex gap-3">
         <CustomerListSidebar
-          customers={customersQuery.data ?? []}
+          customers={visibleCustomers}
           totalCount={customersSorted.length}
           page={sidebarPage}
           pageSize={sidebarPageSize}

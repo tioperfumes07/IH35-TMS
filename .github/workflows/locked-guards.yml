@@ -151,3 +151,6 @@ jobs:
 
       - name: verify:d1-settlement-approval
         run: npm run verify:d1-settlement-approval
+
+      - name: verify:soft-delete-list-filter
+        run: npm run verify:soft-delete-list-filter
