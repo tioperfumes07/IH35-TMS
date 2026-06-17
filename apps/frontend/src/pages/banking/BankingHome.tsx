@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAllAccounts,
@@ -445,16 +446,14 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   </option>
                 ))}
               </SelectCombobox>
-              <input
-                type="date"
+              <DatePicker
                 value={reconPeriodStart}
-                onChange={(event) => setReconPeriodStart(event.target.value)}
+                onChange={(next) => setReconPeriodStart(next)}
                 className="rounded border border-gray-300 px-2 py-1 text-sm"
               />
-              <input
-                type="date"
+              <DatePicker
                 value={reconPeriodEnd}
-                onChange={(event) => setReconPeriodEnd(event.target.value)}
+                onChange={(next) => setReconPeriodEnd(next)}
                 className="rounded border border-gray-300 px-2 py-1 text-sm"
               />
               <input

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSalesTaxAgency,
@@ -146,8 +147,8 @@ export function SalesTaxPage() {
               </option>
             ))}
           </select>
-          <input type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
-          <input type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
+          <DatePicker value={periodStart} onChange={(next) => setPeriodStart(next)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
+          <DatePicker value={periodEnd} onChange={(next) => setPeriodEnd(next)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
           <Button
             disabled={!companyId || !selectedAgencyId || !periodStart || !periodEnd}
             loading={prepareReturnMutation.isPending}

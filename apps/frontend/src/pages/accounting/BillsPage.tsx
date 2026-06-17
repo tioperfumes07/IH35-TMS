@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -387,11 +388,10 @@ export function BillsPage() {
         payloadFields={
           <label className="block text-sm text-gray-700">
             Scheduled date
-            <input
-              type="date"
+            <DatePicker
               className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
               value={scheduledDate}
-              onChange={(event) => setScheduledDate(event.target.value)}
+              onChange={(next) => setScheduledDate(next)}
             />
           </label>
         }

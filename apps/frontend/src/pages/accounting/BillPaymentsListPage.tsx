@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listBillPayments, listBills, type BillPayment, type VendorBill, voidVendorBillPayment } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -148,20 +149,18 @@ export function BillPaymentsListPage() {
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           From
-          <input
-            type="date"
+          <DatePicker
             className="h-9 rounded border border-gray-300 px-2 text-[13px]"
             value={dateFrom}
-            onChange={(event) => setDateFrom(event.target.value)}
+            onChange={(next) => setDateFrom(next)}
           />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           To
-          <input
-            type="date"
+          <DatePicker
             className="h-9 rounded border border-gray-300 px-2 text-[13px]"
             value={dateTo}
-            onChange={(event) => setDateTo(event.target.value)}
+            onChange={(next) => setDateTo(next)}
           />
         </label>
       </div>
