@@ -5,6 +5,8 @@
 **Part of:** the VOID-EVERYWHERE build (`docs/specs/VOID-EVERYWHERE-DESIGN.md`). Continues the gated sequence.
 **Prereqs shipped:** PR-1 (#973, invoices + JEs), PR-2 (#977, bills).
 
+> 🔒 **Driver-pay mileage basis** (see `MILEAGE-MODEL-DESIGN.md` §0.1, LOCKED): driver settlement pay is computed on **`shortest_miles`, never practical**. Practical miles are the customer-invoice basis (RPM with a $3.00/mi floor). When `PCMILER-ROUTING` lands, consume `shortest_miles` as the settlement mileage input — do not double-write mileage.
+
 ---
 
 ## 0. Why this is a design doc and not the next PR

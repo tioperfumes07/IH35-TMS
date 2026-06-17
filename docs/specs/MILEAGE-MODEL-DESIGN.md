@@ -19,6 +19,28 @@ A trucking TMS must keep **three different mileage numbers** for the same trip, 
 
 Plus a fourth, jurisdictional view derived from the same telematics: **IFTA per-state miles** (Samsara jurisdiction data, ECU-prioritized, GPS fallback), aggregated **per unit, per jurisdiction, per quarter**, paired with **fuel gallons by state** for the quarterly IFTA return. **Mexico miles are non-IFTA** (tracked, but excluded from the return — routing supports USA / MEX / CAN).
 
+---
+
+## 0.1 🔒 LOCKED RULE — the mileage two-number rule (governs PC\*Miler routing + Settlements)
+
+**Status: LOCKED** — same standing as entity-independence and the Block-20 cash/accrual decisions. Given by Jorge; do not re-litigate, do not substitute one number for the other.
+
+Every load computes and stores **two distinct truck-mile numbers**, feeding **two different consumers**:
+
+| Number | Consumer | Rule |
+|---|---|---|
+| **`practical_miles`** | **CUSTOMER INVOICE** | Customer RPM shown on the invoice = **negotiated linehaul ÷ practical_miles**, with a **minimum floor of $3.00/mi**. The rate is negotiated (e.g. $6,450); practical miles set the *displayed* RPM; if the computed RPM falls below **$3.00/mi**, flag/warn and enforce the floor. Practical miles are the **customer-billing basis**. |
+| **`shortest_miles`** (a.k.a. `short_miles` / HHG) | **DRIVER PAY** | Driver settlement pay is computed on **shortest miles, never practical**. |
+
+**Both are stored per load** (`loads.practical_miles` + `loads.short_miles`, each with its `*_source`; per-entity TRANSP). They are different values for different purposes — **never use practical where shortest belongs, or vice-versa.**
+
+**Cross-reference (so a future agent wires the correct number):**
+- **PC\*Miler routing block (`PCMILER-ROUTING`)** must compute BOTH (RouteType=Practical and RouteType=Shortest), store both, surface `practical_miles` + computed RPM (with the $3/mi floor) to the **invoice** side, and expose `shortest_miles` as the mileage input to the **settlement** side.
+- **Settlements Tier-1 chain** consumes **`shortest_miles`** for driver pay — coordinate, do not double-write the mileage.
+- **Dispatch / Book Load** (`DISPATCH-MODULE-SPEC.md`) captures the stops these miles route from; the §C address is the geocode source (`PCMILER-GEOCODE`).
+
+The split itself (practical→invoicing, shortest→driver pay) is also reflected in the §0 table above and §2 / §6A below; this callout adds the **$3.00/mi customer-RPM floor** and the explicit consumer cross-reference so the rule survives between agents.
+
 **This is already half-modeled in the repo.** Migration `0019_cust_driver_fields.sql` defines `mdata.miles_basis AS ENUM ('short_miles','practical_miles')` and stamps the *basis choice* on each party: `mdata.customers.default_billing_miles_basis` (default `practical_miles`) and `mdata.drivers.pay_basis` (default `short_miles`). What is missing is the **actual mile numbers per load**, the **source of each number**, the **actual/odometer feed**, and the **IFTA + profitability rollups**. This doc specifies those.
 
 **PC\*Miler is phased (decision LOCKED — Jorge is in talks to acquire the Trimble/PC\*Miler API):**
