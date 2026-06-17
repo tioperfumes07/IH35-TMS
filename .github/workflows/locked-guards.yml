@@ -209,6 +209,9 @@ jobs:
       - name: verify:equipment-deactivate-rls
         run: npm run verify:equipment-deactivate-rls
 
+      - name: verify:deactivation-trap-fix
+        run: npm run verify:deactivation-trap-fix
+
       - name: verify:dispatch-kanban-densities
         run: npm run verify:dispatch-kanban-densities
 
