@@ -1032,6 +1032,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.drivers ud ON ud.id = u.assigned_driver_id
           LEFT JOIN mdata.load_stops ls ON ls.load_id = l.id
           WHERE u.deactivated_at IS NULL
+            -- ACTIVE trucks only. Excludes Sold/Totaled (some are not deactivated_at — a known
+            -- active/inactive desync that inflated "Awaiting assignment" to ~49 vs ~32 active) and
+            -- OutOfService/InMaintenance (those belong to the In-shop / Fleet-OOS surfaces, not Awaiting).
+            AND u.status = 'InService'::mdata.unit_status
             AND l.id IS NULL
           GROUP BY u.id, u.unit_number, ud.id, ud.first_name, ud.last_name
           ORDER BY COALESCE(MAX(ls.actual_departure_at), now() - interval '999 days') ASC
