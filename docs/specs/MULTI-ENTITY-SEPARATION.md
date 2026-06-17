@@ -42,6 +42,29 @@ arm's-length inter-entity transaction, never a shared internal balance.
    launch. A missing `(entity, system_purpose)` mapping must **fail loud**, never silently fall back to
    another entity's or a global account.
 
+## Operational data is per-entity too (not just accounting)
+
+The rule is **not** limited to `catalogs.accounts`. **Every** entity-scoped object is per-entity, never
+global: `mdata.loads`, `mdata.units` / `mdata.equipment` (`owner_company_id` + `currently_leased_to_company_id`),
+`mdata.customers` / `mdata.vendors` / `mdata.drivers`, `mdata.locations`, dispatch, settlements, escrow,
+fuel, banking. No constraint, unique index, or RLS policy on entity-scoped data may be **global** — each is
+**per-entity**.
+
+8. **RLS is per-entity, and managers gain visibility only WITHIN their accessible companies.** Policies key
+   on `operating_company_id` / `owner_company_id` / `currently_leased_to_company_id` ∈
+   `org.user_accessible_company_ids()`. An Owner/Administrator/Manager NEVER sees another entity's
+   (TRK/USMCA) rows — role elevation widens visibility *within* accessible companies only, never across
+   entities. (See the equipment/units soft-delete fix: the manager-sees-deactivated branch is ANDed with the
+   entity scope, so it cannot leak cross-entity — `verify-deactivation-trap-fix`.)
+9. **Soft-delete, never hard-delete.** Deactivate sets `deactivated_at` (Inactive); rows are never DELETEd.
+   The **RLS deactivation trap** (a SELECT-visibility predicate `deactivated_at IS NULL` rejecting the
+   just-soft-deleted row → 42501) is a known failure class — fix it by broadening the **SELECT** policy
+   **role+entity scoped**, never by opening visibility to all entities.
+10. **`identity.*` policy helpers return strict values, never NULL.** `is_lucia_bypass()` must COALESCE to a
+    strict boolean — a NULL in `is_lucia_bypass() OR <entity/role check>` poisons every WITH CHECK (42501).
+    The prod app pool must run as `ih35_app` with RLS **enforced**, never fall back to `neondb_owner`
+    (superuser bypasses RLS → destroys entity isolation). [#878]
+
 ## Guards that keep it true
 - Per-entity partial-unique index on `catalogs.accounts (operating_company_id, system_purpose)`.
 - Runtime resolver throws on: >1 active account per `(entity, purpose)`; active duplicate (#6999);
