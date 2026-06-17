@@ -100,16 +100,16 @@
       "pickup_city": "Sayreville", "pickup_state": "NJ", "pickup_location_name": "OEG Building Materials",
       "delivery_city": "Round Rock", "delivery_state": "TX", "delivery_location_name": null,
       "scheduled_pickup_appt_at": "2026-06-16T08:00:00", "scheduled_delivery_appt_at": "2026-06-18T08:00:00",
-      "broker_customer_name": "Armstrong Transport GR", "rate_cents": 0, "flags": ["no_rate_in_aw"]
+      "broker_customer_name": "Armstrong Transport GR", "rate_cents": 400000, "flags": ["no_rate_in_aw"]
     },
     {
-      "aw_load_number": null, "wo_number": "77225", "status": "pending",
+      "aw_load_number": "13380", "wo_number": "77225", "status": "dispatched",
       "primary_driver_name": "Jose Gerardo Ruiz Flores", "team_driver_name": null,
       "truck_unit": "T164", "trailer_aw_ref": "10222", "trailer_type": "53' Reefer", "equipment_owned": true,
       "pickup_city": "Laredo", "pickup_state": "TX", "pickup_location_name": "Alder Laredo",
       "delivery_city": "Wharton", "delivery_state": "NJ", "delivery_location_name": "DMI",
       "scheduled_pickup_appt_at": "2026-06-16T08:00:00", "scheduled_delivery_appt_at": "2026-06-19T08:00:00",
-      "broker_customer_name": "JZ Logistics LLC", "rate_cents": 630000, "flags": ["missing_aw_load_number", "confirm_aw_load_id_before_commit"]
+      "broker_customer_name": "JZ Logistics LLC", "rate_cents": 630000, "flags": ["confirm_aw_load_id_before_commit"]
     }
   ]
 }
