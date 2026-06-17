@@ -130,7 +130,7 @@ export function FMCSAVerificationModal({
               value={lookupValue}
               onChange={(event) => setLookupValue(event.target.value)}
               placeholder={lookupType === "usdot" ? "e.g. 384859" : "e.g. MC-123456"}
-              className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+              className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
 

@@ -151,7 +151,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
           <input
             value={driverId}
             onChange={(event) => setDriverId(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             placeholder="UUID"
             required
           />
@@ -163,7 +163,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
             <input
               value={reasonUuid}
               onChange={(event) => setReasonUuid(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
               placeholder="Internal fine reason"
               required
             />
@@ -175,7 +175,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
               <input
                 value={issuedByAuthority}
                 onChange={(event) => setIssuedByAuthority(event.target.value)}
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                className="rounded border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -183,7 +183,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
               <input
                 value={jurisdiction}
                 onChange={(event) => setJurisdiction(event.target.value)}
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                className="rounded border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
@@ -191,7 +191,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
               <input
                 value={violationDescription}
                 onChange={(event) => setViolationDescription(event.target.value)}
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                className="rounded border border-gray-300 h-9 px-2 text-[13px]"
                 required
               />
             </div>
@@ -204,7 +204,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
             type="date"
             value={issuedDate}
             onChange={(event) => setIssuedDate(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             required
           />
         </div>
@@ -216,7 +216,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
             min="0.01"
             value={amountUsd}
             onChange={(event) => setAmountUsd(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             required
           />
         </div>
@@ -225,7 +225,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
             rows={2}
           />
         </div>

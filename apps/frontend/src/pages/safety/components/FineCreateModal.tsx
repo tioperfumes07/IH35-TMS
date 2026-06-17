@@ -55,7 +55,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
             <SelectCombobox
               value={subjectType}
               onChange={(event) => setSubjectType(event.target.value as "driver" | "company")}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="driver">Driver</option>
               <option value="company">Company</option>
@@ -67,7 +67,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               <input
                 value={subjectDriverId}
                 onChange={(event) => setSubjectDriverId(event.target.value)}
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                className="rounded border border-gray-300 h-9 px-2 text-[13px]"
                 placeholder="UUID"
                 required
               />
@@ -78,7 +78,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
             <input
               value={issuedByAuthority}
               onChange={(event) => setIssuedByAuthority(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -86,7 +86,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
             <input
               value={jurisdiction}
               onChange={(event) => setJurisdiction(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
@@ -94,7 +94,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
             <input
               value={violationDescription}
               onChange={(event) => setViolationDescription(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
               required
             />
           </div>
@@ -104,7 +104,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               type="date"
               value={issuedDate}
               onChange={(event) => setIssuedDate(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
               required
             />
           </div>
@@ -115,7 +115,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               step="0.01"
               value={amountUsd}
               onChange={(event) => setAmountUsd(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
               required
             />
           </div>
@@ -124,7 +124,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
               rows={2}
             />
           </div>

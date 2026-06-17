@@ -307,7 +307,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-gray-600">Notes</label>
-                      <textarea value={notesDraft} onChange={(event) => setNotesDraft(event.target.value)} rows={3} className="w-full rounded border border-gray-300 px-2 py-2 text-sm" />
+                      <textarea value={notesDraft} onChange={(event) => setNotesDraft(event.target.value)} rows={3} className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
                     </div>
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(false)}>

@@ -820,7 +820,7 @@ export function DriverDetailPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Has phone login</label>
-            <div className="rounded border border-gray-300 px-2 py-2 text-sm">{hasPhoneLogin ? "Yes" : "No"}</div>
+            <div className="rounded border border-gray-300 px-2 text-sm py-2">{hasPhoneLogin ? "Yes" : "No"}</div>
           </div>
           <div className="flex items-end">
             {!hasPhoneLogin ? (
@@ -1008,7 +1008,7 @@ export function DriverDetailPage() {
             {driver.prior_driver_id ? (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Prior driver record</label>
-                <div className="rounded border border-gray-300 bg-gray-50 px-2 py-2 text-sm">
+                <div className="rounded border border-gray-300 bg-gray-50 px-2 text-sm py-2">
                   <Link to={`/drivers/${driver.prior_driver_id}`} className="text-blue-700 hover:underline">
                     {driver.prior_driver_id}
                   </Link>
@@ -1018,7 +1018,7 @@ export function DriverDetailPage() {
             {driver.rehire_count > 0 ? (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Rehire count</label>
-                <div className="rounded border border-gray-300 bg-gray-50 px-2 py-2 text-sm">{driver.rehire_count}</div>
+                <div className="rounded border border-gray-300 bg-gray-50 px-2 text-sm py-2">{driver.rehire_count}</div>
               </div>
             ) : null}
             <div className="flex flex-col gap-1">
@@ -1463,7 +1463,7 @@ export function DriverDetailPage() {
             <DatePicker
               value={newQualificationForm.qualified_at}
               onChange={(value) => setNewQualificationForm((current) => ({ ...current, qualified_at: value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 px-2 text-sm py-2"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1695,7 +1695,7 @@ export function DriverDetailPage() {
             <DatePicker
               value={rateChangeForm.effective_from}
               onChange={(value) => setRateChangeForm((current) => ({ ...current, effective_from: value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 px-2 text-sm py-2"
             />
           </div>
           <div className="flex flex-col gap-1">

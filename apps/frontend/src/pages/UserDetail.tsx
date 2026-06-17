@@ -467,7 +467,7 @@ export function UserDetailPage() {
               value={eventDate}
               max={new Date().toISOString().slice(0, 10)}
               onChange={(event) => setEventDate(event.target.value)}
-              className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+              className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div>
@@ -505,11 +505,11 @@ export function UserDetailPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Summary</label>
-            <input value={summary} onChange={(event) => setSummary(event.target.value)} maxLength={500} className="w-full rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input value={summary} onChange={(event) => setSummary(event.target.value)} maxLength={500} className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Details</label>
-            <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={4} maxLength={5000} className="w-full rounded border border-gray-300 px-2 py-2 text-sm" />
+            <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={4} maxLength={5000} className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
           </div>
           <div className="rounded border border-gray-200 p-2">
             <label className="inline-flex items-center gap-2 text-xs">
@@ -525,7 +525,7 @@ export function UserDetailPage() {
                   value={costAmount}
                   onChange={(event) => setCostAmount(event.target.value)}
                   placeholder="Cost amount"
-                  className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+                  className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
                 />
                 <Combobox
                   options={CURRENCY_OPTIONS}
@@ -548,7 +548,7 @@ export function UserDetailPage() {
                     value={costRecoveredAmount}
                     onChange={(event) => setCostRecoveredAmount(event.target.value)}
                     placeholder="Recovered amount"
-                    className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+                    className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
                   />
                 ) : null}
               </div>
@@ -592,7 +592,7 @@ export function UserDetailPage() {
             onChange={(event) => setVoidReason(event.target.value)}
             rows={4}
             placeholder="Void reason (min 10 chars)"
-            className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+            className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setVoidEventId(null)}>
@@ -623,7 +623,7 @@ export function UserDetailPage() {
             value={editDetails}
             onChange={(event) => setEditDetails(event.target.value)}
             rows={4}
-            className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+            className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
             placeholder="Details"
           />
           <Combobox
@@ -639,7 +639,7 @@ export function UserDetailPage() {
             step="0.01"
             value={editRecoveredAmount}
             onChange={(event) => setEditRecoveredAmount(event.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+            className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
             placeholder="Recovered amount"
           />
           <div className="flex justify-end gap-2">

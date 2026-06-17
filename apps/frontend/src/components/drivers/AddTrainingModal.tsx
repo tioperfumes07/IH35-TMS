@@ -111,7 +111,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
           <select
             value={trainingName}
             onChange={(event) => setTrainingName(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             data-testid="add-training-program"
             required
           >
@@ -130,7 +130,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
             <input
               value={customName}
               onChange={(event) => setCustomName(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
               data-testid="add-training-custom-name"
               required
             />
@@ -142,7 +142,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
             type="date"
             value={completedAt}
             onChange={(event) => setCompletedAt(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             data-testid="add-training-completed"
             required
           />
@@ -152,7 +152,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
             rows={3}
             maxLength={2000}
             data-testid="add-training-notes"

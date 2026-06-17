@@ -200,7 +200,7 @@ export function CollectionsPage() {
                 </div>
                 <label className="md:col-span-3 text-xs text-gray-600">
                   Notes
-                  <textarea value={contactNotes} onChange={(event) => setContactNotes(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-2 text-sm" placeholder="Conversation summary, promises, dispute details..." />
+                  <textarea value={contactNotes} onChange={(event) => setContactNotes(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]" placeholder="Conversation summary, promises, dispute details..." />
                 </label>
               </div>
 

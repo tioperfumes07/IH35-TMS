@@ -87,7 +87,7 @@ export function TerminateConfirmModal({ open, driverId, driverName, onClose, onT
             max={todayIso()}
             value={eventDate}
             onChange={(event) => setEventDate(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -95,7 +95,7 @@ export function TerminateConfirmModal({ open, driverId, driverName, onClose, onT
           <textarea
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
             rows={3}
             data-testid="terminate-summary"
           />

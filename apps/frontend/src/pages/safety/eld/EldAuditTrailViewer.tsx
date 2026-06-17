@@ -150,7 +150,7 @@ export function EldAuditTrailViewer() {
           <label className="text-sm text-gray-700">
             Driver
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-2 text-sm"
+              className="mt-1 w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
               value={driverUuid}
               onChange={(event) => setDriverUuid(event.target.value)}
             >
@@ -165,7 +165,7 @@ export function EldAuditTrailViewer() {
           <label className="text-sm text-gray-700">
             From
             <DatePicker
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-2 text-sm"
+              className="mt-1 w-full rounded border border-gray-300 px-2 text-sm py-2"
               value={from}
               onChange={(next) => setFrom(next)}
             />
@@ -173,7 +173,7 @@ export function EldAuditTrailViewer() {
           <label className="text-sm text-gray-700">
             To
             <DatePicker
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-2 text-sm"
+              className="mt-1 w-full rounded border border-gray-300 px-2 text-sm py-2"
               value={to}
               onChange={(next) => setTo(next)}
             />

@@ -51,24 +51,24 @@ export function AssignmentHistoryPage() {
           <input
             value={driverId}
             onChange={(event) => setDriverId(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             placeholder="Filter by driver UUID"
           />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">From</label>
-          <DatePicker value={from} onChange={(next) => setFrom(next)} className="rounded border px-2 py-2 text-sm" />
+          <DatePicker value={from} onChange={(next) => setFrom(next)} className="rounded border px-2 text-sm py-2" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">To</label>
-          <DatePicker value={to} onChange={(next) => setTo(next)} className="rounded border px-2 py-2 text-sm" />
+          <DatePicker value={to} onChange={(next) => setTo(next)} className="rounded border px-2 text-sm py-2" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Reason contains</label>
           <input
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
       </section>
