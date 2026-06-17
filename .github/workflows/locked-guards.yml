@@ -218,5 +218,8 @@ jobs:
       - name: verify:cash-eta-audit-logged
         run: npm run verify:cash-eta-audit-logged
 
+      - name: verify:cash-eta-rebucket-flag-gated
+        run: npm run verify:cash-eta-rebucket-flag-gated
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density

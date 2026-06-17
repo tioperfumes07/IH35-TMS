@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import {
   getDailyPrediction,
   getActualVsProjected,
@@ -45,7 +46,13 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${query.data.operating_company_id}'`);
-      return getDailyPrediction(client, query.data.operating_company_id, query.data.date);
+      // BLOCK 2: re-bucket projected income by projected_cash_date only when the master flag is on
+      // (OFF/unregistered → false → current behaviour).
+      const cashFollowsEta = await isEnabled(client, "CASH_FOLLOWS_ETA_ENABLED", {
+        operating_company_id: query.data.operating_company_id,
+        user_uuid: user.uuid,
+      });
+      return getDailyPrediction(client, query.data.operating_company_id, query.data.date, cashFollowsEta);
     });
     return reply.send(result);
   });

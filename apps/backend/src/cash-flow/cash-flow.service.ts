@@ -20,6 +20,7 @@
  *   adjustments  → accounting.cash_flow_adjustments (already correct)
  */
 import type pg from "pg";
+import { projectedCashDateSql } from "./projected-cash-date.js";
 
 type Queryable = pg.PoolClient;
 
@@ -101,19 +102,43 @@ const CONFIRMED_STATUSES = new Set(["delivered", "invoiced", "paid", "closed"]);
 export async function getDailyPrediction(
   client: Queryable,
   operatingCompanyId: string,
-  date: string
+  date: string,
+  // BLOCK 2: when CASH_FOLLOWS_ETA_ENABLED is on, bucket projected income by projected_cash_date
+  // (effective delivery + receivable lag) instead of the raw delivery appointment. Default false =
+  // current behaviour, byte-identical query.
+  cashFollowsEta = false
 ): Promise<DailyPredictionResult> {
-  // Income: loads with a delivery stop scheduled on `date`.
-  // Amount = gross rate_total_cents.
-  const incomeRows = await client.query<{
-    id: string;
-    load_number: string;
-    customer_name: string;
-    delivery_time: string | null;
-    rate_total_cents: number;
-    status: string;
-  }>(
-    `
+  // Income: projected gross rate_total_cents, bucketed onto `date`.
+  const incomeSql = cashFollowsEta
+    ? // FORECAST-only re-bucket: match on projected_cash_date = effective delivery + receivable lag.
+      `
+      WITH load_proj AS (
+        SELECT
+          l.id, l.load_number,
+          COALESCE(c.customer_name, 'Unknown') AS customer_name,
+          fd.scheduled_arrival_at AS delivery_time,
+          COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents,
+          l.status::text AS status,
+          ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS projected_cash_date
+        FROM mdata.loads l
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+        LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+        LEFT JOIN LATERAL (
+          SELECT scheduled_arrival_at
+          FROM mdata.load_stops
+          WHERE load_id = l.id AND stop_type = 'delivery'
+          ORDER BY sequence_number DESC
+          LIMIT 1
+        ) fd ON true
+        WHERE l.operating_company_id = $1
+          AND ${ACTIVE_LOAD_FILTER}
+      )
+      SELECT id::text, load_number, customer_name, delivery_time::text AS delivery_time, rate_total_cents, status
+      FROM load_proj
+      WHERE projected_cash_date = $2::date
+      ORDER BY delivery_time ASC NULLS LAST, load_number ASC
+      `
+    : `
     SELECT
       l.id::text,
       l.load_number,
@@ -130,9 +155,15 @@ export async function getDailyPrediction(
     WHERE l.operating_company_id = $1
       AND ${ACTIVE_LOAD_FILTER}
     ORDER BY ls.scheduled_arrival_at ASC NULLS LAST, l.load_number ASC
-    `,
-    [operatingCompanyId, date]
-  );
+    `;
+  const incomeRows = await client.query<{
+    id: string;
+    load_number: string;
+    customer_name: string;
+    delivery_time: string | null;
+    rate_total_cents: number;
+    status: string;
+  }>(incomeSql, [operatingCompanyId, date]);
 
   const incomeItems: IncomeLineItem[] = incomeRows.rows.map((row) => ({
     load_id: row.id,
