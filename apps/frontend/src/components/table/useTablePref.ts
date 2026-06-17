@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
 // GLOBAL-TABLE-CONTROLS — per-user persistence of table view prefs (rows-per-page +
-// hidden columns), keyed by a stable table id. localStorage = per-user-per-device;
-// mirrors the useViewModePref pattern. Never destroys data — visibility only.
+// hidden columns + column widths), keyed by a stable table id. localStorage =
+// per-user-per-device; mirrors the useViewModePref pattern. Never destroys data.
 const PREFIX = "ih35:table-pref:";
 
-export type TablePref = { pageSize: number; hidden: string[] };
+export type TablePref = { pageSize: number; hidden: string[]; widths: Record<string, number> };
 
 function read(key: string): Partial<TablePref> | null {
   try {
@@ -31,10 +31,11 @@ export function useTablePref(tableKey: string, defaults: { pageSize: number; hid
   const initial = read(tableKey);
   const [pageSize, setPageSizeState] = useState<number>(initial?.pageSize ?? defaults.pageSize);
   const [hidden, setHiddenState] = useState<Set<string>>(new Set(initial?.hidden ?? defaults.hidden ?? []));
+  const [widths, setWidthsState] = useState<Record<string, number>>(initial?.widths ?? {});
 
   useEffect(() => {
-    write(tableKey, { pageSize, hidden: Array.from(hidden) });
-  }, [tableKey, pageSize, hidden]);
+    write(tableKey, { pageSize, hidden: Array.from(hidden), widths });
+  }, [tableKey, pageSize, hidden, widths]);
 
   const setPageSize = useCallback((n: number) => setPageSizeState(n), []);
   const toggleColumn = useCallback((key: string) => {
@@ -46,6 +47,9 @@ export function useTablePref(tableKey: string, defaults: { pageSize: number; hid
     });
   }, []);
   const setHidden = useCallback((keys: string[]) => setHiddenState(new Set(keys)), []);
+  const setColumnWidth = useCallback((key: string, width: number) => {
+    setWidthsState((prev) => ({ ...prev, [key]: Math.max(48, Math.round(width)) }));
+  }, []);
 
-  return { pageSize, setPageSize, hidden, toggleColumn, setHidden };
+  return { pageSize, setPageSize, hidden, toggleColumn, setHidden, widths, setColumnWidth };
 }
