@@ -215,8 +215,12 @@ export async function getDailyPrediction(
   const expenseTotalCents = expenseItems.reduce((s, i) => s + i.amount_cents, 0);
   const predictedNetCents = incomeTotalCents - expenseTotalCents;
 
-  // Opening cash: net bank balance before this date. Defensive: returns null on
-  // any error so a missing/empty banking table never crashes the prediction.
+  // Opening cash: net DEPOSITORY bank balance before this date. Credit cards /
+  // lines of credit carry debt (their transactions are borrowing, not cash on hand);
+  // counting them dragged opening cash to -$5.5M (CASH-ANOMALY, mirrors #1072 for the
+  // auto projection). Exclude credit accounts via the bank_account join. LEFT JOIN +
+  // COALESCE keeps transactions whose account is unknown (treated as non-credit).
+  // Defensive: returns null on any error so a missing/empty banking table never crashes.
   const openingRow = await client
     .query<{ balance_cents: number | null }>(
       `
@@ -224,8 +228,10 @@ export async function getDailyPrediction(
         CASE WHEN t.is_credit THEN t.amount_cents ELSE -t.amount_cents END
       ), 0)::int AS balance_cents
       FROM banking.bank_transactions t
+      LEFT JOIN banking.bank_accounts a ON a.id = t.bank_account_id
       WHERE t.operating_company_id = $1
         AND t.transaction_date < $2::date
+        AND COALESCE(a.account_type, '') NOT ILIKE '%credit%'
       `,
       [operatingCompanyId, date]
     )
