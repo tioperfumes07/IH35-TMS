@@ -626,6 +626,7 @@
     "verify:bookload-section-b-hos": "node scripts/verify-bookload-section-b-hos.mjs",
     "verify:bookload-stop-address-oneline": "node scripts/verify-bookload-stop-address-oneline.mjs",
     "verify:dispatch-list-hos-columns": "node scripts/verify-dispatch-list-hos-columns.mjs",
+    "verify:mdp-fields": "node scripts/verify-mdp-fields.mjs",
     "verify:awaiting-truck-driver-hos": "node scripts/verify-awaiting-truck-driver-hos.mjs",
     "verify:load-import-dry-run-default": "node scripts/verify-load-import-dry-run-default.mjs",
     "verify:load-delivery-dates-separated": "node scripts/verify-load-delivery-dates-separated.mjs",
