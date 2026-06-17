@@ -7,6 +7,8 @@ import { useToast } from "./Toast";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
 import { TableControls, Paginator, useTableController, type TableColumn } from "./table";
+import { patchUnit } from "../api/mdata";
+import { patchTrailer } from "../api/fleet-trailers";
 
 export type FleetRow = {
   id: string;
@@ -21,11 +23,16 @@ export type FleetRow = {
   vehicle_type?: string | null;
   equipment_type?: string | null;
   type?: string;
+  deactivated_at?: string | null;
 };
+
+export type SoftDeleteFilter = "active" | "inactive" | "all";
 
 type Props = {
   operatingCompanyId: string;
   rows: FleetRow[];
+  softDeleteFilter: SoftDeleteFilter;
+  onSoftDeleteFilterChange: (value: SoftDeleteFilter) => void;
 };
 
 const FLEET_SELECTION_CAP = 100;
@@ -66,7 +73,7 @@ function fleetSearchText(row: FleetRow): string {
   return [row.unit_number, row.vin, row.make, row.model].filter(Boolean).join(" ");
 }
 
-export function FleetTable({ operatingCompanyId, rows }: Props) {
+export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftDeleteFilterChange }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -173,7 +180,34 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
     onError: (error) => pushToast(error instanceof Error ? error.message : "Bulk inactivate failed", "error"),
   });
 
-  const bulkApplying = truckBulkMutation.isPending || trailerBulkMutation.isPending || inactivateMutation.isPending;
+  // BULK REACTIVATE = clear deactivated_at via the existing PATCH endpoints (units +
+  // equipment both accept deactivated_at:null). Soft-delete is reversible — never a hard op.
+  const reactivateMutation = useMutation({
+    mutationFn: async (targets: FleetRow[]) => {
+      let affected = 0;
+      for (const row of targets) {
+        if (row.kind === "trailer") {
+          await patchTrailer(row.id, operatingCompanyId, { deactivated_at: null });
+        } else {
+          await patchUnit(row.id, { deactivated_at: null });
+        }
+        affected += 1;
+      }
+      return affected;
+    },
+    onSuccess: (count) => {
+      pushToast(`${count} unit(s) reactivated`, "success");
+      selection.clear();
+      void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
+    },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Bulk reactivate failed", "error"),
+  });
+
+  const bulkApplying =
+    truckBulkMutation.isPending ||
+    trailerBulkMutation.isPending ||
+    inactivateMutation.isPending ||
+    reactivateMutation.isPending;
 
   const applyBulk = async (patch: BulkApplyPayload) => {
     const trucks = selectedRows.filter((row) => row.kind !== "trailer");
@@ -235,6 +269,11 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
     inactivateMutation.mutate(selectedRows);
   }, [selectedRows, inactivateMutation]);
 
+  const onReactivateSelected = useCallback(() => {
+    if (selectedRows.length === 0) return;
+    reactivateMutation.mutate(selectedRows);
+  }, [selectedRows, reactivateMutation]);
+
   const isVisible = (key: string) => table.isColumnVisible(key);
 
   return (
@@ -251,6 +290,18 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
         pageSize={table.pageSize}
         onPageSizeChange={table.setPageSize}
       >
+        <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-[11px]" data-list-status-filter="fleet">
+          {(["active", "inactive", "all"] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={`rounded px-2 py-1 font-medium capitalize ${softDeleteFilter === value ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+              onClick={() => onSoftDeleteFilterChange(value)}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
         <select
           aria-label="Filter by status"
           className="h-8 rounded border border-gray-300 px-2 text-[12px]"
@@ -296,6 +347,16 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
         >
           Inactivate selected
         </button>
+        {softDeleteFilter !== "active" ? (
+          <button
+            type="button"
+            className="rounded border border-emerald-300 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+            disabled={bulkApplying || selection.count === 0}
+            onClick={onReactivateSelected}
+          >
+            Reactivate selected
+          </button>
+        ) : null}
       </BulkActionBar>
 
       <TableSelection

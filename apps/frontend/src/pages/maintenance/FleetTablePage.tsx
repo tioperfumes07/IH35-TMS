@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { FleetTable, type FleetRow } from "../../components/FleetTable";
+import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
 
 type Props = {
@@ -53,9 +53,10 @@ function KpiCard({
   );
 }
 
-function buildUnitsUrl(operatingCompanyId: string, typeFilter: string): string {
+function buildUnitsUrl(operatingCompanyId: string, typeFilter: string, includeInactive = false): string {
   const typeParam = typeFilter ? `&type=${encodeURIComponent(typeFilter)}` : "";
-  return `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500${typeParam}`;
+  const inactiveParam = includeInactive ? "&include_inactive=true" : "";
+  return `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500${typeParam}${inactiveParam}`;
 }
 
 export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }: Props) {
@@ -66,6 +67,12 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
   // Absent status → default (active-only on /fleet, all in Maintenance). "all" → no status filter.
   const effectiveStatus = rawStatus == null ? (defaultActiveOnly ? "InService" : "") : rawStatus === "all" ? "" : rawStatus;
   const activeOnly = effectiveStatus === "InService";
+
+  // Soft-delete (deactivated_at) dimension — independent of the 5 operational statuses.
+  // Default Active. Inactive/All fetch with include_inactive=true so soft-deleted units
+  // are visible and reactivatable.
+  const [softDeleteFilter, setSoftDeleteFilter] = useState<SoftDeleteFilter>("active");
+  const includeInactive = softDeleteFilter !== "active";
 
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "kpis", operatingCompanyId],
@@ -90,9 +97,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
   });
 
   const rowsQuery = useQuery({
-    queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId, typeFilter || "all"],
+    queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId, typeFilter || "all", includeInactive ? "incl-inactive" : "active"],
     queryFn: async () => {
-      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(buildUnitsUrl(operatingCompanyId, typeFilter));
+      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(buildUnitsUrl(operatingCompanyId, typeFilter, includeInactive));
       return { rows: payload.units ?? [] };
     },
     enabled: Boolean(operatingCompanyId),
@@ -112,10 +119,15 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
     () =>
       allRows.filter((r) => {
         if (kindFilter && r.kind !== kindFilter) return false;
-        if (effectiveStatus && r.status !== effectiveStatus) return false;
+        // Soft-delete dimension (deactivated_at), independent of operational status.
+        if (softDeleteFilter === "active" && r.deactivated_at != null) return false;
+        if (softDeleteFilter === "inactive" && r.deactivated_at == null) return false;
+        // Operational status filter only narrows the default (Active) view; Inactive/All
+        // show soft-deleted units of any operational status.
+        if (softDeleteFilter === "active" && effectiveStatus && r.status !== effectiveStatus) return false;
         return true;
       }),
-    [allRows, kindFilter, effectiveStatus]
+    [allRows, kindFilter, effectiveStatus, softDeleteFilter]
   );
 
   const totalVehicleCount =
@@ -245,7 +257,12 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
           </div>
         </div>
       ) : (
-        <FleetTable operatingCompanyId={operatingCompanyId} rows={rows} />
+        <FleetTable
+          operatingCompanyId={operatingCompanyId}
+          rows={rows}
+          softDeleteFilter={softDeleteFilter}
+          onSoftDeleteFilterChange={setSoftDeleteFilter}
+        />
       )}
     </div>
   );
