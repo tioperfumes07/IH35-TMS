@@ -155,6 +155,9 @@ jobs:
       - name: verify:a7-audit-per-entity-tabs
         run: npm run verify:a7-audit-per-entity-tabs
 
+      - name: verify:insurance-down-payment
+        run: npm run verify:insurance-down-payment
+
       - name: verify:d1-settlement-approval
         run: npm run verify:d1-settlement-approval
 
