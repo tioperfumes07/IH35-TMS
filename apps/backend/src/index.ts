@@ -599,10 +599,12 @@ async function main() {
   await registerVendorsSyncRoutes(app);
   await registerQboSyncDriftDashboardRoutes(app);
   await registerAccountingCatalogLookupRoutes(app);
-  // Block F: firewalled manual cash forecast — OFF by default until CASH_FORECAST_ENABLED=true.
-  if (process.env.CASH_FORECAST_ENABLED === "true") {
-    await registerCashForecastManualRoutes(app);
-  }
+  // Block F: firewalled manual cash forecast (non-posting, per-company RLS, audited). Migration
+  // 202606162000 enabled the feature (lib.feature_flags → the MDP tab renders), but the routes were
+  // additionally gated by the CASH_FORECAST_ENABLED env var on Render which was never set — so the tab
+  // rendered while every /api/v1/forecast/* write 404'd (opening-balance + income/expense saves). Register
+  // unconditionally like every other route; frontend visibility stays controlled by the DB feature flag.
+  await registerCashForecastManualRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
   await registerQboSyncConflictDetectionRoutes(app);

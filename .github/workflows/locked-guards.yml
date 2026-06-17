@@ -227,6 +227,9 @@ jobs:
       - name: verify:mdp-fields
         run: npm run verify:mdp-fields
 
+      - name: verify:cash-forecast-routes-registered
+        run: npm run verify:cash-forecast-routes-registered
+
       - name: verify:awaiting-truck-driver-hos
         run: npm run verify:awaiting-truck-driver-hos
 
