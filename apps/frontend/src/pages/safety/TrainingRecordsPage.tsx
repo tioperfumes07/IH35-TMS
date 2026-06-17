@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSafetyTrainingRecord, getTrainingCompletions } from "../../api/safety";
 import { listDrivers } from "../../api/mdata";
@@ -164,10 +165,9 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           </label>
           <label className="block text-xs text-slate-600">
             Expiry date (optional)
-            <input
-              type="date"
+            <DatePicker
               value={expiryDate}
-              onChange={(event) => setExpiryDate(event.target.value)}
+              onChange={(next) => setExpiryDate(next)}
               className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
               data-testid="training-record-expiry"
             />

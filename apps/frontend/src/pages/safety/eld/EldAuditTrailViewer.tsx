@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { apiRequest } from "../../../api/client";
@@ -163,20 +164,18 @@ export function EldAuditTrailViewer() {
           </label>
           <label className="text-sm text-gray-700">
             From
-            <input
-              type="date"
+            <DatePicker
               className="mt-1 w-full rounded border border-gray-300 px-2 py-2 text-sm"
               value={from}
-              onChange={(event) => setFrom(event.target.value)}
+              onChange={(next) => setFrom(next)}
             />
           </label>
           <label className="text-sm text-gray-700">
             To
-            <input
-              type="date"
+            <DatePicker
               className="mt-1 w-full rounded border border-gray-300 px-2 py-2 text-sm"
               value={to}
-              onChange={(event) => setTo(event.target.value)}
+              onChange={(next) => setTo(next)}
             />
           </label>
         </div>

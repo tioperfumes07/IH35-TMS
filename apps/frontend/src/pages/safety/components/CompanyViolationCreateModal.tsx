@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation } from "@tanstack/react-query";
 import { createCompanyViolation } from "../../../api/safety";
 import { Button } from "../../../components/Button";
@@ -77,10 +78,9 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Reported date</label>
-            <input
-              type="date"
+            <DatePicker
               value={reportedDate}
-              onChange={(event) => setReportedDate(event.target.value)}
+              onChange={(next) => setReportedDate(next)}
               className="rounded border border-gray-300 px-2 py-2 text-sm"
             />
           </div>

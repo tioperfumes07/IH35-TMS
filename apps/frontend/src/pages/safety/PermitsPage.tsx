@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   archiveSafetyPermit,
@@ -297,10 +298,9 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               </label>
               <label className="text-xs">
                 Expiry date
-                <input
-                  type="date"
+                <DatePicker
                   value={draft.expiry_date}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, expiry_date: event.target.value }))}
+                  onChange={(next) => setDraft((prev) => ({ ...prev, expiry_date: next }))}
                   className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
                 />
               </label>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { Button } from "../../../components/Button";
 
 type Props = {
@@ -20,10 +21,9 @@ export function CompanyViolationCorrectiveActionForm({ loading, onComplete }: Pr
     >
       <div className="text-xs font-semibold text-gray-700">Complete corrective action</div>
       <div className="grid gap-2 md:grid-cols-2">
-        <input
-          type="date"
+        <DatePicker
           value={completedDate}
-          onChange={(event) => setCompletedDate(event.target.value)}
+          onChange={(next) => setCompletedDate(next)}
           className="rounded border border-gray-300 px-2 py-1 text-xs"
         />
         <input

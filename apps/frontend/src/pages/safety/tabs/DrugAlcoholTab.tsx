@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
 import {
@@ -247,7 +248,7 @@ export function DrugAlcoholTab() {
             </label>
             <label className="text-xs text-slate-600">
               Test date
-              <input type="date" className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm" value={testDate} onChange={(e) => setTestDate(e.target.value)} />
+              <DatePicker className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm" value={testDate} onChange={(next) => setTestDate(next)} />
             </label>
           </div>
           <button
