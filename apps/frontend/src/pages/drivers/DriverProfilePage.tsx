@@ -7,7 +7,7 @@ import { listDriverQualificationItems } from "../../api/safety";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
 import { CurrentAssignmentSection } from "../../components/driver-profile/CurrentAssignmentSection";
-import { DocumentsSection } from "../../components/driver-profile/DocumentsSection";
+import { DocumentsTab } from "../../components/documents/DocumentsTab";
 import { DrugProgramSection } from "../../components/driver-profile/DrugProgramSection";
 import { HOSStatusSection } from "../../components/driver-profile/HOSStatusSection";
 import { IdentityHeader } from "../../components/driver-profile/IdentityHeader";
@@ -283,17 +283,10 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <BorderCredentialsSection border={aggregate.border_credentials ?? {}} />
       </div>
       <div data-testid="dp-section-11-documents">
-        <DocumentsSection
-          driverId={id}
-          companyId={companyId}
-          documents={(aggregate.documents ?? []) as Array<{
-            file_id: string;
-            name: string;
-            category?: string | null;
-            expiration_date?: string | null;
-            uploaded_at?: string | null;
-          }>}
-        />
+        {/* Inline the full Documents module (upload + R2 + versions + download) on the driver profile —
+            same component DriverDetail uses. Replaces the read-only stub that only linked out to /docs, so
+            CDLs / medical cards / insurance can be uploaded here directly. Per-entity scoped (driver). */}
+        <DocumentsTab entityType="driver" entityId={id} entityName={displayName} />
       </div>
 
       <KpiStrip>
