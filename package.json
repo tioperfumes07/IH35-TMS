@@ -620,6 +620,7 @@
     "verify:load-import-dry-run-default": "node scripts/verify-load-import-dry-run-default.mjs",
     "verify:load-delivery-dates-separated": "node scripts/verify-load-delivery-dates-separated.mjs",
     "verify:cash-eta-audit-append-only": "node scripts/verify-cash-eta-audit-append-only.mjs",
+    "verify:mdp-single-row": "node scripts/verify-mdp-single-row.mjs",
     "verify:form-input-density": "node scripts/verify-form-input-density.mjs"
   },
   "dependencies": {
