@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -108,20 +109,18 @@ export function ProfitLossPage() {
         <BasisSelector value={basis} onChange={setBasis} />
         <label className="text-xs text-gray-600">
           From
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block h-9 rounded border border-gray-300 px-2"
             value={period.start}
-            onChange={(event) => setPeriod((previous) => ({ ...previous, start: event.target.value }))}
+            onChange={(next) => setPeriod((previous) => ({ ...previous, start: next }))}
           />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block h-9 rounded border border-gray-300 px-2"
             value={period.end}
-            onChange={(event) => setPeriod((previous) => ({ ...previous, end: event.target.value }))}
+            onChange={(next) => setPeriod((previous) => ({ ...previous, end: next }))}
           />
         </label>
         <Button size="sm" onClick={() => setApplied({ ...period })}>

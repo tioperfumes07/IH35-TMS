@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import type { RunnerFilter } from "./runner-config";
 import { listDrivers, listUnits } from "../../../api/mdata";
@@ -60,9 +61,9 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               <div key={filter.key} className="md:col-span-2 xl:col-span-2">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
                 <div className="flex items-center gap-2">
-                  <input type="date" className="rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values.from ?? "")} onChange={(e) => onChange("from", e.target.value)} />
+                  <DatePicker className="rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values.from ?? "")} onChange={(next) => onChange("from", next)} />
                   <span className="text-slate-500">to</span>
-                  <input type="date" className="rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values.to ?? "")} onChange={(e) => onChange("to", e.target.value)} />
+                  <DatePicker className="rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values.to ?? "")} onChange={(next) => onChange("to", next)} />
                 </div>
               </div>
             );

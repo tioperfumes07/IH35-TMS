@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -165,11 +166,10 @@ export function CashFlowOverviewPage() {
           <div className="no-print">
             <label className="text-xs text-gray-600">
               As-of date
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 h-9 rounded border border-gray-300 px-2"
                 value={asOf}
-                onChange={(e) => setAsOf(e.target.value)}
+                onChange={(next) => setAsOf(next)}
               />
             </label>
           </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getDispatchMargin, type DispatchMarginRow } from "../../api/reports";
@@ -81,11 +82,11 @@ export function DispatchMarginPage() {
       <section className="flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white p-3">
         <label className="text-sm">
           From
-          <input type="date" className="ml-2 rounded border px-2 py-1" value={period.start} onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))} />
+          <DatePicker className="ml-2 rounded border px-2 py-1" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
         </label>
         <label className="text-sm">
           To
-          <input type="date" className="ml-2 rounded border px-2 py-1" value={period.end} onChange={(e) => setPeriod((p) => ({ ...p, end: e.target.value }))} />
+          <DatePicker className="ml-2 rounded border px-2 py-1" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
         </label>
         <label className="text-sm">
           Basis

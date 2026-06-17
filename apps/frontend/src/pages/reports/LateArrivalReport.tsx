@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -80,20 +81,18 @@ export function LateArrivalReport() {
       <div className="flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white p-3">
         <label className="text-xs text-slate-600">
           From
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block rounded border border-slate-300 px-2 py-1 text-sm"
             value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={(next) => setFrom(next)}
           />
         </label>
         <label className="text-xs text-slate-600">
           To
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block rounded border border-slate-300 px-2 py-1 text-sm"
             value={to}
-            onChange={(e) => setTo(e.target.value)}
+            onChange={(next) => setTo(next)}
           />
         </label>
         <Button

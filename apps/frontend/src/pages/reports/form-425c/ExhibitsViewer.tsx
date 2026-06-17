@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
@@ -80,20 +81,18 @@ export function ExhibitsViewer() {
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-xs font-semibold text-slate-600">
             Period start
-            <input
-              type="date"
+            <DatePicker
               className="mt-1 block rounded border border-slate-300 px-2 py-1 text-sm"
               value={period.period_start}
-              onChange={(e) => setPeriod((p) => ({ ...p, period_start: e.target.value }))}
+              onChange={(next) => setPeriod((p) => ({ ...p, period_start: next }))}
             />
           </label>
           <label className="text-xs font-semibold text-slate-600">
             Period end
-            <input
-              type="date"
+            <DatePicker
               className="mt-1 block rounded border border-slate-300 px-2 py-1 text-sm"
               value={period.period_end}
-              onChange={(e) => setPeriod((p) => ({ ...p, period_end: e.target.value }))}
+              onChange={(next) => setPeriod((p) => ({ ...p, period_end: next }))}
             />
           </label>
           <button

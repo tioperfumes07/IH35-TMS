@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -92,12 +93,12 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
       <div className="flex flex-wrap gap-2 rounded border border-gray-200 bg-gray-50 p-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500">From</label>
-          <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setOffset(0); }}
+          <DatePicker value={from} onChange={(next) => { setFrom(next); setOffset(0); }}
             className="rounded border border-gray-300 px-2 py-1 text-sm" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500">To</label>
-          <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setOffset(0); }}
+          <DatePicker value={to} onChange={(next) => { setTo(next); setOffset(0); }}
             className="rounded border border-gray-300 px-2 py-1 text-sm" />
         </div>
         {showModuleFilter && (
