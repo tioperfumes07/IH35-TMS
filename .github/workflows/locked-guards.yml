@@ -224,6 +224,9 @@ jobs:
       - name: verify:dispatch-list-hos-columns
         run: npm run verify:dispatch-list-hos-columns
 
+      - name: verify:mdp-fields
+        run: npm run verify:mdp-fields
+
       - name: verify:awaiting-truck-driver-hos
         run: npm run verify:awaiting-truck-driver-hos
 

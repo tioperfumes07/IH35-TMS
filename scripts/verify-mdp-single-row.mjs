@@ -20,15 +20,17 @@ if (!mdp.includes('data-mdp-single-date="true"')) fail("MDP must have the single
 if (!mdp.includes("projectionDate")) fail("MDP must use a single projectionDate");
 if (/const \[from, setFrom\]|const \[to, setTo\]/.test(mdp)) fail("MDP must NOT keep the From/To range state");
 
-// 2. Income row = Unit no. · Invoice customer · Total.
-for (const label of ['"Unit no."', '"Invoice customer"']) {
+// 2. Income row (MDP-FIX-2 / defect 4) = Unit no. · Invoice · Customer · Total. Invoice and Customer
+//    are now SEPARATE columns (was the merged "Invoice customer"). Authoritative column-order check lives
+//    in verify-mdp-fields; here we keep the label lock aligned to the new Jorge-confirmed structure.
+for (const label of ['"Unit no."', '"Invoice"', '"Customer"']) {
   if (!mdp.includes(label)) fail(`income row must label ${label}`);
 }
-// 3. Expense row = Vendor/Driver · Expense · Total.
-for (const label of ['"Vendor/Driver"']) {
+if (/"Invoice customer"/.test(mdp)) fail('income must NOT use the merged "Invoice customer" field (split into Invoice + Customer)');
+// 3. Expense row (defect 5) = Bill/Exp No. · Vendor/Driver · Expense · Total — Bill/Exp No. leads.
+for (const label of ['"Bill/Exp No."', '"Vendor/Driver"', '"Expense"']) {
   if (!mdp.includes(label)) fail(`expense row must label ${label}`);
 }
-if (!/field2Label = direction === "income" \? "Invoice customer" : "Expense"/.test(mdp)) fail("expense second field must be Expense");
 if (!mdp.includes('ariaLabel="Total"') && !mdp.includes('"Total"')) fail("rows must have a Total field");
 
 // 4. Totals math (#1084) untouched — still computed via the shared helper.

@@ -46,12 +46,30 @@ const emptyRow = (): RowForm => ({
   ref_label: "",
 });
 
-// MDP-SINGLE-ROW (Phase 7) — each projection line is ONE horizontal row:
-//   income  → Unit no. (ref_label) · Invoice customer (party_name) · Total (amount_cents)
-//   expense → Vendor/Driver (party_name) · Expense (category) · Total (amount_cents)
-// The legacy fields (Invoice #, Category for income, Memo, Link/Link label) are NOT removed —
-// ADDITIVE-ONLY — they move behind an optional "more" expander so the default row is the 3 fields
-// Jorge named. The entry_date comes from the tab's single Projection date (no From/To range).
+// MDP-FIX-2 (Phase 7) — each projection line is ONE horizontal row with per-direction columns
+// (Jorge-confirmed field order):
+//   income  → Unit no. (ref_label) · Invoice (invoice_no) · Customer (party_name) · Total
+//   expense → Bill/Exp No. (invoice_no) · Vendor/Driver (party_name) · Expense (category) · Total
+// DEFECT 4: income "Invoice" and "Customer" are now SEPARATE columns (were one merged field).
+// DEFECT 5: expense leads with "Bill/Exp No." (invoice_no), then Vendor/Driver, then Expense.
+// DEFECT 1: each panel shows a summed Total footer (in addition to the header) that recomputes live.
+// Remaining legacy fields (category for income, link for expense, memo) stay behind "+ more"
+// (ADDITIVE-ONLY). entry_date comes from the tab's single Projection date.
+type MdpColKey = "ref_label" | "invoice_no" | "party_name" | "category";
+type MdpCol = { key: MdpColKey; label: string; w: string };
+const MDP_COLUMNS: Record<Direction, MdpCol[]> = {
+  income: [
+    { key: "ref_label", label: "Unit no.", w: "w-24" },
+    { key: "invoice_no", label: "Invoice", w: "w-28" },
+    { key: "party_name", label: "Customer", w: "flex-1 min-w-0" },
+  ],
+  expense: [
+    { key: "invoice_no", label: "Bill/Exp No.", w: "w-28" },
+    { key: "party_name", label: "Vendor/Driver", w: "w-32" },
+    { key: "category", label: "Expense", w: "flex-1 min-w-0" },
+  ],
+};
+
 function ProjectionPanel({
   direction,
   title,
@@ -71,10 +89,7 @@ function ProjectionPanel({
   const [showMore, setShowMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const accent = direction === "income" ? "text-emerald-700" : "text-red-700";
-
-  // Field 1 label per direction (income = Unit no., expense = Vendor/Driver).
-  const field1Label = direction === "income" ? "Unit no." : "Vendor/Driver";
-  const field2Label = direction === "income" ? "Invoice customer" : "Expense";
+  const columns = MDP_COLUMNS[direction];
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -82,8 +97,8 @@ function ProjectionPanel({
       if (!entryDate) throw new Error("Pick a Projection date first");
       const cents = form.amount_cents ?? 0;
       if (cents < 0) throw new Error("Total must be ≥ 0");
-      // income: Unit no. -> ref_label (ref_kind 'unit'); customer -> party_name.
-      // expense: Vendor/Driver -> party_name; Expense -> category.
+      // income: Unit no. -> ref_label (ref_kind 'unit'); Invoice -> invoice_no; Customer -> party_name.
+      // expense: Bill/Exp No. -> invoice_no; Vendor/Driver -> party_name; Expense -> category.
       const refKind: "" | ForecastRefKind =
         direction === "income" && form.ref_label && !form.ref_kind ? "unit" : form.ref_kind;
       const payload = {
@@ -119,7 +134,7 @@ function ProjectionPanel({
     setForm({
       id: e.id,
       entry_date: e.entry_date,
-      amount_cents: e.amount_cents,
+      amount_cents: toCents(e.amount_cents),
       party_name: e.party_name ?? "",
       invoice_no: e.invoice_no ?? "",
       category: e.category ?? "",
@@ -127,69 +142,74 @@ function ProjectionPanel({
       ref_kind: e.ref_kind ?? "",
       ref_label: e.ref_label ?? "",
     });
-    setShowMore(Boolean(e.invoice_no || e.memo || (direction === "income" ? e.category : e.ref_label)));
+    // Reveal "+ more" only for the legacy fields that aren't already primary columns.
+    setShowMore(Boolean(e.memo || (direction === "income" ? e.category : e.ref_label)));
   };
 
-  // Per-direction display of the saved row's first two columns.
-  const rowCol1 = (e: ForecastEntry) => (direction === "income" ? e.ref_label : e.party_name) || "—";
-  const rowCol2 = (e: ForecastEntry) => (direction === "income" ? e.party_name : e.category) || "—";
-
+  const cellValue = (e: ForecastEntry, key: MdpColKey) => (e[key] ?? "") || "—";
   const total = sumCents(entries);
-  const field1Value = direction === "income" ? form.ref_label : form.party_name;
-  const field2Value = direction === "income" ? form.party_name : form.category;
-  const setField1 = (v: string) => setForm(direction === "income" ? { ...form, ref_label: v } : { ...form, party_name: v });
-  const setField2 = (v: string) => setForm(direction === "income" ? { ...form, party_name: v } : { ...form, category: v });
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white" data-mdp-panel={direction}>
       <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
         <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-        <span className={`text-sm font-semibold ${accent}`}>{fmtCents(total)}</span>
+        <span className={`text-sm font-semibold ${accent}`} data-mdp-header-total={direction}>{fmtCents(total)}</span>
       </div>
 
       {entries.length === 0 ? (
         <div className="px-3 py-4 text-center text-xs text-gray-400">No {direction} lines yet.</div>
       ) : (
         <div className="divide-y divide-gray-50">
-          {/* Column headers (the 3 named fields). */}
+          {/* Column headers (per-direction). */}
           <div className="flex items-center gap-2 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-            <span className="w-28 shrink-0">{field1Label}</span>
-            <span className="min-w-0 flex-1">{field2Label}</span>
+            {columns.map((c) => (
+              <span key={c.key} className={`${c.w} shrink-0 truncate`}>{c.label}</span>
+            ))}
             <span className="w-24 shrink-0 text-right">Total</span>
             <span className="w-16 shrink-0" />
           </div>
           {entries.map((e) => (
             <div key={e.id} className="flex items-center gap-2 px-3 py-1.5 text-xs" data-mdp-row={direction}>
-              <span className="w-28 shrink-0 truncate font-medium text-gray-700" title={rowCol1(e)}>{rowCol1(e)}</span>
-              <span className="min-w-0 flex-1 truncate" title={rowCol2(e)}>{rowCol2(e)}</span>
-              <span className={`w-24 shrink-0 text-right font-semibold ${accent}`}>{fmtCents(e.amount_cents)}</span>
+              {columns.map((c) => (
+                <span key={c.key} className={`${c.w} shrink-0 truncate ${c.key === columns[0].key ? "font-medium text-gray-700" : ""}`} title={String(cellValue(e, c.key))}>
+                  {cellValue(e, c.key)}
+                </span>
+              ))}
+              <span className={`w-24 shrink-0 text-right font-semibold ${accent}`}>{fmtCents(toCents(e.amount_cents))}</span>
               <span className="flex w-16 shrink-0 justify-end gap-2">
                 <button type="button" className="text-slate-600 hover:underline" onClick={() => editRow(e)}>Edit</button>
                 <button type="button" className="text-red-600 hover:underline" onClick={() => deleteMutation.mutate(e.id)}>Del</button>
               </span>
             </div>
           ))}
+          {/* DEFECT 1 — explicit summed Total footer (recomputes live with the rows). */}
+          <div className="flex items-center gap-2 border-t border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold">
+            <span className="flex-1 text-right text-gray-500 uppercase tracking-wide">Total</span>
+            <span className={`w-24 shrink-0 text-right ${accent}`} data-mdp-footer-total={direction}>{fmtCents(total)}</span>
+            <span className="w-16 shrink-0" />
+          </div>
         </div>
       )}
 
-      {/* Single horizontal add / edit row: the 3 named fields, then optional "more". */}
+      {/* Single horizontal add / edit row: the named columns, then optional "+ more". */}
       <div className="space-y-1.5 border-t border-gray-100 bg-gray-50 px-3 py-2 text-xs">
+        {form.id ? (
+          <div className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800" data-mdp-editing={direction}>
+            Editing existing {direction} line — change fields then press Save.
+          </div>
+        ) : null}
         <div className="flex items-center gap-1.5">
-          <input
-            placeholder={field1Label}
-            aria-label={field1Label}
-            className="h-7 w-28 shrink-0 rounded border border-gray-300 px-2"
-            value={field1Value}
-            onChange={(e) => setField1(e.target.value)}
-          />
-          <input
-            placeholder={field2Label}
-            aria-label={field2Label}
-            className="h-7 min-w-0 flex-1 rounded border border-gray-300 px-2"
-            value={field2Value}
-            onChange={(e) => setField2(e.target.value)}
-          />
-          <MoneyInput valueCents={form.amount_cents} onChangeCents={(c) => setForm({ ...form, amount_cents: c })} placeholder="Total" ariaLabel="Total" className="w-24 shrink-0" />
+          {columns.map((c) => (
+            <input
+              key={c.key}
+              placeholder={c.label}
+              aria-label={c.label}
+              className={`h-7 ${c.w} shrink-0 rounded border border-gray-300 px-2`}
+              value={form[c.key]}
+              onChange={(ev) => setForm((f) => ({ ...f, [c.key]: ev.target.value }))}
+            />
+          ))}
+          <MoneyInput valueCents={form.amount_cents} onChangeCents={(c) => setForm((f) => ({ ...f, amount_cents: c }))} placeholder="Total" ariaLabel="Total" className="w-24 shrink-0" />
         </div>
 
         <button type="button" className="text-[11px] text-slate-500 hover:underline" onClick={() => setShowMore((v) => !v)}>
@@ -197,11 +217,10 @@ function ProjectionPanel({
         </button>
 
         {showMore ? (
-          // Legacy fields preserved (ADDITIVE-ONLY), tucked behind the expander. For income the
-          // unit IS the ref (Unit no. above), so income's "more" exposes Category instead of a
-          // separate Link; expense exposes the optional Link (kind + label).
+          // Legacy fields preserved (ADDITIVE-ONLY), behind the expander. invoice_no is now a primary
+          // column for BOTH directions, so "+ more" exposes only the remaining fields: income = Category;
+          // expense = optional Link (kind + label); plus Memo for both.
           <div className="grid grid-cols-2 gap-1.5 border-t border-gray-100 pt-1.5">
-            <input placeholder="Invoice #" className="h-7 rounded border border-gray-300 px-2" value={form.invoice_no} onChange={(e) => setForm({ ...form, invoice_no: e.target.value })} />
             {direction === "income" ? (
               <input placeholder="Category" className="h-7 rounded border border-gray-300 px-2" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
             ) : (
