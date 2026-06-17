@@ -534,53 +534,71 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
-    const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
-      const oldRes = await client.query(
-        `
-          SELECT id, deactivated_at
-          FROM mdata.equipment
-          WHERE id = $1
-          LIMIT 1
-        `,
+    // DIAGNOSTIC (TEMP — equipment deactivate STILL 500s on prod after #1131 dropped RETURNING; the
+    // RETURNING theory is disproven). Isolate EACH write in its own SAVEPOINT and report which one throws
+    // 42501 (+ full err.table/where/routine/detail), and the row's company membership vs
+    // org.user_accessible_company_ids() (candidate B / entity-independence test). Surfaced in the 500 body
+    // so GUARD reads it from the live endpoint. Removed once the real cause is confirmed.
+    const errFields = (e: unknown) => {
+      const x = e as { code?: string; message?: string; table?: string; schema?: string; column?: string; constraint?: string; where?: string; routine?: string; detail?: string };
+      return { code: x?.code, message: x?.message, table: x?.table, schema: x?.schema, column: x?.column, constraint: x?.constraint, where: x?.where, routine: x?.routine, detail: x?.detail };
+    };
+    const diag: Record<string, unknown> = { authUserRole: authUser.role, equipmentId: parsedParams.data.id };
+    const found = await withCurrentUser(authUser.uuid, async (client) => {
+      // Probe context + company membership on the SAME client/txn, BEFORE any write.
+      const probe = await client.query(
+        `SELECT e.id::text                                                         AS id,
+                current_setting('app.current_user_id', true)                       AS app_current_user_id,
+                identity.current_user_role()::text                                 AS current_user_role,
+                identity.is_lucia_bypass()                                         AS is_lucia_bypass,
+                current_user::text                                                 AS db_session_user,
+                e.deactivated_at::text                                             AS deactivated_at,
+                e.owner_company_id::text                                           AS owner_company_id,
+                e.currently_leased_to_company_id::text                             AS leased_to_company_id,
+                (e.owner_company_id IN (SELECT org.user_accessible_company_ids())) AS owner_in_accessible,
+                (e.currently_leased_to_company_id IN (SELECT org.user_accessible_company_ids())) AS leased_in_accessible,
+                (SELECT array_agg(c::text) FROM org.user_accessible_company_ids() c) AS accessible_company_ids
+         FROM mdata.equipment e WHERE e.id = $1 LIMIT 1`,
         [parsedParams.data.id]
       );
-      const oldRow = oldRes.rows[0] ?? null;
-      if (!oldRow) return null;
+      const row = (probe.rows[0] as Record<string, unknown> | undefined) ?? null;
+      diag.probe = row;
+      if (!row) return false;
 
-      const wasAlreadyDeactivated = oldRow.deactivated_at !== null;
-      let deactivatedAt = oldRow.deactivated_at as string | null;
-      if (!wasAlreadyDeactivated) {
-        // Soft-delete WITHOUT RETURNING. equipment_select's USING requires `deactivated_at IS NULL`, so
-        // the instant we set deactivated_at the mutated row becomes SELECT-invisible. `UPDATE ... RETURNING`
-        // re-reads that mutated row under the SELECT policy (Postgres enforces SELECT policies on RETURNING
-        // rows in ExecWithCheckOptions) → 42501 "new row violates RLS for table equipment" even for an Owner
-        // whose equipment_update WITH CHECK passes. So write an explicit timestamp and reuse it for the
-        // response instead of returning the now-invisible row. (drivers/customers deactivates never hit this
-        // because their select policies have no `deactivated_at IS NULL` gate.) RLS stays ON; per-entity.
-        await client.query(
-          `
-            UPDATE mdata.equipment
-            SET deactivated_at = now(), updated_by_user_id = $2
-            WHERE id = $1
-              AND deactivated_at IS NULL
-          `,
+      const runIsolated = async (name: string, fn: () => Promise<unknown>) => {
+        await client.query(`SAVEPOINT ${name}`);
+        try {
+          await fn();
+          await client.query(`RELEASE SAVEPOINT ${name}`);
+          return null;
+        } catch (e) {
+          await client.query(`ROLLBACK TO SAVEPOINT ${name}`).catch(() => {});
+          return errFields(e);
+        }
+      };
+
+      // (a) the soft-delete UPDATE alone.
+      diag.updateError = await runIsolated("sp_update", () =>
+        client.query(
+          `UPDATE mdata.equipment SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND deactivated_at IS NULL`,
           [parsedParams.data.id, authUser.uuid]
-        );
-        // now() is transaction-scoped (constant for the whole txn), so reading it back here returns the
-        // exact value just written — DB-authoritative — without re-reading the now-SELECT-invisible row.
-        const tsRes = await client.query(`SELECT now() AS deactivated_at`);
-        deactivatedAt = (tsRes.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
-      }
-
-      await appendCrudAudit(client, authUser.uuid, "mdata.equipment.deactivated", {
-        resource_id: oldRow.id,
-        resource_type: "mdata.equipment",
-        was_already_deactivated: wasAlreadyDeactivated,
-      });
-
-      return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
+        )
+      );
+      // (b) the audit append alone.
+      diag.auditError = await runIsolated("sp_audit", () =>
+        appendCrudAudit(client, authUser.uuid, "mdata.equipment.deactivated", {
+          resource_id: parsedParams.data.id,
+          resource_type: "mdata.equipment",
+          diagnostic: true,
+        })
+      );
+      return true;
     });
-    if (!deactivated) return reply.code(404).send({ error: "mdata_equipment_not_found" });
-    return deactivated;
+    if (!found) return reply.code(404).send({ error: "mdata_equipment_not_found", diagnostic: diag });
+    if (diag.updateError || diag.auditError) {
+      req.log?.error({ diag }, "equipment_deactivate_per_statement_diag");
+      return reply.code(500).send({ error: "equipment_deactivate_failed", diagnostic: diag });
+    }
+    return { id: parsedParams.data.id, deactivated_at: new Date().toISOString(), was_already_deactivated: false, diagnostic: diag };
   });
 }
