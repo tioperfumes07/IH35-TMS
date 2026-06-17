@@ -2,6 +2,7 @@ import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
+import type { UnitsWithoutLoad } from "../../api/dispatch";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { classifyProfit, formatProfitCents, getLoadProfitability, profitBadgeClassName } from "../../lib/loadProfit";
 import { ListErrorState } from "../ListErrorState";
@@ -10,12 +11,29 @@ import { canDragLoad, FLAG_EMOJI_BY_CODE, toRouteSummary } from "./constants";
 
 type Props = {
   loads: DispatchLoadRow[];
+  // TRUCK-CENTRIC lane 1 — the active fleet roster minus loaded trucks. Lane "Awaiting assignment"
+  // renders one card per truck (not status-derived loads). Loads with no truck go to "Booked
+  // unassigned".
+  awaitingTrucks?: UnitsWithoutLoad[];
   activeGeofenceBreachVehicleIds?: Set<string>;
   loading: boolean;
   onLoadClick: (loadId: string) => void;
   onStatusDrop: (loadId: string, nextStatus: LoadStatus) => Promise<void>;
   listError?: DataTableErrorState;
 };
+
+// A truck-without-a-load as a synthetic kanban card (Unit + Driver; no load). id prefixed "unit:"
+// so it is inert to drag/status-drop (handleDragEnd can't find it among loads → no-op).
+function truckToKanbanLoad(unit: UnitsWithoutLoad): DispatchLoadRow {
+  return {
+    id: `unit:${unit.id}`,
+    load_number: unit.unit_number,
+    status: "unassigned",
+    assigned_unit_id: unit.id,
+    assigned_unit_number: unit.unit_number,
+    assigned_primary_driver_name: unit.driver_name || null,
+  } as unknown as DispatchLoadRow;
+}
 
 type KanbanLoadExtras = {
   commodity?: string | null;
@@ -53,8 +71,10 @@ type KanbanColumnDef = {
 // feed that HOS/OOS/cash-ETA are gated on; until that feed is confirmed they separate
 // best-effort by status (Loaded stays empty unless a "departed pickup" signal arrives).
 const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
-  { key: "awaiting_assignment", title: "Awaiting assignment", statuses: ["draft", "planned", "unassigned"], dropStatus: "planned" },
-  { key: "booked_unassigned", title: "Booked unassigned", statuses: ["booked"], dropStatus: "booked" },
+  // Awaiting assignment is TRUCK-derived (cards injected from awaitingTrucks), so it matches no
+  // load status. Loads with no truck (draft/planned/unassigned/booked) fall into Booked unassigned.
+  { key: "awaiting_assignment", title: "Awaiting assignment", statuses: [], dropStatus: "planned" },
+  { key: "booked_unassigned", title: "Booked unassigned", statuses: ["draft", "planned", "unassigned", "booked"], dropStatus: "booked" },
   { key: "assigned", title: "Assigned", statuses: ["assigned", "assigned_not_dispatched"], dropStatus: "assigned" },
   { key: "dispatched", title: "Dispatched", statuses: ["dispatched"], dropStatus: "dispatched" },
   { key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true },
@@ -104,7 +124,8 @@ function resolveKanbanColumnKey(load: DispatchLoadRow): string {
   }
 
   const group = KANBAN_STATUS_GROUPS.find((entry) => entry.statuses.includes(status));
-  return group?.key ?? "awaiting_assignment";
+  // Fallback is Booked unassigned (a load needing a truck) — never the truck-only Awaiting lane.
+  return group?.key ?? "booked_unassigned";
 }
 
 function groupLoadsByColumn(loads: DispatchLoadRow[]) {
@@ -426,7 +447,7 @@ function KanbanDispatchColumn({
   );
 }
 
-export function DispatchKanban({ loads, activeGeofenceBreachVehicleIds, loading, onLoadClick, onStatusDrop, listError }: Props) {
+export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreachVehicleIds, loading, onLoadClick, onStatusDrop, listError }: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
   // Part D — default to compact so the whole fleet (32 trucks) fits without scrolling.
   const [density, setDensity] = useState<"compact" | "detailed">("compact");
@@ -437,6 +458,8 @@ export function DispatchKanban({ loads, activeGeofenceBreachVehicleIds, loading,
   }, [loads]);
 
   const grouped = useMemo(() => groupLoadsByColumn(optimisticLoads), [optimisticLoads]);
+  // Lane 1 cards = trucks-without-a-load (roster minus loaded), one compact card per truck.
+  const awaitingTruckCards = useMemo(() => awaitingTrucks.map(truckToKanbanLoad), [awaitingTrucks]);
   // Fleet out-of-service strip (Part D). No fleet-OOS feed reaches this board yet, so we
   // surface breakdown loads best-effort and flag that the full OOS feed is held — same gate
   // as HOS/geofence. Once Jorge wires the OOS source this strip lists every down unit.
@@ -507,7 +530,7 @@ export function DispatchKanban({ loads, activeGeofenceBreachVehicleIds, loading,
             <KanbanDispatchColumn
               key={group.key}
               column={group}
-              loads={grouped.get(group.key) ?? []}
+              loads={group.key === "awaiting_assignment" ? awaitingTruckCards : grouped.get(group.key) ?? []}
               density={density}
               activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
               onLoadClick={onLoadClick}

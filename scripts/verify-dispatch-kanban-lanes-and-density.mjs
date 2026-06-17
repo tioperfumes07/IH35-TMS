@@ -46,4 +46,12 @@ if (!src.includes("KanbanDispatchCard")) fail("detailed card must be preserved (
 if (!src.includes("dispatch-kanban-oos-strip")) fail("Fleet out-of-service strip missing");
 if (!/sticky bottom-0[\s\S]{0,400}Fleet out of service/.test(src)) fail("OOS strip must be pinned (sticky bottom-0)");
 
+// 4. Lane 1 "Awaiting assignment" is TRUCK-derived (roster minus loaded), not status-derived loads.
+if (!src.includes("awaitingTrucks")) fail("Awaiting lane must accept truck roster (awaitingTrucks prop)");
+if (!src.includes("truckToKanbanLoad")) fail("Awaiting lane must render trucks via truckToKanbanLoad");
+if (!/key:\s*"awaiting_assignment",\s*title:\s*"Awaiting assignment",\s*statuses:\s*\[\]/.test(src)) {
+  fail("awaiting_assignment lane must match NO load status (statuses: []) — it is truck-derived");
+}
+if (!/awaiting_assignment"\s*\?\s*awaitingTruckCards/.test(src)) fail("Awaiting column must render awaitingTruckCards");
+
 console.log("PASS verify-dispatch-kanban-lanes-and-density");
