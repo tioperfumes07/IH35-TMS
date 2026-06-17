@@ -286,6 +286,22 @@ export function getDispatchHosClocks(operatingCompanyId: string, driverIds: stri
   );
 }
 
+export type DispatchLoadPosition = {
+  lat: number;
+  lng: number;
+  speed_mph: number | null;
+  recorded_at: string;
+  stale: boolean;
+};
+
+// Batched last-known GPS positions for the dispatch board's Live GPS column (in-app Samsara
+// position store). Returns a map keyed by load id; absent load = no position.
+export function getDispatchLoadPositions(operatingCompanyId: string, loadIds: string[]) {
+  return apiRequest<{ positions_by_load: Record<string, DispatchLoadPosition> }>(
+    `/api/v1/dispatch/load-positions?operating_company_id=${encodeURIComponent(operatingCompanyId)}&load_ids=${encodeURIComponent(loadIds.join(","))}`
+  );
+}
+
 export function createDispatchLoad(payload: DispatchBookLoadPayload) {
   return apiRequest<Record<string, unknown>>("/api/v1/dispatch/loads", { method: "POST", body: payload });
 }

@@ -197,6 +197,9 @@ jobs:
       - name: verify:dispatch-hos-columns-wired
         run: npm run verify:dispatch-hos-columns-wired
 
+      - name: verify:dispatch-live-gps-wired
+        run: npm run verify:dispatch-live-gps-wired
+
       - name: verify:load-import-dry-run-default
         run: npm run verify:load-import-dry-run-default
 
