@@ -172,3 +172,6 @@ jobs:
 
       - name: verify:table-controls-shared
         run: npm run verify:table-controls-shared
+
+      - name: verify:form-input-density
+        run: npm run verify:form-input-density

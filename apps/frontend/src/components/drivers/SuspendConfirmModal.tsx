@@ -57,7 +57,7 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
           <textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
             rows={3}
             data-testid="suspend-reason"
           />

@@ -290,7 +290,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
             <textarea
               value={customMessage}
               onChange={(event) => setCustomMessage(event.target.value)}
-              className="min-h-[84px] w-full rounded border border-gray-300 px-2 py-2 text-sm"
+              className="min-h-[84px] w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
               placeholder="Optional custom message"
             />
           </div>

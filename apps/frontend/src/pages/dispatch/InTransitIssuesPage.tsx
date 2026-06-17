@@ -159,7 +159,7 @@ export function InTransitIssuesPage() {
             <input
               value={loadId}
               onChange={(event) => setLoadId(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
               placeholder="UUID of load"
             />
           </div>
@@ -168,7 +168,7 @@ export function InTransitIssuesPage() {
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="mechanical">Mechanical</option>
               <option value="safety">Safety</option>
@@ -181,7 +181,7 @@ export function InTransitIssuesPage() {
             <select
               value={severity}
               onChange={(event) => setSeverity(event.target.value as typeof severity)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="info">Info</option>
               <option value="warning">Warning</option>
@@ -193,7 +193,7 @@ export function InTransitIssuesPage() {
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
               rows={4}
             />
           </div>

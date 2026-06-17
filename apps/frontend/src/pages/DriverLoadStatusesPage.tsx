@@ -297,7 +297,7 @@ function StatusForm({
             value={form.code}
             disabled={disableCode}
             onChange={(event) => setForm((current) => ({ ...current, code: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "") }))}
-            className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px] disabled:bg-gray-100"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -305,7 +305,7 @@ function StatusForm({
           <input
             value={form.name}
             onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -324,7 +324,7 @@ function StatusForm({
             min={0}
             value={form.sort_order}
             onChange={(event) => setForm((current) => ({ ...current, sort_order: event.target.value }))}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
         <div className="md:col-span-2 flex flex-col gap-1">
@@ -333,7 +333,7 @@ function StatusForm({
             value={form.description}
             onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
             rows={2}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
           />
         </div>
         {disableCode ? (

@@ -77,7 +77,7 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
             rows={3}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+            className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
             placeholder="Required notes (min 20 chars)"
           />
         </div>

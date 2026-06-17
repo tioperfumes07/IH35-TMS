@@ -51,7 +51,7 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
           <select
             value={channel}
             onChange={(event) => setChannel(event.target.value as typeof channel)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           >
             <option value="in_app">In-app</option>
             <option value="sms">SMS</option>
@@ -63,7 +63,7 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
           <input
             value={urgency}
             onChange={(event) => setUrgency(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             placeholder="normal, urgent, …"
           />
         </div>
@@ -73,7 +73,7 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
             data-testid="send-message-body"
             value={message}
             onChange={(event) => setMessage(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
             rows={4}
             maxLength={4000}
           />

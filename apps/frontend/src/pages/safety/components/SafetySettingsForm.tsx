@@ -43,7 +43,7 @@ export function SafetySettingsForm({ operatingCompanyId, settings, onSaved }: Pr
             max={90}
             value={activeWindow}
             onChange={(event) => setActiveWindow(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -54,7 +54,7 @@ export function SafetySettingsForm({ operatingCompanyId, settings, onSaved }: Pr
             max={365}
             value={inactiveThreshold}
             onChange={(event) => setInactiveThreshold(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -64,7 +64,7 @@ export function SafetySettingsForm({ operatingCompanyId, settings, onSaved }: Pr
             min={1}
             value={fineWindow}
             onChange={(event) => setFineWindow(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -74,7 +74,7 @@ export function SafetySettingsForm({ operatingCompanyId, settings, onSaved }: Pr
             min={1}
             value={slaDays}
             onChange={(event) => setSlaDays(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
+            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
       </div>

@@ -224,7 +224,7 @@ export function DataImportPage() {
             <label className="block text-sm">
               <span className="font-medium text-slate-800">Operating company</span>
               <SelectCombobox
-                className="mt-1 block w-full max-w-xs rounded border border-slate-300 px-2 py-2 text-sm"
+                className="mt-1 block w-full max-w-xs rounded border border-slate-300 h-9 px-2 text-[13px]"
                 value={companyCode}
                 onChange={(e) => setCompanyCode(e.target.value as "TRK" | "TRANSP")}
               >
@@ -240,7 +240,7 @@ export function DataImportPage() {
               </label>
               {applyCompanyFilter ? (
                 <SelectCombobox
-                  className="block max-w-xs rounded border border-slate-300 px-2 py-2 text-sm"
+                  className="block max-w-xs rounded border border-slate-300 h-9 px-2 text-[13px]"
                   value={companyCode}
                   onChange={(e) => setCompanyCode(e.target.value as "TRK" | "TRANSP")}
                 >

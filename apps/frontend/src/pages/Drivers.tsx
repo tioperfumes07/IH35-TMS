@@ -1095,7 +1095,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <input
               value={teamForm.team_name}
               onChange={(event) => setTeamForm((current) => ({ ...current, team_name: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1105,7 +1105,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               onChange={(event) =>
                 setTeamForm((current) => ({ ...current, split_method: event.target.value as DriverTeamSplitMethod }))
               }
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="50_50">50_50</option>
               <option value="60_40">60_40</option>
@@ -1120,7 +1120,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <SelectCombobox
               value={teamForm.primary_driver_id}
               onChange={(event) => setTeamForm((current) => ({ ...current, primary_driver_id: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="">Select driver</option>
               {(driversQuery.data ?? []).map((driver) => (
@@ -1133,7 +1133,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <SelectCombobox
               value={teamForm.co_driver_id}
               onChange={(event) => setTeamForm((current) => ({ ...current, co_driver_id: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="">Select driver</option>
               {(driversQuery.data ?? []).map((driver) => (
@@ -1147,7 +1147,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               type="number"
               value={teamForm.primary_share_pct}
               onChange={(event) => setTeamForm((current) => ({ ...current, primary_share_pct: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1156,7 +1156,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               type="number"
               value={teamForm.co_share_pct}
               onChange={(event) => setTeamForm((current) => ({ ...current, co_share_pct: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1164,7 +1164,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <DatePicker
               value={teamForm.effective_from}
               onChange={(value) => setTeamForm((current) => ({ ...current, effective_from: value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 px-2 text-sm py-2"
             />
           </div>
           <div className="md:col-span-2 flex flex-col gap-1">
@@ -1172,7 +1172,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <textarea
               value={teamForm.notes}
               onChange={(event) => setTeamForm((current) => ({ ...current, notes: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
               rows={3}
             />
           </div>
@@ -1343,7 +1343,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   clearDriverFieldError(key);
                   setForm((current) => ({ ...current, [key]: event.target.value }));
                 }}
-                className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border px-2 py-2 text-sm")}
+                className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border h-9 px-2 text-[13px]")}
               />
               <FieldError id={key} message={driverFieldErrors[key]} />
             </div>
@@ -1379,7 +1379,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 clearDriverFieldError("country_code");
                 setForm((current) => ({ ...current, country_code: event.target.value }));
               }}
-              className={fieldErrorClassname(Boolean(driverFieldErrors.country_code), "rounded border px-2 py-2 text-sm")}
+              className={fieldErrorClassname(Boolean(driverFieldErrors.country_code), "rounded border h-9 px-2 text-[13px]")}
             >
               <option value="+1">US (+1)</option>
               <option value="+52">Mexico (+52)</option>
@@ -1396,7 +1396,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 clearDriverFieldError("phone_input");
                 setForm((current) => ({ ...current, phone_input: event.target.value }));
               }}
-              className={fieldErrorClassname(Boolean(driverFieldErrors.phone_input), "rounded border px-2 py-2 text-sm")}
+              className={fieldErrorClassname(Boolean(driverFieldErrors.phone_input), "rounded border h-9 px-2 text-[13px]")}
               placeholder="(956) 555-0001"
             />
             <FieldError id="phone_input" message={driverFieldErrors.phone_input} />
@@ -1476,7 +1476,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                         clearDriverFieldError(key);
                         setForm((current) => ({ ...current, [key]: event.target.value }));
                       }}
-                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border px-2 py-2 text-sm")}
+                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border h-9 px-2 text-[13px]")}
                     />
                     <FieldError id={key} message={driverFieldErrors[key]} />
                   </div>
@@ -1538,7 +1538,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                         clearDriverFieldError(key);
                         setForm((current) => ({ ...current, [key]: event.target.value }));
                       }}
-                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border px-2 py-2 text-sm")}
+                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border h-9 px-2 text-[13px]")}
                     />
                     <FieldError id={key} message={driverFieldErrors[key]} />
                   </div>
@@ -1553,7 +1553,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                       clearDriverFieldError("emergency_contact_address");
                       setForm((current) => ({ ...current, emergency_contact_address: event.target.value }));
                     }}
-                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_address), "rounded border px-2 py-2 text-sm")}
+                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_address), "rounded border px-2 py-1.5 text-[13px]")}
                     rows={2}
                   />
                   <FieldError id="emergency_contact_address" message={driverFieldErrors.emergency_contact_address} />
@@ -1568,7 +1568,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                       clearDriverFieldError("emergency_contact_notes");
                       setForm((current) => ({ ...current, emergency_contact_notes: event.target.value }));
                     }}
-                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_notes), "rounded border px-2 py-2 text-sm")}
+                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_notes), "rounded border px-2 py-1.5 text-[13px]")}
                     rows={2}
                   />
                   <FieldError id="emergency_contact_notes" message={driverFieldErrors.emergency_contact_notes} />
