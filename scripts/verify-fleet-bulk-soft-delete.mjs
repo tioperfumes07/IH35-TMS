@@ -26,6 +26,13 @@ if (src) {
   if (!/inactivateMutation/.test(src)) {
     failures.push(`${FILE}: inactivateMutation (bulk soft-delete) removed`);
   }
+  // Reactivate must clear deactivated_at via PATCH (reversible) — never a hard op.
+  if (!/reactivateMutation/.test(src)) {
+    failures.push(`${FILE}: reactivateMutation (bulk reactivate) removed`);
+  }
+  if (!/deactivated_at:\s*null/.test(src)) {
+    failures.push(`${FILE}: reactivate must clear deactivated_at via PATCH (deactivated_at: null)`);
+  }
 }
 
 if (failures.length) {

@@ -19,6 +19,12 @@ vi.mock("../Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
 }));
 
+// Bulk actions are permission-gated (useBulkPermission → useAuth). Provide an Owner so
+// the BulkActionBar renders in tests.
+vi.mock("../../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "Owner" } }),
+}));
+
 const rows: FleetRow[] = [
   {
     id: "truck-1",
@@ -45,7 +51,12 @@ function renderTable() {
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter>
-        <FleetTable operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" rows={rows} />
+        <FleetTable
+          operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+          rows={rows}
+          softDeleteFilter="active"
+          onSoftDeleteFilterChange={() => {}}
+        />
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -65,8 +76,9 @@ describe("FleetTable unified list", () => {
 
   it("Type column renders correct value per kind", () => {
     renderTable();
-    expect(screen.getByText("Truck")).toBeTruthy();
-    expect(screen.getByText("Dry Van")).toBeTruthy();
+    // The Type list-filter dropdown also renders these as <option>s, so allow duplicates.
+    expect(screen.getAllByText("Truck").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Dry Van").length).toBeGreaterThan(0);
   });
 
   it("row click navigates by kind", () => {
@@ -79,9 +91,10 @@ describe("FleetTable unified list", () => {
 
   it("bulk-update routes to correct endpoint per kind", async () => {
     renderTable();
-    const checkboxes = screen.getAllByRole("checkbox");
-    fireEvent.click(checkboxes[1]);
-    fireEvent.click(checkboxes[2]);
+    // Select the two rows by their stable per-row checkbox aria-labels (robust to the
+    // toolbar's select-all + column-chooser checkboxes).
+    fireEvent.click(screen.getByLabelText("Select unit 101"));
+    fireEvent.click(screen.getByLabelText("Select unit T-10"));
     fireEvent.change(screen.getByLabelText("Change Status"), { target: { value: "Active" } });
     fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
