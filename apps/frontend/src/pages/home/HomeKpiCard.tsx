@@ -13,9 +13,11 @@ type Props = {
   onRetry: () => void;
   subtext?: ReactNode;
   delta?: ReactNode;
+  /** Drill-down route — makes the KPI clickable (GLOBAL clickable-KPI behavior). */
+  to?: string;
 };
 
-export function HomeKpiCard({ label, number, accent, isLoading, isError, error, onRetry, subtext, delta }: Props) {
+export function HomeKpiCard({ label, number, accent, isLoading, isError, error, onRetry, subtext, delta, to }: Props) {
   if (isLoading) {
     return (
       <div className="flex min-h-[118px] flex-col rounded border border-slate-200 bg-white p-3 shadow-sm">
@@ -52,7 +54,7 @@ export function HomeKpiCard({ label, number, accent, isLoading, isError, error, 
 
   return (
     <div className="flex min-h-[118px] flex-col gap-1">
-      <KpiCard label={label} number={number} accent={accent} />
+      <KpiCard label={label} number={number} accent={accent} to={to} />
       {delta ? <div className="px-3 text-[11px]">{delta}</div> : null}
       {subtext ? <div className="px-3 text-[11px] leading-snug text-slate-500">{subtext}</div> : null}
     </div>

@@ -259,6 +259,7 @@ export function DefaultHome({ auth }: Props) {
       <section className="kpi-grid order-3 grid grid-cols-1 gap-2 md:grid-cols-2 lg:order-1 lg:grid-cols-3">
         <HomeKpiCard
           label="Today's Revenue"
+          to="/reports"
           number={tr ? formatUsdFromCents(tr.revenue_cents) : "—"}
           isLoading={todayRevenueQuery.isLoading}
           isError={todayRevenueQuery.isError}
@@ -279,6 +280,7 @@ export function DefaultHome({ auth }: Props) {
         />
         <HomeKpiCard
           label="Open Loads"
+          to="/dispatch?view=loads"
           number={ol ? `${ol.total} loads` : "—"}
           isLoading={openLoadsQuery.isLoading}
           isError={openLoadsQuery.isError}
@@ -292,6 +294,7 @@ export function DefaultHome({ auth }: Props) {
         />
         <HomeKpiCard
           label="Drivers On Duty"
+          to="/driver-hub"
           number={dd ? `${dd.active} / ${dd.total_drivers}` : "—"}
           isLoading={driversDutyQuery.isLoading}
           isError={driversDutyQuery.isError}
@@ -301,6 +304,7 @@ export function DefaultHome({ auth }: Props) {
         />
         <HomeKpiCard
           label="WOs Open"
+          to="/maintenance"
           number={wo ? `${wo.open} WOs` : "—"}
           isLoading={wosOpenQuery.isLoading}
           isError={wosOpenQuery.isError}
@@ -310,6 +314,7 @@ export function DefaultHome({ auth }: Props) {
         />
         <HomeKpiCard
           label="Cash Position"
+          to="/banking"
           number={cp ? formatUsdFromCents(cp.balance_cents) : "—"}
           isLoading={cashPositionQuery.isLoading}
           isError={cashPositionQuery.isError}
@@ -319,6 +324,7 @@ export function DefaultHome({ auth }: Props) {
         />
         <HomeKpiCard
           label="Factoring Balance"
+          to="/factoring"
           number={fb ? formatUsdFromCents(fb.outstanding_cents) : "—"}
           isLoading={factoringBalanceQuery.isLoading}
           isError={factoringBalanceQuery.isError}
