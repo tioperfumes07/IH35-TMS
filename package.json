@@ -604,6 +604,7 @@
     "verify:deadhead-optimizer": "node scripts/verify-deadhead-optimizer.mjs",
     "verify:a7-audit-per-entity-tabs": "node scripts/verify-a7-audit-per-entity-tabs.mjs",
     "verify:d1-settlement-approval": "node scripts/verify-d1-settlement-approval.mjs",
+    "verify:clickable-kpis": "node scripts/verify-clickable-kpis.mjs",
     "verify:soft-delete-list-filter": "node scripts/verify-soft-delete-list-filter.mjs",
     "verify:manual-projection-sum": "node scripts/verify-manual-projection-sum.mjs",
     "verify:fleet-bulk-soft-delete": "node scripts/verify-fleet-bulk-soft-delete.mjs",
