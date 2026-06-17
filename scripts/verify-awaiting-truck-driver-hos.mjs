@@ -17,6 +17,11 @@ const route = read("apps/backend/src/dispatch/loads.routes.ts");
 if (!/LEFT JOIN mdata\.drivers ud ON ud\.id = u\.assigned_driver_id/.test(route)) {
   fail("units-without-load must join the unit's default driver (mdata.units.assigned_driver_id)");
 }
+// ACTIVE units only — Awaiting must not pull Sold/Totaled/OutOfService/InMaintenance trucks
+// (the active/inactive desync that inflated the count).
+if (!/AND u\.status = 'InService'::mdata\.unit_status/.test(route)) {
+  fail("units-without-load must filter to active trucks only (u.status = 'InService')");
+}
 if (!/ud\.id::text AS driver_id/.test(route)) fail("units-without-load must return driver_id");
 
 // Frontend: type carries driver_id; the awaiting-truck row binds it; HOS fetch includes it.

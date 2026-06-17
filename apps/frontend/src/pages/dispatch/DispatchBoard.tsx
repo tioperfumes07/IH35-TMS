@@ -399,7 +399,14 @@ export function DispatchBoard({
   // in exactly one place: unloaded trucks in Awaiting, loaded trucks via their load in Booked.
   const boardSections = useMemo(() => {
     const awaitingRows = unassignedUnits.map(unitToBoardRow);
-    const bookedRows = sortedLoads;
+    // Defensive dedupe by load id — a load must never render twice in Booked (two DISTINCT loads on
+    // the same truck legitimately remain, since they have different ids).
+    const seenBooked = new Set<string>();
+    const bookedRows = sortedLoads.filter((load) => {
+      if (seenBooked.has(load.id)) return false;
+      seenBooked.add(load.id);
+      return true;
+    });
     return SECTION_META.map((meta) => ({
       ...meta,
       rows: meta.key === "awaiting" ? awaitingRows : meta.key === "booked" ? bookedRows : [],
