@@ -14,6 +14,7 @@ import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { DispatchKanban } from "../components/dispatch/DispatchKanban";
+import { listUnitsWithoutLoad } from "../api/dispatch";
 import { FleetOosStrip } from "../components/dispatch/FleetOosStrip";
 import { DispatchBoard } from "./dispatch/DispatchBoard";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
@@ -208,6 +209,15 @@ export function DispatchPage({
   );
 
   const loads = loadsQuery.data?.loads ?? [];
+
+  // Truck-derived "Awaiting assignment" lane on the Kanban (active fleet roster minus loaded trucks).
+  const awaitingTrucksQuery = useQuery({
+    queryKey: ["dispatch", "units-without-load", selectedCompanyId],
+    queryFn: () => listUnitsWithoutLoad(selectedCompanyId as string),
+    enabled: Boolean(selectedCompanyId),
+    staleTime: 30_000,
+  });
+  const awaitingTrucks = awaitingTrucksQuery.data?.units ?? [];
   const activeGeofenceBreachVehicleIds = useMemo(() => {
     const ids = new Set<string>();
     for (const event of geofenceBreachesQuery.data?.events ?? []) {
@@ -415,6 +425,7 @@ export function DispatchPage({
         ) : (
           <DispatchKanban
             loads={loads}
+            awaitingTrucks={awaitingTrucks}
             activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
             loading={loadsQuery.isLoading}
             listError={dataTableErrorState(loadsQuery.error, () => void loadsQuery.refetch())}
