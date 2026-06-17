@@ -200,6 +200,9 @@ jobs:
       - name: verify:dispatch-live-gps-wired
         run: npm run verify:dispatch-live-gps-wired
 
+      - name: verify:awaiting-truck-driver-hos
+        run: npm run verify:awaiting-truck-driver-hos
+
       - name: verify:load-import-dry-run-default
         run: npm run verify:load-import-dry-run-default
 
