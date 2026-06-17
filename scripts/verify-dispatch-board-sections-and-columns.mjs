@@ -45,11 +45,14 @@ if (!/hrs_available[\s\S]{0,120}renderHosAvailable/.test(src)) fail("hrs_availab
 if (!/hrs_to_reset[\s\S]{0,120}renderHosToReset/.test(src)) fail("hrs_to_reset must bind to renderHosToReset (in-app HOS store)");
 if (src.includes("Driver HOS feed pending")) fail("HOS placeholder 'feed pending' must be removed — the feed is resolved/wired");
 
-// 4. Three List/Table sections, exact titles.
+// 4. Three List/Table sections, exact titles. The 3rd is "In shop" (units down for maintenance) —
+// distinct from the pinned bottom "Fleet OOS" strip (units actually out of service); no duplicate
+// "Out of service" label in the table.
 if (!src.includes("LIST_SECTIONS")) fail("LIST_SECTIONS partition missing");
-for (const title of ["Awaiting assignment", "Booked", "Out of service"]) {
+for (const title of ["Awaiting assignment", "Booked", "In shop"]) {
   if (!src.includes(`"${title}"`)) fail(`missing section title: ${title}`);
 }
+if (/title:\s*"Out of service"/.test(src)) fail('in-table 3rd section must be "In shop", not "Out of service" (no duplicate label)');
 
 // 4b. Partition PREDICATE, not just titles: Awaiting = isUnassignedLoad (no truck), Booked =
 // !isUnassignedLoad. Guards against the inverted isBookedReserved basis that put unassigned loads
