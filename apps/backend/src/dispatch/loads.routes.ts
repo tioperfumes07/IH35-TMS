@@ -1013,7 +1013,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             u.id,
             u.unit_number,
             NULL::text AS trailer_number,
-            CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+            ud.id::text AS driver_id,
+            CONCAT_WS(' ', ud.first_name, ud.last_name) AS driver_name,
             MAX(ls.actual_departure_at) AS last_drop_at
           FROM mdata.units u
           LEFT JOIN mdata.loads l
@@ -1025,11 +1026,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
               'in_transit'::mdata.load_status_enum,
               'delivered_pending_docs'::mdata.load_status_enum
             )
-          LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+          -- The unit's DEFAULT driver (mdata.units.assigned_driver_id), so awaiting-truck rows can
+          -- show Driver + HOS even with no load. (The old join used the load's driver, which is
+          -- null for an unloaded truck.)
+          LEFT JOIN mdata.drivers ud ON ud.id = u.assigned_driver_id
           LEFT JOIN mdata.load_stops ls ON ls.load_id = l.id
           WHERE u.deactivated_at IS NULL
             AND l.id IS NULL
-          GROUP BY u.id, u.unit_number, d.first_name, d.last_name
+          GROUP BY u.id, u.unit_number, ud.id, ud.first_name, ud.last_name
           ORDER BY COALESCE(MAX(ls.actual_departure_at), now() - interval '999 days') ASC
         `
       );

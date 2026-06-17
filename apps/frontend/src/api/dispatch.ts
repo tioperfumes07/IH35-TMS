@@ -76,6 +76,7 @@ export type UnitsWithoutLoad = {
   id: string;
   unit_number: string;
   trailer_number: string | null;
+  driver_id: string | null;
   driver_name: string | null;
   last_drop_at: string | null;
   hours_since_last_delivery: number | null;

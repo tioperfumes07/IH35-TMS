@@ -154,7 +154,7 @@ function unitToBoardRow(unit: UnitsWithoutLoad): BoardLoad {
     id: `unit:${unit.id}`,
     assigned_unit_id: unit.id,
     assigned_unit_number: unit.unit_number,
-    assigned_primary_driver_id: null,
+    assigned_primary_driver_id: unit.driver_id,
     assigned_primary_driver_name: unit.driver_name || null,
     trailer_number: unit.trailer_number ?? null,
     load_number: "",
@@ -306,6 +306,7 @@ export function DispatchBoard({
     enabled: Boolean(companyId),
     staleTime: 30_000,
   });
+  const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
 
   const triSignalsQuery = useQuery({
     queryKey: ["dispatch-board", "tri-signals", companyId],
@@ -358,8 +359,12 @@ export function DispatchBoard({
     for (const load of sortedLoads) {
       if (load.assigned_primary_driver_id) ids.add(load.assigned_primary_driver_id);
     }
+    // Include the default drivers of awaiting (unloaded) trucks so their HOS clocks populate too.
+    for (const unit of unassignedUnits) {
+      if (unit.driver_id) ids.add(unit.driver_id);
+    }
     return Array.from(ids).sort();
-  }, [sortedLoads]);
+  }, [sortedLoads, unassignedUnits]);
 
   const hosClocksQuery = useQuery({
     queryKey: ["dispatch-board", "hos-clocks", companyId, visibleDriverIds],
@@ -388,7 +393,6 @@ export function DispatchBoard({
 
   const bookedLoads = useMemo(() => sortedLoads.filter(isBookedReserved), [sortedLoads]);
   const assignedLoads = useMemo(() => sortedLoads.filter(isAssignedLoad), [sortedLoads]);
-  const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
 
   // TRUCK-CENTRIC List/Table sections. Awaiting = roster minus loaded trucks (one row per truck);
   // Booked = active loads (one row per load); In shop = held placeholder. Every active truck lands
