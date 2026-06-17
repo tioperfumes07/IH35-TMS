@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DatePicker } from "../components/forms/DatePicker";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { listVendorBills } from "../api/accounting";
@@ -714,7 +715,7 @@ export function VendorDetailPage() {
                 <div className="grid gap-2 md:grid-cols-2">
                   <label className="block">
                     Payment date
-                    <input type="date" className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={billPayDate} onChange={(e) => setBillPayDate(e.target.value)} />
+                    <DatePicker className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={billPayDate} onChange={setBillPayDate} />
                   </label>
                   <label className="block">
                     Amount (USD)

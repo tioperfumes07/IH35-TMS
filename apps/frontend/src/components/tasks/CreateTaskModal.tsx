@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DatePicker } from "../forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
@@ -129,7 +130,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, onClose
           </div>
           <div>
             <label className={labelCls} htmlFor="create-task-date">Scheduled date</label>
-            <input id="create-task-date" type="date" className={inputCls} value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+            <DatePicker id="create-task-date" className={inputCls} value={scheduledDate} onChange={setScheduledDate} />
           </div>
         </div>
 

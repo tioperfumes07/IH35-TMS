@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { DatePicker } from "../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listInvoices } from "../api/accounting";
@@ -407,8 +408,8 @@ export function CustomersPage() {
                         </SelectCombobox>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
                         <div className="mb-2 grid grid-cols-2 gap-2">
-                          <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
-                          <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
+                          <DatePicker value={dateFrom} onChange={setDateFrom} className="rounded border border-gray-300 px-2 py-1 text-sm" />
+                          <DatePicker value={dateTo} onChange={setDateTo} className="rounded border border-gray-300 px-2 py-1 text-sm" />
                         </div>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
                         <input value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
