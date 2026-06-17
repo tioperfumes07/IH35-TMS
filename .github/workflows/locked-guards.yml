@@ -200,5 +200,8 @@ jobs:
       - name: verify:load-import-dry-run-default
         run: npm run verify:load-import-dry-run-default
 
+      - name: verify:load-delivery-dates-separated
+        run: npm run verify:load-delivery-dates-separated
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density
