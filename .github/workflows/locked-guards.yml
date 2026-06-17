@@ -137,6 +137,9 @@ jobs:
       - name: verify:safety-events-append-only
         run: npm run verify:safety-events-append-only
 
+      - name: verify:insurance-policy-unit-columns
+        run: npm run verify:insurance-policy-unit-columns
+
       - name: verify:safety-rls-coverage
         run: npm run verify:safety-rls-coverage
 

@@ -528,6 +528,7 @@
     "r2:verify": "node scripts/r2-verify.mjs",
     "verify:safety-driver-dqf": "node scripts/verify-safety-driver-dqf.mjs",
     "verify:safety-events-append-only": "node scripts/verify-safety-events-append-only.mjs",
+    "verify:insurance-policy-unit-columns": "node scripts/verify-insurance-policy-unit-columns.mjs",
     "verify:safety-events-tenant-scope": "node scripts/verify-safety-events-tenant-scope.mjs",
     "verify:no-demo-rows-in-safety": "node scripts/verify-no-demo-rows-in-safety.mjs",
     "verify:no-internal-payload-in-notes": "node scripts/verify-no-internal-payload-in-notes.mjs",
