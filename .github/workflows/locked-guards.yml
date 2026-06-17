@@ -206,5 +206,8 @@ jobs:
       - name: verify:cash-eta-audit-append-only
         run: npm run verify:cash-eta-audit-append-only
 
+      - name: verify:mdp-single-row
+        run: npm run verify:mdp-single-row
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density
