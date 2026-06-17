@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
+import { FORM_INPUT_CLASS, FORM_SELECT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/inputClass";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -754,7 +755,7 @@ export function DriverDetailPage() {
                 value={hydratedForm[key] ?? ""}
                 disabled={!editMode}
                 onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
               />
             </div>
           ))}
@@ -861,7 +862,7 @@ export function DriverDetailPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Class (TMS catalog)</label>
                 <SelectCombobox
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  className={FORM_SELECT_CLASS}
                   value={qboClassTmsId}
                   onChange={(e) => setQboClassTmsId(e.target.value)}
                 >
@@ -898,7 +899,7 @@ export function DriverDetailPage() {
                     value={hydratedForm[key] ?? ""}
                     disabled={!editMode}
                     onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                    className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                    className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
                   />
                 </div>
               ))}
@@ -931,7 +932,7 @@ export function DriverDetailPage() {
                     value={hydratedForm[key] ?? ""}
                     disabled={!editMode}
                     onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                    className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                    className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
                   />
                 </div>
               ))}
@@ -941,7 +942,7 @@ export function DriverDetailPage() {
                   value={hydratedForm.emergency_contact_address ?? ""}
                   disabled={!editMode}
                   onChange={(event) => setForm((current) => ({ ...current, emergency_contact_address: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                  className={`${FORM_TEXTAREA_CLASS} disabled:bg-gray-100`}
                   rows={2}
                 />
               </div>
@@ -951,7 +952,7 @@ export function DriverDetailPage() {
                   value={hydratedForm.emergency_contact_notes ?? ""}
                   disabled={!editMode}
                   onChange={(event) => setForm((current) => ({ ...current, emergency_contact_notes: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                  className={`${FORM_TEXTAREA_CLASS} disabled:bg-gray-100`}
                   rows={2}
                 />
               </div>
@@ -1026,7 +1027,7 @@ export function DriverDetailPage() {
                 value={hydratedForm.ine_number ?? ""}
                 disabled={!editMode}
                 onChange={(event) => setForm((current) => ({ ...current, ine_number: event.target.value }))}
-                className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
                 placeholder="13 digits typical"
               />
               {validationErrors.ine_number ? <span className="text-xs text-crit">{validationErrors.ine_number}</span> : null}
@@ -1037,7 +1038,7 @@ export function DriverDetailPage() {
                 value={hydratedForm.curp ?? ""}
                 disabled={!editMode}
                 onChange={(event) => setForm((current) => ({ ...current, curp: event.target.value.toUpperCase() }))}
-                className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
                 placeholder="AAAA######HXXAAA##"
               />
               {validationErrors.curp ? <span className="text-xs text-crit">{validationErrors.curp}</span> : null}
@@ -1054,7 +1055,7 @@ export function DriverDetailPage() {
                   value={hydratedForm[key] ?? ""}
                   disabled={!editMode}
                   onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                  className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
                 />
               </div>
             ))}
@@ -1395,7 +1396,7 @@ export function DriverDetailPage() {
                         [company.id]: event.target.value,
                       }))
                     }
-                    className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+                    className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
                     placeholder="Notes"
                   />
                   {canManageCompanyAuth ? (
@@ -1470,7 +1471,7 @@ export function DriverDetailPage() {
             <textarea
               value={newQualificationForm.notes}
               onChange={(event) => setNewQualificationForm((current) => ({ ...current, notes: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className={FORM_TEXTAREA_CLASS}
               rows={2}
             />
           </div>
@@ -1524,7 +1525,7 @@ export function DriverDetailPage() {
                 max={new Date().toISOString().slice(0, 10)}
                 value={safetyForm.event_date}
                 onChange={(event) => setSafetyForm((current) => ({ ...current, event_date: event.target.value }))}
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                className={FORM_INPUT_CLASS}
               />
             </div>
             {safetyForm.event_type === "termination" ? (
@@ -1574,7 +1575,7 @@ export function DriverDetailPage() {
               <input
                 value={safetyForm.summary}
                 onChange={(event) => setSafetyForm((current) => ({ ...current, summary: event.target.value }))}
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                className={FORM_INPUT_CLASS}
                 maxLength={500}
               />
             </div>
@@ -1583,7 +1584,7 @@ export function DriverDetailPage() {
               <textarea
                 value={safetyForm.details}
                 onChange={(event) => setSafetyForm((current) => ({ ...current, details: event.target.value }))}
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                className={FORM_TEXTAREA_CLASS}
                 rows={4}
                 maxLength={5000}
               />
@@ -1618,7 +1619,7 @@ export function DriverDetailPage() {
             <textarea
               value={voidReason}
               onChange={(event) => setVoidReason(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className={FORM_TEXTAREA_CLASS}
               rows={4}
               minLength={10}
               maxLength={1000}
@@ -1686,7 +1687,7 @@ export function DriverDetailPage() {
               step="0.0001"
               value={rateChangeForm.amount}
               onChange={(event) => setRateChangeForm((current) => ({ ...current, amount: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className={FORM_INPUT_CLASS}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1711,7 +1712,7 @@ export function DriverDetailPage() {
             <textarea
               value={rateChangeForm.change_notes}
               onChange={(event) => setRateChangeForm((current) => ({ ...current, change_notes: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              className={FORM_TEXTAREA_CLASS}
               rows={2}
             />
           </div>
