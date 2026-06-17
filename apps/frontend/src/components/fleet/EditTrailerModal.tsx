@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { patchTrailer } from "../../api/fleet-trailers";
+import { useToast } from "../../components/Toast";
 import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { FormField } from "../forms/FormField";
@@ -44,8 +45,13 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   const equipment = profileQuery.data?.equipment;
   const primaryPlate = profileQuery.data?.plates?.[0];
 
+  // Initialize once per open so a refetch can't reset the form + wipe edits.
+  const initializedRef = useRef(false);
   useEffect(() => {
-    if (!equipment) return;
+    if (!open) initializedRef.current = false;
+  }, [open]);
+  useEffect(() => {
+    if (!equipment || initializedRef.current) return;
     const next: Record<string, string> = {
       equipment_number: str(equipment.equipment_number),
       vin: str(equipment.vin),
@@ -65,7 +71,8 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
     };
     setBaseline(next);
     setDraft(next);
-  }, [equipment?.id, primaryPlate?.id]);
+    initializedRef.current = true;
+  }, [equipment, primaryPlate]);
 
   const patchPayload = useMemo(() => {
     const patch: Record<string, unknown> = {};
@@ -94,6 +101,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
     return patch;
   }, [draft, baseline]);
 
+  const { pushToast } = useToast();
   const saveMutation = useMutation({
     mutationFn: () => patchTrailer(trailerId, operatingCompanyId, patchPayload),
     onSuccess: () => {
@@ -102,6 +110,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
       onSaved?.();
       onClose();
     },
+    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to save trailer", "error"),
   });
 
   const set = (key: string, value: string) => setDraft((d) => ({ ...d, [key]: value }));
@@ -188,8 +197,13 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
           <Button
             size="sm"
             loading={saveMutation.isPending}
-            disabled={Object.keys(patchPayload).length === 0}
-            onClick={() => saveMutation.mutate()}
+            onClick={() => {
+              if (Object.keys(patchPayload).length === 0) {
+                onClose();
+                return;
+              }
+              saveMutation.mutate();
+            }}
           >
             Save
           </Button>

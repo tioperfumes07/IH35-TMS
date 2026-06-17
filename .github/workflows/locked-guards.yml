@@ -102,6 +102,9 @@ jobs:
       - name: verify:unit-retire-open-wo-gate
         run: npm run verify:unit-retire-open-wo-gate
 
+      - name: verify:fleet-edit-save-wired
+        run: npm run verify:fleet-edit-save-wired
+
       - name: verify:cash-forecast-firewall
         run: npm run verify:cash-forecast-firewall
 
