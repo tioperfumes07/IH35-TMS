@@ -534,54 +534,89 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
-    const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
-      const oldRes = await client.query(
-        `
-          SELECT id, deactivated_at, owner_company_id, currently_leased_to_company_id
-          FROM mdata.equipment
-          WHERE id = $1
-          LIMIT 1
-        `,
-        [parsedParams.data.id]
-      );
-      const oldRow = oldRes.rows[0] ?? null;
-      if (!oldRow) return null;
-
-      // Set the tenant session context the same way the working equipment writes (bulk-update) do,
-      // BEFORE the UPDATE — otherwise the equipment RLS check rejects the soft-delete row (42501,
-      // "new row violates row-level security policy"). Scope to the row's own company (per-entity).
-      const tenantCompanyId =
-        (oldRow.currently_leased_to_company_id as string | null) ?? (oldRow.owner_company_id as string | null);
-      if (tenantCompanyId) {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [tenantCompanyId]);
-      }
-
-      let deactivatedAt = oldRow.deactivated_at as string | null;
-      let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
-      if (!wasAlreadyDeactivated) {
-        const res = await client.query(
+    // DIAGNOSTIC (TEMP — remove once the equipment deactivate 42501 root cause is fixed): capture the
+    // live RLS context on the SAME pooled txn immediately before the failing write, and the EXACT
+    // Postgres error fields (table/schema/where/routine), and surface them in the 500 body so GUARD can
+    // read the root cause directly from the live endpoint. The committed equipment_update policy has
+    // identical USING/WITH CHECK, so a 42501 here is logically impossible from that policy — we must see
+    // which statement/table actually throws and what current_user_role()/is_lucia_bypass() resolve to.
+    const diag: Record<string, unknown> = { authUserRole: authUser.role, authUserUuid: authUser.uuid };
+    try {
+      const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+        const oldRes = await client.query(
           `
-            UPDATE mdata.equipment
-            SET deactivated_at = now(), updated_by_user_id = $2
+            SELECT id, deactivated_at, owner_company_id, currently_leased_to_company_id
+            FROM mdata.equipment
             WHERE id = $1
-              AND deactivated_at IS NULL
-            RETURNING id, deactivated_at
+            LIMIT 1
           `,
-          [parsedParams.data.id, authUser.uuid]
+          [parsedParams.data.id]
         );
-        deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
-        wasAlreadyDeactivated = false;
-      }
+        const oldRow = oldRes.rows[0] ?? null;
+        if (!oldRow) return null;
 
-      await appendCrudAudit(client, authUser.uuid, "mdata.equipment.deactivated", {
-        resource_id: oldRow.id,
-        resource_type: "mdata.equipment",
-        was_already_deactivated: wasAlreadyDeactivated,
+        const tenantCompanyId =
+          (oldRow.currently_leased_to_company_id as string | null) ?? (oldRow.owner_company_id as string | null);
+        if (tenantCompanyId) {
+          await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [tenantCompanyId]);
+        }
+
+        // Probe the runtime RLS context on this exact client/transaction, right before the UPDATE.
+        const probe = await client.query(
+          `SELECT current_setting('app.current_user_id', true)            AS app_current_user_id,
+                  identity.current_user_id()::text                        AS resolved_user_id,
+                  identity.current_user_role()::text                      AS current_user_role,
+                  identity.is_lucia_bypass()                              AS is_lucia_bypass,
+                  current_user::text                                      AS db_session_user,
+                  current_setting('app.operating_company_id', true)       AS app_operating_company_id`
+        );
+        diag.probe = probe.rows?.[0] ?? null;
+        diag.tenantCompanyId = tenantCompanyId;
+
+        let deactivatedAt = oldRow.deactivated_at as string | null;
+        let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
+        if (!wasAlreadyDeactivated) {
+          diag.failingStatement = "UPDATE mdata.equipment SET deactivated_at";
+          const res = await client.query(
+            `
+              UPDATE mdata.equipment
+              SET deactivated_at = now(), updated_by_user_id = $2
+              WHERE id = $1
+                AND deactivated_at IS NULL
+              RETURNING id, deactivated_at
+            `,
+            [parsedParams.data.id, authUser.uuid]
+          );
+          deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
+          wasAlreadyDeactivated = false;
+        }
+
+        diag.failingStatement = "appendCrudAudit";
+        await appendCrudAudit(client, authUser.uuid, "mdata.equipment.deactivated", {
+          resource_id: oldRow.id,
+          resource_type: "mdata.equipment",
+          was_already_deactivated: wasAlreadyDeactivated,
+        });
+
+        return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
       });
-
-      return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
-    });
-    if (!deactivated) return reply.code(404).send({ error: "mdata_equipment_not_found" });
-    return deactivated;
+      if (!deactivated) return reply.code(404).send({ error: "mdata_equipment_not_found" });
+      return deactivated;
+    } catch (err) {
+      const e = err as { code?: string; message?: string; table?: string; schema?: string; column?: string; constraint?: string; where?: string; routine?: string; detail?: string };
+      diag.error = {
+        code: e?.code,
+        message: e?.message,
+        table: e?.table,
+        schema: e?.schema,
+        column: e?.column,
+        constraint: e?.constraint,
+        where: e?.where,
+        routine: e?.routine,
+        detail: e?.detail,
+      };
+      req.log?.error({ diag }, "equipment_deactivate_diagnostic");
+      return reply.code(500).send({ error: "equipment_deactivate_failed", diagnostic: diag });
+    }
   });
 }

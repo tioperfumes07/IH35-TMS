@@ -428,66 +428,98 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
-    const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
-      const oldRes = await client.query(
-        `
-          SELECT id, deactivated_at, status, owner_company_id, currently_leased_to_company_id
-          FROM mdata.units
-          WHERE id = $1
-          LIMIT 1
-        `,
-        [parsedParams.data.id]
-      );
-      const oldRow = oldRes.rows[0] ?? null;
-      if (!oldRow) return null;
-
-      // Set the tenant session context before the UPDATE (same as the working unit bulk-update) so
-      // the units RLS check passes — otherwise the soft-delete row is rejected (42501). Per-entity:
-      // scope to the unit's own company.
-      const tenantCompanyId =
-        (oldRow.currently_leased_to_company_id as string | null) ?? (oldRow.owner_company_id as string | null);
-      if (tenantCompanyId) {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [tenantCompanyId]);
-      }
-
-      let deactivatedAt = oldRow.deactivated_at as string | null;
-      let newStatus = oldRow.status as string | null;
-      let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
-      if (!wasAlreadyDeactivated) {
-        // Set status in the SAME update as deactivated_at — the units list/badge read the `status`
-        // column, so writing only deactivated_at left units reading their old (active) status. There is
-        // no 'Inactive' member in mdata.unit_status; 'OutOfService' is the deactivated state. Preserve
-        // terminal/archive states (Sold/Totaled/Transferred/Damaged) rather than downgrade them.
-        const res = await client.query(
+    // DIAGNOSTIC (TEMP — remove with the equipment counterpart once root cause is fixed): same probe as
+    // mdata/equipment/:id/deactivate. units_update has identical USING/WITH CHECK so a 42501 is logically
+    // impossible from that policy — capture the live RLS context + exact PG error fields and surface them
+    // in the 500 body so GUARD can read which statement/table actually throws.
+    const diag: Record<string, unknown> = { authUserRole: authUser.role, authUserUuid: authUser.uuid };
+    try {
+      const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+        const oldRes = await client.query(
           `
-            UPDATE mdata.units
-            SET deactivated_at = now(),
-                status = CASE
-                  WHEN status IN ('Sold','Totaled','Transferred','Damaged') THEN status
-                  ELSE 'OutOfService'::mdata.unit_status
-                END,
-                updated_by_user_id = $2
+            SELECT id, deactivated_at, status, owner_company_id, currently_leased_to_company_id
+            FROM mdata.units
             WHERE id = $1
-              AND deactivated_at IS NULL
-            RETURNING id, deactivated_at, status
+            LIMIT 1
           `,
-          [parsedParams.data.id, authUser.uuid]
+          [parsedParams.data.id]
         );
-        deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
-        newStatus = (res.rows[0]?.status as string | undefined) ?? newStatus;
-        wasAlreadyDeactivated = false;
-      }
+        const oldRow = oldRes.rows[0] ?? null;
+        if (!oldRow) return null;
 
-      await appendCrudAudit(client, authUser.uuid, "mdata.units.deactivated", {
-        resource_id: oldRow.id,
-        resource_type: "mdata.units",
-        was_already_deactivated: wasAlreadyDeactivated,
+        const tenantCompanyId =
+          (oldRow.currently_leased_to_company_id as string | null) ?? (oldRow.owner_company_id as string | null);
+        if (tenantCompanyId) {
+          await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [tenantCompanyId]);
+        }
+
+        const probe = await client.query(
+          `SELECT current_setting('app.current_user_id', true)            AS app_current_user_id,
+                  identity.current_user_id()::text                        AS resolved_user_id,
+                  identity.current_user_role()::text                      AS current_user_role,
+                  identity.is_lucia_bypass()                              AS is_lucia_bypass,
+                  current_user::text                                      AS db_session_user,
+                  current_setting('app.operating_company_id', true)       AS app_operating_company_id`
+        );
+        diag.probe = probe.rows?.[0] ?? null;
+        diag.tenantCompanyId = tenantCompanyId;
+
+        let deactivatedAt = oldRow.deactivated_at as string | null;
+        let newStatus = oldRow.status as string | null;
+        let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
+        if (!wasAlreadyDeactivated) {
+          // Set status in the SAME update as deactivated_at — the units list/badge read the `status`
+          // column, so writing only deactivated_at left units reading their old (active) status. There is
+          // no 'Inactive' member in mdata.unit_status; 'OutOfService' is the deactivated state. Preserve
+          // terminal/archive states (Sold/Totaled/Transferred/Damaged) rather than downgrade them.
+          diag.failingStatement = "UPDATE mdata.units SET deactivated_at,status";
+          const res = await client.query(
+            `
+              UPDATE mdata.units
+              SET deactivated_at = now(),
+                  status = CASE
+                    WHEN status IN ('Sold','Totaled','Transferred','Damaged') THEN status
+                    ELSE 'OutOfService'::mdata.unit_status
+                  END,
+                  updated_by_user_id = $2
+              WHERE id = $1
+                AND deactivated_at IS NULL
+              RETURNING id, deactivated_at, status
+            `,
+            [parsedParams.data.id, authUser.uuid]
+          );
+          deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
+          newStatus = (res.rows[0]?.status as string | undefined) ?? newStatus;
+          wasAlreadyDeactivated = false;
+        }
+
+        diag.failingStatement = "appendCrudAudit";
+        await appendCrudAudit(client, authUser.uuid, "mdata.units.deactivated", {
+          resource_id: oldRow.id,
+          resource_type: "mdata.units",
+          was_already_deactivated: wasAlreadyDeactivated,
+        });
+
+        return { id: oldRow.id, deactivated_at: deactivatedAt, status: newStatus, was_already_deactivated: wasAlreadyDeactivated };
       });
-
-      return { id: oldRow.id, deactivated_at: deactivatedAt, status: newStatus, was_already_deactivated: wasAlreadyDeactivated };
-    });
-    if (!deactivated) return reply.code(404).send({ error: "mdata_unit_not_found" });
-    return deactivated;
+      if (!deactivated) return reply.code(404).send({ error: "mdata_unit_not_found" });
+      return deactivated;
+    } catch (err) {
+      const e = err as { code?: string; message?: string; table?: string; schema?: string; column?: string; constraint?: string; where?: string; routine?: string; detail?: string };
+      diag.error = {
+        code: e?.code,
+        message: e?.message,
+        table: e?.table,
+        schema: e?.schema,
+        column: e?.column,
+        constraint: e?.constraint,
+        where: e?.where,
+        routine: e?.routine,
+        detail: e?.detail,
+      };
+      req.log?.error({ diag }, "units_deactivate_diagnostic");
+      return reply.code(500).send({ error: "units_deactivate_failed", diagnostic: diag });
+    }
   });
 
   app.post("/api/v1/mdata/units/:id/quick-availability", async (req, reply) => {
