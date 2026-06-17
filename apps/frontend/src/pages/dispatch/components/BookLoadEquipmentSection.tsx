@@ -39,7 +39,10 @@ function toDriverOption(row: unknown, index: number): Option {
   if (!row || typeof row !== "object") return { id: `driver-${index}`, label: `Driver ${index + 1}` };
   const rec = row as Record<string, unknown>;
   const id = typeof rec.id === "string" ? rec.id : `driver-${index}`;
-  const fullName = getTextValue(rec, ["full_name", "display_name", "name"]);
+  // mdata.drivers exposes first_name/last_name (no full_name) — compose from those so the
+  // dropdown shows real names instead of "Driver N".
+  const composed = [getTextValue(rec, ["first_name"]), getTextValue(rec, ["last_name"])].filter(Boolean).join(" ");
+  const fullName = getTextValue(rec, ["full_name", "display_name", "name"]) || composed;
   const shortName = getTextValue(rec, ["short_name", "driver_code"]);
   return { id, label: [fullName, shortName].filter(Boolean).join(" · ") || `Driver ${index + 1}` };
 }
