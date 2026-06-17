@@ -84,11 +84,15 @@ A confirmed late slip on a test load moves the projected-cash bucket by the day 
 lag preserved); posted invoices / AR / QBO untouched; audit row written; anti-thrash holds sub-day
 slips; everything behind OFF flags until GUARD prod-verify.
 
-## Open questions routed to Jorge (before build)
-1. **Receivable lag source of truth** — confirm we read factored-vs-net-terms + the T+1 / net days
-   from the existing customer factoring profile / credit-terms (so the lag isn't hardcoded). Which
-   field/table is canonical?
-2. **Exception surface** — reuse the existing at-risk/late dispatch queue for the proposal, or a
-   dedicated "ETA change" review list?
-3. **Audit table home** — `forecast.predicted_delivery_changes` (proposed, keeps it in the forecast
-   firewall) vs. a dispatch-schema location. Confirm schema placement before the migration.
+## Decisions — LOCKED (Jorge, 2026-06-17). Design APPROVED.
+1. **Receivable lag source** — factored loads → factoring advance timing (Block-20 Option A,
+   ~**T+1** from invoice); non-factored → the customer's **net terms**. Source = the load's
+   factored flag + the per-customer terms field. **Field CONFIRMED to exist** (no additive
+   migration needed): `mdata.customers.payment_terms_id` → `catalogs.payment_terms.days_until_due`
+   (int; migrations 0010 + 0021; per-load override possible at invoice time). Lag is never zero.
+2. **Exception surface** — **REUSE the existing At-Risk queue** on the dispatch board. No separate
+   "ETA change" list.
+3. **Audit table** — **`forecast.*` schema, per-entity (TRANSP)** — keeps the audit inside the
+   forecast firewall. `forecast.predicted_delivery_changes` (DDL above). Not a dispatch schema.
+
+Build follows BLOCK 1 (#1108) merge.
