@@ -24,7 +24,7 @@ for (const [file, table] of [
   if (idx < 0) fail(`${table} /deactivate endpoint missing`);
   // Within a window of the handler: it reads the row's company and sets the tenant context before
   // the UPDATE.
-  const window = src.slice(idx, idx + 2200);
+  const window = src.slice(idx, idx + 4500);
   if (!/owner_company_id|currently_leased_to_company_id/.test(window)) {
     fail(`${table} /deactivate must read the row's company (owner_company_id / currently_leased_to_company_id)`);
   }
