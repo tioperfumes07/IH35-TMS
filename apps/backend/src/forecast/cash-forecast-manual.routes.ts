@@ -33,6 +33,15 @@ const entryBody = z.object({
   ref_kind: z.enum(["account", "unit", "driver", "truck", "trailer"]).nullish(),
   ref_label: z.string().trim().max(200).nullish(),
   ref_external_id: z.string().trim().max(120).nullish(),
+  // Part B snapshot refs (read-only display copies, no FK): income row = load/unit/customer
+  // auto-filled from a picked load; expense row = driver/vendor party.
+  load_ref_id: z.string().trim().max(120).nullish(),
+  load_ref_label: z.string().trim().max(200).nullish(),
+  unit_ref_label: z.string().trim().max(200).nullish(),
+  customer_ref_label: z.string().trim().max(200).nullish(),
+  party_ref_kind: z.enum(["driver", "vendor"]).nullish(),
+  party_ref_id: z.string().trim().max(120).nullish(),
+  party_ref_label: z.string().trim().max(200).nullish(),
 });
 const entryPatch = entryBody.partial().extend({ operating_company_id: z.string().uuid() });
 const openingBalanceBody = z.object({
@@ -66,7 +75,10 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
       if (q.data.to) { values.push(q.data.to); filters.push(`entry_date <= $${values.length}`); }
       const res = await client.query(
         `SELECT id, entry_date, direction, amount_cents, party_name, invoice_no, category, memo,
-                ref_kind, ref_label, ref_external_id, created_at, updated_at
+                ref_kind, ref_label, ref_external_id,
+                load_ref_id, load_ref_label, unit_ref_label, customer_ref_label,
+                party_ref_kind, party_ref_id, party_ref_label,
+                created_at, updated_at
            FROM forecast.cash_entries
           WHERE ${filters.join(" AND ")}
           ORDER BY entry_date ASC, created_at ASC`,
@@ -88,12 +100,18 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
       const res = await client.query(
         `INSERT INTO forecast.cash_entries
            (operating_company_id, entry_date, direction, amount_cents, party_name, invoice_no,
-            category, memo, ref_kind, ref_label, ref_external_id, created_by_user_id, updated_by_user_id)
-         VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::uuid,$12::uuid)
+            category, memo, ref_kind, ref_label, ref_external_id,
+            load_ref_id, load_ref_label, unit_ref_label, customer_ref_label,
+            party_ref_kind, party_ref_id, party_ref_label,
+            created_by_user_id, updated_by_user_id)
+         VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::uuid,$19::uuid)
          RETURNING *`,
         [b.data.operating_company_id, b.data.entry_date, b.data.direction, b.data.amount_cents,
          b.data.party_name ?? null, b.data.invoice_no ?? null, b.data.category ?? null, b.data.memo ?? null,
-         b.data.ref_kind ?? null, b.data.ref_label ?? null, b.data.ref_external_id ?? null, user.uuid]
+         b.data.ref_kind ?? null, b.data.ref_label ?? null, b.data.ref_external_id ?? null,
+         b.data.load_ref_id ?? null, b.data.load_ref_label ?? null, b.data.unit_ref_label ?? null,
+         b.data.customer_ref_label ?? null, b.data.party_ref_kind ?? null, b.data.party_ref_id ?? null,
+         b.data.party_ref_label ?? null, user.uuid]
       );
       const created = res.rows[0];
       await appendCrudAudit(client, user.uuid, "forecast.cash_entry.created", {
@@ -118,6 +136,10 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
       entry_date: b.data.entry_date, direction: b.data.direction, amount_cents: b.data.amount_cents,
       party_name: b.data.party_name, invoice_no: b.data.invoice_no, category: b.data.category, memo: b.data.memo,
       ref_kind: b.data.ref_kind, ref_label: b.data.ref_label, ref_external_id: b.data.ref_external_id,
+      load_ref_id: b.data.load_ref_id, load_ref_label: b.data.load_ref_label,
+      unit_ref_label: b.data.unit_ref_label, customer_ref_label: b.data.customer_ref_label,
+      party_ref_kind: b.data.party_ref_kind, party_ref_id: b.data.party_ref_id,
+      party_ref_label: b.data.party_ref_label,
     };
     const sets: string[] = [];
     const values: unknown[] = [];
