@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useFieldArray, type Control, type UseFormRegister } from "react-hook-form";
+import { useFieldArray, Controller, type Control, type UseFormRegister } from "react-hook-form";
 import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
+import { StateSelect } from "../../../components/forms/StateSelect";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 
@@ -71,7 +72,13 @@ export function BookLoadStopsSection({ control, register }: Props) {
                 />
                 <Field label="Address" input={<input {...register(`stops.${index}.address_line1`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
                 <Field label="City" input={<input {...register(`stops.${index}.city`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
-                <Field label="State" input={<input {...register(`stops.${index}.state`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
+                <Field label="State" input={
+                  <Controller
+                    control={control}
+                    name={`stops.${index}.state`}
+                    render={({ field }) => <StateSelect value={field.value ?? ""} onChange={field.onChange} placeholder="State" />}
+                  />
+                } />
                 <Field label="Country" input={<input {...register(`stops.${index}.country`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
                 <Field label="Appt" input={<input type="datetime-local" {...register(`stops.${index}.scheduled_arrival_at`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
                 <Field label="Window start" input={<input type="datetime-local" {...register(`stops.${index}.appointment_start_at`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
