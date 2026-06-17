@@ -188,5 +188,8 @@ jobs:
       - name: verify:dispatch-filter-toolbar
         run: npm run verify:dispatch-filter-toolbar
 
+      - name: verify:dispatch-kanban-lanes-and-density
+        run: npm run verify:dispatch-kanban-lanes-and-density
+
       - name: verify:form-input-density
         run: npm run verify:form-input-density
