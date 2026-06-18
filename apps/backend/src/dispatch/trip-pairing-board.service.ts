@@ -50,12 +50,16 @@ export type TripPairingBoard = {
 export async function getTripPairingBoard(client: DbClient, operatingCompanyId: string, asOf: Date): Promise<TripPairingBoard> {
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-  // Active trucks (entity-scoped; mdata.units = trucks).
+  // Active trucks (entity-scoped). REAL active fleet only = status 'InService' — the same universe the
+  // fleet/maintenance KPI uses (dashboard-kpis.routes.ts: active_units = FILTER status='InService').
+  // Sold units are deactivated (migration 202606161600); demo/retired/sold are excluded by this filter,
+  // so the KPI is the real fleet (~32), not the all-non-deactivated count (50, which includes demo units).
   const unitsRes = await client.query<{ unit_id: string; unit_number: string | null }>(
     `SELECT u.id::text AS unit_id, u.unit_number
        FROM mdata.units u
       WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-        AND u.deactivated_at IS NULL`,
+        AND u.deactivated_at IS NULL
+        AND u.status::text = 'InService'`,
     [operatingCompanyId]
   );
 
