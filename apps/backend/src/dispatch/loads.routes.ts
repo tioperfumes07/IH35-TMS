@@ -609,7 +609,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `,
         [params.data.id]
       );
-      return { ...load, stops: stopsRes.rows, charges: [], drivers: [] };
+      // Charges are a single rate_total_cents today (no line-item table yet — see the charge-line
+      // follow-on block). Reconstruct one LINEHAUL line so the Edit wizard can prefill + round-trip the
+      // rate; the follow-on block replaces this with real per-line charges.
+      const rateTotal = Number(load.rate_total_cents ?? 0);
+      const charges = rateTotal > 0 ? [{ code: "LINEHAUL", amount_cents: rateTotal }] : [];
+      return { ...load, stops: stopsRes.rows, charges, drivers: [] };
     });
 
     if (!detail) return reply.code(404).send({ error: "dispatch_load_not_found" });
