@@ -51,6 +51,9 @@ jobs:
       - name: verify:no-unused-query-params
         run: npm run verify:no-unused-query-params
 
+      - name: verify:sidebar-items-locked
+        run: npm run verify:sidebar-items-locked
+
       - name: verify:canonical-schema-names
         run: npm run verify:canonical-schema-names
 
