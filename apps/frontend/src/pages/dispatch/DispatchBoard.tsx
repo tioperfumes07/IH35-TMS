@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
-import { listUnitsWithoutLoad, listActiveLoadTriSignals, getDispatchHosClocks, getDispatchLoadPositions, type TriSignalRow, type UnitsWithoutLoad, type DispatchHosClock } from "../../api/dispatch";
+import { listUnitsWithoutLoad, listActiveLoadTriSignals, getDispatchLoadPositions, type TriSignalRow, type UnitsWithoutLoad } from "../../api/dispatch";
 import type { DispatchListProps } from "../../components/dispatch/DispatchList";
 import {
   BulkActionBar,
@@ -211,13 +211,6 @@ function isAtRiskOfLate(load: DispatchLoadRow) {
   );
 }
 
-function formatHoursMinutes(totalMinutes: number) {
-  const safe = Math.max(0, Math.floor(totalMinutes));
-  const hours = Math.floor(safe / 60);
-  const minutes = safe % 60;
-  return `${hours}h ${minutes}m`;
-}
-
 function linehaulCents(load: BoardLoad) {
   if (typeof load.linehaul_cents === "number" && load.linehaul_cents > 0) return load.linehaul_cents;
   return load.rate_total_cents;
@@ -353,30 +346,6 @@ export function DispatchBoard({
 
   const sortedLoads = useMemo(() => sortUnassignedFirst(effectiveLoads), [effectiveLoads]);
 
-  // HOS wiring — the visible drivers' cycle clocks, fetched in ONE batched call from the in-app
-  // HOS store (the same service behind /safety/hos; no Samsara, no separate feed). Feeds the
-  // "Hrs available (cycle)" and "Hrs to reset" columns.
-  const visibleDriverIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const load of sortedLoads) {
-      if (load.assigned_primary_driver_id) ids.add(load.assigned_primary_driver_id);
-    }
-    // Include the default drivers of awaiting (unloaded) trucks so their HOS clocks populate too.
-    for (const unit of unassignedUnits) {
-      if (unit.driver_id) ids.add(unit.driver_id);
-    }
-    return Array.from(ids).sort();
-  }, [sortedLoads, unassignedUnits]);
-
-  const hosClocksQuery = useQuery({
-    queryKey: ["dispatch-board", "hos-clocks", companyId, visibleDriverIds],
-    queryFn: () => getDispatchHosClocks(companyId, visibleDriverIds),
-    enabled: Boolean(companyId) && visibleDriverIds.length > 0,
-    staleTime: 60_000,
-    refetchInterval: 120_000,
-  });
-
-  const hosClockByDriver = hosClocksQuery.data?.clocks_by_driver ?? {};
 
   // Live GPS — last-known position per visible load (in-app Samsara store), one batched call.
   // Replaces the hardcoded null stub so the Live GPS column shows real coordinates when present.
@@ -636,54 +605,18 @@ export function DispatchBoard({
     });
   };
 
-  // DISPATCH-REDESIGN Part B — ONE shared column model so List renders the SAME grid as
-  // Table. Order: Unit · Trailer · Driver · Hrs available (cycle) · Hrs to reset · Load # ·
-  // Customer · Commodity · Pickup · Delivery · WO # · Cargo temp · Linehaul · Status signal ·
-  // Live GPS · Risk · Status. Lane is split into Pickup (City, ST) + Delivery (City, ST).
-  // HOS columns (Hrs available / Hrs to reset) render "—" until the data-source feed is
-  // confirmed (Samsara HOS/ELD vs driver-PWA) — wiring is HELD per Jorge.
-  // HOS cells — bound to the in-app HOS store via the batched cycle-clock query. Green when
-  // healthy, amber when low (approaching the cycle cap), red at 0 — mirrors how /safety/hos flags
-  // "Approaching 11h drive cap". "—" when the load has no driver or the clock isn't loaded yet.
-  const hosClockFor = (load: BoardLoad): DispatchHosClock | null =>
-    load.assigned_primary_driver_id ? hosClockByDriver[load.assigned_primary_driver_id] ?? null : null;
-
-  const renderHosAvailable = (load: BoardLoad) => {
-    const clock = hosClockFor(load);
-    if (!load.assigned_primary_driver_id) return <span className="text-gray-300">—</span>;
-    if (!clock) return <span className="text-gray-400" title="Loading HOS…">—</span>;
-    const low = clock.cycle_remaining_min <= 0;
-    const warn = !low && (clock.cycle_remaining_min <= 480 || clock.status !== "ok");
-    const tone = low ? "text-red-700" : warn ? "text-amber-700" : "text-emerald-700";
-    return (
-      <span className={`font-semibold ${tone}`} title={`70-hour cycle hours available${clock.status !== "ok" ? ` · ${clock.status}` : ""}`}>
-        {formatHoursMinutes(clock.cycle_remaining_min)}
-      </span>
-    );
-  };
-
-  const renderHosToReset = (load: BoardLoad) => {
-    const clock = hosClockFor(load);
-    if (!load.assigned_primary_driver_id) return <span className="text-gray-300">—</span>;
-    if (!clock) return <span className="text-gray-400" title="Loading HOS…">—</span>;
-    if (clock.cycle_reset_in_min == null) return <span className="text-gray-400" title="No cycle hours in the 8-day window">—</span>;
-    const tone = clock.cycle_remaining_min <= 480 ? "text-amber-700" : "text-gray-600";
-    return (
-      <span className={tone} title="Hours until the oldest on-duty time rolls off the 8-day window and the cycle recovers">
-        {formatHoursMinutes(clock.cycle_reset_in_min)}
-      </span>
-    );
-  };
+  // DISPATCH-REDESIGN Part B — ONE shared column model so List renders the SAME grid as Table.
+  // Order: Unit · Trailer · Driver · [6 Samsara HOS clocks] · Load # · Customer · Commodity · Pickup ·
+  // Delivery · WO # · Cargo temp · Linehaul · Status signal · Live GPS · Risk · Status. Lane is split
+  // into Pickup (City, ST) + Delivery (City, ST).
   const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
-    { key: "hrs_available", header: "Hrs available", cell: (load) => renderHosAvailable(load) },
-    { key: "hrs_to_reset", header: "Hrs to reset", cell: (load) => renderHosToReset(load) },
-    // DISPATCH-UI-REFINE-2 ITEM 5 — the locked Samsara 6-clock set on the live board (additive; the
-    // Hrs available/Hrs to reset pair above is kept). Drive/Shift/Break/Cycle = H:MM remaining; Stop By
-    // / Resume At are PROJECTED. Same store + projection as the (unmounted) DispatchList, so the numbers
-    // match once the Samsara HOS feed seeds hos.duty_status_events — until then every cell shows "—".
+    // DISPATCH-UI-REFINE-2 ITEM 5 — the locked Samsara 6-clock set on the live board. The old summary
+    // pair was REMOVED per Jorge (it overlapped Drive/Shift/Cycle and cluttered the grid); only these 6
+    // remain. Drive/Shift/Break/Cycle = H:MM remaining; Stop By / Resume At are PROJECTED. Cells show
+    // "—" until the Samsara HOS feed seeds hos.duty_status_events.
     ...HOS_COLUMNS.map((hosCol) => ({
       key: `hos_${hosCol.key}`,
       header: hosCol.label,

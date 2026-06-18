@@ -25,8 +25,11 @@ if (!/const listColumns = boardColumns/.test(src)) fail("listColumns must alias 
 if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alias boardColumns (List == Table grid)");
 
 // 2. Exact column key order (Lane split into pickup + delivery).
+// Note: the 6 Samsara HOS columns (hos_drive…hos_resumeAt) use template-literal keys and are
+// asserted by verify-dispatch-board-hos-columns; this string-literal order check covers the rest.
+// The old summary pair (hrs_available/hrs_to_reset) was REMOVED per Jorge.
 const expectedOrder = [
-  "unit", "trailer", "driver", "hrs_available", "hrs_to_reset", "load", "customer",
+  "unit", "trailer", "driver", "load", "customer",
   "commodity", "pickup", "delivery", "wo", "cargo_temp", "linehaul", "status_signal",
   "live_gps", "risk", "status",
 ];
@@ -39,10 +42,9 @@ if (foundKeys.join(",") !== expectedOrder.join(",")) {
   fail(`column order drifted.\n  expected: ${expectedOrder.join(",")}\n  found:    ${foundKeys.join(",")}`);
 }
 
-// 3. HOS columns are WIRED to the in-app HOS store (feed resolved 2026-06-17 — /safety/hos
-//    cycle clocks, not Samsara). They must bind to the real cycle-clock renderers.
-if (!/hrs_available[\s\S]{0,120}renderHosAvailable/.test(src)) fail("hrs_available must bind to renderHosAvailable (in-app HOS store)");
-if (!/hrs_to_reset[\s\S]{0,120}renderHosToReset/.test(src)) fail("hrs_to_reset must bind to renderHosToReset (in-app HOS store)");
+// 3. The 6 Samsara HOS columns replace the removed summary pair — bound via DriverHosClockValue.
+//    (Detailed lock in verify-dispatch-board-hos-columns.)
+if (!/HOS_COLUMNS\.map/.test(src) || !/DriverHosClockValue/.test(src)) fail("board must render the 6 HOS_COLUMNS via DriverHosClockValue");
 if (src.includes("Driver HOS feed pending")) fail("HOS placeholder 'feed pending' must be removed — the feed is resolved/wired");
 
 // 4. Three List/Table sections, exact titles. The 3rd is "In shop" (units down for maintenance) —
