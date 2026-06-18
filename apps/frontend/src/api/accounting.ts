@@ -246,6 +246,7 @@ type ExpandedInvoiceBody = {
   internal_notes?: string;
   customer_notes?: string;
   auto_deduct_settlement?: boolean;
+  attachment_draft_id?: string;
 };
 
 function createExpandedInvoice(path: string, operatingCompanyId: string, payload: ExpandedInvoiceBody) {
