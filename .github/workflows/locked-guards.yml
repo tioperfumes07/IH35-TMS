@@ -48,6 +48,9 @@ jobs:
       - name: verify:record-expense-driverless-posting
         run: npm run verify:record-expense-driverless-posting
 
+      - name: verify:no-unused-query-params
+        run: npm run verify:no-unused-query-params
+
       - name: verify:canonical-schema-names
         run: npm run verify:canonical-schema-names
 
