@@ -27,6 +27,9 @@ if (!/SET entity_id = \$4/.test(svc)) fail("helper must set entity_id to the new
 const WIRED = [
   { schemaFile: "apps/backend/src/accounting/expenses.routes.ts", callFile: "apps/backend/src/accounting/expenses.routes.ts", entityType: "expense" },
   { schemaFile: "apps/backend/src/work-orders/work-orders.routes.ts", callFile: "apps/backend/src/work-orders/work-orders.routes.ts", entityType: "work_order" },
+  // The endpoint the Create WO modal ACTUALLY posts to (POST /api/v1/maintenance/work-orders) — the
+  // /api/v1/work-orders reconcile above is on a route the UI doesn't hit, so this is the one that matters.
+  { schemaFile: "apps/backend/src/maintenance/work-orders.routes.ts", callFile: "apps/backend/src/maintenance/work-orders.routes.ts", entityType: "work_order" },
   { schemaFile: "apps/backend/src/accounting/bills.routes.ts", callFile: "apps/backend/src/accounting/bills.service.ts", entityType: "bill" },
   { schemaFile: "apps/backend/src/accounting/invoices.routes.ts", callFile: "apps/backend/src/accounting/invoices.routes.ts", entityType: "invoice" },
   { schemaFile: "apps/backend/src/accounting/payments.routes.ts", callFile: "apps/backend/src/accounting/payments.routes.ts", entityType: "payment" },

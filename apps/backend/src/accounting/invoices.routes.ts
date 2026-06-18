@@ -49,6 +49,10 @@ const expandedInvoiceBodySchema = z.object({
   internal_notes: z.string().trim().max(5000).optional(),
   customer_notes: z.string().trim().max(5000).optional(),
   auto_deduct_settlement: z.boolean().optional(),
+  // Draft id for create-time invoice attachments (rate cons / BOL); reconciled onto the real invoice id
+  // in the same txn. These manual/driver-misc/driver-damage routes are what the invoice modals actually
+  // hit (the plain /accounting/invoices route is a separate path).
+  attachment_draft_id: z.string().uuid().optional().nullable(),
 });
 
 const patchBodySchema = z
@@ -357,6 +361,13 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             internalNotes: body.data.internal_notes,
             customerNotes: body.data.customer_notes,
             autoDeductSettlement: body.data.auto_deduct_settlement,
+          });
+          // Option B: link create-time draft attachments to the real invoice id, atomically in this txn.
+          await reassignDraftAttachments(client, {
+            operatingCompanyId: query.data.operating_company_id,
+            entityType: "invoice",
+            draftId: body.data.attachment_draft_id,
+            newId: created.id,
           });
           await enqueueTmsInvoicePushRequested(client, {
             operating_company_id: query.data.operating_company_id,
