@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listDispatchCancellationReasons } from "../../api/dispatch";
+import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
@@ -29,8 +30,17 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
     enabled: open && Boolean(operatingCompanyId),
   });
 
+  const { user } = useAuth();
+  // Mirrors the backend gate (cancellation.service.ts: isOwner(role) = role === "Owner"). An Owner's
+  // cancel of an approval-required reason resolves INLINE (the backend flips status immediately); a
+  // non-owner's becomes a "requested" cancellation pending an Owner's approval.
+  const isOwner = String(user?.role ?? "") === "Owner";
+
   const reasons = reasonsQuery.data ?? [];
   const selectedReason = reasons.find((reason) => String(reason.reason_code) === reasonCode) ?? null;
+  const needsApproval = Boolean(selectedReason?.requires_owner_approval);
+  const ownerInlineApprove = needsApproval && isOwner;
+  const submitLabel = ownerInlineApprove ? "Approve & Cancel" : needsApproval ? "Submit cancel request" : "Confirm Cancel";
 
   return (
     <Modal open={open} onClose={onClose} title="Cancel Load">
@@ -91,10 +101,16 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
           className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
           placeholder="Cancellation charge (USD, optional)"
         />
-        {selectedReason && Boolean(selectedReason.requires_owner_approval) ? (
-          <div className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-            This reason requires Owner approval before load status flips to cancelled.
-          </div>
+        {needsApproval ? (
+          ownerInlineApprove ? (
+            <div className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+              As Owner, confirming will approve &amp; cancel this load immediately.
+            </div>
+          ) : (
+            <div className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              This will be submitted for Owner approval; the load isn&apos;t cancelled until an Owner approves.
+            </div>
+          )
         ) : null}
         {!selectedReason || notes.trim().length < 20 ? (
           <p className="text-[11px] text-gray-500">
@@ -108,7 +124,7 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
             Close
           </Button>
           <Button type="submit" variant="danger" loading={submitting} disabled={!selectedReason || notes.trim().length < 20}>
-            Confirm Cancel
+            {submitLabel}
           </Button>
         </div>
       </form>
