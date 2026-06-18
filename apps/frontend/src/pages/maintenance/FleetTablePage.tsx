@@ -90,8 +90,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
   const totalRowsQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId, "all"],
     queryFn: async () => {
-      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(buildUnitsUrl(operatingCompanyId, ""));
-      return { rows: payload.units ?? [] };
+      const payload = await apiRequest<{ units: UnifiedUnitRow[]; total?: number }>(buildUnitsUrl(operatingCompanyId, ""));
+      const rows = payload.units ?? [];
+      return { rows, total: payload.total ?? rows.length };
     },
     enabled: Boolean(operatingCompanyId) && typeFilter !== "",
   });
@@ -99,8 +100,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
   const rowsQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId, typeFilter || "all", includeInactive ? "incl-inactive" : "active"],
     queryFn: async () => {
-      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(buildUnitsUrl(operatingCompanyId, typeFilter, includeInactive));
-      return { rows: payload.units ?? [] };
+      const payload = await apiRequest<{ units: UnifiedUnitRow[]; total?: number }>(buildUnitsUrl(operatingCompanyId, typeFilter, includeInactive));
+      const rows = payload.units ?? [];
+      return { rows, total: payload.total ?? rows.length };
     },
     enabled: Boolean(operatingCompanyId),
   });
@@ -130,8 +132,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
     [allRows, kindFilter, effectiveStatus, softDeleteFilter]
   );
 
+  // Use the server's authoritative total (GO-LIVE Block 1A) so the count reflects the FULL fleet, not just
+  // the fetched page — the unified/trailers endpoint previously returned no total, leaving "of 50".
   const totalVehicleCount =
-    typeFilter !== "" ? (totalRowsQuery.data?.rows.length ?? 0) : allRows.length;
+    typeFilter !== "" ? (totalRowsQuery.data?.total ?? 0) : (rowsQuery.data?.total ?? allRows.length);
   const filteredCount = rows.length;
   const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "";
 

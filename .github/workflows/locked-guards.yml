@@ -218,6 +218,9 @@ jobs:
       - name: verify:pcmiler-flag-gated
         run: npm run verify:pcmiler-flag-gated
 
+      - name: verify:units-list-total
+        run: npm run verify:units-list-total
+
       - name: verify:deactivation-trap-fix
         run: npm run verify:deactivation-trap-fix
 

@@ -17,7 +17,8 @@ describe("units unified list", () => {
 
   it("without include param returns truck-only query path", () => {
     expect(unitsRoutes).toMatch(/FROM mdata\.units/);
-    expect(unitsRoutes).toMatch(/return \{ units \}/);
+    // Both list paths return a real server-side total (GO-LIVE Block 1A) so the UI pages the full fleet.
+    expect(unitsRoutes).toMatch(/units: result\.rows, total: result\.total/);
   });
 
   it("reefer_summary populated when reefer_brand/year present", () => {
@@ -66,7 +67,7 @@ describe("units unified list", () => {
       },
     };
 
-    const rows = await fetchUnifiedFleetList(client, {
+    const { rows } = await fetchUnifiedFleetList(client, {
       limit: 500,
       offset: 0,
       operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
@@ -103,7 +104,7 @@ describe("units unified list", () => {
       },
     };
 
-    const rows = await fetchUnifiedFleetList(client, {
+    const { rows } = await fetchUnifiedFleetList(client, {
       limit: 500,
       offset: 0,
       type: "Reefer",

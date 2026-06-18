@@ -152,7 +152,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const { limit, offset, status, type, search, operating_company_id, include, include_inactive } = parsedQuery.data;
 
     if (include === "trailers") {
-      const units = await withCurrentUser(authUser.uuid, async (client) => {
+      const result = await withCurrentUser(authUser.uuid, async (client) => {
         if (operating_company_id) {
           await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
         }
@@ -166,7 +166,8 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           include_inactive,
         });
       });
-      return { units };
+      // Return the real total so the Fleet pager shows the FULL fleet (was "of 50" — page size — before).
+      return { units: result.rows, total: result.total };
     }
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
