@@ -305,6 +305,44 @@ export function getDispatchLoadPositions(operatingCompanyId: string, loadIds: st
   );
 }
 
+// Trip Pairing Board (Block 05).
+export type TripLeg = {
+  load_id: string;
+  trip_type: "NB" | "TR" | "SB";
+  status: string;
+  delivery_city: string | null;
+  delivery_state: string | null;
+  delivery_date: string | null;
+  pickup_date: string | null;
+};
+export type TripPairingUnitRow = {
+  unit_id: string;
+  unit_number: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  tour_id: string | null;
+  legs: TripLeg[];
+  has_nb: boolean;
+  has_sb: boolean;
+  open_return: boolean;
+  return_city: string | null;
+  return_avail_date: string | null;
+  up_north_days: number | null;
+  settlement_signal: "settlement_open" | "round_trip" | null;
+  status: string | null;
+};
+export type TripPairingBoard = {
+  kpis: { active_trucks: number; northbound: number; nb_unbooked: number; southbound: number; sb_unbooked: number; up_north_30d: number };
+  unbooked: { unit_id: string; unit_number: string | null; driver_name: string | null }[];
+  tours: TripPairingUnitRow[];
+  generated_at: string;
+};
+export function getTripPairingBoard(operatingCompanyId: string) {
+  return apiRequest<TripPairingBoard>(
+    `/api/v1/dispatch/trip-pairing-board?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function createDispatchLoad(payload: DispatchBookLoadPayload) {
   return apiRequest<Record<string, unknown>>("/api/v1/dispatch/loads", { method: "POST", body: payload });
 }
