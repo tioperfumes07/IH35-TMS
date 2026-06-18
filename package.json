@@ -625,6 +625,7 @@
     "verify:pcmiler-key-not-exposed": "node scripts/verify-pcmiler-key-not-exposed.mjs",
     "verify:pcmiler-flag-gated": "node scripts/verify-pcmiler-flag-gated.mjs",
     "verify:units-list-total": "node scripts/verify-units-list-total.mjs",
+    "verify:samsara-hos-readiness-no-secret": "node scripts/verify-samsara-hos-readiness-no-secret.mjs",
     "verify:multi-entity-separation": "node scripts/verify-multi-entity-separation.mjs",
     "verify:dispatch-kanban-densities": "node scripts/verify-dispatch-kanban-densities.mjs",
     "verify:dispatch-card-unit-first": "node scripts/verify-dispatch-card-unit-first.mjs",
