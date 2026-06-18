@@ -53,6 +53,7 @@ const createBillBodySchema = z.object({
   amount_cents: z.coerce.number().int().positive(),
   memo: z.string().trim().max(4000).optional(),
   coa_account_id: z.string().uuid().optional(),
+  attachment_draft_id: z.string().uuid().optional().nullable(),
 });
 
 const payBillBodySchema = z.object({
@@ -167,6 +168,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           amountCents: body.data.amount_cents,
           memo: body.data.memo,
           coaAccountId: body.data.coa_account_id,
+          attachmentDraftId: body.data.attachment_draft_id,
         },
         String(user.uuid)
       );

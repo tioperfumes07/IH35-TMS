@@ -93,10 +93,12 @@ the create-time uploads are lost.
 - **Increment 1 (this PR):** shared `reassignDraftAttachments` helper + the two create routes that insert
   the record **inline inside their own transaction** — `POST /api/v1/expenses` (expense) and
   `POST /api/v1/work-orders` (work_order). The reconcile runs in that same txn → fully atomic.
-- **Increment 2 (follow-up PR):** `bill`, `invoice`, `payment` create routes thread the draft id **into
-  their service functions** (`createBill`, invoice/payment services) so the re-key stays inside the
-  service's transaction (doing it in the route after the service returns would be a *separate* txn — an
-  orphan window — so it must go into the service). Same helper, same guard extended.
+- **Increment 2 (DONE):** `bill` threads the draft id into the `createBill` service so the re-key stays
+  inside its `withCurrentUser` txn (doing it in the route after the service returns would be a *separate*
+  txn — an orphan window). `invoice` (`POST /api/v1/accounting/invoices`) and `payment`
+  (`POST /api/v1/accounting/payments`) re-key inside their inline-insert route txns. All 5 create surfaces
+  (expense, work_order, bill, invoice, payment) now thread `attachment_draft_id` and re-key atomically;
+  `verify-attachment-draft-reconcile` locks all 5.
 
 Each increment is its own gated PR with your OK.
 

@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { nextPaymentDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
@@ -40,6 +41,9 @@ const createBodySchema = z.object({
   amount_cents: z.coerce.number().int().positive(),
   deposited_to_account_id: z.string().trim().max(120).optional(),
   notes: z.string().trim().max(5000).optional(),
+  // Draft id for create-time payment attachments (check/ACH/wire confirmations); reconciled onto the
+  // real payment id in the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
+  attachment_draft_id: z.string().uuid().optional().nullable(),
   apply_to: z
     .array(
       z.object({
@@ -260,6 +264,14 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       );
       const payment = paymentRes.rows[0] as { id: string; display_id: string; amount_unapplied_cents: number } | undefined;
       if (!payment?.id) return { code: 500 as const, error: "payment_create_failed" };
+      // Option B inc 2: link create-time draft attachments (check/ACH/wire confirmations) to the real
+      // payment id, atomically in this txn.
+      await reassignDraftAttachments(client, {
+        operatingCompanyId: query.data.operating_company_id,
+        entityType: "payment",
+        draftId: body.data.attachment_draft_id,
+        newId: payment.id,
+      });
 
       let applicationsCount = 0;
       for (const applyRow of body.data.apply_to ?? []) {
