@@ -535,6 +535,7 @@ export function createVendorBill(
     amount_cents: number;
     memo?: string;
     coa_account_id?: string;
+    attachment_draft_id?: string;
   }
 ) {
   return apiRequest<{ bill: VendorBill }>(withCompany(`/api/v1/accounting/bills`, operatingCompanyId), {
