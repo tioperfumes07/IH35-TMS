@@ -5,11 +5,20 @@ type ApAgingBillRowDb = {
   vendor_name: string;
   due_date: string | null;
   outstanding_cents: string | number;
+  vendor_type: string | null;
+  is_intercompany: boolean;
+  is_driver: boolean;
 };
+
+// Display grouping for the "By Vendor Type" A/P view. This is a READ-LAYER map only — it does NOT change
+// mdata.vendors.vendor_type (which must stay reconcilable against QBO). Intercompany + Driver are resolved
+// by vendor IDENTITY, not by the vendor_type enum (see resolveDisplayGroup).
+export type VendorDisplayGroup = "Driver" | "Repair" | "Diesel" | "Insurance" | "Intercompany" | "Other";
 
 export type ApAgingVendorRow = {
   vendor_id: string | null;
   vendor_name: string;
+  display_group: VendorDisplayGroup;
   current: number;
   d1_30: number;
   d31_60: number;
@@ -36,6 +45,23 @@ function parseIsoDateOnly(value: string): number {
   return new Date(`${value}T00:00:00.000Z`).getTime();
 }
 
+// Read-layer mapping (F-c). Priority: vendor IDENTITY (Intercompany, Driver) wins over the vendor_type
+// enum. vendor_type relabels: Fuel→Diesel; Repair/Insurance pass through; everything else rolls up to Other.
+function resolveDisplayGroup(row: { is_intercompany: boolean; is_driver: boolean; vendor_type: string | null }): VendorDisplayGroup {
+  if (row.is_intercompany) return "Intercompany"; // another IH35 entity (entity-independence: its own group)
+  if (row.is_driver) return "Driver"; // driver-settlement vendor (resolved by qbo_vendor_id identity)
+  switch (row.vendor_type) {
+    case "Fuel":
+      return "Diesel";
+    case "Repair":
+      return "Repair";
+    case "Insurance":
+      return "Insurance";
+    default: // Tires, Towing, Permit, Toll, Other, null
+      return "Other";
+  }
+}
+
 export async function getApAgingReport(input: {
   userId: string;
   operating_company_id: string;
@@ -50,7 +76,26 @@ export async function getApAgingReport(input: {
           v.id::text AS vendor_id,
           COALESCE(v.vendor_name, 'Unknown Vendor') AS vendor_name,
           b.due_date::text AS due_date,
-          (b.amount_cents - b.paid_cents)::bigint AS outstanding_cents
+          (b.amount_cents - b.paid_cents)::bigint AS outstanding_cents,
+          v.vendor_type AS vendor_type,
+          -- Intercompany: vendor identity matches ANOTHER active IH35 entity (not the current one).
+          -- Entity independence: the TRK↔TRANSP intercompany line must surface as its own group.
+          COALESCE((
+            SELECT true FROM org.companies c
+            WHERE c.id <> $1::uuid AND c.is_active = true AND v.vendor_name IS NOT NULL
+              AND (
+                v.vendor_name ILIKE '%' || c.short_name || '%'
+                OR v.vendor_name ILIKE '%' || c.legal_name || '%'
+              )
+            LIMIT 1
+          ), false) AS is_intercompany,
+          -- Driver: vendor's qbo_vendor_id matches a driver's qbo_vendor_id, same entity.
+          COALESCE((
+            v.qbo_vendor_id IS NOT NULL AND EXISTS (
+              SELECT 1 FROM mdata.drivers d
+              WHERE d.operating_company_id = $1::uuid AND d.qbo_vendor_id = v.qbo_vendor_id
+            )
+          ), false) AS is_driver
         FROM accounting.bills b
         LEFT JOIN mdata.vendors v
           ON v.id = CASE
@@ -79,6 +124,7 @@ export async function getApAgingReport(input: {
       const vendor = byVendor.get(key) ?? {
         vendor_id: row.vendor_id,
         vendor_name: row.vendor_name,
+        display_group: resolveDisplayGroup(row),
         current: 0,
         d1_30: 0,
         d31_60: 0,
