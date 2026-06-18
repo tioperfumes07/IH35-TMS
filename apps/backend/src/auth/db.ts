@@ -114,6 +114,12 @@ export async function withLuciaBypass<T>(
   const client = await luciaPool.connect();
   try {
     await client.query("BEGIN");
+    // #878 fail-closed: same as withCurrentUser — force the non-superuser app role so the
+    // RLS bypass goes through the explicit `app.bypass_rls=lucia` GUC path below, never an
+    // implicit superuser bypass. If ih35_app can't be assumed the txn fails closed.
+    if (!skipPoolAppRole()) {
+      await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
+    }
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
     await client.query(
       `SET LOCAL app.active_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`
@@ -165,6 +171,17 @@ export async function withCurrentUser<T>(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    // #878 fail-closed: force the non-superuser app role transaction-locally, BEFORE any
+    // tenant SQL runs. The pool's session-level `SET ROLE` (connect handler) can silently
+    // fail or lose the race with the first query, leaving the connection as the DATABASE_URL
+    // login (potentially neondb_owner — a superuser that BYPASSES RLS). `SET LOCAL ROLE`
+    // here guarantees current_user = ih35_app for every scoped query, so RLS is always
+    // enforced; if the role can't be assumed (grant missing) the txn throws and the request
+    // fails closed instead of silently leaking across tenants/entities. Skipped only in the
+    // CI boot-smoke superuser path where ih35_app may not exist.
+    if (!skipPoolAppRole()) {
+      await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
+    }
     await client.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [userUuid]);
     const result = await fn(client);
     await client.query("COMMIT");
