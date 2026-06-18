@@ -5,9 +5,9 @@
 // docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md). This locks: the shared helper exists and is per-OCI
 // scoped, and every create route in scope threads `attachment_draft_id` + calls the helper.
 //
-// Increment 1: expense + work_order (inline-insert txns). Increment 2 (bill/invoice/payment, which route
-// through service fns) extends WIRED below when those land — until then they are listed as PENDING so the
-// guard documents the remaining surfaces rather than silently passing.
+// Increment 1: expense + work_order (inline-insert txns). Increment 2: bill (schema in route, re-key in
+// createBill service txn), invoice + payment (inline-insert route txns). All 5 create surfaces now thread
+// attachment_draft_id and re-key in the same transaction as the record insert.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -22,19 +22,22 @@ if (!/UPDATE documents\.attachments/.test(svc)) fail("helper must UPDATE documen
 if (!/operating_company_id = \$1/.test(svc)) fail("helper must scope the re-key by operating_company_id (per-entity isolation)");
 if (!/SET entity_id = \$4/.test(svc)) fail("helper must set entity_id to the new record id");
 
-// 2) Wired create routes: accept attachment_draft_id + call the helper with the right entity_type.
+// 2) Wired create surfaces: the body schema accepts attachment_draft_id (schemaFile) AND the helper is
+// called with the right entity_type in the same txn as the insert (callFile — the service for bill).
 const WIRED = [
-  { file: "apps/backend/src/accounting/expenses.routes.ts", entityType: "expense" },
-  { file: "apps/backend/src/work-orders/work-orders.routes.ts", entityType: "work_order" },
+  { schemaFile: "apps/backend/src/accounting/expenses.routes.ts", callFile: "apps/backend/src/accounting/expenses.routes.ts", entityType: "expense" },
+  { schemaFile: "apps/backend/src/work-orders/work-orders.routes.ts", callFile: "apps/backend/src/work-orders/work-orders.routes.ts", entityType: "work_order" },
+  { schemaFile: "apps/backend/src/accounting/bills.routes.ts", callFile: "apps/backend/src/accounting/bills.service.ts", entityType: "bill" },
+  { schemaFile: "apps/backend/src/accounting/invoices.routes.ts", callFile: "apps/backend/src/accounting/invoices.routes.ts", entityType: "invoice" },
+  { schemaFile: "apps/backend/src/accounting/payments.routes.ts", callFile: "apps/backend/src/accounting/payments.routes.ts", entityType: "payment" },
 ];
-for (const { file, entityType } of WIRED) {
-  const src = read(file);
-  if (!/attachment_draft_id: z\.string\(\)\.uuid\(\)\.optional\(\)\.nullable\(\)/.test(src))
-    fail(`${file}: create body schema must accept optional attachment_draft_id`);
-  if (!/reassignDraftAttachments\(/.test(src)) fail(`${file}: must call reassignDraftAttachments`);
-  if (!new RegExp(`entityType: "${entityType}"`).test(src)) fail(`${file}: reconcile must use entityType "${entityType}"`);
+for (const { schemaFile, callFile, entityType } of WIRED) {
+  const schema = read(schemaFile);
+  if (!/attachment_draft_id: z\.string\(\)\.uuid\(\)\.optional\(\)\.nullable\(\)/.test(schema))
+    fail(`${schemaFile}: create body schema must accept optional attachment_draft_id (entity ${entityType})`);
+  const call = read(callFile);
+  if (!/reassignDraftAttachments\(/.test(call)) fail(`${callFile}: must call reassignDraftAttachments`);
+  if (!new RegExp(`entityType: "${entityType}"`).test(call)) fail(`${callFile}: reconcile must use entityType "${entityType}"`);
 }
 
-// 3) Increment 2 surfaces — documented as pending so this guard is the running checklist.
-const PENDING = ["bill", "invoice", "payment"];
-console.log(`PASS verify-attachment-draft-reconcile (wired: expense, work_order · pending inc2: ${PENDING.join(", ")})`);
+console.log(`PASS verify-attachment-draft-reconcile (all 5 create surfaces wired: expense, work_order, bill, invoice, payment)`);

@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
+import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
@@ -30,6 +31,9 @@ const createBodySchema = z.object({
   internal_notes: z.string().trim().max(5000).optional(),
   customer_notes: z.string().trim().max(5000).optional(),
   currency_code: z.enum(["USD", "MXN"]).optional(),
+  // Draft id for create-time invoice attachments (rate cons / BOL); reconciled onto the real invoice id
+  // in the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
+  attachment_draft_id: z.string().uuid().optional().nullable(),
 });
 
 const fromLoadBodySchema = z.object({
@@ -256,6 +260,14 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       );
       const invoiceId = String(insertRes.rows[0]?.id ?? "");
       if (!invoiceId) return { code: 500 as const, error: "invoice_create_failed" };
+      // Option B inc 2: link create-time draft attachments (rate cons / BOL) to the real invoice id,
+      // atomically in this txn.
+      await reassignDraftAttachments(client, {
+        operatingCompanyId: query.data.operating_company_id,
+        entityType: "invoice",
+        draftId: body.data.attachment_draft_id,
+        newId: invoiceId,
+      });
       await appendCrudAudit(
         client,
         user.uuid,

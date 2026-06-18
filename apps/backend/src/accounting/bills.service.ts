@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
@@ -23,6 +24,9 @@ type CreateBillInput = {
   amountCents: number;
   memo?: string;
   coaAccountId?: string;
+  // Draft id used by UploadZone for create-time bill attachments; reconciled onto the real bill id in
+  // the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
+  attachmentDraftId?: string | null;
 };
 
 type PayBillInput = {
@@ -529,6 +533,14 @@ export async function createBill(input: CreateBillInput, userId: string) {
     );
     if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
     const created = normalizeBill(res.rows[0]);
+    // Option B inc 2: link create-time draft attachments (vendor invoice scans) to the real bill id,
+    // atomically inside this same transaction so they can't be orphaned.
+    await reassignDraftAttachments(client, {
+      operatingCompanyId: input.operatingCompanyId,
+      entityType: "bill",
+      draftId: input.attachmentDraftId,
+      newId: created.id,
+    });
     await appendCrudAudit(
       client,
       userId,
