@@ -40,6 +40,7 @@ export type SamsaraVehicleStat = {
   formatted_location: string | null;
   city: string | null;
   state: string | null;
+  engine_state: "on" | "off" | "idle" | "unknown";
   current_driver: { samsara_driver_id: string; started_at: string; ended_at: string | null } | null;
   raw: Record<string, unknown>;
 };
@@ -269,6 +270,14 @@ function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicleStat |
   }
   const { city, state } = parseCityState(formatted_location);
 
+  // Engine state from the engineStates stat (Samsara value "On"/"Off"/"Idle") — REAL engine, not derived.
+  let engine_state: SamsaraVehicleStat["engine_state"] = "unknown";
+  const engineStat = asObject(row.engineStates) ?? asObject(row.engineState);
+  const engineVal = typeof engineStat?.value === "string" ? engineStat.value.toLowerCase() : null;
+  if (engineVal === "on") engine_state = "on";
+  else if (engineVal === "off") engine_state = "off";
+  else if (engineVal === "idle") engine_state = "idle";
+
   // Current driver assignment: take the open assignment (no endTime) with the latest startTime.
   let current_driver: SamsaraVehicleStat["current_driver"] = null;
   const assignments = Array.isArray(row.driverAssignments) ? row.driverAssignments : [];
@@ -293,7 +302,7 @@ function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicleStat |
     }
   }
 
-  return { id, latitude, longitude, captured_at, speed_mph, heading_deg, formatted_location, city, state, current_driver, raw: row };
+  return { id, latitude, longitude, captured_at, speed_mph, heading_deg, formatted_location, city, state, engine_state, current_driver, raw: row };
 }
 
 async function fetchSamsaraStatsPage(token: string, after: string | null): Promise<{
@@ -302,7 +311,10 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   cursor: string | null;
 }> {
   const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats`);
-  url.searchParams.set("types", "gps,driverAssignments");
+  // VALID stats types only. driverAssignments is NOT a valid /fleet/vehicles/stats type — including it
+  // 400s the whole request (the bug that left city/state blank). Driver login lives on the separate
+  // /fleet/vehicles/driver-assignments feed (the pairing worker), not here.
+  url.searchParams.set("types", "gps,engineStates");
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {
