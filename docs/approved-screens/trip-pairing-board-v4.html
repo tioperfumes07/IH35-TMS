@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Pairing Board v4 — multi-leg stacking</title>
+<style>
+  :root{
+    --topbar:#0f1219; --navbar:#1b2333; --navy:#1d2b45;
+    --ink:#1f2937; --muted:#6b7280; --line:#dfe3e9; --line2:#eceef2;
+    --bg:#f3f5f8; --card:#fff;
+    --nb:#2563eb; --nbbg:#eff6ff; --nbln:#bfdbfe;
+    --tr:#7c3aed; --trbg:#f5f3ff; --trln:#ddd6fe;
+    --sb:#16a34a; --sbbg:#ecfdf3; --sbln:#bbf7d0;
+    --open:#b45309; --openbg:#fff7ed; --openln:#fcd9a8;
+    --grey:#9aa3af; --greybg:#f7f8fa; --qbo:#2ca01c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;font-size:12px;line-height:1.25}
+
+  .topbar{background:var(--topbar);color:#fff;display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:11px}
+  .topbar .brand{font-weight:800;letter-spacing:.04em;font-size:12px}.topbar .co{color:#aab6cd}.topbar .sp{flex:1}
+  .topbar .pill{color:#cdd6e6;display:flex;align-items:center;gap:5px;font-size:10px}.topbar .pill .d{width:6px;height:6px;border-radius:50%}
+  .d.ok{background:#22c55e}.d.warn{background:#f59e0b}.d.off{background:#64748b}
+  .navbar{background:var(--navbar);color:#cdd6e6;display:flex;gap:2px;padding:0 10px;font-size:10.5px;overflow-x:auto}
+  .navbar a{color:#aab6cd;text-decoration:none;padding:7px 9px;white-space:nowrap;border-bottom:2px solid transparent}
+  .navbar a.on{color:#fff;border-bottom-color:#3b82f6}
+
+  .page{max-width:1320px;margin:0 auto;padding:10px 14px}
+  .h1{font-size:15px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:8px;margin:2px 0 8px}
+  .h1 .sub{font-size:10.5px;font-weight:500;color:var(--muted)}
+
+  .kpis{display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap}
+  .kp{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:5px 11px;display:flex;align-items:center;gap:8px;cursor:pointer}
+  .kp .bar{width:3px;align-self:stretch;border-radius:3px}
+  .kp .n{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .kp .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700;line-height:1.1;max-width:78px}
+  .kp.tot .n{color:#0f172a}.kp.tot .bar{background:#475569}
+  .kp.nb .n{color:var(--nb)}.kp.nb .bar{background:var(--nb)}
+  .kp.sb .n{color:var(--sb)}.kp.sb .bar{background:var(--sb)}
+  .kp.open{background:var(--openbg);border-color:var(--openln)}.kp.open .n{color:var(--open)}.kp.open .k{color:#9a3412}.kp.open .bar{background:var(--open)}
+
+  .qbobar{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap}
+  .qbobar .funnel{display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;font-weight:700;padding:0 4px}
+  .qbobar .funnel svg{width:13px;height:13px;color:var(--qbo)}
+  .fdrop{position:relative}
+  .fdrop select{appearance:none;height:28px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:11px;font-family:inherit;color:#374151;padding:0 24px 0 9px;font-weight:600;cursor:pointer}
+  .fdrop::after{content:"\25BE";position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;color:#9aa3af;pointer-events:none}
+  .qsearch{position:relative;flex:1;min-width:170px}
+  .qsearch input{width:100%;height:28px;border:1px solid var(--line);border-radius:6px;padding:0 9px 0 28px;font-size:11.5px;font-family:inherit}
+  .qsearch svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#9aa3af}
+  .qbobar .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;height:28px}
+  .qbobar .seg button{border:0;border-right:1px solid var(--line);background:#fff;font-size:10.5px;font-weight:700;color:var(--muted);padding:0 9px;cursor:pointer;font-family:inherit}
+  .qbobar .seg button:last-child{border-right:0}
+  .qbobar .seg button.on{background:var(--navy);color:#fff}
+  .qbobar .ico{width:28px;height:28px;border:1px solid var(--line);border-radius:6px;background:#fff;display:grid;place-items:center;cursor:pointer;color:#64748b}
+  .qbobar .ico svg{width:14px;height:14px}
+
+  .zone{display:flex;align-items:center;gap:9px;margin:4px 2px 7px}
+  .zone .lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+  .zone .ct{font-size:10px;font-weight:700;padding:1px 8px;border-radius:11px}
+  .zone.unbk .lbl{color:var(--open)} .zone.unbk .ct{background:var(--openbg);color:var(--open);border:1px solid var(--openln)}
+  .zone.asgn .lbl{color:#0f172a} .zone.asgn .ct{background:#eef2f7;color:#475569;border:1px solid var(--line)}
+  .zone .ln{flex:1;height:1px;background:var(--line)}
+  .zone .hint{font-size:10px;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0}
+
+  .pool{background:var(--openbg);border:1px solid var(--openln);border-radius:9px;padding:9px;display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+  .ucard{background:#fff;border:1px solid var(--openln);border-radius:7px;padding:6px 9px;display:flex;align-items:center;gap:8px;min-width:178px}
+  .ucard .u{font-weight:800;font-size:12.5px;color:#0f172a}
+  .ucard .meta{display:flex;flex-direction:column;gap:1px}
+  .ucard .dv{font-size:10px;color:var(--muted);font-weight:600}
+  .ucard .loc{font-size:10px;color:#9a3412;font-weight:600}
+  .ucard .book{margin-left:auto;background:var(--nb);color:#fff;border:0;border-radius:5px;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;font-family:inherit;white-space:nowrap}
+
+  .board{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .grid{display:grid;grid-template-columns:64px 128px 1fr .9fr 1fr 92px;align-items:stretch}
+  .ghead{font-size:9px;text-transform:uppercase;letter-spacing:.04em;font-weight:800;color:#64748b;padding:6px 8px;border-bottom:1px solid var(--line);background:#fafbfc;position:sticky;top:0;z-index:2}
+  .ghead.nb{color:var(--nb);background:var(--nbbg)}.ghead.tr{color:var(--tr);background:var(--trbg)}.ghead.sb{color:var(--sb);background:var(--sbbg)}
+  .gc{padding:4px 8px;border-bottom:1px solid var(--line2);display:flex;align-items:center;min-height:30px;font-size:11px}
+  /* continuation rows: lighter divider so a multi-leg tour reads as one group */
+  .gc.cont{border-bottom:1px solid var(--line2);background:#fcfcfe}
+  .gc.tourtop{border-top:2px solid #e2e6ec}
+
+  .unit{font-weight:800;color:#0f172a;font-size:11.5px;display:flex;flex-direction:column;gap:1px}
+  .unit .leg-no{font-size:9px;font-weight:700;color:var(--tr);letter-spacing:.02em}
+  .unit.contlbl{color:#94a3b8;font-weight:700;font-size:10px}
+  .unit.contlbl .arrow{color:var(--tr)}
+  .drv{color:#334155;font-weight:600;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .drv .open30{display:block;font-size:9px;color:var(--open);font-weight:700;margin-top:1px}
+
+  .box{border-radius:7px;padding:5px 8px;width:100%;border:1px solid}
+  .box.nb{background:var(--nbbg);border-color:var(--nbln)}
+  .box.tr{background:var(--trbg);border-color:var(--trln)}
+  .box.sb{background:var(--sbbg);border-color:var(--sbln)}
+  .box .top{display:flex;align-items:center;gap:6px}
+  .tg{font-size:8.5px;font-weight:800;color:#fff;padding:1px 6px;border-radius:3px;letter-spacing:.02em;flex:none}
+  .tg.nb{background:var(--nb)}.tg.tr{background:var(--tr)}.tg.sb{background:var(--sb)}
+  .box .lane{font-weight:700;color:#0f172a;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .box .rt{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums;font-size:10.5px;flex:none}
+  .box .bot{display:flex;justify-content:space-between;color:var(--muted);font-size:9.5px;margin-top:2px}
+
+  .open-slot{width:100%;border:1.5px dashed var(--nbln);border-radius:7px;background:#fff;padding:5px 8px;display:flex;flex-direction:column;gap:2px;cursor:pointer}
+  .open-slot .t{font-size:10px;font-weight:800;color:var(--nb);display:flex;align-items:center;gap:5px}
+  .open-slot .c{font-size:9.5px;color:#475569;font-weight:600}
+  .na{color:#c2c8d2;font-size:10px;padding-left:4px}
+
+  .st{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:14px;white-space:nowrap}
+  .st .d{width:6px;height:6px;border-radius:50%}
+  .st.pair{background:var(--sbbg);color:var(--sb)}.st.pair .d{background:var(--sb)}
+  .st.tri{background:var(--trbg);color:var(--tr)}.st.tri .d{background:var(--tr)}
+  .st.open{background:var(--openbg);color:var(--open)}.st.open .d{background:var(--open)}
+  .st.up{background:#fef9c3;color:#854d0e}.st.up .d{background:#ca8a04}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;padding:7px 10px;font-size:10px;color:#64748b;border-top:1px solid var(--line2)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}.legend i{width:10px;height:10px;border-radius:2px}
+  .ann{max-width:1320px;margin:0 auto;padding:0 14px 6px}
+  .ann .box2{background:#eef6ff;border:1px solid #cfe0ff;border-radius:7px;padding:7px 11px;font-size:11px;color:#1e3a5f}.ann b{color:#1d4ed8}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">IH 35 DISPATCH</span><span class="co">IH 35 Transportation LLC</span><span class="sp"></span>
+  <span class="pill"><span class="d ok"></span>QuickBooks</span>
+  <span class="pill"><span class="d warn"></span>Samsara: stale</span>
+  <span class="pill"><span class="d off"></span>DAT360: not configured</span>
+  <span class="pill"><span class="d ok"></span>QBO sync OK</span>
+</div>
+<div class="navbar">
+  <a>HOME</a><a>FUEL</a><a class="on">DISPATCH</a><a>DRIVER HUB</a><a>MAINTENANCE</a><a>SAFETY</a><a>FLEET</a><a>ACCOUNTING</a><a>BANKING</a><a>CUSTOMERS</a><a>REPORTS</a>
+</div>
+
+<div class="ann"><div class="box2">Render only. A <b>multi-leg tour</b> (driver staying up north) stacks extra <b>triangulation</b> rows UNDER the unit's first row — no new columns. The SB return lands on the last row; the driver's <b>settlement stays open until he's back in Laredo</b>.</div></div>
+
+<div class="page">
+  <div class="h1">Trip Pairing Board <span class="sub">— Northbound &middot; Triangulation(s) &middot; Southbound · settlement closes on return to Laredo</span></div>
+
+  <div class="kpis">
+    <div class="kp tot"><span class="bar"></span><span class="n">32</span><span class="k">Active trucks</span></div>
+    <div class="kp nb"><span class="bar"></span><span class="n">26</span><span class="k">Northbound</span></div>
+    <div class="kp open"><span class="bar"></span><span class="n">6</span><span class="k">NB unbooked</span></div>
+    <div class="kp sb"><span class="bar"></span><span class="n">19</span><span class="k">Southbound</span></div>
+    <div class="kp open"><span class="bar"></span><span class="n">7</span><span class="k">SB unbooked</span></div>
+  </div>
+
+  <div class="qbobar">
+    <span class="funnel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>Filter</span>
+    <span class="fdrop"><select><option>This week · Jun 18–24</option><option>Today</option><option>Custom…</option></select></span>
+    <span class="fdrop"><select><option>Trailer: All</option><option>Reefer</option><option>Dry Van</option><option>Flatbed</option></select></span>
+    <span class="seg"><button class="on">All</button><button>NB</button><button>TR</button><button>SB</button><button>Open returns</button><button>Up north 30d+</button></span>
+    <span class="qsearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input placeholder="Search unit, driver, load #…"></span>
+    <span class="ico" title="Columns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg></span>
+    <span class="ico" title="Export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span>
+  </div>
+
+  <div class="zone unbk">
+    <span class="lbl">Unbooked / available</span><span class="ct">6 units</span>
+    <span class="hint">no trip assigned — book a Northbound to start the tour</span><span class="ln"></span>
+  </div>
+  <div class="pool" id="pool"></div>
+
+  <div class="zone asgn">
+    <span class="lbl">Assigned trips</span><span class="ct">26 units</span>
+    <span class="hint">multi-leg tours stack under the unit · SB return = settlement closes</span><span class="ln"></span>
+  </div>
+  <div class="board">
+    <div class="grid" id="grid">
+      <div class="ghead">Unit</div>
+      <div class="ghead">Driver</div>
+      <div class="ghead nb">&#9650; Northbound (out)</div>
+      <div class="ghead tr">&#9654; Triangulation(s)</div>
+      <div class="ghead sb">&#9660; Southbound (return)</div>
+      <div class="ghead">Status</div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--nb)"></i> NB Northbound</span>
+      <span><i style="background:var(--tr)"></i> TR Triangulation</span>
+      <span><i style="background:var(--sb)"></i> SB Southbound (return)</span>
+      <span><i style="background:var(--open)"></i> Open return = find / publish</span>
+      <span><i style="background:#ca8a04"></i> Up north — settlement open</span>
+    </div>
+  </div>
+</div>
+
+<script>
+var drivers=["A. Saldaña","J. Treviño","M. Cantú","E. de la Rosa","D. Dávila","P. Muñoz","R. Garza","L. Flores","O. Vega","H. Ramos","S. Lara","C. Ibarra","F. Solís","N. Peña","G. Ruiz","B. Castro","V. Mora","T. Reyes","Q. Salas","W. Niño","Y. Tovar","Z. Cruz","A. Mata","J. Ovalle","M. Rico","E. Pardo"];
+var cities=["Dallas TX","Houston TX","Chicago IL","Memphis TN","Atlanta GA","OKC OK","St Louis MO","Nashville TN","Kansas City MO","Indianapolis IN","Columbus OH"];
+function pick(a,i){return a[i%a.length];}
+function money(s){return "$"+(0.4+((s*37)%170)/100).toFixed(2)+"k";}
+
+var units=[];for(var i=0;i<32;i++)units.push("T"+(140+i));
+
+// unbooked pool (6)
+var pool=document.getElementById("pool");
+for(var i=0;i<6;i++){
+  pool.insertAdjacentHTML("beforeend",
+    '<div class="ucard"><span class="u">'+units[i]+'</span>'
+    +'<span class="meta"><span class="dv">'+pick(drivers,i)+'</span><span class="loc">now: Laredo TX</span></span>'
+    +'<button class="book">+ Book NB</button></div>');
+}
+
+var grid=document.getElementById("grid");
+function cellUnit(u,sub,tourtop){return '<div class="gc'+(tourtop?' tourtop':'')+'"><span class="unit">'+u+(sub?'<span class="leg-no">'+sub+'</span>':'')+'</span></div>';}
+function cellCont(label,tourtop){return '<div class="gc cont'+(tourtop?' tourtop':'')+'"><span class="unit contlbl"><span class="arrow">&#8627;</span> '+label+'</span></div>';}
+function cellDrv(d,note,tourtop){return '<div class="gc'+(tourtop?' tourtop':'')+'"><span class="drv">'+d+(note?'<span class="open30">'+note+'</span>':'')+'</span></div>';}
+function cellDrvBlank(){return '<div class="gc cont"></div>';}
+function boxNB(c,d,r,tourtop){return '<div class="gc'+(tourtop?' tourtop':'')+'"><div class="box nb"><div class="top"><span class="tg nb">NB</span><span class="lane">LRD&rarr;'+c+'</span><span class="rt">'+r+'</span></div><div class="bot"><span>pu 6/'+d+'</span><span>del 6/'+(d+2)+'</span></div></div></div>';}
+function boxTR(a,b,d,r,cont){return '<div class="gc'+(cont?' cont':'')+'"><div class="box tr"><div class="top"><span class="tg tr">TR</span><span class="lane">'+a+'&rarr;'+b+'</span><span class="rt">'+r+'</span></div><div class="bot"><span>pu 6/'+d+'</span><span>del 6/'+(d+1)+'</span></div></div></div>';}
+function boxSB(o,d,r,cont){return '<div class="gc'+(cont?' cont':'')+'"><div class="box sb"><div class="top"><span class="tg sb">SB</span><span class="lane">'+o+'&rarr;LRD</span><span class="rt">'+r+'</span></div><div class="bot"><span>pu 6/'+d+'</span><span>del 6/'+(d+1)+'</span></div></div></div>';}
+function openSB(c,d,cont){return '<div class="gc'+(cont?' cont':'')+'"><div class="open-slot"><span class="t">+ Find Southbound</span><span class="c">empty in '+c+' &middot; avail 6/'+d+'</span></div></div>';}
+function naCell(cont){return '<div class="gc'+(cont?' cont':'')+'"><span class="na">&mdash;</span></div>';}
+function stCell(kind,cont,tourtop){var m={pair:['pair','Round trip'],tri:['tri','Triangle'],open:['open','Find return'],up:['up','Up north · settl. open']};var x=m[kind];return '<div class="gc'+(cont?' cont':'')+(tourtop?' tourtop':'')+'"><span class="st '+x[0]+'"><span class="d"></span>'+x[1]+'</span></div>';}
+
+var html="";
+var idx=6;
+
+// --- T146: the long northern tour (NB + 3 TRs + SB) = stacks across 5 rows ---
+(function(){
+  var u=units[idx++], drv="O. Vega";
+  // row 1: NB
+  html+=cellUnit(u,'tour · 5 legs',true)+cellDrv(drv,'21 days up · settlement OPEN',true)+boxNB('Chicago IL',18,money(3),true)+naCell(false)+naCell(false)+stCell('up',false,true);
+  // row 2: TR 1
+  html+=cellCont('leg 2')+cellDrvBlank()+naCell(true)+boxTR('Chicago IL','Detroit MI',24,money(7),true)+naCell(true)+stCell('up',true,false);
+  // row 3: TR 2
+  html+=cellCont('leg 3')+cellDrvBlank()+naCell(true)+boxTR('Detroit MI','Columbus OH',29,money(8),true)+naCell(true)+stCell('up',true,false);
+  // row 4: TR 3
+  html+=cellCont('leg 4')+cellDrvBlank()+naCell(true)+boxTR('Columbus OH','Memphis TN',33,money(6),true)+naCell(true)+stCell('up',true,false);
+  // row 5: SB return -> settlement closes
+  html+=cellCont('leg 5 · home')+cellDrvBlank()+naCell(true)+naCell(true)+boxSB('Memphis TN',36,money(9),true)+stCell('pair',true,false);
+})();
+
+// --- a normal triangle (NB + TR + SB) on a single row group, 2 rows ---
+(function(){
+  var u=units[idx++], drv="J. Treviño";
+  html+=cellUnit(u,'tour · 3 legs',true)+cellDrv(drv,'',true)+boxNB('San Antonio TX',18,money(2),true)+boxTR('San Antonio TX','Houston TX',19,money(4),false)+boxSB('Houston TX',20,money(5),false)+stCell('tri',false,true);
+})();
+
+// --- the rest: simple pairs + open returns + a couple more, single rows ---
+function simpleRow(state){
+  var u=units[idx++], drv=pick(drivers,idx), c=pick(cities,idx), d=18+(idx%5);
+  html+=cellUnit(u,'',true)+cellDrv(drv,'',true);
+  html+=boxNB(c,d,money(idx+1),true);
+  html+=naCell(false);
+  if(state==='pair') html+=boxSB(c,d+2,money(idx+5),false)+stCell('pair',false,true);
+  else html+=openSB(c,d+2,false)+stCell('open',false,true);
+}
+// fill to make the counts feel right: ~15 pairs, ~7 open, (2 tours already above)
+for(var k=0;k<15;k++) simpleRow('pair');
+for(var k=0;k<7;k++) simpleRow('open');
+
+grid.insertAdjacentHTML("beforeend",html);
+</script>
+</body>
+</html>

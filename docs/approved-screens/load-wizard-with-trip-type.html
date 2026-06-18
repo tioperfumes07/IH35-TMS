@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book / Edit Load — with mandatory Trip Type</title>
+<style>
+  :root{
+    --navy:#1d2b45; --navy2:#243352;
+    --ink:#1f2937; --muted:#6b7280; --line:#d6dae1; --line2:#e6e9ee;
+    --bg:#eef1f5; --card:#ffffff; --green:#16a34a; --green2:#15803d;
+    --amber:#b45309; --amberbg:#fff7ed; --amberline:#fed7aa;
+    --blue:#2563eb; --pickbg:#eff6ff; --delbg:#ecfdf3;
+    /* trip-type colors (match the pairing board) */
+    --nb:#2563eb; --nbbg:#eff6ff; --nbln:#bfdbfe;
+    --tr:#7c3aed; --trbg:#f5f3ff; --trln:#ddd6fe;
+    --sb:#16a34a; --sbbg:#ecfdf3; --sbln:#bbf7d0;
+    --fld-h:30px; --fld-fs:12.5px; --lbl-fs:10.5px; --pad:9px; --gap:8px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;font-size:13px;line-height:1.3;padding:18px}
+
+  .wrap{max-width:1220px;margin:0 auto;background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 10px 40px rgba(15,23,42,.18);border:1px solid var(--line)}
+  .bar{background:var(--navy);color:#fff;padding:9px 14px;display:flex;align-items:center;gap:10px}
+  .bar .title{font-size:15px;font-weight:700}
+  .bar .spacer{flex:1}
+  .bar .ts{font-size:10.5px;color:#aab6cd}
+  .bar .x{color:#aab6cd;cursor:pointer;font-size:15px;padding:0 4px}
+  .subbar{background:var(--navy2);color:#cdd6e6;padding:5px 14px;display:flex;align-items:center;gap:10px;font-size:10.5px}
+  .subbar .ldno{background:#0f1a30;border:1px solid #34466a;border-radius:5px;padding:2px 8px;color:#fff;font-weight:600}
+  .subbar .dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
+
+  /* ===== TRIP TYPE BANNER (mandatory) ===== */
+  .triptype{background:#f8fafc;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .triptype .lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#374151;display:flex;align-items:center;gap:6px}
+  .triptype .lbl .req{color:#b91c1c;font-size:13px}
+  .tripseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:46px;background:#fff}
+  .tripseg button{border:0;background:#fff;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:0 18px;border-right:1px solid var(--line)}
+  .tripseg button:last-child{border-right:0}
+  .tripseg .code{font-size:13.5px;font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:6px}
+  .tripseg .desc{font-size:10px;color:var(--muted);font-weight:500}
+  .tripseg button .ico{font-size:12px}
+  .tripseg button.on.nb{background:var(--nbbg);box-shadow:inset 0 -3px 0 var(--nb)} .tripseg button.on.nb .code{color:var(--nb)}
+  .tripseg button.on.tr{background:var(--trbg);box-shadow:inset 0 -3px 0 var(--tr)} .tripseg button.on.tr .code{color:var(--tr)}
+  .tripseg button.on.sb{background:var(--sbbg);box-shadow:inset 0 -3px 0 var(--sb)} .tripseg button.on.sb .code{color:var(--sb)}
+  .triptype .req-msg{font-size:11px;color:#b91c1c;font-weight:600;display:flex;align-items:center;gap:5px}
+  .triptype .req-msg.hide{display:none}
+  .ttpair{display:flex;flex-direction:column;gap:3px;min-width:230px}
+  .ttpair label{font-size:var(--lbl-fs);text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600}
+  .ttpair select{height:var(--fld-h);font-size:var(--fld-fs);padding:2px 8px;border:1px solid var(--line);border-radius:5px;background:#fff;font-family:inherit}
+  .ttpair.hide{display:none}
+  .tt-note{flex-basis:100%;font-size:10.5px;color:#7c2d12;background:var(--amberbg);border:1px solid var(--amberline);border-radius:6px;padding:6px 10px}
+  .tt-note b{color:var(--amber)}
+
+  .body{padding:var(--pad);display:grid;grid-template-columns:1.05fr 1fr;gap:var(--pad)}
+  .full{grid-column:1 / -1}
+  .sec{border:1px solid var(--line);border-radius:7px;background:#fff}
+  .sec>.head{display:flex;align-items:center;gap:7px;padding:6px 9px;border-bottom:1px solid var(--line2);background:#fafbfc;border-radius:7px 7px 0 0}
+  .badge{width:18px;height:18px;border-radius:4px;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center}
+  .sec .head .t{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#374151;text-transform:uppercase}
+  .sec .head .r{margin-left:auto;font-size:10.5px;color:var(--muted)}
+  .sec .in{padding:var(--pad)}
+
+  .row{display:grid;gap:var(--gap);margin-bottom:var(--gap)}
+  .row:last-child{margin-bottom:0}
+  .c2{grid-template-columns:1fr 1fr}
+  .c3{grid-template-columns:1fr 1fr 1fr}
+  .c-cust{grid-template-columns:1.5fr 1fr 1fr}
+  .f{display:flex;flex-direction:column;gap:3px;min-width:0}
+  label{font-size:var(--lbl-fs);text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600}
+  input,select,.fake{height:var(--fld-h);font-size:var(--fld-fs);padding:2px 8px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);width:100%;outline:none;font-family:inherit}
+  select{appearance:auto}
+  input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.12)}
+  input::placeholder{color:#aab1bd}
+  .fake{display:flex;align-items:center;color:#aab1bd;cursor:pointer;justify-content:space-between}
+  .amt{text-align:right;font-variant-numeric:tabular-nums}
+
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;height:var(--fld-h)}
+  .seg button{border:0;background:#fff;font-size:11px;padding:0 11px;cursor:pointer;color:var(--muted);font-weight:600}
+  .seg button.on{background:var(--navy);color:#fff}
+
+  .chg{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line2);padding:5px 0;font-size:12px}
+  .chg:first-child{border-top:0}
+  .chg .qbamt{position:relative;width:118px}
+  .chg .qbamt .dollar{position:absolute;left:7px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px;pointer-events:none}
+  .chg .qbamt input{height:24px;text-align:right;padding-right:7px;padding-left:16px;font-variant-numeric:tabular-nums}
+  .chg.total{font-weight:700;border-top:1.5px solid var(--line);padding-top:7px}
+
+  .stop{border:1px solid var(--line);border-radius:6px;margin-bottom:var(--gap);overflow:hidden}
+  .stop>.sh{display:flex;align-items:center;gap:8px;padding:5px 9px;font-size:10.5px;font-weight:700;letter-spacing:.03em}
+  .stop.pick>.sh{background:var(--pickbg);color:#1e40af}
+  .stop.del>.sh{background:var(--delbg);color:#166534}
+  .tag{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:4px;color:#fff}
+  .pick .tag{background:#2563eb}.del .tag{background:#16a34a}
+  .stop .sh .r{margin-left:auto;font-weight:500;color:var(--muted)}
+  .stop .si{padding:8px 9px;display:grid;gap:var(--gap)}
+  .si .locrow{display:grid;gap:var(--gap);grid-template-columns:1.6fr 1fr .7fr .7fr 1fr .8fr}
+
+  .foot{border-top:1px solid var(--line);padding:9px 14px;display:flex;align-items:center;gap:10px;background:#fafbfc}
+  .foot .sp{flex:1}
+  .foot .prev{font-size:11.5px;color:#475569}
+  .btn{height:32px;padding:0 14px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:600;color:#374151;cursor:pointer}
+  .btn.green{background:var(--green);border-color:var(--green2);color:#fff}
+  .btn.green[disabled]{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="title">Book / Edit Load</div>
+    <div class="spacer"></div>
+    <div class="ts">Thu, Jun 18, 2026</div>
+    <div class="x">&#10005;</div>
+  </div>
+  <div class="subbar">
+    <span>LOAD #</span><span class="ldno">L&ndash;20260618&ndash;0007</span>
+    <span class="dot"></span><span>Reserved</span>
+    <span class="spacer" style="flex:1"></span>
+    <span>Unit <b style="color:#fff">T140</b></span>
+  </div>
+
+  <!-- ===== MANDATORY TRIP TYPE ===== -->
+  <div class="triptype">
+    <span class="lbl">Trip type <span class="req">*</span></span>
+    <div class="tripseg" id="tripseg">
+      <button class="nb on" data-t="nb"><span class="code"><span class="ico">&#9650;</span> NB &middot; Northbound</span><span class="desc">Border &rarr; US interior</span></button>
+      <button class="tr" data-t="tr"><span class="code"><span class="ico">&#9654;</span> TR &middot; Triangulation</span><span class="desc">Connecting leg (stay up north)</span></button>
+      <button class="sb" data-t="sb"><span class="code"><span class="ico">&#9660;</span> SB &middot; Southbound</span><span class="desc">US interior &rarr; border (return)</span></button>
+    </div>
+
+    <div class="ttpair hide" id="ttpair">
+      <label>Part of unit's tour — follows</label>
+      <select>
+        <option>&mdash; select prior leg &mdash;</option>
+        <option>T140 &middot; NB &middot; L&ndash;0001 (LRD&rarr;Chicago, del 6/24)</option>
+        <option>T140 &middot; TR &middot; L&ndash;0009 (Chicago&rarr;Detroit)</option>
+      </select>
+    </div>
+
+    <span class="req-msg hide" id="reqMsg">&#9888; Trip type is required to book</span>
+
+    <div class="tt-note">
+      Every load must be classified <b>NB</b>, <b>TR</b>, or <b>SB</b>. Booking a <b>Northbound</b> immediately surfaces the unit on the <b>Trip Pairing Board</b> so the desk can work the Southbound return. <b>TR</b> and <b>SB</b> legs link to the unit's existing tour; the driver's settlement closes when the <b>SB</b> leg returns to Laredo.
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- SECTION A -->
+    <section class="sec">
+      <div class="head"><div class="badge">A</div><div class="t">Customer &middot; Invoice &middot; Charges</div><div class="r">Section total <b>$0.00</b></div></div>
+      <div class="in">
+        <div class="row c-cust">
+          <div class="f"><label>Customer</label><input placeholder="Search customer&hellip;"></div>
+          <div class="f"><label>Customer WO #</label><input></div>
+          <div class="f"><label>Pickup #</label><input></div>
+        </div>
+        <div class="row c-cust">
+          <div class="f"><label>Type</label><div class="seg"><button class="on">Broker</button><button>Direct</button></div></div>
+          <div class="f"><label>Commodity</label><input></div>
+          <div class="f"><label>Weight (lbs)</label><input class="amt" placeholder="0"></div>
+        </div>
+        <div style="border-top:1px solid var(--line2);margin:8px 0 2px"></div>
+        <div class="chg"><span>Linehaul</span><span class="qbamt"><span class="dollar">$</span><input value="0.00"></span></div>
+        <div class="chg"><span>Fuel surcharge</span><span class="qbamt"><span class="dollar">$</span><input value="0.00"></span></div>
+        <div class="chg total"><span>Total customer invoice</span><span>$0.00</span></div>
+      </div>
+    </section>
+
+    <!-- SECTION B -->
+    <section class="sec">
+      <div class="head"><div class="badge">B</div><div class="t">Equipment &middot; Driver &middot; Trailer</div><div class="r">Class <b>&mdash;</b></div></div>
+      <div class="in">
+        <div class="row c3">
+          <div class="f"><label>Trailer type</label><select><option value="">Select&hellip;</option><option>Reefer</option><option>Flatbed</option><option>Dry Van</option></select></div>
+          <div class="f"><label>Truck unit</label><input placeholder="T140" value="T140"></div>
+          <div class="f"><label>Trailer unit</label><input placeholder="Select&hellip;"></div>
+        </div>
+        <div class="row c3">
+          <div class="f"><label>Driver</label><input placeholder="A. Saldaña" value="A. Saldaña"></div>
+          <div class="f"><label>Team driver</label><input placeholder="&mdash;"></div>
+          <div class="f"><label>Assignment</label><div class="seg"><button class="on">Solo</button><button>Team</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION C -->
+    <section class="sec full">
+      <div class="head"><div class="badge">C</div><div class="t">Stops &middot; PC*MILER Routing</div><div class="r">1 pickup &middot; 1 delivery</div></div>
+      <div class="in">
+        <div class="stop pick">
+          <div class="sh"><span class="tag">PICKUP</span><span>Stop 1</span><span class="r">auto &mdash; first stop is always a pickup</span></div>
+          <div class="si">
+            <div class="locrow">
+              <div class="f"><label>Address</label><input placeholder="Street address&hellip;"></div>
+              <div class="f"><label>City</label><input value="Laredo" placeholder="City&hellip;"></div>
+              <div class="f"><label>St</label><select><option>TX</option></select></div>
+              <div class="f"><label>Zip</label><input class="amt" placeholder="78040"></div>
+              <div class="f"><label>Date</label><div class="fake">Mon 6/22 <span>&#128197;</span></div></div>
+              <div class="f"><label>Time</label><input type="time" value="08:00"></div>
+            </div>
+          </div>
+        </div>
+        <div class="stop del">
+          <div class="sh"><span class="tag">DELIVERY</span><span>Stop 2</span><span class="r">delivery city &rarr; feeds the pairing board &amp; DAT360 search</span></div>
+          <div class="si">
+            <div class="locrow">
+              <div class="f"><label>Address</label><input placeholder="Street address&hellip;"></div>
+              <div class="f"><label>City</label><input value="Chicago" placeholder="City&hellip;"></div>
+              <div class="f"><label>St</label><select><option>IL</option></select></div>
+              <div class="f"><label>Zip</label><input class="amt" placeholder="60601"></div>
+              <div class="f"><label>Date</label><div class="fake">Wed 6/24 <span>&#128197;</span></div></div>
+              <div class="f"><label>Time</label><input type="time" value="14:00"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="foot">
+    <span class="prev">Trip type: <b id="footTT" style="color:var(--nb)">NB · Northbound</b> &middot; on save, T140 appears on the board with an open Southbound return from Chicago</span>
+    <span class="sp"></span>
+    <button class="btn">Cancel</button>
+    <button class="btn green" id="saveBtn">Book load</button>
+  </div>
+</div>
+
+<script>
+var seg=document.getElementById("tripseg");
+var ttpair=document.getElementById("ttpair");
+var footTT=document.getElementById("footTT");
+var reqMsg=document.getElementById("reqMsg");
+var labels={nb:"NB · Northbound",tr:"TR · Triangulation",sb:"SB · Southbound"};
+var colors={nb:"var(--nb)",tr:"var(--tr)",sb:"var(--sb)"};
+seg.querySelectorAll("button").forEach(function(b){
+  b.addEventListener("click",function(){
+    seg.querySelectorAll("button").forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on");
+    var t=b.getAttribute("data-t");
+    footTT.textContent=labels[t]; footTT.style.color=colors[t];
+    // TR and SB belong to an existing tour -> show the link selector
+    if(t==="tr"||t==="sb"){ ttpair.classList.remove("hide"); } else { ttpair.classList.add("hide"); }
+    reqMsg.classList.add("hide");
+  });
+});
+</script>
+</body>
+</html>
