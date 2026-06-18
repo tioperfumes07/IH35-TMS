@@ -9,11 +9,17 @@ vi.mock("../../api/dispatch", () => ({
     reasons: [
       { reason_code: "CUSTOMER_CANCELLED", reason_label: "Customer cancelled", requires_owner_approval: false },
       { reason_code: "EQUIPMENT_ISSUE", reason_label: "Equipment issue", requires_owner_approval: false },
-      { reason_code: "WEATHER", reason_label: "Weather", requires_owner_approval: false },
+      { reason_code: "DRIVER_WALKOFF", reason_label: "Driver walk-off", requires_owner_approval: true },
     ],
   }),
 }));
 
+// Mock current user so the modal's role-aware branch is deterministic (default Owner; overridden per test).
+vi.mock("../../api/identity", () => ({
+  getMe: vi.fn().mockResolvedValue({ user: { role: "Owner" }, session: {} }),
+}));
+
+import { getMe } from "../../api/identity";
 import { CancelLoadModal } from "./CancelLoadModal";
 
 function renderWithClient(ui: ReactElement) {
@@ -52,5 +58,27 @@ describe("CancelLoadModal — reason selection enables + submits", () => {
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ reason_code: "CUSTOMER_CANCELLED", billable_to_customer: false })
     );
+  });
+
+  it("Owner + approval-required reason → 'Approve & Cancel' (inline approve, not a dead-end)", async () => {
+    vi.mocked(getMe).mockResolvedValue({ user: { role: "Owner" }, session: {} } as never);
+    renderWithClient(
+      <CancelLoadModal open operatingCompanyId="91e0bf0a-133f-4ce8-a734-2586cfa66d96" onClose={vi.fn()} onSubmit={vi.fn()} />
+    );
+    fireEvent.focus(screen.getByPlaceholderText(/Select reason/i));
+    fireEvent.click(await screen.findByRole("option", { name: /Driver walk-off/i }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Approve & Cancel/i })).toBeInTheDocument());
+    expect(screen.getByText(/approve & cancel this load immediately/i)).toBeInTheDocument();
+  });
+
+  it("non-owner + approval-required reason → 'Submit cancel request'", async () => {
+    vi.mocked(getMe).mockResolvedValue({ user: { role: "Dispatcher" }, session: {} } as never);
+    renderWithClient(
+      <CancelLoadModal open operatingCompanyId="91e0bf0a-133f-4ce8-a734-2586cfa66d96" onClose={vi.fn()} onSubmit={vi.fn()} />
+    );
+    fireEvent.focus(screen.getByPlaceholderText(/Select reason/i));
+    fireEvent.click(await screen.findByRole("option", { name: /Driver walk-off/i }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Submit cancel request/i })).toBeInTheDocument());
+    expect(screen.getByText(/submitted for Owner approval/i)).toBeInTheDocument();
   });
 });
