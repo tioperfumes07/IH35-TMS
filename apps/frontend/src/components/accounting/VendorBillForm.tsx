@@ -17,6 +17,9 @@ export type VendorBillFormSubmitPayload = {
   amount_cents: number;
   memo?: string;
   coa_account_id?: string;
+  // Draft id used by UploadZone for create-time attachments; sent so the backend reconciles the
+  // uploaded files onto the new bill (Option B — otherwise the attachment orphans).
+  attachment_draft_id?: string;
 };
 
 type Props = {
@@ -118,6 +121,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
       amount_cents: totalCents,
       memo: memoParts.join(" · "),
       coa_account_id: accountQboId && accountQboId.includes("-") ? accountQboId : undefined,
+      attachment_draft_id: draftAttachmentEntityId,
     });
   }
 
