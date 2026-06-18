@@ -301,6 +301,7 @@
     "verify:expense-gl-posting": "node scripts/verify-expense-gl-posting.mjs",
     "verify:record-expense-driverless-posting": "node scripts/verify-record-expense-driverless-posting.mjs",
     "verify:no-unused-query-params": "node scripts/verify-no-unused-query-params.mjs",
+    "verify:sidebar-items-locked": "node scripts/verify-sidebar-items-locked.mjs",
     "verify:uncategorized-expense-mapping": "node scripts/verify-uncategorized-expense-mapping.mjs",
     "verify:no-policy-unit-is-active": "node scripts/verify-no-policy-unit-is-active.mjs",
     "verify:qbo-customer-sync-tenant-chain": "node scripts/verify-qbo-customer-sync-tenant-chain.mjs",
