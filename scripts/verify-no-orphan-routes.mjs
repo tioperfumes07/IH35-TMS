@@ -48,15 +48,6 @@ const ALLOWLIST = new Map([
   ["registerSettlementApprovalRoutes", "UNSAFE — collides with SettlementsMvp on /settlements/:id/approve"],
   ["registerSettlementDisputeRoutes", "UNSAFE — namespace collision with mounted settlement-disputes"],
   // --- In-flight mount PRs (remove once merged) ---
-  ["registerLoadSettlementSummaryRoutes", "in-flight mount PR #988"],
-  ["registerEscrowDeductionPendingRoutes", "mounted in #982 (allowlisted until local main catches up)"],
-  ["registerLoadProfitabilityRoutes", "in-flight mount PR #992"],
-  ["registerLoadGeofenceTimelineRoutes", "in-flight mount PR #992"],
-  ["registerDriverCommunicationsRoutes", "in-flight mount PR #992"],
-  ["registerMaintenancePartsMasterRoutes", "in-flight mount PR #992"],
-  ["registerMaintenanceServicesCatalogRoutes", "in-flight mount PR #992"],
-  ["registerDamagePhotoEvidenceRoutes", "in-flight mount PR #992"],
-  ["registerEdiRoutes", "in-flight mount PR #992"],
   // --- Newly surfaced by this guard (2026-06) — backlog, not yet triaged for frontend usage.
   //     Each is genuinely unmounted (0 call sites). TODO: triage real-404-bug vs dead-code, then
   //     either mount + remove from this list, or recategorize as dead code. ---
@@ -64,13 +55,8 @@ const ALLOWLIST = new Map([
   ["registerMaintenanceCatalogRoutes", "backlog — catalog aggregator, unmounted; triage pending"],
   ["registerFuelFraudAlertRoutes", "backlog — unmounted; triage pending"],
   ["registerActiveDriverSetRoutes", "backlog — samsara, unmounted; triage pending"],
-  ["registerCap12TireTreadRoutes", "backlog — samsara, unmounted; triage pending"],
-  ["registerCap13BrakeWearRoutes", "backlog — samsara, unmounted; triage pending"],
-  ["registerGeofenceStateMachineRoutes", "backlog — samsara, unmounted; triage pending"],
   ["registerPreFlightDvirRoutes", "backlog — unmounted; triage pending"],
-  ["registerReportCategoryCatalogRoutes", "backlog — unmounted; triage pending"],
   ["registerForm425cExhibitsRoutes", "backlog — unmounted; triage pending"],
-  ["registerPhotoComparisonRoutes", "backlog — unmounted; triage pending"],
 ]);
 
 function walk(dir, out = []) {
