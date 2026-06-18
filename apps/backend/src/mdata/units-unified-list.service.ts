@@ -72,7 +72,7 @@ export async function fetchUnifiedFleetList(
     limit: number;
     offset: number;
   }
-): Promise<UnifiedFleetRow[]> {
+): Promise<{ rows: UnifiedFleetRow[]; total: number }> {
   const truckValues: unknown[] = [];
   const truckFilters: string[] = [excludeDemoPhantomSql("unit_number")];
   if (!options.include_inactive) truckFilters.push("deactivated_at IS NULL");
@@ -197,5 +197,7 @@ export async function fetchUnifiedFleetList(
   const merged = [...trucks, ...trailers].sort((a, b) =>
     a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true })
   );
-  return merged.slice(options.offset, options.offset + options.limit);
+  // total = the FULL merged fleet count (before paging) so the UI pages through every truck+trailer,
+  // not just the current page (the unified/trailers path previously returned no total → UI showed "of 50").
+  return { rows: merged.slice(options.offset, options.offset + options.limit), total: merged.length };
 }
