@@ -681,9 +681,11 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
     amount_cents: number | null;
     description: string | null;
     expense_category_uuid: string | null;
+    expense_account_uuid: string | null;
   }>(
     `
-      SELECT id::text, line_sequence, amount_cents::bigint, description, expense_category_uuid::text
+      SELECT id::text, line_sequence, amount_cents::bigint, description,
+             expense_category_uuid::text, expense_account_uuid::text
       FROM accounting.expense_lines
       WHERE expense_id = $1::uuid
       ORDER BY line_sequence ASC
@@ -714,7 +716,14 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
       const amountCents = row.amount_cents != null ? Number(row.amount_cents) : 0;
       let accountId: string | null = null;
       let method: string | null = null;
-      if (row.expense_category_uuid) {
+      // Prefer a DIRECT GL account on the line (e.g. driverless Record-Expense, where the form's QBO
+      // category was resolved server-side to a catalogs.accounts id). Falls back to the existing
+      // category→metadata.account_id mapping, then the uncategorized role.
+      if (row.expense_account_uuid) {
+        accountId = row.expense_account_uuid;
+        method = "line_direct_account";
+      }
+      if (!accountId && row.expense_category_uuid) {
         accountId = await resolveBillCategoryAccount(client, row.expense_category_uuid);
         if (accountId) method = "expense_category_mapping";
       }

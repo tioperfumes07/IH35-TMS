@@ -545,6 +545,27 @@ export function createVendorBill(
   });
 }
 
+// Driverless, categorized cash-out expense → accounting.expenses (NOT a bill). category_qbo_id is the
+// form's QBO expense account; the backend resolves it to a catalogs.accounts GL id (entity-scoped) and
+// posts DR category / CR payment account through the existing engine (when EXPENSE_GL_POSTING_ENABLED).
+export function createExpense(
+  operatingCompanyId: string,
+  body: {
+    category_qbo_id: string;
+    expense_date: string;
+    amount_cents: number;
+    payment_account_uuid: string;
+    vendor_uuid?: string;
+    memo?: string;
+    attachment_draft_id?: string;
+  }
+) {
+  return apiRequest<{ expense_id: string; posting_status: "posted" | "unposted"; journal_entry_id: string | null }>(
+    "/api/v1/expenses",
+    { method: "POST", body: { operating_company_id: operatingCompanyId, ...body } }
+  );
+}
+
 export function voidVendorBillPayment(id: string, operatingCompanyId: string, reason: string) {
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/bill-payments/${id}/void`, operatingCompanyId), {
     method: "POST",

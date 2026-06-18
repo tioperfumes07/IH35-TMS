@@ -3,9 +3,11 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWoCostContext } from "../../api/maintenance";
 import { listUnits } from "../../api/mdata";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Button } from "../Button";
 import { QboCombobox } from "../forms/QboCombobox";
 import { SelectCombobox } from "../shared/SelectCombobox";
+import { UploadZone } from "../UploadZone";
 import {
   initialRecordExpenseFormValues,
   RECORD_EXPENSE_PAYMENT_METHODS,
@@ -31,6 +33,7 @@ export function RecordExpenseForm({
   const [values, setValues] = useState<RecordExpenseFormValues>(initialRecordExpenseFormValues);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
 
   const costContextQuery = useQuery({
     queryKey: ["record-expense", "cost-context", operatingCompanyId],
@@ -43,6 +46,24 @@ export function RecordExpenseForm({
     queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId),
   });
+  const paymentAccountsQuery = useQuery({
+    queryKey: ["record-expense", "payment-accounts", operatingCompanyId],
+    queryFn: () => listCatalogAccounts({ status: "active", limit: 300 }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+
+  // Payment account = the cash/bank account the expense was paid FROM → postable Asset accounts.
+  const paymentAccountOptions = useMemo(
+    () =>
+      (paymentAccountsQuery.data?.accounts ?? [])
+        .filter((acct) => acct.is_postable && acct.account_type === "Asset" && !acct.deactivated_at)
+        .map((acct) => ({
+          id: acct.id,
+          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+        })),
+    [paymentAccountsQuery.data?.accounts]
+  );
 
   const categoryOptions = useMemo(
     () =>
@@ -63,8 +84,9 @@ export function RecordExpenseForm({
     setSubmitting(true);
     setError(null);
     try {
-      await submitRecordExpense(operatingCompanyId, values);
+      await submitRecordExpense(operatingCompanyId, values, draftAttachmentEntityId);
       setValues(initialRecordExpenseFormValues());
+      setDraftAttachmentEntityId(crypto.randomUUID());
       onSubmitted?.();
     } catch (submitError) {
       setError(String((submitError as Error).message || "Failed to record expense"));
@@ -86,7 +108,10 @@ export function RecordExpenseForm({
             value={values.vendorId}
             displayValue={values.vendorDisplay}
             onChange={(qboId, displayName) => {
-              setValues((prev) => ({ ...prev, vendorId: qboId, vendorDisplay: displayName }));
+              setValues((prev) => ({ ...prev, vendorId: qboId, vendorDisplay: displayName, vendorUuid: null }));
+            }}
+            onPick={(row) => {
+              setValues((prev) => ({ ...prev, vendorId: row.qbo_id, vendorUuid: row.id, vendorDisplay: row.display_name }));
             }}
           />
         </div>
@@ -204,6 +229,40 @@ export function RecordExpenseForm({
           </SelectCombobox>
         </div>
       </label>
+
+      <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("payment-account")}>
+        Payment account *
+        <div className="mt-1">
+          <SelectCombobox
+            id={fieldId("payment-account")}
+            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            value={values.paymentAccountId}
+            onChange={(event) => {
+              const nextId = event.target.value;
+              const match = paymentAccountOptions.find((row) => row.id === nextId);
+              setValues((prev) => ({ ...prev, paymentAccountId: nextId, paymentAccountLabel: match?.label ?? "" }));
+            }}
+          >
+            <option value="">Select bank/cash account…</option>
+            {paymentAccountOptions.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </div>
+      </label>
+
+      <div>
+        <div className="mb-1 text-xs font-semibold text-gray-700">Receipts &amp; documents</div>
+        <UploadZone
+          operatingCompanyId={operatingCompanyId}
+          entityType="expense"
+          entityId={draftAttachmentEntityId}
+          defaultCategory="vendor_invoice"
+          title="Supporting Documents"
+        />
+      </div>
 
       {error ? <div className="text-sm text-red-600">{error}</div> : null}
 
