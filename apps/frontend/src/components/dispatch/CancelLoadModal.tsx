@@ -96,6 +96,13 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
             This reason requires Owner approval before load status flips to cancelled.
           </div>
         ) : null}
+        {!selectedReason || notes.trim().length < 20 ? (
+          <p className="text-[11px] text-gray-500">
+            {!selectedReason
+              ? "Select a cancellation reason to continue."
+              : `Add ${20 - notes.trim().length} more character(s) of notes to enable Confirm Cancel.`}
+          </p>
+        ) : null}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
             Close

@@ -135,11 +135,11 @@ describe("CreateWOSectionIdentification", () => {
 
     const unitPicker = await screen.findByPlaceholderText("Select unit");
     fireEvent.focus(unitPicker);
-    fireEvent.mouseDown(await screen.findByRole("option", { name: "TRK-100" }));
+    fireEvent.click(await screen.findByRole("option", { name: "TRK-100" }));
 
     const driverPicker = await screen.findByPlaceholderText("Select driver");
     fireEvent.focus(driverPicker);
-    fireEvent.mouseDown(await screen.findByRole("option", { name: "Alex Driver" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Alex Driver" }));
 
     await waitFor(() => {
       expect((document.querySelector('input[name="unit_id"]') as HTMLInputElement).value).toBe("unit-1");

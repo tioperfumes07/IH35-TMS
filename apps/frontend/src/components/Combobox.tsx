@@ -263,10 +263,12 @@ export function Combobox({
                 type="button"
                 role="option"
                 aria-selected={value === option.value}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  commitSelection(option.value);
-                }}
+                // Commit on CLICK (not mouseDown) so touch taps, automation, and assistive
+                // interactions all select — mouseDown-only left the field empty on touch/click-only
+                // input (the load-cancel reason couldn't be picked). mouseDown still preventDefaults to
+                // keep the input focused so the dropdown doesn't blur-close before the click lands.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => commitSelection(option.value)}
                 onMouseEnter={() => setActiveIndex(index)}
                 className={`w-full px-2 py-1.5 text-left text-[13px] ${
                   activeIndex === index ? "bg-sky-50 text-sky-900" : "text-gray-800 hover:bg-gray-50"
@@ -281,8 +283,8 @@ export function Combobox({
               type="button"
               role="option"
               aria-selected={activeIndex === filteredOptions.length}
-              onMouseDown={(event) => {
-                event.preventDefault();
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
                 allowAddNew.onAdd(query.trim());
                 setOpen(false);
                 setQuery("");
