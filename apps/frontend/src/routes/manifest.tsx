@@ -185,6 +185,7 @@ import { SettlementSummaryPage } from "../pages/reports/SettlementSummaryPage";
 import { CustomerProfitabilityPage } from "../pages/reports/CustomerProfitabilityPage";
 import { ProfitPerTruckPage } from "../pages/reports/ProfitPerTruckPage";
 import { LaneProfitabilityPage } from "../pages/reports/LaneProfitabilityPage";
+import { CancellationsReportPage } from "../pages/reports/CancellationsReportPage";
 import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
 import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
@@ -2509,6 +2510,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <LaneProfitabilityPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/cancellations"
+          element={
+            <ProtectedRoute>
+              <CancellationsReportPage />
             </ProtectedRoute>
           }
         />

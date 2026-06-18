@@ -62,6 +62,7 @@ const AUDIT_REPORT_CHILDREN: NavChild[] = [
 export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [
   { label: "Reports", href: "/reports" },
   { label: "Run report", children: flattenReportRunLinks() },
+  { label: "Cancellations", href: "/reports/cancellations" },
   { label: "Audit", children: AUDIT_REPORT_CHILDREN },
 ];
 
@@ -84,6 +85,7 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/maintenance-cost-per-unit" ||
     pathname === "/reports/geofence-dwell" ||
     pathname === "/reports/deadhead" ||
+    pathname === "/reports/cancellations" ||
     pathname === "/reports/scheduled"
   ) {
     return pathname;

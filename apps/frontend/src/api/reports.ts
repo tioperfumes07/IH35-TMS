@@ -900,6 +900,39 @@ export async function getLaneProfitability(params: {
   );
 }
 
+// GAP-10 — Load cancellations analytics report.
+export type CancellationBucket = {
+  key: string;
+  label: string;
+  count: number;
+  total_charge_cents: number;
+  billable_count: number;
+};
+export type CancellationsReportResponse = {
+  operating_company_id: string;
+  from: string | null;
+  to: string | null;
+  total: { count: number; total_charge_cents: number; billable_count: number };
+  by_reason: CancellationBucket[];
+  by_driver: CancellationBucket[];
+  by_customer: CancellationBucket[];
+  by_date: CancellationBucket[];
+};
+
+export async function getCancellationsReport(params: {
+  operating_company_id: string;
+  from?: string;
+  to?: string;
+}): Promise<CancellationsReportResponse> {
+  const q = new URLSearchParams();
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
+  const suffix = q.toString() ? `?${q.toString()}` : "";
+  return apiRequest<CancellationsReportResponse>(
+    withCompany(`/api/v1/dispatch/cancellations-report${suffix}`, params.operating_company_id),
+  );
+}
+
 export async function getLaneProfitabilityLoads(params: {
   operating_company_id: string;
   period_start: string;

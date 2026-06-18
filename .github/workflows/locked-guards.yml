@@ -218,6 +218,9 @@ jobs:
       - name: verify:pcmiler-flag-gated
         run: npm run verify:pcmiler-flag-gated
 
+      - name: verify:cancellations-report-wired
+        run: npm run verify:cancellations-report-wired
+
       - name: verify:units-list-total
         run: npm run verify:units-list-total
 
