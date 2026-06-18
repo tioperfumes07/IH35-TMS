@@ -336,8 +336,11 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           `
             SELECT
               bt.*,
-              CASE WHEN bt.amount_cents >= 0 THEN bt.amount_cents::numeric / 100 ELSE 0 END AS deposits,
-              CASE WHEN bt.amount_cents < 0 THEN abs(bt.amount_cents)::numeric / 100 ELSE 0 END AS withdrawals
+              -- amount_cents is stored SIGNED on the Plaid convention: NEGATIVE = money IN (deposit),
+              -- POSITIVE = money OUT (withdrawal). The register previously mapped >=0 -> deposits, which
+              -- SWAPPED the two columns (a deposit showed under Withdrawals). Corrected to match the sign.
+              CASE WHEN bt.amount_cents < 0 THEN abs(bt.amount_cents)::numeric / 100 ELSE 0 END AS deposits,
+              CASE WHEN bt.amount_cents > 0 THEN bt.amount_cents::numeric / 100 ELSE 0 END AS withdrawals
             FROM banking.bank_transactions bt
             WHERE bt.operating_company_id = $1
               AND bt.bank_account_id = $2
