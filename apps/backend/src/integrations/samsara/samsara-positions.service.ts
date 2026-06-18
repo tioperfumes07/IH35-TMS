@@ -287,6 +287,16 @@ export async function syncSamsaraVehicleStats(
         ? `${error.message}${error.statusCode ? `:http_${error.statusCode}` : ""}`
         : String((error as Error)?.message ?? error);
     errors.push(message);
+    // SURFACE the failure — never swallow. The Samsara error (e.g. an invalid-types 400) lands in
+    // integrations.integration_sync_log so it's visible without prod DB spelunking or a redeploy.
+    await writeSyncLog(client, {
+      operatingCompanyId,
+      success: false,
+      fetched: 0,
+      inserted: 0,
+      skippedNoUnit: 0,
+      errorMessage: message,
+    });
     return { fetched: 0, positions_inserted: 0, drivers_paired: 0, skipped_no_unit: 0, errors };
   }
 
@@ -312,7 +322,7 @@ export async function syncSamsaraVehicleStats(
         lng: stat.longitude,
         speed_mph: stat.speed_mph,
         heading_deg: stat.heading_deg,
-        engine_state: deriveEngineState(null, stat.speed_mph),
+        engine_state: stat.engine_state !== "unknown" ? stat.engine_state : deriveEngineState(null, stat.speed_mph),
         raw_samsara_event_id: `cron:stats:${stat.id}:${stat.captured_at}`,
         payload: stat.raw,
         city: stat.city,

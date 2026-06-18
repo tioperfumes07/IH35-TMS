@@ -16,6 +16,7 @@ import { registerSamsaraLivePositionRoutes } from "./integrations/samsara/positi
 import { registerTriSignalRoutes } from "./dispatch/load-status-signal/tri-signal.routes.js";
 import { initializeSamsaraPositionPollWorker } from "./jobs/samsara-position-poll-worker.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
+import { registerSamsaraStatsProbeRoutes } from "./integrations/samsara/samsara-stats-probe.routes.js";
 import { registerSamsaraHosReadinessRoutes } from "./integrations/samsara/hos-readiness.routes.js";
 import { registerIntegrationHealthRoutes } from "./integrations/integration-health.routes.js";
 import { initializeDataSovereigntyDailySync } from "./integrations/samsara/daily-sync-job.js";
@@ -585,6 +586,7 @@ async function main() {
   await registerSamsaraLivePositionRoutes(app);
   await registerTriSignalRoutes(app);
   await registerSamsaraHealthRoutes(app);
+  await registerSamsaraStatsProbeRoutes(app);
   await registerSamsaraHosReadinessRoutes(app);
   await registerSamsaraVehicleDriverPairingRoutes(app);
   await registerIntegrationHealthRoutes(app);
