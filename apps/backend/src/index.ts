@@ -71,6 +71,7 @@ import { registerLoadSettlementSummaryRoutes } from "./dispatch/load-settlement-
 import { registerLoadProfitabilityRoutes } from "./dispatch/load-profitability.routes.js";
 import { registerCancellationsReportRoutes } from "./dispatch/cancellations-report.routes.js";
 import { registerLoadGeofenceTimelineRoutes } from "./dispatch/load-geofence-timeline.routes.js";
+import { registerTripPairingBoardRoutes } from "./dispatch/trip-pairing-board.routes.js";
 import { registerDriverCommunicationsRoutes } from "./drivers/communications.routes.js";
 import { registerMaintenancePartsMasterRoutes } from "./catalogs/maintenance/parts.routes.js";
 import { registerMaintenanceServicesCatalogRoutes } from "./catalogs/maintenance/services.routes.js";
@@ -705,6 +706,7 @@ async function main() {
   await registerLoadProfitabilityRoutes(app);
   await registerCancellationsReportRoutes(app);
   await registerLoadGeofenceTimelineRoutes(app);
+  await registerTripPairingBoardRoutes(app);
   await registerDriverCommunicationsRoutes(app);
   await registerMaintenancePartsMasterRoutes(app);
   await registerMaintenanceServicesCatalogRoutes(app);
