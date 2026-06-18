@@ -357,8 +357,36 @@ async function downloadBinaryExport(path: string) {
   URL.revokeObjectURL(url);
 }
 
-// Fleet current-location + assigned-driver + HOS export (Samsara). Downloads the .xlsx the
-// /api/v1/telematics/fleet-location-hos endpoint produces (covers ALL reporting vehicles, no 50-cap).
+// Fleet current-location + assigned-driver + HOS (Samsara). Covers ALL reporting vehicles (no 50-cap).
+export type FleetLocationHosRow = {
+  unit_id: string;
+  unit_number: string | null;
+  samsara_vehicle_id: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  lat: number | null;
+  lng: number | null;
+  speed_mph: number | null;
+  heading_deg: number | null;
+  engine_state: string | null;
+  captured_at_utc: string | null;
+  captured_at_local: string | null;
+  minutes_since_fix: number | null;
+  stale: boolean;
+  drive_remaining_min: number | null;
+  window_remaining_min: number | null;
+  break_remaining_min: number | null;
+  cycle_remaining_min: number | null;
+  hos_status: string | null;
+};
+
+export function getFleetLocationHos(operatingCompanyId: string) {
+  return apiRequest<{ rows: FleetLocationHosRow[]; generated_at: string; count: number }>(
+    withCompany(`/api/v1/telematics/fleet-location-hos?format=json`, operatingCompanyId)
+  );
+}
+
+// Downloads the .xlsx the same endpoint produces.
 export async function downloadFleetLocationHosXlsx(operatingCompanyId: string) {
   return downloadBinaryExport(
     withCompany(`/api/v1/telematics/fleet-location-hos?format=xlsx`, operatingCompanyId)

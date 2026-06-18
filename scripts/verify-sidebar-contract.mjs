@@ -25,6 +25,7 @@ const LOCKED_ORDER = [
   "driver-hub",
   "maintenance",
   "safety",
+  "compliance",
   "drivers",
   "fleet",
   "insurance",
