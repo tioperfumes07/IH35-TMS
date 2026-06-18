@@ -357,6 +357,14 @@ async function downloadBinaryExport(path: string) {
   URL.revokeObjectURL(url);
 }
 
+// Fleet current-location + assigned-driver + HOS export (Samsara). Downloads the .xlsx the
+// /api/v1/telematics/fleet-location-hos endpoint produces (covers ALL reporting vehicles, no 50-cap).
+export async function downloadFleetLocationHosXlsx(operatingCompanyId: string) {
+  return downloadBinaryExport(
+    withCompany(`/api/v1/telematics/fleet-location-hos?format=xlsx`, operatingCompanyId)
+  );
+}
+
 export async function getTrialBalanceReport(params: {
   operating_company_id: string;
   from_date?: string;

@@ -104,6 +104,7 @@ import { initializeDocumentAlertEngineCron } from "./drivers/document-alerts.cro
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
 import { registerTelematicsPositionsRoutes } from "./telematics/positions.routes.js";
+import { registerFleetLocationHosRoutes } from "./telematics/fleet-location-hos.routes.js";
 import { registerDriverDaySummaryRoutes } from "./telematics/driver-day-summary.routes.js";
 import { registerTelematicsHeatmapRoutes } from "./telematics/heatmap.routes.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
@@ -744,6 +745,7 @@ async function main() {
   await registerTelematicsHeatmapRoutes(app);
   await registerDashcamOnDemandRoutes(app);
   await registerTelematicsPositionsRoutes(app);
+  await registerFleetLocationHosRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
   await registerPreSettlementRoutes(app);
   await registerC1PreSettlementsRoutes(app);
