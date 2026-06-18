@@ -4,7 +4,7 @@ type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unk
 
 // In-flight load statuses where a driver is actually in the truck "now" (mdata.load_status_enum).
 // Excludes pre-assignment (draft/booked/planned) and finished (delivered/invoiced/paid/closed/cancelled).
-const ACTIVE_LOAD_STATUSES = ["assigned", "dispatched", "at_pickup", "in_transit", "at_delivery"];
+const ACTIVE_LOAD_STATUSES = ["assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 
 const STALE_AFTER_MIN = 60; // a fix older than this is flagged stale (positions already filtered to 24h)
 
@@ -77,14 +77,34 @@ export async function getFleetLocationHosRows(
     [operatingCompanyId]
   );
 
-  // 2. Current driver per unit = the driver on that unit's active in-flight load (unit.assigned_driver_id
-  //    is unreliable/NULL — resolve via the load assignment, the authoritative "who's in the truck now").
-  //    DISTINCT ON picks the most-recently-updated active load per unit.
-  const drvRes = await client.query<{
-    assigned_unit_id: string;
-    driver_id: string;
-    driver_name: string;
-  }>(
+  // 2. Current driver per unit. PRIMARY source = Samsara's vehicle→driver assignment (the ELD login,
+  //    telematics.vehicle_driver_assignments — the same telematics feed as positions/HOS, the authoritative
+  //    "who is physically in truck X now"). The dispatch load is NOT reliable here: in current data the loads
+  //    table is nearly empty while 20+ trucks move on Samsara, so it resolved 0 drivers (GUARD). An OPEN
+  //    assignment (ended_at IS NULL) is the active one; DISTINCT ON the most recent per unit.
+  type DriverRow = { assigned_unit_id: string; driver_id: string; driver_name: string };
+  const driverByUnit = new Map<string, DriverRow>();
+
+  const samsaraRes = await client.query<DriverRow>(
+    `
+      SELECT DISTINCT ON (a.unit_id)
+        a.unit_id::text AS assigned_unit_id,
+        a.driver_id::text AS driver_id,
+        trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS driver_name
+      FROM telematics.vehicle_driver_assignments a
+      JOIN mdata.drivers d ON d.id = a.driver_id
+      WHERE a.operating_company_id = $1::uuid
+        AND a.ended_at IS NULL
+        AND a.driver_id IS NOT NULL
+      ORDER BY a.unit_id, a.started_at DESC
+    `,
+    [operatingCompanyId]
+  );
+  for (const r of samsaraRes.rows) driverByUnit.set(r.assigned_unit_id, r);
+
+  // FALLBACK = active-load assignment, for any unit WITHOUT an open Samsara assignment (e.g. a booked
+  // load on a truck Samsara hasn't paired yet). Broadened to include 'assigned'/'assigned_not_dispatched'.
+  const loadRes = await client.query<DriverRow>(
     `
       SELECT DISTINCT ON (l.assigned_unit_id)
         l.assigned_unit_id::text AS assigned_unit_id,
@@ -101,7 +121,10 @@ export async function getFleetLocationHosRows(
     `,
     [operatingCompanyId, ACTIVE_LOAD_STATUSES]
   );
-  const driverByUnit = new Map(drvRes.rows.map((r) => [r.assigned_unit_id, r]));
+  for (const r of loadRes.rows) {
+    if (!driverByUnit.has(r.assigned_unit_id)) driverByUnit.set(r.assigned_unit_id, r);
+  }
+  const drvRes = { rows: [...driverByUnit.values()] }; // for the batched HOS lookup below
 
   // 3. Batch HOS: one query for ALL assigned drivers, grouped, then computeHosClocks per driver (no N+1).
   const driverIds = [...new Set(drvRes.rows.map((r) => r.driver_id))];
