@@ -246,29 +246,32 @@ export async function getDailyPrediction(
   const expenseTotalCents = expenseItems.reduce((s, i) => s + i.amount_cents, 0);
   const predictedNetCents = incomeTotalCents - expenseTotalCents;
 
-  // Opening cash: net DEPOSITORY bank balance before this date. Credit cards /
-  // lines of credit carry debt (their transactions are borrowing, not cash on hand);
-  // counting them dragged opening cash to -$5.5M (CASH-ANOMALY, mirrors #1072 for the
-  // auto projection). Exclude credit accounts via the bank_account join. LEFT JOIN +
-  // COALESCE keeps transactions whose account is unknown (treated as non-credit).
-  // Defensive: returns null on any error so a missing/empty banking table never crashes.
+  // Opening cash = the AUTHORITATIVE reconciled depository balance (Plaid-reported
+  // banking.bank_accounts.current_balance_cents on account_class='depository'), the SAME source
+  // /api/v1/banking/accounts/all reports. We deliberately do NOT re-sum bank_transactions:
+  //   • the prior CASE WHEN is_credit THEN amount_cents ELSE -amount_cents formula assumed a
+  //     positive magnitude, but amount_cents is stored SIGNED (Plaid: +out / -in; is_credit mirrors
+  //     the sign), so every credit was added as +(-X) → the sum collapsed to -(gross volume) and
+  //     produced the phantom -$4,789,956 (GUARD-confirmed live);
+  //   • even the sign-correct re-sum (SUM(-amount_cents)) did NOT match the stated balances — the
+  //     imported transaction history is incomplete — so the stored balance is the only source of truth.
+  // Credit / investment / virtual (factoring/escrow/advance) accounts are excluded: they are not
+  // spendable depository cash. Defensive: null on any error so a missing banking table never crashes.
   const openingRow = await client
     .query<{ balance_cents: number | null }>(
       `
-      SELECT COALESCE(SUM(
-        CASE WHEN t.is_credit THEN t.amount_cents ELSE -t.amount_cents END
-      ), 0)::int AS balance_cents
-      FROM banking.bank_transactions t
-      LEFT JOIN banking.bank_accounts a ON a.id = t.bank_account_id
-      WHERE t.operating_company_id = $1
-        AND t.transaction_date < $2::date
-        AND COALESCE(a.account_type, '') NOT ILIKE '%credit%'
+      SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS balance_cents
+      FROM banking.bank_accounts
+      WHERE operating_company_id = $1
+        AND account_class = 'depository'
+        AND is_active = true
       `,
-      [operatingCompanyId, date]
+      [operatingCompanyId]
     )
     .catch(() => ({ rows: [{ balance_cents: null }] }));
 
-  const openingCashCents = openingRow.rows[0]?.balance_cents ?? null;
+  const openingCashCents =
+    openingRow.rows[0]?.balance_cents != null ? Number(openingRow.rows[0].balance_cents) : null;
   const projectedClosingCents =
     openingCashCents !== null ? openingCashCents + predictedNetCents : null;
 
