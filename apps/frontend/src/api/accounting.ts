@@ -896,6 +896,39 @@ export function listClassesForJe() {
   );
 }
 
+// Accounts Payable aging (Block F) — the accounting endpoint that carries display_group for the
+// "By Vendor Type" view (NOT /reports/ap-aging, which has a different shape). Amounts are integer cents.
+export type ApAgingDisplayGroup = "Driver" | "Repair" | "Diesel" | "Insurance" | "Intercompany" | "Other";
+export type ApAgingVendor = {
+  vendor_id: string | null;
+  vendor_name: string;
+  display_group: ApAgingDisplayGroup;
+  current: number;
+  d1_30: number;
+  d31_60: number;
+  d61_90: number;
+  d90_plus: number;
+  total_outstanding: number;
+};
+export type ApAgingTotals = {
+  current: number;
+  d1_30: number;
+  d31_60: number;
+  d61_90: number;
+  d90_plus: number;
+  total_outstanding: number;
+};
+export type ApAgingResponse = {
+  vendors: ApAgingVendor[];
+  totals: ApAgingTotals;
+  basis?: string;
+};
+export function getApAgingByVendor(operatingCompanyId: string, asOfDate: string) {
+  return apiRequest<ApAgingResponse>(
+    withCompany(`/api/v1/accounting/ap-aging?as_of_date=${encodeURIComponent(asOfDate)}`, operatingCompanyId)
+  );
+}
+
 export type ExpenseCategoryMapKind =
   | "fuel"
   | "maintenance"

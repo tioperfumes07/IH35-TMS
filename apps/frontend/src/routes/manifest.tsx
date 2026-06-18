@@ -238,6 +238,7 @@ import { CashForecastPage } from "../pages/accounting/CashForecastPage";
 import { PeriodComparisonPage } from "../pages/accounting/PeriodComparisonPage";
 import { QBOSyncDriftDashboard } from "../pages/accounting/QBOSyncDriftDashboard";
 import { COLLECTIONS_ROUTE } from "./collections.routes";
+import { AP_AGING_ROUTE } from "./ap-aging.routes";
 import { resolveUnderscoreRedirectPath } from "./url-canonicalize";
 import { ForensicReviewPage } from "../pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "../pages/admin/ActivityLogPage";
@@ -2973,6 +2974,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               {COLLECTIONS_ROUTE.component}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/accounts-payable"
+          element={
+            <ProtectedRoute>
+              {AP_AGING_ROUTE.component}
             </ProtectedRoute>
           }
         />
