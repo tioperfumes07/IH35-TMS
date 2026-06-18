@@ -179,6 +179,9 @@ jobs:
       - name: verify:cash-surfaces-reconcile
         run: npm run verify:cash-surfaces-reconcile
 
+      - name: verify:bank-register-sign
+        run: npm run verify:bank-register-sign
+
       - name: verify:fleet-bulk-soft-delete
         run: npm run verify:fleet-bulk-soft-delete
 
