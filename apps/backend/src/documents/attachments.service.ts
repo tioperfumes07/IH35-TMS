@@ -43,6 +43,48 @@ async function setCompanyScope(client: DbClient, operatingCompanyId: string) {
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 }
 
+/** Entity types whose create forms attach files BEFORE the record exists (random draft entity_id). */
+const RECONCILABLE_ENTITY_TYPES = new Set(["bill", "expense", "invoice", "payment", "work_order"]);
+
+/**
+ * Option B (attachment-draft-reconcile): re-key create-time draft attachments onto the real record id,
+ * INSIDE the caller's transaction so it is atomic with the record insert (no orphan window). UploadZone
+ * uploads files under a random draft `entity_id` before the record exists; this moves those rows to
+ * `newId` so the detail page (which reads attachments by the real record id) shows them. Without this,
+ * every receipt/bill-scan/WO-photo added during creation is silently orphaned (see
+ * docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
+ *
+ * Per-entity scope is enforced via `operating_company_id` (TRANSP/TRK/USMCA never cross). No-op when no
+ * draft id is supplied or it already equals the record id. Rows whose target `(oci, sha256, entity_type,
+ * newId)` already exists are skipped to honor the UNIQUE constraint (idempotent re-runs, dup uploads).
+ * Returns the number of attachments re-linked.
+ */
+export async function reassignDraftAttachments(
+  client: DbClient,
+  params: { operatingCompanyId: string; entityType: string; draftId: string | null | undefined; newId: string }
+): Promise<number> {
+  const { operatingCompanyId, entityType, draftId, newId } = params;
+  if (!draftId || draftId === newId) return 0;
+  if (!RECONCILABLE_ENTITY_TYPES.has(entityType)) throw new Error("unsupported_reconcile_entity_type");
+  await setCompanyScope(client, operatingCompanyId);
+  const res = await client.query(
+    `UPDATE documents.attachments a
+        SET entity_id = $4::uuid
+      WHERE a.operating_company_id = $1::uuid
+        AND a.entity_type = $2
+        AND a.entity_id = $3::uuid
+        AND NOT EXISTS (
+          SELECT 1 FROM documents.attachments b
+           WHERE b.operating_company_id = $1::uuid
+             AND b.entity_type = $2
+             AND b.entity_id = $4::uuid
+             AND b.sha256_hash = a.sha256_hash
+        )`,
+    [operatingCompanyId, entityType, draftId, newId]
+  );
+  return res.rowCount ?? 0;
+}
+
 export async function generateAttachmentUploadUrl(
   userId: string,
   input: {
