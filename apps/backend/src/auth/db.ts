@@ -108,6 +108,53 @@ export const luciaPool: pg.Pool = createLazyPool(getLuciaPool);
 /** All-zeros sentinel — valid uuid syntax; matches no real tenant row (defense-in-depth for RLS). */
 export const LUCIA_BYPASS_SENTINEL_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
+// ── Runtime unused-positional-param guard (Block 07) ────────────────────────────────────────────────
+// A parameterized query that passes N binds but never references some $i (i ≤ N) makes Postgres unable
+// to type $i → 42P18 "could not determine data type of parameter $1" (the geofence-timeline 500). The
+// static regex guard can't see assembled queries; at RUNTIME the final SQL text is known, so we check it
+// here — on the path EVERY scoped query funnels through (withCurrentUser/withLuciaBypass/withCompanyScope).
+// Dev/test/CI only (never the prod hot path).
+export function assertNoUnusedQueryParams(text: string, values: readonly unknown[] | undefined): void {
+  if (process.env.NODE_ENV === "production") return;
+  if (!values || values.length === 0) return;
+  const referenced = new Set<number>();
+  for (const m of text.matchAll(/\$(\d+)\b/g)) referenced.add(Number(m[1]));
+  for (let i = 1; i <= values.length; i++) {
+    if (!referenced.has(i)) {
+      const snippet = text.replace(/\s+/g, " ").trim().slice(0, 160);
+      throw new Error(
+        `[unused-query-param] bind $${i} is passed (${values.length} value(s)) but never referenced in the SQL ` +
+        `— Postgres cannot type it (42P18). Bind only what the query uses. Query: ${snippet}…`
+      );
+    }
+  }
+}
+
+// Wrap a pooled client so its .query runs the assertion first (non-prod only). A Proxy avoids mutating
+// the shared pooled client; all other members pass through unchanged.
+function instrumentClientForDev<C extends pg.PoolClient>(client: C): C {
+  if (process.env.NODE_ENV === "production") return client;
+  return new Proxy(client, {
+    get(target, prop, receiver) {
+      if (prop === "query") {
+        const original = target.query.bind(target);
+        return (...args: unknown[]) => {
+          const first = args[0];
+          if (typeof first === "string") {
+            assertNoUnusedQueryParams(first, Array.isArray(args[1]) ? (args[1] as unknown[]) : undefined);
+          } else if (first && typeof first === "object" && typeof (first as { text?: unknown }).text === "string") {
+            const cfg = first as { text: string; values?: unknown[] };
+            assertNoUnusedQueryParams(cfg.text, cfg.values);
+          }
+          return (original as (...a: unknown[]) => unknown)(...args);
+        };
+      }
+      const value = Reflect.get(target, prop, receiver);
+      return typeof value === "function" ? (value as (...a: unknown[]) => unknown).bind(target) : value;
+    },
+  }) as C;
+}
+
 export async function withLuciaBypass<T>(
   fn: (client: pg.PoolClient) => Promise<T>
 ): Promise<T> {
@@ -127,7 +174,7 @@ export async function withLuciaBypass<T>(
     await client.query(
       `SET LOCAL app.operating_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`
     );
-    const result = await fn(client);
+    const result = await fn(instrumentClientForDev(client));
     await client.query("COMMIT");
     return result;
   } catch (err) {
@@ -183,7 +230,7 @@ export async function withCurrentUser<T>(
       await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
     }
     await client.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [userUuid]);
-    const result = await fn(client);
+    const result = await fn(instrumentClientForDev(client));
     await client.query("COMMIT");
     return result;
   } catch (err) {
