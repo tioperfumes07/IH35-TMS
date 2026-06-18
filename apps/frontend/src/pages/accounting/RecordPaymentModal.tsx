@@ -173,6 +173,9 @@ export function RecordPaymentModal({
               deposited_to_account_id: depositedTo || "ops_checking",
               notes: notes || undefined,
               apply_to,
+              // Option B: send the UploadZone draft id so the payment route re-keys the uploaded
+              // check/ACH/wire confirmation onto the new payment id (otherwise it orphans).
+              attachment_draft_id: draftAttachmentEntityId,
             });
             onRecorded(result.id);
           } catch (error) {

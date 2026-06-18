@@ -566,6 +566,7 @@ export function createPayment(
     deposited_to_account_id?: string;
     notes?: string;
     apply_to?: Array<{ invoice_id: string; amount_cents: number }>;
+    attachment_draft_id?: string;
   }
 ) {
   return apiRequest<{ id: string; display_id: string; amount_unapplied_cents: number; applications_count: number }>(
