@@ -1,8 +1,17 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
 import { DispatchList } from "./DispatchList";
+
+// DispatchList renders DriverHosClocks (uses react-query) for each assigned-driver row, so the
+// component must be mounted under a QueryClientProvider. Fresh client per render, retries off.
+function renderWithClient(ui: ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 function mockLoad(overrides: Partial<DispatchLoadRow> = {}): DispatchLoadRow {
   return {
@@ -34,7 +43,7 @@ function mockLoad(overrides: Partial<DispatchLoadRow> = {}): DispatchLoadRow {
 
 describe("DispatchList single-line names (invariant #23)", () => {
   it("applies single-line-name + title on customer and driver (table + mobile)", () => {
-    const { container } = render(
+    const { container } = renderWithClient(
       <DispatchList
         loads={[mockLoad()]}
         totalCount={1}
@@ -61,7 +70,7 @@ describe("DispatchList single-line names (invariant #23)", () => {
   });
 
   it("omits title when customer or driver name is null (placeholder text only)", () => {
-    const { container } = render(
+    const { container } = renderWithClient(
       <DispatchList
         loads={[
           mockLoad({
@@ -97,7 +106,7 @@ describe("DispatchList single-line names (invariant #23)", () => {
 
   it("shows list error surface when listError is set", () => {
     const onRetry = vi.fn();
-    render(
+    renderWithClient(
       <DispatchList
         loads={[]}
         totalCount={0}
@@ -120,7 +129,7 @@ describe("DispatchList single-line names (invariant #23)", () => {
 
   it("row click still navigates", () => {
     const onRowClick = vi.fn();
-    render(
+    renderWithClient(
       <DispatchList
         loads={[mockLoad()]}
         totalCount={1}

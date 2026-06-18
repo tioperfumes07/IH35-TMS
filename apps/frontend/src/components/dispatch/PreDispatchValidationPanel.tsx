@@ -150,12 +150,11 @@ export function PreDispatchValidationPanel({
         <div className="flex items-center justify-between text-[10px] text-gray-400">
           <span>
             {result.blockers.length > 0
-              ? `${result.blockers.length} blocker(s) — Book button disabled`
+              ? `${result.blockers.length} blocker(s) — override required to dispatch`
               : result.warnings.length > 0
-              ? `${result.warnings.length} warning(s) — Ack to note, booking still allowed`
+              ? `${result.warnings.length} warning(s) — acknowledge to note, booking still allowed`
               : "All checks pass"}
           </span>
-          <span className="font-mono">GAP-14</span>
         </div>
       )}
     </div>

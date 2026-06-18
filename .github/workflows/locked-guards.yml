@@ -229,6 +229,9 @@ jobs:
       - name: verify:app-pool-role-fail-closed
         run: npm run verify:app-pool-role-fail-closed
 
+      - name: verify:predispatch-panel-mounted
+        run: npm run verify:predispatch-panel-mounted
+
       - name: verify:dispatch-kanban-densities
         run: npm run verify:dispatch-kanban-densities
 
