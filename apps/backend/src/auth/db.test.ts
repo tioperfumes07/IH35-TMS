@@ -37,12 +37,29 @@ describe("withLuciaBypass session context", () => {
 
     expect(queryMock.mock.calls.map(([sql]) => String(sql))).toEqual([
       "BEGIN",
+      // #878 fail-closed: non-superuser app role forced transaction-locally before any bypass SQL.
+      "SET LOCAL ROLE ih35_app",
       "SET LOCAL app.bypass_rls = 'lucia'",
       `SET LOCAL app.active_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`,
       `SET LOCAL app.operating_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`,
       "COMMIT",
     ]);
     expect(releaseMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("withCurrentUser forces ih35_app role before setting the tenant user GUC (#878 fail-closed)", async () => {
+    const { withCurrentUser } = await import("./db.js");
+
+    await withCurrentUser("11111111-1111-1111-1111-111111111111", async () => ({ ok: true }));
+
+    const sqls = queryMock.mock.calls.map(([sql]) => String(sql));
+    const roleAt = sqls.findIndex((s) => s === "SET LOCAL ROLE ih35_app");
+    const guidAt = sqls.findIndex((s) => s.includes("app.current_user_id"));
+    expect(roleAt).toBeGreaterThanOrEqual(0);
+    expect(guidAt).toBeGreaterThanOrEqual(0);
+    // Role must be assumed BEFORE any tenant-scoped statement so RLS can never run as a superuser.
+    expect(roleAt).toBeLessThan(guidAt);
+    expect(sqls[0]).toBe("BEGIN");
   });
 
   it("uses all-zeros sentinel uuid format", async () => {
