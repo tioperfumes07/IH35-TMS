@@ -939,9 +939,22 @@ export async function buildAccountingOutboundPayload(
       const vendorQbo =
         e.vendor_uuid != null ? await resolveVendorQboId(client, oc, e.vendor_uuid) : null;
 
+      // QBO Purchase line AccountRef = the EXPENSE CATEGORY account (on the expense line), NOT the
+      // payment/bank account. (Previously this resolved payment_account_uuid, which categorized every
+      // expense to the bank account in QBO — wrong, and would never tie to QBO's P&L.) Falls back to the
+      // first archived Expense/COGS account only if the line carries no resolvable category.
+      const categoryLine = await client.query<{ expense_account_uuid: string | null }>(
+        `SELECT expense_account_uuid::text
+           FROM accounting.expense_lines
+          WHERE expense_id = $1::uuid AND expense_account_uuid IS NOT NULL
+          ORDER BY line_sequence ASC
+          LIMIT 1`,
+        [entityId]
+      );
+      const categoryAccountUuid = categoryLine.rows[0]?.expense_account_uuid ?? null;
       const expAcct =
-        e.payment_account_uuid != null
-          ? await resolveAccountQboId(client, oc, e.payment_account_uuid)
+        categoryAccountUuid != null
+          ? await resolveAccountQboId(client, oc, categoryAccountUuid)
           : null;
       const expenseAccount =
         expAcct ??

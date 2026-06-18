@@ -45,6 +45,9 @@ jobs:
       - name: verify:startup-migration-drift-guard
         run: npm run verify:startup-migration-drift-guard
 
+      - name: verify:record-expense-driverless-posting
+        run: npm run verify:record-expense-driverless-posting
+
       - name: verify:canonical-schema-names
         run: npm run verify:canonical-schema-names
 

@@ -82,7 +82,12 @@ const createExpenseBodySchema = z.object({
   // Draft id used by UploadZone for create-time receipts; reconciled onto the real expense id in the
   // same txn (Option B — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachment_draft_id: z.string().uuid().optional().nullable(),
-  driver_id: z.string().uuid(),
+  // Driver is OPTIONAL: a general vendor "Record expense" is driverless. Driver-centric callers still
+  // send it. When ABSENT, category_qbo_id + payment_account_uuid become REQUIRED (enforced in-route).
+  driver_id: z.string().uuid().optional(),
+  // Form category is a QBO account id (mdata.qbo_accounts.qbo_id); resolved server-side, entity-scoped,
+  // to a catalogs.accounts (GL) id that becomes the expense line's debit account. Rejected if unbridged.
+  category_qbo_id: z.string().trim().min(1).optional(),
   expense_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   amount_cents: z.coerce.number().int().positive(),
   vendor_uuid: z.string().uuid().optional(),
@@ -108,6 +113,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const body = parsed.data;
 
+    // Driverless general expense (e.g. "Record expense") guardrails: a categorized cash-out must carry
+    // BOTH a GL category and the cash/bank account it was paid from — no uncategorized cash-out, no
+    // orphan payable. Driver-centric callers (driver_id present) keep the existing optional behavior.
+    if (!body.driver_id) {
+      if (!body.category_qbo_id) return reply.code(400).send({ error: "category_required_for_driverless_expense" });
+      if (!body.payment_account_uuid) return reply.code(400).send({ error: "payment_account_required_for_driverless_expense" });
+    }
+
     try {
       const payload = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
         if (!(await relationExists(client, "accounting.expenses"))) {
@@ -129,6 +142,25 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const hasLoadId = await columnExists(client, "accounting", "expenses", "load_id");
         const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
 
+        // Resolve the form's QBO category account → a catalogs.accounts (GL) id, ENTITY-SCOPED
+        // (operating_company_id) per TRK/TRANSP/USMCA independence. Reject if the QBO account isn't yet
+        // bridged into this entity's ledger chart — surfaced as an honest CoA-gap, never silently
+        // miscategorized (the CoA-completeness fill is a separate owner-gated step).
+        let categoryAccountId: string | null = null;
+        if (body.category_qbo_id) {
+          const catRes = await client.query(
+            `SELECT id::text AS id
+               FROM catalogs.accounts
+              WHERE qbo_account_id = $1
+                AND operating_company_id = $2::uuid
+                AND deactivated_at IS NULL
+              LIMIT 1`,
+            [body.category_qbo_id, body.operating_company_id]
+          );
+          categoryAccountId = (catRes.rows[0] as { id?: string } | undefined)?.id ?? null;
+          if (!categoryAccountId) return { categoryUnbridged: true as const };
+        }
+
         const columns: string[] = ["operating_company_id", "status", "transaction_date", "total_amount_cents"];
         const values: unknown[] = [body.operating_company_id, "posted", body.expense_date, body.amount_cents];
 
@@ -139,7 +171,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
 
         if (driverColumn) {
           columns.push(driverColumn);
-          values.push(body.driver_id);
+          values.push(body.driver_id ?? null);
         }
 
         if (hasMemo) {
@@ -171,15 +203,32 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           newId: expenseId,
         });
 
-        const attribution = await attributeExpenseToLoad(client, {
-          driverId: body.driver_id,
-          operatingCompanyId: body.operating_company_id,
-          expenseTimestamp: new Date(`${body.expense_date}T12:00:00.000Z`),
-          expenseLocation:
-            body.location_lat != null && body.location_lng != null
-              ? { lat: body.location_lat, lng: body.location_lng }
-              : undefined,
-        });
+        // Categorized line carrying the resolved GL account, so the posting engine debits the real
+        // category (not "Uncategorized"). One line = the full amount on the integer-cents spine.
+        if (categoryAccountId && (await relationExists(client, "accounting.expense_lines"))) {
+          // amount_cents = the integer-cents spine; the legacy numeric `amount` column mirrors it in
+          // dollars (same idiom as the /post synthesizer). Cents stays authoritative.
+          const cents = body.amount_cents;
+          await client.query(
+            `INSERT INTO accounting.expense_lines
+               (expense_id, line_sequence, amount_cents, amount, description, expense_account_uuid)
+             VALUES ($1::uuid, 1, $2, $3, $4, $5::uuid)`,
+            [expenseId, cents, cents / 100, body.memo ?? "Expense", categoryAccountId]
+          );
+        }
+
+        // Load attribution is driver-centric — a driverless general expense has no trip to attribute to.
+        const attribution = body.driver_id
+          ? await attributeExpenseToLoad(client, {
+              driverId: body.driver_id,
+              operatingCompanyId: body.operating_company_id,
+              expenseTimestamp: new Date(`${body.expense_date}T12:00:00.000Z`),
+              expenseLocation:
+                body.location_lat != null && body.location_lng != null
+                  ? { lat: body.location_lat, lng: body.location_lng }
+                  : undefined,
+            })
+          : null;
 
         let expenseNumber: string | null = null;
 
@@ -234,7 +283,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           });
 
           await appendCrudAudit(client, user.uuid, "expense.created", { expense_id: expenseId, attributed: true }, "info", "P6-T11176");
-        } else {
+        } else if (body.driver_id) {
           await insertUnattributedAlert(client, body.operating_company_id, expenseId);
           await emitOutbox(client, "expense.created.unattributed", {
             expense_id: expenseId,
@@ -242,12 +291,31 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             driver_id: body.driver_id,
           });
           await appendCrudAudit(client, user.uuid, "expense.created", { expense_id: expenseId, attributed: false }, "warning", "P6-T11176");
+        } else {
+          // Driverless general expense — categorized cash-out, no load attribution expected (not an alert).
+          await emitOutbox(client, "expense.created", {
+            expense_id: expenseId,
+            operating_company_id: body.operating_company_id,
+            driverless: true,
+            category_account_id: categoryAccountId,
+          });
+          await appendCrudAudit(client, user.uuid, "expense.created", { expense_id: expenseId, driverless: true, category_account_id: categoryAccountId }, "info", "P6-T11176");
         }
 
-        return { expense_id: expenseId, expense_number: expenseNumber };
+        return {
+          expense_id: expenseId,
+          expense_number: expenseNumber,
+          category_account_id: categoryAccountId,
+          has_payment_account: Boolean(body.payment_account_uuid),
+        };
       });
 
       if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
+      if ("categoryUnbridged" in payload)
+        return reply.code(409).send({
+          error: "category_not_in_ledger_chart",
+          detail: "The selected QBO expense category is not yet bridged into this entity's chart of accounts. Sync/complete the CoA migration for this account before recording the expense.",
+        });
       void withCompanyScope(user.uuid, (payload as { operating_company_id?: string })?.operating_company_id ?? body.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: body.operating_company_id,
@@ -258,7 +326,45 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           source_table: "accounting.expenses",
         })
       ).catch(() => undefined);
-      return reply.code(201).send(payload);
+
+      // (P-NOW) GL POSTING — a categorized cash-out (category account + payment account) posts a balanced
+      // JE through the EXISTING engine: DR the resolved category account, CR the payment account. Still
+      // gated by EXPENSE_GL_POSTING_ENABLED (owner flag) — when OFF this is a no-op and the expense stays
+      // unposted (identical to every other expense today), so flipping the flag is the single activation
+      // switch. A posting failure is non-fatal: the expense exists and can be posted later via /:id/post.
+      const created = payload as { expense_id?: string; category_account_id?: string | null; has_payment_account?: boolean };
+      const expenseId = created.expense_id ?? "";
+      let posting_status: "posted" | "unposted" = "unposted";
+      let journal_entry_id: string | null = null;
+      if (expenseId && created.category_account_id && created.has_payment_account) {
+        const flagOn = await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
+          isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: body.operating_company_id, user_uuid: String(user.uuid) })
+        );
+        if (flagOn) {
+          try {
+            const posting = await postSourceTransaction(
+              { operating_company_id: body.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
+              { userId: String(user.uuid) }
+            );
+            journal_entry_id = posting.journal_entry_id;
+            await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+              await client.query(
+                `UPDATE accounting.expenses
+                    SET posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
+                  WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
+                [expenseId, journal_entry_id, body.operating_company_id]
+              );
+              await appendCrudAudit(client, user.uuid, "expense.posted", { expense_id: expenseId, journal_entry_id, source: "record_expense_create" }, "info");
+            });
+            posting_status = "posted";
+          } catch (err) {
+            if (!(err instanceof PostingEngineError)) throw err;
+            // leave unposted — surfaced via posting_status; expense remains valid + re-postable.
+          }
+        }
+      }
+
+      return reply.code(201).send({ ...payload, posting_status, journal_entry_id });
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });

@@ -65,3 +65,12 @@ export function deactivateCatalogAccountById(id: string) {
 export function getCatalogAccount(id: string) {
   return apiRequest<CatalogAccount>(`/api/v1/catalogs/accounts/${encodeURIComponent(id)}`);
 }
+
+// Active chart of accounts (entity-scoped server-side). Used e.g. for the Record-Expense payment-account
+// picker, where the caller filters to postable Asset (bank/cash) accounts.
+export function listCatalogAccounts(params?: { status?: string; limit?: number }) {
+  const qs = new URLSearchParams();
+  qs.set("status", params?.status ?? "active");
+  qs.set("limit", String(params?.limit ?? 300));
+  return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
+}
