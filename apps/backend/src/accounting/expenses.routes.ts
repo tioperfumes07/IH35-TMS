@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
@@ -78,6 +79,9 @@ async function insertUnattributedAlert(client: any, operatingCompanyId: string, 
 
 const createExpenseBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+  // Draft id used by UploadZone for create-time receipts; reconciled onto the real expense id in the
+  // same txn (Option B — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
+  attachment_draft_id: z.string().uuid().optional().nullable(),
   driver_id: z.string().uuid(),
   expense_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   amount_cents: z.coerce.number().int().positive(),
@@ -158,6 +162,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const inserted = await client.query(insertSql, values);
         const expenseId = String((inserted.rows[0] as { id?: string } | undefined)?.id ?? "");
         if (!expenseId) throw new Error("expense_insert_failed");
+
+        // Option B: link create-time draft receipts to the real expense id, atomically with the insert.
+        await reassignDraftAttachments(client, {
+          operatingCompanyId: body.operating_company_id,
+          entityType: "expense",
+          draftId: body.attachment_draft_id,
+          newId: expenseId,
+        });
 
         const attribution = await attributeExpenseToLoad(client, {
           driverId: body.driver_id,

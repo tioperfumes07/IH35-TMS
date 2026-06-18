@@ -8,6 +8,7 @@ import { enqueueEmail } from "../email/queue.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
 import { generatePresignedUploadUrl, isR2Configured } from "../storage/r2-client.js";
+import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import {
   mapServiceClassToOperationalWoType,
   resolveVendorReferences,
@@ -31,6 +32,9 @@ const woServiceClassSchema = z.enum([
 
 const createWorkOrderBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+  // Client-generated draft id used by UploadZone for create-time attachments; reconciled onto the
+  // real WO id in the same txn (Option B — see docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
+  attachment_draft_id: z.string().uuid().optional().nullable(),
   wo_billing_type: z.enum(["internal", "external"]),
   wo_service_class: woServiceClassSchema,
   unit_id: z.string().uuid().optional().nullable(),
@@ -527,6 +531,15 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
             work_order_id: wo.id,
             operating_company_id: body.operating_company_id,
             display_id: wo.display_id,
+          });
+
+          // Option B: link any create-time draft attachments (WO photos/estimates) to the real WO id,
+          // atomically with the insert so they can't be orphaned.
+          await reassignDraftAttachments(client, {
+            operatingCompanyId: body.operating_company_id,
+            entityType: "work_order",
+            draftId: body.attachment_draft_id,
+            newId: String(wo.id),
           });
 
           await client.query("COMMIT");

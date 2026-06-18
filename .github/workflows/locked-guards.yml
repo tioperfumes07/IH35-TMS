@@ -226,6 +226,9 @@ jobs:
       - name: verify:deactivation-trap-fix
         run: npm run verify:deactivation-trap-fix
 
+      - name: verify:attachment-draft-reconcile
+        run: npm run verify:attachment-draft-reconcile
+
       - name: verify:dispatch-board-hos-columns
         run: npm run verify:dispatch-board-hos-columns
 
