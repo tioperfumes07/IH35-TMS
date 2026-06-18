@@ -176,6 +176,9 @@ jobs:
       - name: verify:manual-projection-sum
         run: npm run verify:manual-projection-sum
 
+      - name: verify:cash-surfaces-reconcile
+        run: npm run verify:cash-surfaces-reconcile
+
       - name: verify:fleet-bulk-soft-delete
         run: npm run verify:fleet-bulk-soft-delete
 

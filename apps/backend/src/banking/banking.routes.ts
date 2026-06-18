@@ -133,6 +133,23 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         drivers_with_escrow_balance: 0,
         drivers_with_active_escrow_account: 0,
       }));
+      // total_cash must read the AUTHORITATIVE depository balances (same source as
+      // /banking/accounts/all and the cash-flow opening), not the tile view — the tile-derived
+      // total_cash returned 0 while accounts/all showed real cash, a reconciliation bug. All three
+      // cash surfaces now agree on banking.bank_accounts.current_balance_cents (account_class='depository').
+      const cashRes = await client
+        .query<{ total_cash: string | number | null }>(
+          `
+          SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash
+          FROM banking.bank_accounts
+          WHERE operating_company_id = $1
+            AND account_class = 'depository'
+            AND is_active = true
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [{ total_cash: 0 }] }));
+      const authoritativeTotalCash = Number(cashRes.rows[0]?.total_cash ?? 0);
       return {
         ...(kpiRes.rows[0] ?? {
           operating_company_id: companyId,
@@ -144,6 +161,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           driver_escrow: 0,
           total_uncategorized: 0,
         }),
+        total_cash: authoritativeTotalCash,
         pending_bills: pendingBills,
         ...escrowCounts,
       };

@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 // Guard (CASH-ANOMALY, auto projection): the daily-prediction opening-cash sum must
-// exclude credit-card / line-of-credit accounts (their balances are debt, not cash).
-// Counting them dragged opening cash to -$5.5M. Mirrors the manual-forecast guard
-// verify:cash-forecast-opening-excludes-credit (#1072) for the auto source.
+// exclude credit-card / line-of-credit (and other non-cash) accounts — their balances are
+// debt, not cash; counting them dragged opening cash negative.
+// REALIGNED #1159: the prior implementation re-summed banking.bank_transactions with
+// `CASE WHEN t.is_credit THEN amount_cents ELSE -amount_cents` and merely excluded
+// `NOT ILIKE '%credit%'`. That re-sum mis-signed Plaid's SIGNED amount_cents and produced a
+// phantom -$4.79M. The invariant is now STRONGER and correct: opening cash reads the
+// authoritative reconciled depository balances (current_balance_cents on
+// account_class='depository'), which by definition excludes credit/investment/virtual debt.
 import { readFileSync } from "node:fs";
 
 const FILE = "apps/backend/src/cash-flow/cash-flow.service.ts";
@@ -16,18 +21,22 @@ try {
 }
 
 if (src) {
-  // Anchor on the opening-cash query's unique SQL (the is_credit sum), NOT the first
-  // mention of bank_transactions (which appears in the file's header doc-comment).
-  const idx = src.indexOf("CASE WHEN t.is_credit");
-  const window = idx >= 0 ? src.slice(idx, idx + 500) : "";
-  if (idx < 0) {
-    failures.push(`${FILE}: opening-cash query (CASE WHEN t.is_credit ...) not found`);
+  // Anchor on the opening-cash query (reads bank_accounts.current_balance_cents).
+  const idx = src.indexOf("const openingRow");
+  const end = src.indexOf("const openingCashCents");
+  const window = idx >= 0 && end > idx ? src.slice(idx, end) : "";
+  if (!window) {
+    failures.push(`${FILE}: openingRow query block not found`);
   }
-  if (!/banking\.bank_accounts/.test(window)) {
-    failures.push(`${FILE}: opening-cash query must join banking.bank_accounts to classify accounts`);
+  if (!/SUM\(current_balance_cents\)/.test(window)) {
+    failures.push(`${FILE}: opening-cash must SUM reconciled current_balance_cents (not a bank_transactions re-sum)`);
   }
-  if (!/NOT ILIKE '%credit%'/.test(window)) {
-    failures.push(`${FILE}: opening-cash query must exclude credit accounts (NOT ILIKE '%credit%')`);
+  if (!/account_class = 'depository'/.test(window)) {
+    failures.push(`${FILE}: opening-cash must restrict to account_class='depository' (excludes credit/investment/virtual debt)`);
+  }
+  // The mis-signing re-sum must never come back.
+  if (/CASE WHEN t\.is_credit THEN[\s\S]*amount_cents ELSE/.test(window)) {
+    failures.push(`${FILE}: must NOT re-sum banking.bank_transactions with the signed-amount CASE WHEN is_credit formula`);
   }
 }
 
