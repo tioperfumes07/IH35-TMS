@@ -26,6 +26,7 @@ import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/sams
 import { registerDriverVendorMappingIntegrityRoutes } from "./integrations/integrity-monitors/driver-vendor-mapping.routes.js";
 import { initializeDriverVendorMappingWorker } from "./jobs/driver-vendor-mapping-worker.js";
 import { registerGeofenceReconciliationRoutes } from "./integrations/samsara/geofences/reconciliation.routes.js";
+import { registerGeofenceStateMachineRoutes } from "./integrations/samsara/geofences/state-machine/routes.js";
 import { initializeGeofenceReconciliationWorker } from "./jobs/geofence-reconciliation-daily.js";
 import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
 import { registerAutoStatusSwitchRoutes } from "./integrations/samsara/auto-status-switch/routes.js";
@@ -588,6 +589,7 @@ async function main() {
   await registerSamsaraVendorMappingActionsRoutes(app);
   await registerDriverVendorMappingIntegrityRoutes(app);
   await registerGeofenceReconciliationRoutes(app);
+  await registerGeofenceStateMachineRoutes(app);
   await registerBorderCrossingDetectorRoutes(app);
   await registerAutoStatusSwitchRoutes(app);
   await registerBookingGapRoutes(app);
