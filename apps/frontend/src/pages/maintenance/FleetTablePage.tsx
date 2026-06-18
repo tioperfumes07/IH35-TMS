@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
+import { downloadFleetLocationHosXlsx } from "../../api/reports";
 
 type Props = {
   operatingCompanyId: string;
@@ -238,6 +239,16 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
         <span className="text-gray-600">
           Showing {filteredCount} of {totalVehicleCount} vehicles
         </span>
+        <button
+          type="button"
+          className="ml-auto rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          title="Current location + assigned driver + Hours of Service for all reporting vehicles (Samsara)"
+          onClick={() => {
+            void downloadFleetLocationHosXlsx(operatingCompanyId).catch(() => undefined);
+          }}
+        >
+          ⬇ Export Location + HOS (Excel)
+        </button>
         {hasActiveFilter ? (
           <button
             type="button"

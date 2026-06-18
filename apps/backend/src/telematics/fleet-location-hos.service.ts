@@ -1,0 +1,168 @@
+import { computeHosClocks, type HosDutyStatusEvent } from "./hos-clocks.service.js";
+
+type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
+
+// In-flight load statuses where a driver is actually in the truck "now" (mdata.load_status_enum).
+// Excludes pre-assignment (draft/booked/planned) and finished (delivered/invoiced/paid/closed/cancelled).
+const ACTIVE_LOAD_STATUSES = ["assigned", "dispatched", "at_pickup", "in_transit", "at_delivery"];
+
+const STALE_AFTER_MIN = 60; // a fix older than this is flagged stale (positions already filtered to 24h)
+
+export type FleetLocationHosRow = {
+  unit_id: string;
+  unit_number: string | null;
+  samsara_vehicle_id: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  lat: number | null;
+  lng: number | null;
+  speed_mph: number | null;
+  heading_deg: number | null;
+  engine_state: string | null;
+  captured_at_utc: string | null;
+  captured_at_local: string | null; // America/Chicago (Laredo = Central)
+  minutes_since_fix: number | null;
+  stale: boolean;
+  // HOS (minutes remaining); null when no driver assigned
+  drive_remaining_min: number | null; // 11-hr cap
+  window_remaining_min: number | null; // 14-hr shift
+  break_remaining_min: number | null;
+  cycle_remaining_min: number | null; // 70-hr
+  hos_status: string | null;
+};
+
+const CT = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Chicago",
+  year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", hour12: false,
+});
+function toLocal(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return CT.format(d) + " CT";
+}
+
+export async function getFleetLocationHosRows(
+  client: DbClient,
+  operatingCompanyId: string,
+  asOf: Date
+): Promise<FleetLocationHosRow[]> {
+  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+
+  // 1. Latest position per reporting vehicle (entity-scoped; NO 50-cap — all reporting units).
+  const posRes = await client.query<{
+    unit_id: string;
+    unit_number: string | null;
+    samsara_vehicle_id: string | null;
+    captured_at: string | null;
+    lat: number | null;
+    lng: number | null;
+    speed_mph: number | null;
+    heading_deg: number | null;
+    engine_state: string | null;
+  }>(
+    `
+      SELECT p.unit_id::text AS unit_id, u.unit_number, p.samsara_vehicle_id,
+             p.captured_at::text AS captured_at, p.lat, p.lng, p.speed_mph, p.heading_deg, p.engine_state
+      FROM telematics.vehicle_latest_position p
+      JOIN mdata.units u
+        ON u.id = p.unit_id
+       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = p.operating_company_id
+      WHERE p.operating_company_id = $1::uuid
+        AND p.captured_at > now() - interval '24 hours'
+        AND u.deactivated_at IS NULL
+      ORDER BY p.captured_at DESC
+    `,
+    [operatingCompanyId]
+  );
+
+  // 2. Current driver per unit = the driver on that unit's active in-flight load (unit.assigned_driver_id
+  //    is unreliable/NULL — resolve via the load assignment, the authoritative "who's in the truck now").
+  //    DISTINCT ON picks the most-recently-updated active load per unit.
+  const drvRes = await client.query<{
+    assigned_unit_id: string;
+    driver_id: string;
+    driver_name: string;
+  }>(
+    `
+      SELECT DISTINCT ON (l.assigned_unit_id)
+        l.assigned_unit_id::text AS assigned_unit_id,
+        l.assigned_primary_driver_id::text AS driver_id,
+        trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS driver_name
+      FROM mdata.loads l
+      JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+      WHERE l.operating_company_id = $1::uuid
+        AND l.assigned_unit_id IS NOT NULL
+        AND l.assigned_primary_driver_id IS NOT NULL
+        AND l.soft_deleted_at IS NULL
+        AND l.status::text = ANY($2::text[])
+      ORDER BY l.assigned_unit_id, l.updated_at DESC NULLS LAST
+    `,
+    [operatingCompanyId, ACTIVE_LOAD_STATUSES]
+  );
+  const driverByUnit = new Map(drvRes.rows.map((r) => [r.assigned_unit_id, r]));
+
+  // 3. Batch HOS: one query for ALL assigned drivers, grouped, then computeHosClocks per driver (no N+1).
+  const driverIds = [...new Set(drvRes.rows.map((r) => r.driver_id))];
+  const hosByDriver = new Map<string, ReturnType<typeof computeHosClocks>>();
+  if (driverIds.length > 0) {
+    const evRes = await client.query<HosDutyStatusEvent & { driver_id: string }>(
+      `
+        SELECT e.driver_id::text AS driver_id, e.started_at::text, e.ended_at::text, e.duty_status
+        FROM hos.duty_status_events e
+        WHERE e.operating_company_id = $1::uuid
+          AND e.driver_id = ANY($2::uuid[])
+        ORDER BY e.driver_id, e.started_at ASC
+      `,
+      [operatingCompanyId, driverIds]
+    );
+    const eventsByDriver = new Map<string, HosDutyStatusEvent[]>();
+    for (const ev of evRes.rows) {
+      const list = eventsByDriver.get(ev.driver_id) ?? [];
+      list.push({ started_at: ev.started_at, ended_at: ev.ended_at, duty_status: ev.duty_status });
+      eventsByDriver.set(ev.driver_id, list);
+    }
+    for (const id of driverIds) {
+      hosByDriver.set(id, computeHosClocks(eventsByDriver.get(id) ?? [], asOf));
+    }
+  }
+
+  // 4. Join into the export rows. Vehicles with no current driver keep blank driver/HOS (row NOT dropped).
+  const nowMs = asOf.getTime();
+  return posRes.rows.map((p) => {
+    const drv = p.unit_id ? driverByUnit.get(p.unit_id) ?? null : null;
+    const hos = drv ? hosByDriver.get(drv.driver_id) ?? null : null;
+    const capturedMs = p.captured_at ? new Date(p.captured_at).getTime() : NaN;
+    const minutesSince = Number.isNaN(capturedMs) ? null : Math.round((nowMs - capturedMs) / 60_000);
+    return {
+      unit_id: p.unit_id,
+      unit_number: p.unit_number,
+      samsara_vehicle_id: p.samsara_vehicle_id,
+      driver_id: drv?.driver_id ?? null,
+      driver_name: drv?.driver_name?.trim() || null,
+      lat: p.lat,
+      lng: p.lng,
+      speed_mph: p.speed_mph,
+      heading_deg: p.heading_deg,
+      engine_state: p.engine_state,
+      captured_at_utc: p.captured_at,
+      captured_at_local: toLocal(p.captured_at),
+      minutes_since_fix: minutesSince,
+      stale: minutesSince != null && minutesSince > STALE_AFTER_MIN,
+      drive_remaining_min: hos?.drive_remaining_min ?? null,
+      window_remaining_min: hos?.window_remaining_min ?? null,
+      break_remaining_min: hos?.break_remaining_min ?? null,
+      cycle_remaining_min: hos?.cycle_remaining_min ?? null,
+      hos_status: hos?.status ?? null,
+    };
+  });
+}
+
+// minutes → "h:mm" for the HOS columns in the sheet.
+export function minutesToHMM(min: number | null): string {
+  if (min == null || Number.isNaN(min)) return "";
+  const sign = min < 0 ? "-" : "";
+  const a = Math.abs(min);
+  return `${sign}${Math.floor(a / 60)}:${String(a % 60).padStart(2, "0")}`;
+}
