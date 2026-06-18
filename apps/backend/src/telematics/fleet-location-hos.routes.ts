@@ -16,7 +16,7 @@ function currentUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 const SHEET_HEADERS = [
-  "Unit", "Driver", "Lat", "Lng", "Speed (mph)", "Heading", "Engine",
+  "Unit", "Driver", "City", "State", "Location", "Lat", "Lng", "Speed (mph)", "Heading", "Engine",
   "Last Fix (Laredo)", "Last Fix (UTC)", "Min Ago", "Stale",
   "Drive Rem (11h)", "Shift Rem (14h)", "Break Rem", "Cycle Rem (70h)", "HOS Status", "Map",
 ] as const;
@@ -26,6 +26,9 @@ function rowToSheetArray(r: FleetLocationHosRow): (string | number)[] {
   return [
     r.unit_number ?? "",
     r.driver_name ?? "",
+    r.city ?? "",
+    r.state ?? "",
+    r.formatted_location ?? "",
     r.lat ?? "",
     r.lng ?? "",
     r.speed_mph ?? "",

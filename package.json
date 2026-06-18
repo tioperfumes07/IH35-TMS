@@ -300,6 +300,7 @@
     "verify:fh3-no-posting": "node scripts/verify-fh3-no-posting.mjs",
     "verify:expense-gl-posting": "node scripts/verify-expense-gl-posting.mjs",
     "verify:record-expense-driverless-posting": "node scripts/verify-record-expense-driverless-posting.mjs",
+    "verify:samsara-stats-reversegeo-ingest": "node scripts/verify-samsara-stats-reversegeo-ingest.mjs",
     "verify:no-unused-query-params": "node scripts/verify-no-unused-query-params.mjs",
     "verify:sidebar-items-locked": "node scripts/verify-sidebar-items-locked.mjs",
     "verify:uncategorized-expense-mapping": "node scripts/verify-uncategorized-expense-mapping.mjs",

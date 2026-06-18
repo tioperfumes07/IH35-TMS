@@ -5,12 +5,14 @@ const {
   wrapBackgroundJobTickMock,
   withLuciaBypassMock,
   syncSamsaraVehicleLocationsMock,
+  syncSamsaraVehicleStatsMock,
   clientQueryMock,
 } = vi.hoisted(() => ({
   scheduleMock: vi.fn(),
   wrapBackgroundJobTickMock: vi.fn(),
   withLuciaBypassMock: vi.fn(),
   syncSamsaraVehicleLocationsMock: vi.fn(),
+  syncSamsaraVehicleStatsMock: vi.fn(),
   clientQueryMock: vi.fn(),
 }));
 
@@ -30,6 +32,7 @@ vi.mock("../lib/background-jobs.js", () => ({
 
 vi.mock("../integrations/samsara/samsara-positions.service.js", () => ({
   syncSamsaraVehicleLocations: syncSamsaraVehicleLocationsMock,
+  syncSamsaraVehicleStats: syncSamsaraVehicleStatsMock,
 }));
 
 function makeApp() {
@@ -54,6 +57,15 @@ describe("samsara.positions_cron", () => {
 
     wrapBackgroundJobTickMock.mockImplementation(async (_jobName: string, fn: () => Promise<void>) => {
       await fn();
+    });
+
+    // Default: stats enrichment is a no-op success (each test overrides locations as needed).
+    syncSamsaraVehicleStatsMock.mockResolvedValue({
+      fetched: 0,
+      positions_inserted: 0,
+      drivers_paired: 0,
+      skipped_no_unit: 0,
+      errors: [],
     });
   });
 

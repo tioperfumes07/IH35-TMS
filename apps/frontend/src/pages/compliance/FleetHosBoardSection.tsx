@@ -89,9 +89,9 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                 <tr key={r.unit_id} className={`border-t border-slate-100 hover:bg-slate-50 ${r.stale ? "bg-amber-50" : ""}`}>
                   <td className="px-2 py-1.5 font-medium">{r.unit_number ?? "—"}</td>
                   <td className="px-2 py-1.5">{r.driver_name ?? "—"}</td>
-                  {/* City/State pending the reverse-geocoding source (see CompliancePage note). */}
-                  <td className="px-2 py-1.5 text-slate-400">—</td>
-                  <td className="px-2 py-1.5 text-slate-400">—</td>
+                  {/* City/State from Samsara reverseGeo (stats?types=gps,driverAssignments ingest). */}
+                  <td className={`px-2 py-1.5 ${r.city ? "" : "text-slate-400"}`} title={r.formatted_location ?? undefined}>{r.city ?? "—"}</td>
+                  <td className={`px-2 py-1.5 ${r.state ? "" : "text-slate-400"}`}>{r.state ?? "—"}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{num(r.speed_mph)}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{num(r.heading_deg)}</td>
                   <td className="px-2 py-1.5">{r.engine_state ?? "—"}</td>

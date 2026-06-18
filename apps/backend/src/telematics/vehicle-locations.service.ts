@@ -16,6 +16,9 @@ export type VehicleLocationEventInput = {
   engine_state: "on" | "off" | "idle" | "unknown";
   raw_samsara_event_id: string | null;
   payload: Record<string, unknown>;
+  city?: string | null;
+  state?: string | null;
+  formatted_location?: string | null;
 };
 
 export function deriveEngineState(engineOn: boolean | null, speedMph: number | null): "on" | "off" | "idle" | "unknown" {
@@ -74,9 +77,9 @@ export async function ingestVehicleLocationEvent(client: DbClient, input: Vehicl
   const result = await client.query(
     `
       INSERT INTO telematics.vehicle_locations (
-        operating_company_id, unit_id, samsara_vehicle_id, captured_at, lat, lng, speed_mph, heading_deg, engine_state, raw_samsara_event_id
+        operating_company_id, unit_id, samsara_vehicle_id, captured_at, lat, lng, speed_mph, heading_deg, engine_state, raw_samsara_event_id, city, state, formatted_location
       )
-      VALUES ($1::uuid,$2::uuid,$3,$4::timestamptz,$5,$6,$7,$8,$9,$10)
+      VALUES ($1::uuid,$2::uuid,$3,$4::timestamptz,$5,$6,$7,$8,$9,$10,$11,$12,$13)
       ON CONFLICT (operating_company_id, raw_samsara_event_id) DO NOTHING
     `,
     [
@@ -90,6 +93,9 @@ export async function ingestVehicleLocationEvent(client: DbClient, input: Vehicl
       input.heading_deg,
       input.engine_state,
       rawEventId,
+      input.city ?? null,
+      input.state ?? null,
+      input.formatted_location ?? null,
     ]
   );
   return (result.rowCount ?? 0) > 0;

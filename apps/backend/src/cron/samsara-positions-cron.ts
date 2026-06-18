@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { syncSamsaraVehicleLocations } from "../integrations/samsara/samsara-positions.service.js";
+import { syncSamsaraVehicleLocations, syncSamsaraVehicleStats } from "../integrations/samsara/samsara-positions.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
@@ -111,12 +111,31 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
                 continue;
               }
 
+              // Enrich with reverseGeo city/state + current driver pairing from /fleet/vehicles/stats.
+              // Best-effort: a stats failure must NOT fail the proven lat/lng poll above. Runs after it so
+              // the city/state-bearing event is the freshest in vehicle_latest_position.
+              const statsEnrich = await syncSamsaraVehicleStats(client, operatingCompanyId);
+              if (statsEnrich.errors.length > 0) {
+                await appendCronAuditEvent(client, "cron_samsara_stats_enrich_failed", "warning", {
+                  cron_name: CRON_NAME,
+                  operating_company_id: operatingCompanyId,
+                  errors: statsEnrich.errors,
+                });
+                app.log.warn(
+                  { operating_company_id: operatingCompanyId, errors: statsEnrich.errors },
+                  "Samsara stats enrichment failed for tenant; lat/lng poll still succeeded"
+                );
+              }
+
               app.log.info(
                 {
                   operating_company_id: operatingCompanyId,
                   fetched: stats.fetched,
                   inserted: stats.inserted,
                   skipped_no_unit: stats.skipped_no_unit,
+                  stats_fetched: statsEnrich.fetched,
+                  stats_positions_inserted: statsEnrich.positions_inserted,
+                  drivers_paired: statsEnrich.drivers_paired,
                 },
                 "Samsara positions cron tick complete"
               );
