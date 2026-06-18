@@ -29,8 +29,13 @@ const api = read("apps/frontend/src/api/dispatch.ts");
 if (!/driver_id: string \| null/.test(api)) fail("UnitsWithoutLoad type must include driver_id");
 const board = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
 if (!/assigned_primary_driver_id: unit\.driver_id/.test(board)) fail("unitToBoardRow must bind assigned_primary_driver_id = unit.driver_id");
-if (!/for \(const unit of unassignedUnits\)[\s\S]{0,120}unit\.driver_id/.test(board)) {
-  fail("the HOS driver-id set must include awaiting trucks' default drivers");
+// REALIGNED 2026-06-17: the old batched visibleDriverIds loop (which explicitly added awaiting trucks'
+// drivers to one HOS fetch) was removed with the "Hrs available"/"Hrs to reset" columns. The 6 Samsara
+// HOS columns now render PER ROW via DriverHosClockValue(driverId=load.assigned_primary_driver_id), so an
+// awaiting truck's row — whose assigned_primary_driver_id is bound to unit.driver_id above — automatically
+// shows that default driver's HOS. Lock the per-row binding instead of the old batched set.
+if (!/<DriverHosClockValue[\s\S]{0,200}driverId=\{load\.assigned_primary_driver_id\}/.test(board)) {
+  fail("the board's HOS columns must render per-row via DriverHosClockValue(driverId=load.assigned_primary_driver_id) so awaiting trucks show their default driver's HOS");
 }
 
 console.log("PASS verify-awaiting-truck-driver-hos");
