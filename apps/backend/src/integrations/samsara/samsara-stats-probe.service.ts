@@ -41,6 +41,55 @@ async function rawGet(token: string, url: string): Promise<RawCall> {
   return out;
 }
 
+// Local-side diagnostics (DB, no external I/O) — the OTHER half of the driver chain: even if Samsara
+// returns a logged-in driver, we can only show it if mdata.drivers.samsara_driver_id maps it and the
+// pairing worker persisted an open assignment. Also surfaces the last (now un-swallowed) stats error.
+type LocalQuery = <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
+
+export async function localPairingDiagnostics(query: LocalQuery, operatingCompanyId: string) {
+  const oneNum = async (sql: string) => {
+    const r = await query<{ n: string | number }>(sql, [operatingCompanyId]);
+    return Number(r.rows[0]?.n ?? 0);
+  };
+  const drivers_mapped = await oneNum(
+    `SELECT count(*) AS n FROM mdata.drivers WHERE operating_company_id = $1::uuid AND samsara_driver_id IS NOT NULL AND deactivated_at IS NULL`
+  );
+  const drivers_total = await oneNum(
+    `SELECT count(*) AS n FROM mdata.drivers WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL`
+  );
+  const units_mapped = await oneNum(
+    `SELECT count(*) AS n FROM mdata.units WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid AND samsara_vehicle_id IS NOT NULL AND deactivated_at IS NULL`
+  );
+  const open_assignments = await oneNum(
+    `SELECT count(*) AS n FROM telematics.vehicle_driver_assignments WHERE operating_company_id = $1::uuid AND ended_at IS NULL`
+  );
+  const open_assignments_with_driver = await oneNum(
+    `SELECT count(*) AS n FROM telematics.vehicle_driver_assignments WHERE operating_company_id = $1::uuid AND ended_at IS NULL AND driver_id IS NOT NULL`
+  );
+  const locations_with_city_1h = await oneNum(
+    `SELECT count(*) AS n FROM telematics.vehicle_locations WHERE operating_company_id = $1::uuid AND city IS NOT NULL AND captured_at > now() - interval '1 hour'`
+  );
+  const stats_rows_1h = await oneNum(
+    `SELECT count(*) AS n FROM telematics.vehicle_locations WHERE operating_company_id = $1::uuid AND raw_samsara_event_id LIKE 'cron:stats:%' AND captured_at > now() - interval '1 hour'`
+  );
+  const lastErr = await query<{ finished_at: string; success: boolean; error_message: string | null }>(
+    `SELECT finished_at::text, success, error_message FROM integrations.integration_sync_log
+      WHERE operating_company_id = $1::uuid AND integration = 'samsara'
+      ORDER BY finished_at DESC LIMIT 1`,
+    [operatingCompanyId]
+  );
+  return {
+    drivers_mapped,
+    drivers_total,
+    units_mapped,
+    open_assignments,
+    open_assignments_with_driver,
+    locations_with_city_1h,
+    stats_rows_1h,
+    last_samsara_sync: lastErr.rows[0] ?? null,
+  };
+}
+
 export type ProbeVehicle = {
   vehicle_id: string;
   name: string | null;
