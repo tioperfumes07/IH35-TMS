@@ -302,6 +302,7 @@
     "verify:record-expense-driverless-posting": "node scripts/verify-record-expense-driverless-posting.mjs",
     "verify:samsara-stats-reversegeo-ingest": "node scripts/verify-samsara-stats-reversegeo-ingest.mjs",
     "verify:dispatch-load-patch-money-evidence-guard": "node scripts/verify-dispatch-load-patch-money-evidence-guard.mjs",
+    "verify:driver-pairing-units-key": "node scripts/verify-driver-pairing-units-key.mjs",
     "verify:no-unused-query-params": "node scripts/verify-no-unused-query-params.mjs",
     "verify:sidebar-items-locked": "node scripts/verify-sidebar-items-locked.mjs",
     "verify:uncategorized-expense-mapping": "node scripts/verify-uncategorized-expense-mapping.mjs",

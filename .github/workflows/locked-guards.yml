@@ -54,6 +54,9 @@ jobs:
       - name: verify:dispatch-load-patch-money-evidence-guard
         run: npm run verify:dispatch-load-patch-money-evidence-guard
 
+      - name: verify:driver-pairing-units-key
+        run: npm run verify:driver-pairing-units-key
+
       - name: verify:no-unused-query-params
         run: npm run verify:no-unused-query-params
 
