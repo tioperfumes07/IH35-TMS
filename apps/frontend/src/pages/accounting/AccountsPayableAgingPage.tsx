@@ -1,13 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { TableControls, TableSearch, TableHeaderCell, useTableController, type TableColumn } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -142,10 +141,7 @@ export function AccountsPayableAgingPage() {
   }
 
   return (
-    <div>
-      <AccountingSubNav />
-      <PageHeader title="Accounts Payable" subtitle="What we owe vendors — aging mirrored from QuickBooks; totals tie to QBO's A/P aging." />
-
+    <AccountingSubNavWrapper title="Accounts Payable" subtitle="What we owe vendors — aging mirrored from QuickBooks; totals tie to QBO's A/P aging.">
       <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden">
         <label className="text-xs font-semibold text-slate-600">
           As of
@@ -266,7 +262,7 @@ export function AccountsPayableAgingPage() {
           </div>
         </div>
       )}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }
 
