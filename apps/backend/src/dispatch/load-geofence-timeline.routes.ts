@@ -112,11 +112,14 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
          FROM geo.geofences g
          JOIN geo.geofence_events ge
            ON ge.geofence_id = g.id
-          AND ge.operating_company_id = $2
-         WHERE g.operating_company_id = $2
-           AND g.label LIKE $3
+          AND ge.operating_company_id = $1
+         WHERE g.operating_company_id = $1
+           AND g.label LIKE $2
          GROUP BY g.label`,
-        [loadId, operating_company_id, `load-${loadId}-stop-%`]
+        // NOTE: loadId is NOT passed as a separate bind — it is already embedded in the $2 LIKE
+        // pattern. Passing it as an unused $1 made Postgres unable to type the param
+        // ("could not determine data type of parameter $1"). Bind only what the SQL references.
+        [operating_company_id, `load-${loadId}-stop-%`]
       );
 
       const geoBySeq = new Map(geoRes.rows.map((r) => [r.sequence_number, r]));
