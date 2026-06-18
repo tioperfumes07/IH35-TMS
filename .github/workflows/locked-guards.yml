@@ -229,6 +229,9 @@ jobs:
       - name: verify:attachment-draft-reconcile
         run: npm run verify:attachment-draft-reconcile
 
+      - name: verify:dispatch-board-hos-columns
+        run: npm run verify:dispatch-board-hos-columns
+
       - name: verify:app-pool-role-fail-closed
         run: npm run verify:app-pool-role-fail-closed
 

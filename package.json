@@ -635,6 +635,7 @@
     "verify:cash-forecast-routes-registered": "node scripts/verify-cash-forecast-routes-registered.mjs",
     "verify:deactivation-trap-fix": "node scripts/verify-deactivation-trap-fix.mjs",
     "verify:attachment-draft-reconcile": "node scripts/verify-attachment-draft-reconcile.mjs",
+    "verify:dispatch-board-hos-columns": "node scripts/verify-dispatch-board-hos-columns.mjs",
     "verify:app-pool-role-fail-closed": "node scripts/verify-app-pool-role-fail-closed.mjs",
     "verify:predispatch-panel-mounted": "node scripts/verify-predispatch-panel-mounted.mjs",
     "verify:awaiting-truck-driver-hos": "node scripts/verify-awaiting-truck-driver-hos.mjs",
