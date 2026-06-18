@@ -220,6 +220,8 @@ jobs:
 
       - name: verify:units-list-total
         run: npm run verify:units-list-total
+      - name: verify:multi-entity-separation
+        run: npm run verify:multi-entity-separation
 
       - name: verify:deactivation-trap-fix
         run: npm run verify:deactivation-trap-fix
