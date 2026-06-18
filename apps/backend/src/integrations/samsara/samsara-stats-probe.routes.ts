@@ -13,7 +13,7 @@ import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
-import { runSamsaraStatsProbe } from "./samsara-stats-probe.service.js";
+import { runSamsaraStatsProbe, localPairingDiagnostics } from "./samsara-stats-probe.service.js";
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
@@ -44,9 +44,11 @@ export async function registerSamsaraStatsProbeRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const oc = parsed.data.operating_company_id;
 
-    const cfg = await withCurrentUser(user.uuid, async (client) => {
+    const { cfg, localDb } = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
-      return getSamsaraConfigForCompany(client, oc);
+      const cfgRow = await getSamsaraConfigForCompany(client, oc);
+      const local = await localPairingDiagnostics(client.query.bind(client), oc);
+      return { cfg: cfgRow, localDb: local };
     });
     if (!cfg || !Boolean((cfg as Record<string, unknown>).is_enabled)) {
       return reply.code(409).send({ error: "samsara_not_enabled" });
@@ -55,6 +57,6 @@ export async function registerSamsaraStatsProbeRoutes(app: FastifyInstance) {
     if (!token) return reply.code(409).send({ error: "samsara_token_unavailable" });
 
     const result = await runSamsaraStatsProbe(token, new Date());
-    return reply.send({ operating_company_id: oc, ...result });
+    return reply.send({ operating_company_id: oc, local_db: localDb, ...result });
   });
 }
