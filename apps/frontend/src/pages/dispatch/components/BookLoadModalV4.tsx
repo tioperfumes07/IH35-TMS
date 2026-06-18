@@ -14,6 +14,7 @@ import { useToast } from "../../../components/Toast";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { DeadheadOptimizerPanel } from "../../../components/dispatch/DeadheadOptimizerPanel";
+import { PreDispatchValidationPanel } from "../../../components/dispatch/PreDispatchValidationPanel";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
 import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
@@ -242,6 +243,14 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     },
   });
   const assignedUnitId = form.watch("assigned_unit_id");
+  // GAP-14 live pre-dispatch validation inputs (driver/unit/trailer/customer) + live result summary.
+  const assignedPrimaryDriverId = form.watch("assigned_primary_driver_id");
+  const assignedTrailerUnitId = form.watch("assigned_trailer_unit_id");
+  const watchedCustomerId = form.watch("customer_id");
+  const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean }>({
+    canDispatch: true,
+    hasBlockers: false,
+  });
   const watchedStops = form.watch("stops");
   const deadheadAfterAt = useMemo(() => {
     const stops = (watchedStops ?? []) as Array<{
@@ -932,9 +941,28 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">D</span>
                 <span className="blw-sec-name">Pre-dispatch validation</span>
-                <span className="blw-sec-meta"><b>5 of 5 checks pass</b> · ready to book</span>
+                <span className="blw-sec-meta">
+                  {preDispatch.hasBlockers ? (
+                    <b className="text-red-700">Active blocker(s) — override required</b>
+                  ) : assignedPrimaryDriverId || assignedUnitId || watchedCustomerId ? (
+                    <b>{preDispatch.canDispatch ? "All checks pass · ready to book" : "Review warnings"}</b>
+                  ) : (
+                    <span>Select driver / unit / customer to run checks</span>
+                  )}
+                </span>
               </div>
-              <div className="p-3">
+              <div className="space-y-2 p-3">
+                {/* GAP-14: live CDL / med-card / HOS / DVIR / driver-status checks against the actual
+                    selected driver+unit+customer. Read-only preview — the submit-time gate (gateBanner)
+                    remains the enforcement path; this surfaces blockers before the dispatcher hits Book. */}
+                <PreDispatchValidationPanel
+                  operatingCompanyId={operatingCompanyId}
+                  driverUuid={assignedPrimaryDriverId || null}
+                  unitUuid={assignedUnitId || null}
+                  trailerUuid={assignedTrailerUnitId || null}
+                  customerId={watchedCustomerId || null}
+                  onValidationChange={(canDispatch, hasBlockers) => setPreDispatch({ canDispatch, hasBlockers })}
+                />
                 <BookLoadValidationSection issues={validationIssues} />
               </div>
             </section>

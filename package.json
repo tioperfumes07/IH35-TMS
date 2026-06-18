@@ -634,6 +634,7 @@
     "verify:mdp-fields": "node scripts/verify-mdp-fields.mjs",
     "verify:cash-forecast-routes-registered": "node scripts/verify-cash-forecast-routes-registered.mjs",
     "verify:deactivation-trap-fix": "node scripts/verify-deactivation-trap-fix.mjs",
+    "verify:predispatch-panel-mounted": "node scripts/verify-predispatch-panel-mounted.mjs",
     "verify:awaiting-truck-driver-hos": "node scripts/verify-awaiting-truck-driver-hos.mjs",
     "verify:load-import-dry-run-default": "node scripts/verify-load-import-dry-run-default.mjs",
     "verify:load-delivery-dates-separated": "node scripts/verify-load-delivery-dates-separated.mjs",
