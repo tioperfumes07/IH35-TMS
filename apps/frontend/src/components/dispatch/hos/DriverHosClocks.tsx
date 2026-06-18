@@ -9,6 +9,7 @@ import {
   HOS_COLUMNS,
   HOS_PROJECTED_TOOLTIP,
   hosStatusDot,
+  type HosColumnKey,
   type HosStatusRow,
 } from "./hosClocks";
 
@@ -70,6 +71,33 @@ export function DriverHosClocksBlock({
       )}
       {clocks ? <div className="mt-0.5 text-[9px] text-gray-400">* Stop By / Resume At are projected (continuous driving).</div> : null}
     </div>
+  );
+}
+
+// ITEM 5 (board) — a SINGLE HOS clock value for one column, for grids that wrap each column in their
+// own <td> (DispatchBoard's shared column model). Reuses the exact same store query + projection as the
+// 6-cell fragment so the List and the Board show identical numbers. Renders "—" until HOS data flows.
+export function DriverHosClockValue({
+  driverId,
+  operatingCompanyId,
+  colKey,
+}: {
+  driverId: string | null | undefined;
+  operatingCompanyId: string | undefined;
+  colKey: HosColumnKey;
+}) {
+  const q = useDriverHos(driverId, operatingCompanyId);
+  const clocks = computeHosClocks(q.data as HosStatusRow | undefined);
+  const col = HOS_COLUMNS.find((c) => c.key === colKey);
+  if (!driverId) return <span className="text-gray-300">—</span>;
+  return (
+    <span
+      className="font-mono text-[11px] text-gray-700"
+      data-hos-col={colKey}
+      title={col?.derived ? HOS_PROJECTED_TOOLTIP : col?.samsaraField}
+    >
+      {clocks ? clocks[colKey] : "—"}
+    </span>
   );
 }
 

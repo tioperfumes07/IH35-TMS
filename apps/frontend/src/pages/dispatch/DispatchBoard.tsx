@@ -22,6 +22,8 @@ import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
 import { OnTimePredictionColumn } from "../../components/dispatch/LiveEtaColumns";
 import { CargoTempBadge, isReeferCommodity } from "../../components/dispatch/CargoTempBadge";
+import { DriverHosClockValue } from "../../components/dispatch/hos/DriverHosClocks";
+import { HOS_COLUMNS } from "../../components/dispatch/hos/hosClocks";
 import { LoadLivePositionCell } from "../../components/dispatch/LoadLivePositionCell";
 import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
 
@@ -678,6 +680,21 @@ export function DispatchBoard({
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
     { key: "hrs_available", header: "Hrs available", cell: (load) => renderHosAvailable(load) },
     { key: "hrs_to_reset", header: "Hrs to reset", cell: (load) => renderHosToReset(load) },
+    // DISPATCH-UI-REFINE-2 ITEM 5 — the locked Samsara 6-clock set on the live board (additive; the
+    // Hrs available/Hrs to reset pair above is kept). Drive/Shift/Break/Cycle = H:MM remaining; Stop By
+    // / Resume At are PROJECTED. Same store + projection as the (unmounted) DispatchList, so the numbers
+    // match once the Samsara HOS feed seeds hos.duty_status_events — until then every cell shows "—".
+    ...HOS_COLUMNS.map((hosCol) => ({
+      key: `hos_${hosCol.key}`,
+      header: hosCol.label,
+      cell: (load: BoardLoad) => (
+        <DriverHosClockValue
+          driverId={load.assigned_primary_driver_id}
+          operatingCompanyId={load.operating_company_id}
+          colKey={hosCol.key}
+        />
+      ),
+    })),
     { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
