@@ -220,6 +220,9 @@ jobs:
 
       - name: verify:units-list-total
         run: npm run verify:units-list-total
+
+      - name: verify:samsara-hos-readiness-no-secret
+        run: npm run verify:samsara-hos-readiness-no-secret
       - name: verify:multi-entity-separation
         run: npm run verify:multi-entity-separation
 
