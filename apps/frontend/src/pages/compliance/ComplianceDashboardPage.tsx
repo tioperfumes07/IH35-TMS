@@ -15,6 +15,7 @@ import { NotificationLogPanel } from "../../components/compliance/NotificationLo
 import { NotificationRulesPanel } from "../../components/compliance/NotificationRulesPanel";
 import { SummaryCards } from "../../components/compliance/SummaryCards";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { FleetHosBoardSection } from "./FleetHosBoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function exportCsv(rows: ComplianceCredential[]) {
@@ -98,6 +99,8 @@ export function ComplianceDashboardPage() {
   return (
     <div className="space-y-6 p-4" data-testid="compliance-dashboard-page">
       <PageHeader title="Compliance Dashboard" subtitle="Expiring credentials across trucks, trailers, drivers, and carrier" />
+
+      <FleetHosBoardSection operatingCompanyId={companyId} />
 
       <section data-testid="compliance-section-summary">
         <SummaryCards
