@@ -1,0 +1,264 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accounts Payable — QuickBooks-grade (with app chrome)</title>
+<style>
+  :root{
+    --topbar:#0f1219;--navbar:#1b2333;--pill:#151a24;
+    --page:#f7f8fa;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e2e6ec;--line2:#eef1f5;
+    --blue:#2563eb;--bluebg:#eff6ff;--ok:#16a34a;--warn:#b45309;--red:#b91c1c;
+  }
+  *{box-sizing:border-box}html,body{margin:0}
+  body{background:var(--page);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;font-size:13px}
+  /* chrome */
+  .topbar{background:var(--topbar);color:#fff;display:flex;align-items:center;gap:14px;padding:8px 16px;font-size:12px}
+  .topbar .brand{font-weight:800;letter-spacing:.04em;font-size:14px}.topbar .co{color:#aeb8c9}
+  .topbar .pill{margin-left:6px;display:flex;align-items:center;gap:10px;background:var(--pill);border:1px solid #2a3550;border-radius:999px;padding:3px 12px;color:#cdd6e6;font-size:11px;white-space:nowrap}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}.dot.ok{background:var(--ok)}.dot.warn{background:#f59e0b}.dot.off{background:#64748b}
+  .topbar .sp{flex:1}.topbar .ent{background:#0b1422;border:1px solid #2a3550;border-radius:6px;padding:3px 10px;color:#fff}.topbar .who{color:#8aa0c4}.topbar .item{color:#cdd6e6;cursor:pointer}
+  .navbar{background:var(--navbar);color:#cdd6e6;display:flex;align-items:center;gap:2px;padding:0 10px}
+  .navbar a{color:#cdd6e6;text-decoration:none;font-size:12.5px;font-weight:600;padding:9px 12px;cursor:pointer;border-bottom:2px solid transparent}
+  .navbar a:hover{background:#22304b;color:#fff}.navbar a.active{color:#fff;border-bottom-color:#3b82f6}.navbar .car{font-size:9px;opacity:.7}
+  .navbar .rgt{margin-left:auto;display:flex;gap:2px}
+  /* migration banner */
+  .migbar{background:#0b1422;color:#cdd6e6;font-size:11px;padding:5px 16px;border-bottom:1px solid #22304b;display:flex;align-items:center;gap:8px}
+  .migbar b{color:#fff}.migbar .src{background:#15314a;border:1px solid #2563eb;border-radius:5px;padding:1px 8px;color:#bfdbfe;font-weight:700}
+
+  .pagehdr{padding:14px 18px 0;display:flex;align-items:flex-start;gap:14px}
+  .pagehdr .ttl{font-size:20px;font-weight:800;color:#1a1f36}.pagehdr .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .pagehdr .sp{flex:1}
+  .vtoggle{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .vtoggle button{border:0;background:#fff;font-size:12px;padding:8px 14px;cursor:pointer;color:var(--muted);font-weight:600}
+  .vtoggle button.on{background:var(--navbar);color:#fff}
+
+  /* toolbar: QuickBooks-style filters + gear */
+  .toolbar{display:flex;align-items:center;gap:8px;padding:12px 18px 0;flex-wrap:wrap}
+  .toolbar .grp{display:flex;align-items:center;gap:5px}
+  .toolbar label{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700}
+  .toolbar select,.toolbar input{height:30px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:12.5px;background:#fff;color:var(--ink)}
+  .toolbar .search{width:200px}
+  .toolbar .sp{flex:1}
+  .iconbtn{height:30px;width:34px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;display:grid;place-items:center;color:#475569}
+  .iconbtn:hover{border-color:var(--blue);color:var(--blue)}
+  /* gear column-chooser menu */
+  .gearwrap{position:relative}
+  .gearmenu{position:absolute;right:0;top:36px;z-index:50;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 30px rgba(15,23,42,.16);width:210px;padding:6px;display:none}
+  .gearmenu.open{display:block}
+  .gearmenu .gh{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:4px 8px}
+  .gearmenu label.col{display:flex;align-items:center;gap:8px;padding:5px 8px;font-size:12px;cursor:pointer;border-radius:5px;text-transform:none;letter-spacing:0;color:var(--ink);font-weight:500}
+  .gearmenu label.col:hover{background:var(--bluebg)}
+  .gearmenu input[type=checkbox]{width:14px;height:14px}
+
+  .content{padding:12px 18px 30px}
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:9px;overflow:auto}
+  table.ap{width:100%;border-collapse:collapse;table-layout:fixed}
+  table.ap th{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700;text-align:left;padding:9px 10px;background:#f6f8fb;border-bottom:1px solid var(--line);position:sticky;top:0;cursor:pointer;user-select:none;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  table.ap th:hover{background:#eef2f7;color:#1a1f36}
+  table.ap th .arrow{font-size:9px;margin-left:4px;opacity:.5}
+  table.ap th.sorted .arrow{opacity:1;color:var(--blue)}
+  table.ap th.num,table.ap td.num{text-align:right;font-variant-numeric:tabular-nums}
+  /* drag-resize handle */
+  table.ap th .rsz{position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;}
+  table.ap th .rsz:hover{background:#bfdbfe}
+  table.ap td{padding:8px 10px;border-bottom:1px solid var(--line2);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  table.ap tbody tr{cursor:pointer}
+  table.ap tbody tr:hover td{background:#f9fbfe}
+  table.ap td.vend{font-weight:600;color:#1a1f36}
+  table.ap td .amtlink{color:var(--blue);cursor:pointer}
+  table.ap td .amtlink:hover{text-decoration:underline}
+  .over{color:var(--red);font-weight:700}
+  .vtype{display:inline-block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:1px 7px;border-radius:999px}
+  .vt-driver{background:#ecfeff;color:#0e7490;border:1px solid #a5f3fc}
+  .vt-repair{background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe}
+  .vt-diesel{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+  .vt-ins{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+  .vt-inter{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+  .vt-other{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}
+  /* group rows (by type) */
+  tr.grp td{background:#eef2f7;font-weight:800;color:#1a1f36;border-bottom:1px solid var(--line);cursor:pointer}
+  tr.grp .caret{display:inline-block;width:14px;color:#64748b}
+  tr.child td:first-child{padding-left:30px}
+  tfoot td{font-weight:800;border-top:2px solid var(--line);background:#fafbfc}
+
+  details.note{margin:14px 18px 0;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;font-size:11px;color:#7c2d12}
+  details.note summary{cursor:pointer;font-weight:800;color:#b45309;text-transform:uppercase;font-size:11px}
+  details.note ul{margin:8px 0 0;padding-left:18px;line-height:1.7}
+</style></head>
+<body>
+  <div class="topbar"><span class="brand">IH 35 DISPATCH</span><span class="co">IH 35 Transportation LLC</span>
+    <span class="pill"><span><span class="dot ok"></span>QuickBooks: connected</span><span><span class="dot warn"></span>Samsara: stale</span><span><span class="dot off"></span>Relay: not configured</span><span><span class="dot ok"></span>QBO sync · OK</span></span>
+    <span class="sp"></span><span class="ent">Current: IH 35 Transportation ▾</span><span class="item">＋ Create</span><span class="item">Tasks</span><span class="item">EN | ES</span><span class="who">Thu, Jun 18, 2026 · tioperfumes07@gmail.com</span></div>
+  <div class="navbar"><a>Home</a><a>Dispatch <span class="car">▾</span></a><a>Loads <span class="car">▾</span></a><a>Maintenance <span class="car">▾</span></a><a class="active">Accounting <span class="car">▾</span></a><a>Banking <span class="car">▾</span></a><a>Reports <span class="car">▾</span></a><a>Lists <span class="car">▾</span></a><span class="rgt"><a>Finance Hub</a><a>Settings <span class="car">▾</span></a></span></div>
+  <div class="migbar"><span class="src">QBO = source of truth</span><b>Migration in progress.</b> QuickBooks stays connected and authoritative while data migrates. A/P mirrors QBO until the app reaches and surpasses it; subscription cancels only then.</div>
+
+  <div class="pagehdr">
+    <div><div class="ttl">Accounts Payable</div><div class="sub">What we owe vendors — aging as of today, mirrored from QuickBooks</div></div>
+    <div class="sp"></div>
+    <div class="vtoggle"><button class="on" data-v="vendor">By Vendor</button><button data-v="type">By Vendor Type</button></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="grp"><label>As of</label><input type="date" value="2026-06-18"></div>
+    <div class="grp"><label>Aging</label><select><option>All</option><option>Current</option><option>1–30</option><option>31–60</option><option>61–90</option><option>91+</option></select></div>
+    <div class="grp"><label>Vendor type</label><select><option>All</option><option>Driver</option><option>Repair</option><option>Diesel</option><option>Insurance</option><option>Intercompany</option><option>Other</option></select></div>
+    <div class="grp"><label>Basis</label><select><option>Accrual</option><option>Cash</option></select></div>
+    <input class="search" placeholder="Search vendor…">
+    <div class="sp"></div>
+    <button class="iconbtn" title="Export">⤓</button>
+    <button class="iconbtn" title="Print">⎙</button>
+    <div class="gearwrap">
+      <button class="iconbtn" id="gearBtn" title="Choose columns">⚙</button>
+      <div class="gearmenu" id="gearMenu">
+        <div class="gh">Columns</div>
+        <label class="col"><input type="checkbox" data-c="type" checked> Vendor type</label>
+        <label class="col"><input type="checkbox" data-c="current" checked> Current</label>
+        <label class="col"><input type="checkbox" data-c="b1" checked> 1–30</label>
+        <label class="col"><input type="checkbox" data-c="b2" checked> 31–60</label>
+        <label class="col"><input type="checkbox" data-c="b3" checked> 61–90</label>
+        <label class="col"><input type="checkbox" data-c="b4" checked> 91+</label>
+        <label class="col"><input type="checkbox" data-c="total" checked> Total</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="tablewrap">
+      <table class="ap" id="apTable">
+        <thead><tr>
+          <th data-k="vendor" style="width:230px">Vendor <span class="arrow">▲▼</span><span class="rsz"></span></th>
+          <th data-k="type" data-col="type" style="width:120px">Type <span class="arrow">▲▼</span><span class="rsz"></span></th>
+          <th data-k="current" data-col="current" class="num" style="width:110px">Current <span class="arrow">▲▼</span><span class="rsz"></span></th>
+          <th data-k="b1" data-col="b1" class="num" style="width:100px">1–30 <span class="arrow">▲▼</span><span class="rsz"></span></th>
+          <th data-k="b2" data-col="b2" class="num" style="width:100px">31–60 <span class="arrow">▲▼</span><span class="rsz"></span></th>
+          <th data-k="b3" data-col="b3" class="num" style="width:100px">61–90 <span class="arrow">▲▼</span><span class="rsz"></span></th>
+          <th data-k="b4" data-col="b4" class="num" style="width:110px">91+ <span class="arrow">▲▼</span><span class="rsz"></span></th>
+          <th data-k="total" data-col="total" class="num" style="width:120px">Total <span class="arrow">▲▼</span><span class="rsz"></span></th>
+        </tr></thead>
+        <tbody id="apBody"><!-- filled by JS --></tbody>
+        <tfoot><tr id="apFoot"></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <details class="note">
+    <summary>Render notes (for the coder)</summary>
+    <ul>
+      <li><b>QBO is the system of record during migration</b> — the migration banner states it. A/P mirrors QuickBooks; values must tie to QBO's A/P aging. Do not treat the app as source of truth until it surpasses QBO and the subscription is cancelled.</li>
+      <li><b>QuickBooks-grade table:</b> click any column header to sort ascending/descending (arrow indicator); drag the right edge of a header to resize the column; gear icon on the right opens the column chooser (show/hide columns); rows clickable (drill to the vendor's bills); amounts clickable (drill to the bills in that bucket). Sticky header. Export / Print.</li>
+      <li><b>Two views:</b> "By Vendor" (standard aging, one row per vendor with type chip) and "By Vendor Type" (Driver · Repair · Diesel · Insurance · Intercompany · Other — collapsible group rollups with subtotals; expand to the vendors within). The vendor-type grouping is an app feature layered ON TOP of QBO (QBO's aging report doesn't group by type — this is reaching past it).</li>
+      <li>Toolbar filters QuickBooks-style: As-of date, Aging bucket, Vendor type, Basis (Accrual/Cash), search. Totals row ties to QBO.</li>
+      <li><b>Vendor type</b> is a field on the vendor record (Driver / Repair / Diesel / Insurance / Intercompany / Other) — additive migration, Tier-2, show SQL. Intercompany = TRK↔TRANSP (e.g. "Ih 35 Trucking-Vendor").</li>
+    </ul>
+  </details>
+
+<script>
+  // Demo data anchored to real QBO totals ($1,182,195.33 / 147 vendors; top intercompany $293,232.84).
+  var ROWS=[
+    {vendor:"Ih 35 Trucking-Vendor", type:"Intercompany", current:0, b1:0, b2:48000, b3:75000, b4:170232.84},
+    {vendor:"TA Petro Laredo", type:"Repair", current:4200, b1:8600, b2:12400, b3:0, b4:33100},
+    {vendor:"Rush Truck Centers", type:"Repair", current:2100, b1:5400, b2:9800, b3:14200, b4:21900},
+    {vendor:"Pilot / Flying J (fuel)", type:"Diesel", current:18900, b1:42300, b2:31200, b3:0, b4:0},
+    {vendor:"Love's (fuel)", type:"Diesel", current:9400, b1:22100, b2:18700, b3:6200, b4:0},
+    {vendor:"Luis Sosa (driver settle)", type:"Driver", current:0, b1:3850, b2:0, b3:0, b4:0},
+    {vendor:"R. Peña (driver settle)", type:"Driver", current:0, b1:4120, b2:1980, b3:0, b4:0},
+    {vendor:"M. Reyes (driver settle)", type:"Driver", current:0, b1:5200, b2:0, b3:0, b4:0},
+    {vendor:"Progressive Commercial", type:"Insurance", current:12800, b1:0, b2:0, b3:0, b4:0},
+    {vendor:"Great West Casualty", type:"Insurance", current:0, b1:0, b2:38400, b3:0, b4:0},
+    {vendor:"FleetPride (parts)", type:"Repair", current:1600, b1:3300, b2:0, b3:7800, b4:12400},
+    {vendor:"Laredo Tire & Service", type:"Repair", current:0, b1:2900, b2:4100, b3:0, b4:9600},
+    {vendor:"TXDMV / permits", type:"Other", current:1850, b1:0, b2:0, b3:0, b4:0},
+    {vendor:"PrePass / tolls", type:"Other", current:920, b1:1340, b2:780, b3:0, b4:0}
+  ];
+  ROWS.forEach(function(r){ r.total=r.current+r.b1+r.b2+r.b3+r.b4; });
+  var TYPE_CLASS={Driver:"vt-driver",Repair:"vt-repair",Diesel:"vt-diesel",Insurance:"vt-ins",Intercompany:"vt-inter",Other:"vt-other"};
+  function money(n){ return n? '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'; }
+
+  var view='vendor', sortKey='total', sortDir=-1;
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var $all=function(s,r){return [].slice.call((r||document).querySelectorAll(s));};
+
+  function cell(r,key){
+    if(key==='vendor') return '<td class="vend">'+r.vendor+'</td>';
+    if(key==='type') return '<td data-col="type"><span class="vtype '+TYPE_CLASS[r.type]+'">'+r.type+'</span></td>';
+    var v=r[key]; var over=(key==='b3'||key==='b4')&&v>0;
+    var disp = v? '<span class="amtlink'+(over?' over':'')+'">'+money(v)+'</span>' : '<span style="color:#cbd5e1">—</span>';
+    return '<td class="num" data-col="'+key+'">'+disp+'</td>';
+  }
+  var COLKEYS=['vendor','type','current','b1','b2','b3','b4','total'];
+
+  function renderVendor(){
+    var rows=ROWS.slice().sort(function(a,b){
+      var x=a[sortKey], y=b[sortKey];
+      if(typeof x==='string'){ return sortDir*x.localeCompare(y); }
+      return sortDir*((x||0)-(y||0));
+    });
+    var html=rows.map(function(r){ return '<tr>'+COLKEYS.map(function(k){return cell(r,k);}).join('')+'</tr>'; }).join('');
+    $('#apBody').innerHTML=html;
+    foot();
+  }
+  function renderType(){
+    var groups={};
+    ROWS.forEach(function(r){ (groups[r.type]=groups[r.type]||[]).push(r); });
+    var order=["Intercompany","Diesel","Repair","Insurance","Driver","Other"];
+    var html='';
+    order.forEach(function(t){
+      if(!groups[t])return;
+      var subt=groups[t].reduce(function(s,r){return s+r.total;},0);
+      var c=groups[t].reduce(function(s,r){return s+r.current;},0),b1=groups[t].reduce(function(s,r){return s+r.b1;},0),b2=groups[t].reduce(function(s,r){return s+r.b2;},0),b3=groups[t].reduce(function(s,r){return s+r.b3;},0),b4=groups[t].reduce(function(s,r){return s+r.b4;},0);
+      html+='<tr class="grp" data-t="'+t+'"><td><span class="caret">▾</span>'+t+' ('+groups[t].length+')</td><td data-col="type"></td>'+
+        '<td class="num" data-col="current">'+money(c)+'</td><td class="num" data-col="b1">'+money(b1)+'</td><td class="num" data-col="b2">'+money(b2)+'</td><td class="num" data-col="b3">'+money(b3)+'</td><td class="num" data-col="b4">'+money(b4)+'</td><td class="num" data-col="total">'+money(subt)+'</td></tr>';
+      groups[t].forEach(function(r){
+        html+='<tr class="child" data-parent="'+t+'">'+COLKEYS.map(function(k){return cell(r,k);}).join('')+'</tr>';
+      });
+    });
+    $('#apBody').innerHTML=html;
+    $all('tr.grp').forEach(function(g){ g.onclick=function(){
+      var t=g.dataset.t, open=g.querySelector('.caret').textContent==='▾';
+      g.querySelector('.caret').textContent=open?'▸':'▾';
+      $all('tr.child[data-parent="'+t+'"]').forEach(function(c){c.style.display=open?'none':'';});
+    };});
+    foot();
+  }
+  function foot(){
+    var tot=ROWS.reduce(function(a,r){return {current:a.current+r.current,b1:a.b1+r.b1,b2:a.b2+r.b2,b3:a.b3+r.b3,b4:a.b4+r.b4,total:a.total+r.total};},{current:0,b1:0,b2:0,b3:0,b4:0,total:0});
+    $('#apFoot').innerHTML='<td>TOTAL</td><td data-col="type"></td><td class="num" data-col="current">'+money(tot.current)+'</td><td class="num" data-col="b1">'+money(tot.b1)+'</td><td class="num" data-col="b2">'+money(tot.b2)+'</td><td class="num" data-col="b3">'+money(tot.b3)+'</td><td class="num" data-col="b4">'+money(tot.b4)+'</td><td class="num" data-col="total">'+money(tot.total)+'</td>';
+    applyColVis();
+  }
+  function render(){ if(view==='vendor')renderVendor(); else renderType(); markSort(); }
+
+  // sorting
+  $all('#apTable thead th').forEach(function(th){
+    th.onclick=function(e){ if(e.target.classList.contains('rsz'))return;
+      var k=th.dataset.k; if(view==='type')return; // sort only in vendor view
+      if(sortKey===k){ sortDir*=-1; } else { sortKey=k; sortDir=(k==='vendor'||k==='type')?1:-1; }
+      render();
+    };
+  });
+  function markSort(){
+    $all('#apTable thead th').forEach(function(th){ th.classList.remove('sorted');
+      var a=th.querySelector('.arrow'); if(!a)return;
+      if(th.dataset.k===sortKey && view==='vendor'){ th.classList.add('sorted'); a.textContent=sortDir>0?'▲':'▼'; } else { a.textContent='▲▼'; }
+    });
+  }
+  // column resize (drag)
+  $all('#apTable thead th .rsz').forEach(function(h){
+    h.onmousedown=function(e){ e.preventDefault(); var th=h.parentElement; var sx=e.clientX, sw=th.offsetWidth;
+      function mv(ev){ th.style.width=Math.max(60,sw+(ev.clientX-sx))+'px'; }
+      function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+      document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+    };
+  });
+  // gear column chooser
+  $('#gearBtn').onclick=function(e){ e.stopPropagation(); $('#gearMenu').classList.toggle('open'); };
+  document.addEventListener('click',function(e){ if(!$('.gearwrap').contains(e.target)) $('#gearMenu').classList.remove('open'); });
+  $all('#gearMenu input[type=checkbox]').forEach(function(cb){ cb.onchange=applyColVis; });
+  function applyColVis(){
+    $all('#gearMenu input[type=checkbox]').forEach(function(cb){
+      var on=cb.checked, c=cb.dataset.c;
+      $all('[data-col="'+c+'"]').forEach(function(el){ el.style.display=on?'':'none'; });
+    });
+  }
+  // view toggle
+  $all('.vtoggle button').forEach(function(b){ b.onclick=function(){ $all('.vtoggle button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); view=b.dataset.v; render(); };});
+
+  render();
+</script>
+</body></html>

@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book / Edit Load — Corrected Render v3 (from live app)</title>
+<style>
+  :root{
+    --navy:#1d2b45; --navy2:#243352;
+    --ink:#1f2937; --muted:#6b7280; --line:#d6dae1; --line2:#e6e9ee;
+    --bg:#eef1f5; --card:#ffffff; --green:#16a34a; --green2:#15803d;
+    --amber:#b45309; --amberbg:#fff7ed; --amberline:#fed7aa;
+    --blue:#2563eb; --pickbg:#eff6ff; --delbg:#ecfdf3;
+    --fld-h:30px; --fld-fs:12.5px; --lbl-fs:10.5px; --pad:9px; --gap:8px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;font-size:13px;line-height:1.3;padding:18px}
+
+  .legend{max-width:1220px;margin:0 auto 14px;background:var(--amberbg);border:1px solid var(--amberline);border-radius:8px;padding:11px 14px}
+  .legend h2{margin:0 0 7px;font-size:12.5px;color:var(--amber);letter-spacing:.02em;text-transform:uppercase}
+  .legend ul{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 22px}
+  .legend li{font-size:11px;color:#7c2d12;padding-left:16px;position:relative}
+  .legend li::before{content:"\2713";position:absolute;left:0;color:var(--green);font-weight:700}
+  .legend .note{margin-top:8px;font-size:10.5px;color:#9a3412}
+
+  .wrap{max-width:1220px;margin:0 auto;background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 10px 40px rgba(15,23,42,.18);border:1px solid var(--line)}
+  .bar{background:var(--navy);color:#fff;padding:9px 14px;display:flex;align-items:center;gap:10px}
+  .bar .title{font-size:15px;font-weight:700}
+  .bar .spacer{flex:1}
+  .bar .ts{font-size:10.5px;color:#aab6cd}
+  .bar .x{color:#aab6cd;cursor:pointer;font-size:15px;padding:0 4px}
+  .subbar{background:var(--navy2);color:#cdd6e6;padding:5px 14px;display:flex;align-items:center;gap:10px;font-size:10.5px}
+  .subbar .ldno{background:#0f1a30;border:1px solid #34466a;border-radius:5px;padding:2px 8px;color:#fff;font-weight:600}
+  .subbar .dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
+
+  .body{padding:var(--pad);display:grid;grid-template-columns:1.05fr 1fr;gap:var(--pad)}
+  .full{grid-column:1 / -1}
+  .sec{border:1px solid var(--line);border-radius:7px;background:#fff}
+  .sec>.head{display:flex;align-items:center;gap:7px;padding:6px 9px;border-bottom:1px solid var(--line2);background:#fafbfc;border-radius:7px 7px 0 0}
+  .badge{width:18px;height:18px;border-radius:4px;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center}
+  .sec .head .t{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#374151;text-transform:uppercase}
+  .sec .head .r{margin-left:auto;font-size:10.5px;color:var(--muted)}
+  .sec .in{padding:var(--pad)}
+
+  .row{display:grid;gap:var(--gap);margin-bottom:var(--gap)}
+  .row:last-child{margin-bottom:0}
+  .c2{grid-template-columns:1fr 1fr}
+  .c3{grid-template-columns:1fr 1fr 1fr}
+  .c-cust{grid-template-columns:1.5fr 1fr 1fr}
+  .f{display:flex;flex-direction:column;gap:3px;min-width:0}
+  label{font-size:var(--lbl-fs);text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600}
+  input,select,.fake{height:var(--fld-h);font-size:var(--fld-fs);padding:2px 8px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);width:100%;outline:none;font-family:inherit}
+  select{appearance:auto}
+  input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.12)}
+  input::placeholder{color:#aab1bd}
+  .fake{display:flex;align-items:center;color:#aab1bd;cursor:pointer;justify-content:space-between}
+  .fake.has{color:var(--ink)}
+  .amt{text-align:right;font-variant-numeric:tabular-nums}
+  .hint{font-size:10px;color:#9aa3af}
+
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;height:var(--fld-h)}
+  .seg button{border:0;background:#fff;font-size:11px;padding:0 11px;cursor:pointer;color:var(--muted);font-weight:600}
+  .seg button.on{background:var(--navy);color:#fff}
+  .seg.ynred button.on.no{background:#b91c1c}
+  .seg.yngrn button.on.yes{background:var(--green2)}
+
+  /* document upload dropzone */
+  .drop{border:1.5px dashed #b9c2d0;border-radius:7px;background:#f8fafc;padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:var(--gap)}
+  .drop:hover{border-color:var(--blue);background:#f0f6ff}
+  .drop .ic{width:26px;height:26px;color:var(--blue);flex:none}
+  .drop .tx{font-size:11.5px;color:#475569;font-weight:600}
+  .drop .tx small{display:block;font-weight:400;color:#94a3b8;font-size:10px;margin-top:1px}
+  .drop .btn-up{margin-left:auto;border:1px solid var(--blue);color:var(--blue);background:#fff;border-radius:6px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer}
+  .doclist{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:var(--gap)}
+  .docchip{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:13px;padding:2px 9px;font-size:10.5px;color:#475569;background:#fff}
+  .docchip .rm{color:#b91c1c;cursor:pointer;font-weight:700}
+
+  .chg{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line2);padding:5px 0;font-size:12px}
+  .chg:first-child{border-top:0}
+  .chg .qbamt{position:relative;width:118px}
+  .chg .qbamt .dollar{position:absolute;left:7px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px;pointer-events:none}
+  .chg .qbamt input{height:24px;text-align:right;padding-right:7px;padding-left:16px;font-variant-numeric:tabular-nums}
+  .chg.total{font-weight:700;border-top:1.5px solid var(--line);padding-top:7px}
+  .chg.total .v{font-variant-numeric:tabular-nums}
+
+  .exp{border:1px dashed var(--line);border-radius:6px;margin-top:var(--gap);background:#fcfcfd}
+  .exp>summary{list-style:none;cursor:pointer;padding:6px 9px;font-size:11px;color:var(--blue);font-weight:600;display:flex;align-items:center;gap:6px;user-select:none}
+  .exp>summary::-webkit-details-marker{display:none}
+  .exp>summary .plus{width:15px;height:15px;border-radius:4px;border:1px solid var(--blue);color:var(--blue);display:grid;place-items:center;font-size:11px;line-height:1}
+  .exp>summary .rt{margin-left:auto;color:#9aa3af;font-weight:500}
+  .exp[open]>summary{border-bottom:1px solid var(--line2)}
+  .exp .body2{padding:var(--pad)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{border:1px solid var(--line);border-radius:13px;padding:3px 10px;font-size:11px;color:#475569;cursor:pointer;background:#fff}
+
+  /* conditional equipment panels */
+  .cond{border:1px solid var(--amberline);background:#fffdf8;border-radius:6px;padding:8px;margin-top:var(--gap)}
+  .cond .ct{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--amber);font-weight:700;margin-bottom:6px}
+  .hidden{display:none}
+
+  .hos{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:7px}
+  .hos .clk{border:1px solid var(--line);border-radius:6px;padding:6px 4px;text-align:center;background:#fff}
+  .hos .clk .k{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
+  .hos .clk .v{font-size:14px;font-weight:700;color:#94a3b8;font-variant-numeric:tabular-nums;margin-top:2px}
+  .hos .clk.proj{background:#f8fafc}
+  .hosnote{font-size:10px;color:#9aa3af;margin-top:6px}
+
+  /* STOPS */
+  .stop{border:1px solid var(--line);border-radius:6px;margin-bottom:var(--gap);overflow:hidden}
+  .stop>.sh{display:flex;align-items:center;gap:8px;padding:5px 9px;font-size:10.5px;font-weight:700;letter-spacing:.03em}
+  .stop.pick>.sh{background:var(--pickbg);color:#1e40af}
+  .stop.del>.sh{background:var(--delbg);color:#166534}
+  .stop.mid>.sh{background:#f1f5f9;color:#475569}
+  .tag{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:4px;color:#fff}
+  .pick .tag{background:#2563eb}.del .tag{background:#16a34a}.mid .tag{background:#64748b}
+  .stop .sh .r{margin-left:auto;font-weight:500;color:var(--muted)}
+  .stop .si{padding:8px 9px;display:grid;gap:var(--gap)}
+  /* row 1: location ; row 2: site detail — same field size as A/B */
+  .si .locrow{display:grid;gap:var(--gap);grid-template-columns:1.6fr 1fr .7fr .7fr 1fr .8fr}
+  .si .siterow{display:grid;gap:var(--gap);grid-template-columns:1.2fr 1fr .8fr 1fr 1fr}
+  .addstops{display:flex;gap:8px;margin-bottom:var(--gap)}
+  .addbtn{border:1px dashed var(--line);background:#fff;border-radius:6px;padding:6px 11px;font-size:11px;color:var(--blue);font-weight:600;cursor:pointer}
+
+  .miles{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:2px}
+  .miles .m{flex:1;text-align:center;padding:6px 4px;border-right:1px solid var(--line2)}
+  .miles .m:last-child{border-right:0}
+  .miles .m.hl{background:#eff6ff}
+  .miles .k{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
+  .miles .val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+  .miles .s{font-size:9px;color:#9aa3af}
+
+  .valstrip{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .valstrip .ok{color:var(--green2);font-size:11.5px;font-weight:600}
+  .valstrip .warn{color:var(--amber);font-size:11.5px;font-weight:600}
+
+  .foot{border-top:1px solid var(--line);padding:9px 14px;display:flex;align-items:center;gap:10px;background:#fafbfc}
+  .foot .prev{font-size:11.5px;color:#475569}
+  .foot .sp{flex:1}
+  .btn{height:32px;padding:0 14px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:600;color:#374151;cursor:pointer}
+  .btn.green{background:var(--green);border-color:var(--green2);color:#fff}
+
+  .calwrap{position:relative}
+  .cal{position:absolute;top:calc(100% + 4px);left:0;z-index:30;width:210px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 30px rgba(15,23,42,.18);padding:8px;display:none}
+  .cal.show{display:block}
+  .cal .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .cal .ch b{font-size:12px}
+  .cal .ch button{width:22px;height:22px;border:1px solid var(--line);background:#fff;border-radius:5px;cursor:pointer;font-size:13px;padding:0}
+  .cal .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .cal .dow{font-size:9px;text-align:center;color:var(--muted);font-weight:700;padding:2px 0}
+  .cal .d{font-size:11px;text-align:center;padding:4px 0;border-radius:4px;cursor:pointer}
+  .cal .d:hover{background:#eff6ff}
+  .cal .d.mut{visibility:hidden}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="title">Book / Edit Load</div>
+    <div class="spacer"></div>
+    <div class="ts">Wed, Jun 17</div>
+    <div class="x">&#10005;</div>
+  </div>
+  <div class="subbar">
+    <span>LOAD #</span><span class="ldno">L&ndash;20260617&ndash;0001</span>
+    <span class="dot"></span><span>Reserved</span>
+  </div>
+
+  <div class="body">
+    <!-- SECTION A -->
+    <section class="sec">
+      <div class="head"><div class="badge">A</div><div class="t">Customer &middot; Invoice &middot; Charges</div><div class="r">Section total <b>$0.00</b></div></div>
+      <div class="in">
+<div class="row c-cust">
+          <div class="f"><label>Customer</label><input list="custs" placeholder="Search customer&hellip;"></div>
+          <div class="f"><label>Customer WO #</label><input placeholder=""></div>
+          <div class="f"><label>Pickup #</label><input placeholder=""></div>
+        </div>
+        <div class="row c-cust">
+          <div class="f"><label>Type</label><div class="seg"><button class="on">Broker</button><button>Direct</button></div></div>
+          <div class="f"><label>Commodity</label><input placeholder=""></div>
+          <div class="f"><label>Weight (lbs)</label><input class="amt" placeholder="0"></div>
+        </div>
+
+        <div style="border-top:1px solid var(--line2);margin:8px 0 2px"></div>
+        <div class="chg"><span>Linehaul</span><span class="qbamt"><span class="dollar">$</span><input class="qb" value="0.00"></span></div>
+        <div class="chg"><span>Fuel surcharge</span><span class="qbamt"><span class="dollar">$</span><input class="qb" value="0.00"></span></div>
+        <div class="chg"><span>Accessorial</span><span class="qbamt"><span class="dollar">$</span><input class="qb" value="0.00"></span></div>
+        <div class="chg total"><span>Total customer invoice</span><span class="v" id="invTotal">$0.00</span></div>
+
+        <details class="exp">
+          <summary><span class="plus">+</span> Add charges &amp; advances <span class="rt">cash / fuel advance &middot; factoring</span></summary>
+          <div class="body2">
+            <div class="row c2">
+              <div class="f"><label>Cash advance</label><input class="qb amt" value="0.00"></div>
+              <div class="f"><label>Fuel advance</label><input class="qb amt" value="0.00"></div>
+            </div>
+            <div class="row"><div class="f"><label>Factoring company</label><input placeholder="Select factoring company&hellip;"></div></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- SECTION B -->
+    <section class="sec">
+      <div class="head"><div class="badge">B</div><div class="t">Equipment &middot; Driver &middot; Trailer</div><div class="r">Class <b>&mdash;</b></div></div>
+      <div class="in">
+        <div class="row c3">
+          <div class="f"><label>Trailer type</label>
+            <select id="trailerType">
+              <option value="">Select&hellip;</option>
+              <option>Reefer</option><option>Flatbed</option><option>Dry Van</option><option>Lowboy</option>
+            </select>
+          </div>
+          <div class="f"><label>Truck unit</label><input list="trucks" placeholder="Select&hellip;"></div>
+          <div class="f"><label>Trailer unit</label><input list="trailers" placeholder="Select&hellip;"></div>
+        </div>
+        <div class="row c3">
+          <div class="f"><label>Driver</label><input list="drivers" id="driverInput" placeholder="Select&hellip;"></div>
+          <div class="f"><label>Team driver</label><input placeholder="&mdash;"></div>
+          <div class="f"><label>Assignment</label><div class="seg"><button class="on">Solo</button><button>Team</button></div></div>
+        </div>
+
+        <!-- CONDITIONAL: Reefer -->
+        <div class="cond hidden" id="reeferPanel">
+          <div class="ct">Reefer</div>
+          <div class="row c3">
+            <div class="f"><label>Reefer temp (&deg;F)</label><input class="amt" placeholder="34"></div>
+            <div class="f"><label>Reefer mode</label><select><option>Continuous</option><option>Cycle-sentry</option></select></div>
+            <div class="f"><label>Pre-cool</label><select><option>Yes</option><option>No</option></select></div>
+          </div>
+        </div>
+        <!-- CONDITIONAL: Flatbed -->
+        <div class="cond hidden" id="flatbedPanel">
+          <div class="ct">Flatbed</div>
+          <div class="row c3">
+            <div class="f"><label>Tarp required?</label><div class="seg yngrn" id="tarpSeg"><button class="yes" data-v="yes">Yes</button><button class="no on" data-v="no">No</button></div></div>
+            <div class="f"><label>Tarp qty</label><input class="amt" id="tarpQty" placeholder="0" disabled></div>
+            <div class="f"><label>Tarp size</label><select id="tarpSize" disabled><option>&mdash;</option><option>4'</option><option>6'</option><option>8'</option><option>Steel</option><option>Lumber</option></select></div>
+          </div>
+        </div>
+
+        <details class="exp"><summary><span class="plus">+</span> Equipment &amp; driver instructions <span class="rt">straps · pay rate</span></summary>
+          <div class="body2">
+            <div class="chips" style="margin-bottom:8px">
+              <span class="chip">Reefer fuel</span><span class="chip">Pulp probe</span><span class="chip">Locking jacks</span><span class="chip">Tarps</span><span class="chip">Load locks</span><span class="chip">Straps</span>
+            </div>
+            <div class="row c2">
+              <div class="f"><label>Driver pay rate / mi</label><input class="qb amt" value="0.00"></div>
+              <div class="f"><label>Reefer setpoint</label><input placeholder=""></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="exp" open>
+          <summary><span class="plus">+</span> Expected adjustments <span class="rt">HOS &middot; detention &middot; late risk</span></summary>
+          <div class="body2">
+            <label style="display:block;margin-bottom:2px">Driver HOS (hours of service)</label>
+            <div class="hos">
+              <div class="clk"><div class="k">Drive</div><div class="v">&mdash;</div></div>
+              <div class="clk"><div class="k">Shift</div><div class="v">&mdash;</div></div>
+              <div class="clk"><div class="k">Break</div><div class="v">&mdash;</div></div>
+              <div class="clk"><div class="k">Cycle</div><div class="v">&mdash;</div></div>
+              <div class="clk proj"><div class="k">Stop by</div><div class="v">&mdash;</div></div>
+              <div class="clk proj"><div class="k">Resume at</div><div class="v">&mdash;</div></div>
+            </div>
+            <div class="hosnote" id="hosNote">Select a driver to load HOS. Clocks populate from the Samsara feed. Stop&nbsp;by / Resume&nbsp;at are projected.</div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- SECTION C -->
+    <section class="sec full">
+      <div class="head"><div class="badge">C</div><div class="t">Stops &middot; PC*MILER Routing</div><div class="r" id="stopcount">1 pickup &middot; 1 delivery</div></div>
+      <div class="in">
+        <div id="stops">
+          <!-- pickup -->
+          <div class="stop pick">
+            <div class="sh"><span class="tag">PICKUP</span><span>Stop 1</span><span class="r">auto &mdash; first stop is always a pickup</span></div>
+            <div class="si">
+              <div class="locrow">
+                <div class="f"><label>Address</label><input placeholder="Street address&hellip;"></div>
+                <div class="f"><label>City</label><input list="cities" placeholder="City&hellip;"></div>
+                <div class="f"><label>St</label><select class="stsel"></select></div>
+                <div class="f"><label>Zip Code</label><input class="amt" placeholder="00000"></div>
+                <div class="f calwrap"><label>Date</label><div class="fake cal-trigger">Select date <span>&#128197;</span></div><div class="cal"></div></div>
+                <div class="f"><label>Time</label><input type="time" value="08:00"></div>
+              </div>
+              <div class="siterow">
+                <div class="f"><label>Site contact</label><input placeholder="Name&hellip;"></div>
+                <div class="f"><label>Site phone</label><input type="tel" placeholder="(000) 000-0000"></div>
+                <div class="f"><label>Dock</label><input placeholder="Dock / door"></div>
+                <div class="f"><label>Free time / lumper</label><input placeholder="120 min"></div>
+                <div class="f"><label>Lumper amount</label><div style="position:relative"><span style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px">$</span><input class="qb amt" style="padding-left:16px" value="0.00"></div></div>
+              </div>
+              <details class="exp stop-instr" style="margin-top:var(--gap)"><summary><span class="plus">+</span> Customer instructions <span class="rt">directions &middot; gate code &middot; receiving / appointment</span></summary>
+                <div class="body2"><textarea placeholder="e.g. Gate code 4417. Check in at guard shack. Appointment required — call 30 min out. No idling on dock." style="width:100%;height:54px;border:1px solid var(--line);border-radius:5px;font-size:12.5px;padding:6px 8px;font-family:inherit"></textarea></div>
+              </details>
+            </div>
+          </div>
+          <!-- delivery -->
+          <div class="stop del">
+            <div class="sh"><span class="tag">DELIVERY</span><span>Stop 2</span><span class="r">auto-added because a pickup exists</span></div>
+            <div class="si">
+              <div class="locrow">
+                <div class="f"><label>Address</label><input placeholder="Street address&hellip;"></div>
+                <div class="f"><label>City</label><input list="cities" placeholder="City&hellip;"></div>
+                <div class="f"><label>St</label><select class="stsel"></select></div>
+                <div class="f"><label>Zip Code</label><input class="amt" placeholder="00000"></div>
+                <div class="f calwrap"><label>Date</label><div class="fake cal-trigger">Select date <span>&#128197;</span></div><div class="cal"></div></div>
+                <div class="f"><label>Time</label><input type="time" value="08:00"></div>
+              </div>
+              <div class="siterow">
+                <div class="f"><label>Site contact</label><input placeholder="Name&hellip;"></div>
+                <div class="f"><label>Site phone</label><input type="tel" placeholder="(000) 000-0000"></div>
+                <div class="f"><label>Dock</label><input placeholder="Dock / door"></div>
+                <div class="f"><label>Free time / lumper</label><input placeholder="120 min"></div>
+                <div class="f"><label>Lumper amount</label><div style="position:relative"><span style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px">$</span><input class="qb amt" style="padding-left:16px" value="0.00"></div></div>
+              </div>
+              <details class="exp stop-instr" style="margin-top:var(--gap)"><summary><span class="plus">+</span> Customer instructions <span class="rt">directions &middot; gate code &middot; receiving / appointment</span></summary>
+                <div class="body2"><textarea placeholder="e.g. Gate code 4417. Check in at guard shack. Appointment required — call 30 min out. No idling on dock." style="width:100%;height:54px;border:1px solid var(--line);border-radius:5px;font-size:12.5px;padding:6px 8px;font-family:inherit"></textarea></div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <div class="addstops">
+          <button class="addbtn" id="addPickup">+ Add pickup</button>
+          <button class="addbtn" id="addDelivery">+ Add delivery</button>
+          <button class="addbtn" id="addStop">+ Add stop (multi-leg)</button>
+        </div>
+
+        <div class="miles">
+          <div class="m"><div class="k">Practical</div><div class="val">0</div><div class="s">fuel + ETA</div></div>
+          <div class="m hl"><div class="k">Shortest</div><div class="val">0</div><div class="s">driver pay</div></div>
+          <div class="m"><div class="k">Deadhead</div><div class="val">0</div><div class="s">mi</div></div>
+          <div class="m"><div class="k">RPM</div><div class="val">&mdash;</div><div class="s">rate / mi</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION D -->
+    <section class="sec full">
+      <div class="head"><div class="badge">D</div><div class="t">Pre-Dispatch Validation</div><div class="r">ready to book</div></div>
+      <div class="in">
+        <div class="valstrip">
+          <span class="ok">&#10003; 5 / 5 required checks pass</span>
+          <span class="warn">&#9888; 1 advisory &mdash; expected adjustments</span>
+        </div>
+      </div>
+
+    <!-- SECTION E: Documents (bottom, near save) -->
+    <section class="sec full">
+      <div class="head"><div class="badge">E</div><div class="t">Documents</div><div class="r">rate con &middot; BOL &middot; POD &middot; lumper receipt</div></div>
+      <div class="in">
+        <div class="drop" id="dropzone">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <div class="tx">Upload rate confirmation &amp; documents<small>Drag &amp; drop or click — rate con, BOL, POD, lumper receipt (PDF / image)</small></div>
+          <button class="btn-up">Choose files</button>
+        </div>
+        <div class="doclist">
+          <span class="docchip">RateCon_L0001.pdf <span class="rm">&#10005;</span></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="foot">
+    <div class="prev">Driver bill preview <b>B&ndash;20260617&ndash;0001</b> &middot; <b>$0.00</b> <span class="hint">0 mi &times; $0.00/mi</span></div>
+    <div class="sp"></div>
+    <button class="btn">Cancel</button>
+    <button class="btn">Save draft</button>
+    <button class="btn green">Book + dispatch</button>
+  </div>
+</div>
+
+<details style="max-width:1220px;margin:12px auto 0;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;font-size:11px;color:#7c2d12">
+  <summary style="cursor:pointer;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.02em;font-size:11px">Build notes — what changed vs the live app (for the coder)</summary>
+  <ul style="margin:8px 0 0;padding-left:18px;line-height:1.7">
+    <li>Stops: Address &middot; City &middot; St (dropdown) &middot; Zip; State = filter dropdown</li>
+    <li>Date &amp; Time in separate boxes, QuickBooks click-calendar</li>
+    <li>Per stop: Site Contact &middot; Site Phone &middot; Dock &middot; Free time &middot; Lumper Amount ($)</li>
+    <li>Reefer temp shows when trailer = Reefer; Flatbed shows Tarp Yes/No + Qty + Size</li>
+    <li>Document upload / drop box moved to the BOTTOM (Section E), near Save</li>
+    <li>QuickBooks $ accounting format on all money fields</li>
+    <li>HOS clocks under &ldquo;Expected adjustments&rdquo; (Section B)</li>
+    <li>Stop fields same size as Sections A/B (were 580px); 1st = pickup, 2nd = delivery, one each unless +Add</li>
+    <li>Same wizard for Book AND Edit (Edit is currently a Rate+Notes stub &mdash; must open this full pre-filled wizard)</li>
+  </ul>
+</details>
+
+<datalist id="custs"><option>Chariot Logistics</option><option>HG Logistics</option><option>JZ Logistics LLC</option><option>Allen Lund Company</option><option>Semares Forwarding Services</option></datalist>
+<datalist id="trucks"><option>T171</option><option>T173</option><option>T174</option><option>T163</option><option>T147</option></datalist>
+<datalist id="trailers"><option>10209 &mdash; 53' Reefer</option><option>FB-56710 &mdash; 53' Flatbed</option></datalist>
+<datalist id="drivers"><option>Luis Sosa</option><option>Hugo Gaytan</option><option>Neftali Coronado</option></datalist>
+<datalist id="cities"><option>Laredo</option><option>Houston</option><option>Edison</option><option>Wharton</option></datalist>
+
+<script>
+  // ---- state filter dropdown (all US states) ----
+  var STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
+  function fillStates(sel){ if(sel.dataset.filled)return; sel.dataset.filled=1; var h='<option value="">St</option>'; STATES.forEach(function(s){h+='<option>'+s+'</option>';}); sel.innerHTML=h; }
+  function wireStates(){ document.querySelectorAll('select.stsel').forEach(fillStates); }
+
+  // ---- QuickBooks accounting number format ----
+  function fmtQB(v){var n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));if(isNaN(n))n=0;return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function wireQB(){
+    document.querySelectorAll('input.qb').forEach(function(i){
+      if(i.dataset.qb)return; i.dataset.qb=1;
+      i.addEventListener('blur',function(){i.value=fmtQB(i.value);recalc();});
+      i.addEventListener('focus',function(){var n=i.value.replace(/,/g,'');i.value=(parseFloat(n)||0)===0?'':n;});
+    });
+  }
+  function recalc(){var t=0;document.querySelectorAll('.chg .qb').forEach(function(i){t+=parseFloat(String(i.value).replace(/[^0-9.\-]/g,''))||0;});document.getElementById('invTotal').textContent='$'+fmtQB(t);}
+
+  // ---- conditional Reefer / Flatbed panels ----
+  document.getElementById('trailerType').addEventListener('change',function(){
+    var v=this.value;
+    document.getElementById('reeferPanel').classList.toggle('hidden', v!=='Reefer');
+    document.getElementById('flatbedPanel').classList.toggle('hidden', v!=='Flatbed');
+  });
+  // tarp yes/no toggles qty+size
+  var tarpSeg=document.getElementById('tarpSeg');
+  tarpSeg.querySelectorAll('button').forEach(function(b){
+    b.onclick=function(){
+      tarpSeg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      var yes=b.dataset.v==='yes';
+      document.getElementById('tarpQty').disabled=!yes;
+      document.getElementById('tarpSize').disabled=!yes;
+    };
+  });
+
+  // ---- QuickBooks click calendar ----
+  var MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function buildCal(el){
+    var now=new Date(),y=now.getFullYear(),m=now.getMonth();
+    function render(){
+      var first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+      var h='<div class="ch"><button data-p>&lsaquo;</button><b>'+MN[m]+' '+y+'</b><button data-n>&rsaquo;</button></div><div class="grid">';
+      ["S","M","T","W","T","F","S"].forEach(function(d){h+='<div class="dow">'+d+'</div>';});
+      for(var i=0;i<first;i++)h+='<div class="d mut"></div>';
+      for(var d=1;d<=days;d++)h+='<div class="d" data-d="'+d+'">'+d+'</div>';
+      h+='</div>';el.innerHTML=h;
+      el.querySelector('[data-p]').onclick=function(e){e.stopPropagation();m--;if(m<0){m=11;y--;}render();};
+      el.querySelector('[data-n]').onclick=function(e){e.stopPropagation();m++;if(m>11){m=0;y++;}render();};
+      el.querySelectorAll('[data-d]').forEach(function(c){c.onclick=function(e){e.stopPropagation();var trig=el.parentElement.querySelector('.cal-trigger');trig.textContent=(m+1)+'/'+c.dataset.d+'/'+y;trig.classList.add('has');el.classList.remove('show');};});
+    }
+    render();
+  }
+  function wireCals(){
+    document.querySelectorAll('.calwrap').forEach(function(w){
+      var cal=w.querySelector('.cal'),trig=w.querySelector('.cal-trigger');
+      if(cal.dataset.built)return;cal.dataset.built=1;buildCal(cal);
+      trig.onclick=function(e){e.stopPropagation();document.querySelectorAll('.cal').forEach(function(c){if(c!==cal)c.classList.remove('show');});cal.classList.toggle('show');};
+    });
+  }
+  document.addEventListener('click',function(){document.querySelectorAll('.cal').forEach(function(c){c.classList.remove('show');});});
+
+  // ---- stop builder with site-detail row ----
+  function stopHTML(kind,note){
+    var tag=kind==='pick'?'PICKUP':(kind==='del'?'DELIVERY':'STOP');
+    return '<div class="stop '+kind+'"><div class="sh"><span class="tag">'+tag+'</span><span>Stop</span><span class="r">'+note+'</span></div>'+
+      '<div class="si"><div class="locrow">'+
+      '<div class="f"><label>Address</label><input placeholder="Street address&hellip;"></div>'+
+      '<div class="f"><label>City</label><input list="cities" placeholder="City&hellip;"></div>'+
+      '<div class="f"><label>St</label><select class="stsel"></select></div>'+
+      '<div class="f"><label>Zip Code</label><input class="amt" placeholder="00000"></div>'+
+      '<div class="f calwrap"><label>Date</label><div class="fake cal-trigger">Select date <span>&#128197;</span></div><div class="cal"></div></div>'+
+      '<div class="f"><label>Time</label><input type="time" value="08:00"></div></div>'+
+      '<div class="siterow">'+
+      '<div class="f"><label>Site contact</label><input placeholder="Name&hellip;"></div>'+
+      '<div class="f"><label>Site phone</label><input type="tel" placeholder="(000) 000-0000"></div>'+
+      '<div class="f"><label>Dock</label><input placeholder="Dock / door"></div>'+
+      '<div class="f"><label>Free time / lumper</label><input placeholder="120 min"></div>'+
+      '<div class="f"><label>Lumper amount</label><div style="position:relative"><span style="position:absolute;left:7px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px">$</span><input class="qb amt" style="padding-left:16px" value="0.00"></div></div>'+
+      '</div>'+
+      '<details class="exp stop-instr" style="margin-top:8px"><summary><span class="plus">+</span> Customer instructions <span class="rt">directions &middot; gate code &middot; receiving / appointment</span></summary><div class="body2"><textarea placeholder="Gate code, check-in, appointment, dock notes from the customer..." style="width:100%;height:54px;border:1px solid var(--line);border-radius:5px;font-size:12.5px;padding:6px 8px;font-family:inherit"></textarea></div></details>'+
+      '</div></div>';
+  }
+  function renumber(){
+    var stops=[].slice.call(document.querySelectorAll('#stops .stop'));var p=0,d=0;
+    stops.forEach(function(s,i){s.querySelector('.sh span:nth-child(2)').textContent='Stop '+(i+1);if(s.classList.contains('pick'))p++;else if(s.classList.contains('del'))d++;});
+    document.getElementById('stopcount').textContent=p+' pickup'+(p>1?'s':'')+' \u00b7 '+d+' delivery'+(d>1?'ies':'');
+  }
+  function rewire(){wireStates();wireCals();wireQB();}
+  document.getElementById('addPickup').onclick=function(){var s=document.getElementById('stops');var fd=s.querySelector('.stop.del');var t=document.createElement('div');t.innerHTML=stopHTML('pick','added pickup');s.insertBefore(t.firstChild,fd);renumber();rewire();};
+  document.getElementById('addDelivery').onclick=function(){var s=document.getElementById('stops');var t=document.createElement('div');t.innerHTML=stopHTML('del','added delivery');s.appendChild(t.firstChild);renumber();rewire();};
+  document.getElementById('addStop').onclick=function(){var s=document.getElementById('stops');var fd=s.querySelector('.stop.del');var t=document.createElement('div');t.innerHTML=stopHTML('mid','intermediate stop');s.insertBefore(t.firstChild,fd);renumber();rewire();};
+
+  // ---- HOS demo ----
+  document.getElementById('driverInput').addEventListener('change',function(){
+    if(this.value.trim()){var s=['7:45','9:10','0:22','41:30','4:31p','2:31a'];var v=document.querySelectorAll('.hos .clk .v');v.forEach(function(el,i){el.textContent=s[i];el.style.color='#1f2937';});document.getElementById('hosNote').textContent='HOS from Samsara feed. Stop by / Resume at are projected.';}
+  });
+
+  // dropzone remove chip
+  document.querySelector('.doclist').addEventListener('click',function(e){if(e.target.classList.contains('rm'))e.target.closest('.docchip').remove();});
+
+  rewire();
+</script>
+</body>
+</html>
