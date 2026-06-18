@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
+import { ToastProvider } from "../../components/Toast";
 import { DispatchBoard } from "./DispatchBoard";
 
 vi.mock("../../api/dispatch", async (importOriginal) => {
@@ -56,19 +57,21 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
-        <DispatchBoard
-          loads={[mockLoad()]}
-          totalCount={1}
-          limit={50}
-          offset={0}
-          loading={false}
-          sortField="created_at"
-          sortDirection="desc"
-          onSortChange={vi.fn()}
-          onPageChange={vi.fn()}
-          onRowClick={vi.fn()}
-          onExportCsv={vi.fn()}
-        />
+        <ToastProvider>
+          <DispatchBoard
+            loads={[mockLoad()]}
+            totalCount={1}
+            limit={50}
+            offset={0}
+            loading={false}
+            sortField="created_at"
+            sortDirection="desc"
+            onSortChange={vi.fn()}
+            onPageChange={vi.fn()}
+            onRowClick={vi.fn()}
+            onExportCsv={vi.fn()}
+          />
+        </ToastProvider>
       </QueryClientProvider>
     );
 
