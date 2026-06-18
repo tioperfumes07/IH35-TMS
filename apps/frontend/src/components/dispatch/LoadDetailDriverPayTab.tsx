@@ -43,15 +43,20 @@ function lineTypeLabel(type: string): string {
 }
 
 export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCode }: Props) {
+  // Both load_id AND operating_company_id are REQUIRED by the endpoint (each missing → 400
+  // validation_error, which the drawer rendered as the Driver Pay "error"). Only fire when both are
+  // present so a transient empty value can't produce a malformed request.
+  const hasParams = Boolean(loadId) && Boolean(operatingCompanyId);
   const billsQuery = useQuery({
     queryKey: ["driver-bills", "load", loadId, operatingCompanyId],
+    enabled: hasParams,
     queryFn: () =>
       apiRequest<{ driver_bills: DriverBillRow[] }>(
         `/api/v1/driver-finance/driver-bills?load_id=${encodeURIComponent(loadId)}&operating_company_id=${encodeURIComponent(operatingCompanyId)}`
       ),
   });
 
-  if (billsQuery.isLoading) {
+  if (!hasParams || billsQuery.isLoading) {
     return <div className="py-8 text-center text-sm text-gray-500">Loading driver pay…</div>;
   }
 
