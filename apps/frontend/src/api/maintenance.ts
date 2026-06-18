@@ -203,6 +203,7 @@ export type CreateWorkOrderLegacyPayload = {
 export type CreateWorkOrderTwoSectionPayload = {
   header: {
     operating_company_id: string;
+    attachment_draft_id?: string;
     wo_type: WorkOrderType;
     source_type?: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
     unit_id: string;

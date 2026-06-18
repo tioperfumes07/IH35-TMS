@@ -31,6 +31,7 @@ type Props = {
     due_date?: string;
     internal_notes?: string;
     customer_notes?: string;
+    attachment_draft_id?: string;
   }) => Promise<{ id: string }>;
 };
 
@@ -71,6 +72,9 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
         due_date: parsed.due_date || undefined,
         internal_notes: parsed.notes || undefined,
         customer_notes: parsed.notes || undefined,
+        // Option B: send the UploadZone draft id so the invoice route re-keys the rate-con/BOL onto the
+        // new invoice (otherwise it orphans).
+        attachment_draft_id: draftAttachmentEntityId,
       });
       onCreated(created.id);
       pushToast("Invoice created", "success");

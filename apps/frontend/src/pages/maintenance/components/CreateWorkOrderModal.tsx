@@ -259,6 +259,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       const response = await createWorkOrder({
         header: {
           operating_company_id: operatingCompanyId,
+          // Option B: send the UploadZone draft id so the WO route re-keys create-time photos/estimates
+          // onto the new work order (otherwise they orphan).
+          attachment_draft_id: draftAttachmentEntityId,
           wo_type: values.wo_type,
           source_type: values.source_type,
           unit_id: values.unit_id,
