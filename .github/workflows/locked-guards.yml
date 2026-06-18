@@ -212,6 +212,9 @@ jobs:
       - name: verify:cors-allows-put
         run: npm run verify:cors-allows-put
 
+      - name: verify:geofence-state-machine-registered
+        run: npm run verify:geofence-state-machine-registered
+
       - name: verify:pcmiler-key-not-exposed
         run: npm run verify:pcmiler-key-not-exposed
 

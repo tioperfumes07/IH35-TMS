@@ -81,7 +81,8 @@ export async function registerGeofenceStateMachineRoutes(app: FastifyInstance) {
   app.post("/api/v1/integrations/samsara/geofences/:uuid/manual-transition", async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
-    if (user.role !== "owner") {
+    // Roles are capitalized app-wide ("Owner"); the prior lowercase check made this always-403.
+    if (user.role !== "Owner") {
       return reply.code(403).send({ error: "owner_only" });
     }
     const params = stateParamsSchema.safeParse(req.params ?? {});
