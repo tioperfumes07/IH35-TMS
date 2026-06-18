@@ -135,3 +135,32 @@ forward-only — it does **not** recover past evidence on its own.
 GAP-11 ("wire UploadZone into the expense form, match the bill pattern") is **blocked** by this: matching the
 current pattern would add an 8th orphan surface. GAP-11 should land *on top of* Option B (send the draft id +
 reconcile), not before it.
+
+## 7. END-TO-END STATUS (2026-06-17, honest) — backend plumbed, UI NOT connected yet
+
+Increments 1 (#1152, merged) and 2 (#1165, held) wired the `reassignDraftAttachments` re-key into backend
+create routes. **But the fix does NOTHING end-to-end yet** — two gaps:
+
+1. **No frontend form sends `attachment_draft_id`.** All 7 create forms generate a `draftAttachmentEntityId`,
+   pass it to `UploadZone`, but do **not** include it in their create payload. So `draftId` arrives
+   `undefined` at the backend and the helper no-ops. Each form must send
+   `attachment_draft_id = draftAttachmentEntityId` in its create call. (Forms delegate create to
+   parent-provided fns — the wiring is multi-hop and must be traced per form.)
+2. **Endpoint mismatch (work_order).** inc-1 wired `POST /api/v1/work-orders`, but the Create WO modal
+   actually posts to `POST /api/v1/maintenance/work-orders` (`maintenance/work-orders.routes.ts`), which has
+   **no** reconcile. The reconcile must move/also-apply to the endpoint the UI uses. Every form↔endpoint pair
+   must be confirmed before claiming the surface is fixed.
+
+**Corrected completion plan (per surface — do NOT claim fixed until all three hold):**
+| Surface | Form(s) | Actual create endpoint | Reconcile on that endpoint? | Form sends draft id? |
+|---------|---------|------------------------|-----------------------------|----------------------|
+| expense | RecordExpenseModal, maint CreateExpenseModal | (trace) `/api/v1/expenses`? | inc-1 ✅ if so | ❌ |
+| work_order | CreateWorkOrderModal | `/api/v1/maintenance/work-orders` | ❌ (wired the other endpoint) | ❌ |
+| bill | VendorBillForm, maint CreateBillModal | (trace) | inc-2 (held) | ❌ |
+| invoice | InvoiceTypeModalBase | (trace) `/api/v1/accounting/invoices`? | inc-2 (held) if so | ❌ |
+| payment | RecordPaymentModal | `/api/v1/accounting/payments` ✅ | inc-2 (held) ✅ | ❌ |
+
+**Definition of done (revised):** for every form, GUARD creates the record WITH an attachment and confirms it
+appears on the record's detail view live. Backend plumbing alone is NOT done — it must be traced to the UI's
+real endpoint AND the form must send the draft id. This is the lesson again: merged ≠ working
+(see [[merged-not-live-landmines]]).
