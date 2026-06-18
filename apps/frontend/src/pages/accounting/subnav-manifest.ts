@@ -72,6 +72,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Period comparison", path: "/accounting/period-comparison", section: "direct" },
   { label: "Pre-settlements", path: "/accounting/pre-settlements", section: "direct" },
   { label: "Vendor balances", path: "/accounting/vendor-balances", section: "direct" },
+  { label: "Accounts payable", path: "/accounting/accounts-payable", section: "direct" },
   { label: "Journal entries", path: "/accounting/journal-entries", section: "direct" },
   { label: "Expense category map", path: "/accounting/settings/expense-category-map", section: "settings" },
   { label: "CoA roles", path: "/accounting/settings/coa-roles", section: "settings" },
