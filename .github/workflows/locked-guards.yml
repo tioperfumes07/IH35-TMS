@@ -51,6 +51,9 @@ jobs:
       - name: verify:samsara-stats-reversegeo-ingest
         run: npm run verify:samsara-stats-reversegeo-ingest
 
+      - name: verify:dispatch-load-patch-money-evidence-guard
+        run: npm run verify:dispatch-load-patch-money-evidence-guard
+
       - name: verify:no-unused-query-params
         run: npm run verify:no-unused-query-params
 

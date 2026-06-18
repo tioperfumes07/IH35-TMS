@@ -5,6 +5,12 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bookLoad } from "./book-load.service.js";
+import {
+  updateDispatchLoad,
+  LoadNotFoundError,
+  LoadEditLockedError,
+  type UpdateDispatchLoadFields,
+} from "./update-load.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
@@ -169,6 +175,72 @@ const createDispatchLoadBodySchema = z.object({
   save_mode: z.enum(["draft", "book_dispatch"]).default("book_dispatch"),
   override_token: z.string().uuid().optional(),
   override_reason: z.string().trim().min(10).max(1000).optional(),
+});
+
+// Block 06 (Inc 2) — full load edit. All fields optional (PATCH semantics); only present keys update.
+// Excludes status (uses /transition) and immutable booking provenance. Charges -> rate_total_cents;
+// stops (>=2 when provided) are replaced evidence-safely in the service.
+const updateDispatchLoadBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  customer_id: z.string().uuid().optional(),
+  customer_wo_number: z.string().trim().max(120).nullable().optional(),
+  pickup_number: z.string().trim().max(120).nullable().optional(),
+  border_routing: z.string().trim().max(120).nullable().optional(),
+  driver_instructions_text: z.string().trim().max(5000).nullable().optional(),
+  notes: z.string().trim().max(5000).nullable().optional(),
+  requires_tarps: z.boolean().optional(),
+  tarp_type: z.string().trim().max(60).nullable().optional(),
+  lumper_amount_cents: z.number().int().min(0).optional(),
+  customer_chargeback_requested: z.boolean().optional(),
+  customer_chargeback_reason: z.string().trim().max(1000).nullable().optional(),
+  live_load_number: z.string().trim().max(60).nullable().optional(),
+  anticipated_chargeback_cents: z.number().int().min(0).nullable().optional(),
+  anticipated_chargeback_reason: z.string().trim().max(1000).nullable().optional(),
+  detention_expected_y_n: z.boolean().optional(),
+  detention_expected_hours: z.number().min(0).max(999.99).nullable().optional(),
+  detention_bill_customer_per_hour_cents: z.number().int().min(0).nullable().optional(),
+  detention_driver_pay_per_hour_cents: z.number().int().min(0).nullable().optional(),
+  late_delivery_risk_y_n: z.boolean().optional(),
+  late_delivery_est_deduction_cents: z.number().int().min(0).nullable().optional(),
+  late_delivery_reason: z.string().trim().max(1000).nullable().optional(),
+  miles_practical: z.number().int().min(0).nullable().optional(),
+  miles_shortest: z.number().int().min(0).nullable().optional(),
+  miles_deadhead: z.number().int().min(0).nullable().optional(),
+  trip_type: z.enum(["NB", "TR", "SB"]).optional(),
+  tour_id: z.string().uuid().nullable().optional(),
+  assigned_unit_id: z.string().uuid().nullable().optional(),
+  assigned_primary_driver_id: z.string().uuid().nullable().optional(),
+  assigned_secondary_driver_id: z.string().uuid().nullable().optional(),
+  team_id: z.string().uuid().nullable().optional(),
+  charges: z
+    .array(z.object({ code: z.string().trim().min(1).max(60), amount_cents: z.number().int().min(0) }))
+    .optional(),
+  stops: z
+    .array(
+      z.object({
+        stop_type: z.enum(["pickup", "delivery"]),
+        location_id: z.string().uuid().optional(),
+        city: z.string().trim().max(120).optional(),
+        state: z.string().trim().max(120).optional(),
+        country: z.string().trim().max(120).optional(),
+        address_line1: z.string().trim().max(300).optional(),
+        scheduled_arrival_at: z.string().datetime({ offset: true }).optional(),
+        time_window_type: stopTimeWindowSchema.optional(),
+        appointment_start_at: z.string().datetime({ offset: true }).optional(),
+        appointment_end_at: z.string().datetime({ offset: true }).optional(),
+        lumper_required: z.boolean().optional(),
+        lumper_paid_by: z.enum(["carrier", "shipper", "broker", "receiver", "unknown"]).optional(),
+        lumper_amount_cents: z.number().int().min(0).optional(),
+        is_tarp_stop: z.boolean().optional(),
+        tarp_count: z.number().int().min(0).optional(),
+        stop_notes: z.string().trim().max(1000).optional(),
+        site_contact_name: z.string().trim().max(200).optional(),
+        site_contact_phone: z.string().trim().max(40).optional(),
+        gate_dock_text: z.string().trim().max(200).optional(),
+      })
+    )
+    .min(2)
+    .optional(),
 });
 
 const reserveLoadIdBodySchema = z.object({
@@ -808,6 +880,45 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       const code = (error as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "dispatch_load_conflict" });
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
+      throw error;
+    }
+  });
+
+  // Block 06 (Inc 2) — FULL load edit. Money/evidence-guarded: a load behind an open settlement, an
+  // issued invoice, or a non-open driver bill is LOCKED (409). Stops are replaced evidence-safely
+  // (archive-not-delete). GATED PR — financial-adjacent (edits rate_total_cents). Jorge merges.
+  app.patch("/api/v1/dispatch/loads/:id", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = updateDispatchLoadBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const { operating_company_id, charges, stops, ...fields } = body.data;
+    try {
+      const result = await withCompanyScope(authUser.uuid, operating_company_id, (client) =>
+        updateDispatchLoad(client, {
+          loadId: params.data.id,
+          operatingCompanyId: operating_company_id,
+          requestingUserUuid: authUser.uuid,
+          fields: fields as UpdateDispatchLoadFields,
+          charges,
+          stops,
+        })
+      );
+      return reply.send(result);
+    } catch (error) {
+      if (error instanceof LoadNotFoundError) return reply.code(404).send({ error: "load_not_found" });
+      if (error instanceof LoadEditLockedError) {
+        return reply.code(409).send({ error: "load_edit_locked", lock: error.lock });
+      }
+      const code = (error as { code?: string }).code;
+      if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
+      if (code === "23505") return reply.code(409).send({ error: "dispatch_load_conflict" });
       throw error;
     }
   });

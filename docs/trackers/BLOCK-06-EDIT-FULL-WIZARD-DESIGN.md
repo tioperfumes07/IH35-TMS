@@ -1,5 +1,30 @@
 # Block 06 — Edit = full prefilled wizard (design, build-ready)
 
+## HARD RULES (locked by Jorge 2026-06-18, enforced by `verify:dispatch-load-patch-money-evidence-guard`)
+1. **STOPS — append-only, NEVER DELETE.** `mdata.load_stops` has inbound FKs that **CASCADE-delete legal
+   evidence** (POD/BOL `0356`, detention `202606071901`/`0353`, stop arrivals `0222`). The PATCH UPDATEs
+   kept stops in place (preserves the row id + all its evidence), appends new stops, and **archives
+   removed stops via `status='cancelled'`**. A `DELETE FROM mdata.load_stops` is a §1 violation.
+2. **MONEY GUARD — block the whole edit (409 + blocking doc id)** when the load has: an OPEN
+   load-bookended `driver_finance.driver_settlements` (`trip_closed_at IS NULL`,
+   `settlement_model='load_bookended'`, first/last_load_id), an ISSUED/non-draft `accounting.invoices`
+   (`source_load_id`, status ∈ sent/partial/paid/factored), or a NON-OPEN `driver_finance.driver_bills`
+   (`status <> 'open'`). Guards are read-only; the PATCH never writes `accounting.*`.
+3. **NAMED CEILING + follow-on block (do NOT silently accept).** Charges are stored as a single
+   `mdata.loads.rate_total_cents`, **not line items**. Consequence: the guard can only block the WHOLE
+   edit, not just money fields — so a load with an open settlement/issued invoice cannot have even its
+   non-financial fields (stop times, refs, notes) edited. **QuickBooks / NetSuite / McLeod guard at the
+   CHARGE-LINE level and allow non-money edits.** This PATCH deliberately does NOT build a charges table
+   (scope-smuggling). **FOLLOW-ON BLOCK (next after Block 06): "Charges as first-class line items with
+   per-line history"** — a charge-line table + migration, unlocking line-level money guarding (block
+   only money fields when posted) and per-line audit. Financial cluster → design-first, Jorge gates.
+
+**Status:** Inc 2 backend PATCH built (gated PR) — `apps/backend/src/dispatch/update-load.service.ts`
++ `PATCH /api/v1/dispatch/loads/:id`. Inc 1 frontend (wizard edit-mode + read-only settlement callout +
+"Open full editor" entry) builds on top once the PATCH is merged.
+
+---
+
 **Goal:** clicking Edit on a load opens the SAME booking wizard (`BookLoadModalV4`), fully prefilled,
 so dispatch edits a load with the exact UI it booked it with — plus a **read-only settlement
 callout** so they see settlement impact without being able to change posted money.
