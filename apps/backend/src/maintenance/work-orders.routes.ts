@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -106,6 +107,9 @@ const sectionBLineSchema = z.object({
 const createWorkOrderV5Schema = z.object({
   header: z.object({
     operating_company_id: z.string().uuid(),
+    // Draft id used by UploadZone for create-time WO attachments; reconciled onto the real WO id in the
+    // same txn (Option B — this is the endpoint the Create WO modal actually hits, unlike /api/v1/work-orders).
+    attachment_draft_id: z.string().uuid().optional().nullable(),
     wo_type: workOrderTypeSchema,
     source_type: z.enum(["IS", "ES", "AC", "ET", "RT", "IT", "RS"]),
     status: workOrderStatusSchema.default("open"),
@@ -403,6 +407,14 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           await client.query("BEGIN");
           try {
             const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
+            // Option B: link create-time draft attachments (WO photos/estimates) to the real WO id,
+            // atomically in this txn. This is the endpoint the Create WO modal actually posts to.
+            await reassignDraftAttachments(client as never, {
+              operatingCompanyId: body.header.operating_company_id,
+              entityType: "work_order",
+              draftId: body.header.attachment_draft_id,
+              newId: created.woUuid,
+            });
             if (body.header.equipment_id) {
               await client.query(
                 `UPDATE maintenance.work_orders SET equipment_id = $2::uuid, updated_at = now() WHERE id = $1::uuid`,
