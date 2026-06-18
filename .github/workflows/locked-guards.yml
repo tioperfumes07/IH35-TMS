@@ -48,6 +48,9 @@ jobs:
       - name: verify:record-expense-driverless-posting
         run: npm run verify:record-expense-driverless-posting
 
+      - name: verify:samsara-stats-reversegeo-ingest
+        run: npm run verify:samsara-stats-reversegeo-ingest
+
       - name: verify:no-unused-query-params
         run: npm run verify:no-unused-query-params
 

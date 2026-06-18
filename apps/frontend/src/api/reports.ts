@@ -366,6 +366,9 @@ export type FleetLocationHosRow = {
   driver_name: string | null;
   lat: number | null;
   lng: number | null;
+  city: string | null;
+  state: string | null;
+  formatted_location: string | null;
   speed_mph: number | null;
   heading_deg: number | null;
   engine_state: string | null;

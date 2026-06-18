@@ -16,6 +16,9 @@ export type FleetLocationHosRow = {
   driver_name: string | null;
   lat: number | null;
   lng: number | null;
+  city: string | null;
+  state: string | null;
+  formatted_location: string | null;
   speed_mph: number | null;
   heading_deg: number | null;
   engine_state: string | null;
@@ -58,13 +61,17 @@ export async function getFleetLocationHosRows(
     captured_at: string | null;
     lat: number | null;
     lng: number | null;
+    city: string | null;
+    state: string | null;
+    formatted_location: string | null;
     speed_mph: number | null;
     heading_deg: number | null;
     engine_state: string | null;
   }>(
     `
       SELECT p.unit_id::text AS unit_id, u.unit_number, p.samsara_vehicle_id,
-             p.captured_at::text AS captured_at, p.lat, p.lng, p.speed_mph, p.heading_deg, p.engine_state
+             p.captured_at::text AS captured_at, p.lat, p.lng, p.city, p.state, p.formatted_location,
+             p.speed_mph, p.heading_deg, p.engine_state
       FROM telematics.vehicle_latest_position p
       JOIN mdata.units u
         ON u.id = p.unit_id
@@ -166,6 +173,9 @@ export async function getFleetLocationHosRows(
       driver_name: drv?.driver_name?.trim() || null,
       lat: p.lat,
       lng: p.lng,
+      city: p.city ?? null,
+      state: p.state ?? null,
+      formatted_location: p.formatted_location ?? null,
       speed_mph: p.speed_mph,
       heading_deg: p.heading_deg,
       engine_state: p.engine_state,

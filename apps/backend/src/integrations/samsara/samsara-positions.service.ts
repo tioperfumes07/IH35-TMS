@@ -4,8 +4,10 @@ import {
   ingestVehicleLocationEvent,
 } from "../../telematics/vehicle-locations.service.js";
 import { SamsaraApiError, SamsaraClient } from "./samsara-client.js";
+import type { SamsaraVehicleStat } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
+import { buildSamsaraAssignmentId } from "./vehicle-driver-pairing/pairing.service.js";
 
 export type SyncPositionsStats = {
   fetched: number;
@@ -183,4 +185,162 @@ export async function syncSamsaraVehicleLocations(
     skipped_no_unit: skippedNoUnit,
     errors,
   };
+}
+
+export type SyncStatsResult = {
+  fetched: number;
+  positions_inserted: number;
+  drivers_paired: number;
+  skipped_no_unit: number;
+  errors: string[];
+};
+
+// Resolve a Samsara driver id -> local mdata.drivers.id (entity-scoped, active only).
+async function resolveLocalDriverId(
+  client: PgClient,
+  operatingCompanyId: string,
+  samsaraDriverId: string
+): Promise<string | null> {
+  const res = await client.query(
+    `
+      SELECT id::text AS driver_id
+      FROM mdata.drivers
+      WHERE operating_company_id = $1::uuid
+        AND samsara_driver_id = $2
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [operatingCompanyId, samsaraDriverId]
+  );
+  const row = res.rows[0] as { driver_id?: string } | undefined;
+  return row?.driver_id ?? null;
+}
+
+// Make the current Samsara driver the unit's single OPEN assignment in telematics.vehicle_driver_assignments
+// (the table fleet-location-hos reads). End any stale open for the unit, then insert the current one.
+// Append-only/immutable trigger allows setting ended_at; reuses the deterministic samsara_assignment_id
+// (vehicle:driver:startedAt) so repeated polls dedup via the unique index. Returns true if a row landed.
+async function pairCurrentDriver(
+  client: PgClient,
+  operatingCompanyId: string,
+  unitId: string,
+  samsaraVehicleId: string,
+  current: NonNullable<SamsaraVehicleStat["current_driver"]>
+): Promise<boolean> {
+  const localDriverId = await resolveLocalDriverId(client, operatingCompanyId, current.samsara_driver_id);
+  if (!localDriverId) return false;
+  const assignmentId = buildSamsaraAssignmentId(samsaraVehicleId, current.samsara_driver_id, current.started_at);
+
+  // Close any other open assignment on this unit (driver handoff) — keeps exactly one open = current.
+  await client.query(
+    `
+      UPDATE telematics.vehicle_driver_assignments
+      SET ended_at = now()
+      WHERE operating_company_id = $1::uuid
+        AND unit_id = $2::uuid
+        AND ended_at IS NULL
+        AND samsara_assignment_id IS DISTINCT FROM $3
+    `,
+    [operatingCompanyId, unitId, assignmentId]
+  );
+
+  const ins = await client.query(
+    `
+      INSERT INTO telematics.vehicle_driver_assignments (
+        operating_company_id, unit_id, driver_id, started_at, ended_at, source, samsara_assignment_id
+      )
+      VALUES ($1::uuid, $2::uuid, $3::uuid, $4::timestamptz, $5::timestamptz, 'reconciled', $6)
+      ON CONFLICT DO NOTHING
+    `,
+    [operatingCompanyId, unitId, localDriverId, current.started_at, current.ended_at, assignmentId]
+  );
+  return (ins.rowCount ?? 0) > 0;
+}
+
+// Priority-1 completion: enrich vehicle positions with reverseGeo city/state AND populate the current
+// vehicle->driver assignment, from /fleet/vehicles/stats?types=gps,driverAssignments — the one call that
+// carries both. Runs alongside the lat/lng-only locations poll; writes a fresh position event (the latest
+// wins in vehicle_latest_position) so city/state is always on the newest fix, and pairs the driver so
+// fleet-location-hos resolves driver_id -> HOS for moving trucks (not just the one with a load).
+export async function syncSamsaraVehicleStats(
+  client: PgClient,
+  operatingCompanyId: string
+): Promise<SyncStatsResult> {
+  const errors: string[] = [];
+  const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
+  if (!cfg || !Boolean(cfg.is_enabled)) {
+    return { fetched: 0, positions_inserted: 0, drivers_paired: 0, skipped_no_unit: 0, errors };
+  }
+
+  const token = decryptSamsaraSecret(readEncryptedToken(cfg));
+  const api = new SamsaraClient({
+    apiToken: token,
+    samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null,
+  });
+
+  let stats: SamsaraVehicleStat[];
+  try {
+    stats = await api.listVehicleStats();
+  } catch (error) {
+    const message =
+      error instanceof SamsaraApiError
+        ? `${error.message}${error.statusCode ? `:http_${error.statusCode}` : ""}`
+        : String((error as Error)?.message ?? error);
+    errors.push(message);
+    return { fetched: 0, positions_inserted: 0, drivers_paired: 0, skipped_no_unit: 0, errors };
+  }
+
+  const unitByVehicleId = await loadUnitIdBySamsaraVehicleId(client, operatingCompanyId);
+  let positionsInserted = 0;
+  let driversPaired = 0;
+  let skippedNoUnit = 0;
+
+  for (const stat of stats) {
+    const unitId = unitByVehicleId.get(stat.id);
+    if (!unitId) {
+      skippedNoUnit += 1;
+      continue;
+    }
+
+    if (stat.latitude !== null && stat.longitude !== null) {
+      const didInsert = await ingestVehicleLocationEvent(client as never, {
+        operating_company_id: operatingCompanyId,
+        unit_id: unitId,
+        samsara_vehicle_id: stat.id,
+        captured_at: stat.captured_at,
+        lat: stat.latitude,
+        lng: stat.longitude,
+        speed_mph: stat.speed_mph,
+        heading_deg: stat.heading_deg,
+        engine_state: deriveEngineState(null, stat.speed_mph),
+        raw_samsara_event_id: `cron:stats:${stat.id}:${stat.captured_at}`,
+        payload: stat.raw,
+        city: stat.city,
+        state: stat.state,
+        formatted_location: stat.formatted_location,
+      });
+      if (didInsert) positionsInserted += 1;
+    }
+
+    if (stat.current_driver) {
+      try {
+        if (await pairCurrentDriver(client, operatingCompanyId, unitId, stat.id, stat.current_driver)) {
+          driversPaired += 1;
+        }
+      } catch (error) {
+        errors.push(`pair_driver:${stat.id}:${String((error as Error)?.message ?? error)}`);
+      }
+    }
+  }
+
+  await writeSyncLog(client, {
+    operatingCompanyId,
+    success: errors.length === 0,
+    fetched: stats.length,
+    inserted: positionsInserted,
+    skippedNoUnit,
+    errorMessage: errors[0] ?? null,
+  });
+
+  return { fetched: stats.length, positions_inserted: positionsInserted, drivers_paired: driversPaired, skipped_no_unit: skippedNoUnit, errors };
 }

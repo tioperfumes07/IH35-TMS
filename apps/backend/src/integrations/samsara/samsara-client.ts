@@ -26,6 +26,23 @@ export type SamsaraVehicleLocation = {
   engine_on: boolean | null;
   raw: Record<string, unknown>;
 };
+// /fleet/vehicles/stats?types=gps,driverAssignments — one call gives the latest GPS fix
+// (incl. reverseGeo.formattedLocation -> city/state) AND the current driver assignment per vehicle.
+// Parsed defensively: any missing field degrades to null, never throws (the prod token is encrypted so
+// the payload cannot be live-verified here — GUARD verifies the live outcome after deploy).
+export type SamsaraVehicleStat = {
+  id: string;
+  latitude: number | null;
+  longitude: number | null;
+  captured_at: string;
+  speed_mph: number | null;
+  heading_deg: number | null;
+  formatted_location: string | null;
+  city: string | null;
+  state: string | null;
+  current_driver: { samsara_driver_id: string; started_at: string; ended_at: string | null } | null;
+  raw: Record<string, unknown>;
+};
 export type HosLog = Record<string, unknown>;
 export type SamsaraRemoteEntityType = "drivers" | "vehicles";
 export type DashcamFacing = "road" | "in_cab" | "both";
@@ -201,6 +218,114 @@ async function fetchSamsaraLocationsPage(token: string, after: string | null): P
   return { data, hasNextPage, cursor };
 }
 
+// Best-effort city/state from a Samsara reverseGeo.formattedLocation string. Samsara documents only the
+// flat formattedLocation string (e.g. "1200 San Bernardo Ave, Laredo, TX"), so parse from the right:
+// the last "XX"-looking token is the state, the segment before it is the city. Returns nulls if unsure.
+function parseCityState(formatted: string | null): { city: string | null; state: string | null } {
+  if (!formatted) return { city: null, state: null };
+  const parts = formatted.split(",").map((p) => p.trim()).filter((p) => p.length > 0);
+  if (parts.length === 0) return { city: null, state: null };
+  // Last part may be "TX" or "TX 78040" (or a country). Pull a 2-letter US state code if present.
+  const last = parts[parts.length - 1];
+  const stateMatch = last.match(/\b([A-Z]{2})\b/);
+  const state = stateMatch ? stateMatch[1] : null;
+  let city: string | null = null;
+  if (state && parts.length >= 2) city = parts[parts.length - 2] || null;
+  else if (!state && parts.length >= 2) city = parts[parts.length - 2] || null;
+  return { city, state };
+}
+
+function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicleStat | null {
+  const id = typeof row.id === "string" && row.id.trim().length > 0 ? row.id.trim() : null;
+  if (!id) return null;
+
+  const gps = asObject(row.gps) ?? asObject(row.location);
+  let latitude: number | null = null;
+  let longitude: number | null = null;
+  let captured_at = new Date().toISOString();
+  let speed_mph: number | null = null;
+  let heading_deg: number | null = null;
+  let formatted_location: string | null = null;
+  if (gps) {
+    const lat = Number(gps.latitude ?? gps.lat);
+    const lng = Number(gps.longitude ?? gps.lng ?? gps.lon);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      latitude = lat;
+      longitude = lng;
+    }
+    const timeRaw = gps.time ?? gps.timestamp ?? gps.recordedAt ?? gps.recorded_at;
+    if (typeof timeRaw === "string" && timeRaw.trim().length > 0) captured_at = new Date(timeRaw).toISOString();
+    for (const raw of [gps.speedMilesPerHour, gps.speed_mph, gps.speedMph, gps.speed]) {
+      const v = Number(raw);
+      if (Number.isFinite(v) && v >= 0) { speed_mph = v; break; }
+    }
+    for (const raw of [gps.headingDegrees, gps.heading_deg, gps.heading, gps.bearing]) {
+      const v = Number(raw);
+      if (Number.isFinite(v)) { heading_deg = Number((((v % 360) + 360) % 360).toFixed(2)); break; }
+    }
+    const reverse = asObject(gps.reverseGeo) ?? asObject(gps.reverse_geo);
+    const fl = reverse?.formattedLocation ?? reverse?.formatted_location ?? gps.formattedLocation;
+    if (typeof fl === "string" && fl.trim().length > 0) formatted_location = fl.trim();
+  }
+  const { city, state } = parseCityState(formatted_location);
+
+  // Current driver assignment: take the open assignment (no endTime) with the latest startTime.
+  let current_driver: SamsaraVehicleStat["current_driver"] = null;
+  const assignments = Array.isArray(row.driverAssignments) ? row.driverAssignments : [];
+  let bestStart = "";
+  for (const rawA of assignments) {
+    const a = asObject(rawA);
+    if (!a) continue;
+    const driver = asObject(a.driver);
+    const driverIdRaw = driver?.id ?? a.driverId;
+    const samsara_driver_id = typeof driverIdRaw === "string" ? driverIdRaw.trim() : String(driverIdRaw ?? "").trim();
+    if (!samsara_driver_id) continue;
+    const startRaw = a.startTime ?? a.startedAt ?? a.start_time;
+    if (typeof startRaw !== "string" || startRaw.trim().length === 0) continue;
+    const endRaw = a.endTime ?? a.endedAt ?? a.end_time;
+    const ended_at = typeof endRaw === "string" && endRaw.trim().length > 0 ? new Date(endRaw).toISOString() : null;
+    const started_at = new Date(startRaw).toISOString();
+    // Prefer an open (not-ended) assignment; among those, the most recent start wins.
+    if (ended_at !== null && current_driver !== null) continue;
+    if (started_at >= bestStart) {
+      bestStart = started_at;
+      current_driver = { samsara_driver_id, started_at, ended_at };
+    }
+  }
+
+  return { id, latitude, longitude, captured_at, speed_mph, heading_deg, formatted_location, city, state, current_driver, raw: row };
+}
+
+async function fetchSamsaraStatsPage(token: string, after: string | null): Promise<{
+  data: SamsaraVehicleStat[];
+  hasNextPage: boolean;
+  cursor: string | null;
+}> {
+  const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats`);
+  url.searchParams.set("types", "gps,driverAssignments");
+  if (after) url.searchParams.set("after", after);
+  let res: Response;
+  try {
+    res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
+  } catch (error) {
+    throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+  }
+  if (!res.ok) {
+    const body = await readJsonResponse(res);
+    const retryable = res.status === 429 || res.status >= 500;
+    throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
+  }
+  const json = await readJsonResponse(res);
+  const rows = Array.isArray(json.data)
+    ? json.data.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object"))
+    : [];
+  const data = rows
+    .map((row) => parseVehicleStatRow(row))
+    .filter((row): row is SamsaraVehicleStat => Boolean(row));
+  const { hasNextPage, cursor } = parsePagination(json);
+  return { data, hasNextPage, cursor };
+}
+
 async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers", after: string | null): Promise<{
   data: Record<string, unknown>[];
   hasNextPage: boolean;
@@ -332,6 +457,22 @@ export class SamsaraClient {
     let after: string | null = null;
     for (let page = 0; page < 50; page += 1) {
       const { data, hasNextPage, cursor } = await fetchSamsaraLocationsPage(token, after);
+      out.push(...data);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
+  }
+
+  /** GET /fleet/vehicles/stats?types=gps,driverAssignments — latest GPS (with reverseGeo city/state)
+   *  plus the current driver assignment per vehicle, in one call. Defensive parse; never throws on shape. */
+  async listVehicleStats(): Promise<SamsaraVehicleStat[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: SamsaraVehicleStat[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 50; page += 1) {
+      const { data, hasNextPage, cursor } = await fetchSamsaraStatsPage(token, after);
       out.push(...data);
       if (!hasNextPage || !cursor) break;
       after = cursor;
