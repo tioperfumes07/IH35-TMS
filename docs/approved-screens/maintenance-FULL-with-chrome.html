@@ -1,0 +1,275 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maintenance — Home + Fleet Table (with live app chrome)</title>
+<style>
+  :root{
+    --topbar:#0f1219;--navbar:#1b2333;--pill:#151a24;--navline:#2a3550;
+    --ok:#16a34a;--warn:#b45309;--page:#f7f8fa;--card:#fff;--ink:#1f2937;--muted:#6b7280;
+    --line:#e2e6ec;--line2:#eef1f5;--blue:#2563eb;--bluebg:#eff6ff;
+    --open:#2563eb;--prog:#7c3aed;--parts:#b45309;--sev:#b91c1c;--done:#15803d;
+  }
+  *{box-sizing:border-box}html,body{margin:0}
+  body{background:var(--page);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;font-size:13px}
+  /* ===== GLOBAL APP CHROME (matches live #0f1219 / #1b2333) ===== */
+  .topbar{background:var(--topbar);color:#fff;display:flex;align-items:center;gap:14px;padding:8px 16px;font-size:12px}
+  .topbar .brand{font-weight:800;letter-spacing:.04em;font-size:14px}
+  .topbar .co{color:#aeb8c9}
+  .topbar .pill{margin-left:6px;display:flex;align-items:center;gap:10px;background:var(--pill);border:1px solid #2a3550;border-radius:999px;padding:3px 12px;color:#cdd6e6;font-size:11px;white-space:nowrap}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+  .dot.ok{background:var(--ok)}.dot.warn{background:#f59e0b}.dot.off{background:#64748b}
+  .topbar .sp{flex:1}
+  .topbar .item{color:#cdd6e6;cursor:pointer}
+  .topbar .ent{background:#0b1422;border:1px solid #2a3550;border-radius:6px;padding:3px 10px;color:#fff}
+  .topbar .who{color:#8aa0c4}
+  /* module nav with dropdowns */
+  .navbar{background:var(--navbar);color:#cdd6e6;display:flex;align-items:center;gap:2px;padding:0 10px;border-bottom:1px solid #0b0f17}
+  .navbar a{color:#cdd6e6;text-decoration:none;font-size:12.5px;font-weight:600;padding:9px 12px;display:flex;align-items:center;gap:5px;cursor:pointer;border-bottom:2px solid transparent}
+  .navbar a:hover{background:#22304b;color:#fff}
+  .navbar a.active{color:#fff;border-bottom-color:#3b82f6}
+  .navbar a .car{font-size:9px;opacity:.7}
+  .navbar .rgt{margin-left:auto;display:flex;align-items:center;gap:2px}
+  /* page header */
+  .pagehdr{padding:14px 18px 0;display:flex;align-items:flex-start;gap:14px}
+  .pagehdr .ttl{font-size:20px;font-weight:800;color:#1a1f36;letter-spacing:-.01em}
+  .pagehdr .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .pagehdr .sp{flex:1}
+  .pagehdr .pa{background:var(--blue);color:#fff;border:0;border-radius:7px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
+  .qchips{display:flex;gap:6px;margin:10px 18px 0}
+  .qchips .qc{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:11.5px;font-weight:600;color:#475569;cursor:pointer}
+  .qchips .qc:hover{border-color:var(--blue);color:var(--blue)}
+  /* maintenance sub-tabs */
+  .subtabs{display:flex;gap:2px;flex-wrap:wrap;padding:10px 18px 0;border-bottom:1px solid var(--line);margin-top:10px;background:transparent}
+  .subtabs button{border:0;background:transparent;font-size:12px;font-weight:600;color:var(--muted);padding:8px 11px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+  .subtabs button.on{color:var(--blue);border-bottom-color:var(--blue)}
+  .subtabs button:hover{color:var(--ink)}
+
+  .content{padding:14px 18px 28px}
+  /* ===== KPI strip ===== */
+  .kpis{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:14px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 10px;cursor:pointer}
+  .kpi:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(37,99,235,.08)}
+  .kpi .n{font-size:19px;font-weight:800;line-height:1}
+  .kpi .l{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-top:4px;font-weight:700}
+  .kpi.b .n{color:var(--open)}.kpi.p .n{color:var(--prog)}.kpi.a .n{color:var(--parts)}.kpi.s .n{color:var(--sev)}.kpi.g .n{color:var(--done)}
+
+  /* ===== home layout: board + rail ===== */
+  .home{display:grid;grid-template-columns:1fr 290px;gap:14px}
+  .board{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+  .col{background:#f1f4f8;border:1px solid var(--line);border-radius:9px;padding:8px;min-height:240px}
+  .col h4{margin:0 0 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px;color:#475569}
+  .col h4 .c{margin-left:auto;background:#fff;border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:10px;color:#64748b}
+  .col h4 .bar{width:8px;height:8px;border-radius:2px}
+  .col.open .bar{background:var(--open)}.col.prog .bar{background:var(--prog)}.col.parts .bar{background:var(--parts)}.col.sev .bar{background:var(--sev)}.col.done .bar{background:var(--done)}
+  .wo{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:7px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .wo:hover{border-color:var(--blue)}
+  .wo .id{font-size:11px;font-weight:800;color:#1a1f36}
+  .wo .src{display:inline-block;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:1px 6px;border-radius:4px;color:#fff;margin-left:5px}
+  .src-pm{background:#0891b2}.src-rep{background:#7c3aed}.src-dot{background:#0d9488}.src-road{background:#dc2626}.src-dtc{background:#b45309}.src-dmg{background:#be123c}
+  .wo .meta{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .wo .ft{display:flex;align-items:center;margin-top:5px;font-size:10.5px}
+  .wo .cost{font-weight:800;color:#1a1f36}.wo .age{margin-left:auto;color:#94a3b8}
+  .empty{font-size:11px;color:#9aa3af;text-align:center;padding:18px 6px}
+
+  .rail{display:flex;flex-direction:column;gap:12px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px}
+  .panel h5{margin:0 0 9px;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#374151}
+  .pm{margin-bottom:9px}.pm:last-child{margin-bottom:0}
+  .pm .top{display:flex;font-size:11px;margin-bottom:3px}.pm .top .u{font-weight:700}.pm .top .v{margin-left:auto;color:var(--muted)}
+  .track{height:6px;background:#eef1f5;border-radius:4px;overflow:hidden}
+  .fill{height:100%;border-radius:4px}
+  .fill.g{background:var(--ok)}.fill.a{background:#f59e0b}.fill.r{background:var(--sev)}
+  .alert{display:flex;gap:7px;font-size:11px;padding:6px 0;border-top:1px solid var(--line2);color:#475569}
+  .alert:first-of-type{border-top:0}
+  .alert .ic{width:7px;height:7px;border-radius:50%;margin-top:4px;flex:none}
+  .ic.r{background:var(--sev)}.ic.a{background:#f59e0b}.ic.b{background:var(--blue)}
+
+  /* ===== Fleet Table ===== */
+  .ftbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .ftbar input{height:30px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-size:12.5px;width:220px}
+  .ftbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .ftbar .seg button{border:0;background:#fff;font-size:11.5px;padding:6px 11px;cursor:pointer;color:var(--muted);font-weight:600}
+  .ftbar .seg button.on{background:var(--navbar);color:#fff}
+  .ftbar .sp{flex:1}.ftbar .cnt{font-size:11.5px;color:var(--muted)}
+  .ftbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .ftbl th{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700;text-align:left;padding:8px 10px;background:#f6f8fb;border-bottom:1px solid var(--line);position:sticky;top:0}
+  .ftbl td{padding:8px 10px;border-bottom:1px solid var(--line2);font-size:12.5px}
+  .ftbl tr:hover td{background:#f9fbfe;cursor:pointer}
+  .ftbl .num{text-align:right;font-variant-numeric:tabular-nums}
+  .st{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:999px}
+  .st.act{background:#dcfce7;color:#15803d}.st.shop{background:#fef3c7;color:#92400e}.st.oos{background:#fee2e2;color:#b91c1c}
+  .pmcell{display:flex;align-items:center;gap:7px}.pmcell .t{width:60px;height:6px;background:#eef1f5;border-radius:4px;overflow:hidden}
+  .badgew{display:inline-block;min-width:18px;text-align:center;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:999px;font-size:10.5px;font-weight:800;padding:0 6px}
+  .badgew.z{background:#f1f5f9;color:#94a3b8;border-color:var(--line)}
+
+  .hidden{display:none}
+  details.note{margin:14px 18px 0;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;font-size:11px;color:#7c2d12}
+  details.note summary{cursor:pointer;font-weight:800;color:#b45309;text-transform:uppercase;font-size:11px}
+  details.note ul{margin:8px 0 0;padding-left:18px;line-height:1.7}
+</style></head>
+<body>
+  <!-- GLOBAL TOP BAR -->
+  <div class="topbar">
+    <span class="brand">IH 35 DISPATCH</span>
+    <span class="co">IH 35 Transportation LLC</span>
+    <span class="pill">
+      <span><span class="dot ok"></span>QuickBooks: connected</span>
+      <span><span class="dot warn"></span>Samsara: stale</span>
+      <span><span class="dot off"></span>Relay: not configured</span>
+      <span><span class="dot ok"></span>QBO sync · OK</span>
+    </span>
+    <span class="sp"></span>
+    <span class="ent">Current: IH 35 Transportation ▾</span>
+    <span class="item">＋ Create</span>
+    <span class="item">Tasks</span>
+    <span class="item">EN | ES</span>
+    <span class="who">Thu, Jun 18, 2026 · tioperfumes07@gmail.com</span>
+  </div>
+  <!-- MODULE NAV (dropdowns) -->
+  <div class="navbar">
+    <a>Home</a>
+    <a>Dispatch <span class="car">▾</span></a>
+    <a>Loads <span class="car">▾</span></a>
+    <a class="active">Maintenance <span class="car">▾</span></a>
+    <a>Accounting <span class="car">▾</span></a>
+    <a>Banking <span class="car">▾</span></a>
+    <a>Reports <span class="car">▾</span></a>
+    <a>Lists <span class="car">▾</span></a>
+    <span class="rgt"><a>Finance Hub</a><a>Settings <span class="car">▾</span></a></span>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <div class="pagehdr">
+    <div>
+      <div class="ttl">Maintenance</div>
+      <div class="sub">Work orders, fleet maintenance, parts inventory, and PM scheduling</div>
+    </div>
+    <div class="sp"></div>
+    <button class="pa">＋ Create Work Order</button>
+  </div>
+  <div class="qchips"><span class="qc">PM</span><span class="qc">Repair</span><span class="qc">Tire</span><span class="qc">Accident</span></div>
+
+  <!-- SUB-TABS -->
+  <div class="subtabs">
+    <button class="on" data-v="home">R&amp;M Status Board</button>
+    <button data-v="fleet">Fleet Table</button>
+    <button>Master Data</button>
+    <button>Active WOs</button>
+    <button>Service / Location</button>
+    <button>Arriving Soon</button>
+    <button>In-Transit Issues</button>
+    <button>Damage Reports</button>
+    <button>Severe Repairs</button>
+    <button>Road Service</button>
+    <button>Parts Inventory</button>
+    <button>Settings</button>
+  </div>
+
+  <div class="content">
+    <!-- KPI strip -->
+    <div class="kpis">
+      <div class="kpi b"><div class="n">7</div><div class="l">Open WOs</div></div>
+      <div class="kpi p"><div class="n">3</div><div class="l">In Progress</div></div>
+      <div class="kpi a"><div class="n">2</div><div class="l">Awaiting Parts</div></div>
+      <div class="kpi"><div class="n">5</div><div class="l">PM Due Soon</div></div>
+      <div class="kpi s"><div class="n">1</div><div class="l">Severe / OOS</div></div>
+      <div class="kpi"><div class="n">1</div><div class="l">Road Service</div></div>
+      <div class="kpi"><div class="n">4</div><div class="l">Parts Low-Stock</div></div>
+      <div class="kpi g"><div class="n">$12,480</div><div class="l">MTD Cost</div></div>
+    </div>
+
+    <!-- HOME VIEW -->
+    <div id="homeView">
+      <div class="home">
+        <div class="board">
+          <div class="col open"><h4><span class="bar"></span>Open<span class="c">3</span></h4>
+            <div class="wo"><div><span class="id">WO-1043</span><span class="src src-rep">Repair</span></div><div class="meta">T171 · Luis Sosa<br>Air dryer cartridge</div><div class="ft"><span class="cost">$340</span><span class="age">2h</span></div></div>
+            <div class="wo"><div><span class="id">WO-1041</span><span class="src src-pm">PM</span></div><div class="meta">T163 · PM-A service</div><div class="ft"><span class="cost">$285</span><span class="age">5h</span></div></div>
+            <div class="wo"><div><span class="id">WO-1038</span><span class="src src-dtc">DTC</span></div><div class="meta">T147 · SPN 3364 DEF</div><div class="ft"><span class="cost">—</span><span class="age">1d</span></div></div>
+          </div>
+          <div class="col prog"><h4><span class="bar"></span>In Progress<span class="c">2</span></h4>
+            <div class="wo"><div><span class="id">WO-1040</span><span class="src src-rep">Repair</span></div><div class="meta">T155 · Rush Truck<br>Brake job — drive axle</div><div class="ft"><span class="cost">$1,120</span><span class="age">3h</span></div></div>
+            <div class="wo"><div><span class="id">WO-1035</span><span class="src src-dot">DOT</span></div><div class="meta">TR-10209 · Annual inspection</div><div class="ft"><span class="cost">$190</span><span class="age">6h</span></div></div>
+          </div>
+          <div class="col parts"><h4><span class="bar"></span>Awaiting Parts<span class="c">2</span></h4>
+            <div class="wo"><div><span class="id">WO-1031</span><span class="src src-rep">Repair</span></div><div class="meta">T162 · DEF doser valve<br>ETA Fri</div><div class="ft"><span class="cost">$610</span><span class="age">2d</span></div></div>
+            <div class="wo"><div><span class="id">WO-1029</span><span class="src src-dmg">Damage</span></div><div class="meta">T140 · Mirror RH<br>backorder</div><div class="ft"><span class="cost">$240</span><span class="age">3d</span></div></div>
+          </div>
+          <div class="col sev"><h4><span class="bar"></span>Severe / OOS<span class="c">1</span></h4>
+            <div class="wo"><div><span class="id">WO-1044</span><span class="src src-road">Road</span></div><div class="meta">T151 · OOS — I-35 MM 29<br>Love's Road Service</div><div class="ft"><span class="cost">$0</span><span class="age">40m</span></div></div>
+          </div>
+          <div class="col done"><h4><span class="bar"></span>Completed<span class="c">2</span></h4>
+            <div class="wo"><div><span class="id">WO-1028</span><span class="src src-pm">PM</span></div><div class="meta">T160 · PM-B done</div><div class="ft"><span class="cost">$540</span><span class="age">1d</span></div></div>
+            <div class="wo"><div><span class="id">WO-1022</span><span class="src src-rep">Repair</span></div><div class="meta">T149 · Alternator</div><div class="ft"><span class="cost">$430</span><span class="age">2d</span></div></div>
+          </div>
+        </div>
+
+        <div class="rail">
+          <div class="panel"><h5>PM Countdown</h5>
+            <div class="pm"><div class="top"><span class="u">T171</span><span class="v">1,200 mi left</span></div><div class="track"><div class="fill g" style="width:80%"></div></div></div>
+            <div class="pm"><div class="top"><span class="u">T163</span><span class="v">600 mi left</span></div><div class="track"><div class="fill a" style="width:90%"></div></div></div>
+            <div class="pm"><div class="top"><span class="u">T155</span><span class="v">overdue 300 mi</span></div><div class="track"><div class="fill r" style="width:100%"></div></div></div>
+            <div class="pm"><div class="top"><span class="u">T147</span><span class="v">4,800 mi left</span></div><div class="track"><div class="fill g" style="width:32%"></div></div></div>
+          </div>
+          <div class="panel"><h5>PM Alerts</h5>
+            <div class="alert"><span class="ic r"></span>T155 PM overdue by 300 mi</div>
+            <div class="alert"><span class="ic a"></span>T163 PM due within 600 mi</div>
+            <div class="alert"><span class="ic a"></span>3 units due this week</div>
+          </div>
+          <div class="panel"><h5>DTC Auto Work Orders</h5>
+            <div class="alert"><span class="ic b"></span>T147 · SPN 3364 / FMI 18 — DEF quality → WO-1038</div>
+            <div class="alert"><span class="ic b"></span>T162 · SPN 5246 — aftertreatment</div>
+          </div>
+          <div class="panel"><h5>Road Service Active</h5>
+            <div class="alert"><span class="ic r"></span>T151 OOS · I-35 MM 29 · Love's · ETA 35 min</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLEET TABLE VIEW -->
+    <div id="fleetView" class="hidden">
+      <div class="ftbar">
+        <input placeholder="Search unit / driver…">
+        <div class="seg"><button class="on">Active</button><button>In shop</button><button>OOS</button><button>All</button></div>
+        <div class="sp"></div>
+        <div class="cnt">Showing 8 of 32 units</div>
+      </div>
+      <table class="ftbl">
+        <thead><tr>
+          <th>Unit</th><th>Type</th><th>Driver</th><th>Status</th>
+          <th class="num">Odometer</th><th class="num">Eng hrs</th><th>Next PM</th><th>Open WOs</th><th>Last service</th><th>Location</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><b>T171</b></td><td>Tractor · day cab</td><td>Luis Sosa</td><td><span class="st act">Active</span></td><td class="num">412,880</td><td class="num">11,240</td><td><div class="pmcell"><div class="t"><div class="fill g" style="width:80%;height:100%"></div></div>1,200 mi</div></td><td><span class="badgew">1</span></td><td>06/02</td><td>I-35 · Cotulla</td></tr>
+          <tr><td><b>T163</b></td><td>Tractor · sleeper</td><td>—</td><td><span class="st shop">In shop</span></td><td class="num">388,140</td><td class="num">10,510</td><td><div class="pmcell"><div class="t"><div class="fill a" style="width:90%;height:100%"></div></div>600 mi</div></td><td><span class="badgew">1</span></td><td>05/20</td><td>Laredo yard</td></tr>
+          <tr><td><b>T155</b></td><td>Tractor · day cab</td><td>R. Peña</td><td><span class="st shop">In shop</span></td><td class="num">501,230</td><td class="num">13,980</td><td><div class="pmcell"><div class="t"><div class="fill r" style="width:100%;height:100%"></div></div><span style="color:#b91c1c">overdue</span></div></td><td><span class="badgew">1</span></td><td>04/28</td><td>Rush Truck</td></tr>
+          <tr><td><b>T151</b></td><td>Tractor · day cab</td><td>J. Cantú</td><td><span class="st oos">OOS</span></td><td class="num">476,910</td><td class="num">12,770</td><td><div class="pmcell"><div class="t"><div class="fill g" style="width:55%;height:100%"></div></div>2,600 mi</div></td><td><span class="badgew">1</span></td><td>05/14</td><td>I-35 MM 29</td></tr>
+          <tr><td><b>T147</b></td><td>Tractor · sleeper</td><td>M. Reyes</td><td><span class="st act">Active</span></td><td class="num">298,540</td><td class="num">8,420</td><td><div class="pmcell"><div class="t"><div class="fill g" style="width:32%;height:100%"></div></div>4,800 mi</div></td><td><span class="badgew">1</span></td><td>06/09</td><td>San Antonio</td></tr>
+          <tr><td><b>T162</b></td><td>Tractor · day cab</td><td>A. Flores</td><td><span class="st act">Active</span></td><td class="num">355,200</td><td class="num">9,910</td><td><div class="pmcell"><div class="t"><div class="fill g" style="width:60%;height:100%"></div></div>2,400 mi</div></td><td><span class="badgew">1</span></td><td>05/30</td><td>Dallas</td></tr>
+          <tr><td><b>T160</b></td><td>Tractor · sleeper</td><td>D. Silva</td><td><span class="st act">Active</span></td><td class="num">270,015</td><td class="num">7,680</td><td><div class="pmcell"><div class="t"><div class="fill g" style="width:20%;height:100%"></div></div>5,500 mi</div></td><td><span class="badgew z">0</span></td><td>06/16</td><td>Laredo yard</td></tr>
+          <tr><td><b>TR-10209</b></td><td>Trailer · reefer</td><td>—</td><td><span class="st shop">In shop</span></td><td class="num">—</td><td class="num">—</td><td><div class="pmcell"><div class="t"><div class="fill g" style="width:45%;height:100%"></div></div>annual</div></td><td><span class="badgew">1</span></td><td>05/22</td><td>Laredo yard</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <details class="note">
+    <summary>Render notes (for the coder)</summary>
+    <ul>
+      <li><b>Global app chrome included.</b> Top bar (#0f1219) with brand + entity switcher + live status chips (QuickBooks/Samsara/Relay/QBO sync), module nav bar (#1b2333) with hover-dropdowns, and the page-header — all matching the live app. Every maintenance screen renders INSIDE this chrome (this was missing from the form renders).</li>
+      <li><b>Colors are the live measured values</b> (#0f1219 top bar, #1b2333 nav). If the intended banner is a brighter blue, change the --topbar/--navbar tokens — one place.</li>
+      <li><b>Two views shown:</b> R&amp;M Status Board (kanban Open→In Progress→Awaiting Parts→Severe/OOS→Completed + KPI strip + right rail PM Countdown/Alerts/DTC/Road Service) and <b>Fleet Table</b> (Unit · Type · Driver · Status · Odometer · Eng hrs · Next PM bar · Open WOs · Last service · Location, with Active/In-shop/OOS/All filter + count).</li>
+      <li>Sub-tab bar carries the full live maintenance tab set. KPI cards show "0" states (don't vanish).</li>
+    </ul>
+  </details>
+
+<script>
+  var bs=document.querySelectorAll('.subtabs button');
+  bs.forEach(function(b){b.onclick=function(){
+    if(!b.dataset.v) return;
+    bs.forEach(function(x){x.classList.remove('on');});b.classList.add('on');
+    document.getElementById('homeView').classList.toggle('hidden',b.dataset.v!=='home');
+    document.getElementById('fleetView').classList.toggle('hidden',b.dataset.v!=='fleet');
+  };});
+  document.querySelectorAll('.ftbar .seg button').forEach(function(b){b.onclick=function(){b.parentNode.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');};});
+</script>
+</body></html>
