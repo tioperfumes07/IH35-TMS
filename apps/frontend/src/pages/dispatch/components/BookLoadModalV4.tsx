@@ -45,6 +45,8 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
   pieces: string;
+  trip_type: "" | "NB" | "TR" | "SB";
+  tour_id: string;
   trailer_type: string;
   assigned_unit_id: string;
   assigned_trailer_unit_id: string;
@@ -185,6 +187,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       weight_lbs: 0,
       load_type: "broker",
       pieces: "",
+      trip_type: "",
+      tour_id: "",
       notes: "",
       linehaul_cents: 0,
       fuel_surcharge_cents: 0,
@@ -247,6 +251,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const assignedPrimaryDriverId = form.watch("assigned_primary_driver_id");
   const assignedTrailerUnitId = form.watch("assigned_trailer_unit_id");
   const watchedCustomerId = form.watch("customer_id");
+  const watchedTripType = form.watch("trip_type");
   const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean }>({
     canDispatch: true,
     hasBlockers: false,
@@ -420,6 +425,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       pushToast("Team mode requires a team ID", "error");
       return;
     }
+    // Trip Pairing (Block 04): Trip Type is REQUIRED — block save + surface an inline error.
+    if (!values.trip_type) {
+      form.setError("trip_type", { type: "required", message: "Select a Trip Type (NB / TR / SB)" });
+      pushToast("Select a Trip Type before booking", "error");
+      return;
+    }
     const token = opts?.override ? overrideToken ?? crypto.randomUUID() : undefined;
     if (opts?.override && !overrideToken) setOverrideToken(token ?? null);
     try {
@@ -457,6 +468,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         miles_deadhead: numOrUndef(values.miles_deadhead),
         pickup_number: values.pickup_number || undefined,
         border_routing: values.border_routing || undefined,
+        trip_type: values.trip_type || undefined,
+        tour_id: values.tour_id || undefined,
         trailer_type: values.trailer_type as
           | "refrigerated_van"
           | "dry_van"
@@ -878,6 +891,38 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
                   </div>
                   <div className="space-y-2 p-3">
+                    {/* Trip Pairing (Block 04): mandatory Trip Type — compact pills sized to the wizard's fields. */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-gray-600">
+                        Trip Type <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-1.5">
+                        {([["NB", "Northbound", "#2563eb"], ["TR", "Triangulation", "#7c3aed"], ["SB", "Southbound", "#16a34a"]] as const).map(
+                          ([code, label, color]) => {
+                            const active = watchedTripType === code;
+                            return (
+                              <button
+                                key={code}
+                                type="button"
+                                onClick={() => {
+                                  form.setValue("trip_type", code, { shouldDirty: true });
+                                  form.clearErrors("trip_type");
+                                }}
+                                className="rounded border px-2.5 py-1 text-xs font-semibold transition-colors"
+                                style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: color, color }}
+                              >
+                                {code} · {label}
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+                      {form.formState.errors.trip_type ? (
+                        <p className="text-[11px] text-red-600">{String(form.formState.errors.trip_type.message)}</p>
+                      ) : watchedTripType === "TR" || watchedTripType === "SB" ? (
+                        <p className="text-[11px] text-gray-500">Joins this unit's current tour automatically (its most recent Northbound leg).</p>
+                      ) : null}
+                    </div>
                     <BookLoadEquipmentSection register={form.register} watch={form.watch} setValue={form.setValue} operatingCompanyId={operatingCompanyId} />
                     {assignedUnitId ? (
                       <DeadheadOptimizerPanel

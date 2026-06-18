@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
@@ -57,6 +58,9 @@ export type BookLoadInput = {
   operating_company_id: string;
   customer_id: string;
   status: DispatchStatus;
+  // Trip Pairing (Block 04): NB starts a tour (fresh tour_id), TR/SB join an existing tour_id.
+  trip_type?: "NB" | "TR" | "SB";
+  tour_id?: string;
   customer_wo_number?: string;
   customer_po_number?: string;
   commodity?: string;
@@ -842,6 +846,35 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    // Trip Pairing (Block 04): set trip_type + tour_id post-insert (additive; avoids touching the
+    // 39-column lockstep INSERT above). NB starts a NEW tour (generate a tour_id when none supplied);
+    // TR/SB JOIN the tour_id chosen in the wizard. Entity-scoped row (already the inserted load).
+    if (input.trip_type) {
+      let tourId: string | null;
+      if (input.trip_type === "NB") {
+        tourId = input.tour_id ?? randomUUID(); // NB starts a tour
+      } else if (input.tour_id) {
+        tourId = input.tour_id; // explicit join (the wizard's tour picker, when present)
+      } else if (input.assigned_unit_id) {
+        // TR/SB with no explicit pick → auto-join the unit's most recent active NB tour.
+        const t = await client.query<{ tour_id: string | null }>(
+          `SELECT tour_id::text FROM mdata.loads
+             WHERE assigned_unit_id = $1::uuid AND trip_type = 'NB' AND tour_id IS NOT NULL
+               AND soft_deleted_at IS NULL
+             ORDER BY created_at DESC LIMIT 1`,
+          [input.assigned_unit_id]
+        );
+        tourId = t.rows[0]?.tour_id ?? null;
+      } else {
+        tourId = null;
+      }
+      await client.query(
+        `UPDATE mdata.loads SET trip_type = $1::mdata.trip_type_enum, tour_id = $2::uuid, updated_at = now() WHERE id = $3::uuid`,
+        [input.trip_type, tourId, String(load.id)]
+      );
+    }
+
     await consumeLoadNumberReservation(client, {
       reservationId,
       loadId: String(load.id),

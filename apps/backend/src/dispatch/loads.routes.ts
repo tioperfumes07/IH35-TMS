@@ -121,6 +121,11 @@ const createDispatchLoadBodySchema = z.object({
   pickup_number: z.string().trim().max(120).optional(),
   border_routing: z.string().trim().max(120).optional(),
   trailer_type: z.enum(["refrigerated_van", "dry_van", "flatbed", "power_only_no_trailer", "power_only_customer_trailer"]).optional(),
+  // Trip Pairing (Block 04): optional at the API for now (Phase 1, additive — no break for in-flight
+  // clients); the wizard makes it REQUIRED on the UI, and a follow-up flips this to required once the
+  // selector ships on all clients. NB starts a tour; TR/SB pass the tour_id to join.
+  trip_type: z.enum(["NB", "TR", "SB"]).optional(),
+  tour_id: z.string().uuid().optional(),
   assigned_unit_id: z.string().uuid().optional(),
   assigned_primary_driver_id: z.string().uuid().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
