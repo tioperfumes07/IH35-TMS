@@ -16,6 +16,93 @@
 Of the 70 pending blocks: **~10 are Tier-1** (financial/migration — STOP + your OK), the rest Tier-3 (ship-on-green). Plus non-block backlog (PARTIAL crons, Wave-5 hardening, future Phases 6/7/8) in §4.
 
 ---
+## 0b) CODE RECONCILIATION — 2026-06-17 ~21:00 CST (appended, not a rewrite)
+
+> Method: direct code inspection of 30 of the structured `GAP-*` blocks — a GAP is **DONE-by-inspection**
+> only when its backend route is registered in `apps/backend/src/index.ts` AND its frontend page is routed
+> in `manifest.tsx` (or component mounted). **DONE-by-inspection ≠ live-tested.** The GAP-39 discovery
+> below proves the difference: its route file looked complete but was never registered, so it was *dead*
+> on the live server. Every "DONE-by-inspection" item still needs a GUARD live-check before it is trusted.
+> Original block entries above are unchanged (per docs/CLAUDE.md §12 — append, don't erase).
+
+**Verified result of 30 audited: 25 DONE-by-inspection · 4 PARTIAL · 1 was-unregistered (now wired).**
+
+### DONE (code-verified by inspection, NOT live-tested) — 25
+GAP-8, GAP-18, GAP-19, GAP-28, GAP-29, GAP-40, GAP-44, GAP-48, GAP-49, GAP-61, GAP-62, GAP-63, GAP-66,
+GAP-67, GAP-68, GAP-69, GAP-70, GAP-76, GAP-82, GAP-83, GAP-84, GAP-85, GAP-86, GAP-89, GAP-92.
+Each has a registered backend route + a routed/mounted frontend surface. **Pending GUARD live spot-check**
+to confirm inspection matched reality.
+
+### PARTIAL — RE-VERIFIED: 3 of the 4 were undercounts; they're actually BUILT
+- **GAP-24** Samsara freshness pill — **DONE.** `components/dispatch/FreshnessIndicator.tsx` implements
+  L1–L4 + green/amber/red + age formatting and is **mounted** (LiveEtaColumns).
+- **GAP-34** driver-PWA dispatch view — **DONE.** `apps/driver-pwa/src/screens/DispatchView.tsx` +
+  `components/dispatch/{PickupCard,DeliveryCard,DocUploadDrawer}.tsx` all exist (pickup/delivery cards +
+  doc upload). The "UI missing" verdict was wrong.
+- **GAP-23** Samsara cache tiers — **DONE.** All four exist: `cache/{tier1-realtime,tier2-30s,tier3-5min,
+  tier4-15min}.ts`. The warmer warming only tiers 3–4 is **by design** (real-time/30s tiers are fetched
+  on-demand, not pre-warmed) — not a gap.
+- **GAP-38** damage continuity + insurance auto-claim — **genuinely incomplete:** routes built but **NOT
+  registered**; **TIER-1** (its `auto-create-claim` writes `insurance.claim` = financial/legal). Needs a
+  Tier-1 review (idempotency / threshold / policy-link / RLS) + Jorge's OK before wiring.
+
+> **CONCLUSION (GAP layer):** of 30 GAPs audited, the ONLY genuinely-unfinished items are: GAP-38 (Tier-1
+> review), GAP-39 (now wired, #1157), GAP-10 (built, #1156), GAP-11 (blocked on #1152). Three of four
+> "PARTIAL" verdicts were undercounts. BUT see the DEPTH correction below — "route+page exist" is NOT the
+> right bar for the big domain modules.
+
+## 0c) DEPTH CORRECTION — 2026-06-17 ~21:35 CST (GUARD live-loaded the financial/ops domains)
+
+> The 0b "DONE-by-inspection" standard ("backend route registered + frontend routed") **over-counts** for
+> the big domain pages: a STUB page is still routed and still renders, so inspection wrongly called it DONE.
+> GUARD live-loaded each domain and judged DEPTH (does the page do what the mockup shows). Re-classified
+> with three honest buckets — **STUB** (placeholder, empty even with data → needs build), **BUILT-BUT-EMPTY**
+> (real module, renders thin only because no data/not-seeded → needs data, not rebuild), **BUILT+POPULATED**.
+
+- **FINANCE HUB (`/finance`) — STUB / NOT BUILT (correctly).** `FinanceOverviewPage`, `FinanceProjectionsPage`,
+  `FinanceScenariosPage` are 8–19-line placeholder pages ("Future module for financial planning"). Calculator
+  (114L) + Amortization (139L) are client-side calculators (no persistence); LoanWizard (199L) is partial.
+  This is the **gated Finance Hub** designed in FH-1…FH-8 (Fixed Assets/Depreciation, Loan Wizard, Amortization
+  Engine, Calculator, Bankruptcy Modeler, Tax Manager, Unit Allocation, Lease Contracts) — **design-docs only,
+  no build**. Build size = **LARGE** (8 sub-modules; ~2 partially real). **Tier-1 gated finance build**
+  (never self-merge; design-first; Jorge OK). My 0b audit did NOT list /finance — but this corrects any
+  impression that the domain is done.
+- **MAINTENANCE (`/maintenance`) — BUILT (code), THIN LIVE = data/empty-state (NOT a stub).** The routed
+  `MaintenanceHomePage` is a 470-line dashboard: registered KPI / R&M-status / triage / recent / work-orders
+  endpoints (`registerMaintenanceDashboardKpisRoutes` etc.), tabs, `WorkOrdersTable`, `CreateWorkOrderModal` —
+  structurally matches `2-Maintenance.png` (KPI cards + WO table). GUARD saw it thin live → root cause is
+  **empty TRANSP data / KPI cards vanishing on empty / no-company-selected**, not a missing module.
+  Action: live data+endpoint check; fix empty-state so KPI cards render "0" instead of disappearing.
+- **INVENTORY (`/inventory` → `InventoryPartsStockPage`) — BUILT-BUT-EMPTY.** Real parts-stock query + tabs +
+  create drawer (102L); renders near-empty because no parts data. Not a stub.
+- **CUSTOMERS QBO sync — BUILT, never run.** `CustomersSyncPanel` "Sync now" button → `POST
+  /api/v1/qbo-sync/customers/pull-now` (+ reconcile). "Synced 0 of 1209, never" = **the button has never
+  been clicked**; it's a manual pull, not a cron and not broken. Same "built, not seeded" pattern as Samsara
+  HOS, but the trigger is a visible button. Jorge: click "Sync now" (or decide to schedule it).
+
+> **CORRECTED STANDARD:** code-inspection can only separate **STUB** from **BUILT**; it CANNOT separate
+> BUILT-BUT-EMPTY from BUILT-AND-WORKING — only GUARD's live load + real data can. So: STUB (Finance Hub)
+> = genuine build work; BUILT-BUT-EMPTY (Maintenance / Inventory / Customers) = data/seed/empty-state +
+> a live check, NOT a rebuild. The "70 PENDING" remains mostly stale, but the honest remaining *build* is
+> the **Finance Hub** (large, gated) + empty-state polish + the GAP-38 Tier-1 review. A stub marked DONE is
+> the exact trust failure being guarded against — this section corrects it.
+
+### Was unregistered → now wired
+- **GAP-39** geofence state machine — route file was complete but `registerGeofenceStateMachineRoutes`
+  was never called in index.ts (all 3 endpoints 404'd live). Wired in **PR #1157** (+ fixed an always-403
+  lowercase `"owner"` gate). Held for merge; GUARD live-verify after.
+
+### Built this session (held for merge)
+- **GAP-10** cancellations report — **PR #1156** (held). **GAP-11** upload-expense — **blocked** on the
+  orphaned-attachment fix **PR #1152** (held); do not build on the broken draft-id pattern.
+
+### Takeaway
+The true *remaining* GAP build work is roughly **GAP-34 / GAP-24 / GAP-23** (+ the GAP-38 Tier-1 review and
+merges of #1152 / #1156 / #1157) — on the order of **~6–8 items, not 70**. The headline "70 PENDING" reflects
+`.block-ready` branch-name matching, which misses work that merged under a different branch or sits built but
+unregistered. **Caveat: the 25 DONE-by-inspection are unconfirmed until GUARD live-checks a sample.**
+
+---
 ## 1) WORK DONE — last 48h (80 PRs merged)
 
 - #1052 docs(fleet): FLEET-ASSET-HOME — Units module gap audit + gated proposal
