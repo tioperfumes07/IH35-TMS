@@ -28,6 +28,7 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   { label: "Border", href: "/dispatch/border-crossing" },
   { label: "Late", href: "/dispatch/alerts/late-arrivals", badgeKey: "late" },
   { label: "Live Map", href: "/dispatch/geofencing", badgeKey: "live_map" },
+  { label: "Trip Pairing", href: "/dispatch/trip-pairing" },
   { label: "Factoring", href: "/accounting/factoring", badgeKey: "factoring" },
   {
     label: "Planning",
