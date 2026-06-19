@@ -140,6 +140,10 @@ async function resolveAssetCompanyIds(
 }
 
 const ARCHIVE_STATUSES = new Set(["Sold", "Transferred", "Damaged"]);
+// Active-fleet statuses: setting one of these REACTIVATES a unit — clears deactivated_at so it returns to
+// active lists/board/dropdowns. Without this, clicking "InService" on an archived unit leaves it hidden
+// (deactivated_at still set) — the reactivation half of the Saldana desync class.
+const ACTIVE_FLEET_STATUSES = new Set(["InService", "OutOfService", "InMaintenance"]);
 // WF-064: statuses blocked when the unit has an open work order (Sold/Transferred only).
 const RETIRE_GATE_STATUSES = new Set(["Sold", "Transferred"]);
 
@@ -364,6 +368,9 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     applyUnitPatchFields(b, add);
     if ("status" in b && typeof b.status === "string" && ARCHIVE_STATUSES.has(b.status)) {
       add("deactivated_at", new Date().toISOString().slice(0, 10));
+    } else if ("status" in b && typeof b.status === "string" && ACTIVE_FLEET_STATUSES.has(b.status)) {
+      // Reactivate: returning to an active-fleet status clears the soft-delete so the unit reappears.
+      add("deactivated_at", null);
     }
     if ("status" in b) {
       add("status_changed_at", new Date().toISOString());

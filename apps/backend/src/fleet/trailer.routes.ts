@@ -126,6 +126,16 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
         "status_change_reason = $5",
         "updated_by_user_id = $6",
       ];
+      // Keep deactivated_at consistent with status (mirrors mdata.units) — without this a Sold/Lost trailer
+      // stayed deactivated_at IS NULL and lingered in every active list/dropdown (the Saldana desync, for
+      // trailers). Archive statuses soft-delete; active-fleet statuses reactivate.
+      const TRAILER_ARCHIVE_STATUSES = new Set(["Sold", "Transferred", "Damaged", "Lost"]);
+      const TRAILER_ACTIVE_STATUSES = new Set(["InService", "OutOfService", "InMaintenance"]);
+      if (TRAILER_ARCHIVE_STATUSES.has(body.data.status)) {
+        setParts.push("deactivated_at = COALESCE($4::date, CURRENT_DATE)::timestamptz");
+      } else if (TRAILER_ACTIVE_STATUSES.has(body.data.status)) {
+        setParts.push("deactivated_at = NULL");
+      }
       const values: unknown[] = [
         parsedParams.data.id,
         query.data.operating_company_id,
