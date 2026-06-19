@@ -47,8 +47,8 @@ if (!/city: stat\.city/.test(svc)) fail("service must pass stat.city into the po
 
 // 4) Cron wires the enrichment
 const cron = read("apps/backend/src/cron/samsara-positions-cron.ts");
-if (!/syncSamsaraVehicleStats\(client, operatingCompanyId\)/.test(cron))
-  fail("positions cron must call syncSamsaraVehicleStats");
+if (!/syncSamsaraVehicleStats\(c, operatingCompanyId\)/.test(cron))
+  fail("positions cron must call syncSamsaraVehicleStats (in its own runScoped tx)");
 
 // 5) Reader returns city/state; export + board surface them; no leftover placeholder
 const reader = read("apps/backend/src/telematics/fleet-location-hos.service.ts");
