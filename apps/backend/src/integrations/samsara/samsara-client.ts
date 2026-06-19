@@ -64,6 +64,19 @@ export class SamsaraApiError extends Error {
 
 const SAMSARA_API_BASE = "https://api.samsara.com";
 
+// Timeout-bounded fetch. A bare fetch() has NO timeout — a stalled Samsara socket hangs forever, and the
+// background-job cron holds a DB transaction open the whole time (connection-pool exhaustion / killed
+// idle-in-transaction → full rollback). AbortController closes the socket so the call always returns.
+export async function samsaraFetch(url: URL | string, init: RequestInit, timeoutMs = 12000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function envToken(): string | null {
   const t =
     process.env.SAMSARA_API_TOKEN?.trim() ||
@@ -194,7 +207,7 @@ async function fetchSamsaraLocationsPage(token: string, after: string | null): P
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {
-    res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
+    res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
   } catch (error) {
     throw new SamsaraApiError(
       `samsara_network_error:${String((error as Error)?.message ?? error)}`,
@@ -318,7 +331,7 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {
-    res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
+    res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
   } catch (error) {
     throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
   }
@@ -348,7 +361,7 @@ async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fl
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {
-    res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
+    res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
   } catch (error) {
     throw new SamsaraApiError(
       `samsara_network_error:${String((error as Error)?.message ?? error)}`,
@@ -383,7 +396,7 @@ export class SamsaraClient {
     try {
       const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles`);
       url.searchParams.set("limit", "1");
-      const res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
+      const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
       if (!res.ok) {
         const body = await readJsonResponse(res);
         return { ok: false, error: `http_${res.status}:${JSON.stringify(body).slice(0, 500)}` };
@@ -428,7 +441,7 @@ export class SamsaraClient {
         url.searchParams.set("startTime", startTimeIso);
         url.searchParams.set("endTime", endTimeIso);
         if (after) url.searchParams.set("after", after);
-        const res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
+        const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
         if (!res.ok) break;
         const json = (await res.json()) as {
           data?: unknown;
@@ -575,7 +588,7 @@ export class SamsaraClient {
     if (!token || !clipId.trim()) return null;
     const url = new URL(`${SAMSARA_API_BASE}/fleet/dashcam/clips/${encodeURIComponent(clipId)}`);
     try {
-      const res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
+      const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
       if (!res.ok) return null;
       const json = await readJsonResponse(res);
       const direct = typeof json.url === "string" ? json.url : null;

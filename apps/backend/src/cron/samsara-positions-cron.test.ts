@@ -51,8 +51,9 @@ describe("samsara.positions_cron", () => {
     vi.resetModules();
     delete process.env.ENABLE_SAMSARA_POSITIONS_CRON;
 
-    withLuciaBypassMock.mockImplementation(async (fn: (client: unknown) => Promise<void>) => {
-      await fn({ query: clientQueryMock });
+    // Mirror the real withLuciaBypass: it RETURNS fn's result (the cron reads it — tenant list, enabled).
+    withLuciaBypassMock.mockImplementation(async (fn: (client: unknown) => Promise<unknown>) => {
+      return fn({ query: clientQueryMock });
     });
 
     wrapBackgroundJobTickMock.mockImplementation(async (_jobName: string, fn: () => Promise<void>) => {

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { PoolClient } from "pg";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { syncSamsaraVehicleLocations, syncSamsaraVehicleStats } from "../integrations/samsara/samsara-positions.service.js";
@@ -69,115 +70,92 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
       await wrapBackgroundJobTick(
         CRON_NAME,
         async () => {
-          await withLuciaBypass(async (client) => {
-            const activeTenantIds = await listActiveTenantIds(client);
-            if (activeTenantIds.length === 0) {
-              await appendCronAuditEvent(client, "cron_no_active_tenants", "info", { cron_name: CRON_NAME });
-              return;
-            }
+          // ARCHITECTURE FIX: never hold ONE DB transaction across the whole tick + all Samsara network
+          // I/O (the old shape — connection-pool exhaustion / idle-in-transaction termination → the whole
+          // tick rolled back → nothing persisted, last_samsara_sync + heartbeat frozen). Instead: list
+          // tenants in a short tx, then run EACH operation in its OWN short, tenant-scoped transaction.
+          // Network fetches are bounded by samsaraFetch() timeouts, so no tx is held long. One operation
+          // failing can't roll back the others, and committed writes (incl. the heartbeat) survive.
+          const activeTenantIds = await withLuciaBypass((c) => listActiveTenantIds(c));
+          if (activeTenantIds.length === 0) {
+            await withLuciaBypass((c) => appendCronAuditEvent(c, "cron_no_active_tenants", "info", { cron_name: CRON_NAME })).catch(() => undefined);
+            return;
+          }
 
-            for (const operatingCompanyId of activeTenantIds) {
-              try {
-                assertTenantContext(operatingCompanyId, CRON_NAME);
-              } catch (error) {
-                await appendCronAuditEvent(client, "cron_invalid_tenant_context", "warning", {
+          // Short, tenant-scoped transaction (sets app.operating_company_id for RLS, then runs fn).
+          const runScoped = <T>(oci: string, fn: (c: PoolClient) => Promise<T>): Promise<T> =>
+            withLuciaBypass(async (c) => {
+              await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oci]);
+              return fn(c);
+            });
+
+          for (const operatingCompanyId of activeTenantIds) {
+            try {
+              assertTenantContext(operatingCompanyId, CRON_NAME);
+            } catch (error) {
+              await withLuciaBypass((c) =>
+                appendCronAuditEvent(c, "cron_invalid_tenant_context", "warning", {
                   cron_name: CRON_NAME,
                   operating_company_id: operatingCompanyId ?? null,
                   reason: String((error as Error)?.message ?? error),
-                });
-                continue; // one bad tenant must not abort the whole tick (every later tenant + all syncs)
-              }
-
-              await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-              const enabled = await isSamsaraEnabledForTenant(client, operatingCompanyId);
-              if (!enabled) {
-                await appendCronAuditEvent(client, "cron_skipped_samsara_disabled", "info", {
-                  cron_name: CRON_NAME,
-                  operating_company_id: operatingCompanyId,
-                });
-                continue;
-              }
-
-              // HEARTBEAT — proves the */5 tick is actually FIRING and reached this enabled tenant,
-              // independent of any Samsara call succeeding. A fresh integration_sync_log row (kind
-              // 'samsara_cron_tick') => the scheduler is alive; a stale one => the cron itself isn't firing
-              // (a deploy/registration problem, upstream of any sync-body fix). Best-effort; never aborts.
-              await client
-                .query(
-                  `
-                    INSERT INTO integrations.integration_sync_log
-                      (operating_company_id, integration, sync_kind, finished_at, success, rows_added, rows_updated, rows_removed, error_message, payload)
-                    VALUES ($1, 'samsara', 'samsara_cron_tick', now(), true, 0, 0, 0, NULL, '{}'::jsonb)
-                  `,
-                  [operatingCompanyId]
-                )
-                .catch((err) => app.log.warn({ operating_company_id: operatingCompanyId, err }, "samsara cron heartbeat write failed"));
-
-              // Each Samsara call is INDEPENDENT — a failure in one must never skip the others. The lat/lng
-              // call is wrapped too: an unwrapped throw here would abort the whole tick (and every later
-              // tenant) before stats/pairing ran — invisibly, via wrapBackgroundJobTick.
-              let stats = { fetched: 0, inserted: 0, skipped_no_unit: 0, errors: [] as string[] };
-              try {
-                stats = await syncSamsaraVehicleLocations(client, operatingCompanyId);
-                if (stats.errors.length > 0) {
-                  await appendCronAuditEvent(client, "cron_samsara_positions_fetch_failed", "warning", {
-                    cron_name: CRON_NAME,
-                    operating_company_id: operatingCompanyId,
-                    errors: stats.errors,
-                  });
-                  app.log.warn(
-                    { operating_company_id: operatingCompanyId, errors: stats.errors },
-                    "Samsara positions cron fetch failed for tenant; stats + pairing still attempted"
-                  );
-                }
-              } catch (err) {
-                app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara lat/lng poll threw; stats + pairing still attempted");
-              }
-
-              // Enrich with reverseGeo city/state. Wrapped so a throw can't abort the tick before pairing.
-              let statsEnrich = { fetched: 0, positions_inserted: 0, drivers_paired: 0, skipped_no_unit: 0, errors: [] as string[] };
-              try {
-                statsEnrich = await syncSamsaraVehicleStats(client, operatingCompanyId);
-                if (statsEnrich.errors.length > 0) {
-                  await appendCronAuditEvent(client, "cron_samsara_stats_enrich_failed", "warning", {
-                    cron_name: CRON_NAME,
-                    operating_company_id: operatingCompanyId,
-                    errors: statsEnrich.errors,
-                  });
-                  app.log.warn(
-                    { operating_company_id: operatingCompanyId, errors: statsEnrich.errors },
-                    "Samsara stats enrichment failed for tenant; pairing still attempted"
-                  );
-                }
-              } catch (err) {
-                app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara stats enrichment threw; pairing still attempted");
-              }
-
-              // Current logged-in driver per vehicle (Jorge's rule) — ALWAYS runs (independent of the above),
-              // from /fleet/vehicles/driver-assignments, persisted into telematics.vehicle_driver_assignments.
-              // syncFromSamsara now logs success/error to integration_sync_log so this is never silent again.
-              let driversPaired = 0;
-              try {
-                const pairing = await syncFromSamsara(client, operatingCompanyId, { lookbackHours: 1 });
-                driversPaired = pairing.inserted + pairing.updated;
-              } catch (err) {
-                app.log.warn({ operating_company_id: operatingCompanyId, err }, "driver pairing sync failed; positions still succeeded");
-              }
-
-              app.log.info(
-                {
-                  operating_company_id: operatingCompanyId,
-                  fetched: stats.fetched,
-                  inserted: stats.inserted,
-                  skipped_no_unit: stats.skipped_no_unit,
-                  stats_fetched: statsEnrich.fetched,
-                  stats_positions_inserted: statsEnrich.positions_inserted,
-                  drivers_paired: driversPaired,
-                },
-                "Samsara positions cron tick complete"
-              );
+                })
+              ).catch(() => undefined);
+              continue;
             }
-          });
+
+            // Heartbeat + enabled check in ONE committed tx — the heartbeat proves the */5 tick fired and
+            // reached this tenant even if every sync below fails (it can't be lost to a later rollback).
+            let enabled = false;
+            try {
+              enabled = await runScoped(operatingCompanyId, async (c) => {
+                await c.query(
+                  `INSERT INTO integrations.integration_sync_log
+                     (operating_company_id, integration, sync_kind, finished_at, success, rows_added, rows_updated, rows_removed, error_message, payload)
+                   VALUES ($1, 'samsara', 'samsara_cron_tick', now(), true, 0, 0, 0, NULL, '{}'::jsonb)`,
+                  [operatingCompanyId]
+                );
+                return isSamsaraEnabledForTenant(c, operatingCompanyId);
+              });
+            } catch (err) {
+              app.log.warn({ operating_company_id: operatingCompanyId, err }, "samsara cron heartbeat/enabled tx failed");
+            }
+            if (!enabled) {
+              await runScoped(operatingCompanyId, (c) =>
+                appendCronAuditEvent(c, "cron_skipped_samsara_disabled", "info", { cron_name: CRON_NAME, operating_company_id: operatingCompanyId })
+              ).catch(() => undefined);
+              continue;
+            }
+
+            // Each Samsara sync in its OWN short tx — fetch bounded by timeout, writes commit independently.
+            try {
+              const r = await runScoped(operatingCompanyId, (c) => syncSamsaraVehicleLocations(c, operatingCompanyId));
+              if (r.errors.length > 0) {
+                await runScoped(operatingCompanyId, (c) =>
+                  appendCronAuditEvent(c, "cron_samsara_positions_fetch_failed", "warning", { cron_name: CRON_NAME, operating_company_id: operatingCompanyId, errors: r.errors })
+                ).catch(() => undefined);
+                app.log.warn({ operating_company_id: operatingCompanyId, errors: r.errors }, "Samsara lat/lng poll errors; stats + pairing still attempted");
+              }
+            } catch (err) {
+              app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara lat/lng poll failed; stats + pairing still attempted");
+            }
+            try {
+              const r = await runScoped(operatingCompanyId, (c) => syncSamsaraVehicleStats(c, operatingCompanyId));
+              if (r.errors.length > 0) {
+                await runScoped(operatingCompanyId, (c) =>
+                  appendCronAuditEvent(c, "cron_samsara_stats_enrich_failed", "warning", { cron_name: CRON_NAME, operating_company_id: operatingCompanyId, errors: r.errors })
+                ).catch(() => undefined);
+                app.log.warn({ operating_company_id: operatingCompanyId, errors: r.errors }, "Samsara stats enrichment errors; pairing still attempted");
+              }
+            } catch (err) {
+              app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara stats enrichment failed; pairing still attempted");
+            }
+            try {
+              const pairing = await runScoped(operatingCompanyId, (c) => syncFromSamsara(c, operatingCompanyId, { lookbackHours: 1 }));
+              app.log.info({ operating_company_id: operatingCompanyId, drivers_paired: pairing.inserted + pairing.updated }, "Samsara positions cron tick complete");
+            } catch (err) {
+              app.log.warn({ operating_company_id: operatingCompanyId, err }, "driver pairing sync failed");
+            }
+          }
         },
         app.log
       );

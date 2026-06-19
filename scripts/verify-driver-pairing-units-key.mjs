@@ -33,13 +33,20 @@ if (!/UPDATE telematics\.vehicle_driver_assignments[\s\S]{0,200}ended_at IS NULL
 if (!/integration_sync_log[\s\S]{0,400}vehicle_driver_pairing/.test(svc))
   fail("syncFromSamsara must log success/error to integration_sync_log (sync_kind='vehicle_driver_pairing')");
 
-// The proven 5-min positions cron must drive the pairing sync, and it must run INDEPENDENTLY — a
-// locations/stats failure must not skip it (the bug that left the pairing silent for hours).
+// The proven 5-min positions cron must drive the pairing sync, run it INDEPENDENTLY (a locations/stats
+// failure must not skip it), and NOT hold one DB transaction across all the Samsara network I/O.
 const cron = read("apps/backend/src/cron/samsara-positions-cron.ts");
-if (!/syncFromSamsara\(client, operatingCompanyId/.test(cron))
+if (!/syncFromSamsara\(c, operatingCompanyId/.test(cron))
   fail("the 5-min positions cron must call syncFromSamsara so drivers populate every 5 min");
-// stats enrichment must be wrapped so a throw can't abort the tick before the pairing call.
-if (!/try\s*\{\s*\n?\s*statsEnrich = await syncSamsaraVehicleStats/.test(cron))
-  fail("syncSamsaraVehicleStats must be wrapped in try/catch so it can't abort the tick before pairing runs");
+// Each operation must run in its OWN short, tenant-scoped transaction (runScoped) — never one giant
+// transaction across the whole tick + all fetches (that rolled the whole tick back, persisting nothing).
+if (!/runScoped[\s\S]{0,200}set_config\('app\.operating_company_id'/.test(cron))
+  fail("cron must run each operation in its own short tenant-scoped transaction (runScoped), not one giant tx");
+if (/withLuciaBypass\(async \(client\) => \{\s*\n\s*const activeTenantIds/.test(cron))
+  fail("cron must NOT wrap the whole tenant loop + all syncs in one withLuciaBypass transaction");
+// Samsara fetches must be timeout-bounded so a stalled socket can't hold a transaction/connection open.
+const client = read("apps/backend/src/integrations/samsara/samsara-client.ts");
+if (!/export async function samsaraFetch[\s\S]{0,300}AbortController/.test(client))
+  fail("samsara-client must expose a timeout-bounded samsaraFetch (AbortController)");
 
 console.log("OK verify-driver-pairing-units-key: pairing resolves unit via mdata.units key + 5-min cron pairing locked.");
