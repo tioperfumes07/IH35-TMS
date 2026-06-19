@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { syncSamsaraVehicleLocations, syncSamsaraVehicleStats } from "../integrations/samsara/samsara-positions.service.js";
+import { syncFromSamsara } from "../integrations/samsara/vehicle-driver-pairing/pairing.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
@@ -127,6 +128,18 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
                 );
               }
 
+              // Current logged-in driver per vehicle (Jorge's rule) — from /fleet/vehicles/driver-assignments,
+              // persisted into telematics.vehicle_driver_assignments via the (now units-keyed) pairing sync.
+              // Driven here on the proven 5-min cadence so the board's driver is as fresh as its position
+              // (the hourly pairing worker also runs, for overlap auditing). Best-effort: never fails the poll.
+              let driversPaired = 0;
+              try {
+                const pairing = await syncFromSamsara(client, operatingCompanyId, { lookbackHours: 6 });
+                driversPaired = pairing.inserted + pairing.updated;
+              } catch (err) {
+                app.log.warn({ operating_company_id: operatingCompanyId, err }, "driver pairing sync failed; positions still succeeded");
+              }
+
               app.log.info(
                 {
                   operating_company_id: operatingCompanyId,
@@ -135,7 +148,7 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
                   skipped_no_unit: stats.skipped_no_unit,
                   stats_fetched: statsEnrich.fetched,
                   stats_positions_inserted: statsEnrich.positions_inserted,
-                  drivers_paired: statsEnrich.drivers_paired,
+                  drivers_paired: driversPaired,
                 },
                 "Samsara positions cron tick complete"
               );
