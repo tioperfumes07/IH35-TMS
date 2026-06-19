@@ -16,6 +16,7 @@ import { NotificationRulesPanel } from "../../components/compliance/Notification
 import { SummaryCards } from "../../components/compliance/SummaryCards";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
+import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function exportCsv(rows: ComplianceCredential[]) {
@@ -100,27 +101,34 @@ export function ComplianceDashboardPage() {
     <div className="space-y-6 p-4" data-testid="compliance-dashboard-page">
       <PageHeader title="Compliance Dashboard" subtitle="Expiring credentials across trucks, trailers, drivers, and carrier" />
 
-      <FleetHosBoardSection operatingCompanyId={companyId} />
+      <SectionErrorBoundary name="Live Fleet HOS">
+        <FleetHosBoardSection operatingCompanyId={companyId} />
+      </SectionErrorBoundary>
 
-      <section data-testid="compliance-section-summary">
-        <SummaryCards
-          summary={summaryQ.data ?? { red: 0, yellow: 0, green: 0, total: 0 }}
-          activeSeverity={severityFilter}
-          onSelect={setSeverityFilter}
-        />
-      </section>
+      <SectionErrorBoundary name="Summary">
+        <section data-testid="compliance-section-summary">
+          <SummaryCards
+            summary={summaryQ.data ?? { red: 0, yellow: 0, green: 0, total: 0 }}
+            activeSeverity={severityFilter}
+            onSelect={setSeverityFilter}
+          />
+        </section>
+      </SectionErrorBoundary>
 
-      <section data-testid="compliance-section-table">
-        <ComplianceTable
-          rows={filteredRows}
-          typeFilter={typeFilter}
-          ownerTypeFilter={ownerTypeFilter}
-          onTypeFilter={setTypeFilter}
-          onOwnerTypeFilter={setOwnerTypeFilter}
-          onExportCsv={() => exportCsv(filteredRows)}
-        />
-      </section>
+      <SectionErrorBoundary name="Credentials table">
+        <section data-testid="compliance-section-table">
+          <ComplianceTable
+            rows={filteredRows}
+            typeFilter={typeFilter}
+            ownerTypeFilter={ownerTypeFilter}
+            onTypeFilter={setTypeFilter}
+            onOwnerTypeFilter={setOwnerTypeFilter}
+            onExportCsv={() => exportCsv(filteredRows)}
+          />
+        </section>
+      </SectionErrorBoundary>
 
+      <SectionErrorBoundary name="Notification rules">
       <section data-testid="compliance-section-rules">
         <NotificationRulesPanel
           rules={(rulesQ.data?.rules ?? []) as Array<{
@@ -138,7 +146,9 @@ export function ComplianceDashboardPage() {
           onArchive={(id) => archiveRuleM.mutate(id)}
         />
       </section>
+      </SectionErrorBoundary>
 
+      <SectionErrorBoundary name="Notification log">
       <section data-testid="compliance-section-log">
         <NotificationLogPanel
           entries={
@@ -155,6 +165,7 @@ export function ComplianceDashboardPage() {
           }
         />
       </section>
+      </SectionErrorBoundary>
     </div>
   );
 }
