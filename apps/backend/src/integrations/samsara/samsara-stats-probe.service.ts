@@ -89,6 +89,19 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
       ORDER BY finished_at DESC LIMIT 1`,
     [operatingCompanyId]
   );
+  // The HOS-pull op's own committed row (sync_kind='samsara_hos_pull'): inserted (rows_added) + mapped/unmapped/
+  // driver_errors (payload) + error verbatim. This is the clean-path proof that the board's HOS clocks are REAL
+  // (driver duty events ingested) vs the 14h "fresh shift" default that shows when hos.duty_status_events is empty.
+  const lastHosPull = await query<{ finished_at: string; success: boolean; error_message: string | null; rows_added: number; payload: unknown }>(
+    `SELECT finished_at::text, success, error_message, rows_added, payload
+       FROM integrations.integration_sync_log
+      WHERE operating_company_id = $1::uuid AND integration = 'samsara' AND sync_kind = 'samsara_hos_pull'
+      ORDER BY finished_at DESC LIMIT 1`,
+    [operatingCompanyId]
+  );
+  const hos_events_24h = await oneNum(
+    `SELECT count(*) AS n FROM hos.duty_status_events WHERE operating_company_id = $1::uuid AND source = 'samsara_eld' AND started_at > now() - interval '24 hours'`
+  );
   return {
     drivers_mapped,
     drivers_total,
@@ -99,6 +112,8 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
     stats_rows_1h,
     last_samsara_sync: lastErr.rows[0] ?? null,
     last_pairing_sync: lastPairing.rows[0] ?? null,
+    last_hos_pull: lastHosPull.rows[0] ?? null,
+    hos_events_24h,
   };
 }
 
