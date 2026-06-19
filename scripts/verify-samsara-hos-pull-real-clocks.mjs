@@ -37,6 +37,15 @@ if (!/listHosLogs\([\s\S]{0,90}\[\.\.\.localBySamsara\.keys\(\)\]\)/.test(svc))
 // 8-day window so the 70h cycle + hours-driven are REAL (48h can't carry the cycle).
 if (!/windowHours = 192/.test(svc))
   fail("hos pull window must be 8 days (192h) so the 70h cycle + hours-driven are real");
+// CANONICAL duty_status: the inserter must map Samsara hosStatusType to the FMCSA-canonical set the CHECK constraint
+// allows (off_duty/sleeper/driving/on_duty_not_driving/personal_conveyance/yard_moves). The old mapper emitted
+// "on_duty"/"yard_move"/sanitized unknowns -> CHECK rejected -> 47 driver_errors -> half-default clocks. NEVER again.
+if (!/toCanonicalDutyStatus\(log\.hosStatusType\)/.test(svc))
+  fail("HOS insert must map via toCanonicalDutyStatus (FMCSA-canonical values the CHECK allows), not the old mapDutyStatus");
+if (/return "on_duty"[^_]|return "yard_move"[^s]/.test(svc))
+  fail("duty_status mapper must NOT emit non-canonical values (on_duty / yard_move) — the CHECK rejects them");
+if (!/return "on_duty_not_driving"; \/\/ unknown/.test(svc))
+  fail("unknown duty_status must normalize to a CHECK-allowed value (conservative on_duty_not_driving), never throw");
 // HONEST ERROR: a committed sync row must NEVER be success=false with a null reason. Capture the per-driver error.
 if (!/firstError = `driver_insert:/.test(svc))
   fail("syncSamsaraHosLogs must capture the per-driver insert error (no success=false + null error_message)");

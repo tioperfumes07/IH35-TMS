@@ -10,16 +10,42 @@
 import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany, type PgClient } from "./samsara.service.js";
 
-/** Samsara hosStatusType -> normalized duty_status text (matches the webhook projector's vocabulary). */
-function mapDutyStatus(hosStatusType: string): string {
-  const s = hosStatusType.toLowerCase();
-  if (s.includes("driv")) return "driving";
-  if (s.includes("sleeper")) return "sleeper";
-  if (s.includes("personal")) return "personal_conveyance";
-  if (s.includes("yard")) return "yard_move";
-  if (s.includes("offduty") || s === "off") return "off_duty";
-  if (s.includes("onduty") || s.includes("on_duty")) return "on_duty";
-  return s.replace(/[^a-z]/g, "_");
+export type CanonicalDutyStatus =
+  | "off_duty"
+  | "sleeper"
+  | "driving"
+  | "on_duty_not_driving"
+  | "personal_conveyance"
+  | "yard_moves";
+
+// Map Samsara /fleet/hos/logs hosStatusType -> the FMCSA-canonical duty_status the CHECK constraint
+// (hos.duty_status_events_duty_status_check) AND computeHosClocks both require. The constraint allows EXACTLY these
+// six — it is CORRECT (the FMCSA set), so NO migration is needed. The old mapper produced NON-canonical strings
+// ("on_duty", "yard_move", and sanitized unknowns like "waitingtime"), which the CHECK rightly rejected — that was
+// the 47 driver_errors (the honest-error capture named it). Unknown values normalize CONSERVATIVELY to
+// on_duty_not_driving (counts against the driver's hours — never falsely grants available time, never violates the
+// CHECK), so one unexpected status can never fail a driver's insert again.
+export function toCanonicalDutyStatus(hosStatusType: string): CanonicalDutyStatus {
+  const k = (hosStatusType ?? "").toLowerCase().replace(/[^a-z]/g, "");
+  switch (k) {
+    case "offduty": return "off_duty";
+    case "sleeper":
+    case "sleeperberth": return "sleeper";
+    case "driving": return "driving";
+    case "onduty":
+    case "ondutynotdriving": return "on_duty_not_driving";
+    case "yardmove":
+    case "yardmoves": return "yard_moves";
+    case "personalconveyance": return "personal_conveyance";
+    case "waitingtime": return "on_duty_not_driving"; // FMCSA: oilfield/dock waiting time is on-duty
+  }
+  // Substring fallbacks for unseen variants, then a conservative default.
+  if (k.includes("sleeper")) return "sleeper";
+  if (k.includes("personal")) return "personal_conveyance";
+  if (k.includes("yard")) return "yard_moves";
+  if (k.includes("driv")) return "driving";
+  if (k.includes("offduty")) return "off_duty";
+  return "on_duty_not_driving"; // unknown -> conservative on-duty (never grants free hours; never violates the CHECK)
 }
 
 export type HosPullResult = {
@@ -99,7 +125,7 @@ export async function syncSamsaraHosLogs(
              (operating_company_id, driver_id, unit_id, duty_status, started_at, ended_at, source, odometer_mi, location)
            VALUES ($1::uuid, $2::uuid, NULL, $3, $4::timestamptz, $5::timestamptz, 'samsara_eld', NULL, NULL)
            ON CONFLICT (operating_company_id, driver_id, duty_status, started_at, source) DO NOTHING`,
-          [operatingCompanyId, localDriverId, mapDutyStatus(log.hosStatusType), log.startedAt, log.endedAt]
+          [operatingCompanyId, localDriverId, toCanonicalDutyStatus(log.hosStatusType), log.startedAt, log.endedAt]
         );
         inserted += res.rowCount ?? 0;
       }
