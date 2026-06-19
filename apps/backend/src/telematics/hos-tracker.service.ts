@@ -3,7 +3,7 @@
 // reads "unavailable" with null clocks and an empty timeline — never a guessed default and never a violation on
 // missing data. The #1218 atomic per-driver savepoint + #1220 canonical mapping guarantee a driver's events are
 // all-or-nothing, so "has events" == complete; "no events" == unavailable.
-import { computeHosClocks, hosClocksCoherent, type HosClocks, type HosDutyStatus, type HosDutyStatusEvent } from "./hos-clocks.service.js";
+import { computeHosClocks, hosClocksCoherent, flattenDutySegments, type HosClocks, type HosDutyStatus, type HosDutyStatusEvent } from "./hos-clocks.service.js";
 
 type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
@@ -108,16 +108,19 @@ export async function getHosDaily(
   }
   const driven_cycle_min = Math.max(0, CYCLE_70_MIN - clocks.cycle_remaining_min);
 
-  // Segments: clip the day's events to [dayStart, min(dayEnd, asOf)).
+  // Flatten to a NON-OVERLAPPING timeline (same reconstruction the clocks use) so the day's per-status totals and
+  // the 8-day on-duty breakdown count wall-clock time, not summed overlapping/duplicate/open-ended segments. The
+  // raw-event sum produced impossible days (CAZARES 06-14 = 35h) -> false cycle:0 violations.
+  const flat = flattenDutySegments(eightDayEvents, asOf);
+
+  // Segments: clip the flattened timeline to [dayStart, min(dayEnd, asOf)).
   const segEnd = asOf < dayEnd ? asOf : dayEnd;
   const dayMs = dayEnd.getTime() - dayStart.getTime();
   const per_status_minutes = ZERO_TOTALS();
   const segments: HosSegment[] = [];
-  for (const ev of eightDayEvents) {
-    const s = new Date(ev.started_at);
-    const e = ev.ended_at ? new Date(ev.ended_at) : asOf;
-    const cs = s > dayStart ? s : dayStart;
-    const ce = e < segEnd ? e : segEnd;
+  for (const ev of flat) {
+    const cs = ev.start > dayStart ? ev.start : dayStart;
+    const ce = ev.end < segEnd ? ev.end : segEnd;
     if (ce <= cs) continue; // not in this day
     const minutes = Math.round((ce.getTime() - cs.getTime()) / 60000);
     per_status_minutes[ev.duty_status] += minutes;
@@ -131,21 +134,28 @@ export async function getHosDaily(
     });
   }
 
-  // 8-day on-duty breakdown (per Laredo day) for the cycle context strip.
+  // 8-day on-duty breakdown (per Laredo day) over the flattened timeline — union, not sum.
   const eight_day_breakdown: { date: string; on_duty_min: number }[] = [];
   for (let i = 7; i >= 0; i--) {
     const dEnd = new Date(dayEnd.getTime() - i * 24 * 3600_000);
     const dStart = new Date(dEnd.getTime() - 24 * 3600_000);
     let onDuty = 0;
-    for (const ev of eightDayEvents) {
+    for (const ev of flat) {
       if (!ON_DUTY.has(ev.duty_status)) continue;
-      const s = new Date(ev.started_at);
-      const e = ev.ended_at ? new Date(ev.ended_at) : asOf;
-      const cs = s > dStart ? s : dStart;
-      const ce = e < dEnd ? e : dEnd;
+      const cs = ev.start > dStart ? ev.start : dStart;
+      const ce = ev.end < dEnd ? ev.end : dEnd;
       if (ce > cs) onDuty += Math.round((ce.getTime() - cs.getTime()) / 60000);
     }
     eight_day_breakdown.push({ date: dStart.toISOString().slice(0, 10), on_duty_min: onDuty });
+  }
+
+  // HARD SANITY GUARD: a flattened day can't exceed 24h (1440 min). If it does, the stream is corrupt despite the
+  // flatten -> the CYCLE can't be trusted -> render "unavailable", NEVER a (false) cycle:0 violation.
+  if (eight_day_breakdown.some((d) => d.on_duty_min > 1440)) {
+    return {
+      driver_id: driverId, date: dateStr, available: false, segments: [],
+      per_status_minutes: ZERO_TOTALS(), clocks: null, driven_cycle_min: null, eight_day_breakdown,
+    };
   }
 
   return {
