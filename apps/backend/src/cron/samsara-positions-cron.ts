@@ -85,7 +85,7 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
                   operating_company_id: operatingCompanyId ?? null,
                   reason: String((error as Error)?.message ?? error),
                 });
-                throw error;
+                continue; // one bad tenant must not abort the whole tick (every later tenant + all syncs)
               }
 
               await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
@@ -98,20 +98,40 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
                 continue;
               }
 
-              // Each Samsara call is INDEPENDENT — a failure in one must never skip the others. Previously a
-              // lat/lng error `continue`d past stats AND pairing, and an unwrapped stats throw aborted the
-              // tick before pairing, so the pairing sync silently never ran (board driver stuck blank).
-              const stats = await syncSamsaraVehicleLocations(client, operatingCompanyId);
-              if (stats.errors.length > 0) {
-                await appendCronAuditEvent(client, "cron_samsara_positions_fetch_failed", "warning", {
-                  cron_name: CRON_NAME,
-                  operating_company_id: operatingCompanyId,
-                  errors: stats.errors,
-                });
-                app.log.warn(
-                  { operating_company_id: operatingCompanyId, errors: stats.errors },
-                  "Samsara positions cron fetch failed for tenant; stats + pairing still attempted"
-                );
+              // HEARTBEAT — proves the */5 tick is actually FIRING and reached this enabled tenant,
+              // independent of any Samsara call succeeding. A fresh integration_sync_log row (kind
+              // 'samsara_cron_tick') => the scheduler is alive; a stale one => the cron itself isn't firing
+              // (a deploy/registration problem, upstream of any sync-body fix). Best-effort; never aborts.
+              await client
+                .query(
+                  `
+                    INSERT INTO integrations.integration_sync_log
+                      (operating_company_id, integration, sync_kind, finished_at, success, rows_added, rows_updated, rows_removed, error_message, payload)
+                    VALUES ($1, 'samsara', 'samsara_cron_tick', now(), true, 0, 0, 0, NULL, '{}'::jsonb)
+                  `,
+                  [operatingCompanyId]
+                )
+                .catch((err) => app.log.warn({ operating_company_id: operatingCompanyId, err }, "samsara cron heartbeat write failed"));
+
+              // Each Samsara call is INDEPENDENT — a failure in one must never skip the others. The lat/lng
+              // call is wrapped too: an unwrapped throw here would abort the whole tick (and every later
+              // tenant) before stats/pairing ran — invisibly, via wrapBackgroundJobTick.
+              let stats = { fetched: 0, inserted: 0, skipped_no_unit: 0, errors: [] as string[] };
+              try {
+                stats = await syncSamsaraVehicleLocations(client, operatingCompanyId);
+                if (stats.errors.length > 0) {
+                  await appendCronAuditEvent(client, "cron_samsara_positions_fetch_failed", "warning", {
+                    cron_name: CRON_NAME,
+                    operating_company_id: operatingCompanyId,
+                    errors: stats.errors,
+                  });
+                  app.log.warn(
+                    { operating_company_id: operatingCompanyId, errors: stats.errors },
+                    "Samsara positions cron fetch failed for tenant; stats + pairing still attempted"
+                  );
+                }
+              } catch (err) {
+                app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara lat/lng poll threw; stats + pairing still attempted");
               }
 
               // Enrich with reverseGeo city/state. Wrapped so a throw can't abort the tick before pairing.
