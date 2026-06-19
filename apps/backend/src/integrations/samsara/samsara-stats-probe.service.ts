@@ -2,6 +2,7 @@
 // wrapped), never in the route (ds-admin-route-boundary). Read-only: GETs Samsara, returns a per-vehicle
 // table. Writes nothing. See samsara-stats-probe.routes.ts for the gated entry point.
 import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
+import { samsaraFetch } from "./samsara-client.js";
 
 const SAMSARA_API_BASE = "https://api.samsara.com";
 
@@ -19,7 +20,7 @@ async function rawGet(token: string, url: string): Promise<RawCall> {
   let res: Response;
   try {
     res = await withCircuitBreaker("samsara", () =>
-      fetch(url, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } })
+      samsaraFetch(url, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } })
     );
   } catch (err) {
     out.error = `network_error:${String((err as Error)?.message ?? err)}`;

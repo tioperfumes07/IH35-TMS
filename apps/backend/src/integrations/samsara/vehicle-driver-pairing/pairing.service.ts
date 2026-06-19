@@ -4,6 +4,7 @@
  */
 import { decryptSamsaraSecret } from "../../../lib/samsara-crypto.js";
 import { withCircuitBreaker } from "../../../lib/circuit-breaker/index.js";
+import { samsaraFetch } from "../samsara-client.js";
 import { getDriverForVehicleAtTime } from "../../../telematics/vehicle-driver-lookup.service.js";
 
 const SAMSARA_API_BASE = "https://api.samsara.com";
@@ -169,7 +170,7 @@ async function fetchSamsaraVehicleAssignmentsPage(
   if (after) url.searchParams.set("after", after);
 
   const res = await withCircuitBreaker("samsara", () =>
-    fetch(url, {
+    samsaraFetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
