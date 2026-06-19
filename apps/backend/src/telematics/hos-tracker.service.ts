@@ -164,6 +164,61 @@ export async function getHosDaily(
   };
 }
 
+// ── CANONICAL ROSTER (Block 02-04): one source of truth for the HOS Tracker's timeline (Block 03) AND dense table
+// (Block 04) so they agree per driver. Both surfaces read THIS, not the legacy fleet board's separate cycle math
+// (GUARD: board cyc=128 vs /hos/daily cyc=472 for the same driver). Per active board driver -> getHosDaily + name/unit.
+export type HosRosterDriver = HosDaily & {
+  driver_name: string | null;
+  unit_number: string | null;
+  current_duty_status: HosDutyStatus | null; // the duty status covering "now" (last segment of the day)
+};
+export type HosRoster = {
+  date: string;
+  generated_at: string;
+  drivers: HosRosterDriver[];
+  counts: { active: number; on_duty: number; driving: number; low: number; violation: number; unavailable: number };
+};
+
+export async function getHosDailyRoster(
+  client: DbClient,
+  operatingCompanyId: string,
+  dateStr: string,
+  now: Date
+): Promise<HosRoster> {
+  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  // Active board drivers = drivers with an OPEN vehicle assignment (the same set the fleet board + HOS pull use).
+  const active = await client.query<{ driver_id: string; driver_name: string | null; unit_number: string | null }>(
+    `SELECT DISTINCT ON (a.driver_id)
+       a.driver_id::text AS driver_id,
+       trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS driver_name,
+       u.unit_number
+     FROM telematics.vehicle_driver_assignments a
+     JOIN mdata.drivers d ON d.id = a.driver_id
+     LEFT JOIN mdata.units u ON u.id = a.unit_id
+     WHERE a.operating_company_id = $1::uuid AND a.ended_at IS NULL AND a.driver_id IS NOT NULL
+     ORDER BY a.driver_id, a.started_at DESC`,
+    [operatingCompanyId]
+  );
+
+  const drivers: HosRosterDriver[] = [];
+  for (const r of active.rows) {
+    const daily = await getHosDaily(client, operatingCompanyId, r.driver_id, dateStr, now);
+    const current = daily.segments.length > 0 ? daily.segments[daily.segments.length - 1].duty_status : null;
+    drivers.push({ ...daily, driver_name: r.driver_name?.trim() || null, unit_number: r.unit_number, current_duty_status: current });
+  }
+
+  const counts = { active: drivers.length, on_duty: 0, driving: 0, low: 0, violation: 0, unavailable: 0 };
+  for (const d of drivers) {
+    if (!d.available) { counts.unavailable += 1; continue; }
+    if (d.clocks?.status === "violation") counts.violation += 1;
+    else if (d.clocks?.status === "warning_1hr" || d.clocks?.status === "warning_15min") counts.low += 1;
+    if (d.current_duty_status === "driving") counts.driving += 1;
+    if (d.current_duty_status === "driving" || d.current_duty_status === "on_duty_not_driving" || d.current_duty_status === "yard_moves")
+      counts.on_duty += 1;
+  }
+  return { date: dateStr, generated_at: now.toISOString(), drivers, counts };
+}
+
 export type HosEvent = {
   driver_id: string;
   duty_status: HosDutyStatus;

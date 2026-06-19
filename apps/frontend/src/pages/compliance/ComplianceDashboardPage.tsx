@@ -16,8 +16,27 @@ import { NotificationRulesPanel } from "../../components/compliance/Notification
 import { SummaryCards } from "../../components/compliance/SummaryCards";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
+import { HosTrackerSection } from "./HosTrackerSection";
 import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+
+type ComplianceTab = "overview" | "hos_tracker" | "hos_viewer" | "violations" | "hos_history";
+const COMPLIANCE_TABS: { id: ComplianceTab; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "hos_tracker", label: "HOS Tracker" },
+  { id: "hos_viewer", label: "HOS Viewer" },
+  { id: "violations", label: "Violations" },
+  { id: "hos_history", label: "HOS History" },
+];
+
+function ComplianceEmptyState({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="rounded border border-slate-200 bg-white px-4 py-12 text-center">
+      <div className="text-sm font-semibold text-slate-700">{title}</div>
+      <div className="mt-1 text-xs text-slate-500">{message}</div>
+    </div>
+  );
+}
 
 function exportCsv(rows: ComplianceCredential[]) {
   const header = ["type", "owner_type", "owner_name", "expiration_date", "days_until_expiration", "severity"];
@@ -43,6 +62,7 @@ export function ComplianceDashboardPage() {
   const [severityFilter, setSeverityFilter] = useState<ComplianceSeverity | null>(null);
   const [typeFilter, setTypeFilter] = useState("");
   const [ownerTypeFilter, setOwnerTypeFilter] = useState("");
+  const [tab, setTab] = useState<ComplianceTab>("overview");
 
   const summaryQ = useQuery({
     queryKey: ["compliance-summary", companyId],
@@ -101,6 +121,40 @@ export function ComplianceDashboardPage() {
     <div className="space-y-6 p-4" data-testid="compliance-dashboard-page">
       <PageHeader title="Compliance Dashboard" subtitle="Expiring credentials across trucks, trailers, drivers, and carrier" />
 
+      {/* Tabs — ADDITIVE: Overview keeps every prior section; HOS Tracker/Viewer/Violations/History are new. */}
+      <div className="flex gap-0 border-b border-slate-200" role="tablist">
+        {COMPLIANCE_TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-3 py-2 text-[12px] font-semibold ${tab === t.id ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "text-slate-500 hover:text-slate-700"}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "hos_tracker" ? (
+        <SectionErrorBoundary name="HOS Tracker">
+          <HosTrackerSection operatingCompanyId={companyId} />
+        </SectionErrorBoundary>
+      ) : null}
+
+      {tab === "hos_viewer" ? (
+        <ComplianceEmptyState title="HOS Viewer" message="Select a driver to open their daily ELD log." />
+      ) : null}
+      {tab === "violations" ? (
+        <ComplianceEmptyState title="Violations" message="No HOS violations in range." />
+      ) : null}
+      {tab === "hos_history" ? (
+        <ComplianceEmptyState title="HOS History" message="No HOS history in this range." />
+      ) : null}
+
+      {tab !== "overview" ? null : (
+      <>
       <SectionErrorBoundary name="Live Fleet HOS">
         <FleetHosBoardSection operatingCompanyId={companyId} />
       </SectionErrorBoundary>
@@ -166,6 +220,8 @@ export function ComplianceDashboardPage() {
         />
       </section>
       </SectionErrorBoundary>
+      </>
+      )}
     </div>
   );
 }

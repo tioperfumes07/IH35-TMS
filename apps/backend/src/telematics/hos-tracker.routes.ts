@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { getHosDaily, getHosEvents } from "./hos-tracker.service.js";
+import { getHosDaily, getHosEvents, getHosDailyRoster } from "./hos-tracker.service.js";
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -13,6 +13,11 @@ const dailySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // Laredo calendar day
+});
+
+const rosterSchema = z.object({
+  operating_company_id: z.string().uuid(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 const eventsSchema = z.object({
@@ -36,6 +41,21 @@ export async function registerHosTrackerRoutes(app: FastifyInstance) {
       getHosDaily(client, q.data.operating_company_id, q.data.driver_id, q.data.date, now)
     );
     return reply.send({ ...daily, generated_at: now.toISOString() });
+  });
+
+  // CANONICAL roster for the Compliance HOS Tracker tab — every active board driver's daily timeline + clocks from
+  // ONE source, so the timeline (Block 03) and the dense table (Block 04) agree per driver. Includes KPI counts.
+  app.get("/api/v1/telematics/hos/daily-roster", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    const q = rosterSchema.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+
+    const now = new Date();
+    const roster = await withCurrentUser(user.uuid, (client) =>
+      getHosDailyRoster(client, q.data.operating_company_id, q.data.date, now)
+    );
+    return reply.send(roster);
   });
 
   // Raw duty-status segments for a driver over a window (FMCSA audit / drill-down).
