@@ -33,6 +33,22 @@ type DbClient = {
   ) => Promise<{ rows: T[] }>;
 };
 
+// COHERENCE GUARD (false-violation killer): an internally-impossible clock set means the driver's event stream is
+// INCOMPLETE/gapped and computeHosClocks filled the holes — it must render "unavailable", NEVER a "violation".
+// - You cannot have driven the full 11h (drive_remaining 0) while the 8h-driving break clock is untouched
+//   (break_remaining > 0): passing 8h of driving forces the 30-min break, so break_remaining would be 0.
+// - You cannot have a fully-consumed 14h window (window_remaining 0) with an essentially-untouched break.
+// (Live case: HUGO GAYTAN drive=0/win=0/cyc=0/brk=459 — gapped stream, falsely flagged violation.)
+export function hosClocksCoherent(c: {
+  drive_remaining_min: number;
+  window_remaining_min: number;
+  break_remaining_min: number;
+}): boolean {
+  if (c.drive_remaining_min <= 0 && c.break_remaining_min > 0) return false;
+  if (c.window_remaining_min <= 0 && c.break_remaining_min > 30) return false;
+  return true;
+}
+
 const TEN_HOURS_MIN = 10 * 60;
 const ELEVEN_HOURS_MIN = 11 * 60;
 const FOURTEEN_HOURS_MIN = 14 * 60;

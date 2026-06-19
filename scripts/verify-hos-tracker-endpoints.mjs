@@ -26,6 +26,9 @@ if (!/eightDayEvents\.length === 0[\s\S]{0,200}available: false[\s\S]{0,120}cloc
   fail("a driver-day with no events must return available:false + clocks:null + empty segments (honest unavailable)");
 if (!/computeHosClocks\(eightDayEvents/.test(svc))
   fail("clocks must be computed from the real 8-day event stream (not a default)");
+// COHERENCE: an internally-impossible clock set (gapped stream) -> available:false, never a violation on the timeline.
+if (!/hosClocksCoherent\(clocks\)[\s\S]{0,200}available: false/.test(svc))
+  fail("daily endpoint must return available:false on an incoherent clock set (no false violation on a gapped stream)");
 // driven-in-cycle = 70h - cycle_remaining (Jorge's explicit ask), only when available.
 if (!/CYCLE_70_MIN - clocks\.cycle_remaining_min/.test(svc))
   fail("driven_cycle_min must = 70h*60 - cycle_remaining_min (hours driven in the cycle)");

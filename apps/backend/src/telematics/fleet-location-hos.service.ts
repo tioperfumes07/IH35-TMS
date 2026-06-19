@@ -1,4 +1,4 @@
-import { computeHosClocks, type HosDutyStatusEvent } from "./hos-clocks.service.js";
+import { computeHosClocks, hosClocksCoherent, type HosDutyStatusEvent } from "./hos-clocks.service.js";
 
 type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
@@ -7,6 +7,9 @@ type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unk
 const ACTIVE_LOAD_STATUSES = ["assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 
 const STALE_AFTER_MIN = 60; // a fix older than this is flagged stale (positions already filtered to 24h)
+// PER-DRIVER STALENESS (MUST 3.15.6): a fix older than the 2h absolute cutoff means HOS is NOT live — suppress the
+// clocks to "unavailable" rather than presenting >2h-old HOS as "ok"/current (live case: SOSA PEREZ, ~16h old, "ok").
+const HOS_STALE_CUTOFF_MIN = 120;
 
 // SERIALIZATION BOUNDARY: node-postgres returns numeric/decimal columns (lat, lng, speed_mph, heading_deg)
 // as STRINGS to preserve precision — the row types claim `number | null` but lie at runtime. Consumers that
@@ -182,10 +185,17 @@ export async function getFleetLocationHosRows(
   return posRes.rows.map((p) => {
     const drv = p.unit_id ? driverByUnit.get(p.unit_id) ?? null : null;
     const hosEntry = drv ? hosByDriver.get(drv.driver_id) ?? null : null;
-    const hos = hosEntry && hosEntry !== "no_data" ? hosEntry : null;
-    const hosUnknown = hosEntry === "no_data"; // driver assigned, but no ingested HOS events => unavailable
+    const computed = hosEntry && hosEntry !== "no_data" ? hosEntry : null;
     const capturedMs = p.captured_at ? new Date(p.captured_at).getTime() : NaN;
     const minutesSince = Number.isNaN(capturedMs) ? null : Math.round((nowMs - capturedMs) / 60_000);
+    // SUPPRESS the computed clocks to "unavailable" when (a) the clock set is internally incoherent (gapped
+    // stream -> false violation), or (b) the driver's fix is older than the 2h HOS cutoff (>2h-stale HOS is not
+    // live). A clock/verdict is shown ONLY from a coherent, fresh set — never a fabricated or stale one.
+    const hosStale = minutesSince != null && minutesSince > HOS_STALE_CUTOFF_MIN;
+    const hosIncoherent = computed != null && !hosClocksCoherent(computed);
+    const hos = computed != null && !hosStale && !hosIncoherent ? computed : null;
+    // "unavailable" whenever a driver is assigned but we are not showing a real clock (no events / incoherent / stale).
+    const hosUnknown = drv != null && hos == null;
     return {
       unit_id: p.unit_id,
       unit_number: p.unit_number,
