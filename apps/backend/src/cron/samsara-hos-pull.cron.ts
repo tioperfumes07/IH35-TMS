@@ -125,6 +125,7 @@ export function initializeSamsaraHosPullCron(app: FastifyInstance) {
                     stats.inserted,
                     stats.error,
                     JSON.stringify({
+                      active_drivers: stats.active_drivers,
                       mapped_drivers: stats.mapped_drivers,
                       unmapped_drivers: stats.unmapped_drivers,
                       driver_errors: stats.driver_errors,
