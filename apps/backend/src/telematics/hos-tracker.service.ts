@@ -3,7 +3,7 @@
 // reads "unavailable" with null clocks and an empty timeline — never a guessed default and never a violation on
 // missing data. The #1218 atomic per-driver savepoint + #1220 canonical mapping guarantee a driver's events are
 // all-or-nothing, so "has events" == complete; "no events" == unavailable.
-import { computeHosClocks, type HosClocks, type HosDutyStatus, type HosDutyStatusEvent } from "./hos-clocks.service.js";
+import { computeHosClocks, hosClocksCoherent, type HosClocks, type HosDutyStatus, type HosDutyStatusEvent } from "./hos-clocks.service.js";
 
 type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
@@ -98,6 +98,14 @@ export async function getHosDaily(
   }
 
   const clocks = computeHosClocks(eightDayEvents, asOf);
+  // COHERENCE: an internally-impossible clock set => the event stream is incomplete/gapped (computeHosClocks filled
+  // the holes). Render "unavailable" with null clocks + empty timeline — NEVER a violation on a gapped stream.
+  if (!hosClocksCoherent(clocks)) {
+    return {
+      driver_id: driverId, date: dateStr, available: false, segments: [],
+      per_status_minutes: ZERO_TOTALS(), clocks: null, driven_cycle_min: null, eight_day_breakdown: [],
+    };
+  }
   const driven_cycle_min = Math.max(0, CYCLE_70_MIN - clocks.cycle_remaining_min);
 
   // Segments: clip the day's events to [dayStart, min(dayEnd, asOf)).

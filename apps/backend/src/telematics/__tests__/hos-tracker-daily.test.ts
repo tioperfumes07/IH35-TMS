@@ -20,7 +20,8 @@ describe("getHosDaily", () => {
   it("builds real segments, per-status totals, clocks and driven-cycle from events", async () => {
     const daily = await getHosDaily(
       clientWith([
-        { started_at: "2026-06-19T05:00:00.000Z", ended_at: "2026-06-19T13:00:00.000Z", duty_status: "off_duty" },
+        // A valid 10h+ reset (prior night) so the clocks are coherent, then the day's driving.
+        { started_at: "2026-06-18T20:00:00.000Z", ended_at: "2026-06-19T13:00:00.000Z", duty_status: "off_duty" },
         { started_at: "2026-06-19T13:00:00.000Z", ended_at: "2026-06-19T18:00:00.000Z", duty_status: "driving" },
         { started_at: "2026-06-19T18:00:00.000Z", ended_at: null, duty_status: "on_duty_not_driving" },
       ]),

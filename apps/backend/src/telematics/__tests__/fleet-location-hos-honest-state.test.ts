@@ -66,4 +66,31 @@ describe("fleet-location-hos honest HOS state (no fabricated 840)", () => {
     expect(b.break_remaining_min).toBeNull();
     expect(b.cycle_remaining_min).toBeNull();
   });
+
+  it("PER-DRIVER STALENESS: a driver whose fix is >2h old reads 'unavailable' (HOS suppressed, never 'ok')", async () => {
+    // Same real events as the coherent case, but the position fix is ~16h old (live case: SOSA PEREZ).
+    const stalePos = { ...pos("unit-s", "T-S"), captured_at: "2026-06-19T04:00:00.000Z" }; // 16h before ASOF
+    const client = {
+      query: async (sql: string) => {
+        if (sql.includes("set_config")) return { rows: [] };
+        if (sql.includes("FROM mdata.units")) return { rows: [stalePos] };
+        if (sql.includes("FROM telematics.vehicle_driver_assignments"))
+          return { rows: [{ assigned_unit_id: "unit-s", driver_id: DRIVER_WITH, driver_name: "Stale Fix" }] };
+        if (sql.includes("FROM mdata.loads")) return { rows: [] };
+        if (sql.includes("FROM hos.duty_status_events"))
+          return {
+            rows: [
+              { driver_id: DRIVER_WITH, started_at: "2026-06-18T20:00:00.000Z", ended_at: "2026-06-19T18:00:00.000Z", duty_status: "off_duty" },
+              { driver_id: DRIVER_WITH, started_at: "2026-06-19T18:00:00.000Z", ended_at: null, duty_status: "driving" },
+            ],
+          };
+        return { rows: [] };
+      },
+    };
+    const rows = await getFleetLocationHosRows(client, OCI, ASOF);
+    const s = rows.find((r) => r.unit_number === "T-S")!;
+    expect(s.hos_status).toBe("unavailable"); // >2h stale -> suppressed, NOT "ok"
+    expect(s.drive_remaining_min).toBeNull();
+    expect(s.window_remaining_min).toBeNull();
+  });
 });

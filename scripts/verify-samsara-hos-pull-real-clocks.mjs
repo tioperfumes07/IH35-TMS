@@ -77,6 +77,12 @@ if (!/evs\.length > 0 \? computeHosClocks\([\s\S]{0,40}: "no_data"/.test(reader)
   fail('reader must mark assigned-but-no-events drivers "no_data" (NOT computeHosClocks([])\'s fabricated 840 default)');
 if (!/hosUnknown \? "unavailable"/.test(reader))
   fail('reader must surface hos_status="unavailable" (with blank clocks) when HOS is unknown, never a fabricated full clock');
+// COHERENCE: an internally-impossible clock set (gapped stream) must read "unavailable", never a false "violation".
+if (!/hosClocksCoherent\(computed\)/.test(reader))
+  fail("reader must suppress INCOHERENT clock sets to unavailable (false-violation killer; e.g. drive=0 + brk>0)");
+// PER-DRIVER STALENESS (MUST 3.15.6): a fix older than the 2h cutoff must suppress HOS to unavailable, never "ok".
+if (!/HOS_STALE_CUTOFF_MIN/.test(reader))
+  fail("reader must suppress HOS to unavailable when the driver's fix is older than the 2h cutoff (no stale 'ok')");
 
 // FAST + RELIABLE: the HOS pull must also run on the proven */5 positions cron (not only the single hourly :15
 // cron whose firing GUARD couldn't confirm) so hos.duty_status_events populates within 5 min and last_hos_pull commits.
