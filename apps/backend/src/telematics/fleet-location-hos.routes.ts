@@ -25,7 +25,7 @@ function rowToSheetArray(r: FleetLocationHosRow): (string | number)[] {
   const map = r.lat != null && r.lng != null ? `https://www.google.com/maps?q=${r.lat},${r.lng}` : "";
   return [
     r.unit_number ?? "",
-    r.driver_name ?? "",
+    r.driver_name ?? "Not assigned",
     r.city ?? "",
     r.state ?? "",
     r.formatted_location ?? "",
