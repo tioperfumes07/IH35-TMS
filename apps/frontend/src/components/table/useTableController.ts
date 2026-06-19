@@ -3,9 +3,17 @@ import { useTablePref } from "./useTablePref";
 import type { TableColumn } from "./ColumnChooser";
 
 // GLOBAL-TABLE-CONTROLS — the shared controller every list table drives off of.
-// Owns: free-text search, click-header sort, client-side pagination, and persisted
-// column visibility + page size + widths. The page feeds already-list-filtered rows in;
-// the controller returns the sorted+paged slice + control state.
+// Owns: free-text search, click-header sort, pagination, and persisted column visibility + page size +
+// widths. The page feeds already-list-filtered rows in; the controller returns the sorted+paged slice +
+// control state.
+//
+// SORT has two modes (the header UX — click asc→desc→off, chevron, aria-sort — is identical for both):
+//   • CLIENT-SIDE (default): pass `sortValue` and the controller sorts the loaded rows in-memory. Use
+//     when the FULL dataset is already loaded.
+//   • SERVER-SIDE: pass `onSortChange` (and omit `sortValue`). The controller tracks sort state and fires
+//     onSortChange(key, dir) so the page refetches the WHOLE dataset sorted by the server — required for
+//     paginated/capped lists where the client only holds one page (sorting in-memory would only sort the
+//     visible page). Wire onSortChange into your query key / fetch params.
 // `searchText` and `sortValue` MUST be stable (module-level fn or useCallback).
 export type SortDir = "asc" | "desc";
 
@@ -14,8 +22,10 @@ type Options<T> = {
   columns: TableColumn[];
   tableKey: string;
   searchText: (row: T) => string;
-  /** Per-column sort key extractor. Return null/undefined to sort such rows last. */
+  /** Per-column sort key extractor (CLIENT-SIDE sort). Return null/undefined to sort such rows last. */
   sortValue?: (row: T, key: string) => string | number | null | undefined;
+  /** SERVER-SIDE sort: fired with the new sort state on every header click; refetch sorted data. */
+  onSortChange?: (sortKey: string | null, sortDir: SortDir) => void;
   defaultPageSize?: number;
   defaultHidden?: string[];
 };
@@ -36,6 +46,7 @@ export function useTableController<T>({
   tableKey,
   searchText,
   sortValue,
+  onSortChange,
   defaultPageSize = 50,
   defaultHidden = [],
 }: Options<T>) {
@@ -48,16 +59,24 @@ export function useTableController<T>({
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  // Click a header: asc → desc → unsorted, cycling.
+  // Click a header: asc → desc → unsorted, cycling. Compute the next state explicitly so we can notify
+  // a server-side consumer (onSortChange) with the new key/dir on the same action (no mount-time fire).
   const toggleSort = (key: string) => {
+    let nextKey: string | null;
+    let nextDir: SortDir;
     if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir("asc");
+      nextKey = key;
+      nextDir = "asc";
     } else if (sortDir === "asc") {
-      setSortDir("desc");
+      nextKey = key;
+      nextDir = "desc";
     } else {
-      setSortKey(null);
+      nextKey = null;
+      nextDir = "asc";
     }
+    setSortKey(nextKey);
+    setSortDir(nextDir);
+    onSortChange?.(nextKey, nextDir);
   };
 
   const filtered = useMemo(() => {
