@@ -161,6 +161,11 @@ export async function getFleetLocationHosRows(
         FROM hos.duty_status_events e
         WHERE e.operating_company_id = $1::uuid
           AND e.driver_id = ANY($2::uuid[])
+          -- SAME 8-day window the HOS Tracker roster (getHosDaily) uses, so the board's cycle MATCHES the
+          -- tracker per driver. The full history (unbounded) flattened differently -> board cyc=128 vs daily
+          -- cyc=472 for the same driver. computeHosClocks only needs the rolling 8-day (70h cycle) window.
+          AND e.started_at < now()
+          AND COALESCE(e.ended_at, now()) > now() - interval '8 days'
         ORDER BY e.driver_id, e.started_at ASC
       `,
       [operatingCompanyId, driverIds]
