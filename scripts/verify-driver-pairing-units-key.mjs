@@ -28,10 +28,18 @@ if (!/if \(!samsaraDriverId\) continue/.test(svc))
 if (!/UPDATE telematics\.vehicle_driver_assignments[\s\S]{0,200}ended_at IS NULL[\s\S]{0,120}samsara_assignment_id IS DISTINCT FROM/.test(svc))
   fail("upsert must end other open assignments on the unit before inserting the current one (one-open-per-unit)");
 
-// The proven 5-min positions cron must drive the pairing sync (so the board's driver is as fresh as its
-// position, not waiting on the hourly worker).
+// The pairing sync MUST be observable — it used to swallow errors (invisible while the stats cron looked
+// healthy). It now writes its result/error to integrations.integration_sync_log.
+if (!/integration_sync_log[\s\S]{0,400}vehicle_driver_pairing/.test(svc))
+  fail("syncFromSamsara must log success/error to integration_sync_log (sync_kind='vehicle_driver_pairing')");
+
+// The proven 5-min positions cron must drive the pairing sync, and it must run INDEPENDENTLY — a
+// locations/stats failure must not skip it (the bug that left the pairing silent for hours).
 const cron = read("apps/backend/src/cron/samsara-positions-cron.ts");
 if (!/syncFromSamsara\(client, operatingCompanyId/.test(cron))
   fail("the 5-min positions cron must call syncFromSamsara so drivers populate every 5 min");
+// stats enrichment must be wrapped so a throw can't abort the tick before the pairing call.
+if (!/try\s*\{\s*\n?\s*statsEnrich = await syncSamsaraVehicleStats/.test(cron))
+  fail("syncSamsaraVehicleStats must be wrapped in try/catch so it can't abort the tick before pairing runs");
 
 console.log("OK verify-driver-pairing-units-key: pairing resolves unit via mdata.units key + 5-min cron pairing locked.");
