@@ -83,6 +83,10 @@ if (!/hosClocksCoherent\(computed\)/.test(reader))
 // PER-DRIVER STALENESS (MUST 3.15.6): a fix older than the 2h cutoff must suppress HOS to unavailable, never "ok".
 if (!/HOS_STALE_CUTOFF_MIN/.test(reader))
   fail("reader must suppress HOS to unavailable when the driver's fix is older than the 2h cutoff (no stale 'ok')");
+// CONSISTENCY: the board's HOS events must use the SAME rolling 8-day window the HOS Tracker roster (getHosDaily)
+// uses, so the board cycle MATCHES the tracker per driver (GUARD: board cyc=128 vs daily cyc=472 from full history).
+if (!/COALESCE\(e\.ended_at, now\(\)\) > now\(\) - interval '8 days'/.test(reader))
+  fail("board HOS query must bound to the same 8-day window as the HOS Tracker roster (cycle must match per driver)");
 
 // UNION (no double-count): computeHosClocks must aggregate over the NON-OVERLAPPING flattened timeline so
 // overlapping/duplicate/open-ended segments don't sum the 8-day cycle past 70h -> false cyc:0 (GUARD: CAZARES/
