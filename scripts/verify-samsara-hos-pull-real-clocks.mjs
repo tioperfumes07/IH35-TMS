@@ -84,6 +84,15 @@ if (!/hosClocksCoherent\(computed\)/.test(reader))
 if (!/HOS_STALE_CUTOFF_MIN/.test(reader))
   fail("reader must suppress HOS to unavailable when the driver's fix is older than the 2h cutoff (no stale 'ok')");
 
+// UNION (no double-count): computeHosClocks must aggregate over the NON-OVERLAPPING flattened timeline so
+// overlapping/duplicate/open-ended segments don't sum the 8-day cycle past 70h -> false cyc:0 (GUARD: CAZARES/
+// SINGH/CORONADO). The clocks + the daily breakdown share flattenDutySegments.
+const clocksSvc = read("apps/backend/src/telematics/hos-clocks.service.ts");
+if (!/export function flattenDutySegments/.test(clocksSvc))
+  fail("hos-clocks must export flattenDutySegments (the shared non-overlapping reconstruction)");
+if (!/const flattened = flattenDutySegments\(events, asOf\)/.test(clocksSvc))
+  fail("computeHosClocks must aggregate over flattenDutySegments (union), not raw overlapping segments");
+
 // FAST + RELIABLE: the HOS pull must also run on the proven */5 positions cron (not only the single hourly :15
 // cron whose firing GUARD couldn't confirm) so hos.duty_status_events populates within 5 min and last_hos_pull commits.
 const posCron = read("apps/backend/src/cron/samsara-positions-cron.ts");

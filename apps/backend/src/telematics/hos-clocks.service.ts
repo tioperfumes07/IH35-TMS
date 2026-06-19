@@ -87,15 +87,33 @@ function isOnDutyForCycle(status: HosDutyStatus): boolean {
   return status === "driving" || status === "on_duty_not_driving" || status === "yard_moves";
 }
 
-export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date = new Date()): HosClocks {
-  const asOf = new Date(asOfInput);
-  const sorted = [...events]
-    .map((event) => ({ ...event, start: asDate(event.started_at), end: asDate(event.ended_at) ?? asOf }))
-    .filter((event): event is HosDutyStatusEvent & { start: Date; end: Date } => Boolean(event.start))
+export type FlatDutySegment = { duty_status: HosDutyStatus; start: Date; end: Date };
+
+// NON-OVERLAPPING reconstruction of the duty timeline (the ELD reality: one duty status at a time). Each segment
+// ENDS when the next begins — so overlapping / duplicate / never-logged-out (open-ended) ingested segments don't get
+// their durations SUMMED into impossible totals. Without this, on-duty time over-counts (GUARD: CAZARES 06-14 summed
+// to 35h in a 24h day -> the 8-day cycle clamped to 0 -> a FALSE violation). Used by BOTH the clocks and the daily
+// breakdown so they agree. Zero-length clips are dropped.
+export function flattenDutySegments(events: HosDutyStatusEvent[], asOf: Date): FlatDutySegment[] {
+  const sorted = events
+    .map((event) => ({ duty_status: event.duty_status, start: asDate(event.started_at), end: asDate(event.ended_at) ?? asOf }))
+    .filter((event): event is FlatDutySegment => Boolean(event.start))
     .filter((event) => event.start < asOf)
     .sort((a, b) => a.start.getTime() - b.start.getTime());
+  return sorted
+    .map((event, i) => {
+      const nextStart = i + 1 < sorted.length ? sorted[i + 1].start : asOf;
+      const end = event.end < nextStart ? event.end : nextStart;
+      return { duty_status: event.duty_status, start: event.start, end };
+    })
+    .filter((event) => event.end > event.start);
+}
 
-  if (sorted.length === 0) {
+export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date = new Date()): HosClocks {
+  const asOf = new Date(asOfInput);
+  const flattened = flattenDutySegments(events, asOf);
+
+  if (flattened.length === 0) {
     return {
       drive_remaining_min: ELEVEN_HOURS_MIN,
       window_remaining_min: FOURTEEN_HOURS_MIN,
@@ -109,7 +127,7 @@ export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date =
 
   let resetAccumulator = 0;
   let lastResetAt: Date | null = null;
-  for (const event of sorted) {
+  for (const event of flattened) {
     const segmentEnd = event.end < asOf ? event.end : asOf;
     const segmentMin = minutesBetween(event.start, segmentEnd);
     if (segmentMin <= 0) continue;
@@ -123,11 +141,11 @@ export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date =
     }
   }
 
-  const resetBase = lastResetAt ?? sorted[0].start;
+  const resetBase = lastResetAt ?? flattened[0].start;
   let drivingSinceReset = 0;
   let drivingSinceBreak = 0;
   let nonDrivingStreak = 0;
-  for (const event of sorted) {
+  for (const event of flattened) {
     const segmentEnd = event.end < asOf ? event.end : asOf;
     const segmentMinutes = overlapMinutes(event.start, segmentEnd, resetBase, asOf);
     if (segmentMinutes <= 0) continue;
@@ -146,7 +164,7 @@ export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date =
   const cycleWindowStart = new Date(asOf.getTime() - EIGHT_DAYS_MS);
   let cycleOnDuty = 0;
   let earliestOnDutyInWindow: Date | null = null;
-  for (const event of sorted) {
+  for (const event of flattened) {
     if (!isOnDutyForCycle(event.duty_status)) continue;
     const segmentEnd = event.end < asOf ? event.end : asOf;
     if (overlapMinutes(event.start, segmentEnd, cycleWindowStart, asOf) <= 0) continue;
