@@ -98,6 +98,9 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
                 continue;
               }
 
+              // Each Samsara call is INDEPENDENT — a failure in one must never skip the others. Previously a
+              // lat/lng error `continue`d past stats AND pairing, and an unwrapped stats throw aborted the
+              // tick before pairing, so the pairing sync silently never ran (board driver stuck blank).
               const stats = await syncSamsaraVehicleLocations(client, operatingCompanyId);
               if (stats.errors.length > 0) {
                 await appendCronAuditEvent(client, "cron_samsara_positions_fetch_failed", "warning", {
@@ -107,34 +110,35 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
                 });
                 app.log.warn(
                   { operating_company_id: operatingCompanyId, errors: stats.errors },
-                  "Samsara positions cron fetch failed for tenant; will retry on next tick"
-                );
-                continue;
-              }
-
-              // Enrich with reverseGeo city/state + current driver pairing from /fleet/vehicles/stats.
-              // Best-effort: a stats failure must NOT fail the proven lat/lng poll above. Runs after it so
-              // the city/state-bearing event is the freshest in vehicle_latest_position.
-              const statsEnrich = await syncSamsaraVehicleStats(client, operatingCompanyId);
-              if (statsEnrich.errors.length > 0) {
-                await appendCronAuditEvent(client, "cron_samsara_stats_enrich_failed", "warning", {
-                  cron_name: CRON_NAME,
-                  operating_company_id: operatingCompanyId,
-                  errors: statsEnrich.errors,
-                });
-                app.log.warn(
-                  { operating_company_id: operatingCompanyId, errors: statsEnrich.errors },
-                  "Samsara stats enrichment failed for tenant; lat/lng poll still succeeded"
+                  "Samsara positions cron fetch failed for tenant; stats + pairing still attempted"
                 );
               }
 
-              // Current logged-in driver per vehicle (Jorge's rule) — from /fleet/vehicles/driver-assignments,
-              // persisted into telematics.vehicle_driver_assignments via the (now units-keyed) pairing sync.
-              // Driven here on the proven 5-min cadence so the board's driver is as fresh as its position
-              // (the hourly pairing worker also runs, for overlap auditing). Best-effort: never fails the poll.
+              // Enrich with reverseGeo city/state. Wrapped so a throw can't abort the tick before pairing.
+              let statsEnrich = { fetched: 0, positions_inserted: 0, drivers_paired: 0, skipped_no_unit: 0, errors: [] as string[] };
+              try {
+                statsEnrich = await syncSamsaraVehicleStats(client, operatingCompanyId);
+                if (statsEnrich.errors.length > 0) {
+                  await appendCronAuditEvent(client, "cron_samsara_stats_enrich_failed", "warning", {
+                    cron_name: CRON_NAME,
+                    operating_company_id: operatingCompanyId,
+                    errors: statsEnrich.errors,
+                  });
+                  app.log.warn(
+                    { operating_company_id: operatingCompanyId, errors: statsEnrich.errors },
+                    "Samsara stats enrichment failed for tenant; pairing still attempted"
+                  );
+                }
+              } catch (err) {
+                app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara stats enrichment threw; pairing still attempted");
+              }
+
+              // Current logged-in driver per vehicle (Jorge's rule) — ALWAYS runs (independent of the above),
+              // from /fleet/vehicles/driver-assignments, persisted into telematics.vehicle_driver_assignments.
+              // syncFromSamsara now logs success/error to integration_sync_log so this is never silent again.
               let driversPaired = 0;
               try {
-                const pairing = await syncFromSamsara(client, operatingCompanyId, { lookbackHours: 6 });
+                const pairing = await syncFromSamsara(client, operatingCompanyId, { lookbackHours: 1 });
                 driversPaired = pairing.inserted + pairing.updated;
               } catch (err) {
                 app.log.warn({ operating_company_id: operatingCompanyId, err }, "driver pairing sync failed; positions still succeeded");

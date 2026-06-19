@@ -460,12 +460,47 @@ export async function detectAndFlagOverlaps(
   };
 }
 
+// Make the pairing sync OBSERVABLE — its errors used to be swallowed (only a cron warning), so a
+// failing pairing sync was invisible while the sibling stats cron looked healthy. Writes a row to
+// integrations.integration_sync_log so the probe's last_samsara_sync surfaces success/failure + the error.
+async function writePairingSyncLog(
+  client: DbClient,
+  operatingCompanyId: string,
+  success: boolean,
+  result: SyncFromSamsaraResult,
+  errorMessage: string | null
+): Promise<void> {
+  const exists = await client.query<{ ok: boolean }>(
+    `SELECT to_regclass('integrations.integration_sync_log') IS NOT NULL AS ok`
+  );
+  if (!exists.rows[0]?.ok) return;
+  await client.query(
+    `
+      INSERT INTO integrations.integration_sync_log (
+        operating_company_id, integration, sync_kind, finished_at, success,
+        rows_added, rows_updated, rows_removed, error_message, payload
+      ) VALUES ($1, 'samsara', 'vehicle_driver_pairing', now(), $2, $3, $4, 0, $5, $6::jsonb)
+    `,
+    [
+      operatingCompanyId,
+      success,
+      result.inserted,
+      result.updated,
+      errorMessage,
+      JSON.stringify({ fetched: result.fetched, skipped: result.skipped }),
+    ]
+  );
+}
+
 export async function syncFromSamsara(
   client: DbClient,
   operatingCompanyId: string,
   options?: { lookbackHours?: number }
 ): Promise<SyncFromSamsaraResult> {
-  const lookbackHours = options?.lookbackHours ?? 48;
+  // Default 1h — the /fleet/vehicles/driver-assignments call works at 1h (the probe proves it) but a large
+  // window appears to error, which silently broke the worker. A current assignment overlaps a 1h window
+  // regardless of when it started, so 1h captures every logged-in driver.
+  const lookbackHours = options?.lookbackHours ?? 1;
   const token = await resolveSamsaraApiToken(client, operatingCompanyId);
   const result: SyncFromSamsaraResult = {
     fetched: 0,
@@ -479,34 +514,41 @@ export async function syncFromSamsara(
 
   if (!token) return result;
 
-  const endTime = new Date().toISOString();
-  const startTime = new Date(Date.now() - lookbackHours * 3_600_000).toISOString();
-  const assignments = await fetchSamsaraVehicleAssignments(token, startTime, endTime);
-  result.fetched = assignments.length;
+  try {
+    const endTime = new Date().toISOString();
+    const startTime = new Date(Date.now() - lookbackHours * 3_600_000).toISOString();
+    const assignments = await fetchSamsaraVehicleAssignments(token, startTime, endTime);
+    result.fetched = assignments.length;
 
-  for (const assignment of assignments) {
-    const local = await resolveLocalUnitAndDriver(
-      client,
-      operatingCompanyId,
-      assignment.samsara_vehicle_id,
-      assignment.samsara_driver_id
-    );
-    if (!local) {
-      result.skipped += 1;
-      continue;
+    for (const assignment of assignments) {
+      const local = await resolveLocalUnitAndDriver(
+        client,
+        operatingCompanyId,
+        assignment.samsara_vehicle_id,
+        assignment.samsara_driver_id
+      );
+      if (!local) {
+        result.skipped += 1;
+        continue;
+      }
+      const action = await upsertSamsaraAssignment(client, operatingCompanyId, assignment, local);
+      if (action === "inserted") result.inserted += 1;
+      else if (action === "updated") result.updated += 1;
+      else result.skipped += 1;
     }
-    const action = await upsertSamsaraAssignment(client, operatingCompanyId, assignment, local);
-    if (action === "inserted") result.inserted += 1;
-    else if (action === "updated") result.updated += 1;
-    else result.skipped += 1;
+
+    const overlap = await detectAndFlagOverlaps(client, operatingCompanyId);
+    result.overlap_flags_created = overlap.flags_created;
+    result.overlap_ratio = overlap.overlap_ratio;
+    result.overlap_stop_triggered = overlap.overlap_ratio > OVERLAP_STOP_THRESHOLD_RATIO;
+
+    await writePairingSyncLog(client, operatingCompanyId, true, result, null);
+    return result;
+  } catch (err) {
+    const message = String((err as Error)?.message ?? err);
+    await writePairingSyncLog(client, operatingCompanyId, false, result, message).catch(() => undefined);
+    throw err;
   }
-
-  const overlap = await detectAndFlagOverlaps(client, operatingCompanyId);
-  result.overlap_flags_created = overlap.flags_created;
-  result.overlap_ratio = overlap.overlap_ratio;
-  result.overlap_stop_triggered = overlap.overlap_ratio > OVERLAP_STOP_THRESHOLD_RATIO;
-
-  return result;
 }
 
 export async function lookupDriverForVehicleAtTime(
