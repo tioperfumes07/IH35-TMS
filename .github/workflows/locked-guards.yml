@@ -57,6 +57,9 @@ jobs:
       - name: verify:driver-pairing-units-key
         run: npm run verify:driver-pairing-units-key
 
+      - name: verify:fleet-deactivate-consistency
+        run: npm run verify:fleet-deactivate-consistency
+
       - name: verify:no-unused-query-params
         run: npm run verify:no-unused-query-params
 

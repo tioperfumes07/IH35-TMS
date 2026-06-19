@@ -303,6 +303,7 @@
     "verify:samsara-stats-reversegeo-ingest": "node scripts/verify-samsara-stats-reversegeo-ingest.mjs",
     "verify:dispatch-load-patch-money-evidence-guard": "node scripts/verify-dispatch-load-patch-money-evidence-guard.mjs",
     "verify:driver-pairing-units-key": "node scripts/verify-driver-pairing-units-key.mjs",
+    "verify:fleet-deactivate-consistency": "node scripts/verify-fleet-deactivate-consistency.mjs",
     "verify:no-unused-query-params": "node scripts/verify-no-unused-query-params.mjs",
     "verify:sidebar-items-locked": "node scripts/verify-sidebar-items-locked.mjs",
     "verify:uncategorized-expense-mapping": "node scripts/verify-uncategorized-expense-mapping.mjs",
