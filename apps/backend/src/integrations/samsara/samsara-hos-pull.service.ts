@@ -1,13 +1,12 @@
 // GO-LIVE driver-activity Step 1: Samsara HOS/ELD pull.
 //
-// HOS/ELD scope is granted on the live token (confirmed: /fleet/hos/logs returns real per-driver
-// drive-time), but HOS was only ever wired as webhook-projection (Samsara isn't pushing those events),
-// so hos.duty_status_events is empty. This poll fills it: pull /fleet/hos/logs for a rolling window,
-// map each Samsara driver -> mdata.drivers via integrations.samsara_drivers, and insert duty-status
-// events idempotently (same ON CONFLICT shape as the webhook projector). This ONLY produces the data
-// the 30-day inactivity FLAG reads; it never deactivates anyone.
+// Fills hos.duty_status_events (which the fleet board's HOS clocks + the 30-day inactivity flag read) by polling
+// /fleet/hos/logs. SCOPED to the tenant's ACTIVE board drivers — NOT the whole Samsara account. The account-wide
+// pull returned 1358 drivers, mapped almost nothing (1204 unmapped) and missed the 8 trucks that matter; it also
+// can't carry 8 days of cycle history per driver. We instead resolve the active drivers via the board-proven key
+// (mdata.drivers.samsara_driver_id, on units with an OPEN telematics assignment), pull /fleet/hos/logs for exactly
+// those driverIds over an 8-day window (so the 70h cycle + hours-driven are real), and insert idempotently.
 
-import { withSavepoint, type SavepointQueryClient } from "../../auth/db.js";
 import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany, type PgClient } from "./samsara.service.js";
 
@@ -23,39 +22,40 @@ function mapDutyStatus(hosStatusType: string): string {
   return s.replace(/[^a-z]/g, "_");
 }
 
-// Resolve the Samsara driver to a local mdata.drivers id. Two mapping sources exist and they DRIFT:
-// integrations.samsara_drivers (populated by the webhook/driver-import path) vs mdata.drivers.samsara_driver_id
-// (the key the working vehicle->driver pairing uses, confirmed mapping all logged-in drivers live). HOS used to
-// read ONLY the former, so when it was empty/stale every driver was "unmapped" and hos.duty_status_events stayed
-// empty -> the board showed the 14h "fresh shift" default for everyone (fabricated compliance). Resolve via the
-// import table first, then FALL BACK to the proven mdata.drivers key so HOS maps exactly the drivers the board pairs.
-async function localDriverIdFor(client: PgClient, operatingCompanyId: string, samsaraDriverId: string): Promise<string | null> {
-  const res = await client.query(
-    `SELECT sd.local_driver_id::text AS local_driver_id
-       FROM integrations.samsara_drivers sd
-      WHERE sd.operating_company_id = $1::uuid AND sd.samsara_driver_id = $2
-      LIMIT 1`,
-    [operatingCompanyId, samsaraDriverId]
-  );
-  const row = res.rows[0] as { local_driver_id?: string | null } | undefined;
-  if (row?.local_driver_id) return row.local_driver_id;
-  // Fallback: the same key the vehicle->driver pairing resolves on (board-proven).
-  const fb = await client.query(
-    `SELECT d.id::text AS local_driver_id
-       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id = $2 AND d.deactivated_at IS NULL
-      LIMIT 1`,
-    [operatingCompanyId, samsaraDriverId]
-  );
-  const fbRow = fb.rows[0] as { local_driver_id?: string | null } | undefined;
-  return fbRow?.local_driver_id ?? null;
-}
+export type HosPullResult = {
+  inserted: number;
+  mapped_drivers: number;
+  unmapped_drivers: number;
+  driver_errors: number;
+  active_drivers: number;
+  error: string | null;
+};
 
 export async function syncSamsaraHosLogs(
   client: PgClient,
   operatingCompanyId: string,
-  windowHours = 48
-): Promise<{ inserted: number; mapped_drivers: number; unmapped_drivers: number; driver_errors: number; error: string | null }> {
+  windowHours = 192 // 8 days — the 70h/8-day cycle + hours-driven need the full window, not 48h
+): Promise<HosPullResult> {
+  // SCOPE: the active board drivers = drivers with an OPEN vehicle assignment (the same set the board shows HOS
+  // for), resolved to their Samsara id via the board-proven key. This is the 8, not the account's 1358.
+  const active = await client.query(
+    `SELECT DISTINCT d.id::text AS local_driver_id, d.samsara_driver_id::text AS samsara_driver_id
+       FROM mdata.drivers d
+       JOIN telematics.vehicle_driver_assignments a ON a.driver_id = d.id AND a.ended_at IS NULL
+      WHERE d.operating_company_id = $1::uuid
+        AND d.samsara_driver_id IS NOT NULL
+        AND d.deactivated_at IS NULL`,
+    [operatingCompanyId]
+  );
+  const localBySamsara = new Map<string, string>();
+  for (const r of active.rows as Array<{ local_driver_id: string; samsara_driver_id: string }>) {
+    localBySamsara.set(r.samsara_driver_id, r.local_driver_id);
+  }
+  const activeDrivers = localBySamsara.size;
+  if (activeDrivers === 0) {
+    return { inserted: 0, mapped_drivers: 0, unmapped_drivers: 0, driver_errors: 0, active_drivers: 0, error: null };
+  }
+
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
   // Token resolution: SamsaraClient.effectiveToken falls back to env SAMSARA_API_TOKEN when the
   // per-tenant config carries no plaintext token (the live token is configured at the env level).
@@ -68,48 +68,49 @@ export async function syncSamsaraHosLogs(
   const start = new Date(end.getTime() - windowHours * 3600_000);
   let driverLogs: Awaited<ReturnType<typeof api.listHosLogs>>;
   try {
-    driverLogs = await api.listHosLogs(start.toISOString(), end.toISOString());
+    driverLogs = await api.listHosLogs(start.toISOString(), end.toISOString(), [...localBySamsara.keys()]);
   } catch (err) {
     // Network/timeout/parse failure: record + return so the cron logs it (never throw — a throw inside the
     // tenant tx would roll back the observability row, the exact invisibility class that hid the pairing bug).
-    return { inserted: 0, mapped_drivers: 0, unmapped_drivers: 0, driver_errors: 0, error: `fetch:${String((err as Error)?.message ?? err)}` };
+    return { inserted: 0, mapped_drivers: 0, unmapped_drivers: 0, driver_errors: 0, active_drivers: activeDrivers, error: `fetch:${String((err as Error)?.message ?? err)}` };
   }
 
   let inserted = 0;
   let mapped = 0;
   let unmapped = 0;
   let driverErrors = 0;
+  let firstError: string | null = null; // HONEST: a committed row must never be success=false with a null error
   for (let i = 0; i < driverLogs.length; i++) {
     const dl = driverLogs[i];
-    const localDriverId = await localDriverIdFor(client, operatingCompanyId, dl.driverId);
+    const localDriverId = localBySamsara.get(dl.driverId);
     if (!localDriverId) {
-      unmapped += 1;
+      unmapped += 1; // should be ~0 now that we only request the active driverIds
       continue;
     }
     mapped += 1;
-    // Savepoint-isolate each driver's insert batch: one bad log row (e.g. a malformed timestamp) aborts only
-    // this driver's savepoint, not the whole tenant tx — so the other drivers' events + the sync-log row commit.
-    const result = await withSavepoint<{ rows: number } | "error">(
-      client as unknown as SavepointQueryClient,
-      `hos_driver_${i}`,
-      async () => {
-        let rows = 0;
-        for (const log of dl.logs) {
-          const res = await client.query(
-            `INSERT INTO hos.duty_status_events
-               (operating_company_id, driver_id, unit_id, duty_status, started_at, ended_at, source, odometer_mi, location)
-             VALUES ($1::uuid, $2::uuid, NULL, $3, $4::timestamptz, $5::timestamptz, 'samsara_eld', NULL, NULL)
-             ON CONFLICT (operating_company_id, driver_id, duty_status, started_at, source) DO NOTHING`,
-            [operatingCompanyId, localDriverId, mapDutyStatus(log.hosStatusType), log.startedAt, log.endedAt]
-          );
-          rows += res.rowCount ?? 0;
-        }
-        return { rows };
-      },
-      "error"
-    );
-    if (result === "error") driverErrors += 1;
-    else inserted += result.rows;
+    // Savepoint-isolate each driver's insert batch AND capture the real error (not swallow it): one bad log row
+    // aborts only this driver's savepoint, the others + the sync-log row commit, and the reason is persisted.
+    const sp = `hos_driver_${i}`;
+    await client.query(`SAVEPOINT ${sp}`);
+    try {
+      for (const log of dl.logs) {
+        const res = await client.query(
+          `INSERT INTO hos.duty_status_events
+             (operating_company_id, driver_id, unit_id, duty_status, started_at, ended_at, source, odometer_mi, location)
+           VALUES ($1::uuid, $2::uuid, NULL, $3, $4::timestamptz, $5::timestamptz, 'samsara_eld', NULL, NULL)
+           ON CONFLICT (operating_company_id, driver_id, duty_status, started_at, source) DO NOTHING`,
+          [operatingCompanyId, localDriverId, mapDutyStatus(log.hosStatusType), log.startedAt, log.endedAt]
+        );
+        inserted += res.rowCount ?? 0;
+      }
+      await client.query(`RELEASE SAVEPOINT ${sp}`);
+    } catch (err) {
+      await client.query(`ROLLBACK TO SAVEPOINT ${sp}`).catch(() => undefined);
+      driverErrors += 1;
+      if (!firstError) firstError = `driver_insert:${String((err as Error)?.message ?? err)}`;
+    }
   }
-  return { inserted, mapped_drivers: mapped, unmapped_drivers: unmapped, driver_errors: driverErrors, error: null };
+  // error is non-null whenever driver_errors > 0 — so the cron's success=(error==null && driver_errors===0) can
+  // never commit a success=false row with a null reason.
+  return { inserted, mapped_drivers: mapped, unmapped_drivers: unmapped, driver_errors: driverErrors, active_drivers: activeDrivers, error: firstError };
 }

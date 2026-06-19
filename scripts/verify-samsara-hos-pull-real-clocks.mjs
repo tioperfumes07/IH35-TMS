@@ -25,20 +25,33 @@ if (!/integration_sync_log[\s\S]{0,260}'samsara_hos_pull'/.test(cron))
   fail("hos-pull cron must write an integration_sync_log row (sync_kind='samsara_hos_pull') so the probe can verify it committed");
 
 const svc = read("apps/backend/src/integrations/samsara/samsara-hos-pull.service.ts");
-// Driver mapping must FALL BACK to the board-proven mdata.drivers.samsara_driver_id key, not only the drift-prone
-// integrations.samsara_drivers table (which left every driver unmapped -> empty HOS -> 14h default).
-if (!/FROM\s+mdata\.drivers[\s\S]{0,160}samsara_driver_id\s*=\s*\$2/.test(svc))
-  fail("localDriverIdFor must fall back to mdata.drivers.samsara_driver_id (the board-proven pairing key)");
-// Per-driver insert batches must be savepoint-isolated so one bad log can't abort the whole tenant tx + its log row.
-if (!/withSavepoint[\s\S]{0,400}INSERT INTO hos\.duty_status_events/.test(svc))
-  fail("each driver's HOS insert batch must run in a withSavepoint so one bad log can't roll back the others + the log");
-// The service must NEVER throw (a throw inside the tenant tx rolls back the observability row) — record + return.
-if (!/return \{ inserted: 0[\s\S]{0,80}error: `fetch:/.test(svc))
-  fail("syncSamsaraHosLogs must record-and-return on fetch failure, never throw (a throw rolls back its own sync-log row)");
-// HOS fetch must be timeout-bounded (samsaraFetch / AbortController) so a stalled socket can't hold the tx open.
+// SCOPE: pull only the tenant's ACTIVE board drivers (OPEN vehicle assignment) via the board-proven key — NOT the
+// whole account (1358 drivers -> 1204 unmapped, missing the 8 that matter). Resolve their local+samsara ids here.
+if (!/JOIN telematics\.vehicle_driver_assignments[\s\S]{0,120}ended_at IS NULL/.test(svc))
+  fail("hos pull must scope to drivers with an OPEN vehicle assignment (the active board drivers), not account-wide");
+if (!/mdata\.drivers[\s\S]{0,200}samsara_driver_id IS NOT NULL/.test(svc))
+  fail("hos pull must resolve active drivers via mdata.drivers.samsara_driver_id (the board-proven key)");
+// The /fleet/hos/logs pull must be SCOPED to those driverIds (so unmapped ~0 and the active drivers are covered).
+if (!/listHosLogs\([\s\S]{0,90}\[\.\.\.localBySamsara\.keys\(\)\]\)/.test(svc))
+  fail("hos pull must call listHosLogs with the active driverIds (scoped), not the account-wide pull");
+// 8-day window so the 70h cycle + hours-driven are REAL (48h can't carry the cycle).
+if (!/windowHours = 192/.test(svc))
+  fail("hos pull window must be 8 days (192h) so the 70h cycle + hours-driven are real");
+// HONEST ERROR: a committed sync row must NEVER be success=false with a null reason. Capture the per-driver error.
+if (!/firstError = `driver_insert:/.test(svc))
+  fail("syncSamsaraHosLogs must capture the per-driver insert error (no success=false + null error_message)");
+// Per-driver inserts savepoint-isolated (manual SAVEPOINT + ROLLBACK TO) so one bad log can't abort the others/log.
+if (!/SAVEPOINT \$\{sp\}[\s\S]{0,400}INSERT INTO hos\.duty_status_events/.test(svc))
+  fail("each driver's HOS insert batch must be savepoint-isolated (SAVEPOINT/ROLLBACK TO)");
+// The service must NEVER throw on fetch failure (a throw rolls back the observability row) — record + return.
+if (!/return \{ inserted: 0[\s\S]{0,120}error: `fetch:/.test(svc))
+  fail("syncSamsaraHosLogs must record-and-return on fetch failure, never throw");
+// HOS fetch timeout-bounded (samsaraFetch) AND accepts the driverIds scope param.
 const client = read("apps/backend/src/integrations/samsara/samsara-client.ts");
-if (!/listHosLogs[\s\S]{0,600}samsaraFetch/.test(client))
-  fail("listHosLogs must use the timeout-bounded samsaraFetch (no unbounded fetch holding a tx across HOS I/O)");
+if (!/\/fleet\/hos\/logs[\s\S]{0,400}samsaraFetch/.test(client))
+  fail("listHosLogs must use the timeout-bounded samsaraFetch");
+if (!/listHosLogs\([\s\S]{0,120}driverIds\?: string\[\]/.test(client) || !/searchParams\.set\("driverIds"/.test(client))
+  fail("listHosLogs must accept + apply a driverIds scope param (GET /fleet/hos/logs?driverIds=...)");
 
 // The probe must surface the HOS-pull row + recent event count so HOS reality is verifiable without prod creds.
 const probe = read("apps/backend/src/integrations/samsara/samsara-stats-probe.service.ts");

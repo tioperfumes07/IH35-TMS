@@ -174,6 +174,7 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
                     hos.inserted,
                     hos.error,
                     JSON.stringify({
+                      active_drivers: hos.active_drivers,
                       mapped_drivers: hos.mapped_drivers,
                       unmapped_drivers: hos.unmapped_drivers,
                       driver_errors: hos.driver_errors,

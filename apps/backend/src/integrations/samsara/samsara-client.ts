@@ -429,17 +429,22 @@ export class SamsaraClient {
     return out;
   }
 
-  /** HOS/ELD duty logs per driver for a time window (GET /fleet/hos/logs). Scope confirmed live. */
-  async listHosLogs(startTimeIso: string, endTimeIso: string): Promise<SamsaraHosDriverLogs[]> {
+  /** HOS/ELD duty logs per driver for a time window (GET /fleet/hos/logs). Scope confirmed live.
+   *  driverIds (optional) SCOPES the pull to specific Samsara drivers — without it the endpoint returns the
+   *  whole account (1358 drivers for this token), which mapped almost nothing (1204 unmapped) and missed the
+   *  active board drivers. Pass the tenant's active driver ids to get exactly their events. */
+  async listHosLogs(startTimeIso: string, endTimeIso: string, driverIds?: string[]): Promise<SamsaraHosDriverLogs[]> {
     const token = this._token();
     if (!token) return [];
     const out: SamsaraHosDriverLogs[] = [];
     let after: string | null = null;
+    const scoped = (driverIds ?? []).filter((d) => d && d.trim().length > 0);
     try {
       for (let page = 0; page < 50; page += 1) {
         const url = new URL(`${SAMSARA_API_BASE}/fleet/hos/logs`);
         url.searchParams.set("startTime", startTimeIso);
         url.searchParams.set("endTime", endTimeIso);
+        if (scoped.length > 0) url.searchParams.set("driverIds", scoped.join(","));
         if (after) url.searchParams.set("after", after);
         const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
         if (!res.ok) break;
