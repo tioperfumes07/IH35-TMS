@@ -151,8 +151,22 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
   const perVehicle = [...byId.values()].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
   const movingHint = perVehicle.filter((v) => v.engine_state === "On");
 
+  // Raw engine/gps shape from the first few vehicles — so we SEE why engineStates isn't parsing instead
+  // of guessing the field path. Carrier's own GPS+engine data, no PII.
+  const engine_gps_samples = statsValid.rows.slice(0, 4).map((r) => {
+    const g = asObject(r.gps);
+    return {
+      id: str(r.id),
+      name: str(r.name),
+      gps_keys: g ? Object.keys(g) : null,
+      engineStates: r.engineStates ?? null,
+      engineState: r.engineState ?? null,
+    };
+  });
+
   return {
     probed_at: now.toISOString(),
+    engine_gps_samples,
     interpretation: {
       deployed_call_http_status: statsDeployed.http_status,
       deployed_call_is_invalid: statsDeployed.http_status === 400,
