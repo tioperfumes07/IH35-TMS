@@ -934,6 +934,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               </div>
               <DataTable
                 rows={driversRowsFiltered}
+                tableKey="drivers-roster"
                 loading={driversQuery.isLoading}
                 errorState={dataTableErrorState(driversQuery.error, () => void driversQuery.refetch())}
                 rowKey={(row) => row.id}
