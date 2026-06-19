@@ -133,15 +133,22 @@ export function parseSamsaraVehicleAssignments(json: Record<string, unknown>): S
       if (!assignment) continue;
       const driver = asObject(assignment.driver);
       const samsaraDriverId = extractString(driver?.id, assignment.driverId);
+      // Require ONLY a driver. Samsara's CURRENT (open) assignment objects don't reliably carry a
+      // startTime in the fields we check — the old `|| !startedAt` dropped EVERY current assignment, so
+      // the worker wrote 0 while the probe (which doesn't need startTime) resolved all of them. Fall back
+      // to now() for the timestamp and use a stable time-less id so repeated syncs dedup, not churn.
+      if (!samsaraDriverId) continue;
       const startedAt = extractString(assignment.startTime, assignment.startedAt, assignment.start_time);
-      if (!samsaraDriverId || !startedAt) continue;
       const endedAt = extractString(assignment.endTime, assignment.endedAt, assignment.end_time);
+      const startedAtIso = startedAt ? new Date(startedAt).toISOString() : new Date().toISOString();
       out.push({
         samsara_vehicle_id: samsaraVehicleId,
         samsara_driver_id: samsaraDriverId,
-        started_at: new Date(startedAt).toISOString(),
+        started_at: startedAtIso,
         ended_at: endedAt ? new Date(endedAt).toISOString() : null,
-        samsara_assignment_id: buildSamsaraAssignmentId(samsaraVehicleId, samsaraDriverId, new Date(startedAt).toISOString()),
+        samsara_assignment_id: startedAt
+          ? buildSamsaraAssignmentId(samsaraVehicleId, samsaraDriverId, startedAtIso)
+          : `${samsaraVehicleId}:${samsaraDriverId}:current`,
       });
     }
   }
@@ -294,6 +301,22 @@ async function upsertSamsaraAssignment(
       return "updated";
     }
     return "skipped";
+  }
+
+  // Driver handoff: keep exactly ONE open assignment per unit = the current driver. Before inserting the
+  // current open assignment, end any other open one on this unit (the board reads the open assignment).
+  if (!assignment.ended_at) {
+    await client.query(
+      `
+        UPDATE telematics.vehicle_driver_assignments
+        SET ended_at = now()
+        WHERE operating_company_id = $1::uuid
+          AND unit_id = $2::uuid
+          AND ended_at IS NULL
+          AND samsara_assignment_id IS DISTINCT FROM $3
+      `,
+      [operatingCompanyId, local.unit_id, assignment.samsara_assignment_id]
+    );
   }
 
   await client.query(
