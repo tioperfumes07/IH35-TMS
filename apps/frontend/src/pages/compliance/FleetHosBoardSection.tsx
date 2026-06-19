@@ -13,8 +13,14 @@ function hmm(min: number | null): string {
   const a = Math.abs(min);
   return `${s}${Math.floor(a / 60)}:${String(a % 60).padStart(2, "0")}`;
 }
-function num(n: number | null, digits = 0): string {
-  return n == null ? "—" : n.toFixed(digits);
+// DEFENSIVE: speed_mph/lat/lng/heading_deg arrive as STRINGS from node-postgres numeric columns (the API
+// types claim number but lie). Calling .toFixed() on a string threw "toFixed is not a function" and the whole
+// Live Fleet HOS section was skipped (Jorge saw no HOS). Coerce to number + guard NaN so this can't recur even
+// if the serializer regresses. The backend (fleet-location-hos toNum) is the primary fix; this is the backstop.
+export function num(n: number | string | null | undefined, digits = 0): string {
+  if (n == null || n === "") return "—";
+  const v = typeof n === "number" ? n : Number(n);
+  return Number.isFinite(v) ? v.toFixed(digits) : "—";
 }
 
 const HOS_WARN_MIN = 60; // shift/drive remaining under this → amber

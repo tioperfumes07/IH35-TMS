@@ -8,6 +8,17 @@ const ACTIVE_LOAD_STATUSES = ["assigned", "assigned_not_dispatched", "dispatched
 
 const STALE_AFTER_MIN = 60; // a fix older than this is flagged stale (positions already filtered to 24h)
 
+// SERIALIZATION BOUNDARY: node-postgres returns numeric/decimal columns (lat, lng, speed_mph, heading_deg)
+// as STRINGS to preserve precision — the row types claim `number | null` but lie at runtime. Consumers that
+// trusted the type (e.g. the Live Fleet HOS section calling speed.toFixed()) threw "toFixed is not a function"
+// and the whole section was skipped. Coerce here, at the one API boundary, so the board, the Google-Maps link,
+// and the Excel export all receive real numbers. null/blank/garbage -> null (never NaN onto the wire).
+function toNum(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 export type FleetLocationHosRow = {
   unit_id: string;
   unit_number: string | null;
@@ -174,13 +185,13 @@ export async function getFleetLocationHosRows(
       samsara_vehicle_id: p.samsara_vehicle_id,
       driver_id: drv?.driver_id ?? null,
       driver_name: drv?.driver_name?.trim() || null,
-      lat: p.lat,
-      lng: p.lng,
+      lat: toNum(p.lat),
+      lng: toNum(p.lng),
       city: p.city ?? null,
       state: p.state ?? null,
       formatted_location: p.formatted_location ?? null,
-      speed_mph: p.speed_mph,
-      heading_deg: p.heading_deg,
+      speed_mph: toNum(p.speed_mph),
+      heading_deg: toNum(p.heading_deg),
       engine_state: p.engine_state,
       captured_at_utc: p.captured_at,
       captured_at_local: toLocal(p.captured_at),

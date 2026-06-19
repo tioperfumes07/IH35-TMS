@@ -54,6 +54,13 @@ if (!/syncSamsaraVehicleStats\(c, operatingCompanyId\)/.test(cron))
 const reader = read("apps/backend/src/telematics/fleet-location-hos.service.ts");
 if (!/p\.city/.test(reader) || !/p\.state/.test(reader)) fail("fleet-location-hos must SELECT p.city/p.state");
 if (!/city: p\.city/.test(reader)) fail("fleet-location-hos rows must return city");
+// node-postgres returns numeric columns (lat/lng/speed_mph/heading_deg) as STRINGS; the typed `number | null`
+// lies. The Live Fleet HOS section called .toFixed() on a string -> "toFixed is not a function" -> section
+// skipped. Coerce at this serialization boundary so the board, map link, and Excel export all get real numbers.
+for (const f of ["lat", "lng", "speed_mph", "heading_deg"]) {
+  if (!new RegExp(`${f}: toNum\\(p\\.${f}\\)`).test(reader))
+    fail(`fleet-location-hos must coerce ${f} via toNum() at the serializer (node-postgres returns numeric as string -> .toFixed crash)`);
+}
 const board = read("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx");
 if (/pending the reverse-geocoding source/.test(board)) fail("Compliance board still has the city/state placeholder comment");
 if (!/r\.city/.test(board) || !/r\.state/.test(board)) fail("Compliance board must render r.city/r.state");
