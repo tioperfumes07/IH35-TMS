@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { PoolClient } from "pg";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
@@ -61,40 +62,86 @@ export function initializeSamsaraHosPullCron(app: FastifyInstance) {
       await wrapBackgroundJobTick(
         CRON_NAME,
         async () => {
-          await withLuciaBypass(async (client) => {
-            const activeTenantIds = await listActiveTenantIds(client);
-            if (activeTenantIds.length === 0) {
-              await appendCronAuditEvent(client, "cron_no_active_tenants", "info", { cron_name: CRON_NAME });
-              return;
-            }
-            for (const operatingCompanyId of activeTenantIds) {
-              try {
-                assertTenantContext(operatingCompanyId, CRON_NAME);
-              } catch (error) {
-                await appendCronAuditEvent(client, "cron_invalid_tenant_context", "warning", {
+          // ARCHITECTURE FIX (mirrors the positions cron #1211): never hold ONE DB transaction across the whole
+          // tenant loop + every /fleet/hos/logs network fetch. That shape (connection held across network I/O)
+          // stalled/rolled back the whole tick -> hos.duty_status_events stayed empty -> the fleet board showed
+          // the 14h "fresh shift" HOS default for every driver (fabricated compliance). Instead: list tenants in
+          // one short tx, then run EACH tenant's HOS pull in its OWN short tenant-scoped tx, recording the result
+          // to integration_sync_log (sync_kind='samsara_hos_pull') so the probe can verify it committed. One
+          // tenant failing can't roll back the others, and the observability row survives.
+          const activeTenantIds = await withLuciaBypass((c) => listActiveTenantIds(c));
+          if (activeTenantIds.length === 0) {
+            await withLuciaBypass((c) => appendCronAuditEvent(c, "cron_no_active_tenants", "info", { cron_name: CRON_NAME })).catch(() => undefined);
+            return;
+          }
+
+          // Short, tenant-scoped transaction (sets app.operating_company_id for RLS, then runs fn).
+          const runScoped = <T>(oci: string, fn: (c: PoolClient) => Promise<T>): Promise<T> =>
+            withLuciaBypass(async (c) => {
+              await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oci]);
+              return fn(c);
+            });
+
+          for (const operatingCompanyId of activeTenantIds) {
+            try {
+              assertTenantContext(operatingCompanyId, CRON_NAME);
+            } catch (error) {
+              await withLuciaBypass((c) =>
+                appendCronAuditEvent(c, "cron_invalid_tenant_context", "warning", {
                   cron_name: CRON_NAME,
                   operating_company_id: operatingCompanyId ?? null,
                   reason: String((error as Error)?.message ?? error),
-                });
-                throw error;
-              }
-              await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-              const enabled = await isSamsaraEnabledForTenant(client, operatingCompanyId);
-              if (!enabled) {
-                await appendCronAuditEvent(client, "cron_skipped_samsara_disabled", "info", {
+                })
+              ).catch(() => undefined);
+              continue;
+            }
+
+            let enabled = false;
+            try {
+              enabled = await runScoped(operatingCompanyId, (c) => isSamsaraEnabledForTenant(c, operatingCompanyId));
+            } catch (err) {
+              app.log.warn({ operating_company_id: operatingCompanyId, err }, "samsara hos-pull enabled check failed");
+            }
+            if (!enabled) {
+              await runScoped(operatingCompanyId, (c) =>
+                appendCronAuditEvent(c, "cron_skipped_samsara_disabled", "info", { cron_name: CRON_NAME, operating_company_id: operatingCompanyId })
+              ).catch(() => undefined);
+              continue;
+            }
+
+            // The HOS pull + its observability row in ONE short tenant tx. syncSamsaraHosLogs never throws
+            // (records its own fetch/driver errors), so the sync-log row always commits and the probe can read
+            // inserted/mapped/unmapped/error to prove the HOS clocks are real (or pinpoint why they're not).
+            try {
+              await runScoped(operatingCompanyId, async (c) => {
+                const stats = await syncSamsaraHosLogs(c, operatingCompanyId);
+                await c.query(
+                  `INSERT INTO integrations.integration_sync_log
+                     (operating_company_id, integration, sync_kind, finished_at, success, rows_added, rows_updated, rows_removed, error_message, payload)
+                   VALUES ($1, 'samsara', 'samsara_hos_pull', now(), $2, $3, 0, 0, $4, $5::jsonb)`,
+                  [
+                    operatingCompanyId,
+                    stats.error == null && stats.driver_errors === 0,
+                    stats.inserted,
+                    stats.error,
+                    JSON.stringify({
+                      mapped_drivers: stats.mapped_drivers,
+                      unmapped_drivers: stats.unmapped_drivers,
+                      driver_errors: stats.driver_errors,
+                      inserted: stats.inserted,
+                    }),
+                  ]
+                );
+                await appendCronAuditEvent(c, "cron_samsara_hos_pull_tick", "info", {
                   cron_name: CRON_NAME,
                   operating_company_id: operatingCompanyId,
+                  ...stats,
                 });
-                continue;
-              }
-              const stats = await syncSamsaraHosLogs(client, operatingCompanyId);
-              await appendCronAuditEvent(client, "cron_samsara_hos_pull_tick", "info", {
-                cron_name: CRON_NAME,
-                operating_company_id: operatingCompanyId,
-                ...stats,
               });
+            } catch (err) {
+              app.log.warn({ operating_company_id: operatingCompanyId, err }, "samsara hos-pull tenant tick failed");
             }
-          });
+          }
         },
         app.log
       );
