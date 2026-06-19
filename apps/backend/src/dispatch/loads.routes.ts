@@ -1136,7 +1136,16 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             NULL::text AS trailer_number,
             ud.id::text AS driver_id,
             CONCAT_WS(' ', ud.first_name, ud.last_name) AS driver_name,
-            MAX(ls.actual_departure_at) AS last_drop_at
+            MAX(ls.actual_departure_at) AS last_drop_at,
+            -- LIVE location for EVERY unit (Jorge: show it whether dispatched or not). Reverse-geo'd
+            -- city/state come from the Samsara stats ingest via telematics.vehicle_latest_position
+            -- (the same source that powers the fleet board) — NOT positions/latest, which lacks city/state.
+            p.city AS location_city,
+            p.state AS location_state,
+            p.formatted_location AS location_formatted,
+            p.lat::float8 AS location_lat,
+            p.lng::float8 AS location_lng,
+            p.captured_at::text AS location_captured_at
           FROM mdata.units u
           LEFT JOIN mdata.loads l
             ON l.assigned_unit_id = u.id
@@ -1152,20 +1161,51 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- null for an unloaded truck.)
           LEFT JOIN mdata.drivers ud ON ud.id = u.assigned_driver_id
           LEFT JOIN mdata.load_stops ls ON ls.load_id = l.id
+          LEFT JOIN telematics.vehicle_latest_position p
+            ON p.unit_id = u.id
+            AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
           WHERE u.deactivated_at IS NULL
             -- ACTIVE trucks only. Excludes Sold/Totaled (some are not deactivated_at — a known
             -- active/inactive desync that inflated "Awaiting assignment" to ~49 vs ~32 active) and
             -- OutOfService/InMaintenance (those belong to the In-shop / Fleet-OOS surfaces, not Awaiting).
             AND u.status = 'InService'::mdata.unit_status
             AND l.id IS NULL
-          GROUP BY u.id, u.unit_number, ud.id, ud.first_name, ud.last_name
+          GROUP BY u.id, u.unit_number, ud.id, ud.first_name, ud.last_name,
+            p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at
           ORDER BY COALESCE(MAX(ls.actual_departure_at), now() - interval '999 days') ASC
         `
       );
-      return res.rows.map((row) => ({
-        ...row,
-        hours_since_last_delivery: row.last_drop_at ? Math.floor((Date.now() - new Date(row.last_drop_at as string).getTime()) / 3600000) : null,
-      }));
+      // Live-location is older than this -> show the gold "stale" dot (Samsara positions poll every ~5 min;
+      // >10 min = a couple of missed polls). The "as of HH:MM CT" timestamp always renders when a fix exists.
+      const LOC_STALE_MIN = 10;
+      return res.rows.map((row) => {
+        const capUtc = (row.location_captured_at as string | null) ?? null;
+        const capMs = capUtc ? new Date(capUtc).getTime() : NaN;
+        const minsAgo = Number.isNaN(capMs) ? null : Math.floor((Date.now() - capMs) / 60000);
+        return {
+          id: row.id,
+          unit_number: row.unit_number,
+          trailer_number: row.trailer_number,
+          driver_id: row.driver_id,
+          driver_name: row.driver_name,
+          last_drop_at: row.last_drop_at,
+          hours_since_last_delivery: row.last_drop_at ? Math.floor((Date.now() - new Date(row.last_drop_at as string).getTime()) / 3600000) : null,
+          // Live location is independent of load state — present whenever Samsara has a recent fix for the unit.
+          location: capUtc
+            ? {
+                city: (row.location_city as string | null) ?? null,
+                state: (row.location_state as string | null) ?? null,
+                formatted: (row.location_formatted as string | null) ?? null,
+                lat: (row.location_lat as number | null) ?? null,
+                lng: (row.location_lng as number | null) ?? null,
+                captured_at_utc: capUtc,
+                captured_at_ct: `${new Date(capUtc).toLocaleString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit", hour12: false })} CT`,
+                minutes_ago: minsAgo,
+                stale: minsAgo != null && minsAgo > LOC_STALE_MIN,
+              }
+            : null,
+        };
+      });
     });
     return { units: rows };
   });

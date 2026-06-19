@@ -72,6 +72,18 @@ export type DispatchKpis = {
   mpg: number;
 };
 
+export type UnitLiveLocation = {
+  city: string | null;
+  state: string | null;
+  formatted: string | null;
+  lat: number | null;
+  lng: number | null;
+  captured_at_utc: string;
+  captured_at_ct: string; // "HH:MM CT"
+  minutes_ago: number | null;
+  stale: boolean;
+};
+
 export type UnitsWithoutLoad = {
   id: string;
   unit_number: string;
@@ -80,6 +92,7 @@ export type UnitsWithoutLoad = {
   driver_name: string | null;
   last_drop_at: string | null;
   hours_since_last_delivery: number | null;
+  location: UnitLiveLocation | null; // live Samsara position, present whether dispatched or not
 };
 
 export type DriverLoadAvailability = {
