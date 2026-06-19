@@ -43,6 +43,17 @@ if (!/\/fleet\/vehicles\/driver-assignments/.test(svc))
 if (/driver-assignments[\s\S]{0,300}searchParams\.set\("limit"/.test(svc))
   fail("pairing driver-assignments call must NOT set the limit param (the working probe call omits it)");
 
+// The pairing op must NEVER re-throw — re-throwing rolled back its OWN committed sync-log row (+ good
+// upserts), making the failure invisible (the exact bug that hid the cause for hours). Record + return.
+if (/writePairingSyncLog\([\s\S]{0,120}throw err/.test(svc))
+  fail("syncFromSamsara must NOT re-throw after logging the error (re-throw rolls back its own observability)");
+// Each upsert + the overlap detection must be SAVEPOINT-isolated so one failure can't abort the whole tx
+// (which would roll back every good upsert + the sync-log row). Overlap auditing is secondary to the board.
+if (!/withSavepoint[\s\S]{0,180}upsertSamsaraAssignment/.test(svc))
+  fail("each upsert must run in a withSavepoint so one bad assignment can't roll back the others + the log");
+if (!/withSavepoint[\s\S]{0,180}detectAndFlagOverlaps/.test(svc))
+  fail("detectAndFlagOverlaps must be savepoint-isolated so it can't roll back the assignment upserts");
+
 // The proven 5-min positions cron must drive the pairing sync, run it INDEPENDENTLY (a locations/stats
 // failure must not skip it), and NOT hold one DB transaction across all the Samsara network I/O.
 const cron = read("apps/backend/src/cron/samsara-positions-cron.ts");

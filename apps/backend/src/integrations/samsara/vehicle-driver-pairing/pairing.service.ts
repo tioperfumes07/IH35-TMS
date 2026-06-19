@@ -5,6 +5,7 @@
 import { decryptSamsaraSecret } from "../../../lib/samsara-crypto.js";
 import { withCircuitBreaker } from "../../../lib/circuit-breaker/index.js";
 import { samsaraFetch } from "../samsara-client.js";
+import { withSavepoint } from "../../../auth/db.js";
 import { getDriverForVehicleAtTime } from "../../../telematics/vehicle-driver-lookup.service.js";
 
 const SAMSARA_API_BASE = "https://api.samsara.com";
@@ -35,12 +36,15 @@ export type SamsaraVehicleAssignment = {
 
 export type SyncFromSamsaraResult = {
   fetched: number;
+  resolved: number;
   inserted: number;
   updated: number;
   skipped: number;
+  upsert_errors: number;
   overlap_flags_created: number;
   overlap_ratio: number;
   overlap_stop_triggered: boolean;
+  error?: string | null;
 };
 
 export type OverlapFlagRow = {
@@ -490,7 +494,15 @@ async function writePairingSyncLog(
       result.inserted,
       result.updated,
       errorMessage,
-      JSON.stringify({ fetched: result.fetched, skipped: result.skipped }),
+      JSON.stringify({
+        fetched: result.fetched,
+        resolved: result.resolved,
+        inserted: result.inserted,
+        updated: result.updated,
+        skipped: result.skipped,
+        upsert_errors: result.upsert_errors,
+        error: result.error ?? null,
+      }),
     ]
   );
 }
@@ -507,15 +519,22 @@ export async function syncFromSamsara(
   const token = await resolveSamsaraApiToken(client, operatingCompanyId);
   const result: SyncFromSamsaraResult = {
     fetched: 0,
+    resolved: 0,
     inserted: 0,
     updated: 0,
     skipped: 0,
+    upsert_errors: 0,
     overlap_flags_created: 0,
     overlap_ratio: 0,
     overlap_stop_triggered: false,
+    error: null,
   };
 
-  if (!token) return result;
+  if (!token) {
+    result.error = "no_samsara_token";
+    await writePairingSyncLog(client, operatingCompanyId, false, result, result.error).catch(() => undefined);
+    return result;
+  }
 
   try {
     const endTime = new Date().toISOString();
@@ -523,7 +542,8 @@ export async function syncFromSamsara(
     const assignments = await fetchSamsaraVehicleAssignments(token, startTime, endTime);
     result.fetched = assignments.length;
 
-    for (const assignment of assignments) {
+    for (let i = 0; i < assignments.length; i += 1) {
+      const assignment = assignments[i];
       const local = await resolveLocalUnitAndDriver(
         client,
         operatingCompanyId,
@@ -534,23 +554,43 @@ export async function syncFromSamsara(
         result.skipped += 1;
         continue;
       }
-      const action = await upsertSamsaraAssignment(client, operatingCompanyId, assignment, local);
+      result.resolved += 1;
+      // Isolate EACH upsert in a savepoint — a single bad assignment must not abort the whole tx (which
+      // would roll back every good upsert AND the sync-log row, the exact silent failure we hit).
+      const action = await withSavepoint<"inserted" | "updated" | "skipped" | "error">(
+        client,
+        `pair_upsert_${i}`,
+        () => upsertSamsaraAssignment(client, operatingCompanyId, assignment, local),
+        "error"
+      );
       if (action === "inserted") result.inserted += 1;
       else if (action === "updated") result.updated += 1;
+      else if (action === "error") result.upsert_errors += 1;
       else result.skipped += 1;
     }
 
-    const overlap = await detectAndFlagOverlaps(client, operatingCompanyId);
+    // Overlap auditing is SECONDARY — wrap it in a savepoint so a failure here can never roll back the
+    // assignment upserts above (the board's data). Returns the fallback on any error.
+    const overlap = await withSavepoint(
+      client,
+      "pair_overlap",
+      () => detectAndFlagOverlaps(client, operatingCompanyId),
+      { flags_created: 0, overlapping_assignments: 0, total_assignments: 0, overlap_ratio: 0 }
+    );
     result.overlap_flags_created = overlap.flags_created;
     result.overlap_ratio = overlap.overlap_ratio;
     result.overlap_stop_triggered = overlap.overlap_ratio > OVERLAP_STOP_THRESHOLD_RATIO;
 
-    await writePairingSyncLog(client, operatingCompanyId, true, result, null);
+    const success = result.upsert_errors === 0;
+    await writePairingSyncLog(client, operatingCompanyId, success, result, success ? null : `${result.upsert_errors} upsert error(s)`);
     return result;
   } catch (err) {
-    const message = String((err as Error)?.message ?? err);
-    await writePairingSyncLog(client, operatingCompanyId, false, result, message).catch(() => undefined);
-    throw err;
+    // RECORD + RETURN — never re-throw. Re-throwing rolled back this op's own integration_sync_log write
+    // (its observability), leaving the failure invisible. The savepoints above keep good upserts committed;
+    // this only catches the non-DB path (e.g. a fetch/network error, which doesn't abort the tx).
+    result.error = String((err as Error)?.message ?? err);
+    await writePairingSyncLog(client, operatingCompanyId, false, result, result.error).catch(() => undefined);
+    return result;
   }
 }
 
