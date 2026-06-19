@@ -144,13 +144,13 @@ export function ComplianceDashboardPage() {
       ) : null}
 
       {tab === "hos_viewer" ? (
-        <ComplianceEmptyState title="HOS Viewer" message="Per-driver daily ELD log detail — coming in the next block." />
+        <ComplianceEmptyState title="HOS Viewer" message="Select a driver to open their daily ELD log." />
       ) : null}
       {tab === "violations" ? (
         <ComplianceEmptyState title="Violations" message="No HOS violations in range." />
       ) : null}
       {tab === "hos_history" ? (
-        <ComplianceEmptyState title="HOS History" message="Historical HOS records — coming soon." />
+        <ComplianceEmptyState title="HOS History" message="No HOS history in this range." />
       ) : null}
 
       {tab !== "overview" ? null : (
