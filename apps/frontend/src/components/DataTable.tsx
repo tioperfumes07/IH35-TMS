@@ -3,8 +3,14 @@ import type { ReactNode } from "react";
 import { colors, spacing, typography } from "../design/tokens";
 import type { DataTableErrorState } from "../lib/tableError";
 import { ListErrorState } from "./ListErrorState";
+import { useTablePref } from "./table/useTablePref";
 
 export type { DataTableErrorState };
+
+// Universal rows-per-page choices (Jorge: every list lets the user pick how many rows show). -1 = "All".
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, -1] as const;
+const ALL_SENTINEL = -1;
+const pageSizeLabel = (n: number) => (n === ALL_SENTINEL ? "All" : String(n));
 
 type Column<T> = {
   key: keyof T | string;
@@ -21,6 +27,8 @@ type DataTableProps<T> = {
   rowKey: (row: T) => string;
   loading?: boolean;
   pageSize?: number;
+  /** When set, the user's rows-per-page choice persists per-surface (localStorage, same store as column widths). */
+  tableKey?: string;
   onRowClick?: (row: T) => void;
   errorState?: DataTableErrorState;
 };
@@ -31,12 +39,22 @@ export function DataTable<T>({
   rowKey,
   loading = false,
   pageSize = 15,
+  tableKey,
   onRowClick,
   errorState,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
+  // Rows-per-page: persisted per-surface when a tableKey is given; otherwise ephemeral local state.
+  const pref = useTablePref(tableKey ?? "datatable:adhoc", { pageSize });
+  const [localPageSize, setLocalPageSize] = useState(pageSize);
+  const selectedPageSize = tableKey ? pref.pageSize : localPageSize;
+  const setSelectedPageSize = (n: number) => {
+    setPage(1);
+    if (tableKey) pref.setPageSize(n);
+    else setLocalPageSize(n);
+  };
 
   const sortedRows = useMemo(() => {
     if (!sortKey) return rows;
@@ -50,10 +68,12 @@ export function DataTable<T>({
     return copy;
   }, [rows, sortKey, sortDirection]);
 
-  const pageCount = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+  // "All" (-1) shows every row; otherwise the chosen page size.
+  const effectivePageSize = selectedPageSize === ALL_SENTINEL ? Math.max(1, sortedRows.length) : selectedPageSize;
+  const pageCount = Math.max(1, Math.ceil(sortedRows.length / effectivePageSize));
   const safePage = Math.min(page, pageCount);
-  const offset = (safePage - 1) * pageSize;
-  const pageRows = sortedRows.slice(offset, offset + pageSize);
+  const offset = (safePage - 1) * effectivePageSize;
+  const pageRows = sortedRows.slice(offset, offset + effectivePageSize);
   const inError = Boolean(errorState);
   const footerRowsLength = inError ? 0 : sortedRows.length;
 
@@ -144,13 +164,29 @@ export function DataTable<T>({
         </tbody>
       </table>
       <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600" style={{ color: colors.mutedText }}>
-        <span>
-          {inError
-            ? "—"
-            : footerRowsLength === 0
-              ? `0 of ${footerRowsLength}`
-              : `${offset + 1}-${Math.min(offset + pageSize, footerRowsLength)} of ${footerRowsLength}`}
-        </span>
+        <div className="flex items-center gap-2">
+          <span>
+            {inError
+              ? "—"
+              : footerRowsLength === 0
+                ? `0 of ${footerRowsLength}`
+                : `${offset + 1}-${Math.min(offset + effectivePageSize, footerRowsLength)} of ${footerRowsLength}`}
+          </span>
+          {/* Universal rows-per-page selector (10/25/50/100/All) — persists per-surface when tableKey is set. */}
+          <label className="flex items-center gap-1 text-[11px] text-gray-500">
+            Rows
+            <select
+              aria-label="Rows per page"
+              className="h-6 rounded border border-gray-300 bg-white px-1 text-[11px]"
+              value={selectedPageSize}
+              onChange={(e) => setSelectedPageSize(Number(e.target.value))}
+            >
+              {PAGE_SIZE_OPTIONS.map((n) => (
+                <option key={n} value={n}>{pageSizeLabel(n)}</option>
+              ))}
+            </select>
+          </label>
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
