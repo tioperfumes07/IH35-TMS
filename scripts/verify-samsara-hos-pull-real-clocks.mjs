@@ -47,4 +47,21 @@ if (!/sync_kind = 'samsara_hos_pull'/.test(probe) || !/last_hos_pull/.test(probe
 if (!/hos_events_24h/.test(probe))
   fail("probe must surface hos_events_24h (real ingested duty events) so a still-empty HOS table can't read as 'real'");
 
-console.log("OK verify-samsara-hos-pull-real-clocks: HOS clocks fed by a runScoped, observable, board-keyed pull (no 14h default).");
+// HONEST DEFAULT: the fleet board reader must NEVER present computeHosClocks([])'s fabricated 14h "ok" window for
+// an assigned driver with zero ingested duty events — it must show "unavailable" + blank clocks instead. A safety
+// board claiming every driver is legal-to-drive is the trust violation #1215 was meant to kill.
+const reader = read("apps/backend/src/telematics/fleet-location-hos.service.ts");
+if (!/evs\.length > 0 \? computeHosClocks\([\s\S]{0,40}: "no_data"/.test(reader))
+  fail('reader must mark assigned-but-no-events drivers "no_data" (NOT computeHosClocks([])\'s fabricated 840 default)');
+if (!/hosUnknown \? "unavailable"/.test(reader))
+  fail('reader must surface hos_status="unavailable" (with blank clocks) when HOS is unknown, never a fabricated full clock');
+
+// FAST + RELIABLE: the HOS pull must also run on the proven */5 positions cron (not only the single hourly :15
+// cron whose firing GUARD couldn't confirm) so hos.duty_status_events populates within 5 min and last_hos_pull commits.
+const posCron = read("apps/backend/src/cron/samsara-positions-cron.ts");
+if (!/syncSamsaraHosLogs\(c, operatingCompanyId\)/.test(posCron))
+  fail("the */5 positions cron must also drive syncSamsaraHosLogs so HOS populates within 5 min (not hourly-only)");
+if (!/integration_sync_log[\s\S]{0,260}'samsara_hos_pull'/.test(posCron))
+  fail("the */5 positions cron must write the samsara_hos_pull sync-log row so the probe sees a fresh committed pull");
+
+console.log("OK verify-samsara-hos-pull-real-clocks: HOS clocks fed by a runScoped, observable, board-keyed pull on the */5 path; honest 'unavailable' when unknown (no 14h default).");
