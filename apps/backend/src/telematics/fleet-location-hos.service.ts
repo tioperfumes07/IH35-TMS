@@ -53,7 +53,10 @@ export async function getFleetLocationHosRows(
 ): Promise<FleetLocationHosRow[]> {
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-  // 1. Latest position per reporting vehicle (entity-scoped; NO 50-cap — all reporting units).
+  // 1. Row set = EVERY active truck (Jorge's rule), not only the ones Samsara has a position/driver for.
+  //    Start FROM mdata.units (active InService, entity-scoped, not Sold/retired/demo) and LEFT JOIN the
+  //    latest position — so a truck with no recent fix or no logged-in driver still shows a row (location
+  //    blank, driver resolved-or-"Not assigned"). No 50-cap. The `stale` flag conveys fix freshness.
   const posRes = await client.query<{
     unit_id: string;
     unit_number: string | null;
@@ -69,17 +72,17 @@ export async function getFleetLocationHosRows(
     engine_state: string | null;
   }>(
     `
-      SELECT p.unit_id::text AS unit_id, u.unit_number, p.samsara_vehicle_id,
+      SELECT u.id::text AS unit_id, u.unit_number, p.samsara_vehicle_id,
              p.captured_at::text AS captured_at, p.lat, p.lng, p.city, p.state, p.formatted_location,
              p.speed_mph, p.heading_deg, p.engine_state
-      FROM telematics.vehicle_latest_position p
-      JOIN mdata.units u
-        ON u.id = p.unit_id
-       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = p.operating_company_id
-      WHERE p.operating_company_id = $1::uuid
-        AND p.captured_at > now() - interval '24 hours'
+      FROM mdata.units u
+      LEFT JOIN telematics.vehicle_latest_position p
+        ON p.unit_id = u.id
+       AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
+      WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
         AND u.deactivated_at IS NULL
-      ORDER BY p.captured_at DESC
+        AND u.status::text = 'InService'
+      ORDER BY u.unit_number ASC NULLS LAST
     `,
     [operatingCompanyId]
   );

@@ -88,8 +88,8 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
               {filtered.map((r: FleetLocationHosRow) => (
                 <tr key={r.unit_id} className={`border-t border-slate-100 hover:bg-slate-50 ${r.stale ? "bg-amber-50" : ""}`}>
                   <td className="px-2 py-1.5 font-medium">{r.unit_number ?? "—"}</td>
-                  <td className="px-2 py-1.5">{r.driver_name ?? "—"}</td>
-                  {/* City/State from Samsara reverseGeo (stats?types=gps,driverAssignments ingest). */}
+                  <td className={`px-2 py-1.5 ${r.driver_name ? "" : "text-slate-400 italic"}`}>{r.driver_name ?? "Not assigned"}</td>
+                  {/* City/State from Samsara reverseGeo (stats?types=gps,engineStates ingest). */}
                   <td className={`px-2 py-1.5 ${r.city ? "" : "text-slate-400"}`} title={r.formatted_location ?? undefined}>{r.city ?? "—"}</td>
                   <td className={`px-2 py-1.5 ${r.state ? "" : "text-slate-400"}`}>{r.state ?? "—"}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{num(r.speed_mph)}</td>
