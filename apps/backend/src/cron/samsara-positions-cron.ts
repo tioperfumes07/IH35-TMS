@@ -4,6 +4,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { syncSamsaraVehicleLocations, syncSamsaraVehicleStats } from "../integrations/samsara/samsara-positions.service.js";
 import { syncFromSamsara } from "../integrations/samsara/vehicle-driver-pairing/pairing.service.js";
+import { syncSamsaraHosLogs } from "../integrations/samsara/samsara-hos-pull.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
@@ -154,6 +155,37 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
               app.log.info({ operating_company_id: operatingCompanyId, drivers_paired: pairing.inserted + pairing.updated }, "Samsara positions cron tick complete");
             } catch (err) {
               app.log.warn({ operating_company_id: operatingCompanyId, err }, "driver pairing sync failed");
+            }
+
+            // HOS clocks: pull /fleet/hos/logs → hos.duty_status_events so the fleet board shows REAL clocks
+            // (not the "unavailable" no-data state). On this proven */5 path it populates within 5 min and the
+            // samsara_hos_pull sync-log row commits for the probe — instead of waiting on the separate hourly
+            // cron (whose single firing GUARD couldn't confirm). Own short tx; syncSamsaraHosLogs never throws.
+            try {
+              await runScoped(operatingCompanyId, async (c) => {
+                const hos = await syncSamsaraHosLogs(c, operatingCompanyId);
+                await c.query(
+                  `INSERT INTO integrations.integration_sync_log
+                     (operating_company_id, integration, sync_kind, finished_at, success, rows_added, rows_updated, rows_removed, error_message, payload)
+                   VALUES ($1, 'samsara', 'samsara_hos_pull', now(), $2, $3, 0, 0, $4, $5::jsonb)`,
+                  [
+                    operatingCompanyId,
+                    hos.error == null && hos.driver_errors === 0,
+                    hos.inserted,
+                    hos.error,
+                    JSON.stringify({
+                      mapped_drivers: hos.mapped_drivers,
+                      unmapped_drivers: hos.unmapped_drivers,
+                      driver_errors: hos.driver_errors,
+                      inserted: hos.inserted,
+                      source: "positions_cron",
+                    }),
+                  ]
+                );
+                app.log.info({ operating_company_id: operatingCompanyId, ...hos }, "Samsara HOS pull (positions cron) complete");
+              });
+            } catch (err) {
+              app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara HOS pull (positions cron) failed");
             }
           }
         },

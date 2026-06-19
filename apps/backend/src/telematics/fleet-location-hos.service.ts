@@ -148,8 +148,9 @@ export async function getFleetLocationHosRows(
   const drvRes = { rows: [...driverByUnit.values()] }; // for the batched HOS lookup below
 
   // 3. Batch HOS: one query for ALL assigned drivers, grouped, then computeHosClocks per driver (no N+1).
+  //    "no_data" = driver assigned but ZERO ingested duty events => HOS unknown (NOT the fabricated 14h default).
   const driverIds = [...new Set(drvRes.rows.map((r) => r.driver_id))];
-  const hosByDriver = new Map<string, ReturnType<typeof computeHosClocks>>();
+  const hosByDriver = new Map<string, ReturnType<typeof computeHosClocks> | "no_data">();
   if (driverIds.length > 0) {
     const evRes = await client.query<HosDutyStatusEvent & { driver_id: string }>(
       `
@@ -168,7 +169,11 @@ export async function getFleetLocationHosRows(
       eventsByDriver.set(ev.driver_id, list);
     }
     for (const id of driverIds) {
-      hosByDriver.set(id, computeHosClocks(eventsByDriver.get(id) ?? [], asOf));
+      const evs = eventsByDriver.get(id) ?? [];
+      // HONEST DEFAULT: with NO ingested duty events, HOS is UNKNOWN — not "fresh 14h". computeHosClocks([])
+      // returns the full 11h/14h/70h "ok" window, which on a compliance/safety board is a fabrication (it
+      // claims every driver is legal-to-drive). So zero events => "no_data" -> blank clocks + "unavailable".
+      hosByDriver.set(id, evs.length > 0 ? computeHosClocks(evs, asOf) : "no_data");
     }
   }
 
@@ -176,7 +181,9 @@ export async function getFleetLocationHosRows(
   const nowMs = asOf.getTime();
   return posRes.rows.map((p) => {
     const drv = p.unit_id ? driverByUnit.get(p.unit_id) ?? null : null;
-    const hos = drv ? hosByDriver.get(drv.driver_id) ?? null : null;
+    const hosEntry = drv ? hosByDriver.get(drv.driver_id) ?? null : null;
+    const hos = hosEntry && hosEntry !== "no_data" ? hosEntry : null;
+    const hosUnknown = hosEntry === "no_data"; // driver assigned, but no ingested HOS events => unavailable
     const capturedMs = p.captured_at ? new Date(p.captured_at).getTime() : NaN;
     const minutesSince = Number.isNaN(capturedMs) ? null : Math.round((nowMs - capturedMs) / 60_000);
     return {
@@ -201,7 +208,7 @@ export async function getFleetLocationHosRows(
       window_remaining_min: hos?.window_remaining_min ?? null,
       break_remaining_min: hos?.break_remaining_min ?? null,
       cycle_remaining_min: hos?.cycle_remaining_min ?? null,
-      hos_status: hos?.status ?? null,
+      hos_status: hos?.status ?? (hosUnknown ? "unavailable" : null),
     };
   });
 }
