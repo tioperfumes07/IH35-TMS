@@ -33,6 +33,16 @@ if (!/UPDATE telematics\.vehicle_driver_assignments[\s\S]{0,200}ended_at IS NULL
 if (!/integration_sync_log[\s\S]{0,400}vehicle_driver_pairing/.test(svc))
   fail("syncFromSamsara must log success/error to integration_sync_log (sync_kind='vehicle_driver_pairing')");
 
+// The pairing path uses ONLY /fleet/vehicles/driver-assignments (200) — never the invalid
+// /fleet/vehicles/stats types=...,driverAssignments variant (400), and never the `limit` param (the
+// working probe call omits it; Samsara's driver-assignments endpoint rejected limit=512 -> 0 rows).
+if (/\/fleet\/vehicles\/stats|types=[^"']*driverAssignments/.test(svc))
+  fail("pairing path must NOT call the /fleet/vehicles/stats types=...,driverAssignments variant (400)");
+if (!/\/fleet\/vehicles\/driver-assignments/.test(svc))
+  fail("pairing must fetch /fleet/vehicles/driver-assignments");
+if (/driver-assignments[\s\S]{0,300}searchParams\.set\("limit"/.test(svc))
+  fail("pairing driver-assignments call must NOT set the limit param (the working probe call omits it)");
+
 // The proven 5-min positions cron must drive the pairing sync, run it INDEPENDENTLY (a locations/stats
 // failure must not skip it), and NOT hold one DB transaction across all the Samsara network I/O.
 const cron = read("apps/backend/src/cron/samsara-positions-cron.ts");

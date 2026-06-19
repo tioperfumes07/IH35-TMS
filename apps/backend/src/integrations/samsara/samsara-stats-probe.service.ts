@@ -79,6 +79,16 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
       ORDER BY finished_at DESC LIMIT 1`,
     [operatingCompanyId]
   );
+  // The PAIRING op's own committed row (sync_kind='vehicle_driver_pairing') — fetched/skipped (payload) +
+  // rows_added (inserted) + error verbatim. This is the row that pinpoints why open_assignments stays 0
+  // (HTTP error vs fetched>0-but-inserted=0), readable via the authenticated probe (no SQL / prod creds).
+  const lastPairing = await query<{ finished_at: string; success: boolean; error_message: string | null; rows_added: number; payload: unknown }>(
+    `SELECT finished_at::text, success, error_message, rows_added, payload
+       FROM integrations.integration_sync_log
+      WHERE operating_company_id = $1::uuid AND integration = 'samsara' AND sync_kind = 'vehicle_driver_pairing'
+      ORDER BY finished_at DESC LIMIT 1`,
+    [operatingCompanyId]
+  );
   return {
     drivers_mapped,
     drivers_total,
@@ -88,6 +98,7 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
     locations_with_city_1h,
     stats_rows_1h,
     last_samsara_sync: lastErr.rows[0] ?? null,
+    last_pairing_sync: lastPairing.rows[0] ?? null,
   };
 }
 

@@ -166,7 +166,9 @@ async function fetchSamsaraVehicleAssignmentsPage(
   const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/driver-assignments`);
   url.searchParams.set("startTime", startTime);
   url.searchParams.set("endTime", endTime);
-  url.searchParams.set("limit", "512");
+  // NOTE: do NOT set `limit` here. The probe's identical call WITHOUT limit returns 200/50; the worker's
+  // call WITH limit=512 was the only difference while it wrote 0 — Samsara's driver-assignments endpoint
+  // appears to reject the limit param. Pagination still works via the `after` cursor below.
   if (after) url.searchParams.set("after", after);
 
   const res = await withCircuitBreaker("samsara", () =>
