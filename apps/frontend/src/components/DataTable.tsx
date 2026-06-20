@@ -19,7 +19,29 @@ type Column<T> = {
   render?: (row: T) => ReactNode;
   className?: string;
   cellClass?: string;
+  /**
+   * GLOBAL-TABLE-ALIGNMENT (Block A, Jorge LOCKED option 2): explicit per-column alignment.
+   * Numeric columns (hours HH:MM, money, dates, counts) right-align so digits line up by place value;
+   * everything else centers by default. `numeric` is a convenience flag === align:"right" + tabular-nums.
+   * The HEADER follows the column's data alignment automatically (see resolveAlign).
+   */
+  align?: "left" | "center" | "right";
+  numeric?: boolean;
 };
+
+// GLOBAL-TABLE-ALIGNMENT — single source of truth for column alignment. Flip the default the other way
+// (all-center) by changing the one `?? "center"` fallback below; numeric still wins where set.
+export function resolveAlign(col: { align?: "left" | "center" | "right"; numeric?: boolean }): {
+  textClass: string;
+  justifyClass: string;
+  numeric: boolean;
+} {
+  const a = col.align ?? (col.numeric ? "right" : "center");
+  const numeric = col.numeric === true || a === "right";
+  const textClass = a === "right" ? "text-right" : a === "left" ? "text-left" : "text-center";
+  const justifyClass = a === "right" ? "justify-end" : a === "left" ? "justify-start" : "justify-center";
+  return { textClass, justifyClass, numeric };
+}
 
 type DataTableProps<T> = {
   columns: Array<Column<T>>;
@@ -82,10 +104,12 @@ export function DataTable<T>({
       <table className="w-full table-fixed text-left" style={{ fontSize: typography.tableRow }}>
         <thead className="bg-gray-50">
           <tr style={{ height: spacing.tableHeaderHeight }}>
-            {columns.map((column) => (
+            {columns.map((column) => {
+              const a = resolveAlign(column);
+              return (
               <th
                 key={String(column.key)}
-                className={`font-semibold uppercase text-gray-600 ${column.className ?? ""}`}
+                className={`font-semibold uppercase text-gray-600 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${column.className ?? ""}`}
                 style={{
                   paddingLeft: spacing.tableCellPaddingX,
                   paddingRight: spacing.tableCellPaddingX,
@@ -96,7 +120,7 @@ export function DataTable<T>({
                 {column.sortable ? (
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1"
+                    className={`inline-flex items-center gap-1 ${a.justifyClass} w-full`}
                     onClick={() => {
                       const key = String(column.key);
                       if (sortKey === key) {
@@ -114,7 +138,8 @@ export function DataTable<T>({
                   column.label
                 )}
               </th>
-            ))}
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -149,15 +174,18 @@ export function DataTable<T>({
                 style={{ height: spacing.tableRowHeight }}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
-                {columns.map((column) => (
+                {columns.map((column) => {
+                  const a = resolveAlign(column);
+                  return (
                   <td
                     key={String(column.key)}
-                    className={`overflow-hidden break-all py-1 align-top text-gray-800 ${column.cellClass ?? column.className ?? ""}`}
+                    className={`overflow-hidden break-all py-1 align-top text-gray-800 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${column.cellClass ?? column.className ?? ""}`}
                     style={{ paddingLeft: spacing.tableCellPaddingX, paddingRight: spacing.tableCellPaddingX }}
                   >
                     {column.render ? column.render(row) : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
                   </td>
-                ))}
+                  );
+                })}
               </tr>
             ))
           )}

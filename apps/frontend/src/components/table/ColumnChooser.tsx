@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { Settings } from "lucide-react";
 
 // GLOBAL-TABLE-CONTROLS — QuickBooks-style gear menu: rows-per-page + show/hide columns.
-export type TableColumn = { key: string; label: string; alwaysVisible?: boolean };
+// GLOBAL-TABLE-ALIGNMENT (Block A): `numeric`/`align` let a consumer mark a column once; the shared
+// TableHeaderCell then right-aligns the header over right-aligned numeric data (hours, money, dates,
+// counts). Default (unset) = center. See resolveAlign in DataTable.tsx.
+export type TableColumn = {
+  key: string;
+  label: string;
+  alwaysVisible?: boolean;
+  align?: "left" | "center" | "right";
+  numeric?: boolean;
+};
 
 type Props = {
   columns: TableColumn[];

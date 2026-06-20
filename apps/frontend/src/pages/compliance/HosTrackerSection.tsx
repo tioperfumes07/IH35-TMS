@@ -117,9 +117,21 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           <div className="overflow-x-auto rounded border border-slate-200 bg-white">
             <table className="w-full text-left text-[11px]">
               <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
+                {/* GLOBAL-TABLE-ALIGNMENT (Block A): this section uses a local table (not the shared
+                    DataTable/TableHeaderCell), so the numeric HH:MM headers (Drive/Shift/Cycle/Driven)
+                    are right-aligned here to sit over the already right-aligned tabular-nums data cells.
+                    Text columns (Driver/Unit/Status) stay default left here as in the row markup. */}
                 <tr>
-                  {["Driver", "Unit", "Status", "Drive", "Shift", "Cycle", "Driven (cyc)"].map((h) => (
-                    <th key={h} className="px-2 py-1.5 whitespace-nowrap">{h}</th>
+                  {[
+                    { label: "Driver", numeric: false },
+                    { label: "Unit", numeric: false },
+                    { label: "Status", numeric: false },
+                    { label: "Drive", numeric: true },
+                    { label: "Shift", numeric: true },
+                    { label: "Cycle", numeric: true },
+                    { label: "Driven (cyc)", numeric: true },
+                  ].map((h) => (
+                    <th key={h.label} className={`px-2 py-1.5 whitespace-nowrap ${h.numeric ? "text-right tabular-nums" : ""}`}>{h.label}</th>
                   ))}
                 </tr>
               </thead>
