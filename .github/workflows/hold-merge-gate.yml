@@ -1,0 +1,34 @@
+# HOLD-MERGE-GATE — root-cause control for the 2026-06-20 near-miss (a title-blind `gh pr merge` loop
+# merged 5 [HOLD-FOR-JORGE] PRs). This job goes RED on any HOLD / financial / posting / migration /
+# flag-flip PR unless the human label `JORGE-APPROVED` is present. Mark it a REQUIRED status check in
+# branch protection on `main` (see docs/specs/HOLD-MERGE-GATE.md) so a required red check physically
+# blocks merge — the merge button and `gh pr merge` both fail.
+name: hold-merge-gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+
+# Re-run when the title/labels change (edited/labeled/unlabeled) so applying JORGE-APPROVED flips it green.
+permissions:
+  contents: read
+
+jobs:
+  hold-merge-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for the base..head diff)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Run HOLD-merge gate
+        env:
+          GATE_PR_TITLE: ${{ github.event.pull_request.title }}
+          GATE_PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+          GATE_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GATE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/verify-hold-merge-gate.mjs
