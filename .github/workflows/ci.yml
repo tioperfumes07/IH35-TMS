@@ -675,6 +675,9 @@ jobs:
       - name: verify:hos-driver-map-preview
         run: npm run verify:hos-driver-map-preview
 
+      - name: verify:driver-inactivity-preview
+        run: npm run verify:driver-inactivity-preview
+
       - name: verify:shipper-portal-tenant-isolation
         run: npm run verify:shipper-portal-tenant-isolation
 

@@ -370,6 +370,7 @@
     "verify:compliance-severity-thresholds": "node scripts/verify-compliance-severity-thresholds.mjs",
     "verify:hos-viewer-picker": "node scripts/verify-hos-viewer-picker.mjs",
     "verify:hos-driver-map-preview": "node scripts/verify-hos-driver-map-preview.mjs",
+    "verify:driver-inactivity-preview": "node scripts/verify-driver-inactivity-preview.mjs",
     "verify:shipper-portal-tenant-isolation": "node scripts/verify-shipper-portal-tenant-isolation.mjs",
     "verify:shipper-portal-no-internal-data-leak": "node scripts/verify-shipper-portal-no-internal-data-leak.mjs",
     "verify:shipper-portal-session-cookie-secure": "node scripts/verify-shipper-portal-session-cookie-secure.mjs",

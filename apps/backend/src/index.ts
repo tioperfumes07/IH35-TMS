@@ -18,6 +18,7 @@ import { initializeSamsaraPositionPollWorker } from "./jobs/samsara-position-pol
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
 import { registerSamsaraStatsProbeRoutes } from "./integrations/samsara/samsara-stats-probe.routes.js";
 import { registerHosDriverMapPreviewRoutes } from "./integrations/samsara/hos-driver-map-preview.routes.js";
+import { registerDriverInactivityPreviewRoutes } from "./mdata/driver-inactivity-preview.routes.js";
 import { registerSamsaraHosReadinessRoutes } from "./integrations/samsara/hos-readiness.routes.js";
 import { registerIntegrationHealthRoutes } from "./integrations/integration-health.routes.js";
 import { initializeDataSovereigntyDailySync } from "./integrations/samsara/daily-sync-job.js";
@@ -590,6 +591,7 @@ async function main() {
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraStatsProbeRoutes(app);
   await registerHosDriverMapPreviewRoutes(app);
+  await registerDriverInactivityPreviewRoutes(app);
   await registerSamsaraHosReadinessRoutes(app);
   await registerSamsaraVehicleDriverPairingRoutes(app);
   await registerIntegrationHealthRoutes(app);
