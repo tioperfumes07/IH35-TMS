@@ -232,20 +232,26 @@ async function fetchSamsaraLocationsPage(token: string, after: string | null): P
   return { data, hasNextPage, cursor };
 }
 
-// Best-effort city/state from a Samsara reverseGeo.formattedLocation string. Samsara documents only the
-// flat formattedLocation string (e.g. "1200 San Bernardo Ave, Laredo, TX"), so parse from the right:
-// the last "XX"-looking token is the state, the segment before it is the city. Returns nulls if unsure.
-function parseCityState(formatted: string | null): { city: string | null; state: string | null } {
+// Best-effort city/state from a Samsara reverseGeo.formattedLocation string. Samsara only documents the flat
+// formattedLocation (e.g. "1200 San Bernardo Ave, Laredo, TX" OR "5415 Centerpoint Parkway, Obetz, OH, 43125").
+// The state token is NOT always the last part — a trailing ZIP/country can follow it. SCAN from the right for the
+// 2-letter state code; city = the part immediately before it. Earlier code took the last part only, so on
+// "...,Obetz,OH,43125" it read state from "43125" (none) and city from "OH" (the state code). Guard: city != state.
+export function parseCityState(formatted: string | null): { city: string | null; state: string | null } {
   if (!formatted) return { city: null, state: null };
   const parts = formatted.split(",").map((p) => p.trim()).filter((p) => p.length > 0);
   if (parts.length === 0) return { city: null, state: null };
-  // Last part may be "TX" or "TX 78040" (or a country). Pull a 2-letter US state code if present.
-  const last = parts[parts.length - 1];
-  const stateMatch = last.match(/\b([A-Z]{2})\b/);
-  const state = stateMatch ? stateMatch[1] : null;
-  let city: string | null = null;
-  if (state && parts.length >= 2) city = parts[parts.length - 2] || null;
-  else if (!state && parts.length >= 2) city = parts[parts.length - 2] || null;
+  // Find the state token scanning from the right (handles "TX", "TX 78040", and a trailing ZIP-only part).
+  let stateIdx = -1;
+  let state: string | null = null;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const m = parts[i].match(/\b([A-Z]{2})\b/);
+    if (m) { state = m[1]; stateIdx = i; break; }
+  }
+  // city = the segment immediately before the state token; fall back to second-to-last when no state found.
+  let city: string | null = stateIdx > 0 ? parts[stateIdx - 1] || null : parts.length >= 2 ? parts[parts.length - 2] || null : null;
+  // HARD GUARD: city must never equal the state code (the exact bug — "OH" as a city). Step back one more part.
+  if (city && state && city.toUpperCase() === state) city = stateIdx > 1 ? parts[stateIdx - 2] || null : null;
   return { city, state };
 }
 
