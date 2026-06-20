@@ -21,5 +21,12 @@ body {
 }
 
 .code-cell {
+  /* Codes like WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5} must render on one line and never break or
+     auto-hyphenate at their internal hyphens (the cleanup-hyphen defect). */
   white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+  -webkit-hyphens: none;
+  font-variant-numeric: tabular-nums;
 }
