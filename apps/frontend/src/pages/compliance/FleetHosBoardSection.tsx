@@ -1,4 +1,5 @@
 import { Button } from "../../components/Button";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getFleetLocationHos,
@@ -81,6 +82,7 @@ function fleetHosSortValue(r: FleetLocationHosRow, key: string): string | number
 
 export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyId: string }) {
   const companyId = operatingCompanyId;
+  const navigate = useNavigate(); // AUTO-07: row click → unit detail (clickable sweep)
 
   const query = useQuery({
     queryKey: ["compliance", "fleet-location-hos", companyId],
@@ -162,7 +164,12 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
             </thead>
             <tbody>
               {pageRows.map((r: FleetLocationHosRow) => (
-                <tr key={r.unit_id} className={`border-t border-slate-100 hover:bg-slate-50 ${r.stale ? "bg-amber-50" : ""}`}>
+                <tr
+                  key={r.unit_id}
+                  onClick={() => navigate(`/fleet/units/${r.unit_id}`)}
+                  className={`cursor-pointer border-t border-slate-100 hover:bg-slate-50 ${r.stale ? "bg-amber-50" : ""}`}
+                  title="Open unit detail"
+                >
                   {isVisible("unit_number") ? <td className="px-2 py-1.5 font-medium">{r.unit_number ?? "—"}</td> : null}
                   {isVisible("driver_name") ? (
                     <td className={`px-2 py-1.5 ${r.driver_name ? "" : "text-slate-400 italic"}`}>{r.driver_name ?? "Not assigned"}</td>
