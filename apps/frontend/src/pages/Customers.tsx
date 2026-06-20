@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
+import { ListErrorState } from "../components/ListErrorState";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listInvoices } from "../api/accounting";
@@ -272,6 +273,15 @@ export function CustomersPage() {
   useEffect(() => {
     setSidebarPage(1);
   }, [search, sortByName, sidebarPageSize, companyId]);
+
+  // AUTO-13: honest error state instead of a blank list when the customers fetch 500s.
+  if (customersQuery.isError) {
+    return (
+      <div className="p-3">
+        <ListErrorState title="Couldn't load customers" status={0} message={(customersQuery.error as Error)?.message} onRetry={() => void customersQuery.refetch()} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
