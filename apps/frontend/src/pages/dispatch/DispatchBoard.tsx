@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { listUnitsWithoutLoad, listActiveLoadTriSignals, getDispatchLoadPositions, type TriSignalRow, type UnitsWithoutLoad } from "../../api/dispatch";
+import { getFleetLocationHos } from "../../api/reports";
 import type { DispatchListProps } from "../../components/dispatch/DispatchList";
 import {
   BulkActionBar,
@@ -362,6 +363,21 @@ export function DispatchBoard({
   });
   const positionByLoad = loadPositionsQuery.data?.positions_by_load ?? {};
 
+  // AUTO-04: live city/state per unit from the existing fleet-location-hos feed (reverse-geo #1233, ~3-min fresh).
+  // Read-only; keyed by unit so each load row shows its assigned unit's current location.
+  const fleetLocationQuery = useQuery({
+    queryKey: ["dispatch-board", "fleet-location", companyId],
+    queryFn: () => getFleetLocationHos(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+    refetchInterval: 3 * 60_000,
+  });
+  const locationByUnit = useMemo(() => {
+    const m: Record<string, { city: string | null; state: string | null }> = {};
+    for (const r of fleetLocationQuery.data?.rows ?? []) m[r.unit_id] = { city: r.city, state: r.state };
+    return m;
+  }, [fleetLocationQuery.data]);
+
   const bookedLoads = useMemo(() => sortedLoads.filter(isBookedReserved), [sortedLoads]);
   const assignedLoads = useMemo(() => sortedLoads.filter(isAssignedLoad), [sortedLoads]);
 
@@ -628,6 +644,15 @@ export function DispatchBoard({
         />
       ),
     })),
+    {
+      key: "location",
+      header: "Location",
+      cell: (load) => {
+        const loc = load.assigned_unit_id ? locationByUnit[load.assigned_unit_id] : undefined;
+        const text = loc ? [loc.city, loc.state].filter(Boolean).join(", ") : "";
+        return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-[10px] text-slate-400">—</span>;
+      },
+    },
     { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
