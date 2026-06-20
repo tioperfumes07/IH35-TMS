@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
-import { downloadFleetLocationHosXlsx } from "../../api/reports";
+import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 
 type Props = {
   operatingCompanyId: string;
@@ -117,6 +117,20 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
   };
   const allRows = useMemo(() => (rowsQuery.data?.rows ?? []) as UnifiedUnitRow[], [rowsQuery.data?.rows]);
 
+  // AUTO-05: live city/state per unit from the existing fleet-location-hos feed (reverse-geo #1233, ~3-min fresh).
+  const fleetLocationQuery = useQuery({
+    queryKey: ["maintenance", "fleet-table", "location", operatingCompanyId],
+    queryFn: () => getFleetLocationHos(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+    refetchInterval: 3 * 60_000,
+  });
+  const locationByUnit = useMemo(() => {
+    const m: Record<string, { city: string | null; state: string | null }> = {};
+    for (const r of fleetLocationQuery.data?.rows ?? []) m[r.unit_id] = { city: r.city, state: r.state };
+    return m;
+  }, [fleetLocationQuery.data]);
+
   // Client-side kind sub-tab + status (KPI/toggle) filtering on top of the server type filter.
   const rows = useMemo(
     () =>
@@ -129,8 +143,8 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
         // show soft-deleted units of any operational status.
         if (softDeleteFilter === "active" && effectiveStatus && r.status !== effectiveStatus) return false;
         return true;
-      }),
-    [allRows, kindFilter, effectiveStatus, softDeleteFilter]
+      }).map((r) => ({ ...r, ...(locationByUnit[r.id] ?? {}) })),
+    [allRows, kindFilter, effectiveStatus, softDeleteFilter, locationByUnit]
   );
 
   // Use the server's authoritative total (GO-LIVE Block 1A) so the count reflects the FULL fleet, not just

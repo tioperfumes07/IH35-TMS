@@ -24,6 +24,8 @@ export type FleetRow = {
   equipment_type?: string | null;
   type?: string;
   deactivated_at?: string | null;
+  city?: string | null; // AUTO-05: live location (reverse-geo) merged from /telematics/fleet-location-hos
+  state?: string | null;
 };
 
 export type SoftDeleteFilter = "active" | "inactive" | "all";
@@ -45,8 +47,13 @@ const FLEET_COLUMNS: TableColumn[] = [
   { key: "make_model", label: "Make/Model" },
   { key: "year", label: "Year" },
   { key: "status", label: "Status" },
+  { key: "location", label: "Location" },
   { key: "dot_oo", label: "DOT O/O" },
 ];
+
+function fleetLocationText(row: FleetRow): string {
+  return [row.city, row.state].filter(Boolean).join(", ");
+}
 
 function deriveVehicleType(row: FleetRow): string {
   if (row.kind === "trailer") {
@@ -82,6 +89,7 @@ function fleetSortValue(row: FleetRow, key: string): string | number | null {
     case "make_model": return `${row.make ?? ""} ${row.model ?? ""}`.trim();
     case "year": return row.year != null ? Number(row.year) : null;
     case "status": return row.status ?? null;
+    case "location": return fleetLocationText(row) || null;
     case "dot_oo": return row.kind === "trailer" ? null : row.is_oos ? 1 : 0;
     default: return null;
   }
@@ -444,6 +452,7 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
                     ) : null}
                     {isVisible("year") ? <td className="px-2 py-1">{String(row.year ?? "—")}</td> : null}
                     {isVisible("status") ? <td className="px-2 py-1">{String(row.status ?? "—")}</td> : null}
+                    {isVisible("location") ? <td className="truncate px-2 py-1 text-xs text-slate-700">{fleetLocationText(row) || "—"}</td> : null}
                     {isVisible("dot_oo") ? (
                       <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
                     ) : null}
