@@ -78,7 +78,7 @@ function indexRoster(roster: SamsaraDriver[]) {
 export async function previewDriverSamsaraMap(client: PgClient, operatingCompanyId: string): Promise<DriverMapPreview> {
   const ours = await client.query(
     `SELECT id::text AS id, trim(coalesce(first_name,'') || ' ' || coalesce(last_name,'')) AS name,
-            cdl_number, license_number, phone, samsara_driver_id::text AS samsara_driver_id
+            cdl_number, mexican_license_number, phone, samsara_driver_id::text AS samsara_driver_id
        FROM mdata.drivers
       WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL
       ORDER BY last_name, first_name`,
@@ -93,7 +93,7 @@ export async function previewDriverSamsaraMap(client: PgClient, operatingCompany
 
   const counts = { matched_high: 0, matched_low: 0, ambiguous: 0, unmatched: 0, already_mapped: 0 };
   const rows: DriverMapRow[] = ours.rows.map((r: Record<string, unknown>) => {
-    const license = normLicense(r.cdl_number) ?? normLicense(r.license_number);
+    const license = normLicense(r.cdl_number) ?? normLicense(r.mexican_license_number);
     const phone = normPhone(r.phone);
     const name = normName(r.name);
 
