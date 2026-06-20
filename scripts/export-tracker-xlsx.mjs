@@ -180,7 +180,7 @@ const SHEETS = [
     headers: ["#", "Phase / Section", "Task ID / PR", "Task Name", "Orig Status", "Reconciled Status", "Merge Date", "Merge Time", "Est Min", "Dup?", "Notes / Evidence"],
     // map markdown 9-col -> v26 11-col (Merge Time + Est Min absent in markdown)
     colMap: [0, 1, 2, 3, 4, 5, 6, null, null, 7, 8],
-    widths: [6, 22, 16, 40, 12, 16, 12, 10, 8, 7, 60],
+    widths: [6, 22, 16, 40, 12, 16, 13, 13, 8, 7, 60],
     group: true,
   },
   {
@@ -308,7 +308,13 @@ for (const cfg of SHEETS) {
     // live GitHub PR record whenever the "Task ID / PR" cell (idx 2) is a #<number>.
     if (cfg.name === "01 All Tasks") {
       const m = String(mapped[2] ?? "").trim().match(/^#(\d+)$/);
-      const pr = m ? prByNum.get(Number(m[1])) : null;
+      let pr = m ? prByNum.get(Number(m[1])) : null;
+      // fall back to a "PR #1234" / "#1234" reference in the Notes column (the block-labeled rows
+      // like "#01-Block-W" carry their real PR number in Notes, e.g. "PR #354 merged + deployed").
+      if (!pr) {
+        const nm = String(mapped[10] ?? "").match(/(?:PR\s*)?#(\d+)\b/i);
+        if (nm) pr = prByNum.get(Number(nm[1]));
+      }
       if (pr) {
         if (!mapped[6]) mapped[6] = pr.mergeDate;
         if (!mapped[7]) mapped[7] = pr.mergeTime ? `${pr.mergeTime} UTC` : "";
@@ -351,6 +357,20 @@ for (const cfg of SHEETS) {
       for (const b of PENDING_BLOCKS) {
         dataRow([++lastNum, b.lane, b.id, b.name, "", b.status, "", "", "", "", `docs/blocks/${b.id}.txt`]);
       }
+    }
+    // Format Merge Date (col 7) as a REAL date (Excel sorts/filters it) and keep Merge Time (col 8)
+    // in its own column. Both right-aligned so the date/time read as clean, separate columns.
+    for (let rr = headerRow + 1; rr < r; rr++) {
+      const dcell = ws.getCell(rr, 7);
+      if (typeof dcell.value === "string") {
+        const dm = dcell.value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (dm) {
+          dcell.value = new Date(Date.UTC(+dm[1], +dm[2] - 1, +dm[3]));
+          dcell.numFmt = "yyyy-mm-dd";
+        }
+      }
+      dcell.alignment = { vertical: "top", horizontal: "right" };
+      ws.getCell(rr, 8).alignment = { vertical: "top", horizontal: "right" };
     }
   }
 

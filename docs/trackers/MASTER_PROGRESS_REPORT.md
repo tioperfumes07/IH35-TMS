@@ -102,49 +102,66 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 
 | Order | Wave | Block / Item | Why now | Risk | Effort | Depends on | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | A | A3-1 ledger DDL (remaining_balance_cents + status) | — | — | — | — | ✅ DONE — merged #925 |
-| 1 | A | A3-2 capped recovery ENGINE + 6 locked tests (pure) | Only live path that can mishandle real money | HIGH | M | A3-1 (done) | ✅ ENGINE merged #929 |
-| 1 | A | A3-2 live-path WIRING (flag-gated, cash-advance only) + override DDL | Wires engine into computeSettlement behind SETTLEMENT_CAPPED_RECOVERY_ENABLED (default OFF) | HIGH | M | #929 | ✅ WIRING merged #930 (flag OFF = byte-identical) |
-| 1 | A | A3-2 GL — FALLBACK paired JE at POST (Dr expense / Cr QBO-149) + post-time ledger | Asset draw-down so books reconcile; verify-first proved option-a (bill rewire) not clean | HIGH | M | #930 | ✅ merged #931 — recovery applied at POST (ledger + paired JE atomic); recovery=0→no JE; flag OFF until A3-3 |
-| 1 | A | A3-3 shadow-run (old vs new compared, read-only) | Evidence Jorge flips the flag on | HIGH | M | A3-2 (#929/#930/#931) | 🟢 BUILT — PR #932 · GET /api/v1/payroll/settlement-shadow-run compares both paths per settlement, classifies (a)avoids-below-floor / (b)recovers-leaked / (c)unexplained-must-be-0. NO writes. Shadow-run executed (24 seeded drivers, 0 unexplained) → ✅ FLAG FLIPPED ON in prod 2026-06-14 (lib.feature_flags SETTLEMENT_CAPPED_RECOVERY_ENABLED default_enabled=true, read-back confirmed). ⚠️ A3-CUTOVER pending: legacy blunt path still present in driver-settlement.service.ts |
-| 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR #927 (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
-| 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
-| 4 | B | B1 — /inventory parts 404 (repoint to /api/v1/maintenance/parts) | Visibly broken live page; trivial; independent | LOW-MED | XS | none | ✅ DONE — PR #926 |
-| 5 | B | UNVERIFIED reconcile pass (DIR-G/H, BLOCK-11, CA-04, GAP-76, F3) | Make tracker fully trustworthy | LOW | S | none | ✅ DONE — PR #928 |
-| 6 | B | Commit tracker → this file (Markdown) + xlsx export | Living, version-controlled doc | LOW | S | step 5 | THIS PR |
-| 7 | C | Diesel-code request type (request→approve→inbox) | Highest ops value; reuses B4 timeline + B6 inbox | — | M | B4/B6 | ❌ empty tab |
-| 8 | C | B7 — Driver-inbox reporting (resume; paused) | Preflighted; cross-request analytics; pure read | — | M | B4/B6 | PAUSED |
-| 9 | C | Repair request type | Net-new; links to maintenance WO | — | M | B4/B6+WO | ❌ empty tab |
-| 10 | C | Expense request type | Net-new; links to expense-category map / GL | — | M | B4/B6+Block-21 | ❌ empty tab |
-| 11 | C | Load-update + Complaint request types | Net-new, no GL; finishes inbox tabs | — | S | B4/B6 | ❌ empty tabs |
-| 12 | D | CA-05 register + CA-06 account audit history | QBO-parity; CA-04 shipped | LOW | M | CA-04 | PENDING |
-| 13 | D | Bank reconcile-commit writes (D2) | Read+scoring exists; enable commit | MED | M | recon engine | 🟡 PARTIAL |
-| 14 | D | Opening-balance entries (owner-entered) | Gated financial write | MED | S | AI-4 | PENDING |
-| 15 | E | Stubs: ELD / Finance / Inventory pages — build or hide | UX honesty | LOW | varies | none | ❌ STUB |
-| 16 | E | BLOCK-24 annual 1099 generation | Year-end tax | MED | L | vendor pmts | PENDING |
-| 17 | E | BLOCK-25 multi-entity consolidation | Consolidated statements | MED | L | periods+entities | PENDING |
-| 18 | E | BLOCK-01 depreciation (register+schedule+posting) | Largest financial gap left | MED | L | CoA | ❌ NOT BUILT |
-| 19 | E | USMCA master-data writes / activation | Deferred until July 2026 | LOW | M | — | DEFERRED |
-| — | F | DRIVER-ESCROW-LIABILITY-SUBACCOUNTS (research + design first) | Truth-in-leasing per-driver escrow accounting | MED | L | A3 series | ⏸ PARKED — auto-create a LIABILITY sub-account (driver's name) under the escrow control parent (verify exact parent name in LIVE QBO — 'Escrow' or 'Escrow 2026', do NOT guess). Escrow = driver's money (refundable on separation if no fines/damage). SEPARATE from A3 (liability vs QBO-149 asset). Preview-gated if it touches a locked page. |
-| — | F | DRIVER-SUBACCOUNT-AUTO-PROVISION — ASSET side | Per-driver advance sub-account on hire | MED | M | A3 series | ✅ merged #933 · on driver create, auto-create "Driver Cash Advance- <Name>" under the canonical parent (resolved by NAME, never UUID); idempotent; best-effort. Live-CoA verified: catalogs.accounts is global=TRANSP chart; TRK has no parents; USMCA excluded. |
-| — | F | DRIVER-SUBACCOUNT-AUTO-PROVISION — ESCROW side (STOP #1 resolved) | Per-driver escrow liability sub-account on hire | MED | M | #933 | ✅ merged #934 · DECISION #1 LOCKED: nest under UNPREFIXED "Damage Claim Escrow" (QBO-1150040187, Liability). Auto-create "Damage Claim Escrow- <Name>" in the SAME hire hook; resolved by NAME+Liability (never UUID); idempotent; best-effort; TRANSP-scoped. |
-| — | F | DRIVER-SUBACCOUNT-BULK-BACKFILL — DRY-RUN | Preview existing-driver sub-account gaps | MED | M | #933/#934 | ✅ MERGED #935 (deployed live 9e58a93e, route 401-gated; #936 stale-dup CLOSED 6/14) · GET /api/v1/payroll/driver-subaccount-backfill/dry-run reports per driver {asset/escrow: CREATE\|SKIP-exists\|SKIP-no-parent} + totals, reusing the SHARED planDriverSubAccount (extracted; both provisioners now call it). ZERO writes in dry-run (tested). apply=true defaults OFF + not exposed via any endpoint. ⛔ STOP-DECISION #2 — real mass-create against prod is Jorge's explicit manual go with his spreadsheet after reviewing a dry-run. |
+| 1 | 1 HOS | PR C2 — board/roster read VERBATIM Samsara certified clocks | Gates the legal HOS numbers; PR C data live (#1234) | HIGH | M | GUARD per-driver probe | ⛔ GATED — next */5 tick → GUARD verify |
+| 2 | 1 HOS | HOS Tracker 03 — ELD duty-status timeline | Visual 24h track | MED | M | PR C2 | QUEUED |
+| 3 | 1 HOS | HOS Tracker 04 — dense sortable table | Shared component | LOW | M | PR C2 | QUEUED |
+| 4 | 1 HOS | HOS Tracker 05 — 15-col HOS Viewer | Segments recompute + clocks verbatim | MED | M | PR C2 + #1236 picker | QUEUED |
+| 5 | 1 HOS | HOS Tracker 06/07/08 — Drivers link · Dispatch · degraded mode | Reuse 03–05 | LOW | M | HOS 03–05 | QUEUED |
+| 6 | 2 UX | UX Block B — Dispatch Location column | Non-financial, auto-merge | LOW | S | #1233 | QUEUED |
+| 7 | 2 UX | UX Block C/E — Fleet Location (trucks/trailers/co-veh) | Reuse pairing + #1233 | LOW | M | #1233 | QUEUED |
+| 8 | 2 UX | UX Block D/E — HOS cycle drawer + Location | Headline cycle flips w/ PR C2 | LOW | M | PR C2 | QUEUED |
+| 9 | 3 SAFE | Block 10 — login ingest + 'Last login' display | Read-only | LOW | S | #1224 | QUEUED |
+| 10 | 3 SAFE | Q8 — Work-Order create modal (posting STUBBED+STOPS) | Dead +Create button | MED | M | none | QUEUED |
+| 11 | 3 SAFE | Q9 — Timezone library (lat/lng→IANA + override) | System-wide correctness | MED | M | none | QUEUED · RESPOND-BEFORE-CODE |
+| 12 | 3 SAFE | CHAIN-02 — Account register params (kill 400) | 'registers perfectly' surface | LOW | S | none | QUEUED (non-fin) |
+| 13 | 3 SAFE | CHAIN-01 — Vendor picker on Create Bill (empty) | Can't pick a vendor today | LOW | S | GUARD re-probe | ⛔ GATED on 0-vs-50 probe |
+| 14 | 3 SAFE | CHAIN-05 — Bank-feed live-verify (correct paths) | BUILT — verify, don't rebuild | LOW | S | none | QUEUED |
+| 15 | 3 SAFE | CHAIN-07 — Settlements /accounting 500 fix | Works at /driver-finance | LOW | S | none | QUEUED |
+| 16 | 4 TIER1 | CHAIN-03 — Create-Bill → GL proof (draft-only post) | No bill ever posted; prove tie-out | HIGH | M | CHAIN-01/02 | ⛔ Tier 1 STOP |
+| 17 | 4 TIER1 | CHAIN-04 — Bill Payment tie-out | Dr A/P / Cr cash + AP drop | HIGH | M | CHAIN-03 | ⛔ Tier 1 |
+| 18 | 4 TIER1 | CHAIN-05 — Bank-feed categorize → match → post proof | Last link of the chain | HIGH | M | bank feed | ⛔ Tier 1 |
+| 19 | 4 TIER1 | CHAIN-08 — TRANSP demo/test-data purge | Seed data in live books | HIGH | M | GUARD counts | ⛔ owner-confirmed |
+| 20 | 4 TIER1 | Expense GL posting — flag flip (EXPENSE_GL_POSTING_ENABLED) | Engine merged #1018 | HIGH | S | prod verify | ⛔ Tier 1 |
+| 21 | 4 TIER1 | VOID-EVERYWHERE — flag flip (PR1/2) + build PR3/4 | #973/#977 merged off | HIGH | M | prod verify | ⛔ Tier 1 |
+| 22 | 4 TIER1 | A3-CUTOVER — remove legacy blunt recovery path | Flag already ON | HIGH | S | reconcile | ⛔ Tier 1 |
+| 23 | 4 TIER1 | STMT-2 — Opening balances (owner-entered) | Gated financial write | MED | S | AI-4 | ⛔ owner-only |
+| 24 | 4 TIER1 | AF-4 — A/P bills migration (~$1.18M) | AP-aging empty until this | HIGH | L | design #1177 | ⛔ Tier 1 + migration |
+| 25 | 5 FIN | Roles & Permissions — build | Seam money-flags depend on | MED | L | design #953 | GATED |
+| 26 | 5 FIN | FH-1..4 — posting activation (depreciation/loan/amort) | Merged behind OFF flags | MED | M | Permissions | GATED |
+| 27 | 5 FIN | FH-5 Bankruptcy Modeler · FH-6 Tax Manager · FH-7 Unit Alloc · FH-8 Lease | Design-done; build | MED | L | FH-1..4 | GATED |
+| 28 | 5 FIN | B9 — driver-escrow engine ($25/load, $2,500 cap) | Design locked | MED | L | Permissions | GATED |
+| 29 | 5 FIN | D1 Settlements approval+PDF · CA-05/06 register · STMT-1 BS+Cash Flow | QBO-parity | LOW | M | balances fn | QUEUED |
+| 30 | 6 AF | AF-0 re-baseline → AF-1 entity-COA → AF-2 QBO drift → AF-3 registers | Truth → per-entity → reconcile | HIGH | L | HARD GATE | ⛔ behind go-live gate |
+| 31 | 6 AF | AF-5 catalogs → AF-6 Finance Hub → AF-7 money controls → AF-8 payroll bridge | Program tail | HIGH | L | AF-0..4 | ⛔ Tier 1 |
+| 32 | 7 CONN | CONN-2 Faro packet · CONN-3 Relay bank · CONN-1 Plaid recon-commit · CONN-4 EDI | Integrations | MED | M | — | QUEUED (Relay design-done) |
+| 33 | 8 TAX | STMT-3 1099 / 425C DIP / multi-entity consolidation · W2 payroll wave | Year-end + DIP | MED | L | — | QUEUED |
+| 34 | 9 OPS | Samsara CAP-1..14 (GPS/auto-status/engine-WO/scoring/fuel/tire/cargo) | Telematics depth | — | L | — | VERIFY-STATE |
+| 35 | 9 OPS | Dispatch command-center · Insurance suite · Maintenance/Mechanic · Mexico Ops · Safety W3–W5 · Reports | Feature backlog | — | L | — | VERIFY-STATE |
+| 36 | 10 ENT | Partition · Canary · Perf/Sec/A11y/Monitoring audits · TIER2 harden | Scale/resilience | — | L | — | QUEUED |
 
 ## Pending Queue (live, grouped)
 
 | # | Item | Section | True Status | Why pending | What it needs |
 |---|---|---|---|---|---|
-| A1 | AI-4 periods init | Accounting/Periods | ✅ SEED SHIPPED (PR #927) | Seed extended to full coverage | DONE: TRANSP Jul–Dec 2026 + all 2025, TRK all 2025+2026 (portable code-resolved, generate_series, gated). Remaining ops step: enable PERIODS_INIT_ENABLED in prod (read-only prod flag check still pending) |
-| A2 | BLOCK-01 depreciation | Accounting/Fixed Assets | NOT BUILT | No fixed-asset accounting | Asset register + schedule + monthly posting |
-| A3 | Block-F settlement auto-deduct (capped ledger) | Driver-Finance | ✅ FULL SERIES MERGED + FLAG ON (PROD) | A3-1 DDL #925 · A3-2 engine #929 · wiring #930 · GL paired-JE #931 · A3-3 shadow #932 — all merged | ✅ Flag SETTLEMENT_CAPPED_RECOVERY_ENABLED flipped ON in prod 2026-06-14 (read-back confirmed); shadow-run had 0 unexplained. ⚠️ A3-CUTOVER pending (FINANCE-GATED): remove legacy blunt recovery path from driver-settlement.service.ts lines ~197-220 + reconcile first real recovered settlements |
-| B1 | /inventory parts → 404 | Inventory | ✅ DONE (PR #926) | Page called a missing endpoint | FIXED: repointed Parts & Stock page + create drawer to the real /api/v1/maintenance/parts (single source of truth, frontend-only, field-mapped) |
+| H1 | PR C2 reader swap | HOS | ⛔ GATED | PR C data live #1234; awaiting GUARD per-driver probe | next */5 tick → GUARD verify board==roster==Samsara → swap reader |
+| AC1 | CHAIN-01 vendor picker empty | Accounting | ⛔ GATED on re-probe | Form picker shows 0 of 50 vendors | GUARD re-probe /mdata/vendors?oci=TRANSP (0=data-scope / 50=frontend) |
+| AC2 | CHAIN-02 account register 400 | Accounting | QUEUED (non-fin) | UI not passing account_id/from/to | pass params; render running-balance register |
+| AC3 | CHAIN-03 Create-Bill→GL | Accounting | ⛔ TIER 1 | No bill ever posted; GL decoupled from create | draft-only verifiable post → AP-aging + register tie-out (STOP) |
+| AC4 | CHAIN-05 bank-feed live-proof | Banking | BUILT — verify | GUARD probed wrong URLs; feed/categorize/post exist | verify /banking/transactions/uncategorized + categorize + bulk-post-as-bills live |
+| AC5 | CHAIN-07 settlements 500 | Accounting | QUEUED | /accounting/settlements 500s | fix or document; works at /driver-finance/settlements |
+| AC6 | CHAIN-08 demo-data purge | Accounting | ⛔ owner-confirmed | 'Unauthorized Expenses Ignacio' test data in TRANSP books | GUARD counts → Jorge OK → purge before go-live |
+| A1 | AI-4 periods init | Accounting/Periods | ✅ SEED SHIPPED (#927) | Seed full; ops step pending | enable PERIODS_INIT_ENABLED in prod |
+| A2 | AP-aging data | Accounting | PARTIAL | Page built (#1176/#1178) but empty | AF-4 ~$1.18M bills migration |
+| A3 | A3-CUTOVER | Driver-Finance | ⛔ TIER 1 | Flag ON; legacy blunt path remains | remove blunt path + reconcile first recovered settlements |
+| F1 | Expense GL + VOID flag flips | Accounting | ⛔ TIER 1 | Engines merged behind OFF flags | prod verify → flip EXPENSE_GL_POSTING / VOID_ENFORCEMENT |
+| F2 | FH-5/6/7/8 + Permissions + B9 | Finance | GATED (design-done) | Specs merged; builds pending | build behind flags; Permissions is the dependency |
+| F3 | STMT-2 opening balances | Accounting | ⛔ owner-only | Gated financial write | owner-entered after AI-4 |
+| AF | AF-0 → AF-8 program | Accounting/Finance | ⛔ HARD GATE | Re-baseline→entity-COA→drift→registers→AP-mig→catalogs→hub→controls→payroll | do NOT begin until HOS verbatim + UX + dispatch/fleet location + Block 10 DONE live |
+| D2 | Bank reconcile-commit | Accounting | PARTIAL | Read+scoring exist | enable commit (gated) |
+| L10 | Block 10 mass-flip | Drivers | ⛔ GATED | 96h inactivity status change | preview-gated; STOP for Jorge |
 | C1 | QBO prod credentials | QBO | ENV-BLOCKED | Intuit approval (P7-T4) | prod creds |
 | C2 | Twilio/WhatsApp | Notifications | ENV-BLOCKED | Meta verification (P7-T3) | external approval |
-| D2 | Bank reconcile-commit writes | Accounting | PARTIAL | Read done; commit gated | enable commit; confirm advance→bank-txn match |
-| D5 | CA-05/CA-06 | QBO-Parity | PENDING | After CA-04 | per-account ledger + audit tab |
-| E1 | /eld + 5 tabs | ELD | STUB | No integration | wire Samsara ELD or remove |
-| E2 | /finance ×3 | Finance | STUB | Prose placeholders | build or hide |
-| E5 | /admin/integrity | Admin | STUB | Backend unshipped | register checks endpoint |
+| E1 | /eld + /finance + /admin-integrity | Stubs | STUB / by-design | FH routes 404 = flag OFF (by design) | build or keep honest empty-states |
 
 ## Net-new driver-request types (reuse B4/B6)
 
