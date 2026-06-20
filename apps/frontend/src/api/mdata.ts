@@ -138,6 +138,14 @@ export function deactivateDriver(id: string) {
   );
 }
 
+// "Show in lists" — reverse of deactivate (Inactive -> Active). Reversible soft write; preserves Terminated.
+export function reactivateDriver(id: string) {
+  return apiRequest<{ id: string; deactivated_at: string | null; status: string | null; was_inactive: boolean }>(
+    `/api/v1/mdata/drivers/${id}/reactivate`,
+    { method: "POST" }
+  );
+}
+
 export function enableDriverPhoneLogin(id: string) {
   return apiRequest<{ ok: true; identity_user_id: string }>(`/api/v1/mdata/drivers/${id}/enable-phone-login`, { method: "POST" });
 }
