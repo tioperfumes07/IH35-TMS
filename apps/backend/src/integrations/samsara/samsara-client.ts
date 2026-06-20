@@ -39,8 +39,9 @@ export type SamsaraVehicleLocation = {
   engine_on: boolean | null;
   raw: Record<string, unknown>;
 };
-// /fleet/vehicles/stats?types=gps,driverAssignments — one call gives the latest GPS fix
-// (incl. reverseGeo.formattedLocation -> city/state) AND the current driver assignment per vehicle.
+// /fleet/vehicles/stats?types=gps,engineStates — one call gives the latest GPS fix
+// (incl. reverseGeo.formattedLocation -> city/state) + engine state. (driverAssignments is NOT a valid
+// stats type — it 400s; the current driver comes from the separate /fleet/vehicles/driver-assignments feed.)
 // Parsed defensively: any missing field degrades to null, never throws (the prod token is encrypted so
 // the payload cannot be live-verified here — GUARD verifies the live outcome after deploy).
 export type SamsaraVehicleStat = {
@@ -564,8 +565,9 @@ export class SamsaraClient {
     return out;
   }
 
-  /** GET /fleet/vehicles/stats?types=gps,driverAssignments — latest GPS (with reverseGeo city/state)
-   *  plus the current driver assignment per vehicle, in one call. Defensive parse; never throws on shape. */
+  /** GET /fleet/vehicles/stats?types=gps,engineStates — latest GPS (with reverseGeo city/state) + engine state.
+   *  driverAssignments is NOT a valid stats type (it 400s the request); driver login comes from the separate
+   *  /fleet/vehicles/driver-assignments feed. Defensive parse; never throws on shape. */
   async listVehicleStats(): Promise<SamsaraVehicleStat[]> {
     const token = this._token();
     if (!token) return [];
