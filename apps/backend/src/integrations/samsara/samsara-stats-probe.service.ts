@@ -136,6 +136,21 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
     token,
     `${SAMSARA_API_BASE}/fleet/vehicles/driver-assignments?startTime=${start.toISOString()}&endTime=${now.toISOString()}`
   );
+  // D) SCOPE+SHAPE check for Samsara's COMPUTED HOS clocks (the verbatim-source path, Blueprint §3.15.9.2). This is
+  //    the go/no-go: http_status 200 = scope OK; 403/empty = STOP (Jorge requests scope). The raw clocks object per
+  //    driver reveals the EXACT field names (driving/shift/cycle/break remaining + violation) so PR B writes the
+  //    snapshot columns verbatim, plus COVERAGE (which logged-in drivers have clocks; not-logged-in => no clocks).
+  const hosClocksCall = await rawGet(token, `${SAMSARA_API_BASE}/fleet/hos/clocks`);
+  const hos_clocks_sample = hosClocksCall.rows.slice(0, 12).map((r) => {
+    const driver = asObject(r.driver);
+    const clocks = asObject(r.clocks);
+    return {
+      driver_id: driver ? str(driver.id) : null,
+      driver_name: driver ? str(driver.name) : null,
+      clocks_keys: clocks ? Object.keys(clocks) : null, // EXACT Samsara field names for PR B
+      raw_clocks: r.clocks ?? null, // verbatim values (e.g. Samsara's cycle remaining, next to our recompute)
+    };
+  });
 
   const byId = new Map<string, ProbeVehicle>();
   for (const row of statsValid.rows) {
@@ -206,12 +221,21 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
       vehicles_with_logged_in_driver: perVehicle.filter((v) => v.logged_in_driver).length,
       engine_on_vehicles: movingHint.length,
       engine_on_with_driver: movingHint.filter((v) => v.logged_in_driver).length,
+      // HOS clocks scope go/no-go (the verbatim-source gate): 200 = our token returns Samsara's computed clocks.
+      hos_clocks_http_status: hosClocksCall.http_status,
+      hos_clocks_scope_ok: hosClocksCall.http_status === 200,
+      hos_clocks_error: hosClocksCall.error,
+      hos_clocks_drivers_returned: hosClocksCall.rows.length,
     },
     per_vehicle: perVehicle,
+    // Samsara's COMPUTED clocks per driver (verbatim) — field names + coverage + values for GUARD to compare against
+    // our recompute (board 189 / daily 472 for CAZARES) and confirm Samsara's is the number to trust.
+    hos_clocks_sample,
     raw_call_status: {
       valid_gps_engine: { http_status: statsValid.http_status, error: statsValid.error, vehicles: statsValid.rows.length },
       deployed_with_driver: { http_status: statsDeployed.http_status, error: statsDeployed.error },
       driver_assignments: { http_status: driverFeed.http_status, error: driverFeed.error, vehicles: driverFeed.rows.length },
+      hos_clocks: { http_status: hosClocksCall.http_status, error: hosClocksCall.error, drivers: hosClocksCall.rows.length },
     },
   };
 }
