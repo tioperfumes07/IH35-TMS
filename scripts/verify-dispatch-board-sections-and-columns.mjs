@@ -28,10 +28,12 @@ if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alia
 // Note: the 6 Samsara HOS columns (hos_drive…hos_resumeAt) use template-literal keys and are
 // asserted by verify-dispatch-board-hos-columns; this string-literal order check covers the rest.
 // The old summary pair (hrs_available/hrs_to_reset) was REMOVED per Jorge.
+// LOCKED COUNT CHANGE 2026-06-18 (Jorge-approved, AUTO-04 / PR #1249): 15 → 16 columns —
+// "location" added AFTER live_gps. This 16-column order is the contract going forward.
 const expectedOrder = [
   "unit", "trailer", "driver", "load", "customer",
   "commodity", "pickup", "delivery", "wo", "cargo_temp", "linehaul", "status_signal",
-  "live_gps", "risk", "status",
+  "live_gps", "location", "risk", "status",
 ];
 const modelStart = src.indexOf("const boardColumns");
 const modelEnd = src.indexOf("];", modelStart);
