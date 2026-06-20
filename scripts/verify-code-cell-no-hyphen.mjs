@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // AUTO-12 guard: the shared .code-cell must never break/auto-hyphenate codes (WO-…-V5) at their hyphens.
 import fs from "node:fs"; import path from "node:path"; import process from "node:process";
-const css = fs.readFileSync(path.join(process.cwd(), "apps/frontend/src/index.css"), "utf8");
+const css = fs.readFileSync(path.join(process.cwd(), "apps/frontend/src/index.css"), "utf8")
+  .replace(/\/\*[\s\S]*?\*\//g, ""); // strip comments (they may contain { } from code-format examples)
 const m = css.match(/\.code-cell\s*\{([^}]*)\}/);
 const fails = [];
 if (!m) fails.push(".code-cell rule missing from index.css");
