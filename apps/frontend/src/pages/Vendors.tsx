@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
 import { listVendors, type VendorOption } from "../api/mdata";
 import { Button } from "../components/Button";
+import { ListErrorState } from "../components/ListErrorState";
 import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
@@ -200,6 +201,15 @@ export function VendorsPage() {
   useEffect(() => {
     setSidebarPage(1);
   }, [search, sortByName, sidebarPageSize, companyId]);
+
+  // AUTO-13: honest error state instead of a blank list when the vendors fetch 500s.
+  if (vendorsQuery.isError) {
+    return (
+      <div className="p-3">
+        <ListErrorState title="Couldn't load vendors" status={0} message={(vendorsQuery.error as Error)?.message} onRetry={() => void vendorsQuery.refetch()} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
