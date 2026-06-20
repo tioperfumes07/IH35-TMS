@@ -102,6 +102,32 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
   const hos_events_24h = await oneNum(
     `SELECT count(*) AS n FROM hos.duty_status_events WHERE operating_company_id = $1::uuid AND source = 'samsara_eld' AND started_at > now() - interval '24 hours'`
   );
+  // VERBATIM clocks (Path B / PR C): OUR active drivers' latest Samsara-computed clocks (by name) from
+  // samsara.hos_snapshots — so GUARD compares Samsara-verbatim cycle/drive/shift/break vs our recompute per driver,
+  // and checks cycle_started_at to tell a real 34h restart from a default reading. Values are MINUTES.
+  const latest_hos_clocks = await query<{
+    driver_name: string; cycle_min: number | string | null; drive_min: number | string | null;
+    shift_min: number | string | null; break_min: number | string | null; cycle_started_at: string | null; polled_at: string;
+  }>(
+    `SELECT trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS driver_name,
+            s.cycle_hours_remaining AS cycle_min, s.driving_hours_remaining AS drive_min,
+            s.on_duty_hours_remaining AS shift_min, s.time_to_next_break_minutes AS break_min,
+            s.samsara_event_at::text AS cycle_started_at, s.polled_at::text AS polled_at
+       FROM (SELECT DISTINCT ON (driver_uuid) driver_uuid, cycle_hours_remaining, driving_hours_remaining,
+                    on_duty_hours_remaining, time_to_next_break_minutes, samsara_event_at, polled_at
+               FROM samsara.hos_snapshots WHERE operating_company_id = $1::uuid
+              ORDER BY driver_uuid, polled_at DESC) s
+       JOIN mdata.drivers d ON d.id = s.driver_uuid
+      ORDER BY driver_name`,
+    [operatingCompanyId]
+  );
+  const last_hos_clocks_pull = await query<{ finished_at: string; success: boolean; error_message: string | null; rows_added: number; payload: unknown }>(
+    `SELECT finished_at::text, success, error_message, rows_added, payload
+       FROM integrations.integration_sync_log
+      WHERE operating_company_id = $1::uuid AND integration = 'samsara' AND sync_kind = 'samsara_hos_clocks'
+      ORDER BY finished_at DESC LIMIT 1`,
+    [operatingCompanyId]
+  );
   return {
     drivers_mapped,
     drivers_total,
@@ -113,7 +139,9 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
     last_samsara_sync: lastErr.rows[0] ?? null,
     last_pairing_sync: lastPairing.rows[0] ?? null,
     last_hos_pull: lastHosPull.rows[0] ?? null,
+    last_hos_clocks_pull: last_hos_clocks_pull.rows[0] ?? null,
     hos_events_24h,
+    latest_hos_clocks: latest_hos_clocks.rows, // OUR drivers' Samsara-verbatim clocks (minutes), by name
   };
 }
 

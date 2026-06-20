@@ -5,6 +5,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { syncSamsaraVehicleLocations, syncSamsaraVehicleStats } from "../integrations/samsara/samsara-positions.service.js";
 import { syncFromSamsara } from "../integrations/samsara/vehicle-driver-pairing/pairing.service.js";
 import { syncSamsaraHosLogs } from "../integrations/samsara/samsara-hos-pull.service.js";
+import { syncSamsaraHosClocks } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
@@ -187,6 +188,30 @@ export function initializeSamsaraPositionsCron(app: FastifyInstance) {
               });
             } catch (err) {
               app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara HOS pull (positions cron) failed");
+            }
+
+            // VERBATIM HOS CLOCKS (Path B): pull Samsara's COMPUTED drive/shift/cycle/break remaining + cycle anchor
+            // -> samsara.hos_snapshots, which the board + roster + Block 05 display verbatim (DOT-certified ELD, not
+            // our recompute). Own short tx + observability row; never throws (records its own error).
+            try {
+              await runScoped(operatingCompanyId, async (c) => {
+                const clk = await syncSamsaraHosClocks(c, operatingCompanyId);
+                await c.query(
+                  `INSERT INTO integrations.integration_sync_log
+                     (operating_company_id, integration, sync_kind, finished_at, success, rows_added, rows_updated, rows_removed, error_message, payload)
+                   VALUES ($1, 'samsara', 'samsara_hos_clocks', now(), $2, $3, 0, 0, $4, $5::jsonb)`,
+                  [
+                    operatingCompanyId,
+                    clk.error == null && clk.errors === 0,
+                    clk.written,
+                    clk.error,
+                    JSON.stringify({ active_drivers: clk.active_drivers, mapped: clk.mapped, written: clk.written, errors: clk.errors, source: "positions_cron" }),
+                  ]
+                );
+                app.log.info({ operating_company_id: operatingCompanyId, ...clk }, "Samsara HOS clocks pull (verbatim) complete");
+              });
+            } catch (err) {
+              app.log.warn({ operating_company_id: operatingCompanyId, err }, "Samsara HOS clocks pull (verbatim) failed");
             }
           }
         },

@@ -16,6 +16,19 @@ export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
 export type SamsaraTrailer = { id: string; raw: Record<string, unknown> };
 export type SamsaraHosLog = { startedAt: string; endedAt: string | null; hosStatusType: string };
 export type SamsaraHosDriverLogs = { driverId: string; logs: SamsaraHosLog[] };
+// Samsara's COMPUTED HOS clocks (GET /fleet/hos/clocks) — DOT-certified remaining, displayed verbatim (Blueprint
+// §3.15.9.2). Durations are ms in the API; we convert to minutes. cycle_started_at distinguishes a real 34h restart
+// (Samsara legitimately returns a fresh 70h) from a default reading for a driver who is off the clock.
+export type SamsaraHosClocks = {
+  driverId: string;
+  cycle_remaining_min: number | null;
+  drive_remaining_min: number | null;
+  shift_remaining_min: number | null;
+  break_remaining_min: number | null;
+  cycle_started_at: string | null;
+  cycle_tomorrow_min: number | null;
+  raw: Record<string, unknown>;
+};
 export type SamsaraVehicleLocation = {
   id: string;
   latitude: number;
@@ -474,6 +487,57 @@ export class SamsaraClient {
             }))
             .filter((l): l is SamsaraHosLog => Boolean(l.startedAt) && Boolean(l.hosStatusType));
           if (logs.length > 0) out.push({ driverId, logs });
+        }
+        const hasNext = Boolean(json.pagination?.hasNextPage);
+        const cursor = json.pagination?.endCursor ?? null;
+        if (!hasNext || !cursor) break;
+        after = cursor;
+      }
+    } catch {
+      return out;
+    }
+    return out;
+  }
+
+  /** Samsara's COMPUTED HOS clocks per driver (GET /fleet/hos/clocks). Scope-confirmed live (200, 468 drivers).
+   *  Durations are ms; converted to minutes. Scoped to driverIds (the active board drivers). */
+  async listHosClocks(driverIds?: string[]): Promise<SamsaraHosClocks[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: SamsaraHosClocks[] = [];
+    let after: string | null = null;
+    const scoped = (driverIds ?? []).filter((d) => d && d.trim().length > 0);
+    const msToMin = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? Math.round(v / 60000) : null);
+    const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
+    try {
+      for (let page = 0; page < 50; page += 1) {
+        const url = new URL(`${SAMSARA_API_BASE}/fleet/hos/clocks`);
+        if (scoped.length > 0) url.searchParams.set("driverIds", scoped.join(","));
+        if (after) url.searchParams.set("after", after);
+        const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
+        if (!res.ok) break;
+        const json = (await res.json()) as { data?: unknown; pagination?: { endCursor?: string; hasNextPage?: boolean } };
+        const data = Array.isArray(json.data) ? json.data : [];
+        for (const row of data) {
+          const rec = row as Record<string, unknown>;
+          const driver = rec.driver as { id?: unknown } | undefined;
+          const driverId = driver && typeof driver.id === "string" ? driver.id.trim() : "";
+          if (!driverId) continue;
+          const clocks = obj(rec.clocks);
+          const cyc = obj(clocks.cycle);
+          const drv = obj(clocks.drive);
+          const shf = obj(clocks.shift);
+          const brk = obj(clocks.break);
+          out.push({
+            driverId,
+            cycle_remaining_min: msToMin(cyc.cycleRemainingDurationMs),
+            drive_remaining_min: msToMin(drv.driveRemainingDurationMs),
+            shift_remaining_min: msToMin(shf.shiftRemainingDurationMs),
+            break_remaining_min: msToMin(brk.timeUntilBreakDurationMs),
+            cycle_started_at: typeof cyc.cycleStartedAtTime === "string" ? cyc.cycleStartedAtTime : null,
+            cycle_tomorrow_min: msToMin(cyc.cycleTomorrowDurationMs),
+            raw: rec,
+          });
         }
         const hasNext = Boolean(json.pagination?.hasNextPage);
         const cursor = json.pagination?.endCursor ?? null;
