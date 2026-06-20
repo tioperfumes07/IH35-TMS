@@ -257,9 +257,10 @@ async function pairCurrentDriver(
   return (ins.rowCount ?? 0) > 0;
 }
 
-// Priority-1 completion: enrich vehicle positions with reverseGeo city/state AND populate the current
-// vehicle->driver assignment, from /fleet/vehicles/stats?types=gps,driverAssignments — the one call that
-// carries both. Runs alongside the lat/lng-only locations poll; writes a fresh position event (the latest
+// Priority-1 completion: enrich vehicle positions with reverseGeo city/state from
+// /fleet/vehicles/stats?types=gps,engineStates (driverAssignments is NOT a valid stats type — it 400s; the
+// vehicle->driver pairing comes from the separate driver-assignments feed). Runs alongside the lat/lng-only
+// locations poll; writes a fresh position event (the latest
 // wins in vehicle_latest_position) so city/state is always on the newest fix, and pairs the driver so
 // fleet-location-hos resolves driver_id -> HOS for moving trucks (not just the one with a load).
 export async function syncSamsaraVehicleStats(

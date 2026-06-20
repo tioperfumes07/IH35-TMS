@@ -157,9 +157,11 @@ export type ProbeVehicle = {
 export async function runSamsaraStatsProbe(token: string, now: Date) {
   const start = new Date(now.getTime() - 60 * 60 * 1000);
 
-  // A) valid stats (gps + engine). B) the deployed (suspected-invalid) call. C) the driver-login feed.
+  // A) valid stats (gps + engine). B) the deployed call — now valid types only (driverAssignments is NOT a
+  // /fleet/vehicles/stats type; it 400'd the whole request — the live ingest was fixed in #1200, and driver
+  // login lives on the separate driver-assignments feed in C). C) the driver-login feed.
   const statsValid = await rawGet(token, `${SAMSARA_API_BASE}/fleet/vehicles/stats?types=gps,engineStates`);
-  const statsDeployed = await rawGet(token, `${SAMSARA_API_BASE}/fleet/vehicles/stats?types=gps,driverAssignments,engineStates`);
+  const statsDeployed = await rawGet(token, `${SAMSARA_API_BASE}/fleet/vehicles/stats?types=gps,engineStates`);
   const driverFeed = await rawGet(
     token,
     `${SAMSARA_API_BASE}/fleet/vehicles/driver-assignments?startTime=${start.toISOString()}&endTime=${now.toISOString()}`
