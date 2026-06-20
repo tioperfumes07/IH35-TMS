@@ -32,6 +32,15 @@ export type DriverMapPreview = {
   our_active_drivers: number;
   samsara_roster: number;
   counts: { matched_high: number; matched_low: number; ambiguous: number; unmatched: number; already_mapped: number };
+  // Is the stored samsara_driver_id correct? (settles "don't write": stored == what the matcher independently finds)
+  id_reconcile: { stored_matches_proposed: number; stored_differs_from_proposed: number; stored_but_no_roster_match: number; both_null: number };
+  // Why does the pull write 0 rows even with samsara_driver_id populated? (READ-ONLY counts; leading suspect = 0 open assignments)
+  downstream: {
+    active_driver_query_count: number; // EXACT row count of the pull's real active-driver query (drivers ∩ open assignment ∩ has samsara id)
+    open_vehicle_driver_assignments: number; // telematics.vehicle_driver_assignments WHERE ended_at IS NULL (the pairing gap suspect)
+    linked_samsara_drivers: number; // integrations.samsara_drivers WHERE local_driver_id IS NOT NULL
+    last_hos_clocks_pull: { finished_at: string; success: boolean; error_message: string | null; rows_added: number } | null;
+  };
   rows: DriverMapRow[];
 };
 
@@ -147,12 +156,54 @@ export async function previewDriverSamsaraMap(client: PgClient, operatingCompany
     };
   });
 
+  const id_reconcile = {
+    stored_matches_proposed: rows.filter((r) => r.current_samsara_driver_id && r.proposed_samsara_driver_id && r.current_samsara_driver_id === r.proposed_samsara_driver_id).length,
+    stored_differs_from_proposed: rows.filter((r) => r.current_samsara_driver_id && r.proposed_samsara_driver_id && r.current_samsara_driver_id !== r.proposed_samsara_driver_id).length,
+    stored_but_no_roster_match: rows.filter((r) => r.current_samsara_driver_id && !r.proposed_samsara_driver_id).length,
+    both_null: rows.filter((r) => !r.current_samsara_driver_id && !r.proposed_samsara_driver_id).length,
+  };
+
+  // Downstream diagnostics — all READ-ONLY counts for this company. The leading suspect for the dead clocks is
+  // that the pull's INNER JOIN to OPEN vehicle_driver_assignments yields 0 (the pairing gap), not the mapping.
+  const [activeQ, openAsgQ, linkedQ, lastPullQ] = await Promise.all([
+    client.query(
+      `SELECT count(DISTINCT d.id)::int AS n
+         FROM mdata.drivers d
+         JOIN telematics.vehicle_driver_assignments a ON a.driver_id = d.id AND a.ended_at IS NULL
+        WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL AND d.deactivated_at IS NULL`,
+      [operatingCompanyId]
+    ),
+    client.query(
+      `SELECT count(*)::int AS n FROM telematics.vehicle_driver_assignments WHERE operating_company_id = $1::uuid AND ended_at IS NULL`,
+      [operatingCompanyId]
+    ),
+    client.query(
+      `SELECT count(*)::int AS n FROM integrations.samsara_drivers WHERE operating_company_id = $1::uuid AND local_driver_id IS NOT NULL`,
+      [operatingCompanyId]
+    ),
+    client.query(
+      `SELECT finished_at::text AS finished_at, success, error_message, rows_added
+         FROM integrations.integration_sync_log
+        WHERE operating_company_id = $1::uuid AND integration = 'samsara' AND sync_kind = 'samsara_hos_clocks'
+        ORDER BY finished_at DESC LIMIT 1`,
+      [operatingCompanyId]
+    ),
+  ]);
+  const downstream = {
+    active_driver_query_count: (activeQ.rows[0]?.n as number) ?? 0,
+    open_vehicle_driver_assignments: (openAsgQ.rows[0]?.n as number) ?? 0,
+    linked_samsara_drivers: (linkedQ.rows[0]?.n as number) ?? 0,
+    last_hos_clocks_pull: (lastPullQ.rows[0] as DriverMapPreview["downstream"]["last_hos_clocks_pull"]) ?? null,
+  };
+
   return {
     operating_company_id: operatingCompanyId,
     generated_at: new Date().toISOString(),
     our_active_drivers: ours.rows.length,
     samsara_roster: roster.length,
     counts,
+    id_reconcile,
+    downstream,
     rows,
   };
 }
