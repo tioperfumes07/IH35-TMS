@@ -3,34 +3,24 @@
 // reads "unavailable" with null clocks and an empty timeline — never a guessed default and never a violation on
 // missing data. The #1218 atomic per-driver savepoint + #1220 canonical mapping guarantee a driver's events are
 // all-or-nothing, so "has events" == complete; "no events" == unavailable.
+import { DateTime } from "luxon";
 import { computeHosClocks, hosClocksCoherent, flattenDutySegments, type HosClocks, type HosDutyStatus, type HosDutyStatusEvent } from "./hos-clocks.service.js";
 
 type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
-const LAREDO_TZ = "America/Chicago";
+// HOME TERMINAL zone (FMCSA HOS law — see docs/specs/TIME-AND-TIMEZONE.md). The 24h period + 7/8-day cycle anchor to
+// the home terminal regardless of truck location. America/Chicago for TRANSP/Laredo; per operating company later.
+// Use Luxon (IANA, DST-aware) for ALL day-boundary math — NEVER fixed offsets (a Central day is 23h or 25h on DST).
+const HOME_TZ = "America/Chicago";
 const CYCLE_70_MIN = 70 * 60;
 
-// Offset (minutes, local - UTC) for the Laredo zone at a given instant — DST-correct.
-function tzOffsetMinutes(date: Date): number {
-  const utc = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
-  const tz = new Date(date.toLocaleString("en-US", { timeZone: LAREDO_TZ }));
-  return Math.round((tz.getTime() - utc.getTime()) / 60000);
+// UTC window [start, end) for a home-terminal calendar day "YYYY-MM-DD" — DST-aware (23h/25h on transition dates).
+export function homeDayWindowUtc(dateStr: string): { start: Date; end: Date } {
+  const day = DateTime.fromISO(dateStr, { zone: HOME_TZ }).startOf("day");
+  return { start: day.toUTC().toJSDate(), end: day.plus({ days: 1 }).toUTC().toJSDate() };
 }
-
-// UTC window [start, end) for a Laredo calendar day "YYYY-MM-DD".
-function laredoDayWindowUtc(dateStr: string): { start: Date; end: Date } {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const offNoon = tzOffsetMinutes(new Date(Date.UTC(y, m - 1, d, 12))); // noon avoids DST-midnight edge
-  const start = new Date(Date.UTC(y, m - 1, d, 0, 0, 0) - offNoon * 60000);
-  const end = new Date(start.getTime() + 24 * 3600_000);
-  return { start, end };
-}
-
-const CT = new Intl.DateTimeFormat("en-US", {
-  timeZone: LAREDO_TZ, hour: "2-digit", minute: "2-digit", hour12: false,
-});
 function hmCt(d: Date): string {
-  return `${CT.format(d)} CT`;
+  return `${DateTime.fromJSDate(d).setZone(HOME_TZ).toFormat("HH:mm")} CT`;
 }
 
 export type HosSegment = {
@@ -83,7 +73,7 @@ export async function getHosDaily(
 ): Promise<HosDaily> {
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-  const { start: dayStart, end: dayEnd } = laredoDayWindowUtc(dateStr);
+  const { start: dayStart, end: dayEnd } = homeDayWindowUtc(dateStr);
   const asOf = now < dayEnd ? now : dayEnd; // for a past day, evaluate clocks at end-of-day
   // Anchor the fetch to asOf − 8 days — the SAME window computeHosClocks uses internally for the 70h cycle, and the
   // SAME window the Live Fleet board now uses (now() − 8d). Anchoring to dayEnd − 8d (the old value) fetched too
@@ -138,11 +128,17 @@ export async function getHosDaily(
     });
   }
 
-  // 8-day on-duty breakdown (per Laredo day) over the flattened timeline — union, not sum.
+  // 8-day on-duty breakdown by HOME-TERMINAL CALENDAR DAYS (today + prior 7), DST-aware via Luxon — union, not sum.
+  // Each day's window is its real length (23h/25h on DST-transition days), so the sanity cap is the ACTUAL day
+  // length, not a hardcoded 1440 (same DST-correctness principle applied to the guard itself).
+  const selDay = DateTime.fromISO(dateStr, { zone: HOME_TZ }).startOf("day");
   const eight_day_breakdown: { date: string; on_duty_min: number }[] = [];
+  let impossibleDay = false;
   for (let i = 7; i >= 0; i--) {
-    const dEnd = new Date(dayEnd.getTime() - i * 24 * 3600_000);
-    const dStart = new Date(dEnd.getTime() - 24 * 3600_000);
+    const dayDT = selDay.minus({ days: i }); // Luxon minus days = a real home-terminal calendar day (DST-aware)
+    const dStart = dayDT.toUTC().toJSDate();
+    const dEnd = dayDT.plus({ days: 1 }).toUTC().toJSDate();
+    const dayLenMin = Math.round((dEnd.getTime() - dStart.getTime()) / 60000); // 1380 / 1440 / 1500 by DST
     let onDuty = 0;
     for (const ev of flat) {
       if (!ON_DUTY.has(ev.duty_status)) continue;
@@ -150,12 +146,13 @@ export async function getHosDaily(
       const ce = ev.end < dEnd ? ev.end : dEnd;
       if (ce > cs) onDuty += Math.round((ce.getTime() - cs.getTime()) / 60000);
     }
-    eight_day_breakdown.push({ date: dStart.toISOString().slice(0, 10), on_duty_min: onDuty });
+    if (onDuty > dayLenMin) impossibleDay = true; // exceeds the ACTUAL day length -> corrupt stream
+    eight_day_breakdown.push({ date: dayDT.toISODate() ?? dStart.toISOString().slice(0, 10), on_duty_min: onDuty });
   }
 
-  // HARD SANITY GUARD: a flattened day can't exceed 24h (1440 min). If it does, the stream is corrupt despite the
-  // flatten -> the CYCLE can't be trusted -> render "unavailable", NEVER a (false) cycle:0 violation.
-  if (eight_day_breakdown.some((d) => d.on_duty_min > 1440)) {
+  // HARD SANITY GUARD: a flattened day can't exceed its real (DST-aware) length. If it does, the stream is corrupt
+  // -> the CYCLE can't be trusted -> render "unavailable", NEVER a (false) cycle:0 violation.
+  if (impossibleDay) {
     return {
       driver_id: driverId, date: dateStr, available: false, segments: [],
       per_status_minutes: ZERO_TOTALS(), clocks: null, driven_cycle_min: null, eight_day_breakdown,
