@@ -34,19 +34,22 @@ const HOS_WARN_MIN = 60; // shift/drive remaining under this → amber
 // GLOBAL-TABLE-CONTROLS: every column sortable (click asc→desc→off) + resizable (drag edge, persists per user).
 // "LAST UPDATE" (the real position date+time) replaces the confusing standalone "MIN AGO" as the prominent
 // staleness signal; min-ago is kept only as a muted relative hint inside that cell.
+// GLOBAL-TABLE-ALIGNMENT (Block A): numeric columns (speed/heading + the four HOS HH:MM clocks)
+// marked `numeric` so the shared TableHeaderCell right-aligns the HEADER over the right-aligned
+// tabular-nums data cells below. Text columns stay default (center).
 const FLEET_HOS_COLUMNS: TableColumn[] = [
   { key: "unit_number", label: "Unit", alwaysVisible: true },
   { key: "driver_name", label: "Driver" },
   { key: "city", label: "City" },
   { key: "state", label: "State" },
-  { key: "speed_mph", label: "Speed" },
-  { key: "heading_deg", label: "Heading" },
+  { key: "speed_mph", label: "Speed", numeric: true },
+  { key: "heading_deg", label: "Heading", numeric: true },
   { key: "engine_state", label: "Engine" },
   { key: "last_update", label: "Last Update (Laredo)" },
-  { key: "drive_remaining_min", label: "Drive Rem (11h)" },
-  { key: "window_remaining_min", label: "Shift Rem (14h)" },
-  { key: "break_remaining_min", label: "Break Rem" },
-  { key: "cycle_remaining_min", label: "Cycle Rem (70h)" },
+  { key: "drive_remaining_min", label: "Drive Rem (11h)", numeric: true },
+  { key: "window_remaining_min", label: "Shift Rem (14h)", numeric: true },
+  { key: "break_remaining_min", label: "Break Rem", numeric: true },
+  { key: "cycle_remaining_min", label: "Cycle Rem (70h)", numeric: true },
   { key: "hos_status", label: "HOS" },
   { key: "map", label: "Map" },
 ];
@@ -151,6 +154,8 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                     onToggleSort={table.toggleSort}
                     width={table.widths[c.key]}
                     onResize={table.setColumnWidth}
+                    align={c.align}
+                    numeric={c.numeric}
                   />
                 ))}
               </tr>

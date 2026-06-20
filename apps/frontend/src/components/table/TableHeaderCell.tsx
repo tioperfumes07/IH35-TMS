@@ -1,9 +1,13 @@
 import { useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { SortDir } from "./useTableController";
+import { resolveAlign } from "../DataTable";
 
 // GLOBAL-TABLE-CONTROLS — shared sortable + resizable <th>. Click to sort (asc→desc→off),
 // drag the right edge to resize. Width persists per-user via the controller/useTablePref.
+// GLOBAL-TABLE-ALIGNMENT (Block A): the header follows its column's data alignment. Numeric columns
+// (hours HH:MM, money, dates, counts) right-align so the header sits over right-aligned digits;
+// everything else centers by default. Alignment logic is centralized in resolveAlign (DataTable.tsx).
 type Props = {
   columnKey: string;
   label: string;
@@ -15,6 +19,8 @@ type Props = {
   width?: number;
   onResize?: (key: string, width: number) => void;
   className?: string;
+  align?: "left" | "center" | "right";
+  numeric?: boolean;
 };
 
 export function TableHeaderCell({
@@ -28,9 +34,12 @@ export function TableHeaderCell({
   width,
   onResize,
   className = "",
+  align,
+  numeric,
 }: Props) {
   const thRef = useRef<HTMLTableCellElement>(null);
   const active = sortKey === columnKey;
+  const a = resolveAlign({ align, numeric });
 
   const startResize = useCallback(
     (e: ReactMouseEvent) => {
@@ -52,12 +61,12 @@ export function TableHeaderCell({
   return (
     <th
       ref={thRef}
-      className={`relative px-2 py-1 ${className}`}
+      className={`relative px-2 py-1 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${className}`}
       style={width ? { width } : undefined}
       aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
     >
       <span
-        className={`inline-flex select-none items-center gap-0.5 ${sortable ? "cursor-pointer hover:text-gray-900" : ""}`}
+        className={`inline-flex w-full select-none items-center gap-0.5 ${a.justifyClass} ${sortable ? "cursor-pointer hover:text-gray-900" : ""}`}
         onClick={sortable ? () => onToggleSort(columnKey) : undefined}
       >
         {label}

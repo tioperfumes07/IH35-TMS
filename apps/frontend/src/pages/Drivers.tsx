@@ -959,6 +959,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   {
                     key: "cdl_expires_at",
                     label: "CDL Expires",
+                    // GLOBAL-TABLE-ALIGNMENT (Block A): dates are numeric — right-align so they line up by place.
+                    numeric: true,
                     render: (row) => formatDate(row.cdl_expires_at),
                   },
                   {
@@ -969,6 +971,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   {
                     key: "hire_date",
                     label: "Hire Date",
+                    numeric: true,
                     render: (row) => formatDate(row.hire_date),
                   },
                 ]}
