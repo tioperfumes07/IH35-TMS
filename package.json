@@ -153,6 +153,8 @@
     "verify:user-password-auth": "node scripts/verify-user-password-auth.mjs",
     "verify:no-duplicate-routes": "node scripts/verify-no-duplicate-routes.mjs",
     "verify:branch-fresh": "node scripts/verify-branch-fresh.mjs",
+    "verify:hold-merge-gate": "node scripts/verify-hold-merge-gate.mjs",
+    "verify:hold-merge-gate:self-test": "node scripts/verify-hold-merge-gate.mjs --self-test",
     "verify:accounting-route-map": "node scripts/verify-accounting-route-map.mjs",
     "verify:accounting-autoload-coverage": "node scripts/verify-accounting-autoload-coverage.mjs",
     "verify:accounting-backbone-schema": "node scripts/verify-accounting-backbone-schema.mjs",
