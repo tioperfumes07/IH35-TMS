@@ -1,0 +1,41 @@
+═══════════════════════════════════════════════════════════════════════════════
+HOS-MAP — HOS / TASK Mapping — Driver ↔ Samsara ID population (THE verbatim-clocks unlock)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: LIVE-TRACED / BUILD. Tier 2 (telematics) + MIGRATE if a backfill writes ids. STOPS for Jorge on the write.
+
+WHY THIS IS THE BLOCKER (GUARD live-verified 2026-06-20, SHA 78cc7fd):
+GET /api/v1/mdata/drivers?operating_company_id=91e0bf0a-... → 83 drivers, with_samsara_id = 0 (ZERO).
+There isn't even a samsara key on the driver records. This is tracker row 890
+(HOS-DRIVER-SAMSARA-ID-MAPPING-UNPOPULATED). It is the ROOT CAUSE of PR C producing no clocks:
+  empty mdata.drivers.samsara_driver_id
+   → link-samsara-to-units.mjs JOIN (drivers.samsara_driver_id = normalized samsara id) matches NOTHING
+   → integrations.samsara_drivers.local_driver_id stays NULL
+   → HOS pull localDriverIdFor() returns null → every driver unmapped → 0 rows inserted
+   → latest_hos_clocks absent, last_hos_clocks_pull null/zero-work "success".
+So PR C (#1234) and the HOS pull (#1042) are deployed and may be RUNNING FINE — they write zero rows
+because no driver is mapped. The fix is NOT redeploying PR C; it is populating the mapping upstream.
+NOTE: matching is by Samsara ID, NOT by name — name mismatches (e.g. ABEL vs Vicente) are a red herring.
+
+DO (in order):
+1. Stamp mdata.drivers.samsara_driver_id for each active driver (match our 83 drivers to the Samsara
+   driver roster — Samsara returns numeric driver_id, e.g. CAZARES = 58224958). Show the proposed
+   driver→samsara_id map for Jorge to eyeball BEFORE writing (mass write = STOP for Jorge).
+2. Run scripts/link-samsara-to-units.mjs so integrations.samsara_drivers.local_driver_id populates.
+3. Confirm the HOS pull then attributes: latest_hos_clocks populates + last_hos_clocks_pull shows
+   success with rows > 0.
+DB diagnostics to run when psql available: audit cron_samsara_hos_pull_tick payload; samsara_drivers
+linked count; hos.duty_status_events row count.
+
+SEQUENCING: this BLOCKS — HOS-PRC-DATA (verbatim clocks can't produce data), HOS-PRC2 (reader swap),
+HOS-FANOUT 03–08, and BLOCK-10 step-2 (30-day inactivity flag, per tracker rows 888/890). It runs FIRST
+in the HOS lane. Everything HOS-verbatim is gated on it.
+
+ACCEPTANCE (GUARD live): with_samsara_id > 0 for active drivers; link script populates local_driver_id;
+after one */5 tick last_hos_clocks_pull = success/rows>0 and latest_hos_clocks lists our drivers by name;
+THEN GUARD runs the CAZARES verbatim-vs-recompute comparison (the gate that releases HOS-PRC2).
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show
+diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

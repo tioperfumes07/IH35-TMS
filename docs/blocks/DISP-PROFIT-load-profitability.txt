@@ -2,7 +2,7 @@
 DISP-PROFIT — DISPATCH / TASK Load Profitability — Load Profitability
 PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
-STATUS: VERIFY-STATE / BUILD. Tier 2 (display) → Tier 1 if profitability posts/derives from money flows.
+STATUS: VERIFY — lane profit #375 + W2A #871; confirm per-LOAD gap only.
 
 NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. Confirm CURRENT live state +
 the DISPATCH-MODULE-SPEC.md / approved-screen PNG before building (RESPOND-BEFORE-CODE).

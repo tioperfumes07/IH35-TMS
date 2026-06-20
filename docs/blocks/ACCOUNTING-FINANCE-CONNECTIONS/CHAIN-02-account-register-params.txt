@@ -3,7 +3,7 @@ BLOCK 02 of 08 — ACCOUNTING-CHAIN / TASK 2 — Account register not passing it
 PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
 
-TIER: 2 (frontend wiring — read-only register, posts nothing). Auto-merge on green CI; GUARD verifies.
+TIER: VERIFY+wire params — D5 register shipped #976 (row 839); not a build.
 
 LOCKS (embedded):
 - Additive-only. Reuse the QBO-parity components (ParityTable #824, ParityDrawer #825).

@@ -2,7 +2,7 @@
 RPT-MODULE — REPORTS / TASK — Reports module build-out
 PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
-STATUS: VERIFY-STATE / BUILD. Tier per scope (any GL posting = Tier 1, STOPS for Jorge).
+STATUS: VERIFY — reports foundation #155/#264 shipped; find missing reports only.
 
 NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. This is a TRACKING placeholder so
 the work is not forgotten. Before building: confirm CURRENT live state + the relevant docs/specs/ spec +

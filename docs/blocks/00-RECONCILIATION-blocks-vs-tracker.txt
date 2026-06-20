@@ -1,0 +1,55 @@
+═══════════════════════════════════════════════════════════════════════════════
+RECONCILIATION — docs/blocks/ pending set vs the AUTHORITATIVE All-Tasks tracker (2026-06-20)
+Authored by GUARD · reconciled against the coder's reconciled All-Tasks record (rows 1–1168)
+═══════════════════════════════════════════════════════════════════════════════
+PURPOSE: the 60 pending blocks (tracker rows 1109–1168) were authored before the full All-Tasks record
+was available. The tracker proves several are ALREADY BUILT. Reclassify so the coder is never told to
+build something that exists. This is a doc correction — no new construction.
+
+DROP / RECLASSIFY TO "DONE — VERIFY ONLY" (tracker proves built; do NOT rebuild):
+  • CAP-GPS            → DONE. CAP-1 real-time GPS on every active load, PR #234 (row 98).
+  • CAP-AUTOSTATUS     → DONE. CAP-4 auto-status switching, PR #223 (row 101). (suggest-only)
+  • CAP-ENGINEWO       → DONE. CAP-8 engine fault → auto WO, PR #229 (row 105); also #374/#1060-era predictive.
+  • CAP-SCORING        → DONE. CAP-10 driver scoring page, PR #230 (row 107).
+  • CAP-FUELFRAUD      → DONE (adjacent). CAP-FUEL-CARD match fuel-card txns to GPS, PR #237 (row 117).
+                         (If a distinct fraud-rule engine is wanted beyond matching, keep as a NEW narrow block.)
+  • CAP-CARGOTEMP      → VERIFY. Reefer hours shipped (Block F #942/#1218); confirm cargo-TEMP specifically.
+  • CAP-PREDICTIVE     → VERIFY. CAP-7 maint prediction from live odometer, PR #221 (row 104) + PM auto-WO
+                         #448/#527. Confirm tire/brake-specific predictive vs general; keep only the gap.
+  • MX-OPS             → DONE. Mexico operations, PR #804 (row 594) + border crossing wizard #376 (row 405).
+  • MNT-SHOP           → DONE. Internal mechanic shop, PR #805 (row 595) + mechanic labor UX #457.
+  • INS-MODULE         → DONE. Insurance module INS-01..07 #314–335 (rows 242–248) + #1098–1104.
+  • DISP-KANBAN        → DONE. Dispatch kanban, PR #751 (row 569) + #1107 (10-lane kanban).
+  • DISP-OVERVIEW      → DONE. Dispatch overview, PR #752 (row 567) + #1106.
+  • DISP-PROFIT        → VERIFY. Lane profitability heatmap #375 (row 403) + per-truck CPM #296 + W2A
+                         profitability engine #871. Confirm per-LOAD profitability specifically; keep only the gap.
+  • SAFE-W3/W4/W5      → MOSTLY DONE. Safety waves W3/W4/W5 shipped (#877–883, rows 745–751); safety module
+                         LOCKED per CLAUDE.md §7 (row 674). RECLASSIFY to VERIFY; do not add to a locked module.
+  • RPT-MODULE         → LARGELY DONE. Reports foundation #155/#264 + many report PRs. RECLASSIFY to VERIFY
+                         (identify only specific missing reports, e.g. 1099 below).
+  • AF-3 / CHAIN-02 register → PARTIALLY DONE. D5 read-only per-account running-balance register shipped,
+                         PR #976 (row 839). RECLASSIFY CHAIN-02 to "wire params + VERIFY" not build; AF-3 =
+                         add CA-05/CA-06 only (rows 613/644 genuinely PENDING).
+
+KEEP — GENUINELY PENDING (tracker confirms NOT built):
+  • HOS-MAP (driver↔Samsara id) — NEW, the real unlock (row 890). Highest priority HOS.
+  • CHAIN-01/03/04/05/06/07/08 — the transaction-chain integrity proofs (no bill ever posted; live-traced).
+  • AF-0/1/2/4/5/6/7/8 — structural program (entity-COA rows 880–885, drift, A/P migration #1177 row 1048).
+  • CONN-1 Plaid reconcile-commit (D2 partial), CONN-3 Relay (#956 design-done row 819), CONN-4 EDI (P6-EDI row 195 PENDING).
+  • CONN-2 Factoring/Faro — VERIFY: factoring suite #904 + FACT-1..5 (rows 317–321) shipped; confirm only the Faro packet gap.
+  • FH-VERIFY — FH-1→8 built-gated/design-done (#1017/#1023/#1026/#1027 + specs #957–969). VERIFY+FLAG, don't rebuild.
+  • VOID-VERIFY — PR-1/PR-2 built-gated (#973/#977), PR-3/4 design (#978). VERIFY+FLAG.
+  • STMT-1 BS+CF (built #144/#145 → VERIFY), STMT-2 opening balances (Tier 1, owner-entered),
+    STMT-3 → 1099 (BLOCK-24 row 600 PENDING) + 425C (built #1018-era, VERIFY) + consolidation (BLOCK-25 row 601 PENDING).
+  • TBL-STANDARD + UX-B/C/D/E — live-traced UX gaps (alignment universal, dispatch/fleet location, cycle drawer).
+  • UX-A, HOS-VIEWER — DONE (already tagged).
+  • DISP-WIZARD (#1196 HELD, row 1067), DISP-WO (dead +Create WO button, live-traced).
+  • Q9-TZ (timezone lib), USMCA-LAUNCH (gated July 2026; depends on entity-COA + USMCA mapping row 881).
+  • BLOCK-10 driver inactivity (96h alert + 30-day DOT + vacation override) — step-2 gated on HOS-MAP.
+  • HOS-BUG-DRIVERASSIGN (invalid stat type), HOS-PRC-DATA, HOS-PRC2, HOS-FANOUT — all gated on HOS-MAP.
+  • ENT-AUDIT — VERIFY-STATE (hardening sweeps Wave 5 rows 681–692 mostly pending).
+
+NET: of the 60, ~8 reclassify to DONE/verify-only (CAP suite, Mexico, mechanic shop, insurance, dispatch
+kanban/overview), several to VERIFY+FLAG, and HOS-MAP is ADDED as the priority HOS unlock. The rest stand.
+The coder should update docs/blocks/ + the tracker rows 1109–1168 accordingly before building.
+═══════════════════════════════════════════════════════════════════════════════

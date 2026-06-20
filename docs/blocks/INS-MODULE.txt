@@ -2,7 +2,7 @@
 INS-MODULE — INSURANCE / TASK — Insurance module build-out
 PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
-STATUS: VERIFY-STATE / BUILD. Tier per scope (any GL posting = Tier 1, STOPS for Jorge).
+STATUS: ✅ DONE — verify only (insurance INS-01..07, #314–335, rows 242–248).
 
 NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. This is a TRACKING placeholder so
 the work is not forgotten. Before building: confirm CURRENT live state + the relevant docs/specs/ spec +

@@ -2,7 +2,7 @@
 CONN-2 — CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet
 PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
-STATUS: BUILD. Tier 2 (display/queue) → Tier 1 if it posts reserve/fee JEs. STOPS for Jorge on posts.
+STATUS: VERIFY — factoring #904 + FACT-1..5 shipped; confirm only the Faro packet gap.
 
 LOCKS: Factoring profile (C2 #904, tiered fee+reserve) is DONE — build ON it, don't rebuild. Per-entity;
 reuse parity components. RESPOND-BEFORE-CODE — read the factoring module + FactoringTab before touching.
