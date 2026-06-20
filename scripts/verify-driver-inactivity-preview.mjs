@@ -38,6 +38,11 @@ if (svc) {
   if (!/previewDriverInactivity/.test(svc)) failures.push(`${SVC}: must export previewDriverInactivity`);
   if (!/identity\.users/.test(svc) || !/last_login_at/.test(svc)) failures.push(`${SVC}: must read login from identity.users.last_login_at (joined via identity_user_id)`);
   if (!/OVER_21|NEVER_LOGGED_IN|NO_LOGIN_ACCOUNT/.test(svc)) failures.push(`${SVC}: must bucket OVER_21 / UNDER_21 / NEVER_LOGGED_IN / NO_LOGIN_ACCOUNT`);
+  // The DRIVING-based sweep (Jorge's real rule) must read vehicle_driver_assignments + bucket + carry a coverage guard.
+  if (!/previewDriverDrivingInactivity/.test(svc)) failures.push(`${SVC}: must export previewDriverDrivingInactivity (the driving-based sweep)`);
+  if (!/vehicle_driver_assignments/.test(svc)) failures.push(`${SVC}: driving sweep must read telematics.vehicle_driver_assignments (last_drove_at), not login`);
+  if (!/CURRENTLY_DRIVING|OVER_21_DAYS|NEVER_ON_RECORD/.test(svc)) failures.push(`${SVC}: must bucket CURRENTLY_DRIVING / DROVE_WITHIN_21 / OVER_21_DAYS / NEVER_ON_RECORD`);
+  if (!/coverage/.test(svc) || !/trustworthy/.test(svc)) failures.push(`${SVC}: driving sweep must carry a coverage guard (earliest history + trustworthy flag)`);
 }
 if (route) {
   if (!/\.get\(/.test(route) || /\.(post|put|patch|delete)\(/i.test(route)) {
