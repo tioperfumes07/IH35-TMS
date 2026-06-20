@@ -1,18 +1,22 @@
-# Driver App (PWA) — Help (stub)
+# Driver App (PWA)
 
-> **Content TBD — Jorge fills.** Structured placeholder so the Help center has an entry for the Driver App (PWA) module. Replace each section with real copy (and screenshots).
+The Driver App is the mobile, driver-facing side of the system — a separate installable web app (PWA) that drivers use in the cab to see their assignments, capture paperwork, and stay compliant on hours of service.
 
 ## Overview
-_Content TBD — what the Driver App (PWA) module is for and who uses it._
+The Driver App is built for the road: a focused, dark-themed app that runs on a phone and connects each driver to the loads and tasks meant for them. It is the counterpart to the office system — what dispatch does in the office shows up for the driver here.
 
 ## Key tasks
-_Content TBD — the common things you do here, step by step._
+- **See assigned loads** — drivers view the trips assigned to them, with stops and details.
+- **Capture documents** — drivers photograph and upload proof-of-delivery and other paperwork from the cab.
+- **Stay on top of hours** — drivers see their hours-of-service status so they can plan legal driving time.
+- **Sign in securely** — drivers authenticate to reach only their own data.
 
 ## Tips & gotchas
-_Content TBD — common mistakes, shortcuts, role gating._
+- Each driver sees only their own assignments and data — driver self-resolution uses a dedicated per-driver lookup, never a shared list.
+- The app is installable to the phone home screen (PWA) for quick access in the cab.
+- Documents captured by the driver flow into the office system's evidence storage, so POD and paperwork are available office-side.
 
 ## FAQ
-_Content TBD — frequent questions._
-
----
-_Module help stub (2026-06-14). Replace the TBD sections with real content._
+- **Is this the same as the office app?** No — it's a separate app tuned for drivers on their phones, connected to the same data.
+- **What does a driver do here?** View their loads, upload paperwork like POD, and check their hours of service.
+- **Why can a driver only see their own loads?** The app resolves each driver to their own record so they only ever see data meant for them.

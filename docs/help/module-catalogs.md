@@ -1,18 +1,20 @@
-# Catalogs & Lists — Help (stub)
+# Catalogs & Lists
 
-> **Content TBD — Jorge fills.** Structured placeholder so the Help center has an entry for the Catalogs & Lists module. Replace each section with real copy (and screenshots).
+The Catalogs & Lists module (LISTS) holds the shared reference data that the rest of the system draws on — the dropdown values, categories, and lookup lists that keep data entry consistent everywhere.
 
 ## Overview
-_Content TBD — what the Catalogs & Lists module is for and who uses it._
+Catalogs are the single source of truth for the reusable values used across loads, accounting, maintenance, and more. Maintaining them in one place means every form across the app offers the same, correct choices.
 
 ## Key tasks
-_Content TBD — the common things you do here, step by step._
+- **Maintain reference lists** — keep the lookup values that populate dropdowns throughout the app current and de-duplicated.
+- **Add a value inline** — most reference dropdowns end with an **+ Add new …** option that opens a small create form without closing the panel you're working in, so you can add a missing value mid-task.
+- **Review the chart of accounts** — the accounts catalog underpins accounting; treat it as financial reference data.
 
 ## Tips & gotchas
-_Content TBD — common mistakes, shortcuts, role gating._
+- Prefer the inline **+ Add new …** at the bottom of a dropdown when a value is missing — it adds the value and keeps your place in the parent form.
+- Keep lists clean: duplicate or near-duplicate entries spread inconsistency into every form that uses them.
+- The accounts catalog is financial reference data — changes there affect accounting, so treat it with care.
 
 ## FAQ
-_Content TBD — frequent questions._
-
----
-_Module help stub (2026-06-14). Replace the TBD sections with real content._
+- **A value I need isn't in the dropdown — what do I do?** Use the **+ Add new …** option at the end of the dropdown to create it without leaving the form.
+- **Why standardize lists at all?** Shared lists keep reporting and reconciliation accurate because everyone picks from the same values.
