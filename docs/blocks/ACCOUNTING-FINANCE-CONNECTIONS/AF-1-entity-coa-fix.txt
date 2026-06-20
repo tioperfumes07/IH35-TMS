@@ -1,0 +1,27 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-1 — STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: Tier 1 if it touches COA scope (+ MIGRATE if partition changes). STOPS for Jorge.
+
+LOCKS: Entity independence is a HARD LAW — TRK/TRANSP/USMCA share NOTHING; every entity-scoped row
+(COA, vendors, customers, journals, settlements) is PER-ENTITY. Additive-only. RESPOND-BEFORE-CODE.
+
+WHY FIRST (after AF-0): catalogs.accounts being global-scope is a red flag against entity independence.
+Everything downstream (registers, drift sync, journals, statements) sits on the COA, so this is foundational.
+
+DO:
+1. Audit: is catalogs.accounts — and every entity-scoped catalog — truly partitioned by
+   operating_company_id? Prove per entity with a live query (an entity's COA never returns another's rows).
+2. If global/shared anywhere: design the per-entity partition. Migration STOPS for Jorge; show the
+   corrective SQL preview first. TRK/TRANSP/USMCA each own their COA; no shared rows.
+3. Ship the CI guard for MULTI-ENTITY-SEPARATION (docs/specs/MULTI-ENTITY-SEPARATION.md): any future
+   entity-scoped constraint/index/resolver that isn't per-entity FAILS CI.
+
+ACCEPTANCE (GUARD live): per-entity isolation proven — COA/vendors/customers for one entity never return
+another's rows. CI guard active.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,19 @@
+═══════════════════════════════════════════════════════════════════════════════
+CAP-FUELFRAUD — SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: VERIFY-STATE / BUILD. Tier 2/3.
+
+NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. Confirm CURRENT live state + the
+CAP/Samsara spec + the exact GAP-5x/6x tracker ID before building (RESPOND-BEFORE-CODE). Do not invent
+scope beyond the spec.
+
+LOCK: Samsara = single source of truth for telematics; additive-only; per-entity; America/Chicago.
+
+DO: Detect fuel-card vs tank/telematics mismatches (fraud signal). Build to the spec; reuse Samsara cache + circuit-breaker patterns (already DONE) — do not
+add manual entry where Samsara is the source.
+
+ACCEPTANCE (GUARD live): feature works off real Samsara data per entity, to the spec.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

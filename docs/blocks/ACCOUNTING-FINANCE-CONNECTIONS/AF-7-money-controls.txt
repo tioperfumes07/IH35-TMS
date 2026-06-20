@@ -1,0 +1,24 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-7 — STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: Tier 1 — FULL CEREMONY on each. STOPS for Jorge. See VOID-VERIFY for the built-gated void PRs.
+
+LOCKS: VQ9 (period close LOCKS cash); reverse, never hard-delete; per-entity; North-Star. RESPOND-BEFORE-CODE.
+
+WHY: the high-integrity money flows. Some void code is BUILT-GATED (VOID-VERIFY) — verify+flag those;
+this block covers period-close + RLS + any remaining void surfaces (expenses/settlements PR-3/4 design-done).
+
+DO:
+1. Void / reversing-JE UX: correct GL effect, audit trail, no hard delete (reverse). Complete the
+   design-done expense/settlement void surfaces.
+2. Period-close UX: locks the period; cash-basis snapshot per VQ9; reopen controls.
+3. Financial RLS: role-based access to financial data, per entity.
+
+ACCEPTANCE (GUARD live, Jorge-gated): GL effects of a Jorge-approved test void are correct; close lock
+holds (can't post into a closed period); RLS isolates financial data per role + per entity.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

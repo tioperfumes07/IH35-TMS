@@ -1,0 +1,15 @@
+═══════════════════════════════════════════════════════════════════════════════
+UX-D — TABLE/UX / TASK D — HOS Tracker driver-row cycle drawer
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD. Tier 2.
+
+LOCK: headline cycle = Samsara verbatim (post HOS-PRC2); drawer not a sub-page (Q3=A). RESPOND-BEFORE-CODE.
+
+DO: clicking an HOS Tracker driver row opens a drawer (ParityDrawer) with the 7/8-day cycle breakdown.
+Headline cycle value verbatim from Samsara certified ELD.
+
+ACCEPTANCE (GUARD live): row click opens cycle drawer; headline cycle == Samsara certified value.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

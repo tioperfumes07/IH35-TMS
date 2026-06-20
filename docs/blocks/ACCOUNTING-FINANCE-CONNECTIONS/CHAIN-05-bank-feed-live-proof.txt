@@ -1,0 +1,43 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 05 of 08 — ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+
+TIER: 1 on the POSTING path (categorize → post-as-bill / match writes the GL). STOPS for Jorge before
+any live post. The READ/verify side (does the feed return data) is non-financial.
+
+LOCKS (embedded):
+- The bank feed IS BUILT (GUARD's earlier "missing" call probed the WRONG URLs — corrected). This is
+  VERIFY + prove-the-chain, NOT build-from-scratch.
+- Entity independence: bank transactions + matches scoped per operating_company_id.
+- RESPOND-BEFORE-CODE: read the banking routes + reconciliation services before touching.
+
+CONFIRMED BUILT SURFACE (coder code-trace):
+  GET  /api/v1/banking/transactions/uncategorized          ← the bank feed
+  POST /api/v1/banking/transactions/:id/categorize
+  POST /api/v1/banking/transactions/categorize-bulk
+  POST /api/v1/banking/transactions/bulk-post-as-bills      ← categorize → bill (Jorge's exact flow)
+  POST /api/v1/banking/plaid/items/:id/sync                 + Plaid sync cron + reconciliation routes + nightly auto-match cron
+  Tables: banking.bank_transactions (matched_bill_id + categorization cols), bank_accounts,
+          reconciliation_sessions, bank.reconciliation_matches.
+
+SCOPE (verify live, then prove the chain):
+1. Verify GET /banking/transactions/uncategorized returns real transactions (Plaid-synced) for TRANSP —
+   if empty, confirm Plaid item sync ran and report state.
+2. Categorize one transaction → confirm it persists (category + account).
+3. Match a transaction to the Block 03/04 test bill (matched_bill_id) → confirm the link + GL effect.
+4. bulk-post-as-bills on a sample → confirm it creates the bill(s) + posts to GL/register.
+5. Reconciliation: confirm a session can open, match, and the register/GL reflect it.
+6. Every posting step ties to GL + register, per entity, correct basis.
+
+ACCEPTANCE (GUARD live, Jorge-gated on posts):
+- Feed returns data; categorize persists; match-to-bill links + posts; bulk-post-as-bills creates +
+  registers; reconciliation ties out. The full "categorize in bank feed → match → post → register"
+  chain proven end-to-end on a Jorge-approved sample.
+
+PAUSE POINTS: STOP before any live categorize-and-post that writes the GL.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show
+diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

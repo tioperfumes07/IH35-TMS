@@ -1,0 +1,38 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 04 of 08 — ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+
+TIER: 1 — FULL CEREMONY. STOPS for Jorge. Moves money. No live payment without Jorge's explicit go.
+
+LOCKS (embedded):
+- North-Star: a payment that doesn't reduce A/P + post to cash + show in the register is not done.
+- Entity independence: payment posts under the bill's operating_company_id only.
+- RESPOND-BEFORE-CODE: trace the existing Bill Payment write + JE path before changing.
+
+PROBLEM:
+Bill Payment exists (GET /accounting/bill-payments → 200, 0 rows) but is UNPROVEN — no payment has ever
+posted because no bill has ever been created (chain blocked upstream). The pay path must demonstrably
+post Dr A/P / Cr cash, reduce AP-aging, and appear in both the bank/cash account register and the
+vendor register.
+
+SCOPE (draft/verify, STOP for live):
+1. Pay an open bill (the Block 03 test bill) → post balanced JE (Dr A/P, Cr cash/bank account).
+2. AP-aging drops by the paid amount; bill flips to paid/partially-paid correctly.
+3. Payment shows in the cash/bank account register AND the vendor account register.
+4. Partial payments + overpayment handling correct.
+5. Reversible via the void/reversing-JE path (not hard delete).
+
+SEQUENCING GATE: Block 03 (Create Bill → GL) MUST be proven first — need a real open bill to pay.
+
+ACCEPTANCE (GUARD live, Jorge-gated):
+- A Jorge-approved test payment against the test bill ties out: AP-aging reduction = payment amount,
+  JE balanced (Dr A/P / Cr cash), both registers reflect it, per entity, correct basis (VQ5: driver
+  settle = bank settle date; payments on bank settle date).
+
+PAUSE POINTS: STOP before posting any real payment.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show
+diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

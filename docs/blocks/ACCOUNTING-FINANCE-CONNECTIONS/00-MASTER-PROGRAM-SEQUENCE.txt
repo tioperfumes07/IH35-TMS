@@ -1,0 +1,75 @@
+═══════════════════════════════════════════════════════════════════════════════
+IH35-TMS — COMPLETE ACCOUNTING / FINANCE / CONNECTIONS PROGRAM — MASTER SEQUENCE
+Authored by GUARD · 2026-06-19 · Entity: IH 35 Transportation LLC (TRANSP) 91e0bf0a-133f-4ce8-a734-2586cfa66d96
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT THIS IS: the full accounting + finance + connections build, as individual blocks. It folds in
+(1) the transaction-chain integrity fixes I traced LIVE, (2) the AF-0→AF-8 structural program, and
+(3) the connections layer + Finance Hub / void / statements. Honest status tags below.
+
+STATUS TAGS (read these — they set how much work each block is):
+  • LIVE-TRACED   = GUARD verified the gap live; the block is exact. (chain blocks)
+  • BUILD         = genuinely not built; construction block.
+  • MIGRATE       = data migration; STOPS for Jorge; CI is the fresh-DB gate.
+  • VERIFY+FLAG   = code is BUILT but behind a default-OFF flag (returns 404 'feature_disabled' live BY
+                    DESIGN, not broken). Work = GUARD live-verify the chain, then Jorge flips the flag.
+                    Do NOT rebuild these.
+  • VERIFY-STATE  = inventory says built/design-done; coder must confirm CURRENT live state first
+                    (RESPOND-BEFORE-CODE) — numbers/claims are stale until re-measured.
+
+EVERY block carries: locks embedded, RESPOND-BEFORE-CODE, additive-only, per-entity, reuse QBO-parity
+components, North-Star (reach/surpass QuickBooks/NetSuite/McLeod/Alvys), CI guard on every fix.
+Tier 1 (money/migration/flag-ON) STOPS for Jorge. Nothing posts live without his explicit go.
+
+───────────────────────────────────────────────────────────────────────────────
+PART A — TRANSACTION-CHAIN INTEGRITY (LIVE-TRACED) — pre-go-live, fix what's half-built
+───────────────────────────────────────────────────────────────────────────────
+  CHAIN-01  Vendor picker fix (Tier 2) ............ unblocks bill creation. FIRST.
+  CHAIN-02  Account register params (Tier 2) ...... register 400 → 200; running balance.
+  CHAIN-03  Create Bill → GL auto-post (Tier 1) ... the core "does it really post" link.
+  CHAIN-04  Bill Payment tie-out (Tier 1) ......... pay reduces A/P, hits register.
+  CHAIN-05  Bank feed live proof (Tier 1 post) .... feed is BUILT; verify categorize→match→post.
+  CHAIN-06  Invoice → A/R → Receive Payment (T1) .. fix 0-line invoice JE; prove AR tie-out.
+  CHAIN-07  Settlements 500 fix (Tier 2) .......... /accounting/settlements 500 → fix/redirect.
+  CHAIN-08  TRANSP demo/seed purge (Tier 1) ....... LAST; kill test data before go-live.
+
+───────────────────────────────────────────────────────────────────────────────
+PART B — STRUCTURAL BUILD (AF-0 → AF-8) — held behind START GATE (after Samsara/Safety/Dispatch/Maint)
+───────────────────────────────────────────────────────────────────────────────
+  AF-0  Re-baseline (VERIFY-STATE) ............... re-measure drift/catalogs live before building.
+  AF-1  Entity-independence COA fix (Tier 1) ..... global-COA red flag → per-entity TRK/TRANSP/USMCA.
+  AF-2  QBO drift resolution (Tier 1/MIGRATE) .... reconcile customers/vendors/COA per entity.
+  AF-3  Account registers (QBO-parity) ........... = CHAIN-02 + CA-05/06 running-balance register.
+  AF-4  A/P bills migration ~$1.18M (MIGRATE) .... QBO open bills → TMS A/P.
+  AF-5  34 STUB catalogs (BUILD, additive) ....... each named catalog → working + parity.
+  AF-6  Finance Hub (BUILD/VERIFY) .............. stub → real dashboard (see Part D).
+  AF-7  Money controls (Tier 1) ................. void/reversal + period-close + financial RLS.
+  AF-8  QBO Payroll bridge (Tier 1, Cycle 5) .... TMS→QBO Payroll page; LAST.
+
+───────────────────────────────────────────────────────────────────────────────
+PART C — CONNECTIONS LAYER (not covered by AF)
+───────────────────────────────────────────────────────────────────────────────
+  CONN-1  Plaid bank reconcile-commit (VERIFY+FLAG/BUILD) . read+scoring exist; enable commit.
+  CONN-2  Factoring / Faro reserve packet (BUILD) ......... reserve tracker + FactoringTab drawer.
+  CONN-3  Relay internal-bank + diesel codes (VERIFY-STATE) design-done; verify + build.
+  CONN-4  EDI foundation (BUILD) ......................... broker 204/214/210/990.
+
+───────────────────────────────────────────────────────────────────────────────
+PART D — FINANCE HUB / VOID / STATEMENTS (mostly VERIFY+FLAG or design-done)
+───────────────────────────────────────────────────────────────────────────────
+  FH-VERIFY    Finance Hub FH-1→8 (VERIFY+FLAG) ... assets/depr, loan wizard, amort, calculator (built-
+               gated); bankruptcy, tax mgr, unit alloc, lease (design-done). Verify + flag-plan, don't rebuild.
+  VOID-VERIFY  Void-everywhere (VERIFY+FLAG) ...... PR-1/2 built-gated (invoices/JE, bills); PR-3/4
+               design-done (expenses/settlements). Verify + flag-plan.
+  STMT-1       Balance Sheet + Cash Flow (BUILD) .. statements on account-balances fn (cash|accrual).
+  STMT-2       Opening balances (Tier 1) ......... owner-entered; gates real statements.
+  STMT-3       1099 + 425C DIP + consolidation .... annual 1099s, Form 425C Ch.11, multi-entity consol.
+
+───────────────────────────────────────────────────────────────────────────────
+OVERALL ORDER:
+  Pre-go-live NOW: PART A (chain 01→08, 08 last).
+  After START GATE: AF-0 → AF-1 → AF-2 → AF-3 → AF-4 → AF-5 → AF-6/FH-VERIFY → AF-7/VOID-VERIFY → AF-8.
+  Connections (PART C) slot after AF-2 (drift) since they post to the reconciled books.
+  Statements (STMT-1/2/3) after AF-3 registers + AF-4 migration give them real data.
+GUARD live-verifies every link before any "DONE". Tier 1 STOPS for Jorge. No live money without his go.
+═══════════════════════════════════════════════════════════════════════════════

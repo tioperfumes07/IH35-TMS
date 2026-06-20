@@ -1,0 +1,17 @@
+═══════════════════════════════════════════════════════════════════════════════
+DISP-OVERVIEW — DISPATCH / TASK Dispatch Overview — Dispatch Overview
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: VERIFY-STATE / BUILD. Tier 2 (display) → Tier 1 if profitability posts/derives from money flows.
+
+NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. Confirm CURRENT live state +
+the DISPATCH-MODULE-SPEC.md / approved-screen PNG before building (RESPOND-BEFORE-CODE).
+
+LOCK: additive-only; per-entity; reuse shared table + parity components; America/Chicago.
+
+DO: Dispatch overview dashboard (KPIs, open loads, exceptions). Build to the spec/approved screen; reuse locked components.
+
+ACCEPTANCE (GUARD live): surface renders real data per entity to the spec; no bespoke table (use shared).
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

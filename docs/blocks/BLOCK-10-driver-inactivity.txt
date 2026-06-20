@@ -1,0 +1,26 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK-10 — DRIVER LIFECYCLE / TASK 10 — Driver inactivity: 96h alert + 30-day DOT + vacation override
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD (ingest+display) / GATED (mass-flip). Tier 1 on the mass status flip — STOPS for Jorge.
+
+LOCK (Jorge's corrected rule, exact): continuous driver tracking AT ALL TIMES. Two thresholds + override:
+  • 96 HOURS after last login with no login/no-show → ALERT + status change. SUPPRESSED when the planner/
+    driver-scheduler has a vacation/leave on record (coordinate with the scheduler — known absences do NOT
+    fire). On quit, update INSTANTLY (don't wait for 96h).
+  • 30 DAYS = DOT new-hire boundary: a driver returning after 30 days is a NEW HIRE (re-onboard: app, MVR,
+    drug test), not a reactivation.
+America/Chicago home-terminal days (DST-aware). RESPOND-BEFORE-CODE.
+
+DO:
+1. Ingest + display "Last login" per driver (build now).
+2. 96h evaluator: alert + status-change candidate when no login ≥96h AND no scheduled leave on record.
+3. 30-day classifier: mark returns >30d as new-hire (re-onboarding required).
+4. Mass status flip = PREVIEW-GATED, STOPS for Jorge (same safety pattern as other mass operations).
+   Instant flip on a recorded quit.
+
+ACCEPTANCE (GUARD live): Last-login displays; 96h alert fires only when no leave on record; 30-day
+returns classified new-hire; any mass flip previews + STOPS for Jorge; quit flips instantly.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

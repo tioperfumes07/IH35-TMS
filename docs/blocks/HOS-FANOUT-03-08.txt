@@ -1,0 +1,24 @@
+═══════════════════════════════════════════════════════════════════════════════
+HOS-FANOUT — HOS / TASK Blocks 03–08 — HOS Tracker fan-out (per-driver-state matrix)
+PR URL: <one per block; use tracker phase/task IDs>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: GATED / VERIFY-STATE. Tier 2.
+
+LOCK: verbatim clocks (post HOS-PRC2); America/Chicago home-terminal day boundaries (DST-aware, Luxon);
+RESPOND-BEFORE-CODE per block; exact per-block scope from the tracker phase/task IDs (do not invent).
+
+WHY HELD: fan-out depends on HOS-PRC2 live + GUARD verification distinguishing real 34-hour restarts from
+defaulted full-clock readings Samsara returns for off-duty drivers.
+
+KNOWN: Block 05 = segment columns + totals from recompute, PLUS 4 remaining-clocks + violation from
+Samsara verbatim. Blocks 03/04/06/07/08 = remaining HOS Tracker surfaces — confirm each block's exact
+scope from the tracker before building (coder lists the 6 phase/task rows first).
+
+DO (per block 03→08): RESPOND-BEFORE-CODE (open live + read spec), build the block's surface on verbatim
+clocks, GUARD-verify live before the next.
+
+ACCEPTANCE (GUARD live, per block): surface matches Samsara certified ELD; home-terminal day correct;
+real restart vs default handled.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

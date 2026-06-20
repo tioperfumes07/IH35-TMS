@@ -1,0 +1,23 @@
+═══════════════════════════════════════════════════════════════════════════════
+TBL-STANDARD — TABLE/UX / TASK Standard — Universal table sweep (bespoke → shared DataTable)
+PR URL: <inventory PR first, then per-surface PRs>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: LIVE-TRACED / BUILD. Tier 2/3 per surface.
+
+GUARD FOUND (live): the global alignment fix (#1235) + rows-per-page (#1227) landed correctly on the
+shared DataTable (Drivers list), but Dispatch list, Fleet, Insurance are BESPOKE tables (still
+textAlign:left, no universal page-size) — so "universal" only half-landed. Same root cause both times.
+
+LOCK: additive-only; the shared DataTable is the single table standard. RESPOND-BEFORE-CODE.
+
+DO:
+1. Produce an INVENTORY of every list surface: bespoke-vs-shared DataTable.
+2. Migrate each bespoke list onto the shared DataTable so alignment (center text/title, right-align
+   numeric) + rows-per-page + sort/resize + QB-style calendar land UNIVERSALLY in one place.
+3. One surface per PR, GUARD-verify each live.
+
+ACCEPTANCE (GUARD live): Dispatch/Fleet/Insurance (and all bespoke lists) on the shared component;
+alignment + page-size + sort/resize consistent everywhere.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,16 @@
+═══════════════════════════════════════════════════════════════════════════════
+DISP-WIZARD — DISPATCH / TASK Edit-Load — Edit-Load PATCH wizard (#1196, HELD)
+PR URL: #1196 (HELD)
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD / GATED (HELD). Tier 2 (load edit) → Tier 1 if it touches billing/settlement.
+
+LOCK: additive-only; mirror the Book/Create Load wizard; per-entity. RESPOND-BEFORE-CODE (open the live
+load + the create wizard + DISPATCH-MODULE-SPEC.md).
+
+DO: Edit-Load wizard issuing PATCH to update an existing load (mirror the create wizard's steps/fields).
+Confirm what changes ripple to billing/settlement → those paths Tier 1, STOP for Jorge.
+
+ACCEPTANCE (GUARD live): editing a load via the wizard PATCHes correctly; rate/billing changes gated.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

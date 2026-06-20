@@ -1,0 +1,45 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 03 of 08 — ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+
+TIER: 1 — FULL CEREMONY. STOPS for Jorge. Posts money to the GL. Do NOT post any live bill without
+Jorge's explicit go. Design + draft-only verifiable path first.
+
+LOCKS (embedded):
+- North-Star: must reach/surpass QuickBooks. A bill that creates without its GL journal is not done.
+- INVQ9 locked: driver settlements = Bill + BillPayment (1099). Keep consistent.
+- Entity independence: bill + JE post under the bill's operating_company_id only.
+- RESPOND-BEFORE-CODE: trace the existing Create Bill write path + the JE posting call before changing.
+
+PROBLEM (GUARD + coder verified):
+Create Bill writes accounting.bills (unpaid) but does NOT auto-post the GL journal entry — posting is a
+separate manual call. Live proof of the gap: 0 bills exist, AP-aging = $0 in every bucket → no bill has
+EVER posted end-to-end (the empty vendor picker, Block 01, blocks creation upstream). So the chain
+bill → GL → AP-aging → register → payment is UNPROVEN.
+
+SCOPE (design, show, STOP — then build behind a draft/verify path):
+1. Design the Create Bill → GL auto-post: on bill create, post the balanced JE
+   (Dr expense/item account(s), Cr A/P account) atomically with the bill row, same operating_company_id.
+2. Provide a DRAFT-ONLY / dry-run path so GUARD can verify a (Jorge-approved) test bill:
+   - creates accounting.bills row,
+   - posts the paired GL JE,
+   - appears in Open Bills + AP-aging (accrual) + the vendor's account register,
+   WITHOUT a live-money commit. Show the exact POST endpoint + payload.
+3. Idempotent + reversible (a wrong post must be voidable via the reversing-JE path, not hard-deleted).
+4. Tie to basis: AP-aging always accrual (VQ4); cash-basis views suppress per the Block-20 engine.
+
+SEQUENCING GATE: Block 01 (vendor picker) MUST be fixed first, or no bill can be created to test this.
+
+ACCEPTANCE (GUARD live, Jorge-gated):
+- Design shown + approved by Jorge BEFORE any posting code runs.
+- A single Jorge-approved test bill posts and ties out: bill row + GL JE + AP-aging + vendor register all
+  agree, per entity, correct basis.
+- Reversal of that test bill cleanly unwinds the JE.
+
+PAUSE POINTS: STOP after design (before coding the post). STOP again before posting any real bill.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo) with real measured data. Confirm worktree pwd + git status +
+rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,27 @@
+═══════════════════════════════════════════════════════════════════════════════
+VOID-VERIFY — MONEY CONTROLS / TASK V — Verify Void-Everywhere PRs + flag-plan
+PR URL: <verify report, then flag PRs>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: VERIFY+FLAG. Do NOT rebuild built-gated. Flag-ON = Tier 1, STOPS for Jorge.
+
+LOCKS: reverse, never hard-delete; per-entity; audit trail. RESPOND-BEFORE-CODE — confirm current state.
+
+WHY: void capability is partly built behind OFF flags. Verify the chains, then flag on — don't rebuild.
+
+MODULES:
+  PR-1 (#973) — BUILT-GATED: void Invoices + Journal Entries (flag OFF).
+  PR-2 (#977) — BUILT-GATED: void Bills (AP mirror) (flag OFF).
+  PR-3 / PR-4 (#978) — DESIGN-DONE: void Expenses / Settlements.
+
+DO:
+1. FH-style: GUARD live-verify PR-1/PR-2 void chains behind the flag (reversing JE correct, audit trail,
+   no hard delete), then propose flag-ON (Tier 1, STOPS for Jorge).
+2. PR-3/PR-4: confirm design vs partial build; queue the missing void surfaces (folds into AF-7).
+3. Report state table + flag-on order.
+
+ACCEPTANCE (GUARD live): each void chain verified (a Jorge-approved test void posts a correct reversing JE,
+nothing hard-deleted); flag-on order proposed.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

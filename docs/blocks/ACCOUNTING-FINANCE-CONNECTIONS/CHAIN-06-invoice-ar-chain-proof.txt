@@ -1,0 +1,39 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 06 of 08 — ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+
+TIER: 1 on posting (invoice + receive-payment write the GL). STOPS for Jorge before any live post.
+
+LOCKS (embedded):
+- Mirror of the A/P chain on the A/R side — same proof standard.
+- Entity independence: invoice + payment + JE scoped per operating_company_id.
+- RESPOND-BEFORE-CODE: trace the invoice + receive-payment write/JE paths first.
+
+PROBLEM (GUARD live-verified):
+- GET /accounting/invoices → 200, 0 rows.  GET /accounting/payments → 200, 0 rows.
+- journal-entries has 2 entries BOTH with 0 lines ("Reversal…", "Invoice INV-2026-00001 posting") —
+  i.e. an invoice "posting" JE exists with NO lines. So invoice posting is suspect: a posting entry with
+  zero lines posts nothing to the ledger. Must be traced + fixed.
+- AR-aging → 200 (customers/totals/basis), $0.
+
+SCOPE (draft/verify, STOP for live):
+1. Investigate the 0-line "Invoice INV-2026-00001 posting" JE — why does an invoice posting have no
+   lines? Fix so an invoice posts a balanced JE (Dr A/R, Cr revenue) with real lines.
+2. Receive Payment against an open invoice → post Dr cash / Cr A/R; AR-aging drops; both registers
+   reflect it.
+3. Tie to basis (AR/AP aging always accrual, VQ4); refunds = separate expense line, not negative
+   revenue (VQ6).
+4. Reversible via void/reversing-JE path.
+
+ACCEPTANCE (GUARD live, Jorge-gated):
+- A Jorge-approved test invoice posts a balanced JE WITH lines → AR-aging + customer register reflect it.
+- A test receive-payment ties out (cash up, A/R down), both registers correct, per entity, correct basis.
+- The 0-line posting bug is root-caused and gone (CI guard so a 0-line "posting" JE can't recur).
+
+PAUSE POINTS: STOP before posting any real invoice or payment.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show
+diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

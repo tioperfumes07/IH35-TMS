@@ -1,0 +1,62 @@
+═══════════════════════════════════════════════════════════════════════════════
+IH35-TMS — MASTER INDEX OF ALL PENDING BLOCKS
+═══════════════════════════════════════════════════════════════════════════════
+
+LANE 1 — HOS / TELEMATICS / COMPLIANCE
+  HOS-PRC-DATA   PR C verbatim clocks data side (waiting on deploy+cron)         LIVE-TRACED/GATED
+  HOS-PRC2       Reader swap: board/roster read Samsara certified ELD            GATED (GUARD verify)
+  HOS-FANOUT     HOS Tracker Blocks 03–08 fan-out (per-driver-state matrix)      GATED/VERIFY-STATE
+  HOS-VIEWER     Driver picker + ELD log                                         DONE (verified live)
+  HOS-BUG-ASSIGN deployed_with_driver 400 invalid stat-type fix                  LIVE-TRACED/BUILD
+  BLOCK-10       Driver inactivity: 96h alert + 30-day DOT + vacation override   BUILD/GATED
+
+LANE 2 — TABLE / UX
+  TBL-STANDARD   Universal table sweep (bespoke → shared DataTable)              LIVE-TRACED/BUILD
+  UX-A           Global table alignment                                         DONE (partial→needs TBL-STANDARD)
+  UX-B           Dispatch Location column                                        BUILD
+  UX-C           Fleet Location (trucks telematics / trailers derived)           BUILD
+  UX-D           HOS Tracker cycle drawer                                         BUILD
+  UX-E           Clickable sweep + Compliance HOS Location column                 BUILD
+
+LANE 3 — DISPATCH
+  DISP-WIZARD    Edit-Load PATCH wizard (#1196, HELD)                            BUILD/GATED
+  DISP-WO        Work Order modal (dead +Create Work Order button)              LIVE-TRACED/BUILD
+  DISP-KANBAN    Dispatch Kanban board                                           VERIFY-STATE/BUILD
+  DISP-OVERVIEW  Dispatch Overview                                               VERIFY-STATE/BUILD
+  DISP-PROFIT    Load Profitability                                              VERIFY-STATE/BUILD
+
+LANE 4 — SAMSARA CAP GAPS (GAP-55..64)
+  CAP-GPS        GPS-per-load tracking                                           VERIFY-STATE/BUILD
+  CAP-AUTOSTATUS Auto load-status switch from telematics                         VERIFY-STATE/BUILD
+  CAP-ENGINEWO   Engine-fault → auto Work Order                                  VERIFY-STATE/BUILD
+  CAP-SCORING    Driver scoring                                                  VERIFY-STATE/BUILD
+  CAP-FUELFRAUD  Fuel-fraud detection                                            VERIFY-STATE/BUILD
+  CAP-PREDICTIVE Tire/brake predictive maintenance                               VERIFY-STATE/BUILD
+  CAP-CARGOTEMP  Cargo-temp monitoring                                           VERIFY-STATE/BUILD
+
+LANE 5 — MAINTENANCE / MECHANIC SHOP
+  MNT-SHOP       Mechanic-shop / work-order module                              VERIFY-STATE/BUILD
+
+LANE 6 — INSURANCE
+  INS-MODULE     Insurance module build-out                                      VERIFY-STATE/BUILD
+
+LANE 7 — MEXICO OPS
+  MX-OPS         Mexico cross-border operations                                  VERIFY-STATE/BUILD
+
+LANE 8 — SAFETY / PWA
+  SAFE-W3        Safety/PWA wave W3                                              VERIFY-STATE/BUILD
+  SAFE-W4        Safety/PWA wave W4                                              VERIFY-STATE/BUILD
+  SAFE-W5        Safety/PWA wave W5                                              VERIFY-STATE/BUILD
+
+LANE 9 — REPORTS
+  RPT-MODULE     Reports module build-out                                        VERIFY-STATE/BUILD
+
+LANE 10 — ENTERPRISE / SCALE
+  ENT-AUDIT      Enterprise/scale hardening audits                               VERIFY-STATE
+
+LANE 11 — DRIVER-LIFECYCLE / FOUNDATIONS
+  Q9-TZ          Timezone library (lat/lng→IANA primary + override)             BUILD
+  USMCA-LAUNCH   USMCA carrier launch (July 2026)                                GATED
+
+NOTE: accounting/finance/connections (27 blocks) are in the companion zip
+IH35-ACCOUNTING-FINANCE-CONNECTIONS-FULL.zip — not duplicated here.

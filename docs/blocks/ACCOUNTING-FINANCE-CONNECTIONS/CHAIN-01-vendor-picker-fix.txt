@@ -1,0 +1,44 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 01 of 08 — ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+
+TIER: 2 (non-financial — reads/wiring only, posts nothing). Auto-merge on green CI; GUARD live-verifies.
+
+LOCKS (embedded):
+- Additive-only. Reuse the locked ReferenceSelect (#828) — do not build a new picker.
+- Entity independence: the fix must remain per-entity (operating_company_id), never cross-entity.
+- RESPOND-BEFORE-CODE: read the actual Create Bill form code + the vendor list client before editing.
+
+PROBLEM (GUARD live-verified):
+On /accounting/bills/vendor the Create Bill form's Vendor dropdown shows NO options, even though
+GET /api/v1/vendors?operating_company_id=91e0bf0a-133f-4ce8-a734-2586cfa66d96 returns 200 / 50 vendors.
+The form calls the right endpoint with the right shape ({vendors:[{id, vendor_name AS name}]}).
+Coder code-trace concluded the empty list is a DATA-SCOPING issue: the 50 vendors' operating_company_id
+≠ the form's company (or is NULL), so the exact-match filter returns 0 — NOT a shape bug.
+
+STEP 1 — DISAMBIGUATE (decides the fix; do this first):
+Re-probe the form's actual endpoint for TRANSP:
+  GET /api/v1/mdata/vendors?operating_company_id=91e0bf0a-133f-4ce8-a734-2586cfa66d96
+  - Returns 0  → the 50 vendors live under a different company_id / NULL → DATA-SCOPE fix (Step 2A).
+  - Returns 50 → the form's operatingCompanyId is empty at render → FRONTEND fix (Step 2B).
+
+STEP 2A — DATA-SCOPE FIX (if probe returns 0):
+- Determine the correct operating_company_id the 50 vendors should carry for TRANSP.
+- If vendors are mis-scoped/NULL, this is a data correction — if it requires a migration or bulk write,
+  STOP for Jorge (migration = Tier 1). Show the exact rows + the corrective SQL preview first.
+- Do NOT silently rewrite vendor scoping. Preview → Jorge approves → apply.
+
+STEP 2B — FRONTEND FIX (if probe returns 50):
+- The form isn't passing operatingCompanyId at render. Wire the company context into the vendor query
+  so the picker requests the right company. Confirm the ReferenceSelect receives + renders the 50.
+
+ACCEPTANCE (GUARD live):
+- The disambiguation result is reported (0 vs 50) with the chosen path.
+- On /accounting/bills/vendor the Vendor picker shows all 50 vendors, searchable, selectable.
+- Per-entity preserved: switching company shows only that entity's vendors.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo) with real measured data. Confirm worktree pwd + git status + log
++ rev-parse before starting. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════
