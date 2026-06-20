@@ -1,0 +1,26 @@
+═══════════════════════════════════════════════════════════════════════════════
+STMT-2 — STATEMENTS / TASK 2 — Opening balances (owner-entered)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: Tier 1 (writes opening equity/balances to the GL). STOPS for Jorge. GATED on Jorge's figures.
+
+LOCKS: per-entity; reverse never delete; North-Star. RESPOND-BEFORE-CODE.
+
+WHY: real statements need opening balances. Owner-entered per entity (TRK/TRANSP/USMCA) — gates accurate
+Balance Sheet + registers at go-live.
+
+DO:
+1. Opening-balance entry UI per entity: per-account opening figures → balanced opening JE (Cr/Dr to
+   Opening Balance Equity).
+2. Jorge enters the figures; system posts the opening JE (Tier 1, STOPS for Jorge).
+3. Verify TB/BS reflect openings; per entity; reversible.
+
+SEQUENCING GATE: AF-1 (entity COA) + AF-2 (drift) done — accounts must exist + be reconciled per entity first.
+
+ACCEPTANCE (GUARD live, Jorge-gated): Jorge-entered openings post a balanced JE; BS/TB reflect them per
+entity; reversible.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

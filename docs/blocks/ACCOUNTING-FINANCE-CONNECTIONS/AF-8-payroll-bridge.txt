@@ -1,0 +1,23 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-8 — STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: Tier 1. Cycle 5 / post-MVP. Sequenced LAST.
+
+LOCKS: driver settlements stay in TMS (migration 0138 + Driver Settlement PDF); W-2 office-staff payroll
+stays in QBO Payroll. Per-entity. RESPOND-BEFORE-CODE.
+
+WHY: the integration page connecting TMS to QBO Payroll for office-staff W-2. Driver pay is NOT in scope
+(stays in TMS). Deferred to Cycle 5 — listed for completeness.
+
+DO:
+1. Build the TMS→QBO Payroll bridge page (office W-2 staff).
+2. Confirm no commingling with TMS driver settlements.
+
+ACCEPTANCE (GUARD live, Jorge-gated): bridge maps office payroll to QBO Payroll correctly; driver pay
+untouched; per entity.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

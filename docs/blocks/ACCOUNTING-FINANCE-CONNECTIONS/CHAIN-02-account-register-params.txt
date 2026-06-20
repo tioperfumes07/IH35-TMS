@@ -1,0 +1,41 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 02 of 08 — ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+
+TIER: 2 (frontend wiring — read-only register, posts nothing). Auto-merge on green CI; GUARD verifies.
+
+LOCKS (embedded):
+- Additive-only. Reuse the QBO-parity components (ParityTable #824, ParityDrawer #825).
+- Honor the locked Block-20 basis engine: register must accept ?basis=cash|accrual.
+- RESPOND-BEFORE-CODE: read the register endpoint contract + the COA-REGISTER-QBO-PARITY-2026-06-07.md
+  spec before wiring.
+
+PROBLEM (GUARD live-verified):
+GET /api/v1/accounting/account-register returns 400 with fieldErrors:
+  account_id: "expected string, received undefined"
+  from_date:  "expected string, received undefined"
+  to_date:    "expected string, received undefined"
+The endpoint works — the UI simply isn't passing account_id / from_date / to_date.
+(Also: GET /api/v1/accounting/general-ledger → 404; confirm whether GL is a separate endpoint to build or
+the register IS the per-account ledger. Report which.)
+
+SCOPE:
+1. Wire the account register UI to pass account_id (selected account), from_date, to_date (date range,
+   QB-style calendar) on every request. Default range = current period; default account = first/selected.
+2. Render the per-account running-balance register (date, ref/type, name, memo, increase/decrease,
+   running balance) to the QBO-parity spec, on the shared table component (alignment + page-size +
+   sort/resize land universally).
+3. Honor ?basis=cash|accrual; closed periods read the snapshot.
+4. ParityDrawer drill-in to the underlying transaction.
+5. Per entity — register only ever shows the selected entity's account.
+
+ACCEPTANCE (GUARD live):
+- account-register returns 200 with account_id + from_date + to_date passed; no 400.
+- Running balances render and tie to the ledger; basis switch (cash/accrual) changes the view correctly.
+- general-ledger question answered (build vs already-covered-by-register).
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show
+diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

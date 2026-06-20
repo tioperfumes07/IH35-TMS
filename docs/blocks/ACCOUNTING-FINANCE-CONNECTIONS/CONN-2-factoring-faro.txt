@@ -1,0 +1,25 @@
+═══════════════════════════════════════════════════════════════════════════════
+CONN-2 — CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD. Tier 2 (display/queue) → Tier 1 if it posts reserve/fee JEs. STOPS for Jorge on posts.
+
+LOCKS: Factoring profile (C2 #904, tiered fee+reserve) is DONE — build ON it, don't rebuild. Per-entity;
+reuse parity components. RESPOND-BEFORE-CODE — read the factoring module + FactoringTab before touching.
+
+WHY: Factoring profile exists; the Faro Reserve Tracker (reserve schedule, factoring queue, FactoringTab
+drawer + packet) is the missing piece.
+
+DO:
+1. Reserve tracker: per-invoice reserve schedule, release clock, balances — on the existing factoring profile.
+2. Factoring queue + FactoringTab drawer (parity drawer).
+3. Faro packet generation.
+4. If reserve/fee postings hit the GL → Tier 1, STOPS for Jorge; tie to register.
+
+ACCEPTANCE (GUARD live): reserve tracker shows correct reserve/release per invoice; queue + drawer work;
+packet generates; any GL posting ties out (Jorge-gated).
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

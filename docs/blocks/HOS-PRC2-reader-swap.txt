@@ -1,0 +1,23 @@
+═══════════════════════════════════════════════════════════════════════════════
+HOS-PRC2 — HOS / TASK PR-C2 — Reader swap: board/roster read Samsara certified ELD
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: GATED on GUARD per-driver verify (board == roster == Samsara certified ELD). Tier 2.
+
+LOCK: verbatim only — board/roster headline clocks (cycle/drive/shift/break + violation) come from
+Samsara certified ELD, NOT recompute. Recompute may remain only for the segment/timeline columns.
+RESPOND-BEFORE-CODE.
+
+WHY HELD: must not swap the reader until GUARD confirms per driver that the verbatim values match and
+real 34h restarts are distinguished from Samsara's defaulted full clocks for off-duty drivers.
+
+DO: swap board + roster readers to read latest_hos_clocks (from HOS-PRC-DATA snapshots) for the headline
+clocks + violation; keep recompute for segment columns only.
+
+SEQUENCING GATE: HOS-PRC-DATA live + GUARD comparison passed FIRST.
+
+ACCEPTANCE (GUARD live, per driver): board == roster == Samsara certified ELD; off-duty defaults labeled
+honestly; zero false violations.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

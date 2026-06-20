@@ -1,0 +1,25 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-6 — STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: Tier 2 display → Tier 1 for any money action. See FH-VERIFY for the FH-1→8 sub-modules.
+
+LOCKS: locked design tokens + parity components; per-entity; additive-only. RESPOND-BEFORE-CODE (open the
+live Finance Hub — note: GET /api/v1/finance/hub returns 404 live = flag OFF by design, confirm at AF-0).
+
+WHY: the Finance Hub landing is a stub. Build the real hub: KPIs, open items, drill-ins to registers /
+AR / AP / cash flow. The FH-1→8 sub-modules (assets, loan wizard, amort, calculator, bankruptcy, tax,
+unit alloc, lease) are handled in FH-VERIFY — most are built-gated, verify+flag, do not rebuild.
+
+DO:
+1. Hub dashboard: KPIs + open items + drill-ins to the real register/AR/AP/cash-flow surfaces.
+2. Per entity. Any actionable money control surfaced here = Tier 1, STOPS for Jorge.
+3. Wire to the FH-1→8 modules as they're verified/flagged on (FH-VERIFY).
+
+ACCEPTANCE (GUARD live): hub renders real KPIs/open-items per entity; drill-ins reach real data; no money
+action posts without Jorge's go.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

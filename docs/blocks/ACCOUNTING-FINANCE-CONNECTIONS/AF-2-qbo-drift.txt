@@ -1,0 +1,28 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-2 — STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: Tier 1 (writes to financial master data) + MIGRATE on bulk writes. STOPS for Jorge per batch.
+
+LOCKS: per-entity; additive-only; reuse ParityTable (#824). RESPOND-BEFORE-CODE. Sync direction +
+conflict rule decided WITH Jorge before any write.
+
+WHY: customers, vendors, COA are local-only / drifted from QBO (re-measure exact counts at AF-0; last
+audit ≈2,655 / ≈2,744 / ≈1,282 local-only). This is the data foundation for registers, statements, and
+the connections that post to the books.
+
+DO:
+1. Build a per-entity reconciliation view: local vs QBO with buckets match / local-only / QBO-only /
+   conflicting (ParityTable).
+2. Define the sync direction + conflict rule (which side wins, dup merge, QBO-ID mapping). Present. STOP.
+3. Execute sync in controlled PREVIEWED batches — each batch shows a preview list and STOPS for Jorge
+   (same safety pattern as the Block 10 mass-flip). No silent bulk writes.
+4. Correct header counts to reconciled truth.
+
+ACCEPTANCE (GUARD live): post-sync counts match QBO per entity; zero cross-entity bleed; previews shown
++ approved before each write batch.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,34 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 07 of 08 — ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+
+TIER: 2 to fix the 500 (routing/error). Tier 1 if it touches settlement posting. STOP for Jorge on posts.
+
+LOCKS (embedded):
+- INVQ9 locked: driver settlements = Bill + BillPayment (1099). Keep consistent.
+- Driver settlements stay in TMS (migration 0138 + Driver Settlement PDF); office W-2 payroll = QBO.
+- Entity independence: per operating_company_id.
+- RESPOND-BEFORE-CODE: trace both settlement routes before editing.
+
+PROBLEM (GUARD live-verified):
+- GET /api/v1/accounting/settlements → 500 (statusCode/code/error/message).
+- GET /api/v1/driver-finance/settlements → 200 (settlements + total_count) — the WORKING path.
+So there are two surfaces; the accounting-side one errors. Either fix it or formally retire it in favor of
+the driver-finance path (additive — don't remove a route Jorge relies on without his OK).
+
+SCOPE:
+1. Root-cause the /accounting/settlements 500 (don't mask it). Fix or document + redirect to the working
+   /driver-finance/settlements path.
+2. Confirm settlement posting ties to GL per INVQ9 (Bill + BillPayment, 1099) and shows in the register.
+3. CI guard so the 500 can't silently return.
+
+ACCEPTANCE (GUARD live):
+- No 500 on the settlements path; the working surface is the single source, or the accounting path is
+  fixed to 200 and consistent with driver-finance.
+- Settlement → GL tie-out confirmed (INVQ9), per entity.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show
+diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

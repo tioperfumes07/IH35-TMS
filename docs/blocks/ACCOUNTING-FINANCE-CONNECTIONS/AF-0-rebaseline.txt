@@ -1,0 +1,25 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-0 — STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)
+PR URL: <paste or N/A — produces a doc, not a PR>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: VERIFY-STATE. TIER 3 (read-only). No code.
+
+WHY: the drift/catalog numbers below are from the 2026-06-01 audit and WILL have moved. Re-measure
+live before building anything in Part B/C/D. Do not trust stale figures as fact.
+
+DO:
+1. Re-run the 65-catalog audit → current counts: work-with-data / work-empty / STUB (was 15 / 16 / 34).
+   List each STUB by name (feeds AF-5).
+2. Re-measure QBO drift PER ENTITY (TRANSP via connected QBO; TRK/USMCA as applicable): customers,
+   vendors, chart-of-accounts — local vs QBO vs reconciled. (Was ≈2,655 / ≈2,744 / ≈1,282 local-only.)
+3. Confirm header counts correct across modules (were wrong).
+4. Forensic 5-point on everything claimed DONE through Block-44 (merge on main, CI green, files exist,
+   deploy ok, endpoint responds).
+5. List every BUILT-GATED flag and its current live state (404 'feature_disabled' = OFF by design).
+
+DELIVER: a current Accounting inventory doc (per-entity drift table, catalog status, header-count status,
+flag table). This drives the REAL scope of AF-2 / AF-5 / FH-VERIFY / VOID-VERIFY.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse first. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

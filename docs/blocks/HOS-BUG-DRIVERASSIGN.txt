@@ -1,0 +1,17 @@
+═══════════════════════════════════════════════════════════════════════════════
+HOS-BUG-ASSIGN — HOS / TASK Bug — deployed_with_driver 400 (invalid stat type)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: LIVE-TRACED / BUILD. Tier 2.
+
+GUARD FOUND (live): the live positions/driver pull uses an invalid Samsara stat-type param —
+raw_call_status shows deployed_with_driver → 400 "Invalid stat type(s): driverAssignments". The correct
+call is driver_assignments (snake_case) → returns 200/50.
+
+DO: fix the stat-type param to driver_assignments; confirm the deployed_with_driver pull returns 200 +
+populates live driver positions. CI guard so the invalid stat type can't return.
+
+ACCEPTANCE (GUARD live): raw_call_status deployed_with_driver = 200; live positions populate.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

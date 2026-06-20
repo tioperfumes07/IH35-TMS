@@ -1,0 +1,17 @@
+═══════════════════════════════════════════════════════════════════════════════
+HOS-VIEWER — HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]
+PR URL: #1236 (index-Dv5UA4S7.js)
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: DONE — shipped + GUARD-verified live 2026-06-19. Tracked here so it is NOT re-opened.
+
+WHAT SHIPPED: real HosViewerSection replacing the dead-end empty-state — searchable driver picker
+(49 active), auto-selects first driver w/ HOS, date strip + control, loads per-driver 15-col ELD daily
+log (DRIVE/SHIFT/BREAK/CYCLE remaining + duty-status table), honest empty-state, CI guard
+verify-hos-viewer-picker.mjs.
+
+GUARD VERIFY (live, server bundle + hard reload): picker present ("Search a driver…"), DATE strip
+Jun 12–19, ELD log rendered (DRIVE 10:59 / SHIFT 7:36 / BREAK 7:59 / CYCLE 15:38 + duty table).
+Old dead-end string gone. CONFIRMED WORKING.
+
+NOTE: headline clocks flip to verbatim with HOS-PRC2. No further action — kept for the record.
+═══════════════════════════════════════════════════════════════════════════════

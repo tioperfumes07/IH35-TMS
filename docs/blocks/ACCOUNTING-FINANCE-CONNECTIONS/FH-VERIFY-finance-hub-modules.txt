@@ -1,0 +1,34 @@
+═══════════════════════════════════════════════════════════════════════════════
+FH-VERIFY — FINANCE HUB / TASK V — Verify FH-1→8 (built-gated/design-done) + flag-plan
+PR URL: <verify report, then per-module flag PRs>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: VERIFY+FLAG. Do NOT rebuild built-gated modules. Flag-ON = Tier 1, STOPS for Jorge.
+
+LOCKS: additive-only; per-entity; reuse existing code. RESPOND-BEFORE-CODE — confirm each module's CURRENT
+live state (built-gated returns 404 'feature_disabled' BY DESIGN, not broken).
+
+WHY: FH-1→8 are mostly already built behind OFF flags or design-done. Work = GUARD live-verify each chain,
+then Jorge flips the flag — NOT a rebuild. (Re-confirm exact state at AF-0.)
+
+MODULES (verify each, report state, propose flag-on order):
+  FH-1 Fixed Assets + Depreciation (#1017) — BUILT-GATED: asset register + schedule + gated post-cron.
+  FH-2 Loan Wizard (#1023) — BUILT-GATED: one form → loan+asset+amort+opening JE (preview).
+  FH-3 Amortization engine (#1026) — BUILT-GATED: create loans + store schedules.
+  FH-4 Finance Calculator (#1027) — BUILT-GATED: pure modeling + scenario compare.
+  FH-5 Bankruptcy Modeler (#963/#969) — DESIGN-DONE: Ch.11 reorg post-to-books + tracker.
+  FH-6 Tax Manager + rendition (#961/#968) — DESIGN-DONE: property/Franchise/IRP/IFTA register.
+  FH-7 Unit Allocation (#962) — DESIGN-DONE: split any expense across units.
+  FH-8 Lease Contract + Unit Picker (#965) — DESIGN-DONE: lease → recurring bill + per-unit alloc.
+
+DO:
+1. For each BUILT-GATED (FH-1→4): GUARD live-verify the full chain behind the flag (in a branch/preview),
+   confirm GL effects correct, then propose flag-ON (Tier 1, STOPS for Jorge).
+2. For each DESIGN-DONE (FH-5→8): confirm design vs any partial build; queue as BUILD if truly unbuilt.
+3. Report a single state table + recommended flag-on / build order.
+
+ACCEPTANCE (GUARD live): each FH module's true state confirmed; built-gated chains verified before any
+flag flip; nothing rebuilt that already exists.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,25 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-4 — STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: Tier 1 + MIGRATE. STOPS for Jorge. Previewed batches.
+
+LOCKS: per-entity; INVQ9 locked (driver settlements = Bill + BillPayment, 1099); additive-only.
+RESPOND-BEFORE-CODE. CI is the fresh-DB gate; migration self-contained + reversible.
+
+WHY: QBO open bills (~$1.18M — re-confirm at AF-0) are unmigrated to TMS A/P. Money + master data.
+
+DO:
+1. Reconcile QBO open bills vs TMS A/P per entity → to-migrate list with totals.
+2. Map vendor + account + class + due dates.
+3. Migrate in PREVIEWED batches; each STOPS for Jorge.
+4. GUARD verifies posted A/P total ties to QBO + AP-aging (accrual) correct on both bases.
+
+SEQUENCING GATE: AF-2 (drift) done first — vendors/accounts must be reconciled before bills migrate onto them.
+
+ACCEPTANCE (GUARD prod-verify): A/P total + AP-aging(accrual) tie to QBO per entity; previews approved.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

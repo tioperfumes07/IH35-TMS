@@ -1,0 +1,15 @@
+═══════════════════════════════════════════════════════════════════════════════
+UX-E — TABLE/UX / TASK E — Clickable sweep + Compliance HOS Location column
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD. Tier 2. Depends on #1233 reverse-geo.
+
+LOCK: additive-only; America/Chicago. RESPOND-BEFORE-CODE.
+
+DO: add an HOS Location column on the Compliance HOS surfaces (city/state via #1233) + make the relevant
+rows clickable (sweep) to open the driver's HOS detail.
+
+ACCEPTANCE (GUARD live): HOS Location column populated; rows clickable to HOS detail.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

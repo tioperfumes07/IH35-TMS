@@ -1,0 +1,17 @@
+═══════════════════════════════════════════════════════════════════════════════
+UX-C — TABLE/UX / TASK C — Fleet Location column
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD. Tier 2. Depends on #1233 reverse-geo.
+
+LOCK: Samsara = source of truth for telematics location; additive-only. RESPOND-BEFORE-CODE.
+
+DO: Fleet location by asset type — Trucks: telematics location (Samsara). Trailers: derive via the
+paired truck's location (unpaired = last-known, LABELED). Company Vehicles: their location. City/state
+via #1233. Honest empty when unknown.
+
+ACCEPTANCE (GUARD live): trucks show telematics location; trailers derive via paired truck (unpaired
+labeled last-known); company vehicles show location.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

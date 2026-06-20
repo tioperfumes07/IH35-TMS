@@ -1,0 +1,8 @@
+═══════════════════════════════════════════════════════════════════════════════
+UX-A — TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]
+PR URL: #1235
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: DONE (partial). Logic correct on the shared DataTable (Drivers list): text/title centered,
+numeric right-aligned, header==cell. UNTOUCHED on bespoke tables (Dispatch/Fleet/Insurance) — that is
+TBL-STANDARD's job. Tracked here so it's not re-opened; remaining universality = TBL-STANDARD.
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,19 @@
+═══════════════════════════════════════════════════════════════════════════════
+SAFE-W5 — SAFETY/PWA / TASK — Safety/PWA wave W5
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: VERIFY-STATE / BUILD. Tier per scope (any GL posting = Tier 1, STOPS for Jorge).
+
+NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. This is a TRACKING placeholder so
+the work is not forgotten. Before building: confirm CURRENT live state + the relevant docs/specs/ spec +
+approved-screen PNG + the exact tracker phase/task ID (RESPOND-BEFORE-CODE). Do not invent scope.
+
+LOCK: additive-only; per-entity (TRK/TRANSP/USMCA share nothing); reuse shared table + parity components;
+Samsara/Block-20/timezone laws as applicable; North-Star.
+
+DO: Safety + driver PWA wave W5 (scope per safety roadmap). Decompose into sub-blocks against the spec once current state is confirmed; one PR each.
+
+ACCEPTANCE (GUARD live): each sub-surface renders real data per entity to the spec; gated where it posts.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

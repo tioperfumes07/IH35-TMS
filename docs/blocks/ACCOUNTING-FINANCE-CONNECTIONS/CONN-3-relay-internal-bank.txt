@@ -1,0 +1,25 @@
+═══════════════════════════════════════════════════════════════════════════════
+CONN-3 — CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: VERIFY-STATE (design-done #956). Tier 1 on posting. STOPS for Jorge.
+
+LOCKS: per-entity; additive-only. RESPOND-BEFORE-CODE — read spec #956 + confirm current build state
+(live header shows "Relay: not configured" — confirm whether that's config or unbuilt).
+
+WHY: Relay internal-bank (pre-funded bank; withdrawals = same-day debit; diesel-code → approve → expense)
+is design-done per inventory. Verify current state, then build the remaining surface.
+
+DO:
+1. Verify what's built vs design-only (RESPOND-BEFORE-CODE).
+2. Pre-funded internal bank; withdrawals post same-day debit.
+3. Diesel-code flow: code → approve → post as expense (Tier 1, ties to GL/register).
+4. Per entity; reversible; CI guard.
+
+ACCEPTANCE (GUARD live, Jorge-gated): a Jorge-approved diesel-code approval posts an expense that ties to
+GL/register; withdrawal debits same-day; per entity.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

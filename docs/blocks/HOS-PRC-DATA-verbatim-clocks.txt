@@ -1,0 +1,27 @@
+═══════════════════════════════════════════════════════════════════════════════
+HOS-PRC-DATA — HOS / TASK PR-C — Verbatim Samsara clocks (DATA SIDE)
+PR URL: PR C / #1234 (facb41a) — data side
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: LIVE-TRACED / GATED. Tier 2 (telematics, no money).
+
+LOCK: Samsara = single source of truth for ELD/HOS. Display certified values VERBATIM
+(Blueprint §3.15.9.2) — NEVER recompute HOS clocks from raw duty events. RESPOND-BEFORE-CODE.
+
+STATE (GUARD live): code is on main; live build's stats-probe did NOT yet expose latest_hos_clocks /
+last_hos_clocks_pull (deploy restarted the */5 cron, pull hadn't run-and-written). Pull writes
+samsara.hos_snapshots; probe surfaces latest_hos_clocks + last_hos_clocks_pull.
+
+FIELD MAP (Samsara /fleet/hos/clocks, ms→min ÷60000, nested): cycle.cycleRemainingDurationMs,
+drive.driveRemainingDurationMs, shift.shiftRemainingDurationMs, break.timeUntilBreakDurationMs,
+cycle.cycleStartedAtTime, cycle.cycleTomorrowDurationMs. Samsara driver_id NUMERIC → map to our UUID.
+CAUTION: /fleet/hos/clocks returns DEFAULT full clocks (70h/11h/14h/8h, identical cycleStartedAtTime)
+for drivers NOT in an active duty cycle — must distinguish real 34h restart from default.
+
+DO: confirm the cron calls syncSamsaraHosClocks and writes snapshots; probe returns latest_hos_clocks +
+last_hos_clocks_pull. Report the SHA that carries it.
+
+ACCEPTANCE (GUARD live): after one */5 tick, last_hos_clocks_pull shows success + rows>0; latest_hos_clocks
+populates our drivers by name. Then GUARD runs the CAZARES verbatim-vs-recompute comparison → releases HOS-PRC2.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,24 @@
+═══════════════════════════════════════════════════════════════════════════════
+CONN-4 — CONNECTIONS / TASK 4 — EDI foundation (broker 204 / 214 / 210 / 990)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD (GAP-70). Tier 2 (data exchange) → Tier 1 if 210 posts invoices. STOPS for Jorge on posts.
+
+LOCKS: per-entity; additive-only. RESPOND-BEFORE-CODE — read GAP-70 spec + the dispatch/invoice surfaces
+EDI maps to (204→load, 214→status, 210→invoice, 990→tender response).
+
+WHY: EDI is the broker integration backbone — not built. Foundational for broker-connected loads/billing.
+
+DO:
+1. EDI foundation: parse/emit 204 (tender), 214 (status), 210 (invoice), 990 (tender response).
+2. Map 204 → load create; 214 → status updates; 990 → accept/decline; 210 → invoice (Tier 1 if it posts
+   to A/R — ties to the invoice chain CHAIN-06/AF).
+3. Per broker trading-partner config; per entity.
+
+ACCEPTANCE (GUARD live): 204 creates a load, 214 updates status, 990 responds, 210 maps to an invoice
+(Jorge-gated on any A/R post); per entity.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

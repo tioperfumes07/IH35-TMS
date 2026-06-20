@@ -1,0 +1,24 @@
+═══════════════════════════════════════════════════════════════════════════════
+STMT-1 — STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD (BLOCK-13/14). Tier 2 (display). Built on the account-balances fn (Block 10/44, DONE).
+
+LOCKS: honor Block-20 ?basis=cash|accrual; per-entity; reuse parity components. RESPOND-BEFORE-CODE.
+NOTE: balance-sheet endpoint already returns 200 balanced:true (assets $0 only because no real txns yet) —
+confirm what's built vs missing before building (VERIFY-STATE first).
+
+WHY: BS + Cash Flow statements on fn_account_balances_as_of (opening/activity/closing, cash|accrual).
+
+DO:
+1. Verify the existing balance-sheet/cash-flow endpoints + what UI exists; build the missing statement UI.
+2. Balance Sheet + Cash Flow to GAAP presentation, ?basis aware, closed periods from snapshot.
+3. Per entity; tie to the registers (AF-3) + reconciled data (AF-2) + migrated A/P (AF-4).
+
+ACCEPTANCE (GUARD live): BS balances; CF ties to cash movement; basis switch correct; per entity; numbers
+tie to TB/registers once real transactions exist.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

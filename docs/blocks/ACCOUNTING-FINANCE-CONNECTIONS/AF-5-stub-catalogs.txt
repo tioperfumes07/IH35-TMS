@@ -1,0 +1,23 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-5 — STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)
+PR URL: <one per catalog>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD. Tier 2/3 per catalog (Tier 1 if a catalog drives posting). One catalog = one PR.
+
+LOCKS: additive-only (never remove a catalog/column); reuse the shared table component + ParityTable/
+Drawer/ReferenceSelect; per-entity. RESPOND-BEFORE-CODE per catalog.
+
+WHY: the STUB catalogs (exact list from AF-0; last count 34) are empty shells. Turn each into a working,
+QBO-parity catalog with real data + correct header count.
+
+DO (per catalog, sequential):
+1. RESPOND-BEFORE-CODE: open the live stub + its spec/approved PNG; build on the real current layout.
+2. Wire to real data; QBO-parity table (alignment + page-size + sort/resize); correct header count.
+3. GUARD verifies each catalog works with real data live before the next.
+
+ACCEPTANCE (GUARD live, per catalog): catalog returns real rows, header count correct, parity table behavior.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

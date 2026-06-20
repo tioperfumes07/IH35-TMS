@@ -1,0 +1,21 @@
+═══════════════════════════════════════════════════════════════════════════════
+Q9-TZ — FOUNDATIONS / TASK Q9 — Timezone library (lat/lng→IANA primary + override)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD. Tier 2 (foundational). RESPOND-BEFORE-CODE the tz library choice (Jorge's Q9=A+B).
+
+LOCK (Jorge's TZ law): every wall-clock/day-boundary/projection/ETA/HOS-clock = UTC-stored + IANA-computed
++ DST-correct, NEVER a fixed offset. HOS anchored to HOME-TERMINAL America/Chicago regardless of truck
+location. Luxon already a dep (^3.5.0). See TIME-AND-TIMEZONE.md (#1232).
+
+DECISION (Q9): A primary (resolve lat/lng → IANA timezone) + B override field (manual tz when needed).
+NEVER C (no fixed offset). RESPOND-BEFORE-CODE: propose the lat/lng→tz library + fallback before coding.
+
+DO: a shared tz resolver: lat/lng → IANA tz (primary), with a manual override field (B). Used by ETAs
+(dest-local), detention (facility-local), IFTA, settlements, inactivity cutoffs (home-terminal days).
+
+ACCEPTANCE (GUARD): resolver returns correct IANA tz for sample lat/lngs incl. DST; override works;
+verify-timezone.mjs-style guard passes.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

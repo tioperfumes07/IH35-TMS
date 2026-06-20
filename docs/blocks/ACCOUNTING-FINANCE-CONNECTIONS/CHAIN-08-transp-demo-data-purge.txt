@@ -1,0 +1,41 @@
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 08 of 08 — ACCOUNTING-CHAIN / TASK 8 — TRANSP demo/seed data purge (PRE-GO-LIVE, LAST)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+
+TIER: 1 — FULL CEREMONY + data write to live books. STOPS for Jorge. RUN LAST (Phase 4 / pre-go-live),
+after every chain above is proven — purging before the chains are proven would destroy the test
+artifacts GUARD needs to verify.
+
+LOCKS (embedded):
+- "ARCHIVE" never "DELETE" where a record could be needed; true seed/test rows are purged, real data is
+  never touched.
+- Entity independence: purge TRANSP's books only; never touch TRK/USMCA.
+- RESPOND-BEFORE-CODE: produce the full list of seed/test rows for Jorge to approve BEFORE any deletion.
+
+PROBLEM (GUARD live-verified):
+TRANSP's live trial balance contains a seed/test account literally named "Unauthorized Expenses
+Ignacio…". The 2 existing journal entries are 0-line test artifacts. This demo/test data must not be in
+the live company at go-live.
+
+SCOPE (preview → Jorge approves → purge):
+1. Inventory ALL seed/test artifacts in TRANSP's books: the "Unauthorized Expenses Ignacio…" account,
+   the 0-line test JEs, any test bills/invoices/payments/customers/vendors created during chain proving.
+2. Present the full list to Jorge. STOP. No deletion without explicit approval.
+3. On approval, purge ONLY the approved test rows. Verify TB/BS still balance and are clean
+   (no test account names, no 0-line JEs, $0 only because truly empty — not because of test noise).
+4. CI/data guard: a known seed-name pattern (e.g. test/demo/"Unauthorized Expenses") must not exist in
+   the live company at go-live.
+
+ACCEPTANCE (GUARD live, Jorge-gated):
+- Full seed/test inventory shown + approved before any purge.
+- Post-purge: TRANSP books contain zero test artifacts; TB/BS balanced and clean; real data untouched;
+  TRK/USMCA untouched.
+
+PAUSE POINTS: STOP after the inventory (before any deletion). This block does not run until all chain-
+proof blocks (01–07) are GUARD-verified.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error.
+Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show
+diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

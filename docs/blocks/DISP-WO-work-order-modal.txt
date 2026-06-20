@@ -1,0 +1,18 @@
+═══════════════════════════════════════════════════════════════════════════════
+DISP-WO — DISPATCH/MAINT / TASK WO — Work Order modal (dead +Create Work Order button)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: LIVE-TRACED / BUILD. Tier 2 (build modal) — posting (create_bill_for_wo) Tier 1, STOPS for Jorge.
+
+GUARD FOUND (live): the "+Create Work Order" button on Maintenance does NOTHING when clicked (missing
+handler — verified). Q8 decision: build the WO modal now; the GL posting is stubbed and STOPS for Jorge.
+
+LOCK: locked money-form components; additive-only; per-entity. RESPOND-BEFORE-CODE.
+
+DO: wire +Create Work Order → a real WO modal (locked money-form components). Posting path
+(create_bill_for_wo) STUBBED — STOPS for Jorge before any GL post.
+
+ACCEPTANCE (GUARD live): button opens a working WO modal; posting stubbed/gated.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

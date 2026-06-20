@@ -1,0 +1,26 @@
+═══════════════════════════════════════════════════════════════════════════════
+AF-3 — STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: Tier 2 read/display → Tier 1 if register posts inline. Extends CHAIN-02.
+
+LOCKS: build to COA-REGISTER-QBO-PARITY-2026-06-07.md + QBO_PARITY_UI_SYSTEM_v2_v3.md; reuse ParityTable
+(#824) / ParityDrawer (#825) / ReferenceSelect (#828); honor Block-20 ?basis=cash|accrual; per-entity;
+shared table component (alignment + page-size + sort/resize land universally). RESPOND-BEFORE-CODE.
+
+WHY: CHAIN-02 fixes the 400 (params). AF-3 completes the QBO-grade register: CA-05/06 per-account
+running-balance register + audit tab — the surface that proves "registers perfectly."
+
+DO:
+1. Per-account register: date, ref/type, name/payee, memo, increase/decrease, running balance — QBO density.
+2. ParityDrawer drill-in to the underlying transaction; audit tab.
+3. ?basis=cash|accrual honored; closed periods read accounting.period_cash_basis_snapshot.
+4. Per entity — register only shows that entity's account.
+
+ACCEPTANCE (GUARD live): running balances tie to the ledger; basis switch correct; drill-in works; numeric
+columns right-aligned via the shared component (not a bespoke table).
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

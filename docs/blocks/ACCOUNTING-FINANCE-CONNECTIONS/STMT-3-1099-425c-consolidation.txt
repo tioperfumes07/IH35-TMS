@@ -1,0 +1,25 @@
+═══════════════════════════════════════════════════════════════════════════════
+STMT-3 — STATEMENTS / TASK 3 — 1099 + 425C DIP + multi-entity consolidation
+PR URL: <one per sub-task>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD. Tier 2 (reports) → Tier 1 if any posts. Three sub-tasks, sequence-independent.
+
+LOCKS: per-entity; INVQ9 (driver settlements = Bill+BillPayment 1099); additive-only. RESPOND-BEFORE-CODE.
+
+SUB-TASKS:
+  3a. 1099 (BLOCK-24): annual vendor 1099s — pull from vendor + bill/payment data (INVQ9 driver
+      settlements included as 1099). Per entity.
+  3b. 425C DIP (GAP-44): Form 425C Exhibits A–F, monthly Chapter-11 DIP reporting. Per entity (the
+      filing entity). Builds on the 425C catalog/route already in nav.
+  3c. Multi-entity consolidation (BLOCK-25): consolidated statements + intercompany elimination across
+      TRK/TRANSP/USMCA — they are customers/vendors to each other, so intercompany must eliminate.
+      CRITICAL: consolidation READS across entities but must NOT commingle their books — read-only roll-up
+      with elimination, never shared rows.
+
+ACCEPTANCE (GUARD live): 1099s tie to vendor/settlement data per entity; 425C exhibits populate; consol
+statements roll up with correct intercompany elimination and zero commingling of entity-scoped rows.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

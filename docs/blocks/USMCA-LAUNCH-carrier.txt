@@ -1,0 +1,20 @@
+═══════════════════════════════════════════════════════════════════════════════
+USMCA-LAUNCH — FOUNDATIONS / TASK USMCA — USMCA carrier launch (July 2026)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge.
+
+LOCK (HARD): USMCA is a fully independent legal entity — own federal tax ID, different owner; shares
+NOTHING with TRK/TRANSP (own COA, vendors, customers, journals, settlements). Hidden until launch.
+Per-entity partitioning is law (depends on AF-1 entity-independence + the MULTI-ENTITY-SEPARATION CI guard).
+
+DO (at launch window): un-hide USMCA; verify complete isolation from TRK/TRANSP across every entity-scoped
+surface; confirm CI guard prevents any cross-entity bleed; opening balances (STMT-2) per USMCA.
+
+SEQUENCING GATE: AF-1 entity-independence + CI guard live FIRST; do not launch on a global-COA system.
+
+ACCEPTANCE (GUARD live): USMCA visible + fully isolated; zero shared rows with TRK/TRANSP; per-entity
+books clean.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

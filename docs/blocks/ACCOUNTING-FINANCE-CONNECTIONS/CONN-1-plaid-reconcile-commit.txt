@@ -1,0 +1,24 @@
+═══════════════════════════════════════════════════════════════════════════════
+CONN-1 — CONNECTIONS / TASK 1 — Plaid bank reconcile-commit (enable the commit)
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: VERIFY+FLAG / BUILD. Tier 1 on the commit (writes the GL/reconciliation). STOPS for Jorge.
+
+LOCKS: per-entity; reuse the existing banking/reconciliation surfaces (see CHAIN-05); additive-only.
+RESPOND-BEFORE-CODE — read the reconciliation routes + bank.reconciliation_matches before touching.
+
+WHY: Plaid sync + bank feed + reconciliation READ/scoring exist (inventory: "read+scoring exist; enable
+commit"). The reconcile COMMIT (lock a matched session, post the matches) needs enabling/verifying.
+
+DO:
+1. Verify live: reconciliation_sessions open, candidate matches score, bank.reconciliation_matches populate.
+2. Enable/verify the COMMIT path: committing a session posts the matches + locks them, ties to GL/register.
+3. Per entity; reversible; CI guard.
+
+ACCEPTANCE (GUARD live, Jorge-gated): a Jorge-approved reconciliation session commits — matches post, GL/
+register reflect it, session locks, per entity.
+
+STANDING ORDERS: foreground only, no subagents. No retries — STOP, paste exact error. Live updates every
+5 min CST. Confirm worktree pwd + git status + rev-parse. Show diff --staged --stat before commit. Stop on
+anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

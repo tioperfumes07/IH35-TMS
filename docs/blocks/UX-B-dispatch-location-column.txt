@@ -1,0 +1,20 @@
+═══════════════════════════════════════════════════════════════════════════════
+UX-B — TABLE/UX / TASK B — Dispatch Location column
+PR URL: <paste PR link here>
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: BUILD. Tier 2. Depends on reverse-geo fix (#1233, LIVE).
+
+LOCK: additive-only; column ALWAYS shown; America/Chicago. RESPOND-BEFORE-CODE (open live Dispatch list
++ spec before placing the column).
+
+GUARD NOTE (live): Jorge confirmed the current-location column is NOT on the Dispatch list yet and no
+data is visible — this block adds it.
+
+DO: add a Location column on the Dispatch list BETWEEN "Resume At" and "Load #", always shown, sourced
+from #1223 units-without-load.location (reverse-geo city/state via #1233). Honest empty when unknown.
+
+ACCEPTANCE (GUARD live): Location column present between Resume At and Load #, populated with city/state,
+always visible.
+
+STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+═══════════════════════════════════════════════════════════════════════════════

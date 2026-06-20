@@ -18,6 +18,7 @@
 // Uses exceljs (already a dependency) for merges + frozen panes + banner styling.
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ExcelJS from "exceljs";
@@ -112,6 +113,43 @@ function fetchMergedPRs() {
   }
 }
 const prs = fetchMergedPRs();
+// Lookup #PR -> {mergeDate, mergeTime} so the 01 All Tasks rows can show real GitHub
+// merge timestamps (the markdown only carries Merge Date for some rows and never Merge Time).
+const prByNum = new Map((prs ?? []).map((p) => [p.number, p]));
+
+// ---- pending-program blocks (docs/blocks/**.txt) appended to 01 All Tasks ----
+const LANE_BY_PREFIX = [
+  [/^HOS|^BLOCK-10/, "HOS / Telematics"], [/^UX|^TBL/, "Table / UX"], [/^DISP/, "Dispatch"],
+  [/^CAP/, "Samsara CAP"], [/^MNT/, "Maintenance"], [/^INS/, "Insurance"], [/^MX/, "Mexico Ops"],
+  [/^SAFE/, "Safety / PWA"], [/^RPT/, "Reports"], [/^ENT/, "Enterprise"], [/^Q9|^USMCA/, "Driver-lifecycle"],
+  [/^CHAIN/, "Accounting Chain"], [/^AF-/, "AF Program"], [/^CONN/, "Connections"], [/^FH/, "Finance Hub"],
+  [/^STMT/, "Statements"], [/^VOID/, "Void-Everywhere"],
+];
+const laneFor = (id) => (LANE_BY_PREFIX.find(([re]) => re.test(id)) || [, "Pending Program"])[1];
+function loadPendingBlocks() {
+  const dir = path.join(ROOT, "docs/blocks");
+  if (!fs.existsSync(dir)) return [];
+  const files = [];
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const fp = path.join(d, e.name);
+      if (e.isDirectory()) walk(fp);
+      else if (e.name.endsWith(".txt") && !e.name.startsWith("00-")) files.push(fp);
+    }
+  };
+  walk(dir);
+  return files
+    .map((fp) => {
+      const lines = fs.readFileSync(fp, "utf8").split(/\r?\n/);
+      const id = path.basename(fp, ".txt");
+      const titleLine = (lines.find((l, i) => i > 0 && l.trim() && !/^═/.test(l)) || id).trim();
+      const name = titleLine.includes(" — ") ? titleLine.split(" — ").slice(1).join(" — ") : titleLine;
+      const stat = (lines.find((l) => /^(STATUS|TIER)\s*:/i.test(l)) || "").replace(/^(STATUS|TIER)\s*:\s*/i, "").trim();
+      return { id, name: name.slice(0, 90), status: (stat || "BUILD").slice(0, 60), lane: laneFor(id) };
+    })
+    .sort((a, b) => a.lane.localeCompare(b.lane) || a.id.localeCompare(b.id));
+}
+const PENDING_BLOCKS = loadPendingBlocks();
 const NEW_SINCE_V24_ROWS = prs
   ? prs.filter((p) => p.number > V24_BASELINE_PR).map((p) => [`#${p.number}`, p.mergeDate, p.mergeTime, p.sha, p.domain, p.title, "merged"])
   : [["—", "—", "—", "—", "—", "GitHub data unavailable at export time (gh not authed) — re-run with gh available", "—"]];
@@ -250,6 +288,8 @@ for (const cfg of SHEETS) {
   r++;
 
   const body = cfg.rows ?? (section ? tableBody(section.lines) : []);
+  let lastNum = 0;
+  const seenPRs = new Set();
   for (const cells of body) {
     const g = cfg.group ? groupLabel(cells) : null;
     if (g) {
@@ -264,9 +304,54 @@ for (const cfg of SHEETS) {
     const mapped = cfg.colMap
       ? cfg.colMap.map((idx) => (idx == null ? "" : stripMd(cells[idx] ?? "")))
       : cfg.headers.map((_, i) => stripMd(cells[i] ?? ""));
+    // 01 All Tasks: backfill Merge Date (col 7 → idx 6) + Merge Time (col 8 → idx 7) from the
+    // live GitHub PR record whenever the "Task ID / PR" cell (idx 2) is a #<number>.
+    if (cfg.name === "01 All Tasks") {
+      const m = String(mapped[2] ?? "").trim().match(/^#(\d+)$/);
+      const pr = m ? prByNum.get(Number(m[1])) : null;
+      if (pr) {
+        if (!mapped[6]) mapped[6] = pr.mergeDate;
+        if (!mapped[7]) mapped[7] = pr.mergeTime ? `${pr.mergeTime} UTC` : "";
+      }
+      const n = parseInt(String(mapped[0]).trim(), 10);
+      if (Number.isFinite(n)) lastNum = Math.max(lastNum, n);
+      if (m) seenPRs.add(Number(m[1]));
+    }
     ws.getRow(r).values = mapped;
     ws.getRow(r).alignment = { vertical: "top", wrapText: true };
     r++;
+  }
+
+  // 01 All Tasks: bring it current to the second — append (a) every merged PR above the last one
+  // already listed (the recent gap), then (b) every pending-program block from docs/blocks/.
+  if (cfg.name === "01 All Tasks") {
+    const groupRow = (label) => {
+      ws.mergeCells(r, 1, r, ncols);
+      const c = ws.getCell(r, 1);
+      c.value = label;
+      c.font = { bold: true, size: 10, color: { argb: "FF1A1F36" } };
+      c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: GROUP_FILL } };
+      r++;
+    };
+    const dataRow = (vals) => {
+      ws.getRow(r).values = vals;
+      ws.getRow(r).alignment = { vertical: "top", wrapText: true };
+      r++;
+    };
+    const floor = seenPRs.size ? Math.max(...seenPRs) : 0;
+    const newPrs = (prs ?? []).filter((p) => p.number > floor).sort((a, b) => a.number - b.number);
+    if (newPrs.length) {
+      groupRow(`▼ MERGED PRs since #${floor} — auto-appended live from GitHub (${newPrs.length}, through #${newPrs[newPrs.length - 1].number}) · ${date}`);
+      for (const p of newPrs) {
+        dataRow([++lastNum, p.domain, `#${p.number}`, p.title, "", "DONE", p.mergeDate, p.mergeTime ? `${p.mergeTime} UTC` : "", "", "", `merge ${p.sha}`]);
+      }
+    }
+    if (PENDING_BLOCKS.length) {
+      groupRow(`▼ PENDING PROGRAM BLOCKS — GUARD all-pending-blocks (${PENDING_BLOCKS.length}) · added ${date} · docs/blocks/`);
+      for (const b of PENDING_BLOCKS) {
+        dataRow([++lastNum, b.lane, b.id, b.name, "", b.status, "", "", "", "", `docs/blocks/${b.id}.txt`]);
+      }
+    }
   }
 
   // Summary tab: append the prose facts paragraphs below the table
@@ -289,13 +374,27 @@ for (const cfg of SHEETS) {
 }
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
-const outFile = path.join(OUT_DIR, `IH35-TMS-MASTER-TRACKER-${date}-${version}.xlsx`);
+const fileName = `IH35-TMS-MASTER-TRACKER-${date}-${version}.xlsx`;
+const outFile = path.join(OUT_DIR, fileName);
 await wb.xlsx.writeFile(outFile);
+
+// Auto-deliver a copy to ~/Downloads (where Jorge opens his trackers).
+let downloadsCopy = null;
+try {
+  const home = process.env.HOME || os.homedir();
+  if (home) {
+    downloadsCopy = path.join(home, "Downloads", fileName);
+    fs.copyFileSync(outFile, downloadsCopy);
+  }
+} catch (err) {
+  console.warn(`[export:tracker] could not copy to Downloads: ${err.message}`);
+}
 
 console.log(
   `[export:tracker] wrote ${path.relative(ROOT, outFile)} — ${wb.worksheets.length} sheets ` +
     `(${wb.worksheets.map((w) => w.name).join(", ")}), ${version}, ${date}`
 );
+if (downloadsCopy) console.log(`[export:tracker] copied to ~/Downloads/${fileName}`);
 console.log(
   prs
     ? `[export:tracker] 02 New Since v24 (${NEW_SINCE_V24_ROWS.length}) + 03 Full Merged PRs (${ALL_MERGED_ROWS.length}) pulled from GitHub. 05 Functional Audit: source TBD (flagged for Jorge).`
