@@ -5,7 +5,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { previewDriverInactivity } from "./driver-inactivity-preview.service.js";
+import { previewDriverInactivity, previewDriverDrivingInactivity } from "./driver-inactivity-preview.service.js";
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
@@ -30,6 +30,21 @@ export async function registerDriverInactivityPreviewRoutes(app: FastifyInstance
     const preview = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
       return previewDriverInactivity(client, oc);
+    });
+    return reply.send(preview);
+  });
+
+  // THE sweep: inactivity by DRIVING (vehicle_driver_assignment recency), per Jorge's rule. Read-only.
+  app.get("/api/v1/mdata/drivers/driving-inactivity-preview", async (req, reply) => {
+    const user = currentOfficeAdmin(req, reply);
+    if (!user) return;
+    const parsed = querySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const oc = parsed.data.operating_company_id;
+
+    const preview = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      return previewDriverDrivingInactivity(client, oc);
     });
     return reply.send(preview);
   });
