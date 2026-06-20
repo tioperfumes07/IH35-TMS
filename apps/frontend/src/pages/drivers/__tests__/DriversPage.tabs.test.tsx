@@ -136,27 +136,34 @@ describe("DriversPage list status tabs", () => {
     });
   });
 
-  it("loads all statuses once and shows every row on All", async () => {
+  it("default route (no status param) shows Active-only — hidden drivers excluded", async () => {
+    // AUTO-01: the standalone roster defaults to Active so hidden (Inactive) drivers don't clutter it.
     renderDriversAt("/drivers");
-    await waitFor(() => expect(listDriversMock).toHaveBeenCalledWith({ status: "All", search: "" }));
+    await waitFor(() => expect(listDriversMock).toHaveBeenCalledWith(expect.objectContaining({ status: "All" })));
+    expect(await screen.findByText(/Ann ActiveOnly/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull();
+  });
+
+  it("?status=all shows every row (active + inactive)", async () => {
+    renderDriversAt("/drivers?status=all");
     expect(await screen.findByText(/Ann ActiveOnly/)).toBeInTheDocument();
     expect(screen.getByText(/Ike InactiveOnly/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /all \(2\)/i })).toBeInTheDocument();
   });
 
-  it("clicking Active filters to Active drivers and sets ?status=active", async () => {
+  it("clicking Active from All filters to active and clears the status param (active is the default)", async () => {
     const user = userEvent.setup();
-    const router = renderDriversAt("/drivers");
-    await screen.findByText(/Ann ActiveOnly/);
+    const router = renderDriversAt("/drivers?status=all");
+    await screen.findByText(/Ike InactiveOnly/);
     await user.click(screen.getByRole("button", { name: /^active \(1\)$/i }));
     expect(screen.getByText(/Ann ActiveOnly/)).toBeInTheDocument();
     expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull();
-    expect(router.state.location.search).toContain("status=active");
+    expect(router.state.location.search).not.toContain("status=");
   });
 
-  it("browser back returns to All tab", async () => {
+  it("browser back returns to the All tab", async () => {
     const user = userEvent.setup();
-    const router = renderDriversAt("/drivers");
+    const router = renderDriversAt("/drivers?status=all");
     await screen.findByText(/Ike InactiveOnly/);
     await user.click(screen.getByRole("button", { name: /^active \(1\)$/i }));
     await waitFor(() => expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull());
