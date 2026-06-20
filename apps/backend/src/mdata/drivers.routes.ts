@@ -1378,6 +1378,70 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     return deactivated;
   });
 
+  // Reverse of /deactivate — "Show in lists" un-hides a soft-hidden driver (Inactive -> Active). Reversible soft
+  // write; preserves a deliberate 'Terminated' end-state (never un-terminates). Mirrors the deactivate audit.
+  app.post("/api/v1/mdata/drivers/:id/reactivate", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const reactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      const oldRes = await client.query(
+        `SELECT id, deactivated_at, identity_user_id, status FROM mdata.drivers WHERE id = $1 LIMIT 1`,
+        [parsedParams.data.id]
+      );
+      const oldRow = oldRes.rows[0] ?? null;
+      if (!oldRow) return null;
+
+      let deactivatedAt = oldRow.deactivated_at as string | null;
+      let newStatus = oldRow.status as string | null;
+      const wasInactive = oldRow.deactivated_at !== null && oldRow.status !== "Terminated";
+      if (wasInactive) {
+        const res = await client.query(
+          `UPDATE mdata.drivers
+              SET deactivated_at = NULL,
+                  status = 'Active'::mdata.driver_status,
+                  updated_by_user_id = $2
+            WHERE id = $1 AND deactivated_at IS NOT NULL AND status <> 'Terminated'
+            RETURNING id, deactivated_at, status`,
+          [parsedParams.data.id, authUser.uuid]
+        );
+        deactivatedAt = (res.rows[0]?.deactivated_at as string | null) ?? null;
+        newStatus = (res.rows[0]?.status as string | undefined) ?? newStatus;
+      }
+
+      const identityUserId = oldRow.identity_user_id as string | null;
+      if (wasInactive && identityUserId) {
+        const identityRes = await client.query<{ deactivated_at: string | null }>(
+          `UPDATE identity.users SET deactivated_at = NULL WHERE id = $1 AND deactivated_at IS NOT NULL RETURNING deactivated_at`,
+          [identityUserId]
+        );
+        if (identityRes.rows.length > 0) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "identity.users.reactivated_via_driver_reactivation",
+            { resource_id: identityUserId, resource_type: "identity.users", driver_id: oldRow.id },
+            "info",
+            "BT-1-AUTH-DRIVER"
+          );
+        }
+      }
+
+      await appendCrudAudit(client, authUser.uuid, "mdata.drivers.reactivated", {
+        resource_id: oldRow.id,
+        resource_type: "mdata.drivers",
+        was_inactive: wasInactive,
+      });
+
+      return { id: oldRow.id, deactivated_at: deactivatedAt, status: newStatus, was_inactive: wasInactive };
+    });
+    if (!reactivated) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return reactivated;
+  });
+
   app.post("/api/v1/mdata/drivers/:id/enable-phone-login", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;

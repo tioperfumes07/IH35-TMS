@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { getDriver, updateDriver } from "../../api/mdata";
+import { getDriver, updateDriver, deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
@@ -134,6 +134,19 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     void queryClient.invalidateQueries({ queryKey: ["drivers"] });
   };
 
+  // Hide/Show from TMS lists — reversible soft toggle (status Active<->Inactive). NOT a Samsara/HR action;
+  // just keeps non-working drivers out of the dispatch pickers/roster. 'Terminated' is left untouched.
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
+  const toggleVisibility = async (driverId: string, isHidden: boolean) => {
+    setVisibilitySaving(true);
+    try {
+      await (isHidden ? reactivateDriver(driverId) : deactivateDriver(driverId));
+      refreshDriver();
+    } finally {
+      setVisibilitySaving(false);
+    }
+  };
+
   const driverQ = useQuery({
     queryKey: ["driver", id],
     enabled: Boolean(id),
@@ -203,6 +216,21 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <div className="flex flex-wrap items-center gap-2">
             <DriverDqfComplianceChip summary={summary} />
             <StatusBadge status={driver.status} />
+            {driver.status !== "Terminated" ? (
+              <button
+                type="button"
+                disabled={visibilitySaving}
+                onClick={() => void toggleVisibility(driver.id, driver.status === "Inactive")}
+                className={`rounded border px-2 py-1 text-xs font-semibold disabled:opacity-50 ${
+                  driver.status === "Inactive"
+                    ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    : "border-slate-300 text-slate-600 hover:bg-slate-50"
+                }`}
+                title={driver.status === "Inactive" ? "Show this driver in dispatch pickers and lists" : "Hide this driver from dispatch pickers and lists (reversible)"}
+              >
+                {visibilitySaving ? "Saving…" : driver.status === "Inactive" ? "Show in lists" : "Hide from lists"}
+              </button>
+            ) : null}
             <Link to={`/drivers/${driver.id}`} className="text-xs font-semibold text-sky-700 hover:underline">
               Open full driver record
             </Link>
