@@ -368,6 +368,7 @@
     "verify:compliance-notification-rules-rls": "node scripts/verify-compliance-notification-rules-rls.mjs",
     "verify:compliance-reminder-job-registered": "node scripts/verify-compliance-reminder-job-registered.mjs",
     "verify:compliance-severity-thresholds": "node scripts/verify-compliance-severity-thresholds.mjs",
+    "verify:hos-viewer-picker": "node scripts/verify-hos-viewer-picker.mjs",
     "verify:shipper-portal-tenant-isolation": "node scripts/verify-shipper-portal-tenant-isolation.mjs",
     "verify:shipper-portal-no-internal-data-leak": "node scripts/verify-shipper-portal-no-internal-data-leak.mjs",
     "verify:shipper-portal-session-cookie-secure": "node scripts/verify-shipper-portal-session-cookie-secure.mjs",

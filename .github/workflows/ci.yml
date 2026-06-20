@@ -669,6 +669,9 @@ jobs:
       - name: verify:compliance-severity-thresholds
         run: npm run verify:compliance-severity-thresholds
 
+      - name: verify:hos-viewer-picker
+        run: npm run verify:hos-viewer-picker
+
       - name: verify:shipper-portal-tenant-isolation
         run: npm run verify:shipper-portal-tenant-isolation
 
