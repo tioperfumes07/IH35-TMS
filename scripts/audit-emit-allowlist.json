@@ -354,6 +354,10 @@
       "reason": "HOS duty-status projection from Samsara — idempotent INSERT...ON CONFLICT into append-only hos.duty_status_events; telematics pipeline, audited at cron tick (cron_samsara_hos_pull_tick)"
     },
     {
+      "file": "apps/backend/src/integrations/samsara/samsara-hos-clocks-pull.service.ts",
+      "reason": "Verbatim Samsara HOS clocks poll — append-only INSERT into samsara.hos_snapshots (itself the 5-yr FMCSA audit table); telematics pipeline, audited at cron tick (samsara_hos_clocks sync-log row). Same pattern as samsara-hos-pull."
+    },
+    {
       "file": "apps/backend/src/integrations/samsara/engine-faults/fault-handler.service.ts",
       "reason": "Engine fault handler — telematics pipeline, spine via maintenance-spine-emit"
     },
