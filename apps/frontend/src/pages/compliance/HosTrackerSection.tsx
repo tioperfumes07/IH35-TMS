@@ -47,6 +47,9 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
   const today = laredoToday();
   const strip = useMemo(() => buildDayStrip(today), [today]);
   const [selectedDate, setSelectedDate] = useState(today);
+  // AUTO-06: per-driver cycle drawer — uses the roster row's EXISTING verbatim values (clocks + 8-day
+  // breakdown from /hos/daily-roster). Never recomputes clocks (§3.15.9.2).
+  const [selectedDriver, setSelectedDriver] = useState<HosRosterDriver | null>(null);
 
   const rosterQ = useQuery({
     queryKey: ["compliance", "hos-roster", operatingCompanyId, selectedDate],
@@ -140,7 +143,12 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                   const verdict = driverVerdict(d);
                   const dot = d.current_duty_status ? DUTY_COLOR[d.current_duty_status] : "#94A3B8";
                   return (
-                    <tr key={d.driver_id} className={`border-t border-slate-100 ${d.available ? "" : "opacity-70"}`}>
+                    <tr
+                      key={d.driver_id}
+                      onClick={() => setSelectedDriver(d)}
+                      className={`cursor-pointer border-t border-slate-100 hover:bg-slate-50 ${d.available ? "" : "opacity-70"}`}
+                      title="Open HOS cycle detail"
+                    >
                       <td className="px-2 py-1.5 font-medium text-slate-900">{d.driver_name ?? "—"}</td>
                       <td className="px-2 py-1.5 font-mono">{d.unit_number ?? "—"}</td>
                       <td className="px-2 py-1.5">
@@ -164,6 +172,60 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           </div>
         )}
       </div>
+      {selectedDriver ? (
+        <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setSelectedDriver(null)} />
+          <div className="relative z-10 h-full w-[380px] max-w-[90vw] overflow-y-auto bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">{selectedDriver.driver_name ?? "—"}</div>
+                <div className="text-[11px] text-slate-500">Unit {selectedDriver.unit_number ?? "—"} · {selectedDate} · HOS cycle detail</div>
+              </div>
+              <button type="button" onClick={() => setSelectedDriver(null)} className="rounded px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
+            </div>
+            {!selectedDriver.available || !selectedDriver.clocks ? (
+              <div className="px-4 py-10 text-center text-sm text-slate-500">HOS unavailable for this driver on {selectedDate}.</div>
+            ) : (
+              <div className="space-y-4 px-4 py-4">
+                <div>
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Remaining (Samsara certified)</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Drive", v: selectedDriver.clocks.drive_remaining_min },
+                      { label: "Shift (14h)", v: selectedDriver.clocks.window_remaining_min },
+                      { label: "Break", v: selectedDriver.clocks.break_remaining_min },
+                      { label: "Cycle (70h)", v: selectedDriver.clocks.cycle_remaining_min },
+                    ].map((c) => (
+                      <div key={c.label} className="rounded border border-slate-200 px-2.5 py-1.5">
+                        <div className="text-[9px] uppercase tracking-wide text-slate-500">{c.label}</div>
+                        <div className="text-[15px] font-semibold tabular-nums text-slate-900">{hmm(c.v)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">8-day on-duty (home-terminal days)</div>
+                  <div className="space-y-1">
+                    {(selectedDriver.eight_day_breakdown ?? []).map((day) => {
+                      const pct = Math.min(100, ((day.on_duty_min ?? 0) / (14 * 60)) * 100);
+                      return (
+                        <div key={day.date} className="flex items-center gap-2">
+                          <span className="w-16 shrink-0 text-[10px] text-slate-500">{day.date.slice(5)}</span>
+                          <div className="h-3 flex-1 rounded bg-slate-100">
+                            <div className="h-3 rounded bg-[#1f2a44]" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="w-12 shrink-0 text-right text-[10px] tabular-nums text-slate-600">{hmm(day.on_duty_min)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <p className="text-[10px] text-slate-400">Verbatim Samsara certified ELD — not recomputed.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
