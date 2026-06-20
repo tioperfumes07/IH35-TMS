@@ -672,6 +672,9 @@ jobs:
       - name: verify:hos-viewer-picker
         run: npm run verify:hos-viewer-picker
 
+      - name: verify:hos-driver-map-preview
+        run: npm run verify:hos-driver-map-preview
+
       - name: verify:shipper-portal-tenant-isolation
         run: npm run verify:shipper-portal-tenant-isolation
 
