@@ -281,6 +281,13 @@ export function AccountRegisterPage() {
         <p className="rounded border border-gray-200 bg-white px-3 py-6 text-center text-sm text-gray-500">
           Select an account to view its register.
         </p>
+      ) : view === "register" && registerQuery.isError ? (
+        /* CHAIN-02: a rejected register request (e.g. 400/404) must not leave the table silently blank —
+           surface it so the user can correct the account or date range instead of seeing an empty grid. */
+        <p className="rounded border border-red-200 bg-red-50 px-3 py-6 text-center text-sm text-red-700">
+          Couldn't load the register for this account and date range. Check the selected account and the
+          From/To dates, then try again.
+        </p>
       ) : view === "register" ? (
         <div className="overflow-x-auto rounded border border-gray-200 bg-white">
           <table className="min-w-full text-left text-xs">
