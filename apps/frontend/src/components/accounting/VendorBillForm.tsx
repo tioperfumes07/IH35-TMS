@@ -191,6 +191,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
 
         <div className="md:col-span-6 h-2" />
         <Field label="Vendor *">
+          <>
           <SelectCombobox
             className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
             value={vendorId}
@@ -203,6 +204,18 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
               </option>
             ))}
           </SelectCombobox>
+          {/* CHAIN-01: never leave the vendor picker silently blank — say WHY it's empty so an empty
+              dropdown reads as an honest data/scoping signal, not a broken control. */}
+          {!operatingCompanyId ? (
+            <p className="mt-1 text-[11px] text-amber-700">Select an operating company to load vendors.</p>
+          ) : vendorsQuery.isLoading ? (
+            <p className="mt-1 text-[11px] text-gray-500">Loading vendors…</p>
+          ) : vendorsQuery.isError ? (
+            <p className="mt-1 text-[11px] text-red-600">Couldn't load vendors. Refresh to try again.</p>
+          ) : vendorOptions.length === 0 ? (
+            <p className="mt-1 text-[11px] text-amber-700">No vendors found for this company. Create a vendor first, or check the selected company.</p>
+          ) : null}
+          </>
         </Field>
         <Field label="Load Number">
           <input
