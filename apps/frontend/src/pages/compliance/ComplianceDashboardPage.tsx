@@ -17,6 +17,7 @@ import { SummaryCards } from "../../components/compliance/SummaryCards";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
 import { HosTrackerSection } from "./HosTrackerSection";
+import { HosViewerSection } from "./HosViewerSection";
 import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -144,7 +145,9 @@ export function ComplianceDashboardPage() {
       ) : null}
 
       {tab === "hos_viewer" ? (
-        <ComplianceEmptyState title="HOS Viewer" message="Select a driver to open their daily ELD log." />
+        <SectionErrorBoundary name="HOS Viewer">
+          <HosViewerSection operatingCompanyId={companyId} />
+        </SectionErrorBoundary>
       ) : null}
       {tab === "violations" ? (
         <ComplianceEmptyState title="Violations" message="No HOS violations in range." />
