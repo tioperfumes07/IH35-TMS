@@ -33,6 +33,11 @@ if (!/hosClocksCoherent\(clocks\)[\s\S]{0,200}available: false/.test(svc))
 // raw sum of overlapping/duplicate/open-ended segments (GUARD: CAZARES 06-14 summed to 35h -> false cyc:0).
 if (!/flattenDutySegments\(eightDayEvents/.test(svc))
   fail("getHosDaily must build segments + breakdown from flattenDutySegments (union), not a raw per-event sum");
+// WINDOW CONSISTENCY: the roster fetch must anchor to asOf−8d (the cycle window + the board's now()−8d), NOT
+// dayEnd−8d — that fetched too late and missed on-duty in [asOf−8d, dayEnd−8d], a CONSTANT ~dayEnd−now offset that
+// made roster_cyc != board_cyc (GUARD: ~300min across CAZARES/CORONADO/NOGUEZ). Both paths now use the SAME window.
+if (!/const eightStart = new Date\(asOf\.getTime\(\) - 8 \* 24/.test(svc))
+  fail("getHosDaily must anchor eightStart to asOf−8d (the board+cycle window), not dayEnd−8d — else roster_cyc != board_cyc");
 // HARD SANITY: no day may exceed 1440 min; an impossible day -> cycle "unavailable", never a false violation.
 if (!/on_duty_min > 1440[\s\S]{0,160}available: false/.test(svc))
   fail("a breakdown day > 1440 min must force available:false (cycle unavailable, not a false cyc:0 violation)");

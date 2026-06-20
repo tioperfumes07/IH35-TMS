@@ -85,7 +85,11 @@ export async function getHosDaily(
 
   const { start: dayStart, end: dayEnd } = laredoDayWindowUtc(dateStr);
   const asOf = now < dayEnd ? now : dayEnd; // for a past day, evaluate clocks at end-of-day
-  const eightStart = new Date(dayEnd.getTime() - 8 * 24 * 3600_000);
+  // Anchor the fetch to asOf − 8 days — the SAME window computeHosClocks uses internally for the 70h cycle, and the
+  // SAME window the Live Fleet board now uses (now() − 8d). Anchoring to dayEnd − 8d (the old value) fetched too
+  // late and missed on-duty in [asOf−8d, dayEnd−8d], under-counting on-duty -> over-stating cycle (roster 472 vs
+  // board 169; the ~303min gap was exactly dayEnd−now, the hours to Laredo midnight). Both paths now agree per driver.
+  const eightStart = new Date(asOf.getTime() - 8 * 24 * 3600_000);
 
   // 8-day events drive the cycle clocks; the selected day's events drive the timeline segments.
   const eightDayEvents = await fetchEvents(client, operatingCompanyId, driverId, eightStart, asOf);
