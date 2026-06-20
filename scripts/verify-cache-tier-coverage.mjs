@@ -86,6 +86,10 @@ const LEGACY_DIRECT_SAMSARA = new Set([
   // HOS CLOCKS pull (Path B) — the same per-driver POLL pattern: /fleet/hos/clocks written verbatim into
   // samsara.hos_snapshots (a write path, not a cached-read tier), so it uses SamsaraClient directly too.
   "apps/backend/src/integrations/samsara/samsara-hos-clocks-pull.service.ts",
+  // HOS-MAP preview (the driver↔Samsara-id matcher) does a one-shot per-tenant roster READ via listDrivers()
+  // to PROPOSE a mapping — a read/preview, not a cached-read-tier consumer — so it uses SamsaraClient directly
+  // like the other master-sync/pull/probe services. Writes nothing.
+  "apps/backend/src/integrations/samsara/hos-driver-map-preview.service.ts",
   "apps/backend/src/telematics/dashcam.service.ts",
 ]);
 
