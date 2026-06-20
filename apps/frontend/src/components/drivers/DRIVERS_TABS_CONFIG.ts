@@ -52,8 +52,10 @@ export function parseDriverSubnav(searchParams: URLSearchParams): DriversSubnavI
 }
 
 export function parseDriverListStatus(searchParams: URLSearchParams): DriversListStatusId {
-  const raw = (searchParams.get("status") ?? "all").toLowerCase();
+  // Default to Active-only so hidden (Inactive) drivers don't clutter the roster; the Active/Inactive/All
+  // toggle still flips to the others. No `status` param in the URL = Active (the clean default).
+  const raw = (searchParams.get("status") ?? "active").toLowerCase();
   return (DRIVERS_LIST_STATUS_TABS as readonly { id: string }[]).some((tab) => tab.id === raw)
     ? (raw as DriversListStatusId)
-    : "all";
+    : "active";
 }

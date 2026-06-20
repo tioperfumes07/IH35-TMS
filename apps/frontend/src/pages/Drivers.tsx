@@ -783,7 +783,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     setSearchParams(
       (prev) => {
         const nextParams = new URLSearchParams(prev);
-        if (next === "all") nextParams.delete("status");
+        // Active is the default view, so a clean URL (no status param) = Active; everything else is explicit.
+        if (next === "active") nextParams.delete("status");
         else nextParams.set("status", next);
         return nextParams;
       },
