@@ -2,7 +2,7 @@
 SAFE-W4 — SAFETY/PWA / TASK — Safety/PWA wave W4
 PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
-STATUS: VERIFY-STATE / BUILD. Tier per scope (any GL posting = Tier 1, STOPS for Jorge).
+STATUS: VERIFY — W4 shipped #877–883; safety module LOCKED (CLAUDE.md §7).
 
 NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. This is a TRACKING placeholder so
 the work is not forgotten. Before building: confirm CURRENT live state + the relevant docs/specs/ spec +

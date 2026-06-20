@@ -2,7 +2,7 @@
 CAP-GPS — SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking
 PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
-STATUS: VERIFY-STATE / BUILD. Tier 2/3.
+STATUS: ✅ DONE — verify only (CAP-1 GPS, PR #234, row 98). Do NOT rebuild.
 
 NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. Confirm CURRENT live state + the
 CAP/Samsara spec + the exact GAP-5x/6x tracker ID before building (RESPOND-BEFORE-CODE). Do not invent

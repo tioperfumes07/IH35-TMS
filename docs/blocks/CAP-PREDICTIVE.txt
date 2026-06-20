@@ -2,7 +2,7 @@
 CAP-PREDICTIVE — SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive
 PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
-STATUS: VERIFY-STATE / BUILD. Tier 2/3.
+STATUS: VERIFY — CAP-7 #221 + PM auto-WO; confirm tire/brake gap only.
 
 NOTE: inventory-derived (coder's repo mining), NOT GUARD-live-verified. Confirm CURRENT live state + the
 CAP/Samsara spec + the exact GAP-5x/6x tracker ID before building (RESPOND-BEFORE-CODE). Do not invent
