@@ -4,12 +4,12 @@
 **Purpose:** authoritative inventory of catalog surfaces + a prioritized build order for the STUBs — the
 A2.. build queue. Built from live truth + repo, not the stale 2026-06-01 memory count (65/15/16/34).
 
-> **Integrity note — why the live-count column says "run the script."** The 3-way classification
-> WORK-WITH-DATA / WORK-EMPTY / STUB depends on **live OC-scoped row counts** (work-empty and
-> work-with-data are the *same code*, different data). Direct prod access is gated (CLAUDE.md §1.5), so
-> **no count here is guessed.** Counts are derived by running the read-only auditor with a session — see
-> §3. Everything else below (names, routes, endpoints, OC-scoping, dedicated-page-vs-hub) is repo-truth at
-> `20e0415` and is authoritative as-is.
+> **Integrity note.** The 3-way classification WORK-WITH-DATA / WORK-EMPTY / STUB depends on **live
+> OC-scoped row counts** (work-empty and work-with-data are the *same code*, different data). Direct prod
+> access is gated for the coder (CLAUDE.md §1.5/§1.6 — no session, no embedded token), so **no count here
+> is guessed.** §3 holds the **live classification measured by GUARD** (2026-06-20); rows GUARD has not yet
+> sampled are marked live-pending until the read-only auditor is run. Everything else (names, routes,
+> endpoints, OC-scoping, dedicated-page-vs-hub) is repo-truth at `20e0415`, authoritative as-is.
 
 ## 1. Surface shape (repo truth)
 Catalogs surface two ways:
@@ -23,84 +23,112 @@ Catalogs surface two ways:
 
 ## 2. Enumerated catalog endpoints (repo truth @ `20e0415`)
 35 catalog list endpoints under `/api/v1/catalogs/*` (GET). `OC` = requires `?operating_company_id`.
-A live authed run (§3) fills the **Class** + **Count** columns; unauthed, every row is AUTH-REQUIRED
-except `fuel` which 404s (it's a hub label, not a list endpoint).
+The **Class** column resolves in **§3** (live, GUARD-measured); rows not yet in GUARD's sample are
+live-pending until the full auditor is run. Unauthed, every endpoint is AUTH-REQUIRED except `fuel` (404 —
+hub label, not a list endpoint).
 
 | Dept | Catalog | Endpoint (`/api/v1/catalogs/…`) | OC | Dedicated page | Class (live → §3) |
 |---|---|---|---|---|---|
-| accounting | Chart of Accounts | `accounts` | Y | `/catalogs/accounts` | _run script_ |
-| accounting | Classes | `classes` | Y | `/catalogs/classes` | _run script_ |
-| accounting | Items | `items` | Y | `/catalogs/items` | _run script_ |
-| accounting | Payment Terms | `payment-terms` | Y | `/catalogs/payment-terms` | _run script_ |
-| accounting | Posting Templates | `posting-templates` | Y | `/catalogs/posting-templates` | _run script_ |
-| accounting | Account Role Bindings | `account-role-bindings` | Y | `/catalogs/account-role-bindings` | _run script_ |
-| accounting | Journal Entry Types | `accounting/journal-entry-types` | Y | hub | _run script_ |
-| accounting | QBO Categories | `accounting/qbo-categories` | Y | hub | _run script_ |
-| dispatch | Equipment Types | `equipment-types` | Y | `/catalogs/equipment-types` | _run script_ |
-| dispatch | Driver Load Statuses | `driver-load-statuses` | Y | `/catalogs/driver-load-statuses` | _run script_ |
-| dispatch | Cancellation Reasons | `cancellation-reasons` | – | hub | _run script_ |
-| dispatch | Load Cancellation Reasons | `load-cancellation-reasons` | Y | hub | _run script_ |
-| dispatch | Dispatch Flag Colors | `dispatch-flag-colors` | Y | hub | _run script_ |
-| dispatch | Dispatcher Error Reasons | `dispatcher-error-reasons` | Y | hub | _run script_ |
-| dispatch | Customer Quality Event Reasons | `customer-quality-event-reasons` | Y | hub | _run script_ |
-| driver | Driver Leave Balances | `driver-leave-balances` | Y | hub | _run script_ |
-| driver | Leave Policies | `leave-policies` | Y | hub | _run script_ |
-| driver | Driver Termination Reasons | `driver-termination-reasons` | Y | hub | _run script_ |
-| fleet | Fleet Equipment Types | `fleet/equipment-types` | Y | hub | _run script_ |
-| fleet | Tire Positions | `fleet/tire-positions` | Y | hub | _run script_ |
-| maintenance | Parts | `parts` | Y | hub | _run script_ |
-| maintenance | Parts Master | `maintenance/parts-master` | Y | hub | _run script_ |
-| maintenance | Services Catalog | `maintenance/services-catalog` | Y | hub | _run script_ |
-| maintenance | Labor Rates | `labor-rates` | Y | hub | _run script_ |
-| maintenance | Maintenance Part Locations | `maintenance-part-locations` | Y | hub | _run script_ |
-| safety | Complaint Types | `complaint-types` | Y | hub | _run script_ |
-| safety | Civil Fine Types | `safety/civil-fine-types` | Y | hub | _run script_ |
-| safety | Company Violation Types | `safety/company-violation-types` | Y | hub | _run script_ |
-| safety | Internal Fine Reasons | `safety/internal-fine-reasons` | Y | hub | _run script_ |
-| operations | Audit Event Types | `audit-event-types` | – | hub | _run script_ |
-| operations | File Categories | `file-categories` | Y | hub | _run script_ |
-| operations | US States | `us-states` | – | hub | _run script_ |
-| operations | Mexico States | `mexico-states` | – | hub | _run script_ |
-| operations | Workflow Requests | `workflow-requests` | Y | hub | _run script_ |
+| accounting | Chart of Accounts | `accounts` | Y | `/catalogs/accounts` | → §3 |
+| accounting | Classes | `classes` | Y | `/catalogs/classes` | → §3 |
+| accounting | Items | `items` | Y | `/catalogs/items` | → §3 |
+| accounting | Payment Terms | `payment-terms` | Y | `/catalogs/payment-terms` | → §3 |
+| accounting | Posting Templates | `posting-templates` | Y | `/catalogs/posting-templates` | → §3 |
+| accounting | Account Role Bindings | `account-role-bindings` | Y | `/catalogs/account-role-bindings` | → §3 |
+| accounting | Journal Entry Types | `accounting/journal-entry-types` | Y | hub | → §3 |
+| accounting | QBO Categories | `accounting/qbo-categories` | Y | hub | → §3 |
+| dispatch | Equipment Types | `equipment-types` | Y | `/catalogs/equipment-types` | → §3 |
+| dispatch | Driver Load Statuses | `driver-load-statuses` | Y | `/catalogs/driver-load-statuses` | → §3 |
+| dispatch | Cancellation Reasons | `cancellation-reasons` | – | hub | → §3 |
+| dispatch | Load Cancellation Reasons | `load-cancellation-reasons` | Y | hub | → §3 |
+| dispatch | Dispatch Flag Colors | `dispatch-flag-colors` | Y | hub | → §3 |
+| dispatch | Dispatcher Error Reasons | `dispatcher-error-reasons` | Y | hub | → §3 |
+| dispatch | Customer Quality Event Reasons | `customer-quality-event-reasons` | Y | hub | → §3 |
+| driver | Driver Leave Balances | `driver-leave-balances` | Y | hub | → §3 |
+| driver | Leave Policies | `leave-policies` | Y | hub | → §3 |
+| driver | Driver Termination Reasons | `driver-termination-reasons` | Y | hub | → §3 |
+| fleet | Fleet Equipment Types | `fleet/equipment-types` | Y | hub | → §3 |
+| fleet | Tire Positions | `fleet/tire-positions` | Y | hub | → §3 |
+| maintenance | Parts | `parts` | Y | hub | → §3 |
+| maintenance | Parts Master | `maintenance/parts-master` | Y | hub | → §3 |
+| maintenance | Services Catalog | `maintenance/services-catalog` | Y | hub | → §3 |
+| maintenance | Labor Rates | `labor-rates` | Y | hub | → §3 |
+| maintenance | Maintenance Part Locations | `maintenance-part-locations` | Y | hub | → §3 |
+| safety | Complaint Types | `complaint-types` | Y | hub | → §3 |
+| safety | Civil Fine Types | `safety/civil-fine-types` | Y | hub | → §3 |
+| safety | Company Violation Types | `safety/company-violation-types` | Y | hub | → §3 |
+| safety | Internal Fine Reasons | `safety/internal-fine-reasons` | Y | hub | → §3 |
+| operations | Audit Event Types | `audit-event-types` | – | hub | → §3 |
+| operations | File Categories | `file-categories` | Y | hub | → §3 |
+| operations | US States | `us-states` | – | hub | → §3 |
+| operations | Mexico States | `mexico-states` | – | hub | → §3 |
+| operations | Workflow Requests | `workflow-requests` | Y | hub | → §3 |
 | operations | Fuel (hub label) | `fuel` | Y | hub | **404 — not a list endpoint** |
 
-## 3. Deriving the live counts (GUARD/Jorge — has the session)
-`scripts/audit-catalog-inventory.mjs` is a **read-only** enumerator (GET only, no creds embedded). It calls
-`/registry` (authoritative item_counts) + probes every endpoint above, classifies by live count, and prints
-totals. Run with your own session:
+## 3. Live classification — GUARD probe, 2026-06-20 (api.ih35dispatch.com, OC TRANSP)
+Results below are **live-measured by GUARD's authed run** (the coder has no session and embeds no token —
+§1.5/§1.6 — so these are GUARD's numbers, not guessed).
+
+**Registry (8 registered catalogs):** **6 WORK-WITH-DATA · 2 WORK-EMPTY (accounting).**
+- WORK-WITH-DATA: Chart of Accounts, Classes, Items, Payment Terms, Equipment Types, Driver Load Statuses.
+- WORK-EMPTY (accounting → **Lane B**): Posting Templates, Account Role Bindings.
+
+**Work-empty tables WITH an existing endpoint** (`{table, rows:[]}` — populate-ready, the Tier-A2 head):
+- Parts (`parts`) · Labor Rates (`labor-rates`) · Leave Policies (`leave-policies`).
+
+**STUB — 404, no endpoint** (UI expects them; backend missing → greenfield endpoint+page):
+- trailer-types · cargo-types · inspection-types · violation-types · services.
+
+**Corrected totals** (replaces the stale 2026-06-01 `65 / 15 / 16 / 34`):
+- **Registry = 8** (6 work-with-data, 2 work-empty).
+- Live-measured beyond registry: **3 work-empty-with-endpoint** + **5 greenfield 404 stubs**.
+- The remaining `/api/v1/catalogs/*` endpoints in §2 are **LIVE-PENDING** — run the full auditor below to
+  lock them; **not guessed here.**
+
+> **Reconcile note:** the 5 404 catalogs (`trailer-types`/`cargo-types`/`inspection-types`/`violation-types`/`services`)
+> are **not** in §2's endpoint list — they are UI-expected catalogs with **no backend route**, distinct from
+> the 35 wired endpoints. They need an endpoint **and** a page built (greenfield), not just data.
+
+### Complete the live-pending rows (read-only, GUARD has the session)
+`scripts/audit-catalog-inventory.mjs` (GET only, no creds embedded) prints every route's class + totals:
 ```sh
 AUDIT_COOKIE='session=…' AUDIT_BASE_URL=https://api.ih35dispatch.com \
-  node scripts/audit-catalog-inventory.mjs          # human output
+  node scripts/audit-catalog-inventory.mjs                                   # human output
 AUDIT_COOKIE='session=…' AUDIT_MARKDOWN=1 node scripts/audit-catalog-inventory.mjs   # markdown table
 ```
-Output ends with `TOTALS: work-with-data=… work-empty=… stub/missing=…` — paste those into this doc to
-finalize the corrected live count (replacing the 2026-06-01 65/15/16/34 figures). Unauthed sanity run
-(this PR): 34/35 endpoints exist + require auth; `fuel` 404s.
+Output ends with `TOTALS: work-with-data=… work-empty=… stub/missing=…`. Unauthed sanity run (A1 PR):
+34/35 endpoints exist + require auth; `fuel` 404s (hub label).
 
-## 4. Prioritized STUB build order (the A2.. queue)
-Apply this priority to whatever §3's live run flags as **STUB** or **WORK-EMPTY** (build the operationally
-load-bearing catalogs the daily Laredo↔MX ops depend on before rarely-touched reference lists). Ordering
-rationale follows McLeod/Alvys (ops-master-data first) + QBO/NetSuite (financial reference data governed,
-later):
+## 4. Prioritized A2.. build order — FINALIZED from live data (§3)
+Locked from GUARD's live probe. Easiest-real-value first: populate tables that already have an endpoint,
+then greenfield the 404 stubs, with financial catalogs routed to Lane B (McLeod/Alvys ops-master-data
+first; QBO/NetSuite governs financial reference via ceremony).
 
-1. **Maintenance (daily shop ops):** Parts, Parts Master, Services Catalog, Labor Rates, Maintenance Part
-   Locations — these feed Work Orders (the WO line items + cost). Highest daily leverage.
-2. **Fleet:** Fleet Equipment Types, Tire Positions — feed unit/maintenance records.
-3. **Dispatch:** Cancellation Reasons, Load Cancellation Reasons, Dispatch Flag Colors, Dispatcher Error
-   Reasons, Customer Quality Event Reasons — feed the live board + load lifecycle.
-4. **Driver:** Driver Termination Reasons, Leave Policies, Driver Leave Balances — feed driver lifecycle +
-   settlements adjacency (non-financial reference only).
-5. **Safety/compliance:** Complaint Types, Civil Fine Types, Company Violation Types, Internal Fine Reasons
-   — feed the Safety module's 21 tabs.
-6. **Operations reference (low churn):** File Categories, Audit Event Types, Workflow Requests, US/Mexico
-   States — mostly static; build last.
-7. **Accounting reference:** Journal Entry Types, QBO Categories — **review before building**: these border
-   the financial cluster. A catalog that only *labels* is Tier-3; anything that drives posting/GL is **not
-   Lane A** (→ Lane B ceremony). Confirm per-catalog before queueing.
+**Tier A2 — work-empty tables that ALREADY have an endpoint** (populate + typed catalog UI + inline create;
+additive, no migration):
+1. **Parts** (`/api/v1/catalogs/parts`) — feeds Work Order line items + cost; highest daily leverage.
+2. **Labor Rates** (`/api/v1/catalogs/labor-rates`) — WO labor cost.
+3. **Leave Policies** (`/api/v1/catalogs/leave-policies`) — driver leave reference.
 
-Each A2.. block: one catalog per PR, additive, wired to its existing `/api/v1/catalogs/<name>` endpoint
-(read + the inline `+ Add new …` create), clickable to a detail/profile where the data warrants, no
-posting/migration/flag. GUARD specs each from live once §3 confirms its class.
+**Tier A3 — greenfield 404 stubs** (build the read endpoint + list page + inline create):
+4. **trailer-types** · 5. **cargo-types** · 6. **inspection-types** · 7. **violation-types** · 8. **services**
+   - Boundary: if the underlying `catalogs.*` table already exists, a read endpoint + page is Lane-A
+     additive. If a catalog needs a **new table → that is a migration → STOP for Jorge (not Lane A).**
+
+**LANE B (financial — NOT Lane A):**
+- **Posting Templates** and **Account Role Bindings** define **GL posting behavior** (JE templates / which
+  accounts each role may post to). Financial cluster → Lane B ceremony; never built in Lane A.
+
+**Live-pending — classify with the full auditor (§3) then slot in:** the remaining §2 endpoints
+(`maintenance/parts-master`, `maintenance/services-catalog`, `fleet/equipment-types`, `fleet/tire-positions`,
+`safety/*`, the dispatch reason catalogs, `file-categories`, `us-states`, `mexico-states`,
+`workflow-requests`, `audit-event-types`, `accounting/journal-entry-types`, `accounting/qbo-categories`).
+Accounting ones border the financial cluster — confirm Lane A vs B per-catalog before queueing.
+
+Each A2.. block: one catalog per PR, additive, wired to its `/api/v1/catalogs/<name>` endpoint (read +
+inline `+ Add new …`), clickable to a detail/profile where the data warrants. **No** posting/flag; a new
+`catalogs.*` table or any GL-posting tie = **not Lane A** (migration/financial → STOP). GUARD specs each
+from live.
 
 ## 5. Acceptance / scope honored
 Read-only audit: **no** route/endpoint/migration/flag/UI-behavior changed. Doc + read-only script only.
