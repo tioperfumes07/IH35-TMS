@@ -55,6 +55,7 @@ export type SamsaraVehicleStat = {
   city: string | null;
   state: string | null;
   engine_state: "on" | "off" | "idle" | "unknown";
+  odometer_mi: number | null;
   current_driver: { samsara_driver_id: string; started_at: string; ended_at: string | null } | null;
   raw: Record<string, unknown>;
 };
@@ -269,7 +270,7 @@ export function parseCityState(formatted: string | null): { city: string | null;
   return { city, state };
 }
 
-function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicleStat | null {
+export function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicleStat | null {
   const id = typeof row.id === "string" && row.id.trim().length > 0 ? row.id.trim() : null;
   if (!id) return null;
 
@@ -311,6 +312,16 @@ function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicleStat |
   else if (engineVal === "off") engine_state = "off";
   else if (engineVal === "idle") engine_state = "idle";
 
+  // Odometer from the obdOdometerMeters stat (Samsara reports METERS). Convert to miles at ingest so the
+  // PM countdown / maintenance predictor read miles directly. Defensive: any missing/invalid value -> null.
+  let odometer_mi: number | null = null;
+  const odoStat = asObject(row.obdOdometerMeters) ?? asObject(row.gatewayOdometerMeters);
+  const odoMetersRaw = odoStat?.value ?? null;
+  const odoMeters = typeof odoMetersRaw === "number" ? odoMetersRaw : Number(odoMetersRaw);
+  if (Number.isFinite(odoMeters) && odoMeters >= 0) {
+    odometer_mi = Number((odoMeters * 0.000621371).toFixed(1));
+  }
+
   // Current driver assignment: take the open assignment (no endTime) with the latest startTime.
   let current_driver: SamsaraVehicleStat["current_driver"] = null;
   const assignments = Array.isArray(row.driverAssignments) ? row.driverAssignments : [];
@@ -335,7 +346,7 @@ function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicleStat |
     }
   }
 
-  return { id, latitude, longitude, captured_at, speed_mph, heading_deg, formatted_location, city, state, engine_state, current_driver, raw: row };
+  return { id, latitude, longitude, captured_at, speed_mph, heading_deg, formatted_location, city, state, engine_state, odometer_mi, current_driver, raw: row };
 }
 
 async function fetchSamsaraStatsPage(token: string, after: string | null): Promise<{
@@ -347,7 +358,9 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   // VALID stats types only. driverAssignments is NOT a valid /fleet/vehicles/stats type — including it
   // 400s the whole request (the bug that left city/state blank). Driver login lives on the separate
   // /fleet/vehicles/driver-assignments feed (the pairing worker), not here.
-  url.searchParams.set("types", "gps,engineStates");
+  // VALID stats types only (driverAssignments 400s — see above). obdOdometerMeters carries the live
+  // odometer (meters) for the PM countdown; it is a documented valid stats type and degrades to null if absent.
+  url.searchParams.set("types", "gps,engineStates,obdOdometerMeters");
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {
