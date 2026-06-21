@@ -23,7 +23,7 @@ import { PreSettlementPanel } from "./PreSettlementPanel";
 import { CustomsTab } from "./drawer-tabs/CustomsTab";
 import { FactoringTab } from "./drawer-tabs/FactoringTab";
 import { FinesDeductionsCard } from "./tabs/FinesDeductionsCard";
-import { SettlementProfitabilityCard } from "./drawer-tabs/SettlementProfitabilityCard";
+import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard";
 
 type Props = {
   loadId: string | null;
@@ -614,10 +614,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
             <CustomsTab loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />
           ) : null}
 
-          {/* Block 9 — Settlement profitability card (stub; Lane B fills content) */}
+          {/* Block 9 — Settlement profitability card (DISP-PROFIT: wired to the real per-load
+              profitability breakdown; the drawer-tabs stub was orphaned). */}
           {activeTab === "Settlement" && load ? (
             <div className="mt-3">
-              <SettlementProfitabilityCard loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />
+              <SettlementProfitabilityCard loadId={load.id} operatingCompanyId={load.operating_company_id} currencyCode={load.currency_code} />
             </div>
           ) : null}
 
