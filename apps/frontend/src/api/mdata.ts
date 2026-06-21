@@ -826,6 +826,7 @@ export function updateDriverCompanyAuthorization(
 type CompanyScopedListParams = {
   status?: string;
   search?: string;
+  customer_type?: "broker" | "direct_shipper";
   operating_company_id?: string | null;
 };
 
@@ -834,6 +835,7 @@ function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedL
     query.set("status", params.status);
   }
   if (params.search) query.set("search", params.search);
+  if (params.customer_type) query.set("customer_type", params.customer_type);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
 }
 

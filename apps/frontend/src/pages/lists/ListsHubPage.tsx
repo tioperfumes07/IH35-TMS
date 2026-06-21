@@ -69,6 +69,10 @@ export function ListsHubPage() {
       }
     }
     if (domain === "names_master") {
+      if (catalogKey === "brokers") {
+        navigate("/lists/names/brokers");
+        return;
+      }
       navigate("/lists/names");
       return;
     }
