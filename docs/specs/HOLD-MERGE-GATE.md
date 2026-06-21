@@ -34,7 +34,7 @@ Verdict:
 Content-based detectors (GL markers, flag-flip) skip `*.md`, test files (`*.test.*`, `*.spec.*`,
 `__tests__/`), and the gate script's own fixtures, so prose/tests that merely *mention* a flag don't
 false-positive. The migration analyzer and `*posting*` path globs still catch the dangerous cases
-regardless. The script self-tests its full decision table on every run (`--self-test`, 24 cases incl. the
+regardless. The script self-tests its full decision table on every run (`--self-test`, 27 cases incl. the
 CREATE-TABLE-only migration matrix).
 
 ## The one human step Jorge does (once, in the GitHub UI)

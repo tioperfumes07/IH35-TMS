@@ -219,6 +219,10 @@ function selfTest() {
     { name: "migration with DROP -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0505_x.sql"], diffByFile: { "db/migrations/0505_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+DROP TABLE catalogs.old;" } }, want: "fail" },
     { name: "migration with NO create table (index only) -> fail (conservative)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0506_x.sql"], diffByFile: { "db/migrations/0506_x.sql": "+CREATE INDEX idx ON catalogs.existing (code);" } }, want: "fail" },
     { name: "additive new table BUT title is HOLD -> fail (title still wins)", in: { title: "[HOLD-FOR-JORGE] x", labels: [], changedFiles: ["db/migrations/0509_x.sql"], diffByFile: { "db/migrations/0509_x.sql": "+CREATE TABLE catalogs.bar (id uuid);" } }, want: "fail" },
+    // GUARD-required hole-cases: a new table + dangerous DML on an EXISTING table must stay PROTECTED (DML wins).
+    { name: "new table + UPDATE existing SET -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0510_x.sql"], diffByFile: { "db/migrations/0510_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+UPDATE mdata.existing SET y = 1;" } }, want: "fail" },
+    { name: "new table + DELETE FROM existing -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0511_x.sql"], diffByFile: { "db/migrations/0511_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+DELETE FROM mdata.existing WHERE id = 1;" } }, want: "fail" },
+    { name: "new table + TRUNCATE existing -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0512_x.sql"], diffByFile: { "db/migrations/0512_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+TRUNCATE mdata.existing;" } }, want: "fail" },
   ];
   let failed = 0;
   for (const c of cases) {
