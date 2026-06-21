@@ -48,19 +48,30 @@ const PROTECTED_GLOBS = [
 // PROTECTED (RED until JORGE-APPROVED). Conservative by construction — if we can't prove it's additive,
 // it's protected.
 const isMigrationFile = (f) => /\.sql$/i.test(f) || /(^|\/)migrations\//i.test(f);
-// Dangerous DML/DDL statement forms (precise, so a `BEFORE UPDATE` trigger or `ON DELETE CASCADE` FK clause
-// does NOT trip — only real ALTER/DROP/DELETE-FROM/TRUNCATE/UPDATE-SET statements).
-const MIG_FORBIDDEN = [
-  /\balter\s+table\b/i,
-  /\bdrop\s+(table|schema|index|type|view|materialized|sequence|function|trigger|column|constraint|database|policy)\b/i,
-  /\bdelete\s+from\b/i,
-  /\btruncate\b/i,
-  /\bupdate\s+[\w".]+\s+set\b/i,
-];
+// Untargeted hard-forbidden ops — dangerous regardless of target: dropping a real object, TRUNCATE, REVOKE,
+// or any role op. (DROP POLICY is NOT here — it is target-checked below so the standard idempotent
+// `DROP POLICY IF EXISTS … ON <new table>` RLS scaffolding is allowed on a table you just created.)
+const MIG_HARD_FORBIDDEN = /\bdrop\s+(table|schema|database|materialized\s+view|view|sequence|function|trigger|type|index|extension|role|user|tablespace|publication|subscription)\b|\btruncate\b|\brevoke\b|\b(create|alter|drop)\s+role\b/i;
 // Financial/accounting markers — substring match (conservative: over-protect anything money-adjacent, incl.
 // payment_terms / invoices / bills tables that the word-boundary form would miss).
 const MIG_FINANCIAL_RE = /accounting\.|banking\.|driver_finance\.|payment|invoice|\bbill|ledger|journal|posting|settlement|escrow|\btax\b|\bgl_|\bap_|\bar_/i;
 const normTable = (t) => String(t).replace(/["']/g, "").toLowerCase();
+// Targeted ops — each MUST reference only a table CREATEd in the SAME migration. ALTER / DROP-POLICY /
+// CREATE-POLICY / CREATE-INDEX on your OWN new table (e.g. ENABLE ROW LEVEL SECURITY, the idempotent policy
+// recreate, indexes) is additive; the same op on an EXISTING table is a schema change → protected. DML
+// (INSERT / UPDATE-SET / DELETE-FROM) is allowed only into the new table (seed), never an existing one.
+// Each op carries `kw` (counts the statements) + `re` (resolves the target table). FAIL-SAFE: if a statement
+// keyword appears more times than we could resolve a target (e.g. a dynamic `EXECUTE format('ALTER TABLE %I…')`),
+// the op is UNRESOLVABLE → PROTECTED. Unprovable = RED.
+const MIG_TARGETED_OPS = [
+  { what: "ALTER TABLE", kw: /\balter\s+table\b/gi, re: /\balter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?["']?([a-z0-9_.]+)["']?/gi },
+  { what: "DROP POLICY on", kw: /\bdrop\s+policy\b/gi, re: /\bdrop\s+policy\s+(?:if\s+exists\s+)?[\w".]+\s+on\s+["']?([a-z0-9_.]+)["']?/gi },
+  { what: "CREATE POLICY on", kw: /\bcreate\s+policy\b/gi, re: /\bcreate\s+policy\s+[\w".]+\s+on\s+["']?([a-z0-9_.]+)["']?/gi },
+  { what: "CREATE INDEX on", kw: /\bcreate\s+(?:unique\s+)?index\b/gi, re: /\bcreate\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?[\w".]+\s+on\s+["']?([a-z0-9_.]+)["']?/gi },
+  { what: "INSERT INTO", kw: /\binsert\s+into\b/gi, re: /\binsert\s+into\s+["']?([a-z0-9_.]+)["']?/gi },
+  { what: "UPDATE", kw: /\bupdate\s+["']?[a-z0-9_.]+["']?\s+set\b/gi, re: /\bupdate\s+["']?([a-z0-9_.]+)["']?\s+set\b/gi },
+  { what: "DELETE FROM", kw: /\bdelete\s+from\b/gi, re: /\bdelete\s+from\s+["']?([a-z0-9_.]+)["']?/gi },
+];
 /** Decide whether a changed migration's diff is provably additive-new-table-only. Returns {additive, reason}. */
 export function analyzeMigrationSql(diffText) {
   // Only the ADDED lines (a new migration file is all-added; a touched one is judged by what it introduces).
@@ -71,14 +82,20 @@ export function analyzeMigrationSql(diffText) {
     .join("\n");
   const sql = added.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/--[^\n]*/g, " "); // strip comments
   if (!/\bcreate\s+table\b/i.test(sql)) return { additive: false, reason: "no CREATE TABLE (not additive-new-table)" };
-  for (const re of MIG_FORBIDDEN) if (re.test(sql)) return { additive: false, reason: `forbidden op ${re}` };
+  if (MIG_HARD_FORBIDDEN.test(sql)) return { additive: false, reason: "DROP of an existing object / TRUNCATE / REVOKE / role op" };
   if (MIG_FINANCIAL_RE.test(sql)) return { additive: false, reason: "references a financial/accounting table" };
   const created = new Set();
-  for (const m of sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?["']?([a-z0-9_."]+)["']?/gi)) created.add(normTable(m[1]));
-  for (const m of sql.matchAll(/insert\s+into\s+["']?([a-z0-9_."]+)["']?/gi)) {
-    if (!created.has(normTable(m[1]))) return { additive: false, reason: `INSERT INTO non-new table ${m[1]}` };
+  for (const m of sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?["']?([a-z0-9_.]+)["']?/gi)) created.add(normTable(m[1]));
+  for (const { what, kw, re } of MIG_TARGETED_OPS) {
+    const kwCount = (sql.match(kw) || []).length;
+    let resolved = 0;
+    for (const m of sql.matchAll(re)) {
+      resolved++;
+      if (!created.has(normTable(m[1]))) return { additive: false, reason: `${what} a non-new table (${m[1]})` };
+    }
+    if (resolved < kwCount) return { additive: false, reason: `unresolvable ${what} target — cannot prove it is a same-migration table (fail-safe)` };
   }
-  return { additive: true, reason: "additive new-table only" };
+  return { additive: true, reason: "additive new-table only (every op targets a same-migration table)" };
 }
 
 // Backend GL-writing surfaces: a changed .ts here is protected ONLY when its diff shows GL-write markers
@@ -223,6 +240,17 @@ function selfTest() {
     { name: "new table + UPDATE existing SET -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0510_x.sql"], diffByFile: { "db/migrations/0510_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+UPDATE mdata.existing SET y = 1;" } }, want: "fail" },
     { name: "new table + DELETE FROM existing -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0511_x.sql"], diffByFile: { "db/migrations/0511_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+DELETE FROM mdata.existing WHERE id = 1;" } }, want: "fail" },
     { name: "new table + TRUNCATE existing -> fail (DML wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0512_x.sql"], diffByFile: { "db/migrations/0512_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+TRUNCATE mdata.existing;" } }, want: "fail" },
+    // --- gate v2: RLS/index/policy scaffolding on the OWN new table is additive; on existing = protected ---
+    { name: "new table + ENABLE RLS on OWN table (ALTER self) -> neutral", in: { title: "x", labels: [], changedFiles: ["db/migrations/0600_x.sql"], diffByFile: { "db/migrations/0600_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+ALTER TABLE mdata.svc ENABLE ROW LEVEL SECURITY;" } }, want: "pass-neutral" },
+    { name: "new table + DROP/CREATE POLICY + INDEX on OWN table -> neutral", in: { title: "x", labels: [], changedFiles: ["db/migrations/0601_x.sql"], diffByFile: { "db/migrations/0601_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+DROP POLICY IF EXISTS p ON mdata.svc;\n+CREATE POLICY p ON mdata.svc FOR ALL TO ih35_app USING (true);\n+CREATE INDEX IF NOT EXISTS idx ON mdata.svc (id);\n+GRANT SELECT, INSERT, UPDATE, DELETE ON mdata.svc TO ih35_app;" } }, want: "pass-neutral" },
+    { name: "new table + ALTER an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0602_x.sql"], diffByFile: { "db/migrations/0602_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+ALTER TABLE mdata.existing ENABLE ROW LEVEL SECURITY;" } }, want: "fail" },
+    { name: "new table + CREATE POLICY on an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0603_x.sql"], diffByFile: { "db/migrations/0603_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+CREATE POLICY p ON mdata.existing FOR ALL TO ih35_app USING (true);" } }, want: "fail" },
+    { name: "new table + CREATE INDEX on an EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0604_x.sql"], diffByFile: { "db/migrations/0604_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+CREATE INDEX idx ON mdata.existing (id);" } }, want: "fail" },
+    { name: "new table + REVOKE -> fail (hard-forbidden)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0605_x.sql"], diffByFile: { "db/migrations/0605_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+REVOKE SELECT ON mdata.existing FROM ih35_app;" } }, want: "fail" },
+    { name: "real services-catalog migration shape (full RLS scaffolding on own table) -> neutral", in: { title: "fix(catalogs): create mdata.maintenance_services", labels: [], changedFiles: ["db/migrations/202606210000_maintenance_services_catalog_table.sql"], diffByFile: { "db/migrations/202606210000_maintenance_services_catalog_table.sql": "+CREATE TABLE IF NOT EXISTS mdata.maintenance_services (id uuid PRIMARY KEY, operating_company_id uuid NOT NULL REFERENCES org.companies(id), service_code text NOT NULL);\n+CREATE INDEX IF NOT EXISTS idx_ms ON mdata.maintenance_services (operating_company_id);\n+ALTER TABLE mdata.maintenance_services ENABLE ROW LEVEL SECURITY;\n+DROP POLICY IF EXISTS maintenance_services_company ON mdata.maintenance_services;\n+CREATE POLICY maintenance_services_company ON mdata.maintenance_services FOR ALL TO ih35_app USING (true);\n+GRANT USAGE ON SCHEMA mdata TO ih35_app;\n+GRANT SELECT, INSERT, UPDATE, DELETE ON mdata.maintenance_services TO ih35_app;" } }, want: "pass-neutral" },
+    { name: "new table + ALTER a FINANCIAL table -> fail (financial wins)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0606_x.sql"], diffByFile: { "db/migrations/0606_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+ALTER TABLE accounting.invoices ADD COLUMN x text;" } }, want: "fail" },
+    { name: "ALTER existing, NO create table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0607_x.sql"], diffByFile: { "db/migrations/0607_x.sql": "+ALTER TABLE mdata.existing ADD COLUMN x text;" } }, want: "fail" },
+    { name: "new table + UNRESOLVABLE dynamic ALTER (EXECUTE format) -> fail (fail-safe)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0608_x.sql"], diffByFile: { "db/migrations/0608_x.sql": "+CREATE TABLE mdata.svc (id uuid);\n+EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', some_table);" } }, want: "fail" },
   ];
   let failed = 0;
   for (const c of cases) {
