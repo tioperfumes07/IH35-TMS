@@ -62,7 +62,15 @@ export class BillLineAccountError extends Error {
   }
 }
 
-const VALID_KINDS = new Set<string>(EXPENSE_CATEGORY_MAP_KIND_VALUES);
+// Lazily built — do NOT read EXPENSE_CATEGORY_MAP_KIND_VALUES at MODULE LOAD. Many posting tests
+// partially mock ../expense-category-map/resolver.service.js (only resolveAccountForCategory) and
+// transitively import this module via posting-engine; a module-top access of a named export not on
+// the mock fails the whole suite at load. Accessing it inside the function (runtime) keeps load clean.
+let validKindsCache: Set<string> | null = null;
+function isValidCategoryKind(kind: string): boolean {
+  if (!validKindsCache) validKindsCache = new Set<string>(EXPENSE_CATEGORY_MAP_KIND_VALUES);
+  return validKindsCache.has(kind);
+}
 
 export async function resolveBillLineDebitAccount(
   client: DbClient,
@@ -97,7 +105,7 @@ export async function resolveBillLineDebitAccount(
       `Bill line has an incomplete category (kind=${kind ?? "∅"}, code=${code ?? "∅"}) — both are required. FAIL LOUD.`
     );
   }
-  if (!VALID_KINDS.has(kind)) {
+  if (!isValidCategoryKind(kind)) {
     throw new BillLineAccountError(
       "CATEGORY_KIND_INVALID",
       `Bill line category_kind "${kind}" is not a valid expense category kind — FAIL LOUD.`
