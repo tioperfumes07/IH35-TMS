@@ -224,6 +224,25 @@ async function loadUnitOdometers(
   const map = new Map<string, number>();
   if (unitIds.length === 0) return map;
 
+  // PRIMARY: live odometer from the Samsara stats-poll ingest (#1289). The fleet POLLS rather than
+  // receiving odometer webhooks, so the integrations.samsara_vehicles.raw_payload below is empty for
+  // odometer — without this, every unit was skipped as "no odometer" and the PM auto-engine did nothing.
+  const liveRes = await client.query<{ unit_id: string; odometer_mi: number | string | null }>(
+    `
+      SELECT unit_id::text AS unit_id, odometer_mi
+      FROM telematics.vehicle_latest_position
+      WHERE operating_company_id = $1::uuid
+        AND unit_id = ANY($2::uuid[])
+        AND odometer_mi IS NOT NULL
+    `,
+    [operatingCompanyId, unitIds]
+  );
+  for (const row of liveRes.rows) {
+    const odo = Number(row.odometer_mi);
+    if (Number.isFinite(odo)) map.set(row.unit_id, Math.round(odo));
+  }
+
+  // FALLBACK: webhook raw_payload for any unit without a live stats-poll fix yet.
   const res = await client.query<{ unit_id: string; raw_payload: unknown }>(
     `
       SELECT DISTINCT ON (sv.local_unit_id)
@@ -238,6 +257,7 @@ async function loadUnitOdometers(
   );
 
   for (const row of res.rows) {
+    if (map.has(row.unit_id)) continue;
     const odometer = extractSamsaraOdometerMi(row.raw_payload);
     if (odometer != null) map.set(row.unit_id, odometer);
   }
