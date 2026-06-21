@@ -64,6 +64,7 @@ type PmScheduleRow = {
   next_due_date: string | null;
   samsara_unit_id: string | null;
   samsara_raw_payload: unknown;
+  live_odometer_mi: number | null;
 };
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
@@ -107,12 +108,18 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
         s.next_due_miles::int,
         s.next_due_date::text,
         a.samsara_unit_id,
-        sv.raw_payload AS samsara_raw_payload
+        sv.raw_payload AS samsara_raw_payload,
+        vlp.odometer_mi::float8 AS live_odometer_mi
       FROM maint.pm_schedule s
       JOIN mdata.assets a ON a.id = s.asset_id AND a.tenant_id = s.tenant_id
       LEFT JOIN integrations.samsara_vehicles sv
         ON sv.operating_company_id = s.tenant_id
        AND sv.samsara_vehicle_id = a.samsara_unit_id
+      -- Live odometer from the Samsara stats-poll ingest (#1289): the webhook raw_payload is empty
+      -- because we POLL, not webhook, so the current odometer must come from telematics.vehicle_latest_position.
+      LEFT JOIN telematics.vehicle_latest_position vlp
+        ON vlp.operating_company_id = s.tenant_id
+       AND vlp.samsara_vehicle_id = a.samsara_unit_id
       WHERE ${filters.join(" AND ")}
       ORDER BY COALESCE(s.next_due_date, DATE '9999-12-31') ASC, COALESCE(s.next_due_miles, 2147483647) ASC
     `,
@@ -122,7 +129,12 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
 }
 
 function mapDueRow(row: PmScheduleRow) {
-  const currentOdometer = extractSamsaraOdometerMi(row.samsara_raw_payload);
+  // Prefer the live odometer ingested by the Samsara stats poll (#1289, vehicle_latest_position.odometer_mi);
+  // fall back to the webhook raw_payload for any unit still on the webhook path.
+  const currentOdometer =
+    typeof row.live_odometer_mi === "number" && Number.isFinite(row.live_odometer_mi)
+      ? Math.round(row.live_odometer_mi)
+      : extractSamsaraOdometerMi(row.samsara_raw_payload);
   const evaluation = evaluatePmDue(
     {
       interval_miles: row.interval_miles,
@@ -174,7 +186,7 @@ export async function registerMaintPmRoutes(app: FastifyInstance) {
       return parsed.data.include_not_due ? mapped : mapped.filter((row) => row.is_due);
     });
 
-    return { rows, computed_from: "samsara_odometer_and_schedule_dates" };
+    return { rows, computed_from: "live_odometer_and_schedule_dates" };
   });
 
   app.post("/api/v1/maint/pm/schedules", async (req, reply) => {
