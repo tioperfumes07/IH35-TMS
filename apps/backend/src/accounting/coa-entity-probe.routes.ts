@@ -105,25 +105,42 @@ export async function registerCoaEntityProbeRoutes(app: FastifyInstance) {
       };
     });
 
-    // Applied-migration ledger lives in _system._schema_migrations, which ih35_app cannot read under RLS;
-    // read it via lucia bypass exactly like the /healthz migration-ledger check (read-only system metadata).
-    const stage_migrations_applied = await withLuciaBypass(async (clientRaw) => {
-      const client = clientRaw as QClient;
-      const migApplied = async (like: string): Promise<boolean> => {
-        const rows = (
-          await client.query(`SELECT EXISTS(SELECT 1 FROM _system._schema_migrations WHERE filename LIKE $1) AS ok`, [like])
-        ).rows;
-        return Boolean(rows[0]?.ok);
+    // Applied-migration ledger lives in _system._schema_migrations. ih35_app cannot read it under RLS;
+    // /healthz reads it via lucia bypass. That works in prod but NOT in the CI verify DB (the bypass role
+    // lacks the grant there). It's an AUXILIARY signal — degrade gracefully to null + a readable flag,
+    // never 500 the probe (the primary counts/convergence below come from catalogs.accounts and always return).
+    // Owner/Administrator-gated above + entity reads under withCompanyScope (the membership guard).
+    let migrations_ledger_readable = true;
+    let stage_migrations_applied: Record<string, boolean | null>;
+    try {
+      stage_migrations_applied = await withLuciaBypass(
+        async (clientRaw) => {
+        const client = clientRaw as QClient;
+        const migApplied = async (like: string): Promise<boolean> => {
+          const rows = (
+            await client.query(`SELECT EXISTS(SELECT 1 FROM _system._schema_migrations WHERE filename LIKE $1) AS ok`, [like])
+          ).rows;
+          return Boolean(rows[0]?.ok);
+        };
+        return {
+          stage1_entity_columns: await migApplied("%entity_columns_stage1%"),
+          stage2_backfill_transp: await migApplied("%backfill_transp_stage2%"),
+          stage3_decommingle_trk: await migApplied("%decommingle_trk_stage3%"),
+          stage4_unique_index: await migApplied("%stage4%"),
+          stage5_usmca_seed: await migApplied("%stage5%"),
+        } as Record<string, boolean | null>;
+      });
+    } catch {
+      migrations_ledger_readable = false;
+      stage_migrations_applied = {
+        stage1_entity_columns: null,
+        stage2_backfill_transp: null,
+        stage3_decommingle_trk: null,
+        stage4_unique_index: null,
+        stage5_usmca_seed: null,
       };
-      return {
-        stage1_entity_columns: await migApplied("%entity_columns_stage1%"),
-        stage2_backfill_transp: await migApplied("%backfill_transp_stage2%"),
-        stage3_decommingle_trk: await migApplied("%decommingle_trk_stage3%"),
-        stage4_unique_index: await migApplied("%stage4%"),
-        stage5_usmca_seed: await migApplied("%stage5%"),
-      };
-    });
+    }
 
-    return { ...accounts, stage_migrations_applied };
+    return { ...accounts, stage_migrations_applied, migrations_ledger_readable };
   });
 }

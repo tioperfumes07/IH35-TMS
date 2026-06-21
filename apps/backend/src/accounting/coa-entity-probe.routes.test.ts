@@ -63,8 +63,10 @@ describeIntegration("coa-entity-probe route", () => {
       "stage4_unique_index",
       "stage5_usmca_seed",
     ]) {
-      expect(typeof stages[k]).toBe("boolean");
+      // boolean in prod (lucia bypass reads the ledger); null in the CI verify DB (bypass role lacks the grant).
+      expect(stages[k] === null || typeof stages[k] === "boolean").toBe(true);
     }
+    expect(typeof body.migrations_ledger_readable).toBe("boolean");
     expect(typeof body.stage4_index_exists).toBe("boolean");
     expect(Array.isArray(body.system_purpose_duplicates_active)).toBe(true);
     expect(typeof body.stage4_safe_to_constrain).toBe("boolean");
