@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { registerCargoClaimReasonsRoutes } from "./cargo-claim-reasons.routes.js";
 import { registerCivilFineTypesRoutes } from "./civil-fine-types.routes.js";
 import { registerCompanyViolationTypesRoutes } from "./company-violation-types.routes.js";
 import { registerComplaintTypesRoutes } from "./complaint-types.routes.js";
@@ -11,4 +12,5 @@ export async function registerSafetyCatalogRoutes(app: FastifyInstance) {
   await registerCompanyViolationTypesRoutes(app);
   await registerComplaintTypesRoutes(app);
   await registerDotViolationTypesRoutes(app);
+  await registerCargoClaimReasonsRoutes(app);
 }

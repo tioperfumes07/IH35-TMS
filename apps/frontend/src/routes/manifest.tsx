@@ -329,6 +329,7 @@ import { CivilFineTypesListPage } from "../pages/lists/safety/CivilFineTypesList
 import { CompanyViolationTypesListPage } from "../pages/lists/safety/CompanyViolationTypesListPage";
 import { ComplaintTypesListPage } from "../pages/lists/safety/ComplaintTypesListPage";
 import { DotViolationTypesListPage } from "../pages/lists/safety/DotViolationTypesListPage";
+import { CargoClaimReasonsListPage } from "../pages/lists/safety/CargoClaimReasonsListPage";
 import { InternalFineReasonsListPage } from "../pages/lists/safety/InternalFineReasonsListPage";
 import { LegalTemplateDetailPage } from "../pages/legal/templates/LegalTemplateDetailPage";
 import { LegalTemplatesListPage } from "../pages/legal/templates/LegalTemplatesListPage";
@@ -2339,6 +2340,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DotViolationTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/safety/cargo-claim-reasons"
+          element={
+            <ProtectedRoute>
+              <CargoClaimReasonsListPage />
             </ProtectedRoute>
           }
         />

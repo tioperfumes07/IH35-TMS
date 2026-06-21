@@ -75,6 +75,30 @@ export type DotViolationTypeRow = {
   updated_at: string;
 };
 
+export type CargoClaimCategory =
+  | "damage"
+  | "shortage"
+  | "loss"
+  | "delay"
+  | "temperature"
+  | "contamination"
+  | "theft"
+  | "concealed_damage"
+  | "other";
+
+export type CargoClaimReasonRow = {
+  id: string;
+  operating_company_id: string;
+  reason_code: string;
+  display_name: string;
+  description: string | null;
+  claim_category: CargoClaimCategory | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 type ListQuery = {
   search?: string;
   is_active?: "true" | "false" | "all";
@@ -271,6 +295,43 @@ export function updateDotViolationType(
 
 export function deactivateDotViolationType(companyId: string, id: string) {
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/catalogs/safety/dot-violation-types/${id}`, companyId), {
+    method: "DELETE",
+  });
+}
+
+export function listCargoClaimReasons(companyId: string, query: ListQuery = {}) {
+  return apiRequest<{ rows: CargoClaimReasonRow[]; total: number }>(
+    buildListPath("/api/v1/catalogs/safety/cargo-claim-reasons", companyId, query)
+  );
+}
+
+export function getCargoClaimReason(companyId: string, id: string) {
+  return apiRequest<CargoClaimReasonRow>(withCompany(`/api/v1/catalogs/safety/cargo-claim-reasons/${id}`, companyId));
+}
+
+export function createCargoClaimReason(
+  companyId: string,
+  body: Pick<CargoClaimReasonRow, "reason_code" | "display_name" | "description" | "claim_category" | "is_active" | "sort_order">
+) {
+  return apiRequest<CargoClaimReasonRow>(withCompany("/api/v1/catalogs/safety/cargo-claim-reasons", companyId), {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateCargoClaimReason(
+  companyId: string,
+  id: string,
+  body: Partial<Pick<CargoClaimReasonRow, "reason_code" | "display_name" | "description" | "claim_category" | "is_active" | "sort_order">>
+) {
+  return apiRequest<CargoClaimReasonRow>(withCompany(`/api/v1/catalogs/safety/cargo-claim-reasons/${id}`, companyId), {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function deactivateCargoClaimReason(companyId: string, id: string) {
+  return apiRequest<{ ok: true }>(withCompany(`/api/v1/catalogs/safety/cargo-claim-reasons/${id}`, companyId), {
     method: "DELETE",
   });
 }
