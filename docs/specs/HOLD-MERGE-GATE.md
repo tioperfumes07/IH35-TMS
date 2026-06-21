@@ -15,8 +15,10 @@ control.** This gate is the control.
   (CREATE-TABLE-only neutral, 2026-06-20). A migration is **neutral** only if it `CREATE TABLE`s a new
   table and does nothing dangerous — **no** `ALTER TABLE` / `DROP` / `DELETE FROM` / `TRUNCATE` /
   `UPDATE … SET`, **no** financial/accounting table reference (`accounting.*`, `payment`, `invoice`,
-  `bill`, `ledger`, `journal`, `posting`, `tax`, `gl_/ap_/ar_`), and **no** `INSERT INTO` a table other
-  than the one it just created (seeding its OWN new table is allowed). Anything else stays **PROTECTED** —
+  `bill`, `ledger`, `journal`, `posting`, `tax`, `gl_/ap_/ar_`), and every `ALTER TABLE` / `DROP POLICY` / `CREATE POLICY` / `CREATE INDEX` / `INSERT INTO` targets **only a
+  table created in the same migration** (so the standard RLS scaffolding — `ALTER … ENABLE ROW LEVEL
+  SECURITY`, the idempotent policy recreate, indexes — on the NEW table is allowed; the same op on an
+  EXISTING table, or an unresolvable/dynamic target, stays PROTECTED). Anything else stays **PROTECTED** —
   conservative: if it can't be proven additive-new-table, it's protected, OR
 - a changed **backend accounting/driver-finance `.ts`** file whose diff shows **GL-write markers**
   (`INSERT INTO accounting.journal…`, `journal_entry_postings`, `payment_applications`, post/JE helpers),
@@ -34,7 +36,7 @@ Verdict:
 Content-based detectors (GL markers, flag-flip) skip `*.md`, test files (`*.test.*`, `*.spec.*`,
 `__tests__/`), and the gate script's own fixtures, so prose/tests that merely *mention* a flag don't
 false-positive. The migration analyzer and `*posting*` path globs still catch the dangerous cases
-regardless. The script self-tests its full decision table on every run (`--self-test`, 27 cases incl. the
+regardless. The script self-tests its full decision table on every run (`--self-test`, 37 cases incl. the
 CREATE-TABLE-only migration matrix).
 
 ## The one human step Jorge does (once, in the GitHub UI)
