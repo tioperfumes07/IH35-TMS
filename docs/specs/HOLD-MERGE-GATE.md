@@ -10,8 +10,14 @@ control.** This gate is the control.
 (`.github/workflows/hold-merge-gate.yml`) on every pull request. It marks a PR **PROTECTED** if ANY of:
 
 - the **title** contains `[HOLD-FOR-JORGE]` (case-insensitive), OR
-- a changed file matches a **protected path glob**: `db/migrations/**`, `**/migrations/**`, `**/*.sql`,
-  `**/*posting*.ts`, `**/*posting*.mjs`, OR
+- a changed file matches a **protected path glob**: `**/*posting*.ts`, `**/*posting*.mjs`, OR
+- a changed **migration** (`*.sql` / `**/migrations/**`) is **NOT provably additive-new-table**
+  (CREATE-TABLE-only neutral, 2026-06-20). A migration is **neutral** only if it `CREATE TABLE`s a new
+  table and does nothing dangerous — **no** `ALTER TABLE` / `DROP` / `DELETE FROM` / `TRUNCATE` /
+  `UPDATE … SET`, **no** financial/accounting table reference (`accounting.*`, `payment`, `invoice`,
+  `bill`, `ledger`, `journal`, `posting`, `tax`, `gl_/ap_/ar_`), and **no** `INSERT INTO` a table other
+  than the one it just created (seeding its OWN new table is allowed). Anything else stays **PROTECTED** —
+  conservative: if it can't be proven additive-new-table, it's protected, OR
 - a changed **backend accounting/driver-finance `.ts`** file whose diff shows **GL-write markers**
   (`INSERT INTO accounting.journal…`, `journal_entry_postings`, `payment_applications`, post/JE helpers),
   OR
@@ -27,8 +33,9 @@ Verdict:
 
 Content-based detectors (GL markers, flag-flip) skip `*.md`, test files (`*.test.*`, `*.spec.*`,
 `__tests__/`), and the gate script's own fixtures, so prose/tests that merely *mention* a flag don't
-false-positive. The path globs still catch real migrations/SQL/posting tooling regardless. The script
-self-tests its full decision table on every run (`--self-test`, 14 cases).
+false-positive. The migration analyzer and `*posting*` path globs still catch the dangerous cases
+regardless. The script self-tests its full decision table on every run (`--self-test`, 24 cases incl. the
+CREATE-TABLE-only migration matrix).
 
 ## The one human step Jorge does (once, in the GitHub UI)
 1. **Make `hold-merge-gate` a REQUIRED status check** in branch protection on `main`

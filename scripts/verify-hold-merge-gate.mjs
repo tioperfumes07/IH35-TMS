@@ -9,7 +9,11 @@
 // Decision (classify()):
 //   PROTECTED if ANY of:
 //     • title contains "[HOLD-FOR-JORGE]" (case-insensitive), OR
-//     • a changed file matches a PROTECTED_GLOBS entry (migrations / *.sql / *posting* tooling), OR
+//     • a changed file matches a PROTECTED_GLOBS entry (*posting* tooling), OR
+//     • a changed migration is NOT provably additive-new-table (CREATE-TABLE-only neutral, 2026-06-20:
+//       a migration is neutral ONLY if it CREATEs a new table and does nothing dangerous — no ALTER /
+//       DROP / DELETE / TRUNCATE / UPDATE-SET, no financial/accounting table, no INSERT into an existing
+//       table; INSERT into the same new table is allowed. Anything else stays PROTECTED — conservative), OR
 //     • a changed backend accounting/driver-finance .ts file whose DIFF shows GL-write markers, OR
 //     • the diff flips a *_ENABLED / *_FLAG / FEATURE_* from false/OFF -> true/ON.
 //   Verdict:
@@ -35,12 +39,47 @@ const HOLD_TITLE_RE = /\[HOLD-FOR-JORGE/i;
 
 // Path globs that are ALWAYS protected (financial / posting / migration tooling).
 const PROTECTED_GLOBS = [
-  "db/migrations/**",
-  "**/migrations/**",
-  "**/*.sql",
   "**/*posting*.ts",
   "**/*posting*.mjs",
 ];
+
+// Migration safety (CREATE-TABLE-only neutral, Jorge-approved 2026-06-20). A migration is NEUTRAL only if
+// it is PROVABLY additive-new-table: it CREATEs a new table and does nothing dangerous. Anything else stays
+// PROTECTED (RED until JORGE-APPROVED). Conservative by construction — if we can't prove it's additive,
+// it's protected.
+const isMigrationFile = (f) => /\.sql$/i.test(f) || /(^|\/)migrations\//i.test(f);
+// Dangerous DML/DDL statement forms (precise, so a `BEFORE UPDATE` trigger or `ON DELETE CASCADE` FK clause
+// does NOT trip — only real ALTER/DROP/DELETE-FROM/TRUNCATE/UPDATE-SET statements).
+const MIG_FORBIDDEN = [
+  /\balter\s+table\b/i,
+  /\bdrop\s+(table|schema|index|type|view|materialized|sequence|function|trigger|column|constraint|database|policy)\b/i,
+  /\bdelete\s+from\b/i,
+  /\btruncate\b/i,
+  /\bupdate\s+[\w".]+\s+set\b/i,
+];
+// Financial/accounting markers — substring match (conservative: over-protect anything money-adjacent, incl.
+// payment_terms / invoices / bills tables that the word-boundary form would miss).
+const MIG_FINANCIAL_RE = /accounting\.|banking\.|driver_finance\.|payment|invoice|\bbill|ledger|journal|posting|settlement|escrow|\btax\b|\bgl_|\bap_|\bar_/i;
+const normTable = (t) => String(t).replace(/["']/g, "").toLowerCase();
+/** Decide whether a changed migration's diff is provably additive-new-table-only. Returns {additive, reason}. */
+export function analyzeMigrationSql(diffText) {
+  // Only the ADDED lines (a new migration file is all-added; a touched one is judged by what it introduces).
+  const added = String(diffText || "")
+    .split("\n")
+    .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
+    .map((l) => l.slice(1))
+    .join("\n");
+  const sql = added.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/--[^\n]*/g, " "); // strip comments
+  if (!/\bcreate\s+table\b/i.test(sql)) return { additive: false, reason: "no CREATE TABLE (not additive-new-table)" };
+  for (const re of MIG_FORBIDDEN) if (re.test(sql)) return { additive: false, reason: `forbidden op ${re}` };
+  if (MIG_FINANCIAL_RE.test(sql)) return { additive: false, reason: "references a financial/accounting table" };
+  const created = new Set();
+  for (const m of sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?["']?([a-z0-9_."]+)["']?/gi)) created.add(normTable(m[1]));
+  for (const m of sql.matchAll(/insert\s+into\s+["']?([a-z0-9_."]+)["']?/gi)) {
+    if (!created.has(normTable(m[1]))) return { additive: false, reason: `INSERT INTO non-new table ${m[1]}` };
+  }
+  return { additive: true, reason: "additive new-table only" };
+}
 
 // Backend GL-writing surfaces: a changed .ts here is protected ONLY when its diff shows GL-write markers
 // (so benign accounting UI/route edits stay neutral, per Jorge's "accounting/**/*.ts that write the GL").
@@ -97,6 +136,13 @@ export function classify(input) {
 
   for (const f of changedFiles) {
     if (PROTECTED_GLOB_RES.some((re) => re.test(f))) reasons.push(`protected path: ${f}`);
+  }
+
+  // Migrations: neutral ONLY if provably additive-new-table; ALTER / financial / DML-into-existing → protected.
+  for (const f of changedFiles) {
+    if (!isMigrationFile(f)) continue;
+    const res = analyzeMigrationSql(diffByFile[f] || "");
+    if (!res.additive) reasons.push(`migration not additive-new-table (${f}): ${res.reason}`);
   }
 
   for (const f of changedFiles) {
@@ -162,6 +208,17 @@ function selfTest() {
     { name: "the gate script's own fixtures do NOT self-trip -> neutral", in: { title: "fix(ci): gate", labels: [], changedFiles: ["scripts/verify-hold-merge-gate.mjs"], diffByFile: { "scripts/verify-hold-merge-gate.mjs": "+ EXPENSE_GL_POSTING_ENABLED = true\n+ INSERT INTO accounting.journal_entries" } }, want: "pass-neutral" },
     { name: "a test file mentioning a flag flip -> neutral", in: { title: "test: x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.test.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.test.ts": "+ FOO_ENABLED = true\n+ journal_entries" } }, want: "pass-neutral" },
     { name: "a .md mentioning flags -> neutral", in: { title: "docs", labels: [], changedFiles: ["docs/x.md"], diffByFile: { "docs/x.md": "+ FEATURE_VOID_ENABLED = on; INSERT INTO accounting.journal_entries" } }, want: "pass-neutral" },
+    // --- migration: CREATE-TABLE-only neutral (Jorge-approved 2026-06-20) ---
+    { name: "additive new catalog table -> neutral", in: { title: "feat(catalog): trailer types", labels: [], changedFiles: ["db/migrations/0500_trailer_types.sql"], diffByFile: { "db/migrations/0500_trailer_types.sql": "+CREATE TABLE IF NOT EXISTS catalogs.trailer_types (\n+  id uuid PRIMARY KEY,\n+  code text NOT NULL,\n+  display_name text NOT NULL\n+);\n+GRANT SELECT, INSERT, UPDATE, DELETE ON catalogs.trailer_types TO ih35_app;" } }, want: "pass-neutral" },
+    { name: "additive new table + seed OWN table -> neutral", in: { title: "x", labels: [], changedFiles: ["db/migrations/0501_cargo_types.sql"], diffByFile: { "db/migrations/0501_cargo_types.sql": "+CREATE TABLE catalogs.cargo_types (id uuid, code text);\n+INSERT INTO catalogs.cargo_types (id, code) VALUES (gen_random_uuid(), 'DRY');" } }, want: "pass-neutral" },
+    { name: "additive new table + updated_at trigger (BEFORE UPDATE) -> neutral", in: { title: "x", labels: [], changedFiles: ["db/migrations/0507_svc.sql"], diffByFile: { "db/migrations/0507_svc.sql": "+CREATE TABLE catalogs.svc (id uuid, updated_at timestamptz);\n+CREATE TRIGGER t BEFORE UPDATE ON catalogs.svc FOR EACH ROW EXECUTE FUNCTION touch();" } }, want: "pass-neutral" },
+    { name: "migration with ALTER existing -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0502_x.sql"], diffByFile: { "db/migrations/0502_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+ALTER TABLE catalogs.existing ADD COLUMN y text;" } }, want: "fail" },
+    { name: "migration INSERT into EXISTING table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0503_x.sql"], diffByFile: { "db/migrations/0503_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+INSERT INTO catalogs.other_existing (id) VALUES (1);" } }, want: "fail" },
+    { name: "migration creating a FINANCIAL table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0504_x.sql"], diffByFile: { "db/migrations/0504_x.sql": "+CREATE TABLE accounting.new_journal (id uuid);" } }, want: "fail" },
+    { name: "financial catalog (payment_terms) table -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0508_x.sql"], diffByFile: { "db/migrations/0508_x.sql": "+CREATE TABLE catalogs.payment_terms (id uuid, code text);" } }, want: "fail" },
+    { name: "migration with DROP -> fail", in: { title: "x", labels: [], changedFiles: ["db/migrations/0505_x.sql"], diffByFile: { "db/migrations/0505_x.sql": "+CREATE TABLE catalogs.foo (id uuid);\n+DROP TABLE catalogs.old;" } }, want: "fail" },
+    { name: "migration with NO create table (index only) -> fail (conservative)", in: { title: "x", labels: [], changedFiles: ["db/migrations/0506_x.sql"], diffByFile: { "db/migrations/0506_x.sql": "+CREATE INDEX idx ON catalogs.existing (code);" } }, want: "fail" },
+    { name: "additive new table BUT title is HOLD -> fail (title still wins)", in: { title: "[HOLD-FOR-JORGE] x", labels: [], changedFiles: ["db/migrations/0509_x.sql"], diffByFile: { "db/migrations/0509_x.sql": "+CREATE TABLE catalogs.bar (id uuid);" } }, want: "fail" },
   ];
   let failed = 0;
   for (const c of cases) {
