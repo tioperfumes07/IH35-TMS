@@ -52,6 +52,29 @@ export type ComplaintTypeRow = {
   is_active: boolean;
 };
 
+export type DotBasicCategory =
+  | "unsafe_driving"
+  | "hours_of_service"
+  | "driver_fitness"
+  | "controlled_substances"
+  | "vehicle_maintenance"
+  | "crash_indicator";
+
+export type DotViolationTypeRow = {
+  id: string;
+  operating_company_id: string;
+  violation_code: string;
+  display_name: string;
+  description: string | null;
+  basic_category: DotBasicCategory | null;
+  severity_weight: number | null;
+  is_oos: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 type ListQuery = {
   search?: string;
   is_active?: "true" | "false" | "all";
@@ -211,6 +234,43 @@ export function updateComplaintType(
 
 export function deactivateComplaintType(companyId: string, id: string) {
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/catalogs/safety/complaint-types/${id}`, companyId), {
+    method: "DELETE",
+  });
+}
+
+export function listDotViolationTypes(companyId: string, query: ListQuery = {}) {
+  return apiRequest<{ rows: DotViolationTypeRow[]; total: number }>(
+    buildListPath("/api/v1/catalogs/safety/dot-violation-types", companyId, query)
+  );
+}
+
+export function getDotViolationType(companyId: string, id: string) {
+  return apiRequest<DotViolationTypeRow>(withCompany(`/api/v1/catalogs/safety/dot-violation-types/${id}`, companyId));
+}
+
+export function createDotViolationType(
+  companyId: string,
+  body: Pick<DotViolationTypeRow, "violation_code" | "display_name" | "description" | "basic_category" | "severity_weight" | "is_oos" | "is_active" | "sort_order">
+) {
+  return apiRequest<DotViolationTypeRow>(withCompany("/api/v1/catalogs/safety/dot-violation-types", companyId), {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateDotViolationType(
+  companyId: string,
+  id: string,
+  body: Partial<Pick<DotViolationTypeRow, "violation_code" | "display_name" | "description" | "basic_category" | "severity_weight" | "is_oos" | "is_active" | "sort_order">>
+) {
+  return apiRequest<DotViolationTypeRow>(withCompany(`/api/v1/catalogs/safety/dot-violation-types/${id}`, companyId), {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function deactivateDotViolationType(companyId: string, id: string) {
+  return apiRequest<{ ok: true }>(withCompany(`/api/v1/catalogs/safety/dot-violation-types/${id}`, companyId), {
     method: "DELETE",
   });
 }
