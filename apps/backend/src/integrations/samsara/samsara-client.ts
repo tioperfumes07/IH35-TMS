@@ -316,8 +316,8 @@ export function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicl
   // PM countdown / maintenance predictor read miles directly. Defensive: any missing/invalid value -> null.
   let odometer_mi: number | null = null;
   const odoStat = asObject(row.obdOdometerMeters) ?? asObject(row.gatewayOdometerMeters);
-  const odoMetersRaw = odoStat?.value ?? null;
-  const odoMeters = typeof odoMetersRaw === "number" ? odoMetersRaw : Number(odoMetersRaw);
+  // Guard against Number(null|undefined) === 0 — when no odometer stat is present odometer_mi must stay null.
+  const odoMeters = odoStat != null && odoStat.value != null ? Number(odoStat.value) : NaN;
   if (Number.isFinite(odoMeters) && odoMeters >= 0) {
     odometer_mi = Number((odoMeters * 0.000621371).toFixed(1));
   }
