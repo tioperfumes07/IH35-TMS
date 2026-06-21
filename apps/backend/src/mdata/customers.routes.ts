@@ -19,6 +19,7 @@ const listQuerySchema = z.object({
   q: z.string().trim().max(100).optional(),
   active_only: z.coerce.boolean().optional().default(true),
   autocomplete: z.coerce.boolean().optional().default(false),
+  customer_type: z.enum(["broker", "direct_shipper"]).optional(),
   operating_company_id: z.string().uuid().optional(),
 });
 
@@ -368,7 +369,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, q, active_only, autocomplete, operating_company_id } = parsedQuery.data;
+    const { limit, offset, status, search, q, active_only, autocomplete, customer_type, operating_company_id } = parsedQuery.data;
     const term = (q ?? search ?? "").trim();
     if (autocomplete) {
       if (!operating_company_id) {
@@ -413,6 +414,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       }
       values.push(resolvedOperatingCompanyId);
       filters.push(`operating_company_id = $${values.length}`);
+      if (customer_type) {
+        values.push(customer_type);
+        filters.push(`customer_type = $${values.length}`);
+      }
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const countRes = await client.query<{ total: number }>(
         `SELECT count(*)::int AS total FROM mdata.customers ${whereClause}`,

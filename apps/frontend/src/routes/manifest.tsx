@@ -9,6 +9,7 @@ import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
 import { ListsHubPage } from "../pages/lists/ListsHubPage";
 import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
+import { BrokersListPage } from "../pages/lists/names/BrokersListPage";
 import { DriverDetailPage } from "../pages/DriverDetail";
 import { DriverProfilePage } from "../pages/drivers/DriverProfilePage";
 import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
@@ -1753,6 +1754,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <NamesMasterHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/names/brokers"
+          element={
+            <ProtectedRoute>
+              <BrokersListPage />
             </ProtectedRoute>
           }
         />

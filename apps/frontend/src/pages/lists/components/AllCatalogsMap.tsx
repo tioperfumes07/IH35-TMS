@@ -137,7 +137,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
     catalogs: [
       { name: "Shippers", description: "Canonical shipper naming set", live: false },
       { name: "Consignees", description: "Canonical consignee naming set", live: false },
-      { name: "Brokers", description: "Broker naming and aliases", live: false },
+      { name: "Brokers", description: "Broker naming and aliases", live: true, catalogKey: "brokers" },
       { name: "Lenders", description: "Finance partner naming set", live: false },
       { name: "Insurance Carriers", description: "Insurance provider directory names", live: false },
     ],
