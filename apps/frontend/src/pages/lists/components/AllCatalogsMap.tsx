@@ -37,7 +37,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Detention Reasons", description: "Detention billing reason catalog", live: true, catalogKey: "detention-reasons" },
       { name: "Pickup Time Types", description: "Pickup scheduling semantics", live: true, catalogKey: "pickup-time-types" },
       { name: "Additional Charges", description: "Accessorial and surcharge templates", live: true, catalogKey: "additional-charges" },
-      { name: "Load Cancellation Reasons", description: "Cancellation root-cause reporting taxonomy", live: false },
+      { name: "Load Cancellation Reasons", description: "Cancellation root-cause reporting taxonomy", live: true, catalogKey: "load-cancellation-reasons" },
     ],
   },
   {

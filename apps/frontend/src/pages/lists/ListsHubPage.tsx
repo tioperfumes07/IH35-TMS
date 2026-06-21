@@ -59,6 +59,8 @@ export function ListsHubPage() {
         pickup_time_types: "/lists/dispatch/pickup-time-types",
         "additional-charges": "/lists/dispatch/additional-charges",
         additional_charges: "/lists/dispatch/additional-charges",
+        "load-cancellation-reasons": "/lists/dispatch/load-cancellation-reasons",
+        load_cancellation_reasons: "/lists/dispatch/load-cancellation-reasons",
       };
       const dispatchPath = dispatchRouteMap[catalogKey];
       if (dispatchPath) {
