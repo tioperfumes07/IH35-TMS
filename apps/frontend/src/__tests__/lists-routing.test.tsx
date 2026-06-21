@@ -61,6 +61,7 @@ import { MaintenanceVendorsListPage } from "../pages/lists/maintenance/Maintenan
 import { WorkOrderStatusesListPage } from "../pages/lists/maintenance/WorkOrderStatusesListPage";
 import { CivilFineTypesListPage } from "../pages/lists/safety/CivilFineTypesListPage";
 import { CompanyViolationTypesListPage } from "../pages/lists/safety/CompanyViolationTypesListPage";
+import { ComplaintTypesListPage } from "../pages/lists/safety/ComplaintTypesListPage";
 import { InternalFineReasonsListPage } from "../pages/lists/safety/InternalFineReasonsListPage";
 import { Catalog as DriversLicenseClassesCatalog } from "../pages/lists/drivers/license-classes/Catalog";
 import { Catalog as DriversEndorsementsCatalog } from "../pages/lists/drivers/endorsements/Catalog";
@@ -140,6 +141,7 @@ const LIST_ROUTES = [
   row("/lists/safety/internal-fine-reasons", <InternalFineReasonsListPage />, /internal fine reasons/i),
   row("/lists/safety/civil-fine-types", <CivilFineTypesListPage />, /civil fine types/i),
   row("/lists/safety/company-violation-types", <CompanyViolationTypesListPage />, /company violation types/i),
+  row("/lists/safety/complaint-types", <ComplaintTypesListPage />, /complaint types/i),
   row("/lists/drivers/license-classes", <DriversLicenseClassesCatalog />, /license classes/i),
   row("/lists/drivers/endorsements", <DriversEndorsementsCatalog />, /cdl endorsements/i),
   row("/lists/drivers/restrictions", <DriversRestrictionsCatalog />, /cdl restrictions/i),

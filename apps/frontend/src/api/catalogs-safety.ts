@@ -41,6 +41,17 @@ export type CompanyViolationTypeRow = {
   updated_at: string | null;
 };
 
+export type ComplaintSeverity = "low" | "medium" | "high" | "critical";
+
+export type ComplaintTypeRow = {
+  id: string;
+  operating_company_id: string;
+  type_code: string;
+  type_name: string;
+  default_severity: ComplaintSeverity | null;
+  is_active: boolean;
+};
+
 type ListQuery = {
   search?: string;
   is_active?: "true" | "false" | "all";
@@ -163,6 +174,43 @@ export function updateCompanyViolationType(
 
 export function deactivateCompanyViolationType(companyId: string, id: string) {
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/catalogs/safety/company-violation-types/${id}`, companyId), {
+    method: "DELETE",
+  });
+}
+
+export function listComplaintTypes(companyId: string, query: ListQuery = {}) {
+  return apiRequest<{ rows: ComplaintTypeRow[]; total: number }>(
+    buildListPath("/api/v1/catalogs/safety/complaint-types", companyId, query)
+  );
+}
+
+export function getComplaintType(companyId: string, id: string) {
+  return apiRequest<ComplaintTypeRow>(withCompany(`/api/v1/catalogs/safety/complaint-types/${id}`, companyId));
+}
+
+export function createComplaintType(
+  companyId: string,
+  body: Pick<ComplaintTypeRow, "type_code" | "type_name" | "default_severity" | "is_active">
+) {
+  return apiRequest<ComplaintTypeRow>(withCompany("/api/v1/catalogs/safety/complaint-types", companyId), {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateComplaintType(
+  companyId: string,
+  id: string,
+  body: Partial<Pick<ComplaintTypeRow, "type_code" | "type_name" | "default_severity" | "is_active">>
+) {
+  return apiRequest<ComplaintTypeRow>(withCompany(`/api/v1/catalogs/safety/complaint-types/${id}`, companyId), {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function deactivateComplaintType(companyId: string, id: string) {
+  return apiRequest<{ ok: true }>(withCompany(`/api/v1/catalogs/safety/complaint-types/${id}`, companyId), {
     method: "DELETE",
   });
 }

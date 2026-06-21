@@ -23,7 +23,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Internal Fine Reasons", description: "Default internal penalty reason codes", live: true, catalogKey: "internal-fine-reasons" },
       { name: "Civil Fine Types", description: "External citation/fine category definitions", live: true, catalogKey: "civil-fine-types" },
       { name: "Company Violation Types", description: "Policy and integrity violation code set", live: true, catalogKey: "company-violation-types" },
-      { name: "Complaint Types", description: "Driver and customer complaint classifications", live: false },
+      { name: "Complaint Types", description: "Driver and customer complaint classifications", live: true, catalogKey: "complaint-types" },
       { name: "DOT Violation Types", description: "Inspection and DOT offense groupings", live: false },
       { name: "Cargo Claim Reasons", description: "Claim cause categories for safety/legal", live: false },
     ],
