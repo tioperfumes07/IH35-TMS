@@ -88,6 +88,9 @@ jobs:
       - name: Verify DISP-PROFIT load profitability card wired (not the stub)
         run: npm run verify:load-profitability-card-wired
 
+      - name: Verify PM countdown reads live odometer (#37)
+        run: npm run verify:pm-due-live-odometer
+
       - name: Verify FH-1 fixed-assets data model (Tier 3)
         run: npm run verify:fh1-fixed-assets
 
