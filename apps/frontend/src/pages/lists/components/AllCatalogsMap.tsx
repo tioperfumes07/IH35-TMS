@@ -25,7 +25,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Company Violation Types", description: "Policy and integrity violation code set", live: true, catalogKey: "company-violation-types" },
       { name: "Complaint Types", description: "Driver and customer complaint classifications", live: true, catalogKey: "complaint-types" },
       { name: "DOT Violation Types", description: "Inspection and DOT offense groupings", live: true, catalogKey: "dot-violation-types" },
-      { name: "Cargo Claim Reasons", description: "Claim cause categories for safety/legal", live: false },
+      { name: "Cargo Claim Reasons", description: "Claim cause categories for safety/legal", live: true, catalogKey: "cargo-claim-reasons" },
     ],
   },
   {

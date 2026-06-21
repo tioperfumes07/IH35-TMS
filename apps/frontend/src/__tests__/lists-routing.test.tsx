@@ -63,6 +63,7 @@ import { CivilFineTypesListPage } from "../pages/lists/safety/CivilFineTypesList
 import { CompanyViolationTypesListPage } from "../pages/lists/safety/CompanyViolationTypesListPage";
 import { ComplaintTypesListPage } from "../pages/lists/safety/ComplaintTypesListPage";
 import { DotViolationTypesListPage } from "../pages/lists/safety/DotViolationTypesListPage";
+import { CargoClaimReasonsListPage } from "../pages/lists/safety/CargoClaimReasonsListPage";
 import { BrokersListPage } from "../pages/lists/names/BrokersListPage";
 import { InternalFineReasonsListPage } from "../pages/lists/safety/InternalFineReasonsListPage";
 import { Catalog as DriversLicenseClassesCatalog } from "../pages/lists/drivers/license-classes/Catalog";
@@ -146,6 +147,7 @@ const LIST_ROUTES = [
   row("/lists/safety/company-violation-types", <CompanyViolationTypesListPage />, /company violation types/i),
   row("/lists/safety/complaint-types", <ComplaintTypesListPage />, /complaint types/i),
   row("/lists/safety/dot-violation-types", <DotViolationTypesListPage />, /dot violation types/i),
+  row("/lists/safety/cargo-claim-reasons", <CargoClaimReasonsListPage />, /cargo claim reasons/i),
   row("/lists/names/brokers", <BrokersListPage />, /brokers/i),
   row("/lists/drivers/license-classes", <DriversLicenseClassesCatalog />, /license classes/i),
   row("/lists/drivers/endorsements", <DriversEndorsementsCatalog />, /cdl endorsements/i),
