@@ -329,6 +329,7 @@ export async function syncSamsaraVehicleStats(
         city: stat.city,
         state: stat.state,
         formatted_location: stat.formatted_location,
+        odometer_mi: stat.odometer_mi,
       });
       if (didInsert) positionsInserted += 1;
     }

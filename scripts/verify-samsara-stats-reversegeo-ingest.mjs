@@ -26,13 +26,17 @@ if (!/ADD COLUMN IF NOT EXISTS formatted_location text/.test(mig)) fail("migrati
 if (!/CREATE OR REPLACE VIEW telematics\.vehicle_latest_position[\s\S]*v\.city[\s\S]*v\.state[\s\S]*v\.formatted_location/.test(mig))
   fail("vehicle_latest_position view must surface city/state/formatted_location");
 
-// 2) Client fetches the stats endpoint with VALID types only (gps,engineStates). driverAssignments is
-//    NOT a valid /fleet/vehicles/stats type — including it 400s the whole request (the city/state bug).
+// 2) Client fetches the stats endpoint beginning with the VALID base gps,engineStates. Appended valid
+//    stats types are allowed — obdOdometerMeters was PROVEN safe by the live A-vs-B stats-probe (39b5658):
+//    odometer_call_http_status 200, odometer_present true, odometer_displaces_engineStates FALSE,
+//    odometer_displaces_gps FALSE (engineStates was already absent in the baseline gps,engineStates call —
+//    a pre-existing Samsara token-scope issue, NOT caused by odometer). driverAssignments stays forbidden
+//    (it 400s the whole request — the original city/state bug).
 const client = read("apps/backend/src/integrations/samsara/samsara-client.ts");
 if (!/\/fleet\/vehicles\/stats/.test(client)) fail("client must call /fleet/vehicles/stats");
-if (!/set\("types", "gps,engineStates"\)/.test(client))
-  fail("stats fetch must request VALID types=gps,engineStates");
-if (/set\("types", "gps,driverAssignments"\)/.test(client))
+if (!/set\("types", "gps,engineStates(,[A-Za-z]+)*"\)/.test(client))
+  fail("stats fetch must request VALID types beginning gps,engineStates");
+if (/set\("types", "[^"]*driverAssignments[^"]*"\)/.test(client))
   fail("stats fetch must NOT request driverAssignments on /fleet/vehicles/stats (invalid type -> 400)");
 if (!/reverseGeo/.test(client)) fail("client must parse reverseGeo");
 if (!/engineStates/.test(client)) fail("client must parse engineStates (real engine_state, not derived from speed)");
