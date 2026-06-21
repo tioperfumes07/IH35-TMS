@@ -272,6 +272,7 @@ import { TaxCodesListPage } from "../pages/lists/accounting/TaxCodesListPage";
 import { AbandonmentDefaultsPage } from "../pages/lists/accounting/AbandonmentDefaultsPage";
 import { AdditionalChargesListPage } from "../pages/lists/dispatch/AdditionalChargesListPage";
 import { DetentionReasonsListPage } from "../pages/lists/dispatch/DetentionReasonsListPage";
+import { LoadCancellationReasonsListPage } from "../pages/lists/dispatch/LoadCancellationReasonsListPage";
 import { LoadTypesListPage } from "../pages/lists/dispatch/LoadTypesListPage";
 import { PickupTimeTypesListPage } from "../pages/lists/dispatch/PickupTimeTypesListPage";
 import { DriverDeductionTypesListPage } from "../pages/lists/driver/DriverDeductionTypesListPage";
@@ -519,6 +520,7 @@ const UNDERSCORE_LEGACY_REDIRECTS: ReadonlyArray<readonly [string, string]> = [
   ["/lists/dispatch/detention_reasons", "/lists/dispatch/detention-reasons"],
   ["/lists/dispatch/pickup_time_types", "/lists/dispatch/pickup-time-types"],
   ["/lists/dispatch/additional_charges", "/lists/dispatch/additional-charges"],
+  ["/lists/dispatch/load_cancellation_reasons", "/lists/dispatch/load-cancellation-reasons"],
 ];
 
 function UnderscoreLegacyRedirect({ from, to }: { from: string; to: string }) {
@@ -1765,6 +1767,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DetentionReasonsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/dispatch/load-cancellation-reasons"
+          element={
+            <ProtectedRoute>
+              <LoadCancellationReasonsListPage />
             </ProtectedRoute>
           }
         />

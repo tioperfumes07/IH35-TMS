@@ -21,6 +21,7 @@ import { QboCategoriesListPage } from "../pages/lists/accounting/QboCategoriesLi
 import { TaxCodesListPage } from "../pages/lists/accounting/TaxCodesListPage";
 import { AdditionalChargesListPage } from "../pages/lists/dispatch/AdditionalChargesListPage";
 import { DetentionReasonsListPage } from "../pages/lists/dispatch/DetentionReasonsListPage";
+import { LoadCancellationReasonsListPage } from "../pages/lists/dispatch/LoadCancellationReasonsListPage";
 import { LoadTypesListPage } from "../pages/lists/dispatch/LoadTypesListPage";
 import { PickupTimeTypesListPage } from "../pages/lists/dispatch/PickupTimeTypesListPage";
 import { DriverDeductionTypesListPage } from "../pages/lists/driver/DriverDeductionTypesListPage";
@@ -87,6 +88,7 @@ const LIST_ROUTES = [
   row("/lists/dispatch/detention-reasons", <DetentionReasonsListPage />, /detention reasons/i),
   row("/lists/dispatch/pickup-time-types", <PickupTimeTypesListPage />, /pickup time types/i),
   row("/lists/dispatch/additional-charges", <AdditionalChargesListPage />, /additional charges/i),
+  row("/lists/dispatch/load-cancellation-reasons", <LoadCancellationReasonsListPage />, /load cancellation reasons/i),
   row("/lists/driver/pay-rate-templates", <PayRateTemplatesListPage />, /pay rate templates/i),
   row("/lists/driver/deduction-types", <DriverDeductionTypesListPage />, /driver deduction types/i),
   row("/lists/driver/pay-types", <DriverPayTypesListPage />, /driver pay types/i),

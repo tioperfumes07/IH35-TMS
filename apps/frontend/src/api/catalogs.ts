@@ -151,16 +151,39 @@ export type MexicoState = {
   region: "Norte" | "Centro" | "Sur" | "Sureste" | "Bajio" | "Pacifico";
 };
 
+export type LoadCancellationReasonCategory =
+  | "customer_initiated"
+  | "carrier_initiated"
+  | "force_majeure"
+  | "other";
+
 export type LoadCancellationReason = {
   id: string;
   operating_company_id: string;
   reason_code: string;
   display_name: string;
-  category: "customer_initiated" | "carrier_initiated" | "force_majeure" | "other";
+  category: LoadCancellationReasonCategory;
   is_active: boolean;
   sort_order: number;
   description: string | null;
 };
+
+export type CreateLoadCancellationReasonInput = {
+  operating_company_id: string;
+  reason_code: string;
+  display_name: string;
+  category: LoadCancellationReasonCategory;
+  sort_order?: number;
+  description?: string | null;
+};
+
+export type UpdateLoadCancellationReasonInput = Partial<{
+  reason_code: string;
+  display_name: string;
+  category: LoadCancellationReasonCategory;
+  sort_order: number;
+  description: string | null;
+}>;
 
 export type DispatchFlagColor = {
   id: string;
@@ -260,9 +283,36 @@ export function listMexicoStates() {
   return apiRequest<{ states: MexicoState[] }>("/api/v1/catalogs/mexico-states");
 }
 
-export function listLoadCancellationReasons(operatingCompanyId: string) {
+export function listLoadCancellationReasons(operatingCompanyId: string, includeInactive = false) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
   return apiRequest<{ reasons: LoadCancellationReason[] }>(`/api/v1/catalogs/load-cancellation-reasons?${query.toString()}`);
+}
+
+export function createLoadCancellationReason(payload: CreateLoadCancellationReasonInput) {
+  return apiRequest<{ reason: LoadCancellationReason }>("/api/v1/catalogs/load-cancellation-reasons", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateLoadCancellationReason(id: string, payload: UpdateLoadCancellationReasonInput) {
+  return apiRequest<{ reason: LoadCancellationReason }>(`/api/v1/catalogs/load-cancellation-reasons/${id}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function deactivateLoadCancellationReason(id: string) {
+  return apiRequest<{ reason: LoadCancellationReason }>(`/api/v1/catalogs/load-cancellation-reasons/${id}/deactivate`, {
+    method: "POST",
+  });
+}
+
+export function reactivateLoadCancellationReason(id: string) {
+  return apiRequest<{ reason: LoadCancellationReason }>(`/api/v1/catalogs/load-cancellation-reasons/${id}/reactivate`, {
+    method: "POST",
+  });
 }
 
 export function listDispatchFlagColors(operatingCompanyId: string) {
