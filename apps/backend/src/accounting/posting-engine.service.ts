@@ -564,7 +564,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
       if (err instanceof BillLineAccountError) {
         throw new PostingEngineError(
           "BILL_LINE_ACCOUNT_UNRESOLVED",
-          `Bill line ${row.id ?? row.line_sequence ?? "unknown"}: ${err.message}`
+          `Bill line ${row.id ?? row.line_sequence ?? "unknown"}: [${err.code}] ${err.message}`
         );
       }
       throw err;
