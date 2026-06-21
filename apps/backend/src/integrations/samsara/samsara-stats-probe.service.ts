@@ -254,6 +254,27 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
     };
   });
 
+  // A-vs-B disambiguation (GUARD #7): does adding obdOdometerMeters DISPLACE engineStates, or was
+  // engineStates already absent Samsara-side (pre-existing token-scope issue, unrelated to odometer)?
+  // Compare baseline A = gps,engineStates (statsValid) to B = gps,engineStates,obdOdometerMeters
+  // (statsOdometer). A TRUE regression is only when B LOST a field that A had.
+  const engineStates_in_valid_call = statsValid.rows.some((r) => asObject(r.engineStates)); // A
+  const engineStates_in_odometer_call = statsOdometer.rows.some((r) => asObject(r.engineStates)); // B
+  const gps_in_valid_call = statsValid.rows.some((r) => asObject(r.gps));
+  const gps_in_odometer_call = statsOdometer.rows.some((r) => asObject(r.gps));
+  const odometer_displaces_engineStates = engineStates_in_valid_call && !engineStates_in_odometer_call;
+  const odometer_displaces_gps = gps_in_valid_call && !gps_in_odometer_call;
+  const odometer_safe =
+    statsOdometer.http_status === 200 && !odometer_displaces_engineStates && !odometer_displaces_gps;
+  const odometer_verdict =
+    statsOdometer.http_status !== 200
+      ? "BLOCK: odometer call did not return 200"
+      : odometer_displaces_engineStates || odometer_displaces_gps
+        ? "BLOCK: odometer call dropped a field the baseline had (real regression) -> use isolated endpoint"
+        : !engineStates_in_valid_call
+          ? "SAFE: engineStates already absent in baseline gps,engineStates call (pre-existing Samsara issue, NOT caused by odometer)"
+          : "SAFE: odometer call preserves gps + engineStates";
+
   return {
     probed_at: now.toISOString(),
     engine_gps_samples,
@@ -279,8 +300,17 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
       odometer_call_http_status: statsOdometer.http_status,
       odometer_call_ok: statsOdometer.http_status === 200,
       odometer_call_error: statsOdometer.error,
-      odometer_feed_not_regressed: statsOdometer.http_status === 200 && statsOdometer.rows.some((r) => asObject(r.gps) && asObject(r.engineStates)),
       odometer_present: statsOdometer.rows.some((r) => asObject(r.obdOdometerMeters) ?? asObject(r.gatewayOdometerMeters)),
+      // A-vs-B regression disambiguation (the #1289 go/no-go). not_regressed is now a TRUE comparison:
+      // it only flags a regression if the odometer call LOST a field the baseline gps,engineStates call had.
+      engineStates_in_valid_call: engineStates_in_valid_call, // A: baseline gps,engineStates
+      engineStates_in_odometer_call: engineStates_in_odometer_call, // B: gps,engineStates,obdOdometerMeters
+      gps_in_valid_call: gps_in_valid_call,
+      gps_in_odometer_call: gps_in_odometer_call,
+      odometer_displaces_engineStates: odometer_displaces_engineStates,
+      odometer_displaces_gps: odometer_displaces_gps,
+      odometer_feed_not_regressed: odometer_safe,
+      odometer_verdict: odometer_verdict,
     },
     per_vehicle: perVehicle,
     // Samsara's COMPUTED clocks per driver (verbatim) — field names + coverage + values for GUARD to compare against
