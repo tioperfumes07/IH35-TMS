@@ -88,6 +88,28 @@ export async function registerCoaEntityProbeRoutes(app: FastifyInstance) {
       ).rows;
       const stage4_index_exists = Boolean(idxRows[0]?.ok);
 
+      // STAGE-4 converge-then-constrain gate: the exact rows that would make the partial unique index
+      // (operating_company_id, system_purpose) WHERE system_purpose IS NOT NULL AND deactivated_at IS NULL
+      // FAIL. Empty => converged => Stage 4 is safe to build. Non-empty => decommingle/dedup first.
+      const dupRows = (
+        await client.query(
+          `
+          SELECT a.operating_company_id::text AS operating_company_id, a.system_purpose, count(*)::int AS n
+          FROM catalogs.accounts a
+          WHERE a.system_purpose IS NOT NULL AND a.deactivated_at IS NULL
+          GROUP BY a.operating_company_id, a.system_purpose
+          HAVING count(*) > 1
+          ORDER BY n DESC
+        `
+        )
+      ).rows;
+      const system_purpose_duplicates_active = dupRows.map((r: Record<string, unknown>) => ({
+        operating_company_id: (r.operating_company_id as string | null) ?? null,
+        system_purpose: r.system_purpose as string,
+        n: Number(r.n),
+      }));
+      const stage4_safe_to_constrain = system_purpose_duplicates_active.length === 0;
+
       return {
         accounts_total,
         by_operating_company,
@@ -96,6 +118,8 @@ export async function registerCoaEntityProbeRoutes(app: FastifyInstance) {
         system_purpose_set_count,
         stage_migrations_applied,
         stage4_index_exists,
+        system_purpose_duplicates_active,
+        stage4_safe_to_constrain,
       };
     });
   });

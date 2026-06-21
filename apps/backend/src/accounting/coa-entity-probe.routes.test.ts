@@ -66,5 +66,7 @@ describeIntegration("coa-entity-probe route", () => {
       expect(typeof stages[k]).toBe("boolean");
     }
     expect(typeof body.stage4_index_exists).toBe("boolean");
+    expect(Array.isArray(body.system_purpose_duplicates_active)).toBe(true);
+    expect(typeof body.stage4_safe_to_constrain).toBe("boolean");
   });
 });
