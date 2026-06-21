@@ -16,4 +16,12 @@ if (!/row\.live_odometer_mi/.test(src))
 if (!/extractSamsaraOdometerMi\(row\.samsara_raw_payload\)/.test(src))
   fail("mapDueRow must keep extractSamsaraOdometerMi(raw_payload) as the fallback");
 
-console.log("OK verify-pm-due-live-odometer: pm/due reads live vehicle_latest_position.odometer_mi (webhook fallback kept).");
+// The PM AUTO-ENGINE (the other PM odometer consumer — maintenance.pm_schedules) must ALSO read the live
+// odometer; otherwise it skips every unit as "no odometer" and never evaluates schedules / creates alerts.
+const engine = readFileSync("apps/backend/src/maintenance/pm-auto-engine.service.ts", "utf8");
+if (!/telematics\.vehicle_latest_position/.test(engine))
+  fail("pm-auto-engine loadUnitOdometers must read telematics.vehicle_latest_position (live odometer) as primary");
+if (!/extractSamsaraOdometerMi\(row\.raw_payload\)/.test(engine))
+  fail("pm-auto-engine must keep the webhook raw_payload as the odometer fallback");
+
+console.log("OK verify-pm-due-live-odometer: pm/due + pm-auto-engine read live vehicle_latest_position.odometer_mi (webhook fallback kept).");
