@@ -162,6 +162,10 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
   // login lives on the separate driver-assignments feed in C). C) the driver-login feed.
   const statsValid = await rawGet(token, `${SAMSARA_API_BASE}/fleet/vehicles/stats?types=gps,engineStates`);
   const statsDeployed = await rawGet(token, `${SAMSARA_API_BASE}/fleet/vehicles/stats?types=gps,engineStates`);
+  // DIAGNOSTIC (FINISH-OPS #7 proof): probe the odometer types string WITHOUT touching the live ingest cron
+  // (which still requests gps,engineStates). GUARD reads odometer_probe below to decide whether the
+  // odometer-in-stats approach is safe (200 + gps/engineStates still present) before #7's ingest merges.
+  const statsOdometer = await rawGet(token, `${SAMSARA_API_BASE}/fleet/vehicles/stats?types=gps,engineStates,obdOdometerMeters`);
   const driverFeed = await rawGet(
     token,
     `${SAMSARA_API_BASE}/fleet/vehicles/driver-assignments?startTime=${start.toISOString()}&endTime=${now.toISOString()}`
@@ -236,9 +240,24 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
     };
   });
 
+  // FINISH-OPS #7 proof: from the odometer-types response, confirm (a) it returned 200, (b) rows still
+  // carry gps + engineStates (feed not regressed by adding obdOdometerMeters), (c) odometer actually present.
+  const odometer_samples = statsOdometer.rows.slice(0, 6).map((r) => {
+    const g = asObject(r.gps);
+    const odo = asObject(r.obdOdometerMeters) ?? asObject(r.gatewayOdometerMeters);
+    return {
+      id: str(r.id),
+      name: str(r.name),
+      has_gps: Boolean(g),
+      has_engineStates: Boolean(asObject(r.engineStates)),
+      obd_odometer_meters: odo ? odo.value ?? null : null,
+    };
+  });
+
   return {
     probed_at: now.toISOString(),
     engine_gps_samples,
+    odometer_samples,
     interpretation: {
       deployed_call_http_status: statsDeployed.http_status,
       deployed_call_is_invalid: statsDeployed.http_status === 400,
@@ -256,6 +275,12 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
       hos_clocks_scope_ok: hosClocksCall.http_status === 200,
       hos_clocks_error: hosClocksCall.error,
       hos_clocks_drivers_returned: hosClocksCall.rows.length,
+      // FINISH-OPS #7 odometer-types proof (the go/no-go for the odometer ingest):
+      odometer_call_http_status: statsOdometer.http_status,
+      odometer_call_ok: statsOdometer.http_status === 200,
+      odometer_call_error: statsOdometer.error,
+      odometer_feed_not_regressed: statsOdometer.http_status === 200 && statsOdometer.rows.some((r) => asObject(r.gps) && asObject(r.engineStates)),
+      odometer_present: statsOdometer.rows.some((r) => asObject(r.obdOdometerMeters) ?? asObject(r.gatewayOdometerMeters)),
     },
     per_vehicle: perVehicle,
     // Samsara's COMPUTED clocks per driver (verbatim) — field names + coverage + values for GUARD to compare against
@@ -264,6 +289,7 @@ export async function runSamsaraStatsProbe(token: string, now: Date) {
     raw_call_status: {
       valid_gps_engine: { http_status: statsValid.http_status, error: statsValid.error, vehicles: statsValid.rows.length },
       deployed_with_driver: { http_status: statsDeployed.http_status, error: statsDeployed.error },
+      odometer_types: { http_status: statsOdometer.http_status, error: statsOdometer.error, vehicles: statsOdometer.rows.length },
       driver_assignments: { http_status: driverFeed.http_status, error: driverFeed.error, vehicles: driverFeed.rows.length },
       hos_clocks: { http_status: hosClocksCall.http_status, error: hosClocksCall.error, drivers: hosClocksCall.rows.length },
     },
