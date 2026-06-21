@@ -68,6 +68,7 @@ import { Catalog as DriversEndorsementsCatalog } from "../pages/lists/drivers/en
 import { Catalog as DriversRestrictionsCatalog } from "../pages/lists/drivers/restrictions/Catalog";
 import { Catalog as DriversMedicalCardStatusCatalog } from "../pages/lists/drivers/medical-card-status/Catalog";
 import { Catalog as DriversEmploymentStatusCatalog } from "../pages/lists/drivers/employment-status/Catalog";
+import { TerminationReasonsListPage } from "../pages/lists/drivers/TerminationReasonsListPage";
 
 vi.mock("../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
@@ -147,6 +148,7 @@ const LIST_ROUTES = [
   row("/lists/drivers/restrictions", <DriversRestrictionsCatalog />, /cdl restrictions/i),
   row("/lists/drivers/medical-card-status", <DriversMedicalCardStatusCatalog />, /medical card status/i),
   row("/lists/drivers/employment-status", <DriversEmploymentStatusCatalog />, /employment status/i),
+  row("/lists/drivers/termination-reasons", <TerminationReasonsListPage />, /termination reasons/i),
 ];
 
 describe("lists catalog routing smoke", () => {

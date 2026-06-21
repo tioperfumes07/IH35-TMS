@@ -315,6 +315,63 @@ export function reactivateLoadCancellationReason(id: string) {
   });
 }
 
+export type DriverTerminationSeverity = "info" | "warning" | "severe";
+
+export type DriverTerminationReason = {
+  id: string;
+  code: string;
+  label: string;
+  description: string | null;
+  severity: DriverTerminationSeverity;
+  is_active: boolean;
+  deactivated_at: string | null;
+};
+
+export type CreateDriverTerminationReasonInput = {
+  code: string;
+  label: string;
+  description?: string | null;
+  severity: DriverTerminationSeverity;
+};
+
+export type UpdateDriverTerminationReasonInput = Partial<{
+  code: string;
+  label: string;
+  description: string | null;
+  severity: DriverTerminationSeverity;
+}>;
+
+export function listDriverTerminationReasons(includeInactive = false) {
+  const query = includeInactive ? "?include_inactive=true" : "";
+  return apiRequest<{ reasons: DriverTerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons${query}`);
+}
+
+export function createDriverTerminationReason(payload: CreateDriverTerminationReasonInput) {
+  return apiRequest<{ reason: DriverTerminationReason }>("/api/v1/catalogs/driver-termination-reasons", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateDriverTerminationReason(id: string, payload: UpdateDriverTerminationReasonInput) {
+  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function deactivateDriverTerminationReason(id: string) {
+  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}/deactivate`, {
+    method: "POST",
+  });
+}
+
+export function reactivateDriverTerminationReason(id: string) {
+  return apiRequest<{ reason: DriverTerminationReason }>(`/api/v1/catalogs/driver-termination-reasons/${id}/reactivate`, {
+    method: "POST",
+  });
+}
+
 export function listDispatchFlagColors(operatingCompanyId: string) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ flags: DispatchFlagColor[] }>(`/api/v1/catalogs/dispatch-flag-colors?${query.toString()}`);

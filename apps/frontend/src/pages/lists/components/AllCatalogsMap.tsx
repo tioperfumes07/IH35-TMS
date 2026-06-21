@@ -54,7 +54,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "CDL Restrictions", description: "Restriction code reference set", live: true, catalogKey: "restrictions" },
       { name: "Medical Card Status", description: "DOT medical card status codes", live: true, catalogKey: "medical-card-status" },
       { name: "Employment Status", description: "Driver employment classification codes", live: true, catalogKey: "employment-status" },
-      { name: "Termination Reasons", description: "Offboarding reason taxonomy", live: false },
+      { name: "Termination Reasons", description: "Offboarding reason taxonomy", live: true, catalogKey: "termination-reasons" },
     ],
   },
   {

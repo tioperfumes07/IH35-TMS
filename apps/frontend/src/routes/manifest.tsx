@@ -292,6 +292,7 @@ import { Catalog as DriversEndorsementsCatalog } from "../pages/lists/drivers/en
 import { Catalog as DriversRestrictionsCatalog } from "../pages/lists/drivers/restrictions/Catalog";
 import { Catalog as DriversMedicalCardStatusCatalog } from "../pages/lists/drivers/medical-card-status/Catalog";
 import { Catalog as DriversEmploymentStatusCatalog } from "../pages/lists/drivers/employment-status/Catalog";
+import { TerminationReasonsListPage } from "../pages/lists/drivers/TerminationReasonsListPage";
 import { ConditionCodesListPage } from "../pages/lists/fleet/ConditionCodesListPage";
 import { AssetLocationsListPage } from "../pages/lists/fleet/AssetLocationsListPage";
 import { AssetStatusesListPage } from "../pages/lists/fleet/AssetStatusesListPage";
@@ -1912,6 +1913,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriversEmploymentStatusCatalog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/drivers/termination-reasons"
+          element={
+            <ProtectedRoute>
+              <TerminationReasonsListPage />
             </ProtectedRoute>
           }
         />

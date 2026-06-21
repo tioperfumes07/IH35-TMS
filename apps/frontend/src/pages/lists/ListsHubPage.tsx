@@ -79,6 +79,7 @@ export function ListsHubPage() {
         restrictions: "/lists/drivers/restrictions",
         "medical-card-status": "/lists/drivers/medical-card-status",
         "employment-status": "/lists/drivers/employment-status",
+        "termination-reasons": "/lists/drivers/termination-reasons",
       };
       const driversReferencePath = driversReferenceRouteMap[catalogKey];
       if (driversReferencePath) {

@@ -116,6 +116,178 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return { reasons };
   });
 
+  app.post("/api/v1/catalogs/driver-termination-reasons", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const bodySchema = z.object({
+      code: z
+        .string()
+        .trim()
+        .regex(/^[a-z][a-z0-9_]+$/, "code must be lowercase letters, digits, and underscores")
+        .min(2)
+        .max(80),
+      label: z.string().trim().min(1).max(160),
+      description: z.string().trim().max(1000).nullable().optional(),
+      severity: severitySchema,
+    });
+    const parsedBody = bodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const b = parsedBody.data;
+
+    try {
+      const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const res = await client.query(
+          `
+            INSERT INTO catalogs.driver_termination_reasons (code, label, description, severity, created_by_user_id, updated_by_user_id)
+            VALUES ($1, $2, $3, $4, $5, $5)
+            RETURNING id, code, label, description, severity, is_active, deactivated_at
+          `,
+          [b.code, b.label, b.description ?? null, b.severity, authUser.uuid]
+        );
+        const row = res.rows[0];
+        await appendCrudAudit(client, authUser.uuid, "catalogs.driver_termination_reasons_created", {
+          resource_id: row.id,
+          resource_type: "catalogs.driver_termination_reasons",
+          code: row.code,
+        });
+        return row;
+      });
+      return reply.code(201).send({ reason: created });
+    } catch (error) {
+      if ((error as { code?: string }).code === "23505") return reply.code(409).send({ error: "termination_reason_code_conflict" });
+      throw error;
+    }
+  });
+
+  app.patch("/api/v1/catalogs/driver-termination-reasons/:id", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = z.object({ id: uuidSchema }).safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const bodySchema = z
+      .object({
+        code: z
+          .string()
+          .trim()
+          .regex(/^[a-z][a-z0-9_]+$/, "code must be lowercase letters, digits, and underscores")
+          .min(2)
+          .max(80)
+          .optional(),
+        label: z.string().trim().min(1).max(160).optional(),
+        description: z.string().trim().max(1000).nullable().optional(),
+        severity: severitySchema.optional(),
+      })
+      .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
+    const parsedBody = bodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const b = parsedBody.data;
+
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    const add = (name: string, value: unknown) => {
+      values.push(value);
+      fields.push(`${name} = $${values.length}`);
+    };
+    if ("code" in b) add("code", b.code);
+    if ("label" in b) add("label", b.label);
+    if ("description" in b) add("description", b.description ?? null);
+    if ("severity" in b) add("severity", b.severity);
+    values.push(authUser.uuid);
+    fields.push(`updated_by_user_id = $${values.length}`);
+    fields.push("updated_at = now()");
+    values.push(parsedParams.data.id);
+
+    try {
+      const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const res = await client.query(
+          `
+            UPDATE catalogs.driver_termination_reasons
+            SET ${fields.join(", ")}
+            WHERE id = $${values.length}
+            RETURNING id, code, label, description, severity, is_active, deactivated_at
+          `,
+          values
+        );
+        const row = res.rows[0] ?? null;
+        if (!row) return null;
+        await appendCrudAudit(client, authUser.uuid, "catalogs.driver_termination_reasons_updated", {
+          resource_id: row.id,
+          resource_type: "catalogs.driver_termination_reasons",
+        });
+        return row;
+      });
+      if (!updated) return reply.code(404).send({ error: "not_found" });
+      return { reason: updated };
+    } catch (error) {
+      if ((error as { code?: string }).code === "23505") return reply.code(409).send({ error: "termination_reason_code_conflict" });
+      throw error;
+    }
+  });
+
+  app.post("/api/v1/catalogs/driver-termination-reasons/:id/deactivate", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = z.object({ id: uuidSchema }).safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query(
+        `
+          UPDATE catalogs.driver_termination_reasons
+          SET is_active = false, deactivated_at = now(), updated_by_user_id = $2, updated_at = now()
+          WHERE id = $1
+          RETURNING id, code, label, description, severity, is_active, deactivated_at
+        `,
+        [parsedParams.data.id, authUser.uuid]
+      );
+      const row = res.rows[0] ?? null;
+      if (!row) return null;
+      await appendCrudAudit(client, authUser.uuid, "catalogs.driver_termination_reasons_deactivated", {
+        resource_id: row.id,
+        resource_type: "catalogs.driver_termination_reasons",
+        code: row.code,
+      });
+      return row;
+    });
+    if (!updated) return reply.code(404).send({ error: "not_found" });
+    return { reason: updated };
+  });
+
+  app.post("/api/v1/catalogs/driver-termination-reasons/:id/reactivate", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = z.object({ id: uuidSchema }).safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query(
+        `
+          UPDATE catalogs.driver_termination_reasons
+          SET is_active = true, deactivated_at = NULL, updated_by_user_id = $2, updated_at = now()
+          WHERE id = $1
+          RETURNING id, code, label, description, severity, is_active, deactivated_at
+        `,
+        [parsedParams.data.id, authUser.uuid]
+      );
+      const row = res.rows[0] ?? null;
+      if (!row) return null;
+      await appendCrudAudit(client, authUser.uuid, "catalogs.driver_termination_reasons_updated", {
+        resource_id: row.id,
+        resource_type: "catalogs.driver_termination_reasons",
+        changes: { is_active: true },
+      });
+      return row;
+    });
+    if (!updated) return reply.code(404).send({ error: "not_found" });
+    return { reason: updated };
+  });
+
   app.get("/api/v1/mdata/drivers/:driver_id/safety-events", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
