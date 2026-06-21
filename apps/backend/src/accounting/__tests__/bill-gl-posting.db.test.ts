@@ -130,8 +130,8 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
     );
     expect(result.journal_entry_id).toBeTruthy();
 
-    const rows = await scopedRead<{ account_number: string; account_name: string; debit_or_credit: string; amount_cents: string }>(
-      `SELECT a.account_number, a.account_name, p.debit_or_credit, p.amount_cents::text AS amount_cents
+    const rows = await scopedRead<{ account_id: string; account_number: string; account_name: string; debit_or_credit: string; amount_cents: string }>(
+      `SELECT p.account_id::text AS account_id, a.account_number, a.account_name, p.debit_or_credit, p.amount_cents::text AS amount_cents
          FROM accounting.journal_entry_postings p
          JOIN catalogs.accounts a ON a.id = p.account_id
         WHERE p.journal_entry_uuid = $1::uuid
@@ -142,13 +142,33 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
     // eslint-disable-next-line no-console
     console.log("CHAIN-03 STEP-2 posted JE:\n" + rows.map((r) => `  ${r.debit_or_credit.toUpperCase().padEnd(6)} ${r.account_number} ${r.account_name}  $${(Number(r.amount_cents) / 100).toFixed(2)}`).join("\n"));
 
-    const dr = (acct: string) => rows.filter((r) => r.account_number === acct && r.debit_or_credit === "debit").reduce((s, r) => s + Number(r.amount_cents), 0);
-    const cr = (acct: string) => rows.filter((r) => r.account_number === acct && r.debit_or_credit === "credit").reduce((s, r) => s + Number(r.amount_cents), 0);
-    expect(dr(`F${suffix}`)).toBe(50_000);   // DR fuel
-    expect(dr(`U${suffix}`)).toBe(13_000);   // DR uncategorized (QBO-25)
-    expect(cr(`P${suffix}`)).toBe(63_000);   // single CR to A/P (summed)
-    const totalDr = rows.filter((r) => r.debit_or_credit === "debit").reduce((s, r) => s + Number(r.amount_cents), 0);
-    const totalCr = rows.filter((r) => r.debit_or_credit === "credit").reduce((s, r) => s + Number(r.amount_cents), 0);
+    // Resolve the LIVE role accounts (the verify-DB company may already have uncategorized_expense /
+    // ap_control mapped from the seed migrations — assert against what the roles actually point to, not
+    // the ids we tried to seed). Fuel is asserted by our own map row (no pre-existing fuel/FUEL).
+    const liveRole = async (role: string): Promise<string> => {
+      const r = await scopedRead<{ account_id: string }>(
+        `SELECT account_id::text AS account_id FROM accounting.chart_of_accounts_roles
+          WHERE operating_company_id=$1::uuid AND role=$2 AND is_active=true ORDER BY updated_at DESC LIMIT 1`,
+        [companyId, role]
+      );
+      const id = r[0]?.account_id;
+      if (!id) throw new Error(`no mapped ${role} role for company ${companyId}`);
+      return id;
+    };
+    const liveUncat = await liveRole("uncategorized_expense");
+    const liveAp = await liveRole("ap_control");
+
+    const debits = rows.filter((r) => r.debit_or_credit === "debit");
+    const credits = rows.filter((r) => r.debit_or_credit === "credit");
+    const drBy = (id: string) => debits.filter((r) => r.account_id === id).reduce((s, r) => s + Number(r.amount_cents), 0);
+
+    expect(drBy(fuelAccountId)).toBe(50_000);   // DR fuel (our expense_category_account_map row)
+    expect(drBy(liveUncat)).toBe(13_000);       // DR uncategorized (QBO-25), via the live role
+    expect(credits).toHaveLength(1);            // single summed CR to A/P
+    expect(Number(credits[0].amount_cents)).toBe(63_000);
+    expect(credits[0].account_id).toBe(liveAp); // CR to the live ap_control account
+    const totalDr = debits.reduce((s, r) => s + Number(r.amount_cents), 0);
+    const totalCr = credits.reduce((s, r) => s + Number(r.amount_cents), 0);
     expect(totalDr).toBe(totalCr); // balanced
     expect(totalDr).toBe(63_000);
   });
