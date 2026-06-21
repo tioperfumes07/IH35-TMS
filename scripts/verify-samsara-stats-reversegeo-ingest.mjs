@@ -30,9 +30,11 @@ if (!/CREATE OR REPLACE VIEW telematics\.vehicle_latest_position[\s\S]*v\.city[\
 //    NOT a valid /fleet/vehicles/stats type — including it 400s the whole request (the city/state bug).
 const client = read("apps/backend/src/integrations/samsara/samsara-client.ts");
 if (!/\/fleet\/vehicles\/stats/.test(client)) fail("client must call /fleet/vehicles/stats");
-if (!/set\("types", "gps,engineStates"\)/.test(client))
-  fail("stats fetch must request VALID types=gps,engineStates");
-if (/set\("types", "gps,driverAssignments"\)/.test(client))
+// Must begin with the valid base gps,engineStates; appended valid stats types are allowed
+// (e.g. obdOdometerMeters for the odometer ingest). driverAssignments stays forbidden (it 400s).
+if (!/set\("types", "gps,engineStates(,[A-Za-z]+)*"\)/.test(client))
+  fail("stats fetch must request VALID types beginning gps,engineStates");
+if (/set\("types", "[^"]*driverAssignments[^"]*"\)/.test(client))
   fail("stats fetch must NOT request driverAssignments on /fleet/vehicles/stats (invalid type -> 400)");
 if (!/reverseGeo/.test(client)) fail("client must parse reverseGeo");
 if (!/engineStates/.test(client)) fail("client must parse engineStates (real engine_state, not derived from speed)");
