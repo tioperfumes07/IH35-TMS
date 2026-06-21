@@ -82,6 +82,9 @@ jobs:
       - name: Verify uncategorized-expense seed (GAP-EXPENSES Phase 2 Step 2)
         run: npm run verify:uncategorized-expense-seed
 
+      - name: Verify INS-COVERAGE gap counts units not assets (GUARD #40)
+        run: npm run verify:insurance-coverage-gap-units
+
       - name: Verify FH-1 fixed-assets data model (Tier 3)
         run: npm run verify:fh1-fixed-assets
 

@@ -60,14 +60,23 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
         `SELECT count(*)::int AS count FROM insurance.coi_request
            WHERE tenant_id = $1::uuid AND requested_at >= now() - interval '30 days'`
       );
-      // Coverage gap = active insured assets with NO active policy coverage (uninsured units).
+      // Coverage gap = active UNITS (the authoritative fleet, ~87) with NO active policy coverage.
+      // Previously this counted mdata.assets (a PARTIAL mirror, ~43, linked to units by
+      // unit_code = unit_number), so units with no asset row were silently invisible (GUARD #40:
+      // dashboard showed 43 = asset count, not the unit count). Count over mdata.units LEFT of the
+      // asset→policy_unit chain so an active unit with no asset row OR no active policy surfaces as a
+      // gap. Unit↔company scoping uses COALESCE(leased_to, owner) like the telematics/fleet reads.
       const coverage_gap_count = await count(
-        `SELECT count(*)::int AS count FROM mdata.assets a
-           WHERE a.tenant_id = $1::uuid
+        `SELECT count(*)::int AS count
+           FROM mdata.units u
+           WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+             AND u.deactivated_at IS NULL
              AND NOT EXISTS (
-               SELECT 1 FROM insurance.policy_unit pu
-               JOIN insurance.policy p ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id
-               WHERE pu.asset_id = a.id AND pu.removed_at IS NULL AND p.status = 'active'
+               SELECT 1
+               FROM mdata.assets a
+               JOIN insurance.policy_unit pu ON pu.asset_id = a.id AND pu.removed_at IS NULL
+               JOIN insurance.policy p ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id AND p.status = 'active'
+               WHERE a.tenant_id = $1::uuid AND a.unit_code = u.unit_number
              )`
       );
 
