@@ -25,6 +25,10 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
   const uncatAccountId = randomUUID();
   const apAccountId = randomUUID();
   const userId = "00000000-0000-4000-8000-0000000000bb";
+  // Unique, test-owned category codes so the map seed never collides with the verify-DB company's
+  // pre-existing (fuel, FUEL) mapping (uq_expense_category_account_map_active is per company+kind+code).
+  const fuelCode = `FUEL-${suffix}`;
+  const bogusCode = `NOPE-${suffix}`;
   const createdBillIds: string[] = [];
 
   async function bypass(fn: () => Promise<void>) {
@@ -72,11 +76,11 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
          ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
         [companyId, uncatAccountId]
       );
-      // expense_category_account_map: (fuel, FUEL) → fuel account.
+      // expense_category_account_map: (fuel, <unique code>) → fuel account.
       await db.query(
         `INSERT INTO accounting.expense_category_account_map (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
-         VALUES ($1::uuid,'fuel','FUEL',$2::uuid,'debit',true)`,
-        [companyId, fuelAccountId]
+         VALUES ($1::uuid,'fuel',$2,$3::uuid,'debit',true)`,
+        [companyId, fuelCode, fuelAccountId]
       );
     });
   });
@@ -121,7 +125,7 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
 
   it("posts a BALANCED JE: DR fuel + DR uncategorized (QBO-25), single CR to A/P", async () => {
     const id = await seedBill([
-      { amount_cents: 50_000, category_kind: "fuel", category_code: "FUEL" },
+      { amount_cents: 50_000, category_kind: "fuel", category_code: fuelCode },
       { amount_cents: 13_000 }, // no category → uncategorized (QBO-25)
     ]);
     const result = await postSourceTransaction(
@@ -174,7 +178,7 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
   });
 
   it("a category with NO map entry → FAIL LOUD (CATEGORY_MAPPING_MISSING), nothing posts", async () => {
-    const id = await seedBill([{ amount_cents: 100, category_kind: "fuel", category_code: "BOGUS" }]);
+    const id = await seedBill([{ amount_cents: 100, category_kind: "fuel", category_code: bogusCode }]);
     let caught: unknown = null;
     try {
       await postSourceTransaction(
