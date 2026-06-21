@@ -1,6 +1,7 @@
 import { withCurrentUser } from "../auth/db.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
+import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
 
 export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense";
 export type PostingPurpose = "initial_post" | "reversal";
@@ -454,23 +455,6 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
   };
 }
 
-async function detectBillLineAccountColumn(client: DbClient): Promise<"account_id" | "coa_account_id" | null> {
-  const res = await client.query<{ column_name: string }>(
-    `
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_schema = 'accounting'
-        AND table_name = 'bill_lines'
-        AND column_name IN ('account_id', 'coa_account_id')
-      ORDER BY CASE column_name WHEN 'account_id' THEN 1 ELSE 2 END
-      LIMIT 1
-    `
-  );
-  const col = res.rows[0]?.column_name;
-  if (col === "account_id" || col === "coa_account_id") return col;
-  return null;
-}
-
 async function resolveBillCategoryAccount(client: DbClient, categoryId: string): Promise<string | null> {
   const fromMetadata = await client.query<{ account_id: string | null }>(
     `
@@ -530,16 +514,15 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
   const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
   if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
 
-  const lineAccountColumn = await detectBillLineAccountColumn(client);
-  const directColumnSelection = lineAccountColumn ? `bl.${lineAccountColumn}::text AS direct_account_id,` : `NULL::text AS direct_account_id,`;
-
+  // Each line carries account_id (explicit override), category_kind, category_code (migration 0220).
   const lineRows = await client.query<{
     id: string | null;
     line_sequence: number | null;
     amount: string | null;
     description: string | null;
-    expense_category_uuid: string | null;
-    direct_account_id: string | null;
+    account_id: string | null;
+    category_kind: string | null;
+    category_code: string | null;
   }>(
     `
       SELECT
@@ -547,9 +530,9 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         bl.line_sequence,
         bl.amount::text,
         bl.description,
-        bl.expense_category_uuid::text,
-        ${directColumnSelection}
-        bl.bill_id::text
+        bl.account_id::text,
+        bl.category_kind,
+        bl.category_code
       FROM accounting.bill_lines bl
       WHERE bl.bill_id::uuid = $1::uuid
       ORDER BY bl.line_sequence ASC
@@ -559,68 +542,47 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
 
   const debitLines: PostingLineDraft[] = [];
   const accountResolutionTrace: Array<Record<string, unknown>> = [];
-  const headerFallback = bill.coa_account_id;
-  const roleExpenseDefault = await resolveRoleAccountOptional(client, operatingCompanyId, "expense_default");
 
+  // A bill with no lines cannot be resolved under the canonical order (no silent header/expense_default
+  // fallback any longer) — FAIL LOUD, same as the draft preview's EMPTY_BILL.
   if (lineRows.rows.length === 0) {
-    const amountCents =
-      bill.amount_cents != null ? Number(bill.amount_cents) : Math.round(Number(bill.total_amount ?? "0") * 100);
-    if (!headerFallback && !roleExpenseDefault) {
-      throw new PostingEngineError("BILL_LINE_ACCOUNT_UNRESOLVED", "Bill header/line account mapping is unresolved");
-    }
-    debitLines.push({
-      account_id: headerFallback ?? roleExpenseDefault!,
-      debit_or_credit: "debit",
-      amount_cents: amountCents,
-      description: bill.memo ?? "Bill expense",
-      source_transaction_line_id: null,
-      relationship_role: "bill_header_coa_fallback",
-    });
-    accountResolutionTrace.push({
-      bill_line_id: null,
-      method: "header_coa_account_fallback",
-      account_id: headerFallback,
-    });
-  } else {
-    for (const row of lineRows.rows) {
-      const amountCents = Math.round(Number(row.amount ?? "0") * 100);
-      let accountId = row.direct_account_id?.trim() || null;
-      let method: string | null = null;
-      if (accountId) {
-        method = "bill_line_explicit_account";
-      } else if (row.expense_category_uuid) {
-        accountId = await resolveBillCategoryAccount(client, row.expense_category_uuid);
-        if (accountId) method = "expense_category_mapping";
-      }
-      if (!accountId && headerFallback) {
-        accountId = headerFallback;
-        method = "header_coa_account_fallback";
-      }
-      if (!accountId && roleExpenseDefault) {
-        accountId = roleExpenseDefault;
-        method = "role_expense_default";
-      }
-      if (!accountId) {
+    throw new PostingEngineError("BILL_LINE_ACCOUNT_UNRESOLVED", "Bill has no lines to resolve");
+  }
+
+  for (const row of lineRows.rows) {
+    const amountCents = Math.round(Number(row.amount ?? "0") * 100);
+    // THE ONE shared resolver — identical to the draft preview: explicit override → category map →
+    // uncategorized (QBO-25) → FAIL LOUD. The dropped silent header/expense_default tiers are gone.
+    let resolved;
+    try {
+      resolved = await resolveBillLineDebitAccount(client, operatingCompanyId, {
+        explicit_account_id: row.account_id,
+        category_kind: row.category_kind,
+        category_code: row.category_code,
+      });
+    } catch (err) {
+      if (err instanceof BillLineAccountError) {
         throw new PostingEngineError(
           "BILL_LINE_ACCOUNT_UNRESOLVED",
-          `Bill line ${row.id ?? row.line_sequence ?? "unknown"} has no resolvable debit account`
+          `Bill line ${row.id ?? row.line_sequence ?? "unknown"}: ${err.message}`
         );
       }
-      accountResolutionTrace.push({
-        bill_line_id: row.id,
-        line_sequence: row.line_sequence,
-        method,
-        account_id: accountId,
-      });
-      debitLines.push({
-        account_id: accountId,
-        debit_or_credit: "debit",
-        amount_cents: amountCents,
-        description: row.description ?? `Bill line ${row.line_sequence ?? ""}`.trim(),
-        source_transaction_line_id: row.id ?? null,
-        relationship_role: method === "header_coa_account_fallback" ? "bill_header_coa_fallback" : null,
-      });
+      throw err;
     }
+    accountResolutionTrace.push({
+      bill_line_id: row.id,
+      line_sequence: row.line_sequence,
+      method: resolved.method,
+      account_id: resolved.account_id,
+    });
+    debitLines.push({
+      account_id: resolved.account_id,
+      debit_or_credit: "debit",
+      amount_cents: amountCents,
+      description: row.description ?? `Bill line ${row.line_sequence ?? ""}`.trim(),
+      source_transaction_line_id: row.id ?? null,
+      relationship_role: null,
+    });
   }
 
   const totalDebit = debitLines.reduce((sum, line) => sum + line.amount_cents, 0);

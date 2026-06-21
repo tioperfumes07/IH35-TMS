@@ -4,24 +4,18 @@
 // It WRITES NOTHING — no journal entry, no posting batch, no rows. STEP-2 (the actual post,
 // behind BILL_GL_POSTING_ENABLED) is out of scope here and is a separate, Jorge-gated change.
 //
-// Resolution (Jorge's CHAIN-03 spec, verbatim — resolve by ROLE / category-map, never by name/id):
-//   • Each bill line is a DEBIT to its expense account, resolved via the B1
-//     expense_category_account_map (`resolveAccountForCategory`).
-//   • A line with NO category → DEBIT `uncategorized_expense` role (QBO-25).
-//   • A line WITH a category that has no active map entry → FAIL LOUD (no silent fallback).
-//   • One summed CREDIT to A/P, resolved via the `ap_control` role (TRANSP → 2000).
-//   • Missing ap_control / missing uncategorized_expense role → FAIL LOUD.
+// The DEBIT account for each line is resolved by THE ONE shared resolver
+// (`resolveBillLineDebitAccount` in bill-account-resolver.ts) — the SAME function the actual poster
+// (posting-engine.service.ts buildBillLines) calls, so this preview is guaranteed to equal what posts.
+// One summed CREDIT to A/P via the `ap_control` role (TRANSP → 2000). Missing ap_control → FAIL LOUD.
 // The draft must balance (Σ debits === Σ credits) or it throws.
 //
 // SCOPE LOCK: TRANSPORTATION ONLY. TRK + USMCA are cloned later (Jorge: "we finish transportation,
 // then we clone for trucking and usmca"). The route enforces the entity guard.
 
-import {
-  resolveAccountForCategory,
-  ExpenseCategoryMapResolutionError,
-  type ExpenseCategoryMapKind,
-} from "./expense-category-map/resolver.service.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { resolveBillLineDebitAccount } from "./bill-account-resolver.js";
+import type { ExpenseCategoryMapKind } from "./expense-category-map/resolver.service.js";
 
 // TRANSP operating company (CLAUDE.md §6). STEP-1 is locked to this entity.
 export const TRANSP_OPERATING_COMPANY_ID = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
@@ -44,6 +38,7 @@ export type BillDraftSpec = {
 };
 
 export type DraftResolutionMethod =
+  | "bill_line_explicit_account"
   | "expense_category_map"
   | "uncategorized_expense_role"
   | "ap_control_role";
@@ -72,12 +67,12 @@ export type BillGlDraft = {
   writes_nothing: true;
 };
 
+// Line-level account-resolution failures (CATEGORY_MAPPING_MISSING, UNCATEGORIZED_UNRESOLVED, …) are
+// raised by the shared resolver as BillLineAccountError. These codes are the assembler/draft-level ones.
 export type BillGlDraftErrorCode =
   | "EMPTY_BILL"
   | "INVALID_AMOUNT"
   | "AP_UNRESOLVED"
-  | "UNCATEGORIZED_UNRESOLVED"
-  | "CATEGORY_MAPPING_MISSING"
   | "ACCOUNT_NOT_FOUND"
   | "UNBALANCED";
 
@@ -217,49 +212,19 @@ export async function computeBillGlDraft(
       );
     }
 
-    const kind = line.category_kind ?? null;
-    const code = line.category_code?.trim() || null;
-
-    let ref: AccountRef;
-    let method: ResolvedDebit["resolution_method"];
-    let label: string;
-
-    if (!kind || !code) {
-      // Uncategorized line → QBO-25 uncategorized_expense role (a legitimate bucket, not an error).
-      const uncategorized = await resolveRoleAccountOptional(client, operatingCompanyId, "uncategorized_expense");
-      if (!uncategorized) {
-        throw new BillGlDraftError(
-          "UNCATEGORIZED_UNRESOLVED",
-          "uncategorized_expense role (QBO-25) is not mapped — cannot place an uncategorized line (FAIL LOUD)"
-        );
-      }
-      ref = await accountRef(client, uncategorized);
-      method = "uncategorized_expense_role";
-      label = "Uncategorized expense (QBO-25)";
-    } else {
-      // Specified category MUST resolve via the expense_category_account_map. A missing mapping is a
-      // config error that must surface — NEVER silently bucket it to uncategorized.
-      try {
-        const mapped = await resolveAccountForCategory(operatingCompanyId, kind, code);
-        ref = await accountRef(client, mapped.account_id);
-        method = "expense_category_map";
-        label = `${kind}/${code}`;
-      } catch (err) {
-        if (err instanceof ExpenseCategoryMapResolutionError) {
-          throw new BillGlDraftError(
-            "CATEGORY_MAPPING_MISSING",
-            `Line ${i + 1}: category ${kind}/${code} has no active expense_category_account_map entry — FAIL LOUD (no silent fallback)`
-          );
-        }
-        throw err;
-      }
-    }
+    // THE ONE shared resolver — identical to what the poster uses (explicit override → category map →
+    // uncategorized QBO-25 → FAIL LOUD). A draft preview has no per-line explicit override.
+    const resolved = await resolveBillLineDebitAccount(client, operatingCompanyId, {
+      category_kind: line.category_kind ?? null,
+      category_code: line.category_code ?? null,
+    });
+    const ref = await accountRef(client, resolved.account_id);
 
     debits.push({
       ...ref,
       amount_cents: line.amount_cents,
-      category_label: label,
-      resolution_method: method,
+      category_label: resolved.category_label,
+      resolution_method: resolved.method,
       description: line.description ?? null,
     });
   }

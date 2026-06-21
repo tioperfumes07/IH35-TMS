@@ -300,6 +300,7 @@
     "verify:expenses-cents-void": "node scripts/verify-expenses-cents-and-void-not-delete.mjs",
     "verify:expense-balance-invariant": "node scripts/verify-expense-balance-invariant.mjs",
     "verify:uncategorized-expense-seed": "node scripts/verify-uncategorized-expense-seed.mjs",
+    "verify:bill-resolver-single-source": "node scripts/verify-bill-resolver-single-source.mjs",
     "verify:fh1-fixed-assets": "node scripts/verify-fh1-fixed-assets.mjs",
     "verify:fh2-no-posting": "node scripts/verify-fh2-no-posting.mjs",
     "verify:fh4-no-posting": "node scripts/verify-fh4-no-posting.mjs",
