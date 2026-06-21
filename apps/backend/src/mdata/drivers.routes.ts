@@ -16,7 +16,20 @@ import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "./driver-pseudo-user.js";
 import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "./test-seed-archive.js";
 
-const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
+const DRIVER_STATUS_VALUES = ["Active", "Probation", "Inactive", "Terminated", "OnLeave"] as const;
+export const driverStatusSchema = z.enum(DRIVER_STATUS_VALUES);
+
+// AUTO-01-FOLLOWUP: the LIST query `?status=` tolerates input casing — a case variant of a REAL status
+// (e.g. "active", "ACTIVE", "aCtIvE") resolves to its canonical casing BEFORE validation, so it filters
+// instead of 400ing. A value that is NOT a case variant of a real status (e.g. "all") is passed through
+// unchanged and still fails the enum → 400 (correct; "all" is not a real status). The enum and the stored
+// values are unchanged; the create/update write bodies keep strict casing (only the read filter is lenient).
+export function normalizeDriverListStatusInput(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const canonical = DRIVER_STATUS_VALUES.find((status) => status.toLowerCase() === value.toLowerCase());
+  return canonical ?? value;
+}
+const listStatusSchema = z.preprocess(normalizeDriverListStatusInput, driverStatusSchema);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
 const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
 const preferredLanguageSchema = z.enum(["en", "es"]);
@@ -31,7 +44,7 @@ const ineSchema = z.string().trim().min(8, "INE must be between 8 and 20 charact
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
-  status: driverStatusSchema.optional(),
+  status: listStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
   operating_company_id: z.string().uuid().optional(),
   include_system: z.coerce.boolean().optional().default(false),
