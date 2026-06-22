@@ -31,6 +31,7 @@ import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
 import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
 import { PlannerCalendarPage } from "../pages/dispatch/PlannerCalendarPage";
 import { DispatchPlannersLayout } from "../pages/dispatch/planners/DispatchPlannersLayout";
+import { UnifiedTimelinePlanner } from "../pages/dispatch/planners/UnifiedTimelinePlanner";
 import { DriverPlanner } from "../pages/dispatch/planners/DriverPlanner";
 import { TruckPlanner } from "../pages/dispatch/planners/TruckPlanner";
 import { LoadsPlanner } from "../pages/dispatch/planners/LoadsPlanner";
@@ -819,7 +820,16 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        <Route path="/dispatch/planners" element={<Navigate replace to="/dispatch/planners/loads" />} />
+        {/* Unified Timeline is the default planner view (Phase 1). The 3 legacy tabs stay reachable (archive-not-delete). */}
+        <Route path="/dispatch/planners" element={<Navigate replace to="/dispatch/planners/timeline" />} />
+        <Route
+          path="/dispatch/planners/timeline"
+          element={
+            <ProtectedRoute>
+              <DispatchPlannersLayout><UnifiedTimelinePlanner /></DispatchPlannersLayout>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/dispatch/planner"
           element={

@@ -6,6 +6,8 @@ import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { UniversalFilterBar, type FilterState } from "../../../components/planner/UniversalFilterBar";
 
 const TABS = [
+  // Timeline (Phase 1) is the default unified view; the 3 legacy planners stay reachable (archive-not-delete).
+  { label: "Timeline", to: "/dispatch/planners/timeline" },
   { label: "Driver Planner", to: "/dispatch/planners/driver" },
   { label: "Truck Planner", to: "/dispatch/planners/truck" },
   { label: "Loads Planner", to: "/dispatch/planners/loads" },
