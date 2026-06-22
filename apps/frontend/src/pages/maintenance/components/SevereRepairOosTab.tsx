@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { listUnits } from "../../../api/mdata";
 import {
   completeWorkOrder,
@@ -29,10 +31,12 @@ function asDays(value: number | null | undefined) {
 }
 
 function severityBadgeClass(severity: string) {
+  // §7 status: single red (severe/total loss) + single amber (everything else). No off-palette orange.
   if (severity === "total_loss") return "bg-red-100 text-red-800 border-red-300";
-  if (severity === "out_of_service") return "bg-amber-100 text-amber-800 border-amber-300";
-  return "bg-orange-100 text-orange-800 border-orange-300";
+  return "bg-amber-100 text-amber-800 border-amber-300";
 }
+
+const LINK = "text-slate-700 hover:underline";
 
 export function SevereRepairOosTab({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -44,6 +48,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
   const [oosLocation, setOosLocation] = useState("");
   const [returnNotes, setReturnNotes] = useState("");
   const [returnEstimate, setReturnEstimate] = useState<SevereRepairEstimate | null>(null);
+  const [search, setSearch] = useState("");
 
   const estimatesQuery = useQuery({
     queryKey: ["maintenance", "severe-estimates", operatingCompanyId],
@@ -136,6 +141,113 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
     return map;
   }, [estimates]);
 
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return estimates;
+    return estimates.filter((e) =>
+      [e.unit_number, e.unit_id, e.description, e.estimate_location, e.damage_severity, e.estimate_status].some((v) =>
+        String(v ?? "").toLowerCase().includes(q),
+      ),
+    );
+  }, [estimates, search]);
+
+  // Universal-list columns (spec 02 Severe Repairs). Estimate-backed; links go to existing detail routes
+  // (no driver field on an estimate → omitted, no fabrication). Action buttons live in rowActions.
+  const columns: Array<ParityColumn<SevereRepairEstimate>> = [
+    {
+      key: "trigger_wo_id",
+      label: "WO #",
+      render: (row) =>
+        row.trigger_wo_id ? (
+          <Link to={`/maintenance/work-orders/${row.trigger_wo_id}`} className={LINK}>
+            Open →
+          </Link>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "unit_number",
+      label: "Unit",
+      sortable: true,
+      render: (row) => (
+        <Link to={`/fleet/${row.unit_id}`} className={LINK}>
+          {row.unit_number ?? row.unit_id.slice(0, 8)}
+        </Link>
+      ),
+    },
+    {
+      key: "damage_severity",
+      label: "Severity",
+      sortable: true,
+      render: (row) => (
+        <span className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${severityBadgeClass(row.damage_severity)}`}>
+          {row.damage_severity}
+        </span>
+      ),
+    },
+    { key: "description", label: "Issue", render: (row) => row.description || "—" },
+    { key: "estimate_location", label: "Location", render: (row) => row.estimate_location || "—" },
+    { key: "estimated_labor_cents", label: "Labor", sortable: true, render: (row) => money(row.estimated_labor_cents) },
+    { key: "estimated_parts_cents", label: "Parts", sortable: true, render: (row) => money(row.estimated_parts_cents) },
+    { key: "estimated_outside_service_cents", label: "Outside", sortable: true, render: (row) => money(row.estimated_outside_service_cents) },
+    { key: "estimated_total_cents", label: "Total", sortable: true, render: (row) => <span className="font-semibold">{money(row.estimated_total_cents)}</span> },
+    { key: "days_oos", label: "Days OOS", sortable: true, render: (row) => asDays(row.days_oos) },
+    { key: "estimate_status", label: "Status", sortable: true },
+  ];
+
+  const rowActions = (row: SevereRepairEstimate) => (
+    <div className="flex flex-wrap gap-1">
+      <Button size="sm" variant="secondary" loading={refreshMutation.isPending} onClick={() => void refreshMutation.mutateAsync(row.id)}>
+        Refresh
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => pushToast("Convert to WO action is available from work-order detail in this foundation block", "info")}
+      >
+        Convert to WO
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => {
+          setSelectedUnitId(row.unit_id);
+          setMarkOosOpen(true);
+        }}
+      >
+        Mark OOS
+      </Button>
+      <Button size="sm" variant="secondary" onClick={() => pushToast("Dispatch Tow workflow lands in Block 04", "info")}>
+        Dispatch Tow
+      </Button>
+      <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Approve estimate follows Owner workflow route in next iteration", "info")}>
+        Approve estimate
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={!row.trigger_wo_id}
+        loading={completeMutation.isPending}
+        onClick={() => void completeMutation.mutateAsync(row)}
+      >
+        Mark complete
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={(openByUnit.get(row.unit_id) ?? 0) > 0}
+        onClick={() => {
+          setReturnEstimate(row);
+          setReturnNotes("");
+          setReturnOpen(true);
+        }}
+      >
+        Return to service
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -160,105 +272,24 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 uppercase text-gray-600">
-              <tr>
-                <th className="px-2 py-2">Unit</th>
-                <th className="px-2 py-2">Severity</th>
-                <th className="px-2 py-2">Description</th>
-                <th className="px-2 py-2">Location</th>
-                <th className="px-2 py-2">Labor</th>
-                <th className="px-2 py-2">Parts</th>
-                <th className="px-2 py-2">Outside</th>
-                <th className="px-2 py-2">Total</th>
-                <th className="px-2 py-2">Days OOS</th>
-                <th className="px-2 py-2">Status</th>
-                <th className="px-2 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {estimates.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100 align-top">
-                  <td className="px-2 py-2 font-semibold">{row.unit_number ?? row.unit_id.slice(0, 8)}</td>
-                  <td className="px-2 py-2">
-                    <span className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${severityBadgeClass(row.damage_severity)}`}>
-                      {row.damage_severity}
-                    </span>
-                  </td>
-                  <td className="max-w-56 px-2 py-2">{row.description || "—"}</td>
-                  <td className="px-2 py-2">{row.estimate_location || "—"}</td>
-                  <td className="px-2 py-2">{money(row.estimated_labor_cents)}</td>
-                  <td className="px-2 py-2">{money(row.estimated_parts_cents)}</td>
-                  <td className="px-2 py-2">{money(row.estimated_outside_service_cents)}</td>
-                  <td className="px-2 py-2 font-semibold">{money(row.estimated_total_cents)}</td>
-                  <td className="px-2 py-2">{asDays(row.days_oos)}</td>
-                  <td className="px-2 py-2">{row.estimate_status}</td>
-                  <td className="px-2 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      <Button size="sm" variant="secondary" loading={refreshMutation.isPending} onClick={() => void refreshMutation.mutateAsync(row.id)}>
-                        Refresh
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => pushToast("Convert to WO action is available from work-order detail in this foundation block", "info")}
-                      >
-                        Convert to WO
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          setSelectedUnitId(row.unit_id);
-                          setMarkOosOpen(true);
-                        }}
-                      >
-                        Mark OOS
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => pushToast("Dispatch Tow workflow lands in Block 04", "info")}
-                      >
-                        Dispatch Tow
-                      </Button>
-                      <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Approve estimate follows Owner workflow route in next iteration", "info")}>
-                        Approve estimate
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={!row.trigger_wo_id}
-                        loading={completeMutation.isPending}
-                        onClick={() => void completeMutation.mutateAsync(row)}
-                      >
-                        Mark complete
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={(openByUnit.get(row.unit_id) ?? 0) > 0}
-                        onClick={() => {
-                          setReturnEstimate(row);
-                          setReturnNotes("");
-                          setReturnOpen(true);
-                        }}
-                      >
-                        Return to service
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {estimates.length === 0 ? (
-          <div className="px-3 py-4 text-sm text-gray-500">No severe repairs or OOS units</div>
-        ) : null}
-      </div>
+      <ParityTable<SevereRepairEstimate>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={estimatesQuery.isLoading}
+        emptyText="No severe repairs or OOS units"
+        storageKey="maint-severe-repairs"
+        exportFilename="severe-repairs"
+        rowActions={rowActions}
+        filterBar={
+          <input
+            className="min-h-12 w-full max-w-xs rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+            placeholder="Search unit / issue / location / severity…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        }
+      />
 
       <Modal open={markOosOpen} onClose={() => setMarkOosOpen(false)} title="Mark Unit OOS">
         <div className="space-y-3">
