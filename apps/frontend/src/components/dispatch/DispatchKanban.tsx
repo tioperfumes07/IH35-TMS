@@ -18,6 +18,9 @@ type Props = {
   activeGeofenceBreachVehicleIds?: Set<string>;
   loading: boolean;
   onLoadClick: (loadId: string) => void;
+  // Awaiting-assignment cards are synthetic trucks (no load) — clicking one books a load FOR that truck
+  // rather than opening a (non-existent) load drawer. Receives the bare unit id.
+  onBookForUnit?: (unitId: string) => void;
   onStatusDrop: (loadId: string, nextStatus: LoadStatus) => Promise<void>;
   listError?: DataTableErrorState;
 };
@@ -533,7 +536,7 @@ function KanbanDispatchColumn({
   );
 }
 
-export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreachVehicleIds, loading, onLoadClick, onStatusDrop, listError }: Props) {
+export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreachVehicleIds, loading, onLoadClick, onBookForUnit, onStatusDrop, listError }: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
   // DISPATCH-UI-REFINE-2 ITEM 1 — default to STANDARD (2-line) density. Compact (1-line) + Detailed
   // (~5-line) remain available via the toggle (additive). Standard balances fleet density vs readability.
@@ -620,7 +623,11 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
               loads={group.key === "awaiting_assignment" ? awaitingTruckCards : grouped.get(group.key) ?? []}
               density={density}
               activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
-              onLoadClick={onLoadClick}
+              onLoadClick={
+                group.key === "awaiting_assignment" && onBookForUnit
+                  ? (cardId) => onBookForUnit(cardId.replace(/^unit:/, ""))
+                  : onLoadClick
+              }
             />
           ))}
         </div>
