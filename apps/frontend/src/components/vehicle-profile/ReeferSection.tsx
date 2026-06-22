@@ -32,7 +32,7 @@ export function ReeferSection({ reefer }: { reefer: ReeferData }) {
         <div className="mt-3">
           <div className="text-xs text-gray-600">Hours until service</div>
           <div className="mt-1 h-2 rounded bg-gray-100">
-            <div className="h-2 rounded bg-blue-600" style={{ width: `${pct}%` }} />
+            <div className="h-2 rounded bg-[#1F2A44]" style={{ width: `${pct}%` }} />
           </div>
           <div className="text-xs text-gray-500">{until} hrs remaining · last service {reefer.last_service_date ?? "—"}</div>
         </div>
