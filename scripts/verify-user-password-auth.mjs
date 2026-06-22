@@ -23,7 +23,7 @@ try {
   assertIncludes(officeLoginRoutes, "auth.office_email_login.succeeded", "Office login audit event missing");
 
   const usersPage = read("apps/frontend/src/pages/Users.tsx");
-  assertIncludes(usersPage, "+ Add User", "Users page add-user action missing");
+  assertIncludes(usersPage, "+ Create User", "Users page create-user action missing");
   assertIncludes(usersPage, "Auth method", "Users page auth method column missing");
   assertIncludes(usersPage, "Initial password", "Users page initial password option missing");
 
