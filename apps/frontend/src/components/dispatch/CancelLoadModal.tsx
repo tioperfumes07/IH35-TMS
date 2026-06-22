@@ -5,13 +5,36 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
+import { ApiError } from "../../api/client";
+
+/** Pull a human message out of a cancel API failure (validation_error details, field message, or text). */
+function extractCancelError(err: unknown): string {
+  if (err instanceof ApiError) {
+    const data = (err.data as Record<string, unknown>) ?? {};
+    const details = data.details as Record<string, unknown> | undefined;
+    if (details) {
+      if (typeof details.message === "string") return details.message;
+      // zod flatten shape: { fieldErrors: { field: [msg] }, formErrors: [...] }
+      const fieldErrors = details.fieldErrors as Record<string, string[]> | undefined;
+      const firstField = fieldErrors ? Object.values(fieldErrors).flat()[0] : undefined;
+      if (firstField) return firstField;
+    }
+    if (typeof data.message === "string") return data.message;
+    if (typeof data.error === "string") return `Cancel failed: ${data.error}`;
+    return `Cancel failed (HTTP ${err.status}).`;
+  }
+  return err instanceof Error ? err.message : "Cancel failed. Please try again.";
+}
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
   onSubmit: (payload: {
-    reason_code: string;
+    // Canonical backend cancel contract (cancel-load.routes preValidation hook requires BOTH):
+    cancel_reason_code: string; // the enum code from the reasons dropdown
+    cancel_reason: string; // human text reason (the reason label)
+    reason_code: string; // kept for the legacy cancelMutation status flip
     cancellation_notes: string;
     billable_to_customer: boolean;
     cancellation_charge_cents?: number;
@@ -24,6 +47,7 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
   const [billable, setBillable] = useState(false);
   const [charge, setCharge] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const reasonsQuery = useQuery({
     queryKey: ["dispatch", "cancellation-reasons"],
     queryFn: () => listDispatchCancellationReasons().then((value) => value.reasons),
@@ -48,10 +72,13 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
         className="space-y-3"
         onSubmit={async (event) => {
           event.preventDefault();
+          setSubmitError(null);
           if (!selectedReason || notes.trim().length < 20) return;
           setSubmitting(true);
           try {
             await onSubmit({
+              cancel_reason_code: String(selectedReason.reason_code),
+              cancel_reason: String(selectedReason.reason_label ?? selectedReason.reason_code),
               reason_code: String(selectedReason.reason_code),
               cancellation_notes: notes.trim(),
               billable_to_customer: billable,
@@ -62,6 +89,9 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
             setBillable(false);
             setCharge("");
             onClose();
+          } catch (err) {
+            // Surface the API error instead of silently hanging (the original bug); keep the form editable.
+            setSubmitError(extractCancelError(err));
           } finally {
             setSubmitting(false);
           }
@@ -118,6 +148,11 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
               ? "Select a cancellation reason to continue."
               : `Add ${20 - notes.trim().length} more character(s) of notes to enable Confirm Cancel.`}
           </p>
+        ) : null}
+        {submitError ? (
+          <div className="rounded border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
+            {submitError}
+          </div>
         ) : null}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
