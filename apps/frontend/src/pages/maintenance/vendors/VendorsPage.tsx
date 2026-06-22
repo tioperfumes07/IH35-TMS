@@ -12,6 +12,7 @@ import {
 } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
@@ -122,6 +123,46 @@ export function VendorsPage() {
   const rows = useMemo(() => listQ.data?.rows ?? [], [listQ.data?.rows]);
   const csvEnabled = listQ.data?.csv_import_enabled ?? false;
 
+  // Universal-list columns. Vendor links to the maintenance vendor detail.
+  const columns: Array<ParityColumn<MaintenanceVendorRow>> = [
+    {
+      key: "display_name",
+      label: "Vendor",
+      sortable: true,
+      render: (row) => (
+        <Link to={`/maintenance/vendors/${row.id}`} className="font-semibold text-slate-700 hover:underline">
+          {String(row.display_name ?? row.name ?? "—")}
+        </Link>
+      ),
+    },
+    { key: "code", label: "Code", sortable: true, render: (row) => String(row.code ?? "—") },
+    { key: "contact_email", label: "Email", render: (row) => String(row.contact_email ?? "—") },
+    { key: "contact_phone", label: "Phone", render: (row) => String(row.contact_phone ?? "—") },
+    { key: "is_active", label: "Status", sortable: true, render: (row) => (row.is_active ? "Active" : "Archived") },
+  ];
+
+  const rowActions = (row: MaintenanceVendorRow) => (
+    <div className="flex gap-2">
+      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>
+        Edit
+      </button>
+      <button
+        type="button"
+        className="text-red-600 underline"
+        disabled={!row.is_active}
+        onClick={async () => {
+          const reason = window.prompt("Archive reason");
+          if (!reason) return;
+          await archiveMaintenanceVendor(row.id, companyId, reason);
+          await refresh();
+          pushToast("Vendor archived", "success");
+        }}
+      >
+        Archive
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-3" data-testid="maint-vendors-page">
       <div className="flex items-center justify-between rounded border border-gray-200 bg-white p-3">
@@ -158,63 +199,16 @@ export function VendorsPage() {
             Download template
           </a>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="text-[11px] uppercase text-gray-600">
-              <tr>
-                <th className="py-1">Vendor</th>
-                <th className="py-1">Code</th>
-                <th className="py-1">Email</th>
-                <th className="py-1">Phone</th>
-                <th className="py-1">Status</th>
-                <th className="py-1">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={String(row.id)} className="border-t border-gray-100">
-                  <td className="py-1">
-                    <Link className="font-semibold text-slate-600 underline" to={`/maintenance/vendors/${row.id}`}>
-                      {String(row.display_name ?? row.name ?? "—")}
-                    </Link>
-                  </td>
-                  <td className="py-1">{String(row.code ?? "—")}</td>
-                  <td className="py-1">{String(row.contact_email ?? "—")}</td>
-                  <td className="py-1">{String(row.contact_phone ?? "—")}</td>
-                  <td className="py-1">{row.is_active ? "Active" : "Archived"}</td>
-                  <td className="py-1">
-                    <div className="flex gap-2">
-                      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="text-red-600 underline"
-                        disabled={!row.is_active}
-                        onClick={async () => {
-                          const reason = window.prompt("Archive reason");
-                          if (!reason) return;
-                          await archiveMaintenanceVendor(row.id, companyId, reason);
-                          await refresh();
-                          pushToast("Vendor archived", "success");
-                        }}
-                      >
-                        Archive
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-3 text-center text-gray-500">
-                    No vendors available.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<MaintenanceVendorRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => String(row.id)}
+          loading={listQ.isLoading}
+          emptyText="No vendors available."
+          storageKey="maint-master-data-vendors"
+          exportFilename="maintenance-vendors"
+          rowActions={rowActions}
+        />
       </div>
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vendor">
