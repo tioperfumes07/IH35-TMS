@@ -2,10 +2,12 @@
  * Block 7 — pure mappers for FULL load edit (Edit opens BookLoadModalV4 pre-filled).
  *
  * SAFETY CONTRACT (GUARD #4/#5, anti-data-loss):
- *  - Only the persisted-and-editable set round-trips: the columns the book-load INSERT actually writes
- *    AND the dispatch PATCH schema accepts. Unpersisted wizard fields (commodity, weight, load_type,
- *    trailer_type, trip_type, hazmat, reefer, customer_po, pieces, temp) are NEVER prefilled-then-saved
- *    and are NEVER put in the PATCH body.
+ *  - Only the persisted-and-editable set round-trips: columns that exist on mdata.loads AND the dispatch
+ *    PATCH schema accepts. Block 7 (Jorge-approved 2026-06-22, no migration) ADDS commodity, weight
+ *    (cargo_weight_lbs), reefer setpoint (reefer_setpoint_temp_f), and trip_type to that set.
+ *    Still EXCLUDED (no column / gated / forbidden): load_type, trailer_type, customer_po_number + pieces
+ *    (gated migration — see docs/specs/block7-loads-piece-po-migration.md), and HAZMAT (forbidden by §4,
+ *    Jorge ruling 2026-06-22). Excluded fields are NEVER prefilled-then-saved and NEVER in the PATCH body.
  *  - buildEditPatchBody sends ONLY fields the user actually changed (react-hook-form dirtyFields). A
  *    field the user didn't touch is absent from the body → the partial-update service leaves it
  *    untouched in the DB (never nulled). charges/stops are sent only if that group is dirty.
@@ -94,6 +96,12 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     team_id: str(load.team_id),
     assigned_primary_driver_id: str(load.assigned_primary_driver_id),
     assigned_secondary_driver_id: str(load.assigned_secondary_driver_id),
+    // Block 7 (Jorge-approved, no migration): freight attributes now round-trip. Weight column is
+    // cargo_weight_lbs; reefer setpoint is the numeric reefer_setpoint_temp_f surfaced as text.
+    commodity: str(load.commodity),
+    weight_lbs: num(load.cargo_weight_lbs),
+    reefer_setpoint: str(load.reefer_setpoint_temp_f),
+    trip_type: str(load.trip_type),
     stops,
   };
 }
@@ -125,6 +133,20 @@ const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
   ["miles_shortest", "miles_shortest", (v) => num(v.miles_shortest)],
   ["miles_deadhead", "miles_deadhead", (v) => num(v.miles_deadhead)],
   ["assigned_unit_id", "assigned_unit_id", (v) => str(v.assigned_unit_id) || null],
+  // Block 7 (Jorge-approved, no migration). form key → PATCH key (= mdata.loads column) → transform.
+  ["commodity", "commodity", (v) => str(v.commodity) || null],
+  ["weight_lbs", "cargo_weight_lbs", (v) => {
+    const n = Number(v.weight_lbs);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  }],
+  ["reefer_setpoint", "reefer_setpoint_temp_f", (v) => {
+    const s = str(v.reefer_setpoint).trim();
+    if (!s) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }],
+  // trip_type is a non-nullable enum (NB/TR/SB) — omit (undefined) when blank so it's never cleared to null.
+  ["trip_type", "trip_type", (v) => str(v.trip_type) || undefined],
 ];
 
 const CHARGE_KEYS = ["linehaul_cents", "fuel_surcharge_cents", "accessorial_cents", "accessorial_rows"];

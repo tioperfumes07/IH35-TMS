@@ -660,7 +660,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             detention_expected_y_n, detention_expected_hours,
             detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
             late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
-            miles_practical, miles_shortest, miles_deadhead
+            miles_practical, miles_shortest, miles_deadhead,
+            -- Block 7 (Jorge-approved, no migration): freight attributes that round-trip in the Edit wizard.
+            -- weight column is cargo_weight_lbs; reefer setpoint is reefer_setpoint_temp_f (numeric).
+            commodity, cargo_weight_lbs, reefer_setpoint_temp_f, trip_type
           FROM mdata.loads
           WHERE id = $1
           LIMIT 1

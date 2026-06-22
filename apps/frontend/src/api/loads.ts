@@ -124,6 +124,11 @@ export type LoadsListResponse = {
 
 export type LoadDetail = DispatchLoadRow & {
   stops: LoadStop[];
+  // Block 7 (Jorge-approved, no migration): freight attributes the Edit wizard prefills + round-trips.
+  commodity?: string | null;
+  cargo_weight_lbs?: number | null;
+  reefer_setpoint_temp_f?: number | null;
+  trip_type?: "NB" | "TR" | "SB" | null;
 };
 
 export type LoadAuditEvent = {
