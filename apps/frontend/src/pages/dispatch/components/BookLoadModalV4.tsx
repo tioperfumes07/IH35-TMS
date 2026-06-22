@@ -4,6 +4,8 @@ import { useForm, type UseFormSetValue } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
+import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
+import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
 import { listVendors } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
@@ -124,6 +126,8 @@ type Props = {
   onCreated: () => void;
   /** B21-D7 OCR queue convert — applies template JSON at modal open (integration seam only). */
   templatePrefillJson?: Record<string, unknown> | null;
+  /** Block 7 — when set, the wizard opens in EDIT mode: prefilled from this load, Save → guarded PATCH. */
+  editLoadId?: string | null;
 };
 
 function numOrUndef(v: unknown): number | undefined {
@@ -156,8 +160,9 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 [data-wizard-v5="on"] .space-y-2>*+*{margin-top:4px}
 `;
 
-export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, templatePrefillJson }: Props) {
+export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, templatePrefillJson, editLoadId }: Props) {
   const auth = useAuth();
+  const isEditMode = Boolean(editLoadId);
   const { pushToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
   const { enabled: wizardV5 } = useFeatureFlag(LOAD_WIZARD_V5_FLAG, operatingCompanyId);
@@ -293,6 +298,23 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     }
   }, [open, templatePrefillJson, form]);
 
+  // Block 7 — EDIT mode: load the existing load and prefill the wizard. form.reset(...keepDefaults)
+  // marks nothing dirty, so the Save body (dirtyFields-gated) only contains what the user then changes.
+  const editLoadQuery = useQuery({
+    queryKey: ["book-load-edit", editLoadId],
+    queryFn: () => getLoad(editLoadId as string),
+    enabled: Boolean(open && editLoadId),
+    staleTime: 0,
+  });
+  const editLoad: LoadDetail | undefined = editLoadQuery.data;
+  useEffect(() => {
+    if (!open || !isEditMode || !editLoad) return;
+    // reset WITHOUT keepDefaultValues so the prefilled values become the clean baseline — nothing is
+    // dirty until the user edits, which is what the dirtyFields-gated Save body relies on.
+    form.reset({ ...form.getValues(), ...(buildEditPrefill(editLoad) as Partial<FormValues>) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEditMode, editLoad]);
+
   const finalizeBookLoadClose = useCallback(() => {
     setShowDiscardConfirm(false);
     onClose();
@@ -421,6 +443,35 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     setGateBanner(null);
     setSubmitErrorMessage(null);
+
+    // Block 7 — EDIT mode: PATCH only the fields the user changed (dirtyFields-gated, anti-data-loss).
+    // Trip-type is not editable here, so the create-only trip_type gate below does not apply.
+    if (isEditMode && editLoadId) {
+      try {
+        const body = buildEditPatchBody(
+          values as unknown as Record<string, unknown>,
+          form.formState.dirtyFields as unknown as Record<string, unknown>,
+          operatingCompanyId
+        );
+        await updateDispatchLoadFull(editLoadId, body);
+        pushToast("Load updated", "success");
+        onCreated();
+        onClose();
+      } catch (error) {
+        const data = error instanceof ApiError ? ((error.data as Record<string, unknown>) ?? {}) : {};
+        if (error instanceof ApiError && error.status === 409 && String(data.error ?? "") === "load_edit_locked") {
+          setSubmitErrorMessage(
+            "This load is locked — it's behind an open settlement, an issued invoice, or a driver bill, so it can't be edited."
+          );
+          pushToast("Load locked — can't edit", "error");
+        } else {
+          setSubmitErrorMessage(String(data.message ?? "Failed to update the load."));
+          pushToast("Failed to update load", "error");
+        }
+      }
+      return;
+    }
+
     if (values.assignment_mode === "team" && !values.team_id.trim()) {
       pushToast("Team mode requires a team ID", "error");
       return;
@@ -585,21 +636,30 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         <header className="flex flex-shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#16203a" }}>
           <div>
             <div className="text-[10px]" style={{ color: "#9aa6ba" }}>
-              Dispatch › Book load
+              {isEditMode ? "Dispatch › Edit load" : "Dispatch › Book load"}
             </div>
-            <div className="text-base font-bold">Book load</div>
+            {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
+                ">Book load<" text node for the create wizard while Edit shows the load number. */}
+            {isEditMode ? (
+              <div className="text-base font-bold">Edit load{editLoad?.load_number ? ` ${editLoad.load_number}` : ""}</div>
+            ) : (
+              <div className="text-base font-bold">Book load</div>
+            )}
           </div>
           <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9aa6ba" }}>
             <span>{headerTime}</span>
             <ModalCloseButton
-              title="Book load"
+              title={isEditMode ? "Edit load" : "Book load"}
               onClose={attemptBookLoadClose}
               className="h-6 w-6 rounded text-sm text-gray-200 hover:bg-[#2e3c5a]"
             />
           </div>
         </header>
 
-        <LiveLoadIdBar operatingCompanyId={operatingCompanyId} onReservationUpdate={onReservationUpdate} />
+        {/* Edit mode reuses the real LOAD# (in the header) — no new reservation bar. */}
+        {isEditMode ? null : (
+          <LiveLoadIdBar operatingCompanyId={operatingCompanyId} onReservationUpdate={onReservationUpdate} />
+        )}
 
         <form
           className="flex flex-1 flex-col overflow-y-auto"
@@ -609,6 +669,14 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         >
           {submitErrorMessage ? (
             <div className="mx-3 mt-2 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
+          ) : null}
+
+          {isEditMode ? (
+            <div className="mx-3 mt-2 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
+              Editing the persisted load details. <span className="font-semibold">Commodity, weight, trailer/trip
+              type, hazmat and reefer settings</span> aren&apos;t stored for edit yet — they show blank here and
+              will <span className="font-semibold">not</span> be changed by saving. Only fields you edit are saved.
+            </div>
           ) : null}
 
           {gateBanner ? (
@@ -1023,16 +1091,19 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
               <Button type="button" variant="secondary" onClick={attemptBookLoadClose}>
                 Cancel
               </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={form.handleSubmit(async (values) => {
-                  await submitLoad(values, "draft");
-                })}
-              >
-                Save draft
-              </Button>
-              <Button type="submit">Book + dispatch</Button>
+              {/* Edit mode: a single Save; no draft path (the load already exists). */}
+              {isEditMode ? null : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={form.handleSubmit(async (values) => {
+                    await submitLoad(values, "draft");
+                  })}
+                >
+                  Save draft
+                </Button>
+              )}
+              <Button type="submit">{isEditMode ? "Save changes" : "Book + dispatch"}</Button>
             </div>
           </div>
           <div className="border-t border-gray-100 px-3 py-1 text-right text-[9px] text-gray-500">

@@ -649,7 +649,18 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           SELECT
             id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
             assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-            dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
+            dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id,
+            -- Block 7 (full-edit prefill): editable columns the book-load INSERT actually writes, so the
+            -- Edit wizard can round-trip them. Read-only enrichment; every column verified present in
+            -- book-load.service.ts INSERT + accepted by the PATCH schema (no fabricated fields).
+            customer_wo_number, pickup_number, border_routing, driver_instructions_text,
+            requires_tarps, tarp_type, lumper_amount_cents,
+            customer_chargeback_requested, customer_chargeback_reason, live_load_number,
+            anticipated_chargeback_cents, anticipated_chargeback_reason,
+            detention_expected_y_n, detention_expected_hours,
+            detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
+            late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
+            miles_practical, miles_shortest, miles_deadhead
           FROM mdata.loads
           WHERE id = $1
           LIMIT 1
@@ -664,7 +675,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           SELECT
             id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
             scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at,
-            status, notes, created_at, updated_at
+            status, notes, created_at, updated_at,
+            -- Block 7 full-edit: the editable stop columns the book-load INSERT writes, so an edited
+            -- stop round-trips without wiping appointment window / lumper / tarp / contacts / dock.
+            time_window_type, appointment_start_at, appointment_end_at,
+            lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
+            site_contact_name, site_contact_phone, gate_dock_text
           FROM mdata.load_stops
           WHERE load_id = $1
           ORDER BY sequence_number ASC, created_at ASC
