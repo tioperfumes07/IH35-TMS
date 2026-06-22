@@ -1,10 +1,10 @@
-import type { WorkOrder } from "../../../api/maintenance";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
-import { TableSelection, TableSelectionHeader } from "../../../components/bulk/TableSelection";
+import type { WorkOrder } from "../../../api/maintenance";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { Button } from "../../../components/Button";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
-import { useBulkSelection } from "../../../hooks/useBulkSelection";
 
 type Props = {
   rows: WorkOrder[];
@@ -13,6 +13,8 @@ type Props = {
   onSourceTypeChange: (value: string) => void;
   onExternalVendorChange: (value: string) => void;
 };
+
+const LINK = "text-slate-700 hover:underline";
 
 function formatDuration(seconds: number) {
   const days = Math.floor(seconds / 86400);
@@ -33,6 +35,10 @@ function renderDuration(row: WorkOrder) {
   return "—";
 }
 
+function money(value: unknown) {
+  return `$${Number(value ?? 0).toFixed(2)}`;
+}
+
 export function WorkOrdersTable({
   rows,
   sourceTypeFilter,
@@ -41,104 +47,124 @@ export function WorkOrdersTable({
   onExternalVendorChange,
 }: Props) {
   const { pushToast } = useToast();
-  const selection = useBulkSelection({ cap: 200, onCapExceeded: (e) => pushToast(e.message, "error") });
-  const pageRowIds = rows.map((row) => row.id);
+  const [search, setSearch] = useState("");
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) =>
+      [r.display_id, r.id, r.unit_number, r.driver_id, r.external_vendor_id, r.status, r.source_type].some((v) =>
+        String(v ?? "").toLowerCase().includes(q),
+      ),
+    );
+  }, [rows, search]);
+
+  // Universal-list columns — every record cell links to its detail per 00-MASTER-LINK-MAP.
+  // external_vendor_id is a QBO id (no internal /vendors route) → shown as text, not a dead link.
+  const columns: Array<ParityColumn<WorkOrder>> = [
+    {
+      key: "display_id",
+      label: "WO #",
+      sortable: true,
+      render: (row) => (
+        <Link to={`/maintenance/work-orders/${row.id}`} className={`${LINK} font-medium`}>
+          {row.display_id ?? row.id.slice(0, 8)}
+        </Link>
+      ),
+    },
+    { key: "source_type", label: "Source", sortable: true, render: (row) => row.source_type ?? "—" },
+    {
+      key: "unit_number",
+      label: "Unit",
+      sortable: true,
+      render: (row) => (
+        <Link to={`/fleet/${row.unit_id}`} className={LINK}>
+          {row.unit_number ?? row.unit_id.slice(0, 8)}
+        </Link>
+      ),
+    },
+    {
+      key: "driver_id",
+      label: "Driver",
+      render: (row) =>
+        row.driver_id ? (
+          <Link to={`/drivers/${row.driver_id}`} className={LINK}>
+            {row.driver_id.slice(0, 8)}
+          </Link>
+        ) : (
+          "—"
+        ),
+    },
+    { key: "external_vendor_id", label: "Vendor", render: (row) => row.external_vendor_id ?? "—" },
+    { key: "status", label: "Status", sortable: true },
+    { key: "total_actual_cost", label: "Cost", sortable: true, render: (row) => money((row as Record<string, unknown>).total_actual_cost) },
+    { key: "timing", label: "Timing", render: (row) => renderDuration(row) },
+  ];
 
   return (
     <div className="space-y-2">
-      <BulkActionBar
-        {...selection.bulkActionBarProps([
-          { id: "close", label: "Close Selected", onClick: () => pushToast("Close WOs — bulk endpoint pending.", "success") },
-          { id: "export", label: "Export Selected", onClick: () => pushToast("Export WOs queued.", "success") },
-        ])}
+      <ParityTable<WorkOrder>
+        columns={columns}
+        rows={filteredRows}
+        rowKey={(row) => row.id}
+        emptyText="No work orders found."
+        storageKey="maint-active-wos"
+        exportFilename="active-work-orders"
+        selectable
+        batchActions={(selected) => (
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => pushToast(`Close ${selected.length} WO(s) — bulk endpoint pending.`, "success")}
+            >
+              Close selected
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => pushToast(`Export ${selected.length} WO(s) queued.`, "success")}
+            >
+              Export selected
+            </Button>
+          </>
+        )}
+        filterBar={
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-1 text-xs text-gray-600">
+              <span>Source type</span>
+              <SelectCombobox
+                className="min-h-12 rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                value={sourceTypeFilter}
+                onChange={(e) => onSourceTypeChange(e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="IS">IS</option>
+                <option value="ES">ES</option>
+                <option value="AC">AC</option>
+                <option value="ET">ET</option>
+                <option value="RT">RT</option>
+                <option value="IT">IT</option>
+                <option value="RS">RS</option>
+              </SelectCombobox>
+            </label>
+            <input
+              className="min-h-12 rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+              value={externalVendorFilter}
+              onChange={(e) => onExternalVendorChange(e.target.value)}
+              placeholder="External vendor id…"
+            />
+            <input
+              className="min-h-12 w-full max-w-xs rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search WO / unit / driver / status…"
+            />
+          </div>
+        }
       />
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-        <label className="space-y-1 text-xs">
-          <span className="text-gray-600">Filter by source type</span>
-          <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-sm" value={sourceTypeFilter} onChange={(e) => onSourceTypeChange(e.target.value)}>
-            <option value="">All</option>
-            <option value="IS">IS</option>
-            <option value="ES">ES</option>
-            <option value="AC">AC</option>
-            <option value="ET">ET</option>
-            <option value="RT">RT</option>
-            <option value="IT">IT</option>
-            <option value="RS">RS</option>
-          </SelectCombobox>
-        </label>
-        <label className="space-y-1 text-xs md:col-span-2">
-          <span className="text-gray-600">Filter by external vendor (id)</span>
-          <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-sm"
-            value={externalVendorFilter}
-            onChange={(e) => onExternalVendorChange(e.target.value)}
-            placeholder="Vendor id..."
-          />
-        </label>
-      </div>
-      <div className="overflow-hidden rounded border border-gray-200 bg-white">
-        <TableSelection
-          rows={rows}
-          getId={(row) => row.id}
-          selectedIds={selection.selectedIds}
-          onSelectionChange={selection.setSelectedIds}
-          pageRowIds={pageRowIds}
-          cap={selection.cap}
-        >
-          {({ isSelected, toggle }) => (
-        <table className="w-full table-fixed text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="w-8 px-2 py-1">
-                <TableSelectionHeader
-                  selectedIds={selection.selectedIds}
-                  pageRowIds={pageRowIds}
-                  onSelectionChange={selection.setSelectedIds}
-                  cap={selection.cap}
-                />
-              </th>
-              <th className="px-2 py-1">Display ID</th>
-              <th className="px-2 py-1">Source Type</th>
-              <th className="px-2 py-1">Unit</th>
-              <th className="px-2 py-1">Driver</th>
-              <th className="px-2 py-1">Vendor</th>
-              <th className="px-2 py-1">Status</th>
-              <th className="px-2 py-1">Cost</th>
-              <th className="px-2 py-1">Timing</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-2 py-1">
-                  <input type="checkbox" checked={isSelected(row.id)} onChange={() => toggle(row.id)} aria-label={`Select ${row.display_id ?? row.id}`} />
-                </td>
-                <td className="px-2 py-1 font-medium">
-                  <Link to={`/maintenance/work-orders/${row.id}`} className="text-slate-700 hover:underline">
-                    {row.display_id ?? row.id.slice(0, 8)}
-                  </Link>
-                </td>
-                <td className="px-2 py-1">{row.source_type ?? "—"}</td>
-                <td className="truncate px-2 py-1">{row.unit_number ?? row.unit_id}</td>
-                <td className="truncate px-2 py-1">{row.driver_id ?? "—"}</td>
-                <td className="truncate px-2 py-1">{row.external_vendor_id ?? "—"}</td>
-                <td className="truncate px-2 py-1">{row.status}</td>
-                <td className="px-2 py-1">${Number((row as Record<string, unknown>).total_actual_cost ?? 0).toFixed(2)}</td>
-                <td className="truncate px-2 py-1">{renderDuration(row)}</td>
-              </tr>
-            ))}
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="px-2 py-3 text-center text-gray-500">
-                  No work orders found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-          )}
-        </TableSelection>
-      </div>
     </div>
   );
 }
