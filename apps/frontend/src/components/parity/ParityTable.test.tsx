@@ -91,4 +91,27 @@ describe("ParityTable (A1 grammar)", () => {
     rerender(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} enableColumnResize={false} />);
     expect(screen.queryByLabelText("Resize Name")).toBeNull();
   });
+
+  it("renderExpanded: no expander column by default; toggle reveals/hides the detail row", () => {
+    const { rerender } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    // Additive: existing consumers (no renderExpanded) get no expander toggle.
+    expect(screen.queryByLabelText("Expand row")).toBeNull();
+
+    rerender(
+      <ParityTable<Row>
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        renderExpanded={(r) => <div>detail for {r.name}</div>}
+      />,
+    );
+    // Detail hidden until expanded.
+    expect(screen.queryByText("detail for Alpha")).toBeNull();
+    const toggles = screen.getAllByLabelText("Expand row");
+    fireEvent.click(toggles[0]);
+    expect(screen.getByText("detail for Alpha")).toBeInTheDocument();
+    // Collapse hides it again.
+    fireEvent.click(screen.getByLabelText("Collapse row"));
+    expect(screen.queryByText("detail for Alpha")).toBeNull();
+  });
 });
