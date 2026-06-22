@@ -55,9 +55,35 @@ describe("CancelLoadModal — reason selection enables + submits", () => {
 
     fireEvent.click(confirm);
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    // Contract fix (the cancel bug): payload MUST carry cancel_reason_code (enum) + cancel_reason (text)
+    // — the field names the backend cancel hook requires — not just the legacy reason_code.
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ reason_code: "CUSTOMER_CANCELLED", billable_to_customer: false })
+      expect.objectContaining({
+        cancel_reason_code: "CUSTOMER_CANCELLED",
+        cancel_reason: "Customer cancelled",
+        reason_code: "CUSTOMER_CANCELLED",
+        billable_to_customer: false,
+      })
     );
+  });
+
+  it("surfaces the API error instead of silently hanging (the compounding bug)", async () => {
+    const { ApiError } = await import("../../api/client");
+    const onSubmit = vi
+      .fn()
+      .mockRejectedValue(new ApiError(400, { error: "validation_error", details: { message: "cancel_reason_code is required" } }));
+    renderWithClient(
+      <CancelLoadModal open operatingCompanyId="91e0bf0a-133f-4ce8-a734-2586cfa66d96" onClose={vi.fn()} onSubmit={onSubmit} />
+    );
+    fireEvent.focus(screen.getByPlaceholderText(/Select reason/i));
+    fireEvent.click(await screen.findByRole("option", { name: /Customer cancelled/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Required notes/i), {
+      target: { value: "Customer called to cancel the load this morning." },
+    });
+    await waitFor(() => expect(screen.getByRole("button", { name: /Confirm Cancel/i })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: /Confirm Cancel/i }));
+    // The error renders (form stays open + editable), not a silent hang.
+    expect(await screen.findByRole("alert")).toHaveTextContent(/cancel_reason_code is required/i);
   });
 
   it("Owner + approval-required reason → 'Approve & Cancel' (inline approve, not a dead-end)", async () => {
