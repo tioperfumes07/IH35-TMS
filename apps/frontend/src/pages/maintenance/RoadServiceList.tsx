@@ -42,7 +42,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
               data-testid={`road-service-status-filter-${filter.id}`}
               onClick={() => setStatusFilter(filter.id)}
               className={`rounded border px-2 py-1 text-xs font-medium ${
-                statusFilter === filter.id ? "border-sky-600 bg-sky-50 text-sky-800" : "border-gray-300 bg-white text-gray-700"
+                statusFilter === filter.id ? "border-slate-600 bg-slate-50 text-slate-800" : "border-gray-300 bg-white text-gray-700"
               }`}
             >
               {filter.label}

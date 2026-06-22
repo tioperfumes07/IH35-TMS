@@ -233,7 +233,7 @@ export function InspectionsPage() {
                 <td className="py-1">{row.dvir_submission_id ? "Linked" : "—"}</td>
                 <td className="py-1">{String(row.photo_count ?? 0)}</td>
                 <td className="py-1 space-x-2">
-                  <button type="button" className="text-blue-700 underline" onClick={() => openEdit(row)}>
+                  <button type="button" className="text-slate-700 underline" onClick={() => openEdit(row)}>
                     Edit
                   </button>
                   <button type="button" className="text-red-700 underline" onClick={() => archiveMutation.mutate(row)}>

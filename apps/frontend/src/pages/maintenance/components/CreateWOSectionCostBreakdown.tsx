@@ -68,7 +68,7 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
         <span className="font-semibold">${totals.labor.toFixed(2)}</span> · Estimated Total:{" "}
         <span className="font-semibold">${totals.total.toFixed(2)}</span>
       </div>
-      <div className="mt-2 rounded border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700">
+      <div className="mt-2 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
         On save: work order and accounting artifacts are created according to payment timing.
       </div>
     </section>

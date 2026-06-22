@@ -66,11 +66,11 @@ export function FaultDraftsPage() {
         subtitle="Auto-created draft work orders from high-severity Samsara fault codes — review, assign shop, and confirm."
       />
       <div className="flex gap-2 text-sm">
-        <Link to="/maintenance" className="text-blue-700 underline">
+        <Link to="/maintenance" className="text-slate-700 underline">
           Maintenance home
         </Link>
         <span className="text-gray-400">·</span>
-        <Link to="/maintenance/fault-rules" className="text-blue-700 underline">
+        <Link to="/maintenance/fault-rules" className="text-slate-700 underline">
           Fault rules
         </Link>
       </div>

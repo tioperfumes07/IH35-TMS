@@ -180,7 +180,7 @@ export function VehiclesMasterDataPage() {
                   </td>
                   <td className="px-2 py-2">
                     <div className="flex gap-2">
-                      <button type="button" className="text-blue-600 underline" onClick={() => setEditing(row)}>Edit</button>
+                      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>Edit</button>
                       <button
                         type="button"
                         className="text-red-600 underline"

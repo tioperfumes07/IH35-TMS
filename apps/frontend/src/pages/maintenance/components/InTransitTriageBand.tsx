@@ -20,7 +20,7 @@ export function InTransitTriageBand({ issues, onTriage }: Props) {
             <span className="font-semibold">{issue.unit_display_id}</span>
             <span>{issue.issue_category}</span>
             <span>{Math.floor(issue.hours_since_report)}h</span>
-            <span className="text-blue-700">Triage →</span>
+            <span className="text-slate-700">Triage →</span>
           </button>
         ))}
         {issues.length === 0 ? <div className="px-2 py-2 text-xs text-amber-700">No in-transit issues in queue.</div> : null}

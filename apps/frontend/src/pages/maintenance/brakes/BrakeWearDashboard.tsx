@@ -67,7 +67,7 @@ export function BrakeWearDashboard() {
               type="button"
               onClick={() => setAxleGroup(group)}
               className={`rounded px-2.5 py-1.5 text-xs font-medium capitalize ${
-                axleGroup === group ? "bg-sky-100 text-sky-800" : "text-gray-700 hover:bg-gray-100"
+                axleGroup === group ? "bg-slate-100 text-slate-800" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               {group === "all" ? "All axles" : `${group}s`}
@@ -102,7 +102,7 @@ export function BrakeWearDashboard() {
                   <td className="px-3 py-2 font-medium text-gray-900">
                     <Link
                       to={`/fleet/units/${row.unit_uuid}?tab=brakes`}
-                      className="text-sky-700 hover:underline"
+                      className="text-slate-700 hover:underline"
                     >
                       {row.unit_number ?? row.unit_uuid.slice(0, 8)}
                     </Link>

@@ -60,7 +60,7 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
         {pendingQboCount} pending QBO sync
       </span>
       <span className="text-gray-300">·</span>
-      <button type="button" className="text-blue-700 underline">
+      <button type="button" className="text-slate-700 underline">
         View sync log →
       </button>
     </div>

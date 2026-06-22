@@ -114,7 +114,7 @@ export function WorkOrdersTable({
                   <input type="checkbox" checked={isSelected(row.id)} onChange={() => toggle(row.id)} aria-label={`Select ${row.display_id ?? row.id}`} />
                 </td>
                 <td className="px-2 py-1 font-medium">
-                  <Link to={`/maintenance/work-orders/${row.id}`} className="text-indigo-700 hover:underline">
+                  <Link to={`/maintenance/work-orders/${row.id}`} className="text-slate-700 hover:underline">
                     {row.display_id ?? row.id.slice(0, 8)}
                   </Link>
                 </td>

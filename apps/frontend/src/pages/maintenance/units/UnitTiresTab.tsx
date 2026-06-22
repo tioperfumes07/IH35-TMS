@@ -93,7 +93,7 @@ export function UnitTiresTab({ unitId, companyId }: UnitTiresTabProps) {
                 type="button"
                 onClick={() => setSelectedPosition(position)}
                 className={`rounded px-2 py-1 text-[11px] font-medium ${
-                  activePosition === position ? "bg-sky-100 text-sky-800" : "bg-gray-100 text-gray-700"
+                  activePosition === position ? "bg-slate-100 text-slate-800" : "bg-gray-100 text-gray-700"
                 }`}
               >
                 {position}

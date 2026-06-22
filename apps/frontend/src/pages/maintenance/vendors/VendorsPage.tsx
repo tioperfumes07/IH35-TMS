@@ -129,7 +129,7 @@ export function VendorsPage() {
           <h2 className="text-base font-semibold text-gray-900">Maintenance Vendors</h2>
           <p className="text-xs text-gray-600">
             Canonical vendor master linked to{" "}
-            <Link className="text-blue-600 underline" to="/lists/maintenance/vendors">
+            <Link className="text-slate-600 underline" to="/lists/maintenance/vendors">
               Lists & Catalogs
             </Link>
             .
@@ -154,7 +154,7 @@ export function VendorsPage() {
           <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => importMutation.mutate()}>
             CSV Import
           </Button>
-          <a className="text-xs text-blue-600 underline" href={getMaintenanceVendorsTemplateUrl(companyId)}>
+          <a className="text-xs text-slate-600 underline" href={getMaintenanceVendorsTemplateUrl(companyId)}>
             Download template
           </a>
         </div>
@@ -174,7 +174,7 @@ export function VendorsPage() {
               {rows.map((row) => (
                 <tr key={String(row.id)} className="border-t border-gray-100">
                   <td className="py-1">
-                    <Link className="font-semibold text-blue-600 underline" to={`/maintenance/vendors/${row.id}`}>
+                    <Link className="font-semibold text-slate-600 underline" to={`/maintenance/vendors/${row.id}`}>
                       {String(row.display_name ?? row.name ?? "—")}
                     </Link>
                   </td>
@@ -184,7 +184,7 @@ export function VendorsPage() {
                   <td className="py-1">{row.is_active ? "Active" : "Archived"}</td>
                   <td className="py-1">
                     <div className="flex gap-2">
-                      <button type="button" className="text-blue-600 underline" onClick={() => setEditing(row)}>
+                      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>
                         Edit
                       </button>
                       <button

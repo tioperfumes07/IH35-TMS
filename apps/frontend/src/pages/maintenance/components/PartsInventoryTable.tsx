@@ -70,7 +70,7 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
                   <td className="px-2 py-1">{row.last_purchase_invoice_number ?? "—"}</td>
                   <td className="px-2 py-1">{row.location ?? "—"}</td>
                   <td className="px-2 py-1">
-                    <button className="text-blue-600 underline" onClick={() => setAdjustRow(row)} type="button">Adjust Qty</button>
+                    <button className="text-slate-600 underline" onClick={() => setAdjustRow(row)} type="button">Adjust Qty</button>
                   </td>
                 </tr>
               ))}

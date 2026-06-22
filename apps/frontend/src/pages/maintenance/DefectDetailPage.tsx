@@ -57,7 +57,7 @@ export function DefectDetailPage() {
   return (
     <div className="space-y-4" data-testid="maint-dvir-defect-detail">
       <div className="flex items-center gap-2 text-sm">
-        <Link to="/maintenance/defects" className="text-blue-700 hover:underline">
+        <Link to="/maintenance/defects" className="text-slate-700 hover:underline">
           ← Defects inbox
         </Link>
       </div>
