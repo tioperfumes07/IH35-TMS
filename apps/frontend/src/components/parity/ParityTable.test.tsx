@@ -64,4 +64,31 @@ describe("ParityTable (A1 grammar)", () => {
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     expect(screen.getByText("Batch edit")).toBeInTheDocument();
   });
+
+  // Universal-list contract (spec 01) additions.
+  it("renders the filter-bar slot", () => {
+    render(
+      <ParityTable<Row>
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        filterBar={<input placeholder="Search WOs" />}
+      />,
+    );
+    expect(screen.getByPlaceholderText("Search WOs")).toBeInTheDocument();
+  });
+
+  it("shows the Export button only when exportFilename is set", () => {
+    const { rerender } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    expect(screen.queryByLabelText("Export CSV")).toBeNull();
+    rerender(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} exportFilename="work-orders" />);
+    expect(screen.getByLabelText("Export CSV")).toBeInTheDocument();
+  });
+
+  it("renders resize handles by default and omits them when disabled", () => {
+    const { rerender } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    expect(screen.getByLabelText("Resize Name")).toBeInTheDocument();
+    rerender(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} enableColumnResize={false} />);
+    expect(screen.queryByLabelText("Resize Name")).toBeNull();
+  });
 });

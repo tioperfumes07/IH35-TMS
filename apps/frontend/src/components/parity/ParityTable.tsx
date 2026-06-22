@@ -14,7 +14,7 @@
  *  - optional row 3-dots action menu
  *  - toolbar slot (Print / Export / etc.)
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { colors, typography } from "../../design/tokens";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
@@ -54,6 +54,15 @@ export type ParityTableProps<T> = {
   batchActions?: (selected: T[]) => ReactNode;
   /** Per-row 3-dots action menu content. */
   rowActions?: (row: T) => ReactNode;
+
+  /** Filter toolbar slot (search + dropdowns), rendered above the table per the universal-list standard. */
+  filterBar?: ReactNode;
+  /** When set, a ⤓ Export button appears that downloads the (sorted, visible-column) rows as CSV. */
+  exportFilename?: string;
+  /** Sticky header row on vertical scroll (universal-list standard). Default true. */
+  stickyHeader?: boolean;
+  /** Drag-to-resize columns (widths persist with storageKey). Default true. */
+  enableColumnResize?: boolean;
 };
 
 const DENSITY: Record<ParityDensity, { rowH: number; padY: number; font: number }> = {
@@ -68,7 +77,7 @@ const DENSITY_LABEL: Record<ParityDensity, string> = {
   ultra: "Ultra compact",
 };
 
-type Persisted = { hidden?: string[]; density?: ParityDensity; pageSize?: number };
+type Persisted = { hidden?: string[]; density?: ParityDensity; pageSize?: number; colWidths?: Record<string, number> };
 
 function loadPersisted(storageKey?: string): Persisted {
   if (!storageKey || typeof window === "undefined") return {};
@@ -104,6 +113,10 @@ export function ParityTable<T>({
   selectable = false,
   batchActions,
   rowActions,
+  filterBar,
+  exportFilename,
+  stickyHeader = true,
+  enableColumnResize = true,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
@@ -124,7 +137,9 @@ export function ParityTable<T>({
   );
   const [gearOpen, setGearOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [colWidths, setColWidths] = useState<Record<string, number>>(persisted.colWidths ?? {});
   const gearRef = useRef<HTMLDivElement>(null);
+  const resizing = useRef<{ key: string; startX: number; startW: number } | null>(null);
 
   // Close gear popover on outside click.
   useEffect(() => {
@@ -168,8 +183,56 @@ export function ParityTable<T>({
       hidden: [...hidden],
       density,
       pageSize,
+      colWidths,
       ...next,
     });
+  }
+
+  // Drag-to-resize: capture the column + start geometry on mousedown, update width on mousemove,
+  // persist on mouseup. Widths drive the table-fixed column widths and survive reloads (storageKey).
+  function startResize(key: string, e: ReactMouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const th = (e.currentTarget as HTMLElement).closest("th");
+    const startW = colWidths[key] ?? th?.getBoundingClientRect().width ?? 120;
+    resizing.current = { key, startX: e.clientX, startW };
+    const onMove = (ev: MouseEvent) => {
+      if (!resizing.current) return;
+      const delta = ev.clientX - resizing.current.startX;
+      const w = Math.max(48, Math.round(resizing.current.startW + delta));
+      setColWidths((prev) => ({ ...prev, [resizing.current!.key]: w }));
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      resizing.current = null;
+      // Persist the LATEST widths (read via the state setter to avoid a stale closure value).
+      setColWidths((cur) => {
+        savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: cur });
+        return cur;
+      });
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }
+
+  function exportCsv() {
+    const cols = visibleColumns;
+    const esc = (v: unknown) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = cols.map((c) => esc(c.label)).join(",");
+    const body = sortedRows
+      .map((row) => cols.map((c) => esc((row as Record<string, unknown>)[String(c.key)])).join(","))
+      .join("\n");
+    const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${exportFilename}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function toggleColumn(key: string) {
@@ -243,6 +306,16 @@ export function ParityTable<T>({
         </div>
         <div className="flex items-center gap-2">
           {toolbar}
+          {exportFilename ? (
+            <button
+              type="button"
+              aria-label="Export CSV"
+              className="min-h-11 rounded border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
+              onClick={exportCsv}
+            >
+              ⤓ Export
+            </button>
+          ) : null}
           <div className="relative" ref={gearRef}>
             <button
               type="button"
@@ -309,12 +382,16 @@ export function ParityTable<T>({
         </div>
       </div>
 
+      {filterBar ? (
+        <div className="border-b border-gray-200 px-2 py-1.5">{filterBar}</div>
+      ) : null}
+
       <div className="overflow-x-auto">
       <table className="w-full table-fixed text-left" style={{ fontSize: d.font }}>
-        <thead className="bg-gray-50">
+        <thead className={stickyHeader ? "sticky top-0 z-10 bg-gray-50" : "bg-gray-50"}>
           <tr style={{ height: DENSITY[density].rowH }}>
             {selectable ? (
-              <th className="w-8 px-2">
+              <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`}>
                 <input
                   type="checkbox"
                   aria-label="Select all on page"
@@ -323,31 +400,40 @@ export function ParityTable<T>({
                 />
               </th>
             ) : null}
-            {visibleColumns.map((column) => (
-              <th
-                key={String(column.key)}
-                className={`px-2 font-semibold uppercase text-gray-600 ${column.className ?? ""}`}
-                style={{ fontSize: typography.kpiLabel ?? 11, letterSpacing: 0.3 }}
-              >
-                {column.sortable ? (
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1"
-                    onClick={() => toggleSort(String(column.key))}
-                  >
-                    {column.label}
-                    {sortKey === String(column.key)
-                      ? sortDirection === "asc"
-                        ? "▲"
-                        : "▼"
-                      : null}
-                  </button>
-                ) : (
-                  column.label
-                )}
-              </th>
-            ))}
-            {rowActions ? <th className="w-10 px-2" /> : null}
+            {visibleColumns.map((column) => {
+              const key = String(column.key);
+              const w = colWidths[key];
+              return (
+                <th
+                  key={key}
+                  className={`relative px-2 font-semibold uppercase text-gray-600 ${stickyHeader ? "bg-gray-50" : ""} ${column.className ?? ""}`}
+                  style={{ fontSize: typography.kpiLabel ?? 11, letterSpacing: 0.3, ...(w ? { width: w } : {}) }}
+                >
+                  {column.sortable ? (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1"
+                      onClick={() => toggleSort(key)}
+                    >
+                      {column.label}
+                      {sortKey === key ? (sortDirection === "asc" ? "▲" : "▼") : null}
+                    </button>
+                  ) : (
+                    column.label
+                  )}
+                  {enableColumnResize ? (
+                    <span
+                      role="separator"
+                      aria-label={`Resize ${column.label}`}
+                      onMouseDown={(e) => startResize(key, e)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-gray-300"
+                    />
+                  ) : null}
+                </th>
+              );
+            })}
+            {rowActions ? <th className={`w-10 px-2 ${stickyHeader ? "bg-gray-50" : ""}`} /> : null}
           </tr>
         </thead>
         <tbody>
@@ -371,8 +457,8 @@ export function ParityTable<T>({
                   key={id}
                   className={`border-t border-gray-100 ${
                     onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
-                  } ${selected.has(id) ? "bg-blue-50" : ""}`}
-                  style={{ height: d.rowH }}
+                  }`}
+                  style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                 >
                   {selectable ? (
@@ -459,10 +545,9 @@ export function ParityTable<T>({
               key={p}
               type="button"
               className={`h-6 min-w-6 rounded border px-1.5 ${
-                p === safePage
-                  ? "border-blue-500 bg-blue-500 text-white"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                p === safePage ? "text-white" : "border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
+              style={p === safePage ? { backgroundColor: colors.navy, borderColor: colors.navy } : undefined}
               onClick={() => setPage(p)}
             >
               {p}
