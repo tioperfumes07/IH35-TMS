@@ -342,6 +342,7 @@
     "verify:google-oauth-lazy-env": "node scripts/verify-google-oauth-lazy-env.mjs",
     "verify:maintenance-routes-bootstrapped": "node scripts/verify-maintenance-routes-bootstrapped.mjs",
     "verify:maintenance-tab-coverage": "node scripts/verify-maintenance-tab-coverage.mjs",
+    "verify:section7-palette-maintenance": "node scripts/verify-section7-palette-maintenance.mjs",
     "verify:maint-jump-to-tab-removed": "node scripts/verify-maint-jump-to-tab-removed.mjs",
     "verify:nav-integrity": "node scripts/verify-nav-integrity.mjs",
     "verify:block-ready-c5-no-duplicate-arch-design": "node scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",

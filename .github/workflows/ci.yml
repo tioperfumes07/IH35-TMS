@@ -133,6 +133,9 @@ jobs:
       - name: Verify maintenance tab coverage
         run: npm run verify:maintenance-tab-coverage
 
+      - name: Verify §7 palette (no non-§7 accent hex in maintenance views)
+        run: npm run verify:section7-palette-maintenance
+
       - name: Verify master-data write routes
         run: npm run verify:master-data-write-routes
 

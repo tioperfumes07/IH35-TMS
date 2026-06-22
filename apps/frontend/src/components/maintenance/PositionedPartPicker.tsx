@@ -124,8 +124,8 @@ export function PositionedPartPicker({
                 {/* Position circle */}
                 <circle
                   r="6"
-                  fill={isSelected ? "#2563EB" : "#FFFFFF"}
-                  stroke={isSelected ? "#1D4ED8" : "#6B7280"}
+                  fill={isSelected ? "#1F2A44" : "#FFFFFF"}
+                  stroke={isSelected ? "#0F1729" : "#6B7280"}
                   strokeWidth="2"
                   className="hover:scale-110 transition-transform"
                 />
