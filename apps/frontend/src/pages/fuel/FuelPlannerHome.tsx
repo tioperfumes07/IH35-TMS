@@ -210,7 +210,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         <section className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
           <h3 className="text-sm font-semibold text-gray-900">Expense mapping</h3>
           <p className="mt-2 text-xs text-gray-600">Map fuel card spend to GL expense categories for posting.</p>
-          <Link to="/accounting/settings/expense-category-map" className="mt-3 inline-block text-xs font-semibold text-blue-700 underline">
+          <Link to="/accounting/settings/expense-category-map" className="mt-3 inline-block text-xs font-semibold text-slate-700 underline">
             Open expense category map →
           </Link>
         </section>
@@ -288,7 +288,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                         <span className="font-semibold text-gray-900">
                           Stop {rec.sequence_number} · {rec.city ?? "Unknown"}, {rec.state ?? "NA"}
                         </span>
-                        <span className="rounded bg-blue-100 px-2 py-0.5 text-blue-700">
+                        <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-700">
                           {rec.reason === "low_fuel" ? "low fuel" : "10-hr reset"}
                         </span>
                       </div>

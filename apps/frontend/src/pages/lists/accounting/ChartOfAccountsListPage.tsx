@@ -181,7 +181,7 @@ function buildColumns(
           {row.defaultAction === "view_register" ? (
             <Link
               to={`/accounting/chart-of-accounts/register/${row.id}`}
-              className="text-blue-600 hover:underline"
+              className="text-slate-700 hover:underline"
               onClick={(event) => event.stopPropagation()}
             >
               View register
@@ -189,7 +189,7 @@ function buildColumns(
           ) : (
             <Link
               to="/reports/profit-loss"
-              className="text-blue-600 hover:underline"
+              className="text-slate-700 hover:underline"
               onClick={(event) => event.stopPropagation()}
             >
               Run report
@@ -388,7 +388,7 @@ export function ChartOfAccountsListPage() {
             density="cozy"
             badgeSlot={(row) => (
               <>
-                <span className="ml-1 rounded bg-indigo-100 px-1 py-0.5 text-[9px] font-semibold text-indigo-700">
+                <span className="ml-1 rounded bg-slate-100 px-1 py-0.5 text-[9px] font-semibold text-slate-700">
                   {statementTag(row.statement as "BS" | "P&L")}
                 </span>
                 <span className={`ml-1 rounded px-1 py-0.5 text-[9px] font-semibold ${syncBadgeClasses(row.syncBadge)}`}>
@@ -407,7 +407,7 @@ export function ChartOfAccountsListPage() {
                       setPage(1);
                     }}
                     className={`rounded px-2 py-1 capitalize ${
-                      statusFilter === value ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-50"
+                      statusFilter === value ? "bg-slate-1000 text-white" : "text-gray-700 hover:bg-gray-50"
                     }`}
                   >
                     {value}

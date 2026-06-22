@@ -81,7 +81,7 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
           <StatusBadge status={row.status} />
         </div>
         <div className="mt-2 h-2 rounded bg-gray-100">
-          <div className="h-2 rounded bg-sky-600" style={{ width: `${pct}%` }} />
+          <div className="h-2 rounded bg-[#1F2A44]" style={{ width: `${pct}%` }} />
         </div>
         {row.memo ? <p className="mt-2 text-xs text-gray-600">{row.memo}</p> : null}
         <div className="mt-2 flex flex-wrap gap-2">

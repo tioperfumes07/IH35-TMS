@@ -193,7 +193,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
                   <td className="px-2 py-1">{formatDriveRemaining(row.driveRemainingMin)}</td>
                   <td className="px-2 py-1">{row.clockStatus ?? "—"}</td>
                   <td className="px-2 py-1">
-                    <Link to={`/drivers/${row.driverId}/hos`} className="font-semibold text-sky-700 hover:underline">
+                    <Link to={`/drivers/${row.driverId}/hos`} className="font-semibold text-slate-700 hover:underline">
                       Drill-down
                     </Link>
                   </td>
@@ -213,7 +213,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         <section className="rounded border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">
           <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
             <div className="text-xs font-semibold text-slate-800">HOS violations (read-only)</div>
-            <Link to="/safety/hos-violations" className="text-[11px] font-semibold text-sky-700 hover:underline">
+            <Link to="/safety/hos-violations" className="text-[11px] font-semibold text-slate-700 hover:underline">
               Open violations tab
             </Link>
           </div>
@@ -235,11 +235,11 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
           </div>
           <div className="border-t border-gray-100 px-3 py-2 text-[11px] text-slate-500">
             Log new violations on{" "}
-            <Link to="/safety/hos-violations" className="font-semibold text-sky-700 hover:underline">
+            <Link to="/safety/hos-violations" className="font-semibold text-slate-700 hover:underline">
               /safety/hos-violations
             </Link>
             . Exception paperwork:{" "}
-            <Link to="/safety/hos/exceptions" className="font-semibold text-sky-700 hover:underline">
+            <Link to="/safety/hos/exceptions" className="font-semibold text-slate-700 hover:underline">
               HOS exceptions
             </Link>
             .

@@ -146,7 +146,7 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
     switch (key) {
       case "name":
         return (
-          <Link to={`/customers/${customer.id}`} className="text-sky-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+          <Link to={`/customers/${customer.id}`} className="text-slate-700 hover:underline" onClick={(e) => e.stopPropagation()}>
             {customer.name}
           </Link>
         );
@@ -189,7 +189,7 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
             key={chip.id}
             type="button"
             className={`rounded-full px-3 py-1 text-xs font-medium ${
-              filter === chip.id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              filter === chip.id ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => setFilter(chip.id)}
           >

@@ -128,7 +128,7 @@ export function LegalMattersListPage() {
                           )}
                         </td>
                         <td className="px-3 py-2">
-                          <Link to={`/legal/matters/${id}`} className="text-xs text-blue-600">
+                          <Link to={`/legal/matters/${id}`} className="text-xs text-slate-700">
                             Open
                           </Link>
                         </td>

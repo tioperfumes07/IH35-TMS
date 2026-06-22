@@ -128,7 +128,7 @@ export function FaroImportPage() {
       </div>
 
       {preview ? (
-        <div className="rounded border border-blue-500/40 bg-[#12182B] p-4">
+        <div className="rounded border border-slate-300/40 bg-[#12182B] p-4">
           <h3 className="mb-2 text-sm font-semibold text-white">
             Preview — {preview.line_count} line{preview.line_count === 1 ? "" : "s"}
           </h3>

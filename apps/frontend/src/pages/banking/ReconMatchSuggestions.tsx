@@ -62,8 +62,8 @@ export function ReconMatchSuggestions(props: {
 
 function FactoringSuggestionChip(props: { suggestion: ReconcileSuggestion; disabled?: boolean; onApply: () => void }) {
   return (
-    <div className="flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-1 py-[1px] text-[10px] text-blue-900">
-      <span className="rounded bg-blue-700 px-1 text-[9px] font-semibold uppercase tracking-wide text-white">
+    <div className="flex items-center gap-1 rounded border border-slate-300 bg-slate-100 px-1 py-[1px] text-[10px] text-slate-700">
+      <span className="rounded bg-[#1F2A44] px-1 text-[9px] font-semibold uppercase tracking-wide text-white">
         Factoring ({props.suggestion.batch_number ?? "batch"})
       </span>
       <span>({Math.round(props.suggestion.confidence * 100)}%)</span>
@@ -71,7 +71,7 @@ function FactoringSuggestionChip(props: { suggestion: ReconcileSuggestion; disab
         type="button"
         disabled={props.disabled}
         onClick={props.onApply}
-        className="rounded bg-blue-600 px-1 text-[9px] text-white enabled:hover:bg-blue-700 disabled:opacity-50"
+        className="rounded bg-[#1F2A44] px-1 text-[9px] text-white enabled:hover:bg-[#1F2A44] disabled:opacity-50"
       >
         Apply
       </button>

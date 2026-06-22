@@ -207,7 +207,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                   {isVisible("map") ? (
                     <td className="px-2 py-1.5">
                       {r.lat != null && r.lng != null ? (
-                        <a className="text-sky-700 hover:underline" href={`https://www.google.com/maps?q=${r.lat},${r.lng}`} target="_blank" rel="noopener noreferrer">
+                        <a className="text-slate-700 hover:underline" href={`https://www.google.com/maps?q=${r.lat},${r.lng}`} target="_blank" rel="noopener noreferrer">
                           map
                         </a>
                       ) : "—"}

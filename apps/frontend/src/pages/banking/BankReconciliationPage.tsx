@@ -149,7 +149,7 @@ export function BankReconciliationPage() {
                 type="button"
                 onClick={() => setSelectedTxId(row.id)}
                 className={`w-full rounded border px-2 py-2 text-left text-xs ${
-                  selectedTxId === row.id ? "border-blue-300 bg-blue-50" : "border-gray-100 bg-white hover:bg-gray-50"
+                  selectedTxId === row.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -157,7 +157,7 @@ export function BankReconciliationPage() {
                   <span className="text-gray-600">{money(row.amount_cents)}</span>
                 </div>
                 <div className="truncate text-gray-700">{row.merchant_name ?? row.description ?? "Bank transaction"}</div>
-                {isAutoMatchCandidate(row) ? <div className="text-blue-700">Auto-match candidate: {row.ledger_entry_kind}</div> : <div className="text-gray-500">Unmatched</div>}
+                {isAutoMatchCandidate(row) ? <div className="text-slate-700">Auto-match candidate: {row.ledger_entry_kind}</div> : <div className="text-gray-500">Unmatched</div>}
               </button>
             ))}
           </div>

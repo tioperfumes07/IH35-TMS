@@ -52,7 +52,7 @@ export function UserProfileSettingsPage() {
         <h2 className="text-sm font-semibold text-slate-800">Notifications</h2>
         <p className="mt-1 text-xs text-slate-600">Control email, SMS, WhatsApp, in-app, and quiet hours.</p>
         <div className="mt-3">
-          <Link className="text-sm font-medium text-blue-700 hover:underline" to="/settings/notifications">
+          <Link className="text-sm font-medium text-slate-700 hover:underline" to="/settings/notifications">
             Open notification preferences →
           </Link>
         </div>

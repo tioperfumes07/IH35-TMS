@@ -175,7 +175,7 @@ export function BankingPlaidConnectionsPanel({
                       </div>
                       <ActionButton
                         type="button"
-                        className="border border-blue-200 bg-blue-50 text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        className="border border-slate-300 bg-slate-100 text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                         disabled={syncingItemId === itemId}
                         onClick={() => void handleManualPlaidSync(itemId, institution)}
                       >
@@ -207,7 +207,7 @@ export function BankingPlaidConnectionsPanel({
                   Accounts:{" "}
                   {g.accounts.map((a) => (
                     <span key={a.id} className="mr-2 inline-block">
-                      <Link className="text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" to={`/banking/accounts/${a.id}`}>
+                      <Link className="text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400" to={`/banking/accounts/${a.id}`}>
                         {(a.account_name || "Account") + (a.account_mask ? ` ••••${a.account_mask}` : "")}
                       </Link>
                     </span>
@@ -264,7 +264,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
   const thBtn = (key: CompanyTransactionsSort, label: string) => (
     <button
       type="button"
-      className="font-semibold text-gray-700 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+      className="font-semibold text-gray-700 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
       onClick={() => setSort(key)}
       aria-pressed={sort === key}
     >
@@ -284,13 +284,13 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search description"
           aria-label="Filter transactions by description"
-          className="min-w-[12rem] flex-1 rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+          className="min-w-[12rem] flex-1 rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
         />
         <SelectCombobox
           value={accountFilter}
           onChange={(e) => setAccountFilter(e.target.value)}
           aria-label="Filter by account"
-          className="rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+          className="rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
         >
           <option value="">All accounts</option>
           {accounts.map((a: PlaidBankAccount) => (

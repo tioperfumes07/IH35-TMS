@@ -131,7 +131,7 @@ export function CashAdvanceRequestsPage() {
                     <td className="px-3 py-2">
                       {waitingOwner ? (
                         <div className="space-y-1">
-                          <span className="inline-flex rounded bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-900">
+                          <span className="inline-flex rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                             Pending Owner Approval
                           </span>
                           {ownerUrl ? (

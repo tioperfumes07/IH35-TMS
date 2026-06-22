@@ -163,7 +163,7 @@ export function DeadheadReportPage() {
                 {sortedUnits.map((row) => (
                   <tr
                     key={row.unit_id}
-                    className={`cursor-pointer border-t hover:bg-gray-50 ${selectedUnitId === row.unit_id ? "bg-blue-50" : ""}`}
+                    className={`cursor-pointer border-t hover:bg-gray-50 ${selectedUnitId === row.unit_id ? "bg-slate-100" : ""}`}
                     onClick={() => setSelectedUnitId(row.unit_id)}
                   >
                     <td className="px-3 py-2 font-medium">{row.unit_number}</td>

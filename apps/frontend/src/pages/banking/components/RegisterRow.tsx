@@ -10,7 +10,7 @@ type Props = {
 
 function statusPill(status: string) {
   if (status === "uncategorized") return "bg-amber-100 text-amber-700";
-  if (status === "reconciled") return "bg-blue-100 text-blue-700";
+  if (status === "reconciled") return "bg-slate-100 text-slate-700";
   return "bg-green-100 text-green-700";
 }
 
@@ -38,7 +38,7 @@ export function RegisterRow({ row, selected, bulkSelected = false, onBulkToggle,
         {status === "uncategorized" ? (
           <button type="button" onClick={onCategorize} className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">Categorize ▼</button>
         ) : (
-          <button type="button" onClick={onUndo} className="text-blue-700 underline">Undo</button>
+          <button type="button" onClick={onUndo} className="text-slate-700 underline">Undo</button>
         )}
       </td>
     </tr>

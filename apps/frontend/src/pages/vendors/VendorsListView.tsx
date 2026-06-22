@@ -104,7 +104,7 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
     switch (key) {
       case "name":
         return (
-          <Link to={`/vendors/${vendor.id}`} className="text-sky-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+          <Link to={`/vendors/${vendor.id}`} className="text-slate-700 hover:underline" onClick={(e) => e.stopPropagation()}>
             {vendor.name}
           </Link>
         );

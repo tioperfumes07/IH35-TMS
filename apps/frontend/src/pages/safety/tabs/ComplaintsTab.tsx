@@ -124,7 +124,7 @@ export function ComplaintsTab() {
                 <td className="px-2 py-1">
                   {isOwner ? (
                     <>
-                      <button type="button" className="mr-2 text-blue-700 underline disabled:opacity-60" disabled={patchMutation.isPending} onClick={() => patchMutation.mutate({ id: String(row.id), status: "resolved" })}>
+                      <button type="button" className="mr-2 text-slate-700 underline disabled:opacity-60" disabled={patchMutation.isPending} onClick={() => patchMutation.mutate({ id: String(row.id), status: "resolved" })}>
                         Resolve
                       </button>
                       <button type="button" className="text-red-700 underline disabled:opacity-60" disabled={voidMutation.isPending || Boolean(row.voided_at)} onClick={() => voidMutation.mutate(String(row.id))}>

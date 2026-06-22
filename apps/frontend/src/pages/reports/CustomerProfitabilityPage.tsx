@@ -267,7 +267,7 @@ export function CustomerProfitabilityPage() {
                     <td className="px-2 py-2 text-right">{money(r.gross_margin_cents)}</td>
                     <td className="px-2 py-2 text-right">{pct(r.gross_margin_pct)}</td>
                     <td
-                      className="px-2 py-2 text-right text-blue-700 underline"
+                      className="px-2 py-2 text-right text-slate-700 underline"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/reports/ar-aging?customer_id=${encodeURIComponent(r.customer_id)}`);
@@ -312,7 +312,7 @@ export function CustomerProfitabilityPage() {
                   />
                   <Legend />
                   <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#0d9488" />
-                  <Line yAxisId="right" type="monotone" dataKey="marginPct" name="Margin %" stroke="#1d4ed8" strokeWidth={2} dot />
+                  <Line yAxisId="right" type="monotone" dataKey="marginPct" name="Margin %" stroke="#1F2A44" strokeWidth={2} dot />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

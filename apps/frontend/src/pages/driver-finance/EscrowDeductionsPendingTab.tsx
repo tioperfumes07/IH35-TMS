@@ -137,7 +137,7 @@ export function EscrowDeductionsPendingTab() {
                       {row.load_id ? (
                         <button
                           type="button"
-                          className="text-blue-700 underline hover:text-blue-900"
+                          className="text-slate-700 underline hover:text-slate-700"
                           onClick={() => navigate(`/dispatch?load_id=${encodeURIComponent(loadId)}`)}
                         >
                           {row.load_number ?? row.load_id.slice(0, 8)}

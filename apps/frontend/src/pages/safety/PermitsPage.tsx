@@ -217,7 +217,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                   {row.archived_at ? (
                     <button
                       type="button"
-                      className="text-blue-700 underline"
+                      className="text-slate-700 underline"
                       onClick={() => restoreMutation.mutate(String(row.id))}
                     >
                       Restore

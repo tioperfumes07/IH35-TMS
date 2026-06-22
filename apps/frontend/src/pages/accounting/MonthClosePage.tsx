@@ -163,7 +163,7 @@ export function MonthClosePage() {
                 </td>
                 <td className="px-3 py-2 text-gray-700">{row.detail}</td>
                 <td className="px-3 py-2">
-                  <Link to={row.href} className="text-sm font-medium text-sky-700 hover:underline">
+                  <Link to={row.href} className="text-sm font-medium text-slate-700 hover:underline">
                     Open
                   </Link>
                 </td>

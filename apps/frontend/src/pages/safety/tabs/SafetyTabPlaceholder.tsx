@@ -46,7 +46,7 @@ export function SafetyTabPlaceholder({ title, legacyHref }: Props) {
         No records yet. Data-entry workflows ship in upcoming safety blocks.
       </div>
       {legacyHref ? (
-        <Link to={legacyHref} className="inline-block text-xs text-blue-700 underline">
+        <Link to={legacyHref} className="inline-block text-xs text-slate-700 underline">
           Open legacy implementation
         </Link>
       ) : null}

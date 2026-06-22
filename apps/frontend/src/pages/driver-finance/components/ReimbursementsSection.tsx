@@ -11,18 +11,18 @@ type Props = { lines: Line[] };
 export function ReimbursementsSection({ lines }: Props) {
   const subtotal = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   return (
-    <section className="rounded border border-blue-200 bg-blue-50 p-2">
-      <h3 className="mb-1 text-xs font-semibold uppercase text-blue-800">C. Reimbursements</h3>
+    <section className="rounded border border-slate-300 bg-slate-100 p-2">
+      <h3 className="mb-1 text-xs font-semibold uppercase text-slate-700">C. Reimbursements</h3>
       <table className="w-full text-left text-xs">
         <thead className="text-[10px] uppercase text-gray-600">
           <tr><th>Date</th><th>Description</th><th>Receipt #</th><th>Amount</th></tr>
         </thead>
         <tbody>
           {lines.map((line) => (
-            <tr key={line.id} className="border-t border-blue-100">
+            <tr key={line.id} className="border-t border-slate-300">
               <td className="py-1">{line.date}</td>
               <td>{line.description}</td>
-              <td><button type="button" className="text-blue-700 underline">{line.receipt}</button></td>
+              <td><button type="button" className="text-slate-700 underline">{line.receipt}</button></td>
               <td>${Number(line.amount).toFixed(2)}</td>
             </tr>
           ))}

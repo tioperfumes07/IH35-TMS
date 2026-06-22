@@ -26,9 +26,9 @@ const SEVERITY_OPTIONS: Array<{ value: "all" | QboSyncEventSeverity; label: stri
 ];
 
 function kindPillClass(kind: QboSyncEventKind) {
-  if (kind === "run") return "border-blue-200 bg-blue-50 text-blue-700";
+  if (kind === "run") return "border-slate-300 bg-slate-100 text-slate-700";
   if (kind === "alert") return "border-amber-200 bg-amber-50 text-amber-700";
-  return "border-violet-200 bg-violet-50 text-violet-700";
+  return "border-slate-300 bg-slate-100 text-slate-700";
 }
 
 function severityPillClass(severity: QboSyncEventSeverity) {
@@ -87,7 +87,7 @@ export function QboSyncDetailPage() {
               key={opt.value}
               type="button"
               className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                kind === opt.value ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                kind === opt.value ? "border-slate-300 bg-slate-100 text-slate-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               }`}
               onClick={() => setKind(opt.value)}
             >
@@ -103,7 +103,7 @@ export function QboSyncDetailPage() {
               type="button"
               className={`rounded-full border px-3 py-1 text-xs font-medium ${
                 severity === opt.value
-                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                  ? "border-slate-300 bg-slate-100 text-slate-700"
                   : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               }`}
               onClick={() => setSeverity(opt.value)}

@@ -19,7 +19,7 @@ export function DriverSchedulerRequestInboxPage() {
     <div className="space-y-3">
       <PageHeader title="Leave Requests" subtitle="Pending time-off requests awaiting review" />
       <div className="mb-2">
-        <Link to="/safety/driver-scheduler" className="text-xs text-blue-600 hover:underline">
+        <Link to="/safety/driver-scheduler" className="text-xs text-slate-700 hover:underline">
           ← Back to Driver Scheduler grid
         </Link>
       </div>

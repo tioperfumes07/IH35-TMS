@@ -27,7 +27,7 @@ const DEDUCTION_ORDER: (keyof SettlementDeductionBreakdown)[] = [
   "other",
 ];
 
-const PIE_COLORS = ["#0d9488", "#6366f1", "#f59e0b", "#dc2626", "#64748b"];
+const PIE_COLORS = ["#0d9488", "#155e75", "#f59e0b", "#dc2626", "#64748b"];
 
 function defaultRange() {
   const end = new Date();
@@ -224,7 +224,7 @@ export function SettlementSummaryPage() {
                         <td className="px-2 py-2 text-right">{r.settlement_count}</td>
                         <td className="px-2 py-2 text-right">{money(r.gross_pay_cents)}</td>
                         <td
-                          className="px-2 py-2 text-right text-blue-700 underline"
+                          className="px-2 py-2 text-right text-slate-700 underline"
                           onClick={(e) => {
                             e.stopPropagation();
                             setExpanded((prev) => {

@@ -69,7 +69,7 @@ export function AuditEventsList() {
           </label>
           <button
             type="button"
-            className="rounded border border-blue-300 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800"
+            className="rounded border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
             onClick={() => setAppliedBulkCallId(bulkCallId.trim())}
           >
             Apply filter
@@ -77,7 +77,7 @@ export function AuditEventsList() {
           {appliedBulkCallId ? (
             <button
               type="button"
-              className="text-xs text-blue-700 underline"
+              className="text-xs text-slate-700 underline"
               onClick={() => {
                 setBulkCallId("");
                 setAppliedBulkCallId("");
@@ -110,7 +110,7 @@ export function AuditEventsList() {
                   {row.bulk_call_id ? (
                     <button
                       type="button"
-                      className="font-mono text-blue-700 underline"
+                      className="font-mono text-slate-700 underline"
                       title={row.bulk_call_id}
                       onClick={() => {
                         setBulkCallId(row.bulk_call_id ?? "");

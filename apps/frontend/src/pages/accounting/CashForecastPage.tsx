@@ -135,7 +135,7 @@ export function CashForecastPage() {
                 <XAxis dataKey="week_start" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(value) => money(Number(value))} width={88} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(value: number) => money(value)} />
-                <Line type="monotone" dataKey="projected_balance" stroke="#1d4ed8" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="projected_balance" stroke="#1F2A44" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

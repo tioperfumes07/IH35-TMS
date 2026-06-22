@@ -47,7 +47,7 @@ export function SplitTransactionModal({ open, amount, onClose, onSave }: Props) 
         ))}
         <button
           type="button"
-          className="text-blue-700 underline"
+          className="text-slate-700 underline"
           onClick={() => setLines((prev) => [...prev, { category: "", amount: 0 }])}
         >
           + Create Split Line

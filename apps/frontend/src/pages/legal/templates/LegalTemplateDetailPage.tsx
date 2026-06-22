@@ -238,17 +238,17 @@ export function LegalTemplateDetailPage() {
           </div>
 
           {template.status === "pending_review" ? (
-            <div className="space-y-2 rounded border border-indigo-200 bg-indigo-50/80 p-2">
-              <div className="text-xs font-semibold text-indigo-900">Attorney review link</div>
-              <p className="text-xs text-indigo-800">
+            <div className="space-y-2 rounded border border-slate-300 bg-slate-100/80 p-2">
+              <div className="text-xs font-semibold text-slate-700">Attorney review link</div>
+              <p className="text-xs text-slate-700">
                 Share this URL with outside counsel. It is single-use and expires in 30 days. Regenerate invalidates prior links.
               </p>
               {attorneyReviewUrl ? (
-                <div className="break-all rounded border border-indigo-200 bg-white px-2 py-1 font-mono text-[11px] text-gray-800">
+                <div className="break-all rounded border border-slate-300 bg-white px-2 py-1 font-mono text-[11px] text-gray-800">
                   {attorneyReviewUrl}
                 </div>
               ) : (
-                <p className="text-xs text-indigo-700">Submit for review creates a link. If you lost it, regenerate below.</p>
+                <p className="text-xs text-slate-700">Submit for review creates a link. If you lost it, regenerate below.</p>
               )}
               <div className="flex flex-wrap gap-2">
                 <Button

@@ -87,7 +87,7 @@ export function BatchWizard() {
         ].map((item) => (
           <span
             key={item.id}
-            className={`rounded px-2 py-1 ${step === item.id ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-600"}`}
+            className={`rounded px-2 py-1 ${step === item.id ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
           >
             {item.id}. {item.label}
           </span>

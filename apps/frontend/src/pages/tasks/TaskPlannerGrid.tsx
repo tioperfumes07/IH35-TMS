@@ -21,7 +21,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
   pending:     "bg-gray-100 text-gray-700 border-gray-300",
-  in_progress: "bg-blue-50 text-blue-800 border-blue-300",
+  in_progress: "bg-slate-100 text-slate-700 border-slate-300",
   blocked:     "bg-red-50 text-red-800 border-red-300",
   review:      "bg-yellow-50 text-yellow-800 border-yellow-300",
   completed:   "bg-green-50 text-green-800 border-green-300",
@@ -205,7 +205,7 @@ export function TaskPlannerGrid() {
                 >
                   Employee
                   <div
-                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-400"
+                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-[#1F2A44]"
                     onMouseDown={onResizeMouseDown}
                   />
                 </th>

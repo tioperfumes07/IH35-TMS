@@ -21,7 +21,7 @@ export function QboAccountingSubNav() {
             [
               "flex items-center justify-between rounded px-3 py-1.5 text-sm whitespace-nowrap",
               isActive
-                ? "bg-sky-50 font-semibold text-sky-700"
+                ? "bg-slate-100 font-semibold text-slate-700"
                 : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
             ].join(" ")
           }

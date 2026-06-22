@@ -85,7 +85,7 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, childr
                 key={tab.label}
                 to={tab.to}
                 className={`rounded px-3 py-1 text-sm whitespace-nowrap ${
-                  active ? "border-b-2 border-sky-600 bg-gray-100 font-semibold text-gray-900" : "text-gray-700 hover:bg-gray-50"
+                  active ? "border-b-2 border-slate-300 bg-gray-100 font-semibold text-gray-900" : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 {tab.label}

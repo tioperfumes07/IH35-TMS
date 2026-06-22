@@ -171,7 +171,7 @@ export function OemPartsCatalog() {
         actions={<Button onClick={() => setModalOpen(true)}>+ Create</Button>}
       />
 
-      <div className="rounded border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+      <div className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
         {total} OEM part templates · {brandCount} brands · {fleetCount} in your fleet
       </div>
 

@@ -118,7 +118,7 @@ export function FraudAlertsListPage() {
         title="Fuel fraud alerts"
         subtitle="CAP-11 real-time fuel card fraud monitoring"
         actions={
-          <Link to="/fuel" className="text-xs font-semibold text-blue-700 hover:underline">
+          <Link to="/fuel" className="text-xs font-semibold text-slate-700 hover:underline">
             Back to Fuel Home
           </Link>
         }
@@ -129,7 +129,7 @@ export function FraudAlertsListPage() {
           <button
             key={status}
             type="button"
-            className={`rounded border px-2 py-1 text-xs ${statusFilter === status ? "border-blue-600 bg-blue-50" : "border-gray-300"}`}
+            className={`rounded border px-2 py-1 text-xs ${statusFilter === status ? "border-slate-300 bg-slate-100" : "border-gray-300"}`}
             onClick={() => setStatusFilter(status)}
           >
             {status.replace("_", " ")}

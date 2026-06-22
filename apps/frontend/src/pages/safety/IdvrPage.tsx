@@ -105,7 +105,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 <td className="px-2 py-1">{String(row.defect_severity ?? "none")}</td>
                 <td className="px-2 py-1">
                   {row.follow_up_wo_id ? (
-                    <a className="text-blue-700 underline" href={`/maintenance/work-orders/${String(row.follow_up_wo_id)}`}>
+                    <a className="text-slate-700 underline" href={`/maintenance/work-orders/${String(row.follow_up_wo_id)}`}>
                       Open WO
                     </a>
                   ) : (

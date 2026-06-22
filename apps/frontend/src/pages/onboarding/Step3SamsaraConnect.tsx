@@ -108,7 +108,7 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
         type="button"
         disabled={disabled || !companyId || !apiToken || !webhookSecret || testMutation.isPending}
         onClick={() => testMutation.mutate()}
-        className="rounded bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
       >
         Test connection &amp; pull fleet
       </button>

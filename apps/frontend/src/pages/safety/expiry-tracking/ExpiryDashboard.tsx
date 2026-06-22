@@ -40,7 +40,7 @@ const SEVERITY_OPTIONS: Array<{ value: "all" | CertSeverity; label: string }> = 
 function severityClassName(severity: CertSeverity) {
   if (severity === "critical") return "bg-red-100 text-red-700";
   if (severity === "warn") return "bg-amber-100 text-amber-700";
-  return "bg-blue-100 text-blue-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 function severityWeight(severity: CertSeverity) {

@@ -186,7 +186,7 @@ export function SettlementDetailPage() {
         }
       />
       {hasEngineTeamSplitLines ? (
-        <div className="mb-3 inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-900 ring-1 ring-indigo-100">
+        <div className="mb-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-400">
           Team split lines detected (primary/co-driver)
         </div>
       ) : null}
@@ -274,11 +274,11 @@ export function SettlementDetailPage() {
       />
       <PendingAckNotice pendingAckCount={debt.debt?.pending_ack_count ?? 0} />
       {teamSplitQuery.data && Array.isArray((teamSplitQuery.data as Record<string, unknown>).splits) ? (
-        <div className="rounded border border-indigo-200 bg-indigo-50 p-3 text-xs">
-          <p className="mb-1 font-semibold text-indigo-900">Team Split</p>
+        <div className="rounded border border-slate-300 bg-slate-100 p-3 text-xs">
+          <p className="mb-1 font-semibold text-slate-700">Team Split</p>
           <div className="space-y-1">
             {((teamSplitQuery.data as Record<string, unknown>).splits as Array<Record<string, unknown>>).map((split, index) => (
-              <div key={`${index}-${String(split.driver_id ?? "")}`} className="rounded border border-indigo-100 bg-white px-2 py-1">
+              <div key={`${index}-${String(split.driver_id ?? "")}`} className="rounded border border-slate-300 bg-white px-2 py-1">
                 Driver {String(split.driver_id ?? "—")} · Role {String(split.pay_role ?? "—")} ·
                 Share {Number(split.share_pct ?? 0)}% ·
                 Pay ${((Number(split.driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
@@ -360,7 +360,7 @@ export function SettlementDetailPage() {
                     <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="rounded bg-blue-600 px-2 py-1 text-xs text-white"
+                      className="rounded bg-[#1F2A44] px-2 py-1 text-xs text-white"
                       onClick={() =>
                         void queueSettlementPayment(settlementId)
                           .then(() => {
@@ -403,7 +403,7 @@ export function SettlementDetailPage() {
                     />
                     <button
                       type="button"
-                      className="rounded bg-blue-600 px-2 py-1 text-xs text-white"
+                      className="rounded bg-[#1F2A44] px-2 py-1 text-xs text-white"
                       onClick={() =>
                         void markSettlementSent(settlementId, bankReference || "manual-bank-reference")
                           .then(() => {
@@ -478,7 +478,7 @@ export function SettlementDetailPage() {
                     <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="rounded bg-blue-600 px-2 py-1 text-xs text-white"
+                      className="rounded bg-[#1F2A44] px-2 py-1 text-xs text-white"
                       onClick={() =>
                         void queueSettlementPayment(settlementId)
                           .then(() => {

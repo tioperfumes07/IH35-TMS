@@ -192,7 +192,7 @@ export function DefaultHome({ auth }: Props) {
         subtitle={`Workspace snapshot for the last three days (${displayName})`}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button type="button" className="text-sm font-medium text-blue-700 hover:underline" onClick={() => window.print()}>
+            <button type="button" className="text-sm font-medium text-slate-700 hover:underline" onClick={() => window.print()}>
               Print this page
             </button>
             <Button variant="secondary" onClick={refreshAll}>
@@ -203,29 +203,29 @@ export function DefaultHome({ auth }: Props) {
       />
 
       {auth.role === "Owner" && selectedCompanyId ? (
-        <section className="rounded border border-violet-200 bg-violet-50/90 px-3 py-3 text-sm text-violet-950">
+        <section className="rounded border border-slate-300 bg-slate-100/90 px-3 py-3 text-sm text-slate-700">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-violet-800">Pending Owner Approvals</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Pending Owner Approvals</div>
               <div className="mt-1 font-semibold">
                 {ownerCashPendingQuery.isLoading
                   ? "Loading…"
                   : `${ownerCashPending.length} cash advance request${ownerCashPending.length === 1 ? "" : "s"} awaiting Owner action`}
               </div>
-              <p className="mt-1 max-w-2xl text-xs text-violet-900/90">
+              <p className="mt-1 max-w-2xl text-xs text-slate-700/90">
                 Above-policy driver requests escalated from the office queue. Open the cash advance requests page to copy portal links or use the
                 email you received.
               </p>
             </div>
             <Link
               to="/driver-finance/cash-advance-requests"
-              className="shrink-0 rounded bg-violet-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-800"
+              className="shrink-0 rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1F2A44]"
             >
               Open queue
             </Link>
           </div>
           {ownerCashPending.length > 0 ? (
-            <ul className="mt-2 space-y-1 border-t border-violet-200/80 pt-2 text-xs">
+            <ul className="mt-2 space-y-1 border-t border-slate-300/80 pt-2 text-xs">
               {ownerCashPending.slice(0, 5).map((r) => (
                 <li key={String(r.id ?? "")} className="flex min-w-0 flex-wrap justify-between gap-2">
                   <span className="font-mono">{String(r.display_id ?? "")}</span>
@@ -330,7 +330,7 @@ export function DefaultHome({ auth }: Props) {
           isError={factoringBalanceQuery.isError}
           error={factoringBalanceQuery.error}
           onRetry={() => void factoringBalanceQuery.refetch()}
-          accent="#7c3aed"
+          accent="#475569"
           subtext={fb ? `${fb.invoices_factored} invoices factored` : null}
         />
       </section>

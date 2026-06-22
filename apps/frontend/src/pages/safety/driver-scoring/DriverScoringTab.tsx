@@ -92,7 +92,7 @@ export function DriverScoringTab() {
                 <td className="px-2 py-1">
                   <button
                     type="button"
-                    className="text-blue-700 underline"
+                    className="text-slate-700 underline"
                     onClick={() => setSelectedDriver(row)}
                   >
                     View

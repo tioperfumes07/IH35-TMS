@@ -18,7 +18,7 @@ function timeAgo(value: string) {
 function statusClass(status: string) {
   const s = status.toLowerCase();
   if (s.includes("synced")) return "bg-emerald-50 text-emerald-700";
-  if (s === "in") return "bg-blue-50 text-blue-700";
+  if (s === "in") return "bg-slate-100 text-slate-700";
   if (s.includes("failed")) return "bg-red-50 text-red-700";
   return "bg-amber-50 text-amber-700";
 }

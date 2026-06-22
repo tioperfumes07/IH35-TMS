@@ -297,7 +297,7 @@ export function Form425CHome() {
 
   return (
     <div className="min-h-screen bg-slate-100" data-form425c-page="true">
-      <div className="bg-gradient-to-r from-slate-900 to-blue-900 px-5 py-3 text-white">
+      <div className="bg-gradient-to-r from-slate-900 to-slate-400 px-5 py-3 text-white">
         <div className="text-lg font-extrabold">IH 35 GROUP</div>
         <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>
       </div>

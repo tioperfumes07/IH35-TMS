@@ -7,9 +7,9 @@ type Props = {
 };
 
 function badgeClass(tile: BankingTile) {
-  if (tile.tag?.includes("DIP")) return "bg-blue-100 text-blue-700";
-  if (tile.is_relay) return "bg-purple-100 text-purple-700";
-  if (tile.tag === "Factoring") return "bg-sky-100 text-sky-700";
+  if (tile.tag?.includes("DIP")) return "bg-slate-100 text-slate-700";
+  if (tile.is_relay) return "bg-slate-100 text-slate-700";
+  if (tile.tag === "Factoring") return "bg-slate-100 text-slate-700";
   if (tile.tag === "Escrow") return "bg-green-100 text-green-700";
   if (tile.account_type?.toLowerCase().includes("credit")) return "bg-red-100 text-red-700";
   return "bg-gray-100 text-gray-700";
@@ -21,7 +21,7 @@ export function AccountTile({ tile, selected, onSelect }: Props) {
       type="button"
       onClick={onSelect}
       className={`h-[104px] w-[200px] flex-shrink-0 rounded border px-3 py-2 text-left ${
-        selected ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 bg-white"
+        selected ? "border-slate-300 bg-slate-100 shadow-sm" : "border-gray-200 bg-white"
       }`}
     >
       <div className="mb-1 flex items-start justify-between">

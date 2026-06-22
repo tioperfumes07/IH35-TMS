@@ -22,7 +22,7 @@ type ActivationData = {
 const STATE_BADGE: Record<ActivationState, string> = {
   hidden: "bg-gray-100 text-gray-700",
   soft_launch: "bg-yellow-100 text-yellow-800",
-  pilot_drivers: "bg-blue-100 text-blue-800",
+  pilot_drivers: "bg-slate-100 text-slate-700",
   full_active: "bg-green-100 text-green-800",
   rollback: "bg-red-100 text-red-800",
 };
@@ -108,7 +108,7 @@ export function USMCAActivationPanel() {
                 type="checkbox"
                 checked={item.completed}
                 onChange={(e) => checklistMutation.mutate({ item_id: item.id, completed: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                className="h-4 w-4 rounded border-gray-300 text-slate-700"
               />
               <span className={item.completed ? "text-gray-400 line-through" : "text-gray-800"}>{item.label}</span>
               <span className="ml-auto text-xs text-gray-400">→ {item.required_for.replace(/_/g, " ")}</span>
@@ -123,7 +123,7 @@ export function USMCAActivationPanel() {
           type="button"
           disabled={!allRequiredComplete || transitionMutation.isPending}
           onClick={() => transitionMutation.mutate(nextState)}
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded bg-[#1F2A44] px-4 py-2 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {transitionMutation.isPending ? "Transitioning…" : `Transition to ${nextState.replace(/_/g, " ")}`}
         </button>

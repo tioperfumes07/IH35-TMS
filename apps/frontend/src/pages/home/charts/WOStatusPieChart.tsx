@@ -7,7 +7,7 @@ import { formatWoStatusLabel } from "../../../lib/chartLegend";
 
 const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
   draft: "#94a3b8",
-  approved: "#3b82f6",
+  approved: "#64748b",
   in_progress: "#f59e0b",
   completed: "#1A7A3C",
   cancelled: "#dc2626",

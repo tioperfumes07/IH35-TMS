@@ -168,7 +168,7 @@ export function ExpenseCategoryMapPage() {
                 <td className="px-3 py-2">
                   <Link
                     to={`/admin/activity?event_class=expense_category_map_change&resource_id=${encodeURIComponent(row.id)}`}
-                    className="text-sky-700 hover:underline"
+                    className="text-slate-700 hover:underline"
                   >
                     View audit
                   </Link>

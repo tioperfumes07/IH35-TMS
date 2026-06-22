@@ -45,7 +45,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           <option value="approved">Approved</option>
           <option value="disputed">Disputed</option>
         </SelectCombobox>
-        <button type="button" className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white" disabled={!form.driver_uuid || !form.reason_uuid || createMutation.isPending} onClick={() => createMutation.mutate()}>
+        <button type="button" className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!form.driver_uuid || !form.reason_uuid || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Internal Fine
         </button>
       </div>

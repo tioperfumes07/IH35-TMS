@@ -28,7 +28,7 @@ function withinHours(iso: string, hours: number) {
 function statusPill(status: QboSyncRunStatus) {
   const map: Record<QboSyncRunStatus, string> = {
     pending: "bg-amber-100 text-amber-900 border-amber-200",
-    running: "bg-blue-100 text-blue-900 border-blue-200",
+    running: "bg-slate-100 text-slate-700 border-slate-300",
     success: "bg-emerald-100 text-emerald-900 border-emerald-200",
     failed: "bg-amber-100 text-amber-900 border-amber-200",
     dead_letter: "bg-red-100 text-red-900 border-red-200",
@@ -159,7 +159,7 @@ export function QBOSyncStatusDashboardPage() {
           type="button"
           onClick={() => setActiveTab("runs")}
           className={`rounded px-3 py-1 text-xs font-medium ${
-            activeTab === "runs" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+            activeTab === "runs" ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700"
           }`}
         >
           Sync Runs + Alerts
@@ -168,7 +168,7 @@ export function QBOSyncStatusDashboardPage() {
           type="button"
           onClick={() => setActiveTab("conflicts")}
           className={`rounded px-3 py-1 text-xs font-medium ${
-            activeTab === "conflicts" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+            activeTab === "conflicts" ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700"
           }`}
         >
           Conflicts
@@ -293,7 +293,7 @@ export function QBOSyncStatusDashboardPage() {
                         </Button>
                       )}
                       {entityHref(r.entity_kind, r.entity_id) ? (
-                        <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-blue-700 underline" onClick={(e) => e.stopPropagation()}>
+                        <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-slate-700 underline" onClick={(e) => e.stopPropagation()}>
                           View entity
                         </Link>
                       ) : null}

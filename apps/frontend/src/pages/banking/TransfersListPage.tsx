@@ -76,7 +76,7 @@ export function TransfersListPage() {
         subtitle="Bank transfers and credit-card payments"
         actions={
           <div className="flex items-center gap-2">
-            <Link to="/banking" className="text-sm text-blue-700 hover:underline">
+            <Link to="/banking" className="text-sm text-slate-700 hover:underline">
               Back to Banking Home
             </Link>
           </div>
@@ -173,7 +173,7 @@ export function TransfersListPage() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="text-xs text-blue-700 hover:underline"
+                      className="text-xs text-slate-700 hover:underline"
                       onClick={() => {
                         if (!companyId) return;
                         void getTransfer(row.id, companyId)

@@ -76,7 +76,7 @@ export function CatalogIndex() {
                 </div>
                 <Link
                   to={catalog.routePath}
-                  className="rounded border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 hover:bg-blue-100"
+                  className="rounded border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                 >
                   Open {catalog.displayName}
                 </Link>

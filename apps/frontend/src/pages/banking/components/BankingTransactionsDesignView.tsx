@@ -984,14 +984,14 @@ export function BankingTransactionsDesignView({
                             <div className="mb-2 flex items-center gap-2">
                               <button
                                 type="button"
-                                className={`rounded px-2 py-1 text-xs ${draft.mode === "match" ? "bg-blue-100 text-blue-900" : "bg-gray-100 text-gray-700"}`}
+                                className={`rounded px-2 py-1 text-xs ${draft.mode === "match" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
                                   onClick={() => setDraft(tx, { mode: "match" })}
                               >
                                 Match
                               </button>
                               <button
                                 type="button"
-                                className={`rounded px-2 py-1 text-xs ${draft.mode === "categorize" ? "bg-blue-100 text-blue-900" : "bg-gray-100 text-gray-700"}`}
+                                className={`rounded px-2 py-1 text-xs ${draft.mode === "categorize" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
                                   onClick={() => setDraft(tx, { mode: "categorize" })}
                               >
                                 Categorize

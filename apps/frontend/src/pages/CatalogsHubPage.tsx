@@ -8,10 +8,10 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { colors } from "../design/tokens";
 
 const DEPARTMENT_STYLES: Record<string, { dot: string; border: string; tint: string }> = {
-  dispatch: { dot: "bg-blue-500", border: "hover:border-blue-300", tint: "hover:bg-blue-50" },
+  dispatch: { dot: "bg-slate-1000", border: "hover:border-slate-300", tint: "hover:bg-slate-100" },
   safety: { dot: "bg-red-500", border: "hover:border-red-300", tint: "hover:bg-red-50" },
   accounting: { dot: "bg-green-500", border: "hover:border-green-300", tint: "hover:bg-green-50" },
-  identity: { dot: "bg-purple-500", border: "hover:border-purple-300", tint: "hover:bg-purple-50" },
+  identity: { dot: "bg-slate-1000", border: "hover:border-slate-300", tint: "hover:bg-slate-100" },
   operations: { dot: "bg-amber-500", border: "hover:border-amber-300", tint: "hover:bg-amber-50" },
 };
 

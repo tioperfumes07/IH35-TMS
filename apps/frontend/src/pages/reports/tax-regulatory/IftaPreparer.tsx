@@ -115,7 +115,7 @@ export function IftaPreparer() {
               <li key={row.uuid}>
                 <button
                   type="button"
-                  className="text-left text-blue-700 underline"
+                  className="text-left text-slate-700 underline"
                   onClick={() => setFilingUuid(row.uuid)}
                 >
                   {row.quarter} · {row.status}

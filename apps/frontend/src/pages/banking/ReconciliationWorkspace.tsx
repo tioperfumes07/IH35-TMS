@@ -213,7 +213,7 @@ export function ReconciliationWorkspacePage() {
                     type="button"
                     onClick={() => setSelectedTransactionId(tx.id)}
                     className={`w-full rounded border px-2 py-2 text-left ${
-                      selectedTransactionId === tx.id ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-white"
+                      selectedTransactionId === tx.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white"
                     }`}
                   >
                     <div className="flex items-center justify-between text-xs text-gray-600">
@@ -249,7 +249,7 @@ export function ReconciliationWorkspacePage() {
                   type="button"
                   onClick={() => setSelectedCandidateId(`${event.event_type}:${event.id}`)}
                   className={`w-full rounded border px-2 py-2 text-left ${
-                    selectedCandidateId === `${event.event_type}:${event.id}` ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-white"
+                    selectedCandidateId === `${event.event_type}:${event.id}` ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white"
                   }`}
                 >
                   <div className="text-xs uppercase tracking-wide text-gray-500">{event.event_type}</div>

@@ -57,7 +57,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
           <div className="grid gap-2">
             <button
               type="button"
-              className="rounded border border-gray-200 px-3 py-3 text-left hover:border-blue-400 hover:bg-blue-50"
+              className="rounded border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
               onClick={() => setStep("from_load")}
             >
               <div className="text-sm font-semibold text-gray-900">From an existing load</div>
@@ -65,7 +65,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
             </button>
             <button
               type="button"
-              className="rounded border border-gray-200 px-3 py-3 text-left hover:border-blue-400 hover:bg-blue-50"
+              className="rounded border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
               onClick={() => setStep("blank")}
             >
               <div className="text-sm font-semibold text-gray-900">Blank invoice (no load)</div>

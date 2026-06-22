@@ -121,7 +121,7 @@ function LawsuitRow({ lawsuit }: { lawsuit: InsuranceLawsuit }) {
       </td>
       <td className="px-2 py-1.5 text-gray-700">
         {lawsuit.claim_id ? (
-          <Link className="text-blue-700 underline" to={`/safety/insurance?claim_id=${lawsuit.claim_id}`}>
+          <Link className="text-slate-700 underline" to={`/safety/insurance?claim_id=${lawsuit.claim_id}`}>
             {lawsuit.claim_id.slice(0, 8)}
           </Link>
         ) : (

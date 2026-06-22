@@ -57,7 +57,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
           <option value="WARNING">WARNING</option>
           <option value="OOS">OOS</option>
         </SelectCombobox>
-        <button type="button" onClick={() => createMutation.mutate()} disabled={!form.inspector_name.trim() || createMutation.isPending} className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white">
+        <button type="button" onClick={() => createMutation.mutate()} disabled={!form.inspector_name.trim() || createMutation.isPending} className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white">
           + Create DOT Inspection
         </button>
       </div>
@@ -105,7 +105,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
                 <div className="mt-2 flex items-center gap-2">
                   <button
                     type="button"
-                    className="rounded bg-blue-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    className="rounded bg-[#1F2A44] px-2 py-1 text-[11px] font-semibold text-white"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "reviewed" })}
                   >
                     Mark Reviewed

@@ -20,7 +20,7 @@ export function EldPage() {
         onChange={(next) => setActiveTab(next as EldTabId)}
       />
       <section className="rounded border border-gray-200 bg-white p-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
           <Radio className="h-6 w-6" />
         </div>
         <h2 className="text-lg font-semibold text-gray-900">{activeConfig.emptyTitle}</h2>

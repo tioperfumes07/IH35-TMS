@@ -180,7 +180,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded border bg-white">
-        <div className="border-b bg-blue-900 px-3 py-2 text-sm font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
+        <div className="border-b bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
         {form.hasCarryForward ? (
           <div className="border-b bg-amber-50 px-3 py-2 text-xs text-amber-800">
             Column A came from previous month carry-forward. Manual edits require reason (30+ chars).
@@ -256,7 +256,7 @@ export function CurrentPeriodTab({
         <button type="button" onClick={onSave} disabled={!form.reportId || loading} className="rounded bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
           Save Draft
         </button>
-        <button type="button" onClick={onGeneratePdf} disabled={!form.reportId || loading} className="rounded bg-violet-700 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onGeneratePdf} disabled={!form.reportId || loading} className="rounded bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">
           Save & Generate Filing PDF
         </button>
         <button type="button" onClick={onMarkFiled} disabled={!form.reportId || loading} className="rounded bg-emerald-700 px-3 py-2 text-sm font-semibold text-white">

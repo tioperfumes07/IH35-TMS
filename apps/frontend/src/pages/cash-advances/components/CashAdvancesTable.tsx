@@ -6,7 +6,7 @@ type Props = {
 
 function statusPill(status: string) {
   if (status === "pending_approval") return "bg-amber-100 text-amber-700";
-  if (status === "approved") return "bg-blue-100 text-blue-700";
+  if (status === "approved") return "bg-slate-100 text-slate-700";
   if (status === "disbursed") return "bg-green-100 text-green-700";
   if (status === "failed") return "bg-red-100 text-red-700";
   if (status === "reversed") return "bg-gray-100 text-gray-700";
@@ -47,7 +47,7 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed }: Props
                 <td className="px-2 py-1">{String(row.created_at ?? "").slice(0, 10) || "—"}</td>
                 <td className="px-2 py-1">
                   <div className="flex gap-2">
-                    <button type="button" className="text-blue-700 underline" onClick={() => onOpenDetail(row)}>
+                    <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>
                       View Detail
                     </button>
                     {status !== "disbursed" && status !== "reversed" ? (

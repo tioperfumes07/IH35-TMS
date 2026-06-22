@@ -77,7 +77,7 @@ function MiniSparkline({ values }: { values: number[] }) {
     <div className="h-10 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-          <Line type="monotone" dataKey="v" stroke="#2563eb" strokeWidth={1.5} dot={false} />
+          <Line type="monotone" dataKey="v" stroke="#334155" strokeWidth={1.5} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -239,7 +239,7 @@ export function CashFlowOverviewPage() {
                   />
                   <Area type="monotone" dataKey="balanceHigh" stroke="none" fill="#93c5fd" fillOpacity={0.25} name="Upper band" />
                   <Area type="monotone" dataKey="balanceLow" stroke="none" fill="#93c5fd" fillOpacity={0.25} name="Lower band" />
-                  <Line type="monotone" dataKey="balance" stroke="#1d4ed8" name="Combined balance" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="balance" stroke="#1F2A44" name="Combined balance" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -281,13 +281,13 @@ export function CashFlowOverviewPage() {
               <li>
                 Uncategorized transactions:{" "}
                 <strong>{query.data.current_state.uncategorized_transactions_count}</strong> —{" "}
-                <Link className="text-blue-700 underline" to="/banking/categorization-rules">
+                <Link className="text-slate-700 underline" to="/banking/categorization-rules">
                   Open categorization
                 </Link>
               </li>
               <li>
                 Open chargebacks: <strong>{money(query.data.current_state.chargebacks_open_cents)}</strong> —{" "}
-                <Link className="text-blue-700 underline" to="/accounting/dispute-queue">
+                <Link className="text-slate-700 underline" to="/accounting/dispute-queue">
                   Open dispute queue
                 </Link>
               </li>

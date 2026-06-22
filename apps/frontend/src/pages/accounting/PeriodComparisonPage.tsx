@@ -107,7 +107,7 @@ export function PeriodComparisonPage() {
                 <td className="px-3 py-2">
                   <Link
                     to={`/accounting/posting-lineage?source_transaction_type=account&source_transaction_id=${encodeURIComponent(row.account_id ?? row.row_key)}`}
-                    className="text-sm font-medium text-sky-700 hover:underline"
+                    className="text-sm font-medium text-slate-700 hover:underline"
                   >
                     Open lineage
                   </Link>

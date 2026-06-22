@@ -31,7 +31,7 @@ export function PayrollAggregateTable({ persons }: Props) {
             <tr key={p.person_id} className="border-t border-gray-100 hover:bg-gray-50">
               <td className="px-3 py-2 font-medium">{p.person_name}</td>
               <td className="px-3 py-2">
-                <span className={`rounded px-2 py-0.5 text-xs font-semibold ${p.pay_type === "W2" ? "bg-blue-50 text-blue-700" : "bg-green-50 text-green-700"}`}>
+                <span className={`rounded px-2 py-0.5 text-xs font-semibold ${p.pay_type === "W2" ? "bg-slate-100 text-slate-700" : "bg-green-50 text-green-700"}`}>
                   {p.pay_type}
                 </span>
               </td>

@@ -124,7 +124,7 @@ export function NotificationCenterPage() {
                   </div>
                   <div className="flex shrink-0 gap-2">
                     {!item.read_at ? (
-                      <button type="button" className="text-xs text-blue-700 hover:underline" onClick={() => void markRead(item.id)}>
+                      <button type="button" className="text-xs text-slate-700 hover:underline" onClick={() => void markRead(item.id)}>
                         Mark read
                       </button>
                     ) : null}
@@ -170,7 +170,7 @@ export function NotificationCenterPage() {
               </label>
               <button
                 type="button"
-                className="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                className="rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                 disabled={prefsSaving}
                 onClick={() => void savePrefs()}
               >

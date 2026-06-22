@@ -74,7 +74,7 @@ export function NamesMasterHub() {
             placeholder="Name, email, phone, CDL…"
           />
         </label>
-        <button type="submit" className="rounded bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800">
+        <button type="submit" className="rounded bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44]">
           Search
         </button>
       </form>

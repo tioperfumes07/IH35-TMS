@@ -167,7 +167,7 @@ export function OnboardingWizard() {
       <PageHeader title="Operator onboarding" subtitle="Six guided steps to a fully configured account" />
 
       <div className="h-2 w-full overflow-hidden rounded bg-gray-100">
-        <div className="h-full bg-blue-600 transition-all" style={{ width: `${progressPct}%` }} />
+        <div className="h-full bg-[#1F2A44] transition-all" style={{ width: `${progressPct}%` }} />
       </div>
 
       {completed ? (
@@ -182,7 +182,7 @@ export function OnboardingWizard() {
             <button
               key={step}
               type="button"
-              className={`rounded px-2 py-1 text-xs ${idx === activeIndex ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"}`}
+              className={`rounded px-2 py-1 text-xs ${idx === activeIndex ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700"}`}
               onClick={() => setActiveIndex(idx)}
             >
               {idx + 1}. {ONBOARDING_STEP_LABELS[step]}
@@ -244,7 +244,7 @@ export function OnboardingWizard() {
             {activeIndex < ONBOARDING_STEP_ORDER.length - 1 ? (
               <button
                 type="button"
-                className="rounded bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
                 disabled={!canAdvance || patchMut.isPending}
                 onClick={() => void saveAndAdvance()}
               >

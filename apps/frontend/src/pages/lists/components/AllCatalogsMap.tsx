@@ -31,7 +31,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "dispatch",
     label: "Dispatch",
-    pillClass: "bg-blue-50 text-blue-700",
+    pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "Load Types", description: "Linehaul mode/type setup", live: true, catalogKey: "load-types" },
       { name: "Detention Reasons", description: "Detention billing reason catalog", live: true, catalogKey: "detention-reasons" },
@@ -95,7 +95,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "fleet",
     label: "Fleet",
-    pillClass: "bg-purple-50 text-purple-700",
+    pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "Tractor Statuses", description: "Lifecycle statuses for tractor units", live: true, catalogKey: "tractor-statuses" },
       { name: "Trailer Statuses", description: "Lifecycle statuses for trailer units", live: true, catalogKey: "trailer-statuses" },
@@ -165,7 +165,7 @@ export function AllCatalogsMap({ onCatalogClick }: Props) {
                 {domain.catalogs.map((catalog) => (
                   <div key={`${domain.key}-${catalog.name}`} className="rounded border border-slate-100 px-2 py-1.5">
                     {catalog.live && catalog.catalogKey ? (
-                      <button type="button" className="text-left font-semibold text-blue-700 hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
+                      <button type="button" className="text-left font-semibold text-slate-700 hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
                         {catalog.name}
                       </button>
                     ) : (

@@ -202,7 +202,7 @@ export function AccountsPayableAgingPage() {
                     {table.visibleColumns.map((col) => (
                       <td key={col.key} className={MONEY_KEYS.includes(col.key as (typeof MONEY_KEYS)[number]) ? moneyCellClass(col.key) : "px-2 py-1.5"}>
                         {col.key === "vendor" ? (
-                          v.vendor_id ? <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-sky-700 hover:underline">{v.vendor_name}</Link> : <span className="font-medium">{v.vendor_name}</span>
+                          v.vendor_id ? <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{v.vendor_name}</Link> : <span className="font-medium">{v.vendor_name}</span>
                         ) : col.key === "type" ? (
                           <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${GROUP_CHIP[v.display_group]}`}>{v.display_group}</span>
                         ) : (
@@ -280,7 +280,7 @@ function GroupBlock({ group, rows, subtotal, open, onToggle }: { group: ApAgingD
         ? rows.map((v) => (
             <tr key={v.vendor_id ?? v.vendor_name} className="border-t border-slate-100 hover:bg-slate-50">
               <td className="px-2 py-1.5 pl-7">
-                {v.vendor_id ? <Link to={`/vendors/${v.vendor_id}`} className="text-sky-700 hover:underline">{v.vendor_name}</Link> : v.vendor_name}
+                {v.vendor_id ? <Link to={`/vendors/${v.vendor_id}`} className="text-slate-700 hover:underline">{v.vendor_name}</Link> : v.vendor_name}
               </td>
               {MONEY_KEYS.map((k) => <td key={k} className={moneyCellClass(k)}>{money(amount(v, k))}</td>)}
             </tr>

@@ -10,7 +10,7 @@ const STATUS_FILTERS: Array<SafetyAnomalyStatus | "all"> = ["all", "new", "ackno
 function severityBadgeClass(severity: SafetyAnomalySeverity) {
   if (severity === "critical") return "bg-red-100 text-red-800";
   if (severity === "high") return "bg-amber-100 text-amber-800";
-  if (severity === "medium") return "bg-blue-100 text-blue-800";
+  if (severity === "medium") return "bg-slate-100 text-slate-700";
   return "bg-slate-100 text-slate-700";
 }
 
@@ -90,7 +90,7 @@ export function AnomaliesTab() {
                 <td className="px-2 py-1">
                   <button
                     type="button"
-                    className="text-blue-700 underline"
+                    className="text-slate-700 underline"
                     onClick={(event) => {
                       event.stopPropagation();
                       setSelected(row);

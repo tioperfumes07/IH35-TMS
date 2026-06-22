@@ -22,7 +22,7 @@ const ANOMALY_LABELS: Record<string, string> = {
 const ANOMALY_COLORS: Record<string, string> = {
   orphan_entry: "bg-yellow-100 text-yellow-800",
   orphan_exit: "bg-orange-100 text-orange-800",
-  duplicate_fire: "bg-blue-100 text-blue-800",
+  duplicate_fire: "bg-slate-100 text-slate-700",
   expected_missing: "bg-red-100 text-red-800",
 };
 

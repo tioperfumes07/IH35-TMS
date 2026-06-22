@@ -7,8 +7,8 @@ type Props = {
 function typePill(type: string) {
   if (type === "equipment_loss") return "bg-amber-100 text-amber-700";
   if (type === "civil_fine") return "bg-red-100 text-red-700";
-  if (type === "advance") return "bg-blue-100 text-blue-700";
-  if (type === "antidoping" || type === "fuel") return "bg-purple-100 text-purple-700";
+  if (type === "advance") return "bg-slate-100 text-slate-700";
+  if (type === "antidoping" || type === "fuel") return "bg-slate-100 text-slate-700";
   return "bg-gray-100 text-gray-700";
 }
 
@@ -53,7 +53,7 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
                 <td className="px-2 py-1"><span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{status}</span></td>
                 <td className="px-2 py-1">
                   <div className="flex gap-2">
-                    <button type="button" className="text-blue-700 underline" onClick={() => onOpenDetail(row)}>View Detail</button>
+                    <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>View Detail</button>
                     {status === "pending_ack" ? (
                       <button type="button" className="text-amber-700 underline" onClick={() => onSendAck(row)}>Send Ack Request</button>
                     ) : null}

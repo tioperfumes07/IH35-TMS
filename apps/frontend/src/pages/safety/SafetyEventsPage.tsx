@@ -159,7 +159,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           onClick={() => setLogModalOpen(true)}
-          className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white"
+          className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
         >
           + Log Event
         </button>
@@ -188,7 +188,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
                 <td className="px-2 py-1">{renderSubject(row)}</td>
                 <td className="px-2 py-1">{row.title}</td>
                 <td className="px-2 py-1">
-                  <button type="button" className="text-blue-700 underline" onClick={() => setSelectedEventId(row.id)}>
+                  <button type="button" className="text-slate-700 underline" onClick={() => setSelectedEventId(row.id)}>
                     Open
                   </button>
                 </td>
@@ -324,7 +324,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             type="button"
             onClick={() => createMutation.mutate()}
             disabled={createMutation.isPending || !draft.title.trim() || !draft.event_type.trim()}
-            className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+            className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
           >
             {createMutation.isPending ? "Saving..." : "Save event"}
           </button>

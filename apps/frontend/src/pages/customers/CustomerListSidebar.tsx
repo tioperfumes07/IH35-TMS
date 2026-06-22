@@ -110,7 +110,7 @@ export function CustomerListSidebar({
             href={`/customers/${customer.id}`}
             onNavigate={() => onSelectCustomer(customer.id)}
             className={`block w-full rounded border px-2 py-2 text-left ${
-              selectedCustomerId === customer.id ? "border-blue-500 bg-blue-50" : "border-transparent hover:bg-gray-50"
+              selectedCustomerId === customer.id ? "border-slate-300 bg-slate-100" : "border-transparent hover:bg-gray-50"
             }`}
           >
             <p className="truncate text-sm font-medium text-gray-900">{customer.name}</p>

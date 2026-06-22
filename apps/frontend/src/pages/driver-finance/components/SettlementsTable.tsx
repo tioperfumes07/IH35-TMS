@@ -7,7 +7,7 @@ type Props = {
 
 function statusClass(status: SettlementListRow["status"]) {
   if (status === "paid") return "bg-green-100 text-green-700";
-  if (status === "locked") return "bg-blue-100 text-blue-700";
+  if (status === "locked") return "bg-slate-100 text-slate-700";
   if (status === "held") return "bg-amber-100 text-amber-700";
   if (status === "cancelled") return "bg-red-100 text-red-700";
   return "bg-gray-100 text-gray-700";
@@ -45,7 +45,7 @@ export function SettlementsTable({ rows, onOpen }: Props) {
                 )}
               </td>
               <td className="px-2 py-1">
-                <button type="button" className="text-blue-700 underline" onClick={() => onOpen(row.id)}>
+                <button type="button" className="text-slate-700 underline" onClick={() => onOpen(row.id)}>
                   Open →
                 </button>
               </td>

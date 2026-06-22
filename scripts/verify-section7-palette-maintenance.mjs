@@ -8,16 +8,12 @@ import path from "node:path";
 
 const fail = (m) => { console.error(`FAIL verify-section7-palette-maintenance: ${m}`); process.exit(1); };
 
+// §7 palette is an APP-WIDE lock — the whole frontend source tree is in scope. Scanning all of
+// pages/ + components/ (rather than per-module roots) is the only way to stop the recurring
+// coverage-gap whack-a-mole: maintenance #1303+, fleet #1317, dispatch #1319, shared components #1320,
+// all remaining pages #1321-equiv. A new page/component can no longer ship blue unscanned.
 const ROOTS = [
-  // Per-page module roots that have been §7-cleaned (maintenance #1303+, fleet #1317, dispatch #1319).
-  "apps/frontend/src/pages/maintenance",
-  "apps/frontend/src/pages/fleet",
-  "apps/frontend/src/pages/dispatch",
-  // SHARED-COMPONENT ROOT-GAP fix (2026-06-22): the per-module roots above structurally can't catch
-  // blues in globally-shared root-level components (Button.tsx tertiary text-blue-600, layout/DataPanel
-  // view-all link, lists/ListView batch/filter) — they render blue across EVERY surface incl the
-  // already-"cleaned" modules. Scanning the whole components/ tree (subsumes the old per-component
-  // roots: maintenance, vehicle-profile, trailer-profile, dispatch) closes the gap for good.
+  "apps/frontend/src/pages",
   "apps/frontend/src/components",
 ];
 

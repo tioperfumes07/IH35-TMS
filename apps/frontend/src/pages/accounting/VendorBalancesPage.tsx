@@ -84,7 +84,7 @@ export function VendorBalancesPage() {
               <button
                 key={row.vendor_id}
                 type="button"
-                className={`w-full border-b border-gray-100 px-3 py-2 text-left hover:bg-gray-50 ${selectedVendorId === row.vendor_id ? "bg-blue-50" : ""}`}
+                className={`w-full border-b border-gray-100 px-3 py-2 text-left hover:bg-gray-50 ${selectedVendorId === row.vendor_id ? "bg-slate-100" : ""}`}
                 onClick={() => {
                   setSelectedVendorId(row.vendor_id);
                   setSelectedBillId(null);
@@ -122,7 +122,7 @@ export function VendorBalancesPage() {
               const dueTone =
                 dueDelta === null ? "text-gray-500" : dueDelta < 0 ? "text-red-600" : dueDelta <= 7 ? "text-amber-600" : "text-gray-600";
               return (
-                <div key={bill.id} className={`border-b border-gray-100 px-3 py-2 ${selectedBillId === bill.id ? "bg-blue-50" : ""}`}>
+                <div key={bill.id} className={`border-b border-gray-100 px-3 py-2 ${selectedBillId === bill.id ? "bg-slate-100" : ""}`}>
                   <button type="button" className="w-full text-left" onClick={() => setSelectedBillId(bill.id)}>
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-sm font-semibold text-gray-900">{bill.bill_number || bill.id.slice(0, 8)}</div>

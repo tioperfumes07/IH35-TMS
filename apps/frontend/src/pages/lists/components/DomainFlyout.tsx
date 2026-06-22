@@ -24,7 +24,7 @@ export function DomainFlyout({ rows, onCatalogClick, onViewAllInDomain, onCreate
         ))}
       </div>
       <div className="mt-2 border-t border-slate-200 pt-2">
-        <button type="button" onClick={onCreateNewCatalog} className="block w-full rounded px-2 py-1 text-left text-xs font-semibold text-blue-700 hover:bg-blue-50">
+        <button type="button" onClick={onCreateNewCatalog} className="block w-full rounded px-2 py-1 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100">
           + Create new catalog
         </button>
         <button type="button" onClick={onViewAllInDomain} className="mt-1 block w-full rounded px-2 py-1 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100">

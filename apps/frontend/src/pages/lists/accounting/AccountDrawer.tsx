@@ -270,7 +270,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 disabled={readOnly}
                 onChange={(e) => setField("account_name", e.target.value)}
                 placeholder="e.g. Fuel & Tolls"
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
               <FieldError msg={errors.account_name} />
             </FieldLabel>
@@ -284,7 +284,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 disabled={readOnly}
                 onChange={(e) => setField("account_number", e.target.value)}
                 placeholder="e.g. 6000"
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
               <FieldError msg={errors.account_number} />
             </FieldLabel>
@@ -298,7 +298,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                   setField("account_type", e.target.value);
                   setField("account_subtype", "");
                 }}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               >
                 <option value="">Select type…</option>
                 {ACCOUNT_TYPES.map((t) => (
@@ -316,7 +316,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 value={form.account_subtype}
                 disabled={readOnly || detailTypesForType.length === 0}
                 onChange={(e) => setField("account_subtype", e.target.value)}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               >
                 <option value="">
                   {detailTypesForType.length === 0 ? "No detail types available" : "Select detail type…"}
@@ -337,7 +337,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 onChange={(e) => setField("notes", e.target.value)}
                 placeholder="Optional notes about this account…"
                 rows={3}
-                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
             </FieldLabel>
 
@@ -351,7 +351,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                   disabled={readOnly}
                   onChange={(e) => setField("opening_balance_cents", e.target.value)}
                   placeholder="0.00"
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
                 />
                 <FieldError msg={errors.opening_balance_cents} />
               </FieldLabel>
@@ -361,7 +361,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                   value={form.opening_balance_as_of}
                   disabled={readOnly}
                   onChange={(next) => setField("opening_balance_as_of", next)}
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
                 />
               </FieldLabel>
             </div>
@@ -374,7 +374,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                   checked={form.is_locked}
                   disabled={readOnly}
                   onChange={(e) => setField("is_locked", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-blue-600 disabled:cursor-not-allowed"
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-slate-400 disabled:cursor-not-allowed"
                 />
                 <div>
                   <div className="text-xs font-semibold text-gray-800">Lock Account</div>

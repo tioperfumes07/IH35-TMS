@@ -116,7 +116,7 @@ function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?:
       <header className="flex items-center justify-between border-b border-gray-200 px-3 py-1.5">
         <h3 className="text-[11px] font-bold uppercase tracking-wide text-gray-700">{title}</h3>
         {actionHref && actionLabel ? (
-          <Link to={actionHref} className="text-xs font-semibold text-sky-700 hover:underline">
+          <Link to={actionHref} className="text-xs font-semibold text-slate-700 hover:underline">
             {actionLabel}
           </Link>
         ) : null}
@@ -529,7 +529,7 @@ export function AccountingHubPage() {
       ) : (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
           {TABS.find((t) => t.id === activeTab)?.to ? (
-            <Link className="font-semibold text-sky-700 hover:underline" to={TABS.find((t) => t.id === activeTab)!.to!}>
+            <Link className="font-semibold text-slate-700 hover:underline" to={TABS.find((t) => t.id === activeTab)!.to!}>
               Open {TABS.find((t) => t.id === activeTab)?.label}
             </Link>
           ) : (

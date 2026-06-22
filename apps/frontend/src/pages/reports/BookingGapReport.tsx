@@ -60,7 +60,7 @@ export function BookingGapReport() {
               onClick={() => setPeriod(p)}
               className={`px-3 py-1.5 text-sm rounded capitalize ${
                 period === p
-                  ? "bg-blue-600 text-white"
+                  ? "bg-[#1F2A44] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >

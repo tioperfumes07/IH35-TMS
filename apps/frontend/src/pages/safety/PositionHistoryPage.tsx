@@ -49,7 +49,7 @@ export default function PositionHistoryPage() {
       case "removed":
         return "bg-red-100 text-red-800";
       case "replaced":
-        return "bg-blue-100 text-blue-800";
+        return "bg-slate-100 text-slate-700";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -73,7 +73,7 @@ export default function PositionHistoryPage() {
             value={unitFilter}
             onChange={(e) => setUnitFilter(e.target.value)}
             placeholder="Filter by unit"
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
           />
         </div>
 
@@ -82,7 +82,7 @@ export default function PositionHistoryPage() {
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value as "" | "installed" | "removed" | "replaced")}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
           >
             <option value="">All</option>
             <option value="installed">Installed</option>

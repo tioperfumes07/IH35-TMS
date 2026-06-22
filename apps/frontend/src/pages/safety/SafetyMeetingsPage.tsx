@@ -117,7 +117,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                   <td className="px-2 py-1">
                     <button
                       type="button"
-                      className="text-blue-700 underline"
+                      className="text-slate-700 underline"
                       data-testid={`safety-meeting-attendance-btn-${meeting.id}`}
                       onClick={() => setExpandedMeetingId(expandedMeetingId === meeting.id ? null : meeting.id)}
                     >

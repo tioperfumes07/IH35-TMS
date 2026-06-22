@@ -61,7 +61,7 @@ export function Step6SampleData({ value, disabled, seeding, onSeed }: Props) {
         type="button"
         disabled={disabled || !optIn || seeding}
         onClick={onSeed}
-        className="rounded bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
       >
         {seeding ? "Seeding…" : value.seeded ? "Re-seed sample data" : "Seed sample data"}
       </button>

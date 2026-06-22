@@ -89,7 +89,7 @@ export function ErrorMonitorPage() {
                     <td className="px-3 py-2">
                       <span
                         className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                          row.kind === "server" ? "bg-red-50 text-red-800" : "bg-blue-50 text-blue-800"
+                          row.kind === "server" ? "bg-red-50 text-red-800" : "bg-slate-100 text-slate-700"
                         }`}
                       >
                         {row.kind}
@@ -100,7 +100,7 @@ export function ErrorMonitorPage() {
                       {row.detail ? (
                         <button
                           type="button"
-                          className="text-xs text-blue-700 underline"
+                          className="text-xs text-slate-700 underline"
                           onClick={() => setExpanded((s) => ({ ...s, [key]: !open }))}
                         >
                           {open ? "Hide" : "Show"}
