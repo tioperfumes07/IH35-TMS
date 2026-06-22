@@ -43,7 +43,7 @@ export function NewClassDrawerForm({ operatingCompanyId, onCreated, onClose }: P
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Class name *</span>
         <input
-          className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+          className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Owner-Operator"

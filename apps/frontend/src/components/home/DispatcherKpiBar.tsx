@@ -21,7 +21,7 @@ function cardClasses(accent: KpiCard["accent"]) {
   if (accent === "emerald") {
     return "border-emerald-200 bg-emerald-50 text-emerald-900";
   }
-  return "border-blue-200 bg-blue-50 text-blue-900";
+  return "border-slate-300 bg-slate-100 text-slate-700";
 }
 
 export function DispatcherKpiBar({ activeLoads, lateLoads, todayPickups, todayDeliveries }: DispatcherKpiBarProps) {
@@ -39,7 +39,7 @@ export function DispatcherKpiBar({ activeLoads, lateLoads, todayPickups, todayDe
           key={card.label}
           to={card.to}
           aria-label={`${card.label} — view loads`}
-          className={`block rounded border px-3 py-2 transition hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${cardClasses(card.accent)}`}
+          className={`block rounded border px-3 py-2 transition hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 ${cardClasses(card.accent)}`}
         >
           <div className="text-[11px] font-semibold uppercase tracking-wide">{card.label}</div>
           <div className="mt-1 text-2xl font-semibold">{card.value}</div>

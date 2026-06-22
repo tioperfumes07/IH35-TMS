@@ -24,7 +24,7 @@ function relativeTime(iso: string): string {
 function SeverityIcon({ severity }: { severity: string }) {
   if (severity === "critical" || severity === "high") return <AlertTriangle className="h-4 w-4 text-red-500" />;
   if (severity === "medium") return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-  if (severity === "low") return <Info className="h-4 w-4 text-blue-500" />;
+  if (severity === "low") return <Info className="h-4 w-4 text-slate-700" />;
   return <Bell className="h-4 w-4 text-slate-500" />;
 }
 
@@ -39,7 +39,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="text-xs font-medium text-blue-700 hover:underline"
+            className="text-xs font-medium text-slate-700 hover:underline"
             onClick={() => void onMarkAllRead()}
           >
             Mark all read
@@ -56,7 +56,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
           notifications.slice(0, 20).map((item) => (
             <li
               key={item.id}
-              className={`border-b px-3 py-2 ${item.read_at ? "bg-white" : "bg-blue-50/40"}`}
+              className={`border-b px-3 py-2 ${item.read_at ? "bg-white" : "bg-slate-100/40"}`}
               data-testid="notification-item"
             >
               <div className="flex gap-2">
@@ -71,7 +71,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
                     {!item.read_at ? (
                       <button
                         type="button"
-                        className="text-[11px] font-medium text-blue-700 hover:underline"
+                        className="text-[11px] font-medium text-slate-700 hover:underline"
                         onClick={() => void onMarkRead(item.id)}
                       >
                         Mark read
@@ -87,7 +87,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
                     {item.action_link ? (
                       <Link
                         to={item.action_link}
-                        className="inline-flex items-center gap-0.5 text-[11px] font-medium text-blue-700 hover:underline"
+                        className="inline-flex items-center gap-0.5 text-[11px] font-medium text-slate-700 hover:underline"
                         onClick={onClose}
                       >
                         <LinkIcon className="h-3 w-3" />
@@ -102,7 +102,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
         )}
       </ul>
       <div className="border-t px-3 py-2 text-right">
-        <Link to="/notifications" className="text-xs font-medium text-blue-700 hover:underline" onClick={onClose}>
+        <Link to="/notifications" className="text-xs font-medium text-slate-700 hover:underline" onClick={onClose}>
           View all
         </Link>
       </div>

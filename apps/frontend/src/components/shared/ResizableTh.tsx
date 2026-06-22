@@ -69,7 +69,7 @@ export function ResizableTh({
           role="separator"
           aria-orientation="vertical"
           aria-label={`Resize ${columnId} column`}
-          className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-400"
+          className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-[#1F2A44]"
           onMouseDown={onMouseDown}
         />
       </div>

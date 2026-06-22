@@ -54,9 +54,9 @@ const SEVERITY_CONFIG: Record<
   },
   info: {
     Icon: Info,
-    border: "border-blue-200",
-    bg: "bg-blue-50",
-    iconCls: "text-blue-500",
+    border: "border-slate-300",
+    bg: "bg-slate-100",
+    iconCls: "text-slate-700",
     badge: "#dbeafe",
     badgeFg: "#1e3a8a",
   },

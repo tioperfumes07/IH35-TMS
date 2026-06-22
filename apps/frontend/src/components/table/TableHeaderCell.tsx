@@ -80,7 +80,7 @@ export function TableHeaderCell({
           aria-orientation="vertical"
           aria-label={`Resize ${label} column`}
           onMouseDown={startResize}
-          className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-blue-300"
+          className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-slate-100"
         />
       ) : null}
     </th>

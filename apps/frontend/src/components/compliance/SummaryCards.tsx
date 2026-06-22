@@ -20,7 +20,7 @@ export function SummaryCards({ summary, activeSeverity, onSelect }: Props) {
         <button
           key={card.key}
           type="button"
-          className={`rounded-lg border-2 p-4 text-left ${card.className} ${activeSeverity === card.key ? "ring-2 ring-blue-600" : ""}`}
+          className={`rounded-lg border-2 p-4 text-left ${card.className} ${activeSeverity === card.key ? "ring-2 ring-slate-400" : ""}`}
           onClick={() => onSelect(activeSeverity === card.key ? null : card.key)}
         >
           <div className="text-3xl font-semibold">{card.count}</div>

@@ -69,13 +69,13 @@ export function VendorLinkageModal({
       key={row.qbo_vendor_id}
       type="button"
       className={`w-full rounded border px-2 py-1.5 text-left text-xs hover:bg-gray-50 ${
-        selectedVendorId === row.qbo_vendor_id ? "border-blue-400 bg-blue-50" : "border-gray-200"
+        selectedVendorId === row.qbo_vendor_id ? "border-slate-300 bg-slate-100" : "border-gray-200"
       }`}
       onClick={() => setSelectedVendorId(row.qbo_vendor_id)}
     >
       <div className="font-semibold text-gray-900">{row.display_name}</div>
       <div className="text-gray-600">{row.company_name ?? row.qbo_vendor_id}</div>
-      {"score" in row && row.score !== undefined ? <div className="text-[11px] text-blue-700">Score: {Number(row.score).toFixed(2)}</div> : null}
+      {"score" in row && row.score !== undefined ? <div className="text-[11px] text-slate-700">Score: {Number(row.score).toFixed(2)}</div> : null}
     </button>
   );
 

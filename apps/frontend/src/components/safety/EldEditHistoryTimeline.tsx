@@ -63,10 +63,10 @@ export function EldEditHistoryTimeline({ driverUuid, operatingCompanyId, compact
           Read-only audit trail from mirrored Samsara HOS log edits ({historyQuery.data?.from} to {historyQuery.data?.to}).
         </p>
       ) : null}
-      <ol className="space-y-2 border-l-2 border-blue-200 pl-4">
+      <ol className="space-y-2 border-l-2 border-slate-300 pl-4">
         {edits.map((edit) => (
           <li key={edit.id} className="relative rounded border border-gray-200 bg-white p-3 text-sm">
-            <span className="absolute -left-[1.15rem] top-4 h-2.5 w-2.5 rounded-full bg-blue-500" aria-hidden />
+            <span className="absolute -left-[1.15rem] top-4 h-2.5 w-2.5 rounded-full bg-slate-1000" aria-hidden />
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-semibold text-gray-900">{edit.field_name}</span>
               <span className="text-xs text-gray-500">{formatTimestamp(edit.edited_at)}</span>

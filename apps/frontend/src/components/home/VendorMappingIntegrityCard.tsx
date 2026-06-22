@@ -83,7 +83,7 @@ export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }
         </div>
       </div>
       <div className="border-t border-slate-100 px-3 py-2">
-        <Link className="text-xs font-medium text-blue-700 hover:underline" to="/samsara/vendor-mapping-integrity">
+        <Link className="text-xs font-medium text-slate-700 hover:underline" to="/samsara/vendor-mapping-integrity">
           Open mapping integrity details
         </Link>
       </div>

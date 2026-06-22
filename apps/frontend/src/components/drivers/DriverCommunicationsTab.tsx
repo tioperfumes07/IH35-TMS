@@ -13,8 +13,8 @@ const CHANNEL_OPTIONS = [
 const PAGE_SIZE = 50;
 
 function ChannelIcon({ channel }: { channel: string }) {
-  if (channel === "sms") return <MessageSquare className="h-3.5 w-3.5 text-blue-500" aria-label="SMS" />;
-  if (channel === "email") return <Mail className="h-3.5 w-3.5 text-purple-500" aria-label="Email" />;
+  if (channel === "sms") return <MessageSquare className="h-3.5 w-3.5 text-slate-700" aria-label="SMS" />;
+  if (channel === "email") return <Mail className="h-3.5 w-3.5 text-slate-700" aria-label="Email" />;
   if (channel === "in_app") return <Phone className="h-3.5 w-3.5 text-emerald-500" aria-label="In-App" />;
   return null;
 }
@@ -22,9 +22,9 @@ function ChannelIcon({ channel }: { channel: string }) {
 function ChannelBadge({ channel }: { channel: string }) {
   const classes =
     channel === "sms"
-      ? "bg-blue-50 text-blue-700"
+      ? "bg-slate-100 text-slate-700"
       : channel === "email"
-      ? "bg-purple-50 text-purple-700"
+      ? "bg-slate-100 text-slate-700"
       : "bg-emerald-50 text-emerald-700";
   return (
     <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${classes}`}>

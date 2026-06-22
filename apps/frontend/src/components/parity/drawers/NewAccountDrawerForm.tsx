@@ -185,7 +185,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Account name *</span>
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="e.g. BOA-CHECKING-1135"
@@ -196,7 +196,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Account number</span>
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
               value={form.accountNumber}
               onChange={(e) => set("accountNumber", e.target.value)}
               placeholder="e.g. 1000"
@@ -206,7 +206,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Account type *</span>
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
               value={form.accountType}
               onChange={(e) => set("accountType", e.target.value)}
             >
@@ -225,7 +225,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Detail type *</span>
               <select
-                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
                 value={form.detailType}
                 onChange={(e) => set("detailType", e.target.value)}
               >
@@ -251,7 +251,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Parent account *</span>
               <input
-                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
                 value={form.parentAccount}
                 onChange={(e) => set("parentAccount", e.target.value)}
                 placeholder="Parent account name"
@@ -262,7 +262,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Description</span>
             <textarea
-              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
               rows={2}
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
@@ -302,7 +302,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
                   <p className="mt-0.5 text-gray-500">Sub-type: {form.detailType}</p>
                 )}
                 {bsPlSection && (
-                  <p className="mt-2 rounded bg-sky-50 px-2 py-1.5 text-sky-700">
+                  <p className="mt-2 rounded bg-slate-100 px-2 py-1.5 text-slate-700">
                     {bsPlSection}
                   </p>
                 )}

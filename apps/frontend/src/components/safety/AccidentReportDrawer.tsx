@@ -219,7 +219,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </label>
         </div>
         {spawnedWoDisplayId ? (
-          <div className="mt-2 rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-900">
+          <div className="mt-2 rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700">
             New WO (source type AC): {spawnedWoDisplayId}
           </div>
         ) : null}

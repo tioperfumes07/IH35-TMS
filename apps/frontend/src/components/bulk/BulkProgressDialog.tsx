@@ -50,7 +50,7 @@ export function BulkProgressDialog({
       <div className="space-y-4 text-sm">
         <div className="h-2 overflow-hidden rounded bg-gray-200">
           <div
-            className="h-full bg-blue-600 transition-all duration-300"
+            className="h-full bg-[#1F2A44] transition-all duration-300"
             style={{ width: `${progressPct}%` }}
             role="progressbar"
             aria-valuenow={progressPct}
@@ -104,7 +104,7 @@ export function BulkProgressDialog({
           {!loading && failedCount > 0 && onRetryFailed ? (
             <button
               type="button"
-              className="rounded border border-blue-300 px-3 py-1.5 text-sm text-blue-800"
+              className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
               onClick={onRetryFailed}
             >
               Retry failed
@@ -112,7 +112,7 @@ export function BulkProgressDialog({
           ) : null}
           <button
             type="button"
-            className="rounded bg-blue-700 px-3 py-1.5 text-sm font-semibold text-white"
+            className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white"
             onClick={onClose}
             disabled={loading}
           >

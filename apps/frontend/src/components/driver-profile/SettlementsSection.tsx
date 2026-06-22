@@ -25,7 +25,7 @@ export function SettlementsSection({
           <input type="checkbox" checked={autoPayEnabled} disabled={!onAutoPayChange || autoPaySaving} onChange={(e) => onAutoPayChange?.(e.target.checked)} />
           Auto-pay on payday
         </label>
-        <a href={`/settlements?driver_id=${driverId}`} className="text-xs text-blue-700 underline">
+        <a href={`/settlements?driver_id=${driverId}`} className="text-xs text-slate-700 underline">
           Full settlements
         </a>
       </div>

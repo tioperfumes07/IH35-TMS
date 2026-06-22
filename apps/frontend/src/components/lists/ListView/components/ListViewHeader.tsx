@@ -174,7 +174,7 @@ function ResizableTh({
     <th
       {...dragHandleProps}
       style={{ width, minWidth: width, maxWidth: width, position: isPinned ? "sticky" : undefined, left: isPinned ? 0 : undefined, zIndex: isPinned ? 11 : undefined }}
-      className={`relative select-none font-medium tracking-wide uppercase text-gray-500 bg-gray-50 ${textSize} ${isDragOver ? "bg-blue-50 border-l-2 border-blue-400" : ""}`}
+      className={`relative select-none font-medium tracking-wide uppercase text-gray-500 bg-gray-50 ${textSize} ${isDragOver ? "bg-slate-100 border-l-2 border-slate-300" : ""}`}
       data-column-id={colId}
     >
       <div className="flex items-center gap-1 px-2 overflow-hidden">
@@ -185,7 +185,7 @@ function ResizableTh({
         >
           <span className="truncate">{children}</span>
           {isSorted && (
-            <span className="shrink-0 text-blue-500">{sortDir === "asc" ? "▲" : "▼"}</span>
+            <span className="shrink-0 text-slate-700">{sortDir === "asc" ? "▲" : "▼"}</span>
           )}
         </button>
       </div>
@@ -193,7 +193,7 @@ function ResizableTh({
         role="separator"
         aria-orientation="vertical"
         aria-label={`Resize ${colId}`}
-        className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-400"
+        className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-[#1F2A44]"
         onMouseDown={onResizeMouseDown}
       />
     </th>

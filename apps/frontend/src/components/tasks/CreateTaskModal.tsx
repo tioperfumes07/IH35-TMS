@@ -94,7 +94,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, onClose
     Boolean(operatingCompanyId) && title.trim().length > 0 && assignedTo.length > 0 && scheduledDate.length > 0 && !mutation.isPending;
 
   const labelCls = "block text-[11px] font-semibold uppercase tracking-wide text-gray-600";
-  const inputCls = "mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-800 focus:border-blue-400 focus:outline-none";
+  const inputCls = "mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-800 focus:border-slate-300 focus:outline-none";
 
   return (
     <Modal open={open} onClose={onClose} title="Create task" modalKind="create-task" sizePreset="md">

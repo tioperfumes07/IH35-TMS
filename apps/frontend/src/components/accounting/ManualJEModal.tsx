@@ -280,7 +280,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             </div>
             <button
               type="button"
-              className="text-blue-700 underline"
+              className="text-slate-700 underline"
               onClick={() => setLines((prev) => [...prev, emptyLine()])}
             >
               + Add line

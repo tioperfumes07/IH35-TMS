@@ -29,7 +29,7 @@ export function LicenseSection({ license }: { license: Record<string, unknown> }
           <span
             key={key}
             className={`rounded px-2 py-0.5 text-xs font-semibold ${
-              endorsements[key] ? "bg-sky-100 text-sky-800" : "bg-gray-100 text-gray-400"
+              endorsements[key] ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-400"
             }`}
           >
             {key.toUpperCase()}

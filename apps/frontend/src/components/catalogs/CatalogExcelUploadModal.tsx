@@ -121,7 +121,7 @@ export function CatalogExcelUploadModal({ open, catalogName, displayName, onClos
           Selected: <span className="font-semibold">{file?.name ?? "none"}</span>
         </div>
 
-        <div className="rounded border border-blue-100 bg-blue-50 px-3 py-2 text-blue-900">
+        <div className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-slate-700">
           <div className="font-semibold">{statusLabel}</div>
           {jobQuery.data ? (
             <div className="mt-1 grid grid-cols-3 gap-2 text-[11px]">

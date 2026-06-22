@@ -84,7 +84,7 @@ export function ReferenceSelect({
         disabled={disabled}
         aria-label={addLabel}
         onClick={() => setCreateOpen(true)}
-        className="min-h-11 shrink-0 rounded border border-gray-300 px-2 text-[12px] font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-40 sm:min-h-0 sm:py-1"
+        className="min-h-11 shrink-0 rounded border border-gray-300 px-2 text-[12px] font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 sm:min-h-0 sm:py-1"
       >
         {addLabel}
       </button>

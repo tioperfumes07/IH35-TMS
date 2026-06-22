@@ -205,7 +205,7 @@ export function Combobox({
             ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
             : error
             ? "border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-200"
-            : "border-gray-300 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-200"
+            : "border-gray-300 focus-within:border-slate-300 focus-within:ring-2 focus-within:ring-slate-400"
         }`}
       >
         <input
@@ -271,7 +271,7 @@ export function Combobox({
                 onClick={() => commitSelection(option.value)}
                 onMouseEnter={() => setActiveIndex(index)}
                 className={`w-full px-2 py-1.5 text-left text-[13px] ${
-                  activeIndex === index ? "bg-sky-50 text-sky-900" : "text-gray-800 hover:bg-gray-50"
+                  activeIndex === index ? "bg-slate-100 text-slate-700" : "text-gray-800 hover:bg-gray-50"
                 }`}
               >
                 <div>{option.label}</div>
@@ -291,7 +291,7 @@ export function Combobox({
               }}
               onMouseEnter={() => setActiveIndex(filteredOptions.length)}
               className={`w-full border-t border-gray-100 px-2 py-1.5 text-left text-[13px] ${
-                activeIndex === filteredOptions.length ? "bg-sky-50 text-sky-900" : "text-gray-700 hover:bg-gray-50"
+                activeIndex === filteredOptions.length ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-50"
               }`}
             >
               + {allowAddNew.label} "{query.trim()}"

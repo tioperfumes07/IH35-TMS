@@ -26,7 +26,7 @@ export function SwipeActionRow({ children, actions }: Props) {
             key={action.id}
             type="button"
             className={`min-h-11 px-4 text-xs font-semibold text-white ${
-              action.tone === "danger" ? "bg-red-600" : "bg-blue-600"
+              action.tone === "danger" ? "bg-red-600" : "bg-[#1F2A44]"
             }`}
             onClick={action.onClick}
           >

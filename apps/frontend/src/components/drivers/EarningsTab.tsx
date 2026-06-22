@@ -131,12 +131,12 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
             {money(totalOutstandingLiabilities)}
           </div>
         </div>
-        <div className="rounded border border-blue-200 bg-blue-50 p-3">
-          <div className="text-[11px] uppercase text-blue-700">Cash advances unpaid</div>
-          <div className="text-lg font-semibold text-blue-900" data-testid="driver-earnings-cash-advances-unpaid">
+        <div className="rounded border border-slate-300 bg-slate-100 p-3">
+          <div className="text-[11px] uppercase text-slate-700">Cash advances unpaid</div>
+          <div className="text-lg font-semibold text-slate-700" data-testid="driver-earnings-cash-advances-unpaid">
             {money(cashAdvancesUnpaid)}
           </div>
-          <div className="text-[10px] text-blue-700">{approvedAdvancesForDriver.length} approved advance(s)</div>
+          <div className="text-[10px] text-slate-700">{approvedAdvancesForDriver.length} approved advance(s)</div>
         </div>
         <div className="rounded border border-emerald-200 bg-emerald-50 p-3">
           <div className="text-[11px] uppercase text-emerald-700">Pending ack liabilities</div>
@@ -171,7 +171,7 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
           <h3 className="text-sm font-semibold text-gray-900">Last 4 settlements</h3>
           <Link
             to={`/driver-finance/settlements?driver_id=${encodeURIComponent(driverId)}`}
-            className="text-xs text-blue-700 underline"
+            className="text-xs text-slate-700 underline"
             data-testid="driver-earnings-settlements-link"
           >
             View all settlements →

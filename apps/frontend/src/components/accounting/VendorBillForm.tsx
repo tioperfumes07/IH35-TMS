@@ -270,7 +270,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
       <TwoSectionLineEditor mode="bill" onChange={setLines} partsLaborMode="parts-and-labor" />
       <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Bill Total = A + B" />
 
-      <div className="rounded border border-sky-100 bg-sky-50 px-3 py-2 text-[11px] text-sky-900">
+      <div className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
         Line-level bill persistence posts a single vendor bill total until multi-line bill API ships.
       </div>
 

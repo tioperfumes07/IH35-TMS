@@ -25,7 +25,7 @@ export function RecordExpenseModal({ open, operatingCompanyId, onClose, onCreate
           }}
         />
         <p className="text-xs text-gray-600">
-          <Link className="text-blue-700 underline" to="/accounting/expenses">
+          <Link className="text-slate-700 underline" to="/accounting/expenses">
             View all expenses
           </Link>
         </p>

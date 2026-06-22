@@ -116,7 +116,7 @@ export function BulkActionModal({
           </button>
           <button
             type="button"
-            className="rounded bg-blue-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
             onClick={validateAndConfirm}
             disabled={confirming}
           >
