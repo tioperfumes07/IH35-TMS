@@ -139,6 +139,9 @@ jobs:
       - name: Verify §7 palette (no non-§7 accent hex in maintenance views)
         run: npm run verify:section7-palette-maintenance
 
+      - name: Verify maintenance ParityTable record cells are anchors (no dead record cells)
+        run: npm run verify:maintenance-record-cells-link
+
       - name: Verify master-data write routes
         run: npm run verify:master-data-write-routes
 
