@@ -440,12 +440,14 @@ export function listWorkOrders(companyId: string) {
 
 export function listWorkOrdersFiltered(
   companyId: string,
-  params: { source_type?: string; external_vendor_id?: string; status?: string } = {}
+  params: { source_type?: string; external_vendor_id?: string; status?: string; location?: string; bucket?: string } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.source_type) qs.set("source_type", params.source_type);
   if (params.external_vendor_id) qs.set("external_vendor_id", params.external_vendor_id);
   if (params.status) qs.set("status", params.status);
+  if (params.location) qs.set("location", params.location);
+  if (params.bucket) qs.set("bucket", params.bucket);
   return apiRequest<{ work_orders: WorkOrder[]; total_count: number }>(`/api/v1/maintenance/work-orders?${qs.toString()}`);
 }
 

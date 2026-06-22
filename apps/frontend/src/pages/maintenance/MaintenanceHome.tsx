@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, WorkOrderType } from "../../api/maintenance";
 import {
@@ -89,6 +89,10 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
   const [sourceTypeFilter, setSourceTypeFilter] = useState("");
   const [externalVendorFilter, setExternalVendorFilter] = useState("");
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
+  // Service/Location drill-through: ?location=&bucket= narrow the Active-WOs list to that location.
+  const [searchParams] = useSearchParams();
+  const locationFilter = searchParams.get("location") ?? "";
+  const bucketFilter = searchParams.get("bucket") ?? "";
 
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "kpis", companyId],
@@ -111,11 +115,13 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
     enabled: Boolean(companyId),
   });
   const workOrdersQuery = useQuery({
-    queryKey: ["maintenance", "work-orders", companyId, sourceTypeFilter, externalVendorFilter],
+    queryKey: ["maintenance", "work-orders", companyId, sourceTypeFilter, externalVendorFilter, locationFilter, bucketFilter],
     queryFn: () =>
       listWorkOrdersFiltered(companyId, {
         source_type: sourceTypeFilter || undefined,
         external_vendor_id: externalVendorFilter || undefined,
+        location: locationFilter || undefined,
+        bucket: bucketFilter || undefined,
       }),
     enabled: Boolean(companyId),
   });
