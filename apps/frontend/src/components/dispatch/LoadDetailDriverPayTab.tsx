@@ -34,7 +34,7 @@ function lineTypeBadge(type: string): string {
   if (EARNINGS_TYPES.has(type)) return "bg-green-100 text-green-800";
   if (DEDUCTION_TYPES.has(type)) return "bg-red-100 text-red-800";
   if (ADVANCE_TYPES.has(type)) return "bg-orange-100 text-orange-800";
-  if (REIMBURSEMENT_TYPES.has(type)) return "bg-blue-100 text-blue-800";
+  if (REIMBURSEMENT_TYPES.has(type)) return "bg-slate-100 text-slate-700";
   return "bg-gray-100 text-gray-700";
 }
 
@@ -136,7 +136,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
         {reimbursementsCents > 0 ? (
           <div>
             <div className="text-xs text-gray-500">Reimbursements</div>
-            <div className="font-semibold text-blue-600">+{formatMoneyCents(reimbursementsCents, currencyCode)}</div>
+            <div className="font-semibold text-slate-700">+{formatMoneyCents(reimbursementsCents, currencyCode)}</div>
           </div>
         ) : null}
         <div className="col-span-2 border-t border-gray-200 pt-2">

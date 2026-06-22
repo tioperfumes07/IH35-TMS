@@ -36,7 +36,7 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
     return (
       <button
         type="button"
-        className="single-line-name w-full text-left hover:text-blue-700"
+        className="single-line-name w-full text-left hover:text-slate-700"
         data-testid={`inline-driver-picker-${loadId}`}
         onClick={(event) => {
           event.stopPropagation();

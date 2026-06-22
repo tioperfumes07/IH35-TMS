@@ -32,7 +32,7 @@ function pwaPingLabel(lastPingAt: string | null): string {
 function pwaPingClass(lastPingAt: string | null): string {
   const label = pwaPingLabel(lastPingAt);
   if (label === "Online") return "bg-emerald-100 text-emerald-800";
-  if (label === "Recent") return "bg-blue-100 text-blue-800";
+  if (label === "Recent") return "bg-slate-100 text-slate-700";
   if (label === "Stale") return "bg-amber-100 text-amber-800";
   return "bg-gray-100 text-gray-600";
 }
@@ -71,7 +71,7 @@ export function DriverStatusColumn({ load }: { load: DispatchLoadRow }) {
 
   return (
     <div className="flex flex-col items-start gap-0.5" data-testid="driver-status-column">
-      <span className="rounded-full border border-blue-300 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+      <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
         {LIFECYCLE_LABEL[lifecycle] ?? lifecycle.replaceAll("_", " ")}
       </span>
       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${pwaPingClass(load.driver_pwa_last_ping_at ?? null)}`}>

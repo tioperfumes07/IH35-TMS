@@ -43,7 +43,7 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
         <div key={`w-${i}`} className="rounded bg-amber-50 px-2 py-1 text-sm text-amber-900">{w.workflow}: {w.message}</div>
       ))}
       {info.map((inf, i) => (
-        <div key={`i-${i}`} className="rounded bg-sky-50 px-2 py-1 text-sm text-sky-900">{inf.message}</div>
+        <div key={`i-${i}`} className="rounded bg-slate-100 px-2 py-1 text-sm text-slate-700">{inf.message}</div>
       ))}
       {q.isLoading ? <p className="text-xs text-gray-500">Checking dispatch authorization gates…</p> : null}
     </div>

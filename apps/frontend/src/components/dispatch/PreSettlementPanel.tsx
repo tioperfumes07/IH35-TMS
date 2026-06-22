@@ -90,11 +90,11 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
       <div className="space-y-1">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Linked Trips</div>
         {settlement.first_load_number ? (
-          <div className="flex items-center gap-2 rounded border border-blue-100 bg-blue-50 px-2 py-1.5">
-            <span className="rounded bg-blue-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-blue-800">
+          <div className="flex items-center gap-2 rounded border border-slate-300 bg-slate-100 px-2 py-1.5">
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
               NB
             </span>
-            <span className="font-mono text-xs font-semibold text-blue-900">
+            <span className="font-mono text-xs font-semibold text-slate-700">
               {settlement.first_load_number}
             </span>
           </div>

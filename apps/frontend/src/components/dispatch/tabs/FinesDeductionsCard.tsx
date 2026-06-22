@@ -226,14 +226,14 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               <div key={policy.id} className="rounded border border-gray-100 bg-gray-50 px-2 py-1.5 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-gray-900">{formatMoney(remaining)} remaining</span>
-                  <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-sky-800">{policy.status}</span>
+                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-700">{policy.status}</span>
                 </div>
                 <div className="text-gray-600">
                   {formatMoney(deducted)} / {formatMoney(owed)} · max {formatMoney(policy.max_per_settlement_cents)} / settlement
                 </div>
                 {policy.memo ? <div className="text-gray-500">{policy.memo}</div> : null}
                 <div className="mt-1 h-1.5 rounded bg-gray-200">
-                  <div className="h-1.5 rounded bg-sky-600" style={{ width: `${pct}%` }} />
+                  <div className="h-1.5 rounded bg-[#1F2A44]" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             );

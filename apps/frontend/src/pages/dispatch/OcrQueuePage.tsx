@@ -71,7 +71,7 @@ function QueueRow({
         {canConvert ? (
           <button
             type="button"
-            className="rounded border border-sky-300 px-2 py-1 text-xs text-sky-800"
+            className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700"
             disabled={convertM.isPending}
             onClick={() => convertM.mutate()}
             data-testid={`ocr-convert-${item.id}`}

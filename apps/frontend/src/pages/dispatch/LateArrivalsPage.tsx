@@ -71,7 +71,7 @@ export function LateArrivalsPage() {
               loads.map((load) => (
                 <tr key={load.id} className="border-b last:border-b-0">
                   <td className="px-3 py-2 font-medium">
-                    <Link to={`/dispatch?load_id=${encodeURIComponent(load.id)}`} className="text-sky-700 hover:underline">
+                    <Link to={`/dispatch?load_id=${encodeURIComponent(load.id)}`} className="text-slate-700 hover:underline">
                       {load.load_number}
                     </Link>
                   </td>

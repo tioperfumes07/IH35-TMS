@@ -103,7 +103,7 @@ export function DispatchAlertsPage() {
           <Link
             key={c.title}
             to={c.to}
-            className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-sky-300 hover:shadow"
+            className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow"
           >
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{c.title}</div>
             <div className="mt-2 text-3xl font-bold tabular-nums text-gray-900">{formatCount(c.count)}</div>

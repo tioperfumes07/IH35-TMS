@@ -113,7 +113,7 @@ export function TripProfitability() {
         </label>
         <button
           type="button"
-          className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44]"
           onClick={() => setApplied(period)}
         >
           Apply

@@ -102,11 +102,11 @@ export function LoadsPlanner() {
                         <td
                           key={`${load.id}-${days[dayIdx]}`}
                           colSpan={span.span}
-                          className="border-l border-gray-50 bg-indigo-100 px-1 py-0.5 text-center"
+                          className="border-l border-gray-50 bg-slate-100 px-1 py-0.5 text-center"
                         >
                           <button
                             type="button"
-                            className="w-full truncate text-[9px] font-medium text-indigo-900 hover:underline"
+                            className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
                             data-testid={`loads-planner-bar-${load.load_number}`}
                             onClick={() => openLoad(load.id)}
                             title={`${load.load_number} · ${load.customer_name ?? ""} · ${load.status}`}
@@ -125,7 +125,7 @@ export function LoadsPlanner() {
                   return (
                     <tr key={load.id} className="border-t border-gray-100">
                       <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
-                        <button type="button" className="text-blue-700 hover:underline" onClick={() => openLoad(load.id)}>
+                        <button type="button" className="text-slate-700 hover:underline" onClick={() => openLoad(load.id)}>
                           {load.load_number}
                         </button>
                       </td>

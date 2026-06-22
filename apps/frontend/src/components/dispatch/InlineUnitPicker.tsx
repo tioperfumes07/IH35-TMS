@@ -41,7 +41,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
     return (
       <button
         type="button"
-        className="code-cell w-full text-left font-medium text-gray-800 hover:text-blue-700"
+        className="code-cell w-full text-left font-medium text-gray-800 hover:text-slate-700"
         data-testid={`inline-unit-picker-${loadId}`}
         onClick={(event) => {
           event.stopPropagation();

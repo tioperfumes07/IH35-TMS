@@ -116,7 +116,7 @@ export function BorderCrossingWizardPage() {
               <button
                 key={label}
                 type="button"
-                className={`rounded px-2 py-1 text-xs ${idx === step ? "bg-blue-600 text-white" : "bg-gray-100"}`}
+                className={`rounded px-2 py-1 text-xs ${idx === step ? "bg-[#1F2A44] text-white" : "bg-gray-100"}`}
                 onClick={() => setStep(idx)}
               >
                 {idx + 1}. {label}
@@ -149,7 +149,7 @@ export function BorderCrossingWizardPage() {
             {step < 4 ? (
               <button
                 type="button"
-                className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
                 disabled={!canNext}
                 onClick={() => setStep(step + 1)}
               >
@@ -159,7 +159,7 @@ export function BorderCrossingWizardPage() {
             {step === 4 ? (
               <button
                 type="button"
-                className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
                 disabled={submitting || !canNext}
                 onClick={() => void submitWizard()}
               >

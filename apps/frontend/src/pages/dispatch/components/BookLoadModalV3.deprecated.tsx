@@ -292,7 +292,7 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
         {submitErrorMessage ? (
           <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
         ) : null}
-        <div className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-900">
+        <div className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
           Live load number: <span className="font-semibold">{form.watch("reserved_load_number") || "Reserving..."}</span>
         </div>
         {gateBanner ? (

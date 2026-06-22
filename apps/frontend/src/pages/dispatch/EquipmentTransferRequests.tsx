@@ -32,7 +32,7 @@ export function EquipmentTransferRequests() {
   return (
     <div className="space-y-4 p-4">
       <PageHeader title="Equipment transfer requests" subtitle="Dual-confirm handoff queue" />
-      <button type="button" className="rounded bg-blue-600 px-3 py-2 text-white" onClick={() => setShowModal(true)}>
+      <button type="button" className="rounded bg-[#1F2A44] px-3 py-2 text-white" onClick={() => setShowModal(true)}>
         New transfer
       </button>
       {companyId ? (

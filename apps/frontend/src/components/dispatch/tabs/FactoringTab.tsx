@@ -109,7 +109,7 @@ const STAGE_LABELS: Record<FactoringStage, string> = {
 
 const STAGE_COLORS: Record<FactoringStage, string> = {
   NOT_FACTORED: "bg-gray-100 text-gray-600 border-gray-200",
-  PACKET_READY: "bg-blue-50 text-blue-700 border-blue-200",
+  PACKET_READY: "bg-slate-100 text-slate-700 border-slate-300",
   SUBMITTED: "bg-amber-50 text-amber-700 border-amber-200",
   ADVANCE_RECEIVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
   RESERVE_RELEASED: "bg-green-100 text-green-800 border-green-200",
@@ -402,8 +402,8 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
         <div className="space-y-2">
           {/* Stage: NOT_FACTORED → mark packet ready */}
           {stage === "NOT_FACTORED" && isDeliverable && (
-            <div className="rounded border border-blue-200 bg-blue-50 p-3">
-              <p className="mb-2 text-xs text-blue-800">
+            <div className="rounded border border-slate-300 bg-slate-100 p-3">
+              <p className="mb-2 text-xs text-slate-700">
                 {packetComplete
                   ? "All documents present. Mark packet ready for dispatcher approval."
                   : "Some documents are missing (see checklist). You can still mark ready and upload missing docs later."}

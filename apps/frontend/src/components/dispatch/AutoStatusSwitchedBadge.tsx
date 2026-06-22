@@ -12,7 +12,7 @@ export function AutoStatusSwitchedBadge({ reason, caseId, className = "" }: Prop
 
   return (
     <span
-      className={`inline-flex items-center rounded-full bg-sky-700 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white ${className}`}
+      className={`inline-flex items-center rounded-full bg-[#1F2A44] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white ${className}`}
       title={tooltip}
       aria-label={`Auto status switch: ${tooltip}`}
     >

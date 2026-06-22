@@ -56,7 +56,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
         <input className="rounded border px-2 py-1" placeholder="Transfer location" value={location} onChange={(e) => setLocation(e.target.value)} />
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
         <div className="mt-1 flex gap-2">
-          <button type="button" className="rounded bg-blue-600 px-3 py-1 text-white disabled:opacity-50" disabled={busy} onClick={submit}>
+          <button type="button" className="rounded bg-[#1F2A44] px-3 py-1 text-white disabled:opacity-50" disabled={busy} onClick={submit}>
             Initiate dual-confirm transfer
           </button>
         </div>

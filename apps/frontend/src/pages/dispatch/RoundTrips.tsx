@@ -51,14 +51,14 @@ function TripCard({
     <button
       type="button"
       onClick={() => onClick(load.id)}
-      className="w-full rounded border border-gray-200 bg-white p-2.5 text-left shadow-sm transition hover:border-blue-300 hover:shadow"
+      className="w-full rounded border border-gray-200 bg-white p-2.5 text-left shadow-sm transition hover:border-slate-300 hover:shadow"
       data-testid={`round-trip-load-${load.load_number}`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-semibold text-gray-900">{load.load_number}</span>
         <div className="flex items-center gap-1">
           {tag ? (
-            <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-800">{tag}</span>
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">{tag}</span>
           ) : null}
           <span className="text-sm">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</span>
         </div>

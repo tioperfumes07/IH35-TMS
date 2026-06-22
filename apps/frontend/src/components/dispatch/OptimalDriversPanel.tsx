@@ -101,7 +101,7 @@ export function OptimalDriversPanel({
                 disabled={disabled || blocked}
                 data-testid={`optimal-driver-row-${d.rank}`}
                 className={`flex w-full flex-col rounded border px-2 py-1.5 text-left text-xs transition ${
-                  selected ? "border-indigo-500 bg-indigo-50" : "border-slate-200 bg-white hover:border-slate-300"
+                  selected ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-white hover:border-slate-300"
                 } ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
                 onClick={() => onSelectDriver(d.driver_id)}
               >
@@ -110,7 +110,7 @@ export function OptimalDriversPanel({
                     #{d.rank} · {d.display_name}
                     {!d.hos_safe ? " · HOS risk" : ""}
                   </span>
-                  <span className="font-mono text-[11px] text-indigo-700">{fmtScore(d.total_score)} pts</span>
+                  <span className="font-mono text-[11px] text-slate-700">{fmtScore(d.total_score)} pts</span>
                 </span>
                 <span className="text-[10px] text-slate-500">{breakdownLabel(d)}</span>
                 {d.ineligible_reason ? <span className="text-[10px] text-amber-700">{d.ineligible_reason}</span> : null}
