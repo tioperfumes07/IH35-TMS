@@ -43,6 +43,13 @@ const REQUIRED = {
   "apps/frontend/src/components/vehicle-profile/MaintenanceSnapshotSection.tsx": [
     "/maintenance/work-orders/",
   ],
+  // Trailer asset profile (/fleet/trailers/:id) record cells (Block 3 item 5).
+  "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx": [
+    "/fleet/units/", "/dispatch/loads/",
+  ],
+  "apps/frontend/src/components/trailer-profile/MaintenanceSnapshotSection.tsx": [
+    "/maintenance/work-orders/",
+  ],
   // Each new ParityTable tab must add itself here so its record-cell anchors are locked against regression.
 };
 
