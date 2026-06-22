@@ -19,6 +19,17 @@ const REQUIRED = {
   "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx": [
     "/drivers/",
   ],
+  // Master Data tabs (universal-list ParityTable). Parts is intentionally absent: parts are not a
+  // linkable entity (no part-detail route), so that tab has no record-cell anchor — honest, no dead link.
+  "apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx": [
+    "/fleet/units/",
+  ],
+  "apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx": [
+    "/drivers/",
+  ],
+  "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx": [
+    "/maintenance/vendors/",
+  ],
   // Each new ParityTable tab must add itself here so its record-cell anchors are locked against regression.
 };
 

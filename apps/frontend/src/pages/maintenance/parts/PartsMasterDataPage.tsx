@@ -12,6 +12,7 @@ import {
 } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
@@ -122,6 +123,50 @@ export function PartsMasterDataPage() {
 
   const rows = useMemo(() => partsQuery.data?.rows ?? [], [partsQuery.data?.rows]);
 
+  // Universal-list columns. Parts are NOT a linkable entity (no part-detail route), so there are no
+  // record-cell links here — same honest call as the Parts Inventory tab (PR-E).
+  const columns: Array<ParityColumn<MaintenancePartRow>> = [
+    { key: "part_number", label: "Part #", sortable: true, cellClass: "font-semibold" },
+    { key: "name", label: "Name", sortable: true },
+    {
+      key: "qty_on_hand",
+      label: "On Hand",
+      sortable: true,
+      render: (row) => `${row.qty_on_hand} (reorder ${row.reorder_threshold})`,
+    },
+    { key: "unit_cost", label: "Cost", sortable: true, render: (row) => `$${Number(row.unit_cost ?? 0).toFixed(2)}` },
+    {
+      key: "source",
+      label: "Source",
+      sortable: true,
+      render: (row) => (
+        <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+          {row.voided_at ? "Voided" : row.source === "csv" ? "CSV" : "Manual"}
+        </span>
+      ),
+    },
+  ];
+
+  const rowActions = (row: MaintenancePartRow) => (
+    <div className="flex gap-2">
+      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>
+        Edit
+      </button>
+      <button
+        type="button"
+        className="text-red-600 underline"
+        onClick={async () => {
+          const reason = window.prompt("Void reason");
+          if (!reason) return;
+          await voidMaintenancePart(row.id, companyId, reason);
+          await refresh();
+        }}
+      >
+        Void
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between rounded border border-gray-200 bg-white p-3">
@@ -163,49 +208,16 @@ export function PartsMasterDataPage() {
             Download template
           </a>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 text-left text-gray-500">
-                <th className="px-2 py-2">Part #</th>
-                <th className="px-2 py-2">Name</th>
-                <th className="px-2 py-2">On Hand</th>
-                <th className="px-2 py-2">Cost</th>
-                <th className="px-2 py-2">Source</th>
-                <th className="px-2 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b border-gray-100">
-                  <td className="px-2 py-2 font-semibold">{row.part_number}</td>
-                  <td className="px-2 py-2">{row.name}</td>
-                  <td className="px-2 py-2">{row.qty_on_hand} (reorder {row.reorder_threshold})</td>
-                  <td className="px-2 py-2">${Number(row.unit_cost ?? 0).toFixed(2)}</td>
-                  <td className="px-2 py-2"><span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{row.voided_at ? "Voided" : row.source === "csv" ? "CSV" : "Manual"}</span></td>
-                  <td className="px-2 py-2">
-                    <div className="flex gap-2">
-                      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>Edit</button>
-                      <button
-                        type="button"
-                        className="text-red-600 underline"
-                        onClick={async () => {
-                          const reason = window.prompt("Void reason");
-                          if (!reason) return;
-                          await voidMaintenancePart(row.id, companyId, reason);
-                          await refresh();
-                        }}
-                      >
-                        Void
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {rows.length === 0 ? <tr><td className="px-2 py-6 text-center text-gray-500" colSpan={6}>No parts found.</td></tr> : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<MaintenancePartRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={partsQuery.isLoading}
+          emptyText="No parts found."
+          storageKey="maint-master-data-parts"
+          exportFilename="maintenance-parts"
+          rowActions={rowActions}
+        />
       </div>
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Part">
