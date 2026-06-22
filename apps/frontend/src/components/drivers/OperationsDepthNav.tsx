@@ -77,7 +77,7 @@ export function OperationsDepthNav({ activeSlug, onChange }: Props) {
                   type="button"
                   onClick={() => onChange(item.slug)}
                   className={`px-3 py-1.5 text-left text-xs ${
-                    item.slug === activeSlug ? "bg-sky-50 font-semibold text-sky-800" : "text-slate-700 hover:bg-gray-50"
+                    item.slug === activeSlug ? "bg-slate-100 font-semibold text-slate-700" : "text-slate-700 hover:bg-gray-50"
                   }`}
                 >
                   {item.label}

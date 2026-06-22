@@ -25,7 +25,7 @@ const SEVERITY_STYLES: Record<DriverManagerAttentionItem["severity"], string> = 
   critical: "border-red-300 bg-red-50 text-red-900",
   error: "border-orange-300 bg-orange-50 text-orange-900",
   warning: "border-amber-300 bg-amber-50 text-amber-900",
-  info: "border-sky-200 bg-sky-50 text-sky-900",
+  info: "border-slate-300 bg-slate-100 text-slate-700",
 };
 
 export function DriverManagerAttentionPanel({ items, loading, coolingDriverCount }: Props) {

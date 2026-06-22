@@ -82,7 +82,7 @@ export function ComplianceTable({
               <td className="p-2">{row.days_until_expiration ?? "—"}</td>
               <td className={`p-2 font-medium ${severityClass[row.severity] ?? ""}`}>{row.severity}</td>
               <td className="p-2">
-                <Link className="text-blue-700 underline" to={row.action_link}>
+                <Link className="text-slate-700 underline" to={row.action_link}>
                   Open
                 </Link>
               </td>

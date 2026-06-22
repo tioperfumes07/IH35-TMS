@@ -18,7 +18,7 @@ export function TrainingRecordsSection({
         <h2 className="text-sm font-semibold text-gray-800">Training records</h2>
         <button
           type="button"
-          className="text-xs text-blue-700 underline disabled:cursor-not-allowed disabled:text-gray-400"
+          className="text-xs text-slate-700 underline disabled:cursor-not-allowed disabled:text-gray-400"
           data-testid="dp-add-training"
           onClick={onAddTraining}
           disabled={!onAddTraining}

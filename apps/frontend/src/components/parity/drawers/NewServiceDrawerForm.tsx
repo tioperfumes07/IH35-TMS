@@ -91,7 +91,7 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Name *</span>
         <input
-          className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+          className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
           value={form.name}
           onChange={(e) => set("name", e.target.value)}
           placeholder="e.g. Line Haul"

@@ -22,7 +22,7 @@ export function CurrentAssignmentSection({
         <div>
           <div className="font-semibold text-slate-800">Default truck</div>
           {def ? (
-            <Link to={`/fleet/${def.unit_id}?operating_company_id=${companyId}`} className="text-sky-700 hover:underline">
+            <Link to={`/fleet/${def.unit_id}?operating_company_id=${companyId}`} className="text-slate-700 hover:underline">
               {String(def.unit_number ?? def.unit_id)}
             </Link>
           ) : (
@@ -33,7 +33,7 @@ export function CurrentAssignmentSection({
           <div className="font-semibold text-slate-800">Currently driving</div>
           {cur ? (
             <>
-              <Link to={`/fleet/${cur.unit_id}?operating_company_id=${companyId}`} className="text-sky-700 hover:underline">
+              <Link to={`/fleet/${cur.unit_id}?operating_company_id=${companyId}`} className="text-slate-700 hover:underline">
                 {String(cur.unit_number ?? cur.unit_id)}
               </Link>
               {cur.samsara_logged_in_at ? (
@@ -47,7 +47,7 @@ export function CurrentAssignmentSection({
         <div>
           <div className="font-semibold text-slate-800">Current load</div>
           {load ? (
-            <Link to={`/loads/${load.load_id}`} className="text-sky-700 hover:underline">
+            <Link to={`/loads/${load.load_id}`} className="text-slate-700 hover:underline">
               {String(load.load_number ?? load.load_id)} · {String(load.status ?? "—")}
             </Link>
           ) : (

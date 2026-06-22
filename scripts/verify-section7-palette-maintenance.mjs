@@ -9,20 +9,16 @@ import path from "node:path";
 const fail = (m) => { console.error(`FAIL verify-section7-palette-maintenance: ${m}`); process.exit(1); };
 
 const ROOTS = [
+  // Per-page module roots that have been §7-cleaned (maintenance #1303+, fleet #1317, dispatch #1319).
   "apps/frontend/src/pages/maintenance",
-  "apps/frontend/src/components/maintenance",
-  // Coverage-gap fix (2026-06-22): the fleet ASSET PROFILE surface (/fleet/units/:id +
-  // /fleet/trailers/:id) renders §7-governed UI but lived OUTSIDE this guard's roots, so 13 Tailwind
-  // blues (text-blue-700, bg-blue-600, bg-indigo-500, …) shipped unscanned. Now in scope so they
-  // can't regress. The class detector already existed — only the scanned roots were too narrow.
   "apps/frontend/src/pages/fleet",
-  "apps/frontend/src/components/vehicle-profile",
-  "apps/frontend/src/components/trailer-profile",
-  // Coverage-gap fix (2026-06-22): the DISPATCH module (board, load detail/drawer, planners, book-load
-  // wizard, etc.) is §7-governed but shipped 84 Tailwind blues + 2 forbidden direction hexes unscanned.
-  // Now in scope so they can't regress (de-risks the Block 7 wizard rebuild on a clean surface).
   "apps/frontend/src/pages/dispatch",
-  "apps/frontend/src/components/dispatch",
+  // SHARED-COMPONENT ROOT-GAP fix (2026-06-22): the per-module roots above structurally can't catch
+  // blues in globally-shared root-level components (Button.tsx tertiary text-blue-600, layout/DataPanel
+  // view-all link, lists/ListView batch/filter) — they render blue across EVERY surface incl the
+  // already-"cleaned" modules. Scanning the whole components/ tree (subsumes the old per-component
+  // roots: maintenance, vehicle-profile, trailer-profile, dispatch) closes the gap for good.
+  "apps/frontend/src/components",
 ];
 
 // Non-§7 accent hexes (blues / indigos / violets / pinks). §7 navy/slate (#1F2A44, #0F1729, #334155,

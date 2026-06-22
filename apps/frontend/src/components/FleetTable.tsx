@@ -397,7 +397,7 @@ export function FleetTable({
             <button
               key={value}
               type="button"
-              className={`rounded px-2 py-1 font-medium capitalize ${softDeleteFilter === value ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+              className={`rounded px-2 py-1 font-medium capitalize ${softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
               onClick={() => onSoftDeleteFilterChange(value)}
             >
               {value}

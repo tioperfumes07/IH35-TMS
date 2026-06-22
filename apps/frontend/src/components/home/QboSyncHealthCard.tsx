@@ -137,7 +137,7 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
         ) : null}
       </div>
       <div className="border-t border-slate-100 px-3 py-2">
-        <Link className="text-xs font-medium text-blue-700 hover:underline" to="/qbo/sync-dashboard">
+        <Link className="text-xs font-medium text-slate-700 hover:underline" to="/qbo/sync-dashboard">
           Open QBO sync dashboard
         </Link>
       </div>

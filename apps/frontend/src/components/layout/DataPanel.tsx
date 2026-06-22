@@ -30,7 +30,7 @@ export function DataPanel({ title, accentColor, viewAllHref, children }: Props) 
           {title}
         </span>
         {viewAllHref ? (
-          <Link to={viewAllHref} className="text-[11px] text-blue-600 hover:underline">
+          <Link to={viewAllHref} className="text-[11px] text-slate-700 hover:underline">
             View all →
           </Link>
         ) : null}

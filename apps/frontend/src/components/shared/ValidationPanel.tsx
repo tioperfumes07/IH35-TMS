@@ -39,10 +39,10 @@ const SEVERITY_STYLES: Record<ValidationSeverity, { bg: string; border: string; 
     label: "Warning",
   },
   info: {
-    bg: "bg-blue-50",
-    border: "border-blue-300",
+    bg: "bg-slate-100",
+    border: "border-slate-300",
     icon: "i",
-    iconBg: "bg-blue-500",
+    iconBg: "bg-slate-1000",
     label: "Info",
   },
 };

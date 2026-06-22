@@ -185,7 +185,7 @@ export function UploadModal({
             const file = event.dataTransfer.files[0];
             if (file) setSelectedFile(file);
           }}
-          className={`rounded border border-dashed p-4 text-center text-sm ${dragOver ? "border-sky-400 bg-sky-50" : "border-gray-300 bg-gray-50"}`}
+          className={`rounded border border-dashed p-4 text-center text-sm ${dragOver ? "border-slate-300 bg-slate-100" : "border-gray-300 bg-gray-50"}`}
         >
           <p className="font-medium text-gray-700">Drag and drop file here</p>
           <p className="text-xs text-gray-500">or click to browse</p>
@@ -265,7 +265,7 @@ export function UploadModal({
               <span>{progress}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded bg-gray-200">
-              <div className="h-full bg-sky-500 transition-all" style={{ width: `${progress}%` }} />
+              <div className="h-full bg-slate-1000 transition-all" style={{ width: `${progress}%` }} />
             </div>
           </div>
         ) : null}

@@ -46,9 +46,9 @@ export function BackhaulSuggestionsWidget({
   const suggestions = query.data?.suggestions ?? [];
 
   return (
-    <section className="rounded border border-indigo-200 bg-indigo-50/40 p-4" data-testid="backhaul-suggestions-widget">
-      <h3 className="text-sm font-semibold text-indigo-950">Profitable backhauls</h3>
-      <p className="mt-1 text-xs text-indigo-900/80">
+    <section className="rounded border border-slate-300 bg-slate-100/40 p-4" data-testid="backhaul-suggestions-widget">
+      <h3 className="text-sm font-semibold text-slate-700">Profitable backhauls</h3>
+      <p className="mt-1 text-xs text-slate-700/80">
         Truck {unitNumber} is empty near {location}. Best lanes from lane-profitability cache:
       </p>
       {query.isLoading ? <p className="mt-2 text-xs text-gray-600">Loading suggestions…</p> : null}
@@ -63,7 +63,7 @@ export function BackhaulSuggestionsWidget({
               <span>
                 {lane.origin_city}→{lane.destination_city}
               </span>
-              <span className="font-medium text-indigo-900">
+              <span className="font-medium text-slate-700">
                 {lane.profit_per_mile_cents != null ? `${money(lane.profit_per_mile_cents)}/mi` : money(lane.gross_profit_cents)}
               </span>
             </li>

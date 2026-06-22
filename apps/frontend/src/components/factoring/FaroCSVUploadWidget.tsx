@@ -54,7 +54,7 @@ export function FaroCSVUploadWidget({
   return (
     <div className="space-y-3" data-faro-csv-upload="true">
       <div
-        className={`rounded border-2 border-dashed px-4 py-8 text-center ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"}`}
+        className={`rounded border-2 border-dashed px-4 py-8 text-center ${dragOver ? "border-slate-300 bg-slate-100" : "border-gray-300 bg-gray-50"}`}
         onDragOver={(event) => {
           event.preventDefault();
           setDragOver(true);
@@ -124,7 +124,7 @@ export function FaroCSVUploadWidget({
         {uploading ? "Uploading..." : "Upload and import"}
       </Button>
 
-      <button type="button" className="text-xs text-blue-700 underline" onClick={onToggleJsonFallback}>
+      <button type="button" className="text-xs text-slate-700 underline" onClick={onToggleJsonFallback}>
         {showJsonFallback ? "Hide JSON fallback" : "Show JSON fallback"}
       </button>
       {showJsonFallback ? (

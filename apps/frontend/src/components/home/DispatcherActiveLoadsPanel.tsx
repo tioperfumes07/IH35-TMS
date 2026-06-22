@@ -65,7 +65,7 @@ export function DispatcherActiveLoadsPanel({ rows, isLoading, isError, onRetry }
               <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${badgeClass(row.is_late, row.detention_expected)}`}>
                 {badgeLabel(row.is_late, row.detention_expected)}
               </span>
-              <Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`} className="text-xs font-medium text-blue-700 hover:underline">
+              <Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`} className="text-xs font-medium text-slate-700 hover:underline">
                 Open
               </Link>
             </li>

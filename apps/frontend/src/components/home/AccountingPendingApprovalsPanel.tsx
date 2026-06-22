@@ -54,13 +54,13 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
         </li>
       </ul>
       <div className="flex flex-wrap gap-2 border-t border-slate-100 px-3 py-2">
-        <Link to="/accounting/journal-entries" className="text-xs font-medium text-blue-700 hover:underline">
+        <Link to="/accounting/journal-entries" className="text-xs font-medium text-slate-700 hover:underline">
           Journal entries
         </Link>
-        <Link to="/accounting/invoices" className="text-xs font-medium text-blue-700 hover:underline">
+        <Link to="/accounting/invoices" className="text-xs font-medium text-slate-700 hover:underline">
           Accounting home
         </Link>
-        <Link to="/reports/ar-aging" className="text-xs font-medium text-blue-700 hover:underline">
+        <Link to="/reports/ar-aging" className="text-xs font-medium text-slate-700 hover:underline">
           AR aging report
         </Link>
       </div>

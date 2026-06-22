@@ -20,8 +20,8 @@ export function BatchActionsBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-      <span className="font-medium text-blue-800">
+    <div className="flex items-center gap-3 px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-sm">
+      <span className="font-medium text-slate-700">
         {selectAllPages ? `All ${totalRows} rows selected` : `${selectedCount} selected`}
       </span>
 
@@ -29,7 +29,7 @@ export function BatchActionsBar({
         <button
           type="button"
           onClick={onSelectAcrossPages}
-          className="text-xs text-blue-600 underline hover:text-blue-800"
+          className="text-xs text-slate-700 underline hover:text-slate-700"
         >
           Select all {totalRows} across pages
         </button>
@@ -39,7 +39,7 @@ export function BatchActionsBar({
         <button
           type="button"
           onClick={onClearSelection}
-          className="text-xs text-blue-600 underline hover:text-blue-800"
+          className="text-xs text-slate-700 underline hover:text-slate-700"
         >
           Clear selection
         </button>

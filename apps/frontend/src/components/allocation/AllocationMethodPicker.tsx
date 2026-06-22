@@ -22,7 +22,7 @@ export function AllocationMethodPicker({ value, onChange, disabled }: Props) {
           <label
             key={option.value}
             className={`flex cursor-pointer flex-col rounded border px-3 py-2 text-sm ${
-              value === option.value ? "border-sky-500 bg-sky-50" : "border-gray-200 bg-white"
+              value === option.value ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-white"
             } ${disabled ? "opacity-60" : ""}`}
           >
             <span className="flex items-center gap-2 font-medium text-gray-900">

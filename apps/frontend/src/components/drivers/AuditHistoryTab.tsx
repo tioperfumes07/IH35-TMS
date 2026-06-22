@@ -242,7 +242,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
                   <td className="py-2">
                     <button
                       type="button"
-                      className="text-blue-700 underline"
+                      className="text-slate-700 underline"
                       data-testid={`driver-audit-expand-${row.id}`}
                       onClick={() => setExpandedId(expanded ? null : row.id)}
                     >
