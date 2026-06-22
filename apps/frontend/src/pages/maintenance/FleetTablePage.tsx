@@ -131,6 +131,24 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
     return m;
   }, [fleetLocationQuery.data]);
 
+  // Keystone: live maintenance status per unit (odometer · next PM due · open WO count), merged by
+  // unit id like locationByUnit. Owner-company units only; leased/trailer rows show "—" (honest).
+  const maintStatusQuery = useQuery({
+    queryKey: ["maintenance", "fleet-table", "maint-status", operatingCompanyId],
+    queryFn: () =>
+      apiRequest<{
+        rows: Array<{ id: string; odometer_mi: number | null; next_due_odometer: number | null; open_wo_count: number }>;
+      }>(`/api/v1/maintenance/fleet-table/rows?operating_company_id=${encodeURIComponent(operatingCompanyId)}`),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const maintByUnit = useMemo(() => {
+    const m: Record<string, { odometer_mi: number | null; next_due_odometer: number | null; open_wo_count: number }> = {};
+    for (const r of maintStatusQuery.data?.rows ?? [])
+      m[r.id] = { odometer_mi: r.odometer_mi, next_due_odometer: r.next_due_odometer, open_wo_count: r.open_wo_count };
+    return m;
+  }, [maintStatusQuery.data]);
+
   // Client-side kind sub-tab + status (KPI/toggle) filtering on top of the server type filter.
   const rows = useMemo(
     () =>
@@ -143,8 +161,8 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
         // show soft-deleted units of any operational status.
         if (softDeleteFilter === "active" && effectiveStatus && r.status !== effectiveStatus) return false;
         return true;
-      }).map((r) => ({ ...r, ...(locationByUnit[r.id] ?? {}) })),
-    [allRows, kindFilter, effectiveStatus, softDeleteFilter, locationByUnit]
+      }).map((r) => ({ ...r, ...(locationByUnit[r.id] ?? {}), ...(maintByUnit[r.id] ?? {}) })),
+    [allRows, kindFilter, effectiveStatus, softDeleteFilter, locationByUnit, maintByUnit]
   );
 
   // Use the server's authoritative total (GO-LIVE Block 1A) so the count reflects the FULL fleet, not just

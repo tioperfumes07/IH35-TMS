@@ -81,11 +81,15 @@ describe("FleetTable unified list", () => {
     expect(screen.getAllByText("Dry Van").length).toBeGreaterThan(0);
   });
 
-  it("row click navigates by kind", () => {
+  it("unit cell is a profile link, and row click navigates by kind", () => {
     renderTable();
-    fireEvent.click(screen.getByText("101"));
+    // Keystone: the Unit cell is now a real anchor (Unit links) to the profile route.
+    expect(screen.getByText("101").closest("a")?.getAttribute("href")).toBe("/fleet/units/truck-1");
+    expect(screen.getByText("T-10").closest("a")?.getAttribute("href")).toBe("/fleet/trailers/trailer-1");
+    // Clicking a non-link cell still navigates the whole row by kind (row-click preserved).
+    fireEvent.click(screen.getByText("VIN1"));
     expect(navigate).toHaveBeenCalledWith("/fleet/units/truck-1");
-    fireEvent.click(screen.getByText("T-10"));
+    fireEvent.click(screen.getByText("VIN2"));
     expect(navigate).toHaveBeenCalledWith("/fleet/trailers/trailer-1");
   });
 
