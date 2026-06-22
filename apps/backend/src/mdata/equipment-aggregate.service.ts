@@ -117,7 +117,7 @@ export async function buildEquipmentAggregate(
   }
 
   const maintUnitId = unitId;
-  let maintenance = { open_wo_count: 0, next_pm_due: null as unknown, last_service: null as unknown };
+  let maintenance = { open_wo_count: 0, next_pm_due: null as unknown, last_service: null as unknown, work_orders: [] as unknown[] };
   if (maintUnitId) {
     const woRes = await client.query<{ total: number }>(
       `
@@ -154,10 +154,24 @@ export async function buildEquipmentAggregate(
       `,
       [maintUnitId, operatingCompanyId]
     );
+    // Open WO list (id · display_id · status) so the profile can link each WO to its detail page.
+    const woListRes = await client.query(
+      `
+        SELECT w.id::text AS wo_id, w.display_id, w.status
+        FROM maintenance.work_orders w
+        WHERE w.unit_id = $1::uuid
+          AND w.operating_company_id = $2::uuid
+          AND w.status NOT IN ('complete', 'completed', 'cancelled')
+        ORDER BY COALESCE(w.updated_at, w.opened_at) DESC NULLS LAST
+        LIMIT 20
+      `,
+      [maintUnitId, operatingCompanyId]
+    );
     maintenance = {
       open_wo_count: Number(woRes.rows[0]?.total ?? 0),
       next_pm_due: pmRes.rows[0] ?? null,
       last_service: lastRes.rows[0] ?? null,
+      work_orders: woListRes.rows,
     };
   }
 

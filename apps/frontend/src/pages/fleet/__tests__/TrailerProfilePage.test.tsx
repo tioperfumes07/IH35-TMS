@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as clientApi from "../../../api/client";
+import { ToastProvider } from "../../../components/Toast";
 import { TrailerProfilePage } from "../TrailerProfilePage";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -40,11 +41,13 @@ function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={["/fleet/trailers/eq-1"]}>
-        <Routes>
-          <Route path="/fleet/trailers/:id" element={<TrailerProfilePage />} />
-        </Routes>
-      </MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/fleet/trailers/eq-1"]}>
+          <Routes>
+            <Route path="/fleet/trailers/:id" element={<TrailerProfilePage />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
