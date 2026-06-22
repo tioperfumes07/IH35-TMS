@@ -36,6 +36,13 @@ const REQUIRED = {
   "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx": [
     "/fleet/units/", "/drivers/",
   ],
+  // Fleet asset profile (/fleet/units/:id) record cells — driver + per-WO links (Block 3).
+  "apps/frontend/src/components/vehicle-profile/DriverAssignmentSection.tsx": [
+    "/drivers/",
+  ],
+  "apps/frontend/src/components/vehicle-profile/MaintenanceSnapshotSection.tsx": [
+    "/maintenance/work-orders/",
+  ],
   // Each new ParityTable tab must add itself here so its record-cell anchors are locked against regression.
 };
 

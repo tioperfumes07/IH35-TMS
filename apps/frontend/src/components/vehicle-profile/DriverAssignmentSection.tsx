@@ -1,6 +1,9 @@
+import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+const DRIVER_LINK = "text-slate-700 hover:underline";
 
 export function DriverAssignmentSection({
   unitId,
@@ -43,7 +46,15 @@ export function DriverAssignmentSection({
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded border border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Default driver</div>
-          <div className="text-sm font-medium">{String(defaultDriver?.name ?? "Not set")}</div>
+          <div className="text-sm font-medium">
+            {defaultDriver?.id ? (
+              <Link to={`/drivers/${String(defaultDriver.id)}`} className={DRIVER_LINK}>
+                {String(defaultDriver.name ?? "Not set")}
+              </Link>
+            ) : (
+              String(defaultDriver?.name ?? "Not set")
+            )}
+          </div>
           <div className="text-xs text-gray-600">{String(defaultDriver?.phone ?? "")}</div>
           <Button size="sm" variant="secondary" className="mt-2" onClick={() => clearDefault.mutate()}>
             Clear default
@@ -51,7 +62,15 @@ export function DriverAssignmentSection({
         </div>
         <div className="rounded border border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Currently driving</div>
-          <div className="text-sm font-medium">{String(currentDriver?.name ?? "—")}</div>
+          <div className="text-sm font-medium">
+            {currentDriver?.id ? (
+              <Link to={`/drivers/${String(currentDriver.id)}`} className={DRIVER_LINK}>
+                {String(currentDriver.name ?? "—")}
+              </Link>
+            ) : (
+              String(currentDriver?.name ?? "—")
+            )}
+          </div>
           <div className="text-xs text-gray-600">
             {currentDriver?.logged_in_at ? `Logged in ${String(currentDriver.logged_in_at)}` : ""}
             {currentDriver?.source ? ` via ${String(currentDriver.source)}` : ""}

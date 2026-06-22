@@ -21,7 +21,7 @@ export function TotalOwnershipCostMeter({ ownership }: { ownership: Ownership })
     <div className="mb-3 rounded border border-slate-200 bg-slate-50 p-3" data-testid="vp-ownership-meter">
       <div className="text-xs font-semibold text-slate-700">Total ownership cost</div>
       <div className="mt-2 flex h-3 overflow-hidden rounded">
-        <div className="bg-indigo-500" style={{ width: `${pct}%` }} title="Purchase" />
+        <div className="bg-[#1F2A44]" style={{ width: `${pct}%` }} title="Purchase" />
         <div className="bg-amber-400" style={{ width: `${100 - pct}%` }} title="Lifetime ops" />
       </div>
       <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">

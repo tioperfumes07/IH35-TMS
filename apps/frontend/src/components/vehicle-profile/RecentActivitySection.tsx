@@ -52,12 +52,12 @@ export function RecentActivitySection({ activity }: { activity: Activity }) {
         </tbody>
       </table>
       <div className="mt-2 flex gap-2">
-        <button type="button" className="text-xs text-blue-700 disabled:opacity-40" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+        <button type="button" className="text-xs text-slate-700 disabled:opacity-40" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
           Prev
         </button>
         <button
           type="button"
-          className="text-xs text-blue-700 disabled:opacity-40"
+          className="text-xs text-slate-700 disabled:opacity-40"
           disabled={(page + 1) * pageSize >= rows.length}
           onClick={() => setPage((p) => p + 1)}
         >

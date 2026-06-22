@@ -33,7 +33,7 @@ export function ComparableUnitsWidget({ unitNumber, comparable }: { unitNumber: 
         {usdPerMile(comparable.fleet_avg_maintenance_per_mile_cents)}
         {dev !== 0 ? `, ${dev > 0 ? "+" : ""}${dev}%` : ""})
       </p>
-      <button type="button" className="mt-2 text-xs text-blue-700 underline" onClick={() => setOpen(!open)}>
+      <button type="button" className="mt-2 text-xs text-slate-700 underline" onClick={() => setOpen(!open)}>
         View detailed comparison
       </button>
       {open ? (

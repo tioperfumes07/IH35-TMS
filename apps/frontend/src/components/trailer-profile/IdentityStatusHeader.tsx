@@ -24,7 +24,7 @@ export function IdentityStatusHeader({
         <label className="text-xs text-gray-600">
           Status
           <select
-            className="ml-1 rounded border px-2 py-0.5 text-xs font-medium text-blue-800"
+            className="ml-1 rounded border px-2 py-0.5 text-xs font-medium text-slate-700"
             value={status}
             onChange={(e) => onChangeStatus?.(e.target.value)}
             data-testid="tp-status-badge-dropdown"

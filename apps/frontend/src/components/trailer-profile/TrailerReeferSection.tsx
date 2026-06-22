@@ -125,7 +125,7 @@ export function TrailerReeferSection({
           </label>
           <button
             type="button"
-            className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+            className="rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             disabled={!hoursInput || manualMut.isPending}
             onClick={() => manualMut.mutate()}
             data-testid="reefer-hours-record-btn"

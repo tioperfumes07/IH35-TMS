@@ -11,6 +11,13 @@ const fail = (m) => { console.error(`FAIL verify-section7-palette-maintenance: $
 const ROOTS = [
   "apps/frontend/src/pages/maintenance",
   "apps/frontend/src/components/maintenance",
+  // Coverage-gap fix (2026-06-22): the fleet ASSET PROFILE surface (/fleet/units/:id +
+  // /fleet/trailers/:id) renders §7-governed UI but lived OUTSIDE this guard's roots, so 13 Tailwind
+  // blues (text-blue-700, bg-blue-600, bg-indigo-500, …) shipped unscanned. Now in scope so they
+  // can't regress. The class detector already existed — only the scanned roots were too narrow.
+  "apps/frontend/src/pages/fleet",
+  "apps/frontend/src/components/vehicle-profile",
+  "apps/frontend/src/components/trailer-profile",
 ];
 
 // Non-§7 accent hexes (blues / indigos / violets / pinks). §7 navy/slate (#1F2A44, #0F1729, #334155,

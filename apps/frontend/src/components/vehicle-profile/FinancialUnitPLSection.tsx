@@ -31,7 +31,7 @@ function Bar({ label, value, fleet, higherIsBetter }: { label: string; value: nu
         <span className={good ? "text-green-700" : "text-red-700"}>{usd(value)} vs fleet {usd(fleet)}</span>
       </div>
       <div className="mt-1 flex h-2 gap-1">
-        <div className="rounded bg-blue-500" style={{ width: `${(value / max) * 100}%` }} />
+        <div className="rounded bg-[#1F2A44]" style={{ width: `${(value / max) * 100}%` }} />
         <div className="rounded bg-gray-300" style={{ width: `${(fleet / max) * 100}%` }} />
       </div>
     </div>

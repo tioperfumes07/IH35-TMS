@@ -33,7 +33,7 @@ export function DocumentsSection({
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-800">Documents</h2>
         <a
-          className="text-xs text-blue-700 underline"
+          className="text-xs text-slate-700 underline"
           href={`/docs?entity_type=unit&entity_id=${unitId}&operating_company_id=${companyId}`}
           data-testid="vp-docs-upload-link"
         >

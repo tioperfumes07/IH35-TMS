@@ -203,6 +203,7 @@ export function VehicleProfilePage() {
               pendingFaultDraftCount={
                 faultSummaryQuery.data?.items?.filter((row) => row.auto_wo_id != null).length ?? 0
               }
+              workOrders={profile.recent_activity?.work_orders ?? []}
             />
             <div className="mt-3">
               <ServiceTimeline companyId={companyId} unitId={id} />

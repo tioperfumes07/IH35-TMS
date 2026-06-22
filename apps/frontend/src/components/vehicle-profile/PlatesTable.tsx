@@ -71,7 +71,7 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
               <td className="px-2 py-1">{p.expiration ?? "—"}</td>
               <td className="px-2 py-1">{p.status}</td>
               <td className="px-2 py-1">
-                <button type="button" className="text-blue-700 underline" onClick={() => archiveMutation.mutate(p.id)}>
+                <button type="button" className="text-slate-700 underline" onClick={() => archiveMutation.mutate(p.id)}>
                   Archive
                 </button>
               </td>
