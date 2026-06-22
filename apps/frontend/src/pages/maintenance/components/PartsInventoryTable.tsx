@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type PartsInventoryRow } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type Props = {
   companyId: string;
@@ -13,6 +14,7 @@ type Props = {
 export function PartsInventoryTable({ companyId, rows }: Props) {
   const queryClient = useQueryClient();
   const [openPurchase, setOpenPurchase] = useState(false);
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState({ part_description: "", qty_received: 1, vendor_invoice_number: "", purchase_amount: 0, location: "" });
   const [adjustRow, setAdjustRow] = useState<PartsInventoryRow | null>(null);
   const [deltaQty, setDeltaQty] = useState(0);
@@ -40,44 +42,53 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
     },
   });
 
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) =>
+      [r.part_description, r.last_purchase_invoice_number, r.location].some((v) => String(v ?? "").toLowerCase().includes(q)),
+    );
+  }, [rows, search]);
+
+  // Parts are not a linkable entity (no part-detail route), so there are no record-cell links here —
+  // this is the universal-list upgrade (sort/gear/pagination/resize/sticky/export/filter) + Adjust-Qty.
+  const columns: Array<ParityColumn<PartsInventoryRow>> = [
+    { key: "part_description", label: "Part", sortable: true },
+    { key: "on_hand_qty", label: "On Hand", sortable: true },
+    { key: "last_purchase_invoice_number", label: "Last Invoice", render: (row) => row.last_purchase_invoice_number ?? "—" },
+    { key: "location", label: "Location", sortable: true, render: (row) => row.location ?? "—" },
+  ];
+
+  const rowActions = (row: PartsInventoryRow) => (
+    <button className="text-slate-600 underline" onClick={() => setAdjustRow(row)} type="button">
+      Adjust Qty
+    </button>
+  );
+
   return (
     <div className="space-y-2 rounded border border-gray-200 bg-white p-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Parts Inventory</h3>
         <Button size="sm" onClick={() => setOpenPurchase(true)}>+ Record Purchase</Button>
       </div>
-      {rows.length === 0 ? (
-        <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-3 text-xs text-gray-700">
-          No parts on hand. Click + Record Purchase to track daily purchases. Anti-theft pattern: minimal stock kept on hand.
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-xs">
-            <thead>
-              <tr className="text-left text-gray-500">
-                <th className="px-2 py-1">Part</th>
-                <th className="px-2 py-1">On Hand</th>
-                <th className="px-2 py-1">Last Invoice</th>
-                <th className="px-2 py-1">Location</th>
-                <th className="px-2 py-1">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1">{row.part_description}</td>
-                  <td className="px-2 py-1">{row.on_hand_qty}</td>
-                  <td className="px-2 py-1">{row.last_purchase_invoice_number ?? "—"}</td>
-                  <td className="px-2 py-1">{row.location ?? "—"}</td>
-                  <td className="px-2 py-1">
-                    <button className="text-slate-600 underline" onClick={() => setAdjustRow(row)} type="button">Adjust Qty</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+
+      <ParityTable<PartsInventoryRow>
+        columns={columns}
+        rows={filteredRows}
+        rowKey={(row) => row.id}
+        emptyText="No parts on hand. Click + Record Purchase to track daily purchases. Anti-theft pattern: minimal stock kept on hand."
+        storageKey="maint-parts-inventory"
+        exportFilename="parts-inventory"
+        rowActions={rowActions}
+        filterBar={
+          <input
+            className="min-h-12 w-full max-w-xs rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+            placeholder="Search part / invoice / location…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        }
+      />
 
       <Modal open={openPurchase} onClose={() => setOpenPurchase(false)} title="Record Purchase">
         <div className="space-y-2">
