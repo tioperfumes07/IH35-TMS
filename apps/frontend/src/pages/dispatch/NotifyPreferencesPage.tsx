@@ -135,7 +135,7 @@ export function NotifyPreferencesPage() {
         </label>
         <button
           type="button"
-          className="rounded bg-sky-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
           disabled={!companyId || syncM.isPending}
           onClick={() => syncM.mutate()}
           data-testid="notify-sync-button"

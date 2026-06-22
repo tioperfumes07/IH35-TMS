@@ -18,6 +18,11 @@ const ROOTS = [
   "apps/frontend/src/pages/fleet",
   "apps/frontend/src/components/vehicle-profile",
   "apps/frontend/src/components/trailer-profile",
+  // Coverage-gap fix (2026-06-22): the DISPATCH module (board, load detail/drawer, planners, book-load
+  // wizard, etc.) is §7-governed but shipped 84 Tailwind blues + 2 forbidden direction hexes unscanned.
+  // Now in scope so they can't regress (de-risks the Block 7 wizard rebuild on a clean surface).
+  "apps/frontend/src/pages/dispatch",
+  "apps/frontend/src/components/dispatch",
 ];
 
 // Non-§7 accent hexes (blues / indigos / violets / pinks). §7 navy/slate (#1F2A44, #0F1729, #334155,

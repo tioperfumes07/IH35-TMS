@@ -67,7 +67,7 @@ const STAGE_LABELS: Record<FactoringQueueRow["packet_stage"], string> = {
 
 const STAGE_PILL: Record<FactoringQueueRow["packet_stage"], string> = {
   NOT_FACTORED: "bg-gray-100 text-gray-600 border-gray-200",
-  PACKET_READY: "bg-blue-50 text-blue-700 border-blue-200",
+  PACKET_READY: "bg-slate-100 text-slate-700 border-slate-300",
   SUBMITTED: "bg-amber-50 text-amber-700 border-amber-200",
   ADVANCE_RECEIVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
   RESERVE_RELEASED: "bg-green-100 text-green-800 border-green-200",
@@ -265,7 +265,7 @@ export function FactoringQueuePage() {
                   <td className="px-3 py-2 font-medium">
                     <Link
                       to={`/dispatch?view=loads&load=${row.load_id}`}
-                      className="text-sky-700 hover:underline"
+                      className="text-slate-700 hover:underline"
                     >
                       {row.load_number}
                     </Link>
@@ -303,7 +303,7 @@ export function FactoringQueuePage() {
                     {row.invoice_id ? (
                       <Link
                         to={`/accounting/invoices/${row.invoice_id}`}
-                        className="text-sky-700 hover:underline"
+                        className="text-slate-700 hover:underline"
                       >
                         {row.invoice_display_id ?? "Invoice"}
                       </Link>

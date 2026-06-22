@@ -107,7 +107,7 @@ export function InTransitIssuesPage() {
                   <td className="px-3 py-2">{new Date(issue.reported_at).toLocaleString()}</td>
                   <td className="px-3 py-2">
                     {issue.load_id ? (
-                      <Link to={`/dispatch?load_id=${encodeURIComponent(issue.load_id)}`} className="text-sky-700 hover:underline">
+                      <Link to={`/dispatch?load_id=${encodeURIComponent(issue.load_id)}`} className="text-slate-700 hover:underline">
                         {issue.load_number ?? issue.load_id}
                       </Link>
                     ) : (

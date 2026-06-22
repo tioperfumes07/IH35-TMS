@@ -17,8 +17,8 @@ type Props = {
 
 export function BookLoadV3OptionsSection({ register }: Props) {
   return (
-    <section className="rounded border border-indigo-200 bg-indigo-50 p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-indigo-800">D2 · Book Load v3</h3>
+    <section className="rounded border border-slate-300 bg-slate-100 p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">D2 · Book Load v3</h3>
       <div className="grid gap-2 md:grid-cols-2">
         <label className="text-[11px] font-semibold text-gray-700">
           Booking mode

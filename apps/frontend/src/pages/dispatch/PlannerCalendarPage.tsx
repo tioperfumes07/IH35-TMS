@@ -51,12 +51,12 @@ function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {
       {...attributes}
       type="button"
       data-testid={`planner-load-${load.load_number}`}
-      className={`mb-1 block w-full rounded border border-sky-200 bg-sky-50 px-2 py-1 text-left text-[11px] text-sky-900 ${isDragging ? "opacity-60" : ""}`}
+      className={`mb-1 block w-full rounded border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] text-slate-700 ${isDragging ? "opacity-60" : ""}`}
       title={`${load.customer_name ?? "Load"} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
       onClick={() => navigate(`/dispatch?load_id=${encodeURIComponent(load.id)}`)}
     >
       <span className="font-semibold">{load.load_number}</span>
-      <span className="block truncate text-[10px] text-sky-700">{load.customer_name ?? "—"}</span>
+      <span className="block truncate text-[10px] text-slate-700">{load.customer_name ?? "—"}</span>
     </button>
   );
 }
@@ -88,7 +88,7 @@ function PlannerDayCell({
     <td
       ref={setNodeRef}
       data-testid={`planner-cell-${driverId}-${day}`}
-      className={`min-w-[120px] border-b border-r align-top p-1 ${isOver ? "bg-sky-50" : "bg-white"}`}
+      className={`min-w-[120px] border-b border-r align-top p-1 ${isOver ? "bg-slate-100" : "bg-white"}`}
     >
       {showHosOverlay && dayBlackouts.length > 0 ? (
         <div

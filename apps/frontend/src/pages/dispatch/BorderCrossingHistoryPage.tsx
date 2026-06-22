@@ -84,7 +84,7 @@ export function BorderCrossingHistoryPage() {
                 rows.map((row) => (
                   <tr
                     key={row.id}
-                    className={`cursor-pointer border-t hover:bg-gray-50 ${selected?.id === row.id ? "bg-blue-50" : ""}`}
+                    className={`cursor-pointer border-t hover:bg-gray-50 ${selected?.id === row.id ? "bg-slate-100" : ""}`}
                     onClick={() => setSelected(row)}
                   >
                     <td className="px-3 py-2">{row.planned_crossing_date ?? row.crossing_date}</td>

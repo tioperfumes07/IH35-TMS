@@ -41,7 +41,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
     return (
       <button
         type="button"
-        className="code-cell w-full text-left text-gray-800 hover:text-blue-700"
+        className="code-cell w-full text-left text-gray-800 hover:text-slate-700"
         data-testid={`inline-trailer-picker-${loadId}`}
         onClick={(event) => {
           event.stopPropagation();

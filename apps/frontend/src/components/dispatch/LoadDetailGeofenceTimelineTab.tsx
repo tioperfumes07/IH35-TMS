@@ -34,14 +34,14 @@ type Props = {
 
 const SOURCE_BADGE: Record<StopSource, { label: string; className: string }> = {
   geofence: { label: "Geofence auto", className: "bg-emerald-100 text-emerald-800" },
-  driver_pwa: { label: "Driver PWA", className: "bg-blue-100 text-blue-800" },
+  driver_pwa: { label: "Driver PWA", className: "bg-slate-100 text-slate-700" },
   dispatcher_manual: { label: "Manual", className: "bg-gray-100 text-gray-600" },
 };
 
 const DETENTION_BADGE: Record<NonNullable<DetentionStatus>, { label: string; className: string }> = {
   accruing: { label: "Accruing", className: "bg-red-100 text-red-700" },
   closed: { label: "Closed", className: "bg-gray-200 text-gray-600" },
-  billed: { label: "Billed", className: "bg-indigo-100 text-indigo-700" },
+  billed: { label: "Billed", className: "bg-slate-100 text-slate-700" },
 };
 
 function formatDuration(minutes: number | null): string {

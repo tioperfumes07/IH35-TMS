@@ -493,9 +493,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                   </div>
                   {!isPackageEligible ? <div className="mt-1 text-[11px] text-emerald-800">Package auto-generates once load is delivered/closed.</div> : null}
                 </div>
-                <div className="rounded border border-indigo-200 bg-indigo-50 p-2">
+                <div className="rounded border border-slate-300 bg-slate-100 p-2">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs text-indigo-900">Driver Instructions PDF + Portal/SMS/WhatsApp distribution</div>
+                    <div className="text-xs text-slate-700">Driver Instructions PDF + Portal/SMS/WhatsApp distribution</div>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -574,8 +574,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                 const prev = r.previous_driver_id != null ? String(r.previous_driver_id).slice(0, 8) : "—";
                 const next = r.new_driver_id != null ? String(r.new_driver_id).slice(0, 8) : "—";
                 return (
-                  <div key={id || at + method} className="relative border-l-2 border-blue-200 pl-3">
-                    <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-blue-500" />
+                  <div key={id || at + method} className="relative border-l-2 border-slate-300 pl-3">
+                    <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
                     <div className="text-xs text-gray-500">{at}</div>
                     <div className="text-sm font-semibold text-gray-800">{method.replace(/_/g, " ")}</div>
                     <div className="text-xs text-gray-600">

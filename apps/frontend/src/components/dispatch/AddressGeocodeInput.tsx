@@ -86,7 +86,7 @@ export function AddressGeocodeInput({
             <li key={`${r.formatted}-${i}`}>
               <button
                 type="button"
-                className="block w-full truncate px-2 py-1 text-left hover:bg-blue-50"
+                className="block w-full truncate px-2 py-1 text-left hover:bg-slate-100"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   onResolve(r);

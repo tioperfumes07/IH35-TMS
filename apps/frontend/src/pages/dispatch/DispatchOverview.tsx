@@ -96,7 +96,7 @@ function PanelRow({
         <span style={{ color: colors.mutedText }}> · </span>
         {loadCustomer}
       </span>
-      {onClick ? <span className="shrink-0 text-[11px] text-blue-600">open →</span> : null}
+      {onClick ? <span className="shrink-0 text-[11px] text-slate-700">open →</span> : null}
     </>
   );
 

@@ -58,7 +58,7 @@ function EventRow({
   return (
     <tr className="border-b last:border-b-0">
       <td className="px-3 py-2 font-medium">
-        <Link to={`/dispatch?load_id=${encodeURIComponent(event.load_id)}`} className="text-sky-700 hover:underline">
+        <Link to={`/dispatch?load_id=${encodeURIComponent(event.load_id)}`} className="text-slate-700 hover:underline">
           {event.load_number}
         </Link>
       </td>
@@ -90,7 +90,7 @@ function EventRow({
         {event.status === "closed" ? (
           <button
             type="button"
-            className="rounded border border-sky-300 px-2 py-1 text-xs text-sky-800"
+            className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700"
             disabled={bridgeM.isPending}
             onClick={() => bridgeM.mutate()}
           >

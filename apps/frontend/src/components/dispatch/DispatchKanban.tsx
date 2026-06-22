@@ -333,7 +333,7 @@ function KanbanDispatchCard({
 
       {dwell ? (
         <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
-          <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-800">Dwell {formatMinutes(dwell.dwell)}</span>
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">Dwell {formatMinutes(dwell.dwell)}</span>
           <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-800">Free {formatMinutes(dwell.free)}</span>
           <span className={`rounded px-1.5 py-0.5 ${dwell.det != null && dwell.det > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-600"}`}>
             Det {formatMinutes(dwell.det)}
@@ -357,7 +357,7 @@ function KanbanDispatchCard({
       {isDeliveredColumn ? (
         <div className="mt-2 flex flex-wrap items-center gap-1">
           {factoring ? (
-            <span className="rounded bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-indigo-800">{factoring}</span>
+            <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-slate-700">{factoring}</span>
           ) : null}
           <DeliveredProfitBadge load={load} />
         </div>
@@ -508,7 +508,7 @@ function KanbanDispatchColumn({
         <h3 className="text-sm font-semibold text-gray-700">{column.title}</h3>
         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
       </header>
-      <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded p-1 ${isOver ? "bg-blue-50" : "bg-transparent"}`}>
+      <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}>
         {loads.length === 0 ? <div className="rounded border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
         {loads.map((load) => {
           const breach = Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id));
@@ -603,7 +603,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
               type="button"
               onClick={() => setDensity(mode)}
               className={`rounded border px-2 py-0.5 font-semibold capitalize ${
-                density === mode ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                density === mode ? "border-slate-300 bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
               }`}
               data-testid={`kanban-density-${mode}`}
             >

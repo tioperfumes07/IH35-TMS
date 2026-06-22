@@ -32,8 +32,8 @@ type Props = {
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   open: { label: "Open (pre-settlement)", className: "bg-amber-100 text-amber-800" },
-  closed: { label: "Closed", className: "bg-blue-100 text-blue-800" },
-  finalized: { label: "Finalized", className: "bg-indigo-100 text-indigo-800" },
+  closed: { label: "Closed", className: "bg-slate-100 text-slate-700" },
+  finalized: { label: "Finalized", className: "bg-slate-100 text-slate-700" },
   paid: { label: "Paid", className: "bg-green-100 text-green-800" },
   void: { label: "Void", className: "bg-red-100 text-red-700" },
 };
@@ -56,12 +56,12 @@ function LegRow({ label, leg, isCurrent }: { label: string; leg: SettlementLeg |
   }
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className={`w-5 text-xs font-bold ${isCurrent ? "text-indigo-700" : "text-gray-500"}`}>{label}</span>
-      <span className={`font-mono text-xs ${isCurrent ? "font-bold text-indigo-700" : "text-gray-700"}`}>
+      <span className={`w-5 text-xs font-bold ${isCurrent ? "text-slate-700" : "text-gray-500"}`}>{label}</span>
+      <span className={`font-mono text-xs ${isCurrent ? "font-bold text-slate-700" : "text-gray-700"}`}>
         {leg.load_number}
       </span>
       {isCurrent && (
-        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">
+        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
           this load
         </span>
       )}
@@ -156,7 +156,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
         {settlement.reimbursements_total > 0 ? (
           <div>
             <div className="text-xs text-gray-500">Reimbursements</div>
-            <div className="font-semibold text-blue-600">
+            <div className="font-semibold text-slate-700">
               +{formatMoneyCents(settlement.reimbursements_total, currencyCode)}
             </div>
           </div>

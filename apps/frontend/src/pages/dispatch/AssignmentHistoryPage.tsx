@@ -104,7 +104,7 @@ export function AssignmentHistoryPage() {
                   <td className="px-3 py-2">{new Date(row.assigned_at).toLocaleString()}</td>
                   <td className="px-3 py-2">
                     {row.load_id ? (
-                      <Link to={`/dispatch?load_id=${encodeURIComponent(row.load_id)}`} className="text-sky-700 hover:underline">
+                      <Link to={`/dispatch?load_id=${encodeURIComponent(row.load_id)}`} className="text-slate-700 hover:underline">
                         {row.load_number ?? row.load_id}
                       </Link>
                     ) : (

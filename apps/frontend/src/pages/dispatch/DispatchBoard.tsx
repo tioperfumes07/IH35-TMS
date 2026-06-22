@@ -177,7 +177,7 @@ function sortUnassignedFirst(loads: DispatchLoadRow[]) {
 function statusVariant(status: DispatchLoadRow["status"]) {
   if (status === "cancelled") return "bg-red-100 text-red-700";
   if (status === "delivered") return "bg-emerald-100 text-emerald-700";
-  if (status === "in_transit" || status === "at_pickup" || status === "at_delivery") return "bg-blue-100 text-blue-700";
+  if (status === "in_transit" || status === "at_pickup" || status === "at_delivery") return "bg-slate-100 text-slate-700";
   if (status === "closed" || status === "paid" || status === "invoiced") return "bg-gray-200 text-gray-700";
   return "bg-amber-100 text-amber-700";
 }
@@ -697,7 +697,7 @@ export function DispatchBoard({
       return (
         <div className="rounded border border-gray-200 bg-white p-6 text-sm text-gray-500">
           No loads match your filters.{" "}
-          <button type="button" className="font-semibold text-blue-700 hover:underline" onClick={() => onPageChange(0)}>
+          <button type="button" className="font-semibold text-slate-700 hover:underline" onClick={() => onPageChange(0)}>
             Go back to first page
           </button>
         </div>

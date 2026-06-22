@@ -118,7 +118,7 @@ export function FilterBar({
           <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
           Filters
           {activeCount > 0 ? (
-            <span className="ml-1 inline-flex min-w-[16px] items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+            <span className="ml-1 inline-flex min-w-[16px] items-center justify-center rounded-full bg-[#1F2A44] px-1 text-[10px] font-bold text-white">
               {activeCount}
             </span>
           ) : null}

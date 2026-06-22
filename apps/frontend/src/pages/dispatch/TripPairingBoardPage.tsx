@@ -5,7 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getTripPairingBoard, type TripLeg, type TripPairingUnitRow } from "../../api/dispatch";
 
-const TRIP_COLOR: Record<"NB" | "TR" | "SB", string> = { NB: "#2563eb", TR: "#7c3aed", SB: "#16a34a" };
+const TRIP_COLOR: Record<"NB" | "TR" | "SB", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#16a34a" };
 
 function legChip(leg: TripLeg) {
   const dest = [leg.delivery_city, leg.delivery_state].filter(Boolean).join(", ");
@@ -123,7 +123,7 @@ export function TripPairingBoardPage() {
                           {sb ? (
                             legChip(sb)
                           ) : t.open_return ? (
-                            <span className="inline-flex items-center rounded border border-dashed border-sky-400 bg-sky-50 px-1.5 py-0.5 text-[11px] text-sky-700">
+                            <span className="inline-flex items-center rounded border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">
                               + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${new Date(t.return_avail_date).toLocaleDateString()}` : ""}
                             </span>
                           ) : (
@@ -153,7 +153,7 @@ export function TripPairingBoardPage() {
           </section>
 
           <p className="text-[11px] text-slate-400">
-            <Link to="/dispatch" className="text-sky-700 hover:underline">← Dispatch</Link> · refreshes every 5 min · DAT360 auto-publish not yet wired (the delivery-city + avail-date here feed it later).
+            <Link to="/dispatch" className="text-slate-700 hover:underline">← Dispatch</Link> · refreshes every 5 min · DAT360 auto-publish not yet wired (the delivery-city + avail-date here feed it later).
           </p>
         </div>
       )}
