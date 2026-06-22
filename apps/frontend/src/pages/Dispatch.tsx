@@ -30,10 +30,13 @@ import { DISPATCH_SECONDARY_TAB_PATH, dispatchSecondaryTabFromPath } from "../ro
 type ViewMode = "overview" | "list" | "kanban" | "units";
 
 function parseViewMode(raw: string | null, loadsRoute: boolean): ViewMode {
-  if (loadsRoute) return "list";
-  if (raw === "overview" || raw === "kanban" || raw === "list" || raw === "units") return raw;
+  // Honor an explicit load-board view (list/kanban/units) even on the loads route — previously this
+  // hard-returned "list" on loadsRoute, which made the Kanban (and Units) view tab a dead no-op. The
+  // loads route only defaults to list when no board view (or "overview", not a board view) is selected.
+  if (raw === "kanban" || raw === "units" || raw === "list") return raw;
   if (raw === "loads") return "kanban";
-  return "overview";
+  if (raw === "overview" && !loadsRoute) return "overview";
+  return loadsRoute ? "list" : "overview";
 }
 type DispatchSubTabId = "load_board" | "book_load" | "assignments" | "settlements" | "pre_settlements";
 
@@ -121,8 +124,11 @@ export function DispatchPage({
   useEffect(() => {
     if (!loadsRoute) return;
     setSubTab("load_board");
-    const next = new URLSearchParams(searchParams);
-    if (next.get("view") !== "list") {
+    // Default to the List board ONLY when no valid board view is selected — do NOT override an explicit
+    // Kanban/Units choice (overriding it is what made the Kanban tab dead on /dispatch/loads).
+    const current = searchParams.get("view");
+    if (current !== "list" && current !== "kanban" && current !== "units") {
+      const next = new URLSearchParams(searchParams);
       next.set("view", "list");
       setSearchParams(next, { replace: true });
     }
