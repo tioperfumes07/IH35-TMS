@@ -29,6 +29,10 @@ const listQuerySchema = z.object({
   external_vendor_id: z.string().uuid().optional(),
   equipment_id: z.string().uuid().optional(),
   search: z.string().trim().max(120).optional(),
+  // Service/Location drill-through: filter the WO list by service location + bucket so the tab's
+  // row → /maintenance/active-wos?location=…&bucket=… resolves to real rows (no dead link).
+  location: z.string().trim().max(200).optional(),
+  bucket: z.enum(["in_house", "external", "roadside"]).optional(),
 });
 
 const listByBucketQuerySchema = z.object({
@@ -286,6 +290,14 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (q.search) {
         values.push(`%${q.search}%`);
         where.push(`(COALESCE(w.display_id, '') ILIKE $${values.length} OR COALESCE(w.description, '') ILIKE $${values.length})`);
+      }
+      if (q.location) {
+        values.push(q.location);
+        where.push(`w.repair_location = $${values.length}`);
+      }
+      if (q.bucket) {
+        values.push(q.bucket);
+        where.push(`w.bucket = $${values.length}::maintenance.wo_bucket_enum`);
       }
       const countRes = await client.query(
         `SELECT count(*)::int AS cnt FROM maintenance.work_orders w WHERE ${where.join(" AND ")}`,
