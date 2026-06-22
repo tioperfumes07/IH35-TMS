@@ -481,6 +481,9 @@ function KanbanStandardCard({
 function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (id: string) => void }) {
   const unit = load.assigned_unit_number || load.load_number;
   const driver = load.assigned_primary_driver_name;
+  // Clicking anywhere on the card OR the explicit "+ Book load" button opens the Book wizard pre-filled with
+  // this truck. The button is a real <button> (not a span) so it's an unmistakable, findable affordance; it
+  // stops propagation only to avoid a harmless double-fire with the card click.
   return (
     <div
       role="button"
@@ -497,7 +500,17 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
     >
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate text-xs font-semibold text-gray-900">{unit}</span>
-        <span className="shrink-0 rounded bg-[#1F2A44] px-1.5 py-0.5 text-[10px] font-semibold text-white">+ Book load</span>
+        <button
+          type="button"
+          data-testid={`awaiting-truck-book-${load.id}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onBook(load.id);
+          }}
+          className="shrink-0 rounded bg-[#1F2A44] px-2 py-1 text-[10px] font-semibold text-white hover:bg-[#2a3656]"
+        >
+          + Book load
+        </button>
       </div>
       <div className="mt-0.5 truncate text-[11px] text-gray-500">{driver || "No driver assigned"}</div>
     </div>
