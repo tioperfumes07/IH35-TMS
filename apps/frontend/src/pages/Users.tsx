@@ -372,7 +372,7 @@ export function UsersPage() {
 
   return (
     <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-3">
-      <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Add User</ActionButton>} />
+      <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Create User</ActionButton>} />
 
       <KpiStrip>
         <KpiCard label="Total users" number={tabCounts.all} accent={colors.info.strong} />

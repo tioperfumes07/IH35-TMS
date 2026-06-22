@@ -49,9 +49,9 @@ function wrap(ui: ReactElement) {
   );
 }
 
-/** Click the first "+ Add User" button (PageHeader may render multiple in some viewport breakpoints). */
+/** Click the first "+ Create User" button (PageHeader may render multiple in some viewport breakpoints). */
 async function openInviteModal(user: ReturnType<typeof userEvent.setup>) {
-  const btns = screen.getAllByRole("button", { name: /\+ Add User/i });
+  const btns = screen.getAllByRole("button", { name: /\+ Create User/i });
   await user.click(btns[0]!);
   await screen.findByRole("heading", { name: /add user/i });
 }
@@ -100,7 +100,7 @@ describe("UsersPage — Add User submit", () => {
     await chooseSetPasswordMode(user);
     await fillModalBasics(user);
     await typePassword(user, "Aa1!abcdefghij");
-    await user.click(screen.getByRole("button", { name: /create user/i }));
+    await user.click(screen.getByRole("button", { name: /^create user$/i }));
     await waitFor(() => expect(createUserMock).toHaveBeenCalledOnce());
     await waitFor(() => {
       const msgs = toastMessages();
@@ -115,7 +115,7 @@ describe("UsersPage — Add User submit", () => {
     await chooseSetPasswordMode(user);
     await fillModalBasics(user);
     await typePassword(user, "weak");
-    const submit = screen.getByRole("button", { name: /create user/i });
+    const submit = screen.getByRole("button", { name: /^create user$/i });
     expect(submit).not.toBeDisabled();
     await user.click(submit);
     await waitFor(() => {
@@ -148,7 +148,7 @@ describe("UsersPage — Add User submit", () => {
     await fillModalBasics(user);
     await typePassword(user, "Aa1!abcdefghij");
 
-    const submit = screen.getByRole("button", { name: /create user/i });
+    const submit = screen.getByRole("button", { name: /^create user$/i });
     expect(submit).not.toBeDisabled();
     await user.click(submit);
 
@@ -178,7 +178,7 @@ describe("UsersPage — Add User submit", () => {
     await fillModalBasics(user);
     await typePassword(user, "Aa1!abcdefghij");
 
-    await user.click(screen.getByRole("button", { name: /create user/i }));
+    await user.click(screen.getByRole("button", { name: /^create user$/i }));
     await waitFor(() => expect(createUserMock).toHaveBeenCalledOnce());
     await waitFor(() => {
       const msgs = toastMessages();
