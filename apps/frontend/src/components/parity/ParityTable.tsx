@@ -14,7 +14,7 @@
  *  - optional row 3-dots action menu
  *  - toolbar slot (Print / Export / etc.)
  */
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { colors, typography } from "../../design/tokens";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
@@ -63,6 +63,12 @@ export type ParityTableProps<T> = {
   stickyHeader?: boolean;
   /** Drag-to-resize columns (widths persist with storageKey). Default true. */
   enableColumnResize?: boolean;
+  /**
+   * Optional per-row expandable detail. When provided, a ▸/▾ toggle column is prepended; clicking it
+   * reveals renderExpanded(row) in a full-width detail row beneath the parent row. Additive — existing
+   * consumers that omit it are unchanged.
+   */
+  renderExpanded?: (row: T) => ReactNode;
 };
 
 const DENSITY: Record<ParityDensity, { rowH: number; padY: number; font: number }> = {
@@ -117,6 +123,7 @@ export function ParityTable<T>({
   exportFilename,
   stickyHeader = true,
   enableColumnResize = true,
+  renderExpanded,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
@@ -137,6 +144,7 @@ export function ParityTable<T>({
   );
   const [gearOpen, setGearOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [colWidths, setColWidths] = useState<Record<string, number>>(persisted.colWidths ?? {});
   const gearRef = useRef<HTMLDivElement>(null);
   const resizing = useRef<{ key: string; startX: number; startW: number } | null>(null);
@@ -261,6 +269,15 @@ export function ParityTable<T>({
     });
   }
 
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   function togglePageAll() {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -281,7 +298,8 @@ export function ParityTable<T>({
     return out;
   }, [safePage, pageCount]);
 
-  const colSpan = visibleColumns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0);
+  const colSpan =
+    visibleColumns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0) + (renderExpanded ? 1 : 0);
 
   return (
     <div className="overflow-visible rounded-md border border-gray-200 bg-white">
@@ -390,6 +408,7 @@ export function ParityTable<T>({
       <table className="w-full table-fixed text-left" style={{ fontSize: d.font }}>
         <thead className={stickyHeader ? "sticky top-0 z-10 bg-gray-50" : "bg-gray-50"}>
           <tr style={{ height: DENSITY[density].rowH }}>
+            {renderExpanded ? <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`} /> : null}
             {selectable ? (
               <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`}>
                 <input
@@ -452,15 +471,29 @@ export function ParityTable<T>({
           ) : (
             pageRows.map((row) => {
               const id = rowKey(row);
+              const isExpanded = expanded.has(id);
               return (
+                <Fragment key={id}>
                 <tr
-                  key={id}
                   className={`border-t border-gray-100 ${
                     onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
                   }`}
                   style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                 >
+                  {renderExpanded ? (
+                    <td className="px-2 align-top" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        aria-label={isExpanded ? "Collapse row" : "Expand row"}
+                        aria-expanded={isExpanded}
+                        className="text-gray-500 hover:text-gray-800"
+                        onClick={() => toggleExpanded(id)}
+                      >
+                        {isExpanded ? "▾" : "▸"}
+                      </button>
+                    </td>
+                  ) : null}
                   {selectable ? (
                     <td className="px-2" onClick={(e) => e.stopPropagation()}>
                       <input
@@ -490,6 +523,14 @@ export function ParityTable<T>({
                     </td>
                   ) : null}
                 </tr>
+                {renderExpanded && isExpanded ? (
+                  <tr className="bg-gray-50/60">
+                    <td colSpan={colSpan} className="px-3 py-2">
+                      {renderExpanded(row)}
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
               );
             })
           )}

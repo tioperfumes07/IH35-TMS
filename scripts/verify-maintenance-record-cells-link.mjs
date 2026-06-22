@@ -30,6 +30,12 @@ const REQUIRED = {
   "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx": [
     "/maintenance/vendors/",
   ],
+  "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx": [
+    "/fleet/units/", "/dispatch/loads/", "/drivers/",
+  ],
+  "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx": [
+    "/fleet/units/", "/drivers/",
+  ],
   // Each new ParityTable tab must add itself here so its record-cell anchors are locked against regression.
 };
 

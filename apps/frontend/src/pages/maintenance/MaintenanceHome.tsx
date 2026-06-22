@@ -29,7 +29,7 @@ import { MaintenanceSettingsPage } from "./MaintenanceSettingsPage";
 import { ServiceLocationPage } from "./ServiceLocationPage";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
 import { DtcAutoWorkOrdersCard } from "./components/DtcAutoWorkOrdersCard";
-import { InTransitTriageBand } from "./components/InTransitTriageBand";
+import { InTransitIssuesTable } from "./components/InTransitIssuesTable";
 import { IntegrationsStrip } from "./components/IntegrationsStrip";
 import { MaintKpiRows } from "./components/MaintKpiRows";
 import { MaintenancePmCountdownCards } from "./components/MaintenancePmCountdownCards";
@@ -284,7 +284,7 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
             </div>
             )
           : (
-            <InTransitTriageBand issues={triageQuery.data?.issues ?? []} onTriage={(issue) => setTriageIssue(issue)} />
+            <InTransitIssuesTable issues={triageQuery.data?.issues ?? []} onTriage={(issue) => setTriageIssue(issue)} />
             )
         : null}
 
