@@ -474,6 +474,36 @@ function KanbanStandardCard({
   );
 }
 
+// Awaiting-assignment lane cards are synthetic trucks (no load), so they must NOT reuse the draggable
+// KanbanCard components — dnd-kit's pointer listeners swallow the click, so the card never fired
+// onBookForUnit and had no visible affordance. This is a purpose-built, NON-draggable card with an
+// explicit "+ Book load" button; clicking anywhere opens the Book wizard pre-filled with this truck.
+function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (id: string) => void }) {
+  const unit = load.assigned_unit_number || load.load_number;
+  const driver = load.assigned_primary_driver_name;
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      data-testid={`awaiting-truck-card-${load.id}`}
+      onClick={() => onBook(load.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onBook(load.id);
+        }
+      }}
+      className="cursor-pointer rounded border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="min-w-0 truncate text-xs font-semibold text-gray-900">{unit}</span>
+        <span className="shrink-0 rounded bg-[#1F2A44] px-1.5 py-0.5 text-[10px] font-semibold text-white">+ Book load</span>
+      </div>
+      <div className="mt-0.5 truncate text-[11px] text-gray-500">{driver || "No driver assigned"}</div>
+    </div>
+  );
+}
+
 function KanbanDispatchColumn({
   column,
   loads,
@@ -515,6 +545,10 @@ function KanbanDispatchColumn({
         {loads.length === 0 ? <div className="rounded border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
         {loads.map((load) => {
           const breach = Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id));
+          if (column.key === "awaiting_assignment") {
+            // onLoadClick for this lane is the book handler (see DispatchKanban) — open Book pre-filled.
+            return <AwaitingTruckCard key={load.id} load={load} onBook={onLoadClick} />;
+          }
           if (density === "compact") {
             return <KanbanCompactCard key={load.id} load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} />;
           }
