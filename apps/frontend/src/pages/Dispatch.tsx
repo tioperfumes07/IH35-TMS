@@ -114,6 +114,8 @@ export function DispatchPage({
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(false);
+  // Dispatch "+ Book load" per Awaiting-assignment truck card — prefill that unit into the new booking.
+  const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
   const loadsRoute = loadsDeepLink || location.pathname === "/dispatch/loads";
 
@@ -440,6 +442,10 @@ export function DispatchPage({
               next.set("load_id", id);
               setSearchParams(next);
             }}
+            onBookForUnit={(unitId) => {
+              setBookUnitId(unitId);
+              setNewLoadOpen(true);
+            }}
             onStatusDrop={async (id, nextStatus) => {
               await statusMutation.mutateAsync({ id, body: { new_status: nextStatus } });
             }}
@@ -498,10 +504,15 @@ export function DispatchPage({
       <BookLoadModal
         open={newLoadOpen}
         operatingCompanyId={defaultCompanyIds[0] ?? ""}
-        onClose={() => setNewLoadOpen(false)}
+        prefillUnitId={bookUnitId}
+        onClose={() => {
+          setNewLoadOpen(false);
+          setBookUnitId(null);
+        }}
         onCreated={() => {
           pushToast("Load saved", "success");
           setNewLoadOpen(false);
+          setBookUnitId(null);
           void loadsQuery.refetch();
         }}
       />

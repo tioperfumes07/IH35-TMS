@@ -128,6 +128,8 @@ type Props = {
   templatePrefillJson?: Record<string, unknown> | null;
   /** Block 7 — when set, the wizard opens in EDIT mode: prefilled from this load, Save → guarded PATCH. */
   editLoadId?: string | null;
+  /** Dispatch "+ Book load" per-truck action — prefill the assigned unit when opening a fresh booking. */
+  prefillUnitId?: string | null;
 };
 
 function numOrUndef(v: unknown): number | undefined {
@@ -160,7 +162,7 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 [data-wizard-v5="on"] .space-y-2>*+*{margin-top:4px}
 `;
 
-export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, templatePrefillJson, editLoadId }: Props) {
+export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, templatePrefillJson, editLoadId, prefillUnitId }: Props) {
   const auth = useAuth();
   const isEditMode = Boolean(editLoadId);
   const { pushToast } = useToast();
@@ -297,6 +299,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       form.setValue("ocr_source_pdf_r2_key", ocrKey, { shouldDirty: true });
     }
   }, [open, templatePrefillJson, form]);
+
+  // Dispatch per-truck "+ Book load" — prefill the assigned unit when opening a fresh (non-edit) booking.
+  useEffect(() => {
+    if (!open || editLoadId || !prefillUnitId) return;
+    form.setValue("assigned_unit_id", prefillUnitId, { shouldDirty: true });
+  }, [open, editLoadId, prefillUnitId, form]);
 
   // Block 7 — EDIT mode: load the existing load and prefill the wizard. form.reset(...keepDefaults)
   // marks nothing dirty, so the Save body (dirtyFields-gated) only contains what the user then changes.
