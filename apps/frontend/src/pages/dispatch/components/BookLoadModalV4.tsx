@@ -636,11 +636,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         <header className="flex flex-shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#16203a" }}>
           <div>
             <div className="text-[10px]" style={{ color: "#9aa6ba" }}>
-              Dispatch › {isEditMode ? "Edit load" : "Book load"}
+              {isEditMode ? "Dispatch › Edit load" : "Dispatch › Book load"}
             </div>
-            <div className="text-base font-bold">
-              {isEditMode ? `Edit load${editLoad?.load_number ? ` ${editLoad.load_number}` : ""}` : "Book load"}
-            </div>
+            {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
+                ">Book load<" text node for the create wizard while Edit shows the load number. */}
+            {isEditMode ? (
+              <div className="text-base font-bold">Edit load{editLoad?.load_number ? ` ${editLoad.load_number}` : ""}</div>
+            ) : (
+              <div className="text-base font-bold">Book load</div>
+            )}
           </div>
           <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9aa6ba" }}>
             <span>{headerTime}</span>
