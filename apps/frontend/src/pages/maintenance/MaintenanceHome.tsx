@@ -260,7 +260,7 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
         />
       ) : null}
 
-      {tab === "fleet_table" ? <FleetTablePage operatingCompanyId={companyId} /> : null}
+      {tab === "fleet_table" ? <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns /> : null}
 
       {tab === "service_location" ? <ServiceLocationPage operatingCompanyId={companyId} /> : null}
 

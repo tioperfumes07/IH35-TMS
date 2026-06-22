@@ -10,6 +10,9 @@ type Props = {
   operatingCompanyId: string;
   // /fleet home opts into active-only by default; Maintenance keeps showing all.
   defaultActiveOnly?: boolean;
+  // Keystone opt-in: only the Maintenance fleet-table tab passes this → adds the 3 maintenance columns,
+  // Unit links, CSV export, and the maintenance-status fetch. /fleet leaves it false → identical to before.
+  showMaintenanceColumns?: boolean;
 };
 
 type UnifiedUnitRow = FleetRow & {
@@ -60,7 +63,7 @@ function buildUnitsUrl(operatingCompanyId: string, typeFilter: string, includeIn
   return `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500${typeParam}${inactiveParam}`;
 }
 
-export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }: Props) {
+export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, showMaintenanceColumns = false }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const typeFilter = parseFleetTypeFilter(searchParams);
   const kindFilter = searchParams.get("kind") ?? "";
@@ -139,7 +142,8 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
       apiRequest<{
         rows: Array<{ id: string; odometer_mi: number | null; next_due_odometer: number | null; open_wo_count: number }>;
       }>(`/api/v1/maintenance/fleet-table/rows?operating_company_id=${encodeURIComponent(operatingCompanyId)}`),
-    enabled: Boolean(operatingCompanyId),
+    // Only fetch maintenance status when the columns are shown — /fleet never makes this call.
+    enabled: Boolean(operatingCompanyId) && showMaintenanceColumns,
     staleTime: 60_000,
   });
   const maintByUnit = useMemo(() => {
@@ -309,6 +313,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false }
           rows={rows}
           softDeleteFilter={softDeleteFilter}
           onSoftDeleteFilterChange={setSoftDeleteFilter}
+          showMaintenanceColumns={showMaintenanceColumns}
         />
       )}
     </div>

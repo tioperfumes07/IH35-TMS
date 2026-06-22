@@ -46,7 +46,7 @@ const rows: FleetRow[] = [
   },
 ];
 
-function renderTable() {
+function renderTable(showMaintenanceColumns = false) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
@@ -56,6 +56,7 @@ function renderTable() {
           rows={rows}
           softDeleteFilter="active"
           onSoftDeleteFilterChange={() => {}}
+          showMaintenanceColumns={showMaintenanceColumns}
         />
       </MemoryRouter>
     </QueryClientProvider>
@@ -81,11 +82,30 @@ describe("FleetTable unified list", () => {
     expect(screen.getAllByText("Dry Van").length).toBeGreaterThan(0);
   });
 
-  it("unit cell is a profile link, and row click navigates by kind", () => {
-    renderTable();
-    // Keystone: the Unit cell is now a real anchor (Unit links) to the profile route.
+  it("base mode (/fleet): Unit is plain text, no maintenance columns, row click navigates by kind", () => {
+    renderTable(false);
+    // Unit is NOT a link in base mode — /fleet renders identically to before the keystone.
+    expect(screen.getByText("101").closest("a")).toBeNull();
+    // The 3 maintenance columns are absent.
+    expect(screen.queryByText("Odometer")).toBeNull();
+    expect(screen.queryByText("Next PM")).toBeNull();
+    expect(screen.queryByText("Open WO")).toBeNull();
+    // Whole-row click navigates by kind.
+    fireEvent.click(screen.getByText("101"));
+    expect(navigate).toHaveBeenCalledWith("/fleet/units/truck-1");
+    fireEvent.click(screen.getByText("T-10"));
+    expect(navigate).toHaveBeenCalledWith("/fleet/trailers/trailer-1");
+  });
+
+  it("maintenance mode: Unit is a profile link, 3 maintenance columns render, row click still works", () => {
+    renderTable(true);
+    // Keystone opt-in: the Unit cell is a real anchor to the profile route.
     expect(screen.getByText("101").closest("a")?.getAttribute("href")).toBe("/fleet/units/truck-1");
     expect(screen.getByText("T-10").closest("a")?.getAttribute("href")).toBe("/fleet/trailers/trailer-1");
+    // The 3 maintenance columns are present.
+    expect(screen.getByText("Odometer")).toBeTruthy();
+    expect(screen.getByText("Next PM")).toBeTruthy();
+    expect(screen.getByText("Open WO")).toBeTruthy();
     // Clicking a non-link cell still navigates the whole row by kind (row-click preserved).
     fireEvent.click(screen.getByText("VIN1"));
     expect(navigate).toHaveBeenCalledWith("/fleet/units/truck-1");
