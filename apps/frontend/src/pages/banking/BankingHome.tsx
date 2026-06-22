@@ -241,7 +241,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <div className="font-semibold text-amber-800">{uncategorizedCount}</div>
             </button>
             <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Recon accts</div><div className="font-semibold">{reconAccounts}</div></div>
-            <div className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-blue-700">Factoring res</div><div className="font-semibold text-blue-900">{money.format(factoringReserve)}</div></div>
+            <div className="rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-slate-700">Factoring res</div><div className="font-semibold text-slate-700">{money.format(factoringReserve)}</div></div>
             <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-emerald-700">Escrow feed</div><div className="font-semibold text-emerald-900">{money.format(escrowFeed)}</div></div>
           </div>
 
@@ -249,7 +249,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             <div className="rounded border border-gray-200 bg-white">
               <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <span>Bank accounts</span>
-                <button className="text-blue-700 hover:underline" type="button" onClick={() => setManageOpen(true)}>+</button>
+                <button className="text-slate-700 hover:underline" type="button" onClick={() => setManageOpen(true)}>+</button>
               </div>
               <div className="max-h-[260px] overflow-y-auto">
                 {bankAccountsPanelRows.map((row) => (
@@ -257,7 +257,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     key={row.id}
                     type="button"
                     onClick={() => setSelectedAccountId(row.id)}
-                    className={`grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-3 py-1.5 text-left text-sm ${selectedId === row.id ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                    className={`grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-3 py-1.5 text-left text-sm ${selectedId === row.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
                   >
                     <span className="truncate">{row.displayName}</span>
                     <span className="font-medium">{money.format(row.balance)}</span>
@@ -271,8 +271,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </label>
             </div>
 
-            <div className="rounded border border-blue-200 bg-blue-50">
-              <div className="flex items-center justify-between border-b border-blue-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+            <div className="rounded border border-slate-300 bg-slate-100">
+              <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
                 <span>Factoring · virtual bank</span>
                 <span className="text-[10px]">Open</span>
               </div>
@@ -282,7 +282,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <div className="flex justify-between"><span>Chargebacks open</span><span className="text-red-700">{money.format(0)}</span></div>
                 <div className="flex justify-between"><span>+30 aging fees</span><span className="text-amber-700">{money.format(0)}</span></div>
                 <div className="pt-1 text-xs text-gray-500">Last upload: {selectedTile?.last_txn_date ? String(selectedTile.last_txn_date) : "—"}</div>
-                {factoringTile ? <div className="text-xs text-blue-800">{factoringTile.display_name}</div> : null}
+                {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
               </div>
             </div>
 
@@ -331,10 +331,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Reconciliation</p>
               <div className="flex flex-wrap items-center gap-3">
-                <Link to="/banking/reconcile" className="text-xs font-medium text-blue-700 hover:underline">
+                <Link to="/banking/reconcile" className="text-xs font-medium text-slate-700 hover:underline">
                   Open Reconcile Queue
                 </Link>
-                <Link to="/banking/reconciliation" className="text-xs font-medium text-blue-700 hover:underline">
+                <Link to="/banking/reconciliation" className="text-xs font-medium text-slate-700 hover:underline">
                   Open Workspace
                 </Link>
               </div>

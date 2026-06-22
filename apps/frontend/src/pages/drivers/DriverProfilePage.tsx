@@ -63,7 +63,7 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
         <h2 className="text-sm font-semibold text-slate-900">Layovers (last 30 days)</h2>
         <Link
           to={`/dispatch/layovers/driver/${driverId}`}
-          className="text-xs font-semibold text-sky-700 hover:underline"
+          className="text-xs font-semibold text-slate-700 hover:underline"
         >
           View history
         </Link>
@@ -192,11 +192,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       <div className="space-y-2 rounded border border-gray-200 bg-white p-3 text-sm text-slate-600">
         <p>Driver not found.</p>
         {onBack ? (
-          <button type="button" onClick={onBack} className="text-xs font-semibold text-sky-700 hover:underline">
+          <button type="button" onClick={onBack} className="text-xs font-semibold text-slate-700 hover:underline">
             Back to driver list
           </button>
         ) : (
-          <Link to="/drivers?subtab=profiles" className="text-xs font-semibold text-sky-700 hover:underline">
+          <Link to="/drivers?subtab=profiles" className="text-xs font-semibold text-slate-700 hover:underline">
             Back to DQF profiles
           </Link>
         )}
@@ -231,7 +231,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 {visibilitySaving ? "Saving…" : driver.status === "Inactive" ? "Show in lists" : "Hide from lists"}
               </button>
             ) : null}
-            <Link to={`/drivers/${driver.id}`} className="text-xs font-semibold text-sky-700 hover:underline">
+            <Link to={`/drivers/${driver.id}`} className="text-xs font-semibold text-slate-700 hover:underline">
               Open full driver record
             </Link>
             {onBack ? (

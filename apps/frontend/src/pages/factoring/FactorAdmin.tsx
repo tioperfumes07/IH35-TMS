@@ -148,7 +148,7 @@ export function FactorAdmin() {
               <tr
                 key={factor.id}
                 onClick={() => setSelectedFactor(factor)}
-                className={`cursor-pointer ${selectedFactor?.id === factor.id ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                className={`cursor-pointer ${selectedFactor?.id === factor.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
               >
                 <td className="px-2 py-2 font-medium text-gray-900">{factor.name}</td>
                 <td className="px-2 py-2">{formatPct(factor.advance_rate)}</td>

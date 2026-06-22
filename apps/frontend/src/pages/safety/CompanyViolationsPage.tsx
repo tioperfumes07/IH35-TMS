@@ -25,7 +25,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white"
+          className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
           data-testid="company-violation-create-btn"
         >
           + Create Company Violation
@@ -52,7 +52,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
                 <td className="px-2 py-1">{String(row.description ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.status ?? "open")}</td>
                 <td className="px-2 py-1">
-                  <button type="button" className="text-blue-700 underline" onClick={() => setSelected(row)}>
+                  <button type="button" className="text-slate-700 underline" onClick={() => setSelected(row)}>
                     Open
                   </button>
                 </td>

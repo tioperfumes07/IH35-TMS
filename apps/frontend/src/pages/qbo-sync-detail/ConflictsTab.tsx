@@ -66,7 +66,7 @@ export function ConflictsTab({ operatingCompanyId }: { operatingCompanyId: strin
                 setExpanded(new Set());
               }}
               className={`rounded border px-2 py-1 text-xs ${
-                entityType === option.value ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700"
+                entityType === option.value ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700"
               }`}
             >
               {option.label}
@@ -88,7 +88,7 @@ export function ConflictsTab({ operatingCompanyId }: { operatingCompanyId: strin
                 setExpanded(new Set());
               }}
               className={`rounded border px-2 py-1 text-xs ${
-                conflictType === option.value ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700"
+                conflictType === option.value ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700"
               }`}
             >
               {option.label}

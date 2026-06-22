@@ -293,14 +293,14 @@ export function CustomersPage() {
             <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="customers">
               <button
                 type="button"
-                className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setViewMode("list")}
               >
                 List view
               </button>
               <button
                 type="button"
-                className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setViewMode("master-detail")}
               >
                 Master-detail
@@ -311,7 +311,7 @@ export function CustomersPage() {
                 <button
                   key={value}
                   type="button"
-                  className={`rounded px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  className={`rounded px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
                   onClick={() => setListStatus(value)}
                 >
                   {value}

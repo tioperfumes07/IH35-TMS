@@ -8,7 +8,7 @@ function cents(n: number) {
 }
 
 const CLASS_COLORS: Record<string, string> = {
-  "UNIT-DRIVER": "bg-blue-500",
+  "UNIT-DRIVER": "bg-slate-1000",
   OFFICE: "bg-emerald-500",
   OTHER: "bg-gray-400",
 };

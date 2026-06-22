@@ -75,7 +75,7 @@ export function AccountingHome({ auth }: Props) {
         subtitle={`AR/AP snapshot and period-close status (${displayName})`}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button type="button" className="text-sm font-medium text-blue-700 hover:underline" onClick={() => window.print()}>
+            <button type="button" className="text-sm font-medium text-slate-700 hover:underline" onClick={() => window.print()}>
               Print this page
             </button>
             <Button variant="secondary" onClick={refresh}>
@@ -98,7 +98,7 @@ export function AccountingHome({ auth }: Props) {
       <AccountingKpiBar data={homeQuery.data} isLoading={homeQuery.isLoading} />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <AgingBucketCard title="Accounts Receivable Aging" buckets={homeQuery.data?.ar_aging} accent="#1d4ed8" />
+        <AgingBucketCard title="Accounts Receivable Aging" buckets={homeQuery.data?.ar_aging} accent="#1F2A44" />
         <AgingBucketCard title="Accounts Payable Aging" buckets={homeQuery.data?.ap_aging} accent="#b45309" />
       </section>
 

@@ -84,7 +84,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 <td className="px-2 py-1">{String(row.location ?? row.description ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.status ?? "open")}</td>
                 <td className="px-2 py-1">
-                  <button type="button" className="text-blue-700 underline" onClick={() => openAccident(row)}>
+                  <button type="button" className="text-slate-700 underline" onClick={() => openAccident(row)}>
                     Open accident
                   </button>
                 </td>

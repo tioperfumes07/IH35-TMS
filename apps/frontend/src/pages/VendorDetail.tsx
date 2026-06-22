@@ -402,7 +402,7 @@ export function VendorDetailPage() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`rounded px-2.5 py-1.5 text-xs font-medium ${activeTab === tab ? "bg-sky-100 text-sky-800" : "text-gray-700 hover:bg-gray-100"}`}
+                className={`rounded px-2.5 py-1.5 text-xs font-medium ${activeTab === tab ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
               >
                 {tab}
               </button>
@@ -740,7 +740,7 @@ export function VendorDetailPage() {
                 {vendorPaymentBackendPending ? (
                   <div className="rounded border border-amber-200 bg-amber-50 p-2 text-amber-950">
                     Backend pending — file <strong>P6-T11204</strong> for vendor bill payment APIs.{" "}
-                    <button type="button" className="font-semibold text-blue-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
+                    <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
                       Retry
                     </button>
                   </div>

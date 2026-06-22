@@ -130,7 +130,7 @@ export function NotificationPreferencesPage() {
           <h1 className="text-lg font-semibold text-slate-900">Notifications</h1>
           <p className="text-sm text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
         </div>
-        <Link to="/settings" className="text-sm text-blue-700 hover:underline">
+        <Link to="/settings" className="text-sm text-slate-700 hover:underline">
           ← Back to profile
         </Link>
       </div>

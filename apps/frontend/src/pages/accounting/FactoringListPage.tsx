@@ -28,7 +28,7 @@ function money(cents: number) {
 
 function statusPill(status: FactoringAdvance["status"]) {
   const base = "rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
-  if (status === "advanced") return `${base} bg-blue-50 text-blue-700 border border-blue-200`;
+  if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
   if (status === "reserve_held" || status === "collected") return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
   if (status === "released") return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
   if (status === "recourse_returned") return `${base} bg-red-50 text-red-700 border border-red-200`;

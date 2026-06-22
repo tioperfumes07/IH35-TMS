@@ -132,7 +132,7 @@ export function DocsHomePage() {
           <div className="rounded border border-dashed border-gray-300 p-6 text-center">
             <p className="text-base font-semibold text-gray-900">No documents found</p>
             <p className="mt-1 text-sm text-gray-600">No documents yet. Click + Upload Document to add one.</p>
-            <button type="button" className="mt-3 rounded bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white opacity-70">
+            <button type="button" className="mt-3 rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white opacity-70">
               + Upload Document
             </button>
           </div>

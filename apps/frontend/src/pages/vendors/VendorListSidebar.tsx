@@ -105,7 +105,7 @@ export function VendorListSidebar({
             href={`/vendors/${vendor.id}`}
             onNavigate={() => onSelectVendor(vendor.id)}
             className={`block w-full rounded border px-2 py-2 text-left ${
-              selectedVendorId === vendor.id ? "border-blue-500 bg-blue-50" : "border-transparent hover:bg-gray-50"
+              selectedVendorId === vendor.id ? "border-slate-300 bg-slate-100" : "border-transparent hover:bg-gray-50"
             }`}
           >
             <p className="truncate text-sm font-medium text-gray-900">{vendor.name}</p>

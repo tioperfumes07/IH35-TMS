@@ -73,7 +73,7 @@ export function PlaidReconnectButton({ operatingCompanyId, plaidItemId, onComple
   return (
     <ActionButton
       type="button"
-      className="focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+      className="focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
       disabled={disabled}
       onClick={() => {
         if (disabled) return;

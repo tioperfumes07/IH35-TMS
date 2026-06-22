@@ -47,7 +47,7 @@ export function BankingReportsTabContent() {
           <Link
             key={report.id}
             to={report.href}
-            className="rounded border border-gray-200 bg-white px-3 py-2 hover:border-blue-300 hover:bg-blue-50"
+            className="rounded border border-gray-200 bg-white px-3 py-2 hover:border-slate-300 hover:bg-slate-100"
           >
             <p className="text-sm font-semibold text-gray-900">{report.label}</p>
             <p className="mt-1 text-xs text-gray-600">{report.detail}</p>

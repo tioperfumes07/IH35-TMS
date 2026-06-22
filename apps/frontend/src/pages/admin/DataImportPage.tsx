@@ -168,7 +168,7 @@ export function DataImportPage() {
         {[1, 2, 3, 4, 5].map((n) => (
           <span
             key={n}
-            className={`rounded-full px-2 py-1 ${step === n ? "bg-blue-100 font-semibold text-blue-900" : "bg-slate-100"}`}
+            className={`rounded-full px-2 py-1 ${step === n ? "bg-slate-100 font-semibold text-slate-700" : "bg-slate-100"}`}
           >
             Step {n}
           </span>
@@ -177,7 +177,7 @@ export function DataImportPage() {
 
       <p className="text-sm text-slate-600">
         Import curated production CSVs without shell access. Read the{" "}
-        <a className="text-blue-700 underline" href={helpUrlFromRel("docs/seed-real-data-guide.md")} target="_blank" rel="noreferrer">
+        <a className="text-slate-700 underline" href={helpUrlFromRel("docs/seed-real-data-guide.md")} target="_blank" rel="noreferrer">
           seed real data guide
         </a>{" "}
         for formatting rules. Uploads use the same validation as <span className="font-mono text-xs">npm run seed:from-csv</span>.
@@ -209,7 +209,7 @@ export function DataImportPage() {
           </div>
           <button
             type="button"
-            className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className="rounded bg-[#1F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44]"
             onClick={() => setStep(2)}
           >
             Continue
@@ -256,7 +256,7 @@ export function DataImportPage() {
           )}
 
           <div className="text-sm">
-            <a className="font-medium text-blue-700 underline" href={dataImportTemplateUrl(entity)} target="_blank" rel="noreferrer">
+            <a className="font-medium text-slate-700 underline" href={dataImportTemplateUrl(entity)} target="_blank" rel="noreferrer">
               Download CSV template ({entity})
             </a>
           </div>
@@ -282,7 +282,7 @@ export function DataImportPage() {
             <button
               type="button"
               disabled={busy}
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              className="rounded bg-[#1F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44] disabled:opacity-60"
               onClick={() => void goNextFromUpload()}
             >
               {busy ? "Validating…" : "Run preview"}
@@ -347,7 +347,7 @@ export function DataImportPage() {
               type="button"
               disabled={preview.invalid_rows > 0}
               title={preview.invalid_rows > 0 ? "Fix invalid rows before committing." : undefined}
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded bg-[#1F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44] disabled:cursor-not-allowed disabled:opacity-50"
               onClick={() => setStep(4)}
             >
               Continue to commit
@@ -414,7 +414,7 @@ export function DataImportPage() {
           )}
 
           <div className="flex flex-wrap gap-2">
-            <Link className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700" to={POST_IMPORT_LINKS[entity].to}>
+            <Link className="rounded bg-[#1F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44]" to={POST_IMPORT_LINKS[entity].to}>
               {POST_IMPORT_LINKS[entity].label}
             </Link>
             <button type="button" className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={resetWizard}>

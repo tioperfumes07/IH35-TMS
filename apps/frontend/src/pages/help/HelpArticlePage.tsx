@@ -14,7 +14,7 @@ export function HelpArticlePage() {
       <div className="space-y-3">
         <PageHeader title="Article not found" />
         <p className="text-sm text-gray-700">
-          <Link to="/help" className="text-blue-700 hover:underline">
+          <Link to="/help" className="text-slate-700 hover:underline">
             Back to help home
           </Link>
         </p>
@@ -33,7 +33,7 @@ export function HelpArticlePage() {
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded border border-gray-300 px-3 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            className="rounded border border-gray-300 px-3 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             onClick={() => setFeedback("up")}
             aria-pressed={feedback === "up"}
           >
@@ -41,7 +41,7 @@ export function HelpArticlePage() {
           </button>
           <button
             type="button"
-            className="rounded border border-gray-300 px-3 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            className="rounded border border-gray-300 px-3 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             onClick={() => setFeedback("down")}
             aria-pressed={feedback === "down"}
           >
@@ -54,7 +54,7 @@ export function HelpArticlePage() {
           </p>
         ) : null}
         <p className="mt-3 text-sm">
-          <Link to="/help" className="text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+          <Link to="/help" className="text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
             ← All articles
           </Link>
         </p>

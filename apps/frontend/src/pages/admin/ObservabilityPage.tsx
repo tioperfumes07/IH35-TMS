@@ -75,7 +75,7 @@ export function ObservabilityPage() {
                   href={data.sentry_org_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline text-sm"
+                  className="text-slate-700 underline text-sm"
                 >
                   {data.sentry_org_url}
                 </a>
@@ -91,7 +91,7 @@ export function ObservabilityPage() {
                   href={data.recent_errors_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline text-sm"
+                  className="text-slate-700 underline text-sm"
                 >
                   Open in Sentry →
                 </a>
@@ -106,7 +106,7 @@ export function ObservabilityPage() {
                 href={data.healthz_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 underline text-sm"
+                className="text-slate-700 underline text-sm"
               >
                 {data.healthz_url}
               </a>

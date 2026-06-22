@@ -28,7 +28,7 @@ export function SettlementHeader({ driverName, driverDisplayId, periodStart, per
         <div className="text-[10px] uppercase text-gray-500">Status</div>
         <div className="text-sm font-semibold">{status}</div>
         <div className="mt-1 text-[10px] text-gray-500">Recompute: {computedAt ?? "n/a"}</div>
-        <button type="button" className="mt-1 text-xs text-blue-700 underline" onClick={onRefresh}>Refresh</button>
+        <button type="button" className="mt-1 text-xs text-slate-700 underline" onClick={onRefresh}>Refresh</button>
       </div>
     </div>
   );

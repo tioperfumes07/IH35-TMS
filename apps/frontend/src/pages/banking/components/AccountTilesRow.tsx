@@ -19,7 +19,7 @@ export function AccountTilesRow({ tiles, selectedId, onSelect, onManageAccounts 
           onSelect={() => onSelect(tile.id)}
         />
       ))}
-      <button type="button" onClick={onManageAccounts} className="flex-shrink-0 text-sm text-blue-700 hover:underline">
+      <button type="button" onClick={onManageAccounts} className="flex-shrink-0 text-sm text-slate-700 hover:underline">
         + Create Account
       </button>
     </div>

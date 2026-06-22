@@ -73,7 +73,7 @@ export function GeofenceBreachesTab() {
               ) : (
                 <button
                   type="button"
-                  className="rounded bg-blue-700 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                  className="rounded bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
                   disabled={acknowledgeMutation.isPending}
                   onClick={() => acknowledgeMutation.mutate(event.id)}
                 >

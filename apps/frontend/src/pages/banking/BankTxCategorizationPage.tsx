@@ -364,7 +364,7 @@ export function BankTxCategorizationPage() {
             <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-800">Could not load uncategorized transactions.</div>
           ) : null}
           {bulkIds.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2 rounded border border-blue-200 bg-blue-50 p-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-100 p-2 text-xs">
               <span className="font-semibold">{bulkIds.length} selected</span>
               <Button size="sm" variant="secondary" onClick={() => void applyBulkSuggestions()}>
                 Apply suggestion to all selected
@@ -388,7 +388,7 @@ export function BankTxCategorizationPage() {
               >
                 Categorize all selected
               </Button>
-              <button type="button" className="text-blue-700 underline" onClick={() => setBulkSelected({})}>
+              <button type="button" className="text-slate-700 underline" onClick={() => setBulkSelected({})}>
                 Clear selection
               </button>
             </div>
@@ -415,7 +415,7 @@ export function BankTxCategorizationPage() {
                   return (
                     <tr
                       key={id || idx}
-                      className={`cursor-pointer border-b border-gray-100 ${selected ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                      className={`cursor-pointer border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
                       onClick={() => setSelectedRowId(id)}
                     >
                       <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>

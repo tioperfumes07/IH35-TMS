@@ -135,7 +135,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 <td className="px-2 py-1">{String(row.location ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.status ?? "open")}</td>
                 <td className="px-2 py-1">
-                  <button type="button" className="text-blue-700 underline" onClick={() => openRow(row)}>
+                  <button type="button" className="text-slate-700 underline" onClick={() => openRow(row)}>
                     {config.detailLabel}
                   </button>
                 </td>

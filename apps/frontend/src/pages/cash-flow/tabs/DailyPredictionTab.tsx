@@ -103,13 +103,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             <button
               type="button"
               onClick={() => setDate(todayIso())}
-              className="text-xs text-blue-600 hover:underline"
+              className="text-xs text-slate-700 hover:underline"
             >
               Back to today
             </button>
           )}
           {date === todayIso() && (
-            <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">Today</span>
+            <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Today</span>
           )}
         </div>
         <button
@@ -212,7 +212,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                       item.basis === "Confirmed"
                         ? "bg-emerald-50 text-emerald-700"
                         : item.basis === "Predicted"
-                        ? "bg-blue-50 text-blue-700"
+                        ? "bg-slate-100 text-slate-700"
                         : "bg-amber-50 text-amber-700"
                     }`}>
                       {item.basis}
@@ -256,7 +256,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                       <div className="min-w-0 flex-1">
                         <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium mr-2 ${
                           item.kind === "driver_pay"
-                            ? "bg-purple-50 text-purple-700"
+                            ? "bg-slate-100 text-slate-700"
                             : item.kind === "bill_due"
                             ? "bg-orange-50 text-orange-700"
                             : "bg-gray-100 text-gray-600"
@@ -284,14 +284,14 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     placeholder="Label (e.g. Fuel surcharge)"
                     value={addLabel}
                     onChange={(e) => setAddLabel(e.target.value)}
-                    className="flex-1 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+                    className="flex-1 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
                   />
                   <input
                     type="text"
                     placeholder="$0.00"
                     value={addAmount}
                     onChange={(e) => setAddAmount(e.target.value)}
-                    className="w-24 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-blue-400 focus:outline-none"
+                    className="w-24 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
                   />
                   <button
                     type="button"
@@ -336,7 +336,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   onClick={() => setDate(entry.date)}
                   className={`flex flex-col items-center rounded-lg py-2 transition-colors ${
                     isSelected ? "ring-2 ring-[#1f2a44]" : "hover:bg-gray-50"
-                  } ${isToday ? "bg-blue-50" : ""}`}
+                  } ${isToday ? "bg-slate-100" : ""}`}
                 >
                   <span className="text-xs text-gray-500">
                     {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short" })}

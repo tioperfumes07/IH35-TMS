@@ -9,7 +9,7 @@ import { TypeCatalogAdmin } from "../../insurance/TypeCatalogAdmin";
 
 export function InsuranceTab() {
   const navClassName = ({ isActive }: { isActive: boolean }) =>
-    `rounded px-3 py-1.5 text-xs font-medium ${isActive ? "bg-blue-100 text-blue-800" : "text-slate-600 hover:bg-slate-100"}`;
+    `rounded px-3 py-1.5 text-xs font-medium ${isActive ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-slate-100"}`;
 
   return (
     <div className="space-y-4">

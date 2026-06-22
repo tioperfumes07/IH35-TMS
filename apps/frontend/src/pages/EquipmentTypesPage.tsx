@@ -262,7 +262,7 @@ export function EquipmentTypesPage() {
               <div
                 key={typeRow.id}
                 id={`equipment-type-${typeRow.id}`}
-                className={`rounded border bg-white ${highlightId === typeRow.id ? "border-blue-400 ring-1 ring-blue-200" : "border-gray-200"}`}
+                className={`rounded border bg-white ${highlightId === typeRow.id ? "border-slate-300 ring-1 ring-slate-400" : "border-gray-200"}`}
               >
                 <button
                   type="button"
@@ -331,7 +331,7 @@ export function EquipmentTypesPage() {
                           key={item.id}
                           id={`equipment-line-item-${item.id}`}
                           className={`flex min-h-8 items-center justify-between gap-2 rounded border px-2 py-1 ${
-                            highlightId === item.id ? "border-blue-300 bg-blue-50" : "border-gray-200"
+                            highlightId === item.id ? "border-slate-300 bg-slate-100" : "border-gray-200"
                           }`}
                         >
                           <div className="min-w-0">

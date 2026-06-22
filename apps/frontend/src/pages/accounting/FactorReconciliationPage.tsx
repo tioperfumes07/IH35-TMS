@@ -107,7 +107,7 @@ export function FactorReconciliationPage() {
                 type="button"
                 onClick={() => setSelectedRunId(run.id)}
                 className={`w-full rounded border px-2 py-1.5 text-left text-xs ${
-                  selectedRunId === run.id ? "border-blue-300 bg-blue-50" : "border-gray-200 bg-white hover:bg-gray-50"
+                  selectedRunId === run.id ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-white hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">

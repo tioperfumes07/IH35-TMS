@@ -108,7 +108,7 @@ export function DriverHubReportingPage() {
           <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">To</label>
           <input type="date" className={inputCls} value={to} min={from} max={todayIso()} onChange={(e) => setTo(e.target.value)} />
         </div>
-        <Link to="/driver-hub" className="ml-auto text-xs font-semibold text-blue-700 underline">
+        <Link to="/driver-hub" className="ml-auto text-xs font-semibold text-slate-700 underline">
           ← Back to Driver Inbox
         </Link>
       </div>

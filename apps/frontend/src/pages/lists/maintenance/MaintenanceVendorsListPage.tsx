@@ -7,7 +7,7 @@ export function MaintenanceVendorsListPage() {
     <div className="space-y-2">
       <p className="text-xs text-gray-600">
         Full vendor master with CSV import and WO history:{" "}
-        <Link className="font-medium text-blue-600 underline" to="/maintenance/vendors">
+        <Link className="font-medium text-slate-700 underline" to="/maintenance/vendors">
           Maintenance Vendors hub
         </Link>
         .

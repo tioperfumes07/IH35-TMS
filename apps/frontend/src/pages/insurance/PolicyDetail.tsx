@@ -131,7 +131,7 @@ export function PolicyDetail() {
       <header className="rounded border border-gray-200 bg-white p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <button type="button" className="text-xs text-blue-700 underline" onClick={() => navigate("/safety/insurance/policies")}>
+            <button type="button" className="text-xs text-slate-700 underline" onClick={() => navigate("/safety/insurance/policies")}>
               Back to policies
             </button>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">Policy {policy.policy_number}</h2>
@@ -211,7 +211,7 @@ export function PolicyDetail() {
               {policy.units.map((unit) => (
                 <tr key={unit.id} className="border-t border-gray-100">
                   <td className="px-2 py-1.5 text-slate-700">
-                    <Link className="text-blue-700 underline" to={`/fleet/units/${unit.asset_id}`}>
+                    <Link className="text-slate-700 underline" to={`/fleet/units/${unit.asset_id}`}>
                       {unit.asset_id.slice(0, 8)}
                     </Link>
                   </td>
@@ -278,7 +278,7 @@ export function PolicyDetail() {
                 <tr key={row.id} className="border-t border-gray-100">
                   <td className="px-2 py-1.5 text-slate-700">{row.requested_at.slice(0, 10)}</td>
                   <td className="px-2 py-1.5 text-slate-700">{row.status}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{row.document_url ? <a href={row.document_url} className="text-blue-700 underline">View</a> : "-"}</td>
+                  <td className="px-2 py-1.5 text-slate-700">{row.document_url ? <a href={row.document_url} className="text-slate-700 underline">View</a> : "-"}</td>
                 </tr>
               ))}
               {!coiQuery.isLoading && coiRows.length === 0 ? (

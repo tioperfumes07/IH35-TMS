@@ -51,7 +51,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
           const isOrigin = idx === 0;
           const isDestination = idx === stopPoints.length - 1;
           const radius = strategic ? 9 : isOrigin || isDestination ? 9 : 7;
-          const fill = strategic ? "#D97706" : isOrigin ? "#2563EB" : isDestination ? "#7C3AED" : "#16A34A";
+          const fill = strategic ? "#D97706" : isOrigin ? "#334155" : isDestination ? "#475569" : "#16A34A";
           return (
             <g
               key={stop.pointId}

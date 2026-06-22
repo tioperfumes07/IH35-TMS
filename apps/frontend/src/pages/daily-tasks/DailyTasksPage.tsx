@@ -62,7 +62,7 @@ function toDateTimeLocalValue(value: Date): string {
 
 function statusBadge(status: DailyTask["status"]) {
   if (status === "completed") return "bg-emerald-100 text-emerald-800";
-  if (status === "accepted") return "bg-blue-100 text-blue-800";
+  if (status === "accepted") return "bg-slate-100 text-slate-700";
   if (status === "cancelled") return "bg-zinc-200 text-zinc-700";
   return "bg-amber-100 text-amber-800";
 }
@@ -71,7 +71,7 @@ function priorityBadge(priority: DailyTask["priority"]) {
   if (priority === "urgent") return "bg-red-100 text-red-800";
   if (priority === "high") return "bg-orange-100 text-orange-800";
   if (priority === "low") return "bg-slate-100 text-slate-700";
-  return "bg-indigo-100 text-indigo-800";
+  return "bg-slate-100 text-slate-700";
 }
 
 export function DailyTasksPage() {

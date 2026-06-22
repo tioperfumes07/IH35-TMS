@@ -105,7 +105,7 @@ export function EdiSetupWizard() {
             />
             <button
               type="button"
-              className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+              className="rounded bg-[#1F2A44] px-4 py-2 text-white disabled:opacity-50"
               disabled={!partnerName.trim()}
               onClick={() => setStep(2)}
             >
@@ -142,7 +142,7 @@ export function EdiSetupWizard() {
               </button>
               <button
                 type="button"
-                className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+                className="rounded bg-[#1F2A44] px-4 py-2 text-white disabled:opacity-50"
                 disabled={!isaId.trim() || !gsId.trim() || !endpoint.trim() || saveMutation.isPending}
                 onClick={() => saveMutation.mutate()}
               >
@@ -163,7 +163,7 @@ export function EdiSetupWizard() {
                   </span>
                   <button
                     type="button"
-                    className="text-blue-600 underline"
+                    className="text-slate-700 underline"
                     onClick={() => testMutation.mutate(p.uuid)}
                   >
                     Test connection

@@ -61,7 +61,7 @@ export function PayrollIntegrationPage() {
             type="button"
             onClick={handleRefresh}
             disabled={refreshMutation.isPending}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
           >
             {refreshMutation.isPending ? "Refreshing…" : "Refresh from QBO"}
           </button>
@@ -91,9 +91,9 @@ export function PayrollIntegrationPage() {
       {/* 4 KPI cards */}
       <div className="grid gap-3 md:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className={`rounded border p-4 ${kpi.highlight ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-white"}`}>
+          <div key={kpi.label} className={`rounded border p-4 ${kpi.highlight ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-white"}`}>
             <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{kpi.label}</div>
-            <div className={`mt-1 text-2xl font-bold tabular-nums ${kpi.highlight ? "text-blue-700" : "text-gray-900"}`}>
+            <div className={`mt-1 text-2xl font-bold tabular-nums ${kpi.highlight ? "text-slate-700" : "text-gray-900"}`}>
               {aggregateQuery.isLoading ? "…" : kpi.value}
             </div>
             <div className="mt-0.5 text-xs text-gray-400">{kpi.sub}</div>

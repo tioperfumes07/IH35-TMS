@@ -102,7 +102,7 @@ export function DriverSchedulerGridPage() {
                             : lt === "personal"
                               ? "bg-orange-100"
                               : lt === "wfh"
-                                ? "bg-blue-100"
+                                ? "bg-slate-100"
                                 : "bg-white";
                       const label = lt ? String(lt).slice(0, 3) : "";
                       return (

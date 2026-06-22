@@ -282,7 +282,7 @@ export function DrugAlcoholTab() {
                     <span
                       key={stage}
                       className={`rounded px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                        active ? "bg-blue-100 text-blue-900" : completed ? "bg-emerald-50 text-emerald-800" : "bg-gray-100 text-gray-600"
+                        active ? "bg-slate-100 text-slate-700" : completed ? "bg-emerald-50 text-emerald-800" : "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {stageLabel(stage)}
@@ -294,7 +294,7 @@ export function DrugAlcoholTab() {
                 <button
                   type="button"
                   disabled={advanceRtdMutation.isPending}
-                  className="rounded bg-blue-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                   onClick={() => advanceRtdMutation.mutate(nextStage as (typeof RTD_STAGES)[number])}
                 >
                   Advance to {stageLabel(nextStage)}

@@ -162,7 +162,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           </label>
         </div>
 
-        <div className="mt-3 rounded border border-blue-200 bg-blue-50 p-2">
+        <div className="mt-3 rounded border border-slate-300 bg-slate-100 p-2">
           <div className="mb-1 flex items-center justify-between">
             <div className="font-semibold">Bill Payment Linkage</div>
             <label className="inline-flex items-center gap-1">
@@ -194,7 +194,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   ))}
                 </SelectCombobox>
               </label>
-              <div className="rounded border border-blue-100 bg-white p-2">
+              <div className="rounded border border-slate-300 bg-white p-2">
                 <div>Bill amount auto-fills advance amount.</div>
                 <div>Recipient becomes vendor on disbursement.</div>
                 {selectedBill ? <div className="mt-1">Selected: {String(selectedBill.display_id)}</div> : null}

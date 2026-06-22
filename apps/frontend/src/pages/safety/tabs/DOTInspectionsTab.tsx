@@ -110,7 +110,7 @@ export function DOTInspectionsTab() {
                 <td className="px-2 py-1">{String(row.csa_points ?? "0")}</td>
                 <td className="px-2 py-1">{String(row.auto_spawned_wo_id ?? "—")}</td>
                 <td className="px-2 py-1">
-                  <label className="mr-2 inline-flex cursor-pointer items-center text-blue-700 underline">
+                  <label className="mr-2 inline-flex cursor-pointer items-center text-slate-700 underline">
                     PDF
                     <input
                       type="file"

@@ -36,7 +36,7 @@ const FLAG_META: Record<MaintenanceCostFlag, { emoji: string; label: string }> =
   reliable: { emoji: "⭐", label: "reliable" },
 };
 
-const PIE_COLORS = ["#0d9488", "#6366f1", "#f59e0b", "#dc2626", "#64748b", "#8b5cf6"];
+const PIE_COLORS = ["#0d9488", "#155e75", "#f59e0b", "#dc2626", "#64748b", "#1e293b"];
 
 type SortKey = keyof MaintenanceCostUnitRow;
 

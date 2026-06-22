@@ -106,7 +106,7 @@ export function ItemsListPage() {
                 <td className="px-3 py-2 text-right">
                   <button
                     type="button"
-                    className="text-xs text-sky-600 hover:underline"
+                    className="text-xs text-slate-700 hover:underline"
                     onClick={() => openEdit(row)}
                   >
                     Edit

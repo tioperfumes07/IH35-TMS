@@ -112,7 +112,7 @@ export function LateArrivalReport() {
           <button
             key={tab}
             type="button"
-            className={`px-3 py-2 text-sm ${groupBy === tab ? "border-b-2 border-blue-600 font-medium text-blue-700" : "text-slate-600"}`}
+            className={`px-3 py-2 text-sm ${groupBy === tab ? "border-b-2 border-slate-300 font-medium text-slate-700" : "text-slate-600"}`}
             onClick={() => {
               setGroupBy(tab);
               setApplied((current) => ({ ...current, groupBy: tab }));

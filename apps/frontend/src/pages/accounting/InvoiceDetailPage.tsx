@@ -17,7 +17,7 @@ function money(cents: number) {
 
 function factoringPillClass(status: string | null | undefined) {
   const base = "rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
-  if (status === "advanced") return `${base} bg-blue-50 text-blue-700 border border-blue-200`;
+  if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
   if (status === "reserve_held" || status === "collected") return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
   if (status === "released") return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
   if (status === "recourse_returned") return `${base} bg-red-50 text-red-700 border border-red-200`;
@@ -217,7 +217,7 @@ export function InvoiceDetailPage() {
               <div className="text-xs font-semibold text-gray-500">Customer notes</div>
               <div>{invoice.customer_notes || "-"}</div>
             </div>
-            <button className="text-xs font-semibold text-blue-700 underline" onClick={() => navigate(`/reports?invoice_id=${invoice.id}`)} type="button">
+            <button className="text-xs font-semibold text-slate-700 underline" onClick={() => navigate(`/reports?invoice_id=${invoice.id}`)} type="button">
               View audit log
             </button>
           </div>

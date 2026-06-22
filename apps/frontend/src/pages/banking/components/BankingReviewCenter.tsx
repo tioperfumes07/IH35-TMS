@@ -45,7 +45,7 @@ function confidenceChipClasses(tx: Record<string, unknown>): string {
   const conf = tx.categorization_confidence;
   const s = String(conf ?? "");
   if (s === "rule_match") return "bg-emerald-100 text-emerald-900";
-  if (s === "vendor_category_fallback") return "bg-blue-100 text-blue-900";
+  if (s === "vendor_category_fallback") return "bg-slate-100 text-slate-700";
   return "bg-amber-100 text-amber-900";
 }
 
@@ -199,7 +199,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                         </button>
                         <button
                           type="button"
-                          className="text-[11px] font-medium text-blue-700 underline"
+                          className="text-[11px] font-medium text-slate-700 underline"
                           onClick={() => setExpandedId((c) => (c === id ? null : id))}
                         >
                           {expanded ? "Collapse" : "Edit"}

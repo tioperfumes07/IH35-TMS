@@ -144,8 +144,8 @@ export function BankingObligationReconcilePage() {
         </label>
       </div>
       {hasSelected ? (
-        <div className="flex flex-wrap items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2">
-          <span className="text-xs font-semibold text-blue-900">{selectedList.length} selected</span>
+        <div className="flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-100 px-3 py-2">
+          <span className="text-xs font-semibold text-slate-700">{selectedList.length} selected</span>
           <ActionButton
             disabled={bulkMutation.isPending}
             onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "mark_reviewed" })}
@@ -182,7 +182,7 @@ export function BankingObligationReconcilePage() {
           </ActionButton>
           <button
             type="button"
-            className="rounded border border-blue-300 px-2 py-1 text-xs text-blue-800 hover:bg-blue-100"
+            className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
             onClick={() => setSelectedTxnIds(new Set())}
           >
             Clear selection
@@ -238,7 +238,7 @@ export function BankingObligationReconcilePage() {
                 key={`${o.obligation_type}-${o.obligation_id}`}
                 type="button"
                 className={`w-full rounded border px-2 py-2 text-left ${
-                  dragTxnId ? "border-blue-300 bg-blue-50/40" : "border-slate-100"
+                  dragTxnId ? "border-slate-300 bg-slate-100/40" : "border-slate-100"
                 }`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {

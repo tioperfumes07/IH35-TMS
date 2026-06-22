@@ -37,7 +37,7 @@ export function AdminPage() {
             key={tile.path}
             type="button"
             onClick={() => navigate(tile.path)}
-            className="rounded border border-gray-200 bg-white p-4 text-left shadow-sm hover:border-blue-300 hover:shadow"
+            className="rounded border border-gray-200 bg-white p-4 text-left shadow-sm hover:border-slate-300 hover:shadow"
           >
             <div className="text-sm font-semibold text-gray-800">{tile.label}</div>
             <div className="mt-1 text-xs text-gray-500">{tile.description}</div>

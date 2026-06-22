@@ -99,7 +99,7 @@ export function CarrierBootstrapPage() {
                 </div>
                 <button
                   type="button"
-                  className="rounded bg-blue-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  className="rounded bg-[#1F2A44] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
                   disabled={bootstrapMutation.isPending}
                   onClick={() => bootstrapMutation.mutate(carrier.code)}
                 >

@@ -113,7 +113,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
                     <td className="px-2 py-1.5">
                       <StatusBadge variant={statusVariant(status)}>{status}</StatusBadge>
                     </td>
-                    <td className="px-2 py-1.5 text-gray-700">{request.document_url ? <a href={request.document_url} className="text-blue-700 underline" target="_blank" rel="noreferrer">Open</a> : "-"}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{request.document_url ? <a href={request.document_url} className="text-slate-700 underline" target="_blank" rel="noreferrer">Open</a> : "-"}</td>
                   </tr>
                 );
               })}

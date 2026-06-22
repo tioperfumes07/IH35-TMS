@@ -14,7 +14,7 @@ const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retire
 
 function statusPillClass(status: string) {
   if (status === "active") return "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
-  if (status === "approved") return "rounded bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700";
+  if (status === "approved") return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   if (status === "pending_review") return "rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
   if (status === "retired") return "rounded bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";

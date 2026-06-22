@@ -162,7 +162,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
                 <td className="px-2 py-1">
                   <button
                     type="button"
-                    className="text-blue-700 underline"
+                    className="text-slate-700 underline"
                     data-testid={`training-program-assign-${program.id}`}
                     onClick={() => {
                       setSelectedProgram(program);

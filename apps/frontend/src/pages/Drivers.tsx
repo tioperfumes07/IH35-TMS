@@ -79,7 +79,7 @@ function DriversCashAdvanceRequestsLink() {
     <Link
       to="/driver-finance/cash-advance-requests"
       className={`rounded border px-2 py-1 text-xs font-medium ${
-        active ? "border-sky-600 bg-sky-50 text-sky-800" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+        active ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
       }`}
     >
       Cash advance requests
@@ -216,7 +216,7 @@ function getDetectionSeverityClass(detection: ReturningDetectionResult | null) {
   if (!detection) return "border-gray-300 bg-gray-50 text-gray-800";
   if (detection.severity_summary.severe_count > 0) return "border-red-300 bg-red-50 text-red-900";
   if (detection.severity_summary.warning_count > 0) return "border-amber-300 bg-amber-50 text-amber-900";
-  return "border-blue-300 bg-blue-50 text-blue-900";
+  return "border-slate-300 bg-slate-100 text-slate-700";
 }
 
 type DriversPageProps = {

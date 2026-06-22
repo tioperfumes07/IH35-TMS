@@ -57,7 +57,7 @@ function ApplicantCard({
       {row.onboarding_session_id ? (
         <Link
           to={`/drivers/onboarding/${row.onboarding_session_id}`}
-          className="block text-xs text-blue-600 hover:underline"
+          className="block text-xs text-slate-700 hover:underline"
         >
           Open onboarding wizard
         </Link>

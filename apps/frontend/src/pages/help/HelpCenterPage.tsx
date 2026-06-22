@@ -31,7 +31,7 @@ export function HelpCenterPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by title or keywords…"
-          className="w-full max-w-xl rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+          className="w-full max-w-xl rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
         />
       </div>
 
@@ -44,7 +44,7 @@ export function HelpCenterPage() {
               <li key={a.slug}>
                 <Link
                   to={`/help/${a.slug}`}
-                  className="text-sm font-medium text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  className="text-sm font-medium text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
                   {a.title}
                 </Link>
@@ -63,7 +63,7 @@ export function HelpCenterPage() {
                   <li key={a.slug}>
                     <Link
                       to={`/help/${a.slug}`}
-                      className="text-sm text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                      className="text-sm text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                     >
                       {a.title}
                     </Link>

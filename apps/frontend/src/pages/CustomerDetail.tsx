@@ -1643,7 +1643,7 @@ export function CustomerDetailPage() {
                 {paymentsBackendPending ? (
                   <div className="rounded border border-amber-200 bg-amber-50 p-2 text-amber-950">
                     Backend pending — file <strong>P6-T11204</strong> for customer payment APIs.{" "}
-                    <button type="button" className="font-semibold text-blue-700 underline" onClick={() => void customerPaymentsQuery.refetch()}>
+                    <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void customerPaymentsQuery.refetch()}>
                       Retry
                     </button>
                   </div>
@@ -1802,7 +1802,7 @@ export function CustomerDetailPage() {
                           <td className="px-2 py-1.5">{p.reference ?? "—"}</td>
                           <td className="px-2 py-1.5">
                             {jeId ? (
-                              <button type="button" className="mr-2 text-blue-700 underline" onClick={() => navigate(`/accounting/journal-entries/${jeId}`)}>
+                              <button type="button" className="mr-2 text-slate-700 underline" onClick={() => navigate(`/accounting/journal-entries/${jeId}`)}>
                                 View JE
                               </button>
                             ) : null}
@@ -1880,7 +1880,7 @@ export function CustomerDetailPage() {
           <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Recent Invoices</h3>
-              <button type="button" className="text-xs font-semibold text-blue-700 underline" onClick={() => navigate("/accounting/invoices")}>
+              <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => navigate("/accounting/invoices")}>
                 View all
               </button>
             </div>

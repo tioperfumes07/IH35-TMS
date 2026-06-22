@@ -218,7 +218,7 @@ export function OnboardingWizardPage() {
               key={label}
               type="button"
               disabled={completed}
-              className={`rounded px-2 py-1 text-xs ${idx === activeStep ? "bg-blue-600 text-white" : "bg-gray-100"}`}
+              className={`rounded px-2 py-1 text-xs ${idx === activeStep ? "bg-[#1F2A44] text-white" : "bg-gray-100"}`}
               onClick={() => setStepIndex(idx)}
             >
               {idx + 1}. {label}
@@ -308,7 +308,7 @@ export function OnboardingWizardPage() {
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              className="rounded bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+              className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
               disabled={!canAdvance || saveMut.isPending}
               onClick={() => void saveAndAdvance()}
             >

@@ -309,7 +309,7 @@ export function ForensicReviewPage() {
                   </div>
                 ) : null}
                 <div className="mt-1 h-2 overflow-hidden rounded bg-gray-100">
-                  <div className="h-full bg-blue-500" style={{ width: batch.status === "in_progress" ? `${pct}%` : batch.status === "completed" ? "100%" : "20%" }} />
+                  <div className="h-full bg-slate-1000" style={{ width: batch.status === "in_progress" ? `${pct}%` : batch.status === "completed" ? "100%" : "20%" }} />
                 </div>
                 {batch.status === "in_progress" && live?.recent_errors?.length ? (
                   <details className="mt-2 rounded border border-red-100 bg-red-50 p-2">
@@ -382,7 +382,7 @@ export function ForensicReviewPage() {
                   setReviewNotes(anomaly.review_notes ?? "");
                 }}
                 className={`w-full rounded border px-2 py-2 text-left ${
-                  selectedAnomalyId === anomaly.id ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-white"
+                  selectedAnomalyId === anomaly.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white"
                 }`}
               >
                 <div className="flex items-center justify-between">

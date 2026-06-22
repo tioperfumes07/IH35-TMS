@@ -443,7 +443,7 @@ export function DispatchPage({
         <DataPanel title="Book load">
           <DataPanelRow>
             <span className="text-sm text-gray-700">Use the Book Load flow to create a new dispatch load.</span>
-            <button className="rounded border border-blue-700 px-2 py-1 text-xs text-blue-700" onClick={() => setNewLoadOpen(true)} type="button">
+            <button className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700" onClick={() => setNewLoadOpen(true)} type="button">
               + Book Load
             </button>
           </DataPanelRow>
@@ -466,7 +466,7 @@ export function DispatchPage({
               <span className="text-sm text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
               <Link
                 to="/driver-finance/settlements"
-                className="text-xs text-blue-700 underline"
+                className="text-xs text-slate-700 underline"
                 data-testid="dispatch-settlements-link"
               >
                 View all settlements →

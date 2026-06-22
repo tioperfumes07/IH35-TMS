@@ -71,7 +71,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
           type="button"
           disabled={disabled}
           onClick={addInvite}
-          className="rounded border border-blue-600 px-3 py-1.5 text-sm font-semibold text-blue-700 disabled:opacity-50"
+          className="rounded border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
         >
           Add
         </button>

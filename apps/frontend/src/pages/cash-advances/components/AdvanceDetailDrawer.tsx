@@ -45,7 +45,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           <div>Liability ID: {String(advance.liability_id ?? "—")}</div>
         </div>
 
-        <div className="mt-2 rounded border border-blue-200 bg-blue-50 p-2">
+        <div className="mt-2 rounded border border-slate-300 bg-slate-100 p-2">
           <div className="font-semibold">Disbursement Timeline</div>
           <div>Created: {String(advance.created_at ?? "—")}</div>
           <div>Approved: {String(advance.approved_at ?? "—")}</div>
@@ -59,7 +59,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
               <div>
                 Linked to bill {String(advance.linked_bill_display_id ?? advance.linked_bill_id)} ({String(advance.linked_bill_vendor_id ?? "vendor")})
               </div>
-              <a className="text-blue-700 underline" href={`/bills/${String(advance.linked_bill_id)}`}>
+              <a className="text-slate-700 underline" href={`/bills/${String(advance.linked_bill_id)}`}>
                 Open bill detail
               </a>
             </>

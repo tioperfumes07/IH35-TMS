@@ -102,7 +102,7 @@ export function IntegrityReportsTab() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+      <div className="rounded border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700">
         Foundation outlier views (Phase 3). Active alerts tab runs the A23-12 rule engine inbox.
       </div>
 

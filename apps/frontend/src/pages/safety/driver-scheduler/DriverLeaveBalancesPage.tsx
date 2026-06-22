@@ -18,7 +18,7 @@ export function DriverLeaveBalancesPage() {
     <div className="space-y-3">
       <PageHeader title="Leave Balances" subtitle="Annual entitlements per company policy (driver-level balances in a follow-on PR)" />
       <div className="mb-2">
-        <Link to="/safety/driver-scheduler" className="text-xs text-blue-600 hover:underline">
+        <Link to="/safety/driver-scheduler" className="text-xs text-slate-700 hover:underline">
           ← Driver Scheduler grid
         </Link>
       </div>

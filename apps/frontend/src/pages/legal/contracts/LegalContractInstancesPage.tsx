@@ -23,7 +23,7 @@ const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string 
 
 function statusClass(status: LegalContractStatus) {
   if (status === "signed_electronically") return "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
-  if (status === "sent" || status === "viewed") return "rounded bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700";
+  if (status === "sent" || status === "viewed") return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   if (status === "expired") return "rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
   if (status === "voided") return "rounded bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";

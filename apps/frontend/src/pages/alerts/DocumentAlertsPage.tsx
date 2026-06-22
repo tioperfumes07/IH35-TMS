@@ -108,7 +108,7 @@ function InboxRow({
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to={profileLink} className="text-xs font-medium text-blue-700 hover:underline">
+          <Link to={profileLink} className="text-xs font-medium text-slate-700 hover:underline">
             Open
           </Link>
           <Button
@@ -185,14 +185,14 @@ export function DocumentAlertsPage() {
       <div className="mb-4 flex gap-2 border-b border-gray-200">
         <button
           type="button"
-          className={`px-3 py-2 text-sm font-medium ${tab === "inbox" ? "border-b-2 border-blue-600 text-blue-700" : "text-gray-600"}`}
+          className={`px-3 py-2 text-sm font-medium ${tab === "inbox" ? "border-b-2 border-slate-300 text-slate-700" : "text-gray-600"}`}
           onClick={() => setTab("inbox")}
         >
           Inbox ({pendingCount})
         </button>
         <button
           type="button"
-          className={`px-3 py-2 text-sm font-medium ${tab === "rules" ? "border-b-2 border-blue-600 text-blue-700" : "text-gray-600"}`}
+          className={`px-3 py-2 text-sm font-medium ${tab === "rules" ? "border-b-2 border-slate-300 text-slate-700" : "text-gray-600"}`}
           onClick={() => setTab("rules")}
         >
           Rules

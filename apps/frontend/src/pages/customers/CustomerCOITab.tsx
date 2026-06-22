@@ -206,7 +206,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
                   <td className="px-2 py-1.5 text-gray-700">{request.expires_at ?? "-"}</td>
                   <td className="px-2 py-1.5 text-gray-700">
                     {request.document_url ? (
-                      <a className="text-blue-700 underline" href={request.document_url} target="_blank" rel="noreferrer">
+                      <a className="text-slate-700 underline" href={request.document_url} target="_blank" rel="noreferrer">
                         Open
                       </a>
                     ) : (

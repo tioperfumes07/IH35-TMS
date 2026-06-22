@@ -110,7 +110,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white"
+          className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
         >
           + Create Fine
         </button>
@@ -141,7 +141,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
                 <td className="px-2 py-1">
                   <button
                     type="button"
-                    className="text-blue-700 underline"
+                    className="text-slate-700 underline"
                     onClick={() => setSelectedFine(row)}
                   >
                     Open

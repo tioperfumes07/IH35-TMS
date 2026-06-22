@@ -92,7 +92,7 @@ export function RunbooksIndex() {
             <div className="flex items-center justify-between gap-2">
               <a
                 href={`/${rb.docPath}`}
-                className="text-sm font-semibold text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                className="text-sm font-semibold text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
               >
                 {rb.title}
               </a>

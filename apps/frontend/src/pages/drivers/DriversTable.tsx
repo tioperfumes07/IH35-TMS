@@ -77,12 +77,12 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
                     <button
                       type="button"
                       onClick={() => onOpenProfile(row.driverId)}
-                      className="text-xs font-semibold text-sky-700 hover:underline"
+                      className="text-xs font-semibold text-slate-700 hover:underline"
                     >
                       Open profile
                     </button>
                   ) : (
-                    <Link to={`/drivers/${row.driverId}/profile`} className="text-xs font-semibold text-sky-700 hover:underline">
+                    <Link to={`/drivers/${row.driverId}/profile`} className="text-xs font-semibold text-slate-700 hover:underline">
                       Open profile
                     </Link>
                   )}

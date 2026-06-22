@@ -149,7 +149,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 </button>
                 <p className="pr-5 text-sm font-medium text-gray-800">{card.title}</p>
                 <p className="mt-1 text-xs text-gray-500">{card.body}</p>
-                <Link to={card.to} className="mt-2 inline-block text-xs font-semibold text-sky-600 hover:underline">
+                <Link to={card.to} className="mt-2 inline-block text-xs font-semibold text-slate-700 hover:underline">
                   {card.cta} →
                 </Link>
               </div>
@@ -184,7 +184,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded border border-gray-200 bg-white p-4 shadow-sm md:col-span-2 xl:col-span-1">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bank accounts</p>
-              <Link to="/banking" className="text-xs text-sky-600 hover:underline">Go to registers</Link>
+              <Link to="/banking" className="text-xs text-slate-700 hover:underline">Go to registers</Link>
             </div>
             {bankTilesQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded bg-gray-100" />
@@ -222,7 +222,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Profit &amp; Loss</p>
-              <Link to="/reports" className="text-xs text-sky-600 hover:underline">Analyze →</Link>
+              <Link to="/reports" className="text-xs text-slate-700 hover:underline">Analyze →</Link>
             </div>
             {revenueQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded bg-gray-100" />
@@ -256,7 +256,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Expenses</p>
-              <Link to="/accounting/expenses" className="text-xs text-sky-600 hover:underline">View →</Link>
+              <Link to="/accounting/expenses" className="text-xs text-slate-700 hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded bg-gray-100" />
@@ -278,7 +278,7 @@ export function QboStyleHomePage({ auth }: Props) {
                       </div>
                       <div className="mt-0.5 h-1.5 w-full rounded-full bg-gray-100">
                         <div
-                          className="h-1.5 rounded-full bg-sky-400"
+                          className="h-1.5 rounded-full bg-[#1F2A44]"
                           style={{ width: `${cat.pct}%` }}
                         />
                       </div>
@@ -293,7 +293,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Invoices</p>
-              <Link to="/accounting/invoices" className="text-xs text-sky-600 hover:underline">View →</Link>
+              <Link to="/accounting/invoices" className="text-xs text-slate-700 hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded bg-gray-100" />
@@ -313,7 +313,7 @@ export function QboStyleHomePage({ auth }: Props) {
                     </span>
                   </div>
                 </div>
-                <Link to="/reports/ar-aging" className="mt-2 block text-xs text-sky-600 hover:underline">
+                <Link to="/reports/ar-aging" className="mt-2 block text-xs text-slate-700 hover:underline">
                   View A/R aging →
                 </Link>
               </>
@@ -324,7 +324,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">My integrations</p>
-              <Link to="/accounting/qbo-sync" className="text-xs text-sky-600 hover:underline">View issues →</Link>
+              <Link to="/accounting/qbo-sync" className="text-xs text-slate-700 hover:underline">View issues →</Link>
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">

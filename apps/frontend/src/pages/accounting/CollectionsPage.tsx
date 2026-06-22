@@ -146,7 +146,7 @@ export function CollectionsPage() {
                 key={task.id}
                 type="button"
                 onClick={() => setSelectedTaskId(task.id)}
-                className={`w-full border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                className={`w-full border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
               >
                 <div className="text-sm font-medium text-gray-900">{task.customer_name ?? "Unknown customer"}</div>
                 <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-600">

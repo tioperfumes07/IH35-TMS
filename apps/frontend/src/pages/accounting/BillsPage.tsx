@@ -209,7 +209,7 @@ export function BillsPage() {
         <span className="text-gray-600">Category:</span>
         <button
           type="button"
-          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${!category ? "border-sky-600 bg-sky-50 text-sky-800" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${!category ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
           onClick={() => setCategory("")}
         >
           All
@@ -219,7 +219,7 @@ export function BillsPage() {
             key={cat}
             type="button"
             className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${
-              category === cat ? "border-sky-600 bg-sky-50 text-sky-800" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              category === cat ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => setCategory(cat)}
           >
@@ -331,7 +331,7 @@ export function BillsPage() {
                           type="button"
                           className={`rounded border px-2 py-0.5 text-[11px] font-medium ${
                             allocationBillId === bill.id
-                              ? "border-sky-600 bg-sky-50 text-sky-800"
+                              ? "border-slate-300 bg-slate-100 text-slate-700"
                               : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
                           }`}
                           onClick={() => setAllocationBillId((current) => (current === bill.id ? null : bill.id))}

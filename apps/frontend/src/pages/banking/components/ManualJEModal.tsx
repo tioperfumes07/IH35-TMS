@@ -206,7 +206,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             </div>
             <button
               type="button"
-              className="text-blue-700 underline"
+              className="text-slate-700 underline"
               onClick={() =>
                 setLines((prev) => [...prev, { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" }])
               }

@@ -121,13 +121,13 @@ function ClaimRow({ claim }: { claim: InsuranceClaim }) {
         <StatusBadge variant={claimStatusVariant(claim.status)}>{claim.status}</StatusBadge>
       </td>
       <td className="px-2 py-1.5 text-gray-700">
-        <Link className="text-blue-700 underline" to={`/safety/insurance?policy_id=${claim.policy_id}`}>
+        <Link className="text-slate-700 underline" to={`/safety/insurance?policy_id=${claim.policy_id}`}>
           {claim.policy_id.slice(0, 8)}
         </Link>
       </td>
       <td className="px-2 py-1.5 text-gray-700">
         {claim.asset_id ? (
-          <Link className="text-blue-700 underline" to={`/fleet/units/${claim.asset_id}`}>
+          <Link className="text-slate-700 underline" to={`/fleet/units/${claim.asset_id}`}>
             {claim.asset_id.slice(0, 8)}
           </Link>
         ) : (

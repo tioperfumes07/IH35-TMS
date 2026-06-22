@@ -150,7 +150,7 @@ export function CustomReportBuilder() {
             value={filterReportId}
             onChange={(e) => setFilterReportId(e.target.value)}
           />
-          <div className="mt-2 min-h-[120px] rounded border border-dashed border-blue-300 bg-blue-50/40 p-2">
+          <div className="mt-2 min-h-[120px] rounded border border-dashed border-slate-300 bg-slate-100/40 p-2">
             {selectedFields.length === 0 ? (
               <p className="text-xs text-slate-500">Drop fields here or click to add</p>
             ) : (

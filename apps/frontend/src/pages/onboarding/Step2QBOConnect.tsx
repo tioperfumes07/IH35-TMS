@@ -52,7 +52,7 @@ export function Step2QBOConnect({ companyId, value, disabled, onChange }: Props)
         type="button"
         disabled={disabled || !companyId}
         onClick={handleConnect}
-        className="rounded bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
       >
         {connected ? "Reconnect QBO" : "Connect QBO"}
       </button>

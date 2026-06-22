@@ -75,7 +75,7 @@ export function DriverScoringTab() {
                 <td className="px-2 py-1 text-right">{row.counts_by_kind.major}</td>
                 <td className="px-2 py-1 text-right">{row.counts_by_kind.minor}</td>
                 <td className="px-2 py-1">
-                  <button type="button" className="text-blue-700 underline" onClick={() => setSelectedDriverId(row.driver_id)}>
+                  <button type="button" className="text-slate-700 underline" onClick={() => setSelectedDriverId(row.driver_id)}>
                     Open
                   </button>
                 </td>

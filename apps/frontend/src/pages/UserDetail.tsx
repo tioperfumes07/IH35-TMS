@@ -231,7 +231,7 @@ export function UserDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge status={targetUser.deactivated_at ? "Inactive" : "Active"} />
-          <Link to="/users" className="text-xs text-sky-700 hover:underline">
+          <Link to="/users" className="text-xs text-slate-700 hover:underline">
             Back to users
           </Link>
         </div>
@@ -346,7 +346,7 @@ export function UserDetailPage() {
                 <div className="mt-2 flex gap-2">
                   <button
                     type="button"
-                    className="text-xs text-sky-700 hover:underline"
+                    className="text-xs text-slate-700 hover:underline"
                     onClick={() => setExpandedEventId((current) => (current === event.id ? null : event.id))}
                   >
                     {expandedEventId === event.id ? "Hide details" : "View details"}
@@ -379,8 +379,8 @@ export function UserDetailPage() {
                     <div>Recovered amount: {money(event.cost_recovered_amount)}</div>
                     <div>
                       Related:{" "}
-                      {event.related_customer_id ? <Link to={`/customers/${event.related_customer_id}`} className="text-sky-700">Customer</Link> : "Customer —"} |{" "}
-                      {event.related_driver_id ? <Link to={`/drivers/${event.related_driver_id}`} className="text-sky-700">Driver</Link> : "Driver —"} | Load:{" "}
+                      {event.related_customer_id ? <Link to={`/customers/${event.related_customer_id}`} className="text-slate-700">Customer</Link> : "Customer —"} |{" "}
+                      {event.related_driver_id ? <Link to={`/drivers/${event.related_driver_id}`} className="text-slate-700">Driver</Link> : "Driver —"} | Load:{" "}
                       {event.related_load_id ?? "Load link pending"}
                     </div>
                     {event.voided_at ? (

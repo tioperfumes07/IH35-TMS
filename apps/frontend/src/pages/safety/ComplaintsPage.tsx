@@ -60,7 +60,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           <option value="high">high</option>
           <option value="critical">critical</option>
         </SelectCombobox>
-        <button type="button" className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white" disabled={!form.respondent_uuid || !form.complaint_type_uuid || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
+        <button type="button" className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!form.respondent_uuid || !form.complaint_type_uuid || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Complaint
         </button>
       </div>

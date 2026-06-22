@@ -8,7 +8,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
 const SEVERITY_ICON: Record<HomeAttentionSeverity, { Icon: typeof Info; className: string }> = {
-  info: { Icon: Info, className: "text-blue-600" },
+  info: { Icon: Info, className: "text-slate-700" },
   warning: { Icon: AlertTriangle, className: "text-amber-600" },
   error: { Icon: AlertCircle, className: "text-orange-700" },
   critical: { Icon: ShieldAlert, className: "text-red-600" },

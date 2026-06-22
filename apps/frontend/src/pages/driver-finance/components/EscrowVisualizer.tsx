@@ -22,7 +22,7 @@ export function EscrowVisualizer({ preClause, postClause, target = 1000, onOpenT
         <div>Post-Clause: ${postClause.toFixed(2)}</div>
         <div>Forfeiture Clause: <span className="rounded bg-emerald-100 px-1 py-0.5 text-emerald-700">Active ✓</span></div>
       </div>
-      <button type="button" className="mt-2 text-blue-700 underline" onClick={onOpenTimeline}>Escrow timeline →</button>
+      <button type="button" className="mt-2 text-slate-700 underline" onClick={onOpenTimeline}>Escrow timeline →</button>
     </div>
   );
 }

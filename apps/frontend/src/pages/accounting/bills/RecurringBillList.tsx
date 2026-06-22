@@ -80,7 +80,7 @@ export function RecurringBillList() {
         </div>
         <button
           onClick={() => navigate("/accounting/bills/recurring/create")}
-          className="flex items-center gap-1.5 rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+          className="flex items-center gap-1.5 rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1F2A44]"
         >
           <Plus className="h-3.5 w-3.5" />
           Create Recurring Bill
@@ -105,7 +105,7 @@ export function RecurringBillList() {
           <p className="text-sm text-gray-500">No recurring bill templates yet.</p>
           <button
             onClick={() => navigate("/accounting/bills/recurring/create")}
-            className="mt-3 text-sm font-medium text-blue-600 hover:underline"
+            className="mt-3 text-sm font-medium text-slate-700 hover:underline"
           >
             Create your first template →
           </button>
@@ -137,7 +137,7 @@ export function RecurringBillList() {
                   <td className="px-4 py-2 text-right font-medium text-gray-900">{money(tmpl.amount)}</td>
                   <td className="px-4 py-2 text-center">
                     {tmpl.auto_post ? (
-                      <span className="text-xs font-medium text-blue-600">Yes</span>
+                      <span className="text-xs font-medium text-slate-700">Yes</span>
                     ) : (
                       <span className="text-xs text-gray-400">No</span>
                     )}
@@ -151,7 +151,7 @@ export function RecurringBillList() {
                             title="Generate bill now"
                             disabled={generateNowMutation.isPending}
                             onClick={() => generateNowMutation.mutate(tmpl.uuid)}
-                            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-blue-600 disabled:opacity-50"
+                            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-slate-700 disabled:opacity-50"
                           >
                             <Zap className="h-3.5 w-3.5" />
                           </button>

@@ -75,7 +75,7 @@ export function LoginPage() {
         <p className="mt-2 text-sm text-gray-700">Use your Google account or email and password.</p>
 
         <div className="mt-5">
-          <a href={loginHref} className="block rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
+          <a href={loginHref} className="block rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
             <Button className="w-full">Sign in with Google</Button>
           </a>
         </div>
@@ -103,7 +103,7 @@ export function LoginPage() {
               onChange={(ev) => setEmail(ev.target.value)}
               aria-invalid={emailInvalid}
               aria-describedby={emailInvalid ? "office-email-err" : undefined}
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             {emailInvalid ? (
               <p id="office-email-err" className="mt-1 text-xs text-red-700">
@@ -123,7 +123,7 @@ export function LoginPage() {
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
               aria-describedby="password-strength-help"
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             <div id="password-strength-help" className="mt-2" aria-live="polite">
               <div
@@ -150,7 +150,7 @@ export function LoginPage() {
           <div className="flex justify-end">
             <Link
               to="/login/reset"
-              className="text-sm text-blue-700 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="text-sm text-slate-700 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             >
               Forgot password?
             </Link>

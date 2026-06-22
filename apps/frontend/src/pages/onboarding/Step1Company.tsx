@@ -113,7 +113,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
               disabled={disabled}
               onClick={() => toggleState(code)}
               className={`rounded px-2 py-0.5 text-xs ${
-                localStates.includes(code) ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+                localStates.includes(code) ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700"
               }`}
             >
               {code}

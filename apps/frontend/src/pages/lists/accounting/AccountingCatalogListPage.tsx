@@ -116,10 +116,10 @@ export function AccountingCatalogListPage({
       </div>
 
       {bulkEnabled && selectedIds.size > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 rounded border border-blue-200 bg-blue-50 p-2 text-sm">
-          <span className="font-semibold text-blue-800">{selectedIds.size} selected</span>
+        <div className="flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-100 p-2 text-sm">
+          <span className="font-semibold text-slate-700">{selectedIds.size} selected</span>
           {bulkBar!({ selectedIds: [...selectedIds], rows, clearSelection, refetch: () => void query.refetch() })}
-          <button type="button" className="ml-auto text-xs font-semibold text-blue-700 underline" onClick={clearSelection}>
+          <button type="button" className="ml-auto text-xs font-semibold text-slate-700 underline" onClick={clearSelection}>
             Clear
           </button>
         </div>

@@ -172,7 +172,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                     <td className="px-2 py-1">{String(row.subject_type ?? "—")}</td>
                     <td className="px-2 py-1">{String(row.resolution_status ?? "unresolved")}</td>
                     <td className="px-2 py-1">
-                      <button type="button" className="text-blue-700 underline" onClick={() => setSelected(row)}>
+                      <button type="button" className="text-slate-700 underline" onClick={() => setSelected(row)}>
                         Open
                       </button>
                     </td>
@@ -211,7 +211,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                   <td className="px-2 py-1">
                     <button
                       type="button"
-                      className="text-blue-700 underline"
+                      className="text-slate-700 underline"
                       onClick={() => {
                         setEditingRule(rule);
                         setDraftRule({

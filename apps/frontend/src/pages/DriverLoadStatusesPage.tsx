@@ -145,7 +145,7 @@ export function DriverLoadStatusesPage() {
               key={status.id}
               id={`driver-status-${status.id}`}
               className={`rounded border bg-white p-2.5 ${
-                highlightId === status.id ? "border-blue-300 ring-1 ring-blue-200" : "border-gray-200"
+                highlightId === status.id ? "border-slate-300 ring-1 ring-slate-400" : "border-gray-200"
               }`}
             >
               <div className="flex min-h-8 items-start justify-between gap-2">
@@ -153,7 +153,7 @@ export function DriverLoadStatusesPage() {
                   <div className="flex items-center gap-2">
                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{status.code}</span>
                     <span className="text-[13px] font-semibold text-gray-900">{status.name}</span>
-                    <span className="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">{phaseLabel[status.phase]}</span>
+                    <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{phaseLabel[status.phase]}</span>
                     <span
                       className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
                         status.is_active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"

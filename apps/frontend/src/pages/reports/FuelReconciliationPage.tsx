@@ -207,10 +207,10 @@ export function FuelReconciliationPage() {
 
           <div className="rounded border border-gray-200 bg-white p-3">
             <div className="no-print mb-2 flex gap-2 border-b border-gray-100 pb-2">
-              <button type="button" className={`text-sm font-semibold ${tab === "card" ? "text-blue-700" : "text-gray-500"}`} onClick={() => setTab("card")}>
+              <button type="button" className={`text-sm font-semibold ${tab === "card" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("card")}>
                 Unmatched Card Transactions
               </button>
-              <button type="button" className={`text-sm font-semibold ${tab === "wo" ? "text-blue-700" : "text-gray-500"}`} onClick={() => setTab("wo")}>
+              <button type="button" className={`text-sm font-semibold ${tab === "wo" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("wo")}>
                 Unmatched WO Entries
               </button>
             </div>

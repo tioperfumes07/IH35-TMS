@@ -57,7 +57,7 @@ export function LoginResetRequestPage() {
               onChange={(ev) => setEmail(ev.target.value)}
               aria-invalid={emailInvalid}
               aria-describedby={emailInvalid ? "reset-email-err" : undefined}
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             {emailInvalid ? (
               <p id="reset-email-err" className="mt-1 text-xs text-red-700">
@@ -80,7 +80,7 @@ export function LoginResetRequestPage() {
           </Button>
         </form>
         <p className="mt-4 text-center text-sm">
-          <Link to="/login" className="text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+          <Link to="/login" className="text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
             Back to sign in
           </Link>
         </p>
