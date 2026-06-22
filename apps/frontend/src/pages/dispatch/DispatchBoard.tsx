@@ -1,6 +1,23 @@
 import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
+
+// Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
+// also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
+function renderCustomerCell(load: DispatchLoadRow): ReactNode {
+  if (!load.customer_id || !load.customer_name) return load.customer_name ?? "—";
+  return (
+    <Link
+      to={`/customers/${load.customer_id}`}
+      onClick={(e) => e.stopPropagation()}
+      className="text-slate-700 hover:underline"
+      data-testid="loads-customer-link"
+    >
+      {load.customer_name}
+    </Link>
+  );
+}
 import { listUnitsWithoutLoad, listActiveLoadTriSignals, getDispatchLoadPositions, type TriSignalRow, type UnitsWithoutLoad } from "../../api/dispatch";
 import { getFleetLocationHos } from "../../api/reports";
 import type { DispatchListProps } from "../../components/dispatch/DispatchList";
@@ -645,7 +662,7 @@ export function DispatchBoard({
       ),
     })),
     { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
-    { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
+    { key: "customer", header: "Customer", cell: renderCustomerCell },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
     { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
     { key: "delivery", header: "Delivery", cell: (load) => renderDeliveryCell(load) },
@@ -917,7 +934,7 @@ export function DispatchBoard({
                       header: "Load",
                       cell: (load) => <span className="code-cell font-medium">{load.load_number}</span>,
                     },
-                    { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
+                    { key: "customer", header: "Customer", cell: renderCustomerCell },
                     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
                     { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
                     { key: "doc", header: "Doc-Compliance", cell: (load) => <DocComplianceCell load={load} /> },
@@ -986,7 +1003,7 @@ export function DispatchBoard({
                       header: "Load",
                       cell: (load) => <span className="code-cell font-medium">{load.load_number}</span>,
                     },
-                    { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
+                    { key: "customer", header: "Customer", cell: renderCustomerCell },
                     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
                     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
                     { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
