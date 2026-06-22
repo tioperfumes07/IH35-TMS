@@ -1,4 +1,12 @@
 export const colors = {
+  // §7 LOCKED palette (CLAUDE.md §7) — the canonical accent/emphasis tokens. Active states
+  // (active tab, active sort, active page, selection, card emphasis) use navy/slate — NEVER blue/
+  // purple/pink. These supersede the package's #185fa5 accent (§7 governs). Guarded by
+  // verify:section7-palette-maintenance.
+  navy: "#1F2A44",
+  navyDk: "#0F1729",
+  slate: "#334155",
+  slateLt: "#64748B",
   topbarBg: "#0F1219",
   sidebarBg: "#1B2333",
   sidebarBorder: "#2A3242",
