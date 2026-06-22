@@ -40,15 +40,36 @@ describe("DispatchKanban — Awaiting-assignment truck card opens Book", () => {
       />
     );
 
-    // The card surfaces the unit and an explicit "+ Book load" affordance (no longer a bare draggable card).
+    // The card surfaces the unit and an explicit "+ Book load" <button> (no longer a bare draggable card).
     expect(screen.getByText("T171")).toBeInTheDocument();
-    const card = screen.getByTestId("awaiting-truck-card-unit:u-171");
-    expect(card).toHaveTextContent("+ Book load");
+    const bookButton = screen.getByTestId("awaiting-truck-book-unit:u-171");
+    expect(bookButton.tagName).toBe("BUTTON");
+    expect(bookButton).toHaveTextContent("+ Book load");
 
-    await user.click(card);
-
-    // Clicking books FOR this truck (bare id, "unit:" prefix stripped) — and does NOT open a load drawer.
+    // Clicking the explicit button books FOR this truck (bare id, "unit:" prefix stripped) — not a load drawer.
+    await user.click(bookButton);
     expect(onBookForUnit).toHaveBeenCalledTimes(1);
+    expect(onBookForUnit).toHaveBeenCalledWith("u-171");
+    expect(onLoadClick).not.toHaveBeenCalled();
+  });
+
+  it("also opens Book when the card body (outside the button) is clicked", async () => {
+    const onBookForUnit = vi.fn();
+    const onLoadClick = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <DispatchKanban
+        loads={[]}
+        awaitingTrucks={[truck]}
+        loading={false}
+        onLoadClick={onLoadClick}
+        onBookForUnit={onBookForUnit}
+        onStatusDrop={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByTestId("awaiting-truck-card-unit:u-171"));
     expect(onBookForUnit).toHaveBeenCalledWith("u-171");
     expect(onLoadClick).not.toHaveBeenCalled();
   });
