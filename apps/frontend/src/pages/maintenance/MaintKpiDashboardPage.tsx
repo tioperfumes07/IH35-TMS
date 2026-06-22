@@ -39,7 +39,7 @@ function MiniSparkline({ points, testId }: { points: MaintKpiSparkPoint[]; testI
     })
     .join(" ");
   return (
-    <svg width={width} height={height} className="text-sky-600" data-testid={testId} aria-hidden>
+    <svg width={width} height={height} className="text-slate-600" data-testid={testId} aria-hidden>
       <polyline fill="none" stroke="currentColor" strokeWidth="2" points={coords} />
     </svg>
   );
@@ -67,7 +67,7 @@ function KpiTile({
       type="button"
       onClick={onSelect}
       className={`rounded border px-3 py-2 text-left transition ${
-        active ? "border-sky-500 bg-sky-50 ring-1 ring-sky-300" : "border-gray-200 bg-white hover:border-sky-300"
+        active ? "border-slate-500 bg-slate-50 ring-1 ring-slate-300" : "border-gray-200 bg-white hover:border-slate-300"
       }`}
       data-testid={testId}
     >
@@ -170,7 +170,7 @@ export function MaintKpiDashboardPage() {
           <h2 className="text-base font-semibold text-gray-900">Maintenance KPI Dashboard</h2>
           <p className="text-xs text-gray-500">
             Downtime, MTBF, CPM, cost-per-truck, and PM compliance with drill-down. Cross-link:{" "}
-            <Link to="/reports/maintenance-cost-per-unit" className="font-semibold text-sky-700 underline">
+            <Link to="/reports/maintenance-cost-per-unit" className="font-semibold text-slate-700 underline">
               maintenance cost per unit report
             </Link>
           </p>
@@ -228,22 +228,22 @@ export function MaintKpiDashboardPage() {
         ))}
       </div>
 
-      <section className="rounded border border-indigo-200 bg-indigo-50 p-3" data-testid="maint-kpi-pm-hub">
-        <div className="text-xs font-semibold uppercase text-indigo-900">PM compliance hub</div>
-        <p className="mt-1 text-xs text-indigo-800">
+      <section className="rounded border border-slate-200 bg-slate-50 p-3" data-testid="maint-kpi-pm-hub">
+        <div className="text-xs font-semibold uppercase text-slate-900">PM compliance hub</div>
+        <p className="mt-1 text-xs text-slate-800">
           Manage schedules and the auto-WO engine from linked maintenance surfaces.
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
           <Link
             to="/maintenance/pm-auto-engine"
-            className="rounded bg-indigo-900 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded bg-slate-900 px-3 py-1 text-xs font-semibold text-white"
             data-testid="maint-kpi-link-pm-engine"
           >
             PM auto engine
           </Link>
           <Link
             to="/maintenance/pm-schedule"
-            className="rounded border border-indigo-400 bg-white px-3 py-1 text-xs font-semibold text-indigo-900"
+            className="rounded border border-slate-400 bg-white px-3 py-1 text-xs font-semibold text-slate-900"
             data-testid="maint-kpi-link-pm-schedule"
           >
             PM schedule

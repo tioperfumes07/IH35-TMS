@@ -54,7 +54,7 @@ export function ArrivingSoonFilterBar({
           Include non-yard destinations
         </label>
       </div>
-      <div className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-900">
+      <div className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-900">
         {counts.total ?? 0} units arriving · {counts.severe ?? 0} severe · {counts.warning ?? 0} warning · {counts.already_arrived ?? 0} already at yard
       </div>
     </div>

@@ -78,7 +78,7 @@ export function PreFlightDvirQueue() {
             onClick={() => setTab(entry.key)}
             className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
               tab === entry.key
-                ? "border-blue-600 text-blue-700"
+                ? "border-slate-600 text-slate-700"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -120,7 +120,7 @@ export function PreFlightDvirQueue() {
                   {row.auto_wo_id ? (
                     <Link
                       to={`/maintenance/work-orders/${row.auto_wo_id}`}
-                      className="text-blue-700 underline"
+                      className="text-slate-700 underline"
                       data-testid={`dvir-wo-link-${row.id}`}
                     >
                       View WO

@@ -35,13 +35,20 @@ function walk(dir) {
   return out;
 }
 
+// Tailwind accent classes are §7 drift too — maintenance views use navy/slate only. Forbid any
+// blue/indigo/violet/purple/fuchsia/pink/sky/cyan utility class on a color-bearing property.
+const FORBIDDEN_CLASS = /\b(bg|text|border|ring|from|to|via|divide|outline|decoration|placeholder|accent|fill|stroke)-(blue|indigo|violet|purple|fuchsia|pink|sky|cyan)-\d{2,3}\b/;
+
 const files = ROOTS.flatMap(walk);
 const hits = [];
 for (const f of files) {
-  const src = readFileSync(f, "utf8").toLowerCase();
+  const raw = readFileSync(f, "utf8");
+  const src = raw.toLowerCase();
   for (const hex of FORBIDDEN) {
     if (src.includes(hex)) hits.push(`${f}: ${hex}`);
   }
+  const cls = raw.match(FORBIDDEN_CLASS);
+  if (cls) hits.push(`${f}: class ${cls[0]}`);
 }
 
 if (hits.length) {
@@ -50,4 +57,4 @@ if (hits.length) {
       hits.join("\n  ")
   );
 }
-console.log(`OK verify-section7-palette-maintenance: ${files.length} maintenance files scanned, no non-§7 accent hex.`);
+console.log(`OK verify-section7-palette-maintenance: ${files.length} maintenance files scanned, no non-§7 accent hex or class.`);

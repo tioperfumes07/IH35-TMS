@@ -47,7 +47,7 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
 
       <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
         {canConvert ? (
-          <button type="button" className="rounded border border-blue-300 px-2 py-1 text-blue-700" onClick={() => onConvert(card)}>
+          <button type="button" className="rounded border border-slate-300 px-2 py-1 text-slate-700" onClick={() => onConvert(card)}>
             Convert to WO
           </button>
         ) : (

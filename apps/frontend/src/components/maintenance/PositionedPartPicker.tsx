@@ -81,7 +81,7 @@ export function PositionedPartPicker({
             disabled={disabled}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               activeView === view
-                ? "bg-blue-600 text-white"
+                ? "bg-slate-600 text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
@@ -165,14 +165,14 @@ export function PositionedPartPicker({
               return (
                 <span
                   key={code}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-md"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-800 text-sm rounded-md"
                 >
                   {code}
-                  {pos && <span className="text-blue-600">- {pos.name}</span>}
+                  {pos && <span className="text-slate-600">- {pos.name}</span>}
                   {!disabled && (
                     <button
                       onClick={() => handlePositionToggle(code)}
-                      className="ml-1 text-blue-600 hover:text-blue-800"
+                      className="ml-1 text-slate-600 hover:text-slate-800"
                     >
                       ×
                     </button>
@@ -202,7 +202,7 @@ export function PositionedPartPicker({
                 key={pos.code}
                 className={`border-t cursor-pointer transition-colors ${
                   selectedPositions.includes(pos.code)
-                    ? "bg-blue-50"
+                    ? "bg-slate-50"
                     : "hover:bg-gray-50"
                 }`}
                 onClick={() => handlePositionToggle(pos.code)}

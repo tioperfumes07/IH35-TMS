@@ -44,7 +44,7 @@ export function VendorDetailPage() {
             </dl>
             <p className="mt-2 text-[11px] text-gray-500">
               Catalog record in{" "}
-              <Link className="text-blue-600 underline" to="/lists/maintenance/vendors">
+              <Link className="text-slate-600 underline" to="/lists/maintenance/vendors">
                 Lists & Catalogs / Maintenance Vendors
               </Link>
               .

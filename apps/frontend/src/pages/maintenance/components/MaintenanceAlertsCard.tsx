@@ -68,7 +68,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId }: Props) {
                 </button>
                 <button
                   type="button"
-                  className="rounded bg-blue-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+                  className="rounded bg-slate-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-slate-700"
                   disabled={scheduleMutation.isPending}
                   onClick={() => {
                     const woId = window.prompt("Enter work order ID to link this PM alert:");
