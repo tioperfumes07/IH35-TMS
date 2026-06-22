@@ -15,6 +15,11 @@ const fail = (m) => { console.error(`FAIL verify-section7-palette-maintenance: $
 const ROOTS = [
   "apps/frontend/src/pages",
   "apps/frontend/src/components",
+  // Remaining UI-bearing dirs: the customer portal, the layout shell (top bar / sidebar — §7 chrome),
+  // and lib/ class-bundle helpers (vendorCategories chip colors). Closes the last frontend gap.
+  "apps/frontend/src/portal",
+  "apps/frontend/src/layouts",
+  "apps/frontend/src/lib",
 ];
 
 // Non-§7 accent hexes (blues / indigos / violets / pinks). §7 navy/slate (#1F2A44, #0F1729, #334155,
