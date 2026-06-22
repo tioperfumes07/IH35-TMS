@@ -30,17 +30,22 @@ function loadSpanDays(load: PlannerLoadEvent, days: string[]): { startIdx: numbe
 }
 
 async function fetchLoadsForRange(operatingCompanyId: string, rangeStart: string, rangeEnd: string): Promise<PlannerLoadEvent[]> {
+  // Enumerate the weeks first (bounded: the planner range is 7–40 days → ≤6 weeks), then fetch them in
+  // PARALLEL. The previous code awaited each week sequentially inside the loop, so the planner stalled
+  // for the sum of all round-trips on every load — the "Loads Planner hangs on load" symptom.
+  const weekStarts: string[] = [];
+  for (let weekStart = rangeStart; weekStart <= rangeEnd; weekStart = addDaysIso(weekStart, 7)) {
+    weekStarts.push(weekStart);
+  }
+  const payloads = await Promise.all(weekStarts.map((w) => getDispatchPlannerWeek(operatingCompanyId, w)));
   const seen = new Map<string, PlannerLoadEvent>();
-  let weekStart = rangeStart;
-  while (weekStart <= rangeEnd) {
-    const payload = await getDispatchPlannerWeek(operatingCompanyId, weekStart);
+  for (const payload of payloads) {
     for (const load of payload.loads) {
       const day = toDayKey(load.start_at);
       if (day && day >= rangeStart && day <= rangeEnd) {
         seen.set(load.id, load);
       }
     }
-    weekStart = addDaysIso(weekStart, 7);
   }
   return [...seen.values()].sort((a, b) => a.start_at.localeCompare(b.start_at));
 }
