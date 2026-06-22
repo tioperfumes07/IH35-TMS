@@ -32,9 +32,9 @@ export function vendorCategoryLabel(code: string | null | undefined): string {
 export function vendorCategoryChipClasses(code: string | null | undefined): string {
   switch (code) {
     case "diesel":
-      return "bg-blue-100 text-blue-900 border-blue-200";
+      return "bg-slate-100 text-slate-900 border-slate-200";
     case "def":
-      return "bg-cyan-100 text-cyan-900 border-cyan-200";
+      return "bg-green-100 text-green-900 border-green-200";
     case "repairs_maintenance":
       return "bg-orange-100 text-orange-900 border-orange-200";
     case "road_service":
@@ -42,13 +42,13 @@ export function vendorCategoryChipClasses(code: string | null | undefined): stri
     case "meals_entertainment":
       return "bg-amber-100 text-amber-950 border-amber-200";
     case "driver":
-      return "bg-purple-100 text-purple-900 border-purple-200";
+      return "bg-zinc-100 text-zinc-900 border-zinc-200";
     case "washout":
-      return "bg-sky-100 text-sky-900 border-sky-200";
+      return "bg-gray-100 text-gray-900 border-gray-200";
     case "lumpers":
       return "bg-lime-100 text-lime-900 border-lime-200";
     case "insurance":
-      return "bg-indigo-100 text-indigo-900 border-indigo-200";
+      return "bg-stone-100 text-stone-900 border-stone-200";
     case "tolls":
       return "bg-teal-100 text-teal-900 border-teal-200";
     case "parking":
@@ -58,7 +58,7 @@ export function vendorCategoryChipClasses(code: string | null | undefined): stri
     case "taxes":
       return "bg-rose-100 text-rose-900 border-rose-200";
     case "professional_services":
-      return "bg-violet-100 text-violet-900 border-violet-200";
+      return "bg-neutral-100 text-neutral-900 border-neutral-200";
     case "utilities":
       return "bg-emerald-100 text-emerald-900 border-emerald-200";
     case "rent":
@@ -66,7 +66,7 @@ export function vendorCategoryChipClasses(code: string | null | undefined): stri
     case "office_supplies":
       return "bg-neutral-200 text-neutral-900 border-neutral-300";
     case "software":
-      return "bg-fuchsia-100 text-fuchsia-900 border-fuchsia-200";
+      return "bg-zinc-200 text-zinc-900 border-zinc-300";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }

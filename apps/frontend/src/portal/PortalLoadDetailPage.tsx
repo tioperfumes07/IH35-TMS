@@ -121,7 +121,7 @@ export function PortalLoadDetailPage() {
             <ol className="space-y-4 border-l-2 border-slate-200 pl-4">
               {detail.milestones.map((m) => (
                 <li key={m.id} className="relative">
-                  <span className="absolute -left-[1.35rem] top-1 h-3 w-3 rounded-full bg-blue-600" aria-hidden />
+                  <span className="absolute -left-[1.35rem] top-1 h-3 w-3 rounded-full bg-[#1F2A44]" aria-hidden />
                   <p className="font-medium capitalize text-slate-900">{milestoneLabel(m.milestone_type)}</p>
                   <p className="text-xs text-slate-500">{new Date(m.occurred_at).toLocaleString()}</p>
                 </li>

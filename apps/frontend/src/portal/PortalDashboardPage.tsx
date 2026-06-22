@@ -45,7 +45,7 @@ export function PortalDashboardPage() {
             {(loadsQuery.data ?? []).map((load) => (
               <tr key={load.id} className="border-t border-slate-100">
                 <td className="px-4 py-3">
-                  <Link to={`/portal/loads/${load.id}`} className="font-medium text-blue-700 hover:underline">
+                  <Link to={`/portal/loads/${load.id}`} className="font-medium text-slate-700 hover:underline">
                     {load.load_number}
                   </Link>
                 </td>
