@@ -395,6 +395,7 @@ import { registerAdminObservabilityRoutes } from "./admin/observability.routes.j
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
 import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/routes.js";
 import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
+import { registerBillGlDraftRoutes } from "./accounting/bill-gl-draft.routes.js";
 import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
 import { registerGeocodingRoutes } from "./integrations/trimble/geocoding.routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
@@ -774,6 +775,7 @@ async function main() {
   await registerHomeWidgetRoutes(app);
   await registerOwnerTodaysAttentionRoutes(app);
   await registerAccountingRoleHomeRoutes(app);
+  await registerBillGlDraftRoutes(app);
   await registerSafetyOfficerRoleHomeRoutes(app);
   await registerDriverManagerRoleHomeRoutes(app);
   await registerReportsRoutes(app);
