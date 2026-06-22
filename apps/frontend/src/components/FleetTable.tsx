@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
 import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection } from "./bulk";
@@ -26,6 +26,10 @@ export type FleetRow = {
   deactivated_at?: string | null;
   city?: string | null; // AUTO-05: live location (reverse-geo) merged from /telematics/fleet-location-hos
   state?: string | null;
+  // Keystone: live maintenance status merged from /maintenance/fleet-table/rows (owner-company units).
+  odometer_mi?: number | null;
+  next_due_odometer?: number | null;
+  open_wo_count?: number | null;
 };
 
 export type SoftDeleteFilter = "active" | "inactive" | "all";
@@ -35,11 +39,18 @@ type Props = {
   rows: FleetRow[];
   softDeleteFilter: SoftDeleteFilter;
   onSoftDeleteFilterChange: (value: SoftDeleteFilter) => void;
+  /**
+   * Keystone opt-in (Maintenance fleet-table ONLY). When true, render the 3 maintenance columns
+   * (Odometer · Next PM · Open WO), the Unit <Link>, and the CSV export. /fleet (FleetHomePage) does
+   * NOT pass this → it renders IDENTICALLY to before (8 registry cols + Edit, Unit plain text, row-click).
+   */
+  showMaintenanceColumns?: boolean;
 };
 
 const FLEET_SELECTION_CAP = 100;
 
 // Column registry for the gear/column-chooser. "Unit" is always visible (anchor column).
+// This is the BASE set rendered everywhere (incl. /fleet) — unchanged from before the keystone.
 const FLEET_COLUMNS: TableColumn[] = [
   { key: "unit_number", label: "Unit", alwaysVisible: true },
   { key: "vin", label: "VIN" },
@@ -50,6 +61,18 @@ const FLEET_COLUMNS: TableColumn[] = [
   { key: "location", label: "Location" },
   { key: "dot_oo", label: "DOT O/O" },
 ];
+
+// Keystone maintenance columns — inserted before DOT O/O ONLY when showMaintenanceColumns is set.
+const FLEET_MAINT_COLUMNS: TableColumn[] = [
+  { key: "odometer", label: "Odometer" },
+  { key: "next_pm", label: "Next PM" },
+  { key: "open_wo", label: "Open WO" },
+];
+
+function fmtMiles(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return `${Math.round(value).toLocaleString()} mi`;
+}
 
 function fleetLocationText(row: FleetRow): string {
   return [row.city, row.state].filter(Boolean).join(", ");
@@ -90,13 +113,29 @@ function fleetSortValue(row: FleetRow, key: string): string | number | null {
     case "year": return row.year != null ? Number(row.year) : null;
     case "status": return row.status ?? null;
     case "location": return fleetLocationText(row) || null;
+    case "odometer": return row.odometer_mi ?? null;
+    case "next_pm": return row.next_due_odometer ?? null;
+    case "open_wo": return row.open_wo_count ?? null;
     case "dot_oo": return row.kind === "trailer" ? null : row.is_oos ? 1 : 0;
     default: return null;
   }
 }
 
-export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftDeleteFilterChange }: Props) {
+export function FleetTable({
+  operatingCompanyId,
+  rows,
+  softDeleteFilter,
+  onSoftDeleteFilterChange,
+  showMaintenanceColumns = false,
+}: Props) {
   const navigate = useNavigate();
+
+  // Active column set: base everywhere; maintenance columns inserted before DOT O/O only when opted in.
+  const columns = useMemo(() => {
+    if (!showMaintenanceColumns) return FLEET_COLUMNS;
+    const dotIdx = FLEET_COLUMNS.findIndex((c) => c.key === "dot_oo");
+    return [...FLEET_COLUMNS.slice(0, dotIdx), ...FLEET_MAINT_COLUMNS, ...FLEET_COLUMNS.slice(dotIdx)];
+  }, [showMaintenanceColumns]);
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
@@ -127,8 +166,9 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
 
   const table = useTableController<FleetRow>({
     rows: listFiltered,
-    columns: FLEET_COLUMNS,
-    tableKey: "fleet",
+    columns,
+    // Separate persisted column prefs for the maintenance view so /fleet's stored prefs stay identical.
+    tableKey: showMaintenanceColumns ? "fleet-maint" : "fleet",
     searchText: fleetSearchText,
     sortValue: fleetSortValue,
     defaultPageSize: 50,
@@ -307,6 +347,37 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
 
   const isVisible = (key: string) => table.isColumnVisible(key);
 
+  // Universal-list CSV export: the full filtered+sorted set, visible columns only (exportFilename=fleet-table).
+  const exportCsv = useCallback(() => {
+    const cols = columns.filter((c) => table.isColumnVisible(c.key));
+    const cell = (row: FleetRow, key: string): string => {
+      switch (key) {
+        case "unit_number": return String(row.unit_number ?? row.id ?? "");
+        case "vin": return String(row.vin ?? "");
+        case "type": return displayType(row);
+        case "make_model": return `${row.make ?? ""} ${row.model ?? ""}`.trim();
+        case "year": return String(row.year ?? "");
+        case "status": return String(row.status ?? "");
+        case "location": return fleetLocationText(row);
+        case "odometer": return row.odometer_mi != null ? String(Math.round(row.odometer_mi)) : "";
+        case "next_pm": return row.next_due_odometer != null ? String(row.next_due_odometer) : "";
+        case "open_wo": return row.open_wo_count != null ? String(row.open_wo_count) : "";
+        case "dot_oo": return row.kind === "trailer" ? "" : row.is_oos ? "Yes" : "No";
+        default: return "";
+      }
+    };
+    const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const header = cols.map((c) => esc(c.label)).join(",");
+    const body = table.filtered.map((row) => cols.map((c) => esc(cell(row, c.key))).join(",")).join("\n");
+    const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fleet-table.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [table, columns]);
+
   return (
     <div className="space-y-2">
       <TableControls
@@ -315,7 +386,7 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
         searchPlaceholder="Search Unit #, VIN, Make/Model…"
         filteredCount={table.filteredCount}
         totalCount={rows.length}
-        columns={FLEET_COLUMNS}
+        columns={columns}
         hidden={table.hidden}
         onToggleColumn={table.toggleColumn}
         pageSize={table.pageSize}
@@ -355,6 +426,16 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
+        {showMaintenanceColumns ? (
+          <button
+            type="button"
+            aria-label="Export CSV"
+            className="h-8 rounded border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
+            onClick={exportCsv}
+          >
+            ⤓ Export
+          </button>
+        ) : null}
       </TableControls>
 
       <BulkActionBar
@@ -414,7 +495,7 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
                       ariaLabel="Select all units on this page"
                     />
                   </th>
-                  {FLEET_COLUMNS.filter((c) => isVisible(c.key)).map((c) => (
+                  {columns.filter((c) => isVisible(c.key)).map((c) => (
                     <TableHeaderCell
                       key={c.key}
                       columnKey={c.key}
@@ -444,7 +525,15 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
                         onChange={() => selectCtx.toggle(row.id)}
                       />
                     </td>
-                    <td className="px-2 py-1">{String(row.unit_number ?? row.id ?? "—")}</td>
+                    {showMaintenanceColumns ? (
+                      <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
+                        <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
+                          {String(row.unit_number ?? row.id ?? "—")}
+                        </Link>
+                      </td>
+                    ) : (
+                      <td className="px-2 py-1">{String(row.unit_number ?? row.id ?? "—")}</td>
+                    )}
                     {isVisible("vin") ? <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td> : null}
                     {isVisible("type") ? <td className="truncate px-2 py-1">{displayType(row)}</td> : null}
                     {isVisible("make_model") ? (
@@ -453,6 +542,17 @@ export function FleetTable({ operatingCompanyId, rows, softDeleteFilter, onSoftD
                     {isVisible("year") ? <td className="px-2 py-1">{String(row.year ?? "—")}</td> : null}
                     {isVisible("status") ? <td className="px-2 py-1">{String(row.status ?? "—")}</td> : null}
                     {isVisible("location") ? <td className="truncate px-2 py-1 text-xs text-slate-700">{fleetLocationText(row) || "—"}</td> : null}
+                    {showMaintenanceColumns && isVisible("odometer") ? <td className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi)}</td> : null}
+                    {showMaintenanceColumns && isVisible("next_pm") ? <td className="px-2 py-1 tabular-nums">{fmtMiles(row.next_due_odometer)}</td> : null}
+                    {showMaintenanceColumns && isVisible("open_wo") ? (
+                      <td className="px-2 py-1 tabular-nums">
+                        {row.open_wo_count != null && row.open_wo_count > 0 ? (
+                          <span className="font-semibold text-slate-800">{row.open_wo_count}</span>
+                        ) : (
+                          <span className="text-gray-400">{row.kind === "trailer" ? "—" : "0"}</span>
+                        )}
+                      </td>
+                    ) : null}
                     {isVisible("dot_oo") ? (
                       <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
                     ) : null}

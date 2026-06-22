@@ -197,25 +197,50 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     const companyId = parsed.data.operating_company_id;
 
     const rows = await withCompany(user.uuid, companyId, async (client) => {
+      // Fleet-table keystone: enrich each unit with LIVE maintenance status (additive columns).
+      // - odometer_mi  : latest Samsara odometer (telematics.vehicle_latest_position, #1289)
+      // - next_due_odometer : nearest active PM due-mileage (maintenance.pm_schedules)
+      // - open_wo_count : open work orders (maintenance.work_orders, not complete/cancelled)
+      // Each source is guarded by relationExists so envs without the table still return the base row.
+      const [hasVlp, hasPm, hasWo] = await Promise.all([
+        relationExists(client, "telematics.vehicle_latest_position"),
+        relationExists(client, "maintenance.pm_schedules"),
+        relationExists(client, "maintenance.work_orders"),
+      ]);
+      const odoExpr = hasVlp
+        ? `(SELECT vlp.odometer_mi FROM telematics.vehicle_latest_position vlp
+             WHERE vlp.unit_id = u.id AND vlp.operating_company_id = $1::uuid)`
+        : `NULL::double precision`;
+      const pmExpr = hasPm
+        ? `(SELECT MIN(ps.next_due_odometer) FROM maintenance.pm_schedules ps
+             WHERE ps.unit_id = u.id AND ps.is_active AND ps.next_due_odometer IS NOT NULL)`
+        : `NULL::int`;
+      const woExpr = hasWo
+        ? `(SELECT COUNT(*) FROM maintenance.work_orders wo
+             WHERE wo.unit_id = u.id AND wo.status NOT IN ('complete', 'cancelled'))`
+        : `0`;
       const res = await client.query(
         `
           SELECT
-            id,
-            unit_number,
-            vin,
-            make,
-            model,
-            year,
-            status,
-            is_oos,
-            oos_since,
-            oos_reason,
-            qbo_vendor_id,
-            samsara_vehicle_id
-          FROM mdata.units
-          WHERE owner_company_id = $1::uuid
-            AND deactivated_at IS NULL
-          ORDER BY unit_number ASC
+            u.id,
+            u.unit_number,
+            u.vin,
+            u.make,
+            u.model,
+            u.year,
+            u.status,
+            u.is_oos,
+            u.oos_since,
+            u.oos_reason,
+            u.qbo_vendor_id,
+            u.samsara_vehicle_id,
+            ${odoExpr} AS odometer_mi,
+            ${pmExpr} AS next_due_odometer,
+            ${woExpr}::int AS open_wo_count
+          FROM mdata.units u
+          WHERE u.owner_company_id = $1::uuid
+            AND u.deactivated_at IS NULL
+          ORDER BY u.unit_number ASC
           LIMIT 500
         `,
         [companyId]
