@@ -7,6 +7,7 @@ export const colors = {
   navyDk: "#0F1729",
   slate: "#334155",
   slateLt: "#64748B",
+  accentTint: "#EAECF1", // §7 active-state light tint (selected row / active fill) — replaces light-blue
   topbarBg: "#0F1219",
   sidebarBg: "#1B2333",
   sidebarBorder: "#2A3242",
