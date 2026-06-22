@@ -28,6 +28,9 @@ const REQUIRED_BULK_FILES = [
 const BULK_MARKERS = [
   "useBulkSelection",
   "BulkSelectableTable",
+  // ParityTable's built-in bulk-select surface (selectable + batchActions renders the bulk-action bar).
+  // Proven by ParityTable.test "supports selection → batch bar". A valid bulk mechanism, not an exemption.
+  "batchActions",
   "from \"../../hooks/useBulkSelection\"",
   "from '../../hooks/useBulkSelection'",
   "from \"../hooks/useBulkSelection\"",
