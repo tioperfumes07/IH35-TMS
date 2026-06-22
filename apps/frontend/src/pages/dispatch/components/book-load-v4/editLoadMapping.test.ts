@@ -23,6 +23,10 @@ const baseLoad = {
   detention_expected_y_n: true,
   detention_expected_hours: 2,
   miles_practical: 500,
+  commodity: "STEEL COILS",
+  cargo_weight_lbs: 42000,
+  reefer_setpoint_temp_f: 34,
+  trip_type: "NB",
   stops: [
     { id: "s1", load_id: "load-1", sequence_number: 1, stop_type: "pickup", city: "Laredo", state: "TX", country: "USA", address_line1: "1 A", scheduled_arrival_at: null, status: "pending", notes: null, created_at: "", updated_at: "", gate_dock_text: "Dock 4" },
   ],
@@ -56,11 +60,50 @@ describe("editLoadMapping — anti-data-loss (GUARD #5)", () => {
     expect(Object.keys(body)).toEqual(["operating_company_id"]);
   });
 
-  it("commodity is never emitted even if present in values + dirty (not in the editable set)", () => {
-    const values = { ...buildEditPrefill(baseLoad), commodity: "STEEL", notes: "changed" };
-    const body = buildEditPatchBody(values, { commodity: true, notes: true } as Record<string, unknown>, OCID);
+  it("Block 7: commodity/weight/reefer/trip_type ARE emitted when dirty (Jorge-approved set)", () => {
+    const values = {
+      ...buildEditPrefill(baseLoad),
+      commodity: "ALUMINUM",
+      weight_lbs: 38000,
+      reefer_setpoint: "28",
+      trip_type: "SB",
+    };
+    const body = buildEditPatchBody(
+      values,
+      { commodity: true, weight_lbs: true, reefer_setpoint: true, trip_type: true } as Record<string, unknown>,
+      OCID
+    );
+    expect(body.commodity).toBe("ALUMINUM");
+    expect(body.cargo_weight_lbs).toBe(38000); // form weight_lbs → mdata column cargo_weight_lbs
+    expect(body.reefer_setpoint_temp_f).toBe(28); // text → numeric
+    expect(body.trip_type).toBe("SB");
+  });
+
+  it("Block 7: an untouched commodity is NOT sent even when another field changes (no wipe)", () => {
+    const values = { ...buildEditPrefill(baseLoad), notes: "changed" };
+    const body = buildEditPatchBody(values, { notes: true } as Record<string, unknown>, OCID);
     expect("commodity" in body).toBe(false);
+    expect("cargo_weight_lbs" in body).toBe(false);
     expect(body.notes).toBe("changed");
+  });
+
+  it("still-excluded fields (load_type/trailer_type/customer_po_number/pieces/hazmat) are NEVER emitted", () => {
+    const values = {
+      ...buildEditPrefill(baseLoad),
+      load_type: "broker",
+      trailer_type: "dry_van",
+      customer_po_number: "PO-123",
+      pieces: "12",
+      hazmat: true,
+    };
+    const body = buildEditPatchBody(
+      values,
+      { load_type: true, trailer_type: true, customer_po_number: true, pieces: true, hazmat: true } as Record<string, unknown>,
+      OCID
+    );
+    for (const k of ["load_type", "trailer_type", "customer_po_number", "pieces", "hazmat"]) {
+      expect(k in body).toBe(false);
+    }
   });
 
   it("stops are sent (full shape) only when the stops group is dirty", () => {
@@ -81,5 +124,13 @@ describe("editLoadMapping — prefill", () => {
     expect(v.detention_expected_y_n).toBe(true);
     expect(v.assignment_mode).toBe("solo");
     expect((v.stops as Array<Record<string, unknown>>)[0].gate_dock_text).toBe("Dock 4");
+  });
+
+  it("Block 7: prefills commodity/weight/reefer/trip_type from the detail (round-trip)", () => {
+    const v = buildEditPrefill(baseLoad);
+    expect(v.commodity).toBe("STEEL COILS");
+    expect(v.weight_lbs).toBe(42000); // from cargo_weight_lbs
+    expect(v.reefer_setpoint).toBe("34"); // numeric reefer_setpoint_temp_f surfaced as text
+    expect(v.trip_type).toBe("NB");
   });
 });

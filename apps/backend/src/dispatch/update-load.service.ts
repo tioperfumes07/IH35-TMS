@@ -72,6 +72,10 @@ export type UpdateDispatchLoadFields = Partial<{
   border_routing: string | null;
   trip_type: "NB" | "TR" | "SB";
   tour_id: string | null;
+  // Block 7 (Jorge-approved, no migration): freight attributes round-tripped from the Edit wizard.
+  commodity: string | null;
+  cargo_weight_lbs: number | null;
+  reefer_setpoint_temp_f: number | null;
 }>;
 
 export type UpdateDispatchLoadInput = {
@@ -138,6 +142,9 @@ const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
   border_routing: "border_routing",
   trip_type: "trip_type",
   tour_id: "tour_id",
+  commodity: "commodity",
+  cargo_weight_lbs: "cargo_weight_lbs",
+  reefer_setpoint_temp_f: "reefer_setpoint_temp_f",
 };
 
 // Columns needing an explicit cast in the SET clause.

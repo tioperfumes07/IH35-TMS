@@ -207,6 +207,10 @@ const updateDispatchLoadBodySchema = z.object({
   miles_shortest: z.number().int().min(0).nullable().optional(),
   miles_deadhead: z.number().int().min(0).nullable().optional(),
   trip_type: z.enum(["NB", "TR", "SB"]).optional(),
+  // Block 7 (Jorge-approved, no migration): commodity/weight/reefer setpoint round-trip in the Edit wizard.
+  commodity: z.string().trim().max(120).nullable().optional(),
+  cargo_weight_lbs: z.number().int().min(0).nullable().optional(),
+  reefer_setpoint_temp_f: z.number().nullable().optional(),
   tour_id: z.string().uuid().nullable().optional(),
   assigned_unit_id: z.string().uuid().nullable().optional(),
   assigned_primary_driver_id: z.string().uuid().nullable().optional(),
