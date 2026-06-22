@@ -20,6 +20,18 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: https://api.ih35dispatch.com
+    headers:
+      # Hashed build assets — filenames change per build, so cache them forever (first match wins).
+      - path: /assets/*
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
+      # The app shell (index.html) + every SPA fallback route — NO s-maxage, so Cloudflare can't hold a
+      # stale HTML shell for 5 min after a deploy (that caused "fixed but looks stale" reports). Must
+      # revalidate every load so a new deploy is visible immediately. The hashed /assets/* above keep
+      # their long immutable cache (filenames change per build, so they're always safe).
+      - path: /*
+        name: Cache-Control
+        value: "public, max-age=0, must-revalidate"
 
   - type: static
     name: ih35-tms-driver
