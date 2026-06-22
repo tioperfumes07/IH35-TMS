@@ -50,6 +50,17 @@ const REQUIRED = {
   "apps/frontend/src/components/trailer-profile/MaintenanceSnapshotSection.tsx": [
     "/maintenance/work-orders/",
   ],
+  // Operational LIST tables — the primary record cell already navigates to its detail; locked here so a
+  // refactor can't silently turn them back into plain text (regression-lock; the links pre-existed).
+  "apps/frontend/src/pages/drivers/DriversTable.tsx": [
+    "/drivers/",
+  ],
+  "apps/frontend/src/pages/customers/CustomersListView.tsx": [
+    "/customers/",
+  ],
+  "apps/frontend/src/pages/vendors/VendorsListView.tsx": [
+    "/vendors/",
+  ],
   // Each new ParityTable tab must add itself here so its record-cell anchors are locked against regression.
 };
 
