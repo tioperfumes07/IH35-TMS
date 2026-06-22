@@ -35,6 +35,19 @@ export type LoadStop = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  // Block 7 full-edit — editable stop columns surfaced by the enriched detail endpoint.
+  time_window_type?: string | null;
+  appointment_start_at?: string | null;
+  appointment_end_at?: string | null;
+  lumper_required?: boolean | null;
+  lumper_paid_by?: string | null;
+  lumper_amount_cents?: number | null;
+  is_tarp_stop?: boolean | null;
+  tarp_count?: number | null;
+  stop_notes?: string | null;
+  site_contact_name?: string | null;
+  site_contact_phone?: string | null;
+  gate_dock_text?: string | null;
 };
 
 export type DispatchLoadRow = {
@@ -51,6 +64,7 @@ export type DispatchLoadRow = {
   assigned_primary_driver_id: string | null;
   assigned_primary_driver_name: string | null;
   assigned_secondary_driver_id: string | null;
+  team_id?: string | null;
   dispatcher_user_id: string;
   notes: string | null;
   driver_instructions_file_id?: string | null;
@@ -77,6 +91,29 @@ export type DispatchLoadRow = {
   samsara_last_fetched_at?: string | null;
   delivery_scheduled_at?: string | null;
   on_time_prediction?: "green" | "amber" | "red" | null;
+  // Block 7 full-edit prefill — editable columns surfaced by the enriched detail endpoint.
+  customer_wo_number?: string | null;
+  pickup_number?: string | null;
+  border_routing?: string | null;
+  driver_instructions_text?: string | null;
+  requires_tarps?: boolean | null;
+  tarp_type?: string | null;
+  lumper_amount_cents?: number | null;
+  customer_chargeback_requested?: boolean | null;
+  customer_chargeback_reason?: string | null;
+  live_load_number?: string | null;
+  anticipated_chargeback_cents?: number | null;
+  anticipated_chargeback_reason?: string | null;
+  detention_expected_y_n?: boolean | null;
+  detention_expected_hours?: number | null;
+  detention_bill_customer_per_hour_cents?: number | null;
+  detention_driver_pay_per_hour_cents?: number | null;
+  late_delivery_risk_y_n?: boolean | null;
+  late_delivery_est_deduction_cents?: number | null;
+  late_delivery_reason?: string | null;
+  miles_practical?: number | null;
+  miles_shortest?: number | null;
+  miles_deadhead?: number | null;
 };
 
 export type LoadsListResponse = {
@@ -176,6 +213,15 @@ export function createLoad(body: CreateLoadWizardBody) {
 
 export function updateLoad(id: string, body: Record<string, unknown>) {
   return apiRequest<LoadDetail>(`/api/v1/mdata/loads/${id}`, { method: "PATCH", body });
+}
+
+/**
+ * Block 7 — FULL load edit via the guarded dispatch endpoint (money/evidence-guarded: 409
+ * load_edit_locked behind open settlement / issued invoice / non-open driver bill; stops replaced
+ * archive-not-delete). Body must be a PARTIAL update — only fields present are touched.
+ */
+export function updateDispatchLoadFull(id: string, body: Record<string, unknown>) {
+  return apiRequest<LoadDetail>(`/api/v1/dispatch/loads/${id}`, { method: "PATCH", body });
 }
 
 export function updateLoadStatus(
