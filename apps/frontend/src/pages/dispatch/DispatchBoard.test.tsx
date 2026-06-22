@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
@@ -57,26 +58,57 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
-        <ToastProvider>
-          <DispatchBoard
-            loads={[mockLoad()]}
-            totalCount={1}
-            limit={50}
-            offset={0}
-            loading={false}
-            sortField="created_at"
-            sortDirection="desc"
-            onSortChange={vi.fn()}
-            onPageChange={vi.fn()}
-            onRowClick={vi.fn()}
-            onExportCsv={vi.fn()}
-          />
-        </ToastProvider>
+        <MemoryRouter>
+          <ToastProvider>
+            <DispatchBoard
+              loads={[mockLoad()]}
+              totalCount={1}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={vi.fn()}
+              onExportCsv={vi.fn()}
+            />
+          </ToastProvider>
+        </MemoryRouter>
       </QueryClientProvider>
     );
 
     await waitFor(() => {
       expect(screen.getAllByTitle(/ETA source:/i).length).toBeGreaterThanOrEqual(1);
     });
+  });
+
+  it("renders the Customer cell as a link to the customer detail route", async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ToastProvider>
+            <DispatchBoard
+              loads={[mockLoad()]}
+              totalCount={1}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={vi.fn()}
+              onExportCsv={vi.fn()}
+            />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    const link = await screen.findByTestId("loads-customer-link");
+    expect(link.textContent).toContain("ACME");
+    expect(link.getAttribute("href")).toBe("/customers/00000000-0000-4000-8000-0000000000cc");
   });
 });
