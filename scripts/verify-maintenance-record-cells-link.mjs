@@ -13,8 +13,13 @@ const REQUIRED = {
   "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx": [
     "/maintenance/work-orders/", "/fleet/",
   ],
-  // WorkOrdersTable added once #1306 (Active WOs ParityTable rewrite) merges. Each new ParityTable tab
-  // must add itself here so its record-cell anchors are locked against regression.
+  "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx": [
+    "/maintenance/work-orders/", "/fleet/", "/drivers/",
+  ],
+  "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx": [
+    "/drivers/",
+  ],
+  // Each new ParityTable tab must add itself here so its record-cell anchors are locked against regression.
 };
 
 const failures = [];
