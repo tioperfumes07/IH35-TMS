@@ -1,10 +1,20 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { CancelReasonCodeSchema, CancelReasonSchema } from "./load.shared.js";
+import { CancelReasonSchema } from "./load.shared.js";
 
 const cancelRouteParamsSchema = z.object({
   id: z.string().uuid(),
 });
+
+// cancel_reason_code is validated against the catalog (catalogs.cancellation_reasons) DOWNSTREAM by the
+// cancelLoad service (it throws E_REASON_NOT_FOUND → 400 for an unknown code). It must NOT be enum-gated
+// here: the canonical catalog codes are CUSTOMER_CANCELLED / DRIVER_ISSUE / EQUIPMENT_ISSUE / WEATHER /
+// NO_PICKUP / RATE_DISPUTE / CUSTOMER_BANKRUPTCY / TRUCK_BREAKDOWN / DRIVER_WALKOFF (migration 0101), which
+// are exactly what the frontend dropdown (also catalog-driven) submits. The previous hard-coded enum
+// (customer_request / no_truck_available / hos_violation / …) matched NEITHER the catalog NOR the dropdown,
+// so EVERY real cancel 400'd with "cancel_reason_code is required". Accept any non-empty code; the catalog
+// is the single source of truth for which codes are valid.
+const cancelReasonCodeInputSchema = z.string().trim().min(1).max(100);
 
 function buildLegacyCancellationNotes(cancelReason: string): string {
   if (cancelReason.length >= 20) return cancelReason;
@@ -38,7 +48,7 @@ export async function registerDispatchCancelLoadRoutes(app: FastifyInstance) {
     const parsedReason = CancelReasonSchema.safeParse(bodyRecord.cancel_reason);
     if (!parsedReason.success) return sendMissingField(reply, "cancel_reason");
 
-    const parsedCode = CancelReasonCodeSchema.safeParse(bodyRecord.cancel_reason_code);
+    const parsedCode = cancelReasonCodeInputSchema.safeParse(bodyRecord.cancel_reason_code);
     if (!parsedCode.success) return sendMissingField(reply, "cancel_reason_code");
 
     const legacyNotes =
