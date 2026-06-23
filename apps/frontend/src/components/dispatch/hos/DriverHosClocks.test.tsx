@@ -25,6 +25,9 @@ describe("DriverHosClocksBlock — renders in the wizard even with no driver", (
       expect(screen.getByText(label)).toBeInTheDocument();
     }
     // Empty state hint (no fabricated values).
-    expect(screen.getByText(/Select a driver to load HOS clocks\./)).toBeInTheDocument();
+    // render-v6 §B exact hosNote text.
+    expect(
+      screen.getByText(/Select a driver to load HOS\. Clocks populate from the Samsara feed\. Stop by \/ Resume at are projected\./)
+    ).toBeInTheDocument();
   });
 });

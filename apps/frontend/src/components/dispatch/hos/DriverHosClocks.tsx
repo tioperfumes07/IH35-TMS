@@ -71,12 +71,10 @@ export function DriverHosClocksBlock({
           ))}
         </div>
       )}
-      {!driverId ? (
-        <div className="mt-0.5 text-[9px] text-gray-400">Select a driver to load HOS clocks.</div>
-      ) : !clocks && !q.isLoading ? (
-        <div className="mt-0.5 text-[9px] text-gray-400">No HOS data yet for this driver.</div>
-      ) : null}
-      {clocks ? <div className="mt-0.5 text-[9px] text-gray-400">* Stop By / Resume At are projected (continuous driving).</div> : null}
+      {/* render-v6 §B hosNote — exact design text. */}
+      <div className="hosnote mt-0.5 text-[9px] text-gray-400">
+        Select a driver to load HOS. Clocks populate from the Samsara feed. Stop by / Resume at are projected.
+      </div>
     </div>
   );
 }

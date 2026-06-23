@@ -797,7 +797,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <span className="blw-sec-meta">Section total <b>{money.format(sectionTotal / 100)}</b></span>
                 </div>
                 <div className="space-y-2 p-3">
-                  <OcrDropZone operatingCompanyId={operatingCompanyId} onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })} />
+                  {/* render-v6 §A: the rate-confirmation/document dropzone is NOT here — moved to §E (bottom). */}
                   <LoadTemplatePicker
                     operatingCompanyId={operatingCompanyId}
                     onSelectTemplate={(row) => {
@@ -1103,6 +1103,20 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   onValidationChange={(canDispatch, hasBlockers) => setPreDispatch({ canDispatch, hasBlockers })}
                 />
                 <BookLoadValidationSection issues={validationIssues} />
+              </div>
+            </section>
+
+            {/* render-v6 §E — DOCUMENTS at the BOTTOM near Save (design note: "moved to the BOTTOM").
+                Rate confirmation + BOL / POD / lumper receipt upload. */}
+            <section className="blw-sec" data-testid="book-load-documents">
+              <div className="blw-sec-hd">
+                <span className="blw-sec-chip">E</span>
+                <span className="blw-sec-name">Documents</span>
+                <span className="blw-sec-meta">rate con · BOL · POD · lumper receipt</span>
+              </div>
+              <div className="space-y-2 p-3">
+                <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation &amp; documents</label>
+                <OcrDropZone operatingCompanyId={operatingCompanyId} onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })} />
               </div>
             </section>
           </div>

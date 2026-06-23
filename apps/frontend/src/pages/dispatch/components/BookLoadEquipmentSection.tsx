@@ -171,13 +171,20 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
-      {/* render-v6 Section B — Driver HOS (hours of service) block: the 6-clock set (Drive/Shift/Break/Cycle/
-          Stop by/Resume at) + projected-note. ALWAYS shown (not gated on a selected driver) so it matches the
-          v6 design; shows "No HOS data" until a driver is picked + the Samsara HOS pull is seeded. */}
-      <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
-      {assignmentMode === "team" && secondaryDriverId ? (
-        <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
-      ) : null}
+      {/* render-v6 §B — "Expected adjustments" collapsible (OPEN by default). Holds the Driver HOS block:
+          the 6-clock set (Drive/Shift/Break/Cycle/Stop by/Resume at), ALWAYS shown (not gated on a selected
+          driver) so it matches the v6 design; "No HOS data" until a driver is picked + Samsara HOS seeded. */}
+      <details open data-testid="expected-adjustments" className="rounded border border-gray-200">
+        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
+          Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
+        </summary>
+        <div className="space-y-2 border-t border-gray-200 p-2">
+          <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
+          {assignmentMode === "team" && secondaryDriverId ? (
+            <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
+          ) : null}
+        </div>
+      </details>
       {operatingCompanyId && pickupStop?.city ? (
         <OptimalDriversPanel
           loadId={optimizerLoadKey}
