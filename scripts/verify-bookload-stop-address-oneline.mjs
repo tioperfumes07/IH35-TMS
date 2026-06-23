@@ -1,24 +1,23 @@
 #!/usr/bin/env node
-// DISPATCH-UI-REFINE-2 ITEM 4 guard: the Book Load stop address primary entry is a SINGLE full-width
-// horizontal line (interim, pre-PC*MILER). Parsed city/state/country fields are kept behind it (additive).
+// Book Load stop ADDRESS entry guard. Functional lock: the stop's "Address" cell is the flag-gated
+// PC*MILER geocoding input (data-stop-address-oneline), and the parsed city/state/country fields are kept.
+//
+// render-v6 §C (GUARD render-truth spec, 2026-06-23): the stop card is a TWO-ROW grid; "Address" is the
+// first cell of Row 1 (.locrow: Address · City · St · Zip Code · Date · Time) — no longer the standalone
+// full-width "Address (one line)" line of the interim DISPATCH-UI-REFINE-2 layout. So this guard now locks
+// the geocode FUNCTION (input + parsed fields), not the obsolete full-width label/col-span.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fail = (m) => { console.error(`FAIL verify-bookload-stop-address-oneline: ${m}`); process.exit(1); };
 const src = readFileSync(join(root, "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx"), "utf8");
-// The one-line address marker may be a plain attribute (#1134) or passed via the geocode input's
-// dataAttrs prop (PCMILER-GEOCODE) — match either form.
-if (!/data-stop-address-oneline/.test(src)) fail("a single one-line address input (data-stop-address-oneline) must exist");
-// PCMILER-GEOCODE: the one-line address is now the flag-gated geocoding input (plain text when the flag is OFF).
-if (!/AddressGeocodeInput/.test(src)) fail("the one-line address must use AddressGeocodeInput (flag-gated geocoding; plain text when OFF)");
-// The one-line address block (anchored on its label) must be full-width and use the geocode input.
-const aidx = src.indexOf('"Address (one line)"');
-if (aidx < 0) fail('the "Address (one line)" field must exist');
-const block = src.slice(Math.max(0, aidx - 200), aidx + 1600);
-if (!/md:col-span-2/.test(block)) fail("the one-line address must span full width (md:col-span-2)");
-if (!/data-stop-address-oneline/.test(block)) fail("the one-line address marker must be on this field");
-if (!/AddressGeocodeInput/.test(block)) fail("the one-line address must render AddressGeocodeInput");
+// The geocode address marker (plain attribute #1134 or via the geocode input's dataAttrs prop).
+if (!/data-stop-address-oneline/.test(src)) fail("the geocoding address input (data-stop-address-oneline) must exist");
+// The address cell must use the flag-gated geocoding input (plain text when the flag is OFF).
+if (!/AddressGeocodeInput/.test(src)) fail("the address cell must use AddressGeocodeInput (flag-gated geocoding; plain text when OFF)");
+// render-v6 §C: the address cell lives in the locrow grid.
+if (!/stop-locrow-/.test(src)) fail("the address must live in the render-v6 §C locrow grid (stop-locrow-*)");
 // parsed fields kept (additive — not deleted).
 for (const f of ["city", "state", "country"]) {
   if (!new RegExp(`stops\\.\\$\\{index\\}\\.${f}`).test(src)) fail(`parsed ${f} field must be kept (additive)`);
