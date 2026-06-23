@@ -10,6 +10,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -30,6 +31,11 @@ export function InvoiceDetailPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
+  // M-1: inline QBO money entry for invoice lines (replaces window.prompt). unit_amount stays CENTS.
+  const [newLineDesc, setNewLineDesc] = useState("");
+  const [newLineCents, setNewLineCents] = useState<number | null>(null);
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [editingCents, setEditingCents] = useState<number | null>(null);
 
   const detailQuery = useQuery({
     queryKey: ["accounting", "invoice", selectedCompanyId, id],
@@ -244,19 +250,35 @@ export function InvoiceDetailPage() {
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs text-gray-600">Line items and billable components</div>
           {isDraft ? (
-            <Button
-              size="sm"
-              onClick={() => {
-                const description = window.prompt("Line description");
-                if (!description) return;
-                const amount = Number(window.prompt("Unit amount (cents)") ?? "0");
-                if (!Number.isFinite(amount) || amount < 0) return;
-                addLineMutation.mutate({ description, unit_amount_cents: Math.trunc(amount) });
-              }}
-              loading={addLineMutation.isPending}
-            >
-              + Create Line
-            </Button>
+            // M-1: replace the window.prompt("…cents") with an inline QBO MoneyInput (cents-mode — the user
+            // types dollars, unit_amount_cents stored stays cents; no money-math change vs the prompt).
+            <div className="flex items-end gap-2">
+              <label className="text-xs text-gray-600">
+                Description
+                <input
+                  value={newLineDesc}
+                  onChange={(e) => setNewLineDesc(e.target.value)}
+                  placeholder="Line description"
+                  className="mt-1 h-9 w-48 rounded border border-gray-300 px-2 text-xs"
+                />
+              </label>
+              <label className="text-xs text-gray-600">
+                Unit amount
+                <MoneyInput valueCents={newLineCents} onChangeCents={setNewLineCents} className="mt-1 w-28" ariaLabel="Unit amount" />
+              </label>
+              <Button
+                size="sm"
+                disabled={!newLineDesc.trim() || newLineCents == null}
+                loading={addLineMutation.isPending}
+                onClick={() => {
+                  addLineMutation.mutate({ description: newLineDesc.trim(), unit_amount_cents: Math.trunc(newLineCents ?? 0) });
+                  setNewLineDesc("");
+                  setNewLineCents(null);
+                }}
+              >
+                + Create Line
+              </Button>
+            </div>
           ) : null}
         </div>
         <div className="overflow-x-auto">
@@ -281,22 +303,40 @@ export function InvoiceDetailPage() {
                   <td className="px-2 py-1.5 text-gray-700">{money(line.line_total_cents)}</td>
                   <td className="px-2 py-1.5 text-gray-700">
                     {isDraft ? (
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => {
-                            const amount = Number(window.prompt("New unit amount (cents)", String(line.unit_amount_cents)) ?? "0");
-                            if (!Number.isFinite(amount) || amount < 0) return;
-                            patchLineMutation.mutate({ lineId: line.id, unit_amount_cents: Math.trunc(amount) });
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="danger" onClick={() => deleteLineMutation.mutate(line.id)}>
-                          Delete
-                        </Button>
-                      </div>
+                      editingLineId === line.id ? (
+                        // M-1: inline QBO MoneyInput edit (cents-mode) — replaces window.prompt("…cents").
+                        <div className="flex items-center gap-1">
+                          <MoneyInput valueCents={editingCents} onChangeCents={setEditingCents} className="w-24" ariaLabel="Edit unit amount" />
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              patchLineMutation.mutate({ lineId: line.id, unit_amount_cents: Math.trunc(editingCents ?? 0) });
+                              setEditingLineId(null);
+                            }}
+                          >
+                            Save
+                          </Button>
+                          <Button size="sm" variant="secondary" onClick={() => setEditingLineId(null)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setEditingLineId(line.id);
+                              setEditingCents(line.unit_amount_cents);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button size="sm" variant="danger" onClick={() => deleteLineMutation.mutate(line.id)}>
+                            Delete
+                          </Button>
+                        </div>
+                      )
                     ) : (
                       "-"
                     )}
