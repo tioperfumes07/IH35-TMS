@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { type LoadDetail, updateLoad, useCancelLoad, useDispatchLoad, useLoad, useLoadAudit } from "../../api/loads";
@@ -48,6 +48,30 @@ const tabs = [
   "Pre-Settlement",
 ] as const;
 type DrawerTab = (typeof tabs)[number];
+
+// RENDER-load-side-panel B1a: the Overview mirrors the Book Load wizard sections (read-only) so the
+// dispatcher sees the load the way it was booked, with a per-section "Edit ▸" into the prefilled wizard.
+const TRIP_TYPE_LABEL: Record<string, string> = {
+  NB: "NB · Northbound",
+  TR: "TR · Triangulation",
+  SB: "SB · Southbound",
+};
+
+function OverviewWizardSection({ title, canEdit, onEdit, children }: { title: string; canEdit: boolean; onEdit: () => void; children: ReactNode }) {
+  return (
+    <section className="rounded border border-gray-200">
+      <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-1.5">
+        <span className="text-[11px] font-semibold text-gray-700">{title}</span>
+        {canEdit ? (
+          <button type="button" onClick={onEdit} className="text-[11px] font-semibold text-[#1f2a44] hover:underline">
+            Edit ▸
+          </button>
+        ) : null}
+      </div>
+      <div className="p-3">{children}</div>
+    </section>
+  );
+}
 
 function loadHasCrossBorder(load: LoadDetail): boolean {
   return (load.stops ?? []).some(
@@ -245,17 +269,63 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           {activeTab === "Overview" ? (
             load ? (
               <div className="space-y-3 text-sm">
-                <FlatFieldGrid
-                  columns={2}
-                  fields={[
-                    { label: "Customer", value: load.customer_name ?? "-" },
-                    { label: "Status", value: STATUS_LABEL[load.status] },
-                    { label: "Driver", value: load.assigned_primary_driver_name ?? "Unassigned" },
-                    { label: "Unit", value: load.assigned_unit_number ?? "-" },
-                    { label: "Rate", value: formatMoneyCents(load.rate_total_cents, load.currency_code) },
-                    { label: "Created", value: new Date(load.created_at).toLocaleString() },
-                  ]}
-                />
+                {/* §A — Customer · Invoice · Charges (charges = single total; line-item split is the gated
+                    charge line-items block, NOT fabricated here). */}
+                <OverviewWizardSection title="Customer · Invoice · Charges" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
+                  <FlatFieldGrid
+                    columns={2}
+                    fields={[
+                      { label: "Customer", value: load.customer_name ?? "—" },
+                      { label: "Status", value: STATUS_LABEL[load.status] },
+                      { label: "Customer WO #", value: load.customer_wo_number ?? "—" },
+                      { label: "Pickup #", value: load.pickup_number ?? "—" },
+                      { label: "Total customer invoice", value: formatMoneyCents(load.rate_total_cents, load.currency_code) },
+                      { label: "Created", value: new Date(load.created_at).toLocaleString() },
+                    ]}
+                  />
+                  <p className="mt-1 text-[10px] text-gray-400">Single customer total. Linehaul / fuel / accessorial breakdown arrives with the charge line-items block.</p>
+                </OverviewWizardSection>
+
+                {/* §B — Equipment · Driver · Trailer. Trailer type/unit, team-driver name, and pay rate are
+                    "—" until the LoadDetail backend enrichment (B1b) surfaces them. */}
+                <OverviewWizardSection title="Equipment · Driver · Trailer" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
+                  <FlatFieldGrid
+                    columns={2}
+                    fields={[
+                      { label: "Trip Type", value: load.trip_type ? (TRIP_TYPE_LABEL[load.trip_type] ?? load.trip_type) : "—" },
+                      { label: "Trailer type", value: "—" },
+                      { label: "Truck unit", value: load.assigned_unit_number ?? "—" },
+                      { label: "Trailer unit", value: "—" },
+                      { label: "Driver", value: load.assigned_primary_driver_name ?? "Unassigned" },
+                      { label: "Team driver", value: load.assigned_secondary_driver_id ? "—" : "Solo" },
+                      { label: "Driver pay rate / mi", value: "—" },
+                    ]}
+                  />
+                  <p className="mt-1 text-[10px] text-gray-400">Trailer type/unit, team-driver name, and pay rate populate once LoadDetail enrichment (B1b) lands.</p>
+                </OverviewWizardSection>
+
+                {/* §C — Stops · PC*MILER Routing (per-stop, from the live payload). */}
+                <OverviewWizardSection title="Stops · PC*MILER Routing" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
+                  <div className="space-y-2">
+                    {(load.stops ?? []).map((stop) => (
+                      <div key={stop.id} className="rounded border border-gray-100 p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">{stop.stop_type}</div>
+                        <FlatFieldGrid
+                          columns={2}
+                          fields={[
+                            { label: "Address", value: stop.address_line1 ?? "—" },
+                            { label: "City / St / Zip", value: [[stop.city, stop.state].filter(Boolean).join(", "), stop.postal_code].filter(Boolean).join(" ") || "—" },
+                            { label: "Date / Time", value: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toLocaleString() : "—" },
+                            { label: "Site contact", value: stop.site_contact_name ?? "—" },
+                            { label: "Dock", value: stop.gate_dock_text ?? "—" },
+                            { label: "Lumper amount", value: stop.lumper_amount_cents != null ? formatMoneyCents(stop.lumper_amount_cents, load.currency_code) : "—" },
+                          ]}
+                        />
+                      </div>
+                    ))}
+                    {(load.stops ?? []).length === 0 ? <div className="text-xs text-gray-500">No stops on this load.</div> : null}
+                  </div>
+                </OverviewWizardSection>
 
                 {load.operating_company_id ? (
                   <div className="flex flex-wrap gap-2">
