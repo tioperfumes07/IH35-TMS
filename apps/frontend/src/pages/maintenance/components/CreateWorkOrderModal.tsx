@@ -67,6 +67,8 @@ export type CreateWOFormValues = {
   authorization_number: string;
   service_location_type: "" | "shop" | "mobile" | "roadside";
   repaired_by: "" | "in_house" | "outside_vendor";
+  // render-v5 §A Priority — stored value must match the mig-0310 CHECK (routine|urgent|immediate).
+  wo_priority: "" | "routine" | "urgent" | "immediate";
   line_items: Array<{
     line_type: "parts" | "labor" | "other";
     description: string;
@@ -160,6 +162,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       authorization_number: "",
       service_location_type: "",
       repaired_by: "",
+      wo_priority: "",
       line_items: [],
       ...initialValues,
     },
@@ -363,6 +366,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             : undefined,
           authorized_by_user_id: values.authorized_by_user_id || undefined,
           authorization_number: values.authorization_number || undefined,
+          wo_priority: values.wo_priority || undefined,
           service_location_type: values.service_location_type || undefined,
           repaired_by: values.repaired_by || undefined,
         },
