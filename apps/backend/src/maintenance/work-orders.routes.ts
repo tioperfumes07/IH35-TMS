@@ -168,6 +168,8 @@ const createWorkOrderV5Schema = z.object({
     authorization_number: z.string().trim().max(120).optional(),
     service_location_type: z.enum(["shop", "mobile", "roadside"]).optional(),
     repaired_by: z.enum(["in_house", "outside_vendor"]).optional(),
+    // render-v5 §A Priority — stored value must match the mig-0310 CHECK (routine|urgent|immediate).
+    wo_priority: z.enum(["routine", "urgent", "immediate"]).optional(),
   }),
   sectionA: z.array(sectionALineSchema).default([]),
   sectionB: z.array(sectionBLineSchema).default([]),

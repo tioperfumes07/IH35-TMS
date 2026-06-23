@@ -248,6 +248,8 @@ export type CreateWorkOrderTwoSectionPayload = {
     authorization_number?: string;
     service_location_type?: "shop" | "mobile" | "roadside";
     repaired_by?: "in_house" | "outside_vendor";
+    // render-v5 §A Priority — stored value must match the mig-0310 CHECK (routine|urgent|immediate).
+    wo_priority?: "routine" | "urgent" | "immediate";
   };
   sectionA: Array<{
     description: string;

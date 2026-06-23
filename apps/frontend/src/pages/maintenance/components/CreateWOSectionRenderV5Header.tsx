@@ -4,11 +4,11 @@ import { listUsers } from "../../../api/identity";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 // render-v5 §header (maintenance-create-wo-render-v5.html) — the WO header fields that persist to LIVE
-// maintenance.work_orders columns (migration 202606221200 / #1353): Status, Open date/time (opened_at),
-// Authorized by (authorized_by_user_id), Repaired by, Authorization #, Service location. All real, all
-// persisted post-insert. Fields whose DB column does NOT exist yet (Priority, Close date/time, Odometer/
-// Engine-hrs Samsara) are intentionally NOT rendered here — no fabrication; they wait on a gated migration /
-// a Samsara data source. §7 navy. Compact h-7 inputs to match the VMRS/asset-location sections.
+// maintenance.work_orders columns: Status, Priority (wo_priority, mig 0310 CHECK routine|urgent|immediate),
+// Open date/time (opened_at), Authorized by (authorized_by_user_id), Repaired by, Authorization #, Service
+// location (migration 202606221200 / #1353). All real, all persisted post-insert. Fields whose DB column
+// does NOT exist yet (Close date/time, Odometer/Engine-hrs Samsara) are intentionally NOT rendered here —
+// no fabrication; they wait on a gated migration / a Samsara data source. §7 navy. Compact h-7 inputs.
 
 function Cell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -41,6 +41,15 @@ export function CreateWOSectionRenderV5Header({ register }: { register: UseFormR
             <option value="waiting_parts">Awaiting parts</option>
             <option value="complete">Complete</option>
             <option value="cancelled">Cancelled</option>
+          </select>
+        </Cell>
+        <Cell label="Priority">
+          {/* mig-0310 CHECK: stored value is exactly routine|urgent|immediate (display labels only). */}
+          <select {...register("wo_priority")} className={INPUT}>
+            <option value="">— select —</option>
+            <option value="routine">Routine</option>
+            <option value="urgent">Urgent</option>
+            <option value="immediate">Immediate</option>
           </select>
         </Cell>
         <Cell label="Open date">

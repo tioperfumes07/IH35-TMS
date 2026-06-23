@@ -53,6 +53,8 @@ export type TwoSectionHeader = {
   authorization_number?: string | null;
   service_location_type?: "shop" | "mobile" | "roadside" | null;
   repaired_by?: "in_house" | "outside_vendor" | null;
+  // render-v5 §A Priority (mig 0310: maintenance.work_orders.wo_priority, CHECK routine|urgent|immediate).
+  wo_priority?: "routine" | "urgent" | "immediate" | null;
 };
 
 export type SectionALine = {
@@ -230,7 +232,8 @@ export async function createWorkOrderWithLines(
     header.authorized_by_user_id != null ||
     header.authorization_number != null ||
     header.service_location_type != null ||
-    header.repaired_by != null
+    header.repaired_by != null ||
+    header.wo_priority != null
   ) {
     await client.query(
       `UPDATE maintenance.work_orders
@@ -239,14 +242,16 @@ export async function createWorkOrderWithLines(
              authorization_number = COALESCE($3, authorization_number),
              service_location_type = COALESCE($4, service_location_type),
              repaired_by = COALESCE($5, repaired_by),
+             wo_priority = COALESCE($6, wo_priority),
              updated_at = now()
-       WHERE id = $6`,
+       WHERE id = $7`,
       [
         header.opened_at ?? null,
         header.authorized_by_user_id ?? null,
         header.authorization_number ?? null,
         header.service_location_type ?? null,
         header.repaired_by ?? null,
+        header.wo_priority ?? null,
         wo.id,
       ]
     );
