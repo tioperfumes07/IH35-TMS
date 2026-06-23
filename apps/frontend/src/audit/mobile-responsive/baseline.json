@@ -1,65 +1,245 @@
 {
   "version": 1,
-  "note": "GAP-91 initial baseline (189 known issues \u2014 fix blocks per module)",
+  "note": "GAP-91 initial baseline (189 known issues — fix blocks per module)",
   "issues": [
     {
-      "id": "input-under-44px:apps/frontend/src/pages/Customers.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/Customers.tsx",
-      "message": "Text input height may be below 48px on mobile",
+      "id": "button-under-44px:apps/frontend/src/components/CompanySwitcher.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/CompanySwitcher.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
       "viewport": {
         "width": 375,
         "height": 667
       },
-      "suggested_fix": "See gap-91 spec",
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/Customers.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/Customers.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
+      "id": "button-under-44px:apps/frontend/src/components/DataTable.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/DataTable.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
       "viewport": {
         "width": 375,
         "height": 667
       },
-      "suggested_fix": "See gap-91 spec",
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/DriverDetail.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/DriverDetail.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
+      "id": "button-under-44px:apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
       "viewport": {
         "width": 375,
         "height": 667
       },
-      "suggested_fix": "See gap-91 spec",
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/DriverLoadStatusesPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/DriverLoadStatusesPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
+      "id": "button-under-44px:apps/frontend/src/components/fleet/BulkActionBar.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/fleet/BulkActionBar.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
       "viewport": {
         "width": 375,
         "height": 667
       },
-      "suggested_fix": "See gap-91 spec",
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/Drivers.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/Drivers.tsx",
-      "message": "Text input height may be below 48px on mobile",
+      "id": "button-under-44px:apps/frontend/src/components/forms/DatePicker.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/forms/DatePicker.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
       "viewport": {
         "width": 375,
         "height": 667
       },
-      "suggested_fix": "See gap-91 spec",
+      "suggested_fix": "Dense office UI (CLAUDE.md §10) — accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/forms/MoneyInput.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/forms/MoneyInput.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md §10) — accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/forms/StateSelect.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/forms/StateSelect.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md §10)",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/layout/CarrierSwitcher.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/layout/CarrierSwitcher.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/notifications/NotificationBell.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/notifications/NotificationBell.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/table/ColumnChooser.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/table/ColumnChooser.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/table/Paginator.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/table/Paginator.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/components/Topbar.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/components/Topbar.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md §10) — accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "button-under-44px:apps/frontend/src/pages/driver/DriverShell.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/driver/DriverShell.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
       "owner_module": "office-tms"
     },
     {
@@ -75,15 +255,15 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/EquipmentTypesPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/EquipmentTypesPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
+      "id": "button-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
       "viewport": {
         "width": 375,
         "height": 667
       },
-      "suggested_fix": "See gap-91 spec",
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
       "owner_module": "office-tms"
     },
     {
@@ -99,9 +279,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/Users.tsx",
+      "id": "input-under-44px:apps/frontend/src/components/accounting/ManualJEModal.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/Users.tsx",
+      "file": "apps/frontend/src/components/accounting/ManualJEModal.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
@@ -111,9 +291,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/VendorDetail.tsx",
+      "id": "input-under-44px:apps/frontend/src/components/accounting/VendorBillForm.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/VendorDetail.tsx",
+      "file": "apps/frontend/src/components/accounting/VendorBillForm.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
@@ -123,9 +303,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/Vendors.tsx",
+      "id": "input-under-44px:apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/Vendors.tsx",
+      "file": "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
@@ -135,10 +315,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/Vendors.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/Vendors.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
+      "id": "input-under-44px:apps/frontend/src/components/fleet/EditTrailerModal.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
+      "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
         "height": 667
@@ -147,10 +327,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
+      "id": "input-under-44px:apps/frontend/src/components/fleet/EditVehicleModal.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
+      "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
         "height": 667
@@ -159,10 +339,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
+      "id": "input-under-44px:apps/frontend/src/components/FleetTable.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/FleetTable.tsx",
+      "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
         "height": 667
@@ -171,10 +351,106 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/BillsPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/BillsPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
+      "id": "input-under-44px:apps/frontend/src/components/forms/MoneyInput.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/forms/MoneyInput.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md §10) — accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/forms/StateSelect.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/forms/StateSelect.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md §10)",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/forms/TimePicker.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/forms/TimePicker.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md §10) — accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/table/ColumnChooser.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/table/ColumnChooser.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/table/Paginator.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/table/Paginator.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/table/TableSearch.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/table/TableSearch.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/components/UploadZone.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/components/UploadZone.tsx",
+      "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
         "height": 667
@@ -199,66 +475,6 @@
       "rule": "input-under-44px",
       "file": "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
       "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/EscrowPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/EscrowPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
         "height": 667
@@ -303,18 +519,6 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/PostingLineagePage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/PostingLineagePage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
       "id": "input-under-44px:apps/frontend/src/pages/accounting/RecordPaymentModal.tsx",
       "rule": "input-under-44px",
       "file": "apps/frontend/src/pages/accounting/RecordPaymentModal.tsx",
@@ -327,82 +531,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/admin/ActivityLogPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/admin/ActivityLogPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/admin/ErrorMonitor.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/admin/ErrorMonitor.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
       "id": "input-under-44px:apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx",
       "rule": "input-under-44px",
       "file": "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx",
       "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/audit/AuditEventsList.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/audit/AuditEventsList.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
         "height": 667
@@ -423,93 +555,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/banking/TransfersListPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/banking/TransfersListPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
       "id": "input-under-44px:apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
       "rule": "input-under-44px",
       "file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/banking/components/ManualJEModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/banking/components/ManualJEModal.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
@@ -615,57 +663,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/compliance/Form2290Filings.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/dev/BulkDemoPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/dev/BulkDemoPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/dispatch/LoadTemplateLibrary.tsx",
+      "id": "input-under-44px:apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/LoadTemplateLibrary.tsx",
+      "file": "apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
@@ -675,9 +675,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/dispatch/MultiStopEditor.tsx",
+      "id": "input-under-44px:apps/frontend/src/pages/banking/components/ManualJEModal.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/MultiStopEditor.tsx",
+      "file": "apps/frontend/src/pages/banking/components/ManualJEModal.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
@@ -687,9 +687,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx",
+      "id": "input-under-44px:apps/frontend/src/pages/banking/TransfersListPage.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx",
+      "file": "apps/frontend/src/pages/banking/TransfersListPage.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
@@ -699,94 +699,22 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "button-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "id": "input-under-44px:apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "file": "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
         "height": 667
       },
-      "suggested_fix": "See gap-91 spec",
+      "suggested_fix": "Dense office UI (CLAUDE.md §10) — accepted at desktop density",
       "owner_module": "office-tms"
     },
     {
-      "id": "button-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+      "id": "input-under-44px:apps/frontend/src/pages/Customers.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+      "file": "apps/frontend/src/pages/Customers.tsx",
       "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/dispatch/components/LoadTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/dispatch/components/LoadTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
         "height": 667
@@ -819,9 +747,429 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/driver/ArrivalPrompt.tsx",
+      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/dispatch/LoadTemplateLibrary.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/LoadTemplateLibrary.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/dispatch/MultiStopEditor.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/dispatch/MultiStopEditor.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/driver-finance/components/HoldDeductionModal.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/driver-finance/components/HoldDeductionModal.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/DriverLoadStatusesPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/DriverLoadStatusesPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/Drivers.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/Drivers.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/drivers/DriversListPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/drivers/DriversListPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/EquipmentTypesPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/EquipmentTypesPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/ArrivingSoonFilterBar.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/ArrivingSoonFilterBar.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateBillModal.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateBillModal.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateExpenseModal.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateExpenseModal.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionCostBreakdown.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionCostBreakdown.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/PartsInventoryTable.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/PartsInventoryTable.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/MaintenanceSettingsPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/MaintenanceSettingsPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/safety/IdvrPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/safety/IdvrPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/safety/TrainingRecordsPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/Users.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/Users.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/VendorDetail.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/VendorDetail.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/Vendors.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/Vendors.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/driver-pwa/src/components/Modal.tsx",
       "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/driver/ArrivalPrompt.tsx",
+      "file": "apps/driver-pwa/src/components/Modal.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "driver-pwa"
+    },
+    {
+      "id": "modal-viewport-risk:apps/driver-pwa/src/pages/IncidentReport.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/driver-pwa/src/pages/IncidentReport.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "driver-pwa"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/components/dialogs/ConfirmDiscardDialog.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/components/dialogs/ConfirmDiscardDialog.tsx",
       "message": "Full-screen overlay may exceed viewport without internal scroll",
       "viewport": {
         "width": 375,
@@ -831,21 +1179,45 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "button-under-44px:apps/frontend/src/pages/driver/DriverShell.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/pages/driver/DriverShell.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
+      "id": "modal-viewport-risk:apps/frontend/src/components/Sidebar.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/components/Sidebar.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
       "viewport": {
         "width": 375,
         "height": 667
       },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "suggested_fix": "See gap-91 spec",
       "owner_module": "office-tms"
     },
     {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/driver/StatusSuggestionPrompt.tsx",
+      "id": "modal-viewport-risk:apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx",
       "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/driver/StatusSuggestionPrompt.tsx",
+      "file": "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx",
       "message": "Full-screen overlay may exceed viewport without internal scroll",
       "viewport": {
         "width": 375,
@@ -867,9 +1239,93 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx",
+      "id": "modal-viewport-risk:apps/frontend/src/pages/driver/ArrivalPrompt.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/driver/ArrivalPrompt.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/pages/driver/StatusSuggestionPrompt.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/driver/StatusSuggestionPrompt.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/pages/factoring/FactorAdmin.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/factoring/FactorAdmin.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/pages/safety/PermitsPage.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/safety/PermitsPage.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "modal-viewport-risk:apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx",
+      "rule": "modal-viewport-risk",
+      "file": "apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx",
+      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/allocation/AllocationPreviewTable.tsx",
       "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx",
+      "file": "apps/frontend/src/components/allocation/AllocationPreviewTable.tsx",
       "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
@@ -879,10 +1335,490 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/driver-finance/components/HoldDeductionModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/driver-finance/components/HoldDeductionModal.tsx",
-      "message": "Text input height may be below 48px on mobile",
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/compliance/ComplianceTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/compliance/ComplianceTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/compliance/NotificationLogPanel.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/compliance/NotificationLogPanel.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/compliance/NotificationRulesPanel.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/compliance/NotificationRulesPanel.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/DataTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/DataTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/driver-profile/DocumentsSection.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/driver-profile/DocumentsSection.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/FleetTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/FleetTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/maintenance/LaborTracker.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/maintenance/LaborTracker.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/reports/LaneDetailModal.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/reports/LaneDetailModal.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/shared/ResizableTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/shared/ResizableTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/trailer-profile/PlatesTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/trailer-profile/PlatesTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/vehicle-profile/PlatesTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/vehicle-profile/PlatesTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/BillsPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/BillsPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/EscrowPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/EscrowPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/PostingLineagePage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/PostingLineagePage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/admin/ActivityLogPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/admin/ActivityLogPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/admin/ErrorMonitor.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/admin/ErrorMonitor.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/audit/AuditEventsList.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/audit/AuditEventsList.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Dense office UI (CLAUDE.md §10) — accepted at desktop density",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/compliance/Form2290Filings.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/Customers.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/Customers.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/dev/BulkDemoPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/dev/BulkDemoPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/dispatch/components/LoadTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/dispatch/components/LoadTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
         "height": 667
@@ -915,10 +1851,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/drivers/DriversListPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/drivers/DriversListPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/DriverDetail.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/DriverDetail.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
         "height": 667
@@ -963,18 +1899,6 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/factoring/FactorAdmin.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/factoring/FactorAdmin.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
       "id": "table-no-mobile-fallback:apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx",
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx",
@@ -1011,9 +1935,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx",
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx",
       "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx",
+      "file": "apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx",
       "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
@@ -1023,9 +1947,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx",
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx",
       "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx",
+      "file": "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx",
       "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
@@ -1071,6 +1995,30 @@
       "owner_module": "office-tms"
     },
     {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/compliance/Compliance425CPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/maintenance/compliance/Compliance425CPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
       "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx",
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx",
@@ -1095,10 +2043,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
         "height": 667
@@ -1107,10 +2055,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/MaintenanceSettingsPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/MaintenanceSettingsPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
         "height": 667
@@ -1122,6 +2070,18 @@
       "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx",
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx",
       "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
@@ -1191,237 +2151,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/compliance/Compliance425CPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/maintenance/compliance/Compliance425CPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/ArrivingSoonFilterBar.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/components/ArrivingSoonFilterBar.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateBillModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/components/CreateBillModal.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateExpenseModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/components/CreateExpenseModal.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionCostBreakdown.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionCostBreakdown.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/PartsInventoryTable.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/components/PartsInventoryTable.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
       "id": "table-no-mobile-fallback:apps/frontend/src/pages/operations/GeofencesPage.tsx",
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/operations/GeofencesPage.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx",
       "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
@@ -1446,6 +2178,18 @@
       "id": "table-no-mobile-fallback:apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx",
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx",
       "message": "Table without mobile overflow/fallback pattern",
       "viewport": {
         "width": 375,
@@ -1575,6 +2319,18 @@
       "owner_module": "office-tms"
     },
     {
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/reports/runners/RunnerTable.tsx",
+      "rule": "table-no-mobile-fallback",
+      "file": "apps/frontend/src/pages/reports/runners/RunnerTable.tsx",
+      "message": "Table without mobile overflow/fallback pattern",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
       "id": "table-no-mobile-fallback:apps/frontend/src/pages/reports/ScheduledReportsPage.tsx",
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/reports/ScheduledReportsPage.tsx",
@@ -1603,78 +2359,6 @@
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/reports/TrialBalancePage.tsx",
       "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/reports/runners/RunnerTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/reports/runners/RunnerTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/safety/IdvrPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/safety/IdvrPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/safety/PermitsPage.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/safety/PermitsPage.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/safety/TrainingRecordsPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
         "height": 667
@@ -1719,18 +2403,6 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "modal-viewport-risk:apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
       "id": "table-no-mobile-fallback:apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
@@ -1767,22 +2439,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx",
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/Vendors.tsx",
       "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx",
+      "file": "apps/frontend/src/pages/Vendors.tsx",
       "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx",
-      "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
         "height": 667
@@ -1803,646 +2463,10 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "button-under-44px:apps/frontend/src/components/CompanySwitcher.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/CompanySwitcher.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/DataTable.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/DataTable.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/DataTable.tsx",
+      "id": "table-no-mobile-fallback:apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx",
       "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/DataTable.tsx",
+      "file": "apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx",
       "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/FleetTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/FleetTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "modal-viewport-risk:apps/frontend/src/components/Sidebar.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/components/Sidebar.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/Topbar.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/Topbar.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/UploadZone.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/UploadZone.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/accounting/ManualJEModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/accounting/ManualJEModal.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/accounting/VendorBillForm.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/accounting/VendorBillForm.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/allocation/AllocationPreviewTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/allocation/AllocationPreviewTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/compliance/ComplianceTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/compliance/ComplianceTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/compliance/NotificationLogPanel.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/compliance/NotificationLogPanel.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/compliance/NotificationRulesPanel.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/compliance/NotificationRulesPanel.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "modal-viewport-risk:apps/frontend/src/components/dialogs/ConfirmDiscardDialog.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/frontend/src/components/dialogs/ConfirmDiscardDialog.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/driver-profile/DocumentsSection.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/driver-profile/DocumentsSection.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/driver-profile/SettlementsSection.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/driver-profile/TrainingRecordsSection.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/fleet/BulkActionBar.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/fleet/BulkActionBar.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/fleet/EditTrailerModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/fleet/EditVehicleModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/layout/CarrierSwitcher.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/layout/CarrierSwitcher.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/maintenance/LaborTracker.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/maintenance/LaborTracker.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/notifications/NotificationBell.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/notifications/NotificationBell.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/reports/LaneDetailModal.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/reports/LaneDetailModal.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/shared/ResizableTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/shared/ResizableTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/trailer-profile/PlatesTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/trailer-profile/PlatesTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/vehicle-profile/PlatesTable.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/vehicle-profile/PlatesTable.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "modal-viewport-risk:apps/driver-pwa/src/pages/IncidentReport.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/driver-pwa/src/pages/IncidentReport.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "driver-pwa"
-    },
-    {
-      "id": "modal-viewport-risk:apps/driver-pwa/src/components/Modal.tsx",
-      "rule": "modal-viewport-risk",
-      "file": "apps/driver-pwa/src/components/Modal.tsx",
-      "message": "Full-screen overlay may exceed viewport without internal scroll",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "driver-pwa"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/forms/DatePicker.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/forms/DatePicker.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/forms/MoneyInput.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/forms/MoneyInput.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/forms/MoneyInput.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/forms/MoneyInput.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/forms/TimePicker.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/forms/TimePicker.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710) \u2014 accepted at desktop density",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/forms/StateSelect.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/forms/StateSelect.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710)",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/forms/StateSelect.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/forms/StateSelect.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Dense office UI (CLAUDE.md \u00a710)",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/FleetTable.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/FleetTable.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/table/ColumnChooser.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/table/ColumnChooser.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/table/ColumnChooser.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/table/ColumnChooser.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "button-under-44px:apps/frontend/src/components/table/Paginator.tsx",
-      "rule": "button-under-44px",
-      "file": "apps/frontend/src/components/table/Paginator.tsx",
-      "message": "Interactive control uses h-7 (<44px touch target)",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/table/Paginator.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/table/Paginator.tsx",
-      "message": "Text input height may be below 48px on mobile",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
-      "id": "input-under-44px:apps/frontend/src/components/table/TableSearch.tsx",
-      "rule": "input-under-44px",
-      "file": "apps/frontend/src/components/table/TableSearch.tsx",
-      "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
         "height": 667
