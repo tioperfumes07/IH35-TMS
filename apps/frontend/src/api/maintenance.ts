@@ -241,6 +241,13 @@ export type CreateWorkOrderTwoSectionPayload = {
     repair_complaint?: string;
     repair_cause?: string;
     repair_correction?: string;
+    // render-v5 header (migration 202606221200 #1353).
+    status?: "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
+    opened_at?: string;
+    authorized_by_user_id?: string;
+    authorization_number?: string;
+    service_location_type?: "shop" | "mobile" | "roadside";
+    repaired_by?: "in_house" | "outside_vendor";
   };
   sectionA: Array<{
     description: string;

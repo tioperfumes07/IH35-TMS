@@ -162,6 +162,12 @@ const createWorkOrderV5Schema = z.object({
     repair_complaint: z.string().trim().max(2000).optional(),
     repair_cause: z.string().trim().max(2000).optional(),
     repair_correction: z.string().trim().max(2000).optional(),
+    // render-v5 header (migration 202606221200 #1353) — persisted post-insert in the service.
+    opened_at: z.string().datetime({ offset: true }).optional(),
+    authorized_by_user_id: z.string().uuid().optional(),
+    authorization_number: z.string().trim().max(120).optional(),
+    service_location_type: z.enum(["shop", "mobile", "roadside"]).optional(),
+    repaired_by: z.enum(["in_house", "outside_vendor"]).optional(),
   }),
   sectionA: z.array(sectionALineSchema).default([]),
   sectionB: z.array(sectionBLineSchema).default([]),

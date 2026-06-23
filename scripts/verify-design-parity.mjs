@@ -52,6 +52,7 @@ const SCREEN_COMPONENTS = {
   "Create/Edit Work Order Wizard": [
     `${FE}/maintenance/components/CreateWorkOrderModal.tsx`,
     `${FE}/maintenance/components/CreateWOSectionIdentification.tsx`,
+    `${FE}/maintenance/components/CreateWOSectionRenderV5Header.tsx`,
     `${FE}/maintenance/components/CreateWOSectionCostBreakdown.tsx`,
     `${FE}/maintenance/components/CreateWOSectionPaymentTiming.tsx`,
     `${FE}/maintenance/components/CreateWOSectionReconcile.tsx`,
@@ -84,18 +85,19 @@ const SCREEN_COMPONENTS = {
 // migration first"). Each entry MUST name the gating migration PR. Remove the token here the moment
 // the field renders. This keeps the guard honest about WHY a field is absent instead of silently passing.
 const DEFERRED = {
-  // Work Order header fields blocked on migration #1353 (JORGE-APPROVED gate) — see DESIGN-PARITY-ENFORCEMENT.md.
+  // WO header fields whose maintenance.work_orders column does NOT exist yet → a gated migration must land
+  // first (Priority + Close date/time have no column), OR there is no live data source (Odometer/Engine-hrs
+  // are Samsara-sourced and Samsara is PARKED — GUARD gate-4: data-source-pending, do NOT fabricate). The
+  // #1353-live header fields (Status/Authorized-by/Repaired-by/Authorization#/Service-location/Open date+time)
+  // are BUILT and render — removed from this list.
   "Create/Edit Work Order Wizard": {
-    pr: "#1353",
+    reason: "priority+close need a gated migration (no column); odometer/engine-hrs need a Samsara source (parked)",
     tokens: [
       "priority",
-      "status",
-      "authorizedbyemployees",
-      "repairedby",
       "closedateoncompletion",
       "closetimeoncompletion",
-      "authorization",
-      "servicelocationmobileroadside",
+      "odometersamsara",
+      "enginehrssamsara",
     ],
   },
 };
