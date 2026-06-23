@@ -294,22 +294,23 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   <p className="mt-1 text-[10px] text-gray-400">Single customer total. Linehaul / fuel / accessorial breakdown arrives with the charge line-items block.</p>
                 </OverviewWizardSection>
 
-                {/* §B — Equipment · Driver · Trailer. Trailer type/unit, team-driver name, and pay rate are
-                    "—" until the LoadDetail backend enrichment (B1b) surfaces them. */}
+                {/* §B — Equipment · Driver · Trailer. W-FIX-3a surfaces team-driver name (join) + trailer
+                    type/unit (loads.trailer_id → equipment) via read-only joins. Driver pay rate stays "—"
+                    (the load-specific rate isn't persisted on the load — not fabricated). */}
                 <OverviewWizardSection title="Equipment · Driver · Trailer" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
                   <FlatFieldGrid
                     columns={2}
                     fields={[
                       { label: "Trip Type", value: load.trip_type ? (TRIP_TYPE_LABEL[load.trip_type] ?? load.trip_type) : "—" },
-                      { label: "Trailer type", value: "—" },
+                      { label: "Trailer type", value: load.trailer_equipment_type ?? "—" },
                       { label: "Truck unit", value: load.assigned_unit_number ?? "—" },
-                      { label: "Trailer unit", value: "—" },
+                      { label: "Trailer unit", value: load.trailer_number ?? "—" },
                       { label: "Driver", value: load.assigned_primary_driver_name ?? "Unassigned" },
-                      { label: "Team driver", value: load.assigned_secondary_driver_id ? "—" : "Solo" },
+                      { label: "Team driver", value: load.assigned_secondary_driver_name ?? (load.assigned_secondary_driver_id ? "—" : "Solo") },
                       { label: "Driver pay rate / mi", value: "—" },
                     ]}
                   />
-                  <p className="mt-1 text-[10px] text-gray-400">Trailer type/unit, team-driver name, and pay rate populate once LoadDetail enrichment (B1b) lands.</p>
+                  <p className="mt-1 text-[10px] text-gray-400">Trailer type/unit show when a trailer is assigned (loads.trailer_id). Driver pay rate is the load-specific rate, not stored on the load yet.</p>
                 </OverviewWizardSection>
 
                 {/* §C — Stops · PC*MILER Routing (per-stop, from the live payload). */}

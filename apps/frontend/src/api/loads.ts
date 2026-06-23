@@ -138,6 +138,10 @@ export type LoadDetail = DispatchLoadRow & {
   pre_cool?: boolean | null;
   tarp_qty?: number | null;
   tarp_size?: string | null;
+  // W-FIX-3a: side-panel §B Equipment enrichment (read-only joins, no new column).
+  assigned_secondary_driver_name?: string | null; // team driver (assigned_secondary_driver_id → drivers)
+  trailer_equipment_type?: string | null;          // mdata.loads.trailer_id → mdata.equipment.equipment_type
+  trailer_number?: string | null;                  // mdata.equipment.equipment_number
 };
 
 export type LoadAuditEvent = {
