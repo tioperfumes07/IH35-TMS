@@ -233,6 +233,14 @@ export type CreateWorkOrderTwoSectionPayload = {
     roadside_provider_vendor_id?: string;
     roadside_location?: string;
     roadside_breakdown_load_id?: string;
+    // Block 8 (migration 202606221100) — VMRS repair detail.
+    vmrs_system_code?: string;
+    vmrs_assembly_code?: string;
+    vmrs_component_code?: string;
+    out_of_service?: boolean;
+    repair_complaint?: string;
+    repair_cause?: string;
+    repair_correction?: string;
   };
   sectionA: Array<{
     description: string;

@@ -79,6 +79,14 @@ const createWorkOrderSchema = z.object({
   roadside_provider_vendor_id: z.string().uuid().optional(),
   roadside_location: z.string().trim().max(1000).optional(),
   roadside_breakdown_load_id: z.string().uuid().optional(),
+  // Block 8 (migration 202606221100) — VMRS repair detail (additive; persisted post-insert in the service).
+  vmrs_system_code: z.string().trim().max(40).optional(),
+  vmrs_assembly_code: z.string().trim().max(40).optional(),
+  vmrs_component_code: z.string().trim().max(40).optional(),
+  out_of_service: z.boolean().optional(),
+  repair_complaint: z.string().trim().max(2000).optional(),
+  repair_cause: z.string().trim().max(2000).optional(),
+  repair_correction: z.string().trim().max(2000).optional(),
 });
 
 const sectionALineSchema = z.object({
@@ -146,6 +154,14 @@ const createWorkOrderV5Schema = z.object({
     roadside_provider_vendor_id: z.string().uuid().optional(),
     roadside_location: z.string().trim().max(1000).optional(),
     roadside_breakdown_load_id: z.string().uuid().optional(),
+    // Block 8 (migration 202606221100) — VMRS repair detail (persisted post-insert in the service).
+    vmrs_system_code: z.string().trim().max(40).optional(),
+    vmrs_assembly_code: z.string().trim().max(40).optional(),
+    vmrs_component_code: z.string().trim().max(40).optional(),
+    out_of_service: z.boolean().optional(),
+    repair_complaint: z.string().trim().max(2000).optional(),
+    repair_cause: z.string().trim().max(2000).optional(),
+    repair_correction: z.string().trim().max(2000).optional(),
   }),
   sectionA: z.array(sectionALineSchema).default([]),
   sectionB: z.array(sectionBLineSchema).default([]),

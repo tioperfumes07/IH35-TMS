@@ -50,6 +50,14 @@ export type CreateWOFormValues = {
   roadside_provider_vendor_id: string;
   roadside_location: string;
   roadside_breakdown_load_id: string;
+  // Block 8 — VMRS repair detail.
+  vmrs_system_code: string;
+  vmrs_assembly_code: string;
+  vmrs_component_code: string;
+  out_of_service: boolean;
+  repair_complaint: string;
+  repair_cause: string;
+  repair_correction: string;
   line_items: Array<{
     line_type: "parts" | "labor" | "other";
     description: string;
@@ -125,6 +133,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       roadside_provider_vendor_id: "",
       roadside_location: "",
       roadside_breakdown_load_id: "",
+      vmrs_system_code: "",
+      vmrs_assembly_code: "",
+      vmrs_component_code: "",
+      out_of_service: false,
+      repair_complaint: "",
+      repair_cause: "",
+      repair_correction: "",
       line_items: [],
       ...initialValues,
     },
@@ -312,6 +327,14 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           roadside_provider_vendor_id: values.roadside_provider_vendor_id || undefined,
           roadside_location: values.roadside_location || undefined,
           roadside_breakdown_load_id: values.roadside_breakdown_load_id || undefined,
+          // Block 8 — VMRS repair detail.
+          vmrs_system_code: values.vmrs_system_code || undefined,
+          vmrs_assembly_code: values.vmrs_assembly_code || undefined,
+          vmrs_component_code: values.vmrs_component_code || undefined,
+          out_of_service: values.out_of_service || undefined,
+          repair_complaint: values.repair_complaint || undefined,
+          repair_cause: values.repair_cause || undefined,
+          repair_correction: values.repair_correction || undefined,
         },
         sectionA: sectionALines,
         sectionB: sectionBLines,
@@ -378,6 +401,29 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
           Class auto-derive: <span className="font-semibold">{form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`}</span>
         </div>
+        {/* Block 8 — VMRS Repair Detail (render-v5 §B). System/Assembly/Component codes + the 3 Cs. §7 navy. */}
+        <section data-testid="wo-vmrs-repair-detail" className="rounded border border-slate-300 bg-white p-2 text-xs">
+          <div className="mb-1 font-semibold text-[#1F2A44]">VMRS Repair Detail</div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">System code</span>
+              <input {...form.register("vmrs_system_code")} className="h-7 w-full rounded border border-gray-300 px-2" /></label>
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Assembly code</span>
+              <input {...form.register("vmrs_assembly_code")} className="h-7 w-full rounded border border-gray-300 px-2" /></label>
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Component code</span>
+              <input {...form.register("vmrs_component_code")} className="h-7 w-full rounded border border-gray-300 px-2" /></label>
+          </div>
+          <label className="mt-2 flex items-center gap-1.5 font-semibold text-slate-600">
+            <input type="checkbox" {...form.register("out_of_service")} className="h-3.5 w-3.5" /> Out of service?
+          </label>
+          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Complaint</span>
+              <textarea {...form.register("repair_complaint")} rows={2} className="w-full rounded border border-gray-300 px-2 py-1" /></label>
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Cause</span>
+              <textarea {...form.register("repair_cause")} rows={2} className="w-full rounded border border-gray-300 px-2 py-1" /></label>
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Correction</span>
+              <textarea {...form.register("repair_correction")} rows={2} className="w-full rounded border border-gray-300 px-2 py-1" /></label>
+          </div>
+        </section>
         <TwoSectionLineEditor mode="wo" initialLines={[]} onChange={setLines} />
         {requiresLoadForG18 ? (
           <div className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">

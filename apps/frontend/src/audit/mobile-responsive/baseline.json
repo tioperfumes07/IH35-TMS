@@ -255,6 +255,18 @@
       "owner_module": "office-tms"
     },
     {
+      "id": "button-under-44px:apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
       "id": "button-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx",
       "rule": "button-under-44px",
       "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx",
@@ -906,6 +918,18 @@
       "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateExpenseModal.tsx",
       "rule": "input-under-44px",
       "file": "apps/frontend/src/pages/maintenance/components/CreateExpenseModal.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,
