@@ -19,6 +19,8 @@ type Props = {
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required"),
+  // render-v5 §D vendor: Display name (= name) and Company/Vendor name are distinct fields.
+  company: z.string().trim().optional(),
   email: z.string().trim().email("Valid email required").optional().or(z.literal("")),
   phone: z.string().trim().optional(),
   sku: z.string().trim().optional(),
@@ -48,7 +50,7 @@ export function QuickCreateEntityModal({
   const { pushToast } = useToast();
   const [saving, setSaving] = useState(false);
   const form = useForm<FormValues>({
-    defaultValues: { name: "", email: "", phone: "", sku: "", unitPrice: 0, qtyReceived: 1, location: "" },
+    defaultValues: { name: "", company: "", email: "", phone: "", sku: "", unitPrice: 0, qtyReceived: 1, location: "" },
   });
 
   const submit = form.handleSubmit(async (raw) => {
@@ -71,7 +73,7 @@ export function QuickCreateEntityModal({
       if (kind === "vendor") {
         const res = await createQboVendor(operatingCompanyId, {
           display_name: parsed.data.name,
-          company_name: parsed.data.name,
+          company_name: parsed.data.company?.trim() || parsed.data.name,
           primary_email: parsed.data.email || undefined,
           primary_phone: parsed.data.phone || undefined,
         });
@@ -79,7 +81,7 @@ export function QuickCreateEntityModal({
       } else if (kind === "customer") {
         const res = await createQboCustomer(operatingCompanyId, {
           display_name: parsed.data.name,
-          company_name: parsed.data.name,
+          company_name: parsed.data.company?.trim() || parsed.data.name,
           primary_email: parsed.data.email || undefined,
           primary_phone: parsed.data.phone || undefined,
         });
@@ -122,9 +124,16 @@ export function QuickCreateEntityModal({
     <Modal open={open} onClose={onClose} title={titleFor(kind)} modalKind="quick-create-entity" sizePreset="md" resizable>
       <form className="space-y-3 text-sm" onSubmit={submit}>
         <label className="block">
-          <span className="text-xs font-medium text-gray-600">Name *</span>
+          <span className="text-xs font-medium text-gray-600">{kind === "vendor" || kind === "customer" ? "Display name *" : "Name *"}</span>
           <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("name")} aria-label="Quick create name" />
         </label>
+
+        {kind === "vendor" || kind === "customer" ? (
+          <label className="block">
+            <span className="text-xs font-medium text-gray-600">Company / {kind === "vendor" ? "Vendor" : "Customer"} name</span>
+            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("company")} aria-label="Quick create company name" placeholder="Defaults to display name" />
+          </label>
+        ) : null}
 
         {kind === "vendor" || kind === "customer" ? (
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
