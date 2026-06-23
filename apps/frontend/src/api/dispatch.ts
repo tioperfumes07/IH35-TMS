@@ -146,6 +146,7 @@ export type DispatchBookLoadPayload = {
   tour_id?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
+  assigned_trailer_unit_id?: string; // W-FIX-3b: persisted to mdata.loads.trailer_id
   assigned_primary_driver_id?: string;
   assigned_secondary_driver_id?: string;
   team_id?: string;

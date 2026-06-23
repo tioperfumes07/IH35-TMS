@@ -102,6 +102,8 @@ export type BookLoadInput = {
   border_routing?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
+  // W-FIX-3b: the selected trailer (mdata.equipment id) → persisted to the existing mdata.loads.trailer_id.
+  assigned_trailer_unit_id?: string;
   assigned_primary_driver_id?: string;
   assigned_secondary_driver_id?: string;
   team_id?: string;
@@ -792,6 +794,26 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       hazmat: Boolean(input.hazmat),
     };
 
+    // W-FIX-3b: persist the selected trailer to the existing mdata.loads.trailer_id (additive — no new
+    // column, no other stored field changed). Entity-scoped: only persist a trailer (mdata.equipment) that
+    // belongs to this operating company (owner or current lessee); otherwise leave trailer_id NULL — never
+    // attach a foreign company's trailer.
+    let trailerIdForInsert: string | null = null;
+    if (input.assigned_trailer_unit_id) {
+      const trailerRows = await optionalQuery(
+        client,
+        `
+          SELECT id
+          FROM mdata.equipment
+          WHERE id = $1
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2
+          LIMIT 1
+        `,
+        [input.assigned_trailer_unit_id, input.operating_company_id]
+      );
+      trailerIdForInsert = (trailerRows[0]?.id as string | undefined) ?? null;
+    }
+
     const loadRes = await client.query(
       `
         INSERT INTO mdata.loads (
@@ -806,9 +828,10 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
           late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
-          customer_wo_number, pickup_number, border_routing
+          customer_wo_number, pickup_number, border_routing,
+          trailer_id
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40)
         RETURNING *
       `,
       [
@@ -851,6 +874,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         input.customer_wo_number ?? null,
         input.pickup_number ?? null,
         input.border_routing ?? null,
+        trailerIdForInsert,
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;

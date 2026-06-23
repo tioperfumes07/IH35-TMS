@@ -549,6 +549,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           | "power_only_no_trailer"
           | "power_only_customer_trailer",
         assigned_unit_id: values.assigned_unit_id || undefined,
+        assigned_trailer_unit_id: values.assigned_trailer_unit_id || undefined, // W-FIX-3b → mdata.loads.trailer_id
         team_id: values.assignment_mode === "team" ? values.team_id || undefined : undefined,
         assigned_primary_driver_id: values.assignment_mode === "solo" ? values.assigned_primary_driver_id || undefined : undefined,
         assigned_secondary_driver_id: values.assignment_mode === "solo" ? values.assigned_secondary_driver_id || undefined : undefined,

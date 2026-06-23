@@ -140,6 +140,7 @@ const createDispatchLoadBodySchema = z.object({
   trip_type: z.enum(["NB", "TR", "SB"]).optional(),
   tour_id: z.string().uuid().optional(),
   assigned_unit_id: z.string().uuid().optional(),
+  assigned_trailer_unit_id: z.string().uuid().optional(), // W-FIX-3b: persisted to mdata.loads.trailer_id
   assigned_primary_driver_id: z.string().uuid().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
   team_id: z.string().uuid().optional(),
