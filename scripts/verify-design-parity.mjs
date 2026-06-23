@@ -15,6 +15,15 @@
  * label/section/column exists in the screen), not a layout/pixel check. §7 palette overrides design
  * COLOR, so color is never a token. See [[design-parity-lock]] + docs/design/DESIGN-PARITY-ENFORCEMENT.md.
  *
+ * LIMITATION + BACKSTOP (GUARD, 2026-06-23): token-in-source is NECESSARY but NOT SUFFICIENT — a token can
+ * exist in the file yet render nothing (early `return null`, a never-true conditional, a collapsed/unmounted
+ * branch). That was the #1355 false-DONE: the HOS block + stop-card fields passed this guard but rendered
+ * blank live. The fix for "does it actually render" is a DOM render-test that mounts the component and asserts
+ * the design labels appear (e.g. DriverHosClocks.test.tsx mounts the HOS block with NO driver and asserts the
+ * 6 clock labels are in the DOM; BookLoadStopsSection.test.tsx asserts the v6 card fields show by default).
+ * Rule: when a screen graduates into ENFORCED, back it with a render-test that proves its key fields reach the
+ * DOM — this guard catches "field deleted from source", the render-test catches "field present but not rendered".
+ *
  * The contract is the enforcement source (tokens); this script owns the screen→component wiring below.
  *
  * Enforcement model (ratchet): a screen in ENFORCED that is missing any required token = RED build —
