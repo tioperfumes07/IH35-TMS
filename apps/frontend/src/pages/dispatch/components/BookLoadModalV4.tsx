@@ -15,13 +15,10 @@ import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
-import { DeadheadOptimizerPanel } from "../../../components/dispatch/DeadheadOptimizerPanel";
 import { PreDispatchValidationPanel } from "../../../components/dispatch/PreDispatchValidationPanel";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
-import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
-import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCallout";
 import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
 import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
@@ -188,8 +185,6 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
   const [showSpecialNotes, setShowSpecialNotes] = useState(false);
-  const [showDriverInstructions, setShowDriverInstructions] = useState(false);
-  const [showExpectedAdjustments, setShowExpectedAdjustments] = useState(false);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -456,8 +451,6 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     setOverrideToken(null);
     setPendingCloseAfterAdvisory(false);
     setShowSpecialNotes(false);
-    setShowDriverInstructions(false);
-    setShowExpectedAdjustments(false);
   }, [open, form]);
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
@@ -913,7 +906,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     onRowsChange={(rows) => form.setValue("accessorial_rows", rows, { shouldDirty: true })}
                     onDetentionSeed={() => {
                       form.setValue("detention_expected_y_n", true, { shouldDirty: true });
-                      setShowExpectedAdjustments(true);
+                      // §B "Expected adjustments" expander is open by default (RENDER-A-v2 reorder) — no toggle needed.
                       const accrual = computeDetentionAccrualCents(
                         form.getValues("detention_expected_hours"),
                         form.getValues("detention_bill_customer_per_hour_cents")
@@ -1068,43 +1061,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                         <p className="text-[11px] text-gray-500">Joins this unit's current tour automatically (its most recent Northbound leg).</p>
                       ) : null}
                     </div>
-                    <BookLoadEquipmentSection register={form.register} watch={form.watch} setValue={form.setValue} operatingCompanyId={operatingCompanyId} />
-                    {assignedUnitId ? (
-                      <DeadheadOptimizerPanel
-                        operatingCompanyId={operatingCompanyId}
-                        unitUuid={assignedUnitId}
-                        afterDeliveryAt={deadheadAfterAt}
-                        dropCity={deadheadDropPreview.city}
-                        dropState={deadheadDropPreview.state}
-                      />
-                    ) : null}
-                    <div className={`blw-collapse ${showDriverInstructions ? "open" : ""}`}>
-                      <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowDriverInstructions((openState) => !openState)}>
-                        <span className="blw-collapse-plus">{showDriverInstructions ? "−" : "+"}</span>
-                        <span className="text-[11px] font-bold text-[#1f2733]">Driver instructions</span>
-                        <span className="ml-auto text-[9.5px] text-[#8a93a1]">visible to driver — click to add</span>
-                      </button>
-                      {showDriverInstructions ? (
-                        <div className="border-t border-gray-200 p-3">
-                          <DriverInstructionsTextarea register={form.register as never} />
-                        </div>
-                      ) : null}
-                    </div>
+                    <BookLoadEquipmentSection
+                      register={form.register}
+                      watch={form.watch}
+                      setValue={form.setValue}
+                      operatingCompanyId={operatingCompanyId}
+                      deadheadAfterAt={deadheadAfterAt}
+                      deadheadDropCity={deadheadDropPreview.city}
+                      deadheadDropState={deadheadDropPreview.state}
+                    />
                   </div>
                 </section>
-
-                <div className={`blw-collapse ${showExpectedAdjustments ? "open" : ""}`}>
-                  <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowExpectedAdjustments((openState) => !openState)}>
-                    <span className="blw-collapse-plus">{showExpectedAdjustments ? "−" : "+"}</span>
-                    <span className="text-[11px] font-bold text-[#1f2733]">Expected adjustments</span>
-                    <span className="ml-auto text-[9.5px] text-[#8a93a1]">chargeback · detention · late risk</span>
-                  </button>
-                  {showExpectedAdjustments ? (
-                    <div className="border-t border-gray-200 p-3">
-                      <ExpectedAdjustmentsCallout register={form.register as never} />
-                    </div>
-                  ) : null}
-                </div>
               </div>
             </div>
 

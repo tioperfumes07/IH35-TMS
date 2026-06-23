@@ -4,6 +4,9 @@ import { listDrivers, listDriverTeams, listUnits } from "../../../api/mdata";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { OptimalDriversPanel } from "../../../components/dispatch/OptimalDriversPanel";
 import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHosClocks";
+import { DeadheadOptimizerPanel } from "../../../components/dispatch/DeadheadOptimizerPanel";
+import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
+import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCallout";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -12,6 +15,10 @@ type Props = {
   operatingCompanyId?: string;
   /** Existing load id when editing; preview seam uses reservation uuid for new books. */
   optimizerLoadId?: string;
+  /** Deadhead-optimizer inputs lifted from the parent so §B order is owned here (RENDER-A-v2). */
+  deadheadAfterAt?: string;
+  deadheadDropCity?: string;
+  deadheadDropState?: string;
 };
 
 type Option = { id: string; label: string };
@@ -48,10 +55,11 @@ function toDriverOption(row: unknown, index: number): Option {
   return { id, label: [fullName, shortName].filter(Boolean).join(" · ") || `Driver ${index + 1}` };
 }
 
-export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId }: Props) {
+export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId, deadheadAfterAt, deadheadDropCity, deadheadDropState }: Props) {
   const assignmentMode = watch ? watch("assignment_mode") : "solo";
   const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "") : "";
   const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "") : "";
+  const assignedUnitId = watch ? String(watch("assigned_unit_id") ?? "") : "";
   const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
   // Conditional equipment detail reveals (render-v6 §B): reefer detail only on a reefer trailer, tarp detail
@@ -174,20 +182,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
-      {/* render-v6 §B — "Expected adjustments" collapsible (OPEN by default). Holds the Driver HOS block:
-          the 6-clock set (Drive/Shift/Break/Cycle/Stop by/Resume at), ALWAYS shown (not gated on a selected
-          driver) so it matches the v6 design; "No HOS data" until a driver is picked + Samsara HOS seeded. */}
-      <details open data-testid="expected-adjustments" className="rounded border border-gray-200">
-        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
-          Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
-        </summary>
-        <div className="space-y-2 border-t border-gray-200 p-2">
-          <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
-          {assignmentMode === "team" && secondaryDriverId ? (
-            <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
-          ) : null}
-        </div>
-      </details>
       {operatingCompanyId && pickupStop?.city ? (
         <OptimalDriversPanel
           loadId={optimizerLoadKey}
@@ -200,6 +194,16 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             hazmat,
             trailer_type: trailerType,
           }}
+        />
+      ) : null}
+      {/* RENDER-A-v2 §B: deadhead-optimizer aid sits with the driver-assignment helpers, before reefer/flatbed. */}
+      {assignedUnitId && operatingCompanyId ? (
+        <DeadheadOptimizerPanel
+          operatingCompanyId={operatingCompanyId}
+          unitUuid={assignedUnitId}
+          afterDeliveryAt={deadheadAfterAt ?? ""}
+          dropCity={deadheadDropCity ?? ""}
+          dropState={deadheadDropState ?? ""}
         />
       ) : null}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-center">
@@ -231,19 +235,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             </SelectCombobox>
           }
         />
-      </div>
-      <div>
-        <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
-        <div className="flex flex-wrap gap-1.5">
-          {toggles.map((toggle) => (
-            <label key={toggle.field} className="cursor-pointer">
-              <input type="checkbox" {...register(toggle.field)} className="peer sr-only" />
-              <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#16203a] peer-checked:text-white peer-checked:ring-[#16203a]">
-                {toggle.label}
-              </span>
-            </label>
-          ))}
-        </div>
       </div>
       {/* RENDER-A-v2 §B: Driver pay rate / mi is TOP-LEVEL, half-row (standard field width). The separate
           "Reefer setpoint" field is REMOVED — the reefer panel's temperature IS the single setpoint. */}
@@ -299,6 +290,44 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           />
         </div>
       ) : null}
+      {/* RENDER-A-v2 §B: "Equipment & driver instructions" expander — equipment requirement chips + the
+          driver-visible instructions, combined into one expander after the trailer panels. */}
+      <details open data-testid="equipment-driver-instructions" className="rounded border border-gray-200">
+        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
+          Equipment &amp; driver instructions <span className="font-normal text-gray-400">requirements · visible to driver</span>
+        </summary>
+        <div className="space-y-2 border-t border-gray-200 p-2">
+          <div>
+            <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
+            <div className="flex flex-wrap gap-1.5">
+              {toggles.map((toggle) => (
+                <label key={toggle.field} className="cursor-pointer">
+                  <input type="checkbox" {...register(toggle.field)} className="peer sr-only" />
+                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#16203a] peer-checked:text-white peer-checked:ring-[#16203a]">
+                    {toggle.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <DriverInstructionsTextarea register={register as never} />
+        </div>
+      </details>
+      {/* RENDER-A-v2 §B: "Expected adjustments" (HOS · detention · late risk) is the LAST §B block. Holds the
+          Driver HOS clock set (always shown; "No HOS data" until a driver + Samsara HOS) + the chargeback /
+          detention / late-risk callout. */}
+      <details open data-testid="expected-adjustments" className="rounded border border-gray-200">
+        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
+          Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
+        </summary>
+        <div className="space-y-2 border-t border-gray-200 p-2">
+          <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
+          {assignmentMode === "team" && secondaryDriverId ? (
+            <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
+          ) : null}
+          <ExpectedAdjustmentsCallout register={register as never} />
+        </div>
+      </details>
       <div className="hidden">
         <input type="number" {...register("temp_fahrenheit", { valueAsNumber: true })} />
       </div>

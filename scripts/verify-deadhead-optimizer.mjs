@@ -13,6 +13,9 @@ const paths = {
   tests: path.join(ROOT, "apps/backend/src/dispatch/deadhead/__tests__/optimizer.test.ts"),
   panel: path.join(ROOT, "apps/frontend/src/components/dispatch/DeadheadOptimizerPanel.tsx"),
   bookLoadModal: path.join(ROOT, "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx"),
+  // RENDER-A-v2 §B reorder (A1a): the deadhead panel now lives in the §B section component, which the
+  // wizard mounts — so the seam is asserted across both files instead of grepping the old parent location.
+  equipmentSection: path.join(ROOT, "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx"),
   dispatchApi: path.join(ROOT, "apps/frontend/src/api/dispatch.ts"),
   index: path.join(ROOT, "apps/backend/src/index.ts"),
   spec: path.join(ROOT, "docs/specs/gap-76-deadhead-optimizer.md"),
@@ -36,6 +39,7 @@ function main() {
   const tests = read(paths.tests);
   const panel = read(paths.panel);
   const bookLoadModal = read(paths.bookLoadModal);
+  const equipmentSection = read(paths.equipmentSection);
   const dispatchApi = read(paths.dispatchApi);
   const index = read(paths.index);
   const spec = read(paths.spec);
@@ -51,7 +55,10 @@ function main() {
   if ((tests.match(/\bit\(/g) ?? []).length < 5) failures.push("optimizer tests must cover at least 5 cases");
   if (!index.includes("registerDeadheadOptimizerRoutes")) failures.push("backend index must register deadhead routes");
   if (!panel.includes('data-testid="deadhead-optimizer-panel"')) failures.push("DeadheadOptimizerPanel must expose test id");
-  if (!bookLoadModal.includes("DeadheadOptimizerPanel")) failures.push("BookLoadModalV4 must embed DeadheadOptimizerPanel");
+  // A1a: the deadhead panel is embedded in the §B section (BookLoadEquipmentSection), and the wizard
+  // (BookLoadModalV4) must mount that section — together this keeps the seam reachable from Book Load.
+  if (!equipmentSection.includes("DeadheadOptimizerPanel")) failures.push("BookLoadEquipmentSection (§B owner) must embed DeadheadOptimizerPanel");
+  if (!bookLoadModal.includes("BookLoadEquipmentSection")) failures.push("BookLoadModalV4 must mount BookLoadEquipmentSection (so the deadhead panel is reachable in Book Load)");
   if (!dispatchApi.includes("getDeadheadNextLoadSuggestions")) failures.push("dispatch API must export getDeadheadNextLoadSuggestions");
   if (!spec.includes("GAP-76")) failures.push("gap-76 spec doc must reference GAP-76");
   if (!pkg.includes("verify:deadhead-optimizer")) failures.push("package.json must define verify:deadhead-optimizer");
