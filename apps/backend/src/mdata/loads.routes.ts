@@ -685,7 +685,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             -- stop round-trips without wiping appointment window / lumper / tarp / contacts / dock.
             time_window_type, appointment_start_at, appointment_end_at,
             lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
-            site_contact_name, site_contact_phone, gate_dock_text
+            site_contact_name, site_contact_phone, gate_dock_text, postal_code
           FROM mdata.load_stops
           WHERE load_id = $1
           ORDER BY sequence_number ASC, created_at ASC
