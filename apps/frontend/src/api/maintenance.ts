@@ -265,6 +265,15 @@ export type CreateWorkOrderTwoSectionPayload = {
       part_location_codes?: string[];
     }>;
   }>;
+  // Block 8 — asset-location map: serialized parts placed on the unit.
+  serialized_parts?: Array<{
+    part_type: "tire" | "battery" | "lamp" | "mirror" | "other";
+    part_label: string;
+    serial_number?: string;
+    position_code?: string;
+    unit_id?: string;
+    notes?: string;
+  }>;
 };
 
 function query(companyId: string) {
