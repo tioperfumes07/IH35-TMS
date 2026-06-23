@@ -30,6 +30,12 @@ function asDays(value: number | null | undefined) {
   return String(Math.max(0, Math.round(value)));
 }
 
+function asDate(value: string | null | undefined) {
+  if (!value) return "—";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+}
+
 function severityBadgeClass(severity: string) {
   // §7 status: single red (severe/total loss) + single amber (everything else). No off-palette orange.
   if (severity === "total_loss") return "bg-red-100 text-red-800 border-red-300";
@@ -191,7 +197,10 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
     { key: "estimated_labor_cents", label: "Labor", sortable: true, render: (row) => money(row.estimated_labor_cents) },
     { key: "estimated_parts_cents", label: "Parts", sortable: true, render: (row) => money(row.estimated_parts_cents) },
     { key: "estimated_outside_service_cents", label: "Outside", sortable: true, render: (row) => money(row.estimated_outside_service_cents) },
-    { key: "estimated_total_cents", label: "Total", sortable: true, render: (row) => <span className="font-semibold">{money(row.estimated_total_cents)}</span> },
+    { key: "estimated_total_cents", label: "Cost", sortable: true, render: (row) => <span className="font-semibold">{money(row.estimated_total_cents)}</span> },
+    // Design parity (severe-repairs.html): Down Since (oos_since), Est. Return (estimated_completion_date).
+    { key: "oos_since", label: "Down Since", sortable: true, render: (row) => asDate(row.oos_since) },
+    { key: "estimated_completion_date", label: "Est. Return", sortable: true, render: (row) => asDate(row.estimated_completion_date) },
     { key: "days_oos", label: "Days OOS", sortable: true, render: (row) => asDays(row.days_oos) },
     { key: "estimate_status", label: "Status", sortable: true },
   ];
