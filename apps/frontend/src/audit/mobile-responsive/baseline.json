@@ -963,6 +963,18 @@
       "owner_module": "office-tms"
     },
     {
+      "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionRenderV5Header.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionRenderV5Header.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec — office-modal compact h-7 convention, same as the other Create-WO sections",
+      "owner_module": "office-tms"
+    },
+    {
       "id": "input-under-44px:apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx",
       "rule": "input-under-44px",
       "file": "apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx",

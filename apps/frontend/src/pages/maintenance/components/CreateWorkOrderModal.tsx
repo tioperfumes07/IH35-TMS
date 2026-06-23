@@ -12,6 +12,7 @@ import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { UploadZone } from "../../../components/UploadZone";
 import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
+import { CreateWOSectionRenderV5Header } from "./CreateWOSectionRenderV5Header";
 import { CreateWOSectionPaymentTiming } from "./CreateWOSectionPaymentTiming";
 import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
 import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
@@ -58,6 +59,14 @@ export type CreateWOFormValues = {
   repair_complaint: string;
   repair_cause: string;
   repair_correction: string;
+  // render-v5 header (#1353 live columns).
+  status: "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
+  open_date: string;
+  open_time: string;
+  authorized_by_user_id: string;
+  authorization_number: string;
+  service_location_type: "" | "shop" | "mobile" | "roadside";
+  repaired_by: "" | "in_house" | "outside_vendor";
   line_items: Array<{
     line_type: "parts" | "labor" | "other";
     description: string;
@@ -144,6 +153,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       repair_complaint: "",
       repair_cause: "",
       repair_correction: "",
+      status: "open",
+      open_date: new Date().toISOString().slice(0, 10),
+      open_time: "",
+      authorized_by_user_id: "",
+      authorization_number: "",
+      service_location_type: "",
+      repaired_by: "",
       line_items: [],
       ...initialValues,
     },
@@ -340,6 +356,15 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           repair_complaint: values.repair_complaint || undefined,
           repair_cause: values.repair_cause || undefined,
           repair_correction: values.repair_correction || undefined,
+          // render-v5 header (#1353 live columns). opened_at = open_date + open_time → ISO (date-only if no time).
+          status: values.status || undefined,
+          opened_at: values.open_date
+            ? new Date(`${values.open_date}T${values.open_time || "00:00"}`).toISOString()
+            : undefined,
+          authorized_by_user_id: values.authorized_by_user_id || undefined,
+          authorization_number: values.authorization_number || undefined,
+          service_location_type: values.service_location_type || undefined,
+          repaired_by: values.repaired_by || undefined,
         },
         sectionA: sectionALines,
         sectionB: sectionBLines,
@@ -410,13 +435,14 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           }
           backendLoadError={backendLoadError}
         />
+        <CreateWOSectionRenderV5Header register={form.register} />
         <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} />
         <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
           Class auto-derive: <span className="font-semibold">{form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`}</span>
         </div>
         {/* Block 8 — VMRS Repair Detail (render-v5 §B). System/Assembly/Component codes + the 3 Cs. §7 navy. */}
         <section data-testid="wo-vmrs-repair-detail" className="rounded border border-slate-300 bg-white p-2 text-xs">
-          <div className="mb-1 font-semibold text-[#1F2A44]">VMRS Repair Detail</div>
+          <div className="mb-1 font-semibold text-[#1F2A44]">VMRS Repair Detail — System / component</div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
             <label className="space-y-0.5"><span className="font-semibold text-slate-600">System code</span>
               <input {...form.register("vmrs_system_code")} className="h-7 w-full rounded border border-gray-300 px-2" /></label>

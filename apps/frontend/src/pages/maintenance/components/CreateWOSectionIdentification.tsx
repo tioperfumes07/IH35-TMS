@@ -107,7 +107,7 @@ export function CreateWOSectionIdentification({
             <input {...register("unit_id", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
           )}
         </Field>
-        <Field label="Driver">
+        <Field label="Driver locked — assigned to this trip">
           {operatingCompanyId && setValue ? (
             <>
               <input type="hidden" {...register("driver_id", { required: requireDriverAndLoad })} />
@@ -125,7 +125,7 @@ export function CreateWOSectionIdentification({
         <Field label="Class (auto)">
           <input {...register("class_hint")} readOnly className="h-8 w-full rounded border border-emerald-200 bg-emerald-50 px-2 text-sm font-semibold text-emerald-900" />
         </Field>
-        <Field label="Load #">
+        <Field label="Load # auto — unit on active trip">
           <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
       </div>

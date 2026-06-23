@@ -47,6 +47,12 @@ export type TwoSectionHeader = {
   repair_complaint?: string | null;
   repair_cause?: string | null;
   repair_correction?: string | null;
+  // render-v5 header (migration 202606221200 #1353) — persisted post-insert; all nullable/additive.
+  opened_at?: string | null;
+  authorized_by_user_id?: string | null;
+  authorization_number?: string | null;
+  service_location_type?: "shop" | "mobile" | "roadside" | null;
+  repaired_by?: "in_house" | "outside_vendor" | null;
 };
 
 export type SectionALine = {
@@ -211,6 +217,36 @@ export async function createWorkOrderWithLines(
         header.repair_complaint ?? null,
         header.repair_cause ?? null,
         header.repair_correction ?? null,
+        wo.id,
+      ]
+    );
+  }
+
+  // render-v5 header (migration 202606221200 #1353) — persist authorized-by / repaired-by / authorization # /
+  // service-location / open date-time post-insert. All COALESCE so a missing field never clobbers the INSERT
+  // defaults (e.g. opened_at). DB CHECK constraints enforce service_location_type/repaired_by domains.
+  if (
+    header.opened_at != null ||
+    header.authorized_by_user_id != null ||
+    header.authorization_number != null ||
+    header.service_location_type != null ||
+    header.repaired_by != null
+  ) {
+    await client.query(
+      `UPDATE maintenance.work_orders
+         SET opened_at = COALESCE($1, opened_at),
+             authorized_by_user_id = COALESCE($2, authorized_by_user_id),
+             authorization_number = COALESCE($3, authorization_number),
+             service_location_type = COALESCE($4, service_location_type),
+             repaired_by = COALESCE($5, repaired_by),
+             updated_at = now()
+       WHERE id = $6`,
+      [
+        header.opened_at ?? null,
+        header.authorized_by_user_id ?? null,
+        header.authorization_number ?? null,
+        header.service_location_type ?? null,
+        header.repaired_by ?? null,
         wo.id,
       ]
     );
