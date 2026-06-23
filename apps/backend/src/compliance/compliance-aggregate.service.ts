@@ -76,31 +76,31 @@ const AGGREGATE_SQL = `
            COALESCE(u.unit_number, u.id::text) AS owner_name, 'US Insurance'::text AS label,
            u.us_insurance_expiration AS expiration_date, NULL::uuid AS parent_id
     FROM mdata.units u
-    WHERE u.operating_company_id = $1::uuid AND u.us_insurance_expiration IS NOT NULL
+    WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid) AND u.us_insurance_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'mx_insurance', 'unit', u.id, COALESCE(u.unit_number, u.id::text), 'MX Insurance',
            u.mx_insurance_expiration, NULL
     FROM mdata.units u
-    WHERE u.operating_company_id = $1::uuid AND u.mx_insurance_expiration IS NOT NULL
+    WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid) AND u.mx_insurance_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'irp', 'unit', u.id, COALESCE(u.unit_number, u.id::text), 'IRP Registration',
            u.irp_expiration, NULL
     FROM mdata.units u
-    WHERE u.operating_company_id = $1::uuid AND u.irp_expiration IS NOT NULL
+    WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid) AND u.irp_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'sct_permit', 'unit', u.id, COALESCE(u.unit_number, u.id::text), 'SCT Permit',
            u.sct_permit_expiration, NULL
     FROM mdata.units u
-    WHERE u.operating_company_id = $1::uuid AND u.sct_permit_expiration IS NOT NULL
+    WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid) AND u.sct_permit_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'pita', 'unit', u.id, COALESCE(u.unit_number, u.id::text), 'PITA Permit',
            u.pita_expiration, NULL
     FROM mdata.units u
-    WHERE u.operating_company_id = $1::uuid AND u.pita_expiration IS NOT NULL
+    WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid) AND u.pita_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'trailer_us_insurance', 'equipment', e.id, COALESCE(e.equipment_number, e.id::text), 'Trailer US Insurance',

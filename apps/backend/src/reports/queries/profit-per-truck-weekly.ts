@@ -47,7 +47,8 @@ export async function profitPerTruckWeeklyQuery(context: QueryContext): Promise<
         LEFT JOIN maintenance.work_orders wo
           ON wo.operating_company_id = $1
           AND wo.unit_id = u.id
-        WHERE u.operating_company_id = $1
+        -- §4: mdata.units has NO operating_company_id — scope via owner_company_id / currently_leased_to_company_id.
+        WHERE (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
           AND u.deactivated_at IS NULL
         GROUP BY u.id, u.unit_number
         HAVING
