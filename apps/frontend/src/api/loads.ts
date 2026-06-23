@@ -273,6 +273,27 @@ export function useLoad(id: string | null) {
   });
 }
 
+/**
+ * Load detail via the entity-scoped DISPATCH endpoint (GET /api/v1/dispatch/loads/:id?operating_company_id=).
+ * Unlike the mdata GET, this passes operating_company_id and reliably returns the full payload (load + stops +
+ * charges) — the side panel uses this so the Overview tab can't hang on an RLS-null / unscoped read.
+ */
+export function getDispatchLoad(id: string, operatingCompanyId: string) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId }).toString();
+  return apiRequest<LoadDetail & { charges?: Array<{ code: string; amount_cents: number }> }>(
+    `/api/v1/dispatch/loads/${id}?${qs}`
+  );
+}
+
+export function useDispatchLoad(id: string | null, operatingCompanyId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["dispatch", "load-detail", id, operatingCompanyId],
+    queryFn: () => getDispatchLoad(id as string, operatingCompanyId as string),
+    enabled: Boolean(id && operatingCompanyId),
+    refetchInterval: 60000,
+  });
+}
+
 export function useLoadAudit(id: string | null) {
   return useQuery({
     queryKey: ["loads", "audit", id],

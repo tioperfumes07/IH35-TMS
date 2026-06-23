@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { type LoadDetail, updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/loads";
+import { type LoadDetail, updateLoad, useCancelLoad, useDispatchLoad, useLoad, useLoadAudit } from "../../api/loads";
 import { createInvoiceFromLoad, listInvoices } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory } from "../../api/dispatch";
 import { resolveApiUrl } from "../../api/client";
@@ -30,6 +30,7 @@ type Props = {
   loadId: string | null;
   isOpen: boolean;
   canEdit: boolean;
+  operatingCompanyId?: string;
   onClose: () => void;
 };
 
@@ -92,7 +93,7 @@ function serializeFactoringPackageNotes(meta: FactoringPackageMeta, visibleNotes
   return `${FACTORING_PACKAGE_META_PREFIX}${JSON.stringify(meta)}\n${visibleNotes.trim()}`.trim();
 }
 
-export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
+export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, onClose }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<DrawerTab>("Overview");
@@ -106,7 +107,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
   const [abandonmentOpen, setAbandonmentOpen] = useState(false);
   const { pushToast } = useToast();
 
-  const loadQuery = useLoad(loadId);
+  // BUG 1 fix: the side panel reads via the entity-scoped dispatch endpoint (operating_company_id passed) so
+  // the Overview can't hang on an RLS-null / unscoped read; falls back to the mdata read if no company id.
+  const dispatchLoadQuery = useDispatchLoad(loadId, operatingCompanyId);
+  const mdataLoadQuery = useLoad(operatingCompanyId ? null : loadId);
+  const loadQuery = operatingCompanyId ? dispatchLoadQuery : mdataLoadQuery;
   const auditQuery = useLoadAudit(loadId);
   const cancelMutation = useCancelLoad();
   const updateMutation = useMutation({
@@ -327,8 +332,19 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : loadQuery.isError ? (
+              // BUG 1: never hang silently — surface the error + a retry instead of an endless "Loading…".
+              <div className="space-y-2 text-sm">
+                <div className="text-red-700">Couldn't load this load’s overview.</div>
+                <div className="text-xs text-gray-500">{String((loadQuery.error as Error | undefined)?.message ?? "Request failed")}</div>
+                <Button size="sm" variant="secondary" onClick={() => void loadQuery.refetch()}>
+                  Retry
+                </Button>
+              </div>
+            ) : loadQuery.isLoading ? (
               <div className="text-sm text-gray-500">Loading load overview...</div>
+            ) : (
+              <div className="text-sm text-gray-500">Load not found.</div>
             )
           ) : null}
 
