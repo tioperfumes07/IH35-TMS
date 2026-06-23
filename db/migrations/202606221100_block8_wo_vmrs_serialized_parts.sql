@@ -45,6 +45,22 @@ CREATE INDEX IF NOT EXISTS wo_serialized_parts_unit_idx
 -- New table → explicit GRANT (does NOT inherit; §2 / docs/CLAUDE.md §15 — else runtime 500).
 GRANT SELECT, INSERT, UPDATE, DELETE ON maintenance.wo_serialized_parts TO ih35_app;
 
+-- RLS (mandatory on any operating_company_id-scoped table — verify:rls-operating-company-scope guard).
+-- Same policy shape as maintenance.tire_* : tenant scope via app.operating_company_id, Lucia bypass.
+ALTER TABLE maintenance.wo_serialized_parts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS wo_serialized_parts_company_scope ON maintenance.wo_serialized_parts;
+CREATE POLICY wo_serialized_parts_company_scope
+  ON maintenance.wo_serialized_parts
+  FOR ALL TO ih35_app
+  USING (
+    operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+    OR current_setting('app.bypass_rls', true) = 'lucia'
+  )
+  WITH CHECK (
+    operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+    OR current_setting('app.bypass_rls', true) = 'lucia'
+  );
+
 -- Standard append-only audit row trigger (drift-capture), same helper the other maintenance tables use.
 SELECT audit.ensure_row_trigger('maintenance', 'wo_serialized_parts');
 
