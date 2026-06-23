@@ -701,6 +701,48 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             </div>
           ) : null}
 
+          {/* A3 (render-A): Trip Type full-width banner between the subbar and the body. §7 navy ruling —
+              NB/TR/SB in the navy family (navy / slate / slate-dk), no blue/green/purple. 46px two-line
+              buttons (code over description) with directional icons; amber lifecycle note; TR/SB auto-join
+              the unit's tour (tour_id derived server-side). */}
+          <div className="border-b border-gray-200 bg-[#f8fafc] px-3 py-2" data-testid="trip-type-banner">
+            <span className="text-[11px] font-bold uppercase tracking-[0.4px] text-gray-600">
+              Trip Type <span className="text-red-500">*</span>
+            </span>
+            <div className="mt-1 flex gap-2">
+              {([
+                ["NB", "▲", "Northbound", "Border → US interior", "#1F2A44"],
+                ["TR", "▶", "Triangulation", "US interior → US interior", "#64748b"],
+                ["SB", "▼", "Southbound", "US interior → Laredo border", "#334155"],
+              ] as const).map(([code, icon, label, desc, color]) => {
+                const active = watchedTripType === code;
+                return (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => {
+                      form.setValue("trip_type", code, { shouldDirty: true });
+                      form.clearErrors("trip_type");
+                    }}
+                    className="flex h-[46px] flex-1 flex-col justify-center rounded border px-2.5 text-left transition-colors"
+                    style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#cbd5e1", color: "#1f2733" }}
+                  >
+                    <span className="text-[13.5px] font-bold leading-tight">{icon} {code} · {label}</span>
+                    <span className={`text-[10px] leading-tight ${active ? "text-white/80" : "text-gray-500"}`}>{desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {form.formState.errors.trip_type ? (
+              <p className="mt-1 text-[11px] text-red-600">{String(form.formState.errors.trip_type.message)}</p>
+            ) : watchedTripType === "TR" || watchedTripType === "SB" ? (
+              <p className="mt-1 text-[11px] text-gray-600">Part of this unit's tour — follows its most recent Northbound leg (joined automatically).</p>
+            ) : null}
+            <p className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[10.5px] text-amber-800">
+              Every load must be classified NB, TR, or SB. NB starts a tour; TR/SB join it; the settlement closes when the SB leg returns to Laredo.
+            </p>
+          </div>
+
           {gateBanner ? (
             <div
               className={`mx-3 mt-2 rounded border px-3 py-2 text-xs ${
@@ -1031,38 +1073,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
                   </div>
                   <div className="space-y-2 p-3">
-                    {/* Trip Pairing (Block 04): mandatory Trip Type — compact pills sized to the wizard's fields. */}
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600">
-                        Trip Type <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex gap-1.5">
-                        {([["NB", "Northbound", "#1F2A44"], ["TR", "Triangulation", "#64748b"], ["SB", "Southbound", "#1F2A44"]] as const).map(
-                          ([code, label, color]) => {
-                            const active = watchedTripType === code;
-                            return (
-                              <button
-                                key={code}
-                                type="button"
-                                onClick={() => {
-                                  form.setValue("trip_type", code, { shouldDirty: true });
-                                  form.clearErrors("trip_type");
-                                }}
-                                className="rounded border px-2.5 py-1 text-xs font-semibold transition-colors"
-                                style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: color, color }}
-                              >
-                                {code} · {label}
-                              </button>
-                            );
-                          }
-                        )}
-                      </div>
-                      {form.formState.errors.trip_type ? (
-                        <p className="text-[11px] text-red-600">{String(form.formState.errors.trip_type.message)}</p>
-                      ) : watchedTripType === "TR" || watchedTripType === "SB" ? (
-                        <p className="text-[11px] text-gray-500">Joins this unit's current tour automatically (its most recent Northbound leg).</p>
-                      ) : null}
-                    </div>
+                    {/* Trip Type lifted to the full-width banner above the body (A3). §B starts at Equipment. */}
                     <BookLoadEquipmentSection
                       register={form.register}
                       watch={form.watch}
