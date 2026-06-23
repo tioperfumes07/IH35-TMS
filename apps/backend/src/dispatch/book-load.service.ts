@@ -100,7 +100,7 @@ export type BookLoadInput = {
   miles_deadhead?: number;
   pickup_number?: string;
   border_routing?: string;
-  trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "power_only_no_trailer" | "power_only_customer_trailer";
+  trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
   assigned_primary_driver_id?: string;
   assigned_secondary_driver_id?: string;
