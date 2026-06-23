@@ -14,6 +14,7 @@ import { UploadZone } from "../../../components/UploadZone";
 import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
 import { CreateWOSectionPaymentTiming } from "./CreateWOSectionPaymentTiming";
 import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
+import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
 
 export type CreateWOFormValues = {
   wo_type: WorkOrderType;
@@ -86,6 +87,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const { pushToast } = useToast();
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
+  // Block 8 gap 1 — vendor-invoice reconcile (the invoice SIDE; the WO side is computed from the lines below).
+  const [invoicePartsInput, setInvoicePartsInput] = useState("");
+  const [invoiceLaborInput, setInvoiceLaborInput] = useState("");
   const form = useForm<CreateWOFormValues>({
     defaultValues: {
       wo_type: initialType,
@@ -136,6 +140,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       ...initialValues,
     });
     setLines([]);
+    setInvoicePartsInput("");
+    setInvoiceLaborInput("");
     setSuggestionPinned(false);
     setBackendLoadError(null);
   }, [form, initialType, initialValues, open]);
@@ -156,6 +162,19 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     setDraftAttachmentEntityId(crypto.randomUUID());
   }, [open]);
   const needsExternalVendor = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
+
+  // Block 8 gap 1 — two-sided reconcile. WO parts/labor come from the Section B item sub-rows by line_type;
+  // the invoice side is the captured vendor-invoice totals. Create is HARD-GATED until both tie (vendor
+  // invoices only — in-house / paid-same-day have no separate invoice to reconcile against).
+  const sectionBSubRows = lines.filter((l) => l.section === "B").flatMap((l) => l.sub_rows ?? []);
+  const woPartsDollars = sectionBSubRows.filter((r) => r.line_type === "parts").reduce((s, r) => s + Number(r.amount || 0), 0);
+  const woLaborDollars = sectionBSubRows.filter((r) => r.line_type === "labor").reduce((s, r) => s + Number(r.amount || 0), 0);
+  const reconcileRequired = paymentTiming === "vendor_invoice";
+  const reconcileOk =
+    !reconcileRequired ||
+    (Math.round(woPartsDollars * 100) === Math.round((Number(invoicePartsInput) || 0) * 100) &&
+      Math.round(woLaborDollars * 100) === Math.round((Number(invoiceLaborInput) || 0) * 100));
+
   const checks = [
     { label: "Unit active and class set", ok: Boolean(form.watch("unit_id")) },
     {
@@ -179,6 +198,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           Boolean(form.watch("external_vendor_invoice_number"))),
     },
     { label: "At least one cost line item", ok: (form.watch("line_items") ?? []).length > 0 },
+    ...(reconcileRequired
+      ? [{ label: "Vendor invoice reconciles — WO parts & labor tie to invoice", ok: reconcileOk }]
+      : []),
   ];
 
   const sectionALines = lines
@@ -363,6 +385,16 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           </div>
         ) : null}
         <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="WO Total = A + B" />
+        {reconcileRequired ? (
+          <CreateWOSectionReconcile
+            woPartsDollars={woPartsDollars}
+            woLaborDollars={woLaborDollars}
+            invoicePartsInput={invoicePartsInput}
+            invoiceLaborInput={invoiceLaborInput}
+            onInvoicePartsChange={setInvoicePartsInput}
+            onInvoiceLaborChange={setInvoiceLaborInput}
+          />
+        ) : null}
         <CreateWOSectionValidation checks={checks} />
         <UploadZone
           operatingCompanyId={operatingCompanyId}
@@ -382,7 +414,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             </Button>
             <Button
               type="button"
-              disabled={requiresLoadForG18 && !Boolean(form.watch("load_id")) && form.watch("load_exemption_reason").trim().length < 20}
+              disabled={
+                (requiresLoadForG18 && !Boolean(form.watch("load_id")) && form.watch("load_exemption_reason").trim().length < 20) ||
+                // Block 8 gap 1 — hard gate: vendor-invoice WO can't be created until parts & labor tie.
+                !reconcileOk
+              }
               onClick={() => void submit("full")}
             >
               {paymentTiming === "vendor_invoice" ? "Save WO & Create Bill" : paymentTiming === "paid_same_day" ? "Save WO & Create Expense" : "Save WO"}
