@@ -394,7 +394,10 @@ describe("CostBreakdownBox", () => {
     next = onSectionBChange.mock.lastCall?.[0] as ItemLine[];
     expect(next[0].sub_rows?.[0].amount).toBe(15);
 
-    fireEvent.change(numericInputs[1], { target: { value: "7" } });
+    // M-1: the sub-row cost is now a dollars-mode MoneyInput (display-only QBO format; the value stays a
+    // DOLLAR number, so cost 7 → amount 7 — byte-for-byte, no cents conversion).
+    const partCostInput = within(partRow as HTMLElement).getByLabelText("Sub-row cost");
+    fireEvent.change(partCostInput, { target: { value: "7" } });
     next = onSectionBChange.mock.lastCall?.[0] as ItemLine[];
     expect(next[0].sub_rows?.[0].amount).toBe(7);
   });
