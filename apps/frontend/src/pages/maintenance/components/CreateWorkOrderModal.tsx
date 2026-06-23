@@ -541,7 +541,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           </Button>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house"} onClick={() => void submit("wo_only")}>
-              Save draft
+              Create work order
             </Button>
             <Button
               type="button"
@@ -552,7 +552,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               }
               onClick={() => void submit("full")}
             >
-              {paymentTiming === "vendor_invoice" ? "Save WO & Create Bill" : paymentTiming === "paid_same_day" ? "Save WO & Create Expense" : "Create work order"}
+              {paymentTiming === "vendor_invoice" ? "Save WO & Create Bill" : paymentTiming === "paid_same_day" ? "Save WO & Create Expense" : "Save WO"}
             </Button>
           </div>
         </div>
