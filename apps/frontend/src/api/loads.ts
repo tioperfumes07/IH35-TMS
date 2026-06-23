@@ -132,6 +132,12 @@ export type LoadDetail = DispatchLoadRow & {
   trip_type?: "NB" | "TR" | "SB" | null;
   piece_count?: number | null;
   customer_po_number?: string | null;
+  // render-v6 §B reefer/tarp detail (migration 202606231400).
+  reefer_temp_f?: number | null;
+  reefer_mode?: string | null;
+  pre_cool?: boolean | null;
+  tarp_qty?: number | null;
+  tarp_size?: string | null;
 };
 
 export type LoadAuditEvent = {

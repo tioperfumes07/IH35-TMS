@@ -665,7 +665,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             -- weight column is cargo_weight_lbs; reefer setpoint is reefer_setpoint_temp_f (numeric).
             commodity, cargo_weight_lbs, reefer_setpoint_temp_f, trip_type,
             -- Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
-            piece_count, customer_po_number
+            piece_count, customer_po_number,
+            -- render-v6 §B reefer/tarp detail (migration 202606231400).
+            reefer_temp_f, reefer_mode, pre_cool, tarp_qty, tarp_size
           FROM mdata.loads
           WHERE id = $1
           LIMIT 1

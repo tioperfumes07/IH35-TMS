@@ -74,6 +74,12 @@ type FormValues = BookLoadFormValues & {
   booking_mode: "single_popup" | "legacy_form";
   requires_tarps: boolean;
   tarp_type: string;
+  // render-v6 §B reefer/tarp detail (migration 202606231400).
+  reefer_temp_f: number | "";
+  reefer_mode: string;
+  pre_cool: "yes" | "no";
+  tarp_qty: number | "";
+  tarp_size: string;
   lumper_amount_cents: number;
   customer_chargeback_requested: boolean;
   customer_chargeback_reason: string;
@@ -225,6 +231,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       booking_mode: "single_popup",
       requires_tarps: false,
       tarp_type: "",
+      reefer_temp_f: "",
+      reefer_mode: "",
+      pre_cool: "no",
+      tarp_qty: "",
+      tarp_size: "",
       lumper_amount_cents: 0,
       customer_chargeback_requested: false,
       customer_chargeback_reason: "",
@@ -507,6 +518,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         booking_mode: values.booking_mode,
         requires_tarps: values.requires_tarps,
         tarp_type: values.tarp_type || undefined,
+        // render-v6 §B reefer/tarp detail (migration 202606231400).
+        reefer_temp_f: values.reefer_temp_f === "" ? undefined : Number(values.reefer_temp_f),
+        reefer_mode: values.reefer_mode || undefined,
+        pre_cool: values.pre_cool === "yes" ? true : undefined,
+        tarp_qty: values.tarp_qty === "" ? undefined : Number(values.tarp_qty),
+        tarp_size: values.tarp_size || undefined,
         lumper_amount_cents: values.lumper_amount_cents || 0,
         customer_chargeback_requested: values.customer_chargeback_requested,
         customer_chargeback_reason: values.customer_chargeback_reason || undefined,

@@ -106,6 +106,12 @@ const createDispatchLoadBodySchema = z.object({
   booking_mode: z.enum(["single_popup", "legacy_form"]).default("single_popup"),
   requires_tarps: z.boolean().default(false),
   tarp_type: z.string().trim().max(60).optional(),
+  // render-v6 §B reefer/tarp detail (migration 202606231400).
+  reefer_temp_f: z.number().optional(),
+  reefer_mode: z.string().trim().max(40).optional(),
+  pre_cool: z.boolean().optional(),
+  tarp_qty: z.number().int().min(0).optional(),
+  tarp_size: z.string().trim().max(40).optional(),
   lumper_amount_cents: z.number().int().min(0).default(0),
   customer_chargeback_requested: z.boolean().default(false),
   customer_chargeback_reason: z.string().trim().max(1000).optional(),
@@ -216,6 +222,12 @@ const updateDispatchLoadBodySchema = z.object({
   // Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
   piece_count: z.number().int().min(0).nullable().optional(),
   customer_po_number: z.string().trim().max(120).nullable().optional(),
+  // render-v6 §B reefer/tarp detail (migration 202606231400).
+  reefer_temp_f: z.number().nullable().optional(),
+  reefer_mode: z.string().trim().max(40).nullable().optional(),
+  pre_cool: z.boolean().nullable().optional(),
+  tarp_qty: z.number().int().min(0).nullable().optional(),
+  tarp_size: z.string().trim().max(40).nullable().optional(),
   tour_id: z.string().uuid().nullable().optional(),
   assigned_unit_id: z.string().uuid().nullable().optional(),
   assigned_primary_driver_id: z.string().uuid().nullable().optional(),
