@@ -58,7 +58,10 @@ const SCREEN_COMPONENTS = {
     `${FE}/maintenance/FleetTablePage.tsx`,
     "apps/frontend/src/components/FleetTable.tsx",
   ],
-  "Arriving Soon": [`${FE}/maintenance/ArrivingSoonPage.tsx`],
+  "Arriving Soon": [
+    `${FE}/maintenance/ArrivingSoonPage.tsx`,
+    `${FE}/maintenance/components/ArrivingSoonFilterBar.tsx`,
+  ],
   "In-Transit Issues": [`${FE}/maintenance/components/InTransitIssuesTable.tsx`],
   "Damage Reports": [`${FE}/maintenance/DriverReportsQueuePage.tsx`],
   "Road Service": [`${FE}/maintenance/RoadServiceList.tsx`],
@@ -97,6 +100,8 @@ const ENFORCED = new Set([
   "Service / Location",
   "R&M Status Board",
   "Accounts Payable",
+  "Arriving Soon",
+  "Severe Repairs",
 ]);
 
 if (!fs.existsSync(CONTRACT)) {
