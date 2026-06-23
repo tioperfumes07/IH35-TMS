@@ -494,6 +494,7 @@ export function DispatchPage({
         loadId={loadId}
         isOpen={Boolean(loadId)}
         canEdit={canEdit}
+        operatingCompanyId={defaultCompanyIds[0] ?? ""}
         onClose={() => {
           const next = new URLSearchParams(searchParams);
           next.delete("load_id");
