@@ -18,6 +18,7 @@ import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { DeadheadOptimizerPanel } from "../../../components/dispatch/DeadheadOptimizerPanel";
 import { PreDispatchValidationPanel } from "../../../components/dispatch/PreDispatchValidationPanel";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
+import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
 import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
 import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCallout";
@@ -930,6 +931,22 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     }}
                   />
                   <input type="hidden" {...form.register("accessorial_cents", { valueAsNumber: true })} />
+
+                  {/* GAP-31 per-stop extra rates — relocated to §A (with the charges) per GUARD 2026-06-23.
+                      Lives here, NOT in the §C stop card (which is exactly the 11 render-v6 fields). Each
+                      editor instance is stop-scoped (stopIndex → stops.N.extra_rates) so the per-stop model
+                      + verify-multi-stop-extra-rates guard hold. */}
+                  <div data-testid="section-a-extra-rates" className="space-y-1">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
+                    {((form.watch("stops") as Array<{ stop_type?: string }> | undefined) ?? []).map((stopRow, i) => (
+                      <div key={i} className="rounded border border-gray-200 p-1">
+                        <div className="text-[10px] font-semibold text-gray-600">
+                          Stop {i + 1} · {stopRow?.stop_type === "delivery" ? "Delivery" : "Pickup"}
+                        </div>
+                        <MultiStopExtraRateEditor control={form.control as never} register={form.register as never} stopIndex={i} />
+                      </div>
+                    ))}
+                  </div>
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">

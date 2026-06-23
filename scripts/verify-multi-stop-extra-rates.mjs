@@ -10,6 +10,9 @@ const files = {
   routes: "apps/backend/src/dispatch/loads/multi-stop/extra-rate.routes.ts",
   fromLoad: "apps/backend/src/accounting/from-load.ts",
   editor: "apps/frontend/src/components/dispatch/MultiStopExtraRateEditor.tsx",
+  // GAP-31 editor RELOCATED to §A (Customer · Invoice · Charges) per GUARD 2026-06-23 — render-v6 §C shows
+  // no extra-rate editor, so it can't live in the stop card. It mounts in BookLoadModalV4 §A, stop-scoped.
+  bookLoadModal: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
   bookLoadStops: "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
   indexTs: "apps/backend/src/index.ts",
   docs: "docs/specs/gap-31-multi-stop-extra-rates.md",
@@ -24,6 +27,7 @@ const service = read(files.service);
 const routes = read(files.routes);
 const fromLoad = read(files.fromLoad);
 const editor = read(files.editor);
+const bookLoadModal = read(files.bookLoadModal);
 const bookLoadStops = read(files.bookLoadStops);
 const indexTs = read(files.indexTs);
 const docs = read(files.docs);
@@ -34,7 +38,10 @@ const checks = [
   ["service has add/list/total/soft-delete", service.includes("addStopExtra") && service.includes("listForLoad") && service.includes("totalForLoad") && service.includes("softDelete")],
   ["routes register API paths", routes.includes("/api/v1/dispatch/loads/:load_uuid/stops/:stop_uuid/extra-rates") && routes.includes("/api/v1/dispatch/loads/:load_uuid/extra-rates")],
   ["frontend editor exists", editor.includes("Per-stop extra rates")],
-  ["book load stops mounts editor", bookLoadStops.includes("MultiStopExtraRateEditor")],
+  // GUARD 2026-06-23: editor lives in §A (Customer · Invoice · Charges), stop-scoped — NOT in the §C card.
+  ["§A mounts the extra-rate editor", bookLoadModal.includes("MultiStopExtraRateEditor") && bookLoadModal.includes('data-testid="section-a-extra-rates"')],
+  ["editor is stop-scoped (stopIndex per line)", bookLoadModal.includes("stopIndex={i}") && editor.includes("stops.${stopIndex}.extra_rates")],
+  ["§C stop card does NOT mount the editor (empty-diff: exactly 11 fields)", !bookLoadStops.includes("MultiStopExtraRateEditor")],
   ["accounting from-load includes stop extras", fromLoad.includes("dispatch.stop_extra_rates") && fromLoad.includes("invoice_line_uuid")],
   ["backend index registers routes", indexTs.includes("registerLoadStopExtraRateRoutes")],
   ["spec doc references WF-053", docs.includes("WF-053")],
