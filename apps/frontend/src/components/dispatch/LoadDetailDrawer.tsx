@@ -14,7 +14,7 @@ import { CancelLoadModal } from "./CancelLoadModal";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
-import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "./constants";
+import { STATUS_LABEL, formatMoneyCents } from "./constants";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
 import { MultiStopEditor } from "../../pages/dispatch/MultiStopEditor";
 import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
@@ -161,7 +161,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
 
   const routeSummary = useMemo(() => {
     if (!load) return "-";
-    return toRouteSummary(load.first_pickup_city, load.first_delivery_city);
+    // FIX-2: derive origin/destination from the actual stops (first → last). first_pickup_city /
+    // first_delivery_city are often null on the detail payload, which made toRouteSummary print
+    // "Unknown origin -> Unknown destination" while the stops carried real cities. Show "—" when a
+    // stop city is genuinely empty — never "Unknown".
+    const stops = load.stops ?? [];
+    const fmt = (s?: { city: string | null; state: string | null }) => (s ? [s.city, s.state].filter(Boolean).join(", ") : "");
+    const origin = fmt(stops[0]) || load.first_pickup_city || "—";
+    const dest = fmt(stops[stops.length - 1]) || load.first_delivery_city || "—";
+    return `${origin} -> ${dest}`;
   }, [load]);
   const canInvoiceFromLoad = useMemo(() => {
     if (!load) return false;
