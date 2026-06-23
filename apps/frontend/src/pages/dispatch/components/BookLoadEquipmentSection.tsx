@@ -242,6 +242,8 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           ))}
         </div>
       </div>
+      {/* render-v6 §B: Driver pay rate / mi + Reefer setpoint are BOTH top-level (always shown), per the
+          IDENTICAL-TARGET — Reefer setpoint is NOT gated on trailer type. */}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <Field
           label="Driver pay rate / mi"
@@ -255,20 +257,18 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             />
           }
         />
-        {isReefer ? (
-          <Field
-            label="Reefer setpoint (°F)"
-            input={<input data-testid="reefer-setpoint-field" {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
-          />
-        ) : null}
-        {/* render-v6 §B reefer detail — revealed only for a reefer trailer (migration 202606231400). */}
-        {isReefer ? (
+        <Field
+          label="Reefer setpoint (°F)"
+          input={<input data-testid="reefer-setpoint-field" {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
+        />
+      </div>
+      {/* render-v6 §B REEFER PANEL (amber) — revealed only for a reefer trailer. Reefer temp · mode · Pre-cool. */}
+      {isReefer ? (
+        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-3">
           <Field
             label="Reefer temp ( F)"
             input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
           />
-        ) : null}
-        {isReefer ? (
           <Field
             label="Reefer mode"
             input={
@@ -279,8 +279,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               </SelectCombobox>
             }
           />
-        ) : null}
-        {isReefer ? (
           <Field
             label="Pre-cool"
             input={
@@ -290,12 +288,12 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               </SelectCombobox>
             }
           />
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       {/* Render-v6 §B conditional detail: revealed by trailer type. Reefer setpoint above (reefer only);
           flatbed reveals the tarp-type detail (the "Tarps" required toggle stays in the Equipment chips). */}
       {isFlatbed ? (
-        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-2">
           <Field
             label="Tarp type"
             input={
