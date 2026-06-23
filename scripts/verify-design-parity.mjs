@@ -115,6 +115,30 @@ const ENFORCED = new Set([
   "Severe Repairs",
 ]);
 
+// STRUCTURAL GATE (GUARD upgrade, 2026-06-23): token-in-source proved insufficient — it passed while the
+// §C stop LAYOUT, field LABELS and §E PLACEMENT were all wrong (the fields existed in the file but in the
+// wrong section/row/order). The durable fix for "is it structurally right" is a DOM render-test that mounts
+// the component and asserts each label is in its correct row/section container (within(locrow)/within(siterow),
+// conditional-panel reveals, exact note text). This map declares the render-tests that carry those structural
+// assertions for a screen; the guard asserts they EXIST (can't be deleted) so structural proof can't regress.
+//
+// RULE: a STRUCTURALLY COMPLEX screen (multi-section wizard) may NOT be added to ENFORCED unless it appears
+// here with render-tests — token-pass alone must never lock such a screen (that was the false-DONE). Simple
+// column-only tables are token-sufficient and need no entry. The render-tests themselves run in the CI vitest
+// suite; this guard guarantees their continued presence.
+const STRUCTURAL_RENDER_TESTS = {
+  "Load Book/Edit Wizard": [
+    "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.test.tsx",
+    "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.test.tsx",
+    "apps/frontend/src/components/dispatch/hos/DriverHosClocks.test.tsx",
+  ],
+  "Create/Edit Work Order Wizard": [
+    "apps/frontend/src/pages/maintenance/components/CreateWOSectionRenderV5Header.test.tsx",
+  ],
+};
+// Screens that are structurally complex → require a STRUCTURAL_RENDER_TESTS entry before they can be ENFORCED.
+const REQUIRE_STRUCTURAL_TESTS = new Set(["Load Book/Edit Wizard", "Create/Edit Work Order Wizard"]);
+
 if (!fs.existsSync(CONTRACT)) {
   console.error(`verify:design-parity FAIL: missing contract ${path.relative(ROOT, CONTRACT)}`);
   process.exit(1);
@@ -163,6 +187,17 @@ for (const [screen, spec] of Object.entries(contract)) {
       continue;
     }
     missing.push(token);
+  }
+
+  // Structural gate: declared render-tests must exist (they carry the in-the-right-section/row assertions).
+  const structuralTests = STRUCTURAL_RENDER_TESTS[screen] ?? [];
+  const missingTests = structuralTests.filter((t) => !fs.existsSync(path.join(ROOT, t)));
+  if (missingTests.length > 0) {
+    failures.push(`${screen} [STRUCTURE]: required render-test(s) missing → ${missingTests.join(", ")} (structural proof can't regress)`);
+  }
+  // A structurally-complex screen can't be ENFORCED without render-tests proving its layout.
+  if (ENFORCED.has(screen) && REQUIRE_STRUCTURAL_TESTS.has(screen) && structuralTests.length === 0) {
+    failures.push(`${screen} [STRUCTURE]: ENFORCED but no render-tests declared — token-pass alone must not lock a multi-section wizard`);
   }
 
   if (ENFORCED.has(screen)) {
