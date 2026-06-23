@@ -661,6 +661,16 @@ export function DispatchBoard({
         />
       ),
     })),
+    // UX-B: Location (last-known unit city) sits right after the HOS clocks (Resume At), before Load #.
+    {
+      key: "location",
+      header: "Location",
+      cell: (load) => {
+        const loc = load.assigned_unit_id ? locationByUnit[load.assigned_unit_id] : undefined;
+        const text = loc ? [loc.city, loc.state].filter(Boolean).join(", ") : "";
+        return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-[10px] text-slate-400">—</span>;
+      },
+    },
     { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "customer", header: "Customer", cell: renderCustomerCell },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
@@ -681,15 +691,6 @@ export function DispatchBoard({
     { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
     { key: "status_signal", header: "Status signal", cell: (load) => renderTriSignalCell(load) },
     { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={positionByLoad[load.id] ?? null} loadId={load.id} /> },
-    {
-      key: "location",
-      header: "Location",
-      cell: (load) => {
-        const loc = load.assigned_unit_id ? locationByUnit[load.assigned_unit_id] : undefined;
-        const text = loc ? [loc.city, loc.state].filter(Boolean).join(", ") : "";
-        return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-[10px] text-slate-400">—</span>;
-      },
-    },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
   ];
