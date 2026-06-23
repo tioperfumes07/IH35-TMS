@@ -76,6 +76,8 @@ export type UpdateDispatchLoadFields = Partial<{
   commodity: string | null;
   cargo_weight_lbs: number | null;
   reefer_setpoint_temp_f: number | null;
+  piece_count: number | null;
+  customer_po_number: string | null;
 }>;
 
 export type UpdateDispatchLoadInput = {
@@ -145,6 +147,8 @@ const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
   commodity: "commodity",
   cargo_weight_lbs: "cargo_weight_lbs",
   reefer_setpoint_temp_f: "reefer_setpoint_temp_f",
+  piece_count: "piece_count",
+  customer_po_number: "customer_po_number",
 };
 
 // Columns needing an explicit cast in the SET clause.

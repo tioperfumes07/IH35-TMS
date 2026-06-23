@@ -27,6 +27,8 @@ const baseLoad = {
   cargo_weight_lbs: 42000,
   reefer_setpoint_temp_f: 34,
   trip_type: "NB",
+  piece_count: 18,
+  customer_po_number: "PO-9000",
   stops: [
     { id: "s1", load_id: "load-1", sequence_number: 1, stop_type: "pickup", city: "Laredo", state: "TX", country: "USA", address_line1: "1 A", scheduled_arrival_at: null, status: "pending", notes: null, created_at: "", updated_at: "", gate_dock_text: "Dock 4" },
   ],
@@ -87,21 +89,30 @@ describe("editLoadMapping — anti-data-loss (GUARD #5)", () => {
     expect(body.notes).toBe("changed");
   });
 
-  it("still-excluded fields (load_type/trailer_type/customer_po_number/pieces/hazmat) are NEVER emitted", () => {
+  it("Block 7 (migration 202606221000): pieces→piece_count + customer_po_number ARE emitted when dirty", () => {
+    const values = { ...buildEditPrefill(baseLoad), pieces: "12", customer_po_number: "PO-123" };
+    const body = buildEditPatchBody(
+      values,
+      { pieces: true, customer_po_number: true } as Record<string, unknown>,
+      OCID
+    );
+    expect(body.piece_count).toBe(12); // form 'pieces' text → mdata column piece_count (int)
+    expect(body.customer_po_number).toBe("PO-123");
+  });
+
+  it("still-excluded fields (load_type/trailer_type/hazmat) are NEVER emitted (no column / §4)", () => {
     const values = {
       ...buildEditPrefill(baseLoad),
       load_type: "broker",
       trailer_type: "dry_van",
-      customer_po_number: "PO-123",
-      pieces: "12",
       hazmat: true,
     };
     const body = buildEditPatchBody(
       values,
-      { load_type: true, trailer_type: true, customer_po_number: true, pieces: true, hazmat: true } as Record<string, unknown>,
+      { load_type: true, trailer_type: true, hazmat: true } as Record<string, unknown>,
       OCID
     );
-    for (const k of ["load_type", "trailer_type", "customer_po_number", "pieces", "hazmat"]) {
+    for (const k of ["load_type", "trailer_type", "hazmat"]) {
       expect(k in body).toBe(false);
     }
   });
@@ -132,5 +143,7 @@ describe("editLoadMapping — prefill", () => {
     expect(v.weight_lbs).toBe(42000); // from cargo_weight_lbs
     expect(v.reefer_setpoint).toBe("34"); // numeric reefer_setpoint_temp_f surfaced as text
     expect(v.trip_type).toBe("NB");
+    expect(v.pieces).toBe("18"); // piece_count (int) surfaced as text
+    expect(v.customer_po_number).toBe("PO-9000");
   });
 });

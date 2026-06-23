@@ -663,7 +663,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             miles_practical, miles_shortest, miles_deadhead,
             -- Block 7 (Jorge-approved, no migration): freight attributes that round-trip in the Edit wizard.
             -- weight column is cargo_weight_lbs; reefer setpoint is reefer_setpoint_temp_f (numeric).
-            commodity, cargo_weight_lbs, reefer_setpoint_temp_f, trip_type
+            commodity, cargo_weight_lbs, reefer_setpoint_temp_f, trip_type,
+            -- Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
+            piece_count, customer_po_number
           FROM mdata.loads
           WHERE id = $1
           LIMIT 1

@@ -99,6 +99,7 @@ const createDispatchLoadBodySchema = z.object({
   customer_po_number: z.string().trim().max(120).optional(),
   commodity: z.string().trim().max(120).optional(),
   weight_lbs: z.number().int().min(0).optional(),
+  piece_count: z.number().int().min(0).optional(),
   hazmat: z.boolean().optional(),
   driver_instructions_text: z.string().trim().max(5000).optional(),
   notes: z.string().trim().max(5000).optional(),
@@ -211,6 +212,9 @@ const updateDispatchLoadBodySchema = z.object({
   commodity: z.string().trim().max(120).nullable().optional(),
   cargo_weight_lbs: z.number().int().min(0).nullable().optional(),
   reefer_setpoint_temp_f: z.number().nullable().optional(),
+  // Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
+  piece_count: z.number().int().min(0).nullable().optional(),
+  customer_po_number: z.string().trim().max(120).nullable().optional(),
   tour_id: z.string().uuid().nullable().optional(),
   assigned_unit_id: z.string().uuid().nullable().optional(),
   assigned_primary_driver_id: z.string().uuid().nullable().optional(),
