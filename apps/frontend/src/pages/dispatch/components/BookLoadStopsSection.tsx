@@ -114,6 +114,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                 />
                 <Field label="Address" input={<input {...register(`stops.${index}.address_line1`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
                 <Field label="City" input={<input {...register(`stops.${index}.city`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
+                <Field label="Zip Code" input={<input {...register(`stops.${index}.postal_code`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" placeholder="ZIP / postal" />} />
                 <Field label="State" input={
                   <Controller
                     control={control}

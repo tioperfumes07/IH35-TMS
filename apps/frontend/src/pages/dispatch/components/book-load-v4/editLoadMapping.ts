@@ -57,6 +57,7 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     site_contact_name: str(s.site_contact_name),
     site_contact_phone: str(s.site_contact_phone),
     gate_dock_text: str(s.gate_dock_text),
+    postal_code: str(s.postal_code),
   }));
 
   return {
@@ -218,6 +219,7 @@ export function buildEditPatchBody(values: AnyValues, dirty: Dirty, operatingCom
       site_contact_name: str(s.site_contact_name) || undefined,
       site_contact_phone: str(s.site_contact_phone) || undefined,
       gate_dock_text: str(s.gate_dock_text) || undefined,
+      postal_code: str(s.postal_code) || undefined,
     }));
   }
 

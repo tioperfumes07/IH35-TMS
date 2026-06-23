@@ -48,6 +48,7 @@ export type LoadStop = {
   site_contact_name?: string | null;
   site_contact_phone?: string | null;
   gate_dock_text?: string | null;
+  postal_code?: string | null;
 };
 
 export type DispatchLoadRow = {

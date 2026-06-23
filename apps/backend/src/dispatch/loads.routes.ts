@@ -170,6 +170,7 @@ const createDispatchLoadBodySchema = z.object({
         site_contact_name: z.string().trim().max(200).optional(),
         site_contact_phone: z.string().trim().max(40).optional(),
         gate_dock_text: z.string().trim().max(200).optional(),
+        postal_code: z.string().trim().max(20).optional(),
       })
     )
     .min(2),
@@ -245,6 +246,7 @@ const updateDispatchLoadBodySchema = z.object({
         site_contact_name: z.string().trim().max(200).optional(),
         site_contact_phone: z.string().trim().max(40).optional(),
         gate_dock_text: z.string().trim().max(200).optional(),
+        postal_code: z.string().trim().max(20).optional(),
       })
     )
     .min(2)

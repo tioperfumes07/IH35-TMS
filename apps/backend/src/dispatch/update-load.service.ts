@@ -37,6 +37,7 @@ export type UpdateLoadStopInput = {
   site_contact_name?: string | null;
   site_contact_phone?: string | null;
   gate_dock_text?: string | null;
+  postal_code?: string | null;
 };
 
 // Scalar load fields editable via the wizard. Status is intentionally EXCLUDED — it flows through the
@@ -267,7 +268,7 @@ async function replaceStops(
             scheduled_arrival_at = $8, time_window_type = $9, appointment_start_at = $10, appointment_end_at = $11,
             lumper_required = $12, lumper_paid_by = $13, lumper_amount_cents = $14, is_tarp_stop = $15,
             tarp_count = $16, stop_notes = $17, site_contact_name = $18, site_contact_phone = $19,
-            gate_dock_text = $20,
+            gate_dock_text = $20, postal_code = $21,
             status = CASE WHEN status = 'cancelled' THEN 'pending' ELSE status END,
             updated_at = now()
           WHERE id = $1::uuid
@@ -293,6 +294,7 @@ async function replaceStops(
           stop.site_contact_name ?? null,
           stop.site_contact_phone ?? null,
           stop.gate_dock_text ?? null,
+          stop.postal_code ?? null,
         ]
       );
       updated += 1;
@@ -302,9 +304,9 @@ async function replaceStops(
           INSERT INTO mdata.load_stops (
             load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status,
             time_window_type, appointment_start_at, appointment_end_at, lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
-            site_contact_name, site_contact_phone, gate_dock_text
+            site_contact_name, site_contact_phone, gate_dock_text, postal_code
           )
-          VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+          VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
         `,
         [
           loadId,
@@ -328,6 +330,7 @@ async function replaceStops(
           stop.site_contact_name ?? null,
           stop.site_contact_phone ?? null,
           stop.gate_dock_text ?? null,
+          stop.postal_code ?? null,
         ]
       );
       inserted += 1;

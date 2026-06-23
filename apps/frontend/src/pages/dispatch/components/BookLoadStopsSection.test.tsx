@@ -27,7 +27,7 @@ describe("BookLoadStopsSection — v6 stop card renders fields inline by default
     expect(screen.getByTestId("stop-card-0")).toBeInTheDocument();
     expect(screen.getByText("PICKUP")).toBeInTheDocument();
     // v6 fields that were previously hidden behind the collapsed toggle — must be visible by default now.
-    for (const label of ["Address", "City", "Site contact", "Site phone", "Gate / dock"]) {
+    for (const label of ["Address", "City", "Zip Code", "Site contact", "Site phone", "Gate / dock"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
     // The toggle defaults to "Collapse" (i.e. currently expanded), proving fields are shown by default.
