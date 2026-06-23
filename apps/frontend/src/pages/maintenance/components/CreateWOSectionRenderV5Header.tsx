@@ -58,6 +58,13 @@ export function CreateWOSectionRenderV5Header({ register }: { register: UseFormR
         <Cell label="Open time">
           <input type="time" {...register("open_time")} className={INPUT} />
         </Cell>
+        <Cell label="Close date">
+          {/* W-FIX-8: render-v5 §A Close date/time → maintenance.work_orders.closed_at (existing column). */}
+          <input type="date" {...register("close_date")} className={INPUT} />
+        </Cell>
+        <Cell label="Close time">
+          <input type="time" {...register("close_time")} className={INPUT} />
+        </Cell>
         <Cell label="Authorized by employees">
           <select {...register("authorized_by_user_id")} className={INPUT}>
             <option value="">— select —</option>

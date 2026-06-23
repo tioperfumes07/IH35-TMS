@@ -55,6 +55,8 @@ export type TwoSectionHeader = {
   repaired_by?: "in_house" | "outside_vendor" | null;
   // render-v5 §A Priority (mig 0310: maintenance.work_orders.wo_priority, CHECK routine|urgent|immediate).
   wo_priority?: "routine" | "urgent" | "immediate" | null;
+  // W-FIX-8: render-v5 §A Close date/time → existing maintenance.work_orders.closed_at (no migration).
+  closed_at?: string | null;
 };
 
 export type SectionALine = {
@@ -233,7 +235,8 @@ export async function createWorkOrderWithLines(
     header.authorization_number != null ||
     header.service_location_type != null ||
     header.repaired_by != null ||
-    header.wo_priority != null
+    header.wo_priority != null ||
+    header.closed_at != null
   ) {
     await client.query(
       `UPDATE maintenance.work_orders
@@ -243,8 +246,9 @@ export async function createWorkOrderWithLines(
              service_location_type = COALESCE($4, service_location_type),
              repaired_by = COALESCE($5, repaired_by),
              wo_priority = COALESCE($6, wo_priority),
+             closed_at = COALESCE($7, closed_at),
              updated_at = now()
-       WHERE id = $7`,
+       WHERE id = $8`,
       [
         header.opened_at ?? null,
         header.authorized_by_user_id ?? null,
@@ -252,6 +256,7 @@ export async function createWorkOrderWithLines(
         header.service_location_type ?? null,
         header.repaired_by ?? null,
         header.wo_priority ?? null,
+        header.closed_at ?? null,
         wo.id,
       ]
     );

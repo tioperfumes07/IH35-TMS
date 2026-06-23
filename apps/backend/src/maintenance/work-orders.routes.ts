@@ -164,6 +164,7 @@ const createWorkOrderV5Schema = z.object({
     repair_correction: z.string().trim().max(2000).optional(),
     // render-v5 header (migration 202606221200 #1353) — persisted post-insert in the service.
     opened_at: z.string().datetime({ offset: true }).optional(),
+    closed_at: z.string().datetime({ offset: true }).optional(), // W-FIX-8: § A Close date/time → closed_at
     authorized_by_user_id: z.string().uuid().optional(),
     authorization_number: z.string().trim().max(120).optional(),
     service_location_type: z.enum(["shop", "mobile", "roadside"]).optional(),

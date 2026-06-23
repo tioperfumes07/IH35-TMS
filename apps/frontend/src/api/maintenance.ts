@@ -244,6 +244,7 @@ export type CreateWorkOrderTwoSectionPayload = {
     // render-v5 header (migration 202606221200 #1353).
     status?: "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
     opened_at?: string;
+    closed_at?: string; // W-FIX-8: §A Close date/time → closed_at
     authorized_by_user_id?: string;
     authorization_number?: string;
     service_location_type?: "shop" | "mobile" | "roadside";
