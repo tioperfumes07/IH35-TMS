@@ -1008,7 +1008,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                         Trip Type <span className="text-red-500">*</span>
                       </label>
                       <div className="flex gap-1.5">
-                        {([["NB", "Northbound", "#1F2A44"], ["TR", "Triangulation", "#64748b"], ["SB", "Southbound", "#16a34a"]] as const).map(
+                        {/* §7 lock: no green/blue — Southbound was #16a34a (green) → navy #1F2A44. */}
+                        {([["NB", "Northbound", "#1F2A44"], ["TR", "Triangulation", "#64748b"], ["SB", "Southbound", "#1F2A44"]] as const).map(
                           ([code, label, color]) => {
                             const active = watchedTripType === code;
                             return (

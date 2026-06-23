@@ -22,6 +22,11 @@
         "name": "§B reefer panel (trailer = Reefer)",
         "container": "reefer-panel",
         "exact_labels": ["Reefer temp ( F)", "Reefer mode", "Pre-cool"]
+      },
+      {
+        "name": "§B flatbed panel (trailer = Flatbed)",
+        "container": "flatbed-tarp-detail",
+        "exact_labels": ["Tarp required?", "Tarp qty", "Tarp size"]
       }
     ]
   }

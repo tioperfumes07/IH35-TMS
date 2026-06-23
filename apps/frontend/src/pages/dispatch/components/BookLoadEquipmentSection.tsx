@@ -173,20 +173,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
-      {/* render-v6 §B — "Expected adjustments" collapsible (OPEN by default). Holds the Driver HOS block:
-          the 6-clock set (Drive/Shift/Break/Cycle/Stop by/Resume at), ALWAYS shown (not gated on a selected
-          driver) so it matches the v6 design; "No HOS data" until a driver is picked + Samsara HOS seeded. */}
-      <details open data-testid="expected-adjustments" className="rounded border border-gray-200">
-        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
-          Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
-        </summary>
-        <div className="space-y-2 border-t border-gray-200 p-2">
-          <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
-          {assignmentMode === "team" && secondaryDriverId ? (
-            <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
-          ) : null}
-        </div>
-      </details>
       {operatingCompanyId && pickupStop?.city ? (
         <OptimalDriversPanel
           loadId={optimizerLoadKey}
@@ -231,39 +217,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
-      <div>
-        <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
-        <div className="flex flex-wrap gap-1.5">
-          {toggles.map((toggle) => (
-            <label key={toggle.field} className="cursor-pointer">
-              <input type="checkbox" {...register(toggle.field)} className="peer sr-only" />
-              <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#16203a] peer-checked:text-white peer-checked:ring-[#16203a]">
-                {toggle.label}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-      {/* render-v6 §B: Driver pay rate / mi + Reefer setpoint are BOTH top-level (always shown), per the
-          IDENTICAL-TARGET — Reefer setpoint is NOT gated on trailer type. */}
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        <Field
-          label="Driver pay rate / mi"
-          input={
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("driver_pay_rate_per_mile", { valueAsNumber: true })}
-              className="h-7 w-full rounded border border-gray-300 px-2 text-xs"
-            />
-          }
-        />
-        <Field
-          label="Reefer setpoint (°F)"
-          input={<input data-testid="reefer-setpoint-field" {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
-        />
-      </div>
       {/* render-v6 §B REEFER PANEL (amber) — revealed only for a reefer trailer. Reefer temp · mode · Pre-cool. */}
       {isReefer ? (
         <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-3">
@@ -295,21 +248,10 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {/* Render-v6 §B conditional detail: revealed by trailer type. Reefer setpoint above (reefer only);
           flatbed reveals the tarp-type detail (the "Tarps" required toggle stays in the Equipment chips). */}
       {isFlatbed ? (
-        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-2">
-          <Field
-            label="Tarp type"
-            input={
-              <SelectCombobox {...register("tarp_type")} className="h-7 w-full text-xs">
-                <option value="">Select tarp type</option>
-                <option value="steel">Steel tarp</option>
-                <option value="lumber">Lumber tarp</option>
-                <option value="smoke">Smoke tarp</option>
-                <option value="coil">Coil/machinery tarp</option>
-              </SelectCombobox>
-            }
-          />
-          {/* render-v6 §B tarp detail — revealed only for a flatbed (migration 202606231400). "Tarp required?"
-              reuses the existing requires_tarps flag; tarp_qty / tarp_size are new. */}
+        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-3">
+          {/* render-v6 §B flatbed panel = Tarp required? · Tarp qty · Tarp size (design line 239-241). The old
+              "Tarp type" material dropdown is a SEPARATE extra beyond the size dropdown → kept hidden for round-trip. */}
+          <input type="hidden" {...register("tarp_type")} />
           <Field
             label="Tarp required?"
             input={
@@ -337,6 +279,48 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           />
         </div>
       ) : null}
+      {/* render-v6 §B — "Equipment & driver instructions" expander: the equipment chips + Driver pay rate / mi
+          + Reefer setpoint live INSIDE this expander (design lines 245-252), NOT top-level. */}
+      <details data-testid="equipment-instructions" className="rounded border border-gray-200">
+        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
+          Equipment &amp; driver instructions <span className="font-normal text-gray-400">straps · pay rate</span>
+        </summary>
+        <div className="space-y-2 border-t border-gray-200 p-2">
+          <div className="flex flex-wrap gap-1.5">
+            {toggles.map((toggle) => (
+              <label key={toggle.field} className="cursor-pointer">
+                <input type="checkbox" {...register(toggle.field)} className="peer sr-only" />
+                <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#16203a] peer-checked:text-white peer-checked:ring-[#16203a]">
+                  {toggle.label}
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <Field
+              label="Driver pay rate / mi"
+              input={<input type="number" step="0.01" min="0" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
+            />
+            <Field
+              label="Reefer setpoint"
+              input={<input data-testid="reefer-setpoint-field" {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
+            />
+          </div>
+        </div>
+      </details>
+      {/* render-v6 §B — "Expected adjustments" expander LAST (OPEN by default). Driver HOS 6-clock set,
+          always shown; "No HOS data" until a driver + Samsara HOS seed. */}
+      <details open data-testid="expected-adjustments" className="rounded border border-gray-200">
+        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
+          Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
+        </summary>
+        <div className="space-y-2 border-t border-gray-200 p-2">
+          <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
+          {assignmentMode === "team" && secondaryDriverId ? (
+            <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
+          ) : null}
+        </div>
+      </details>
       <div className="hidden">
         <input type="number" {...register("temp_fahrenheit", { valueAsNumber: true })} />
       </div>
