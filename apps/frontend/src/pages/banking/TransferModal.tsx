@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 type Props = {
   open: boolean;
@@ -31,17 +32,16 @@ function minDateIso90DaysAgo() {
   return d.toISOString().slice(0, 10);
 }
 
-function centsFromAmount(value: string) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 0;
-  return Math.round(parsed * 100);
+function centsFromAmount(value: number | null) {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return Math.round(value * 100);
 }
 
 export function TransferModal({ open, operatingCompanyId, onClose, onSaved, prefill = null, linkBankTransactionId = null }: Props) {
   const { pushToast } = useToast();
   const [fromAccountId, setFromAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState<number | null>(null);
   const [transferDate, setTransferDate] = useState(todayIsoDate());
   const [memo, setMemo] = useState("");
   const [saving, setSaving] = useState(false);
@@ -53,13 +53,13 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
     if (prefill) {
       setFromAccountId(prefill.from_account_id ?? "");
       setToAccountId(prefill.to_account_id ?? "");
-      setAmount(prefill.amount_cents != null && prefill.amount_cents > 0 ? (prefill.amount_cents / 100).toFixed(2) : "");
+      setAmount(prefill.amount_cents != null && prefill.amount_cents > 0 ? prefill.amount_cents / 100 : null);
       setTransferDate(prefill.transfer_date ?? todayIsoDate());
       setMemo(prefill.memo ?? "");
     } else {
       setFromAccountId("");
       setToAccountId("");
-      setAmount("");
+      setAmount(null);
       setTransferDate(todayIsoDate());
       setMemo("");
     }
@@ -159,15 +159,9 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             Amount (USD)
-            <input
-              aria-label="Amount (USD)"
-              type="number"
-              min="0"
-              step="0.01"
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+            {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents = round(amount*100)
+                unchanged (byte-for-byte). */}
+            <MoneyInput valueDollars={amount} onChangeDollars={setAmount} className="mt-1 w-full" ariaLabel="Amount (USD)" />
           </label>
           <label className="block">
             Date
