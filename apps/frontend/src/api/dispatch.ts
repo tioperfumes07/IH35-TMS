@@ -130,6 +130,12 @@ export type DispatchBookLoadPayload = {
   booking_mode?: "single_popup" | "legacy_form";
   requires_tarps?: boolean;
   tarp_type?: string;
+  // render-v6 §B reefer/tarp detail (migration 202606231400).
+  reefer_temp_f?: number;
+  reefer_mode?: string;
+  pre_cool?: boolean;
+  tarp_qty?: number;
+  tarp_size?: string;
   lumper_amount_cents?: number;
   customer_chargeback_requested?: boolean;
   customer_chargeback_reason?: string;

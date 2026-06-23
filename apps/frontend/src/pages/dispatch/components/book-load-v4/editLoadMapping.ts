@@ -105,6 +105,12 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     // Block 7 (migration 202606221000): pieces + customer PO round-trip.
     pieces: str(load.piece_count),
     customer_po_number: str(load.customer_po_number),
+    // render-v6 §B reefer/tarp detail (migration 202606231400).
+    reefer_temp_f: load.reefer_temp_f ?? undefined,
+    reefer_mode: str(load.reefer_mode),
+    pre_cool: load.pre_cool ? "yes" : "no",
+    tarp_qty: load.tarp_qty ?? undefined,
+    tarp_size: str(load.tarp_size),
     stops,
   };
 }
@@ -158,6 +164,18 @@ const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
     return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
   }],
   ["customer_po_number", "customer_po_number", (v) => str(v.customer_po_number) || null],
+  // render-v6 §B reefer/tarp detail (migration 202606231400).
+  ["reefer_temp_f", "reefer_temp_f", (v) => {
+    const n = Number(v.reefer_temp_f);
+    return Number.isFinite(n) ? n : null;
+  }],
+  ["reefer_mode", "reefer_mode", (v) => str(v.reefer_mode) || null],
+  ["pre_cool", "pre_cool", (v) => str(v.pre_cool) === "yes"],
+  ["tarp_qty", "tarp_qty", (v) => {
+    const n = Number(v.tarp_qty);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+  }],
+  ["tarp_size", "tarp_size", (v) => str(v.tarp_size) || null],
 ];
 
 const CHARGE_KEYS = ["linehaul_cents", "fuel_surcharge_cents", "accessorial_cents", "accessorial_rows"];

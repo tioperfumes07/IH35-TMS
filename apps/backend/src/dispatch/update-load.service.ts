@@ -78,6 +78,12 @@ export type UpdateDispatchLoadFields = Partial<{
   reefer_setpoint_temp_f: number | null;
   piece_count: number | null;
   customer_po_number: string | null;
+  // render-v6 §B reefer/tarp detail (migration 202606231400).
+  reefer_temp_f: number | null;
+  reefer_mode: string | null;
+  pre_cool: boolean | null;
+  tarp_qty: number | null;
+  tarp_size: string | null;
 }>;
 
 export type UpdateDispatchLoadInput = {
@@ -149,6 +155,11 @@ const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
   reefer_setpoint_temp_f: "reefer_setpoint_temp_f",
   piece_count: "piece_count",
   customer_po_number: "customer_po_number",
+  reefer_temp_f: "reefer_temp_f",
+  reefer_mode: "reefer_mode",
+  pre_cool: "pre_cool",
+  tarp_qty: "tarp_qty",
+  tarp_size: "tarp_size",
 };
 
 // Columns needing an explicit cast in the SET clause.

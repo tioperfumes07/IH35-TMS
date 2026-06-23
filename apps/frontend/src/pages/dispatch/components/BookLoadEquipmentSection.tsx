@@ -58,6 +58,8 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   // only on a flatbed. Previously the reefer setpoint always showed and flatbed tarp detail never revealed.
   const isReefer = trailerType === "refrigerated_van";
   const isFlatbed = trailerType === "flatbed";
+  // render-v6 §B: Tarp qty + size are disabled until "Tarp required?" = Yes (reuses requires_tarps).
+  const tarpRequired = watch ? Boolean(watch("requires_tarps")) : false;
   const hazmat = watch ? Boolean(watch("hazmat")) : false;
   const stops = watch ? (watch("stops") as Array<{ city?: string; state?: string }> | undefined) : undefined;
   const pickupStop = stops?.find((s) => s) ?? stops?.[0];
@@ -252,6 +254,36 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             input={<input data-testid="reefer-setpoint-field" {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
           />
         ) : null}
+        {/* render-v6 §B reefer detail — revealed only for a reefer trailer (migration 202606231400). */}
+        {isReefer ? (
+          <Field
+            label="Reefer temp ( F)"
+            input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
+          />
+        ) : null}
+        {isReefer ? (
+          <Field
+            label="Reefer mode"
+            input={
+              <SelectCombobox {...register("reefer_mode")} className="h-7 w-full text-xs">
+                <option value="">Select mode</option>
+                <option value="continuous">Continuous</option>
+                <option value="cycle_sentry">Cycle-Sentry</option>
+              </SelectCombobox>
+            }
+          />
+        ) : null}
+        {isReefer ? (
+          <Field
+            label="Pre-cool"
+            input={
+              <SelectCombobox data-testid="pre-cool-field" {...register("pre_cool")} className="h-7 w-full text-xs">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </SelectCombobox>
+            }
+          />
+        ) : null}
       </div>
       {/* Render-v6 §B conditional detail: revealed by trailer type. Reefer setpoint above (reefer only);
           flatbed reveals the tarp-type detail (the "Tarps" required toggle stays in the Equipment chips). */}
@@ -266,6 +298,33 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                 <option value="lumber">Lumber tarp</option>
                 <option value="smoke">Smoke tarp</option>
                 <option value="coil">Coil/machinery tarp</option>
+              </SelectCombobox>
+            }
+          />
+          {/* render-v6 §B tarp detail — revealed only for a flatbed (migration 202606231400). "Tarp required?"
+              reuses the existing requires_tarps flag; tarp_qty / tarp_size are new. */}
+          <Field
+            label="Tarp required?"
+            input={
+              <label className="flex h-7 items-center gap-2 text-xs">
+                <input type="checkbox" {...register("requires_tarps")} className="h-3.5 w-3.5" /> Required
+              </label>
+            }
+          />
+          <Field
+            label="Tarp qty"
+            input={<input data-testid="tarp-qty-field" type="number" min={0} step={1} disabled={!tarpRequired} {...register("tarp_qty", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs disabled:bg-gray-100" />}
+          />
+          <Field
+            label="Tarp size"
+            input={
+              <SelectCombobox {...register("tarp_size")} disabled={!tarpRequired} className="h-7 w-full text-xs disabled:bg-gray-100">
+                <option value="">—</option>
+                <option value="4ft">4'</option>
+                <option value="6ft">6'</option>
+                <option value="8ft">8'</option>
+                <option value="steel">Steel</option>
+                <option value="lumber">Lumber</option>
               </SelectCombobox>
             }
           />

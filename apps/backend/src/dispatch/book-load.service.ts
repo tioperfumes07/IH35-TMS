@@ -72,6 +72,12 @@ export type BookLoadInput = {
   booking_mode?: "single_popup" | "legacy_form";
   requires_tarps?: boolean;
   tarp_type?: string;
+  // render-v6 §B reefer/tarp detail (migration 202606231400).
+  reefer_temp_f?: number;
+  reefer_mode?: string;
+  pre_cool?: boolean;
+  tarp_qty?: number;
+  tarp_size?: string;
   lumper_amount_cents?: number;
   customer_chargeback_requested?: boolean;
   customer_chargeback_reason?: string;
@@ -855,6 +861,30 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       await client.query(
         `UPDATE mdata.loads SET piece_count = $1, customer_po_number = $2, updated_at = now() WHERE id = $3::uuid`,
         [input.piece_count ?? null, input.customer_po_number ?? null, String(load.id)]
+      );
+    }
+
+    // render-v6 §B reefer/tarp detail (migration 202606231400) — persist post-insert (same pattern), so the
+    // lockstep INSERT is untouched. All COALESCE-null; only writes when at least one field is present.
+    if (
+      input.reefer_temp_f != null ||
+      (input.reefer_mode ?? "").trim().length > 0 ||
+      input.pre_cool != null ||
+      input.tarp_qty != null ||
+      (input.tarp_size ?? "").trim().length > 0
+    ) {
+      await client.query(
+        `UPDATE mdata.loads
+           SET reefer_temp_f = $1, reefer_mode = $2, pre_cool = $3, tarp_qty = $4, tarp_size = $5, updated_at = now()
+         WHERE id = $6::uuid`,
+        [
+          input.reefer_temp_f ?? null,
+          input.reefer_mode ?? null,
+          input.pre_cool ?? null,
+          input.tarp_qty ?? null,
+          input.tarp_size ?? null,
+          String(load.id),
+        ]
       );
     }
 
