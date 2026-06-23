@@ -62,6 +62,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const assignedUnitId = watch ? String(watch("assigned_unit_id") ?? "") : "";
   const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
+  const temperatureType = watch ? String(watch("temperature_type") ?? "") : ""; // W-FIX-1 Frozen/Fresh segmented
   // Conditional equipment detail reveals (render-v6 §B): reefer detail only on a reefer trailer, tarp detail
   // only on a flatbed. Previously the reefer setpoint always showed and flatbed tarp detail never revealed.
   const isReefer = trailerType === "refrigerated_van";
@@ -244,12 +245,37 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           input={<input type="number" step="0.01" min="0" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
         />
       </div>
-      {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Reefer temperature (°F)"
-          is the single setpoint (reefer_temp_f). Reefer mode + Pre-cool REMOVED per Jorge.
-          NOTE: "Temperature type" (Frozen/Fresh, asked first) needs a temperature_type column → gated
-          migration follow-up; flagged, not faked. */}
+      {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Temperature type"
+          (Frozen/Fresh) is asked FIRST, THEN "Reefer temperature (°F)" (the single setpoint reefer_temp_f).
+          temperature_type persists via migration 202606231600 (W-FIX-1). Reefer mode + Pre-cool removed. */}
       {isReefer ? (
         <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-2">
+          <Field
+            label="Temperature type"
+            input={
+              <div data-testid="temperature-type-segmented" className="flex h-7 overflow-hidden rounded border border-gray-300 text-xs">
+                {/* register keeps the value in form state; the buttons drive it via setValue (segmented control,
+                    RENDER-A-v2). Asked FIRST, before "Reefer temperature (°F)". */}
+                <input type="hidden" {...register("temperature_type")} />
+                {([
+                  { value: "frozen", label: "Frozen" },
+                  { value: "fresh", label: "Fresh" },
+                ] as const).map((opt, idx) => {
+                  const active = temperatureType === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setValue?.("temperature_type", opt.value, { shouldDirty: true })}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            }
+          />
           <Field
             label="Reefer temperature (°F)"
             input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
