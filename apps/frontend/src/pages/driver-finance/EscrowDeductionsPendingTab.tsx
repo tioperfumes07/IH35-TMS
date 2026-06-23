@@ -12,6 +12,7 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function formatMoney(cents: number) {
@@ -38,7 +39,9 @@ export function EscrowDeductionsPendingTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [selected, setSelected] = useState<EscrowPendingDeduction | null>(null);
-  const [overrideAmount, setOverrideAmount] = useState<string>("");
+  // M-1: dollars-origin override (escrow). Stored as a dollar NUMBER; the *100 → cents seam at submit is
+  // unchanged (byte-for-byte). Display via dollars-mode MoneyInput.
+  const [overrideAmount, setOverrideAmount] = useState<number | null>(null);
   const [reviewNotes, setReviewNotes] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
@@ -54,9 +57,8 @@ export function EscrowDeductionsPendingTab() {
   const approveMutation = useMutation({
     mutationFn: async () => {
       if (!selected) return;
-      const normalized = overrideAmount.trim();
       const overrideAmountCents =
-        normalized.length > 0 ? Math.round(Math.max(0, Number(normalized.replace(/[$,]/g, ""))) * 100) : undefined;
+        overrideAmount != null ? Math.round(Math.max(0, overrideAmount) * 100) : undefined;
       return approvePendingEscrowDeduction(selected.id, {
         operating_company_id: companyId,
         override_amount_cents: overrideAmountCents,
@@ -65,7 +67,7 @@ export function EscrowDeductionsPendingTab() {
     },
     onSuccess: async () => {
       setSelected(null);
-      setOverrideAmount("");
+      setOverrideAmount(null);
       setReviewNotes("");
       setErrorMessage("");
       await queryClient.invalidateQueries({ queryKey: ["driver-finance", "escrow-pending", companyId] });
@@ -86,7 +88,7 @@ export function EscrowDeductionsPendingTab() {
     },
     onSuccess: async () => {
       setSelected(null);
-      setOverrideAmount("");
+      setOverrideAmount(null);
       setReviewNotes("");
       setErrorMessage("");
       await queryClient.invalidateQueries({ queryKey: ["driver-finance", "escrow-pending", companyId] });
@@ -98,8 +100,8 @@ export function EscrowDeductionsPendingTab() {
   });
 
   const selectedAmountDefault = useMemo(() => {
-    if (!selected) return "";
-    return (selected.proposed_amount_cents / 100).toFixed(2);
+    if (!selected) return null;
+    return selected.proposed_amount_cents / 100;
   }, [selected]);
 
   return (
@@ -158,7 +160,7 @@ export function EscrowDeductionsPendingTab() {
                         variant="secondary"
                         onClick={() => {
                           setSelected(row);
-                          setOverrideAmount((row.proposed_amount_cents / 100).toFixed(2));
+                          setOverrideAmount(row.proposed_amount_cents / 100);
                           setReviewNotes("");
                           setErrorMessage("");
                         }}
@@ -186,7 +188,7 @@ export function EscrowDeductionsPendingTab() {
         onClose={() => {
           setSelected(null);
           setErrorMessage("");
-          setOverrideAmount("");
+          setOverrideAmount(null);
           setReviewNotes("");
         }}
         title="Review Escrow Deduction"
@@ -208,11 +210,13 @@ export function EscrowDeductionsPendingTab() {
 
             <div className="space-y-3 rounded border border-gray-200 p-3">
               <label className="block text-xs font-semibold uppercase text-gray-600">Override Amount (optional)</label>
-              <input
-                className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                value={overrideAmount || selectedAmountDefault}
-                onChange={(event) => setOverrideAmount(event.target.value)}
-                placeholder="e.g. 650.00"
+              {/* M-1: dollars-mode QBO money entry ($ + .00). Value stays a DOLLAR number; the *100 → cents
+                  conversion at submit is unchanged (byte-for-byte override_amount_cents). */}
+              <MoneyInput
+                valueDollars={overrideAmount ?? selectedAmountDefault}
+                onChangeDollars={(d) => setOverrideAmount(d)}
+                className="w-full"
+                ariaLabel="Override amount"
               />
 
               <label className="block text-xs font-semibold uppercase text-gray-600">Review Notes</label>
