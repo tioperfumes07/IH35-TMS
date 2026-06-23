@@ -44,6 +44,16 @@ const vendorCreateSchema = companyScoped.extend({
   company_name: z.string().trim().max(200).optional(),
   primary_email: z.string().trim().max(320).optional(),
   primary_phone: z.string().trim().max(80).optional(),
+  // W-FIX-7b: render-v5 §D fields (columns added by migration 202606231500).
+  billing_address_line1: z.string().trim().max(300).optional(),
+  billing_city: z.string().trim().max(120).optional(),
+  billing_state: z.string().trim().max(120).optional(),
+  billing_postal_code: z.string().trim().max(40).optional(),
+  account_number: z.string().trim().max(120).optional(),
+  terms: z.string().trim().max(120).optional(),
+  tax_id: z.string().trim().max(60).optional(),
+  track_1099: z.boolean().optional(),
+  default_expense_account_qbo_id: z.string().trim().max(120).optional(),
 });
 
 const vendorUpdateSchema = vendorCreateSchema.partial().extend({
@@ -123,8 +133,11 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
               primary_phone,
               active,
               created_in_tms,
-              payload_json
-            ) VALUES ($1, NULL, $2, $3, $4, $5, true, true, '{}'::jsonb)
+              payload_json,
+              billing_address_line1, billing_city, billing_state, billing_postal_code,
+              account_number, terms, tax_id, track_1099, default_expense_account_qbo_id
+            ) VALUES ($1, NULL, $2, $3, $4, $5, true, true, '{}'::jsonb,
+              $6, $7, $8, $9, $10, $11, $12, COALESCE($13, false), $14)
             RETURNING id
           `,
           [
@@ -133,6 +146,15 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             body.company_name ?? null,
             body.primary_email ?? null,
             body.primary_phone ?? null,
+            body.billing_address_line1 ?? null,
+            body.billing_city ?? null,
+            body.billing_state ?? null,
+            body.billing_postal_code ?? null,
+            body.account_number ?? null,
+            body.terms ?? null,
+            body.tax_id ?? null,
+            body.track_1099 ?? null,
+            body.default_expense_account_qbo_id ?? null,
           ]
         );
         const mirrorId = String(inserted.rows[0]?.id ?? "");

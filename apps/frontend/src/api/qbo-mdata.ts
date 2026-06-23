@@ -54,7 +54,22 @@ export function searchQboMasterData(
 
 export function createQboVendor(
   operatingCompanyId: string,
-  body: { display_name: string; company_name?: string; primary_email?: string; primary_phone?: string }
+  body: {
+    display_name: string;
+    company_name?: string;
+    primary_email?: string;
+    primary_phone?: string;
+    // W-FIX-7b: render-v5 §D fields (mig 202606231500).
+    billing_address_line1?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_postal_code?: string;
+    account_number?: string;
+    terms?: string;
+    tax_id?: string;
+    track_1099?: boolean;
+    default_expense_account_qbo_id?: string;
+  }
 ) {
   return apiRequest<{ vendor: { id: string } }>(`/api/v1/mdata/qbo/vendors`, {
     method: "POST",
