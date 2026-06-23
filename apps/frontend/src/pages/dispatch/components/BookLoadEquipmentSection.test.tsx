@@ -26,9 +26,10 @@ function Harness({ trailer }: { trailer: string }) {
 describe("BookLoadEquipmentSection — render-v6 §B conditional panels", () => {
   it("reveals the Reefer panel (temp / mode / pre-cool) only for a reefer trailer", () => {
     render(<Harness trailer="refrigerated_van" />);
-    expect(screen.getByText("Reefer temp ( F)")).toBeInTheDocument();
-    expect(screen.getByText("Reefer mode")).toBeInTheDocument();
-    expect(screen.getByText("Pre-cool")).toBeInTheDocument();
+    // RENDER-A-v2: reefer panel is just "Reefer temperature (°F)" (mode + pre-cool removed).
+    expect(screen.getByText("Reefer temperature (°F)")).toBeInTheDocument();
+    expect(screen.queryByText("Reefer mode")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pre-cool")).not.toBeInTheDocument();
   });
 
   it("reveals the Flatbed panel (tarp required / qty / size) only for a flatbed", () => {

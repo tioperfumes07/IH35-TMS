@@ -113,6 +113,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               <option value="refrigerated_van">Reefer</option>
               <option value="flatbed">Flatbed</option>
               <option value="dry_van">Dry Van</option>
+              <option value="lowboy">Lowboy</option>
               <option value="power_only_no_trailer">Power-only · no trailer</option>
               <option value="power_only_customer_trailer">Power-only · customer trailer</option>
             </SelectCombobox>
@@ -244,72 +245,33 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           ))}
         </div>
       </div>
-      {/* render-v6 §B: Driver pay rate / mi + Reefer setpoint are BOTH top-level (always shown), per the
-          IDENTICAL-TARGET — Reefer setpoint is NOT gated on trailer type. */}
+      {/* RENDER-A-v2 §B: Driver pay rate / mi is TOP-LEVEL, half-row (standard field width). The separate
+          "Reefer setpoint" field is REMOVED — the reefer panel's temperature IS the single setpoint. */}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <Field
           label="Driver pay rate / mi"
-          input={
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("driver_pay_rate_per_mile", { valueAsNumber: true })}
-              className="h-7 w-full rounded border border-gray-300 px-2 text-xs"
-            />
-          }
-        />
-        <Field
-          label="Reefer setpoint (°F)"
-          input={<input data-testid="reefer-setpoint-field" {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
+          input={<input type="number" step="0.01" min="0" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
         />
       </div>
-      {/* render-v6 §B REEFER PANEL (amber) — revealed only for a reefer trailer. Reefer temp · mode · Pre-cool. */}
+      {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Reefer temperature (°F)"
+          is the single setpoint (reefer_temp_f). Reefer mode + Pre-cool REMOVED per Jorge.
+          NOTE: "Temperature type" (Frozen/Fresh, asked first) needs a temperature_type column → gated
+          migration follow-up; flagged, not faked. */}
       {isReefer ? (
-        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-3">
+        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-2">
           <Field
-            label="Reefer temp ( F)"
+            label="Reefer temperature (°F)"
             input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
-          />
-          <Field
-            label="Reefer mode"
-            input={
-              <SelectCombobox {...register("reefer_mode")} className="h-7 w-full text-xs">
-                <option value="">Select mode</option>
-                <option value="continuous">Continuous</option>
-                <option value="cycle_sentry">Cycle-Sentry</option>
-              </SelectCombobox>
-            }
-          />
-          <Field
-            label="Pre-cool"
-            input={
-              <SelectCombobox data-testid="pre-cool-field" {...register("pre_cool")} className="h-7 w-full text-xs">
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-              </SelectCombobox>
-            }
           />
         </div>
       ) : null}
       {/* Render-v6 §B conditional detail: revealed by trailer type. Reefer setpoint above (reefer only);
           flatbed reveals the tarp-type detail (the "Tarps" required toggle stays in the Equipment chips). */}
       {isFlatbed ? (
-        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-2">
-          <Field
-            label="Tarp type"
-            input={
-              <SelectCombobox {...register("tarp_type")} className="h-7 w-full text-xs">
-                <option value="">Select tarp type</option>
-                <option value="steel">Steel tarp</option>
-                <option value="lumber">Lumber tarp</option>
-                <option value="smoke">Smoke tarp</option>
-                <option value="coil">Coil/machinery tarp</option>
-              </SelectCombobox>
-            }
-          />
-          {/* render-v6 §B tarp detail — revealed only for a flatbed (migration 202606231400). "Tarp required?"
-              reuses the existing requires_tarps flag; tarp_qty / tarp_size are new. */}
+        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-3">
+          {/* RENDER-A-v2 §B flatbed = Tarp required? · Tarp qty · Tarp size. The old "Tarp type" material
+              dropdown is a separate extra beyond the size dropdown → kept hidden for round-trip. */}
+          <input type="hidden" {...register("tarp_type")} />
           <Field
             label="Tarp required?"
             input={

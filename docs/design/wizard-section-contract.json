@@ -21,7 +21,13 @@
       {
         "name": "§B reefer panel (trailer = Reefer)",
         "container": "reefer-panel",
-        "exact_labels": ["Reefer temp ( F)", "Reefer mode", "Pre-cool"]
+        "_note": "RENDER-A-v2: Reefer temperature is the single setpoint; mode/pre-cool removed. Temperature type (Frozen/Fresh) joins once its gated temperature_type migration lands.",
+        "exact_labels": ["Reefer temperature (°F)"]
+      },
+      {
+        "name": "§B flatbed panel (trailer = Flatbed)",
+        "container": "flatbed-tarp-detail",
+        "exact_labels": ["Tarp required?", "Tarp qty", "Tarp size"]
       }
     ]
   }
