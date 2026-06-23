@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { additionalChargesCatalogClient } from "../../api/catalogs-dispatch";
 import { SelectCombobox } from "../shared/SelectCombobox";
+import { MoneyInput } from "../forms/MoneyInput";
 import {
   createEmptyAccessorialRow,
   seedAccessorialRow,
@@ -154,15 +155,11 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
                     />
                   </td>
                   <td className="px-2 py-1 text-right">
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={row.amount_cents}
-                      onChange={(event) =>
-                        onRowsChange(updateRow(rows, row.id, { amount_cents: Math.max(0, Number(event.target.value) || 0) }))
-                      }
-                      className="h-7 w-24 rounded border border-gray-300 px-2 text-right text-xs"
+                    <MoneyInput
+                      valueCents={row.amount_cents}
+                      onChangeCents={(c) => onRowsChange(updateRow(rows, row.id, { amount_cents: Math.max(0, c ?? 0) }))}
+                      className="ml-auto w-24"
+                      ariaLabel="Accessorial amount"
                     />
                   </td>
                   <td className="px-2 py-1 text-center">

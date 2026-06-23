@@ -41,6 +41,7 @@ import {
 } from "../../../components/dispatch/accessorial-editor-lib";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
@@ -877,13 +878,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                         <tr className="border-b border-gray-100">
                           <td className="px-2 py-1.5">Linehaul</td>
                           <td className="px-2 py-1.5 text-right">
-                            <input type="number" min="0" step="1" {...form.register("linehaul_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                            <MoneyInput valueCents={form.watch("linehaul_cents")} onChangeCents={(c) => form.setValue("linehaul_cents", c ?? 0, { shouldDirty: true })} className="ml-auto w-28" ariaLabel="Linehaul" />
                           </td>
                         </tr>
                         <tr className="border-b border-gray-100">
                           <td className="px-2 py-1.5">Fuel surcharge</td>
                           <td className="px-2 py-1.5 text-right">
-                            <input type="number" min="0" step="1" {...form.register("fuel_surcharge_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                            <MoneyInput valueCents={form.watch("fuel_surcharge_cents")} onChangeCents={(c) => form.setValue("fuel_surcharge_cents", c ?? 0, { shouldDirty: true })} className="ml-auto w-28" ariaLabel="Fuel surcharge" />
                           </td>
                         </tr>
                         <tr className="border-b border-gray-100">
@@ -978,11 +979,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Cash advance
-                      <input type="number" min="0" step="1" {...form.register("cash_advance_cents", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                      <MoneyInput valueCents={form.watch("cash_advance_cents")} onChangeCents={(c) => form.setValue("cash_advance_cents", c ?? 0, { shouldDirty: true })} className="mt-0.5 w-full" ariaLabel="Cash advance" />
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Fuel advance
-                      <input type="number" min="0" step="1" {...form.register("fuel_advance_cents", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                      <MoneyInput valueCents={form.watch("fuel_advance_cents")} onChangeCents={(c) => form.setValue("fuel_advance_cents", c ?? 0, { shouldDirty: true })} className="mt-0.5 w-full" ariaLabel="Fuel advance" />
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
