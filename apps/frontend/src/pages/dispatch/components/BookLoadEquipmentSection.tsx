@@ -104,13 +104,15 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   return (
     <section className="space-y-2">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        {/* render-v6 §B labels: Reefer / Flatbed / Dry Van (/ Lowboy — needs a trailer_type enum value via a
+            gated migration; flagged). power_only_* kept — real data; removing them would break power-only loads. */}
         <Field
           label="Trailer type"
           input={
             <SelectCombobox {...register("trailer_type")} className="h-7 w-full text-xs">
-              <option value="refrigerated_van">Refrigerated van</option>
-              <option value="dry_van">Dry van</option>
+              <option value="refrigerated_van">Reefer</option>
               <option value="flatbed">Flatbed</option>
+              <option value="dry_van">Dry Van</option>
               <option value="power_only_no_trailer">Power-only · no trailer</option>
               <option value="power_only_customer_trailer">Power-only · customer trailer</option>
             </SelectCombobox>

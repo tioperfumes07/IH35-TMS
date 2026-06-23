@@ -1,6 +1,6 @@
 {
   "_doc": "EXACT field-set per wizard section (GUARD empty-diff contract, source: IH35-WIZARD-IDENTICAL-TARGET.md). verify:wizard-section-equality slices each container's source region (div-depth) and asserts the rendered field labels == exact_labels — FAIL on missing OR extra. Add a section here once its component wraps its fields in a data-testid container.",
-  "Load Book/Edit Wizard": {
+  "Load Book/Edit Wizard — §C stops": {
     "component": "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
     "sections": [
       {
@@ -12,6 +12,16 @@
         "name": "§C stop siterow",
         "container": "stop-siterow",
         "exact_labels": ["Site contact", "Site phone", "Dock", "Free time / lumper", "Lumper amount ($)"]
+      }
+    ]
+  },
+  "Load Book/Edit Wizard — §B equipment": {
+    "component": "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+    "sections": [
+      {
+        "name": "§B reefer panel (trailer = Reefer)",
+        "container": "reefer-panel",
+        "exact_labels": ["Reefer temp ( F)", "Reefer mode", "Pre-cool"]
       }
     ]
   }
