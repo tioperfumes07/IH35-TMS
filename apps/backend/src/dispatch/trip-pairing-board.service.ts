@@ -31,6 +31,7 @@ export type TripPairingUnitRow = {
   up_north_days: number | null; // days since the NB pickup, when still up north
   settlement_signal: "settlement_open" | "round_trip" | null;
   status: string | null;
+  location: { city: string | null; state: string | null } | null; // live Samsara position (latest fix)
 };
 
 export type TripPairingBoard = {
@@ -42,7 +43,7 @@ export type TripPairingBoard = {
     sb_unbooked: number;
     up_north_30d: number;
   };
-  unbooked: { unit_id: string; unit_number: string | null; driver_name: string | null }[];
+  unbooked: { unit_id: string; unit_number: string | null; driver_name: string | null; location: { city: string | null; state: string | null } | null }[];
   tours: TripPairingUnitRow[];
   generated_at: string;
 };
@@ -75,6 +76,20 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
     [operatingCompanyId]
   );
   const driverByUnit = new Map(drvRes.rows.map((r) => [r.unit_id, r]));
+
+  // C1b: live unit position (latest Samsara fix) — same source as fleet-location-hos. Powers the
+  // unbooked pool "now: <city>" label. NEVER fabricated — null when there is no recent fix.
+  const locRes = await client.query<{ unit_id: string; city: string | null; state: string | null }>(
+    `SELECT p.unit_id::text AS unit_id, p.city, p.state
+       FROM telematics.vehicle_latest_position p
+      WHERE p.operating_company_id = $1::uuid`,
+    [operatingCompanyId]
+  );
+  const locByUnit = new Map(locRes.rows.map((r) => [r.unit_id, r]));
+  const locationFor = (unitId: string): { city: string | null; state: string | null } | null => {
+    const l = locByUnit.get(unitId);
+    return l && (l.city || l.state) ? { city: l.city, state: l.state } : null;
+  };
 
   // Active trip-classified loads + their delivery stop (city/date) for the open-return display.
   const loadsRes = await client.query<{
@@ -119,7 +134,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
       (a, b) => (a.pickup_date ?? "").localeCompare(b.pickup_date ?? "")
     );
     if (legs.length === 0) {
-      unbooked.push({ unit_id: u.unit_id, unit_number: u.unit_number, driver_name: drv?.driver_name?.trim() || null });
+      unbooked.push({ unit_id: u.unit_id, unit_number: u.unit_number, driver_name: drv?.driver_name?.trim() || null, location: locationFor(u.unit_id) });
       continue;
     }
     const nb = legs.find((l) => l.trip_type === "NB") ?? null;
@@ -142,6 +157,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
       up_north_days: upNorthDays,
       settlement_signal: hasSb ? "round_trip" : hasNb ? "settlement_open" : null,
       status: legs[legs.length - 1]?.status ?? null,
+      location: locationFor(u.unit_id),
     });
   }
 

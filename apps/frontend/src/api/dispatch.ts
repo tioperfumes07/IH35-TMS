@@ -350,10 +350,11 @@ export type TripPairingUnitRow = {
   up_north_days: number | null;
   settlement_signal: "settlement_open" | "round_trip" | null;
   status: string | null;
+  location?: { city: string | null; state: string | null } | null; // C1b: live Samsara position
 };
 export type TripPairingBoard = {
   kpis: { active_trucks: number; northbound: number; nb_unbooked: number; southbound: number; sb_unbooked: number; up_north_30d: number };
-  unbooked: { unit_id: string; unit_number: string | null; driver_name: string | null }[];
+  unbooked: { unit_id: string; unit_number: string | null; driver_name: string | null; location?: { city: string | null; state: string | null } | null }[];
   tours: TripPairingUnitRow[];
   generated_at: string;
 };
