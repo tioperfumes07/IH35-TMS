@@ -172,7 +172,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {/* render-v6 Section B — Driver HOS (hours of service) block: the 6-clock set (Drive/Shift/Break/Cycle/
           Stop by/Resume at) + projected-note. ALWAYS shown (not gated on a selected driver) so it matches the
           v6 design; shows "No HOS data" until a driver is picked + the Samsara HOS pull is seeded. */}
-      <DriverHosClocksBlock driverId={primaryDriverId || null} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
+      <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
       {assignmentMode === "team" && secondaryDriverId ? (
         <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
       ) : null}
