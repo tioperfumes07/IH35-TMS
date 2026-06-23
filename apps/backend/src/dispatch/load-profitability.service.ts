@@ -142,7 +142,9 @@ export async function computeLoadProfitability(
     const insRes = await client.query<{ total_premium_cents: string; active_unit_count: string }>(
       `SELECT
          COALESCE(SUM(ip.total_premium_cents), 0)::text AS total_premium_cents,
-         GREATEST((SELECT COUNT(*)::int FROM mdata.units u WHERE u.operating_company_id = $1 AND u.deactivated_at IS NULL), 1)::text AS active_unit_count
+         -- §4: mdata.units has NO operating_company_id — a unit is operated by a company when it OWNS it
+         -- (owner_company_id) or LEASES it (currently_leased_to_company_id). Old u.operating_company_id 42703'd.
+         GREATEST((SELECT COUNT(*)::int FROM mdata.units u WHERE (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1) AND u.deactivated_at IS NULL), 1)::text AS active_unit_count
        FROM insurance.policies ip
        WHERE ip.operating_company_id = $1
          AND ip.status IN ('active', 'bound')
