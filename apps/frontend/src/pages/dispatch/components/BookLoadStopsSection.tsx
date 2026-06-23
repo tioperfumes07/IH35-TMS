@@ -1,7 +1,6 @@
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
-import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 
 type Props = {
   control: Control<any>;
@@ -175,11 +174,8 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                 <input type="hidden" {...register(`stops.${index}.is_tarp_stop`)} />
                 <input type="hidden" {...register(`stops.${index}.tarp_count`)} />
                 <input type="hidden" {...register(`stops.${index}.stop_notes`)} />
-
-                {/* GAP-31 per-stop extra-rate billing (guarded feature, separate from the 11 design fields).
-                    DRIFT FLAGGED to GUARD: render-v6 §C shows no extra-rate editor; kept here so the billing
-                    feature + its verify:multi-stop-extra-rates guard survive pending GUARD's keep/relocate call. */}
-                <MultiStopExtraRateEditor control={control} register={register} stopIndex={index} />
+                {/* GAP-31 per-stop extra-rate editor RELOCATED to §A (with the charges) per GUARD 2026-06-23 —
+                    render-v6 §C has no extra-rate editor; the §C card is exactly the 11 design fields. */}
               </div>
             </div>
           );
