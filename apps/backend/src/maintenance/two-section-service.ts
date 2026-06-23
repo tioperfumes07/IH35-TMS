@@ -39,6 +39,14 @@ export type TwoSectionHeader = {
   roadside_provider_vendor_id?: string | null;
   roadside_location?: string | null;
   roadside_breakdown_load_id?: string | null;
+  // Block 8 (migration 202606221100) — VMRS repair detail (persisted post-insert; lockstep INSERT untouched).
+  vmrs_system_code?: string | null;
+  vmrs_assembly_code?: string | null;
+  vmrs_component_code?: string | null;
+  out_of_service?: boolean;
+  repair_complaint?: string | null;
+  repair_cause?: string | null;
+  repair_correction?: string | null;
 };
 
 export type SectionALine = {
@@ -177,6 +185,36 @@ export async function createWorkOrderWithLines(
     ]
   );
   const wo = woRes.rows[0];
+
+  // Block 8 (migration 202606221100) — persist VMRS repair detail post-insert (same pattern as the dispatch
+  // load post-insert updates; keeps the 28-column lockstep INSERT above untouched). Additive, no-op if absent.
+  if (
+    header.vmrs_system_code != null ||
+    header.vmrs_assembly_code != null ||
+    header.vmrs_component_code != null ||
+    header.out_of_service != null ||
+    header.repair_complaint != null ||
+    header.repair_cause != null ||
+    header.repair_correction != null
+  ) {
+    await client.query(
+      `UPDATE maintenance.work_orders
+         SET vmrs_system_code = $1, vmrs_assembly_code = $2, vmrs_component_code = $3,
+             out_of_service = COALESCE($4, out_of_service), repair_complaint = $5, repair_cause = $6,
+             repair_correction = $7, updated_at = now()
+       WHERE id = $8`,
+      [
+        header.vmrs_system_code ?? null,
+        header.vmrs_assembly_code ?? null,
+        header.vmrs_component_code ?? null,
+        header.out_of_service ?? null,
+        header.repair_complaint ?? null,
+        header.repair_cause ?? null,
+        header.repair_correction ?? null,
+        wo.id,
+      ]
+    );
+  }
 
   for (const line of sectionALines) {
     const amount = asNumber(line.amount);

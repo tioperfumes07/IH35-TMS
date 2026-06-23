@@ -50,6 +50,14 @@ export type CreateWOFormValues = {
   roadside_provider_vendor_id: string;
   roadside_location: string;
   roadside_breakdown_load_id: string;
+  // Block 8 — VMRS repair detail.
+  vmrs_system_code: string;
+  vmrs_assembly_code: string;
+  vmrs_component_code: string;
+  out_of_service: boolean;
+  repair_complaint: string;
+  repair_cause: string;
+  repair_correction: string;
   line_items: Array<{
     line_type: "parts" | "labor" | "other";
     description: string;
@@ -88,6 +96,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
   // Block 8 gap 1 — vendor-invoice reconcile (the invoice SIDE; the WO side is computed from the lines below).
+  // Block 8 — asset-location map: serialized parts placed on the unit during this WO.
+  const [serializedParts, setSerializedParts] = useState<
+    Array<{ part_type: "tire" | "battery" | "lamp" | "mirror" | "other"; part_label: string; serial_number: string; position_code: string }>
+  >([]);
   const [invoicePartsInput, setInvoicePartsInput] = useState("");
   const [invoiceLaborInput, setInvoiceLaborInput] = useState("");
   const form = useForm<CreateWOFormValues>({
@@ -125,6 +137,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       roadside_provider_vendor_id: "",
       roadside_location: "",
       roadside_breakdown_load_id: "",
+      vmrs_system_code: "",
+      vmrs_assembly_code: "",
+      vmrs_component_code: "",
+      out_of_service: false,
+      repair_complaint: "",
+      repair_cause: "",
+      repair_correction: "",
       line_items: [],
       ...initialValues,
     },
@@ -140,6 +159,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       ...initialValues,
     });
     setLines([]);
+    setSerializedParts([]);
     setInvoicePartsInput("");
     setInvoiceLaborInput("");
     setSuggestionPinned(false);
@@ -312,9 +332,25 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           roadside_provider_vendor_id: values.roadside_provider_vendor_id || undefined,
           roadside_location: values.roadside_location || undefined,
           roadside_breakdown_load_id: values.roadside_breakdown_load_id || undefined,
+          // Block 8 — VMRS repair detail.
+          vmrs_system_code: values.vmrs_system_code || undefined,
+          vmrs_assembly_code: values.vmrs_assembly_code || undefined,
+          vmrs_component_code: values.vmrs_component_code || undefined,
+          out_of_service: values.out_of_service || undefined,
+          repair_complaint: values.repair_complaint || undefined,
+          repair_cause: values.repair_cause || undefined,
+          repair_correction: values.repair_correction || undefined,
         },
         sectionA: sectionALines,
         sectionB: sectionBLines,
+        serialized_parts: serializedParts
+          .filter((sp) => sp.part_label.trim())
+          .map((sp) => ({
+            part_type: sp.part_type,
+            part_label: sp.part_label.trim(),
+            serial_number: sp.serial_number.trim() || undefined,
+            position_code: sp.position_code.trim() || undefined,
+          })),
       });
       if ((response as { bill?: { uuid?: string } }).bill?.uuid) {
         pushToast("Work order created. Bill auto-created (Open Bill).", "success");
@@ -378,6 +414,71 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
           Class auto-derive: <span className="font-semibold">{form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`}</span>
         </div>
+        {/* Block 8 — VMRS Repair Detail (render-v5 §B). System/Assembly/Component codes + the 3 Cs. §7 navy. */}
+        <section data-testid="wo-vmrs-repair-detail" className="rounded border border-slate-300 bg-white p-2 text-xs">
+          <div className="mb-1 font-semibold text-[#1F2A44]">VMRS Repair Detail</div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">System code</span>
+              <input {...form.register("vmrs_system_code")} className="h-7 w-full rounded border border-gray-300 px-2" /></label>
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Assembly code</span>
+              <input {...form.register("vmrs_assembly_code")} className="h-7 w-full rounded border border-gray-300 px-2" /></label>
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Component code</span>
+              <input {...form.register("vmrs_component_code")} className="h-7 w-full rounded border border-gray-300 px-2" /></label>
+          </div>
+          <label className="mt-2 flex items-center gap-1.5 font-semibold text-slate-600">
+            <input type="checkbox" {...form.register("out_of_service")} className="h-3.5 w-3.5" /> Out of service?
+          </label>
+          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Complaint</span>
+              <textarea {...form.register("repair_complaint")} rows={2} className="w-full rounded border border-gray-300 px-2 py-1" /></label>
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Cause</span>
+              <textarea {...form.register("repair_cause")} rows={2} className="w-full rounded border border-gray-300 px-2 py-1" /></label>
+            <label className="space-y-0.5"><span className="font-semibold text-slate-600">Correction</span>
+              <textarea {...form.register("repair_correction")} rows={2} className="w-full rounded border border-gray-300 px-2 py-1" /></label>
+          </div>
+        </section>
+        {/* Block 8 — Asset-location map (serialized parts): part + serial + position on the unit. §7 navy. */}
+        <section data-testid="wo-asset-location" className="rounded border border-slate-300 bg-white p-2 text-xs">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="font-semibold text-[#1F2A44]">Asset-location (serialized parts)</span>
+            <button
+              type="button"
+              data-testid="wo-add-serialized-part"
+              onClick={() => setSerializedParts((p) => [...p, { part_type: "tire", part_label: "", serial_number: "", position_code: "" }])}
+              className="rounded bg-[#1F2A44] px-2 py-0.5 text-[10px] font-semibold text-white"
+            >
+              + Add part
+            </button>
+          </div>
+          {serializedParts.length === 0 ? (
+            <div className="text-[11px] text-slate-500">No serialized parts. Add tires/batteries/lamps/mirrors with serial + position.</div>
+          ) : (
+            <div className="space-y-1">
+              {serializedParts.map((sp, i) => (
+                <div key={i} className="grid grid-cols-1 gap-1 md:grid-cols-[120px_1fr_1fr_1fr_auto]">
+                  <select
+                    value={sp.part_type}
+                    onChange={(e) => setSerializedParts((p) => p.map((x, j) => (j === i ? { ...x, part_type: e.target.value as typeof x.part_type } : x)))}
+                    className="h-7 rounded border border-gray-300 px-1"
+                  >
+                    {["tire", "battery", "lamp", "mirror", "other"].map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <input placeholder="Part label" value={sp.part_label}
+                    onChange={(e) => setSerializedParts((p) => p.map((x, j) => (j === i ? { ...x, part_label: e.target.value } : x)))}
+                    className="h-7 rounded border border-gray-300 px-2" />
+                  <input placeholder="Serial #" value={sp.serial_number}
+                    onChange={(e) => setSerializedParts((p) => p.map((x, j) => (j === i ? { ...x, serial_number: e.target.value } : x)))}
+                    className="h-7 rounded border border-gray-300 px-2" />
+                  <input placeholder="Position (e.g. LF, RR-IN)" value={sp.position_code}
+                    onChange={(e) => setSerializedParts((p) => p.map((x, j) => (j === i ? { ...x, position_code: e.target.value } : x)))}
+                    className="h-7 rounded border border-gray-300 px-2" />
+                  <button type="button" onClick={() => setSerializedParts((p) => p.filter((_, j) => j !== i))}
+                    className="rounded border border-gray-300 px-2 text-[11px] text-[#A32D2D]">Remove</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
         <TwoSectionLineEditor mode="wo" initialLines={[]} onChange={setLines} />
         {requiresLoadForG18 ? (
           <div className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">

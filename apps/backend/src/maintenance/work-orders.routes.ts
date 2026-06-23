@@ -79,6 +79,14 @@ const createWorkOrderSchema = z.object({
   roadside_provider_vendor_id: z.string().uuid().optional(),
   roadside_location: z.string().trim().max(1000).optional(),
   roadside_breakdown_load_id: z.string().uuid().optional(),
+  // Block 8 (migration 202606221100) — VMRS repair detail (additive; persisted post-insert in the service).
+  vmrs_system_code: z.string().trim().max(40).optional(),
+  vmrs_assembly_code: z.string().trim().max(40).optional(),
+  vmrs_component_code: z.string().trim().max(40).optional(),
+  out_of_service: z.boolean().optional(),
+  repair_complaint: z.string().trim().max(2000).optional(),
+  repair_cause: z.string().trim().max(2000).optional(),
+  repair_correction: z.string().trim().max(2000).optional(),
 });
 
 const sectionALineSchema = z.object({
@@ -146,9 +154,30 @@ const createWorkOrderV5Schema = z.object({
     roadside_provider_vendor_id: z.string().uuid().optional(),
     roadside_location: z.string().trim().max(1000).optional(),
     roadside_breakdown_load_id: z.string().uuid().optional(),
+    // Block 8 (migration 202606221100) — VMRS repair detail (persisted post-insert in the service).
+    vmrs_system_code: z.string().trim().max(40).optional(),
+    vmrs_assembly_code: z.string().trim().max(40).optional(),
+    vmrs_component_code: z.string().trim().max(40).optional(),
+    out_of_service: z.boolean().optional(),
+    repair_complaint: z.string().trim().max(2000).optional(),
+    repair_cause: z.string().trim().max(2000).optional(),
+    repair_correction: z.string().trim().max(2000).optional(),
   }),
   sectionA: z.array(sectionALineSchema).default([]),
   sectionB: z.array(sectionBLineSchema).default([]),
+  // Block 8 — asset-location map: serialized parts placed on the unit (tire/battery/lamp/mirror + serial + position).
+  serialized_parts: z
+    .array(
+      z.object({
+        part_type: z.enum(["tire", "battery", "lamp", "mirror", "other"]),
+        part_label: z.string().trim().min(1).max(200),
+        serial_number: z.string().trim().max(120).optional(),
+        position_code: z.string().trim().max(60).optional(),
+        unit_id: z.string().uuid().optional(),
+        notes: z.string().trim().max(1000).optional(),
+      })
+    )
+    .default([]),
 });
 
 const updateWorkOrderSchema = z.object({
@@ -427,6 +456,24 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
               draftId: body.header.attachment_draft_id,
               newId: created.woUuid,
             });
+            // Block 8 — asset-location map: persist serialized-part placements for this WO (entity-scoped).
+            for (const sp of body.serialized_parts) {
+              await client.query(
+                `INSERT INTO maintenance.wo_serialized_parts
+                   (operating_company_id, work_order_id, unit_id, part_label, part_type, serial_number, position_code, notes)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+                [
+                  body.header.operating_company_id,
+                  created.woUuid,
+                  sp.unit_id ?? body.header.unit_id ?? null,
+                  sp.part_label,
+                  sp.part_type,
+                  sp.serial_number ?? null,
+                  sp.position_code ?? null,
+                  sp.notes ?? null,
+                ]
+              );
+            }
             if (body.header.equipment_id) {
               await client.query(
                 `UPDATE maintenance.work_orders SET equipment_id = $2::uuid, updated_at = now() WHERE id = $1::uuid`,
