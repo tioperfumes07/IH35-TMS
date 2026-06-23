@@ -52,8 +52,10 @@ describe("BookLoadStopsSection — render-v6 §C two-row stop card", () => {
       expect(within(siterow).getByText(label)).toBeInTheDocument();
     }
 
-    // Collapsible Customer instructions.
-    expect(screen.getByText(/Customer instructions/)).toBeInTheDocument();
+    // Empty-diff (GUARD): NOTHING extra renders in the stop card — the relocated fields must be absent.
+    for (const extra of ["Customer instructions", "Appointment start", "Appointment end", "Lumper paid by", "Lumper required", "Tarp stop", "Tarp count", "Instructions / directions"]) {
+      expect(screen.queryByText(extra)).not.toBeInTheDocument();
+    }
   });
 
   it("offers Add pickup / Add delivery / multi-leg buttons", () => {

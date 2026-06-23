@@ -1,8 +1,7 @@
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { StateSelect } from "../../../components/forms/StateSelect";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
+import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 
 type Props = {
   control: Control<any>;
@@ -164,41 +163,23 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                   />
                 </div>
 
-                {/* Collapsible — Customer instructions (directions · gate code · receiving / appointment). */}
-                <details className="rounded border border-gray-200">
-                  <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
-                    Customer instructions <span className="font-normal text-gray-400">directions · gate code · receiving / appointment</span>
-                  </summary>
-                  <div className="grid grid-cols-1 gap-2 border-t border-gray-200 p-2 md:grid-cols-2">
-                    <div className="md:col-span-2">
-                      <Field label="Instructions / directions" input={<textarea {...register(`stops.${index}.stop_notes`)} rows={2} className="w-full rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Gate code · receiving hours · directions" />} />
-                    </div>
-                    <Field label="Appointment start" input={<input type="datetime-local" {...register(`stops.${index}.appointment_start_at`)} className={CELL} />} />
-                    <Field label="Appointment end" input={<input type="datetime-local" {...register(`stops.${index}.appointment_end_at`)} className={CELL} />} />
-                    <Field
-                      label="Lumper paid by"
-                      input={
-                        <SelectCombobox {...register(`stops.${index}.lumper_paid_by`)} className="h-7 w-full text-xs">
-                          <option value="carrier">Carrier</option>
-                          <option value="shipper">Shipper</option>
-                          <option value="broker">Broker</option>
-                          <option value="receiver">Receiver</option>
-                          <option value="unknown">Unknown</option>
-                        </SelectCombobox>
-                      }
-                    />
-                    <label className="flex items-center gap-2 text-[11px] text-gray-700">
-                      <input type="checkbox" {...register(`stops.${index}.lumper_required`)} /> Lumper required
-                    </label>
-                    <label className="flex items-center gap-2 text-[11px] text-gray-700">
-                      <input type="checkbox" {...register(`stops.${index}.is_tarp_stop`)} /> Tarp stop
-                    </label>
-                    <Field label="Tarp count" input={<input type="number" min={0} step={1} {...register(`stops.${index}.tarp_count`, { valueAsNumber: true })} className={CELL} />} />
-                    <div className="md:col-span-2">
-                      <MultiStopExtraRateEditor control={control} register={register} stopIndex={index} />
-                    </div>
-                  </div>
-                </details>
+                {/* render-v6 §C empty-diff (GUARD): the stop card renders EXACTLY the 11 locrow/siterow fields
+                    above — nothing else. These columns are RELOCATED per Jorge, not deleted, so they round-trip
+                    as hidden registered inputs (the full-stops-array UPDATE would null them otherwise):
+                    appointment start/end → represented by Date+Time; Lumper paid by / required → §A by the
+                    Lumper charge; tarp stop/count → §B Flatbed panel; instructions → optional, not a flat field. */}
+                <input type="hidden" {...register(`stops.${index}.appointment_start_at`)} />
+                <input type="hidden" {...register(`stops.${index}.appointment_end_at`)} />
+                <input type="hidden" {...register(`stops.${index}.lumper_paid_by`)} />
+                <input type="hidden" {...register(`stops.${index}.lumper_required`)} />
+                <input type="hidden" {...register(`stops.${index}.is_tarp_stop`)} />
+                <input type="hidden" {...register(`stops.${index}.tarp_count`)} />
+                <input type="hidden" {...register(`stops.${index}.stop_notes`)} />
+
+                {/* GAP-31 per-stop extra-rate billing (guarded feature, separate from the 11 design fields).
+                    DRIFT FLAGGED to GUARD: render-v6 §C shows no extra-rate editor; kept here so the billing
+                    feature + its verify:multi-stop-extra-rates guard survive pending GUARD's keep/relocate call. */}
+                <MultiStopExtraRateEditor control={control} register={register} stopIndex={index} />
               </div>
             </div>
           );
