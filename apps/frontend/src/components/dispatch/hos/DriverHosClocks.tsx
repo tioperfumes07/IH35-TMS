@@ -42,7 +42,9 @@ export function DriverHosClocksBlock({
   heading: string;
 }) {
   const q = useDriverHos(driverId, operatingCompanyId);
-  if (!driverId) return null;
+  // render-v6 §B: the HOS block is ALWAYS mounted (never returns null) so the 6-clock set is visible in the
+  // wizard the moment Section B is shown — even before a driver is picked or while Samsara HOS is unseeded.
+  // Returning null here was the #1355 false-DONE: the JSX existed (guard passed) but rendered nothing live.
   const clocks = computeHosClocks(q.data as HosStatusRow | undefined);
   const dot = hosStatusDot(q.data?.status ?? null);
 
@@ -54,9 +56,9 @@ export function DriverHosClocksBlock({
       </div>
       {q.isLoading ? (
         <div className="text-[11px] text-gray-400">Loading HOS…</div>
-      ) : !clocks ? (
-        <div className="text-[11px] text-gray-500">No HOS data</div>
       ) : (
+        // Always render the 6 labeled clocks (Drive/Shift/Break/Cycle/Stop By/Resume At); values fall back to
+        // "—" until a driver is selected and HOS data flows. This keeps the design's clock set on screen.
         <div className="grid grid-cols-3 gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-6">
           {HOS_COLUMNS.map((col) => (
             <div key={col.key} title={col.derived ? HOS_PROJECTED_TOOLTIP : col.samsaraField}>
@@ -64,11 +66,16 @@ export function DriverHosClocksBlock({
                 {col.label}
                 {col.derived ? <span className="ml-0.5 text-gray-400">*</span> : null}
               </div>
-              <div className="font-mono font-semibold text-gray-800">{clocks[col.key]}</div>
+              <div className="font-mono font-semibold text-gray-800">{clocks ? clocks[col.key] : "—"}</div>
             </div>
           ))}
         </div>
       )}
+      {!driverId ? (
+        <div className="mt-0.5 text-[9px] text-gray-400">Select a driver to load HOS clocks.</div>
+      ) : !clocks && !q.isLoading ? (
+        <div className="mt-0.5 text-[9px] text-gray-400">No HOS data yet for this driver.</div>
+      ) : null}
       {clocks ? <div className="mt-0.5 text-[9px] text-gray-400">* Stop By / Resume At are projected (continuous driving).</div> : null}
     </div>
   );

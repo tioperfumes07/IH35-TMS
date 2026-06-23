@@ -17,14 +17,18 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
     control,
     name: "stops",
   });
+  // render-v6 §C: stop cards show their address/appointment fields INLINE by default (the v6 vertical card).
+  // State tracks rows the user has explicitly collapsed; undefined/true = expanded. Defaulting to collapsed
+  // was the #1355 stop-card false-DONE — the fields existed in source (guard passed) but rendered hidden.
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const isExpanded = (id: string) => expandedRows[id] !== false;
   const currentStops =
     ((control as unknown as { _formValues?: { stops?: Array<Record<string, unknown>> } })._formValues?.stops ?? []) as Array<
       Record<string, unknown>
     >;
 
   function toggleExpanded(id: string) {
-    setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedRows((prev) => ({ ...prev, [id]: prev[id] === false ? true : false }));
   }
 
   function formatStopDate(raw: unknown) {
@@ -51,7 +55,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                 {currentStops[index]?.scheduled_arrival_at ? ` · ${formatStopDate(currentStops[index]?.scheduled_arrival_at)}` : ""}
               </span>
               <button type="button" className={`text-[10px] font-semibold ${index % 2 === 0 ? "text-white" : "text-[#16203a]"}`} onClick={() => toggleExpanded(field.id)}>
-                {expandedRows[field.id] ? "Collapse" : "Expand / edit"}
+                {isExpanded(field.id) ? "Collapse" : "Expand / edit"}
               </button>
               {index >= 2 ? (
                 <button type="button" className={`text-[10px] font-semibold ${index % 2 === 0 ? "text-white" : "text-[#A32D2D]"}`} onClick={() => remove(index)}>
@@ -64,7 +68,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
               <Field label="Time window" input={<TimeWindowDropdown register={register} name={`stops.${index}.time_window_type`} />} />
               <Field label="Free time / lumper" input={<input {...register(`stops.${index}.free_time_summary`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" placeholder="120 min · customer-provided" />} />
             </div>
-            {expandedRows[field.id] ? (
+            {isExpanded(field.id) ? (
               <div className="mt-2 grid grid-cols-1 gap-2 border-t border-gray-200 pt-2 md:grid-cols-2">
                 {/* DISPATCH-UI-REFINE-2 ITEM 4 + PCMILER-GEOCODE — single full-width address line. When
                     PCMILER_ENABLED is ON, this becomes a Trimble geocoding autocomplete; selecting a result
