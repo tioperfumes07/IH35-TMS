@@ -63,6 +63,9 @@ export type CreateWOFormValues = {
   status: "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
   open_date: string;
   open_time: string;
+  // W-FIX-8: render-v5 §A Close date/time → maintenance.work_orders.closed_at.
+  close_date: string;
+  close_time: string;
   authorized_by_user_id: string;
   authorization_number: string;
   service_location_type: "" | "shop" | "mobile" | "roadside";
@@ -158,6 +161,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       status: "open",
       open_date: new Date().toISOString().slice(0, 10),
       open_time: "",
+      close_date: "",
+      close_time: "",
       authorized_by_user_id: "",
       authorization_number: "",
       service_location_type: "",
@@ -363,6 +368,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           status: values.status || undefined,
           opened_at: values.open_date
             ? new Date(`${values.open_date}T${values.open_time || "00:00"}`).toISOString()
+            : undefined,
+          closed_at: values.close_date
+            ? new Date(`${values.close_date}T${values.close_time || "00:00"}`).toISOString()
             : undefined,
           authorized_by_user_id: values.authorized_by_user_id || undefined,
           authorization_number: values.authorization_number || undefined,
