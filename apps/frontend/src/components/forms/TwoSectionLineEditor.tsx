@@ -199,6 +199,7 @@ export function TwoSectionLineEditor({
         onQuickCreateItem={(lineId) => setQuickCreateTarget({ kind: "item", lineId })}
         onQuickCreatePart={(lineId, subId) => setQuickCreateTarget({ kind: "part", lineId, subId })}
         partsLaborMode={partsLaborMode ?? (mode === "wo" || mode === "bill" ? "parts-and-labor" : "parts-only")}
+        variant={mode === "wo" ? "wo" : "default"}
         onSectionAChange={onSectionAChange}
         onSectionBChange={onSectionBChange}
         onOpenLocationMap={(lineId, subId) => setLocationTarget({ lineId, subId })}

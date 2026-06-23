@@ -51,6 +51,10 @@ type Props = {
   onSectionBChange: (lines: ItemLine[]) => void;
   onOpenLocationMap?: (lineId: string, subId: string) => void;
   readOnly?: boolean;
+  /** "wo" relabels the Section-A column headers to the render-v5 WO set (Type | Part # / Task | Qty/Hr |
+   * Unit/Rate | Total). Default keeps Category | Description | Qty | Cost | Total — this box is SHARED
+   * with the bill/expense forms, so the WO labels must not leak into them (FIX-4). */
+  variant?: "default" | "wo";
 };
 
 function emptyCategoryLine(): CategoryLine {
@@ -92,7 +96,13 @@ export function CostBreakdownBox({
   onSectionBChange,
   onOpenLocationMap,
   readOnly = false,
+  variant = "default",
 }: Props) {
+  // FIX-4: WO mode uses the render-v5 §C column labels; default keeps the bill/expense labels unchanged.
+  const col =
+    variant === "wo"
+      ? { category: "Type", description: "Part # / Task", qty: "Qty/Hr", cost: "Unit/Rate", total: "Total" }
+      : { category: "Category", description: "Description", qty: "Qty", cost: "Cost", total: "Total" };
   const subtotalA = sectionA.lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   const subtotalB = sectionB.lines.reduce((sum, line) => {
     const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
@@ -112,11 +122,11 @@ export function CostBreakdownBox({
               <table className="min-w-full text-xs">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-2 py-1 text-left">Category</th>
-                    <th className="px-2 py-1 text-left">Description</th>
-                    <th className="px-2 py-1 text-left">Qty</th>
-                    <th className="px-2 py-1 text-left">Cost</th>
-                    <th className="px-2 py-1 text-left">Total</th>
+                    <th className="px-2 py-1 text-left">{col.category}</th>
+                    <th className="px-2 py-1 text-left">{col.description}</th>
+                    <th className="px-2 py-1 text-left">{col.qty}</th>
+                    <th className="px-2 py-1 text-left">{col.cost}</th>
+                    <th className="px-2 py-1 text-left">{col.total}</th>
                     <th className="px-2 py-1" />
                   </tr>
                 </thead>
