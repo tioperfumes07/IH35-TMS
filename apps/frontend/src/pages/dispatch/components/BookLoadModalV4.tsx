@@ -948,6 +948,40 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     ))}
                   </div>
 
+                  {/* Lumper responsibility — relocated to §A per GUARD 2026-06-23 (was hidden in §C). Per-stop,
+                      referencing the stop (McLeod/QBO keep lumper-responsibility per-line in the charges).
+                      Click-to-add: appears for a stop once it has a Lumper amount (§C "Lumper amount ($)" > 0). */}
+                  {(() => {
+                    const stopsForLumper = (form.watch("stops") as Array<{ stop_type?: string; lumper_amount_cents?: number }> | undefined) ?? [];
+                    const withLumper = stopsForLumper.map((s, i) => ({ s, i })).filter(({ s }) => Number(s?.lumper_amount_cents ?? 0) > 0);
+                    if (withLumper.length === 0) return null;
+                    return (
+                      <div data-testid="section-a-lumper-responsibility" className="space-y-1">
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
+                        {withLumper.map(({ s, i }) => (
+                          <div key={i} className="grid grid-cols-1 items-end gap-2 rounded border border-gray-200 p-1 md:grid-cols-3">
+                            <div className="text-[10px] font-semibold text-gray-600">
+                              Stop {i + 1} · {s?.stop_type === "delivery" ? "Delivery" : "Pickup"}
+                            </div>
+                            <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                              Lumper paid by
+                              <SelectCombobox {...form.register(`stops.${i}.lumper_paid_by`)} className="mt-0.5 h-7 w-full text-xs">
+                                <option value="carrier">Carrier</option>
+                                <option value="shipper">Shipper</option>
+                                <option value="broker">Broker</option>
+                                <option value="receiver">Receiver</option>
+                                <option value="unknown">Unknown</option>
+                              </SelectCombobox>
+                            </label>
+                            <label className="flex items-center gap-2 text-[11px] text-gray-700">
+                              <input type="checkbox" {...form.register(`stops.${i}.lumper_required`)} /> Lumper required
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Cash advance
