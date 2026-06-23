@@ -38,25 +38,28 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
     <section className="space-y-2">
       <div className="space-y-1">
         {fields.map((field, index) => (
-          <div key={field.id} className="rounded border border-gray-200 bg-white p-2">
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.4px] ${index % 2 === 0 ? "bg-[#e7eef6] text-[#345d86]" : "bg-[#e9f1ec] text-[#15824a]"}`}>
+          <div key={field.id} data-testid={`stop-card-${index}`} className="overflow-hidden rounded border border-gray-200 bg-white">
+            {/* render-v6 .stop card — full-width colored header BAR + tag. v6 uses blue(pick)/green(del); §7
+                overrides design color → pickup = navy #1F2A44, delivery = slate. (§7 forbids blue/green.) */}
+            <div className={`flex items-center gap-2 px-2 py-1 text-[10.5px] font-bold tracking-[0.03em] ${index % 2 === 0 ? "bg-[#1F2A44] text-white" : "bg-slate-200 text-slate-800"}`}>
+              <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase ${index % 2 === 0 ? "bg-white/20 text-white" : "bg-slate-600 text-white"}`}>
                 {index % 2 === 0 ? "PICKUP" : "DELIVERY"}
               </span>
-              <span className="font-mono text-[10px] text-gray-500">STOP-{index + 1}</span>
-              <span className="flex-1 truncate text-gray-800">{`${currentStops[index]?.address_full || currentStops[index]?.address_line1 || "Address pending"}`}</span>
-              <span className="text-[10px] text-gray-500">
-                {formatStopDate(currentStops[index]?.scheduled_arrival_at)}
+              <span>Stop {index + 1}</span>
+              <span className={`ml-auto truncate font-medium ${index % 2 === 0 ? "text-white/80" : "text-slate-600"}`}>
+                {`${currentStops[index]?.address_full || currentStops[index]?.address_line1 || "Address pending"}`}
+                {currentStops[index]?.scheduled_arrival_at ? ` · ${formatStopDate(currentStops[index]?.scheduled_arrival_at)}` : ""}
               </span>
-              <button type="button" className="text-[10px] font-semibold text-[#16203a]" onClick={() => toggleExpanded(field.id)}>
+              <button type="button" className={`text-[10px] font-semibold ${index % 2 === 0 ? "text-white" : "text-[#16203a]"}`} onClick={() => toggleExpanded(field.id)}>
                 {expandedRows[field.id] ? "Collapse" : "Expand / edit"}
               </button>
               {index >= 2 ? (
-                <button type="button" className="text-[10px] font-semibold text-red-600" onClick={() => remove(index)}>
+                <button type="button" className={`text-[10px] font-semibold ${index % 2 === 0 ? "text-white" : "text-[#A32D2D]"}`} onClick={() => remove(index)}>
                   Remove
                 </button>
               ) : null}
             </div>
+            <div className="p-2">
             <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
               <Field label="Time window" input={<TimeWindowDropdown register={register} name={`stops.${index}.time_window_type`} />} />
               <Field label="Free time / lumper" input={<input {...register(`stops.${index}.free_time_summary`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" placeholder="120 min · customer-provided" />} />
@@ -149,6 +152,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                 </div>
               </div>
             ) : null}
+            </div>
           </div>
         ))}
       </div>
