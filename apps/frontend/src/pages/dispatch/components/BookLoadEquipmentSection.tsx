@@ -54,6 +54,10 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "") : "";
   const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
+  // Conditional equipment detail reveals (render-v6 §B): reefer detail only on a reefer trailer, tarp detail
+  // only on a flatbed. Previously the reefer setpoint always showed and flatbed tarp detail never revealed.
+  const isReefer = trailerType === "refrigerated_van";
+  const isFlatbed = trailerType === "flatbed";
   const hazmat = watch ? Boolean(watch("hazmat")) : false;
   const stops = watch ? (watch("stops") as Array<{ city?: string; state?: string }> | undefined) : undefined;
   const pickupStop = stops?.find((s) => s) ?? stops?.[0];
@@ -243,8 +247,31 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             />
           }
         />
-        <Field label="Reefer setpoint" input={<input {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
+        {isReefer ? (
+          <Field
+            label="Reefer setpoint (°F)"
+            input={<input data-testid="reefer-setpoint-field" {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
+          />
+        ) : null}
       </div>
+      {/* Render-v6 §B conditional detail: revealed by trailer type. Reefer setpoint above (reefer only);
+          flatbed reveals the tarp-type detail (the "Tarps" required toggle stays in the Equipment chips). */}
+      {isFlatbed ? (
+        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <Field
+            label="Tarp type"
+            input={
+              <SelectCombobox {...register("tarp_type")} className="h-7 w-full text-xs">
+                <option value="">Select tarp type</option>
+                <option value="steel">Steel tarp</option>
+                <option value="lumber">Lumber tarp</option>
+                <option value="smoke">Smoke tarp</option>
+                <option value="coil">Coil/machinery tarp</option>
+              </SelectCombobox>
+            }
+          />
+        </div>
+      ) : null}
       <div className="hidden">
         <input type="number" {...register("temp_fahrenheit", { valueAsNumber: true })} />
       </div>
