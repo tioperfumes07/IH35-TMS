@@ -52,10 +52,12 @@ import { MAINTENANCE_TAB_PATH, maintenanceTabFromPath } from "../../router/route
 
 export { MAINTENANCE_MASTER_DATA_LINKS, MAINTENANCE_OPERATION_LINKS } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 
+// Approved order (maintenance-FULL-with-chrome.html): R&M Status Board is the landing tab, then Fleet
+// Table, then Active WOs. Additive reorder only — every existing tab is preserved.
 const SUBNAV = [
-  { id: "active_wos", label: "Active WOs" },
-  { id: "fleet_table", label: "Fleet Table" },
   { id: "rm_status_board", label: "R&M Status Board" },
+  { id: "fleet_table", label: "Fleet Table" },
+  { id: "active_wos", label: "Active WOs" },
   { id: "service_location", label: "Service / Location" },
   { id: "arriving_soon", label: "Arriving Soon" },
   { id: "in_transit_issues", label: "In-Transit Issues" },
@@ -72,7 +74,7 @@ type Props = {
   initialTab?: MaintenanceTabId;
 };
 
-export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
+export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const location = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
