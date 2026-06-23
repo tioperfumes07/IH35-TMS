@@ -120,6 +120,7 @@ export type DispatchBookLoadPayload = {
   customer_id: string;
   customer_wo_number?: string;
   customer_po_number?: string;
+  piece_count?: number;
   commodity?: string;
   weight_lbs?: number;
   hazmat?: boolean;

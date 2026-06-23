@@ -129,6 +129,8 @@ export type LoadDetail = DispatchLoadRow & {
   cargo_weight_lbs?: number | null;
   reefer_setpoint_temp_f?: number | null;
   trip_type?: "NB" | "TR" | "SB" | null;
+  piece_count?: number | null;
+  customer_po_number?: string | null;
 };
 
 export type LoadAuditEvent = {

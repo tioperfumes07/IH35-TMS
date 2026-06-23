@@ -63,6 +63,7 @@ export type BookLoadInput = {
   tour_id?: string;
   customer_wo_number?: string;
   customer_po_number?: string;
+  piece_count?: number;
   commodity?: string;
   weight_lbs?: number;
   hazmat?: boolean;
@@ -846,6 +847,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    // Block 7 (migration 202606221000): persist pieces + customer PO at create — post-insert, same pattern
+    // as trip_type below, so the 39-column lockstep INSERT is untouched. customer_po_number was previously
+    // accepted-but-dropped; now it stores. Entity-scoped row (the load just inserted under $1 above).
+    if (input.piece_count != null || (input.customer_po_number ?? "").trim().length > 0) {
+      await client.query(
+        `UPDATE mdata.loads SET piece_count = $1, customer_po_number = $2, updated_at = now() WHERE id = $3::uuid`,
+        [input.piece_count ?? null, input.customer_po_number ?? null, String(load.id)]
+      );
+    }
 
     // Trip Pairing (Block 04): set trip_type + tour_id post-insert (additive; avoids touching the
     // 39-column lockstep INSERT above). NB starts a NEW tour (generate a tour_id when none supplied);

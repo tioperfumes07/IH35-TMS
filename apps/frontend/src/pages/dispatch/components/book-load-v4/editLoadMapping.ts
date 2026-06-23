@@ -102,6 +102,9 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     weight_lbs: num(load.cargo_weight_lbs),
     reefer_setpoint: str(load.reefer_setpoint_temp_f),
     trip_type: str(load.trip_type),
+    // Block 7 (migration 202606221000): pieces + customer PO round-trip.
+    pieces: str(load.piece_count),
+    customer_po_number: str(load.customer_po_number),
     stops,
   };
 }
@@ -147,6 +150,14 @@ const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
   }],
   // trip_type is a non-nullable enum (NB/TR/SB) — omit (undefined) when blank so it's never cleared to null.
   ["trip_type", "trip_type", (v) => str(v.trip_type) || undefined],
+  // Block 7 (migration 202606221000): pieces (form text) → piece_count (int) ; customer PO text.
+  ["pieces", "piece_count", (v) => {
+    const s = str(v.pieces).trim();
+    if (!s) return null;
+    const n = Number(s);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+  }],
+  ["customer_po_number", "customer_po_number", (v) => str(v.customer_po_number) || null],
 ];
 
 const CHARGE_KEYS = ["linehaul_cents", "fuel_surcharge_cents", "accessorial_cents", "accessorial_rows"];
