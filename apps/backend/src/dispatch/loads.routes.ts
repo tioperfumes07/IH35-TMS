@@ -608,11 +608,23 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const detail = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
+      // W-FIX-3a: side-panel §B Equipment enrichment — READ-ONLY joins, NO new column, NO view change.
+      //   team-driver name  ← assigned_secondary_driver_id → mdata.drivers (persisted)
+      //   trailer type/unit ← mdata.loads.trailer_id → mdata.equipment (persisted column + table)
+      // trailer_id is NULL for loads the Book Load wizard created (it does not persist it yet — a payload
+      // change, flagged separately), so trailer fields are honestly NULL ("—") for those; real where set.
+      // Driver pay rate is NOT a load-persisted value (load-specific rate isn't stored; mdata.driver_pay_rates
+      // is effective-dated per-qualification) → intentionally not surfaced here (stays "—"), no fabrication.
       const loadRes = await client.query(
         `
-          SELECT l.*, c.customer_name
+          SELECT l.*, c.customer_name,
+                 NULLIF(TRIM(CONCAT(COALESCE(sd.first_name, ''), ' ', COALESCE(sd.last_name, ''))), '') AS assigned_secondary_driver_name,
+                 te.equipment_type AS trailer_equipment_type,
+                 te.equipment_number AS trailer_number
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
+          LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
+          LEFT JOIN mdata.equipment te ON te.id = l.trailer_id
           WHERE l.id = $1
             AND l.operating_company_id = $2
           LIMIT 1
