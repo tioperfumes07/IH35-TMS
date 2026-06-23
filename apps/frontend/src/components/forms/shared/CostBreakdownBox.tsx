@@ -1,4 +1,5 @@
 import { SelectCombobox } from "../../shared/SelectCombobox";
+import { MoneyInput } from "../MoneyInput";
 export type CategoryLine = {
   id: string;
   expense_category_uuid?: string;
@@ -194,21 +195,21 @@ export function CostBreakdownBox({
                         />
                       </td>
                       <td className="px-2 py-1">
-                        <input
+                        {/* M-1 dollars-mode: QBO display ($ + .00), unit_cost stays a DOLLAR number — payload byte-for-byte unchanged. */}
+                        <MoneyInput
                           disabled={readOnly}
-                          type="number"
-                          min={0}
-                          value={line.unit_cost}
-                          onChange={(event) =>
+                          valueDollars={line.unit_cost}
+                          onChangeDollars={(d) =>
                             onSectionAChange(
                               sectionA.lines.map((entry) => {
                                 if (entry.id !== line.id) return entry;
-                                const unitCost = Number(event.target.value || 0);
+                                const unitCost = d ?? 0;
                                 return { ...entry, unit_cost: unitCost, amount: unitCost * Number(entry.quantity || 0) };
                               })
                             )
                           }
-                          className="w-24 rounded border border-gray-300 px-2 py-1"
+                          className="w-24"
+                          ariaLabel={col.cost}
                         />
                       </td>
                       <td className="px-2 py-1">${Number(line.amount || 0).toFixed(2)}</td>
@@ -321,22 +322,21 @@ export function CostBreakdownBox({
                     className="rounded border border-gray-300 px-2 py-1 text-xs"
                     placeholder="Qty"
                   />
-                  <input
+                  {/* M-1 dollars-mode: QBO display ($ + .00), unit_cost stays a DOLLAR number — payload byte-for-byte unchanged. */}
+                  <MoneyInput
                     disabled={readOnly}
-                    type="number"
-                    min={0}
-                    value={line.unit_cost}
-                    onChange={(event) =>
+                    valueDollars={line.unit_cost}
+                    onChangeDollars={(d) =>
                       onSectionBChange(
                         sectionB.lines.map((entry) => {
                           if (entry.id !== line.id) return entry;
-                          const unitCost = Number(event.target.value || 0);
+                          const unitCost = d ?? 0;
                           return { ...entry, unit_cost: unitCost, amount: Number(entry.quantity || 0) * unitCost };
                         })
                       )
                     }
-                    className="rounded border border-gray-300 px-2 py-1 text-xs"
-                    placeholder="Cost"
+                    className="text-xs"
+                    ariaLabel={`${col.cost} (item)`}
                   />
                   <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold">${Number(line.amount || 0).toFixed(2)}</div>
                   <button
@@ -481,12 +481,11 @@ export function CostBreakdownBox({
                           }
                           className="rounded border border-gray-300 px-2 py-1 text-xs"
                         />
-                        <input
+                        {/* M-1 dollars-mode (sub-row): QBO display, unit_cost stays a DOLLAR number — payload unchanged. */}
+                        <MoneyInput
                           disabled={readOnly}
-                          type="number"
-                          min={0}
-                          value={row.unit_cost}
-                          onChange={(event) =>
+                          valueDollars={row.unit_cost}
+                          onChangeDollars={(d) =>
                             onSectionBChange(
                               sectionB.lines.map((entry) =>
                                 entry.id !== line.id
@@ -495,14 +494,15 @@ export function CostBreakdownBox({
                                       ...entry,
                                       sub_rows: (entry.sub_rows ?? []).map((current) => {
                                         if (current.id !== row.id) return current;
-                                        const unitCost = Number(event.target.value || 0);
+                                        const unitCost = d ?? 0;
                                         return { ...current, unit_cost: unitCost, amount: Number(current.quantity || 0) * unitCost };
                                       }),
                                     }
                               )
                             )
                           }
-                          className="rounded border border-gray-300 px-2 py-1 text-xs"
+                          className="text-xs"
+                          ariaLabel="Sub-row cost"
                         />
                         <div className="rounded border border-gray-200 bg-white px-2 py-1 text-xs">${Number(row.amount || 0).toFixed(2)}</div>
                         <button
