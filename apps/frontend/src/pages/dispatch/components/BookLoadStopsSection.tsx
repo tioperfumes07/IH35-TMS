@@ -167,10 +167,10 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                     as hidden registered inputs (the full-stops-array UPDATE would null them otherwise):
                     appointment start/end → represented by Date+Time; Lumper paid by / required → §A by the
                     Lumper charge; tarp stop/count → §B Flatbed panel; instructions → optional, not a flat field. */}
+                {/* Lumper paid by / required now render in §A (per-stop, by the Lumper charge) — their values
+                    round-trip via the stop field-array item (default/prefill); no hidden §C input needed. */}
                 <input type="hidden" {...register(`stops.${index}.appointment_start_at`)} />
                 <input type="hidden" {...register(`stops.${index}.appointment_end_at`)} />
-                <input type="hidden" {...register(`stops.${index}.lumper_paid_by`)} />
-                <input type="hidden" {...register(`stops.${index}.lumper_required`)} />
                 <input type="hidden" {...register(`stops.${index}.is_tarp_stop`)} />
                 <input type="hidden" {...register(`stops.${index}.tarp_count`)} />
                 <input type="hidden" {...register(`stops.${index}.stop_notes`)} />

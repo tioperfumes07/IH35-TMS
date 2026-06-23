@@ -42,6 +42,9 @@ const checks = [
   ["§A mounts the extra-rate editor", bookLoadModal.includes("MultiStopExtraRateEditor") && bookLoadModal.includes('data-testid="section-a-extra-rates"')],
   ["editor is stop-scoped (stopIndex per line)", bookLoadModal.includes("stopIndex={i}") && editor.includes("stops.${stopIndex}.extra_rates")],
   ["§C stop card does NOT mount the editor (empty-diff: exactly 11 fields)", !bookLoadStops.includes("MultiStopExtraRateEditor")],
+  // Lumper responsibility (paid-by + required) relocated to §A per-stop (GUARD 2026-06-23) — not in the §C card.
+  ["§A has stop-scoped lumper responsibility", bookLoadModal.includes('data-testid="section-a-lumper-responsibility"') && bookLoadModal.includes("stops.${i}.lumper_paid_by") && bookLoadModal.includes("stops.${i}.lumper_required")],
+  ["§C stop card does NOT render lumper paid-by/required inputs", !bookLoadStops.includes("stops.${index}.lumper_paid_by") && !bookLoadStops.includes("stops.${index}.lumper_required")],
   ["accounting from-load includes stop extras", fromLoad.includes("dispatch.stop_extra_rates") && fromLoad.includes("invoice_line_uuid")],
   ["backend index registers routes", indexTs.includes("registerLoadStopExtraRateRoutes")],
   ["spec doc references WF-053", docs.includes("WF-053")],
