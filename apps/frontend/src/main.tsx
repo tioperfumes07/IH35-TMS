@@ -10,6 +10,33 @@ import i18n from "./i18n";
 
 void i18n;
 
+// STALE-BUNDLE KILL SWITCH (office app). Symptom this fixes: the office UI kept showing an OLD build
+// even after clearing browser cache in multiple browsers — the classic signature of a leftover service
+// worker and/or Cache Storage entry pinning old hashed assets (browser "Clear cache" does NOT always
+// evict SW caches). The office app intentionally registers NO service worker, so on every boot we
+// proactively unregister any that exist and wipe Cache Storage so a stale SW can never serve old JS.
+(function purgeStaleServiceWorkerCaches() {
+  if (typeof navigator === "undefined") return;
+  try {
+    if ("serviceWorker" in navigator) {
+      void navigator.serviceWorker
+        .getRegistrations?.()
+        .then((regs) => {
+          for (const reg of regs) void reg.unregister();
+        })
+        .catch(() => undefined);
+    }
+    if (typeof caches !== "undefined") {
+      void caches
+        .keys()
+        .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+        .catch(() => undefined);
+    }
+  } catch {
+    /* never block app boot on cleanup */
+  }
+})();
+
 // GO-LIVE #15 (429): without defaults, every component mount + window-focus refetched, so the same
 // provider GETs (sync-health, qbo, preferences, notifications, identity/me) fired many times per load
 // and overran the edge per-IP rate limit — a following status-change WRITE then tipped to 429. Sane
