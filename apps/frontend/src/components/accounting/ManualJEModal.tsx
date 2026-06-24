@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../../api/accounting";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
+import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 import { SelectCombobox } from "../shared/SelectCombobox";
 
@@ -238,25 +239,18 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                       </option>
                     ))}
                   </SelectCombobox>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="h-8 rounded border border-gray-300 px-2"
+                  {/* M-1: dollars-mode QBO money entry; debit/credit DOLLARS → Math.round(*100)=amount_cents byte-for-byte. */}
+                  <MoneyInput
+                    valueDollars={line.debit || null}
+                    onChangeDollars={(d) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, debit: d ?? 0 } : row)))}
+                    ariaLabel="Debit"
                     placeholder="Debit"
-                    value={line.debit || ""}
-                    onChange={(e) =>
-                      setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, debit: Number(e.target.value || 0) } : row)))
-                    }
                   />
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="h-8 rounded border border-gray-300 px-2"
+                  <MoneyInput
+                    valueDollars={line.credit || null}
+                    onChangeDollars={(d) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, credit: d ?? 0 } : row)))}
+                    ariaLabel="Credit"
                     placeholder="Credit"
-                    value={line.credit || ""}
-                    onChange={(e) =>
-                      setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, credit: Number(e.target.value || 0) } : row)))
-                    }
                   />
                   <div className="flex items-center gap-1">
                     <input
