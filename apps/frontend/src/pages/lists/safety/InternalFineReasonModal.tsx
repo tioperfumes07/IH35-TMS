@@ -3,6 +3,7 @@ import { ApiError } from "../../../api/client";
 import { createInternalFineReason, deactivateInternalFineReason, updateInternalFineReason, type InternalFineReasonRow } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { CODE_REGEX } from "./shared";
 
 type Props = {
@@ -127,13 +128,12 @@ export function InternalFineReasonModal({ open, companyId, row, onClose, onSaved
 
         <label className="block text-xs font-semibold text-gray-600">
           Default Amount ($)
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={form.default_amount_dollars}
-            onChange={(event) => setForm((v) => ({ ...v, default_amount_dollars: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+          {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
+          <MoneyInput
+            valueDollars={form.default_amount_dollars ? Number(form.default_amount_dollars) : null}
+            onChangeDollars={(d) => setForm((v) => ({ ...v, default_amount_dollars: d == null ? "" : String(d) }))}
+            ariaLabel="Default Amount ($)"
+            className="mt-1 w-full"
           />
           {errors.default_amount_dollars ? <div className="mt-1 text-[11px] text-red-700">{errors.default_amount_dollars}</div> : null}
         </label>
