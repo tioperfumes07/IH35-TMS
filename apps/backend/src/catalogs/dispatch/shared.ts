@@ -142,8 +142,22 @@ export function registerDispatchCatalogCrudRoutes(app: FastifyInstance, options:
       );
       const totalRes = await client.query<{ n: string }>(`SELECT COUNT(*)::text AS n FROM ${tableName} ${whereClause}`, values);
       return { rows: rowsRes.rows, total: Number(totalRes.rows[0]?.n ?? "0") };
+    }).catch((e: unknown) => {
+      // W-2 (catalogs prod-shape drift): surface the underlying pg error so a prod-only failure (a missing
+      // column / grant / RLS on catalogs.<catalog>) is DIAGNOSABLE from the live response + logs, instead of
+      // a blind 500. pg_code names the category without leaking row data: 42703 undefined_column,
+      // 42501 insufficient_privilege, 42P01 undefined_table. From-migrations DBs (e2e) return 200 and never
+      // reach here — this only trips on a prod schema that drifted from the migrations.
+      const pgCode = e && typeof e === "object" && "code" in e ? String((e as { code?: unknown }).code ?? "") : null;
+      req.log.error(
+        { err: e, catalog: options.catalogPath, operating_company_id: q.operating_company_id, pg_code: pgCode },
+        "dispatch catalog list query failed"
+      );
+      reply.code(500).send({ error: "catalog_query_failed", catalog: options.catalogPath, pg_code: pgCode });
+      return null;
     });
 
+    if (result === null) return; // error response already sent in the catch above
     return result;
   });
 
