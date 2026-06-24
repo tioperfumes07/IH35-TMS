@@ -76,7 +76,43 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         }
         return [];
       }
-      const res = await client.query(`SELECT * FROM views.maintenance_intransit_triage_queue LIMIT 50`);
+      // Reproduces views.maintenance_intransit_triage_queue (0041) EXACTLY — same SELECT/joins/filters/order
+      // — and additionally exposes Load # + ETA for design-parity (in-transit-issues.html) without a gated
+      // view migration. load_id/stop_id are real FKs on dispatch.intransit_issues; ETA = the issue stop's
+      // scheduled_arrival_at (real scheduled data, not a fabricated column). RLS-scoped via withCompany.
+      const res = await client.query(`
+        SELECT
+          i.id,
+          i.reported_at,
+          i.unit_id,
+          i.driver_id,
+          i.gps_lat::numeric AS gps_lat,
+          i.gps_lng::numeric AS gps_lng,
+          i.gps_label,
+          i.issue_category,
+          i.issue_description,
+          i.severity,
+          i.promoted_to_wo_id,
+          i.promoted_to_damage_report_id,
+          COALESCE(u.unit_number, '') AS unit_display_id,
+          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_full_name,
+          EXTRACT(epoch FROM (now() - i.reported_at)) / 3600 AS hours_since_report,
+          i.load_id,
+          CASE WHEN l.id IS NOT NULL THEN COALESCE(l.load_number, l.id::text) END AS load_display_id,
+          s.scheduled_arrival_at::text AS eta_at
+        FROM dispatch.intransit_issues i
+        JOIN mdata.units u ON u.id = i.unit_id
+        JOIN mdata.drivers d ON d.id = i.driver_id
+        -- Entity-scoped on PURPOSE: mdata.loads RLS allows any of a multi-entity user's companies, so we
+        -- additionally pin the Load # join to the viewed operating company ($1) — a load from another entity
+        -- (TRANSP/TRK/USMCA) can never surface here even for a cross-entity user. ETA stop inherits the load.
+        LEFT JOIN mdata.loads l ON l.id = i.load_id AND l.operating_company_id = $1
+        LEFT JOIN mdata.load_stops s ON s.id = i.stop_id AND s.load_id = l.id
+        WHERE i.promoted_to_wo_id IS NULL
+          AND i.promoted_to_damage_report_id IS NULL
+        ORDER BY i.reported_at DESC
+        LIMIT 50
+      `, [companyId]);
       if (res.rows.length > 0) return res.rows;
       if (shouldUseDevFixturesForMaintenance()) {
         console.warn("Maintenance triage queue using DEV fixtures because queue is empty.");

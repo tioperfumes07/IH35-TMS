@@ -183,6 +183,21 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       ),
     },
     {
+      // Design parity (severe-repairs.html): Driver after Unit. Backed by mdata.units.assigned_driver_id
+      // → mdata.drivers (LEFT JOIN in severe-repair-estimate.service.ts) — not a faked column.
+      key: "driver_name",
+      label: "Driver",
+      sortable: true,
+      render: (row) =>
+        row.driver_id ? (
+          <Link to={`/drivers/${row.driver_id}`} className={LINK}>
+            {row.driver_name ?? row.driver_id.slice(0, 8)}
+          </Link>
+        ) : (
+          <span className="text-gray-400">Unassigned</span>
+        ),
+    },
+    {
       key: "damage_severity",
       label: "Severity",
       sortable: true,

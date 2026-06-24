@@ -6,6 +6,8 @@ type SevereEstimateRow = {
   id: string;
   unit_id: string;
   unit_number: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
   trigger_wo_id: string | null;
   damage_severity: string;
   estimate_status: string;
@@ -29,6 +31,8 @@ export async function listOpenEstimates(client: PoolClient, operating_company_id
         e.id,
         e.unit_id,
         u.unit_number,
+        d.id AS driver_id,
+        NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS driver_name,
         e.trigger_wo_id,
         e.damage_severity,
         e.estimate_status,
@@ -45,6 +49,7 @@ export async function listOpenEstimates(client: PoolClient, operating_company_id
         COALESCE(EXTRACT(EPOCH FROM (now() - u.oos_since)) / 86400, 0)::numeric AS days_oos
       FROM maintenance.severe_repair_estimates e
       LEFT JOIN mdata.units u ON u.id = e.unit_id
+      LEFT JOIN mdata.drivers d ON d.id = u.assigned_driver_id
       WHERE e.operating_company_id = $1
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
       ORDER BY e.estimated_total_cents DESC

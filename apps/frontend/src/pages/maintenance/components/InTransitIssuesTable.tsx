@@ -23,6 +23,12 @@ function formatHours(h: number): string {
   return `${Math.round(h)}h ago`;
 }
 
+function formatEta(iso?: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+}
+
 // In-Transit faults are FLAT (one issue per row — no nesting), so this is a plain universal-list
 // ParityTable, not the parent+expand shape used by Arriving Soon.
 export function InTransitIssuesTable({ issues, onTriage }: Props) {
@@ -50,7 +56,22 @@ export function InTransitIssuesTable({ issues, onTriage }: Props) {
           <span className="text-gray-400">Unassigned</span>
         ),
     },
-    { key: "issue_category", label: "Category", sortable: true },
+    {
+      // Design parity (in-transit-issues.html): Load # after Driver. Backed by dispatch.intransit_issues.load_id.
+      key: "load_display_id",
+      label: "Load #",
+      sortable: true,
+      render: (issue) =>
+        issue.load_id ? (
+          <Link to={`/dispatch/loads/${issue.load_id}`} className={LINK}>
+            {issue.load_display_id ?? issue.load_id.slice(0, 8)}
+          </Link>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
+    },
+    // Preview's "Fault" column = the issue category. Description kept as a useful extra (additive).
+    { key: "issue_category", label: "Fault", sortable: true },
     { key: "issue_description", label: "Description", render: (issue) => issue.issue_description },
     {
       key: "severity",
@@ -61,6 +82,8 @@ export function InTransitIssuesTable({ issues, onTriage }: Props) {
       ),
     },
     { key: "gps_label", label: "Location", render: (issue) => issue.gps_label ?? "—" },
+    // Design parity: ETA = the issue stop's scheduled arrival (real scheduled data). Reported kept as extra.
+    { key: "eta_at", label: "ETA", sortable: true, render: (issue) => formatEta(issue.eta_at) },
     { key: "hours_since_report", label: "Reported", sortable: true, render: (issue) => formatHours(issue.hours_since_report) },
   ];
 

@@ -1,0 +1,56 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Road Service</title><style>:root{--ink:#1f2937;--muted:#6b7280;--tert:#9aa0a8;--line:#e2e6ec;--line2:#eef1f5;--page:#f7f8fa;--card:#fff;--bg2:#f1f3f6;--blue:#1F2A44;--red:#A32D2D;--amber:#854F0B;--coral:#F0997B;--topbar:#0f1219;--navbar:#1b2333;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:11px;color:var(--ink);background:var(--page);}
+.topbar{background:var(--topbar);padding:6px 12px;display:flex;align-items:center;gap:12px;font-size:11px;color:#aeb4c0;}
+.topbar .brand{font-weight:600;color:#fff;letter-spacing:.3px;}
+.topbar .ent{color:#7f8696;}
+.topbar .chips{margin-left:auto;display:flex;gap:12px;align-items:center;color:#7f8696;}
+.dot-ok{color:#4ea674;}.dot-off{color:#6b7280;}
+.nav{background:var(--navbar);padding:0 12px;display:flex;font-size:10.5px;color:#9aa2b4;overflow-x:auto;white-space:nowrap;}
+.nav span{padding:7px 8px;}
+.nav .on{color:#fff;box-shadow:inset 0 -2px 0 #4a7fb5;}
+.page{padding:10px 12px;}
+.h-row{display:flex;align-items:center;justify-content:space-between;}
+.h1{font-size:15px;font-weight:600;}
+.sub{font-size:10.5px;color:var(--muted);margin-left:8px;}
+.btn{height:26px;font-size:10.5px;padding:0 9px;border:0.5px solid #c3c8d0;background:#fff;border-radius:6px;cursor:pointer;}
+.subnav{display:flex;margin-top:8px;font-size:10.5px;overflow-x:auto;white-space:nowrap;border-bottom:0.5px solid var(--line);}
+.subnav a{padding:6px 8px;color:var(--muted);text-decoration:none;}
+.subnav a.on{color:var(--blue);box-shadow:inset 0 -2px 0 var(--blue);font-weight:600;}
+.kpis{padding:9px 0 0;display:flex;gap:14px;flex-wrap:wrap;}
+.kpi{font-size:10px;color:var(--muted);} .kpi b{font-size:13px;color:var(--ink);margin-left:3px;}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 0 0;}
+.inp{height:27px;font-size:10.5px;border:0.5px solid #c3c8d0;border-radius:6px;padding:0 8px;background:#fff;}
+.sel{height:27px;font-size:10.5px;border:0.5px solid #c3c8d0;border-radius:6px;background:#fff;}
+.ico{height:27px;width:27px;border:0.5px solid #c3c8d0;border-radius:6px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
+.tablewrap{border:0.5px solid var(--line);border-radius:6px;overflow:hidden;margin-top:8px;}
+table{width:100%;border-collapse:collapse;font-size:10.5px;white-space:nowrap;}
+thead tr{background:var(--bg2);color:var(--muted);text-align:left;}
+th{padding:5px 8px;cursor:pointer;position:relative;}
+th .rz{position:absolute;right:0;top:3px;bottom:3px;border-right:1.5px solid var(--line);cursor:col-resize;}
+td{padding:5px 8px;}
+tbody tr{border-top:0.5px solid var(--line2);cursor:pointer;}
+a.lk{color:var(--blue);text-decoration:none;font-weight:600;}
+.pill{padding:1px 6px;border-radius:4px;font-size:9.5px;}
+.pill-red{background:#FCEBEB;color:var(--red);}.pill-amber{background:#FAEEDA;color:var(--amber);}.pill-blue{background:#EAECF1;color:var(--blue);}.pill-gray{background:#eef0f3;color:var(--muted);}
+.t-red{color:var(--red);}.t-amber{color:var(--amber);}.muted{color:var(--muted);}
+.pgbar{display:flex;justify-content:space-between;align-items:center;padding:5px 9px;background:var(--bg2);font-size:10px;color:var(--muted);}
+.pgbar .pg span{border:0.5px solid #c3c8d0;padding:1px 6px;border-radius:3px;margin-left:3px;cursor:pointer;}
+.pgbar .pg .cur{background:var(--blue);color:#fff;border-color:var(--blue);}
+.pgbar .pg .jump{color:var(--blue);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.panel{border:0.5px solid var(--line);border-radius:6px;overflow:hidden;}
+.panel .ph{background:var(--bg2);padding:5px 9px;font-weight:600;font-size:10px;color:var(--muted);display:flex;justify-content:space-between;}
+.panel .ph a{color:var(--blue);text-decoration:none;font-weight:400;}
+.stat{background:var(--bg2);border-radius:6px;padding:8px 10px;cursor:pointer;}
+.stat .l{font-size:10px;color:var(--muted);}.stat .v{font-size:17px;font-weight:600;}
+.note{background:#fffbe6;border:0.5px solid #f5e3a0;border-radius:6px;padding:7px 10px;font-size:10px;color:#7a5b00;margin:9px 0 0;}
+</style></head><body><div class="topbar"><span class="brand">IH 35 DISPATCH</span><span class="ent">IH 35 Transportation LLC</span><span class="chips"><span>QuickBooks <span class="dot-ok">●</span></span><span>Samsara <span class="dot-ok">●</span></span><span>Relay <span class="dot-off">●</span></span><span style="color:#cfd3da;">+ Create</span></span></div>
+<div class="nav"><span>Home</span><span>Dispatch</span><span>Loads</span><span class="on">Maintenance</span><span>Accounting</span><span>Banking</span><span>Reports</span><span>Lists</span><span>Finance Hub</span></div>
+<div class="page"><div class="h-row"><div><span class="h1">Maintenance</span><span class="sub">Work orders, fleet, parts &amp; PM scheduling</span></div><button class="btn">+ Create Work Order</button></div><div class="subnav"><a class="" href="https://app.ih35dispatch.com/maintenance/rm-status-board">R&M Status Board</a><a class="" href="https://app.ih35dispatch.com/maintenance/fleet-table">Fleet Table</a><a class="" href="https://app.ih35dispatch.com/maintenance/master-data">Master Data</a><a class="" href="https://app.ih35dispatch.com/maintenance/active-wos">Active WOs</a><a class="" href="https://app.ih35dispatch.com/maintenance/service-location">Service / Location</a><a class="" href="https://app.ih35dispatch.com/maintenance/arriving-soon">Arriving Soon</a><a class="" href="https://app.ih35dispatch.com/maintenance/in-transit-issues">In-Transit</a><a class="" href="https://app.ih35dispatch.com/maintenance/damage-reports">Damage</a><a class="" href="https://app.ih35dispatch.com/maintenance/severe-repairs">Severe</a><a class="on" href="https://app.ih35dispatch.com/maintenance/road-service">Road Service</a><a class="" href="https://app.ih35dispatch.com/maintenance/parts-inventory">Parts</a><a class="" href="https://app.ih35dispatch.com/maintenance/settings">Settings</a></div>
+<div class="kpis"><span class="kpi">OPEN WOS<b>7</b></span><span class="kpi">PAST DUE<b>1</b></span><span class="kpi">AVG CLOSE<b>2.1d</b></span><span class="kpi">OPEN $<b>$12,480</b></span><span class="kpi">TIRE ALERTS<b>4</b></span><span class="kpi">PM DUE<b>5</b></span><span class="kpi">DOT O/O<b>13</b></span></div><div class="h-row" style="margin-top:9px"><div></div><button class="btn">+ Roadside WO</button></div>
+<div class="toolbar"><input class="inp" style="flex:1;min-width:160px" placeholder="Search…"><select class="sel"><option>Status: All</option><option>Active</option><option>Resolved</option></select><button class="ico" title="Columns">▦</button><button class="ico" title="Views / gear">⚙</button><button class="ico" title="Export">⤓</button></div>
+<div class="tablewrap"><table><thead><tr><th>WO #<span class=rz></span></th><th>UNIT<span class=rz></span></th><th>DRIVER<span class=rz></span></th><th>LOCATION<span class=rz></span></th><th>PROVIDER<span class=rz></span></th><th>CALLOUT</th><th>ETA / RESPONSE</th><th>STATUS</th><th>COST</th></tr></thead><tbody>
+<tr onclick="location.href='https://app.ih35dispatch.com/maintenance/work-orders/x8'"><td><a class=lk href="https://app.ih35dispatch.com/maintenance/work-orders/x8">WO-1044</a></td><td><a class=lk href="https://app.ih35dispatch.com/fleet/u09">T151</a></td><td><a class=lk href="https://app.ih35dispatch.com/drivers/d4">J. Cantú</a></td><td class="t-red">I-35 MM 29</td><td><a class=lk href="https://app.ih35dispatch.com/vendors/v1">Love's Road Service</a></td><td>40m ago</td><td>ETA 35 min</td><td><span class="pill pill-red">Active</span></td><td>—</td></tr>
+</tbody></table><div class="pgbar"><span>1–1 of 1</span><span class="pg"><span>‹ Prev</span><span class="cur">1</span><span>Next ›</span><span class="jump">Jump to</span></span></div></div></div></body></html>
