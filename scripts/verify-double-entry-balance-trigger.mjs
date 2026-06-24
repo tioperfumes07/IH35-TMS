@@ -180,7 +180,8 @@ try {
       const p = path.join(dir, name);
       const st = fs.statSync(p);
       if (st.isDirectory()) walkTs(p);
-      else if (name.endsWith(".ts") && !name.endsWith(".test.ts")) {
+      else if (name.endsWith(".ts") && !name.endsWith(".test.ts") && !name.endsWith(".deprecated.ts")) {
+        // .deprecated.ts = archived/unmounted code (ARCHIVE-never-DELETE); the guard targets LIVE writers only.
         if (/INSERT\s+INTO\s+accounting\.journal_entry_lines\b/i.test(fs.readFileSync(p, "utf8"))) {
           insertOffenders.push(p.replace(process.cwd() + "/", ""));
         }

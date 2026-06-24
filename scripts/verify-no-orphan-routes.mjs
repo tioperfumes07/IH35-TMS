@@ -26,6 +26,7 @@ const SRC = "apps/backend/src";
 // mounted. Each MUST have a reason. New orphans NOT in this list fail the guard.
 const ALLOWLIST = new Map([
   // --- Dead code: built then abandoned, no frontend caller (leave unmounted) ---
+  ["registerBankingManualJeRoutes", "ARCHIVED 2026-06-24 (Tier-1 H-1) — dead path, unmounted; original in manual-je.routes.deprecated.ts. Canonical JE = /api/v1/accounting/journal-entries."],
   ["registerAccountingReconciliationRoutes", "dead code — no frontend caller (2026-06 sweep)"],
   ["registerBrokerUpdateRoutes", "dead code — no frontend caller"],
   ["registerDamageContinuityRoutes", "dead code — no frontend caller"],
