@@ -12,6 +12,8 @@ GUARD verified read-only on Neon (no prod writes):
 - **The banking path is DEAD:** `createManualJe` (the `apps/frontend/src/api/banking.ts` client for `POST /api/v1/banking/manual-je`) has **zero callers** (confirmed independently). The live "+ Manual JE" buttons open the **accounting** modal → `POST /api/v1/accounting/journal-entries` → `journal_entry_postings` (the canonical path, which works). **Users are not losing JEs.**
 - Net: this is a **latent landmine** (a forbidden, unread write path wired up but never invoked), **not active money loss.** Severity **MEDIUM**, not HIGH.
 
+**DECISION (2026-06-24): Jorge chose **Option A — ARCHIVE**. Implemented show-first in **#1443** (410-Gone tombstone + @deprecated client + recurrence guard); **#1442** (re-route) is **superseded/closed**. Still HOLD-FOR-JORGE pending GUARD verify + explicit OK.**
+
 **This changes the recommended fix** (see §3, rewritten): because the banking path is dead, the cleanest action is to **ARCHIVE it** (one canonical JE path — QBO/NetSuite standard) rather than keep a second writer alive by re-routing. Both options are presented; **GUARD + I recommend ARCHIVE.** The re-route option is already built as #1442 (held) if Jorge prefers to keep the route live.
 
 ---
