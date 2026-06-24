@@ -18,7 +18,7 @@ import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
 import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
 
 // ---- render-v5 presentational helpers (match docs/approved-screens/maintenance-create-wo-render-v5.html) ----
-const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-[12.5px] text-[#1f2937] outline-none focus:border-[#2563eb]";
+const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-[12.5px] text-[#1f2937] outline-none focus:border-[#1f2a44]";
 
 function SectionCard({ badge, title, right, testid, children }: { badge: string; title: string; right?: string; testid?: string; children: ReactNode }) {
   return (
@@ -76,7 +76,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
       <div className="flex items-center gap-2 bg-[#0f1a30] px-2.5 py-1.5 text-white">
         <span className="text-[10px] font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
         <span className="ml-auto text-[10px] text-[#aab6cd]">tires · batteries · lamps · mirrors — where it sits + serial</span>
-        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded bg-[#2563eb] px-2 py-0.5 text-[10px] font-semibold text-white">+ Add part</button>
+        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded bg-[#1f2a44] px-2 py-0.5 text-[10px] font-semibold text-white">+ Add part</button>
       </div>
       {parts.length === 0 ? (
         <div className="px-3 py-3 text-[11px] text-[#94a3b8]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
@@ -104,7 +104,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                   <div className="flex flex-wrap gap-1">
                     {cat.positions.map((pos) => (
                       <button type="button" key={pos} onClick={() => onChange(i, { position_code: pos })}
-                        className={`rounded border px-2 py-0.5 text-[10px] font-bold ${sp.position_code === pos ? "border-[#2563eb] bg-[#2563eb] text-white" : "border-[#94a3b8] bg-white text-[#475569]"}`}>{pos}</button>
+                        className={`rounded border px-2 py-0.5 text-[10px] font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#94a3b8] bg-white text-[#475569]"}`}>{pos}</button>
                     ))}
                   </div>
                 </div>
@@ -675,7 +675,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               {paymentTiming === "paid_same_day" ? (
                 <>
                   <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} />
-                  <div className="mt-1.5 rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2 py-1.5 text-[10.5px] text-[#1e40af]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
+                  <div className="mt-1.5 rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-1.5 text-[10.5px] text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
                 </>
               ) : null}
               {paymentTiming === "vendor_invoice" ? (
