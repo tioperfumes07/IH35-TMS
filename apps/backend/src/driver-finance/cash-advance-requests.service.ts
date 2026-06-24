@@ -29,6 +29,9 @@ export const driverCreateCashAdvanceRequestSchema = z.object({
   reason: z.string().trim().min(10).max(4000),
   proposed_recovery_per_settlement_cents: z.number().int().positive().optional(),
   submitted_via: z.enum(["pwa", "office", "phone"]).default("pwa"),
+  // [HOLD-FOR-JORGE — TIER 1] Originating load when booked at load creation (office). Driver-initiated
+  // (pwa/phone) advances omit it. Nullable FK to mdata.loads — entity-scoped (same operating company as the request).
+  load_id: z.string().uuid().nullable().optional(),
 });
 
 export const officeApproveBodySchema = z.object({
@@ -189,8 +192,9 @@ export async function createCashAdvanceRequest(
         reason,
         proposed_recovery_per_settlement_cents,
         status,
-        is_above_policy
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)
+        is_above_policy,
+        load_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
       RETURNING *
     `,
     [
@@ -202,6 +206,7 @@ export async function createCashAdvanceRequest(
       input.reason,
       input.proposed_recovery_per_settlement_cents ?? null,
       isAbovePolicy,
+      input.load_id ?? null,
     ]
   );
   const row = ins.rows[0]!;

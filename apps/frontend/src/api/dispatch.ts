@@ -123,6 +123,10 @@ export type DispatchBookLoadPayload = {
   piece_count?: number;
   commodity?: string;
   weight_lbs?: number;
+  // [HOLD-FOR-JORGE — TIER 1] Booked advances (cents). Cash → pending owner-approval cash-advance request;
+  // fuel → truck cost, deferred (never a driver deduction). Previously collected in the form but dropped here.
+  cash_advance_cents?: number;
+  fuel_advance_cents?: number;
   hazmat?: boolean;
   driver_instructions_text?: string;
   notes?: string;

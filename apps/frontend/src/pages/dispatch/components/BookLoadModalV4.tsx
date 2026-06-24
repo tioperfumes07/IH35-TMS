@@ -509,6 +509,10 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         piece_count: numOrUndef(values.pieces),
         commodity: values.commodity || undefined,
         weight_lbs: values.weight_lbs || undefined,
+        // [HOLD-FOR-JORGE — TIER 1] send booked advances so the backend can create the pending cash-advance
+        // request (cash) / defer (fuel). Previously collected in the form but never sent.
+        cash_advance_cents: values.cash_advance_cents || undefined,
+        fuel_advance_cents: values.fuel_advance_cents || undefined,
         hazmat: values.hazmat,
         driver_instructions_text: values.driver_instructions_text || undefined,
         notes: values.notes || undefined,
