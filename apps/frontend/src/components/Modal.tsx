@@ -25,6 +25,8 @@ type ModalProps = {
   sizePreset?: ModalSizePreset;
   /** Enable bottom-right resize grip (requires `modalKind` + `sizePreset`). */
   resizable?: boolean;
+  /** Opt-in wide layout (~1140px) for two-column form modals (e.g. Create Work Order render-v5). */
+  wide?: boolean;
 };
 
 export function Modal({
@@ -38,6 +40,7 @@ export function Modal({
   modalKind,
   sizePreset,
   resizable = false,
+  wide = false,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -149,7 +152,11 @@ export function Modal({
         <div
           ref={panelRef}
           className={`relative flex flex-col rounded-lg bg-white shadow-xl ${
-            box ? "overflow-hidden" : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
+            box
+              ? "overflow-hidden"
+              : wide
+                ? "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(72rem,calc(100vw-2rem))]"
+                : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
           }`}
           style={panelStyle}
           onMouseDown={(event) => event.stopPropagation()}
