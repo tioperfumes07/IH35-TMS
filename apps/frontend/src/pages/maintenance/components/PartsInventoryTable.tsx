@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type PartsInventoryRow } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
@@ -98,7 +99,8 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
             <input className="h-8 rounded border border-gray-300 px-2 text-sm" placeholder="Invoice #" value={form.vendor_invoice_number} onChange={(e) => setForm((v) => ({ ...v, vendor_invoice_number: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-sm" type="number" min={0} step="0.01" value={form.purchase_amount} onChange={(e) => setForm((v) => ({ ...v, purchase_amount: Number(e.target.value || 0) }))} />
+            {/* M-1: dollars-mode QBO money entry; backend purchase_amount = numeric(10,2) DOLLARS, byte-for-byte. */}
+            <MoneyInput valueDollars={form.purchase_amount} onChangeDollars={(d) => setForm((v) => ({ ...v, purchase_amount: d ?? 0 }))} ariaLabel="Purchase amount" />
             <input className="h-8 rounded border border-gray-300 px-2 text-sm" placeholder="Location" value={form.location} onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))} />
           </div>
           <Button onClick={() => purchaseMutation.mutate()} disabled={!form.part_description.trim() || purchaseMutation.isPending}>

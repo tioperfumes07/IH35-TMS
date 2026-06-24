@@ -12,6 +12,7 @@ import {
 } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -20,7 +21,7 @@ type PartDraft = {
   part_number: string;
   name: string;
   vendor_default: string;
-  unit_cost: string;
+  unit_cost: number | null; // M-1: dollar number (backend /maintenance/parts unit_cost = numeric(10,2) DOLLARS)
   qty_on_hand: string;
   reorder_threshold: string;
   location: string;
@@ -30,7 +31,7 @@ const EMPTY_DRAFT: PartDraft = {
   part_number: "",
   name: "",
   vendor_default: "",
-  unit_cost: "",
+  unit_cost: null,
   qty_on_hand: "0",
   reorder_threshold: "0",
   location: "",
@@ -71,7 +72,7 @@ export function PartsMasterDataPage() {
         part_number: draft.part_number,
         name: draft.name,
         vendor_default: draft.vendor_default || undefined,
-        unit_cost: draft.unit_cost ? Number(draft.unit_cost) : undefined,
+        unit_cost: draft.unit_cost ?? undefined, // dollars (byte-for-byte: was Number(string))
         qty_on_hand: Number(draft.qty_on_hand || "0"),
         reorder_threshold: Number(draft.reorder_threshold || "0"),
         location: draft.location || undefined,
@@ -228,7 +229,7 @@ export function PartsMasterDataPage() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Vendor default" value={draft.vendor_default} onChange={(e) => setDraft((p) => ({ ...p, vendor_default: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Unit cost" type="number" step="0.01" value={draft.unit_cost} onChange={(e) => setDraft((p) => ({ ...p, unit_cost: e.target.value }))} />
+            <MoneyInput valueDollars={draft.unit_cost} onChangeDollars={(d) => setDraft((p) => ({ ...p, unit_cost: d }))} ariaLabel="Unit cost" placeholder="Unit cost" />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Qty on hand" type="number" value={draft.qty_on_hand} onChange={(e) => setDraft((p) => ({ ...p, qty_on_hand: e.target.value }))} />
