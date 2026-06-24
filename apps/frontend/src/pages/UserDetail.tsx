@@ -15,6 +15,7 @@ import {
 import { listCustomers, listDrivers } from "../api/mdata";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
+import { MoneyInput } from "../components/forms/MoneyInput";
 import { DataPanel } from "../components/layout/DataPanel";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
@@ -518,14 +519,13 @@ export function UserDetailPage() {
             </label>
             {enableCost ? (
               <div className="mt-2 space-y-2">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={costAmount}
-                  onChange={(event) => setCostAmount(event.target.value)}
+                {/* M-1: dollars-mode QBO money entry; cost_amount = numeric(12,2) DOLLARS, submit Number() byte-for-byte. */}
+                <MoneyInput
+                  valueDollars={costAmount ? Number(costAmount) : null}
+                  onChangeDollars={(d) => setCostAmount(d == null ? "" : String(d))}
+                  ariaLabel="Cost amount"
                   placeholder="Cost amount"
-                  className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                  className="w-full"
                 />
                 <Combobox
                   options={CURRENCY_OPTIONS}
@@ -541,14 +541,12 @@ export function UserDetailPage() {
                   placeholder="Select recovery status"
                 />
                 {costRecoveryStatus === "partial" || costRecoveryStatus === "recovered" ? (
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={costRecoveredAmount}
-                    onChange={(event) => setCostRecoveredAmount(event.target.value)}
+                  <MoneyInput
+                    valueDollars={costRecoveredAmount ? Number(costRecoveredAmount) : null}
+                    onChangeDollars={(d) => setCostRecoveredAmount(d == null ? "" : String(d))}
+                    ariaLabel="Recovered amount"
                     placeholder="Recovered amount"
-                    className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                    className="w-full"
                   />
                 ) : null}
               </div>
@@ -633,14 +631,12 @@ export function UserDetailPage() {
             allowClear
             placeholder="No recovery status"
           />
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={editRecoveredAmount}
-            onChange={(event) => setEditRecoveredAmount(event.target.value)}
-            className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+          <MoneyInput
+            valueDollars={editRecoveredAmount ? Number(editRecoveredAmount) : null}
+            onChangeDollars={(d) => setEditRecoveredAmount(d == null ? "" : String(d))}
+            ariaLabel="Recovered amount"
             placeholder="Recovered amount"
+            className="w-full"
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setEditEventId(null)}>
