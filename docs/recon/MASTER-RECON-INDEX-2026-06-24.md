@@ -21,8 +21,8 @@ Source docs live alongside this file in `docs/recon/`. Status legend:
 | 2 | CI guard audit (nominal vs real) | `guard-audit-2026-06-24.md` | ~640/695 guards NOMINAL (source-string); the **real** correction: `locked-guards` IS a live-required check |
 | 3 | Data-source correctness | `data-source-map-2026-06-24.md` | 70 screens, **1 WRONG-SOURCE** (Damage Reports), **0 entity leaks** in UI reads |
 | 4 | Stub inventory (façade vs real) | `stub-inventory-2026-06-24.md` | 14 silent stubs (3 HIGH, all financial); catalogs **54/61 real** ("34/65" was stale) |
-| 5 | Money tie-out (Tier-1) | `money-tie-out-2026-06-24.md` | **PENDING** (read-only, in flight) |
-| 6 | Entity-independence (Tier-1) | `entity-independence-2026-06-24.md` | **PENDING** (read-only, in flight) |
+| 5 | Money tie-out (Tier-1) | `money-tie-out-2026-06-24.md` | Posting engine reference-grade; **1 HIGH** manual-JE float+orphan; statements read live ledger (no QBO-mirror money fake) |
+| 6 | Entity-independence (Tier-1) | `entity-independence-2026-06-24.md` | ~380 entity tables RLS-scoped, **0 leaks**; 1 global (catalogs.accounts, tracked); **24 `tenant_id` tables invisible to entity guards** |
 | 7 | Route-mount map | `route-mount-map-2026-06-24.md` | live WO-create = `CreateWorkOrderModal`; dead twin `WorkOrderCreateModal` (trap); ~85 dead components |
 
 ---
@@ -61,6 +61,18 @@ Source docs live alongside this file in `docs/recon/`. Status legend:
 | AP Aging bucket-filter not built | accounting / financial-adjacent | HELD |
 | Load Book v6 reefer 3-field previews vs shipped 1-field | resolved: 1-field canonical (#1437 contract fix) | RESOLVED |
 
+### Tier-1 read-only findings (Pass 5 money / Pass 6 entity) — DOCUMENTED + STOPPED, Jorge decides
+| Finding | Pass | Why held | Status |
+|---|---|---|---|
+| **Manual JE never moves the books** — `banking/manual-je.routes.ts:60` balances in **float dollars** (no cents, no balance trigger) + writes to `accounting.journal_entry_lines`, an **orphan table** with no migration + no GL reader (TB/BS/P&L read `journal_entry_postings`) | 5 | financial cluster — never self-merge | GATED/HELD (Jorge) |
+| Profitability revenue summed off `mdata.loads`, not GL | 5 | financial-adjacent | HELD |
+| FE paginated `.reduce()` KPIs sum only the current page (under-count) | 5 | non-financial but touches money display — surface first | FLAGGED |
+| WO-header `totalCost` float→toFixed vs per-line cents drift | 5 | caught only at GL-post; minor | FLAGGED (LOW-MED) |
+| `catalogs.accounts.account_number` global UNIQUE COA code | 6 | Path-B decommingle, financial cluster | GATED (tracked) |
+| **24 `tenant_id`-scoped tables invisible to the entity CI guards** (incl. `factoring.*`, `accounting.coa_account/ps_*/pse_*`, `insurance.*`) — they ARE per-entity via RLS but guards key on the literal `operating_company_id` column | 6 | guard-fix audits financial tables — surface first | FLAGGED (Jorge) |
+| Posting engine itself | 5 | reference-grade (cents-integer, `assertBalanced` + DB trigger) | OK |
+| Entity isolation at schema/constraint level | 6 | ~380 tables RLS-scoped, 0 active leaks | OK |
+
 ### Drift / decisions for Jorge (no build)
 | Item | Decision needed |
 |---|---|
@@ -75,4 +87,4 @@ Source docs live alongside this file in `docs/recon/`. Status legend:
 - **Entity-independence:** Pass 3 found 0 cross-entity leaks in UI reads; Pass 6 (pending) verifies at the schema/constraint level (the known `catalogs.accounts` global is the Path-B decommingle item, already tracked).
 - **No faked columns shipped** — every data-less field deferred with a code comment + a guard `DEFERRED` entry (Arriving Soon Prep, Damage Reports Linked-WO, WO priority/close/odometer/engine-hrs).
 
-_Last updated 2026-06-24. Passes 5 + 6 to be appended on landing._
+_Last updated 2026-06-24 — all 7 passes complete. Pass 5/6 are Tier-1 read-only findings: documented + held for Jorge; nothing auto-fixed._
