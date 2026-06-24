@@ -57,6 +57,12 @@ const SCREEN_COMPONENTS = {
     `${FE}/maintenance/components/CreateWOSectionPaymentTiming.tsx`,
     `${FE}/maintenance/components/CreateWOSectionReconcile.tsx`,
     `${FE}/maintenance/components/CreateWOSectionValidation.tsx`,
+    // Parts/labor line fields (Part # / Task, Qty/Hr, Unit/Rate, Total) render via the shared line editor;
+    // the inline "+ Add vendor" mini-create (Street/Zip/Account no./Tax ID/Track 1099?/Default expense
+    // account) renders via QuickCreateEntityModal — both reached from this modal.
+    `apps/frontend/src/components/forms/TwoSectionLineEditor.tsx`,
+    `apps/frontend/src/components/forms/shared/CostBreakdownBox.tsx`,
+    `apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx`,
   ],
   "Maintenance Shell": [
     `${FE}/maintenance/MaintenanceHome.tsx`,
@@ -113,6 +119,10 @@ const ENFORCED = new Set([
   "Accounts Payable",
   "Arriving Soon",
   "Severe Repairs",
+  // Promoted 2026-06-24 (Jorge's call): contract aligned to the approved/live UI labels (Display name /
+  // Street / Part # / Task; Payment method removed — it belongs to CreateExpenseModal). A multi-section
+  // wizard, so it is backed by the full-modal DOM render-test in STRUCTURAL_RENDER_TESTS (CreateWorkOrderModal.test.tsx).
+  "Create/Edit Work Order Wizard",
 ]);
 
 // STRUCTURAL GATE (GUARD upgrade, 2026-06-23): token-in-source proved insufficient — it passed while the
