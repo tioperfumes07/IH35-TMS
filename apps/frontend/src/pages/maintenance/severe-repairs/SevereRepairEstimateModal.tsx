@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Modal } from "../../../components/Modal";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { UploadZone } from "../../../components/UploadZone";
 import { Button } from "../../../components/Button";
 
@@ -21,16 +22,17 @@ export function SevereRepairEstimateModal({ open, operatingCompanyId, entityId, 
       <div className="space-y-3">
         <div className="grid gap-2 md:grid-cols-3">
           <label className="text-xs font-semibold text-slate-600">
-            Labor (cents)
-            <input className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-sm" value={laborCents} onChange={(event) => setLaborCents(event.target.value)} />
+            Labor (USD)
+            {/* M-1: was raw "(cents)"; cents-mode MoneyInput (operator types dollars). */}
+            <MoneyInput valueCents={laborCents ? Number(laborCents) : null} onChangeCents={(c) => setLaborCents(c == null ? "" : String(c))} ariaLabel="Labor (USD)" className="mt-1 w-full" />
           </label>
           <label className="text-xs font-semibold text-slate-600">
-            Parts (cents)
-            <input className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-sm" value={partsCents} onChange={(event) => setPartsCents(event.target.value)} />
+            Parts (USD)
+            <MoneyInput valueCents={partsCents ? Number(partsCents) : null} onChangeCents={(c) => setPartsCents(c == null ? "" : String(c))} ariaLabel="Parts (USD)" className="mt-1 w-full" />
           </label>
           <label className="text-xs font-semibold text-slate-600">
-            Outside services (cents)
-            <input className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-sm" value={outsideCents} onChange={(event) => setOutsideCents(event.target.value)} />
+            Outside services (USD)
+            <MoneyInput valueCents={outsideCents ? Number(outsideCents) : null} onChangeCents={(c) => setOutsideCents(c == null ? "" : String(c))} ariaLabel="Outside services (USD)" className="mt-1 w-full" />
           </label>
         </div>
         <label className="block text-xs font-semibold text-slate-600">
