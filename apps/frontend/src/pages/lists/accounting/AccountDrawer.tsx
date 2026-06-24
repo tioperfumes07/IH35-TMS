@@ -9,6 +9,7 @@ import {
 } from "../../../api/catalog-accounts";
 import { fetchAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../../api/coa-list";
 import { Button } from "../../../components/Button";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 type Mode = "create" | "edit";
 
@@ -344,14 +345,13 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
             {/* Opening Balance */}
             <div className="grid grid-cols-2 gap-3">
               <FieldLabel label="Opening Balance ($)">
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.opening_balance_cents}
+                {/* M-1: dollars-mode QBO money entry; bridged so centsFromDollarString (×100) is byte-for-byte. */}
+                <MoneyInput
+                  valueDollars={form.opening_balance_cents ? Number(form.opening_balance_cents) : null}
+                  onChangeDollars={(d) => setField("opening_balance_cents", d == null ? "" : String(d))}
                   disabled={readOnly}
-                  onChange={(e) => setField("opening_balance_cents", e.target.value)}
-                  placeholder="0.00"
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                  ariaLabel="Opening Balance ($)"
+                  className="mt-1 w-full"
                 />
                 <FieldError msg={errors.opening_balance_cents} />
               </FieldLabel>

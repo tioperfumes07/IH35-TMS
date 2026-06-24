@@ -12,6 +12,7 @@ import {
   type BankingTile,
 } from "../../api/banking";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PlaidLinkButton } from "../../components/banking/PlaidLinkButton";
 import { PlaidLink } from "../../components/banking/PlaidLink";
 import { PlaidSyncStatusPanel } from "../../components/banking/PlaidSyncStatusPanel";
@@ -456,13 +457,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 onChange={(next) => setReconPeriodEnd(next)}
                 className="rounded border border-gray-300 px-2 py-1 text-sm"
               />
-              <input
-                type="number"
-                step="0.01"
-                value={reconStatementBalance}
-                onChange={(event) => setReconStatementBalance(event.target.value)}
+              {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
+              <MoneyInput
+                valueDollars={reconStatementBalance ? Number(reconStatementBalance) : null}
+                onChangeDollars={(d) => setReconStatementBalance(d == null ? "" : String(d))}
+                ariaLabel="Statement balance (USD)"
                 placeholder="Statement balance (USD)"
-                className="rounded border border-gray-300 px-2 py-1 text-sm"
+                className="text-sm"
               />
             </div>
             <div className="mt-4 flex justify-end gap-2">
