@@ -1,11 +1,38 @@
 {
  "date": "2026-06-24",
  "counts": {
-  "PENDING": 10,
-  "PENDING (GATED)": 17,
-  "DONE": 317
+  "PENDING": 62,
+  "PENDING (GATED)": 24,
+  "DONE": 370
  },
  "blocks": [
+  {
+   "id": "BLOCK-07-of-29-TIER2-PAGINATION-AUDIT",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-07-of-29-TIER2-PAGINATION-AUDIT"
+  },
+  {
+   "id": "BLOCK-12-of-29-TIER2-DESTRUCT-PREFLIGHT",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-12-of-29-TIER2-DESTRUCT-PREFLIGHT"
+  },
+  {
+   "id": "BLOCK-18-of-29-TIER3-PII-ENCRYPTION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "PENDING",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-18-of-29-TIER3-PII-ENCRYPTION"
+  },
   {
    "id": "CASH-FLOW-MODULE",
    "source": ".block-ready",
@@ -32,6 +59,447 @@
    "status": "PENDING",
    "evidence": "no merged PR / no files on main",
    "name": ""
+  },
+  {
+   "id": "gap-14-validation-pre-dispatch",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-14-validation-pre-dispatch"
+  },
+  {
+   "id": "gap-20-recurring-bills",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-20-recurring-bills"
+  },
+  {
+   "id": "gap-23-samsara-cache-tiers",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-23-samsara-cache-tiers"
+  },
+  {
+   "id": "gap-25-active-driver-set",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-25-active-driver-set"
+  },
+  {
+   "id": "gap-26-border-crossings",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-26-border-crossings"
+  },
+  {
+   "id": "gap-27-geofence-reconciliation",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-27-geofence-reconciliation"
+  },
+  {
+   "id": "gap-28-layover-detection",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-28-layover-detection"
+  },
+  {
+   "id": "gap-29-booking-gap-analytics",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-29-booking-gap-analytics"
+  },
+  {
+   "id": "gap-30-late-arrival-analytics",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-30-late-arrival-analytics"
+  },
+  {
+   "id": "gap-31-multi-stop-extra-rates",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-31-multi-stop-extra-rates"
+  },
+  {
+   "id": "gap-32-customer-free-time-detention",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-32-customer-free-time-detention"
+  },
+  {
+   "id": "gap-34-driver-pwa-dispatch",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-34-driver-pwa-dispatch"
+  },
+  {
+   "id": "gap-36-driver-pwa-incident-full",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-36-driver-pwa-incident-full"
+  },
+  {
+   "id": "gap-39-geofence-state-machine",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-39-geofence-state-machine"
+  },
+  {
+   "id": "gap-40-damage-photo-exif-chain",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-40-damage-photo-exif-chain"
+  },
+  {
+   "id": "gap-41-reports-hub-9-categories",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-41-reports-hub-9-categories"
+  },
+  {
+   "id": "gap-42-ifta-quarterly-preparer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-42-ifta-quarterly-preparer"
+  },
+  {
+   "id": "gap-43-scheduled-reports",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-43-scheduled-reports"
+  },
+  {
+   "id": "gap-44-form-425c-exhibits",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-44-form-425c-exhibits"
+  },
+  {
+   "id": "gap-45-cash-flow-cpm-routes",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-45-cash-flow-cpm-routes"
+  },
+  {
+   "id": "gap-46-anomaly-detection",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-46-anomaly-detection"
+  },
+  {
+   "id": "gap-47-dispatch-auth-gates",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-47-dispatch-auth-gates"
+  },
+  {
+   "id": "gap-48-driver-operations-depth",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-48-driver-operations-depth"
+  },
+  {
+   "id": "gap-49-dvir-severity-tagging",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-49-dvir-severity-tagging"
+  },
+  {
+   "id": "gap-50-ai-photo-comparison",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-50-ai-photo-comparison"
+  },
+  {
+   "id": "gap-52-driver-vendor-mapping-integrity",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-52-driver-vendor-mapping-integrity"
+  },
+  {
+   "id": "gap-53-bank-multi-company-drift",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-53-bank-multi-company-drift"
+  },
+  {
+   "id": "gap-55-cap-1-live-gps",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-55-cap-1-live-gps"
+  },
+  {
+   "id": "gap-56-cap-4-auto-status-switch",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-56-cap-4-auto-status-switch"
+  },
+  {
+   "id": "gap-57-cap-5-tri-signal",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-57-cap-5-tri-signal"
+  },
+  {
+   "id": "gap-58-cap-8-engine-fault-auto-wo",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-58-cap-8-engine-fault-auto-wo"
+  },
+  {
+   "id": "gap-59-cap-9-vehicle-driver-pairing",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-59-cap-9-vehicle-driver-pairing"
+  },
+  {
+   "id": "gap-60-cap-10-driver-scoring",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-60-cap-10-driver-scoring"
+  },
+  {
+   "id": "gap-61-cap-11-fuel-fraud-alerts",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-61-cap-11-fuel-fraud-alerts"
+  },
+  {
+   "id": "gap-63-cap-13-brake-wear",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-63-cap-13-brake-wear"
+  },
+  {
+   "id": "gap-64-cap-14-cargo-sensors",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-64-cap-14-cargo-sensors"
+  },
+  {
+   "id": "gap-66-dispatcher-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-66-dispatcher-home-view"
+  },
+  {
+   "id": "gap-7-severe-repair-oos-estimate",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-7-severe-repair-oos-estimate"
+  },
+  {
+   "id": "gap-70-edi-foundation",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-70-edi-foundation"
+  },
+  {
+   "id": "gap-71-driver-retention-model",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-71-driver-retention-model"
+  },
+  {
+   "id": "gap-72-customer-relationship-score",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-72-customer-relationship-score"
+  },
+  {
+   "id": "gap-76-deadhead-optimizer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-76-deadhead-optimizer"
+  },
+  {
+   "id": "gap-8-assignments-quicksave",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-8-assignments-quicksave"
+  },
+  {
+   "id": "gap-82-cert-expiry-tracking",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-82-cert-expiry-tracking"
+  },
+  {
+   "id": "gap-83-eld-audit-trail",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-83-eld-audit-trail"
+  },
+  {
+   "id": "gap-85-permits-toll-tags",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-85-permits-toll-tags"
+  },
+  {
+   "id": "gap-86-insurance-module",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-86-insurance-module"
+  },
+  {
+   "id": "gap-89-cmd-k-quick-switcher",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-89-cmd-k-quick-switcher"
+  },
+  {
+   "id": "gap-92-feature-flags",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "gap spec (verify) — forward Phase 4-7 work",
+   "name": "gap-92-feature-flags"
   },
   {
    "id": "HOS-BUG-DRIVERASSIGN",
@@ -106,6 +574,33 @@
    "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)"
   },
   {
+   "id": "BLOCK-01-of-29-TIER1.5-DEPRECIATION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "1.5",
+   "status": "PENDING (GATED)",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-01-of-29-TIER1.5-DEPRECIATION"
+  },
+  {
+   "id": "BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "1.5",
+   "status": "PENDING (GATED)",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW"
+  },
+  {
+   "id": "BLOCK-03-of-29-TIER1.5-IFTA",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "1.5",
+   "status": "PENDING (GATED)",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-03-of-29-TIER1.5-IFTA"
+  },
+  {
    "id": "BLOCK-10-driver-inactivity",
    "source": "program",
    "fin": false,
@@ -113,6 +608,42 @@
    "status": "PENDING (GATED)",
    "evidence": "BUILD (ingest+display) / GATED (mass-flip). Tier 1 on the mass status flip — STOPS for Jor",
    "name": "DRIVER LIFECYCLE / TASK 10 — Driver inactivity: 96h alert + 30-day DOT + vacation override"
+  },
+  {
+   "id": "BLOCK-17-of-29-TIER2.5-W2-1099",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2.5",
+   "status": "PENDING (GATED)",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-17-of-29-TIER2.5-W2-1099"
+  },
+  {
+   "id": "BLOCK-19-of-29-TIER3-AUDIT-HASH",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "PENDING (GATED)",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-19-of-29-TIER3-AUDIT-HASH"
+  },
+  {
+   "id": "BLOCK-24-of-29-TIER3.5-1099-ANNUAL",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3.5",
+   "status": "PENDING (GATED)",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-24-of-29-TIER3.5-1099-ANNUAL"
+  },
+  {
+   "id": "BLOCK-25-of-29-TIER3.5-CONSOLIDATION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3.5",
+   "status": "PENDING (GATED)",
+   "evidence": "deep-verified 2026-06-24 (feature grep)",
+   "name": "BLOCK-25-of-29-TIER3.5-CONSOLIDATION"
   },
   {
    "id": "CHAIN-02-account-register-params",
@@ -493,6 +1024,24 @@
    "name": ""
   },
   {
+   "id": "BLOCK-04-of-29-TIER2-RATE-LIMIT",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #1189 (title match)",
+   "name": "BLOCK-04-of-29-TIER2-RATE-LIMIT"
+  },
+  {
+   "id": "BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #1192 (title match)",
+   "name": "BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS"
+  },
+  {
    "id": "BLOCK-05-TIER2-CIRCUIT-BREAKERS",
    "source": ".block-ready",
    "fin": false,
@@ -500,6 +1049,24 @@
    "status": "DONE",
    "evidence": "PR #800 merged 2026-06-08",
    "name": "Circuit breakers on external dependencies (QBO, Samsara, Plaid, OpenAI, etc.)"
+  },
+  {
+   "id": "BLOCK-06-of-29-TIER2-OUTBOX-DLQ",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #1196 (title match)",
+   "name": "BLOCK-06-of-29-TIER2-OUTBOX-DLQ"
+  },
+  {
+   "id": "BLOCK-08-of-29-TIER2-LOAD-TEST",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #796 (title match)",
+   "name": "BLOCK-08-of-29-TIER2-LOAD-TEST"
   },
   {
    "id": "BLOCK-08-TIER2-LOAD-TEST",
@@ -511,6 +1078,15 @@
    "name": "k6 load-test baseline with nightly CI"
   },
   {
+   "id": "BLOCK-09-of-29-TIER2-E2E-PATHS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #802 (title match)",
+   "name": "BLOCK-09-of-29-TIER2-E2E-PATHS"
+  },
+  {
    "id": "BLOCK-09-TIER2-E2E-PATHS",
    "source": ".block-ready",
    "fin": false,
@@ -518,6 +1094,24 @@
    "status": "DONE",
    "evidence": "PR #802 merged 2026-06-09",
    "name": "Playwright E2E tests for 10 critical user paths"
+  },
+  {
+   "id": "block-10-account-balances",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-10-account-balances"
+  },
+  {
+   "id": "BLOCK-10-of-29-TIER2-RLS-TEST-GATE",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #1224 (title match)",
+   "name": "BLOCK-10-of-29-TIER2-RLS-TEST-GATE"
   },
   {
    "id": "BLOCK-10-TIER2-RLS-TEST-GATE",
@@ -529,6 +1123,24 @@
    "name": "Cross-tenant RLS gate verification script with fixture generation"
   },
   {
+   "id": "BLOCK-11-of-29-TIER2-AUDIT-COVERAGE",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #814 (title match)",
+   "name": "BLOCK-11-of-29-TIER2-AUDIT-COVERAGE"
+  },
+  {
+   "id": "BLOCK-13-of-29-TIER2-TUNING-CATALOG",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #794 (title match)",
+   "name": "BLOCK-13-of-29-TIER2-TUNING-CATALOG"
+  },
+  {
    "id": "BLOCK-13-TIER2-TUNING-CATALOG",
    "source": ".block-ready",
    "fin": false,
@@ -538,6 +1150,24 @@
    "name": "Operational tuning catalog — single doc for all tunable parameters with CI guard"
   },
   {
+   "id": "BLOCK-14-of-29-TIER2.5-MEXICO-OPS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2.5",
+   "status": "DONE",
+   "evidence": "PR #804 (title match)",
+   "name": "BLOCK-14-of-29-TIER2.5-MEXICO-OPS"
+  },
+  {
+   "id": "BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2.5",
+   "status": "DONE",
+   "evidence": "PR #805 (title match)",
+   "name": "BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP"
+  },
+  {
    "id": "BLOCK-16-COMPLIANCE-DASHBOARD",
    "source": ".block-ready",
    "fin": false,
@@ -545,6 +1175,285 @@
    "status": "DONE",
    "evidence": "PR #701 merged 2026-06-07",
    "name": "COMPLIANCE-DASHBOARD"
+  },
+  {
+   "id": "BLOCK-16-of-29-TIER2.5-FUEL-CARD",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2.5",
+   "status": "DONE",
+   "evidence": "PR #701 (title match)",
+   "name": "BLOCK-16-of-29-TIER2.5-FUEL-CARD"
+  },
+  {
+   "id": "block-20-cash-basis",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-20-cash-basis"
+  },
+  {
+   "id": "block-20-frontend-selector",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-20-frontend-selector"
+  },
+  {
+   "id": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "PR #806 (title match)",
+   "name": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION"
+  },
+  {
+   "id": "block-20-period-close-lock",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-20-period-close-lock"
+  },
+  {
+   "id": "block-21-expense-category-map",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-21-expense-category-map"
+  },
+  {
+   "id": "BLOCK-21-of-29-TIER3-DR-DRILL",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "PR #807 (title match)",
+   "name": "BLOCK-21-of-29-TIER3-DR-DRILL"
+  },
+  {
+   "id": "block-22-driver-settlement-engine",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-22-driver-settlement-engine"
+  },
+  {
+   "id": "BLOCK-22-of-29-TIER3-OPS-RUNBOOKS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "PR #241 (title match)",
+   "name": "BLOCK-22-of-29-TIER3-OPS-RUNBOOKS"
+  },
+  {
+   "id": "block-23-escrow-posting-flow",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-23-escrow-posting-flow"
+  },
+  {
+   "id": "BLOCK-23-of-29-TIER3-DEGRADATION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "PR #808 (title match)",
+   "name": "BLOCK-23-of-29-TIER3-DEGRADATION"
+  },
+  {
+   "id": "block-24-factoring-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-24-factoring-posting"
+  },
+  {
+   "id": "block-25-factoring-fees-reserves",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-25-factoring-fees-reserves"
+  },
+  {
+   "id": "block-26-factoring-reconciliation",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-26-factoring-reconciliation"
+  },
+  {
+   "id": "BLOCK-26-of-29-TIER4-PARTITION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "DONE",
+   "evidence": "PR #809 (title match)",
+   "name": "BLOCK-26-of-29-TIER4-PARTITION"
+  },
+  {
+   "id": "block-27-fuel-expense-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-27-fuel-expense-posting"
+  },
+  {
+   "id": "BLOCK-27-of-29-TIER4-CANARY",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "DONE",
+   "evidence": "PR #810 (title match)",
+   "name": "BLOCK-27-of-29-TIER4-CANARY"
+  },
+  {
+   "id": "block-28-maintenance-ap-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-28-maintenance-ap-posting"
+  },
+  {
+   "id": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "DONE",
+   "evidence": "PR #811 (title match)",
+   "name": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN"
+  },
+  {
+   "id": "block-29-bank-reconciliation-engine",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-29-bank-reconciliation-engine"
+  },
+  {
+   "id": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "DONE",
+   "evidence": "PR #813 (title match)",
+   "name": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS"
+  },
+  {
+   "id": "block-30-bank-reconciliation-ui",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-30-bank-reconciliation-ui"
+  },
+  {
+   "id": "block-31-sales-tax-handling",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-31-sales-tax-handling"
+  },
+  {
+   "id": "block-33-invoice-line-revenue-mapping",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-33-invoice-line-revenue-mapping"
+  },
+  {
+   "id": "block-34-payment-application",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-34-payment-application"
+  },
+  {
+   "id": "block-35-chart-of-accounts-roles",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-35-chart-of-accounts-roles"
+  },
+  {
+   "id": "block-36-multi-entity-accounting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-36-multi-entity-accounting"
+  },
+  {
+   "id": "block-37-qbo-sync-repair-pipeline",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-37-qbo-sync-repair-pipeline"
+  },
+  {
+   "id": "block-40-accounting-audit-trail",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-40-accounting-audit-trail"
+  },
+  {
+   "id": "block-41-posting-lineage-ui",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-41-posting-lineage-ui"
+  },
+  {
+   "id": "block-43-live-db-schema-verification",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-43-live-db-schema-verification"
   },
   {
    "id": "BLOCK-C-DEDUCTION-CAP",
@@ -563,6 +1472,24 @@
    "status": "DONE",
    "evidence": "PR #698 merged 2026-06-07",
    "name": "Rename Block C migration to 12-digit runner-compatible filename so db:migrate applies min_net_settlement columns in prod"
+  },
+  {
+   "id": "block-cf-cash-forecast",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-cf-cash-forecast"
+  },
+  {
+   "id": "block-cmc-month-close-wizard",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-cmc-month-close-wizard"
   },
   {
    "id": "BLOCK-D-INSURANCE-RENEWAL",
@@ -626,6 +1553,15 @@
    "status": "DONE",
    "evidence": "PR #1063 (title match) merged 2026-06-16",
    "name": ""
+  },
+  {
+   "id": "block-ppc-period-comparison",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "financial posting engine — verified built 2026-06-24",
+   "name": "block-ppc-period-comparison"
   },
   {
    "id": "BLOCK5-INSURANCE-FORWARD-FIX",
@@ -2185,6 +3121,15 @@
    "name": "G14 Equipment dual-confirm transfer (WF-047)"
   },
   {
+   "id": "gap-37-equipment-dual-confirm-transfer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "spec marks shipped/merged",
+   "name": "gap-37-equipment-dual-confirm-transfer"
+  },
+  {
    "id": "GAP-38-DAMAGE-INSURANCE-CONTINUITY",
    "source": ".block-ready",
    "fin": false,
@@ -2338,6 +3283,15 @@
    "name": "WF-051 250-foot arrival prompt correction"
   },
   {
+   "id": "gap-54-wf-051-250-foot-correction",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "spec marks shipped/merged",
+   "name": "gap-54-wf-051-250-foot-correction"
+  },
+  {
    "id": "GAP-55",
    "source": ".block-ready",
    "fin": false,
@@ -2428,6 +3382,15 @@
    "name": "CAP-14 cargo temp/humidity sensors"
   },
   {
+   "id": "gap-65-owner-todays-attention",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "spec marks shipped/merged",
+   "name": "gap-65-owner-todays-attention"
+  },
+  {
    "id": "GAP-66-DISPATCHER-HOME",
    "source": ".block-ready",
    "fin": false,
@@ -2446,6 +3409,15 @@
    "name": "Accounting Home role-specific view (read-only display)"
   },
   {
+   "id": "gap-67-accounting-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "spec marks shipped/merged",
+   "name": "gap-67-accounting-home-view"
+  },
+  {
    "id": "GAP-68-SAFETY-OFFICER-HOME",
    "source": ".block-ready",
    "fin": false,
@@ -2455,6 +3427,15 @@
    "name": "Safety Officer home role-specific view"
   },
   {
+   "id": "gap-68-safety-officer-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "spec marks shipped/merged",
+   "name": "gap-68-safety-officer-home-view"
+  },
+  {
    "id": "GAP-69-DRIVER-MANAGER-HOME",
    "source": ".block-ready",
    "fin": false,
@@ -2462,6 +3443,15 @@
    "status": "DONE",
    "evidence": "PR #654 merged 2026-06-07",
    "name": "Driver Manager home role-specific view"
+  },
+  {
+   "id": "gap-69-driver-manager-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "spec marks shipped/merged",
+   "name": "gap-69-driver-manager-home-view"
   },
   {
    "id": "GAP-7",
@@ -2518,6 +3508,15 @@
    "name": "G26 assignments inline quicksave (unit/trailer/driver)"
   },
   {
+   "id": "gap-81-drug-alcohol-program",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "spec marks shipped/merged",
+   "name": "gap-81-drug-alcohol-program"
+  },
+  {
    "id": "GAP-82-MEDICAL-CARD-TRACKING",
    "source": ".block-ready",
    "fin": false,
@@ -2570,6 +3569,15 @@
    "status": "DONE",
    "evidence": "PR #737 merged 2026-06-08",
    "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea"
+  },
+  {
+   "id": "gap-87-audit-log-viewer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "spec marks shipped/merged",
+   "name": "gap-87-audit-log-viewer"
   },
   {
    "id": "GAP-89-UNIVERSAL-SEARCH-CMD-K",

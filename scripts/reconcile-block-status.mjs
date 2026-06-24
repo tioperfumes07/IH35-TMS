@@ -104,9 +104,49 @@ for (const fp of progFiles) {
   all.push({ id, source: "program", fin, tier, status, evidence: evidence.slice(0, 90), name });
 }
 
-// de-dupe by id (program detail wins)
+// (C) in-repo construction/spec docs NOT in a build registry — scanned for completeness.
+//   docs/accounting/block-*.md   (financial posting engine — deep-verified all built 2026-06-24)
+//   docs/dispatch/BLOCK-*-of-29  (enterprise/hardening 29-series — mixed; CURATED from deep feature-grep)
+//   docs/specs/gap-*.md          (forward specs — status-line/PR heuristic; spec-level confidence)
+// CURATED = verdicts confirmed 2026-06-24 by feature-existence grep where no reliable auto-signal exists.
+const CURATED = {
+  "BLOCK-01-of-29": "PENDING (GATED)", "BLOCK-02-of-29": "PENDING (GATED)", "BLOCK-03-of-29": "PENDING (GATED)",
+  "BLOCK-07-of-29": "PENDING", "BLOCK-12-of-29": "PENDING", "BLOCK-17-of-29": "PENDING (GATED)",
+  "BLOCK-18-of-29": "PENDING", "BLOCK-19-of-29": "PENDING (GATED)", "BLOCK-24-of-29": "PENDING (GATED)",
+  "BLOCK-25-of-29": "PENDING (GATED)",
+};
+function scanDir(rel, opts) {
+  const dir = path.join(ROOT, rel);
+  if (!fs.existsSync(dir)) return;
+  for (const f of fs.readdirSync(dir)) {
+    if (!opts.match.test(f)) continue;
+    const id = f.replace(/\.(md|txt)$/i, "");
+    const curatedKey = Object.keys(CURATED).find((k) => id.startsWith(k));
+    let status, evidence;
+    if (opts.allBuilt) { status = "DONE"; evidence = "financial posting engine — verified built 2026-06-24"; }
+    else if (curatedKey) { status = CURATED[curatedKey]; evidence = "deep-verified 2026-06-24 (feature grep)"; }
+    else if (opts.readStatus) {
+      // gap specs: trust the spec's OWN status marker, default PENDING (forward Phase 4-7 work).
+      const head = fs.readFileSync(path.join(dir, f), "utf8").slice(0, 2500).toLowerCase();
+      if (/\b(shipped|merged on main|status:\s*done|✅\s*done|live on main|already shipped)\b/.test(head)) { status = "DONE"; evidence = "spec marks shipped/merged"; }
+      else { status = "PENDING"; evidence = opts.specNote || "gap spec — not shipped"; }
+    } else {
+      const tokPr = prByToken(id);
+      if (tokPr) { status = "DONE"; evidence = `PR #${tokPr.number} (title match)`; }
+      else { status = opts.gated ? "PENDING (GATED)" : "PENDING"; evidence = "spec — not built on main"; }
+    }
+    const tier = (id.match(/TIER([0-9.]+)/i) || [])[1] || "";
+    all.push({ id, source: opts.source, fin: !!opts.fin, tier, status, evidence: evidence.slice(0, 90), name: id });
+  }
+}
+scanDir("docs/accounting", { match: /^block-.*\.md$/i, source: "accounting", fin: true, allBuilt: true });
+scanDir("docs/dispatch", { match: /^BLOCK-.*-of-29-.*\.txt$/i, source: "enterprise-29" });
+scanDir("docs/specs", { match: /^gap-\d+.*\.md$/i, source: "gap-spec", readStatus: true, specNote: "gap spec (verify) — forward Phase 4-7 work" });
+
+// de-dupe by id (program/registry detail wins over a spec doc of the same name)
+const SRC_RANK = { "program": 4, ".block-ready": 3, "enterprise-29": 2, "accounting": 2, "gap-spec": 1 };
 const byId = new Map();
-for (const b of all) { const k = b.id.toUpperCase(); if (!byId.has(k) || b.source === "program") byId.set(k, b); }
+for (const b of all) { const k = b.id.toUpperCase(); const cur = byId.get(k); if (!cur || (SRC_RANK[b.source] || 0) > (SRC_RANK[cur.source] || 0)) byId.set(k, b); }
 const blocks = [...byId.values()];
 const ORDER = { "PENDING": 0, "PENDING (GATED)": 1, "DONE": 2 };
 blocks.sort((a, b) => (ORDER[a.status] - ORDER[b.status]) || a.id.localeCompare(b.id));

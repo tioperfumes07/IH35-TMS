@@ -5,16 +5,68 @@
 **Verified against `origin/main` (6961 files) + 1369 merged PRs.** A block is DONE only if its branch merged, a PR title references it, or its files are on main.
 
 ## Counts
-- **PENDING**: 10
-- **PENDING (GATED)**: 17
-- **DONE**: 317
+- **PENDING**: 62
+- **PENDING (GATED)**: 24
+- **DONE**: 370
 
 ## Every block
 | Block | Status | Fin | Tier | Source | Evidence |
 |-------|--------|-----|------|--------|----------|
+| BLOCK-07-of-29-TIER2-PAGINATION-AUDIT | PENDING |  | T2 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
+| BLOCK-12-of-29-TIER2-DESTRUCT-PREFLIGHT | PENDING |  | T2 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
+| BLOCK-18-of-29-TIER3-PII-ENCRYPTION | PENDING |  | T3 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | CASH-FLOW-MODULE | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | FIX-AUDIT-TRIGGER-DRIFT | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | FIX-REQUIRED-CHECKS-GATE | PENDING |  |  | .block-ready | no merged PR / no files on main |
+| gap-14-validation-pre-dispatch | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-20-recurring-bills | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-23-samsara-cache-tiers | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-25-active-driver-set | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-26-border-crossings | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-27-geofence-reconciliation | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-28-layover-detection | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-29-booking-gap-analytics | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-30-late-arrival-analytics | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-31-multi-stop-extra-rates | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-32-customer-free-time-detention | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-34-driver-pwa-dispatch | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-36-driver-pwa-incident-full | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-39-geofence-state-machine | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-40-damage-photo-exif-chain | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-41-reports-hub-9-categories | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-42-ifta-quarterly-preparer | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-43-scheduled-reports | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-44-form-425c-exhibits | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-45-cash-flow-cpm-routes | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-46-anomaly-detection | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-47-dispatch-auth-gates | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-48-driver-operations-depth | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-49-dvir-severity-tagging | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-50-ai-photo-comparison | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-52-driver-vendor-mapping-integrity | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-53-bank-multi-company-drift | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-55-cap-1-live-gps | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-56-cap-4-auto-status-switch | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-57-cap-5-tri-signal | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-58-cap-8-engine-fault-auto-wo | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-59-cap-9-vehicle-driver-pairing | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-60-cap-10-driver-scoring | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-61-cap-11-fuel-fraud-alerts | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-63-cap-13-brake-wear | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-64-cap-14-cargo-sensors | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-66-dispatcher-home-view | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-7-severe-repair-oos-estimate | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-70-edi-foundation | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-71-driver-retention-model | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-72-customer-relationship-score | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-76-deadhead-optimizer | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-8-assignments-quicksave | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-82-cert-expiry-tracking | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-83-eld-audit-trail | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-85-permits-toll-tags | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-86-insurance-module | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-89-cmd-k-quick-switcher | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
+| gap-92-feature-flags | PENDING |  |  | gap-spec | gap spec (verify) — forward Phase 4-7 work |
 | HOS-BUG-DRIVERASSIGN | PENDING |  | T2 | program | LIVE-TRACED / BUILD. Tier 2. |
 | Q9-TZ-timezone-library | PENDING |  | T2 | program | BUILD. Tier 2 (foundational). RESPOND-BEFORE-CODE the tz library choice (Jorge's Q9=A+B). |
 | TBL-STANDARD-universal-table-sweep | PENDING |  | T2 | program | LIVE-TRACED / BUILD. Tier 2/3 per surface. |
@@ -23,7 +75,14 @@
 | UX-D-hos-cycle-drawer | PENDING |  | T2 | program | BUILD. Tier 2. |
 | UX-E-compliance-hos-location | PENDING |  | T2 | program | BUILD. Tier 2. Depends on #1233 reverse-geo. |
 | AF-5-stub-catalogs | PENDING (GATED) | 💰 | T2 | program | BUILD. Tier 2/3 per catalog (Tier 1 if a catalog drives posting). One catalog = one PR. |
+| BLOCK-01-of-29-TIER1.5-DEPRECIATION | PENDING (GATED) |  | T1.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
+| BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW | PENDING (GATED) |  | T1.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
+| BLOCK-03-of-29-TIER1.5-IFTA | PENDING (GATED) |  | T1.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-10-driver-inactivity | PENDING (GATED) |  | T1 | program | BUILD (ingest+display) / GATED (mass-flip). Tier 1 on the mass status flip — STOPS for Jor |
+| BLOCK-17-of-29-TIER2.5-W2-1099 | PENDING (GATED) |  | T2.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
+| BLOCK-19-of-29-TIER3-AUDIT-HASH | PENDING (GATED) |  | T3 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
+| BLOCK-24-of-29-TIER3.5-1099-ANNUAL | PENDING (GATED) |  | T3.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
+| BLOCK-25-of-29-TIER3.5-CONSOLIDATION | PENDING (GATED) |  | T3.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | CHAIN-02-account-register-params | PENDING (GATED) | 💰 |  | program | VERIFY+wire params — D5 register shipped #976 (row 839); not a build. |
 | CHAIN-08-transp-demo-data-purge | PENDING (GATED) | 💰 | T1 | program | 1 — FULL CEREMONY + data write to live books. STOPS for Jorge. RUN LAST (Phase 4 / pre-go- |
 | CONN-1-plaid-reconcile-commit | PENDING (GATED) | 💰 | T1 | program | VERIFY+FLAG / BUILD. Tier 1 on the commit (writes the GL/reconciliation). STOPS for Jorge. |
@@ -66,14 +125,58 @@
 | AF-7-money-controls | DONE | 💰 | T1 | program | PR #542 (title match) |
 | AF-8-payroll-bridge | DONE | 💰 | T1 | program | PR #544 (title match) |
 | BK7-INLINE-CREATE-DRAWERS | DONE |  |  | .block-ready | PR #866 (title match) merged 2026-06-11 |
+| BLOCK-04-of-29-TIER2-RATE-LIMIT | DONE |  | T2 | enterprise-29 | PR #1189 (title match) |
+| BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | DONE |  | T2 | enterprise-29 | PR #1192 (title match) |
 | BLOCK-05-TIER2-CIRCUIT-BREAKERS | DONE |  |  | .block-ready | PR #800 merged 2026-06-08 |
+| BLOCK-06-of-29-TIER2-OUTBOX-DLQ | DONE |  | T2 | enterprise-29 | PR #1196 (title match) |
+| BLOCK-08-of-29-TIER2-LOAD-TEST | DONE |  | T2 | enterprise-29 | PR #796 (title match) |
 | BLOCK-08-TIER2-LOAD-TEST | DONE |  |  | .block-ready | PR #796 merged 2026-06-08 |
+| BLOCK-09-of-29-TIER2-E2E-PATHS | DONE |  | T2 | enterprise-29 | PR #802 (title match) |
 | BLOCK-09-TIER2-E2E-PATHS | DONE |  |  | .block-ready | PR #802 merged 2026-06-09 |
+| block-10-account-balances | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-10-of-29-TIER2-RLS-TEST-GATE | DONE |  | T2 | enterprise-29 | PR #1224 (title match) |
 | BLOCK-10-TIER2-RLS-TEST-GATE | DONE |  |  | .block-ready | PR #801 merged 2026-06-09 |
+| BLOCK-11-of-29-TIER2-AUDIT-COVERAGE | DONE |  | T2 | enterprise-29 | PR #814 (title match) |
+| BLOCK-13-of-29-TIER2-TUNING-CATALOG | DONE |  | T2 | enterprise-29 | PR #794 (title match) |
 | BLOCK-13-TIER2-TUNING-CATALOG | DONE |  |  | .block-ready | PR #794 merged 2026-06-08 |
+| BLOCK-14-of-29-TIER2.5-MEXICO-OPS | DONE |  | T2.5 | enterprise-29 | PR #804 (title match) |
+| BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP | DONE |  | T2.5 | enterprise-29 | PR #805 (title match) |
 | BLOCK-16-COMPLIANCE-DASHBOARD | DONE |  |  | .block-ready | PR #701 merged 2026-06-07 |
+| BLOCK-16-of-29-TIER2.5-FUEL-CARD | DONE |  | T2.5 | enterprise-29 | PR #701 (title match) |
+| block-20-cash-basis | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-20-frontend-selector | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-20-of-29-TIER3-SECRETS-ROTATION | DONE |  | T3 | enterprise-29 | PR #806 (title match) |
+| block-20-period-close-lock | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-21-expense-category-map | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-21-of-29-TIER3-DR-DRILL | DONE |  | T3 | enterprise-29 | PR #807 (title match) |
+| block-22-driver-settlement-engine | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-22-of-29-TIER3-OPS-RUNBOOKS | DONE |  | T3 | enterprise-29 | PR #241 (title match) |
+| block-23-escrow-posting-flow | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-23-of-29-TIER3-DEGRADATION | DONE |  | T3 | enterprise-29 | PR #808 (title match) |
+| block-24-factoring-posting | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-25-factoring-fees-reserves | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-26-factoring-reconciliation | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-26-of-29-TIER4-PARTITION | DONE |  | T4 | enterprise-29 | PR #809 (title match) |
+| block-27-fuel-expense-posting | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-27-of-29-TIER4-CANARY | DONE |  | T4 | enterprise-29 | PR #810 (title match) |
+| block-28-maintenance-ap-posting | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-28-of-29-TIER4-VENDOR-LOCKIN | DONE |  | T4 | enterprise-29 | PR #811 (title match) |
+| block-29-bank-reconciliation-engine | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS | DONE |  | T4 | enterprise-29 | PR #813 (title match) |
+| block-30-bank-reconciliation-ui | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-31-sales-tax-handling | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-33-invoice-line-revenue-mapping | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-34-payment-application | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-35-chart-of-accounts-roles | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-36-multi-entity-accounting | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-37-qbo-sync-repair-pipeline | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-40-accounting-audit-trail | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-41-posting-lineage-ui | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-43-live-db-schema-verification | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
 | BLOCK-C-DEDUCTION-CAP | DONE |  |  | .block-ready | PR #692 merged 2026-06-07 |
 | BLOCK-C-MIGRATION-RENAME | DONE |  |  | .block-ready | PR #698 merged 2026-06-07 |
+| block-cf-cash-forecast | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
+| block-cmc-month-close-wizard | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
 | BLOCK-D-INSURANCE-RENEWAL | DONE |  |  | .block-ready | PR #699 merged 2026-06-07 |
 | BLOCK-E-INSURANCE-FLEET | DONE |  |  | .block-ready | PR #702 merged 2026-06-07 |
 | BLOCK-F-INSURANCE-CANCELLATION | DONE |  |  | .block-ready | PR #700 merged 2026-06-07 |
@@ -81,6 +184,7 @@
 | BLOCK-H-DETENTION-NOTIFY | DONE |  |  | .block-ready | PR #693 merged 2026-06-07 |
 | BLOCK-I-CI-DIST-FIX | DONE |  |  | .block-ready | PR #73 (title match) merged 2026-05-15 |
 | BLOCK-J-MASTER-DATA-GRANT | DONE |  |  | .block-ready | PR #1063 (title match) merged 2026-06-16 |
+| block-ppc-period-comparison | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
 | BLOCK5-INSURANCE-FORWARD-FIX | DONE |  |  | .block-ready | PR #695 merged 2026-06-07 |
 | BLOCK7-DRIVER-HUB-REQUESTS | DONE |  |  | .block-ready | PR #694 merged 2026-06-07 |
 | BUG-ADD-USER-INERT | DONE |  |  | .block-ready | PR #861 merged 2026-06-10 |
@@ -254,6 +358,7 @@
 | GAP-34 | DONE |  |  | .block-ready | PR #667 merged 2026-06-07 |
 | GAP-36 | DONE |  |  | .block-ready | PR #759 merged 2026-06-08 |
 | GAP-37 | DONE |  |  | .block-ready | PR #765 merged 2026-06-08 |
+| gap-37-equipment-dual-confirm-transfer | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-38-DAMAGE-INSURANCE-CONTINUITY | DONE |  |  | .block-ready | PR #671 merged 2026-06-07 |
 | GAP-39 | DONE |  |  | .block-ready | PR #669 merged 2026-06-07 |
 | GAP-40 | DONE |  |  | .block-ready | PR #673 merged 2026-06-07 |
@@ -271,6 +376,7 @@
 | GAP-52 | DONE |  |  | .block-ready | PR #773 merged 2026-06-08 |
 | GAP-53 | DONE |  |  | .block-ready | PR #774 merged 2026-06-08 |
 | GAP-54 | DONE |  |  | .block-ready | PR #775 merged 2026-06-08 |
+| gap-54-wf-051-250-foot-correction | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-55 | DONE |  |  | .block-ready | PR #776 merged 2026-06-08 |
 | GAP-56 | DONE |  |  | .block-ready | PR #779 merged 2026-06-08 |
 | GAP-57 | DONE |  |  | .block-ready | PR #781 merged 2026-06-08 |
@@ -281,22 +387,28 @@
 | GAP-62-CAP-12-TIRE-TREAD | DONE |  |  | .block-ready | PR #679 merged 2026-06-07 |
 | GAP-63 | DONE |  |  | .block-ready | PR #678 merged 2026-06-07 |
 | GAP-64 | DONE |  |  | .block-ready | PR #783 merged 2026-06-08 |
+| gap-65-owner-todays-attention | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-66-DISPATCHER-HOME | DONE |  |  | .block-ready | PR #645 merged 2026-06-07 |
 | GAP-67-ACCOUNTING-HOME | DONE |  |  | .block-ready | PR #652 merged 2026-06-07 |
+| gap-67-accounting-home-view | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-68-SAFETY-OFFICER-HOME | DONE |  |  | .block-ready | PR #653 merged 2026-06-07 |
+| gap-68-safety-officer-home-view | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-69-DRIVER-MANAGER-HOME | DONE |  |  | .block-ready | PR #654 merged 2026-06-07 |
+| gap-69-driver-manager-home-view | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-7 | DONE |  |  | .block-ready | PR #660 merged 2026-06-07 |
 | GAP-70 | DONE |  |  | .block-ready | PR #691 merged 2026-06-07 |
 | GAP-71 | DONE |  |  | .block-ready | PR #784 merged 2026-06-08 |
 | GAP-72 | DONE |  |  | .block-ready | PR #782 merged 2026-06-08 |
 | GAP-76 | DONE |  |  | .block-ready | all 7 file(s) on main |
 | GAP-8 | DONE |  |  | .block-ready | PR #661 merged 2026-06-07 |
+| gap-81-drug-alcohol-program | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-82-MEDICAL-CARD-TRACKING | DONE |  |  | .block-ready | PR #640 merged 2026-06-07 |
 | GAP-83-ELD-AUDIT-VIEWER | DONE |  |  | .block-ready | PR #644 merged 2026-06-07 |
 | GAP-84-DOT-INSPECTION-GAP-CLOSE | DONE |  |  | .block-ready | PR #649 merged 2026-06-07 |
 | GAP-85-PERMIT-TOLL-TRACKING | DONE |  |  | .block-ready | PR #655 merged 2026-06-07 |
 | GAP-86-INSURANCE-BILL-CREATOR | DONE |  |  | .block-ready | PR #687 merged 2026-06-07 |
 | GAP-86-POLICY-WIZARD | DONE |  |  | .block-ready | PR #737 merged 2026-06-08 |
+| gap-87-audit-log-viewer | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-89-UNIVERSAL-SEARCH-CMD-K | DONE |  |  | .block-ready | PR #657 merged 2026-06-07 |
 | GAP-91-MOBILE-RESPONSIVE-AUDIT | DONE |  |  | .block-ready | PR #658 merged 2026-06-07 |
 | GAP-92-FEATURE-FLAG-SYSTEM | DONE |  |  | .block-ready | PR #659 merged 2026-06-07 |
