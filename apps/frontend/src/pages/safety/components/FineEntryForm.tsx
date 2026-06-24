@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { createInternalFine, createSafetyFine } from "../../../api/safety";
 import { Button } from "../../../components/Button";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useAutoDeductionPolicyMutations } from "../../../hooks/useAutoDeductionPolicies";
 
 export type FineEntryKind = "dot" | "internal";
@@ -210,14 +211,11 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Amount USD</label>
-          <input
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={amountUsd}
-            onChange={(event) => setAmountUsd(event.target.value)}
-            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
-            required
+          {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
+          <MoneyInput
+            valueDollars={amountUsd ? Number(amountUsd) : null}
+            onChangeDollars={(d) => setAmountUsd(d == null ? "" : String(d))}
+            ariaLabel="Amount USD"
           />
         </div>
         <div className="flex flex-col gap-1 md:col-span-2">

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { listSettlements } from "../../api/driverFinance";
 import { Modal } from "../../components/Modal";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -165,13 +166,11 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
 
         <label className="block space-y-1">
           <span className="font-medium">Claimed amount (USD)</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            className="w-full rounded border border-gray-300 px-2 py-1"
-            value={claimedDollars}
-            onChange={(e) => setClaimedDollars(e.target.value)}
+          {/* M-1: dollars-mode QBO money entry; bridged so Math.round(claimedDollars*100) is byte-for-byte. */}
+          <MoneyInput
+            valueDollars={claimedDollars ? Number(claimedDollars) : null}
+            onChangeDollars={(d) => setClaimedDollars(d == null ? "" : String(d))}
+            ariaLabel="Claimed amount (USD)"
           />
         </label>
 
