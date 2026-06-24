@@ -9,6 +9,7 @@ import {
 } from "../../api/insurance";
 import { listUnits } from "../../api/mdata";
 import { Modal } from "../Modal";
+import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 import { useCostPerVehicle } from "./useCostPerVehicle";
 
@@ -404,23 +405,18 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
           <div className="space-y-4">
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="Total Premium (USD) *" error={step3Errors.total_premium}>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  className="w-full rounded border border-gray-300 px-2 py-1"
-                  value={step3.total_premium}
-                  onChange={(e) => setStep3((s) => ({ ...s, total_premium: e.target.value }))}
+                {/* M-1: dollars-mode QBO money entry; bridged so parsePremiumCents (×100) is byte-for-byte. */}
+                <MoneyInput
+                  valueDollars={step3.total_premium ? Number(step3.total_premium) : null}
+                  onChangeDollars={(d) => setStep3((s) => ({ ...s, total_premium: d == null ? "" : String(d) }))}
+                  ariaLabel="Total Premium (USD)"
                 />
               </Field>
               <Field label="Down Payment (USD)">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="w-full rounded border border-gray-300 px-2 py-1"
-                  value={step3.down_payment}
-                  onChange={(e) => setStep3((s) => ({ ...s, down_payment: e.target.value }))}
+                <MoneyInput
+                  valueDollars={step3.down_payment ? Number(step3.down_payment) : null}
+                  onChangeDollars={(d) => setStep3((s) => ({ ...s, down_payment: d == null ? "" : String(d) }))}
+                  ariaLabel="Down Payment (USD)"
                 />
               </Field>
               <Field label="Term (months) *" error={step3Errors.term_months}>
