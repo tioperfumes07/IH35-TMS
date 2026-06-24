@@ -774,16 +774,15 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         reservationId: input.reservation_uuid,
         reservedByUserId: input.requestingUserUuid,
       });
-      if (!claimed) {
-        return {
-          kind: "error",
-          status: 409,
-          payload: { error: "E_RESERVATION_NOT_AVAILABLE", message: "Reservation expired or unavailable." },
-        };
+      if (claimed) {
+        reservationId = claimed.id;
+        loadNumber = claimed.reserved_load_number;
       }
-      reservationId = claimed.id;
-      loadNumber = claimed.reserved_load_number;
-    } else {
+      // FIX-NEW-409: a supplied-but-unclaimable reservation (expired / consumed / superseded — the wizard's
+      // LiveLoadIdBar re-issues reserve-id under load, so the uuid on submit can be stale) must NOT 409. The
+      // user clearly intends to book; fall through and allocate a fresh, valid load number transparently.
+    }
+    if (!loadNumber) {
       const reservation = await reserveNextLoadId(client, {
         operatingCompanyId: input.operating_company_id,
         reservedByUserId: input.requestingUserUuid,
