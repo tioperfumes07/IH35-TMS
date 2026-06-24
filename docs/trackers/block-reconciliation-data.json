@@ -1,0 +1,3106 @@
+{
+ "date": "2026-06-24",
+ "counts": {
+  "PENDING": 10,
+  "PENDING (GATED)": 17,
+  "DONE": 317
+ },
+ "blocks": [
+  {
+   "id": "CASH-FLOW-MODULE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "no merged PR / no files on main",
+   "name": ""
+  },
+  {
+   "id": "FIX-AUDIT-TRIGGER-DRIFT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "no merged PR / no files on main",
+   "name": ""
+  },
+  {
+   "id": "FIX-REQUIRED-CHECKS-GATE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "no merged PR / no files on main",
+   "name": ""
+  },
+  {
+   "id": "HOS-BUG-DRIVERASSIGN",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "LIVE-TRACED / BUILD. Tier 2.",
+   "name": "HOS / TASK Bug — deployed_with_driver 400 (invalid stat type)"
+  },
+  {
+   "id": "Q9-TZ-timezone-library",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "BUILD. Tier 2 (foundational). RESPOND-BEFORE-CODE the tz library choice (Jorge's Q9=A+B).",
+   "name": "FOUNDATIONS / TASK Q9 — Timezone library (lat/lng→IANA primary + override)"
+  },
+  {
+   "id": "TBL-STANDARD-universal-table-sweep",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "LIVE-TRACED / BUILD. Tier 2/3 per surface.",
+   "name": "TABLE/UX / TASK Standard — Universal table sweep (bespoke → shared DataTable)"
+  },
+  {
+   "id": "UX-B-dispatch-location-column",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "BUILD. Tier 2. Depends on reverse-geo fix (#1233, LIVE).",
+   "name": "TABLE/UX / TASK B — Dispatch Location column"
+  },
+  {
+   "id": "UX-C-fleet-location",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "BUILD. Tier 2. Depends on #1233 reverse-geo.",
+   "name": "TABLE/UX / TASK C — Fleet Location column"
+  },
+  {
+   "id": "UX-D-hos-cycle-drawer",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "BUILD. Tier 2.",
+   "name": "TABLE/UX / TASK D — HOS Tracker driver-row cycle drawer"
+  },
+  {
+   "id": "UX-E-compliance-hos-location",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING",
+   "evidence": "BUILD. Tier 2. Depends on #1233 reverse-geo.",
+   "name": "TABLE/UX / TASK E — Clickable sweep + Compliance HOS Location column"
+  },
+  {
+   "id": "AF-5-stub-catalogs",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "BUILD. Tier 2/3 per catalog (Tier 1 if a catalog drives posting). One catalog = one PR.",
+   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)"
+  },
+  {
+   "id": "BLOCK-10-driver-inactivity",
+   "source": "program",
+   "fin": false,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "BUILD (ingest+display) / GATED (mass-flip). Tier 1 on the mass status flip — STOPS for Jor",
+   "name": "DRIVER LIFECYCLE / TASK 10 — Driver inactivity: 96h alert + 30-day DOT + vacation override"
+  },
+  {
+   "id": "CHAIN-02-account-register-params",
+   "source": "program",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "VERIFY+wire params — D5 register shipped #976 (row 839); not a build.",
+   "name": "ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)"
+  },
+  {
+   "id": "CHAIN-08-transp-demo-data-purge",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "1 — FULL CEREMONY + data write to live books. STOPS for Jorge. RUN LAST (Phase 4 / pre-go-",
+   "name": "ACCOUNTING-CHAIN / TASK 8 — TRANSP demo/seed data purge (PRE-GO-LIVE, LAST)"
+  },
+  {
+   "id": "CONN-1-plaid-reconcile-commit",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "VERIFY+FLAG / BUILD. Tier 1 on the commit (writes the GL/reconciliation). STOPS for Jorge.",
+   "name": "CONNECTIONS / TASK 1 — Plaid bank reconcile-commit (enable the commit)"
+  },
+  {
+   "id": "CONN-4-edi-foundation",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "BUILD (GAP-70). Tier 2 (data exchange) → Tier 1 if 210 posts invoices. STOPS for Jorge on ",
+   "name": "CONNECTIONS / TASK 4 — EDI foundation (broker 204 / 214 / 210 / 990)"
+  },
+  {
+   "id": "DISP-WIZARD-edit-load-patch",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "BUILD / GATED (HELD). Tier 2 (load edit) → Tier 1 if it touches billing/settlement.",
+   "name": "DISPATCH / TASK Edit-Load — Edit-Load PATCH wizard (#1196, HELD)"
+  },
+  {
+   "id": "DISP-WO-work-order-modal",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "LIVE-TRACED / BUILD. Tier 2 (build modal) — posting (create_bill_for_wo) Tier 1, STOPS for",
+   "name": "DISPATCH/MAINT / TASK WO — Work Order modal (dead +Create Work Order button)"
+  },
+  {
+   "id": "ENT-AUDIT",
+   "source": "program",
+   "fin": false,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "VERIFY-STATE / BUILD. Tier per scope (any GL posting = Tier 1, STOPS for Jorge).",
+   "name": "ENTERPRISE/SCALE / TASK — Enterprise/scale hardening audits"
+  },
+  {
+   "id": "HOS-FANOUT-03-08",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "GATED / VERIFY-STATE. Tier 2.",
+   "name": "HOS / TASK Blocks 03–08 — HOS Tracker fan-out (per-driver-state matrix)"
+  },
+  {
+   "id": "HOS-MAP-driver-samsara-id",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "LIVE-TRACED / BUILD. Tier 2 (telematics) + MIGRATE if a backfill writes ids. STOPS for Jor",
+   "name": "HOS / TASK Mapping — Driver ↔ Samsara ID population (THE verbatim-clocks unlock)"
+  },
+  {
+   "id": "HOS-PRC-DATA-verbatim-clocks",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "LIVE-TRACED / GATED. Tier 2 (telematics, no money).",
+   "name": "HOS / TASK PR-C — Verbatim Samsara clocks (DATA SIDE)"
+  },
+  {
+   "id": "HOS-PRC2-reader-swap",
+   "source": "program",
+   "fin": false,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "GATED on GUARD per-driver verify (board == roster == Samsara certified ELD). Tier 2.",
+   "name": "HOS / TASK PR-C2 — Reader swap: board/roster read Samsara certified ELD"
+  },
+  {
+   "id": "STMT-1-balance-sheet-cash-flow",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "BUILD (BLOCK-13/14). Tier 2 (display). Built on the account-balances fn (Block 10/44, DONE",
+   "name": "STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements"
+  },
+  {
+   "id": "STMT-2-opening-balances",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "Tier 1 (writes opening equity/balances to the GL). STOPS for Jorge. GATED on Jorge's figur",
+   "name": "STATEMENTS / TASK 2 — Opening balances (owner-entered)"
+  },
+  {
+   "id": "STMT-3-1099-425c-consolidation",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "BUILD. Tier 2 (reports) → Tier 1 if any posts. Three sub-tasks, sequence-independent.",
+   "name": "STATEMENTS / TASK 3 — 1099 + 425C DIP + multi-entity consolidation"
+  },
+  {
+   "id": "USMCA-LAUNCH-carrier",
+   "source": "program",
+   "fin": false,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge.",
+   "name": "FOUNDATIONS / TASK USMCA — USMCA carrier launch (July 2026)"
+  },
+  {
+   "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #884 merged 2026-06-11",
+   "name": "Additive columns on events.event_log: source_table, source_reference_id, actor_user_id, correlation_id — all NULLABLE, n"
+  },
+  {
+   "id": "A2-AUDIT-EMIT-DISPATCH",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #886 merged 2026-06-12",
+   "name": "Dispatch mutations emit spine events via emitDispatchSpineEvent helper calling events.log_event(). Covers: load.created,"
+  },
+  {
+   "id": "A3-AUDIT-EMIT-MAINTENANCE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #888 merged 2026-06-12",
+   "name": "Maintenance WO lifecycle mutations emit spine events via emitMaintenanceSpineEvent helper calling events.log_event(). Co"
+  },
+  {
+   "id": "A4-AUDIT-EMIT-ACCOUNTING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #889 merged 2026-06-12",
+   "name": "Accounting transaction mutations emit spine events via emitAccountingSpineEvent helper calling events.log_event(). Cover"
+  },
+  {
+   "id": "A5-AUDIT-EMIT-BANKING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #890 merged 2026-06-12",
+   "name": "Banking mutations emit spine events via emitBankingSpineEvent helper calling events.log_event(). Covers transfers (creat"
+  },
+  {
+   "id": "A6-AUDIT-UNIVERSAL-VIEW",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #891 merged 2026-06-12",
+   "name": "Universal read API over events.event_log at GET /api/v1/audit/events with RLS + pagination. AuditTrailPage at /audit/tra"
+  },
+  {
+   "id": "A7-AUDIT-PER-ENTITY-TABS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #909 merged 2026-06-12",
+   "name": "Add Audit/History tab to entity detail views (Vehicle, Load, Driver, Invoice, Bill, Banking txn, Customer, Vendor) with "
+  },
+  {
+   "id": "A8-AUDIT-REPORTS-SECTION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #899 merged 2026-06-12",
+   "name": "7 pre-built audit report pages under Reports > Audit. Read-only, RLS+pagination, CSV export. Backend: 7 GET endpoints in"
+  },
+  {
+   "id": "A9-AUDIT-CI-EMIT-GUARD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #901 merged 2026-06-12",
+   "name": "CI gate that fails the build if any mutating route/service lacks a spine audit emit. No migration. Script + allowlist + "
+  },
+  {
+   "id": "ACCT-BLOCK-10-ACCOUNT-BALANCES",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #709 merged 2026-06-08",
+   "name": "Block 10/44 — Account Balances View. Adds accounting.fn_account_balances_as_of(p_company_id, p_as_of_date, p_from_date) "
+  },
+  {
+   "id": "ACCT-BLOCK-11-PERIODS-INIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #814 merged 2026-06-09",
+   "name": "Accounting Periods Init — ops seed for Jan–Jun 2026 periods for TRANSP (IH 35 Transportation LLC). Adds unique index on "
+  },
+  {
+   "id": "ACCT-COA-CANONICALIZATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #715 merged 2026-06-08",
+   "name": "Establish catalogs.accounts as the canonical posting COA: reconcile against the accounting.qbo_accounts TRANSP slice, ad"
+  },
+  {
+   "id": "ACCT-INTEGRITY-VERIFY-EXTEND",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #816 merged 2026-06-09",
+   "name": "Accounting integrity: verify and extend 4 items (period lock CI, bank-recon cron, accounting probes, CoA role bindings s"
+  },
+  {
+   "id": "ACCT-QBOPAR-00-DESIGN-LOCK",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #703 merged 2026-06-07",
+   "name": "CA-00 Design lock: commit QBO-parity COA spec, account-type/detail-type catalog, and two interactive HTML design-law pre"
+  },
+  {
+   "id": "ACCT-QBOPAR-01-CATALOG-BACKEND",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 16 file(s) on main",
+   "name": "QBO-parity account type & detail type catalog: migration + seed (15 types / 5 groups) + GET /api/v1/accounting/account-t"
+  },
+  {
+   "id": "ACCT-QBOPAR-02",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #710 merged 2026-06-07",
+   "name": "Shared ListView component (universal list behaviors): reusable table with sort, filter, gear, pagination, drag-reorder, "
+  },
+  {
+   "id": "ACCT-QBOPAR-03",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #740 merged 2026-06-08",
+   "name": "Chart of Accounts list on ListView: QBO-parity columns, balances, hierarchy, batch archive/merge, gear/filter/export."
+  },
+  {
+   "id": "ACCT-QBOPAR-04",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #815 merged 2026-06-08",
+   "name": "CA-04: New/Edit Account drawer with is_locked flag, opening_balance_as_of, nullable account_number. Migration 2026060802"
+  },
+  {
+   "id": "AF-0-rebaseline",
+   "source": "program",
+   "fin": true,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "PR #1264 (title match)",
+   "name": "STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)"
+  },
+  {
+   "id": "AF-1-entity-coa-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #530 (title match)",
+   "name": "STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)"
+  },
+  {
+   "id": "AF-2-qbo-drift",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #532 (title match)",
+   "name": "STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)"
+  },
+  {
+   "id": "AF-3-account-registers",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #534 (title match)",
+   "name": "STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)"
+  },
+  {
+   "id": "AF-4-ap-bills-migration",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #536 (title match)",
+   "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)"
+  },
+  {
+   "id": "AF-6-finance-hub",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #540 (title match)",
+   "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)"
+  },
+  {
+   "id": "AF-7-money-controls",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #542 (title match)",
+   "name": "STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS"
+  },
+  {
+   "id": "AF-8-payroll-bridge",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #544 (title match)",
+   "name": "STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST"
+  },
+  {
+   "id": "BK7-INLINE-CREATE-DRAWERS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #866 (title match) merged 2026-06-11",
+   "name": ""
+  },
+  {
+   "id": "BLOCK-05-TIER2-CIRCUIT-BREAKERS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #800 merged 2026-06-08",
+   "name": "Circuit breakers on external dependencies (QBO, Samsara, Plaid, OpenAI, etc.)"
+  },
+  {
+   "id": "BLOCK-08-TIER2-LOAD-TEST",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #796 merged 2026-06-08",
+   "name": "k6 load-test baseline with nightly CI"
+  },
+  {
+   "id": "BLOCK-09-TIER2-E2E-PATHS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #802 merged 2026-06-09",
+   "name": "Playwright E2E tests for 10 critical user paths"
+  },
+  {
+   "id": "BLOCK-10-TIER2-RLS-TEST-GATE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #801 merged 2026-06-09",
+   "name": "Cross-tenant RLS gate verification script with fixture generation"
+  },
+  {
+   "id": "BLOCK-13-TIER2-TUNING-CATALOG",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #794 merged 2026-06-08",
+   "name": "Operational tuning catalog — single doc for all tunable parameters with CI guard"
+  },
+  {
+   "id": "BLOCK-16-COMPLIANCE-DASHBOARD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #701 merged 2026-06-07",
+   "name": "COMPLIANCE-DASHBOARD"
+  },
+  {
+   "id": "BLOCK-C-DEDUCTION-CAP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #692 merged 2026-06-07",
+   "name": "Settlement deduction cap — net floor (50% gross + absolute cents) with all-or-nothing roll-over of pending deductions at"
+  },
+  {
+   "id": "BLOCK-C-MIGRATION-RENAME",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #698 merged 2026-06-07",
+   "name": "Rename Block C migration to 12-digit runner-compatible filename so db:migrate applies min_net_settlement columns in prod"
+  },
+  {
+   "id": "BLOCK-D-INSURANCE-RENEWAL",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #699 merged 2026-06-07",
+   "name": "Insurance policy renewal (clone-forward). POST /api/v1/insurance/policies/:id/renew clones the source policy (tenant_id,"
+  },
+  {
+   "id": "BLOCK-E-INSURANCE-FLEET",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #702 merged 2026-06-07",
+   "name": "Insurance Fleet Add/Remove — add/remove trucks/trailers from an active policy mid-term. POST /insurance/policies/:id/uni"
+  },
+  {
+   "id": "BLOCK-F-INSURANCE-CANCELLATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #700 merged 2026-06-07",
+   "name": "Insurance policy cancellation + unearned-premium refund with Decision C hardened soft-skip. POST /api/v1/insurance/polic"
+  },
+  {
+   "id": "BLOCK-G-COI-PDF",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 4 file(s) on main",
+   "name": "Certificate of Insurance PDF — GET /api/v1/insurance/policies/:id/coi returns Puppeteer-rendered PDF; frontend Download "
+  },
+  {
+   "id": "BLOCK-H-DETENTION-NOTIFY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #693 merged 2026-06-07",
+   "name": "Block H — On detention request approval (PATCH /api/v1/dispatch/detention/requests/:id/approve), after the billing bridg"
+  },
+  {
+   "id": "BLOCK-I-CI-DIST-FIX",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #73 (title match) merged 2026-05-15",
+   "name": ""
+  },
+  {
+   "id": "BLOCK-J-MASTER-DATA-GRANT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1063 (title match) merged 2026-06-16",
+   "name": ""
+  },
+  {
+   "id": "BLOCK5-INSURANCE-FORWARD-FIX",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #695 merged 2026-06-07",
+   "name": "Forward-fix for the #687 double-bill vulnerability: require Idempotency-Key on /insurance/policies, partial-UNIQUE bill_"
+  },
+  {
+   "id": "BLOCK7-DRIVER-HUB-REQUESTS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #694 merged 2026-06-07",
+   "name": "Driver Hub Requests — Manager/Owner approve/deny cash advance requests; approve creates a settlement deduction via creat"
+  },
+  {
+   "id": "BUG-ADD-USER-INERT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #861 merged 2026-06-10",
+   "name": "Fix inert Add User button: SaveDropdown disabled by silent returningDetection state; fix BE default_company_id; add regr"
+  },
+  {
+   "id": "C1-PRE-SETTLEMENTS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #900 merged 2026-06-12",
+   "name": "Settlement data model (read side). Schema settlement, tables settlement/settlement_line/settlement_deduction. RLS+NULLIF"
+  },
+  {
+   "id": "C2-FACTORING-PROFILE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #904 merged 2026-06-12",
+   "name": "Enrich factoring.factor with fully configurable tiered fee + reserve schedules (fee_schedule jsonb, reserve_schedule jso"
+  },
+  {
+   "id": "C3-CUSTOMER-CONTRACT-UPLOAD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #902 merged 2026-06-12",
+   "name": "Upload + store customer contracts. Append-only. Supersede by new version. Audit-linked. Reuses existing docs/R2 storage."
+  },
+  {
+   "id": "C4-CUST-VEND-REBUILD-RECLASSIFY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #905 merged 2026-06-12",
+   "name": "Additive reclassification columns on mdata.customers + mdata.vendors, append-only entity_reclassification_log table, rec"
+  },
+  {
+   "id": "C6-HOME-DASHBOARD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "QBO-style home dashboard at /app/homepage. Read-only aggregation. Sidebar HOME item wired to /app/homepage. No financial"
+  },
+  {
+   "id": "C7-ACCT-SUBNAV-CHROME",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 10 file(s) on main",
+   "name": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r"
+  },
+  {
+   "id": "CAP-AUTOSTATUS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (CAP-4 auto-status, PR #223, row 101).",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Auto load-status switch"
+  },
+  {
+   "id": "CAP-CARGOTEMP",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "VERIFY — reefer shipped #942/#1218; confirm cargo-TEMP gap only.",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Cargo-temp monitoring"
+  },
+  {
+   "id": "CAP-ENGINEWO",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (CAP-8 engine→WO, PR #229, row 105).",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Engine-fault auto Work Order"
+  },
+  {
+   "id": "CAP-FUELFRAUD",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE adjacent — verify (CAP-FUEL-CARD, PR #237, row 117).",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection"
+  },
+  {
+   "id": "CAP-GPS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (CAP-1 GPS, PR #234, row 98). Do NOT rebuild.",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking"
+  },
+  {
+   "id": "CAP-PREDICTIVE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "VERIFY — CAP-7 #221 + PM auto-WO; confirm tire/brake gap only.",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive"
+  },
+  {
+   "id": "CAP-SCORING",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (CAP-10 driver scoring, PR #230, row 107).",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring"
+  },
+  {
+   "id": "CHAIN-01-vendor-picker-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "PR #1262 (title match)",
+   "name": "ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty"
+  },
+  {
+   "id": "CHAIN-03-create-bill-gl-autopost",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #1300 (title match)",
+   "name": "ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)"
+  },
+  {
+   "id": "CHAIN-04-bill-payment-tieout",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #1267 (title match)",
+   "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)"
+  },
+  {
+   "id": "CHAIN-05-bank-feed-live-proof",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #1268 (title match)",
+   "name": "ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE"
+  },
+  {
+   "id": "CHAIN-06-invoice-ar-chain-proof",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #1269 (title match)",
+   "name": "ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof"
+  },
+  {
+   "id": "CHAIN-07-settlements-500-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "PR #1270 (title match)",
+   "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out"
+  },
+  {
+   "id": "CHORE-MASTER-TRACKER-MD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #924 merged 2026-06-13",
+   "name": "Establish the in-repo living master tracker. docs/trackers/MASTER_PROGRESS_REPORT.md is the Markdown SOURCE OF TRUTH (fu"
+  },
+  {
+   "id": "CHORE-UNVERIFIED-ROWS-RECONCILE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #928 merged 2026-06-13",
+   "name": "Reconcile every UNVERIFIED tracker row against the GitHub merged-PR record (871 PRs). Confirmed: CA-04 = DONE #815; GAP-"
+  },
+  {
+   "id": "CLOSURE-10-MAINT-PARTS-CATALOG",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #798 merged 2026-06-09",
+   "name": "Maintenance parts master catalog by brand for owned fleet"
+  },
+  {
+   "id": "CLOSURE-11-MAINT-SERVICES-CATALOG",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #799 merged 2026-06-08",
+   "name": "Maintenance services catalog + ETA defaults from Samsara"
+  },
+  {
+   "id": "CLOSURE-12-CYCLE5-PAYROLL-INTEGRATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #795 merged 2026-06-08",
+   "name": "Cycle 5 TMS↔QBO payroll integration page"
+  },
+  {
+   "id": "CLOSURE-13-USMCA-JULY-LAUNCH",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #797 merged 2026-06-08",
+   "name": "USMCA July 2026 launch activation runbook + toggle sequence"
+  },
+  {
+   "id": "CLOSURE-16-DEEP-AUDIT-C",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #793 merged 2026-06-08",
+   "name": "Deep audit C — 11 canonical reports + 3 E2E QBO workflows"
+  },
+  {
+   "id": "CLOSURE-17-ON-HOLD-TRIAGE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #788 merged 2026-06-08",
+   "name": "ON HOLD blocks triage — A23-11, A23-14, B19, B20 scope review"
+  },
+  {
+   "id": "CLOSURE-18-PERF-AUDIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #792 merged 2026-06-08",
+   "name": "Performance audit — bundle size + page load + API latency budgets"
+  },
+  {
+   "id": "CLOSURE-19-SEC-AUDIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #785 merged 2026-06-08",
+   "name": "Security audit — RLS + auth + secrets + dependency CVEs"
+  },
+  {
+   "id": "CLOSURE-20-A11Y-AUDIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #787 merged 2026-06-09",
+   "name": "Accessibility audit — WCAG 2.1 AA compliance pass"
+  },
+  {
+   "id": "CLOSURE-21-MONITORING-SETUP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #791 merged 2026-06-10",
+   "name": "Production monitoring + alerting (Sentry + deep health + uptime)"
+  },
+  {
+   "id": "CLOSURE-23-DR-BACKUP-AUDIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #786 merged 2026-06-08",
+   "name": "Disaster recovery + backup verification + restore drill"
+  },
+  {
+   "id": "CLOSURE-24-OPERATOR-ONBOARDING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #790 merged 2026-06-09",
+   "name": "Operator onboarding flow + sample data + walkthroughs"
+  },
+  {
+   "id": "CLOSURE-25-RUNBOOKS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #789 merged 2026-06-10",
+   "name": "Per-block manifest + artifact CI guard for runbooks"
+  },
+  {
+   "id": "CONN-2-factoring-faro",
+   "source": "program",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "VERIFY — factoring #904 + FACT-1..5 shipped; confirm only the Faro packet gap.",
+   "name": "CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet"
+  },
+  {
+   "id": "CONN-3-relay-internal-bank",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "VERIFY-STATE (design-done #956). Tier 1 on posting. STOPS for Jorge.",
+   "name": "CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes"
+  },
+  {
+   "id": "D1-SETTLEMENTS-APPROVAL-PDF",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #910 merged 2026-06-12",
+   "name": "Settlements approval workspace + driver/company PDF. Trip-number auto-link engine, per-line approve/reject, escrow runni"
+  },
+  {
+   "id": "DESIGN-STD-NAVY-PAGE-BANNER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #898 merged 2026-06-12",
+   "name": "Create NavyPageSubNav as the software-wide navy banner standard. Swap SettlementsPage onto it. Lock approved tokens in C"
+  },
+  {
+   "id": "DISP-DRAWER-WIRE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #746 merged 2026-06-08",
+   "name": "Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs"
+  },
+  {
+   "id": "DISP-FACTORING-PACKET",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #750 merged 2026-06-08",
+   "name": "DISP-FACTORING-PACKET — Factoring queue + FARO Reserve Tracker + FactoringTab drawer child (LANE B Block 7)"
+  },
+  {
+   "id": "DISP-FINES-DEDUCT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #762 merged 2026-06-08",
+   "name": "Block 13 — Driver fines → auto-deduction policies + drawer confirm/defer card"
+  },
+  {
+   "id": "DISP-KANBAN-dispatch-kanban-board",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (kanban, PR #751 + #1107, row 569).",
+   "name": "DISPATCH / TASK Dispatch Kanban board — Dispatch Kanban board"
+  },
+  {
+   "id": "DISP-KANBAN-STATES",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #751 merged 2026-06-08",
+   "name": "Block 3 — True Kanban operational states (7 columns + Completed/Cancelled terminal)"
+  },
+  {
+   "id": "DISP-LIST-TABLE-ASSIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #758 merged 2026-06-08",
+   "name": "Block 5 — List(simple+risk) vs Table(detailed) + Assignment bands with unassigned-on-top"
+  },
+  {
+   "id": "DISP-OVERVIEW",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #752 merged 2026-06-08",
+   "name": "Block 1 — Dispatch Overview command center (default view)"
+  },
+  {
+   "id": "DISP-OVERVIEW-dispatch-overview",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (overview, PR #752 + #1106, row 567).",
+   "name": "DISPATCH / TASK Dispatch Overview — Dispatch Overview"
+  },
+  {
+   "id": "DISP-PLANNERS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 11 file(s) on main",
+   "name": "DISP-PLANNERS"
+  },
+  {
+   "id": "DISP-PROFIT-load-profitability",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "VERIFY — lane profit #375 + W2A #871; confirm per-LOAD gap only.",
+   "name": "DISPATCH / TASK Load Profitability — Load Profitability"
+  },
+  {
+   "id": "DISP-PROFITABILITY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #743 merged 2026-06-08",
+   "name": "Trip Profitability view + SettlementProfitabilityCard drawer child + loadProfit util"
+  },
+  {
+   "id": "DISP-QUEUES-NAV",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #753 merged 2026-06-08",
+   "name": "DISP-QUEUES-NAV Block 2 — top-bar queue navigation with live count badges and Dispatch › view breadcrumb."
+  },
+  {
+   "id": "DISP-ROUNDTRIPS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #756 merged 2026-06-08",
+   "name": "Block 4 — Round Trips view + OOS strip pinned bottom of every dispatch view"
+  },
+  {
+   "id": "DISPATCH-LIVE-ETA",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #688 merged 2026-06-07",
+   "name": "Dispatch live ETA columns — driver status, Samsara ETA, on-time prediction"
+  },
+  {
+   "id": "DOCS-AUDIT-LINKAGE-SPECS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #882 merged 2026-06-11",
+   "name": "Architecture specs for the A1–A9 audit linkage phase and Settlements page spec. Also adds an honest docs/ exemption to C"
+  },
+  {
+   "id": "DOCS-B9-ESCROW-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #948 merged 2026-06-14",
+   "name": "Docs-only design spec for the gated B9 driver-escrow-deduction build (Section D #1). Captures Jorge's 9 LOCKED rules ($2"
+  },
+  {
+   "id": "DOCS-DISPATCH-LANE-ENFORCEMENT-V2",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #742 merged 2026-06-08",
+   "name": "Lock dispatch lane enforcement document — allowed_files per block, disjoint-lane rules, stop-the-line gate policy."
+  },
+  {
+   "id": "DOCS-FACTORING-ACCOUNTING-STRUCTURE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #738 merged 2026-06-08",
+   "name": "Factoring accounting structure proposal + bookkeeper worksheet v1.1 update (cash_dip WF, factor_advances_receivable FARO"
+  },
+  {
+   "id": "DOCS-FH1-FIXED-ASSETS-DEPRECIATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #957 merged 2026-06-14",
+   "name": "Docs-only design spec for Finance Hub FH-1 (Fixed Assets + Depreciation) — the foundation block. Closes the QBO gap: QBO"
+  },
+  {
+   "id": "DOCS-FH1-LEASING-FOLLOWUP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #967 merged 2026-06-15",
+   "name": "Docs-only follow-up to FH-1 (already merged) adding the inter-company leasing relationship per locked decision #5. Adds "
+  },
+  {
+   "id": "DOCS-FH2-LOAN-WIZARD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #959 merged 2026-06-14",
+   "name": "Docs-only design spec for Finance Hub FH-2 (Loan Wizard, 'create everything'). Closes the QBO gap (loan-for-asset setup "
+  },
+  {
+   "id": "DOCS-FH3-AMORTIZATION-ENGINE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #958 merged 2026-06-14",
+   "name": "Docs-only design spec for Finance Hub FH-3 (Amortization Schedule Engine). Closes the QBO gap (QBO has no built-in amort"
+  },
+  {
+   "id": "DOCS-FH4-FINANCE-CALCULATOR",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #960 merged 2026-06-14",
+   "name": "Docs-only design spec for Finance Hub FH-4 (Finance Calculator). PURE CALCULATION, no posting, no GL, no money path. Mod"
+  },
+  {
+   "id": "DOCS-FH5-BANKRUPTCY-MODELER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #963 merged 2026-06-14",
+   "name": "Docs-only design spec for Finance Hub FH-5 (Bankruptcy Calculator/Modeler) -- most complex + sensitive, build last. TRAN"
+  },
+  {
+   "id": "DOCS-FH5-POSTING-LOCKED",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #969 merged 2026-06-15",
+   "name": "Docs-only follow-up to the merged FH-5 Bankruptcy Modeler spec, applying Jorge's LOCKED posting decision (2026-06-14): P"
+  },
+  {
+   "id": "DOCS-FH6-TAX-MANAGER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #961 merged 2026-06-14",
+   "name": "Docs-only design spec for Finance Hub FH-6 (Tax Manager) + FH-6a (property-tax rendition). Per-year tax register for Jor"
+  },
+  {
+   "id": "DOCS-FH7-UNIT-ALLOCATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #962 merged 2026-06-14",
+   "name": "Docs-only design spec for Finance Hub FH-7 (shared Unit Allocation control). Cross-cutting, NOT tax-only: a reusable con"
+  },
+  {
+   "id": "DOCS-FH8-LEASE-CONTRACT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #965 merged 2026-06-15",
+   "name": "Docs-only design spec for Finance Hub FH-8 (Lease Contract + Unit Picker, Legal<->Finance, reuses FH-7). Lease agreement"
+  },
+  {
+   "id": "DOCS-FINANCE-ANSWERED-QS-FOLLOWUP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #968 merged 2026-06-15",
+   "name": "Docs-only follow-up applying Jorge's answered questions (Finance Build Package-4, 11-ANSWERED-QUESTIONS) to two already-"
+  },
+  {
+   "id": "DOCS-GEOFENCE-INSURANCE-SPEC",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #719 merged 2026-06-08",
+   "name": "Lock dispatch geofence timing model (WF-043) + insurance blueprint + CI guard spec — no app code changed."
+  },
+  {
+   "id": "DOCS-MILEAGE-LIFECYCLE-CORRECTION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #954 merged 2026-06-14",
+   "name": "Docs-only correction to MILEAGE-MODEL-DESIGN.md per Jorge's locked lifecycle (03-MILEAGE-LIFECYCLE-LOCKED). Adds §1A 'Lo"
+  },
+  {
+   "id": "DOCS-MILEAGE-MODEL-ANSWERS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #946 merged 2026-06-14",
+   "name": "Docs-only follow-up to the merged mileage design (#943). Replaces MILEAGE-MODEL-DESIGN.md §6 'Open questions' with Jorge"
+  },
+  {
+   "id": "DOCS-MILEAGE-MODEL-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #943 merged 2026-06-14",
+   "name": "Docs-only design/grounding spec for the mileage build blocks — no code, no DDL, no migration, no money path. Authors doc"
+  },
+  {
+   "id": "DOCS-PERMISSIONS-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #953 merged 2026-06-14",
+   "name": "Docs-only design spec for the foundational Roles & Permissions block (Jorge-approved UI lock 01-PERMISSIONS-LOCKED). Qui"
+  },
+  {
+   "id": "DOCS-QBO-PARITY-CAPTURE-V2",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #826 merged 2026-06-09",
+   "name": "Capture master progress report + QBO-parity v2/v3 specs + Visuals-First specs to repo (docs-only) so nothing is lost."
+  },
+  {
+   "id": "DOCS-RECON-TRACKER-ESCROW-RESEARCH-0614",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #937 merged 2026-06-14",
+   "name": "Docs-only, no code/DDL. (1) Reconcile MASTER_PROGRESS_REPORT.md against a full read-only recon of the entire block set v"
+  },
+  {
+   "id": "DOCS-RELAY-INTERNAL-BANK-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #956 merged 2026-06-14",
+   "name": "Docs-only design spec for the gated Relay internal-bank + diesel-code build (Section D #2). Captures Jorge's exact Relay"
+  },
+  {
+   "id": "DOCS-RLS-COVERAGE-AUDIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #947 merged 2026-06-14",
+   "name": "Safe-additive Block 9 — RLS coverage audit (docs-only, GUARD #33 / Wave-5 Block N). docs/specs/RLS-COVERAGE-AUDIT.md: re"
+  },
+  {
+   "id": "DOCS-ROLE-BINDINGS-WORKSHEET",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #716 merged 2026-06-08",
+   "name": "Bookkeeper approval worksheet for chart-of-accounts role bindings used by the IH35-TMS posting engine."
+  },
+  {
+   "id": "DOCS-VOID-EVERYWHERE-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #964 merged 2026-06-14",
+   "name": "Docs-only design spec for the VOID-EVERYWHERE cross-cutting block (finance build package construction block #1, BUILD FI"
+  },
+  {
+   "id": "E1-SMOKE-SERVICE-TOKEN-AUTH",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #906 merged 2026-06-12",
+   "name": "Service-token auth middleware for service-to-service/cron HTTP calls. Daily smoke probe (read-only critical path checks)"
+  },
+  {
+   "id": "FEAT-ACCOUNT-REGISTER-D5",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #976 merged 2026-06-15",
+   "name": "D5 / CA-05 + CA-06: read-only per-account register (running-balance ledger over the chart of accounts) + audit-history t"
+  },
+  {
+   "id": "FEAT-B1-EXPENSE-CATEGORY-MAP-SEED",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #918 merged 2026-06-13",
+   "name": "B1: populate accounting.expense_category_account_map (10 category->account mappings x active operating companies TRANSP+"
+  },
+  {
+   "id": "FEAT-B2-POSTING-ENGINE-CASH-ADVANCE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #919 merged 2026-06-13",
+   "name": "B2: teach the posting engine the cash_advance source type so an approved advance posts a real, balanced, traceable journ"
+  },
+  {
+   "id": "FEAT-B3-EMPLOYEE-LOAN-LEDGER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #920 merged 2026-06-13",
+   "name": "B3: wire the missing GL posting for the employee-loan / cash-advance disbursement on the existing 0138 driver_finance le"
+  },
+  {
+   "id": "FEAT-B4-DRIVER-REQUEST-AUDIT-TIMELINE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #921 merged 2026-06-13",
+   "name": "B4: append-only driver-request accountability timeline on the existing immutable spine (events.event_log). Captures requ"
+  },
+  {
+   "id": "FEAT-B5-CASH-ADVANCE-APPROVE-CASCADE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #922 merged 2026-06-13",
+   "name": "B5 (capstone): rework approveCashAdvanceRequest into the link+post cascade orchestrating B2/B3/B4. On approval the advan"
+  },
+  {
+   "id": "FEAT-B6-DRIVER-INBOX-UI",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #923 merged 2026-06-13",
+   "name": "B6 Driver Inbox UI inside Driver Hub Home. (1) Approve action uses the OFFICE cascade API (/cash-advance-requests/:id/ap"
+  },
+  {
+   "id": "FEAT-CLASSES-BULK-EDIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #952 merged 2026-06-14",
+   "name": "Safe-additive Block 7 — classes bulk-edit (additive, no migration, no money path). Backend: new POST /api/v1/catalogs/cl"
+  },
+  {
+   "id": "FEAT-DISP-CASHFLOW-LINK",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #744 merged 2026-06-08",
+   "name": "DISP-CASHFLOW-LINK — verify factoring advances, settlement payouts, detention revenue, and factoring fees are represente"
+  },
+  {
+   "id": "FEAT-DISP-DRAWER-WIRE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #746 merged 2026-06-08",
+   "name": "Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs"
+  },
+  {
+   "id": "FEAT-DISPATCH-PLANNERS-SPLIT-NAV",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #944 merged 2026-06-14",
+   "name": "Safe-additive Block 1 (C-1) — Dispatch Planners split control. The 'Planning' parent was an intentional click-to-toggle "
+  },
+  {
+   "id": "FEAT-DOCS-UPLOAD-UI",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #949 merged 2026-06-14",
+   "name": "Safe-additive Block 4 — docs-upload UI on the Documents page (frontend-only, additive, no money path, no migration). The"
+  },
+  {
+   "id": "FEAT-DRIVER-ESCROW-SUBACCOUNT-V2",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #934 merged 2026-06-14",
+   "name": "Per-driver ESCROW (liability) sub-account auto-provision — the liability half, STOP-DECISION #1 resolved (asset side mer"
+  },
+  {
+   "id": "FEAT-DRIVER-HUB-ROUTE-WIRE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #822 merged 2026-06-09",
+   "name": "P5a — wire existing DriverHubPage to /driver-hub route (additive; mirrors /cash-flow)"
+  },
+  {
+   "id": "FEAT-DRIVER-INBOX-REPORTING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #951 merged 2026-06-14",
+   "name": "Safe-additive Block 6 (B7) — read-only driver-inbox reporting. New GET /api/v1/driver-finance/inbox-reporting?operating_"
+  },
+  {
+   "id": "FEAT-DRIVER-SUBACCOUNT-ASSET-PROVISION",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #933 merged 2026-06-14",
+   "name": "Per-driver ASSET sub-account auto-provision (the part NOT gated on STOP-DECISION #1). On driver-profile creation (POST /"
+  },
+  {
+   "id": "FEAT-DRIVER-SUBACCOUNT-BULK-BACKFILL-DRYRUN",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #935 merged 2026-06-14",
+   "name": "Bulk backfill DRY-RUN for the per-driver asset + escrow sub-accounts (the per-hire path is #933 asset / #934 escrow). Ex"
+  },
+  {
+   "id": "FEAT-EXPENSES-PHASE1-5-BUILD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1008 merged 2026-06-15",
+   "name": "GAP-EXPENSES Phase 1.5 -- expense_lines cents reconciliation + the hard 'balances or fails hard' total=sum invariant, la"
+  },
+  {
+   "id": "FEAT-EXPENSES-PHASE1-FOUNDATION",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1006 merged 2026-06-15",
+   "name": "GAP-EXPENSES-MODULE-COMPLETION Phase 1 (A1-staged foundation). Authors the dormant parent header accounting.expenses so "
+  },
+  {
+   "id": "FEAT-EXPENSES-PHASE2-STEP3-POSTING-BUILD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1018 merged 2026-06-15",
+   "name": "GAP-EXPENSES Phase 2 Step 3 (TIER 1) — expense → GL posting engine + reversing-JE void, ALL behind EXPENSE_GL_POSTING_EN"
+  },
+  {
+   "id": "FEAT-EXPENSES-PHASE2-UNCATEGORIZED-SEED",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1015 merged 2026-06-15",
+   "name": "GAP-EXPENSES Phase 2 Step 2 — the safe foundation seed (NO posting logic). Migration 202606151500 seeds one global 'Unca"
+  },
+  {
+   "id": "FEAT-FH-2-LOAN-WIZARD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1023 merged 2026-06-16",
+   "name": "FH-2 Loan Wizard — Finance Hub centerpiece, PREVIEW/COMPUTE-ONLY (Tier 3). One form computes the full preview-first draf"
+  },
+  {
+   "id": "FEAT-FH-3-AMORTIZATION",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1026 merged 2026-06-16",
+   "name": "FH-3 Amortization Schedule Engine (Tier 3). Create loans + generate/store amortization schedules. New schema finance.* ("
+  },
+  {
+   "id": "FEAT-FH-4-CALCULATOR",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1027 merged 2026-06-16",
+   "name": "FH-4 Finance Calculator (Tier 3). PURE modeling-only: monthly payment, total interest, payoff date, amortization preview"
+  },
+  {
+   "id": "FEAT-FH1-FIXED-ASSETS-DATA-MODEL",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1017 merged 2026-06-15",
+   "name": "FH-1 Fixed Assets + Depreciation — Step 1: the asset-register DATA MODEL only (NO posting, NO cron). TIER 3 (FH-module b"
+  },
+  {
+   "id": "FEAT-HELP-ARTICLE-STUBS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #950 merged 2026-06-14",
+   "name": "Safe-additive Block 5 — help-article scaffold stubs (frontend-only docs, no money path, no migration). Help is frontend-"
+  },
+  {
+   "id": "FEAT-HIDE-STUB-NAV-PAGES",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #945 merged 2026-06-14",
+   "name": "Safe-additive Block 8 — hide stub/placeholder pages from nav (frontend-only, reversible, no code deleted). Per GUARD ans"
+  },
+  {
+   "id": "FEAT-INSURANCE-POLICY-WIZARD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #737 merged 2026-06-08",
+   "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea"
+  },
+  {
+   "id": "FEAT-INVENTORY-PARTS-404-FIX",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #926 merged 2026-06-13",
+   "name": "B1: fix the /inventory Parts & Stock page that called a non-existent /api/v1/inventory/parts endpoint (404). Frontend-on"
+  },
+  {
+   "id": "FEAT-PERIODS-INIT-TRK-2025-H2",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #927 merged 2026-06-13",
+   "name": "AI-4: extend the accounting-period seed to full p4-periods-balances coverage (2025 + 2026, TRANSP + TRK). 202606080210 s"
+  },
+  {
+   "id": "FEAT-QBO-PARITY-A1-TABLE-GRAMMAR",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #824 merged 2026-06-09",
+   "name": "A1 — shared ParityTable grammar (density + gear column-toggle + advanced pager + select/batch). Additive new component; "
+  },
+  {
+   "id": "FEAT-QBO-PARITY-A3-SIZING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #825 merged 2026-06-09",
+   "name": "A3 — sizing tokens + ParityDrawer (~576px right-drawer shell for create/edit). Additive new files; no existing files tou"
+  },
+  {
+   "id": "FEAT-QBO-PARITY-DOCS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #823 merged 2026-06-09",
+   "name": "QBO-PARITY-UI-SYSTEM (PART D) — design-law spec + architecture/blueprint/locked-decisions docs (docs-only)"
+  },
+  {
+   "id": "FEAT-REEFER-HOURS-POLL-CRON",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #942 merged 2026-06-14",
+   "name": "Block F — reefer hours 15-minute poller cron (additive backend, no money path). The ingest (ingestReeferHoursFromSamsara"
+  },
+  {
+   "id": "FEAT-SETTLEMENT-DEDUCTION-LEDGER-DDL",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #925 merged 2026-06-13",
+   "name": "A3-1: additive ledger columns on driver_finance.driver_settlement_deductions (the KEEP ledger). Adds remaining_balance_c"
+  },
+  {
+   "id": "FEAT-SETTLEMENT-RECOVERY-CAPPED-PAYROLL",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #929 merged 2026-06-14",
+   "name": "A3-2: the net-floor-capped, partial-to-floor advance-recovery ENGINE for driver settlements. Adds a PURE engine (payroll"
+  },
+  {
+   "id": "FEAT-SETTLEMENT-RECOVERY-CAPPED-WIRING",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #930 merged 2026-06-14",
+   "name": "A3-2 live-path WIRING (engine merged in #929). Wires computeSettlement to the capped engine behind SETTLEMENT_CAPPED_REC"
+  },
+  {
+   "id": "FEAT-SETTLEMENT-RECOVERY-GL-JE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #931 merged 2026-06-14",
+   "name": "A3-2 GL — FALLBACK paired JE (Option B locked; verify-first proved the single multi-line bill is not clean — createBill "
+  },
+  {
+   "id": "FEAT-SETTLEMENT-SHADOW-RUN",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #932 merged 2026-06-14",
+   "name": "A3-3: read-only / compute-only shadow comparison of OLD blunt recovery vs NEW capped-ledger recovery, per real settlemen"
+  },
+  {
+   "id": "FEAT-SIDEBAR-V2-REORG-25",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #859 merged 2026-06-10",
+   "name": "SIDEBAR-V2-REORG-25: 25-item Owner sidebar + 3 new modules (Tasks, Finance, Inventory shells)"
+  },
+  {
+   "id": "FEAT-TASK-BOARD-CREATE-TASK-UI",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #940 merged 2026-06-14",
+   "name": "Block B — Create-Task UI (additive, frontend-only, no money path). The Task Board displayed tasks but had no create acti"
+  },
+  {
+   "id": "FEAT-TRACKER-EXPORT-GITHUB-TABS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #941 merged 2026-06-14",
+   "name": "Exporter Option C — add the GitHub/computed tabs to scripts/export-tracker-xlsx.mjs so v27 has all 10 v26 tabs in order."
+  },
+  {
+   "id": "FEAT-V0-SIDEBAR-DRIVER-HUB",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #827 merged 2026-06-09",
+   "name": "V0 (partial) — add DRIVER HUB sidebar entry adjacent to DRIVERS (additive insert; cash-flow nav deferred to Sidebar-V2)."
+  },
+  {
+   "id": "FEAT-V2-A2-REFERENCE-SELECT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #828 merged 2026-06-09",
+   "name": "A2 keystone — ReferenceSelect: Combobox + always-visible '+ Add new' -> QuickCreateEntityModal (nested-create-returns-se"
+  },
+  {
+   "id": "FEAT-VOID-EVERYWHERE-PR1",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #973 merged 2026-06-15",
+   "name": "VOID-EVERYWHERE PR-1 (foundation, gated default OFF). Adds the shared void engine wired to Invoices + Journal Entries. M"
+  },
+  {
+   "id": "FEAT-VOID-EVERYWHERE-PR2",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #977 merged 2026-06-15",
+   "name": "VOID-EVERYWHERE PR-2 (gated, default OFF, NO migration). Extends the PR-1 shared void engine to Bills -- the AP mirror o"
+  },
+  {
+   "id": "FH-VERIFY-finance-hub-modules",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "VERIFY+FLAG. Do NOT rebuild built-gated modules. Flag-ON = Tier 1, STOPS for Jorge.",
+   "name": "FINANCE HUB / TASK V — Verify FH-1→8 (built-gated/design-done) + flag-plan"
+  },
+  {
+   "id": "FIX-AT-RISK-LOADS-SD-CITY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #820 merged 2026-06-08",
+   "name": "at-risk-loads 500 (Postgres 42703) — project city/state in the sd delivery-stop lateral + projection-drift regression gu"
+  },
+  {
+   "id": "FIX-AUDIT-KPI-DRIFTS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #480 merged 2026-06-04",
+   "name": "Reconcile 8 KPI drifts production vs app. All 8 canonical KPIs already fixed in main: canonical-kpis.ts, KPI_SOURCES_OF_"
+  },
+  {
+   "id": "FIX-AUDIT-NESTED-MODALS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #462 merged 2026-06-04",
+   "name": "Fix nested-box modal pattern (double-frame headers). WorkOrderDetailModal + CustomerDrillModal already clean. Added doub"
+  },
+  {
+   "id": "FIX-AUDIT-PROD-STUBS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #471 merged 2026-06-04",
+   "name": "Remove 13+ production stub strings. Fixed DriversTable.tsx '(stub)' toast. CI guard (verify-no-prod-stubs.mjs) already i"
+  },
+  {
+   "id": "FIX-AUDIT-TEST-DATA-LEAK",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #469 merged 2026-06-04",
+   "name": "Archive TEST/seed rows from prod listings. Infrastructure already in place (migrations 0320/0367/0369/0396, EXCLUDE_ARCH"
+  },
+  {
+   "id": "FIX-CANARY-SMOKE-DURABLE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 file(s) on main",
+   "name": "Simplify smoke.sh to health-only: drop SMOKE_TEST_TOKEN/EMAIL/PASSWORD/COMPANY_ID — auth is Google OAuth/Lucia, no servi"
+  },
+  {
+   "id": "FIX-CI-YML-CONFLICT-MARKERS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #875 merged 2026-06-11",
+   "name": "Remove git conflict markers committed to ci.yml during W1B/W2B/W2P squash merges. YAML validated."
+  },
+  {
+   "id": "FIX-COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1019 merged 2026-06-15",
+   "name": "BUGFIX COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE — the #1015 seed created catalogs.accounts #6999 'Uncategorized Expenses'"
+  },
+  {
+   "id": "FIX-DEPLOY-MIGRATION-DRIFT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #878 merged 2026-06-11",
+   "name": "Re-home wave SQL migrations from apps/backend/migrations/ (never scanned by db-migrate.mjs) into db/migrations/ with tim"
+  },
+  {
+   "id": "FIX-DISPATCH-SUBNAV-ROUTING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #818 merged 2026-06-08",
+   "name": "Block V — wire 5 dispatch secondary tabs to distinct routes"
+  },
+  {
+   "id": "FIX-DOUBLE-STRINGIFY-SWEEP-NONMONEY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #975 merged 2026-06-15",
+   "name": "Final double-stringify sweep (sibling of the task-create #970 and money-path #971 fixes) — the remaining NON-money api c"
+  },
+  {
+   "id": "FIX-FINANCE-DOUBLE-STRINGIFY-SWEEP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #971 merged 2026-06-15",
+   "name": "Money-path double-stringify sweep (sibling of FIX-TASK-CREATE-DOUBLE-STRINGIFY). Same root cause: these api clients pre-"
+  },
+  {
+   "id": "FIX-FUEL-SUBNAV-ROUTING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #817 merged 2026-06-08",
+   "name": "Block U — wire 8 fuel sub-nav tabs to distinct routes"
+  },
+  {
+   "id": "FIX-GUARD-M2-FK-DETECTION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #917 merged 2026-06-13",
+   "name": "Fix verify:m2-integrity-position-history FK detection: use pg_constraint (role-independent catalog) instead of informati"
+  },
+  {
+   "id": "FIX-INSURANCE-POLICY-UNIT-IS-ACTIVE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1011 merged 2026-06-15",
+   "name": "Insurance create/units 500 fix. insurance.policy_unit has NO is_active column (active state = removed_at IS NULL; verifi"
+  },
+  {
+   "id": "FIX-P8-AUDIT-NESTED-MODALS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #907 merged 2026-06-12",
+   "name": "Fix nested-box modal pattern (double-frame headers). WorkOrderDetailModal + CustomerDrillModal already clean in main. Ad"
+  },
+  {
+   "id": "FIX-REMOVE-LEFT-SIDEBAR-HOVER-DROPDOWN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #974 merged 2026-06-15",
+   "name": "Finance-build block 17: remove the LEFT main sidebar hover/fly-out dropdown (outstanding cleanup; locked sidebar design "
+  },
+  {
+   "id": "FIX-RLS-BILL-EXPENSE-LINES",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #714 merged 2026-06-08",
+   "name": "Accounting audit security fix: enable + force RLS with company-isolation policies on accounting.bill_lines, accounting.e"
+  },
+  {
+   "id": "FIX-SAFETY-NAV-COUNT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #647 merged 2026-06-07",
+   "name": "Restore SAFETY_CANONICAL_TAB_COUNT reference in HomePage after home router refactor"
+  },
+  {
+   "id": "FIX-SAMSARA-WEBHOOKS-INVESTIGATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #475 merged 2026-06-04",
+   "name": "Samsara webhooks investigation + restoration. Route mounted at dual paths, HMAC-SHA256 signature verifier present, per-t"
+  },
+  {
+   "id": "FIX-STEP3-POSTING-BALANCED-JE-PROOF",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1021 merged 2026-06-15",
+   "name": "Step 3 (expense → GL posting) balanced-JE proof + two posting-engine robustness fixes uncovered while obtaining it. (1) "
+  },
+  {
+   "id": "FIX-TASK-CREATE-DOUBLE-STRINGIFY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #970 merged 2026-06-15",
+   "name": "Prod 400 fix: task-create POST sent a double-stringified body ('\"{...}\"') so the server rejected with 400 'expected obje"
+  },
+  {
+   "id": "FIX-TEST-JSDOM-ENV-MISSING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #863 merged 2026-06-10",
+   "name": "Fix 64 failing tests in dispatch-coming-soon-triage and lists-routing — missing @vitest-environment jsdom + jest-dom mat"
+  },
+  {
+   "id": "FIX-URL-NORMALIZE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #819 merged 2026-06-08",
+   "name": "Block H — underscore URL redirect to hyphen canonical paths"
+  },
+  {
+   "id": "FOLLOWUP-SPECS-2026-06-07",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #689 merged 2026-06-07",
+   "name": "Follow-up block specs from June 6-7 sprint: insurance renewals, deduction cap, detention notifications, CI fixes, and Dr"
+  },
+  {
+   "id": "GAP-10-DELTA-CANCELLATIONS-REPORT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #663 merged 2026-06-07",
+   "name": "Load cancellations analytics report (group by reason, driver, customer, date)"
+  },
+  {
+   "id": "GAP-11-DELTA-UPLOAD-EXPENSE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #666 merged 2026-06-07",
+   "name": "Wire UploadZone into expense create form (match bill/invoice attachment pattern)"
+  },
+  {
+   "id": "GAP-14-PRE-DISPATCH-VALIDATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 6 file(s) on main",
+   "name": ""
+  },
+  {
+   "id": "GAP-18-DRIVER-COMM-TIMELINE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #682 merged 2026-06-07",
+   "name": ""
+  },
+  {
+   "id": "GAP-19-DETENTION-INVOICE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #686 merged 2026-06-07",
+   "name": "GAP-19 Detention billable manager-approval gate — approve bridges detention into linehaul invoice (reuses bridgeDetentio"
+  },
+  {
+   "id": "GAP-20",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #704 merged 2026-06-07",
+   "name": ""
+  },
+  {
+   "id": "GAP-23",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #662 merged 2026-06-07",
+   "name": "4-tier Samsara cache hierarchy with scheduled warmer"
+  },
+  {
+   "id": "GAP-24-FRESHNESS-INDICATOR",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #685 merged 2026-06-07",
+   "name": "Samsara freshness indicator pill (L1-L4, green/amber/red)"
+  },
+  {
+   "id": "GAP-25",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #707 merged 2026-06-08",
+   "name": "Active Driver Set 15-min Recompute"
+  },
+  {
+   "id": "GAP-26",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #722 merged 2026-06-08",
+   "name": "Border 1000m Geofences + Customs Clearance Time"
+  },
+  {
+   "id": "GAP-27",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #724 merged 2026-06-08",
+   "name": "Daily Geofence Reconciliation Report"
+  },
+  {
+   "id": "GAP-28",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 8 file(s) on main",
+   "name": "Layover Time Computation (>8h Gap)"
+  },
+  {
+   "id": "GAP-29",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 7 file(s) on main",
+   "name": "Booking-Gap Time per Dispatcher Analytics"
+  },
+  {
+   "id": "GAP-30",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #665 merged 2026-06-07",
+   "name": "Late-arrival rate analytics per driver/customer/lane"
+  },
+  {
+   "id": "GAP-31",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #761 merged 2026-06-08",
+   "name": "Multi-stop extra rate per stop (WF-053)"
+  },
+  {
+   "id": "GAP-32",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #760 merged 2026-06-08",
+   "name": "Customer free-time detention catalog"
+  },
+  {
+   "id": "GAP-34",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #667 merged 2026-06-07",
+   "name": "G22 Driver PWA dispatch view (pickup/delivery cards + doc upload)"
+  },
+  {
+   "id": "GAP-36",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #759 merged 2026-06-08",
+   "name": "Driver PWA full incident reporting (WF-048)"
+  },
+  {
+   "id": "GAP-37",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #765 merged 2026-06-08",
+   "name": "G14 Equipment dual-confirm transfer (WF-047)"
+  },
+  {
+   "id": "GAP-38-DAMAGE-INSURANCE-CONTINUITY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #671 merged 2026-06-07",
+   "name": "Damage report continuity chain + WF-027 insurance auto-claim linkage (additive; UI on locked shared surface deferred for"
+  },
+  {
+   "id": "GAP-39",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #669 merged 2026-06-07",
+   "name": "G17 Geofencing full backend state machine"
+  },
+  {
+   "id": "GAP-40",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #673 merged 2026-06-07",
+   "name": "Damage photo EXIF chain-of-custody (WF-058)"
+  },
+  {
+   "id": "GAP-41",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #672 merged 2026-06-07",
+   "name": "9 Reports Hub categories with hover-dropdown WF-061"
+  },
+  {
+   "id": "GAP-42",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #767 merged 2026-06-08",
+   "name": "IFTA 4-step quarterly preparer + Owner-only WF-064"
+  },
+  {
+   "id": "GAP-43",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #768 merged 2026-06-08",
+   "name": "6 scheduled reports auto-emailed per Q8"
+  },
+  {
+   "id": "GAP-44",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #674 merged 2026-06-07",
+   "name": "Form 425C Exhibits A-F auto-build for TRANSP monthly DIP filings"
+  },
+  {
+   "id": "GAP-45",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #763 merged 2026-06-08",
+   "name": "Cash flow + per-truck CPM route fix (P6-C1)"
+  },
+  {
+   "id": "GAP-46",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #769 merged 2026-06-08",
+   "name": "Integrity anomaly detection alert engine"
+  },
+  {
+   "id": "GAP-47",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #770 merged 2026-06-08",
+   "name": "Dispatch auth gates WF-044/050/038"
+  },
+  {
+   "id": "GAP-48",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #676 merged 2026-06-07",
+   "name": "GAP-48 Driver Operations Depth — 12 read-only operational sub-views on a new Operations tab"
+  },
+  {
+   "id": "GAP-49",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #675 merged 2026-06-07",
+   "name": "Maintenance Pre-Flight DVIR Severity Tagging (major vs minor vs observation) — WF-050 / 49 CFR §396.11"
+  },
+  {
+   "id": "GAP-50",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #677 merged 2026-06-07",
+   "name": "AI Photo Comparison Pre/Post Trip Damage Detection"
+  },
+  {
+   "id": "GAP-51",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #772 merged 2026-06-08",
+   "name": "Data sovereignty DS-1..7 suite"
+  },
+  {
+   "id": "GAP-52",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #773 merged 2026-06-08",
+   "name": "CAP-15 Driver QBO vendor mapping integrity"
+  },
+  {
+   "id": "GAP-53",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #774 merged 2026-06-08",
+   "name": "Bank account multi-company drift fix"
+  },
+  {
+   "id": "GAP-54",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #775 merged 2026-06-08",
+   "name": "WF-051 250-foot arrival prompt correction"
+  },
+  {
+   "id": "GAP-55",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #776 merged 2026-06-08",
+   "name": "CAP-1 Real-time GPS every active load"
+  },
+  {
+   "id": "GAP-56",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #779 merged 2026-06-08",
+   "name": "CAP-4 Auto status switching on vehicle movement"
+  },
+  {
+   "id": "GAP-57",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #781 merged 2026-06-08",
+   "name": "CAP-5 Dispatch board on-track behind delayed tri-signal"
+  },
+  {
+   "id": "GAP-58",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #777 merged 2026-06-08",
+   "name": "CAP-8 Engine diagnostic fault auto work order"
+  },
+  {
+   "id": "GAP-59",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #778 merged 2026-06-08",
+   "name": "CAP-9 Vehicle-Driver Pairing At Time of Event — Samsara pairing lookup for WO/accident/fuel attribution"
+  },
+  {
+   "id": "GAP-60",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #780 merged 2026-06-08",
+   "name": "CAP-10 Driver Scoring Page Safety"
+  },
+  {
+   "id": "GAP-61",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #681 merged 2026-06-07",
+   "name": "CAP-11 Fuel card real-time fraud alerts"
+  },
+  {
+   "id": "GAP-62-CAP-12-TIRE-TREAD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #679 merged 2026-06-07",
+   "name": "CAP-12 tire tread wear tracking and replacement projections"
+  },
+  {
+   "id": "GAP-63",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #678 merged 2026-06-07",
+   "name": "CAP-13 Brake Wear Predictive Maintenance — lining thickness tracking + replacement projections"
+  },
+  {
+   "id": "GAP-64",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #783 merged 2026-06-08",
+   "name": "CAP-14 cargo temp/humidity sensors"
+  },
+  {
+   "id": "GAP-66-DISPATCHER-HOME",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #645 merged 2026-06-07",
+   "name": "Dispatcher Home role-specific view"
+  },
+  {
+   "id": "GAP-67-ACCOUNTING-HOME",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #652 merged 2026-06-07",
+   "name": "Accounting Home role-specific view (read-only display)"
+  },
+  {
+   "id": "GAP-68-SAFETY-OFFICER-HOME",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #653 merged 2026-06-07",
+   "name": "Safety Officer home role-specific view"
+  },
+  {
+   "id": "GAP-69-DRIVER-MANAGER-HOME",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #654 merged 2026-06-07",
+   "name": "Driver Manager home role-specific view"
+  },
+  {
+   "id": "GAP-7",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #660 merged 2026-06-07",
+   "name": ""
+  },
+  {
+   "id": "GAP-70",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #691 merged 2026-06-07",
+   "name": "EDI Integration Foundation (204/214/210/990)"
+  },
+  {
+   "id": "GAP-71",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #784 merged 2026-06-08",
+   "name": "Driver Retention Predictive Model"
+  },
+  {
+   "id": "GAP-72",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #782 merged 2026-06-08",
+   "name": "Customer Relationship Score + Health"
+  },
+  {
+   "id": "GAP-76",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 7 file(s) on main",
+   "name": "Deadhead mile optimizer — ranked next-load suggestions"
+  },
+  {
+   "id": "GAP-8",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #661 merged 2026-06-07",
+   "name": "G26 assignments inline quicksave (unit/trailer/driver)"
+  },
+  {
+   "id": "GAP-82-MEDICAL-CARD-TRACKING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #640 merged 2026-06-07",
+   "name": "Medical card + CDL expiry tracking and alerts"
+  },
+  {
+   "id": "GAP-83-ELD-AUDIT-VIEWER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #644 merged 2026-06-07",
+   "name": "ELD audit trail read-only viewer"
+  },
+  {
+   "id": "GAP-84-DOT-INSPECTION-GAP-CLOSE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #649 merged 2026-06-07",
+   "name": "DOT inspection clean-rate endpoint, score badge, and CI verify guard"
+  },
+  {
+   "id": "GAP-85-PERMIT-TOLL-TRACKING",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #655 merged 2026-06-07",
+   "name": "Permit + toll tag tracking per unit with expiry alerts"
+  },
+  {
+   "id": "GAP-86-INSURANCE-BILL-CREATOR",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #687 merged 2026-06-07",
+   "name": "Insurance multi-vehicle policy creator + bill schedule write via createBill()"
+  },
+  {
+   "id": "GAP-86-POLICY-WIZARD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #737 merged 2026-06-08",
+   "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea"
+  },
+  {
+   "id": "GAP-89-UNIVERSAL-SEARCH-CMD-K",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #657 merged 2026-06-07",
+   "name": "Universal Cmd-K quick switcher search"
+  },
+  {
+   "id": "GAP-91-MOBILE-RESPONSIVE-AUDIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #658 merged 2026-06-07",
+   "name": "Mobile responsive audit + PWA touch UI polish"
+  },
+  {
+   "id": "GAP-92-FEATURE-FLAG-SYSTEM",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #659 merged 2026-06-07",
+   "name": "Per-tenant and per-user feature flag system"
+  },
+  {
+   "id": "GAP-CI-WIRE-PREPUSH-GUARDS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #897 merged 2026-06-12",
+   "name": "Wire all static pre-push locked guards into GitHub Actions CI so git push --no-verify cannot silently break a locked rul"
+  },
+  {
+   "id": "GAP-DOUBLE-ENTRY-DB-ENFORCEMENT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #708 merged 2026-06-07",
+   "name": "Double-entry DB enforcement guard: CI script asserting balance trigger exists + DB integration test + existing-data veri"
+  },
+  {
+   "id": "GAP-E-PLANNER-TASKS-ROUTES",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #885 merged 2026-06-12",
+   "name": "Fix two dead routes: add /dispatch/planners index redirect to /loads; remove stale /tasks ComingSoonPage stub so real Ta"
+  },
+  {
+   "id": "GAP-IDEMP-KEYS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #737 merged 2026-06-08",
+   "name": "Insurance policy create wizard (GAP-86) + HTTP idempotency keys (GAP-IDEMP): combined scope for insurance wizard PR whic"
+  },
+  {
+   "id": "GAP-PREMERGE-GATES-EXPAND",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #651 merged 2026-06-07",
+   "name": "Promote three post-merge feedback checks to required pre-merge CI gates (GAP-81 failure class)"
+  },
+  {
+   "id": "GLOBAL-SORT-RULE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #723 merged 2026-06-08",
+   "name": "Lock Global Sort Rule as a UI contract (docs/specs/GLOBAL-SORT-RULE.md) and wire CI guard (scripts/verify-global-sort-ru"
+  },
+  {
+   "id": "HOS-VIEWER-DONE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "DONE — shipped + GUARD-verified live 2026-06-19. Tracked here so it is NOT re-opened.",
+   "name": "HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]"
+  },
+  {
+   "id": "HOTFIX-0327-MIGRATION-ROLE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #643 merged 2026-06-07",
+   "name": "Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)"
+  },
+  {
+   "id": "INS-MODULE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (insurance INS-01..07, #314–335, rows 242–248).",
+   "name": "INSURANCE / TASK — Insurance module build-out"
+  },
+  {
+   "id": "ITEM1-TWO-SIDED-ITEM",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 file(s) on main",
+   "name": "Two-sided item model: sell side (income account, defaults to Service income) + buy side (expense account + preferred ven"
+  },
+  {
+   "id": "LOCKDOWN-ENFORCEMENT-GUARDS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #755 merged 2026-06-08",
+   "name": "Anti-regression CI guards — sidebar 23-target additive check, cash-flow module pending gate, insurance atomic financial "
+  },
+  {
+   "id": "M1-POSITIONED-PARTS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #913 merged 2026-06-12",
+   "name": "Positioned-parts picker for work orders. position_set catalog, part_position_assignment linking, picker UI with SVG map "
+  },
+  {
+   "id": "M2-INTEGRITY-POSITION-HISTORY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #915 merged 2026-06-13",
+   "name": "Position History tracking for Integrity/Positioned-Parts. Immutable audit trail of part installations/removals/replaceme"
+  },
+  {
+   "id": "MIGRATION-RUNNER-HARDEN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #914 merged 2026-06-13",
+   "name": "Migration runner hardening - fail loud on unrecognized migration filenames to prevent silent skips"
+  },
+  {
+   "id": "MNT-SHOP",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (mechanic shop, PR #805, row 595).",
+   "name": "MAINTENANCE / TASK — Mechanic-shop / Work-Order module"
+  },
+  {
+   "id": "MX-OPS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "✅ DONE — verify only (Mexico ops, PR #804, row 594).",
+   "name": "MEXICO OPS / TASK — Mexico cross-border operations"
+  },
+  {
+   "id": "OB1-NAV-HEADER-UNIFY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #894 merged 2026-06-12",
+   "name": "Replace legacy 38-item hover-dropdown AccountingSubNav with unified 12-tab clean nav bar. All accounting pages automatic"
+  },
+  {
+   "id": "P0-BLOCK-3-DRIVER-LOAD-HISTORY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #731 merged 2026-06-08",
+   "name": "Driver per-load history tab: surface dispatch.load_assignment_history in DriverDetailPage via new LoadHistoryTab compone"
+  },
+  {
+   "id": "P5-T6-BANKING-TRANSFER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #862 merged 2026-06-10",
+   "name": "Banking transfer between accounts (P5-T6) — fix broken test (missing jsdom env + jest-dom matchers); all surface already"
+  },
+  {
+   "id": "PREREQ-A-SCHEMA-GRANT-GATE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #684 (title match) merged 2026-06-07",
+   "name": ""
+  },
+  {
+   "id": "PREREQ-B-SETTLEMENT-DEDUCTION-SVC",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #683 merged 2026-06-07",
+   "name": "createSettlementDeduction() service — unblocks Driver Hub Requests approve→deduction (Block 7)"
+  },
+  {
+   "id": "RPT-MODULE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "VERIFY — reports foundation #155/#264 shipped; find missing reports only.",
+   "name": "REPORTS / TASK — Reports module build-out"
+  },
+  {
+   "id": "SAFE-W3",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "VERIFY — W3 shipped #877–883; safety module LOCKED (CLAUDE.md §7).",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W3"
+  },
+  {
+   "id": "SAFE-W4",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "VERIFY — W4 shipped #877–883; safety module LOCKED (CLAUDE.md §7).",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W4"
+  },
+  {
+   "id": "SAFE-W5",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "VERIFY — W5 shipped #877–883; safety module LOCKED (CLAUDE.md §7).",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W5"
+  },
+  {
+   "id": "SETTLEMENTS-SIDEBAR-RENAME-MOVE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #893 merged 2026-06-12",
+   "name": "Rename Payroll sidebar entry to Settlements, reposition between Cash Flow and Accounting. Non-financial label+order chan"
+  },
+  {
+   "id": "SHADOW-ROUTE-REDIRECTS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #887 merged 2026-06-12",
+   "name": "Replace 5 alias-shadow routes (ComingSoonPage) with proper Navigate redirects to their real pages. Leave honest stubs (/"
+  },
+  {
+   "id": "SIDEBAR-DRIVER-HUB",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #680 merged 2026-06-07",
+   "name": ""
+  },
+  {
+   "id": "SIDEBAR-INSURANCE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #717 merged 2026-06-08",
+   "name": "Add Insurance sidebar entry after Drivers in sidebar-config.ts; add /insurance redirect route; bump PASS-8 module count "
+  },
+  {
+   "id": "SMOKE-TOKEN-AUTH",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #860 merged 2026-06-10",
+   "name": "Switch smoke auth to bearer token; disable dead PR-preview trigger; Layer-2-only ship; inherit BUG-ADD-USER-INERT fix"
+  },
+  {
+   "id": "STRUCTURAL-MANIFEST-SPLIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #650 merged 2026-06-07",
+   "name": "Each block writes its own .block-ready/<block-id>.json; zero manifest merge conflicts in parallel lanes"
+  },
+  {
+   "id": "STRUCTURAL-MIGRATION-TIMESTAMPS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #648 merged 2026-06-07",
+   "name": "New migrations use timestamp format (20260607_120000_name.sql) to eliminate parallel-lane sequence collisions"
+  },
+  {
+   "id": "TASKS-PLANNER-REDESIGN-V3",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #892 merged 2026-06-12",
+   "name": "Rebuild Task Board into a full employee×day planner grid. Migration adds progress_pct + task_type table. Backend adds /t"
+  },
+  {
+   "id": "TEST-COPY-TO-ACCOUNTING-LINES-BILL-BRANCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1009 merged 2026-06-15",
+   "name": "Follow-up to GAP-EXPENSES Phase 1.5 (#1008): add the bill-branch regression guard GUARD's checklist item (d) flagged as "
+  },
+  {
+   "id": "TIER14-MEXICO-OPS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #804 merged 2026-06-08",
+   "name": "Block 14 — Mexico Operations Module: cross-border loads, mx_permits, mx_tolls_ledger, B1 drivers"
+  },
+  {
+   "id": "TIER15-MECHANIC-SHOP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #805 merged 2026-06-08",
+   "name": "Block 15 — Internal Mechanic Shop: internal_labor_log, parts decrement, JE posting"
+  },
+  {
+   "id": "TIER20-SECRETS-ROTATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #806 merged 2026-06-08",
+   "name": "Block 20 — Secrets Rotation: runbook covering all 10+ secrets with rotation procedures"
+  },
+  {
+   "id": "TIER21-DR-DRILL",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #807 merged 2026-06-08",
+   "name": "Block 21 — DR Restore Drill: first drill completed, RTO 25min, RPO <30sec, quarterly calendar set"
+  },
+  {
+   "id": "TIER23-DEGRADATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #808 merged 2026-06-08",
+   "name": "Block 23 — Degradation Matrix: all 10 deps documented, 3 simulated failures drilled"
+  },
+  {
+   "id": "TIER26-PARTITION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #809 merged 2026-06-09",
+   "name": "Block 26 — Partition Hot Tables: audit_log partitioned by month, maintenance cron, archival function"
+  },
+  {
+   "id": "TIER27-CANARY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #810 merged 2026-06-08",
+   "name": "Block 27 — Canary Deploy: runbook + canary-smoke.yml CI workflow + rollback trigger documented"
+  },
+  {
+   "id": "TIER28-VENDOR-LOCKIN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #811 merged 2026-06-08",
+   "name": "Block 28 — Vendor Lock-in Analysis: 11 vendors documented with severity scoring"
+  },
+  {
+   "id": "TIER29-KNOWN-LIMITATIONS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #813 merged 2026-06-08",
+   "name": "Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories"
+  },
+  {
+   "id": "UX-A-table-alignment-DONE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "DONE (partial). Logic correct on the shared DataTable (Drivers list): text/title centered,",
+   "name": "TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]"
+  },
+  {
+   "id": "VOID-VERIFY-void-everywhere",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "VERIFY+FLAG. Do NOT rebuild built-gated. Flag-ON = Tier 1, STOPS for Jorge.",
+   "name": "MONEY CONTROLS / TASK V — Verify Void-Everywhere PRs + flag-plan"
+  },
+  {
+   "id": "W1-EVENT-LOG-SPINE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 file(s) on main",
+   "name": "Immutable timestamped event spine — events.event_log table + logEvent() helper. All downstream Waves (2-5) write to this"
+  },
+  {
+   "id": "W1A-EVENT-LOG-IMMUTABLE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #870 merged 2026-06-11",
+   "name": "Event log append-only enforcement + hash chain"
+  },
+  {
+   "id": "W1B-TASKS-MODULE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #872 merged 2026-06-11",
+   "name": "Employee×day task planner grid — tasks.task schema, status workflow, spine writes, 5-tab categories, REST routes"
+  },
+  {
+   "id": "W2A-PROFITABILITY-ENGINE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #871 merged 2026-06-11",
+   "name": "ONE profitability engine, THREE groupings: By Lane / By Type / By Customer / By Load. Revenue/mile, cost/mile, margin. R"
+  },
+  {
+   "id": "W2B-ALERT-RULES-PROFILES",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #873 merged 2026-06-11",
+   "name": "THREE QBO alert profile pages: App, Driver (force_ack + force_alarm), Broker (auto_send vs hold_for_review). Config only"
+  },
+  {
+   "id": "W2P-PLANNER-REDESIGN",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #874 merged 2026-06-11",
+   "name": "Rebuild existing planner pages with universal grid: narrow day cols, gridlines YES/shading NO, day headers, ~27-30px row"
+  },
+  {
+   "id": "W3A-GEOFENCE-ENGINE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #877 merged 2026-06-11",
+   "name": "Geofence engine: schema geofence (fence, event). Enter/exit debounced via geofence-state-watcher. Spine writes via event"
+  },
+  {
+   "id": "W3B-FORCED-DRIVER-ACK",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #879 merged 2026-06-11",
+   "name": "Blocking driver acknowledgment modal in Driver PWA. Dispatches alerts to drivers, re-alarms until acked, timestamps all "
+  },
+  {
+   "id": "W4A-SIGNED-SAFETY-DOCS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #880 merged 2026-06-11",
+   "name": "Safety docs sent to driver → driver reads → e-signs. Signed records immutable (RAISE on UPDATE/DELETE). Send/read/sign e"
+  },
+  {
+   "id": "W4B-BROKER-AUTO-UPDATE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #881 merged 2026-06-11",
+   "name": "Auto-email broker load status updates. Gated: all sends go to hold-for-review queue by default. Auto-send is OFF unless "
+  },
+  {
+   "id": "W5-TIME-UTILIZATION",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #883 merged 2026-06-11",
+   "name": "Per-driver + per-truck minute ledger. READ-ONLY reporting (no financial writes). Surfaces UNACCOUNTED time. $/productive"
+  }
+ ]
+}

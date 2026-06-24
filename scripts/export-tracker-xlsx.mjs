@@ -150,6 +150,16 @@ function loadPendingBlocks() {
     .sort((a, b) => a.lane.localeCompare(b.lane) || a.id.localeCompare(b.id));
 }
 const PENDING_BLOCKS = loadPendingBlocks();
+
+// Full built/pending reconciliation (every .block-ready + program block) — written by
+// scripts/reconcile-block-status. Used to put EVERY block into 01 All Tasks (none missing),
+// each with a clear DONE / PENDING / PENDING (GATED) status.
+function loadReconBlocks() {
+  const fp = path.join(ROOT, "docs/trackers/block-reconciliation-data.json");
+  if (!fs.existsSync(fp)) return [];
+  try { return JSON.parse(fs.readFileSync(fp, "utf8")).blocks ?? []; } catch { return []; }
+}
+const RECON_BLOCKS = loadReconBlocks();
 const NEW_SINCE_V24_ROWS = prs
   ? prs.filter((p) => p.number > V24_BASELINE_PR).map((p) => [`#${p.number}`, p.mergeDate, p.mergeTime, p.sha, p.domain, p.title, "merged"])
   : [["—", "—", "—", "—", "—", "GitHub data unavailable at export time (gh not authed) — re-run with gh available", "—"]];
@@ -352,7 +362,23 @@ for (const cfg of SHEETS) {
         dataRow([++lastNum, p.domain, `#${p.number}`, p.title, "", "DONE", p.mergeDate, p.mergeTime ? `${p.mergeTime} UTC` : "", "", "", `merge ${p.sha}`]);
       }
     }
-    if (PENDING_BLOCKS.length) {
+    // EVERY block, built vs pending (verified vs origin/main + merged PRs) — none missing.
+    // Grouped PENDING → PENDING (GATED) → DONE so the open work is at the top.
+    if (RECON_BLOCKS.length) {
+      const groups = [
+        ["PENDING", "▼ PENDING — needs build"],
+        ["PENDING (GATED)", "▼ PENDING (GATED) — financial / locked, needs Jorge's gate first"],
+        ["DONE", "▼ DONE — built & on main (verified: branch merged / PR title / files on main)"],
+      ];
+      for (const [st, label] of groups) {
+        const rows = RECON_BLOCKS.filter((b) => b.status === st);
+        if (!rows.length) continue;
+        groupRow(`${label} (${rows.length}) · reconciled ${date}`);
+        for (const b of rows) {
+          dataRow([++lastNum, b.source, b.id, b.name, "", b.status, "", "", "", b.fin ? "FIN" : "", b.evidence]);
+        }
+      }
+    } else if (PENDING_BLOCKS.length) {
       groupRow(`▼ PENDING PROGRAM BLOCKS — GUARD all-pending-blocks (${PENDING_BLOCKS.length}) · added ${date} · docs/blocks/`);
       for (const b of PENDING_BLOCKS) {
         dataRow([++lastNum, b.lane, b.id, b.name, "", b.status, "", "", "", "", `docs/blocks/${b.id}.txt`]);
