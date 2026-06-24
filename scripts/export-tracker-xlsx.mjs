@@ -363,12 +363,13 @@ for (const cfg of SHEETS) {
       }
     }
     // EVERY block, built vs pending (verified vs origin/main + merged PRs) — none missing.
-    // Grouped PENDING → PENDING (GATED) → DONE so the open work is at the top.
+    // Grouped PENDING → PENDING (GATED) → NEEDS-VERIFY → DONE so the open/untrusted work is at the top.
     if (RECON_BLOCKS.length) {
       const groups = [
         ["PENDING", "▼ PENDING — needs build"],
         ["PENDING (GATED)", "▼ PENDING (GATED) — financial / locked, needs Jorge's gate first"],
-        ["DONE", "▼ DONE — built & on main (verified: branch merged / PR title / files on main)"],
+        ["NEEDS-VERIFY", "▼ NEEDS-VERIFY — weak signal (title-match / partial files / self-report), NOT trusted until GUARD confirms"],
+        ["DONE", "▼ DONE — verified on main (branch merged OR all signature files present)"],
       ];
       for (const [st, label] of groups) {
         const rows = RECON_BLOCKS.filter((b) => b.status === st);

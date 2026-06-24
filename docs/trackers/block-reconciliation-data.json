@@ -3,7 +3,8 @@
  "counts": {
   "PENDING": 62,
   "PENDING (GATED)": 24,
-  "DONE": 370
+  "NEEDS-VERIFY": 94,
+  "DONE": 276
  },
  "blocks": [
   {
@@ -781,6 +782,852 @@
    "name": "FOUNDATIONS / TASK USMCA — USMCA carrier launch (July 2026)"
   },
   {
+   "id": "AF-0-rebaseline",
+   "source": "program",
+   "fin": true,
+   "tier": "3",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1264 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)"
+  },
+  {
+   "id": "AF-1-entity-coa-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #530 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)"
+  },
+  {
+   "id": "AF-2-qbo-drift",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #532 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)"
+  },
+  {
+   "id": "AF-3-account-registers",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #534 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)"
+  },
+  {
+   "id": "AF-4-ap-bills-migration",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #536 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)"
+  },
+  {
+   "id": "AF-6-finance-hub",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #540 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)"
+  },
+  {
+   "id": "AF-7-money-controls",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #542 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS"
+  },
+  {
+   "id": "AF-8-payroll-bridge",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #544 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST"
+  },
+  {
+   "id": "BK7-INLINE-CREATE-DRAWERS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #866 title-match only, unverified",
+   "name": ""
+  },
+  {
+   "id": "BLOCK-04-of-29-TIER2-RATE-LIMIT",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1189 title-match only, unverified",
+   "name": "BLOCK-04-of-29-TIER2-RATE-LIMIT"
+  },
+  {
+   "id": "BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1192 title-match only, unverified",
+   "name": "BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS"
+  },
+  {
+   "id": "BLOCK-06-of-29-TIER2-OUTBOX-DLQ",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1196 title-match only, unverified",
+   "name": "BLOCK-06-of-29-TIER2-OUTBOX-DLQ"
+  },
+  {
+   "id": "BLOCK-08-of-29-TIER2-LOAD-TEST",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #796 title-match only, unverified",
+   "name": "BLOCK-08-of-29-TIER2-LOAD-TEST"
+  },
+  {
+   "id": "BLOCK-09-of-29-TIER2-E2E-PATHS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #802 title-match only, unverified",
+   "name": "BLOCK-09-of-29-TIER2-E2E-PATHS"
+  },
+  {
+   "id": "block-10-account-balances",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1224 title-match only, unverified",
+   "name": "block-10-account-balances"
+  },
+  {
+   "id": "BLOCK-10-of-29-TIER2-RLS-TEST-GATE",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1224 title-match only, unverified",
+   "name": "BLOCK-10-of-29-TIER2-RLS-TEST-GATE"
+  },
+  {
+   "id": "BLOCK-11-of-29-TIER2-AUDIT-COVERAGE",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #814 title-match only, unverified",
+   "name": "BLOCK-11-of-29-TIER2-AUDIT-COVERAGE"
+  },
+  {
+   "id": "BLOCK-13-of-29-TIER2-TUNING-CATALOG",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #794 title-match only, unverified",
+   "name": "BLOCK-13-of-29-TIER2-TUNING-CATALOG"
+  },
+  {
+   "id": "BLOCK-14-of-29-TIER2.5-MEXICO-OPS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2.5",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #804 title-match only, unverified",
+   "name": "BLOCK-14-of-29-TIER2.5-MEXICO-OPS"
+  },
+  {
+   "id": "BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2.5",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #805 title-match only, unverified",
+   "name": "BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP"
+  },
+  {
+   "id": "BLOCK-16-of-29-TIER2.5-FUEL-CARD",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2.5",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #701 title-match only, unverified",
+   "name": "BLOCK-16-of-29-TIER2.5-FUEL-CARD"
+  },
+  {
+   "id": "block-20-cash-basis",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #806 title-match only, unverified",
+   "name": "block-20-cash-basis"
+  },
+  {
+   "id": "block-20-frontend-selector",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #806 title-match only, unverified",
+   "name": "block-20-frontend-selector"
+  },
+  {
+   "id": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #806 title-match only, unverified",
+   "name": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION"
+  },
+  {
+   "id": "block-20-period-close-lock",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #806 title-match only, unverified",
+   "name": "block-20-period-close-lock"
+  },
+  {
+   "id": "block-21-expense-category-map",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #807 title-match only, unverified",
+   "name": "block-21-expense-category-map"
+  },
+  {
+   "id": "BLOCK-21-of-29-TIER3-DR-DRILL",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #807 title-match only, unverified",
+   "name": "BLOCK-21-of-29-TIER3-DR-DRILL"
+  },
+  {
+   "id": "block-22-driver-settlement-engine",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #241 title-match only, unverified",
+   "name": "block-22-driver-settlement-engine"
+  },
+  {
+   "id": "BLOCK-22-of-29-TIER3-OPS-RUNBOOKS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #241 title-match only, unverified",
+   "name": "BLOCK-22-of-29-TIER3-OPS-RUNBOOKS"
+  },
+  {
+   "id": "block-23-escrow-posting-flow",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #808 title-match only, unverified",
+   "name": "block-23-escrow-posting-flow"
+  },
+  {
+   "id": "BLOCK-23-of-29-TIER3-DEGRADATION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #808 title-match only, unverified",
+   "name": "BLOCK-23-of-29-TIER3-DEGRADATION"
+  },
+  {
+   "id": "block-24-factoring-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #214 title-match only, unverified",
+   "name": "block-24-factoring-posting"
+  },
+  {
+   "id": "block-25-factoring-fees-reserves",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #216 title-match only, unverified",
+   "name": "block-25-factoring-fees-reserves"
+  },
+  {
+   "id": "block-26-factoring-reconciliation",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #809 title-match only, unverified",
+   "name": "block-26-factoring-reconciliation"
+  },
+  {
+   "id": "BLOCK-26-of-29-TIER4-PARTITION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #809 title-match only, unverified",
+   "name": "BLOCK-26-of-29-TIER4-PARTITION"
+  },
+  {
+   "id": "block-27-fuel-expense-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #810 title-match only, unverified",
+   "name": "block-27-fuel-expense-posting"
+  },
+  {
+   "id": "BLOCK-27-of-29-TIER4-CANARY",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #810 title-match only, unverified",
+   "name": "BLOCK-27-of-29-TIER4-CANARY"
+  },
+  {
+   "id": "block-28-maintenance-ap-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #811 title-match only, unverified",
+   "name": "block-28-maintenance-ap-posting"
+  },
+  {
+   "id": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #811 title-match only, unverified",
+   "name": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN"
+  },
+  {
+   "id": "block-29-bank-reconciliation-engine",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #813 title-match only, unverified",
+   "name": "block-29-bank-reconciliation-engine"
+  },
+  {
+   "id": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #813 title-match only, unverified",
+   "name": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS"
+  },
+  {
+   "id": "block-30-bank-reconciliation-ui",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #219 title-match only, unverified",
+   "name": "block-30-bank-reconciliation-ui"
+  },
+  {
+   "id": "block-31-sales-tax-handling",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #222 title-match only, unverified",
+   "name": "block-31-sales-tax-handling"
+  },
+  {
+   "id": "block-33-invoice-line-revenue-mapping",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #209 title-match only, unverified",
+   "name": "block-33-invoice-line-revenue-mapping"
+  },
+  {
+   "id": "block-34-payment-application",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "claimed built 2026-06-24 — no branch/signature-file evidence; GUARD must verify",
+   "name": "block-34-payment-application"
+  },
+  {
+   "id": "block-35-chart-of-accounts-roles",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "claimed built 2026-06-24 — no branch/signature-file evidence; GUARD must verify",
+   "name": "block-35-chart-of-accounts-roles"
+  },
+  {
+   "id": "block-36-multi-entity-accounting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #225 title-match only, unverified",
+   "name": "block-36-multi-entity-accounting"
+  },
+  {
+   "id": "block-37-qbo-sync-repair-pipeline",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #226 title-match only, unverified",
+   "name": "block-37-qbo-sync-repair-pipeline"
+  },
+  {
+   "id": "block-40-accounting-audit-trail",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #227 title-match only, unverified",
+   "name": "block-40-accounting-audit-trail"
+  },
+  {
+   "id": "block-41-posting-lineage-ui",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #228 title-match only, unverified",
+   "name": "block-41-posting-lineage-ui"
+  },
+  {
+   "id": "block-43-live-db-schema-verification",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #232 title-match only, unverified",
+   "name": "block-43-live-db-schema-verification"
+  },
+  {
+   "id": "block-cf-cash-forecast",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #698 title-match only, unverified",
+   "name": "block-cf-cash-forecast"
+  },
+  {
+   "id": "block-cmc-month-close-wizard",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #698 title-match only, unverified",
+   "name": "block-cmc-month-close-wizard"
+  },
+  {
+   "id": "BLOCK-I-CI-DIST-FIX",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #73 title-match only, unverified",
+   "name": ""
+  },
+  {
+   "id": "BLOCK-J-MASTER-DATA-GRANT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1063 title-match only, unverified",
+   "name": ""
+  },
+  {
+   "id": "block-ppc-period-comparison",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1060 title-match only, unverified",
+   "name": "block-ppc-period-comparison"
+  },
+  {
+   "id": "CAP-AUTOSTATUS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (CAP-4 auto-status, PR #223, row 101).\", unverified",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Auto load-status switch"
+  },
+  {
+   "id": "CAP-CARGOTEMP",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY — reefer shipped #942/#1218; confirm cargo-TEMP gap only.\", unver",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Cargo-temp monitoring"
+  },
+  {
+   "id": "CAP-ENGINEWO",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (CAP-8 engine→WO, PR #229, row 105).\", unverified",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Engine-fault auto Work Order"
+  },
+  {
+   "id": "CAP-FUELFRAUD",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE adjacent — verify (CAP-FUEL-CARD, PR #237, row 117).\", unverified",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection"
+  },
+  {
+   "id": "CAP-GPS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (CAP-1 GPS, PR #234, row 98). Do NOT rebuild.\", unv",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking"
+  },
+  {
+   "id": "CAP-PREDICTIVE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY — CAP-7 #221 + PM auto-WO; confirm tire/brake gap only.\", unverif",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive"
+  },
+  {
+   "id": "CAP-SCORING",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (CAP-10 driver scoring, PR #230, row 107).\", unveri",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring"
+  },
+  {
+   "id": "CHAIN-01-vendor-picker-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1262 title-match only, unverified",
+   "name": "ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty"
+  },
+  {
+   "id": "CHAIN-03-create-bill-gl-autopost",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1300 title-match only, unverified",
+   "name": "ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)"
+  },
+  {
+   "id": "CHAIN-04-bill-payment-tieout",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1267 title-match only, unverified",
+   "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)"
+  },
+  {
+   "id": "CHAIN-05-bank-feed-live-proof",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1268 title-match only, unverified",
+   "name": "ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE"
+  },
+  {
+   "id": "CHAIN-06-invoice-ar-chain-proof",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1269 title-match only, unverified",
+   "name": "ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof"
+  },
+  {
+   "id": "CHAIN-07-settlements-500-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1270 title-match only, unverified",
+   "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out"
+  },
+  {
+   "id": "CONN-2-factoring-faro",
+   "source": "program",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY — factoring #904 + FACT-1..5 shipped; confirm only the Faro packe",
+   "name": "CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet"
+  },
+  {
+   "id": "CONN-3-relay-internal-bank",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY-STATE (design-done #956). Tier 1 on posting. STOPS for Jorge.\", u",
+   "name": "CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes"
+  },
+  {
+   "id": "DISP-KANBAN-dispatch-kanban-board",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (kanban, PR #751 + #1107, row 569).\", unverified",
+   "name": "DISPATCH / TASK Dispatch Kanban board — Dispatch Kanban board"
+  },
+  {
+   "id": "DISP-OVERVIEW-dispatch-overview",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (overview, PR #752 + #1106, row 567).\", unverified",
+   "name": "DISPATCH / TASK Dispatch Overview — Dispatch Overview"
+  },
+  {
+   "id": "DISP-PROFIT-load-profitability",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY — lane profit #375 + W2A #871; confirm per-LOAD gap only.\", unver",
+   "name": "DISPATCH / TASK Load Profitability — Load Profitability"
+  },
+  {
+   "id": "FH-VERIFY-finance-hub-modules",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY+FLAG. Do NOT rebuild built-gated modules. Flag-ON = Tier 1, STOPS",
+   "name": "FINANCE HUB / TASK V — Verify FH-1→8 (built-gated/design-done) + flag-plan"
+  },
+  {
+   "id": "gap-37-equipment-dual-confirm-transfer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "spec self-reports shipped/merged, unverified",
+   "name": "gap-37-equipment-dual-confirm-transfer"
+  },
+  {
+   "id": "gap-54-wf-051-250-foot-correction",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "spec self-reports shipped/merged, unverified",
+   "name": "gap-54-wf-051-250-foot-correction"
+  },
+  {
+   "id": "gap-65-owner-todays-attention",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "spec self-reports shipped/merged, unverified",
+   "name": "gap-65-owner-todays-attention"
+  },
+  {
+   "id": "gap-67-accounting-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "spec self-reports shipped/merged, unverified",
+   "name": "gap-67-accounting-home-view"
+  },
+  {
+   "id": "gap-68-safety-officer-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "spec self-reports shipped/merged, unverified",
+   "name": "gap-68-safety-officer-home-view"
+  },
+  {
+   "id": "gap-69-driver-manager-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "spec self-reports shipped/merged, unverified",
+   "name": "gap-69-driver-manager-home-view"
+  },
+  {
+   "id": "gap-81-drug-alcohol-program",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "spec self-reports shipped/merged, unverified",
+   "name": "gap-81-drug-alcohol-program"
+  },
+  {
+   "id": "gap-87-audit-log-viewer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "spec self-reports shipped/merged, unverified",
+   "name": "gap-87-audit-log-viewer"
+  },
+  {
+   "id": "HOS-VIEWER-DONE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"DONE — shipped + GUARD-verified live 2026-06-19. Tracked here so it is N",
+   "name": "HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]"
+  },
+  {
+   "id": "INS-MODULE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (insurance INS-01..07, #314–335, rows 242–248).\", u",
+   "name": "INSURANCE / TASK — Insurance module build-out"
+  },
+  {
+   "id": "MNT-SHOP",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (mechanic shop, PR #805, row 595).\", unverified",
+   "name": "MAINTENANCE / TASK — Mechanic-shop / Work-Order module"
+  },
+  {
+   "id": "MX-OPS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"✅ DONE — verify only (Mexico ops, PR #804, row 594).\", unverified",
+   "name": "MEXICO OPS / TASK — Mexico cross-border operations"
+  },
+  {
+   "id": "PREREQ-A-SCHEMA-GRANT-GATE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #684 title-match only, unverified",
+   "name": ""
+  },
+  {
+   "id": "RPT-MODULE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY — reports foundation #155/#264 shipped; find missing reports only",
+   "name": "REPORTS / TASK — Reports module build-out"
+  },
+  {
+   "id": "SAFE-W3",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY — W3 shipped #877–883; safety module LOCKED (CLAUDE.md §7).\", unv",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W3"
+  },
+  {
+   "id": "SAFE-W4",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY — W4 shipped #877–883; safety module LOCKED (CLAUDE.md §7).\", unv",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W4"
+  },
+  {
+   "id": "SAFE-W5",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY — W5 shipped #877–883; safety module LOCKED (CLAUDE.md §7).\", unv",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W5"
+  },
+  {
+   "id": "UX-A-table-alignment-DONE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"DONE (partial). Logic correct on the shared DataTable (Drivers list): te",
+   "name": "TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]"
+  },
+  {
+   "id": "VOID-VERIFY-void-everywhere",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "NEEDS-VERIFY",
+   "evidence": "doc self-reports \"VERIFY+FLAG. Do NOT rebuild built-gated. Flag-ON = Tier 1, STOPS for Jor",
+   "name": "MONEY CONTROLS / TASK V — Verify Void-Everywhere PRs + flag-plan"
+  },
+  {
    "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
    "source": ".block-ready",
    "fin": true,
@@ -943,105 +1790,6 @@
    "name": "CA-04: New/Edit Account drawer with is_locked flag, opening_balance_as_of, nullable account_number. Migration 2026060802"
   },
   {
-   "id": "AF-0-rebaseline",
-   "source": "program",
-   "fin": true,
-   "tier": "3",
-   "status": "DONE",
-   "evidence": "PR #1264 (title match)",
-   "name": "STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)"
-  },
-  {
-   "id": "AF-1-entity-coa-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #530 (title match)",
-   "name": "STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)"
-  },
-  {
-   "id": "AF-2-qbo-drift",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #532 (title match)",
-   "name": "STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)"
-  },
-  {
-   "id": "AF-3-account-registers",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #534 (title match)",
-   "name": "STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)"
-  },
-  {
-   "id": "AF-4-ap-bills-migration",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #536 (title match)",
-   "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)"
-  },
-  {
-   "id": "AF-6-finance-hub",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #540 (title match)",
-   "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)"
-  },
-  {
-   "id": "AF-7-money-controls",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #542 (title match)",
-   "name": "STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS"
-  },
-  {
-   "id": "AF-8-payroll-bridge",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #544 (title match)",
-   "name": "STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST"
-  },
-  {
-   "id": "BK7-INLINE-CREATE-DRAWERS",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #866 (title match) merged 2026-06-11",
-   "name": ""
-  },
-  {
-   "id": "BLOCK-04-of-29-TIER2-RATE-LIMIT",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #1189 (title match)",
-   "name": "BLOCK-04-of-29-TIER2-RATE-LIMIT"
-  },
-  {
-   "id": "BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #1192 (title match)",
-   "name": "BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS"
-  },
-  {
    "id": "BLOCK-05-TIER2-CIRCUIT-BREAKERS",
    "source": ".block-ready",
    "fin": false,
@@ -1049,24 +1797,6 @@
    "status": "DONE",
    "evidence": "PR #800 merged 2026-06-08",
    "name": "Circuit breakers on external dependencies (QBO, Samsara, Plaid, OpenAI, etc.)"
-  },
-  {
-   "id": "BLOCK-06-of-29-TIER2-OUTBOX-DLQ",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #1196 (title match)",
-   "name": "BLOCK-06-of-29-TIER2-OUTBOX-DLQ"
-  },
-  {
-   "id": "BLOCK-08-of-29-TIER2-LOAD-TEST",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #796 (title match)",
-   "name": "BLOCK-08-of-29-TIER2-LOAD-TEST"
   },
   {
    "id": "BLOCK-08-TIER2-LOAD-TEST",
@@ -1078,15 +1808,6 @@
    "name": "k6 load-test baseline with nightly CI"
   },
   {
-   "id": "BLOCK-09-of-29-TIER2-E2E-PATHS",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #802 (title match)",
-   "name": "BLOCK-09-of-29-TIER2-E2E-PATHS"
-  },
-  {
    "id": "BLOCK-09-TIER2-E2E-PATHS",
    "source": ".block-ready",
    "fin": false,
@@ -1094,24 +1815,6 @@
    "status": "DONE",
    "evidence": "PR #802 merged 2026-06-09",
    "name": "Playwright E2E tests for 10 critical user paths"
-  },
-  {
-   "id": "block-10-account-balances",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-10-account-balances"
-  },
-  {
-   "id": "BLOCK-10-of-29-TIER2-RLS-TEST-GATE",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #1224 (title match)",
-   "name": "BLOCK-10-of-29-TIER2-RLS-TEST-GATE"
   },
   {
    "id": "BLOCK-10-TIER2-RLS-TEST-GATE",
@@ -1123,24 +1826,6 @@
    "name": "Cross-tenant RLS gate verification script with fixture generation"
   },
   {
-   "id": "BLOCK-11-of-29-TIER2-AUDIT-COVERAGE",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #814 (title match)",
-   "name": "BLOCK-11-of-29-TIER2-AUDIT-COVERAGE"
-  },
-  {
-   "id": "BLOCK-13-of-29-TIER2-TUNING-CATALOG",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #794 (title match)",
-   "name": "BLOCK-13-of-29-TIER2-TUNING-CATALOG"
-  },
-  {
    "id": "BLOCK-13-TIER2-TUNING-CATALOG",
    "source": ".block-ready",
    "fin": false,
@@ -1150,24 +1835,6 @@
    "name": "Operational tuning catalog — single doc for all tunable parameters with CI guard"
   },
   {
-   "id": "BLOCK-14-of-29-TIER2.5-MEXICO-OPS",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2.5",
-   "status": "DONE",
-   "evidence": "PR #804 (title match)",
-   "name": "BLOCK-14-of-29-TIER2.5-MEXICO-OPS"
-  },
-  {
-   "id": "BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2.5",
-   "status": "DONE",
-   "evidence": "PR #805 (title match)",
-   "name": "BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP"
-  },
-  {
    "id": "BLOCK-16-COMPLIANCE-DASHBOARD",
    "source": ".block-ready",
    "fin": false,
@@ -1175,285 +1842,6 @@
    "status": "DONE",
    "evidence": "PR #701 merged 2026-06-07",
    "name": "COMPLIANCE-DASHBOARD"
-  },
-  {
-   "id": "BLOCK-16-of-29-TIER2.5-FUEL-CARD",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2.5",
-   "status": "DONE",
-   "evidence": "PR #701 (title match)",
-   "name": "BLOCK-16-of-29-TIER2.5-FUEL-CARD"
-  },
-  {
-   "id": "block-20-cash-basis",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-20-cash-basis"
-  },
-  {
-   "id": "block-20-frontend-selector",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-20-frontend-selector"
-  },
-  {
-   "id": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "3",
-   "status": "DONE",
-   "evidence": "PR #806 (title match)",
-   "name": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION"
-  },
-  {
-   "id": "block-20-period-close-lock",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-20-period-close-lock"
-  },
-  {
-   "id": "block-21-expense-category-map",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-21-expense-category-map"
-  },
-  {
-   "id": "BLOCK-21-of-29-TIER3-DR-DRILL",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "3",
-   "status": "DONE",
-   "evidence": "PR #807 (title match)",
-   "name": "BLOCK-21-of-29-TIER3-DR-DRILL"
-  },
-  {
-   "id": "block-22-driver-settlement-engine",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-22-driver-settlement-engine"
-  },
-  {
-   "id": "BLOCK-22-of-29-TIER3-OPS-RUNBOOKS",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "3",
-   "status": "DONE",
-   "evidence": "PR #241 (title match)",
-   "name": "BLOCK-22-of-29-TIER3-OPS-RUNBOOKS"
-  },
-  {
-   "id": "block-23-escrow-posting-flow",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-23-escrow-posting-flow"
-  },
-  {
-   "id": "BLOCK-23-of-29-TIER3-DEGRADATION",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "3",
-   "status": "DONE",
-   "evidence": "PR #808 (title match)",
-   "name": "BLOCK-23-of-29-TIER3-DEGRADATION"
-  },
-  {
-   "id": "block-24-factoring-posting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-24-factoring-posting"
-  },
-  {
-   "id": "block-25-factoring-fees-reserves",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-25-factoring-fees-reserves"
-  },
-  {
-   "id": "block-26-factoring-reconciliation",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-26-factoring-reconciliation"
-  },
-  {
-   "id": "BLOCK-26-of-29-TIER4-PARTITION",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "4",
-   "status": "DONE",
-   "evidence": "PR #809 (title match)",
-   "name": "BLOCK-26-of-29-TIER4-PARTITION"
-  },
-  {
-   "id": "block-27-fuel-expense-posting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-27-fuel-expense-posting"
-  },
-  {
-   "id": "BLOCK-27-of-29-TIER4-CANARY",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "4",
-   "status": "DONE",
-   "evidence": "PR #810 (title match)",
-   "name": "BLOCK-27-of-29-TIER4-CANARY"
-  },
-  {
-   "id": "block-28-maintenance-ap-posting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-28-maintenance-ap-posting"
-  },
-  {
-   "id": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "4",
-   "status": "DONE",
-   "evidence": "PR #811 (title match)",
-   "name": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN"
-  },
-  {
-   "id": "block-29-bank-reconciliation-engine",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-29-bank-reconciliation-engine"
-  },
-  {
-   "id": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "4",
-   "status": "DONE",
-   "evidence": "PR #813 (title match)",
-   "name": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS"
-  },
-  {
-   "id": "block-30-bank-reconciliation-ui",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-30-bank-reconciliation-ui"
-  },
-  {
-   "id": "block-31-sales-tax-handling",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-31-sales-tax-handling"
-  },
-  {
-   "id": "block-33-invoice-line-revenue-mapping",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-33-invoice-line-revenue-mapping"
-  },
-  {
-   "id": "block-34-payment-application",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-34-payment-application"
-  },
-  {
-   "id": "block-35-chart-of-accounts-roles",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-35-chart-of-accounts-roles"
-  },
-  {
-   "id": "block-36-multi-entity-accounting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-36-multi-entity-accounting"
-  },
-  {
-   "id": "block-37-qbo-sync-repair-pipeline",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-37-qbo-sync-repair-pipeline"
-  },
-  {
-   "id": "block-40-accounting-audit-trail",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-40-accounting-audit-trail"
-  },
-  {
-   "id": "block-41-posting-lineage-ui",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-41-posting-lineage-ui"
-  },
-  {
-   "id": "block-43-live-db-schema-verification",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-43-live-db-schema-verification"
   },
   {
    "id": "BLOCK-C-DEDUCTION-CAP",
@@ -1472,24 +1860,6 @@
    "status": "DONE",
    "evidence": "PR #698 merged 2026-06-07",
    "name": "Rename Block C migration to 12-digit runner-compatible filename so db:migrate applies min_net_settlement columns in prod"
-  },
-  {
-   "id": "block-cf-cash-forecast",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-cf-cash-forecast"
-  },
-  {
-   "id": "block-cmc-month-close-wizard",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-cmc-month-close-wizard"
   },
   {
    "id": "BLOCK-D-INSURANCE-RENEWAL",
@@ -1535,33 +1905,6 @@
    "status": "DONE",
    "evidence": "PR #693 merged 2026-06-07",
    "name": "Block H — On detention request approval (PATCH /api/v1/dispatch/detention/requests/:id/approve), after the billing bridg"
-  },
-  {
-   "id": "BLOCK-I-CI-DIST-FIX",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #73 (title match) merged 2026-05-15",
-   "name": ""
-  },
-  {
-   "id": "BLOCK-J-MASTER-DATA-GRANT",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #1063 (title match) merged 2026-06-16",
-   "name": ""
-  },
-  {
-   "id": "block-ppc-period-comparison",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "financial posting engine — verified built 2026-06-24",
-   "name": "block-ppc-period-comparison"
   },
   {
    "id": "BLOCK5-INSURANCE-FORWARD-FIX",
@@ -1643,123 +1986,6 @@
    "status": "DONE",
    "evidence": "all 10 file(s) on main",
    "name": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r"
-  },
-  {
-   "id": "CAP-AUTOSTATUS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (CAP-4 auto-status, PR #223, row 101).",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Auto load-status switch"
-  },
-  {
-   "id": "CAP-CARGOTEMP",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "VERIFY — reefer shipped #942/#1218; confirm cargo-TEMP gap only.",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Cargo-temp monitoring"
-  },
-  {
-   "id": "CAP-ENGINEWO",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (CAP-8 engine→WO, PR #229, row 105).",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Engine-fault auto Work Order"
-  },
-  {
-   "id": "CAP-FUELFRAUD",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE adjacent — verify (CAP-FUEL-CARD, PR #237, row 117).",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection"
-  },
-  {
-   "id": "CAP-GPS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (CAP-1 GPS, PR #234, row 98). Do NOT rebuild.",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking"
-  },
-  {
-   "id": "CAP-PREDICTIVE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "VERIFY — CAP-7 #221 + PM auto-WO; confirm tire/brake gap only.",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive"
-  },
-  {
-   "id": "CAP-SCORING",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (CAP-10 driver scoring, PR #230, row 107).",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring"
-  },
-  {
-   "id": "CHAIN-01-vendor-picker-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "DONE",
-   "evidence": "PR #1262 (title match)",
-   "name": "ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty"
-  },
-  {
-   "id": "CHAIN-03-create-bill-gl-autopost",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #1300 (title match)",
-   "name": "ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)"
-  },
-  {
-   "id": "CHAIN-04-bill-payment-tieout",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #1267 (title match)",
-   "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)"
-  },
-  {
-   "id": "CHAIN-05-bank-feed-live-proof",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #1268 (title match)",
-   "name": "ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE"
-  },
-  {
-   "id": "CHAIN-06-invoice-ar-chain-proof",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #1269 (title match)",
-   "name": "ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof"
-  },
-  {
-   "id": "CHAIN-07-settlements-500-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "PR #1270 (title match)",
-   "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out"
   },
   {
    "id": "CHORE-MASTER-TRACKER-MD",
@@ -1897,24 +2123,6 @@
    "name": "Per-block manifest + artifact CI guard for runbooks"
   },
   {
-   "id": "CONN-2-factoring-faro",
-   "source": "program",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "VERIFY — factoring #904 + FACT-1..5 shipped; confirm only the Faro packet gap.",
-   "name": "CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet"
-  },
-  {
-   "id": "CONN-3-relay-internal-bank",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "VERIFY-STATE (design-done #956). Tier 1 on posting. STOPS for Jorge.",
-   "name": "CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes"
-  },
-  {
    "id": "D1-SETTLEMENTS-APPROVAL-PDF",
    "source": ".block-ready",
    "fin": false,
@@ -1960,15 +2168,6 @@
    "name": "Block 13 — Driver fines → auto-deduction policies + drawer confirm/defer card"
   },
   {
-   "id": "DISP-KANBAN-dispatch-kanban-board",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (kanban, PR #751 + #1107, row 569).",
-   "name": "DISPATCH / TASK Dispatch Kanban board — Dispatch Kanban board"
-  },
-  {
    "id": "DISP-KANBAN-STATES",
    "source": ".block-ready",
    "fin": false,
@@ -1996,15 +2195,6 @@
    "name": "Block 1 — Dispatch Overview command center (default view)"
   },
   {
-   "id": "DISP-OVERVIEW-dispatch-overview",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (overview, PR #752 + #1106, row 567).",
-   "name": "DISPATCH / TASK Dispatch Overview — Dispatch Overview"
-  },
-  {
    "id": "DISP-PLANNERS",
    "source": ".block-ready",
    "fin": false,
@@ -2012,15 +2202,6 @@
    "status": "DONE",
    "evidence": "all 11 file(s) on main",
    "name": "DISP-PLANNERS"
-  },
-  {
-   "id": "DISP-PROFIT-load-profitability",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "VERIFY — lane profit #375 + W2A #871; confirm per-LOAD gap only.",
-   "name": "DISPATCH / TASK Load Profitability — Load Profitability"
   },
   {
    "id": "DISP-PROFITABILITY",
@@ -2716,15 +2897,6 @@
    "name": "VOID-EVERYWHERE PR-2 (gated, default OFF, NO migration). Extends the PR-1 shared void engine to Bills -- the AP mirror o"
   },
   {
-   "id": "FH-VERIFY-finance-hub-modules",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "VERIFY+FLAG. Do NOT rebuild built-gated modules. Flag-ON = Tier 1, STOPS for Jorge.",
-   "name": "FINANCE HUB / TASK V — Verify FH-1→8 (built-gated/design-done) + flag-plan"
-  },
-  {
    "id": "FIX-AT-RISK-LOADS-SD-CITY",
    "source": ".block-ready",
    "fin": false,
@@ -3121,15 +3293,6 @@
    "name": "G14 Equipment dual-confirm transfer (WF-047)"
   },
   {
-   "id": "gap-37-equipment-dual-confirm-transfer",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "spec marks shipped/merged",
-   "name": "gap-37-equipment-dual-confirm-transfer"
-  },
-  {
    "id": "GAP-38-DAMAGE-INSURANCE-CONTINUITY",
    "source": ".block-ready",
    "fin": false,
@@ -3283,15 +3446,6 @@
    "name": "WF-051 250-foot arrival prompt correction"
   },
   {
-   "id": "gap-54-wf-051-250-foot-correction",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "spec marks shipped/merged",
-   "name": "gap-54-wf-051-250-foot-correction"
-  },
-  {
    "id": "GAP-55",
    "source": ".block-ready",
    "fin": false,
@@ -3382,15 +3536,6 @@
    "name": "CAP-14 cargo temp/humidity sensors"
   },
   {
-   "id": "gap-65-owner-todays-attention",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "spec marks shipped/merged",
-   "name": "gap-65-owner-todays-attention"
-  },
-  {
    "id": "GAP-66-DISPATCHER-HOME",
    "source": ".block-ready",
    "fin": false,
@@ -3409,15 +3554,6 @@
    "name": "Accounting Home role-specific view (read-only display)"
   },
   {
-   "id": "gap-67-accounting-home-view",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "spec marks shipped/merged",
-   "name": "gap-67-accounting-home-view"
-  },
-  {
    "id": "GAP-68-SAFETY-OFFICER-HOME",
    "source": ".block-ready",
    "fin": false,
@@ -3427,15 +3563,6 @@
    "name": "Safety Officer home role-specific view"
   },
   {
-   "id": "gap-68-safety-officer-home-view",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "spec marks shipped/merged",
-   "name": "gap-68-safety-officer-home-view"
-  },
-  {
    "id": "GAP-69-DRIVER-MANAGER-HOME",
    "source": ".block-ready",
    "fin": false,
@@ -3443,15 +3570,6 @@
    "status": "DONE",
    "evidence": "PR #654 merged 2026-06-07",
    "name": "Driver Manager home role-specific view"
-  },
-  {
-   "id": "gap-69-driver-manager-home-view",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "spec marks shipped/merged",
-   "name": "gap-69-driver-manager-home-view"
   },
   {
    "id": "GAP-7",
@@ -3508,15 +3626,6 @@
    "name": "G26 assignments inline quicksave (unit/trailer/driver)"
   },
   {
-   "id": "gap-81-drug-alcohol-program",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "spec marks shipped/merged",
-   "name": "gap-81-drug-alcohol-program"
-  },
-  {
    "id": "GAP-82-MEDICAL-CARD-TRACKING",
    "source": ".block-ready",
    "fin": false,
@@ -3569,15 +3678,6 @@
    "status": "DONE",
    "evidence": "PR #737 merged 2026-06-08",
    "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea"
-  },
-  {
-   "id": "gap-87-audit-log-viewer",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "spec marks shipped/merged",
-   "name": "gap-87-audit-log-viewer"
   },
   {
    "id": "GAP-89-UNIVERSAL-SEARCH-CMD-K",
@@ -3661,15 +3761,6 @@
    "name": "Lock Global Sort Rule as a UI contract (docs/specs/GLOBAL-SORT-RULE.md) and wire CI guard (scripts/verify-global-sort-ru"
   },
   {
-   "id": "HOS-VIEWER-DONE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "DONE — shipped + GUARD-verified live 2026-06-19. Tracked here so it is NOT re-opened.",
-   "name": "HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]"
-  },
-  {
    "id": "HOTFIX-0327-MIGRATION-ROLE",
    "source": ".block-ready",
    "fin": false,
@@ -3677,15 +3768,6 @@
    "status": "DONE",
    "evidence": "PR #643 merged 2026-06-07",
    "name": "Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)"
-  },
-  {
-   "id": "INS-MODULE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (insurance INS-01..07, #314–335, rows 242–248).",
-   "name": "INSURANCE / TASK — Insurance module build-out"
   },
   {
    "id": "ITEM1-TWO-SIDED-ITEM",
@@ -3733,24 +3815,6 @@
    "name": "Migration runner hardening - fail loud on unrecognized migration filenames to prevent silent skips"
   },
   {
-   "id": "MNT-SHOP",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (mechanic shop, PR #805, row 595).",
-   "name": "MAINTENANCE / TASK — Mechanic-shop / Work-Order module"
-  },
-  {
-   "id": "MX-OPS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "✅ DONE — verify only (Mexico ops, PR #804, row 594).",
-   "name": "MEXICO OPS / TASK — Mexico cross-border operations"
-  },
-  {
    "id": "OB1-NAV-HEADER-UNIFY",
    "source": ".block-ready",
    "fin": false,
@@ -3778,15 +3842,6 @@
    "name": "Banking transfer between accounts (P5-T6) — fix broken test (missing jsdom env + jest-dom matchers); all surface already"
   },
   {
-   "id": "PREREQ-A-SCHEMA-GRANT-GATE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #684 (title match) merged 2026-06-07",
-   "name": ""
-  },
-  {
    "id": "PREREQ-B-SETTLEMENT-DEDUCTION-SVC",
    "source": ".block-ready",
    "fin": false,
@@ -3794,42 +3849,6 @@
    "status": "DONE",
    "evidence": "PR #683 merged 2026-06-07",
    "name": "createSettlementDeduction() service — unblocks Driver Hub Requests approve→deduction (Block 7)"
-  },
-  {
-   "id": "RPT-MODULE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "VERIFY — reports foundation #155/#264 shipped; find missing reports only.",
-   "name": "REPORTS / TASK — Reports module build-out"
-  },
-  {
-   "id": "SAFE-W3",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "VERIFY — W3 shipped #877–883; safety module LOCKED (CLAUDE.md §7).",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W3"
-  },
-  {
-   "id": "SAFE-W4",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "VERIFY — W4 shipped #877–883; safety module LOCKED (CLAUDE.md §7).",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W4"
-  },
-  {
-   "id": "SAFE-W5",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "VERIFY — W5 shipped #877–883; safety module LOCKED (CLAUDE.md §7).",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W5"
   },
   {
    "id": "SETTLEMENTS-SIDEBAR-RENAME-MOVE",
@@ -3992,24 +4011,6 @@
    "status": "DONE",
    "evidence": "PR #813 merged 2026-06-08",
    "name": "Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories"
-  },
-  {
-   "id": "UX-A-table-alignment-DONE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "DONE (partial). Logic correct on the shared DataTable (Drivers list): text/title centered,",
-   "name": "TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]"
-  },
-  {
-   "id": "VOID-VERIFY-void-everywhere",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "DONE",
-   "evidence": "VERIFY+FLAG. Do NOT rebuild built-gated. Flag-ON = Tier 1, STOPS for Jorge.",
-   "name": "MONEY CONTROLS / TASK V — Verify Void-Everywhere PRs + flag-plan"
   },
   {
    "id": "W1-EVENT-LOG-SPINE",

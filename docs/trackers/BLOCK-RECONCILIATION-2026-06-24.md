@@ -1,13 +1,14 @@
 # BLOCK RECONCILIATION — 2026-06-24 (every block, built vs pending — verified)
 
-**DONE** = on main now (PR merged / files present).  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
+**DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (6961 files) + 1369 merged PRs.** A block is DONE only if its branch merged, a PR title references it, or its files are on main.
+**Verified against `origin/main` (6963 files) + 1370 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
 - **PENDING**: 62
 - **PENDING (GATED)**: 24
-- **DONE**: 370
+- **NEEDS-VERIFY**: 94
+- **DONE**: 276
 
 ## Every block
 | Block | Status | Fin | Tier | Source | Evidence |
@@ -98,6 +99,100 @@
 | STMT-2-opening-balances | PENDING (GATED) | 💰 | T1 | program | Tier 1 (writes opening equity/balances to the GL). STOPS for Jorge. GATED on Jorge's figur |
 | STMT-3-1099-425c-consolidation | PENDING (GATED) | 💰 | T2 | program | BUILD. Tier 2 (reports) → Tier 1 if any posts. Three sub-tasks, sequence-independent. |
 | USMCA-LAUNCH-carrier | PENDING (GATED) |  | T1 | program | GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge. |
+| AF-0-rebaseline | NEEDS-VERIFY | 💰 | T3 | program | PR #1264 title-match only, unverified |
+| AF-1-entity-coa-fix | NEEDS-VERIFY | 💰 | T1 | program | PR #530 title-match only, unverified |
+| AF-2-qbo-drift | NEEDS-VERIFY | 💰 | T1 | program | PR #532 title-match only, unverified |
+| AF-3-account-registers | NEEDS-VERIFY | 💰 | T2 | program | PR #534 title-match only, unverified |
+| AF-4-ap-bills-migration | NEEDS-VERIFY | 💰 | T1 | program | PR #536 title-match only, unverified |
+| AF-6-finance-hub | NEEDS-VERIFY | 💰 | T2 | program | PR #540 title-match only, unverified |
+| AF-7-money-controls | NEEDS-VERIFY | 💰 | T1 | program | PR #542 title-match only, unverified |
+| AF-8-payroll-bridge | NEEDS-VERIFY | 💰 | T1 | program | PR #544 title-match only, unverified |
+| BK7-INLINE-CREATE-DRAWERS | NEEDS-VERIFY |  |  | .block-ready | PR #866 title-match only, unverified |
+| BLOCK-04-of-29-TIER2-RATE-LIMIT | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1189 title-match only, unverified |
+| BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1192 title-match only, unverified |
+| BLOCK-06-of-29-TIER2-OUTBOX-DLQ | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1196 title-match only, unverified |
+| BLOCK-08-of-29-TIER2-LOAD-TEST | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #796 title-match only, unverified |
+| BLOCK-09-of-29-TIER2-E2E-PATHS | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #802 title-match only, unverified |
+| block-10-account-balances | NEEDS-VERIFY | 💰 |  | accounting | PR #1224 title-match only, unverified |
+| BLOCK-10-of-29-TIER2-RLS-TEST-GATE | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1224 title-match only, unverified |
+| BLOCK-11-of-29-TIER2-AUDIT-COVERAGE | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #814 title-match only, unverified |
+| BLOCK-13-of-29-TIER2-TUNING-CATALOG | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #794 title-match only, unverified |
+| BLOCK-14-of-29-TIER2.5-MEXICO-OPS | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #804 title-match only, unverified |
+| BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #805 title-match only, unverified |
+| BLOCK-16-of-29-TIER2.5-FUEL-CARD | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #701 title-match only, unverified |
+| block-20-cash-basis | NEEDS-VERIFY | 💰 |  | accounting | PR #806 title-match only, unverified |
+| block-20-frontend-selector | NEEDS-VERIFY | 💰 |  | accounting | PR #806 title-match only, unverified |
+| BLOCK-20-of-29-TIER3-SECRETS-ROTATION | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #806 title-match only, unverified |
+| block-20-period-close-lock | NEEDS-VERIFY | 💰 |  | accounting | PR #806 title-match only, unverified |
+| block-21-expense-category-map | NEEDS-VERIFY | 💰 |  | accounting | PR #807 title-match only, unverified |
+| BLOCK-21-of-29-TIER3-DR-DRILL | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #807 title-match only, unverified |
+| block-22-driver-settlement-engine | NEEDS-VERIFY | 💰 |  | accounting | PR #241 title-match only, unverified |
+| BLOCK-22-of-29-TIER3-OPS-RUNBOOKS | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #241 title-match only, unverified |
+| block-23-escrow-posting-flow | NEEDS-VERIFY | 💰 |  | accounting | PR #808 title-match only, unverified |
+| BLOCK-23-of-29-TIER3-DEGRADATION | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #808 title-match only, unverified |
+| block-24-factoring-posting | NEEDS-VERIFY | 💰 |  | accounting | PR #214 title-match only, unverified |
+| block-25-factoring-fees-reserves | NEEDS-VERIFY | 💰 |  | accounting | PR #216 title-match only, unverified |
+| block-26-factoring-reconciliation | NEEDS-VERIFY | 💰 |  | accounting | PR #809 title-match only, unverified |
+| BLOCK-26-of-29-TIER4-PARTITION | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #809 title-match only, unverified |
+| block-27-fuel-expense-posting | NEEDS-VERIFY | 💰 |  | accounting | PR #810 title-match only, unverified |
+| BLOCK-27-of-29-TIER4-CANARY | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #810 title-match only, unverified |
+| block-28-maintenance-ap-posting | NEEDS-VERIFY | 💰 |  | accounting | PR #811 title-match only, unverified |
+| BLOCK-28-of-29-TIER4-VENDOR-LOCKIN | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #811 title-match only, unverified |
+| block-29-bank-reconciliation-engine | NEEDS-VERIFY | 💰 |  | accounting | PR #813 title-match only, unverified |
+| BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #813 title-match only, unverified |
+| block-30-bank-reconciliation-ui | NEEDS-VERIFY | 💰 |  | accounting | PR #219 title-match only, unverified |
+| block-31-sales-tax-handling | NEEDS-VERIFY | 💰 |  | accounting | PR #222 title-match only, unverified |
+| block-33-invoice-line-revenue-mapping | NEEDS-VERIFY | 💰 |  | accounting | PR #209 title-match only, unverified |
+| block-34-payment-application | NEEDS-VERIFY | 💰 |  | accounting | claimed built 2026-06-24 — no branch/signature-file evidence; GUARD must verify |
+| block-35-chart-of-accounts-roles | NEEDS-VERIFY | 💰 |  | accounting | claimed built 2026-06-24 — no branch/signature-file evidence; GUARD must verify |
+| block-36-multi-entity-accounting | NEEDS-VERIFY | 💰 |  | accounting | PR #225 title-match only, unverified |
+| block-37-qbo-sync-repair-pipeline | NEEDS-VERIFY | 💰 |  | accounting | PR #226 title-match only, unverified |
+| block-40-accounting-audit-trail | NEEDS-VERIFY | 💰 |  | accounting | PR #227 title-match only, unverified |
+| block-41-posting-lineage-ui | NEEDS-VERIFY | 💰 |  | accounting | PR #228 title-match only, unverified |
+| block-43-live-db-schema-verification | NEEDS-VERIFY | 💰 |  | accounting | PR #232 title-match only, unverified |
+| block-cf-cash-forecast | NEEDS-VERIFY | 💰 |  | accounting | PR #698 title-match only, unverified |
+| block-cmc-month-close-wizard | NEEDS-VERIFY | 💰 |  | accounting | PR #698 title-match only, unverified |
+| BLOCK-I-CI-DIST-FIX | NEEDS-VERIFY |  |  | .block-ready | PR #73 title-match only, unverified |
+| BLOCK-J-MASTER-DATA-GRANT | NEEDS-VERIFY |  |  | .block-ready | PR #1063 title-match only, unverified |
+| block-ppc-period-comparison | NEEDS-VERIFY | 💰 |  | accounting | PR #1060 title-match only, unverified |
+| CAP-AUTOSTATUS | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (CAP-4 auto-status, PR #223, row 101).", unverified |
+| CAP-CARGOTEMP | NEEDS-VERIFY |  |  | program | doc self-reports "VERIFY — reefer shipped #942/#1218; confirm cargo-TEMP gap only.", unver |
+| CAP-ENGINEWO | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (CAP-8 engine→WO, PR #229, row 105).", unverified |
+| CAP-FUELFRAUD | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE adjacent — verify (CAP-FUEL-CARD, PR #237, row 117).", unverified |
+| CAP-GPS | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (CAP-1 GPS, PR #234, row 98). Do NOT rebuild.", unv |
+| CAP-PREDICTIVE | NEEDS-VERIFY |  |  | program | doc self-reports "VERIFY — CAP-7 #221 + PM auto-WO; confirm tire/brake gap only.", unverif |
+| CAP-SCORING | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (CAP-10 driver scoring, PR #230, row 107).", unveri |
+| CHAIN-01-vendor-picker-fix | NEEDS-VERIFY | 💰 | T2 | program | PR #1262 title-match only, unverified |
+| CHAIN-03-create-bill-gl-autopost | NEEDS-VERIFY | 💰 | T1 | program | PR #1300 title-match only, unverified |
+| CHAIN-04-bill-payment-tieout | NEEDS-VERIFY | 💰 | T1 | program | PR #1267 title-match only, unverified |
+| CHAIN-05-bank-feed-live-proof | NEEDS-VERIFY | 💰 | T1 | program | PR #1268 title-match only, unverified |
+| CHAIN-06-invoice-ar-chain-proof | NEEDS-VERIFY | 💰 | T1 | program | PR #1269 title-match only, unverified |
+| CHAIN-07-settlements-500-fix | NEEDS-VERIFY | 💰 | T1 | program | PR #1270 title-match only, unverified |
+| CONN-2-factoring-faro | NEEDS-VERIFY | 💰 |  | program | doc self-reports "VERIFY — factoring #904 + FACT-1..5 shipped; confirm only the Faro packe |
+| CONN-3-relay-internal-bank | NEEDS-VERIFY | 💰 | T1 | program | doc self-reports "VERIFY-STATE (design-done #956). Tier 1 on posting. STOPS for Jorge.", u |
+| DISP-KANBAN-dispatch-kanban-board | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (kanban, PR #751 + #1107, row 569).", unverified |
+| DISP-OVERVIEW-dispatch-overview | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (overview, PR #752 + #1106, row 567).", unverified |
+| DISP-PROFIT-load-profitability | NEEDS-VERIFY |  |  | program | doc self-reports "VERIFY — lane profit #375 + W2A #871; confirm per-LOAD gap only.", unver |
+| FH-VERIFY-finance-hub-modules | NEEDS-VERIFY | 💰 | T1 | program | doc self-reports "VERIFY+FLAG. Do NOT rebuild built-gated modules. Flag-ON = Tier 1, STOPS |
+| gap-37-equipment-dual-confirm-transfer | NEEDS-VERIFY |  |  | gap-spec | spec self-reports shipped/merged, unverified |
+| gap-54-wf-051-250-foot-correction | NEEDS-VERIFY |  |  | gap-spec | spec self-reports shipped/merged, unverified |
+| gap-65-owner-todays-attention | NEEDS-VERIFY |  |  | gap-spec | spec self-reports shipped/merged, unverified |
+| gap-67-accounting-home-view | NEEDS-VERIFY |  |  | gap-spec | spec self-reports shipped/merged, unverified |
+| gap-68-safety-officer-home-view | NEEDS-VERIFY |  |  | gap-spec | spec self-reports shipped/merged, unverified |
+| gap-69-driver-manager-home-view | NEEDS-VERIFY |  |  | gap-spec | spec self-reports shipped/merged, unverified |
+| gap-81-drug-alcohol-program | NEEDS-VERIFY |  |  | gap-spec | spec self-reports shipped/merged, unverified |
+| gap-87-audit-log-viewer | NEEDS-VERIFY |  |  | gap-spec | spec self-reports shipped/merged, unverified |
+| HOS-VIEWER-DONE | NEEDS-VERIFY |  |  | program | doc self-reports "DONE — shipped + GUARD-verified live 2026-06-19. Tracked here so it is N |
+| INS-MODULE | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (insurance INS-01..07, #314–335, rows 242–248).", u |
+| MNT-SHOP | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (mechanic shop, PR #805, row 595).", unverified |
+| MX-OPS | NEEDS-VERIFY |  |  | program | doc self-reports "✅ DONE — verify only (Mexico ops, PR #804, row 594).", unverified |
+| PREREQ-A-SCHEMA-GRANT-GATE | NEEDS-VERIFY |  |  | .block-ready | PR #684 title-match only, unverified |
+| RPT-MODULE | NEEDS-VERIFY |  |  | program | doc self-reports "VERIFY — reports foundation #155/#264 shipped; find missing reports only |
+| SAFE-W3 | NEEDS-VERIFY |  |  | program | doc self-reports "VERIFY — W3 shipped #877–883; safety module LOCKED (CLAUDE.md §7).", unv |
+| SAFE-W4 | NEEDS-VERIFY |  |  | program | doc self-reports "VERIFY — W4 shipped #877–883; safety module LOCKED (CLAUDE.md §7).", unv |
+| SAFE-W5 | NEEDS-VERIFY |  |  | program | doc self-reports "VERIFY — W5 shipped #877–883; safety module LOCKED (CLAUDE.md §7).", unv |
+| UX-A-table-alignment-DONE | NEEDS-VERIFY |  |  | program | doc self-reports "DONE (partial). Logic correct on the shared DataTable (Drivers list): te |
+| VOID-VERIFY-void-everywhere | NEEDS-VERIFY | 💰 | T1 | program | doc self-reports "VERIFY+FLAG. Do NOT rebuild built-gated. Flag-ON = Tier 1, STOPS for Jor |
 | A1-AUDIT-SPINE-LINK-COLUMNS | DONE | 💰 |  | .block-ready | PR #884 merged 2026-06-11 |
 | A2-AUDIT-EMIT-DISPATCH | DONE |  |  | .block-ready | PR #886 merged 2026-06-12 |
 | A3-AUDIT-EMIT-MAINTENANCE | DONE |  |  | .block-ready | PR #888 merged 2026-06-12 |
@@ -116,75 +211,19 @@
 | ACCT-QBOPAR-02 | DONE |  |  | .block-ready | PR #710 merged 2026-06-07 |
 | ACCT-QBOPAR-03 | DONE |  |  | .block-ready | PR #740 merged 2026-06-08 |
 | ACCT-QBOPAR-04 | DONE |  |  | .block-ready | PR #815 merged 2026-06-08 |
-| AF-0-rebaseline | DONE | 💰 | T3 | program | PR #1264 (title match) |
-| AF-1-entity-coa-fix | DONE | 💰 | T1 | program | PR #530 (title match) |
-| AF-2-qbo-drift | DONE | 💰 | T1 | program | PR #532 (title match) |
-| AF-3-account-registers | DONE | 💰 | T2 | program | PR #534 (title match) |
-| AF-4-ap-bills-migration | DONE | 💰 | T1 | program | PR #536 (title match) |
-| AF-6-finance-hub | DONE | 💰 | T2 | program | PR #540 (title match) |
-| AF-7-money-controls | DONE | 💰 | T1 | program | PR #542 (title match) |
-| AF-8-payroll-bridge | DONE | 💰 | T1 | program | PR #544 (title match) |
-| BK7-INLINE-CREATE-DRAWERS | DONE |  |  | .block-ready | PR #866 (title match) merged 2026-06-11 |
-| BLOCK-04-of-29-TIER2-RATE-LIMIT | DONE |  | T2 | enterprise-29 | PR #1189 (title match) |
-| BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | DONE |  | T2 | enterprise-29 | PR #1192 (title match) |
 | BLOCK-05-TIER2-CIRCUIT-BREAKERS | DONE |  |  | .block-ready | PR #800 merged 2026-06-08 |
-| BLOCK-06-of-29-TIER2-OUTBOX-DLQ | DONE |  | T2 | enterprise-29 | PR #1196 (title match) |
-| BLOCK-08-of-29-TIER2-LOAD-TEST | DONE |  | T2 | enterprise-29 | PR #796 (title match) |
 | BLOCK-08-TIER2-LOAD-TEST | DONE |  |  | .block-ready | PR #796 merged 2026-06-08 |
-| BLOCK-09-of-29-TIER2-E2E-PATHS | DONE |  | T2 | enterprise-29 | PR #802 (title match) |
 | BLOCK-09-TIER2-E2E-PATHS | DONE |  |  | .block-ready | PR #802 merged 2026-06-09 |
-| block-10-account-balances | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-10-of-29-TIER2-RLS-TEST-GATE | DONE |  | T2 | enterprise-29 | PR #1224 (title match) |
 | BLOCK-10-TIER2-RLS-TEST-GATE | DONE |  |  | .block-ready | PR #801 merged 2026-06-09 |
-| BLOCK-11-of-29-TIER2-AUDIT-COVERAGE | DONE |  | T2 | enterprise-29 | PR #814 (title match) |
-| BLOCK-13-of-29-TIER2-TUNING-CATALOG | DONE |  | T2 | enterprise-29 | PR #794 (title match) |
 | BLOCK-13-TIER2-TUNING-CATALOG | DONE |  |  | .block-ready | PR #794 merged 2026-06-08 |
-| BLOCK-14-of-29-TIER2.5-MEXICO-OPS | DONE |  | T2.5 | enterprise-29 | PR #804 (title match) |
-| BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP | DONE |  | T2.5 | enterprise-29 | PR #805 (title match) |
 | BLOCK-16-COMPLIANCE-DASHBOARD | DONE |  |  | .block-ready | PR #701 merged 2026-06-07 |
-| BLOCK-16-of-29-TIER2.5-FUEL-CARD | DONE |  | T2.5 | enterprise-29 | PR #701 (title match) |
-| block-20-cash-basis | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-20-frontend-selector | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-20-of-29-TIER3-SECRETS-ROTATION | DONE |  | T3 | enterprise-29 | PR #806 (title match) |
-| block-20-period-close-lock | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-21-expense-category-map | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-21-of-29-TIER3-DR-DRILL | DONE |  | T3 | enterprise-29 | PR #807 (title match) |
-| block-22-driver-settlement-engine | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-22-of-29-TIER3-OPS-RUNBOOKS | DONE |  | T3 | enterprise-29 | PR #241 (title match) |
-| block-23-escrow-posting-flow | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-23-of-29-TIER3-DEGRADATION | DONE |  | T3 | enterprise-29 | PR #808 (title match) |
-| block-24-factoring-posting | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-25-factoring-fees-reserves | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-26-factoring-reconciliation | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-26-of-29-TIER4-PARTITION | DONE |  | T4 | enterprise-29 | PR #809 (title match) |
-| block-27-fuel-expense-posting | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-27-of-29-TIER4-CANARY | DONE |  | T4 | enterprise-29 | PR #810 (title match) |
-| block-28-maintenance-ap-posting | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-28-of-29-TIER4-VENDOR-LOCKIN | DONE |  | T4 | enterprise-29 | PR #811 (title match) |
-| block-29-bank-reconciliation-engine | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS | DONE |  | T4 | enterprise-29 | PR #813 (title match) |
-| block-30-bank-reconciliation-ui | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-31-sales-tax-handling | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-33-invoice-line-revenue-mapping | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-34-payment-application | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-35-chart-of-accounts-roles | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-36-multi-entity-accounting | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-37-qbo-sync-repair-pipeline | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-40-accounting-audit-trail | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-41-posting-lineage-ui | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-43-live-db-schema-verification | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
 | BLOCK-C-DEDUCTION-CAP | DONE |  |  | .block-ready | PR #692 merged 2026-06-07 |
 | BLOCK-C-MIGRATION-RENAME | DONE |  |  | .block-ready | PR #698 merged 2026-06-07 |
-| block-cf-cash-forecast | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
-| block-cmc-month-close-wizard | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
 | BLOCK-D-INSURANCE-RENEWAL | DONE |  |  | .block-ready | PR #699 merged 2026-06-07 |
 | BLOCK-E-INSURANCE-FLEET | DONE |  |  | .block-ready | PR #702 merged 2026-06-07 |
 | BLOCK-F-INSURANCE-CANCELLATION | DONE |  |  | .block-ready | PR #700 merged 2026-06-07 |
 | BLOCK-G-COI-PDF | DONE |  |  | .block-ready | all 4 file(s) on main |
 | BLOCK-H-DETENTION-NOTIFY | DONE |  |  | .block-ready | PR #693 merged 2026-06-07 |
-| BLOCK-I-CI-DIST-FIX | DONE |  |  | .block-ready | PR #73 (title match) merged 2026-05-15 |
-| BLOCK-J-MASTER-DATA-GRANT | DONE |  |  | .block-ready | PR #1063 (title match) merged 2026-06-16 |
-| block-ppc-period-comparison | DONE | 💰 |  | accounting | financial posting engine — verified built 2026-06-24 |
 | BLOCK5-INSURANCE-FORWARD-FIX | DONE |  |  | .block-ready | PR #695 merged 2026-06-07 |
 | BLOCK7-DRIVER-HUB-REQUESTS | DONE |  |  | .block-ready | PR #694 merged 2026-06-07 |
 | BUG-ADD-USER-INERT | DONE |  |  | .block-ready | PR #861 merged 2026-06-10 |
@@ -194,19 +233,6 @@
 | C4-CUST-VEND-REBUILD-RECLASSIFY | DONE |  |  | .block-ready | PR #905 merged 2026-06-12 |
 | C6-HOME-DASHBOARD | DONE | 💰 |  | .block-ready | all 3 file(s) on main |
 | C7-ACCT-SUBNAV-CHROME | DONE | 💰 |  | .block-ready | all 10 file(s) on main |
-| CAP-AUTOSTATUS | DONE |  |  | program | ✅ DONE — verify only (CAP-4 auto-status, PR #223, row 101). |
-| CAP-CARGOTEMP | DONE |  |  | program | VERIFY — reefer shipped #942/#1218; confirm cargo-TEMP gap only. |
-| CAP-ENGINEWO | DONE |  |  | program | ✅ DONE — verify only (CAP-8 engine→WO, PR #229, row 105). |
-| CAP-FUELFRAUD | DONE |  |  | program | ✅ DONE adjacent — verify (CAP-FUEL-CARD, PR #237, row 117). |
-| CAP-GPS | DONE |  |  | program | ✅ DONE — verify only (CAP-1 GPS, PR #234, row 98). Do NOT rebuild. |
-| CAP-PREDICTIVE | DONE |  |  | program | VERIFY — CAP-7 #221 + PM auto-WO; confirm tire/brake gap only. |
-| CAP-SCORING | DONE |  |  | program | ✅ DONE — verify only (CAP-10 driver scoring, PR #230, row 107). |
-| CHAIN-01-vendor-picker-fix | DONE | 💰 | T2 | program | PR #1262 (title match) |
-| CHAIN-03-create-bill-gl-autopost | DONE | 💰 | T1 | program | PR #1300 (title match) |
-| CHAIN-04-bill-payment-tieout | DONE | 💰 | T1 | program | PR #1267 (title match) |
-| CHAIN-05-bank-feed-live-proof | DONE | 💰 | T1 | program | PR #1268 (title match) |
-| CHAIN-06-invoice-ar-chain-proof | DONE | 💰 | T1 | program | PR #1269 (title match) |
-| CHAIN-07-settlements-500-fix | DONE | 💰 | T1 | program | PR #1270 (title match) |
 | CHORE-MASTER-TRACKER-MD | DONE | 💰 |  | .block-ready | PR #924 merged 2026-06-13 |
 | CHORE-UNVERIFIED-ROWS-RECONCILE | DONE | 💰 |  | .block-ready | PR #928 merged 2026-06-13 |
 | CLOSURE-10-MAINT-PARTS-CATALOG | DONE |  |  | .block-ready | PR #798 merged 2026-06-09 |
@@ -222,20 +248,15 @@
 | CLOSURE-23-DR-BACKUP-AUDIT | DONE |  |  | .block-ready | PR #786 merged 2026-06-08 |
 | CLOSURE-24-OPERATOR-ONBOARDING | DONE |  |  | .block-ready | PR #790 merged 2026-06-09 |
 | CLOSURE-25-RUNBOOKS | DONE |  |  | .block-ready | PR #789 merged 2026-06-10 |
-| CONN-2-factoring-faro | DONE | 💰 |  | program | VERIFY — factoring #904 + FACT-1..5 shipped; confirm only the Faro packet gap. |
-| CONN-3-relay-internal-bank | DONE | 💰 | T1 | program | VERIFY-STATE (design-done #956). Tier 1 on posting. STOPS for Jorge. |
 | D1-SETTLEMENTS-APPROVAL-PDF | DONE |  |  | .block-ready | PR #910 merged 2026-06-12 |
 | DESIGN-STD-NAVY-PAGE-BANNER | DONE |  |  | .block-ready | PR #898 merged 2026-06-12 |
 | DISP-DRAWER-WIRE | DONE |  |  | .block-ready | PR #746 merged 2026-06-08 |
 | DISP-FACTORING-PACKET | DONE |  |  | .block-ready | PR #750 merged 2026-06-08 |
 | DISP-FINES-DEDUCT | DONE |  |  | .block-ready | PR #762 merged 2026-06-08 |
-| DISP-KANBAN-dispatch-kanban-board | DONE |  |  | program | ✅ DONE — verify only (kanban, PR #751 + #1107, row 569). |
 | DISP-KANBAN-STATES | DONE |  |  | .block-ready | PR #751 merged 2026-06-08 |
 | DISP-LIST-TABLE-ASSIGN | DONE |  |  | .block-ready | PR #758 merged 2026-06-08 |
 | DISP-OVERVIEW | DONE |  |  | .block-ready | PR #752 merged 2026-06-08 |
-| DISP-OVERVIEW-dispatch-overview | DONE |  |  | program | ✅ DONE — verify only (overview, PR #752 + #1106, row 567). |
 | DISP-PLANNERS | DONE |  |  | .block-ready | all 11 file(s) on main |
-| DISP-PROFIT-load-profitability | DONE |  |  | program | VERIFY — lane profit #375 + W2A #871; confirm per-LOAD gap only. |
 | DISP-PROFITABILITY | DONE |  |  | .block-ready | PR #743 merged 2026-06-08 |
 | DISP-QUEUES-NAV | DONE |  |  | .block-ready | PR #753 merged 2026-06-08 |
 | DISP-ROUNDTRIPS | DONE |  |  | .block-ready | PR #756 merged 2026-06-08 |
@@ -313,7 +334,6 @@
 | FEAT-V2-A2-REFERENCE-SELECT | DONE |  |  | .block-ready | PR #828 merged 2026-06-09 |
 | FEAT-VOID-EVERYWHERE-PR1 | DONE | 💰 |  | .block-ready | PR #973 merged 2026-06-15 |
 | FEAT-VOID-EVERYWHERE-PR2 | DONE | 💰 |  | .block-ready | PR #977 merged 2026-06-15 |
-| FH-VERIFY-finance-hub-modules | DONE | 💰 | T1 | program | VERIFY+FLAG. Do NOT rebuild built-gated modules. Flag-ON = Tier 1, STOPS for Jorge. |
 | FIX-AT-RISK-LOADS-SD-CITY | DONE |  |  | .block-ready | PR #820 merged 2026-06-08 |
 | FIX-AUDIT-KPI-DRIFTS | DONE |  |  | .block-ready | PR #480 merged 2026-06-04 |
 | FIX-AUDIT-NESTED-MODALS | DONE |  |  | .block-ready | PR #462 merged 2026-06-04 |
@@ -358,7 +378,6 @@
 | GAP-34 | DONE |  |  | .block-ready | PR #667 merged 2026-06-07 |
 | GAP-36 | DONE |  |  | .block-ready | PR #759 merged 2026-06-08 |
 | GAP-37 | DONE |  |  | .block-ready | PR #765 merged 2026-06-08 |
-| gap-37-equipment-dual-confirm-transfer | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-38-DAMAGE-INSURANCE-CONTINUITY | DONE |  |  | .block-ready | PR #671 merged 2026-06-07 |
 | GAP-39 | DONE |  |  | .block-ready | PR #669 merged 2026-06-07 |
 | GAP-40 | DONE |  |  | .block-ready | PR #673 merged 2026-06-07 |
@@ -376,7 +395,6 @@
 | GAP-52 | DONE |  |  | .block-ready | PR #773 merged 2026-06-08 |
 | GAP-53 | DONE |  |  | .block-ready | PR #774 merged 2026-06-08 |
 | GAP-54 | DONE |  |  | .block-ready | PR #775 merged 2026-06-08 |
-| gap-54-wf-051-250-foot-correction | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-55 | DONE |  |  | .block-ready | PR #776 merged 2026-06-08 |
 | GAP-56 | DONE |  |  | .block-ready | PR #779 merged 2026-06-08 |
 | GAP-57 | DONE |  |  | .block-ready | PR #781 merged 2026-06-08 |
@@ -387,28 +405,22 @@
 | GAP-62-CAP-12-TIRE-TREAD | DONE |  |  | .block-ready | PR #679 merged 2026-06-07 |
 | GAP-63 | DONE |  |  | .block-ready | PR #678 merged 2026-06-07 |
 | GAP-64 | DONE |  |  | .block-ready | PR #783 merged 2026-06-08 |
-| gap-65-owner-todays-attention | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-66-DISPATCHER-HOME | DONE |  |  | .block-ready | PR #645 merged 2026-06-07 |
 | GAP-67-ACCOUNTING-HOME | DONE |  |  | .block-ready | PR #652 merged 2026-06-07 |
-| gap-67-accounting-home-view | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-68-SAFETY-OFFICER-HOME | DONE |  |  | .block-ready | PR #653 merged 2026-06-07 |
-| gap-68-safety-officer-home-view | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-69-DRIVER-MANAGER-HOME | DONE |  |  | .block-ready | PR #654 merged 2026-06-07 |
-| gap-69-driver-manager-home-view | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-7 | DONE |  |  | .block-ready | PR #660 merged 2026-06-07 |
 | GAP-70 | DONE |  |  | .block-ready | PR #691 merged 2026-06-07 |
 | GAP-71 | DONE |  |  | .block-ready | PR #784 merged 2026-06-08 |
 | GAP-72 | DONE |  |  | .block-ready | PR #782 merged 2026-06-08 |
 | GAP-76 | DONE |  |  | .block-ready | all 7 file(s) on main |
 | GAP-8 | DONE |  |  | .block-ready | PR #661 merged 2026-06-07 |
-| gap-81-drug-alcohol-program | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-82-MEDICAL-CARD-TRACKING | DONE |  |  | .block-ready | PR #640 merged 2026-06-07 |
 | GAP-83-ELD-AUDIT-VIEWER | DONE |  |  | .block-ready | PR #644 merged 2026-06-07 |
 | GAP-84-DOT-INSPECTION-GAP-CLOSE | DONE |  |  | .block-ready | PR #649 merged 2026-06-07 |
 | GAP-85-PERMIT-TOLL-TRACKING | DONE |  |  | .block-ready | PR #655 merged 2026-06-07 |
 | GAP-86-INSURANCE-BILL-CREATOR | DONE |  |  | .block-ready | PR #687 merged 2026-06-07 |
 | GAP-86-POLICY-WIZARD | DONE |  |  | .block-ready | PR #737 merged 2026-06-08 |
-| gap-87-audit-log-viewer | DONE |  |  | gap-spec | spec marks shipped/merged |
 | GAP-89-UNIVERSAL-SEARCH-CMD-K | DONE |  |  | .block-ready | PR #657 merged 2026-06-07 |
 | GAP-91-MOBILE-RESPONSIVE-AUDIT | DONE |  |  | .block-ready | PR #658 merged 2026-06-07 |
 | GAP-92-FEATURE-FLAG-SYSTEM | DONE |  |  | .block-ready | PR #659 merged 2026-06-07 |
@@ -418,25 +430,16 @@
 | GAP-IDEMP-KEYS | DONE |  |  | .block-ready | PR #737 merged 2026-06-08 |
 | GAP-PREMERGE-GATES-EXPAND | DONE |  |  | .block-ready | PR #651 merged 2026-06-07 |
 | GLOBAL-SORT-RULE | DONE |  |  | .block-ready | PR #723 merged 2026-06-08 |
-| HOS-VIEWER-DONE | DONE |  |  | program | DONE — shipped + GUARD-verified live 2026-06-19. Tracked here so it is NOT re-opened. |
 | HOTFIX-0327-MIGRATION-ROLE | DONE |  |  | .block-ready | PR #643 merged 2026-06-07 |
-| INS-MODULE | DONE |  |  | program | ✅ DONE — verify only (insurance INS-01..07, #314–335, rows 242–248). |
 | ITEM1-TWO-SIDED-ITEM | DONE | 💰 |  | .block-ready | all 2 file(s) on main |
 | LOCKDOWN-ENFORCEMENT-GUARDS | DONE |  |  | .block-ready | PR #755 merged 2026-06-08 |
 | M1-POSITIONED-PARTS | DONE |  |  | .block-ready | PR #913 merged 2026-06-12 |
 | M2-INTEGRITY-POSITION-HISTORY | DONE |  |  | .block-ready | PR #915 merged 2026-06-13 |
 | MIGRATION-RUNNER-HARDEN | DONE |  |  | .block-ready | PR #914 merged 2026-06-13 |
-| MNT-SHOP | DONE |  |  | program | ✅ DONE — verify only (mechanic shop, PR #805, row 595). |
-| MX-OPS | DONE |  |  | program | ✅ DONE — verify only (Mexico ops, PR #804, row 594). |
 | OB1-NAV-HEADER-UNIFY | DONE |  |  | .block-ready | PR #894 merged 2026-06-12 |
 | P0-BLOCK-3-DRIVER-LOAD-HISTORY | DONE |  |  | .block-ready | PR #731 merged 2026-06-08 |
 | P5-T6-BANKING-TRANSFER | DONE |  |  | .block-ready | PR #862 merged 2026-06-10 |
-| PREREQ-A-SCHEMA-GRANT-GATE | DONE |  |  | .block-ready | PR #684 (title match) merged 2026-06-07 |
 | PREREQ-B-SETTLEMENT-DEDUCTION-SVC | DONE |  |  | .block-ready | PR #683 merged 2026-06-07 |
-| RPT-MODULE | DONE |  |  | program | VERIFY — reports foundation #155/#264 shipped; find missing reports only. |
-| SAFE-W3 | DONE |  |  | program | VERIFY — W3 shipped #877–883; safety module LOCKED (CLAUDE.md §7). |
-| SAFE-W4 | DONE |  |  | program | VERIFY — W4 shipped #877–883; safety module LOCKED (CLAUDE.md §7). |
-| SAFE-W5 | DONE |  |  | program | VERIFY — W5 shipped #877–883; safety module LOCKED (CLAUDE.md §7). |
 | SETTLEMENTS-SIDEBAR-RENAME-MOVE | DONE |  |  | .block-ready | PR #893 merged 2026-06-12 |
 | SHADOW-ROUTE-REDIRECTS | DONE |  |  | .block-ready | PR #887 merged 2026-06-12 |
 | SIDEBAR-DRIVER-HUB | DONE |  |  | .block-ready | PR #680 merged 2026-06-07 |
@@ -455,8 +458,6 @@
 | TIER27-CANARY | DONE |  |  | .block-ready | PR #810 merged 2026-06-08 |
 | TIER28-VENDOR-LOCKIN | DONE |  |  | .block-ready | PR #811 merged 2026-06-08 |
 | TIER29-KNOWN-LIMITATIONS | DONE |  |  | .block-ready | PR #813 merged 2026-06-08 |
-| UX-A-table-alignment-DONE | DONE |  |  | program | DONE (partial). Logic correct on the shared DataTable (Drivers list): text/title centered, |
-| VOID-VERIFY-void-everywhere | DONE | 💰 | T1 | program | VERIFY+FLAG. Do NOT rebuild built-gated. Flag-ON = Tier 1, STOPS for Jorge. |
 | W1-EVENT-LOG-SPINE | DONE | 💰 |  | .block-ready | all 1 file(s) on main |
 | W1A-EVENT-LOG-IMMUTABLE | DONE | 💰 |  | .block-ready | PR #870 merged 2026-06-11 |
 | W1B-TASKS-MODULE | DONE | 💰 |  | .block-ready | PR #872 merged 2026-06-11 |

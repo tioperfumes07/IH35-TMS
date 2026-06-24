@@ -4,10 +4,18 @@
 //   npm run reconcile:blocks            # regenerate from live repo + GitHub
 //   npm run reconcile:blocks -- --date=2026-06-24
 //
-// THREE clear states only:
-//   DONE            = on main now (branch merged, OR a merged PR title references it, OR signature files present)
+// FOUR clear states (truth-first; a weak signal must NEVER read as DONE):
+//   DONE            = verified on main: its branch merged to a real PR, OR all its signature files are present
+//                     on origin/main. These are evidence — nothing else qualifies as DONE.
+//   NEEDS-VERIFY    = a WEAK signal suggests built but it is NOT independently verified — a PR-title token
+//                     match, a partial set of signature files, a doc's own "shipped/done" self-report, or a
+//                     prior hardcoded built-claim. Treat as NOT trusted until GUARD confirms.
 //   PENDING         = not built; needs build
 //   PENDING (GATED) = not built AND financial/locked → needs Jorge's gate before building
+//
+// 2026-06-24 hardening: PR-title token matches, partial-file presence, spec self-reports, and the old
+// docs/accounting `allBuilt:true` hardcode previously all printed DONE — overstating built. They are now
+// NEEDS-VERIFY. Strong signals (branch merged / all signature files present) are UNCHANGED.
 //
 // Sources reconciled (every block, none missing):
 //   (A) .block-ready/*.json     — block registry (allowed_files = signature files; branch = its PR)
@@ -75,8 +83,8 @@ for (const f of fs.readdirSync(brDir).filter((x) => x.endsWith(".json"))) {
   let status, evidence;
   if (mergedPr) { status = "DONE"; evidence = `PR #${mergedPr.number} merged ${(mergedPr.mergedAt || "").slice(0, 10)}`; }
   else if (sig.length && present.length === sig.length) { status = "DONE"; evidence = `all ${sig.length} file(s) on main`; }
-  else if (tokPr) { status = "DONE"; evidence = `PR #${tokPr.number} (title match) merged ${(tokPr.mergedAt || "").slice(0, 10)}`; }
-  else if (present.length) { status = "DONE"; evidence = `${present.length}/${sig.length} file(s) on main (mostly shipped)`; }
+  else if (tokPr) { status = "NEEDS-VERIFY"; evidence = `PR #${tokPr.number} title-match only, unverified`; }
+  else if (present.length) { status = "NEEDS-VERIFY"; evidence = `${present.length}/${sig.length} signature file(s) on main — partial, unverified`; }
   else { status = fin ? "PENDING (GATED)" : "PENDING"; evidence = sig.length ? `0/${sig.length} signature file(s) on main` : "no merged PR / no files on main"; }
   all.push({ id, source: ".block-ready", fin, tier: "", status, evidence, name: String(j.task || "").slice(0, 120) });
 }
@@ -98,7 +106,9 @@ for (const fp of progFiles) {
   const doneSignal = /done/i.test(id) || sl.includes("✅") || /\bdone\b/.test(s) || /^verify|shipped|verify-only/.test(s) || !!tokPr;
   const gated = fin || /gated|full ceremony|stops for jorge/.test(s) || tier === "1";
   let status, evidence;
-  if (doneSignal && !/\bbuild\b/.test(s.replace(/build load|book load/g, ""))) { status = "DONE"; evidence = tokPr ? `PR #${tokPr.number} (title match)` : (sl || "status: done/verify"); }
+  // Program docs carry NO branch-merge / signature-file check — a "done" here is only a self-reported STATUS
+  // line or a PR-title token match. Both are weak → NEEDS-VERIFY (never DONE from a self-report).
+  if (doneSignal && !/\bbuild\b/.test(s.replace(/build load|book load/g, ""))) { status = "NEEDS-VERIFY"; evidence = tokPr ? `PR #${tokPr.number} title-match only, unverified` : `doc self-reports "${sl || "done/verify"}", unverified`; }
   else if (gated) { status = "PENDING (GATED)"; evidence = sl || "financial / locked — needs Jorge gate"; }
   else { status = "PENDING"; evidence = sl || "needs build"; }
   all.push({ id, source: "program", fin, tier, status, evidence: evidence.slice(0, 90), name });
@@ -123,23 +133,31 @@ function scanDir(rel, opts) {
     const id = f.replace(/\.(md|txt)$/i, "");
     const curatedKey = Object.keys(CURATED).find((k) => id.startsWith(k));
     let status, evidence;
-    if (opts.allBuilt) { status = "DONE"; evidence = "financial posting engine — verified built 2026-06-24"; }
+    if (opts.claimedBuilt) {
+      // docs/accounting: the old `allBuilt:true` hardcode printed DONE for EVERY block from a typed boolean.
+      // REMOVED. A bare block-*.md carries no branch-merge / signature-file evidence this tool can check, so a
+      // prior built-claim is only a WEAK signal → NEEDS-VERIFY. Record a title-token PR if any (still unverified).
+      const tokPr = prByToken(id);
+      status = "NEEDS-VERIFY";
+      evidence = tokPr ? `PR #${tokPr.number} title-match only, unverified`
+                       : "claimed built 2026-06-24 — no branch/signature-file evidence; GUARD must verify";
+    }
     else if (curatedKey) { status = CURATED[curatedKey]; evidence = "deep-verified 2026-06-24 (feature grep)"; }
     else if (opts.readStatus) {
-      // gap specs: trust the spec's OWN status marker, default PENDING (forward Phase 4-7 work).
+      // gap specs: a spec's OWN shipped/done marker is a self-report (no merge/file backing) → NEEDS-VERIFY.
       const head = fs.readFileSync(path.join(dir, f), "utf8").slice(0, 2500).toLowerCase();
-      if (/\b(shipped|merged on main|status:\s*done|✅\s*done|live on main|already shipped)\b/.test(head)) { status = "DONE"; evidence = "spec marks shipped/merged"; }
+      if (/\b(shipped|merged on main|status:\s*done|✅\s*done|live on main|already shipped)\b/.test(head)) { status = "NEEDS-VERIFY"; evidence = "spec self-reports shipped/merged, unverified"; }
       else { status = "PENDING"; evidence = opts.specNote || "gap spec — not shipped"; }
     } else {
       const tokPr = prByToken(id);
-      if (tokPr) { status = "DONE"; evidence = `PR #${tokPr.number} (title match)`; }
+      if (tokPr) { status = "NEEDS-VERIFY"; evidence = `PR #${tokPr.number} title-match only, unverified`; }
       else { status = opts.gated ? "PENDING (GATED)" : "PENDING"; evidence = "spec — not built on main"; }
     }
     const tier = (id.match(/TIER([0-9.]+)/i) || [])[1] || "";
     all.push({ id, source: opts.source, fin: !!opts.fin, tier, status, evidence: evidence.slice(0, 90), name: id });
   }
 }
-scanDir("docs/accounting", { match: /^block-.*\.md$/i, source: "accounting", fin: true, allBuilt: true });
+scanDir("docs/accounting", { match: /^block-.*\.md$/i, source: "accounting", fin: true, claimedBuilt: true });
 scanDir("docs/dispatch", { match: /^BLOCK-.*-of-29-.*\.txt$/i, source: "enterprise-29" });
 scanDir("docs/specs", { match: /^gap-\d+.*\.md$/i, source: "gap-spec", readStatus: true, specNote: "gap spec (verify) — forward Phase 4-7 work" });
 
@@ -148,24 +166,30 @@ const SRC_RANK = { "program": 4, ".block-ready": 3, "enterprise-29": 2, "account
 const byId = new Map();
 for (const b of all) { const k = b.id.toUpperCase(); const cur = byId.get(k); if (!cur || (SRC_RANK[b.source] || 0) > (SRC_RANK[cur.source] || 0)) byId.set(k, b); }
 const blocks = [...byId.values()];
-const ORDER = { "PENDING": 0, "PENDING (GATED)": 1, "DONE": 2 };
+const ORDER = { "PENDING": 0, "PENDING (GATED)": 1, "NEEDS-VERIFY": 2, "DONE": 3 };
 blocks.sort((a, b) => (ORDER[a.status] - ORDER[b.status]) || a.id.localeCompare(b.id));
 
 const counts = {};
 for (const b of blocks) counts[b.status] = (counts[b.status] || 0) + 1;
 const gatedN = blocks.filter((b) => b.status === "PENDING (GATED)").length;
-console.log(`[reconcile:blocks] ${blocks.length} blocks — ${JSON.stringify(counts)}`);
+const c4 = (k) => counts[k] || 0;
+console.log(`[reconcile:blocks] ${blocks.length} blocks — DONE=${c4("DONE")}  NEEDS-VERIFY=${c4("NEEDS-VERIFY")}  PENDING=${c4("PENDING")}  PENDING (GATED)=${c4("PENDING (GATED)")}`);
 
 fs.writeFileSync(path.join(ROOT, "docs/trackers/block-reconciliation-data.json"), JSON.stringify({ date, counts, blocks }, null, 1));
 
-const legend = `**DONE** = on main now (PR merged / files present).  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.`;
+const legend = [
+  `**DONE** = verified on main (branch merged or all signature files present).`,
+  `**NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.`,
+  `**PENDING** = needs build.`,
+  `**PENDING (GATED)** = financial/locked, needs Jorge's gate first.`,
+].join("  ");
 const tbl = blocks.map((b) => `| ${b.id} | ${b.status} | ${b.fin ? "💰" : ""} | ${b.tier ? "T" + b.tier : ""} | ${b.source} | ${b.evidence.replace(/\|/g, "/")} |`).join("\n");
 fs.writeFileSync(path.join(ROOT, `docs/trackers/BLOCK-RECONCILIATION-${date}.md`),
 `# BLOCK RECONCILIATION — ${date} (every block, built vs pending — verified)
 
 ${legend}
 
-**Verified against \`origin/main\` (${mainFiles.size} files) + ${mergedPRs.length} merged PRs.** A block is DONE only if its branch merged, a PR title references it, or its files are on main.
+**Verified against \`origin/main\` (${mainFiles.size} files) + ${mergedPRs.length} merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
 ${Object.entries(counts).map(([k, v]) => `- **${k}**: ${v}`).join("\n")}
@@ -179,13 +203,13 @@ ${tbl}
 // xlsx
 const wb = new ExcelJS.Workbook();
 const NAVY = "FF1A1F36", HDR = "FFE5E7EB";
-const color = { "PENDING": "FFFCE8E6", "PENDING (GATED)": "FFFFF4CE", "DONE": "FFE6F4EA" };
+const color = { "PENDING": "FFFCE8E6", "PENDING (GATED)": "FFFFF4CE", "NEEDS-VERIFY": "FFFFE0B2", "DONE": "FFE6F4EA" };
 const ws = wb.addWorksheet("All Blocks (built vs pending)");
 ws.mergeCells(1, 1, 1, 6); const t = ws.getCell(1, 1);
 t.value = `IH35-TMS — EVERY BLOCK, BUILT vs PENDING — ${date} (verified vs origin/main + ${mergedPRs.length} merged PRs)`;
 t.font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } }; t.fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } }; ws.getRow(1).height = 22;
 ws.mergeCells(2, 1, 2, 6); const lg = ws.getCell(2, 1);
-lg.value = "DONE = on main now · PENDING = needs build · PENDING (GATED) = financial/locked, needs Jorge's gate first";
+lg.value = "DONE = verified on main (branch merged or files present) · NEEDS-VERIFY = weak signal, not trusted until GUARD confirms · PENDING = needs build · PENDING (GATED) = financial/locked, needs Jorge's gate first";
 lg.font = { italic: true, size: 9, color: { argb: "FF6B7280" } };
 ws.getRow(3).values = ["Block", "Status", "Financial", "Tier", "Source", "Evidence / why"];
 ws.getRow(3).eachCell((c) => { c.font = { bold: true, size: 10 }; c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: HDR } }; c.alignment = { wrapText: true, vertical: "middle" }; });
