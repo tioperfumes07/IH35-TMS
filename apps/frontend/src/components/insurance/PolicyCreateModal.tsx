@@ -5,6 +5,7 @@ import { ApiError, apiRequest } from "../../api/client";
 import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicyStatus } from "../../api/insurance";
 import { listUnits } from "../../api/mdata";
 import { Modal } from "../Modal";
+import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 
 type Props = {
@@ -370,26 +371,21 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Total Premium (USD)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="w-full rounded border border-gray-300 px-2 py-1"
-              value={form.total_premium}
-              onChange={(event) => updateField("total_premium", event.target.value)}
+            {/* M-1: dollars-mode QBO money entry; bridged so parseCurrencyToCents (×100) is byte-for-byte. */}
+            <MoneyInput
+              valueDollars={form.total_premium ? Number(form.total_premium) : null}
+              onChangeDollars={(d) => updateField("total_premium", d == null ? "" : String(d))}
+              ariaLabel="Total Premium (USD)"
             />
             {fieldErrors.total_premium ? <span className="text-xs text-red-700">{fieldErrors.total_premium}</span> : null}
           </label>
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Down Payment (USD)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="w-full rounded border border-gray-300 px-2 py-1"
-              value={form.down_payment}
-              onChange={(event) => updateField("down_payment", event.target.value)}
+            <MoneyInput
+              valueDollars={form.down_payment ? Number(form.down_payment) : null}
+              onChangeDollars={(d) => updateField("down_payment", d == null ? "" : String(d))}
+              ariaLabel="Down Payment (USD)"
             />
             {fieldErrors.down_payment ? <span className="text-xs text-red-700">{fieldErrors.down_payment}</span> : null}
           </label>

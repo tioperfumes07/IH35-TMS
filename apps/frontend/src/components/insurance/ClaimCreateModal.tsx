@@ -9,6 +9,7 @@ import {
 } from "../../api/insurance";
 import { listUnits } from "../../api/mdata";
 import { Modal } from "../Modal";
+import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 
 type Props = {
@@ -297,26 +298,21 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Amount Claimed (USD)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="w-full rounded border border-gray-300 px-2 py-1"
-              value={form.amount_claimed}
-              onChange={(event) => updateField("amount_claimed", event.target.value)}
+            {/* M-1: dollars-mode QBO money entry; bridged over the string form so parseCurrencyToCents (×100) is byte-for-byte. */}
+            <MoneyInput
+              valueDollars={form.amount_claimed ? Number(form.amount_claimed) : null}
+              onChangeDollars={(d) => updateField("amount_claimed", d == null ? "" : String(d))}
+              ariaLabel="Amount Claimed (USD)"
             />
             {fieldErrors.amount_claimed ? <span className="text-xs text-red-700">{fieldErrors.amount_claimed}</span> : null}
           </label>
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Amount Paid (USD)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="w-full rounded border border-gray-300 px-2 py-1"
-              value={form.amount_paid}
-              onChange={(event) => updateField("amount_paid", event.target.value)}
+            <MoneyInput
+              valueDollars={form.amount_paid ? Number(form.amount_paid) : null}
+              onChangeDollars={(d) => updateField("amount_paid", d == null ? "" : String(d))}
+              ariaLabel="Amount Paid (USD)"
             />
             {fieldErrors.amount_paid ? <span className="text-xs text-red-700">{fieldErrors.amount_paid}</span> : null}
           </label>

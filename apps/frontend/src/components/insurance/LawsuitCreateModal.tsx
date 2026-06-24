@@ -8,6 +8,7 @@ import {
   type InsuranceLawsuitStatus,
 } from "../../api/insurance";
 import { Modal } from "../Modal";
+import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 
 type Props = {
@@ -277,26 +278,21 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Demand (USD)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="w-full rounded border border-gray-300 px-2 py-1"
-              value={form.demand}
-              onChange={(event) => updateField("demand", event.target.value)}
+            {/* M-1: dollars-mode QBO money entry; bridged so parseCurrencyToCents (×100) is byte-for-byte. */}
+            <MoneyInput
+              valueDollars={form.demand ? Number(form.demand) : null}
+              onChangeDollars={(d) => updateField("demand", d == null ? "" : String(d))}
+              ariaLabel="Demand (USD)"
             />
             {fieldErrors.demand ? <span className="text-xs text-red-700">{fieldErrors.demand}</span> : null}
           </label>
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Settlement (USD)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="w-full rounded border border-gray-300 px-2 py-1"
-              value={form.settlement}
-              onChange={(event) => updateField("settlement", event.target.value)}
+            <MoneyInput
+              valueDollars={form.settlement ? Number(form.settlement) : null}
+              onChangeDollars={(d) => updateField("settlement", d == null ? "" : String(d))}
+              ariaLabel="Settlement (USD)"
             />
             {fieldErrors.settlement ? <span className="text-xs text-red-700">{fieldErrors.settlement}</span> : null}
           </label>
