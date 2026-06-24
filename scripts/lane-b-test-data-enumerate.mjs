@@ -36,8 +36,9 @@
  *              updated_by_user_id = <actor> WHERE id = <id> AND deactivated_at IS NULL;  -- no RETURNING
  *   equipment: UPDATE mdata.equipment SET deactivated_at = now(),
  *              updated_by_user_id = <actor> WHERE id = <id> AND deactivated_at IS NULL;  -- no RETURNING
- *   loads:     UPDATE mdata.loads SET soft_deleted_at = now()
- *              WHERE id = <id> AND soft_deleted_at IS NULL;
+ *   loads:     UPDATE mdata.loads SET soft_deleted_at = now(), deleted_by_user_id = <actor>
+ *              WHERE id = <id> AND soft_deleted_at IS NULL;  -- never touches loads.status
+ *              (status drives the Kanban board + settlement timing per Block-20 — GUARD-verified)
  * It NEVER executes those statements. The real inactivation is run BY JORGE, on the
  * confirmed set only, after he reviews this list. Reversible by design (clear the
  * timestamp column). FINANCIAL-LINKED candidates are excluded from the would-run set.
@@ -406,7 +407,7 @@ function printDryRun(units, trailers, loads) {
   }
   log(`\n  -- LOADS (${safeLoads.length}) --`);
   for (const l of safeLoads) {
-    log(`  UPDATE mdata.loads SET soft_deleted_at = now() WHERE id = '${l.id}' AND soft_deleted_at IS NULL;  -- ${l.load_number}`);
+    log(`  UPDATE mdata.loads SET soft_deleted_at = now(), deleted_by_user_id = '${actor}' WHERE id = '${l.id}' AND soft_deleted_at IS NULL;  -- ${l.load_number} (status untouched — Block-20)`);
   }
   const skipped = [...units, ...loads].filter((r) => r.fin_linked === "YES");
   if (skipped.length) {
