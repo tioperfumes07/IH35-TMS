@@ -57,4 +57,34 @@ describe("book-load cash advance (Tier-1 #1440)", () => {
     // and the input schema accepts load_id
     expect(src).toMatch(/load_id:\s*z\.string\(\)\.uuid\(\)\.nullable\(\)\.optional\(\)/);
   });
+
+  it("Finding 2 — load_id is derived SERVER-SIDE from the just-created load; the route never accepts a client load_id (entity-scope by construction)", () => {
+    const routeSrc = readFileSync("src/dispatch/loads.routes.ts", "utf8");
+    const createSchema = routeSrc.slice(
+      routeSrc.indexOf("const createDispatchLoadBodySchema = z.object("),
+      routeSrc.indexOf("});", routeSrc.indexOf("const createDispatchLoadBodySchema")),
+    );
+    // The create body schema declares NO load_id field → a client-supplied load_id is stripped by z.object
+    // (non-strict) and never reaches bookLoad. So the advance's load_id can only be the load the server just made.
+    expect(createSchema).not.toMatch(/^\s*load_id\s*:/m);
+
+    const svcSrc = readFileSync("src/dispatch/book-load.service.ts", "utf8");
+    // BookLoadInput type has no load_id field either (client cannot pass one through the service input).
+    const inputType = svcSrc.slice(svcSrc.indexOf("export type BookLoadInput = {"), svcSrc.indexOf("};", svcSrc.indexOf("export type BookLoadInput")));
+    expect(inputType).not.toMatch(/^\s*load_id\??\s*:/m);
+    // The cash-advance request is created with load_id = String(load.id) — the row RETURNING * id from the
+    // server-side INSERT, under the same app.operating_company_id → same operating company as the load.
+    expect(svcSrc).toMatch(/load_id:\s*String\(load\.id\)/);
+  });
+
+  it("decision 2 (observed-by-contract) — the FUEL-advance branch creates NO settlement deduction; it only emits the deferral audit", () => {
+    const svcSrc = readFileSync("src/dispatch/book-load.service.ts", "utf8");
+    const fuelBranch = svcSrc.slice(svcSrc.indexOf("(input.fuel_advance_cents ?? 0) > 0"));
+    const fuelBlock = fuelBranch.slice(0, fuelBranch.indexOf("\n    }") + 6);
+    // No driver-debt writes in the fuel path — no settlement line, no driver advance, no cash-advance request.
+    expect(fuelBlock).not.toMatch(/settlement_lines|driver_advances|driver_settlement_deductions|createCashAdvanceRequest/);
+    // It defers — records the intent only.
+    expect(fuelBlock).toMatch(/fuel_advance\.deferred_no_target|deferred/i);
+    // (The observed-on-real-rows zero-deduction assertion runs on GUARD's ci-migration-test Neon branch.)
+  });
 });
