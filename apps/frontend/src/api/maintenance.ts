@@ -119,6 +119,10 @@ export type InTransitIssue = {
   gps_lng?: number | null;
   gps_label?: string | null;
   hours_since_report: number;
+  // Design parity (in-transit-issues.html) — Load # + ETA, backed by dispatch.intransit_issues.load_id/stop_id.
+  load_id?: string | null;
+  load_display_id?: string | null;
+  eta_at?: string | null;
 };
 
 export type PartsInventoryRow = {
