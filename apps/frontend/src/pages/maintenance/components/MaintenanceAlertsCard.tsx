@@ -9,9 +9,11 @@ import { useToast } from "../../../components/Toast";
 
 type Props = {
   operatingCompanyId: string;
+  /** Opt-in narrow-sidebar layout: tight read-only list (ack/schedule actions stay in full mode). Default false. */
+  compact?: boolean;
 };
 
-export function MaintenanceAlertsCard({ operatingCompanyId }: Props) {
+export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
 
@@ -37,6 +39,31 @@ export function MaintenanceAlertsCard({ operatingCompanyId }: Props) {
   });
 
   const alerts = alertsQuery.data?.alerts ?? [];
+
+  if (compact) {
+    return (
+      <section className="overflow-hidden rounded border border-gray-200 bg-white">
+        <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">PM Alerts</span>
+          <span className="text-[10px] font-semibold" style={{ color: "#854F0B" }}>{alerts.length} open</span>
+        </div>
+        {alerts.length === 0 ? (
+          <div className="px-2 py-1.5 text-[11px] text-gray-400">No PM alerts</div>
+        ) : (
+          <ul className="flex flex-col">
+            {alerts.map((alert: MaintenancePmAlert) => (
+              <li key={alert.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-[10px]">
+                <div className="font-semibold" style={{ color: "#1F2A44" }}>
+                  {alert.unit_number} · {alert.schedule_label}
+                </div>
+                <div className="text-gray-500">Due @ {alert.trigger_odometer.toLocaleString()} mi</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="rounded border border-gray-200 bg-white p-3">

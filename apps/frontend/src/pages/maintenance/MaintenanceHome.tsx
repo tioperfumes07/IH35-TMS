@@ -38,6 +38,7 @@ import { PartsInventoryTable } from "./components/PartsInventoryTable";
 import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { RMStatStrip } from "./components/RMStatStrip";
+import { RoadServiceActivePanel } from "./components/RoadServiceActivePanel";
 import { RecentActivityRow } from "./components/RecentActivityRow";
 import { RoadServiceList } from "./RoadServiceList";
 import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
@@ -238,10 +239,14 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       </SubTabRow>
 
       <MaintKpiRows kpis={kpis} />
-      {companyId ? <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} /> : null}
+      {/* On the R&M Status Board these three cards move into the right sidebar (compact) below; every
+          other tab keeps its existing full-width layout. */}
+      {companyId && tab !== "rm_status_board" ? (
+        <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} />
+      ) : null}
       <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
-      {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} /> : null}
-      {companyId ? <DtcAutoWorkOrdersCard operatingCompanyId={companyId} /> : null}
+      {companyId && tab !== "rm_status_board" ? <MaintenanceAlertsCard operatingCompanyId={companyId} /> : null}
+      {companyId && tab !== "rm_status_board" ? <DtcAutoWorkOrdersCard operatingCompanyId={companyId} /> : null}
 
       {tab === "active_wos" ? (
         <WorkOrdersTable
@@ -256,18 +261,37 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "rm_status_board" ? <RMStatStrip kpis={kpis} /> : null}
 
       {tab === "rm_status_board" ? (
-        <RMBucketsGrid
-          inHouse={rmStatusQuery.data?.in_house ?? []}
-          external={rmStatusQuery.data?.external ?? []}
-          roadside={rmStatusQuery.data?.roadside ?? []}
-          onCreateRoadside={() => {
-            setCreateWoType("repair");
-            setPrefillFromIssue(null);
-            setCreateWoOpen(true);
-          }}
-          onOpen={(id) => setSelectedWorkOrderId(id)}
-          onAdvanceStatus={(id, status) => statusMutation.mutate({ id, status })}
-        />
+        // Approved rm-status-board.html: board LEFT + a compact ~168-180px right sidebar with
+        // PM Countdown / PM Alerts / DTC / Road Service Active. Single-column stack on small screens.
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
+          <div className="min-w-0">
+            <RMBucketsGrid
+              inHouse={rmStatusQuery.data?.in_house ?? []}
+              external={rmStatusQuery.data?.external ?? []}
+              roadside={rmStatusQuery.data?.roadside ?? []}
+              onCreateRoadside={() => {
+                setCreateWoType("repair");
+                setPrefillFromIssue(null);
+                setCreateWoOpen(true);
+              }}
+              onOpen={(id) => setSelectedWorkOrderId(id)}
+              onAdvanceStatus={(id, status) => statusMutation.mutate({ id, status })}
+            />
+          </div>
+          <aside className="flex flex-col gap-2">
+            {companyId ? (
+              <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} compact />
+            ) : null}
+            {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} compact /> : null}
+            {companyId ? (
+              <DtcAutoWorkOrdersCard operatingCompanyId={companyId} compact onOpen={(id) => setSelectedWorkOrderId(id)} />
+            ) : null}
+            <RoadServiceActivePanel
+              roadside={rmStatusQuery.data?.roadside ?? []}
+              onOpen={(id) => setSelectedWorkOrderId(id)}
+            />
+          </aside>
+        </div>
       ) : null}
 
       {tab === "fleet_table" ? <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns /> : null}
