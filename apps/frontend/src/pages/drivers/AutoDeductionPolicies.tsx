@@ -3,6 +3,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listDrivers } from "../../api/mdata";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -184,11 +185,12 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
           <div className="grid grid-cols-2 gap-2">
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Total owed (USD)
-              <input className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={totalOwed} onChange={(e) => setTotalOwed(e.target.value)} />
+              {/* M-1: dollars-mode; Math.round(totalOwed*100)=total_owed_cents byte-for-byte. */}
+              <MoneyInput valueDollars={totalOwed ? Number(totalOwed) : null} onChangeDollars={(d) => setTotalOwed(d == null ? "" : String(d))} ariaLabel="Total owed (USD)" />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Max / settlement (USD)
-              <input className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={maxPerSettlement} onChange={(e) => setMaxPerSettlement(e.target.value)} />
+              <MoneyInput valueDollars={maxPerSettlement ? Number(maxPerSettlement) : null} onChangeDollars={(d) => setMaxPerSettlement(d == null ? "" : String(d))} ariaLabel="Max / settlement (USD)" />
             </label>
           </div>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
