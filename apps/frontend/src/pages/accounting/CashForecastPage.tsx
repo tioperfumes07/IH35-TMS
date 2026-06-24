@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCashForecast, getCashForecastSettings, upsertCashForecastSettings, type CashForecastSettings } from "../../api/accounting";
 import { useToast } from "../../components/Toast";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { AccountingSubNav } from "./AccountingSubNav";
 
 function money(cents: number) {
@@ -83,20 +84,20 @@ export function CashForecastPage() {
             ).map(([key, label]) => (
               <label key={key} className="block text-xs text-gray-600">
                 {label}
-                <input
-                  type="number"
-                  min={0}
-                  value={effectiveSettings[key]}
-                  onChange={(event) => {
-                    const value = Number(event.target.value || 0);
-                    const next = { ...(settingsFromServer ?? draft), [key]: Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0 };
+                {/* M-1: these settings are stored in CENTS but were edited as raw cents (operator had to
+                    type "50000" for $500). cents-mode MoneyInput → operator types dollars, *_cents stored. */}
+                <MoneyInput
+                  valueCents={effectiveSettings[key]}
+                  onChangeCents={(cents) => {
+                    const next = { ...(settingsFromServer ?? draft), [key]: Math.max(0, cents ?? 0) };
                     if (settingsFromServer) {
                       queryClient.setQueryData(["accounting", "cash-forecast-settings", companyId], { settings: next });
                     } else {
                       setDraft(next);
                     }
                   }}
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                  ariaLabel={label}
+                  className="mt-1 w-full"
                 />
               </label>
             ))}
