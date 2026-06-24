@@ -8,6 +8,7 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 type SeedDraft = {
@@ -24,13 +25,14 @@ type BillDraftRow = {
   bill_date: string;
   due_date: string;
   bill_number: string;
-  amount: string;
+  amount: number | null; // M-1: dollar number (was a dollars-string); amount_cents = round(amount*100) byte-for-byte
   memo: string;
   coa_account_id: string;
 };
 
-function toUsd(cents: number) {
-  return (Math.round(cents) / 100).toFixed(2);
+function centsToDollars(cents: number): number | null {
+  const c = Math.round(cents);
+  return c > 0 ? c / 100 : null;
 }
 
 function rowFromSeed(seed: SeedDraft, index: number): BillDraftRow {
@@ -41,7 +43,7 @@ function rowFromSeed(seed: SeedDraft, index: number): BillDraftRow {
     bill_date: seed.transaction_date ?? "",
     due_date: "",
     bill_number: "",
-    amount: toUsd(Math.abs(Number(seed.amount_cents) || 0)),
+    amount: centsToDollars(Math.abs(Number(seed.amount_cents) || 0)),
     memo: seed.description ?? "",
     coa_account_id: "",
   };
@@ -55,7 +57,7 @@ function emptyRow(): BillDraftRow {
     bill_date: "",
     due_date: "",
     bill_number: "",
-    amount: "",
+    amount: null,
     memo: "",
     coa_account_id: "",
   };
@@ -198,11 +200,12 @@ export function CreateMultipleBillsPage() {
                   <input className="h-8 rounded border border-gray-300 px-2" value={row.bill_number} onChange={(event) => updateRow(row.id, { bill_number: event.target.value })} />
                 </td>
                 <td className="px-2 py-1.5">
-                  <input
-                    inputMode="decimal"
-                    className="h-8 w-28 rounded border border-gray-300 px-2 text-right"
-                    value={row.amount}
-                    onChange={(event) => updateRow(row.id, { amount: event.target.value })}
+                  {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
+                  <MoneyInput
+                    valueDollars={row.amount}
+                    onChangeDollars={(d) => updateRow(row.id, { amount: d })}
+                    ariaLabel="Bill amount (USD)"
+                    className="w-28"
                   />
                 </td>
                 <td className="px-2 py-1.5">
