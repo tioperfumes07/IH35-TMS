@@ -81,6 +81,19 @@ const KNOWN_TEST_ID_PREFIXES = ["6119f024", "96e1f233"];
 // Real Dispatch vehicles to ALWAYS exclude by display number (never test data).
 const EXCLUDE_UNIT_NUMBERS = ["T139"];
 
+// SUBSTRING markers (GUARD complete-set, 2026-06-24): a row is test/demo if these appear ANYWHERE in the
+// display number, name, OR vin (not just as a prefix) — catches 'DEMO DATA - …' titles, 'X-TEST' suffixes, etc.
+const TEST_MARKER_SUBSTRINGS = ["DEMO", "TEST", "SAMPLE"];
+
+// REVIEW-ONLY (do NOT auto-include): non-standard-named trucks GUARD saw that MIGHT be test data — Jorge
+// confirms each. Matched on unit_number. These are flagged "REVIEW", never auto-marked test.
+const REVIEW_UNIT_NUMBERS = ["01", "Truck-01", "Truck-02", "Truck-04", "Truck-103", "Truck-106", "Truck-112", "Truck-121", "Truck-130"];
+
+// KEEP-REAL allowlist: obvious real company vehicles — never reported as test, even if a substring matched
+// by accident. Applied JS-side to the result rows (a unit_number matching any of these is dropped from the
+// test set). TACOMA / VERSA* (named units) + the T120–T177 real-fleet block.
+const KEEP_REAL_RE = /^(tacoma|versa[\s-]*\d*|versa\s*white|t1[2-7]\d)$/i;
+
 // Load statuses that put a load on the live Dispatch board (its assigned unit is real).
 // Terminal statuses (delivered/cancelled) are NOT board loads. Derived from mdata.load_status_enum.
 const DISPATCH_BOARD_STATUSES = [
@@ -121,11 +134,22 @@ function assertHostAllowed(connectionString) {
 function log(...a) { console.log(...a); }
 function err(...a) { console.error(...a); }
 
-// SQL fragment: is this display-number / id a test marker?
+// SQL fragment: is this display-number / id a test marker? (prefix + known-id form — used for loads).
 const markerSql = (numCol, idCol) => {
   const prefixLikes = TEST_MARKER_PREFIXES.map((p) => `${numCol} ILIKE '${p}%'`);
   const idLikes = KNOWN_TEST_ID_PREFIXES.map((p) => `${idCol}::text LIKE '${p}%'`);
   return `(${[...prefixLikes, ...idLikes].join(" OR ")})`;
+};
+
+// BROAD marker (GUARD complete-set): prefix OR substring-anywhere in the number OR substring-anywhere in the
+// VIN OR a known test/demo id-prefix. Used for units / equipment / work orders so 'DEMO DATA - …' and
+// vin-embedded markers are caught, not just 'DEMO-' prefixes.
+const markerSqlBroad = (numCol, vinCol, idCol) => {
+  const prefixLikes = TEST_MARKER_PREFIXES.map((p) => `${numCol} ILIKE '${p}%'`);
+  const substrNum = TEST_MARKER_SUBSTRINGS.map((s) => `${numCol} ILIKE '%${s}%'`);
+  const substrVin = vinCol ? TEST_MARKER_SUBSTRINGS.map((s) => `${vinCol} ILIKE '%${s}%'`) : [];
+  const idLikes = KNOWN_TEST_ID_PREFIXES.map((p) => `${idCol}::text LIKE '${p}%'`);
+  return `(${[...prefixLikes, ...substrNum, ...substrVin, ...idLikes].join(" OR ")})`;
 };
 
 // company scope fragment for a given company column expression
@@ -176,8 +200,10 @@ async function main() {
     const units = await enumerateUnits(client, excluded.unitIds);
     const trailers = await enumerateTrailers(client);
     const loads = await enumerateLoads(client);
+    const workOrders = await enumerateWorkOrders(client);
+    const reviewUnits = await enumerateReviewUnits(client);
 
-    const report = { scope: scopeLabel, excluded, units, trailers, loads };
+    const report = { scope: scopeLabel, excluded, units, trailers, loads, workOrders, reviewUnits };
 
     if (asJson) {
       log(JSON.stringify(report, null, 2));
@@ -185,8 +211,11 @@ async function main() {
       printExclusions(excluded);
       printSection("UNITS (mdata.units)", units, UNIT_COLUMNS);
       printSection("TRAILERS (mdata.equipment)", trailers, TRAILER_COLUMNS);
+      printSection("WORK ORDERS (maintenance.work_orders)", workOrders, WO_COLUMNS);
       printSection("LOADS (mdata.loads)", loads, LOAD_COLUMNS);
+      printSection("⚠ REVIEW — ambiguous trucks (Jorge confirms each; NOT auto-included)", reviewUnits, REVIEW_COLUMNS);
       printSummary(units, trailers, loads);
+      log(`  work orders (DEMO/TEST): ${workOrders.length}   review-flagged units: ${reviewUnits.length}`);
       if (dryRun) printDryRun(units, trailers, loads);
     }
 
@@ -249,7 +278,7 @@ async function loadExclusions(client) {
 }
 
 // ── Units ───────────────────────────────────────────────────────────────────
-const UNIT_COLUMNS = ["unit_number", "vin", "status", "marker", "created", "loads", "work_orders", "settlements", "advances", "fuel", "inspections", "fin_linked", "id8"];
+const UNIT_COLUMNS = ["unit_number", "vin", "status", "is_active", "marker", "created", "loads", "work_orders", "settlements", "advances", "fuel", "inspections", "fin_linked", "id8"];
 async function enumerateUnits(client, excludedUnitIds) {
   const { rows } = await client.query(
     `
@@ -274,20 +303,22 @@ async function enumerateUnits(client, excludedUnitIds) {
        + (SELECT count(*) FROM driver_finance.cash_advance_requests c
           WHERE c.load_id IN (SELECT id FROM mdata.loads WHERE assigned_unit_id = u.id))) AS adv_cnt
     FROM mdata.units u
-    WHERE ${markerOrSample("u.unit_number", "u.id", "u.is_sample_data")}
+    WHERE (${markerSqlBroad("u.unit_number", "u.vin", "u.id")} OR u.is_sample_data = TRUE)
       AND ${companyScopeSql("COALESCE(u.currently_leased_to_company_id, u.owner_company_id)")}
       AND NOT (u.id = ANY($1::uuid[]))
     ORDER BY u.created_at
     `,
     [excludedUnitIds.length ? excludedUnitIds : ["00000000-0000-0000-0000-000000000000"]]
   );
-  return rows.map(unitRow);
+  // KEEP-REAL: drop obvious real company vehicles even if a substring matched by accident.
+  return rows.map(unitRow).filter((r) => !KEEP_REAL_RE.test(String(r.unit_number || "").trim()));
 }
 function unitRow(r) {
   const finLinked = Number(r.settle_cnt) > 0 || Number(r.adv_cnt) > 0;
   return {
     id: r.id, id8: r.id.slice(0, 8),
     unit_number: r.unit_number, vin: r.vin || "", status: r.status,
+    is_active: r.deactivated_at ? "no" : "yes",
     marker: markerReason(r.unit_number, r.id, r.is_sample_data),
     created: fmtDate(r.created_at), deactivated_at: r.deactivated_at,
     loads: Number(r.loads_cnt), work_orders: Number(r.wo_cnt),
@@ -298,7 +329,7 @@ function unitRow(r) {
 }
 
 // ── Trailers (mdata.equipment) ────────────────────────────────────────────────
-const TRAILER_COLUMNS = ["equipment_number", "vin", "status", "marker", "created", "work_orders", "fin_linked", "id8"];
+const TRAILER_COLUMNS = ["equipment_number", "vin", "status", "is_active", "marker", "created", "work_orders", "fin_linked", "id8"];
 async function enumerateTrailers(client) {
   const { rows } = await client.query(
     `
@@ -307,19 +338,73 @@ async function enumerateTrailers(client) {
       e.created_at, e.deactivated_at,
       (SELECT count(*) FROM maintenance.work_orders w WHERE w.equipment_id = e.id) AS wo_cnt
     FROM mdata.equipment e
-    WHERE ${markerSql("e.equipment_number", "e.id")}
+    WHERE ${markerSqlBroad("e.equipment_number", "e.vin", "e.id")}
       AND ${companyScopeSql("COALESCE(e.currently_leased_to_company_id, e.owner_company_id)")}
     ORDER BY e.created_at
     `
   );
-  // equipment has no is_sample_data column (verified) — marker is prefix/id only.
+  // equipment has no is_sample_data column (verified) — marker is prefix/substring/vin/id.
   return rows.map((r) => ({
     id: r.id, id8: r.id.slice(0, 8),
     equipment_number: r.equipment_number, vin: r.vin || "", status: r.status,
+    is_active: r.deactivated_at ? "no" : "yes",
     marker: markerReason(r.equipment_number, r.id, false),
     created: fmtDate(r.created_at), deactivated_at: r.deactivated_at,
     work_orders: Number(r.wo_cnt),
     fin_linked: "", // trailers carry no settlement/advance linkage
+  })).filter((r) => !KEEP_REAL_RE.test(String(r.equipment_number || "").trim()));
+}
+
+// ── Work orders (maintenance.work_orders) ────────────────────────────────────
+const WO_COLUMNS = ["display_id", "wo_title", "status", "unit8", "marker", "id8"];
+async function enumerateWorkOrders(client) {
+  const subs = TEST_MARKER_SUBSTRINGS.map((s) =>
+    `(w.display_id ILIKE '%${s}%' OR w.wo_title ILIKE '%${s}%' OR w.description ILIKE '%${s}%')`
+  ).join(" OR ");
+  const { rows } = await client.query(
+    `
+    SELECT w.id::text AS id, w.display_id, w.wo_title, w.status::text AS status,
+           w.unit_id::text AS unit_id, w.created_at
+    FROM maintenance.work_orders w
+    WHERE (${subs})
+      AND ${companyScopeSql("w.operating_company_id")}
+    ORDER BY w.created_at
+    `
+  ).catch(async (e) => {
+    // operating_company_id may not exist on maintenance.work_orders in every build — fall back unscoped.
+    if (!/operating_company_id/.test(String(e.message))) throw e;
+    return client.query(
+      `SELECT w.id::text AS id, w.display_id, w.wo_title, w.status::text AS status,
+              w.unit_id::text AS unit_id, w.created_at
+       FROM maintenance.work_orders w WHERE (${subs}) ORDER BY w.created_at`
+    );
+  });
+  return rows.map((r) => ({
+    id: r.id, id8: r.id.slice(0, 8),
+    display_id: r.display_id, wo_title: (r.wo_title || "").slice(0, 50), status: r.status,
+    unit8: r.unit_id ? r.unit_id.slice(0, 8) : "",
+    marker: "DEMO/TEST in title/desc",
+  }));
+}
+
+// ── REVIEW-ONLY ambiguous trucks (Jorge confirms each — NOT auto-included) ────
+const REVIEW_COLUMNS = ["unit_number", "vin", "status", "is_active", "why", "id8"];
+async function enumerateReviewUnits(client) {
+  const { rows } = await client.query(
+    `
+    SELECT u.id::text AS id, u.unit_number, u.vin, u.status::text AS status, u.deactivated_at
+    FROM mdata.units u
+    WHERE u.unit_number = ANY($1::text[])
+      AND ${companyScopeSql("COALESCE(u.currently_leased_to_company_id, u.owner_company_id)")}
+    ORDER BY u.unit_number
+    `,
+    [REVIEW_UNIT_NUMBERS]
+  );
+  return rows.map((r) => ({
+    id: r.id, id8: r.id.slice(0, 8),
+    unit_number: r.unit_number, vin: r.vin || "", status: r.status,
+    is_active: r.deactivated_at ? "no" : "yes",
+    why: "non-standard name — Jorge confirms real-vs-test",
   }));
 }
 
