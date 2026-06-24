@@ -116,6 +116,9 @@ export type BookLoadInput = {
   // (captured in audit, no settlement deduction). No money columns on mdata.loads.
   cash_advance_cents?: number;
   fuel_advance_cents?: number;
+  // Decision 4: full recovery at next settlement (default) | amortize with a per-settlement cap.
+  cash_advance_recovery_mode?: "full" | "amortize";
+  cash_advance_recovery_cents?: number;
   temp_fahrenheit?: number;
   charges: BookLoadCharge[];
   stops: BookLoadStop[];
@@ -440,6 +443,14 @@ export async function createDriverBillArtifacts(
 export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   if (input.assigned_primary_driver_id && input.team_id) {
     return { kind: "error", status: 400, payload: { error: "solo_or_team_assignment_required_not_both" } };
+  }
+
+  // [HOLD-FOR-JORGE — TIER 1] A booked CASH advance is recovered from a driver's settlement, so it REQUIRES an
+  // assigned driver. Reject up-front rather than orphaning or silently dropping the money (GUARD-recommended).
+  // [DECISION FOR JORGE: reject (this) vs. hold-until-driver-assigned — see PR.] Fuel advance has no driver
+  // dependency (it's deferred either way), so it does not gate booking.
+  if ((input.cash_advance_cents ?? 0) > 0 && !input.assigned_primary_driver_id) {
+    return { kind: "error", status: 422, payload: { error: "cash_advance_requires_driver" } };
   }
 
   return withCurrentUser(input.requestingUserUuid, async (client) => {
@@ -979,27 +990,24 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     // the existing request → owner-approval → settlement-deduction rails (no money columns on mdata.loads, no new
     // GL math). Full recovery at the next settlement is the default (proposed_recovery_per_settlement_cents left
     // null; an explicit per-advance override amortizes). A cash advance needs a payee, so it requires a driver.
-    if ((input.cash_advance_cents ?? 0) > 0) {
-      if (input.assigned_primary_driver_id) {
-        await createCashAdvanceRequest(client, {
-          operatingCompanyId: input.operating_company_id,
-          driverId: input.assigned_primary_driver_id,
-          actorUserId: input.requestingUserUuid,
-          body: {
-            requested_amount_cents: input.cash_advance_cents!,
-            reason: `Cash advance booked at load creation (load ${String(load.load_number ?? load.id)}).`,
-            submitted_via: "office",
-            load_id: String(load.id),
-          },
-        });
-      } else {
-        await appendCrudAudit(client, input.requestingUserUuid, "driver_finance.cash_advance.skipped_no_driver", {
-          load_uuid: load.id,
-          load_number: String(load.load_number ?? load.id),
-          cash_advance_cents: input.cash_advance_cents,
-          reason: "no_assigned_driver_at_booking",
-        });
-      }
+    if ((input.cash_advance_cents ?? 0) > 0 && input.assigned_primary_driver_id) {
+      // Decision 4: FULL recovery at the next settlement is the default (proposed_recovery_per_settlement_cents
+      // omitted ⇒ full). An explicit 'amortize' override sets a per-settlement recovery cap. The driver is
+      // guaranteed present here (the no-driver case is rejected up-front above).
+      const recoveryCapCents =
+        input.cash_advance_recovery_mode === "amortize" ? input.cash_advance_recovery_cents : undefined;
+      await createCashAdvanceRequest(client, {
+        operatingCompanyId: input.operating_company_id,
+        driverId: input.assigned_primary_driver_id,
+        actorUserId: input.requestingUserUuid,
+        body: {
+          requested_amount_cents: input.cash_advance_cents!,
+          reason: `Cash advance booked at load creation (load ${String(load.load_number ?? load.id)}).`,
+          submitted_via: "office",
+          load_id: String(load.id),
+          proposed_recovery_per_settlement_cents: recoveryCapCents,
+        },
+      });
     }
     // [HOLD-FOR-JORGE — TIER 1] FUEL advance is a TRUCK operating cost (fuel-card / Corpay), NEVER a driver
     // settlement deduction (deducting it would be double-recovery). No fuel-card persistence target exists yet, so

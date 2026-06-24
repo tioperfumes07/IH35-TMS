@@ -18,6 +18,9 @@ jobs:
       - name: verify:deep-audit-b-invoices-subnav
         run: npm run verify:deep-audit-b-invoices-subnav
 
+      - name: verify:load-advance-persistence
+        run: npm run verify:load-advance-persistence
+
       - name: verify:deep-audit-b-bell-icon
         run: npm run verify:deep-audit-b-bell-icon
 

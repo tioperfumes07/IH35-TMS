@@ -123,6 +123,8 @@ const createDispatchLoadBodySchema = z.object({
   // (recovered from settlement). FUEL → truck cost, deferred (never a driver deduction). No money on mdata.loads.
   cash_advance_cents: z.number().int().min(0).optional(),
   fuel_advance_cents: z.number().int().min(0).optional(),
+  cash_advance_recovery_mode: z.enum(["full", "amortize"]).optional(),
+  cash_advance_recovery_cents: z.number().int().positive().optional(),
   hazmat: z.boolean().optional(),
   driver_instructions_text: z.string().trim().max(5000).optional(),
   notes: z.string().trim().max(5000).optional(),
