@@ -14,21 +14,41 @@ in **today's `main` code** by the coder on 2026-06-24 (post #1444/#1447/#1448). 
 
 ## Status legend
 `OPEN` diagnosed, not built · `RE-VERIFY` may already be fixed on current main, confirm live first ·
-`GATED` touches a flagged/locked area (hazmat drift / money) — coordinate before building.
+`GATED` touches a flagged/locked area (hazmat drift / money) — coordinate before building ·
+`SHIPPED` fixed + merged · `LIKELY-RESOLVED` code on current main already correct, live re-verify only.
 
-| # | Issue | Priority | Status | Root-cause confidence |
-|---|-------|----------|--------|------------------------|
-| W-1 | `is_tarp_stop: ""` → booking 400 (hard blocker) | **P0 — unblocks all booking** | OPEN | **HIGH (code-confirmed)** |
-| W-2 | Empty "Create charge" code dropdown — additional-charges 404 | P1 | RE-VERIFY | MED (route exists on main) |
-| W-3 | 10× money bug ($1,500 → $15,000) | **P0 — money correctness** | OPEN | MED (needs the exact field) |
-| W-4 | optimal-drivers 500 (`l.hazmat` / `l.trailer_type` 42703) | P1 | OPEN / partly GATED | **HIGH (code-confirmed)** |
-| W-5 | Totals not summing (charges/lumper → Total customer invoice) | P1 | OPEN | MED |
-| W-6 | Lumper not in totals; "paid by broker" → auto reimbursable line | P1 | OPEN / money | MED |
-| W-7 | Section A ↔ Section C extra-stop fee coordination | P2 | OPEN | LOW (needs live) |
-| W-8 | State dropdown no type-filter; address not binding; PC*Miler no autofill | P2 | OPEN | LOW (needs live) |
-| W-9 | Calendar in stops not working | P2 | OPEN | LOW (needs live) |
-| W-10 | Out-of-proportion boxes (per-stop rates, create charge, stop 2) | P3 — CSS | OPEN | LOW (needs live) |
-| W-11 | Missing preview PDFs (office + driver-instructions) | P2 | OPEN | LOW (needs live) |
+| # | Issue | Priority | Status (verified 2026-06-24 vs main) | Root-cause confidence |
+|---|-------|----------|--------------------------------------|------------------------|
+| W-1 | `is_tarp_stop: ""` → booking 400 (hard blocker) | **P0** | **SHIPPED — PR #1449** (`edd33025`) | confirmed |
+| W-2 | Empty "Create charge" code dropdown — additional-charges 404 | P1 | **LIKELY-RESOLVED** — route wired + **15 seeded rows** on main | live re-verify only |
+| W-3 | 10× money bug ($1,500 → $15,000) | P0 | **LIKELY-RESOLVED** — live V4 uses correct cents `MoneyInput`; buggy path is **dead V3** | live re-verify only |
+| W-4 | optimal-drivers 500 (`l.hazmat` 42703) | P1 | **OPEN — REAL bug; hazmat half GATED** | **HIGH (code-confirmed)** |
+| W-5 | Totals not summing (charges/lumper → Total customer invoice) | P1 | OPEN — live confirm (money) | MED |
+| W-6 | Lumper not in totals; "paid by broker" → auto reimbursable line | P1 | OPEN — money rule GATED | MED |
+| W-7 | Section A ↔ Section C extra-stop fee coordination | P2 | OPEN — needs live | LOW |
+| W-8 | State/address not binding; PC*Miler no autofill | P2 | **OPEN — REAL data-loss candidate; §C design-locked** | MED (code-confirmed) |
+| W-9 | Calendar in stops not working | P2 | OPEN — needs live | LOW |
+| W-10 | Out-of-proportion boxes (per-stop rates, create charge, stop 2) | P3 — CSS | OPEN — needs live | LOW |
+| W-11 | Missing preview PDFs (office + driver-instructions) | P2 | OPEN — needs live | LOW |
+
+> **VERIFICATION PASS — 2026-06-24, coder, vs current `main`** (no browser this session; verified against
+> source + live `ih35_e2e` schema). Findings that change the build plan:
+> - **W-1 SHIPPED** (PR #1449): backend `stopBooleanish`/`stopIntish`/`stopDatetimeish` zod coercion + FE
+>   `setValueAs` on the hidden inputs + 10-case CI guard. Auto-merged on green; deploy verified.
+> - **W-2 LIKELY-RESOLVED**: `catalogs.additional_charges` exists with **15 seeded rows**, route is wired
+>   (`catalogs/dispatch/index.ts`). The 404 looks stale (frozen-session bundle). **Do not build — re-verify live.**
+> - **W-3 LIKELY-RESOLVED**: the live `BookLoadModalV4` linehaul input is the correct cents-based
+>   `MoneyInput` (×100). The `dollarsToCents` register path lives in **`BookLoadCustomerSection`, which is
+>   dead** (only `BookLoadModalV3.deprecated.tsx` mounts it). **Do NOT "fix" dead code.** If a 10× persists
+>   live, it is a different field → re-crawl.
+> - **W-4 REAL + GATED**: `driver-optimizer.service.ts:186` `COALESCE(l.hazmat, false)` — `mdata.loads` has
+>   **no `hazmat` column** in any migration (book-load stores hazmat in the `quicksave_pending_fields`
+>   jsonb). `l.trailer_type` exists on prod but not `ih35_e2e` (drift). The hazmat source is **GATED**
+>   (CLAUDE.md §4 "no hazmat fields" vs the unresolved hazmat-field drift) — **STOP for Jorge.**
+> - **W-8 REAL but design-locked**: `book-load.service` writes `address_line1`/`state` to `mdata.load_stops`;
+>   the stop UI binds them only via the **address autocomplete** (`setValue` at `BookLoadStopsSection.tsx:95,97`),
+>   not a registered input, and the §C card is **design-locked to 11 fields**. Live re-verify whether the
+>   autocomplete value actually persists into the submit payload; adding fields needs design sign-off.
 
 ---
 
