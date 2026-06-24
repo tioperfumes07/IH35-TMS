@@ -611,23 +611,26 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const detail = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
-      // W-FIX-3a: side-panel §B Equipment enrichment — READ-ONLY joins, NO new column, NO view change.
-      //   team-driver name  ← assigned_secondary_driver_id → mdata.drivers (persisted)
-      //   trailer type/unit ← mdata.loads.trailer_id → mdata.equipment (persisted column + table)
-      // trailer_id is NULL for loads the Book Load wizard created (it does not persist it yet — a payload
-      // change, flagged separately), so trailer fields are honestly NULL ("—") for those; real where set.
+      // BUGFIX (Block 1, 2026-06-24): the prior W-FIX-3a join `LEFT JOIN mdata.equipment te ON te.id =
+      // l.trailer_id` referenced a column that DOES NOT EXIST. mdata.loads (and the dispatch view) have NO
+      // trailer_id and NO trailer_type column — verified against the full migration set; the only equipment
+      // column on a load is assigned_unit_id (the truck). That non-existent column 500'd every load-detail
+      // fetch (42703), which in turn broke the cancel flow (overview 500 → load never leaves the board) and
+      // left the Cancelled Kanban column counted-but-empty. There is no persisted trailer↔load link to read,
+      // so the trailer fields are honestly NULL ("—"); the response SHAPE is unchanged (both keys present).
+      // A real trailer-on-load link (persist a trailer unit/type) is a separate additive feature — flagged.
+      //   team-driver name ← assigned_secondary_driver_id → mdata.drivers (persisted, kept).
       // Driver pay rate is NOT a load-persisted value (load-specific rate isn't stored; mdata.driver_pay_rates
       // is effective-dated per-qualification) → intentionally not surfaced here (stays "—"), no fabrication.
       const loadRes = await client.query(
         `
           SELECT l.*, c.customer_name,
                  NULLIF(TRIM(CONCAT(COALESCE(sd.first_name, ''), ' ', COALESCE(sd.last_name, ''))), '') AS assigned_secondary_driver_name,
-                 te.equipment_type AS trailer_equipment_type,
-                 te.equipment_number AS trailer_number
+                 NULL::text AS trailer_equipment_type,
+                 NULL::text AS trailer_number
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
           LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
-          LEFT JOIN mdata.equipment te ON te.id = l.trailer_id
           WHERE l.id = $1
             AND l.operating_company_id = $2
           LIMIT 1
