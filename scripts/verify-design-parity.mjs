@@ -69,7 +69,10 @@ const SCREEN_COMPONENTS = {
     `${FE}/maintenance/FleetTablePage.tsx`,
     `${FE}/maintenance/components/WorkOrdersTable.tsx`,
   ],
-  "R&M Status Board": [`${FE}/maintenance/components/RMBucketsGrid.tsx`],
+  "R&M Status Board": [
+    `${FE}/maintenance/components/RMBucketsGrid.tsx`,
+    `${FE}/maintenance/components/RMStatStrip.tsx`,
+  ],
   "Fleet Table": [
     `${FE}/maintenance/FleetTablePage.tsx`,
     "apps/frontend/src/components/FleetTable.tsx",
@@ -156,6 +159,11 @@ const STRUCTURAL_RENDER_TESTS = {
     // wo-invoice-payment / wo-documents) actually reach the DOM. Catches "render-v5 layout removed/renamed"
     // (the pre-#1426 / testid-removed regression) that token-in-source presence cannot see.
     "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.test.tsx",
+  ],
+  // R&M Status Board was ENFORCED with an EMPTY token list (vacuous). Now backed by real board/strip tokens
+  // + this render-test which mounts RMStatStrip and asserts all 8 stat tiles reach the DOM.
+  "R&M Status Board": [
+    "apps/frontend/src/pages/maintenance/components/RMStatStrip.test.tsx",
   ],
 };
 // Screens that are structurally complex → require a STRUCTURAL_RENDER_TESTS entry before they can be ENFORCED.

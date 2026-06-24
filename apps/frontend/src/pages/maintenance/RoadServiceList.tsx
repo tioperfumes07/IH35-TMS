@@ -104,6 +104,9 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
     },
     { key: "service_type", label: "Service", sortable: true },
     { key: "created_at", label: "Callout", sortable: true, render: (row) => calloutAt(row.created_at) },
+    // ETA / RESPONSE (road-service.html) — real on_scene_time arrival column, previously unrendered. "—" until
+    // the provider is marked on-scene (no fabrication — it's a genuine nullable timestamp).
+    { key: "on_scene_time", label: "ETA / Response", sortable: true, render: (row) => calloutAt(row.on_scene_time) },
     { key: "total_cost_cents", label: "Cost", sortable: true, render: (row) => money(row.total_cost_cents) },
     { key: "status", label: "Status", sortable: true, render: (row) => <StatusBadge status={row.status} /> },
     {
