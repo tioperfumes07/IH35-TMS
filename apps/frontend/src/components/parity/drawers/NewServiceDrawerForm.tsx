@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { createQboItem } from "../../../api/qbo-mdata";
+import { MoneyInput } from "../../forms/MoneyInput";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -28,11 +29,11 @@ type FormState = {
   category: string;
   sellEnabled: boolean;
   sellDescription: string;
-  sellPrice: string;
+  sellPrice: number | null;
   incomeAccount: string;
   buyEnabled: boolean;
   buyDescription: string;
-  buyCost: string;
+  buyCost: number | null;
   preferredVendor: string;
   expenseAccount: string;
 };
@@ -47,16 +48,16 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     category: "",
     sellEnabled: true,
     sellDescription: "",
-    sellPrice: "",
+    sellPrice: null,
     incomeAccount: "Sales of Service Income",
     buyEnabled: false,
     buyDescription: "",
-    buyCost: "",
+    buyCost: null,
     preferredVendor: "",
     expenseAccount: "",
   });
 
-  function set<K extends keyof FormState>(key: K, value: string | boolean) {
+  function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -69,7 +70,11 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     }
     setSaving(true);
     try {
-      const priceCents = form.sellPrice ? Math.round(parseFloat(form.sellPrice) * 100) : 0;
+      // M-1: sellPrice stays a DOLLAR number → unit_price_cents = round(price*100) unchanged (byte-for-byte).
+      // NOTE: the buy side (buyCost/buyDescription/preferredVendor/expenseAccount) is collected here but the
+      // createQboItem API + mdata.qbo_items only persist the SELL side — buyCost is NOT a 100× bug (never sent).
+      // Persisting the buy side requires new qbo_items columns → tracked as a separate [HOLD-FOR-JORGE] migration.
+      const priceCents = form.sellPrice != null ? Math.round(form.sellPrice * 100) : 0;
       const res = await createQboItem(operatingCompanyId, {
         name: form.name.trim(),
         sku: form.sku.trim() || undefined,
@@ -146,14 +151,12 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Sales price / rate</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm"
-                value={form.sellPrice}
-                onChange={(e) => set("sellPrice", e.target.value)}
-                placeholder="0.00"
+              {/* M-1: dollars-mode QBO money entry; unit_price_cents byte-for-byte. */}
+              <MoneyInput
+                valueDollars={form.sellPrice}
+                onChangeDollars={(d) => set("sellPrice", d)}
+                ariaLabel="Sales price / rate"
+                className="mt-1 w-full"
               />
             </label>
             <label className="block">
@@ -196,14 +199,12 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Cost</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm"
-                value={form.buyCost}
-                onChange={(e) => set("buyCost", e.target.value)}
-                placeholder="0.00"
+              {/* M-1: dollars-mode QBO money entry. NOTE: buy side not yet persisted (see handleSubmit). */}
+              <MoneyInput
+                valueDollars={form.buyCost}
+                onChangeDollars={(d) => set("buyCost", d)}
+                ariaLabel="Cost"
+                className="mt-1 w-full"
               />
             </label>
             <label className="block">

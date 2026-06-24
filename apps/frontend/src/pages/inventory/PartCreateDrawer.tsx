@@ -3,6 +3,7 @@ import { resolveApiUrl } from "../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Button } from "../../components/Button";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 interface PartCreateDrawerProps {
   isOpen: boolean;
@@ -129,12 +130,13 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
             </div>
             <div>
               <label className="block text-sm font-medium">Unit cost</label>
-              <input
-                type="number"
-                step="0.01"
-                className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
-                value={formData.unit_cost}
-                onChange={(e) => setFormData({ ...formData, unit_cost: e.target.value })}
+              {/* M-1: dollars-mode QBO money entry; backend /maintenance/parts unit_cost = numeric(10,2) DOLLARS.
+                  Bridged over the all-strings formData so submit Number(data.unit_cost) is byte-for-byte. */}
+              <MoneyInput
+                valueDollars={formData.unit_cost ? Number(formData.unit_cost) : null}
+                onChangeDollars={(d) => setFormData({ ...formData, unit_cost: d == null ? "" : String(d) })}
+                ariaLabel="Unit cost"
+                className="mt-1 w-full"
               />
             </div>
           </div>
