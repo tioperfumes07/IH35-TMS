@@ -28,6 +28,7 @@
   "exclude": [
     "src/**/*.test.ts",
     "src/**/__tests__/**",
-    "src/**/*.integration.test.ts"
+    "src/**/*.integration.test.ts",
+    "src/**/*.deprecated.ts"
   ]
 }

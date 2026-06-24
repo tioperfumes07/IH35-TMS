@@ -41,10 +41,10 @@ const checks = [
     file: "apps/backend/src/banking/reconciliation.routes.ts",
     events: ["banking.reconciliation.started", "banking.reconciliation.completed"],
   },
-  {
-    file: "apps/backend/src/banking/manual-je.routes.ts",
-    events: ["banking.manual_je.created"],
-  },
+  // banking/manual-je.routes.ts — ARCHIVED 2026-06-24 (Tier-1 H-1). The route is RETIRED (unmounted; the
+  // original is preserved in manual-je.routes.deprecated.ts) and no longer mutates anything, so it is no longer
+  // a banking write surface that must emit a spine event. Removed from coverage. Canonical JE path =
+  // /api/v1/accounting/journal-entries (which emits via the accounting layer).
 ];
 
 for (const { file, events } of checks) {

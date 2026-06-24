@@ -1,3 +1,11 @@
+// ARCHIVED 2026-06-24 — Tier-1 H-1 (Jorge: Option A). UNMOUNTED + RETIRED, kept per ARCHIVE-never-DELETE.
+// This is the ORIGINAL banking manual-JE route, preserved for history. It is no longer registered
+// (removed from apps/backend/src/index.ts) and is NOT served. It wrote to accounting.journal_entry_lines
+// — a forbidden, GL-unread orphan table that does not exist in prod (verified on Neon). The canonical,
+// single JE writer is POST /api/v1/accounting/journal-entries → createJournalEntry() →
+// accounting.journal_entry_postings (QBO/NetSuite standard). Do NOT re-register this file.
+//
+// eslint-disable / excluded from the journal_entry_lines write-guard via the .deprecated suffix.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";

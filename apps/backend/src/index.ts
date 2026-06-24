@@ -196,7 +196,6 @@ import { registerPlaidWebhookRoutes } from "./integrations/plaid/webhook.routes.
 import { registerBankingPlaidWebhookRoutes } from "./banking/plaid/webhook.routes.js";
 import { registerBankingTransfersRoutes } from "./banking/transfers.routes.js";
 import { registerCcPaymentRoutes } from "./bill-payments/cc-payment.routes.js";
-import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
 import { registerBankingEscrowVisualizerRoutes } from "./banking/escrow-visualizer.routes.js";
 import { registerBankingReconciliationRoutes } from "./banking/reconciliation.routes.js";
@@ -847,7 +846,9 @@ async function main() {
   await registerBankingPlaidWebhookRoutes(app);
   await registerBankingTransfersRoutes(app);
   await registerCcPaymentRoutes(app);
-  await registerBankingManualJeRoutes(app);
+  // registerBankingManualJeRoutes — ARCHIVED 2026-06-24 (Tier-1 H-1). Dead path (zero callers) that wrote the
+  // forbidden accounting.journal_entry_lines. UNMOUNTED; original preserved in manual-je.routes.deprecated.ts.
+  // Canonical JE path = POST /api/v1/accounting/journal-entries.
   await registerBankingFactoringVirtualRoutes(app);
   await registerBankingEscrowVisualizerRoutes(app);
   await registerBankingReconciliationRoutes(app);
