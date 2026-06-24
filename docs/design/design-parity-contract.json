@@ -202,8 +202,26 @@
  "R&M Status Board": {
   "design_file": "rm-status-board.html",
   "route": "app/maintenance/rm-status-board",
-  "required_tokens": [],
-  "required_labels": []
+  "required_tokens": [
+   "inprogress",
+   "awaitingparts",
+   "severeoos",
+   "completed",
+   "pmduesoon",
+   "roadservice",
+   "partslowstock",
+   "mtdcost"
+  ],
+  "required_labels": [
+   "In Progress",
+   "Awaiting Parts",
+   "Severe / OOS",
+   "Completed",
+   "PM Due Soon",
+   "Road Service",
+   "Parts Low-Stock",
+   "MTD Cost"
+  ]
  },
  "Fleet Table": {
   "design_file": "fleet-table.html",
