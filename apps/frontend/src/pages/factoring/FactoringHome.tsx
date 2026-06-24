@@ -592,11 +592,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 onChange={(event) => setLoanLenderVendorId(event.target.value)}
                 placeholder="lender vendor uuid"
               />
-              <input
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
-                value={loanPrincipalCents}
-                onChange={(event) => setLoanPrincipalCents(event.target.value)}
-                placeholder="principal cents"
+              {/* M-1 (GUARD FAIL #3): was a raw "principal cents" text input (350 = $3.50). cents-mode MoneyInput:
+                  operator types dollars; principal_cents = Number(loanPrincipalCents) stored unchanged. */}
+              <MoneyInput
+                valueCents={loanPrincipalCents ? Number(loanPrincipalCents) : null}
+                onChangeCents={(c) => setLoanPrincipalCents(c == null ? "" : String(c))}
+                ariaLabel="Loan principal (USD)"
+                placeholder="Principal"
               />
               <input
                 className="rounded border border-gray-300 px-2 py-1 text-xs"
