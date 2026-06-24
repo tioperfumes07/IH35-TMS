@@ -63,6 +63,7 @@ import { registerStatesRoutes } from "./catalogs/states.routes.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
+import { registerDispatchCatalogRoutes } from "./catalogs/dispatch/index.js";
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
 import { registerDocsFoundationRoutes } from "./docs/docs.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
@@ -690,6 +691,10 @@ async function main() {
   await registerDriverCatalogDeprecatedRoutes(app);
   await registerFuelCatalogRoutes(app);
   await registerFleetCatalogRoutes(app);
+  // FIX-3: the dispatch catalog group (load-types, detention-reasons, pickup-time-types, additional-charges)
+  // was DEFINED in catalogs/dispatch/index.ts but never mounted here alongside its siblings — so
+  // GET /api/v1/catalogs/dispatch/additional-charges (the Book Load "+ Create charge" code list) 404'd.
+  await registerDispatchCatalogRoutes(app);
   await registerGenericCatalogRoutes(app);
   await registerStubCatalogPurgeRoutes(app);
   await registerAccountingCatalogRoutes(app);
