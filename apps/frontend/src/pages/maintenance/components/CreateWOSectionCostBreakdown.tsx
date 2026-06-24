@@ -1,5 +1,6 @@
-import { useFieldArray, type Control, type UseFormRegister, type UseFormWatch } from "react-hook-form";
+import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormWatch } from "react-hook-form";
 import { Button } from "../../../components/Button";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -39,8 +40,13 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
             </SelectCombobox>
             <input {...register(`line_items.${idx}.description`)} placeholder="Description" className="h-8 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
             <input type="number" step="0.01" {...register(`line_items.${idx}.quantity`, { valueAsNumber: true })} placeholder="Qty" className="h-8 rounded border border-gray-300 px-2 text-sm" />
-            <input type="number" step="0.01" {...register(`line_items.${idx}.unit_cost`, { valueAsNumber: true })} placeholder="Unit $" className="h-8 rounded border border-gray-300 px-2 text-sm" />
-            <input type="number" step="0.01" {...register(`line_items.${idx}.amount`, { valueAsNumber: true })} placeholder="Amount" className="h-8 rounded border border-gray-300 px-2 text-sm" />
+            {/* M-1: dollars-mode via Controller; WO line unit_cost/amount = z.number() DOLLARS (work-orders.routes), byte-for-byte. */}
+            <Controller control={control} name={`line_items.${idx}.unit_cost`} render={({ field }) => (
+              <MoneyInput valueDollars={field.value ?? null} onChangeDollars={(d) => field.onChange(d ?? 0)} ariaLabel="Unit cost (USD)" className="w-full" />
+            )} />
+            <Controller control={control} name={`line_items.${idx}.amount`} render={({ field }) => (
+              <MoneyInput valueDollars={field.value ?? null} onChangeDollars={(d) => field.onChange(d ?? 0)} ariaLabel="Amount (USD)" className="w-full" />
+            )} />
             <Button type="button" size="icon" variant="secondary" onClick={() => remove(idx)}>✕</Button>
           </div>
         ))}

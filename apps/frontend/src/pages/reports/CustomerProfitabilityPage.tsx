@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -169,14 +170,8 @@ export function CustomerProfitabilityPage() {
       <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           Min revenue (USD)
-          <input
-            type="number"
-            min={0}
-            step={100}
-            className="mt-1 block h-9 w-28 rounded border border-gray-300 px-2"
-            value={minRevDollars}
-            onChange={(e) => setMinRevDollars(e.target.value)}
-          />
+          {/* M-1: dollars-mode filter; Math.round(minRevDollars*100)=min_revenue_cents byte-for-byte. */}
+          <MoneyInput valueDollars={minRevDollars ? Number(minRevDollars) : null} onChangeDollars={(d) => setMinRevDollars(d == null ? "" : String(d))} ariaLabel="Min revenue (USD)" className="mt-1 w-28" />
         </label>
         <label className="text-xs text-gray-600">
           From

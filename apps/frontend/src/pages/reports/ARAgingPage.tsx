@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { exportArAging, getArAgingReport, type ARAgingRow } from "../../api/reports";
@@ -182,7 +183,8 @@ export function ARAgingPage() {
         </label>
         <label className="text-xs text-gray-600">
           Min balance ($)
-          <input type="number" className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={minBal} onChange={(e) => setMinBal(e.target.value)} />
+          {/* M-1: dollars-mode filter; Math.round(minBal*100) byte-for-byte. */}
+          <MoneyInput valueDollars={minBal ? Number(minBal) : null} onChangeDollars={(d) => setMinBal(d == null ? "" : String(d))} ariaLabel="Min balance ($)" className="mt-1 w-full" />
         </label>
         <label className="text-xs text-gray-600">
           Aging bucket

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   bulkCategorizeBankTransactions,
@@ -344,11 +345,12 @@ export function BankTxCategorizationPage() {
           </label>
           <label className="block text-xs">
             Amount min (USD)
-            <input className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={amountMin} onChange={(e) => setAmountMin(e.target.value)} />
+            {/* M-1: dollars-mode filter; Math.round(amountMin*100)=amount_min_cents byte-for-byte. */}
+            <MoneyInput valueDollars={amountMin ? Number(amountMin) : null} onChangeDollars={(d) => setAmountMin(d == null ? "" : String(d))} ariaLabel="Amount min (USD)" className="mt-0.5 w-full" />
           </label>
           <label className="block text-xs">
             Amount max (USD)
-            <input className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={amountMax} onChange={(e) => setAmountMax(e.target.value)} />
+            <MoneyInput valueDollars={amountMax ? Number(amountMax) : null} onChangeDollars={(d) => setAmountMax(d == null ? "" : String(d))} ariaLabel="Amount max (USD)" className="mt-0.5 w-full" />
           </label>
           <label className="block text-xs">
             Search description
