@@ -14,15 +14,14 @@ export type RecordExpenseFormValues = {
   paymentAccountId: string;
   paymentAccountLabel: string;
   billDate: string;
-  amount: string;
+  amount: number | null; // M-1: dollar number (was a dollars-string); amount_cents = round(amount*100) byte-for-byte
   description: string;
   paymentMethod: RecordExpensePaymentMethod | "";
 };
 
-export function dollarsToCents(value: string) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return 0;
-  return Math.round(n * 100);
+export function dollarsToCents(value: number | null) {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return Math.round(value * 100);
 }
 
 export function buildRecordExpenseMemo(values: RecordExpenseFormValues) {
@@ -83,7 +82,7 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     paymentAccountId: "",
     paymentAccountLabel: "",
     billDate: new Date().toISOString().slice(0, 10),
-    amount: "",
+    amount: null,
     description: "",
     paymentMethod: "",
   };

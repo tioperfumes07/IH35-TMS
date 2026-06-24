@@ -5,6 +5,7 @@ import { getWoCostContext } from "../../api/maintenance";
 import { listUnits } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Button } from "../Button";
+import { MoneyInput } from "../forms/MoneyInput";
 import { QboCombobox } from "../forms/QboCombobox";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
@@ -158,12 +159,13 @@ export function RecordExpenseForm({
         </label>
         <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("amount")}>
           Amount (USD)
-          <input
+          {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
+          <MoneyInput
             id={fieldId("amount")}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
-            inputMode="decimal"
-            value={values.amount}
-            onChange={(event) => setValues((prev) => ({ ...prev, amount: event.target.value }))}
+            valueDollars={values.amount}
+            onChangeDollars={(d) => setValues((prev) => ({ ...prev, amount: d }))}
+            ariaLabel="Amount (USD)"
+            className="mt-1 w-full"
           />
         </label>
       </div>
