@@ -169,6 +169,35 @@ try {
     }
   }
 
+  // Forbidden WRITE (H-1, 2026-06-24): no route/service may INSERT INTO accounting.journal_entry_lines —
+  // every JE must post via createJournalEntry() → accounting.journal_entry_postings (the canonical GL table the
+  // trial balance reads). The old guard only forbade CREATEing the table; the (now-archived) banking manual-JE
+  // route INSERTed into it and was NOT caught. This scans the backend source too.
+  const backendSrcDir = path.join(process.cwd(), "apps/backend/src");
+  const insertOffenders = [];
+  const walkTs = (dir) => {
+    for (const name of fs.readdirSync(dir)) {
+      const p = path.join(dir, name);
+      const st = fs.statSync(p);
+      if (st.isDirectory()) walkTs(p);
+      else if (name.endsWith(".ts") && !name.endsWith(".test.ts")) {
+        if (/INSERT\s+INTO\s+accounting\.journal_entry_lines\b/i.test(fs.readFileSync(p, "utf8"))) {
+          insertOffenders.push(p.replace(process.cwd() + "/", ""));
+        }
+      }
+    }
+  };
+  if (fs.existsSync(backendSrcDir)) walkTs(backendSrcDir);
+  if (insertOffenders.length > 0) {
+    for (const f of insertOffenders) {
+      failures.push(
+        `${f}: INSERT INTO accounting.journal_entry_lines — forbidden write. Post via createJournalEntry() → accounting.journal_entry_postings (the GL/trial-balance table).`
+      );
+    }
+  } else {
+    console.log("✅ [5/5] No route/service INSERTs into accounting.journal_entry_lines (canonical postings path only)");
+  }
+
   if (failures.length > 0) {
     for (const msg of failures) {
       console.error(`✘ ${msg}`);

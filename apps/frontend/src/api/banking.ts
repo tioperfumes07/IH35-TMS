@@ -398,6 +398,12 @@ export function saveAccountVisibility(
   });
 }
 
+/**
+ * @deprecated ARCHIVED 2026-06-24 (Tier-1 H-1). Zero callers. The `/api/v1/banking/manual-je` endpoint is
+ * retired (returns 410 Gone) — it wrote to the forbidden, GL-unread accounting.journal_entry_lines. Post
+ * journal entries via the canonical accounting path instead (POST /api/v1/accounting/journal-entries →
+ * accounting.journal_entry_postings). Kept (not deleted) per ARCHIVE-never-DELETE; do not wire new callers.
+ */
 export function createManualJe(
   companyId: string,
   payload: { date: string; memo?: string; lines: Array<{ account_id: string; dr_amount: number; cr_amount: number }> }
