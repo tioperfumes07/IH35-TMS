@@ -28,6 +28,7 @@ import { FleetTablePage } from "./FleetTablePage";
 import { MaintenanceSettingsPage } from "./MaintenanceSettingsPage";
 import { ServiceLocationPage } from "./ServiceLocationPage";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
+import { MaintenanceDamageRegisterTab } from "./components/MaintenanceDamageRegisterTab";
 import { DtcAutoWorkOrdersCard } from "./components/DtcAutoWorkOrdersCard";
 import { InTransitIssuesTable } from "./components/InTransitIssuesTable";
 import { IntegrationsStrip } from "./components/IntegrationsStrip";
@@ -64,6 +65,7 @@ const SUBNAV = [
   { id: "arriving_soon", label: "Arriving Soon" },
   { id: "in_transit_issues", label: "In-Transit Issues" },
   { id: "damage_reports", label: "Damage Reports" },
+  { id: "driver_reports", label: "Driver Reports" },
   { id: "severe_repairs", label: "Severe Repairs" },
   { id: "road_service", label: "Road Service" },
   { id: "parts_inventory", label: "Parts Inventory" },
@@ -322,7 +324,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             )
         : null}
 
-      {tab === "damage_reports" ? <DriverReportsQueuePage /> : null}
+      {/* Damage Reports = the FORMAL register (safety.incidents, read-only). The driver-PWA intake queue
+          moved to its own "Driver Reports" tab below — additive, nothing removed. */}
+      {tab === "damage_reports" ? <MaintenanceDamageRegisterTab operatingCompanyId={companyId} /> : null}
+
+      {tab === "driver_reports" ? <DriverReportsQueuePage /> : null}
 
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
 

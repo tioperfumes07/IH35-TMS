@@ -70,11 +70,12 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.incidents
-          WHERE operating_company_id = $1
-            AND incident_type = $2
-          ORDER BY incident_at DESC
+          SELECT i.*, u.unit_number
+          FROM safety.incidents i
+          LEFT JOIN mdata.units u ON u.id = i.unit_id
+          WHERE i.operating_company_id = $1
+            AND i.incident_type = $2
+          ORDER BY i.incident_at DESC
           LIMIT $3 OFFSET $4
         `,
         [query.data.operating_company_id, query.data.incident_type, query.data.limit, query.data.offset]

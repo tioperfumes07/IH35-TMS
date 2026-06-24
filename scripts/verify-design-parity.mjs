@@ -79,7 +79,7 @@ const SCREEN_COMPONENTS = {
     `${FE}/maintenance/components/ArrivingSoonFilterBar.tsx`,
   ],
   "In-Transit Issues": [`${FE}/maintenance/components/InTransitIssuesTable.tsx`],
-  "Damage Reports": [`${FE}/maintenance/DriverReportsQueuePage.tsx`],
+  "Damage Reports": [`${FE}/maintenance/components/MaintenanceDamageRegisterTab.tsx`],
   "Road Service": [`${FE}/maintenance/RoadServiceList.tsx`],
   "Service / Location": [`${FE}/maintenance/ServiceLocationPage.tsx`],
   "Severe Repairs": [`${FE}/maintenance/components/SevereRepairOosTab.tsx`],
@@ -105,6 +105,13 @@ const DEFERRED = {
       "odometersamsara",
       "enginehrssamsara",
     ],
+  },
+  // Damage Reports re-pointed to the FORMAL register (safety.incidents, read-only) — Report#/Unit/Date/Type/
+  // Description/Status/Photos all render from real fields. "Linked WO" defers: safety.incidents has NO
+  // work_order link column, so wiring it requires a gated additive migration later (no faked column).
+  "Damage Reports": {
+    reason: "safety.incidents has no work_order link column — gated additive migration later",
+    tokens: ["linkedwo"],
   },
 };
 
