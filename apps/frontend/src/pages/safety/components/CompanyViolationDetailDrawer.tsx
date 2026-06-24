@@ -7,6 +7,7 @@ import {
   updateCompanyViolation,
 } from "../../../api/safety";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { CompanyViolationCorrectiveActionForm } from "./CompanyViolationCorrectiveActionForm";
@@ -148,16 +149,15 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
               </SelectCombobox>
             </label>
             <label className="text-xs font-medium text-slate-700">
-              Fine Override (cents)
-              <input
-                className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-xs"
-                type="number"
-                min={1}
-                step={1}
-                value={fineOverrideCents}
-                onChange={(event) => setFineOverrideCents(event.target.value)}
+              Fine Override (USD)
+              {/* M-1: was raw "(cents)"; cents-mode MoneyInput; Number(fineOverrideCents) unchanged. */}
+              <MoneyInput
+                valueCents={fineOverrideCents ? Number(fineOverrideCents) : null}
+                onChangeCents={(c) => setFineOverrideCents(c == null ? "" : String(c))}
+                ariaLabel="Fine Override (USD)"
                 placeholder="Optional"
                 disabled={outcome !== "monetary_fine"}
+                className="mt-1 w-full"
               />
             </label>
             <label className="text-xs font-medium text-slate-700 md:col-span-2">

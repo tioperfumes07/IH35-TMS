@@ -36,7 +36,9 @@ const MONEY_PLACEHOLDER_RE = /placeholder=["'][^"']*(\$|USD|principal cents|amou
 const EXCLUDE_RE =
   /readOnly|value=\{[^}]*(Ref\b|Reference|Date\b|Name\b|Phone|Email|Uuid|\bId\b|Number\b|Code\b|description|memo|Pct\b|percent)/;
 const NON_MONEY_RE =
-  /%|[Pp]ct|percent|per[_ ]?mile|[Qq]ty|quantity|[Mm]iles|\bhours\b|\bdays\b|odometer|term_months|installment|[Ww]eight|latitude|longitude|\blat\b|\blng\b|\byear\b|reorder|on_hand|qty_/;
+  /%|[Pp]ct|percent|per[_ ]?mile|[Qq]ty|quantity|[Mm]iles|\bhours\b|\bdays\b|odometer|term_months|installment|[Ww]eight|latitude|longitude|\blat\b|\blng\b|\byear\b|reorder|on_hand|qty_|step=["']?0?\.000/;
+// step="0.0001"/"0.000.." = a sub-cent RATE (e.g. driver per-mile pay rate, 4-decimal), NOT a $#,##0.00
+// money amount — MoneyInput's 2-decimal format would TRUNCATE it. Excluded above via step=0.000.
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {

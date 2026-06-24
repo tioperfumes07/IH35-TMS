@@ -1,5 +1,6 @@
-import { useFieldArray, type Control, type UseFormRegister } from "react-hook-form";
+import { useFieldArray, Controller, type Control, type UseFormRegister } from "react-hook-form";
 import { SelectCombobox } from "../shared/SelectCombobox";
+import { MoneyInput } from "../forms/MoneyInput";
 
 type Props = {
   control: Control<any>;
@@ -44,13 +45,14 @@ export function MultiStopExtraRateEditor({ control, register, stopIndex }: Props
               <option value="accessorial">Accessorial</option>
               <option value="other">Other</option>
             </SelectCombobox>
-            <input
-              type="number"
-              min={0}
-              step={1}
-              {...register(`stops.${stopIndex}.extra_rates.${rowIndex}.amount_cents`, { valueAsNumber: true })}
-              className="h-12 rounded border border-gray-300 px-3 text-sm"
-              placeholder="Amount cents"
+            {/* M-1: was a raw "Amount cents" input (operator typed cents). cents-mode MoneyInput via Controller;
+                the form value stays amount_cents (integer cents), byte-for-byte. */}
+            <Controller
+              control={control}
+              name={`stops.${stopIndex}.extra_rates.${rowIndex}.amount_cents`}
+              render={({ field }) => (
+                <MoneyInput valueCents={field.value || null} onChangeCents={(c) => field.onChange(c ?? 0)} ariaLabel="Extra rate amount (USD)" className="w-full" />
+              )}
             />
             <input
               {...register(`stops.${stopIndex}.extra_rates.${rowIndex}.description`)}

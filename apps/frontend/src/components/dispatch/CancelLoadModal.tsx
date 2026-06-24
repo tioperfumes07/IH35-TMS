@@ -5,6 +5,7 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
+import { MoneyInput } from "../forms/MoneyInput";
 import { ApiError } from "../../api/client";
 
 /** Pull a human message out of a cancel API failure (validation_error details, field message, or text). */
@@ -125,11 +126,13 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
           <input type="checkbox" checked={billable} onChange={(event) => setBillable(event.target.checked)} />
           Billable to customer
         </label>
-        <input
-          value={charge}
-          onChange={(event) => setCharge(event.target.value)}
-          className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+        {/* M-1: dollars-mode; Math.round(charge*100)=cancellation_charge_cents byte-for-byte. */}
+        <MoneyInput
+          valueDollars={charge ? Number(charge) : null}
+          onChangeDollars={(d) => setCharge(d == null ? "" : String(d))}
+          ariaLabel="Cancellation charge (USD, optional)"
           placeholder="Cancellation charge (USD, optional)"
+          className="w-full"
         />
         {needsApproval ? (
           ownerInlineApprove ? (
