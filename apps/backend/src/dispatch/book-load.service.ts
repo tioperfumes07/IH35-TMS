@@ -102,7 +102,8 @@ export type BookLoadInput = {
   border_routing?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
-  // W-FIX-3b: the selected trailer (mdata.equipment id) → persisted to the existing mdata.loads.trailer_id.
+  // W-FIX-3b: the selected trailer (mdata.equipment id) → persisted post-insert to the real link
+  // dispatch.load_assignment_history.new_trailer_id (mdata.loads has no trailer-equipment column).
   assigned_trailer_unit_id?: string;
   // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600).
   temperature_type?: "frozen" | "fresh";
@@ -796,10 +797,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       hazmat: Boolean(input.hazmat),
     };
 
-    // W-FIX-3b: persist the selected trailer to the existing mdata.loads.trailer_id (additive — no new
-    // column, no other stored field changed). Entity-scoped: only persist a trailer (mdata.equipment) that
-    // belongs to this operating company (owner or current lessee); otherwise leave trailer_id NULL — never
-    // attach a foreign company's trailer.
+    // W-FIX-3b (root-caused 2026-06-24): the selected trailer is an mdata.equipment id. mdata.loads has NO
+    // trailer_id column — verified against db/migrations AND live prod (GUARD: loads_has_trailer_id=0). The
+    // prior INSERT of a `trailer_id` column 42703'd EVERY booking that reached it (the write-side twin of the
+    // #1444 read-side bug). Resolve the trailer entity-scoped here, then persist it POST-INSERT via the REAL
+    // existing link dispatch.load_assignment_history.new_trailer_id (same post-insert pattern as piece_count /
+    // reefer / trip_type below, so the 39-column lockstep INSERT is untouched). Only attach a trailer this
+    // operating company owns or currently leases — never a foreign company's trailer.
     let trailerIdForInsert: string | null = null;
     if (input.assigned_trailer_unit_id) {
       const trailerRows = await optionalQuery(
@@ -830,10 +834,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
           late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
-          customer_wo_number, pickup_number, border_routing,
-          trailer_id
+          customer_wo_number, pickup_number, border_routing
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39)
         RETURNING *
       `,
       [
@@ -876,10 +879,30 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         input.customer_wo_number ?? null,
         input.pickup_number ?? null,
         input.border_routing ?? null,
-        trailerIdForInsert,
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    // W-FIX-3b persist (post-insert, same pattern): record the selected trailer (mdata.equipment id) on the
+    // REAL link dispatch.load_assignment_history.new_trailer_id — the only real sink (mdata.loads has no
+    // trailer-equipment column). Trailer-ONLY row: new_unit_id / new_driver_id stay NULL, so dispatcher
+    // booking-gap analytics (which JOIN on new_unit_id IS NOT NULL) are unaffected. assignment_method
+    // 'full_form' (the Book Load full-form wizard) is one of the allowed CHECK values
+    // (full_form|quicksave|drag_drop|auto_reassign|manual_reassign). Only writes when an entity-scoped
+    // trailer was resolved above.
+    if (trailerIdForInsert) {
+      await client.query(
+        `
+          INSERT INTO dispatch.load_assignment_history (
+            operating_company_id, load_id, assignment_method,
+            previous_trailer_id, new_trailer_id,
+            assigned_by_user_id, warnings_acknowledged
+          )
+          VALUES ($1::uuid, $2::uuid, 'full_form', NULL, $3::uuid, $4::uuid, '[]'::jsonb)
+        `,
+        [input.operating_company_id, String(load.id), trailerIdForInsert, input.requestingUserUuid]
+      );
+    }
 
     // Block 7 (migration 202606221000): persist pieces + customer PO at create — post-insert, same pattern
     // as trip_type below, so the 39-column lockstep INSERT is untouched. customer_po_number was previously
