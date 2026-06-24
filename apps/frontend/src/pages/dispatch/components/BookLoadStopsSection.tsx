@@ -1,5 +1,6 @@
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { StateSelect } from "../../../components/forms/StateSelect";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
 
 type Props = {
@@ -148,13 +149,13 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                         control={control}
                         name={`stops.${index}.lumper_amount_cents`}
                         render={({ field: f }) => (
-                          <input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={f.value ? Number(f.value) / 100 : ""}
-                            onChange={(e) => f.onChange(e.target.value === "" ? 0 : Math.round(Number(e.target.value) * 100))}
-                            className={CELL}
+                          // M-1: cents-mode QBO money entry (operator types dollars; cents stored). Fixes the prior
+                          // display truncation (Number(f.value)/100 with no 2-decimal format). Input cents value unchanged.
+                          <MoneyInput
+                            valueCents={f.value || null}
+                            onChangeCents={(c) => f.onChange(c ?? 0)}
+                            ariaLabel="Lumper amount"
+                            className="w-full"
                           />
                         )}
                       />
