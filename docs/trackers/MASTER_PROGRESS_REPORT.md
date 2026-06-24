@@ -3,6 +3,15 @@
 > **SOURCE OF TRUTH.** This Markdown file is the living tracker. The Excel export in [`exports/`](exports/) is generated from it — do not hand-edit the xlsx as the master.
 > Generated **2026-06-13 13:01:33 CDT** by read-only repo + GitHub reconciliation.
 
+> **2026-06-24 VERIFIED REFRESH →** see [`MASTER_TRACKER_2026-06-24.md`](MASTER_TRACKER_2026-06-24.md) — a parallel-agent
+> reconciliation built **only from verified data** (git/gh PR state, live `/healthz` sha, the live FE bundle hash, the
+> `verify:money-fields-use-moneyinput` guard). Headlines: backend `741a6da` == `origin/main` (deploy CURRENT, not lagging);
+> the **M-1 money-input sweep** shipped as ~29 merged PRs (#1384–#1422) — every raw money `<input>` → shared `MoneyInput`
+> (69 files), guard PASS at floor + CI-wired in `locked-guards.yml`, **1 tracked-debt allowlist** (`EscrowForfeitModal` —
+> its forfeit backend route is missing → blocked, not guessed); HOLD-FOR-JORGE queue **drained** (0 open; the GL/JE ones —
+> #1386/#1393/#1413/#1416 — merged after Jorge approval). **Open:** Create-WO render-v5 A–E rebuild (#1426, not yet merged);
+> EscrowForfeit (needs backend forfeit route confirmed); `verify:design-parity` re-point to assert the live-mounted screen.
+
 ## 🔒 UPDATE PROTOCOL (locked)
 
 **Every future block's PR MUST update its own row's `Reconciled Status` (+ `Reconcile Note`) in this file, in the SAME PR.** The tracker therefore never drifts from `main`. No separate tracker-only commits; no self-merge — Jorge merges. When a block ships, flip its row to `DONE`, add the PR# + merge SHA to the note, and (if it was in §Next Blocks) drop it from that queue.
