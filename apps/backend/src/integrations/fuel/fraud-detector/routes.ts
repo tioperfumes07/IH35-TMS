@@ -1,6 +1,6 @@
 /**
  * GAP-61 / CAP-11 — Fuel fraud alert routes.
- * Base path: /api/fuel/fraud-alerts
+ * Base path: /api/v1/fuel/fraud-alerts
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -72,7 +72,7 @@ async function fetchAlert(client: DbClient, operatingCompanyId: string, alertUui
 }
 
 export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promise<void> {
-  app.get("/api/fuel/fraud-alerts", async (req, reply) => {
+  app.get("/api/v1/fuel/fraud-alerts", async (req, reply) => {
     const user = getAuth(req, reply);
     if (!user) return;
     const parsed = companyQuery.safeParse(req.query ?? {});
@@ -121,7 +121,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     return reply.send({ alerts });
   });
 
-  app.get("/api/fuel/fraud-alerts/summary", async (req, reply) => {
+  app.get("/api/v1/fuel/fraud-alerts/summary", async (req, reply) => {
     const user = getAuth(req, reply);
     if (!user) return;
     const parsed = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
@@ -147,7 +147,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     return reply.send(summary);
   });
 
-  app.patch("/api/fuel/fraud-alerts/:uuid/investigate", async (req, reply) => {
+  app.patch("/api/v1/fuel/fraud-alerts/:uuid/investigate", async (req, reply) => {
     const user = getAuth(req, reply);
     if (!user) return;
     if (!canInvestigate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -183,7 +183,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     return reply.send({ alert });
   });
 
-  app.patch("/api/fuel/fraud-alerts/:uuid/confirm-fraud", async (req, reply) => {
+  app.patch("/api/v1/fuel/fraud-alerts/:uuid/confirm-fraud", async (req, reply) => {
     const user = getAuth(req, reply);
     if (!user) return;
     if (!canInvestigate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -222,7 +222,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     return reply.send({ alert });
   });
 
-  app.patch("/api/fuel/fraud-alerts/:uuid/dismiss", async (req, reply) => {
+  app.patch("/api/v1/fuel/fraud-alerts/:uuid/dismiss", async (req, reply) => {
     const user = getAuth(req, reply);
     if (!user) return;
     if (!canInvestigate(user.role)) return reply.code(403).send({ error: "forbidden" });

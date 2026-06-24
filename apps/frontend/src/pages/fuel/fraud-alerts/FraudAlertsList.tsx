@@ -33,7 +33,7 @@ async function listAlerts(companyId: string, status?: string, severity?: string)
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (status) params.set("status", status);
   if (severity) params.set("severity", severity);
-  return apiRequest<{ alerts: FraudAlertRow[] }>(`/api/fuel/fraud-alerts?${params.toString()}`);
+  return apiRequest<{ alerts: FraudAlertRow[] }>(`/api/v1/fuel/fraud-alerts?${params.toString()}`);
 }
 
 export function FraudAlertsListPage() {
@@ -57,7 +57,7 @@ export function FraudAlertsListPage() {
 
   const investigateMut = useMutation({
     mutationFn: (uuid: string) =>
-      apiRequest(`/api/fuel/fraud-alerts/${uuid}/investigate`, {
+      apiRequest(`/api/v1/fuel/fraud-alerts/${uuid}/investigate`, {
         method: "PATCH",
         body: { operating_company_id: companyId },
       }),
@@ -69,7 +69,7 @@ export function FraudAlertsListPage() {
 
   const confirmMut = useMutation({
     mutationFn: (uuid: string) =>
-      apiRequest(`/api/fuel/fraud-alerts/${uuid}/confirm-fraud`, {
+      apiRequest(`/api/v1/fuel/fraud-alerts/${uuid}/confirm-fraud`, {
         method: "PATCH",
         body: { operating_company_id: companyId },
       }),
@@ -81,7 +81,7 @@ export function FraudAlertsListPage() {
 
   const dismissMut = useMutation({
     mutationFn: ({ uuid, reason }: { uuid: string; reason: string }) =>
-      apiRequest(`/api/fuel/fraud-alerts/${uuid}/dismiss`, {
+      apiRequest(`/api/v1/fuel/fraud-alerts/${uuid}/dismiss`, {
         method: "PATCH",
         body: { operating_company_id: companyId, reason },
       }),

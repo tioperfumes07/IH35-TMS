@@ -9,7 +9,7 @@ type FraudSummary = {
 };
 
 async function fetchFraudSummary(companyId: string): Promise<FraudSummary> {
-  return apiRequest(`/api/fuel/fraud-alerts/summary?operating_company_id=${encodeURIComponent(companyId)}`);
+  return apiRequest(`/api/v1/fuel/fraud-alerts/summary?operating_company_id=${encodeURIComponent(companyId)}`);
 }
 
 export function FuelFraudAlertsKpiCard() {
