@@ -1,4 +1,5 @@
 import type { WizardFormState } from "./borderCrossingApi";
+import { MoneyInput } from "../forms/MoneyInput";
 
 type Props = {
   form: WizardFormState;
@@ -30,13 +31,12 @@ export function WizardStep3({ form, onChange }: Props) {
         </label>
         <label className="block text-sm">
           Value (USD)
-          <input
-            type="number"
-            min={0}
-            step="0.01"
-            className="mt-1 w-full rounded border px-2 py-1.5"
-            value={form.commodityValue}
-            onChange={(e) => onChange({ commodityValue: e.target.value })}
+          {/* M-1: dollars-mode QBO money entry; parent sends commodity_value (dollars) → backend ×100. Byte-for-byte. */}
+          <MoneyInput
+            valueDollars={form.commodityValue ? Number(form.commodityValue) : null}
+            onChangeDollars={(d) => onChange({ commodityValue: d == null ? "" : String(d) })}
+            ariaLabel="Value (USD)"
+            className="mt-1 w-full"
           />
         </label>
       </div>
