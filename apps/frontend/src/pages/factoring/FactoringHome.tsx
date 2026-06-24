@@ -15,6 +15,8 @@ import {
   upsertFaroDailyImport,
 } from "../../api/data-infra";
 import { Button } from "../../components/Button";
+import { Modal } from "../../components/Modal";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
@@ -104,6 +106,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const [loanStartedOn, setLoanStartedOn] = useState("");
   const [selectedLoanId, setSelectedLoanId] = useState<string>("");
   const [creatingLoan, setCreatingLoan] = useState(false);
+  // M-1: equipment-loan attribution/payment money entry — replaces window.prompt("…amount cents")
+  // (raw-cents prompt was a UX bug; nobody types cents). Cents-mode MoneyInput: user types dollars,
+  // amount_cents stored unchanged.
+  const [loanAction, setLoanAction] = useState<{ loanId: string; kind: "attribution" | "payment" } | null>(null);
+  const [loanActionLoadId, setLoanActionLoadId] = useState("");
+  const [loanActionCents, setLoanActionCents] = useState<number | null>(null);
+  const [loanActionSaving, setLoanActionSaving] = useState(false);
   const [mergeDriverId, setMergeDriverId] = useState("");
   const [mergeDriverName, setMergeDriverName] = useState("");
   const [mergeConfirm, setMergeConfirm] = useState("");
@@ -646,22 +655,10 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={async () => {
-                          const loadId = window.prompt("Load UUID for attribution");
-                          const amount = window.prompt("Attribution amount cents");
-                          if (!loadId || !amount) return;
-                          try {
-                            await createEquipmentLoanAttribution(String(row.id), {
-                              operating_company_id: companyId,
-                              load_id: loadId,
-                              attribution_date: new Date().toISOString().slice(0, 10),
-                              amount_cents: Number(amount),
-                            });
-                            pushToast("Attribution recorded", "success");
-                            await queryClient.invalidateQueries({ queryKey: ["data-infra", "equipment-loan-ledger", String(row.id), companyId] });
-                          } catch (error) {
-                            pushToast(String((error as Error).message || "Attribution failed"), "error");
-                          }
+                        onClick={() => {
+                          setLoanAction({ loanId: String(row.id), kind: "attribution" });
+                          setLoanActionLoadId("");
+                          setLoanActionCents(null);
                         }}
                       >
                         + Attribution
@@ -669,23 +666,10 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={async () => {
-                          const amount = window.prompt("Payment amount cents");
-                          if (!amount) return;
-                          try {
-                            await createEquipmentLoanPayment(String(row.id), {
-                              operating_company_id: companyId,
-                              paid_on: new Date().toISOString().slice(0, 10),
-                              amount_cents: Number(amount),
-                              principal_cents: Number(amount),
-                              interest_cents: 0,
-                              fee_cents: 0,
-                            });
-                            pushToast("Payment recorded", "success");
-                            await queryClient.invalidateQueries({ queryKey: ["data-infra", "equipment-loan-ledger", String(row.id), companyId] });
-                          } catch (error) {
-                            pushToast(String((error as Error).message || "Payment failed"), "error");
-                          }
+                        onClick={() => {
+                          setLoanAction({ loanId: String(row.id), kind: "payment" });
+                          setLoanActionLoadId("");
+                          setLoanActionCents(null);
                         }}
                       >
                         + Payment
@@ -816,6 +800,79 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
         </div>
       ) : null}
+
+      {/* M-1: equipment-loan attribution / payment money entry (replaces the raw-cents window.prompt). */}
+      <Modal
+        open={loanAction != null}
+        onClose={() => setLoanAction(null)}
+        title={loanAction?.kind === "attribution" ? "Record loan attribution" : "Record loan payment"}
+      >
+        <div className="space-y-3 text-sm">
+          {loanAction?.kind === "attribution" ? (
+            <label className="block">
+              Load UUID
+              <input
+                className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+                value={loanActionLoadId}
+                onChange={(e) => setLoanActionLoadId(e.target.value)}
+                placeholder="Load UUID for attribution"
+              />
+            </label>
+          ) : null}
+          <label className="block">
+            Amount (USD)
+            {/* cents-mode: user types dollars, amount_cents stored unchanged. */}
+            <MoneyInput valueCents={loanActionCents} onChangeCents={setLoanActionCents} className="mt-1 w-full" ariaLabel="Amount (USD)" />
+          </label>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setLoanAction(null)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              loading={loanActionSaving}
+              disabled={
+                loanActionCents == null ||
+                loanActionCents <= 0 ||
+                (loanAction?.kind === "attribution" && !loanActionLoadId.trim())
+              }
+              onClick={async () => {
+                if (!loanAction || loanActionCents == null) return;
+                setLoanActionSaving(true);
+                try {
+                  if (loanAction.kind === "attribution") {
+                    await createEquipmentLoanAttribution(loanAction.loanId, {
+                      operating_company_id: companyId,
+                      load_id: loanActionLoadId.trim(),
+                      attribution_date: new Date().toISOString().slice(0, 10),
+                      amount_cents: loanActionCents,
+                    });
+                    pushToast("Attribution recorded", "success");
+                  } else {
+                    await createEquipmentLoanPayment(loanAction.loanId, {
+                      operating_company_id: companyId,
+                      paid_on: new Date().toISOString().slice(0, 10),
+                      amount_cents: loanActionCents,
+                      principal_cents: loanActionCents,
+                      interest_cents: 0,
+                      fee_cents: 0,
+                    });
+                    pushToast("Payment recorded", "success");
+                  }
+                  await queryClient.invalidateQueries({ queryKey: ["data-infra", "equipment-loan-ledger", loanAction.loanId, companyId] });
+                  setLoanAction(null);
+                } catch (error) {
+                  pushToast(String((error as Error).message || "Failed to record"), "error");
+                } finally {
+                  setLoanActionSaving(false);
+                }
+              }}
+            >
+              {loanAction?.kind === "attribution" ? "Record attribution" : "Record payment"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
