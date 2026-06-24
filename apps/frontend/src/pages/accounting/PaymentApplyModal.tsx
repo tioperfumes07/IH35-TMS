@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import type { Invoice } from "../../api/accounting";
 
 type Props = {
@@ -19,7 +20,7 @@ function money(cents: number) {
 
 export function PaymentApplyModal({ open, loading = false, unappliedCents, invoices, onClose, onSubmit }: Props) {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
-  const [applyAmountDollars, setApplyAmountDollars] = useState("");
+  const [applyAmountDollars, setApplyAmountDollars] = useState<number | null>(null);
   const [search, setSearch] = useState("");
 
   const filteredInvoices = useMemo(() => {
@@ -36,7 +37,8 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
         className="space-y-3"
         onSubmit={(event) => {
           event.preventDefault();
-          const cents = Math.round(Number(applyAmountDollars || "0") * 100);
+          // M-1: amount stays a DOLLAR number → amount_cents = round(amount*100) unchanged (byte-for-byte).
+          const cents = Math.round(Number(applyAmountDollars ?? 0) * 100);
           if (!selectedInvoiceId || !Number.isFinite(cents) || cents <= 0) return;
           onSubmit({ invoice_id: selectedInvoiceId, amount_cents: cents });
         }}
@@ -56,7 +58,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
               const invoice = filteredInvoices.find((row) => row.id === nextId);
               if (!invoice) return;
               const defaultApply = Math.min(Number(unappliedCents ?? 0), Number(invoice.amount_open_cents ?? 0));
-              setApplyAmountDollars((defaultApply / 100).toFixed(2));
+              setApplyAmountDollars(defaultApply > 0 ? defaultApply / 100 : null);
             }}
             className="h-9 rounded border border-gray-300 px-2 text-[13px]"
           >
@@ -71,7 +73,8 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Apply amount (USD)
-          <input value={applyAmountDollars} onChange={(event) => setApplyAmountDollars(event.target.value)} inputMode="decimal" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+          {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
+          <MoneyInput valueDollars={applyAmountDollars} onChangeDollars={setApplyAmountDollars} ariaLabel="Apply amount (USD)" />
         </label>
 
         <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">

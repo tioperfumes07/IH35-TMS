@@ -7,6 +7,7 @@ import { Combobox } from "../../components/Combobox";
 import { Modal } from "../../components/Modal";
 import { UploadZone } from "../../components/UploadZone";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 type Props = {
   open: boolean;
@@ -29,14 +30,15 @@ const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
   { value: "other", label: "Other" },
 ];
 
-function dollarsToCents(value: string) {
-  const normalized = Number(value || "0");
-  if (!Number.isFinite(normalized) || normalized <= 0) return 0;
-  return Math.round(normalized * 100);
+// M-1: amount stays a DOLLAR number → *_cents = round(amount*100) unchanged (byte-for-byte).
+function dollarsToCents(value: number | null) {
+  if (value == null || !Number.isFinite(value) || value <= 0) return 0;
+  return Math.round(value * 100);
 }
 
-function centsToDollarsInput(value: number) {
-  return (Math.max(0, Number(value || 0)) / 100).toFixed(2);
+function centsToDollars(value: number): number | null {
+  const v = Math.max(0, Number(value || 0));
+  return v > 0 ? v / 100 : null;
 }
 
 function money(cents: number) {
@@ -56,7 +58,7 @@ export function RecordPaymentModal({
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ach");
   const [reference, setReference] = useState("");
-  const [amountDollars, setAmountDollars] = useState(centsToDollarsInput(prefillAmountCents ?? 0));
+  const [amountDollars, setAmountDollars] = useState<number | null>(centsToDollars(prefillAmountCents ?? 0));
   const [depositedTo, setDepositedTo] = useState("ops_checking");
   const [notes, setNotes] = useState("");
   const [applyByInvoice, setApplyByInvoice] = useState<Record<string, number>>({});
@@ -96,7 +98,7 @@ export function RecordPaymentModal({
     setPaymentDate(new Date().toISOString().slice(0, 10));
     setPaymentMethod("ach");
     setReference("");
-    setAmountDollars(centsToDollarsInput(prefillAmountCents ?? 0));
+    setAmountDollars(centsToDollars(prefillAmountCents ?? 0));
     setDepositedTo("ops_checking");
     setNotes("");
     setErrorMessage(null);
@@ -220,7 +222,8 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Amount (USD)
-            <input value={amountDollars} onChange={(event) => setAmountDollars(event.target.value)} inputMode="decimal" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
+            <MoneyInput valueDollars={amountDollars} onChangeDollars={setAmountDollars} ariaLabel="Amount (USD)" />
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -275,14 +278,14 @@ export function RecordPaymentModal({
                       {invoice.display_id} · Open {money(invoiceOpen)}
                     </label>
                     {checked ? (
-                      <input
-                        value={centsToDollarsInput(applyByInvoice[invoice.id] ?? 0)}
-                        onChange={(event) => {
-                          const cents = dollarsToCents(event.target.value);
-                          setApplyByInvoice((current) => ({ ...current, [invoice.id]: Math.min(invoiceOpen, cents) }));
-                        }}
-                        inputMode="decimal"
-                        className="h-8 w-36 rounded border border-gray-300 px-2 text-right text-[13px]"
+                      // M-1: cents-mode QBO money entry; clamp to the invoice open balance unchanged.
+                      <MoneyInput
+                        valueCents={applyByInvoice[invoice.id] ?? 0}
+                        onChangeCents={(cents) =>
+                          setApplyByInvoice((current) => ({ ...current, [invoice.id]: Math.min(invoiceOpen, cents ?? 0) }))
+                        }
+                        ariaLabel={`Apply to ${invoice.display_id}`}
+                        className="w-36"
                       />
                     ) : null}
                   </div>
