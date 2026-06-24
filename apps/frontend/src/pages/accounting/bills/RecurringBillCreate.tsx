@@ -6,6 +6,7 @@ import { createRecurringBillTemplate, type RecurringBillFrequency, type Recurrin
 import { listVendors } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 const FREQUENCIES: { value: RecurringBillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -134,18 +135,13 @@ export function RecurringBillCreate() {
           {/* Amount */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Amount *</label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">$</span>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                className="w-full rounded border border-gray-300 pl-7 pr-3 py-2 text-sm focus:border-slate-300 focus:outline-none"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </div>
+            {/* M-1: dollars-mode QBO money entry (its own $ prefix); backend amount = numeric(12,2) DOLLARS, byte-for-byte. */}
+            <MoneyInput
+              valueDollars={amount ? Number(amount) : null}
+              onChangeDollars={(d) => setAmount(d == null ? "" : String(d))}
+              ariaLabel="Amount"
+              className="w-full"
+            />
           </div>
 
           {/* Memo */}
@@ -239,14 +235,13 @@ export function RecurringBillCreate() {
                   value={item.description}
                   onChange={(e) => updateLineItem(idx, "description", e.target.value)}
                 />
-                <div className="relative w-28">
-                  <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-gray-400 text-xs">$</span>
-                  <input
-                    type="number"
-                    className="w-full rounded border border-gray-300 pl-5 pr-2 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
-                    placeholder="0.00"
-                    value={item.amount || ""}
-                    onChange={(e) => updateLineItem(idx, "amount", parseFloat(e.target.value) || 0)}
+                <div className="w-28">
+                  {/* M-1: dollars-mode QBO money entry (own $ prefix); line amount DOLLARS, byte-for-byte. */}
+                  <MoneyInput
+                    valueDollars={item.amount || null}
+                    onChangeDollars={(d) => updateLineItem(idx, "amount", d ?? 0)}
+                    ariaLabel="Line amount"
+                    className="w-full"
                   />
                 </div>
                 <button

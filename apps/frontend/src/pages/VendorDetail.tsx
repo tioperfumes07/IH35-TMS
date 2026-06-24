@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
+import { MoneyInput } from "../components/forms/MoneyInput";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { listVendorBills } from "../api/accounting";
@@ -752,7 +753,8 @@ export function VendorDetailPage() {
                   </label>
                   <label className="block">
                     Amount (USD)
-                    <input className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={billPayAmount} onChange={(e) => setBillPayAmount(e.target.value)} />
+                    {/* M-1: dollars-mode QBO money entry; bridged so Math.round(billPayAmount*100) is byte-for-byte. */}
+                    <MoneyInput valueDollars={billPayAmount ? Number(billPayAmount) : null} onChangeDollars={(d) => setBillPayAmount(d == null ? "" : String(d))} ariaLabel="Payment amount (USD)" className="mt-0.5 w-full" />
                   </label>
                   <label className="block">
                     Method
@@ -825,12 +827,11 @@ export function VendorDetailPage() {
                         <span className="font-medium text-gray-800">{b.bill_number ?? b.id.slice(0, 8)}</span>
                         <span className="text-gray-600">Open {money.format(billOpenBalanceCents(b) / 100)}</span>
                         {!billPayAuto ? (
-                          <input
-                            type="number"
-                            step="0.01"
-                            className="w-24 rounded border border-gray-300 px-1 py-0.5"
-                            value={billPayAmt[b.id] ?? ""}
-                            onChange={(e) => setBillPayAmt((p) => ({ ...p, [b.id]: e.target.value }))}
+                          <MoneyInput
+                            valueDollars={billPayAmt[b.id] ? Number(billPayAmt[b.id]) : null}
+                            onChangeDollars={(d) => setBillPayAmt((p) => ({ ...p, [b.id]: d == null ? "" : String(d) }))}
+                            ariaLabel={`Apply to ${b.bill_number ?? b.id.slice(0, 8)}`}
+                            className="w-24"
                           />
                         ) : (
                           <span className="text-gray-700">
