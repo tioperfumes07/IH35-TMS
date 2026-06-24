@@ -10,6 +10,7 @@ import {
 } from "../../api/maintenance";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -219,11 +220,14 @@ export function WarrantyClaimsPage() {
             </select>
           </label>
           <label className="block text-xs">
-            Claim amount (cents)
-            <input
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
-              value={claimDraft.claim_amount_cents}
-              onChange={(e) => setClaimDraft((d) => ({ ...d, claim_amount_cents: e.target.value }))}
+            Claim amount (USD)
+            {/* M-1: was raw "(cents)"; cents-mode MoneyInput (operator types dollars; claim_amount_cents
+                = Number(claimDraft.claim_amount_cents) unchanged, byte-for-byte). */}
+            <MoneyInput
+              valueCents={claimDraft.claim_amount_cents ? Number(claimDraft.claim_amount_cents) : null}
+              onChangeCents={(c) => setClaimDraft((d) => ({ ...d, claim_amount_cents: c == null ? "" : String(c) }))}
+              ariaLabel="Claim amount (USD)"
+              className="mt-1 w-full"
             />
           </label>
           <label className="block text-xs">

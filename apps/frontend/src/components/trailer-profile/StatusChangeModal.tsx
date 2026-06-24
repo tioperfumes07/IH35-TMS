@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Modal } from "../Modal";
+import { MoneyInput } from "../forms/MoneyInput";
 import { Button } from "../Button";
 import { putTrailerStatus, type TrailerStatus } from "../../api/fleet-trailers";
 
@@ -152,7 +153,8 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
             </label>
             <label className="block">
               Sold price
-              <input className="mt-1 w-full rounded border px-2 py-1" value={soldPrice} onChange={(e) => setSoldPrice(e.target.value)} />
+              {/* M-1: dollars-mode; sold_price = numeric(12,2) DOLLARS, submit Number(soldPrice) byte-for-byte. */}
+              <MoneyInput valueDollars={soldPrice ? Number(soldPrice) : null} onChangeDollars={(d) => setSoldPrice(d == null ? "" : String(d))} ariaLabel="Sold price (USD)" className="mt-1 w-full" />
             </label>
           </>
         ) : null}
