@@ -21,8 +21,8 @@
       {
         "name": "§B reefer panel (trailer = Reefer)",
         "container": "reefer-panel",
-        "_note": "RENDER-A-v2: Reefer temperature is the single setpoint; mode/pre-cool removed. Temperature type (Frozen/Fresh) joins once its gated temperature_type migration lands.",
-        "exact_labels": ["Reefer temperature (°F)"]
+        "_note": "RENDER-A-v2: Temperature type (Frozen/Fresh) asked FIRST, then Reefer temperature (the single setpoint); mode/pre-cool removed. temperature_type persists via migration 202606231600 (W-FIX-1).",
+        "exact_labels": ["Temperature type", "Reefer temperature (°F)"]
       },
       {
         "name": "§B flatbed panel (trailer = Flatbed)",

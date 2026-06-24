@@ -83,6 +83,7 @@ export type UpdateDispatchLoadFields = Partial<{
   reefer_temp_f: number | null;
   reefer_mode: string | null;
   pre_cool: boolean | null;
+  temperature_type: "frozen" | "fresh" | null; // W-FIX-1
   tarp_qty: number | null;
   tarp_size: string | null;
 }>;
@@ -159,6 +160,7 @@ const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
   reefer_temp_f: "reefer_temp_f",
   reefer_mode: "reefer_mode",
   pre_cool: "pre_cool",
+  temperature_type: "temperature_type",
   tarp_qty: "tarp_qty",
   tarp_size: "tarp_size",
 };

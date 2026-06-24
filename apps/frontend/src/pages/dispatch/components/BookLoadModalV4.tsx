@@ -75,6 +75,7 @@ type FormValues = BookLoadFormValues & {
   tarp_type: string;
   // render-v6 §B reefer/tarp detail (migration 202606231400).
   reefer_temp_f: number | "";
+  temperature_type: "" | "frozen" | "fresh";
   reefer_mode: string;
   pre_cool: "yes" | "no";
   tarp_qty: number | "";
@@ -229,6 +230,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       requires_tarps: false,
       tarp_type: "",
       reefer_temp_f: "",
+      temperature_type: "",
       reefer_mode: "",
       pre_cool: "no",
       tarp_qty: "",
@@ -515,6 +517,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         tarp_type: values.tarp_type || undefined,
         // render-v6 §B reefer/tarp detail (migration 202606231400).
         reefer_temp_f: values.reefer_temp_f === "" ? undefined : Number(values.reefer_temp_f),
+        temperature_type: values.temperature_type || undefined,
         reefer_mode: values.reefer_mode || undefined,
         pre_cool: values.pre_cool === "yes" ? true : undefined,
         tarp_qty: values.tarp_qty === "" ? undefined : Number(values.tarp_qty),

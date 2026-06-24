@@ -104,6 +104,8 @@ export type BookLoadInput = {
   assigned_unit_id?: string;
   // W-FIX-3b: the selected trailer (mdata.equipment id) → persisted to the existing mdata.loads.trailer_id.
   assigned_trailer_unit_id?: string;
+  // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600).
+  temperature_type?: "frozen" | "fresh";
   assigned_primary_driver_id?: string;
   assigned_secondary_driver_id?: string;
   team_id?: string;
@@ -896,18 +898,21 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       (input.reefer_mode ?? "").trim().length > 0 ||
       input.pre_cool != null ||
       input.tarp_qty != null ||
-      (input.tarp_size ?? "").trim().length > 0
+      (input.tarp_size ?? "").trim().length > 0 ||
+      input.temperature_type != null // W-FIX-1: Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600)
     ) {
       await client.query(
         `UPDATE mdata.loads
-           SET reefer_temp_f = $1, reefer_mode = $2, pre_cool = $3, tarp_qty = $4, tarp_size = $5, updated_at = now()
-         WHERE id = $6::uuid`,
+           SET reefer_temp_f = $1, reefer_mode = $2, pre_cool = $3, tarp_qty = $4, tarp_size = $5,
+               temperature_type = $6, updated_at = now()
+         WHERE id = $7::uuid`,
         [
           input.reefer_temp_f ?? null,
           input.reefer_mode ?? null,
           input.pre_cool ?? null,
           input.tarp_qty ?? null,
           input.tarp_size ?? null,
+          input.temperature_type ?? null,
           String(load.id),
         ]
       );

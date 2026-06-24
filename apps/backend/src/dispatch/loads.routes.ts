@@ -141,6 +141,7 @@ const createDispatchLoadBodySchema = z.object({
   tour_id: z.string().uuid().optional(),
   assigned_unit_id: z.string().uuid().optional(),
   assigned_trailer_unit_id: z.string().uuid().optional(), // W-FIX-3b: persisted to mdata.loads.trailer_id
+  temperature_type: z.enum(["frozen", "fresh"]).optional(), // W-FIX-1: reefer Frozen/Fresh → loads.temperature_type
   assigned_primary_driver_id: z.string().uuid().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
   team_id: z.string().uuid().optional(),
@@ -227,6 +228,7 @@ const updateDispatchLoadBodySchema = z.object({
   reefer_temp_f: z.number().nullable().optional(),
   reefer_mode: z.string().trim().max(40).nullable().optional(),
   pre_cool: z.boolean().nullable().optional(),
+  temperature_type: z.enum(["frozen", "fresh"]).nullable().optional(), // W-FIX-1
   tarp_qty: z.number().int().min(0).nullable().optional(),
   tarp_size: z.string().trim().max(40).nullable().optional(),
   tour_id: z.string().uuid().nullable().optional(),
