@@ -134,6 +134,11 @@ const STRUCTURAL_RENDER_TESTS = {
   ],
   "Create/Edit Work Order Wizard": [
     "apps/frontend/src/pages/maintenance/components/CreateWOSectionRenderV5Header.test.tsx",
+    // Full-modal DOM render-test: mounts <CreateWorkOrderModal open> and asserts the render-v5 root,
+    // the A→B→C→D→E section badges IN ORDER, and each section testid (wo-vmrs-repair-detail / wo-parts-labor /
+    // wo-invoice-payment / wo-documents) actually reach the DOM. Catches "render-v5 layout removed/renamed"
+    // (the pre-#1426 / testid-removed regression) that token-in-source presence cannot see.
+    "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.test.tsx",
   ],
 };
 // Screens that are structurally complex → require a STRUCTURAL_RENDER_TESTS entry before they can be ENFORCED.
