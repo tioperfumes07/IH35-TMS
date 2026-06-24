@@ -1729,13 +1729,12 @@ export function CustomerDetailPage() {
                         <span className="font-medium text-gray-800">{inv.display_id}</span>
                         <span className="text-gray-600">Open {formatCurrencyCents(inv.amount_open_cents)}</span>
                         {!payAutoApply ? (
-                          <input
-                            type="number"
-                            step="0.01"
-                            className="w-24 rounded border border-gray-300 px-1 py-0.5"
-                            placeholder="Apply"
-                            value={payInvoiceAmount[inv.id] ?? ""}
-                            onChange={(e) => setPayInvoiceAmount((p) => ({ ...p, [inv.id]: e.target.value }))}
+                          // M-1: dollars-mode; Math.round(payInvoiceAmount*100)=cents byte-for-byte (per-invoice apply).
+                          <MoneyInput
+                            valueDollars={payInvoiceAmount[inv.id] ? Number(payInvoiceAmount[inv.id]) : null}
+                            onChangeDollars={(d) => setPayInvoiceAmount((p) => ({ ...p, [inv.id]: d == null ? "" : String(d) }))}
+                            ariaLabel={`Apply to ${inv.display_id}`}
+                            className="w-24"
                           />
                         ) : (
                           <span className="text-gray-700">

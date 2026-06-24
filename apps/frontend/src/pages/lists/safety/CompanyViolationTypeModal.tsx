@@ -3,6 +3,7 @@ import { ApiError } from "../../../api/client";
 import { createCompanyViolationType, deactivateCompanyViolationType, updateCompanyViolationType, type CompanyViolationTypeRow } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { CODE_REGEX } from "./shared";
 
 type Props = {
@@ -138,15 +139,14 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
-          Default Fine Amount (cents)
-          <input
-            type="number"
-            min={1}
-            step={1}
-            value={form.amount_cents}
-            onChange={(event) => setForm((v) => ({ ...v, amount_cents: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
-            placeholder="e.g. 12500"
+          Default Fine Amount (USD)
+          {/* M-1: was raw "(cents)"; cents-mode MoneyInput; Number(form.amount_cents) unchanged. */}
+          <MoneyInput
+            valueCents={form.amount_cents ? Number(form.amount_cents) : null}
+            onChangeCents={(c) => setForm((v) => ({ ...v, amount_cents: c == null ? "" : String(c) }))}
+            ariaLabel="Default Fine Amount (USD)"
+            className="mt-1 w-full"
+            placeholder="e.g. 125.00"
           />
           {errors.amount_cents ? <div className="mt-1 text-[11px] text-red-700">{errors.amount_cents}</div> : null}
         </label>
