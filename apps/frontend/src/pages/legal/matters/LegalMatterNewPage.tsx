@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -142,20 +143,21 @@ export function LegalMatterNewPage() {
             </label>
             <label className="text-xs text-gray-600">
               Amount claimed (against us)
-              <input
-                inputMode="decimal"
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
-                value={form.amount_claimed_against_us}
-                onChange={(e) => setForm((f) => ({ ...f, amount_claimed_against_us: e.target.value }))}
+              {/* M-1: dollars-mode QBO money entry; bridges the all-strings form so submit Number(...) is byte-for-byte. */}
+              <MoneyInput
+                valueDollars={form.amount_claimed_against_us ? Number(form.amount_claimed_against_us) : null}
+                onChangeDollars={(d) => setForm((f) => ({ ...f, amount_claimed_against_us: d == null ? "" : String(d) }))}
+                ariaLabel="Amount claimed (against us)"
+                className="mt-1 w-full"
               />
             </label>
             <label className="text-xs text-gray-600">
               Amount we seek
-              <input
-                inputMode="decimal"
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
-                value={form.amount_we_seek}
-                onChange={(e) => setForm((f) => ({ ...f, amount_we_seek: e.target.value }))}
+              <MoneyInput
+                valueDollars={form.amount_we_seek ? Number(form.amount_we_seek) : null}
+                onChangeDollars={(d) => setForm((f) => ({ ...f, amount_we_seek: d == null ? "" : String(d) }))}
+                ariaLabel="Amount we seek"
+                className="mt-1 w-full"
               />
             </label>
             <label className="text-xs text-gray-600">
