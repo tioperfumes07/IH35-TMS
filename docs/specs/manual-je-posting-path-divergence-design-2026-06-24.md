@@ -5,6 +5,17 @@ Confirmed independently from source (route → service → table + CI guards + c
 
 ---
 
+## 0. UPDATE 2026-06-24 — GUARD Neon verification → **DOWNGRADED HIGH → MEDIUM** (latent landmine, not active loss)
+
+GUARD verified read-only on Neon (no prod writes):
+- **`accounting.journal_entry_lines` does NOT exist in prod** — the orphan table was never created, so nothing was ever written to it and **no books were silently lost. No backfill needed.**
+- **The banking path is DEAD:** `createManualJe` (the `apps/frontend/src/api/banking.ts` client for `POST /api/v1/banking/manual-je`) has **zero callers** (confirmed independently). The live "+ Manual JE" buttons open the **accounting** modal → `POST /api/v1/accounting/journal-entries` → `journal_entry_postings` (the canonical path, which works). **Users are not losing JEs.**
+- Net: this is a **latent landmine** (a forbidden, unread write path wired up but never invoked), **not active money loss.** Severity **MEDIUM**, not HIGH.
+
+**This changes the recommended fix** (see §3, rewritten): because the banking path is dead, the cleanest action is to **ARCHIVE it** (one canonical JE path — QBO/NetSuite standard) rather than keep a second writer alive by re-routing. Both options are presented; **GUARD + I recommend ARCHIVE.** The re-route option is already built as #1442 (held) if Jorge prefers to keep the route live.
+
+---
+
 ## 1. The finding — two manual-JE paths, only one moves the books
 
 | | **A — Accounting path** | **B — Banking path (THE DEFECT)** |
@@ -40,20 +51,25 @@ Path B also emits an `outbox.outbox_queue` event (`manual-je.routes.ts:107`). **
 
 ---
 
-## 3. Proposed fix (Jorge decides — build nothing yet)
+## 3. Proposed fix — TWO options (Jorge decides; build nothing more until chosen)
 
-**RECOMMENDED: re-route `POST /api/v1/banking/manual-je` through the SAME `createJournalEntry()` service the accounting path uses** — so every manual JE, regardless of entry surface, posts to `accounting.journal_entry_postings`, balance-checked, with posting_batch status. This is the QuickBooks/NetSuite standard: one canonical posting path, single source of truth.
+Because the banking path is **dead** (§0: `createManualJe` has zero callers; the live UI uses the canonical accounting path), there are two clean shapes. Both end at one canonical JE path; they differ on whether the banking route stays alive.
 
-Why this shape:
-- Removes the forbidden `journal_entry_lines` write (satisfies the existing CI guards).
-- One canonical ledger path — no dual-write/dual-read drift.
-- Reuses existing balance enforcement + cents handling — **no new GL math**.
-- Behavior-correctness fix, not a new module. Additive: re-point the write target; do not delete the route.
+### Option A — **ARCHIVE the dead path (RECOMMENDED — GUARD + coder)**
+The banking manual-JE route and its `createManualJe` client are unused. **Archive** them (do not delete — additive-only, per §7 ARCHIVE-never-DELETE) and keep the recurrence guard (§4):
+- Mark `apps/backend/src/banking/manual-je.routes.ts` deprecated / unregister the route; mark `createManualJe` in `apps/frontend/src/api/banking.ts` deprecated.
+- Result: **one canonical JE writer** (`createJournalEntry` → `journal_entry_postings`) — the QBO/NetSuite standard; no second writer to drift, no forbidden-table code in the tree.
+- Lowest surface, removes the landmine entirely. Nothing to backfill (table never existed).
 
-**Open sub-questions for Jorge (the doc lays them out; nothing built until answered):**
-- **(a) Field parity.** Does the Banking manual-JE UI send any field `createJournalEntry()` doesn't already accept (e.g. a banking memo, a source-account tag)? If yes — **extend the one service's input**, do not fork a second writer. (Needs a field-by-field diff of the banking route body vs the accounting service input.)
-- **(b) Backfill.** Are there existing rows already written to `accounting.journal_entry_lines` that need a one-time backfill into `journal_entry_postings` (so historical manual JEs actually hit the GL)? This is migration-class + financial → gated; the doc scopes it, nothing runs without Jorge + GUARD. (Live count of `journal_entry_lines` rows needed first.)
-- **(c) Outbox event.** Keep the emitted event (if other consumers depend on it) or retire it? **Trace consumers first** — do not delete it blind.
+### Option B — **Re-route the path through the canonical service** (already built: **#1442**, held)
+Keep the route but post through the same `createJournalEntry()` the accounting path uses (writes `journal_entry_postings`, cents-integer, balance-enforced). Useful only if you want the `/api/v1/banking/manual-je` endpoint to stay live for a future banking UI. #1442 implements this (field parity confirmed: no extra fields; outbox kept; recurrence guard added).
+
+**Recommendation: Option A (archive).** A dead, forbidden-table write path is best removed, not kept alive. If you foresee a banking-surface manual-JE UI soon, pick Option B (#1442 is ready).
+
+### Sub-question resolutions (from GUARD's Neon verification)
+- **(a) Field parity:** banking sends only `date`/`memo`/`lines` → all map cleanly to `createJournalEntry` (entry_date/memo/postings). **No extra fields, no service fork.** (Relevant only if Option B.)
+- **(b) Backfill:** **NOT NEEDED** — `accounting.journal_entry_lines` does not exist in prod and was never written. No rows to replay. (Block 3 backfill is cancelled.)
+- **(c) Outbox:** **KEEP** (additive) — for Option B it references the canonical posted JE id (built in #1442). For Option A the route is archived, so the event is archived with it (trace any consumer first; none found).
 
 ---
 
