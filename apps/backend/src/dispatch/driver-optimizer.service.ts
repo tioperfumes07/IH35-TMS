@@ -183,8 +183,14 @@ export async function listOptimalDriversForLoad(userId: string, query: OptimalDr
       `
         SELECT
           l.id,
-          COALESCE(l.hazmat, false) AS hazmat,
-          l.trailer_type::text AS trailer_type,
+          -- FIX-7 (optimal-drivers 500, twin of #1444/#1448): mdata.loads has NO hazmat column (42703 x8 live);
+          -- book-load persists hazmat into the quicksave_pending_fields jsonb, so read that jsonb key here.
+          COALESCE((l.quicksave_pending_fields->>'hazmat')::boolean, false) AS hazmat,
+          -- trailer_type exists on prod but NOT in a from-migrations build (prod<->migration drift). Per GUARD,
+          -- do not reference it directly in this from-migrations-critical query until the drift migration lands.
+          -- The booking-preview path still supplies the trailer type via the preview_trailer_type query param;
+          -- the saved-load path degrades to NULL (no trailer-endorsement filter) until the drift migration.
+          NULL::text AS trailer_type,
           COALESCE(sp.city, '') AS pickup_city,
           COALESCE(sp.state, '') AS pickup_state,
           l.miles_deadhead
