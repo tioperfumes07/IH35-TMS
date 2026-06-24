@@ -87,7 +87,10 @@ export function MoneyInput({
         value={text}
         onFocus={() => {
           setFocused(true);
-          setText(rawValue == null ? "" : String(rawValue));
+          // W-3 (10× money bug): a zero/empty field must clear to "" on focus, NOT "0". Leaving a "0" let
+          // the cursor land before it and typed digits prepend ("1500" + "0" = "15000" → parseToCents →
+          // 1500000 = 10×). Empty-on-zero removes the leftover digit; a real value still shows for editing.
+          setText(rawValue ? String(rawValue) : "");
         }}
         onChange={(e) => {
           setText(e.target.value);

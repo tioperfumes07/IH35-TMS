@@ -1,5 +1,8 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it } from "vitest";
-import { formatCentsDisplay, formatDollarsDisplay, parseToCents, parseToDollars } from "./MoneyInput";
+import { MoneyInput, formatCentsDisplay, formatDollarsDisplay, parseToCents, parseToDollars } from "./MoneyInput";
 
 // M-1 (P0): the shared QBO-style money seam. The Book Load §A bug was typing 350 (dollars) into a
 // *_cents field with NO conversion → stored 350¢ → totalled $3.50. MoneyInput converts dollars↔cents
@@ -62,5 +65,47 @@ describe("MoneyInput DOLLARS mode (parseToDollars / formatDollarsDisplay) — no
     const d = parseToDollars("350");
     expect(d).toBe(350);
     expect(formatDollarsDisplay(d)).toBe("350.00");
+  });
+});
+
+// W-3 (GUARD live, 2026-06-24): typing 1500 into the flat §A Linehaul box yielded a DOM value of "15000"
+// (digit-shift) → parseToCents("15000") = 1500000 = $15,000 (10× the $1,500 entered). parseToCents and
+// buildBookLoadChargeLines are correct; the bug was UPSTREAM in onFocus: a zero field set its text to "0"
+// (not ""), and after the programmatic value change the cursor landed at the start, so the typed digits
+// prepended to the leftover "0" → "1500" + "0" = "15000". These RENDER tests reproduce it at the keystroke
+// layer (the parseToCents-in-isolation tests above passed and missed it).
+describe("MoneyInput keystroke layer — zero-field digit-shift (W-3 10× guard)", () => {
+  let lastCents: number | null = -1;
+  function CentsHarness() {
+    const [cents, setCents] = useState<number | null>(0);
+    lastCents = cents;
+    return (
+      <MoneyInput
+        valueCents={cents}
+        onChangeCents={(c) => {
+          lastCents = c;
+          setCents(c);
+        }}
+        ariaLabel="Amount"
+      />
+    );
+  }
+
+  it("focusing a ZERO field clears it to empty (no leftover '0' to prepend)", async () => {
+    const user = userEvent.setup();
+    render(<CentsHarness />);
+    const input = screen.getByLabelText("Amount") as HTMLInputElement;
+    await user.click(input);
+    expect(input.value).toBe(""); // was "0" before the fix — the leftover digit that caused the shift
+  });
+
+  it("typing 1500 into a fresh field yields 150000 cents, NOT 1500000", async () => {
+    const user = userEvent.setup();
+    render(<CentsHarness />);
+    const input = screen.getByLabelText("Amount") as HTMLInputElement;
+    await user.click(input); // focus → onFocus
+    input.setSelectionRange(0, 0); // browser lands the cursor at the start after the programmatic value change
+    await user.type(input, "1500", { skipClick: true, initialSelectionStart: 0, initialSelectionEnd: 0 });
+    expect(lastCents).toBe(150000); // was 1500000 (the leftover "0" made the value "15000")
   });
 });
