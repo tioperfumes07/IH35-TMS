@@ -28,11 +28,12 @@ const MONEY_COMPONENT = "MoneyInput.tsx";
 
 // ALLOWLIST — money inputs intentionally NOT yet converted, each with a tracked reason. Keep this EMPTY
 // except for genuinely-blocked fields; every entry is debt to remove.
-//   EscrowForfeitModal: TIER-1 GL-posting (B9-ESCROW-DESIGN: forfeit posts an expense/receivable JE).
-//   The modal emits a bare {amount} number and forfeitEscrow converts downstream; the emit-unit is NOT
-//   decidable from the modal (escrow_ledger=cents destination, but display is $.toFixed(2) dollars), and
-//   the forfeit route is registry-mounted (not greppable). Converting on inference = the PartsMasterData
-//   trap. Blocked until Jorge confirms the forfeit endpoint + amount unit; then convert as a [HOLD] (TIER-1).
+//   EscrowForfeitModal: BLOCKED — its POST target /api/v1/driver-finance/escrow/:driverId/forfeit has NO
+//   backend handler (grep "forfeit" across apps/backend/src = only escrow-history.service.ts, a reader;
+//   escrow_ledger is written ONLY by settlements/approval.service.ts, the settlement-approval path — not by
+//   this modal). So the modal currently 404s and its emit-unit is UNDECIDABLE (no Zod contract to match).
+//   Converting the widget on inference = the PartsMasterData trap. Resolution is a backend/product decision
+//   (wire the forfeit route → convert matching its Zod as a TIER-1 [HOLD]; OR archive the dead modal).
 const ALLOWLIST = new Set([
   "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx",
 ]);
