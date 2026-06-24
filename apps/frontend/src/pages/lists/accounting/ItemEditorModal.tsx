@@ -22,6 +22,7 @@ import type { AccountingCatalogCreateBody, AccountingCatalogRow, AccountingCatal
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 const ITEM_TYPES = [
   { value: "Service", label: "Service" },
@@ -241,14 +242,12 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               </label>
               <label className="block">
                 <span className="text-xs font-semibold text-gray-600">Sales price / rate ($)</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
-                  value={form.sellPriceDollars}
-                  onChange={(e) => set("sellPriceDollars", e.target.value)}
-                  placeholder="0.00"
+                {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
+                <MoneyInput
+                  valueDollars={form.sellPriceDollars ? Number(form.sellPriceDollars) : null}
+                  onChangeDollars={(d) => set("sellPriceDollars", d == null ? "" : String(d))}
+                  ariaLabel="Sales price"
+                  className="mt-1 w-full"
                 />
               </label>
               <label className="block">
@@ -292,14 +291,11 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               </label>
               <label className="block">
                 <span className="text-xs font-semibold text-gray-600">Purchase cost ($)</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
-                  value={form.buyCostDollars}
-                  onChange={(e) => set("buyCostDollars", e.target.value)}
-                  placeholder="0.00"
+                <MoneyInput
+                  valueDollars={form.buyCostDollars ? Number(form.buyCostDollars) : null}
+                  onChangeDollars={(d) => set("buyCostDollars", d == null ? "" : String(d))}
+                  ariaLabel="Purchase cost"
+                  className="mt-1 w-full"
                 />
               </label>
               <label className="block">
