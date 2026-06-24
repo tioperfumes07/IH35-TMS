@@ -37,6 +37,7 @@ import { MaintenanceAlertsCard } from "./components/MaintenanceAlertsCard";
 import { PartsInventoryTable } from "./components/PartsInventoryTable";
 import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
+import { RMStatStrip } from "./components/RMStatStrip";
 import { RecentActivityRow } from "./components/RecentActivityRow";
 import { RoadServiceList } from "./RoadServiceList";
 import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
@@ -188,6 +189,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         tire_alerts: 0,
         pm_due: 0,
         dot_oos: 0,
+        in_progress: 0,
+        waiting_parts: 0,
+        severe_oos: 0,
+        road_service: 0,
+        parts_low_stock: 0,
       },
     [kpisQuery.data]
   );
@@ -246,6 +252,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           onExternalVendorChange={setExternalVendorFilter}
         />
       ) : null}
+
+      {tab === "rm_status_board" ? <RMStatStrip kpis={kpis} /> : null}
 
       {tab === "rm_status_board" ? (
         <RMBucketsGrid

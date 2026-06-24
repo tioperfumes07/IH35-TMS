@@ -72,6 +72,11 @@ const EMPTY_KPI_PAYLOAD = {
   tire_alerts: 0,
   pm_due: 0,
   dot_oos: 0,
+  in_progress: 0,
+  waiting_parts: 0,
+  severe_oos: 0,
+  road_service: 0,
+  parts_low_stock: 0,
   total_units: 0,
   active_units: 0,
 };
@@ -176,6 +181,57 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
           : 0;
         const pastDueCount = await countPastDueMaintenanceWorkOrders(client, companyId);
 
+        // R&M Status Board 2nd stat strip (rm-status-board.html) — real, entity-scoped counts (no migration).
+        // In Progress / Awaiting Parts split out of open WOs; Road Service = roadside bucket; Severe/OOS =
+        // open severe-repair estimates; Parts Low-Stock = on_hand_qty<=2 (same rule as the parts KPI).
+        const woStatus = await client.query<{ in_progress: number; waiting_parts: number; road_service: number }>(
+          `
+            SELECT
+              COUNT(*) FILTER (WHERE status = 'in_progress')::int AS in_progress,
+              COUNT(*) FILTER (WHERE status = 'waiting_parts')::int AS waiting_parts,
+              COUNT(*) FILTER (
+                WHERE ${(await columnExists(client, "maintenance", "work_orders", "bucket")) ? "bucket = 'roadside'" : "false"}
+                  AND status IN ('open', 'in_progress', 'waiting_parts')
+              )::int AS road_service
+            FROM maintenance.work_orders
+            WHERE operating_company_id = $1::uuid
+          `,
+          [companyId]
+        );
+        const inProgressCount = Number(woStatus.rows[0]?.in_progress ?? 0);
+        const waitingPartsCount = Number(woStatus.rows[0]?.waiting_parts ?? 0);
+        const roadServiceCount = Number(woStatus.rows[0]?.road_service ?? 0);
+
+        let severeOosCount = 0;
+        if (await relationExists(client, "maintenance.severe_repair_estimates")) {
+          const severeRes = await client.query<{ severe_oos: number }>(
+            `
+              SELECT COUNT(*)::int AS severe_oos
+              FROM maintenance.severe_repair_estimates
+              WHERE operating_company_id = $1::uuid
+                AND estimate_status IN ('open', 'awaiting_approval', 'approved')
+            `,
+            [companyId]
+          );
+          severeOosCount = Number(severeRes.rows[0]?.severe_oos ?? 0);
+        }
+
+        let partsLowStockCount = 0;
+        if (
+          (await relationExists(client, "maintenance.parts_inventory")) &&
+          (await columnExists(client, "maintenance", "parts_inventory", "on_hand_qty"))
+        ) {
+          const lowStockRes = await client.query<{ low_stock: number }>(
+            `
+              SELECT COUNT(*) FILTER (WHERE COALESCE(on_hand_qty, 0) <= 2)::int AS low_stock
+              FROM maintenance.parts_inventory
+              WHERE operating_company_id = $1::uuid
+            `,
+            [companyId]
+          );
+          partsLowStockCount = Number(lowStockRes.rows[0]?.low_stock ?? 0);
+        }
+
         return {
           open_wos: Number(openWoCount ?? base.open_wos ?? 0),
           in_shop: Number(base.in_shop ?? 0),
@@ -195,6 +251,11 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
           tire_alerts: tireAlerts,
           pm_due: pmDueCount,
           dot_oos: dotOos,
+          in_progress: inProgressCount,
+          waiting_parts: waitingPartsCount,
+          severe_oos: severeOosCount,
+          road_service: roadServiceCount,
+          parts_low_stock: partsLowStockCount,
           total_units: totalUnits,
           active_units: activeUnits,
         };
