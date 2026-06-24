@@ -17,6 +17,19 @@ export type MaintenanceKpis = {
   top_vendor: string | null;
   top_failure: string | null;
   pending_qbo: number;
+  // R&M Status Board strips (optional — present on the dashboard/kpis payload).
+  past_due?: number;
+  avg_close_days?: number;
+  open_dollars?: number;
+  tire_alerts?: number;
+  pm_due?: number;
+  dot_oos?: number;
+  // 2nd stat strip (rm-status-board.html) — real entity-scoped counts.
+  in_progress?: number;
+  waiting_parts?: number;
+  severe_oos?: number;
+  road_service?: number;
+  parts_low_stock?: number;
 };
 
 export type MaintenancePmAlert = {
