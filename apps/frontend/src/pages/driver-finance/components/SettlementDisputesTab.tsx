@@ -9,6 +9,7 @@ import {
   type SettlementDisputeStatus,
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -246,10 +247,12 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
                 <option value="rejected">Reject</option>
                 <option value="partial">Partial</option>
               </SelectCombobox>
-              <input
-                value={resolutionAmount}
-                onChange={(event) => setResolutionAmount(event.target.value)}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+              {/* M-1 [HOLD]: dollars-mode; Math.round(resolutionAmount*100)=resolution_amount_cents drives the
+                  corrective JE (debit/credit posting) — byte-for-byte, GUARD live-verifies before merge. */}
+              <MoneyInput
+                valueDollars={resolutionAmount ? Number(resolutionAmount) : null}
+                onChangeDollars={(d) => setResolutionAmount(d == null ? "" : String(d))}
+                ariaLabel="Adjustment amount (USD)"
                 placeholder="Adjustment amount (USD)"
                 disabled={resolution === "rejected"}
               />
