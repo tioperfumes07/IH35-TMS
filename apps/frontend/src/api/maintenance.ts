@@ -139,6 +139,8 @@ export type SevereRepairEstimate = {
   id: string;
   unit_id: string;
   unit_number: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
   trigger_wo_id: string | null;
   damage_severity: "severe" | "out_of_service" | "total_loss";
   estimate_status: "open" | "awaiting_approval" | "approved" | "rejected" | "completed";

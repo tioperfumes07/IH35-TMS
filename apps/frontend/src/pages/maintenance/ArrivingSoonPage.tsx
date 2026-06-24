@@ -42,6 +42,33 @@ function formatReported(iso: string): string {
   return new Date(iso).toLocaleString();
 }
 
+// Preview parity (arriving-soon.html): split the old conflated "Issues" column into a plain-text
+// "Open Issue" (the most-severe open issue) + a colored "Severity" label. Both derive from data the
+// card already carries (issues[] + severe/warning/info_count) — no fabricated column.
+const SEV_RANK: Record<string, number> = { severe: 3, warning: 2, info: 1 };
+
+function topSeverity(card: ArrivingSoonCardType): "severe" | "warning" | "info" {
+  return card.severe_count > 0 ? "severe" : card.warning_count > 0 ? "warning" : "info";
+}
+
+function topIssueLabel(card: ArrivingSoonCardType): string {
+  if (card.issues.length === 0) return "—";
+  const top = [...card.issues].sort(
+    (a, b) => (SEV_RANK[b.severity?.toLowerCase()] ?? 0) - (SEV_RANK[a.severity?.toLowerCase()] ?? 0),
+  )[0];
+  const base = top.issue_type || top.description || "Open issue";
+  const more = card.total_open_issues > 1 ? ` +${card.total_open_issues - 1}` : "";
+  return `${base}${more}`;
+}
+
+// Preview uses colored severity TEXT (t-red / t-amber), not a pill — match it. §7: red #A32D2D, amber #854F0B.
+function severityTextClass(severity: string): string {
+  const s = severity.toLowerCase();
+  if (s === "severe") return "text-[#A32D2D]";
+  if (s === "warning") return "text-[#854F0B]";
+  return "text-gray-500";
+}
+
 export function ArrivingSoonPage({ operatingCompanyId }: Props) {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -109,27 +136,25 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
           <span className="text-gray-400">Unassigned</span>
         ),
     },
-    { key: "final_dest_name", label: "Destination", render: (card) => formatDest(card) },
     { key: "hours_until_yard_arrival", label: "ETA", sortable: true, render: (card) => formatEta(card) },
+    { key: "final_dest_name", label: "Destination", render: (card) => formatDest(card) },
     {
-      key: "total_open_issues",
-      label: "Issues",
-      sortable: true,
+      key: "open_issue",
+      label: "Open Issue",
+      render: (card) => <span className="text-gray-800">{topIssueLabel(card)}</span>,
+    },
+    {
+      key: "severity",
+      label: "Severity",
       render: (card) => {
-        const top = card.severe_count > 0 ? "severe" : card.warning_count > 0 ? "warning" : "info";
-        const label =
-          card.severe_count > 0
-            ? `${card.severe_count} severe`
-            : card.warning_count > 0
-              ? `${card.warning_count} warning`
-              : `${card.total_open_issues} info`;
-        return (
-          <span className={`rounded border px-2 py-0.5 text-[11px] ${severityChip(top)}`}>
-            ● {label}
-          </span>
-        );
+        const s = topSeverity(card);
+        return <span className={`font-semibold ${severityTextClass(s)}`}>{s.charAt(0).toUpperCase() + s.slice(1)}</span>;
       },
     },
+    // PREP column (preview's "Prep bay →" WO link) is intentionally DEFERRED, not faked: arriving-soon
+    // issues are pre-conversion (the view filters promoted_to_wo_id IS NULL), so there is no prep work
+    // order to link to yet — the per-row "Convert to WO" action creates it. Wire once the card carries a
+    // prep/promoted WO id from the backend.
   ];
 
   const rowActions = canConvert
