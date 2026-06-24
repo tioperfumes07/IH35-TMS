@@ -17,6 +17,7 @@ import { useToast } from "../../components/Toast";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement" };
 
@@ -66,7 +67,7 @@ export function ReconciliationWorkspacePage() {
 
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
-  const [statementBalanceInput, setStatementBalanceInput] = useState("");
+  const [statementBalanceInput, setStatementBalanceInput] = useState<number | null>(null);
   const [startLoading, setStartLoading] = useState(false);
   const [filterMode, setFilterMode] = useState<"all" | "matched" | "unmatched">("all");
   const [eventFilter, setEventFilter] = useState<"all" | "load" | "bill" | "settlement">("all");
@@ -153,16 +154,16 @@ export function ReconciliationWorkspacePage() {
               onChange={(event) => setPeriodEnd(event.target.value)}
               className="rounded border border-gray-300 px-2 py-1 text-sm"
             />
-            <input
-              type="number"
-              step="0.01"
-              value={statementBalanceInput}
-              onChange={(event) => setStatementBalanceInput(event.target.value)}
+            {/* M-1: dollars-mode QBO money entry; balance stays a DOLLAR number → *_cents byte-for-byte. */}
+            <MoneyInput
+              valueDollars={statementBalanceInput}
+              onChangeDollars={setStatementBalanceInput}
+              ariaLabel="Statement balance (USD)"
               placeholder="Statement balance (USD)"
-              className="rounded border border-gray-300 px-2 py-1 text-sm"
+              className="text-sm"
             />
             <ActionButton
-              disabled={!companyId || !effectiveBankAccountId || !periodStart || !periodEnd || !statementBalanceInput || startLoading}
+              disabled={!companyId || !effectiveBankAccountId || !periodStart || !periodEnd || statementBalanceInput == null || startLoading}
               onClick={() => {
                 setStartLoading(true);
                 const statementBalanceCents = Math.round(Number(statementBalanceInput) * 100);

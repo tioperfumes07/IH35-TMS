@@ -6,6 +6,7 @@ import { Modal } from "../../components/Modal";
 import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 type Props = {
   open: boolean;
@@ -18,10 +19,10 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function centsFromAmount(value: string) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 0;
-  return Math.round(parsed * 100);
+// M-1: amount stays a DOLLAR number → amount_cents = round(amount*100) unchanged (byte-for-byte).
+function centsFromAmount(value: number | null) {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return Math.round(value * 100);
 }
 
 export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSaved }: Props) {
@@ -32,7 +33,7 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
   const [liabilityLabel, setLiabilityLabel] = useState("");
   const [fromBankId, setFromBankId] = useState("");
   const [paymentDate, setPaymentDate] = useState(todayIsoDate());
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState<number | null>(null);
   const [memo, setMemo] = useState("");
   const [statementPeriod, setStatementPeriod] = useState("");
   const [saving, setSaving] = useState(false);
@@ -45,7 +46,7 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
     setLiabilityLabel("");
     setFromBankId("");
     setPaymentDate(todayIsoDate());
-    setAmount("");
+    setAmount(null);
     setMemo("");
     setStatementPeriod("");
   }, [open]);
@@ -149,15 +150,8 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
           </label>
           <label className="block">
             Amount (USD)
-            <input
-              aria-label="Amount (USD)"
-              type="number"
-              min="0"
-              step="0.01"
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+            {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
+            <MoneyInput valueDollars={amount} onChangeDollars={setAmount} className="mt-1 w-full" ariaLabel="Amount (USD)" />
           </label>
         </div>
         <label className="block">
