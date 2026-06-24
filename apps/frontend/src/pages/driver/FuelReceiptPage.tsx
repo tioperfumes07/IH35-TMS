@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { resolveApiUrl } from "../../api/client";
 import { getValidDriverAccessToken } from "../../lib/auth-token";
 import { driverFetch } from "../../lib/driver-offline-queue";
@@ -11,7 +12,7 @@ export function FuelReceiptPage() {
   const [rotation, setRotation] = useState(0);
   const [truckId, setTruckId] = useState("");
   const [odometer, setOdometer] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState<number | null>(null);
   const [station, setStation] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export function FuelReceiptPage() {
 
   const submit = async () => {
     setMessage(null);
-    if (!truckId || !odometer || !amount || !station) {
+    if (!truckId || !odometer || amount == null || !station) {
       setMessage("Fill truck, odometer, amount, and station.");
       return;
     }
@@ -82,7 +83,7 @@ export function FuelReceiptPage() {
       const fd = new FormData();
       fd.set("truck_id", truckId);
       fd.set("odometer", odometer);
-      fd.set("amount", amount);
+      fd.set("amount", String(amount)); // backend z.coerce.number() → Math.round(amount*100); byte-for-byte
       fd.set("station_name", station);
       fd.set("image", blob, "receipt.jpg");
       const res = await driverFetch(resolveApiUrl("/api/v1/driver/fuel/upload-receipt"), {
@@ -148,7 +149,8 @@ export function FuelReceiptPage() {
       </label>
       <label className="block text-xs font-medium text-slate-600">
         Amount (USD)
-        <input className="mt-1 w-full rounded border px-2 py-1" value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
+        {/* M-1: dollars-mode QBO money entry; backend z.coerce.number()→round(amount*100), byte-for-byte. */}
+        <MoneyInput valueDollars={amount} onChangeDollars={setAmount} ariaLabel="Amount (USD)" className="mt-1 w-full" />
       </label>
       <label className="block text-xs font-medium text-slate-600">
         Station name
