@@ -534,7 +534,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const classHint = form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`;
 
   return (
-    <Modal open={open} onClose={onClose} title="Create / Edit Work Order" sizePreset="lg">
+    <Modal open={open} onClose={onClose} title="Create / Edit Work Order" sizePreset="lg" wide>
       <div data-testid="create-wo-render-v5" className="space-y-2.5 text-[12.5px] text-[#1f2937]">
         {/* Subbar — WO # · status · opened timestamp (render: .subbar) */}
         <div className="flex flex-wrap items-center gap-2 rounded bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
