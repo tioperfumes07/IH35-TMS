@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
+import { MoneyInput } from "../components/forms/MoneyInput";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -366,7 +367,7 @@ export function CustomerDetailPage() {
   const [voidReason, setVoidReason] = useState("");
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
   const [payDate, setPayDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [payAmount, setPayAmount] = useState("");
+  const [payAmount, setPayAmount] = useState<number | null>(null);
   const [payMethod, setPayMethod] = useState("ach");
   const [payRef, setPayRef] = useState("");
   const [payMemo, setPayMemo] = useState("");
@@ -790,7 +791,7 @@ export function CustomerDetailPage() {
     [paymentInvoicesQuery.data]
   );
 
-  const paymentCents = Math.round(Number(payAmount) * 100) || 0;
+  const paymentCents = Math.round(Number(payAmount ?? 0) * 100) || 0; // M-1: dollar number → cents, byte-for-byte
 
   const paymentApplicationBreakdown = useMemo(() => {
     if (payAutoApply) {
@@ -849,7 +850,7 @@ export function CustomerDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["customer-billing-summary", id] });
       void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
       setRecordPaymentOpen(false);
-      setPayAmount("");
+      setPayAmount(null);
       setPayRef("");
       setPayMemo("");
       setPayDate(new Date().toISOString().slice(0, 10));
@@ -1655,12 +1656,8 @@ export function CustomerDetailPage() {
                   </label>
                   <label className="block">
                     Amount (USD)
-                    <input
-                      className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1"
-                      inputMode="decimal"
-                      value={payAmount}
-                      onChange={(e) => setPayAmount(e.target.value)}
-                    />
+                    {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → cents byte-for-byte. */}
+                    <MoneyInput valueDollars={payAmount} onChangeDollars={setPayAmount} ariaLabel="Payment amount (USD)" className="mt-0.5 w-full" />
                   </label>
                   <label className="block">
                     Method
@@ -2049,8 +2046,25 @@ export function CustomerDetailPage() {
             <Field label="Origin State" value={laneForm.origin_state} onChange={(value) => setLaneForm((current) => ({ ...current, origin_state: value }))} />
             <Field label="Destination City" value={laneForm.destination_city} onChange={(value) => setLaneForm((current) => ({ ...current, destination_city: value }))} />
             <Field label="Destination State" value={laneForm.destination_state} onChange={(value) => setLaneForm((current) => ({ ...current, destination_state: value }))} />
-            <Field label="Base Rate (cents)" value={laneForm.base_rate_cents} onChange={(value) => setLaneForm((current) => ({ ...current, base_rate_cents: value }))} />
-            <Field label="FSC per mile (cents)" value={laneForm.fsc_per_mile_cents} onChange={(value) => setLaneForm((current) => ({ ...current, fsc_per_mile_cents: value }))} />
+            {/* M-1: were RAW-CENTS text inputs ("Base Rate (cents)" — operator typed "50000" for $500).
+                cents-mode MoneyInput → operator types dollars; *_cents stored as a string (bridged) so the
+                zod string schema + submit Number(...) stay byte-for-byte. */}
+            <div className="mb-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Base Rate (USD)</label>
+              <MoneyInput
+                valueCents={laneForm.base_rate_cents ? Number(laneForm.base_rate_cents) : null}
+                onChangeCents={(c) => setLaneForm((current) => ({ ...current, base_rate_cents: c == null ? "" : String(c) }))}
+                ariaLabel="Base Rate (USD)"
+              />
+            </div>
+            <div className="mb-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">FSC per mile (USD)</label>
+              <MoneyInput
+                valueCents={laneForm.fsc_per_mile_cents ? Number(laneForm.fsc_per_mile_cents) : null}
+                onChangeCents={(c) => setLaneForm((current) => ({ ...current, fsc_per_mile_cents: c == null ? "" : String(c) }))}
+                ariaLabel="FSC per mile (USD)"
+              />
+            </div>
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-semibold text-gray-600">Notes</label>
               <textarea
