@@ -170,10 +170,12 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                     Lumper charge; tarp stop/count → §B Flatbed panel; instructions → optional, not a flat field. */}
                 {/* Lumper paid by / required now render in §A (per-stop, by the Lumper charge) — their values
                     round-trip via the stop field-array item (default/prefill); no hidden §C input needed. */}
-                <input type="hidden" {...register(`stops.${index}.appointment_start_at`)} />
-                <input type="hidden" {...register(`stops.${index}.appointment_end_at`)} />
-                <input type="hidden" {...register(`stops.${index}.is_tarp_stop`)} />
-                <input type="hidden" {...register(`stops.${index}.tarp_count`)} />
+                {/* Hidden round-trip inputs: RHF reads a hidden <input> value as a STRING, so booleans/
+                    numbers/datetimes must be coerced back on register or the API 400s (is_tarp_stop "" bug). */}
+                <input type="hidden" {...register(`stops.${index}.appointment_start_at`, { setValueAs: (v) => (v === "" || v == null ? undefined : v) })} />
+                <input type="hidden" {...register(`stops.${index}.appointment_end_at`, { setValueAs: (v) => (v === "" || v == null ? undefined : v) })} />
+                <input type="hidden" {...register(`stops.${index}.is_tarp_stop`, { setValueAs: (v) => v === true || v === "true" })} />
+                <input type="hidden" {...register(`stops.${index}.tarp_count`, { setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)) })} />
                 <input type="hidden" {...register(`stops.${index}.stop_notes`)} />
                 {/* GAP-31 per-stop extra-rate editor RELOCATED to §A (with the charges) per GUARD 2026-06-23 —
                     render-v6 §C has no extra-rate editor; the §C card is exactly the 11 design fields. */}

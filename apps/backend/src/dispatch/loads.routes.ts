@@ -23,6 +23,25 @@ import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countActiveDispatchLoads, countInTransitDispatchLoads } from "./active-loads-count.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 
+// Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
+// (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
+// boolean / number / datetime stop fields arrive on the wire as strings and a bare z.boolean() /
+// z.number() / z.string().datetime() rejects them with a 400 — the `is_tarp_stop: ""` booking blocker.
+// These tolerant wrappers accept the wire string and coerce to the real type. IMPORTANT: NOT
+// z.coerce.boolean() — Boolean("false") === true would invert the value; we map the literal strings.
+export const stopBooleanish = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v === "true" || v === true ? true : v === "false" || v === false ? false : v),
+  z.boolean().optional()
+);
+export const stopIntish = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : typeof v === "string" ? Number(v) : v),
+  z.number().int().min(0).optional()
+);
+export const stopDatetimeish = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v),
+  z.string().datetime({ offset: true }).optional()
+);
+
 const dispatchStatusSchema = z.enum([
   "unassigned",
   "assigned_not_dispatched",
@@ -167,13 +186,13 @@ const createDispatchLoadBodySchema = z.object({
         address_line1: z.string().trim().max(300).optional(),
         scheduled_arrival_at: z.string().datetime({ offset: true }).optional(),
         time_window_type: stopTimeWindowSchema,
-        appointment_start_at: z.string().datetime({ offset: true }).optional(),
-        appointment_end_at: z.string().datetime({ offset: true }).optional(),
-        lumper_required: z.boolean().optional(),
+        appointment_start_at: stopDatetimeish,
+        appointment_end_at: stopDatetimeish,
+        lumper_required: stopBooleanish,
         lumper_paid_by: z.enum(["carrier", "shipper", "broker", "receiver", "unknown"]).optional(),
         lumper_amount_cents: z.number().int().min(0).optional(),
-        is_tarp_stop: z.boolean().optional(),
-        tarp_count: z.number().int().min(0).optional(),
+        is_tarp_stop: stopBooleanish,
+        tarp_count: stopIntish,
         stop_notes: z.string().trim().max(1000).optional(),
         site_contact_name: z.string().trim().max(200).optional(),
         site_contact_phone: z.string().trim().max(40).optional(),
@@ -250,13 +269,13 @@ const updateDispatchLoadBodySchema = z.object({
         address_line1: z.string().trim().max(300).optional(),
         scheduled_arrival_at: z.string().datetime({ offset: true }).optional(),
         time_window_type: stopTimeWindowSchema.optional(),
-        appointment_start_at: z.string().datetime({ offset: true }).optional(),
-        appointment_end_at: z.string().datetime({ offset: true }).optional(),
-        lumper_required: z.boolean().optional(),
+        appointment_start_at: stopDatetimeish,
+        appointment_end_at: stopDatetimeish,
+        lumper_required: stopBooleanish,
         lumper_paid_by: z.enum(["carrier", "shipper", "broker", "receiver", "unknown"]).optional(),
         lumper_amount_cents: z.number().int().min(0).optional(),
-        is_tarp_stop: z.boolean().optional(),
-        tarp_count: z.number().int().min(0).optional(),
+        is_tarp_stop: stopBooleanish,
+        tarp_count: stopIntish,
         stop_notes: z.string().trim().max(1000).optional(),
         site_contact_name: z.string().trim().max(200).optional(),
         site_contact_phone: z.string().trim().max(40).optional(),
