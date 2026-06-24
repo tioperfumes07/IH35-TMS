@@ -6,6 +6,7 @@ import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { useToast } from "../Toast";
+import { MoneyInput } from "../forms/MoneyInput";
 
 export type BillPaymentRow = {
   bill_id: string;
@@ -40,23 +41,23 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 }
 
-function centsFromInput(value: string) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
-  return Math.round(parsed * 100);
+// M-1: amount stays a DOLLAR number → *_cents = round(amount*100) unchanged (byte-for-byte).
+function centsFromInput(value: number | null) {
+  if (value == null || !Number.isFinite(value) || value <= 0) return 0;
+  return Math.round(value * 100);
 }
 
 export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorName, onClose, onSaved }: Props) {
   const { pushToast } = useToast();
   const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [paymentMethod, setPaymentMethod] = useState<(typeof METHOD_OPTIONS)[number]["value"]>("ach");
-  const [totalAmount, setTotalAmount] = useState("");
+  const [totalAmount, setTotalAmount] = useState<number | null>(null);
   const [checkNumber, setCheckNumber] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [memo, setMemo] = useState("");
   const [autoApply, setAutoApply] = useState(true);
   const [included, setIncluded] = useState<Record<string, boolean>>({});
-  const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [amounts, setAmounts] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,7 +98,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
     }
     return openBills.flatMap((bill) => {
       if (!included[bill.id]) return [];
-      const apply = centsFromInput(amounts[bill.id] ?? "0");
+      const apply = centsFromInput(amounts[bill.id] ?? null);
       if (apply <= 0) return [];
       return [
         {
@@ -117,7 +118,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
     if (!open) return;
     setPaymentDate(new Date().toISOString().slice(0, 10));
     setPaymentMethod("ach");
-    setTotalAmount("");
+    setTotalAmount(null);
     setCheckNumber("");
     setReferenceNumber("");
     setMemo("");
@@ -201,7 +202,8 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Total payment (USD)
-            <input value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} inputMode="decimal" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → *_cents byte-for-byte. */}
+            <MoneyInput valueDollars={totalAmount} onChangeDollars={setTotalAmount} ariaLabel="Total payment amount (USD)" />
           </label>
           {paymentMethod === "check" ? (
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -261,13 +263,12 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
                       {autoApply ? (
                         money(applyCents)
                       ) : (
-                        <input
-                          type="number"
-                          step="0.01"
-                          className="w-24 rounded border border-gray-300 px-1 py-0.5"
-                          value={amounts[bill.id] ?? ""}
+                        <MoneyInput
+                          valueDollars={amounts[bill.id] ?? null}
+                          onChangeDollars={(d) => setAmounts((prev) => ({ ...prev, [bill.id]: d }))}
                           disabled={!included[bill.id]}
-                          onChange={(e) => setAmounts((prev) => ({ ...prev, [bill.id]: e.target.value }))}
+                          ariaLabel={`Apply to ${bill.bill_number ?? bill.id.slice(0, 8)}`}
+                          className="w-24"
                         />
                       )}
                     </td>
