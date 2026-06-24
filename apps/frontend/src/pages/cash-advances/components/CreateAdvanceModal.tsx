@@ -4,6 +4,7 @@ import { createCashAdvance, listUnpaidBills, type CashAdvanceMethod, type CashAd
 import { listDrivers } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -122,13 +123,12 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           </label>
           <label className="space-y-1">
             <span>Amount</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="w-full rounded border border-gray-300 px-2 py-1"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+            {/* M-1: dollars-mode QBO money entry; bridged so submit Number(amount||"0") (dollars) is byte-for-byte. */}
+            <MoneyInput
+              valueDollars={amount ? Number(amount) : null}
+              onChangeDollars={(d) => setAmount(d == null ? "" : String(d))}
+              ariaLabel="Advance amount (USD)"
+              className="w-full"
             />
           </label>
           <label className="space-y-1">
@@ -226,13 +226,12 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
             </label>
             <label className="space-y-1">
               <span>Per Period Amount</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className="w-full rounded border border-gray-300 px-2 py-1"
-                value={weeklyAmount}
-                onChange={(e) => setWeeklyAmount(e.target.value)}
+              {/* M-1: dollars-mode QBO money entry; byte-for-byte (submit Number(weeklyAmount||"0")). */}
+              <MoneyInput
+                valueDollars={weeklyAmount ? Number(weeklyAmount) : null}
+                onChangeDollars={(d) => setWeeklyAmount(d == null ? "" : String(d))}
+                ariaLabel="Per-period amount (USD)"
+                className="w-full"
               />
             </label>
             <label className="space-y-1">
