@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Plus, BarChart2 } from "lucide-react";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import {
   getDailyPrediction,
   addCashFlowAdjustment,
@@ -286,12 +287,12 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     onChange={(e) => setAddLabel(e.target.value)}
                     className="flex-1 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
                   />
-                  <input
-                    type="text"
-                    placeholder="$0.00"
-                    value={addAmount}
-                    onChange={(e) => setAddAmount(e.target.value)}
-                    className="w-24 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+                  {/* M-1: dollars-mode; seam Math.round(parseFloat(addAmount...)*100)=amount_cents byte-for-byte. */}
+                  <MoneyInput
+                    valueDollars={addAmount ? Number(addAmount.replace(/[^0-9.-]/g, "")) || null : null}
+                    onChangeDollars={(d) => setAddAmount(d == null ? "" : String(d))}
+                    ariaLabel="Projection amount (USD)"
+                    className="w-24"
                   />
                   <button
                     type="button"

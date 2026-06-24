@@ -4,6 +4,7 @@ import { getReportLibrary } from "../../api/reports";
 import type { ScheduledReportCreatePayload } from "../../api/scheduled-reports";
 import { createScheduledReport, testSendScheduledReport } from "../../api/scheduled-reports";
 import { Button } from "../../components/Button";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -133,7 +134,8 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
           {reportId.includes("profit") ? (
             <label className="mt-2 block text-xs text-gray-600">
               Min revenue (USD)
-              <input className="mt-1 h-9 w-full rounded border px-2" value={minRevenueDollars} onChange={(e) => setMinRevenueDollars(e.target.value)} placeholder="1000" />
+              {/* M-1: dollars-mode; Math.round(minRevenueDollars*100)=min_revenue_cents byte-for-byte. */}
+              <MoneyInput valueDollars={minRevenueDollars ? Number(minRevenueDollars) : null} onChangeDollars={(d) => setMinRevenueDollars(d == null ? "" : String(d))} ariaLabel="Min revenue (USD)" className="mt-1 w-full" />
             </label>
           ) : null}
         </fieldset>
