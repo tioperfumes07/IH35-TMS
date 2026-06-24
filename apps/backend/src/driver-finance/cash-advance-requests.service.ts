@@ -626,6 +626,18 @@ export async function approveCashAdvanceRequest(
         });
   if (!core.ok) return { error: "advance_create_failed" as const, details: core };
 
+  // [HOLD-FOR-JORGE — TIER 1] #1440 traceability: forward the originating load from the REQUEST onto the
+  // disbursed advance, so driver_finance.driver_advances.load_id mirrors cash_advance_requests.load_id (the
+  // load↔advance trace — the whole point of #1440). Booked cash advances carry a load_id; driver-initiated ones
+  // don't (NULL, no-op). Entity-scoped to the same operating company.
+  if (row.load_id) {
+    await client.query(
+      `UPDATE driver_finance.driver_advances SET load_id = $1::uuid, updated_at = now()
+       WHERE id = $2::uuid AND operating_company_id = $3::uuid AND load_id IS NULL`,
+      [row.load_id, core.advanceId, args.operatingCompanyId]
+    );
+  }
+
   const notes = input.approval_notes?.trim() ?? null;
   const upd = await client.query(
     `
