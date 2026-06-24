@@ -12,6 +12,7 @@ import {
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
@@ -258,12 +259,14 @@ export function FactoringDetailPage() {
                 <input type="datetime-local" className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={releasedAt} onChange={(event) => setReleasedAt(event.target.value)} />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-xs font-semibold text-gray-600">Factor fee cents</span>
-                <input type="number" min={0} className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={feeAmount} onChange={(event) => setFeeAmount(event.target.value)} />
+                <span className="text-xs font-semibold text-gray-600">Factor fee (USD)</span>
+                {/* M-1: was raw "Factor fee cents" (350=$3.50). cents-mode MoneyInput; submit Math.trunc(Number(feeAmount)) cents unchanged. */}
+                <MoneyInput valueCents={feeAmount ? Number(feeAmount) : null} onChangeCents={(c) => setFeeAmount(c == null ? "" : String(c))} ariaLabel="Factor fee (USD)" />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-xs font-semibold text-gray-600">Release amount cents</span>
-                <input type="number" min={0} className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={releaseAmount} onChange={(event) => setReleaseAmount(event.target.value)} />
+                <span className="text-xs font-semibold text-gray-600">Release amount (USD)</span>
+                {/* M-1: was raw "Release amount cents". cents-mode MoneyInput; submit Math.trunc(Number(releaseAmount)) cents unchanged. */}
+                <MoneyInput valueCents={releaseAmount ? Number(releaseAmount) : null} onChangeCents={(c) => setReleaseAmount(c == null ? "" : String(c))} ariaLabel="Release amount (USD)" />
               </label>
             </>
           ) : null}

@@ -17,6 +17,7 @@ import {
 } from "../../api/driverFinance";
 import { resolveApiUrl } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
 import { BackButton } from "../../components/shared/BackButton";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
@@ -218,10 +219,11 @@ export function SettlementDetailPage() {
               <option value="escrow_dispute">escrow_dispute</option>
               <option value="other">other</option>
             </SelectCombobox>
-            <input
-              value={disputeAmount}
-              onChange={(event) => setDisputeAmount(event.target.value)}
-              className="rounded border border-amber-300 bg-white px-2 py-1"
+            {/* M-1: dollars-mode QBO money entry; bridged so Math.round(disputeAmount*100) is byte-for-byte. */}
+            <MoneyInput
+              valueDollars={disputeAmount ? Number(disputeAmount) : null}
+              onChangeDollars={(d) => setDisputeAmount(d == null ? "" : String(d))}
+              ariaLabel="Disputed amount (USD, optional)"
               placeholder="Disputed amount (USD, optional)"
             />
             <Button
