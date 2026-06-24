@@ -90,7 +90,14 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                         render={({ field: f }) => (
                           <AddressGeocodeInput
                             value={f.value ?? ""}
-                            onChange={f.onChange}
+                            onChange={(v) => {
+                              f.onChange(v);
+                              // FIX-2 (address binding): commit the raw typed address to address_line1
+                              // immediately, so it serializes into the booking payload even when no geocode
+                              // match is selected. onResolve refines it when a match IS chosen. Without this
+                              // the payload sent address_line1: "" (the typed text lived only in address_full).
+                              setValue?.(`stops.${index}.address_line1`, v, { shouldDirty: true });
+                            }}
                             onResolve={(r) => {
                               if (r.address_line1) setValue?.(`stops.${index}.address_line1`, r.address_line1, { shouldDirty: true });
                               if (r.city) setValue?.(`stops.${index}.city`, r.city, { shouldDirty: true });
