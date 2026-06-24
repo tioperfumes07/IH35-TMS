@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "../../../../components/Button";
 import { Modal } from "../../../../components/Modal";
+import { MoneyInput } from "../../../../components/forms/MoneyInput";
 
 type Props = {
   open: boolean;
@@ -32,16 +33,16 @@ export function SplitTransactionModal({ open, amount, onClose, onSave }: Props) 
                 setLines(next);
               }}
             />
-            <input
-              type="number"
-              step="0.01"
-              className="h-8 rounded border border-gray-300 px-2"
-              value={line.amount}
-              onChange={(event) => {
+            {/* M-1: dollars-mode QBO money entry; line amount is DOLLARS (backend compares dollars), byte-for-byte. */}
+            <MoneyInput
+              valueDollars={line.amount || null}
+              onChangeDollars={(d) => {
                 const next = [...lines];
-                next[idx] = { ...line, amount: Number(event.target.value) };
+                next[idx] = { ...line, amount: d ?? 0 };
                 setLines(next);
               }}
+              ariaLabel="Split amount (USD)"
+              className="w-full"
             />
           </div>
         ))}

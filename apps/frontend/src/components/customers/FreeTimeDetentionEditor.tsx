@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
+import { MoneyInput } from "../forms/MoneyInput";
 import { DataPanel } from "../layout/DataPanel";
 
 type CustomerFreeTimeTerms = {
@@ -123,14 +124,13 @@ export function FreeTimeDetentionEditor(props: {
             </label>
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Detention Rate (per hour)</span>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={detentionRatePerHour}
-                onChange={(event) => setDetentionRatePerHour(event.target.value)}
+              {/* M-1: dollars-mode QBO money entry; rate is DOLLARS (numeric(8,2)), submit Number() byte-for-byte. */}
+              <MoneyInput
+                valueDollars={detentionRatePerHour ? Number(detentionRatePerHour) : null}
+                onChangeDollars={(d) => setDetentionRatePerHour(d == null ? "" : String(d))}
                 disabled={!props.canEdit}
-                className="w-full rounded border border-gray-300 px-2 py-1 disabled:bg-gray-50"
+                ariaLabel="Detention Rate (per hour)"
+                className="w-full"
               />
             </label>
             <label className="block">
