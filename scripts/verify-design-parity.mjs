@@ -42,9 +42,12 @@ const FE = "apps/frontend/src/pages";
 // Screen name (contract key) → live component file(s) that render its fields/columns.
 // Concatenated and normalized before the token check. Keep in sync when a screen is re-homed.
 const SCREEN_COMPONENTS = {
+  // Re-mapped off the DEAD BookLoadCustomerSection.tsx (its component renders ONLY in BookLoadModalV3.deprecated;
+  // V4 imports just the TYPE from it). The guard now reads only LIVE-rendered V4 components — Section A
+  // (customer/invoice/charges) renders inline in BookLoadModalV4.tsx. This closes the nominal-guard hole where
+  // a dead file's source satisfied tokens that never reach the live DOM.
   "Load Book/Edit Wizard": [
     `${FE}/dispatch/components/BookLoadModalV4.tsx`,
-    `${FE}/dispatch/components/BookLoadCustomerSection.tsx`,
     `${FE}/dispatch/components/BookLoadEquipmentSection.tsx`,
     `${FE}/dispatch/components/BookLoadStopsSection.tsx`,
     `${FE}/dispatch/components/BookLoadValidationSection.tsx`,
