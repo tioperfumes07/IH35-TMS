@@ -107,6 +107,7 @@ export const MAINTENANCE_TAB_PATH: Record<string, string> = {
   arriving_soon: "/maintenance/arriving-soon",
   in_transit_issues: "/maintenance/in-transit-issues",
   damage_reports: "/maintenance/damage-reports",
+  driver_reports: "/maintenance/driver-reports",
   severe_repairs: "/maintenance/severe-repairs",
   road_service: "/maintenance/road-service",
   parts_inventory: "/maintenance/parts-inventory",
