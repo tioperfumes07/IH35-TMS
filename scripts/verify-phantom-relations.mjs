@@ -56,7 +56,6 @@ const KNOWN_PHANTOM_DEBT = [
   // ── [HOLD-FOR-JORGE] financial fixes in flight (PR #1483) — remove when #1483 merges ──
   // ── bucket-③ HOLD / needs migration or data-model decision ──
   { rel: "accounting.qbo_payroll_links", why: "HOLD payroll — real integrations.qbo_payroll_links is per-run aggregate, not per-employee; needs data-model decision" },
-  { rel: "mdata.maintenance_parts", why: "FLAG — parts-master table never created; 0357 canonical=maintenance.parts_inventory; needs gated migration" },
   { rel: "accounting.journal_entry_lines", why: "deprecated dead route (manual-je.routes.deprecated.ts — not served); canonical=accounting.journal_entry_postings; archive, don't revive" },
   // ── section C: degrade-safe but still names the phantom in a comment/fallback path (PR #1485) ──
 

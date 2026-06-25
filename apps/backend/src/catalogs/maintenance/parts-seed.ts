@@ -49,6 +49,12 @@ export async function seedMaintenanceParts(
   const csvFiles = ["detroit-diesel.csv", "cummins.csv", "freightliner.csv", "peterbilt.csv", "kenworth.csv"];
   const allParts: PartRow[] = csvFiles.flatMap((f) => parseCsv(path.join(SEED_DIR, f)));
 
+  // mdata.maintenance_parts does not exist yet (the parts-master feature's table was never created;
+  // see memory bucket3-phantom-schema-disposition — pending a Jorge data-model decision). No-op rather
+  // than 42P01 so this manual seed is safe to invoke before the table is provisioned.
+  const tableOk = await client.query<{ ok: boolean }>(`SELECT to_regclass('mdata.maintenance_parts') IS NOT NULL AS ok`);
+  if (!tableOk.rows[0]?.ok) return { upserted: 0, skipped: allParts.length };
+
   let upserted = 0;
   let skipped = 0;
 
