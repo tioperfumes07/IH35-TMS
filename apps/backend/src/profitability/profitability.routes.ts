@@ -267,7 +267,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
           f.*,
           c.customer_name
         FROM analytics.load_fact f
-        LEFT JOIN sales.customers c ON c.customer_id = f.customer_id
+        LEFT JOIN mdata.customers c ON c.id = f.customer_id
         WHERE f.load_id = $1 AND f.operating_company_id = $2
       `;
       const result = await (client as Queryable).query(sql, [id, operating_company_id]);

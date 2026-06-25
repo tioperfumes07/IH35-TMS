@@ -154,7 +154,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
               AND df.deleted_at IS NULL
               AND dfc.code = 'pod'
           ) AS has_pod
-        FROM dispatch.loads l
+        FROM mdata.loads l
         JOIN mdata.customers c ON c.id = l.customer_id
         LEFT JOIN accounting.invoices inv
           ON inv.source_load_id = l.id
