@@ -55,11 +55,11 @@ export async function indexLoadsForCompany(client: DbClient, operatingCompanyId:
     `
       SELECT l.id::text AS entity_uuid,
              COALESCE(l.load_number, l.id::text) AS display_text,
-             COALESCE(c.name, '') AS secondary_text
-      FROM dispatch.loads l
+             COALESCE(c.customer_name, '') AS secondary_text
+      FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id
       WHERE l.operating_company_id = $1::uuid
-        AND l.cancelled_at IS NULL
+        AND l.soft_deleted_at IS NULL
       LIMIT 5000
     `,
     [operatingCompanyId]

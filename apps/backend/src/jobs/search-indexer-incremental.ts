@@ -12,7 +12,7 @@ export async function runSearchIndexerIncrementalTick() {
     const companies = await client.query<{ operating_company_id: string }>(
       `
         SELECT DISTINCT operating_company_id::text AS operating_company_id
-        FROM dispatch.loads
+        FROM mdata.loads
         WHERE operating_company_id IS NOT NULL
       `
     );
