@@ -1,4 +1,5 @@
 import { CATALOG_IN_PREPARATION } from "../../../lib/prodEmptyStateCopy";
+import { DomainRowCountBadge } from "./DomainRowCountBadge";
 
 type CatalogItem = {
   name: string;
@@ -159,7 +160,9 @@ export function AllCatalogsMap({ onCatalogClick }: Props) {
             <div key={domain.key} className="rounded border border-slate-100 px-2 py-2 text-xs">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className={`rounded px-2 py-0.5 font-semibold ${domain.pillClass}`}>{domain.label}</span>
-                <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{domain.catalogs.length}</span>
+                {/* #P3 parity — live row count via the same useModuleCount source as the ribbon badge
+                    (was domain.catalogs.length, a static catalog-type count that disagreed with the ribbon). */}
+                <DomainRowCountBadge domain={domain.key} className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600" />
               </div>
               <div className="grid gap-1.5 md:grid-cols-2">
                 {domain.catalogs.map((catalog) => (
