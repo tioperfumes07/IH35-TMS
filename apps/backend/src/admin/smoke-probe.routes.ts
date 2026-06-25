@@ -11,7 +11,7 @@
  * Checks:
  *   1. db_ping          — pool can execute SELECT 1
  *   2. event_log_read   — events.event_log table is readable (SELECT COUNT)
- *   3. loads_read       — dispatch.loads table is readable
+ *   3. loads_read       — mdata.loads table is readable
  *   4. invoices_read    — accounting.invoices table is readable
  *   5. spine_write_gate — events.log_event() function exists (does NOT call it)
  */
@@ -68,7 +68,7 @@ export async function registerSmokeProbeRoutes(app: FastifyInstance) {
       }));
 
       checks.push(await runCheck("loads_read", async () => {
-        await client.query("SELECT COUNT(*) FROM dispatch.loads LIMIT 1");
+        await client.query("SELECT COUNT(*) FROM mdata.loads LIMIT 1");
       }));
 
       checks.push(await runCheck("invoices_read", async () => {
