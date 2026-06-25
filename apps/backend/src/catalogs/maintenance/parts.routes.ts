@@ -61,6 +61,19 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: { 
   });
 }
 
+// The parts-MASTER table this route was built against (mdata.maintenance_parts, with sku/manufacturer/
+// category/barcode/model_compatibility) does NOT exist on prod, and NO existing table matches its shape:
+// catalogs.parts lacks 7 of 9 columns; maintenance.parts_inventory is a stock table (on_hand_qty/last_
+// purchase_*). Resolving this is a Jorge data-model decision (canonical parts master vs. the ~6 stub
+// tables) — see memory bucket3-phantom-schema-disposition. Until then, degrade gracefully instead of
+// 42P01'ing every request: guard on to_regclass and report the feature as unprovisioned.
+async function partsMasterTableExists(client: {
+  query: <R = Record<string, unknown>>(sql: string, vals?: unknown[]) => Promise<{ rows: R[] }>;
+}): Promise<boolean> {
+  const r = await client.query<{ ok: boolean }>(`SELECT to_regclass('mdata.maintenance_parts') IS NOT NULL AS ok`);
+  return Boolean(r.rows[0]?.ok);
+}
+
 export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/maintenance/parts-master", async (req, reply) => {
     const user = authUser(req, reply);
@@ -71,6 +84,7 @@ export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance)
     const offset = (q.page - 1) * q.limit;
 
     return withCompany(user.uuid, q.operating_company_id, async (client) => {
+      if (!(await partsMasterTableExists(client))) return { rows: [], total: 0, page: q.page, limit: q.limit };
       const values: unknown[] = [q.operating_company_id];
       const where = ["operating_company_id = $1"];
       if (q.search) { values.push(`%${q.search}%`); where.push(`(sku ILIKE $${values.length} OR part_name ILIKE $${values.length} OR barcode_upc ILIKE $${values.length})`); }
@@ -95,6 +109,7 @@ export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance)
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     const d = body.data;
     const created = await withCompany(user.uuid, d.operating_company_id, async (client) => {
+      if (!(await partsMasterTableExists(client))) return null;
       const res = await client.query(
         `INSERT INTO mdata.maintenance_parts (operating_company_id, sku, part_name, manufacturer, model_compatibility, category, sub_category, typical_unit_cost_cents, barcode_upc, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
@@ -102,6 +117,7 @@ export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance)
       );
       return res.rows[0];
     });
+    if (!created) return reply.code(503).send({ error: "parts_master_not_provisioned" });
     return reply.code(201).send(created);
   });
 
@@ -117,6 +133,7 @@ export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance)
     if (!companyQ.success) return reply.code(400).send({ error: "missing operating_company_id" });
 
     const updated = await withCompany(user.uuid, companyQ.data.operating_company_id, async (client) => {
+      if (!(await partsMasterTableExists(client))) return null;
       const d = body.data;
       const setClauses: string[] = [];
       const vals: unknown[] = [];
