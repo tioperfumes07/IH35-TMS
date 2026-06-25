@@ -127,7 +127,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
           EXISTS (
             SELECT 1 FROM docs.files df
             JOIN docs.file_links dfl ON dfl.file_id = df.id
-            LEFT JOIN docs.file_categories dfc ON dfc.id = df.category_id
+            LEFT JOIN catalogs.file_categories dfc ON dfc.id = df.category_id
             WHERE dfl.entity_type = 'load'
               AND dfl.entity_id = l.id
               AND dfl.deleted_at IS NULL
@@ -137,7 +137,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
           EXISTS (
             SELECT 1 FROM docs.files df
             JOIN docs.file_links dfl ON dfl.file_id = df.id
-            LEFT JOIN docs.file_categories dfc ON dfc.id = df.category_id
+            LEFT JOIN catalogs.file_categories dfc ON dfc.id = df.category_id
             WHERE dfl.entity_type = 'load'
               AND dfl.entity_id = l.id
               AND dfl.deleted_at IS NULL
@@ -147,7 +147,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
           EXISTS (
             SELECT 1 FROM docs.files df
             JOIN docs.file_links dfl ON dfl.file_id = df.id
-            LEFT JOIN docs.file_categories dfc ON dfc.id = df.category_id
+            LEFT JOIN catalogs.file_categories dfc ON dfc.id = df.category_id
             WHERE dfl.entity_type = 'load'
               AND dfl.entity_id = l.id
               AND dfl.deleted_at IS NULL
