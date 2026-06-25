@@ -27,6 +27,11 @@ async function main() {
   const client = new pg.Client({ connectionString: url });
   await client.connect();
   await client.query("SET TRANSACTION READ ONLY");
+  // DURABILITY LOCK (GUARD BLOCK-7): enumerate via pg_class.relkind, NOT information_schema.tables.
+  // information_schema.tables EXCLUDES materialized views, so it would silently drop matviews
+  // (e.g. reports.lane_metrics_monthly, relkind='m') from the canonical set — the phantom guard would
+  // then false-FAIL any backend query against them. Keep relkind IN ('r','v','m','p','f') =
+  // table / view / MATVIEW / partitioned / foreign. Do not "simplify" this to information_schema.
   const { rows } = await client.query(`
     SELECT n.nspname AS schema, c.relname AS name
     FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
