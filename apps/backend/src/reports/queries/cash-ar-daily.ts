@@ -31,10 +31,11 @@ export async function cashArDailyQuery(context: QueryContext): Promise<ReportDat
 
     const cashRes = await client.query(
       `
-        SELECT COALESCE(SUM(amount_received_cents), 0)::bigint AS cash_received_last_24h_cents
+        SELECT COALESCE(SUM(amount_cents), 0)::bigint AS cash_received_last_24h_cents
         FROM accounting.payments
         WHERE operating_company_id = $1
-          AND received_at >= now() - interval '24 hours'
+          AND voided_at IS NULL
+          AND payment_date >= now() - interval '24 hours'
       `,
       [context.operatingCompanyId]
     );

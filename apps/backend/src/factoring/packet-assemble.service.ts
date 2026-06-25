@@ -99,7 +99,7 @@ export async function assembleFactoringPacket(
     }>(
       `
       SELECT id, load_number, status, notes, customer_id
-      FROM dispatch.loads
+      FROM mdata.loads
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
@@ -179,7 +179,7 @@ export async function assembleFactoringPacket(
             CURRENT_DATE + INTERVAL '30 days',
             'from_load',
             $3::uuid
-          FROM dispatch.loads l
+          FROM mdata.loads l
           WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid
           ON CONFLICT (source_load_id) DO NOTHING
           RETURNING id
@@ -208,7 +208,7 @@ export async function assembleFactoringPacket(
     };
 
     await client.query(
-      `UPDATE dispatch.loads SET notes = $1, updated_at = now() WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+      `UPDATE mdata.loads SET notes = $1, updated_at = now() WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
       [buildPacketNotes(nextMeta, visibleNotes), input.loadId, input.operatingCompanyId],
     );
 
@@ -220,7 +220,7 @@ export async function assembleFactoringPacket(
         VALUES ($1, $2, $3, $4::jsonb)
         `,
         [
-          "dispatch.loads",
+          "mdata.loads",
           input.loadId,
           "dispatch.factoring_packet_assembled",
           JSON.stringify({
@@ -261,7 +261,7 @@ export async function sweepAndAssemblePackets(
     const eligibleRes = await client.query<{ id: string; notes: string | null }>(
       `
       SELECT DISTINCT l.id, l.notes
-      FROM dispatch.loads l
+      FROM mdata.loads l
       JOIN dispatch.pod_documents p
         ON p.load_id = l.id
         AND p.operating_company_id = l.operating_company_id
