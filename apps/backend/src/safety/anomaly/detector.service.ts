@@ -25,23 +25,19 @@ async function detectDuplicateLoadNumber(client: Parameters<DetectorFn>[0], oci:
   }));
 }
 
-async function detectFuelOffRoute(client: Parameters<DetectorFn>[0], oci: string, config: Record<string, unknown>) {
-  const maxMiles = Number(config.max_route_deviation_miles ?? 25);
-  const res = await client.query<{ txn_id: string; driver_id: string | null; deviation_miles: number }>(
-    `SELECT ft.id::text AS txn_id, ft.driver_id::text AS driver_id,
-            COALESCE((ft.metadata->>'route_deviation_miles')::numeric, 0) AS deviation_miles
-     FROM fuel.transactions ft
-     WHERE ft.operating_company_id = $1::uuid
-       AND ft.transaction_at >= now() - interval '7 days'
-       AND COALESCE((ft.metadata->>'route_deviation_miles')::numeric, 0) > $2
-     LIMIT 50`,
-    [oci, maxMiles]
-  );
-  return res.rows.map((row) => ({
-    subject_kind: 'fuel_transaction',
-    subject_uuid: row.txn_id,
-    evidence: { driver_id: row.driver_id, deviation_miles: row.deviation_miles, max_allowed: maxMiles },
-  }));
+// BLOCK-1 — fuel-off-route detection is a SAFE NO-OP (returns no findings) until a real data source
+// exists. The original query threw Postgres 42P01 on EVERY run: it selected FROM a phantom relation
+// (the real table is fuel.fuel_transactions, with a different name) AND read a non-existent
+// metadata->>'route_deviation_miles' (fuel.fuel_transactions has NO jsonb/metadata column and no
+// precomputed deviation; it does carry location_lat/lng). So this detector never produced findings —
+// it only spammed errors. Returning [] stops that. Building real off-route detection (compare each fuel
+// stop's location_lat/lng against the load's planned route) is a separate follow-up; flagged for Jorge.
+async function detectFuelOffRoute(
+  _client: Parameters<DetectorFn>[0],
+  _operatingCompanyId: string,
+  _config: Record<string, unknown>
+): Promise<AnomalyFinding[]> {
+  return [];
 }
 
 async function detectDvirMajorOpen(client: Parameters<DetectorFn>[0], oci: string, _config: Record<string, unknown>) {
