@@ -11,11 +11,18 @@
 -- (emitDriverRequestSpineEvent) and the #1440 Book-Load cash-advance spine emit. Same §2 landmine class as
 -- the audit.row_changes RLS gap: "new schema -> add GRANTs or it 500s at runtime."
 --
--- This makes a fresh-DB build reproduce the INTENDED prod grant. events.log_event is SECURITY DEFINER, so
--- USAGE alone lets ih35_app call it (the function inserts into events.event_log as its owner). Append-only
--- invariant is unaffected: USAGE on a schema confers NO table DML; events.event_log immutability
--- (202606111051_w1a_event_log_immutable revokes UPDATE/DELETE) stands. Idempotent: GRANT is a no-op when
--- the privilege is already held. Role-guarded so a roleless fresh DB does not error.
+-- This makes a fresh-DB build reproduce the INTENDED prod grant (events alongside audit/accounting).
+-- Append-only invariant is unaffected: USAGE on a schema confers NO table DML; events.event_log
+-- immutability (202606111051_w1a_event_log_immutable revokes UPDATE/DELETE) stands. Idempotent: GRANT is a
+-- no-op when the privilege is already held. Role-guarded so a roleless fresh DB does not error.
+--
+-- NOTE (Neon branch-test, 2026-06-25): USAGE clears the schema-permission barrier, but it is NECESSARY-
+-- NOT-SUFFICIENT for the spine emit. events.log_event has TWO overloads — the 9-arg is SECURITY DEFINER;
+-- the 13-arg one emitDriverRequestSpineEvent calls is NOT (secdef=false), so (a) it inserts as the caller
+-- ih35_app (may also need INSERT on events.event_log) and (b) it has a separate TYPE bug: it inserts
+-- p_actor_id (text) into event_log.actor_id (uuid) with no cast, so it fails for ALL callers regardless of
+-- value (proven on a prod-copy branch with NULL and a uuid). Fixing #1440's e2e needs THIS grant PLUS a
+-- function fix (cast p_actor_id::uuid / use p_actor_user_id / route to the definer overload) — see PR notes.
 
 DO $$
 BEGIN
