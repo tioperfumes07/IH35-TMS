@@ -298,10 +298,12 @@ async function enumerateUnits(client, excludedUnitIds) {
       (SELECT count(*) FROM driver_finance.driver_settlements s
          WHERE s.first_load_id IN (SELECT id FROM mdata.loads WHERE assigned_unit_id = u.id)
             OR s.last_load_id  IN (SELECT id FROM mdata.loads WHERE assigned_unit_id = u.id)) AS settle_cnt,
+      -- advances/requests are DRIVER-scoped (no load_id/unit_id column); link a unit to them
+      -- through the driver(s) who ran loads on this unit.
       ((SELECT count(*) FROM driver_finance.driver_advances a
-          WHERE a.load_id IN (SELECT id FROM mdata.loads WHERE assigned_unit_id = u.id))
+          WHERE a.driver_id IN (SELECT assigned_primary_driver_id FROM mdata.loads WHERE assigned_unit_id = u.id AND assigned_primary_driver_id IS NOT NULL))
        + (SELECT count(*) FROM driver_finance.cash_advance_requests c
-          WHERE c.load_id IN (SELECT id FROM mdata.loads WHERE assigned_unit_id = u.id))) AS adv_cnt
+          WHERE c.driver_id IN (SELECT assigned_primary_driver_id FROM mdata.loads WHERE assigned_unit_id = u.id AND assigned_primary_driver_id IS NOT NULL))) AS adv_cnt
     FROM mdata.units u
     WHERE (${markerSqlBroad("u.unit_number", "u.vin", "u.id")} OR u.is_sample_data = TRUE)
       AND ${companyScopeSql("COALESCE(u.currently_leased_to_company_id, u.owner_company_id)")}
@@ -417,8 +419,9 @@ async function enumerateLoads(client) {
       l.id::text AS id, l.load_number, l.status::text AS status, l.created_at, l.soft_deleted_at,
       (SELECT count(*) FROM maintenance.work_orders w WHERE w.load_id = l.id OR w.roadside_breakdown_load_id = l.id) AS wo_cnt,
       (SELECT count(*) FROM driver_finance.driver_settlements s WHERE s.first_load_id = l.id OR s.last_load_id = l.id) AS settle_cnt,
-      ((SELECT count(*) FROM driver_finance.driver_advances a WHERE a.load_id = l.id)
-       + (SELECT count(*) FROM driver_finance.cash_advance_requests c WHERE c.load_id = l.id)) AS adv_cnt,
+      -- advances/requests are DRIVER-scoped (no load_id column); link via the load's assigned driver.
+      ((SELECT count(*) FROM driver_finance.driver_advances a WHERE l.assigned_primary_driver_id IS NOT NULL AND a.driver_id = l.assigned_primary_driver_id)
+       + (SELECT count(*) FROM driver_finance.cash_advance_requests c WHERE l.assigned_primary_driver_id IS NOT NULL AND c.driver_id = l.assigned_primary_driver_id)) AS adv_cnt,
       (SELECT count(*) FROM fuel.fuel_transactions f WHERE f.load_id = l.id) AS fuel_cnt
     FROM mdata.loads l
     WHERE ${markerSql("l.load_number", "l.id")}
