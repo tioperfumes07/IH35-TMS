@@ -303,14 +303,15 @@ async function sourceDamageLiabilities(client: DbClient, ociId: string): Promise
 
 async function sourceDetentionApprovals(client: DbClient, ociId: string): Promise<AttentionItem[]> {
   try {
-    if (!(await tableExists(client, "mdata.detention_requests"))) return [];
+    // Canonical detention table is dispatch.detention_requests (mdata.detention_requests does not
+    // exist). "Pending Owner approval" = status = 'pending_review' (per detention-approval.service.ts).
+    if (!(await tableExists(client, "dispatch.detention_requests"))) return [];
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
-        FROM mdata.detention_requests
+        FROM dispatch.detention_requests
         WHERE operating_company_id = $1::uuid
-          AND owner_approved_at IS NULL
-          AND voided_at IS NULL
+          AND status = 'pending_review'
       `,
       [ociId]
     );
