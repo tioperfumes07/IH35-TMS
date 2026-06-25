@@ -22,13 +22,15 @@ type Props = {
   rows: AccessorialRow[];
   onRowsChange: (rows: AccessorialRow[]) => void;
   onDetentionSeed?: (patch: DetentionSeedPatch) => void;
+  /** W7 — per-stop extra rates (stops[].extra_rates) rolled into the displayed Accessorial subtotal. */
+  extraSubtotalCents?: number;
 };
 
 function updateRow(rows: AccessorialRow[], id: string, patch: Partial<AccessorialRow>): AccessorialRow[] {
   return rows.map((row) => (row.id === id ? { ...row, ...patch } : row));
 }
 
-export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDetentionSeed }: Props) {
+export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDetentionSeed, extraSubtotalCents = 0 }: Props) {
   const catalogQuery = useQuery({
     queryKey: ["book-load-additional-charges", operatingCompanyId],
     queryFn: () =>
@@ -58,7 +60,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
     ];
   }, [catalogQuery.data?.rows]);
 
-  const accessorialSubtotal = sumAccessorialCents(rows);
+  const accessorialSubtotal = sumAccessorialCents(rows) + Math.max(0, extraSubtotalCents);
 
   function appendRow(row: AccessorialRow) {
     onRowsChange([...rows, row]);
