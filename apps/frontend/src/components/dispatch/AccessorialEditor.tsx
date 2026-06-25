@@ -124,7 +124,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
               <tr className="border-b border-gray-100 bg-[#f7f8fa] text-left text-[9px] font-semibold uppercase tracking-wide text-gray-500">
                 <th className="px-2 py-1">Code</th>
                 <th className="px-2 py-1">Description</th>
-                <th className="px-2 py-1 text-right">Amount (¢)</th>
+                <th className="px-2 py-1 text-right">Amount ($)</th>
                 <th className="px-2 py-1 text-center">Taxable</th>
                 <th className="px-2 py-1 w-16" />
               </tr>
