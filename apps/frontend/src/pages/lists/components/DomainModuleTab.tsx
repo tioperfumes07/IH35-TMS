@@ -1,17 +1,5 @@
-import type { ListsModule } from "../../../api/listsHub";
-import { useModuleCount } from "../../../hooks/useModuleCount";
+import { DOMAIN_CATALOG_COUNTS } from "./AllCatalogsMap";
 import { DomainTab } from "./DomainTab";
-
-const DOMAIN_MODULE: Record<string, ListsModule> = {
-  safety: "SAFETY",
-  maintenance: "MAINTENANCE",
-  dispatch: "DISPATCH",
-  fuel: "FUEL",
-  drivers: "DRIVERS",
-  fleet: "FLEET",
-  accounting: "ACCOUNTING",
-  names_master: "NAMES_MASTER",
-};
 
 type Props = {
   domain: string;
@@ -22,14 +10,16 @@ type Props = {
 };
 
 export function DomainModuleTab({ domain, label, isActive, onMouseEnter, onClick }: Props) {
-  const module = DOMAIN_MODULE[domain];
-  const { count, loading } = useModuleCount(module);
+  // #P3 — read the same per-domain catalog count the All Catalogs map renders. The badges
+  // previously used a per-module count hook whose endpoint returned 0. Counts are
+  // static/registry-derived, so there is nothing to load.
+  const count = DOMAIN_CATALOG_COUNTS[domain] ?? 0;
 
   return (
     <DomainTab
       label={label}
       count={count}
-      loading={loading}
+      loading={false}
       isActive={isActive}
       onMouseEnter={onMouseEnter}
       onClick={onClick}

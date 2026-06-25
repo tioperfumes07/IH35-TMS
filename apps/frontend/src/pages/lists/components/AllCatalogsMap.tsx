@@ -144,6 +144,15 @@ const DOMAIN_CONFIG: DomainConfig[] = [
   },
 ];
 
+/**
+ * #P3 — single source of truth for per-domain catalog counts. The All Catalogs map renders
+ * domain.catalogs.length; the Domain ribbon badges must read the SAME number (they previously
+ * used useModuleCount, which returned 0). Derived from DOMAIN_CONFIG so the two can never drift.
+ */
+export const DOMAIN_CATALOG_COUNTS: Record<string, number> = Object.fromEntries(
+  DOMAIN_CONFIG.map((domain) => [domain.key, domain.catalogs.length])
+);
+
 type Props = {
   onCatalogClick: (domain: string, catalogKey: string) => void;
 };
