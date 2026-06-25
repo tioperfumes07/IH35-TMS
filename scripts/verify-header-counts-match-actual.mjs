@@ -20,6 +20,8 @@ const HOOK_CONSUMERS = [
   "apps/frontend/src/components/layout/SubNavCounts.tsx",
   "apps/frontend/src/components/layout/ModuleHeader.tsx",
   "apps/frontend/src/pages/lists/components/DomainModuleTab.tsx",
+  // #P3 parity — the live count badge shared by the ribbon and the All Catalogs map.
+  "apps/frontend/src/pages/lists/components/DomainRowCountBadge.tsx",
 ];
 
 function fail(message) {
@@ -71,6 +73,17 @@ for (const rel of HOOK_CONSUMERS) {
   if (!source.includes("useModuleCount")) {
     fail(`${rel} must use useModuleCount for live header counts`);
   }
+}
+
+// #P3 parity — the All Catalogs map domain header badge must read the SAME live count source as the
+// ribbon (DomainRowCountBadge → useModuleCount), NOT a static catalog-type count. Otherwise the badge
+// and the map disagree (the original P3 bug: ribbon=live-rows vs map=catalogs.length).
+const mapSource = read("apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx");
+if (!mapSource.includes("DomainRowCountBadge")) {
+  fail("AllCatalogsMap.tsx must render DomainRowCountBadge so its domain count matches the ribbon badge");
+}
+if (/<span[^>]*>\{domain\.catalogs\.length\}<\/span>/.test(mapSource)) {
+  fail("AllCatalogsMap.tsx still shows a static {domain.catalogs.length} header badge — use the live DomainRowCountBadge");
 }
 
 console.log(
