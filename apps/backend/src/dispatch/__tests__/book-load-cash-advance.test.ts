@@ -1,6 +1,14 @@
 import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { bookLoad, type BookLoadInput } from "../book-load.service.js";
+
+// Resolve source-contract paths relative to THIS test file, not the runner CWD. The monorepo vitest
+// runs from the repo root, so bare "src/..." paths throw ENOENT in CI (they only resolved when run
+// from apps/backend locally). This file lives in apps/backend/src/dispatch/__tests__.
+const HERE = dirname(fileURLToPath(import.meta.url));
+const SRC = join(HERE, "..", "..");
 
 // [HOLD-FOR-JORGE — TIER 1] #1440 verification — the cash-advance-on-book decisions:
 //   1. cash advance with NO driver → REJECT the book (422), do not orphan the money.
@@ -49,7 +57,7 @@ describe("book-load cash advance (Tier-1 #1440)", () => {
 
   it("decision 3 + 4 — the cash-advance request INSERT persists load_id and creates it PENDING (owner-approval)", () => {
     // Contract on the actual service source (paired with the live ih35_ci/Neon schema verification).
-    const src = readFileSync("src/driver-finance/cash-advance-requests.service.ts", "utf8");
+    const src = readFileSync(join(SRC, "driver-finance/cash-advance-requests.service.ts"), "utf8");
     const insertBlock = src.slice(src.indexOf("INSERT INTO driver_finance.cash_advance_requests"));
     expect(insertBlock, "createCashAdvanceRequest must INSERT into cash_advance_requests").toBeTruthy();
     expect(insertBlock).toMatch(/load_id/); // load_id is persisted on the request
@@ -59,7 +67,7 @@ describe("book-load cash advance (Tier-1 #1440)", () => {
   });
 
   it("Finding 2 — load_id is derived SERVER-SIDE from the just-created load; the route never accepts a client load_id (entity-scope by construction)", () => {
-    const routeSrc = readFileSync("src/dispatch/loads.routes.ts", "utf8");
+    const routeSrc = readFileSync(join(SRC, "dispatch/loads.routes.ts"), "utf8");
     const createSchema = routeSrc.slice(
       routeSrc.indexOf("const createDispatchLoadBodySchema = z.object("),
       routeSrc.indexOf("});", routeSrc.indexOf("const createDispatchLoadBodySchema")),
@@ -68,7 +76,7 @@ describe("book-load cash advance (Tier-1 #1440)", () => {
     // (non-strict) and never reaches bookLoad. So the advance's load_id can only be the load the server just made.
     expect(createSchema).not.toMatch(/^\s*load_id\s*:/m);
 
-    const svcSrc = readFileSync("src/dispatch/book-load.service.ts", "utf8");
+    const svcSrc = readFileSync(join(SRC, "dispatch/book-load.service.ts"), "utf8");
     // BookLoadInput type has no load_id field either (client cannot pass one through the service input).
     const inputType = svcSrc.slice(svcSrc.indexOf("export type BookLoadInput = {"), svcSrc.indexOf("};", svcSrc.indexOf("export type BookLoadInput")));
     expect(inputType).not.toMatch(/^\s*load_id\??\s*:/m);
@@ -78,7 +86,7 @@ describe("book-load cash advance (Tier-1 #1440)", () => {
   });
 
   it("decision 2 (observed-by-contract) — the FUEL-advance branch creates NO settlement deduction; it only emits the deferral audit", () => {
-    const svcSrc = readFileSync("src/dispatch/book-load.service.ts", "utf8");
+    const svcSrc = readFileSync(join(SRC, "dispatch/book-load.service.ts"), "utf8");
     const fuelBranch = svcSrc.slice(svcSrc.indexOf("(input.fuel_advance_cents ?? 0) > 0"));
     const fuelBlock = fuelBranch.slice(0, fuelBranch.indexOf("\n    }") + 6);
     // No driver-debt writes in the fuel path — no settlement line, no driver advance, no cash-advance request.
