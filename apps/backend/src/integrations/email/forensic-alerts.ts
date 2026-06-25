@@ -15,12 +15,13 @@ async function getOwnerEmailForCompany(operatingCompanyId: string) {
     const primary = await client.query<{ email: string }>(
       `
         SELECT iu.email
-        FROM org.user_company_roles ucr
-        JOIN identity.users iu ON iu.id = ucr.user_id
-        WHERE ucr.operating_company_id = $1
-          AND ucr.role = 'Owner'
+        FROM org.user_company_access uca
+        JOIN identity.users iu ON iu.id = uca.user_id
+        WHERE uca.company_id = $1
+          AND iu.role = 'Owner'
           AND iu.email IS NOT NULL
-        ORDER BY ucr.created_at ASC
+          AND uca.deactivated_at IS NULL
+        ORDER BY uca.granted_at ASC
         LIMIT 1
       `,
       [operatingCompanyId]

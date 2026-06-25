@@ -32,9 +32,14 @@ export async function bootstrapUsmcaSubaccount(
   const coaCloned = Number((coa.rows[0] as { count?: string } | undefined)?.count ?? 0) > 0;
 
   const adminUsers = await client.query<{ count: string }>(
-    `SELECT count(*)::text AS count FROM identity.user_company_roles ucr
-     JOIN org.companies c ON c.id = ucr.operating_company_id
-     WHERE c.company_code = $1 AND ucr.role IN ('Owner', 'Administrator')`,
+    // Per-company role = global identity.users.role + org.user_company_access grant (no
+    // user_company_roles table exists; org.companies key column is `code`, not `company_code`).
+    `SELECT count(*)::text AS count
+     FROM org.user_company_access uca
+     JOIN org.companies c ON c.id = uca.company_id
+     JOIN identity.users iu ON iu.id = uca.user_id
+     WHERE c.code = $1 AND iu.role IN ('Owner', 'Administrator')
+       AND uca.deactivated_at IS NULL`,
     [carrierCode]
   );
   const adminCount = Number((adminUsers.rows[0] as { count?: string } | undefined)?.count ?? 0);

@@ -60,8 +60,6 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "accounting.qbo_payroll_links", why: "HOLD payroll — real integrations.qbo_payroll_links is per-run aggregate, not per-employee; needs data-model decision" },
   { rel: "mdata.maintenance_parts", why: "FLAG — parts-master table never created; 0357 canonical=maintenance.parts_inventory; needs gated migration" },
   { rel: "accounting.journal_entry_lines", why: "deprecated dead route (manual-je.routes.deprecated.ts — not served); canonical=accounting.journal_entry_postings; archive, don't revive" },
-  { rel: "identity.user_company_roles", why: "FLAG auth-model — no per-company role table; real=org.user_company_access (no role) + identity.users.role (global); needs rewrite, confirm access semantics (§1.6)" },
-  { rel: "org.user_company_roles", why: "FLAG auth-model — same as identity.user_company_roles; forensic-alerts owner-email query needs rewrite onto user_company_access + users.role" },
   // ── section C: degrade-safe but still names the phantom in a comment/fallback path (PR #1485) ──
   { rel: "maintenance.dot_inspection_events", why: "PR #1485 — reports.routes degrade-safe; remove when #1485 merges" },
 
