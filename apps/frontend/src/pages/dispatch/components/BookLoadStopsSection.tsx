@@ -2,6 +2,7 @@ import { useFieldArray, Controller, type Control, type UseFormRegister, type Use
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
+import { stopGeocodePatches } from "./book-load-stop-geocode";
 
 type Props = {
   control: Control<any>;
@@ -99,10 +100,11 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                               setValue?.(`stops.${index}.address_line1`, v, { shouldDirty: true });
                             }}
                             onResolve={(r) => {
-                              if (r.address_line1) setValue?.(`stops.${index}.address_line1`, r.address_line1, { shouldDirty: true });
-                              if (r.city) setValue?.(`stops.${index}.city`, r.city, { shouldDirty: true });
-                              if (r.state) setValue?.(`stops.${index}.state`, r.state, { shouldDirty: true });
-                              if (r.country) setValue?.(`stops.${index}.country`, r.country, { shouldDirty: true });
+                              // W8: map the geocode match onto the stop, INCLUDING zip→postal_code
+                              // (was omitted, so City could populate but Zip never did).
+                              for (const patch of stopGeocodePatches(index, r)) {
+                                setValue?.(patch.field, patch.value, { shouldDirty: true });
+                              }
                             }}
                             placeholder="123 Main St"
                             className={CELL}
