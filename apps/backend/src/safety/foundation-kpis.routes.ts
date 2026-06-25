@@ -71,7 +71,7 @@ async function buildKpis(client: any, companyId: string) {
   const dotInspections =
     (
       await client
-        .query(`SELECT COUNT(*)::int AS count FROM maintenance.dot_inspection_events WHERE operating_company_id = $1`, [companyId])
+        .query(`SELECT COUNT(*)::int AS count FROM compliance.dot_inspection_events WHERE operating_company_id = $1`, [companyId])
         .catch(() => ({ rows: [{ count: 0 }] }))
     ).rows[0]?.count ?? 0;
   const hosViolations =
