@@ -44,3 +44,18 @@ jobs:
 
       - name: Verify mdata.drivers SELECT policy is OCI-scoped (H1)
         run: node scripts/verify-drivers-rls-scope.mjs
+
+  phantom-relation-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Verify backend SQL references no phantom (non-existent) relation
+        run: node scripts/verify-phantom-relations.mjs

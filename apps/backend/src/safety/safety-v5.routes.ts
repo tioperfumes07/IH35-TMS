@@ -153,7 +153,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
                 quantity: 1,
                 unit_cost: 0,
                 amount: 0,
-                service_item_uuid: (await client.query(`SELECT id FROM catalogs.items_services ORDER BY created_at LIMIT 1`)).rows[0]?.id,
+                service_item_uuid: (await client.query(`SELECT id FROM catalogs.items ORDER BY created_at LIMIT 1`)).rows[0]?.id,
                 sub_rows: (body.data.cited_violations ?? []).slice(0, 5).map((v: any) => ({
                   line_type: "labor",
                   description: `${v.code}: ${v.description ?? "DOT violation correction"}`,
