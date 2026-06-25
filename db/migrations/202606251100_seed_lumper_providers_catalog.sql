@@ -1,4 +1,4 @@
--- 202606242100 — Seed catalogs.lumper_providers: minimal generic starter set.
+-- 202606251100 — Seed catalogs.lumper_providers: minimal generic starter set.
 --
 -- DEPENDS ON 202606241800 (PR #1463) which CREATES catalogs.lumper_providers (one of the 24 generic
 -- catalogs). NO PR until #1463 is live (table must exist first). [HOLD-FOR-JORGE], catalogs.* DATA = §1.4.
