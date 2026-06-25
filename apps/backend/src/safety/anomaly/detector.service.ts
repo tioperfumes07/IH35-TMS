@@ -13,7 +13,7 @@ export type DetectorFn = (
 async function detectDuplicateLoadNumber(client: Parameters<DetectorFn>[0], oci: string, _config: Record<string, unknown>) {
   const res = await client.query<{ load_number: string; cnt: string; load_ids: string[] }>(
     `SELECT load_number, COUNT(*)::text AS cnt, array_agg(id::text) AS load_ids
-     FROM dispatch.loads
+     FROM mdata.loads
      WHERE operating_company_id = $1::uuid AND load_number IS NOT NULL AND load_number <> ''
      GROUP BY load_number HAVING COUNT(*) > 1 LIMIT 50`,
     [oci]
@@ -41,13 +41,14 @@ async function detectFuelOffRoute(
 }
 
 async function detectDvirMajorOpen(client: Parameters<DetectorFn>[0], oci: string, _config: Record<string, unknown>) {
+  // Real schema: the DVIR header is safety.dvir_submissions (NOT safety.dvir_reports — phantom), and it
+  // carries a precomputed `has_major_defect` boolean. The old query joined a non-existent dvir_reports +
+  // dd.dvir_report_id (the FK is dvir_defects.dvir_submission_id) and filtered a non-existent resolved_at,
+  // so it threw 42P01/42703 every run. Use the major-defect flag directly.
   const res = await client.query<{ unit_id: string; dvir_id: string }>(
     `SELECT DISTINCT d.unit_id::text AS unit_id, d.id::text AS dvir_id
-     FROM safety.dvir_reports d
-     JOIN safety.dvir_defect_severity_tags t ON t.dvir_defect_id = ANY(
-       SELECT dd.id FROM safety.dvir_defects dd WHERE dd.dvir_report_id = d.id
-     )
-     WHERE d.operating_company_id = $1::uuid AND d.resolved_at IS NULL AND t.severity = 'major'
+     FROM safety.dvir_submissions d
+     WHERE d.operating_company_id = $1::uuid AND d.has_major_defect = true
      LIMIT 50`,
     [oci]
   );
@@ -62,9 +63,9 @@ async function detectInactiveDriverAssignment(client: Parameters<DetectorFn>[0],
   const res = await client.query<{ driver_id: string; status: string }>(
     `SELECT d.id::text AS driver_id, d.status::text AS status
      FROM mdata.drivers d
-     JOIN dispatch.loads l ON l.assigned_primary_driver_id = d.id
+     JOIN mdata.loads l ON l.assigned_primary_driver_id = d.id
      WHERE d.operating_company_id = $1::uuid
-       AND (d.status <> 'Active' OR d.deactivated_at IS NOT NULL OR COALESCE(d.is_dispatch_blocked, false))
+       AND (d.status <> 'Active' OR d.deactivated_at IS NOT NULL OR d.archived_at IS NOT NULL)
        AND l.status IN ('assigned','dispatched','in_transit')
      LIMIT 50`,
     [oci]
@@ -92,21 +93,16 @@ async function detectGeofenceDuplicateFire(client: Parameters<DetectorFn>[0], oc
   }));
 }
 
-async function detectPmDueAdvisory(client: Parameters<DetectorFn>[0], oci: string, config: Record<string, unknown>) {
-  const days = Number(config.days_ahead ?? 14);
-  const res = await client.query<{ unit_id: string; wo_id: string; due_at: string }>(
-    `SELECT wo.unit_id::text AS unit_id, wo.id::text AS wo_id, wo.scheduled_start_at::text AS due_at
-     FROM maintenance.work_orders wo
-     WHERE wo.operating_company_id = $1::uuid AND wo.status IN ('open','in_progress')
-       AND wo.category = 'pm' AND wo.scheduled_start_at <= now() + ($2 || ' days')::interval
-     LIMIT 50`,
-    [oci, days]
-  );
-  return res.rows.map((row) => ({
-    subject_kind: 'unit',
-    subject_uuid: row.unit_id,
-    evidence: { wo_id: row.wo_id, due_at: row.due_at, wf: 'WF-044', days_ahead: days },
-  }));
+// PM-due detection is a SAFE NO-OP — maintenance.work_orders has NO scheduling-date column
+// (the query read wo.scheduled_start_at + wo.category='pm', neither of which exists; the real columns are
+// wo_type/source_type/status). It threw 42703 every run. PM-due advisories belong to the PM-interval /
+// countdown system, not a WO scheduled date; flagged for a real implementation. Returning [] stops the error.
+async function detectPmDueAdvisory(
+  _client: Parameters<DetectorFn>[0],
+  _operatingCompanyId: string,
+  _config: Record<string, unknown>
+): Promise<AnomalyFinding[]> {
+  return [];
 }
 
 export const DETECTOR_REGISTRY: Record<string, DetectorFn> = {

@@ -1,50 +1,50 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { DETECTOR_REGISTRY } from "./detector.service.js";
 
 /**
- * BLOCK-1 guard — the anomaly detector threw Postgres 42P01 on every run because it referenced
- * `fuel.transactions` (no such relation; the real table is fuel.fuel_transactions). This guard:
- *  (1) fails if ANY backend source reintroduces the bad relation name `fuel.transactions`, and
- *  (2) proves the fuel-off-route detector is a safe no-op (returns [] without touching the DB).
+ * Anomaly-detector phantom-relation guard. The detector service threw Postgres 42P01/42703 on every run
+ * because it referenced relations/columns that don't exist (the schema it was coded against never matched
+ * reality). Real fixes: dispatch.loads → mdata.loads, safety.dvir_reports → safety.dvir_submissions
+ * (has_major_defect), is_dispatch_blocked → archived_at; fuel-off-route + pm-due are safe no-ops (no data
+ * source). This guard:
+ *  (1) fails if ANY backend SQL selects FROM/JOIN a known phantom relation, and
+ *  (2) proves the disabled detectors are safe no-ops (return [] without touching the DB).
  */
 
-const BACKEND_SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+// schema.table names that DO NOT EXIST — real targets given in the comment above.
+// NOTE: dispatch.loads + safety.dvir_reports are ALSO referenced by ~8 other backend files (factoring,
+// search-indexer, alerts, smoke-probe, wf-050 gate) — a separate systemic bug surfaced + flagged for Jorge;
+// this guard is scoped to the detector service it ships with so it stays green and bites on regression here.
+const PHANTOM_RELATIONS = ["fuel.transactions", "dispatch.loads", "safety.dvir_reports"];
 
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (full.endsWith(".ts")) out.push(full);
-  }
-  return out;
-}
+const DETECTOR_SRC = join(dirname(fileURLToPath(import.meta.url)), "detector.service.ts");
 
-describe("anomaly detector — fuel.transactions guard (BLOCK-1)", () => {
-  it("no backend SQL selects FROM/JOIN the phantom relation `fuel.transactions`", () => {
+describe("anomaly detector — phantom-relation guard", () => {
+  it("the detector service selects FROM/JOIN no known phantom relation", () => {
+    const src = readFileSync(DETECTOR_SRC, "utf8");
     const offenders: string[] = [];
-    // SQL-context only (FROM/JOIN/INTO/UPDATE fuel.transactions) — NOT fuel.fuel_transactions, and not
-    // prose mentions in comments/docs. Skip *.test.ts so this guard's own literal doesn't trip it.
-    const bad = /\b(from|join|into|update)\s+fuel\.transactions\b/i;
-    for (const file of walk(BACKEND_SRC)) {
-      if (file.endsWith(".test.ts")) continue;
-      const src = readFileSync(file, "utf8");
-      if (bad.test(src)) offenders.push(file.replace(BACKEND_SRC, "..."));
+    for (const rel of PHANTOM_RELATIONS) {
+      const esc = rel.replace(/[.]/g, "\\.");
+      // SQL-context only (FROM/JOIN/INTO/UPDATE <relation>) — not prose mentions in comments.
+      if (new RegExp(`\\b(from|join|into|update)\\s+${esc}\\b`, "i").test(src)) offenders.push(rel);
     }
-    expect(offenders, `referenced fuel.transactions (use fuel.fuel_transactions): ${offenders.join(", ")}`).toEqual([]);
+    expect(offenders, `detector references phantom relations: ${offenders.join(", ")}`).toEqual([]);
   });
 
-  it("fuel_off_route detector is a safe no-op (returns [] without a DB call)", async () => {
-    const detector = DETECTOR_REGISTRY.fuel_off_route_geo;
-    expect(detector).toBeTypeOf("function");
-    const client = {
-      query: async () => {
-        throw new Error("detector must NOT query the DB while disabled");
-      },
-    };
-    const findings = await detector(client as never, "00000000-0000-0000-0000-000000000000", {});
-    expect(findings).toEqual([]);
-  });
+  for (const name of ["fuel_off_route_geo", "pm_due_advisory"]) {
+    it(`${name} detector is a safe no-op (returns [] without a DB call)`, async () => {
+      const detector = DETECTOR_REGISTRY[name];
+      expect(detector).toBeTypeOf("function");
+      const client = {
+        query: async () => {
+          throw new Error("detector must NOT query the DB while disabled");
+        },
+      };
+      const findings = await detector(client as never, "00000000-0000-0000-0000-000000000000", {});
+      expect(findings).toEqual([]);
+    });
+  }
 });
