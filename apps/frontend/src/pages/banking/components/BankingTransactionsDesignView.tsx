@@ -778,8 +778,8 @@ export function BankingTransactionsDesignView({
         ])}
       />
 
-      <div className="overflow-hidden rounded border border-gray-200 bg-white">
-        <table className="w-full table-fixed text-left text-[12px]">
+      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <table className="min-w-[1150px] w-full table-fixed text-left text-[12px]">
           <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
               <th className="w-[3%] px-1 py-2">
