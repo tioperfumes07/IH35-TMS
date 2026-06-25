@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Resolve the preview service's live deploy for THIS PR's head SHA, then
       # read its service URL. We poll the Render API for status=live instead of a
