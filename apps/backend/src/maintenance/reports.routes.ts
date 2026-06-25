@@ -77,14 +77,27 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
           [companyId]
         )
       ).rows;
-    case "inspection_pass_fail_rate":
+    case "inspection_pass_fail_rate": {
+      // The canonical inspection table compliance.dot_inspection_events is a station DWELL-event
+      // table (arrived_at/departed_at/dwell_minutes/follow_up_state) — it has NO pass/fail "outcome"
+      // column, and there is no pass/fail data model anywhere yet. (The old query read a phantom
+      // maintenance.dot_inspection_events and 42P01'd.) Degrade to empty rather than 42P01/42703;
+      // forward-compatible — if an `outcome` column is later added, this lights up automatically.
+      // FLAGGED to Jorge: inspection_pass_fail_rate needs a real compliance/DVIR data source.
+      const hasOutcome = await client.query(
+        `SELECT 1 FROM information_schema.columns
+         WHERE table_schema = 'compliance' AND table_name = 'dot_inspection_events'
+           AND column_name = 'outcome' LIMIT 1`
+      );
+      if (hasOutcome.rows.length === 0) return [];
       return (
         await client.query(
           `SELECT outcome, COUNT(*)::int AS inspections
-           FROM maintenance.dot_inspection_events WHERE operating_company_id = $1 GROUP BY outcome`,
+           FROM compliance.dot_inspection_events WHERE operating_company_id = $1 GROUP BY outcome`,
           [companyId]
         )
       ).rows;
+    }
     case "top_vendors_by_spend":
       return (
         await client.query(
