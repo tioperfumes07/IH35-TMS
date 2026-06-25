@@ -31,6 +31,7 @@ import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 export const LOAD_WIZARD_V5_FLAG = "LOAD_WIZARD_V5";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
 import { AccessorialEditor } from "../../../components/dispatch/AccessorialEditor";
+import { lumperReimbursementChargeLines, sumLumperReimbursementCents } from "../../../components/dispatch/book-load-lumper";
 import {
   buildBookLoadChargeLines,
   computeBookLoadSectionTotalCents,
@@ -365,6 +366,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const linehaul = form.watch("linehaul_cents");
   const fuel = form.watch("fuel_surcharge_cents");
   const accessorialRows = form.watch("accessorial_rows");
+  const stops = form.watch("stops");
   const customerQboId = form.watch("customer_qbo_id");
   const customerName = form.watch("customer_name");
   const loadType = form.watch("load_type");
@@ -392,6 +394,10 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     () => computeBookLoadSectionTotalCents(linehaul || 0, fuel || 0, accessorialRows ?? []),
     [accessorialRows, fuel, linehaul]
   );
+  // W6 — broker-paid lumper is reimbursable: it adds to the CUSTOMER invoice total (not the driver
+  // bill, which stays on sectionTotal). Pure math in book-load-lumper.ts (unit-tested).
+  const lumperReimbursementCents = useMemo(() => sumLumperReimbursementCents(stops ?? []), [stops]);
+  const customerInvoiceTotal = sectionTotal + lumperReimbursementCents;
 
   useEffect(() => {
     const sum = sumAccessorialCents(accessorialRows ?? []);
@@ -560,11 +566,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         charges:
           saveMode === "draft"
             ? []
-            : buildBookLoadChargeLines({
-                linehaul_cents: Number(values.linehaul_cents || 0),
-                fuel_surcharge_cents: Number(values.fuel_surcharge_cents || 0),
-                accessorial_rows: values.accessorial_rows ?? [],
-              }),
+            : [
+                ...buildBookLoadChargeLines({
+                  linehaul_cents: Number(values.linehaul_cents || 0),
+                  fuel_surcharge_cents: Number(values.fuel_surcharge_cents || 0),
+                  accessorial_rows: values.accessorial_rows ?? [],
+                }),
+                // W6 — broker-paid lumper auto-reimbursable line(s) onto the customer invoice.
+                ...lumperReimbursementChargeLines(values.stops ?? []),
+              ],
         stops: values.stops.map((stop, index) => ({
           stop_type: stop.stop_type,
           sequence_number: index + 1,
@@ -939,9 +949,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                             {money.format(sumAccessorialCents(accessorialRows ?? []) / 100)}
                           </td>
                         </tr>
+                        {lumperReimbursementCents > 0 ? (
+                          <tr className="border-b border-gray-100">
+                            <td className="px-2 py-1.5">Lumper reimbursement (broker)</td>
+                            <td className="px-2 py-1.5 text-right font-mono text-gray-800">{money.format(lumperReimbursementCents / 100)}</td>
+                          </tr>
+                        ) : null}
                         <tr className="bg-[#f7f8fa] font-semibold">
                           <td className="px-2 py-1.5">Total customer invoice</td>
-                          <td className="px-2 py-1.5 text-right">{money.format(sectionTotal / 100)}</td>
+                          <td className="px-2 py-1.5 text-right">{money.format(customerInvoiceTotal / 100)}</td>
                         </tr>
                       </tbody>
                     </table>
