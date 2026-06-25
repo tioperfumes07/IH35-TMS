@@ -72,22 +72,6 @@ async function relationExists(client: Queryable, relation: string): Promise<bool
   return Boolean(res.rows[0]?.ok);
 }
 
-async function columnExists(client: Queryable, relation: string, column: string): Promise<boolean> {
-  const res = await client.query<{ ok: boolean }>(
-    `
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = split_part($1, '.', 1)
-          AND table_name = split_part($1, '.', 2)
-          AND column_name = $2
-      ) AS ok
-    `,
-    [relation, column]
-  );
-  return Boolean(res.rows[0]?.ok);
-}
-
 async function loadKpis(
   client: Queryable,
   userId: string,
@@ -273,12 +257,10 @@ async function loadPendingDetentionApprovals(
   userId: string,
   operatingCompanyId?: string
 ): Promise<number> {
-  if (!(await relationExists(client, "mdata.detention_requests"))) return 0;
-
-  const hasDispatcherColumn = await columnExists(client, "mdata.detention_requests", "dispatcher_user_id");
-  const hasLoadColumn = await columnExists(client, "mdata.detention_requests", "load_id");
-  const hasOwnerApprovedAt = await columnExists(client, "mdata.detention_requests", "owner_approved_at");
-  const hasVoidedAt = await columnExists(client, "mdata.detention_requests", "voided_at");
+  // Canonical detention table is dispatch.detention_requests (NOT mdata.detention_requests, which does
+  // not exist). "Pending owner approval" = status = 'pending_review' (set by detention-approval.service.ts;
+  // approved→'approved'/'invoiced', rejected→'rejected'). Scope to this dispatcher via the load.
+  if (!(await relationExists(client, "dispatch.detention_requests"))) return 0;
 
   const values: unknown[] = [userId];
   let companyFilter = "";
@@ -287,25 +269,13 @@ async function loadPendingDetentionApprovals(
     companyFilter = "AND dr.operating_company_id = $2::uuid";
   }
 
-  let scopeClause = "";
-  if (hasDispatcherColumn) {
-    scopeClause = "AND dr.dispatcher_user_id = $1::uuid";
-  } else if (hasLoadColumn) {
-    scopeClause = "AND l.dispatcher_user_id = $1::uuid";
-  }
-
-  const joinClause = hasLoadColumn ? "LEFT JOIN mdata.loads l ON l.id = dr.load_id" : "";
-  const ownerApprovedClause = hasOwnerApprovedAt ? "AND dr.owner_approved_at IS NULL" : "";
-  const voidedClause = hasVoidedAt ? "AND dr.voided_at IS NULL" : "";
   const res = await client.query<{ c: number }>(
     `
       SELECT COUNT(*)::int AS c
-      FROM mdata.detention_requests dr
-      ${joinClause}
-      WHERE 1 = 1
-        ${ownerApprovedClause}
-        ${voidedClause}
-        ${scopeClause}
+      FROM dispatch.detention_requests dr
+      LEFT JOIN mdata.loads l ON l.id = dr.load_id
+      WHERE dr.status = 'pending_review'
+        AND l.dispatcher_user_id = $1::uuid
         ${companyFilter}
     `,
     values
