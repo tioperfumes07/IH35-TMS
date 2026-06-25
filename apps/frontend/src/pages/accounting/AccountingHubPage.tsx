@@ -31,7 +31,7 @@ type TabId =
   | "journal-entries"
   | "reports";
 
-const TABS: Array<{ id: TabId; label: string; to?: string }> = [
+export const TABS: Array<{ id: TabId; label: string; to?: string }> = [
   { id: "home", label: "Home" },
   { id: "bills", label: "Bills", to: "/accounting/bills" },
   { id: "expenses", label: "Expenses", to: "/accounting/expenses" },
@@ -45,6 +45,46 @@ const TABS: Array<{ id: TabId; label: string; to?: string }> = [
   { id: "journal-entries", label: "Journal Entries", to: "/accounting/journal-entries" },
   { id: "reports", label: "Reports", to: "/reports" },
 ];
+
+/**
+ * #3a — per-tab summary-card subtitle. The card title updates per tab but the subtitle was a
+ * single hardcoded "Bills paid MTD · Avg DSO" line on every tab. This makes the subtitle reactive
+ * to the active tab: AP/AR tabs surface the relevant live metric, others get a domain hint.
+ * Exhaustive over TabId (no default) so a new tab fails typecheck until it gets a subtitle.
+ */
+export function accountingTabSubtitle(
+  tabId: TabId,
+  metrics: { billsPaidMtdCents: number; avgDsoDays: number | null }
+): string {
+  const billsPaid = money.format(metrics.billsPaidMtdCents / 100);
+  const dso = metrics.avgDsoDays == null ? "—" : `${Math.round(metrics.avgDsoDays)}d`;
+  switch (tabId) {
+    case "home":
+      return `Bills paid MTD: ${billsPaid}. Avg DSO: ${dso}.`;
+    case "bills":
+      return `Open bills awaiting payment. Bills paid MTD: ${billsPaid}.`;
+    case "expenses":
+      return "Direct expenses and category mapping.";
+    case "bill-payment":
+      return `Bill payments recorded this month: ${billsPaid}.`;
+    case "invoices":
+      return `Customer invoices outstanding. Avg DSO: ${dso}.`;
+    case "receive-payment":
+      return "Record customer payments and deposits.";
+    case "settlements":
+      return "Driver settlements and pay runs.";
+    case "find-transactions":
+      return "Search across all accounting transactions.";
+    case "unmatched-needs-review":
+      return "QBO sync items that need review.";
+    case "factoring":
+      return "Faro factoring advances and reserve releases.";
+    case "journal-entries":
+      return "Manual journal entries and GL adjustments.";
+    case "reports":
+      return "Financial statements and account registers.";
+  }
+}
 
 const CREATE_MENU: Array<{ label: string; to: string }> = [
   { label: "Bill", to: "/accounting/bills/vendor" },
@@ -536,7 +576,7 @@ export function AccountingHubPage() {
             <p>No dedicated route is currently registered for this tab.</p>
           )}
           <p className="mt-2 text-xs text-gray-500">
-            Bills paid MTD: {money.format(billsPaidMtdCents / 100)} · Avg DSO: {avgDsoDays == null ? "—" : `${Math.round(avgDsoDays)}d`}
+            {accountingTabSubtitle(activeTab, { billsPaidMtdCents, avgDsoDays })}
           </p>
         </div>
       )}
