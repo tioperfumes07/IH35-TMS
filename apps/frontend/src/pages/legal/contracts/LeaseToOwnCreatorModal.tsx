@@ -170,6 +170,12 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
             <div className="md:col-span-2 rounded bg-slate-50 p-2 text-sm">
               <strong>Seller:</strong> {seller ? seller.legal_name : "loading…"} <span className="text-slate-500">(equipment owner — TRK default)</span>
             </div>
+            <label className="flex flex-col gap-1 text-sm">Seller signer
+              <input className="rounded border px-2 py-1" value={sellerSigner.signer_name} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_name: e.target.value })} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">Seller signer title
+              <input className="rounded border px-2 py-1" value={sellerSigner.signer_title} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_title: e.target.value })} />
+            </label>
             <label className="flex flex-col gap-1 text-sm">Truck-owner to lease from
               <select className="rounded border px-2 py-1" value={ownerCompanyId} onChange={(e) => setOwnerCompanyId(e.target.value)}>
                 {ownerOptions.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
