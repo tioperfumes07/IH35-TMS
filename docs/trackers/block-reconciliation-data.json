@@ -1,10 +1,10 @@
 {
- "date": "2026-06-25",
+ "date": "2026-06-26",
  "counts": {
-  "PENDING": 62,
+  "PENDING": 32,
   "PENDING (GATED)": 24,
-  "NEEDS-VERIFY": 94,
-  "DONE": 276
+  "NEEDS-VERIFY": 69,
+  "DONE": 331
  },
  "blocks": [
   {
@@ -35,6 +35,69 @@
    "name": "BLOCK-18-of-29-TIER3-PII-ENCRYPTION"
   },
   {
+   "id": "CAP-AUTOSTATUS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Auto load-status switch"
+  },
+  {
+   "id": "CAP-CARGOTEMP",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Cargo-temp monitoring"
+  },
+  {
+   "id": "CAP-ENGINEWO",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Engine-fault auto Work Order"
+  },
+  {
+   "id": "CAP-FUELFRAUD",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection"
+  },
+  {
+   "id": "CAP-GPS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking"
+  },
+  {
+   "id": "CAP-PREDICTIVE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive"
+  },
+  {
+   "id": "CAP-SCORING",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring"
+  },
+  {
    "id": "CASH-FLOW-MODULE",
    "source": ".block-ready",
    "fin": false,
@@ -42,6 +105,33 @@
    "status": "PENDING",
    "evidence": "no merged PR / no files on main",
    "name": ""
+  },
+  {
+   "id": "DISP-KANBAN-dispatch-kanban-board",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "DISPATCH / TASK Dispatch Kanban board — Dispatch Kanban board"
+  },
+  {
+   "id": "DISP-OVERVIEW-dispatch-overview",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "DISPATCH / TASK Dispatch Overview — Dispatch Overview"
+  },
+  {
+   "id": "DISP-PROFIT-load-profitability",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "DISPATCH / TASK Load Profitability — Load Profitability"
   },
   {
    "id": "FIX-AUDIT-TRIGGER-DRIFT",
@@ -62,454 +152,49 @@
    "name": ""
   },
   {
-   "id": "gap-14-validation-pre-dispatch",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-14-validation-pre-dispatch"
-  },
-  {
-   "id": "gap-20-recurring-bills",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-20-recurring-bills"
-  },
-  {
-   "id": "gap-23-samsara-cache-tiers",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-23-samsara-cache-tiers"
-  },
-  {
-   "id": "gap-25-active-driver-set",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-25-active-driver-set"
-  },
-  {
-   "id": "gap-26-border-crossings",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-26-border-crossings"
-  },
-  {
-   "id": "gap-27-geofence-reconciliation",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-27-geofence-reconciliation"
-  },
-  {
-   "id": "gap-28-layover-detection",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-28-layover-detection"
-  },
-  {
-   "id": "gap-29-booking-gap-analytics",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-29-booking-gap-analytics"
-  },
-  {
-   "id": "gap-30-late-arrival-analytics",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-30-late-arrival-analytics"
-  },
-  {
-   "id": "gap-31-multi-stop-extra-rates",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-31-multi-stop-extra-rates"
-  },
-  {
-   "id": "gap-32-customer-free-time-detention",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-32-customer-free-time-detention"
-  },
-  {
-   "id": "gap-34-driver-pwa-dispatch",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-34-driver-pwa-dispatch"
-  },
-  {
-   "id": "gap-36-driver-pwa-incident-full",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-36-driver-pwa-incident-full"
-  },
-  {
-   "id": "gap-39-geofence-state-machine",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-39-geofence-state-machine"
-  },
-  {
-   "id": "gap-40-damage-photo-exif-chain",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-40-damage-photo-exif-chain"
-  },
-  {
-   "id": "gap-41-reports-hub-9-categories",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-41-reports-hub-9-categories"
-  },
-  {
-   "id": "gap-42-ifta-quarterly-preparer",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-42-ifta-quarterly-preparer"
-  },
-  {
-   "id": "gap-43-scheduled-reports",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-43-scheduled-reports"
-  },
-  {
-   "id": "gap-44-form-425c-exhibits",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-44-form-425c-exhibits"
-  },
-  {
-   "id": "gap-45-cash-flow-cpm-routes",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-45-cash-flow-cpm-routes"
-  },
-  {
-   "id": "gap-46-anomaly-detection",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-46-anomaly-detection"
-  },
-  {
-   "id": "gap-47-dispatch-auth-gates",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-47-dispatch-auth-gates"
-  },
-  {
-   "id": "gap-48-driver-operations-depth",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-48-driver-operations-depth"
-  },
-  {
-   "id": "gap-49-dvir-severity-tagging",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-49-dvir-severity-tagging"
-  },
-  {
-   "id": "gap-50-ai-photo-comparison",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-50-ai-photo-comparison"
-  },
-  {
-   "id": "gap-52-driver-vendor-mapping-integrity",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-52-driver-vendor-mapping-integrity"
-  },
-  {
-   "id": "gap-53-bank-multi-company-drift",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-53-bank-multi-company-drift"
-  },
-  {
-   "id": "gap-55-cap-1-live-gps",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-55-cap-1-live-gps"
-  },
-  {
-   "id": "gap-56-cap-4-auto-status-switch",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-56-cap-4-auto-status-switch"
-  },
-  {
-   "id": "gap-57-cap-5-tri-signal",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-57-cap-5-tri-signal"
-  },
-  {
-   "id": "gap-58-cap-8-engine-fault-auto-wo",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-58-cap-8-engine-fault-auto-wo"
-  },
-  {
-   "id": "gap-59-cap-9-vehicle-driver-pairing",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-59-cap-9-vehicle-driver-pairing"
-  },
-  {
-   "id": "gap-60-cap-10-driver-scoring",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-60-cap-10-driver-scoring"
-  },
-  {
-   "id": "gap-61-cap-11-fuel-fraud-alerts",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-61-cap-11-fuel-fraud-alerts"
-  },
-  {
-   "id": "gap-63-cap-13-brake-wear",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-63-cap-13-brake-wear"
-  },
-  {
-   "id": "gap-64-cap-14-cargo-sensors",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-64-cap-14-cargo-sensors"
-  },
-  {
-   "id": "gap-66-dispatcher-home-view",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-66-dispatcher-home-view"
-  },
-  {
-   "id": "gap-7-severe-repair-oos-estimate",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-7-severe-repair-oos-estimate"
-  },
-  {
-   "id": "gap-70-edi-foundation",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-70-edi-foundation"
-  },
-  {
-   "id": "gap-71-driver-retention-model",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-71-driver-retention-model"
-  },
-  {
-   "id": "gap-72-customer-relationship-score",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-72-customer-relationship-score"
-  },
-  {
-   "id": "gap-76-deadhead-optimizer",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-76-deadhead-optimizer"
-  },
-  {
-   "id": "gap-8-assignments-quicksave",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-8-assignments-quicksave"
-  },
-  {
-   "id": "gap-82-cert-expiry-tracking",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-82-cert-expiry-tracking"
-  },
-  {
-   "id": "gap-83-eld-audit-trail",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-83-eld-audit-trail"
-  },
-  {
-   "id": "gap-85-permits-toll-tags",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-85-permits-toll-tags"
-  },
-  {
-   "id": "gap-86-insurance-module",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-86-insurance-module"
-  },
-  {
-   "id": "gap-89-cmd-k-quick-switcher",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-89-cmd-k-quick-switcher"
-  },
-  {
-   "id": "gap-92-feature-flags",
-   "source": "gap-spec",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "gap spec (verify) — forward Phase 4-7 work",
-   "name": "gap-92-feature-flags"
-  },
-  {
    "id": "HOS-BUG-DRIVERASSIGN",
    "source": "program",
    "fin": false,
    "tier": "2",
    "status": "PENDING",
-   "evidence": "LIVE-TRACED / BUILD. Tier 2.",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "HOS / TASK Bug — deployed_with_driver 400 (invalid stat type)"
+  },
+  {
+   "id": "HOS-VIEWER-DONE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]"
+  },
+  {
+   "id": "INS-MODULE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "INSURANCE / TASK — Insurance module build-out"
+  },
+  {
+   "id": "MNT-SHOP",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "MAINTENANCE / TASK — Mechanic-shop / Work-Order module"
+  },
+  {
+   "id": "MX-OPS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "MEXICO OPS / TASK — Mexico cross-border operations"
   },
   {
    "id": "Q9-TZ-timezone-library",
@@ -517,8 +202,44 @@
    "fin": false,
    "tier": "2",
    "status": "PENDING",
-   "evidence": "BUILD. Tier 2 (foundational). RESPOND-BEFORE-CODE the tz library choice (Jorge's Q9=A+B).",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "FOUNDATIONS / TASK Q9 — Timezone library (lat/lng→IANA primary + override)"
+  },
+  {
+   "id": "RPT-MODULE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "REPORTS / TASK — Reports module build-out"
+  },
+  {
+   "id": "SAFE-W3",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W3"
+  },
+  {
+   "id": "SAFE-W4",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W4"
+  },
+  {
+   "id": "SAFE-W5",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W5"
   },
   {
    "id": "TBL-STANDARD-universal-table-sweep",
@@ -526,8 +247,17 @@
    "fin": false,
    "tier": "2",
    "status": "PENDING",
-   "evidence": "LIVE-TRACED / BUILD. Tier 2/3 per surface.",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "TABLE/UX / TASK Standard — Universal table sweep (bespoke → shared DataTable)"
+  },
+  {
+   "id": "UX-A-table-alignment-DONE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]"
   },
   {
    "id": "UX-B-dispatch-location-column",
@@ -535,7 +265,7 @@
    "fin": false,
    "tier": "2",
    "status": "PENDING",
-   "evidence": "BUILD. Tier 2. Depends on reverse-geo fix (#1233, LIVE).",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "TABLE/UX / TASK B — Dispatch Location column"
   },
   {
@@ -544,7 +274,7 @@
    "fin": false,
    "tier": "2",
    "status": "PENDING",
-   "evidence": "BUILD. Tier 2. Depends on #1233 reverse-geo.",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "TABLE/UX / TASK C — Fleet Location column"
   },
   {
@@ -553,7 +283,7 @@
    "fin": false,
    "tier": "2",
    "status": "PENDING",
-   "evidence": "BUILD. Tier 2.",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "TABLE/UX / TASK D — HOS Tracker driver-row cycle drawer"
   },
   {
@@ -562,17 +292,8 @@
    "fin": false,
    "tier": "2",
    "status": "PENDING",
-   "evidence": "BUILD. Tier 2. Depends on #1233 reverse-geo.",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "TABLE/UX / TASK E — Clickable sweep + Compliance HOS Location column"
-  },
-  {
-   "id": "AF-5-stub-catalogs",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "PENDING (GATED)",
-   "evidence": "BUILD. Tier 2/3 per catalog (Tier 1 if a catalog drives posting). One catalog = one PR.",
-   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)"
   },
   {
    "id": "BLOCK-01-of-29-TIER1.5-DEPRECIATION",
@@ -600,15 +321,6 @@
    "status": "PENDING (GATED)",
    "evidence": "deep-verified 2026-06-24 (feature grep)",
    "name": "BLOCK-03-of-29-TIER1.5-IFTA"
-  },
-  {
-   "id": "BLOCK-10-driver-inactivity",
-   "source": "program",
-   "fin": false,
-   "tier": "1",
-   "status": "PENDING (GATED)",
-   "evidence": "BUILD (ingest+display) / GATED (mass-flip). Tier 1 on the mass status flip — STOPS for Jor",
-   "name": "DRIVER LIFECYCLE / TASK 10 — Driver inactivity: 96h alert + 30-day DOT + vacation override"
   },
   {
    "id": "BLOCK-17-of-29-TIER2.5-W2-1099",
@@ -647,21 +359,12 @@
    "name": "BLOCK-25-of-29-TIER3.5-CONSOLIDATION"
   },
   {
-   "id": "CHAIN-02-account-register-params",
-   "source": "program",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "VERIFY+wire params — D5 register shipped #976 (row 839); not a build.",
-   "name": "ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)"
-  },
-  {
    "id": "CHAIN-08-transp-demo-data-purge",
    "source": "program",
    "fin": true,
    "tier": "1",
    "status": "PENDING (GATED)",
-   "evidence": "1 — FULL CEREMONY + data write to live books. STOPS for Jorge. RUN LAST (Phase 4 / pre-go-",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "ACCOUNTING-CHAIN / TASK 8 — TRANSP demo/seed data purge (PRE-GO-LIVE, LAST)"
   },
   {
@@ -670,8 +373,26 @@
    "fin": true,
    "tier": "1",
    "status": "PENDING (GATED)",
-   "evidence": "VERIFY+FLAG / BUILD. Tier 1 on the commit (writes the GL/reconciliation). STOPS for Jorge.",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "CONNECTIONS / TASK 1 — Plaid bank reconcile-commit (enable the commit)"
+  },
+  {
+   "id": "CONN-2-factoring-faro",
+   "source": "program",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet"
+  },
+  {
+   "id": "CONN-3-relay-internal-bank",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes"
   },
   {
    "id": "CONN-4-edi-foundation",
@@ -679,7 +400,7 @@
    "fin": true,
    "tier": "2",
    "status": "PENDING (GATED)",
-   "evidence": "BUILD (GAP-70). Tier 2 (data exchange) → Tier 1 if 210 posts invoices. STOPS for Jorge on ",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "CONNECTIONS / TASK 4 — EDI foundation (broker 204 / 214 / 210 / 990)"
   },
   {
@@ -708,6 +429,15 @@
    "status": "PENDING (GATED)",
    "evidence": "VERIFY-STATE / BUILD. Tier per scope (any GL posting = Tier 1, STOPS for Jorge).",
    "name": "ENTERPRISE/SCALE / TASK — Enterprise/scale hardening audits"
+  },
+  {
+   "id": "FH-VERIFY-finance-hub-modules",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "FINANCE HUB / TASK V — Verify FH-1→8 (built-gated/design-done) + flag-plan"
   },
   {
    "id": "HOS-FANOUT-03-08",
@@ -746,21 +476,12 @@
    "name": "HOS / TASK PR-C2 — Reader swap: board/roster read Samsara certified ELD"
   },
   {
-   "id": "STMT-1-balance-sheet-cash-flow",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "PENDING (GATED)",
-   "evidence": "BUILD (BLOCK-13/14). Tier 2 (display). Built on the account-balances fn (Block 10/44, DONE",
-   "name": "STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements"
-  },
-  {
    "id": "STMT-2-opening-balances",
    "source": "program",
    "fin": true,
    "tier": "1",
    "status": "PENDING (GATED)",
-   "evidence": "Tier 1 (writes opening equity/balances to the GL). STOPS for Jorge. GATED on Jorge's figur",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "STATEMENTS / TASK 2 — Opening balances (owner-entered)"
   },
   {
@@ -769,7 +490,7 @@
    "fin": true,
    "tier": "2",
    "status": "PENDING (GATED)",
-   "evidence": "BUILD. Tier 2 (reports) → Tier 1 if any posts. Three sub-tasks, sequence-independent.",
+   "evidence": "forward spec — 0 named artifacts on main",
    "name": "STATEMENTS / TASK 3 — 1099 + 425C DIP + multi-entity consolidation"
   },
   {
@@ -780,6 +501,15 @@
    "status": "PENDING (GATED)",
    "evidence": "GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge.",
    "name": "FOUNDATIONS / TASK USMCA — USMCA carrier launch (July 2026)"
+  },
+  {
+   "id": "VOID-VERIFY-void-everywhere",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "forward spec — 0 named artifacts on main",
+   "name": "MONEY CONTROLS / TASK V — Verify Void-Everywhere PRs + flag-plan"
   },
   {
    "id": "AF-0-rebaseline",
@@ -825,6 +555,15 @@
    "status": "NEEDS-VERIFY",
    "evidence": "PR #536 title-match only, unverified",
    "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)"
+  },
+  {
+   "id": "AF-5-stub-catalogs",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #538 title-match only, unverified",
+   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)"
   },
   {
    "id": "AF-6-finance-hub",
@@ -908,13 +647,13 @@
    "name": "BLOCK-09-of-29-TIER2-E2E-PATHS"
   },
   {
-   "id": "block-10-account-balances",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
+   "id": "BLOCK-10-driver-inactivity",
+   "source": "program",
+   "fin": false,
+   "tier": "1",
    "status": "NEEDS-VERIFY",
    "evidence": "PR #1224 title-match only, unverified",
-   "name": "block-10-account-balances"
+   "name": "DRIVER LIFECYCLE / TASK 10 — Driver inactivity: 96h alert + 30-day DOT + vacation override"
   },
   {
    "id": "BLOCK-10-of-29-TIER2-RLS-TEST-GATE",
@@ -971,24 +710,6 @@
    "name": "BLOCK-16-of-29-TIER2.5-FUEL-CARD"
   },
   {
-   "id": "block-20-cash-basis",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #806 title-match only, unverified",
-   "name": "block-20-cash-basis"
-  },
-  {
-   "id": "block-20-frontend-selector",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #806 title-match only, unverified",
-   "name": "block-20-frontend-selector"
-  },
-  {
    "id": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION",
    "source": "enterprise-29",
    "fin": false,
@@ -996,24 +717,6 @@
    "status": "NEEDS-VERIFY",
    "evidence": "PR #806 title-match only, unverified",
    "name": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION"
-  },
-  {
-   "id": "block-20-period-close-lock",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #806 title-match only, unverified",
-   "name": "block-20-period-close-lock"
-  },
-  {
-   "id": "block-21-expense-category-map",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #807 title-match only, unverified",
-   "name": "block-21-expense-category-map"
   },
   {
    "id": "BLOCK-21-of-29-TIER3-DR-DRILL",
@@ -1025,15 +728,6 @@
    "name": "BLOCK-21-of-29-TIER3-DR-DRILL"
   },
   {
-   "id": "block-22-driver-settlement-engine",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #241 title-match only, unverified",
-   "name": "block-22-driver-settlement-engine"
-  },
-  {
    "id": "BLOCK-22-of-29-TIER3-OPS-RUNBOOKS",
    "source": "enterprise-29",
    "fin": false,
@@ -1041,15 +735,6 @@
    "status": "NEEDS-VERIFY",
    "evidence": "PR #241 title-match only, unverified",
    "name": "BLOCK-22-of-29-TIER3-OPS-RUNBOOKS"
-  },
-  {
-   "id": "block-23-escrow-posting-flow",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #808 title-match only, unverified",
-   "name": "block-23-escrow-posting-flow"
   },
   {
    "id": "BLOCK-23-of-29-TIER3-DEGRADATION",
@@ -1061,33 +746,6 @@
    "name": "BLOCK-23-of-29-TIER3-DEGRADATION"
   },
   {
-   "id": "block-24-factoring-posting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #214 title-match only, unverified",
-   "name": "block-24-factoring-posting"
-  },
-  {
-   "id": "block-25-factoring-fees-reserves",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #216 title-match only, unverified",
-   "name": "block-25-factoring-fees-reserves"
-  },
-  {
-   "id": "block-26-factoring-reconciliation",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #809 title-match only, unverified",
-   "name": "block-26-factoring-reconciliation"
-  },
-  {
    "id": "BLOCK-26-of-29-TIER4-PARTITION",
    "source": "enterprise-29",
    "fin": false,
@@ -1095,15 +753,6 @@
    "status": "NEEDS-VERIFY",
    "evidence": "PR #809 title-match only, unverified",
    "name": "BLOCK-26-of-29-TIER4-PARTITION"
-  },
-  {
-   "id": "block-27-fuel-expense-posting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #810 title-match only, unverified",
-   "name": "block-27-fuel-expense-posting"
   },
   {
    "id": "BLOCK-27-of-29-TIER4-CANARY",
@@ -1115,15 +764,6 @@
    "name": "BLOCK-27-of-29-TIER4-CANARY"
   },
   {
-   "id": "block-28-maintenance-ap-posting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #811 title-match only, unverified",
-   "name": "block-28-maintenance-ap-posting"
-  },
-  {
    "id": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN",
    "source": "enterprise-29",
    "fin": false,
@@ -1133,15 +773,6 @@
    "name": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN"
   },
   {
-   "id": "block-29-bank-reconciliation-engine",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #813 title-match only, unverified",
-   "name": "block-29-bank-reconciliation-engine"
-  },
-  {
    "id": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS",
    "source": "enterprise-29",
    "fin": false,
@@ -1149,60 +780,6 @@
    "status": "NEEDS-VERIFY",
    "evidence": "PR #813 title-match only, unverified",
    "name": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS"
-  },
-  {
-   "id": "block-30-bank-reconciliation-ui",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #219 title-match only, unverified",
-   "name": "block-30-bank-reconciliation-ui"
-  },
-  {
-   "id": "block-31-sales-tax-handling",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #222 title-match only, unverified",
-   "name": "block-31-sales-tax-handling"
-  },
-  {
-   "id": "block-33-invoice-line-revenue-mapping",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #209 title-match only, unverified",
-   "name": "block-33-invoice-line-revenue-mapping"
-  },
-  {
-   "id": "block-34-payment-application",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "claimed built 2026-06-24 — no branch/signature-file evidence; GUARD must verify",
-   "name": "block-34-payment-application"
-  },
-  {
-   "id": "block-35-chart-of-accounts-roles",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "claimed built 2026-06-24 — no branch/signature-file evidence; GUARD must verify",
-   "name": "block-35-chart-of-accounts-roles"
-  },
-  {
-   "id": "block-36-multi-entity-accounting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #225 title-match only, unverified",
-   "name": "block-36-multi-entity-accounting"
   },
   {
    "id": "block-37-qbo-sync-repair-pipeline",
@@ -1223,42 +800,6 @@
    "name": "block-40-accounting-audit-trail"
   },
   {
-   "id": "block-41-posting-lineage-ui",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #228 title-match only, unverified",
-   "name": "block-41-posting-lineage-ui"
-  },
-  {
-   "id": "block-43-live-db-schema-verification",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #232 title-match only, unverified",
-   "name": "block-43-live-db-schema-verification"
-  },
-  {
-   "id": "block-cf-cash-forecast",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #698 title-match only, unverified",
-   "name": "block-cf-cash-forecast"
-  },
-  {
-   "id": "block-cmc-month-close-wizard",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #698 title-match only, unverified",
-   "name": "block-cmc-month-close-wizard"
-  },
-  {
    "id": "BLOCK-I-CI-DIST-FIX",
    "source": ".block-ready",
    "fin": false,
@@ -1277,78 +818,6 @@
    "name": ""
   },
   {
-   "id": "block-ppc-period-comparison",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1060 title-match only, unverified",
-   "name": "block-ppc-period-comparison"
-  },
-  {
-   "id": "CAP-AUTOSTATUS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (CAP-4 auto-status, PR #223, row 101).\", unverified",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Auto load-status switch"
-  },
-  {
-   "id": "CAP-CARGOTEMP",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY — reefer shipped #942/#1218; confirm cargo-TEMP gap only.\", unver",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Cargo-temp monitoring"
-  },
-  {
-   "id": "CAP-ENGINEWO",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (CAP-8 engine→WO, PR #229, row 105).\", unverified",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Engine-fault auto Work Order"
-  },
-  {
-   "id": "CAP-FUELFRAUD",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE adjacent — verify (CAP-FUEL-CARD, PR #237, row 117).\", unverified",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection"
-  },
-  {
-   "id": "CAP-GPS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (CAP-1 GPS, PR #234, row 98). Do NOT rebuild.\", unv",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking"
-  },
-  {
-   "id": "CAP-PREDICTIVE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY — CAP-7 #221 + PM auto-WO; confirm tire/brake gap only.\", unverif",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive"
-  },
-  {
-   "id": "CAP-SCORING",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (CAP-10 driver scoring, PR #230, row 107).\", unveri",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring"
-  },
-  {
    "id": "CHAIN-01-vendor-picker-fix",
    "source": "program",
    "fin": true,
@@ -1356,6 +825,15 @@
    "status": "NEEDS-VERIFY",
    "evidence": "PR #1262 title-match only, unverified",
    "name": "ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty"
+  },
+  {
+   "id": "CHAIN-02-account-register-params",
+   "source": "program",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1263 title-match only, unverified",
+   "name": "ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)"
   },
   {
    "id": "CHAIN-03-create-bill-gl-autopost",
@@ -1403,67 +881,130 @@
    "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out"
   },
   {
-   "id": "CONN-2-factoring-faro",
-   "source": "program",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY — factoring #904 + FACT-1..5 shipped; confirm only the Faro packe",
-   "name": "CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet"
-  },
-  {
-   "id": "CONN-3-relay-internal-bank",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY-STATE (design-done #956). Tier 1 on posting. STOPS for Jorge.\", u",
-   "name": "CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes"
-  },
-  {
-   "id": "DISP-KANBAN-dispatch-kanban-board",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (kanban, PR #751 + #1107, row 569).\", unverified",
-   "name": "DISPATCH / TASK Dispatch Kanban board — Dispatch Kanban board"
-  },
-  {
-   "id": "DISP-OVERVIEW-dispatch-overview",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (overview, PR #752 + #1106, row 567).\", unverified",
-   "name": "DISPATCH / TASK Dispatch Overview — Dispatch Overview"
-  },
-  {
-   "id": "DISP-PROFIT-load-profitability",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY — lane profit #375 + W2A #871; confirm per-LOAD gap only.\", unver",
-   "name": "DISPATCH / TASK Load Profitability — Load Profitability"
-  },
-  {
-   "id": "FH-VERIFY-finance-hub-modules",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY+FLAG. Do NOT rebuild built-gated modules. Flag-ON = Tier 1, STOPS",
-   "name": "FINANCE HUB / TASK V — Verify FH-1→8 (built-gated/design-done) + flag-plan"
-  },
-  {
-   "id": "gap-37-equipment-dual-confirm-transfer",
+   "id": "gap-26-border-crossings",
    "source": "gap-spec",
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "spec self-reports shipped/merged, unverified",
-   "name": "gap-37-equipment-dual-confirm-transfer"
+   "evidence": "PR #733 title-match only, unverified",
+   "name": "gap-26-border-crossings"
+  },
+  {
+   "id": "gap-27-geofence-reconciliation",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #724 title-match only, unverified",
+   "name": "gap-27-geofence-reconciliation"
+  },
+  {
+   "id": "gap-28-layover-detection",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #726 title-match only, unverified",
+   "name": "gap-28-layover-detection"
+  },
+  {
+   "id": "gap-29-booking-gap-analytics",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #729 title-match only, unverified",
+   "name": "gap-29-booking-gap-analytics"
+  },
+  {
+   "id": "gap-30-late-arrival-analytics",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #665 title-match only, unverified",
+   "name": "gap-30-late-arrival-analytics"
+  },
+  {
+   "id": "gap-36-driver-pwa-incident-full",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #759 title-match only, unverified",
+   "name": "gap-36-driver-pwa-incident-full"
+  },
+  {
+   "id": "gap-39-geofence-state-machine",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1157 title-match only, unverified",
+   "name": "gap-39-geofence-state-machine"
+  },
+  {
+   "id": "gap-41-reports-hub-9-categories",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #672 title-match only, unverified",
+   "name": "gap-41-reports-hub-9-categories"
+  },
+  {
+   "id": "gap-44-form-425c-exhibits",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #674 title-match only, unverified",
+   "name": "gap-44-form-425c-exhibits"
+  },
+  {
+   "id": "gap-45-cash-flow-cpm-routes",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #763 title-match only, unverified",
+   "name": "gap-45-cash-flow-cpm-routes"
+  },
+  {
+   "id": "gap-46-anomaly-detection",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #769 title-match only, unverified",
+   "name": "gap-46-anomaly-detection"
+  },
+  {
+   "id": "gap-47-dispatch-auth-gates",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #770 title-match only, unverified",
+   "name": "gap-47-dispatch-auth-gates"
+  },
+  {
+   "id": "gap-52-driver-vendor-mapping-integrity",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #773 title-match only, unverified",
+   "name": "gap-52-driver-vendor-mapping-integrity"
+  },
+  {
+   "id": "gap-53-bank-multi-company-drift",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #774 title-match only, unverified",
+   "name": "gap-53-bank-multi-company-drift"
   },
   {
    "id": "gap-54-wf-051-250-foot-correction",
@@ -1471,17 +1012,44 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "spec self-reports shipped/merged, unverified",
+   "evidence": "PR #775 title-match only, unverified",
    "name": "gap-54-wf-051-250-foot-correction"
   },
   {
-   "id": "gap-65-owner-todays-attention",
+   "id": "gap-55-cap-1-live-gps",
    "source": "gap-spec",
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "spec self-reports shipped/merged, unverified",
-   "name": "gap-65-owner-todays-attention"
+   "evidence": "PR #776 title-match only, unverified",
+   "name": "gap-55-cap-1-live-gps"
+  },
+  {
+   "id": "gap-56-cap-4-auto-status-switch",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #779 title-match only, unverified",
+   "name": "gap-56-cap-4-auto-status-switch"
+  },
+  {
+   "id": "gap-57-cap-5-tri-signal",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #781 title-match only, unverified",
+   "name": "gap-57-cap-5-tri-signal"
+  },
+  {
+   "id": "gap-58-cap-8-engine-fault-auto-wo",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #777 title-match only, unverified",
+   "name": "gap-58-cap-8-engine-fault-auto-wo"
   },
   {
    "id": "gap-67-accounting-home-view",
@@ -1489,80 +1057,62 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "spec self-reports shipped/merged, unverified",
+   "evidence": "PR #652 title-match only, unverified",
    "name": "gap-67-accounting-home-view"
   },
   {
-   "id": "gap-68-safety-officer-home-view",
+   "id": "gap-7-severe-repair-oos-estimate",
    "source": "gap-spec",
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "spec self-reports shipped/merged, unverified",
-   "name": "gap-68-safety-officer-home-view"
+   "evidence": "PR #660 title-match only, unverified",
+   "name": "gap-7-severe-repair-oos-estimate"
   },
   {
-   "id": "gap-69-driver-manager-home-view",
+   "id": "gap-70-edi-foundation",
    "source": "gap-spec",
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "spec self-reports shipped/merged, unverified",
-   "name": "gap-69-driver-manager-home-view"
+   "evidence": "PR #691 title-match only, unverified",
+   "name": "gap-70-edi-foundation"
   },
   {
-   "id": "gap-81-drug-alcohol-program",
+   "id": "gap-71-driver-retention-model",
    "source": "gap-spec",
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "spec self-reports shipped/merged, unverified",
-   "name": "gap-81-drug-alcohol-program"
+   "evidence": "PR #784 title-match only, unverified",
+   "name": "gap-71-driver-retention-model"
   },
   {
-   "id": "gap-87-audit-log-viewer",
+   "id": "gap-76-deadhead-optimizer",
    "source": "gap-spec",
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "spec self-reports shipped/merged, unverified",
-   "name": "gap-87-audit-log-viewer"
+   "evidence": "PR #844 title-match only, unverified",
+   "name": "gap-76-deadhead-optimizer"
   },
   {
-   "id": "HOS-VIEWER-DONE",
-   "source": "program",
+   "id": "gap-8-assignments-quicksave",
+   "source": "gap-spec",
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"DONE — shipped + GUARD-verified live 2026-06-19. Tracked here so it is N",
-   "name": "HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]"
+   "evidence": "PR #661 title-match only, unverified",
+   "name": "gap-8-assignments-quicksave"
   },
   {
-   "id": "INS-MODULE",
-   "source": "program",
+   "id": "gap-83-eld-audit-trail",
+   "source": "gap-spec",
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (insurance INS-01..07, #314–335, rows 242–248).\", u",
-   "name": "INSURANCE / TASK — Insurance module build-out"
-  },
-  {
-   "id": "MNT-SHOP",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (mechanic shop, PR #805, row 595).\", unverified",
-   "name": "MAINTENANCE / TASK — Mechanic-shop / Work-Order module"
-  },
-  {
-   "id": "MX-OPS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"✅ DONE — verify only (Mexico ops, PR #804, row 594).\", unverified",
-   "name": "MEXICO OPS / TASK — Mexico cross-border operations"
+   "evidence": "PR #644 title-match only, unverified",
+   "name": "gap-83-eld-audit-trail"
   },
   {
    "id": "PREREQ-A-SCHEMA-GRANT-GATE",
@@ -1574,58 +1124,13 @@
    "name": ""
   },
   {
-   "id": "RPT-MODULE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY — reports foundation #155/#264 shipped; find missing reports only",
-   "name": "REPORTS / TASK — Reports module build-out"
-  },
-  {
-   "id": "SAFE-W3",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY — W3 shipped #877–883; safety module LOCKED (CLAUDE.md §7).\", unv",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W3"
-  },
-  {
-   "id": "SAFE-W4",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY — W4 shipped #877–883; safety module LOCKED (CLAUDE.md §7).\", unv",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W4"
-  },
-  {
-   "id": "SAFE-W5",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY — W5 shipped #877–883; safety module LOCKED (CLAUDE.md §7).\", unv",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W5"
-  },
-  {
-   "id": "UX-A-table-alignment-DONE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"DONE (partial). Logic correct on the shared DataTable (Drivers list): te",
-   "name": "TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]"
-  },
-  {
-   "id": "VOID-VERIFY-void-everywhere",
+   "id": "STMT-1-balance-sheet-cash-flow",
    "source": "program",
    "fin": true,
-   "tier": "1",
+   "tier": "2",
    "status": "NEEDS-VERIFY",
-   "evidence": "doc self-reports \"VERIFY+FLAG. Do NOT rebuild built-gated. Flag-ON = Tier 1, STOPS for Jor",
-   "name": "MONEY CONTROLS / TASK V — Verify Void-Everywhere PRs + flag-plan"
+   "evidence": "PR #1265 title-match only, unverified",
+   "name": "STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements"
   },
   {
    "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
@@ -1817,6 +1322,15 @@
    "name": "Playwright E2E tests for 10 critical user paths"
   },
   {
+   "id": "block-10-account-balances",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "branch feat/acct-block-10-account-balances → PR #709 merged 2026-06-08",
+   "name": "block-10-account-balances"
+  },
+  {
    "id": "BLOCK-10-TIER2-RLS-TEST-GATE",
    "source": ".block-ready",
    "fin": false,
@@ -1844,6 +1358,186 @@
    "name": "COMPLIANCE-DASHBOARD"
   },
   {
+   "id": "block-20-cash-basis",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "block-20-cash-basis"
+  },
+  {
+   "id": "block-20-frontend-selector",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 9 named artifact(s) on main",
+   "name": "block-20-frontend-selector"
+  },
+  {
+   "id": "block-20-period-close-lock",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "block-20-period-close-lock"
+  },
+  {
+   "id": "block-21-expense-category-map",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "block-21-expense-category-map"
+  },
+  {
+   "id": "block-22-driver-settlement-engine",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 4 named artifact(s) on main",
+   "name": "block-22-driver-settlement-engine"
+  },
+  {
+   "id": "block-23-escrow-posting-flow",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "block-23-escrow-posting-flow"
+  },
+  {
+   "id": "block-24-factoring-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 4 named artifact(s) on main",
+   "name": "block-24-factoring-posting"
+  },
+  {
+   "id": "block-25-factoring-fees-reserves",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 6 named artifact(s) on main",
+   "name": "block-25-factoring-fees-reserves"
+  },
+  {
+   "id": "block-26-factoring-reconciliation",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 10 named artifact(s) on main",
+   "name": "block-26-factoring-reconciliation"
+  },
+  {
+   "id": "block-27-fuel-expense-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "branch feat/block-27-fuel-expense-posting → PR #203 merged 2026-05-23",
+   "name": "block-27-fuel-expense-posting"
+  },
+  {
+   "id": "block-28-maintenance-ap-posting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "branch feat/block-28-maintenance-ap-posting → PR #205 merged 2026-05-23",
+   "name": "block-28-maintenance-ap-posting"
+  },
+  {
+   "id": "block-29-bank-reconciliation-engine",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "branch feat/block-29-bank-reconciliation-engine → PR #206 merged 2026-05-23",
+   "name": "block-29-bank-reconciliation-engine"
+  },
+  {
+   "id": "block-30-bank-reconciliation-ui",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 10 named artifact(s) on main",
+   "name": "block-30-bank-reconciliation-ui"
+  },
+  {
+   "id": "block-31-sales-tax-handling",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 10 named artifact(s) on main",
+   "name": "block-31-sales-tax-handling"
+  },
+  {
+   "id": "block-33-invoice-line-revenue-mapping",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "branch feat/block-33-invoice-line-revenue-mapping → PR #209 merged 2026-05-23",
+   "name": "block-33-invoice-line-revenue-mapping"
+  },
+  {
+   "id": "block-34-payment-application",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 7 named artifact(s) on main",
+   "name": "block-34-payment-application"
+  },
+  {
+   "id": "block-35-chart-of-accounts-roles",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 6 named artifact(s) on main",
+   "name": "block-35-chart-of-accounts-roles"
+  },
+  {
+   "id": "block-36-multi-entity-accounting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 9 named artifact(s) on main",
+   "name": "block-36-multi-entity-accounting"
+  },
+  {
+   "id": "block-41-posting-lineage-ui",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 5 named artifact(s) on main",
+   "name": "block-41-posting-lineage-ui"
+  },
+  {
+   "id": "block-43-live-db-schema-verification",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "block-43-live-db-schema-verification"
+  },
+  {
    "id": "BLOCK-C-DEDUCTION-CAP",
    "source": ".block-ready",
    "fin": false,
@@ -1860,6 +1554,24 @@
    "status": "DONE",
    "evidence": "PR #698 merged 2026-06-07",
    "name": "Rename Block C migration to 12-digit runner-compatible filename so db:migrate applies min_net_settlement columns in prod"
+  },
+  {
+   "id": "block-cf-cash-forecast",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "block-cf-cash-forecast"
+  },
+  {
+   "id": "block-cmc-month-close-wizard",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "block-cmc-month-close-wizard"
   },
   {
    "id": "BLOCK-D-INSURANCE-RENEWAL",
@@ -1905,6 +1617,15 @@
    "status": "DONE",
    "evidence": "PR #693 merged 2026-06-07",
    "name": "Block H — On detention request approval (PATCH /api/v1/dispatch/detention/requests/:id/approve), after the billing bridg"
+  },
+  {
+   "id": "block-ppc-period-comparison",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "block-ppc-period-comparison"
   },
   {
    "id": "BLOCK5-INSURANCE-FORWARD-FIX",
@@ -3149,6 +2870,15 @@
    "name": ""
   },
   {
+   "id": "gap-14-validation-pre-dispatch",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 6 named artifact(s) on main",
+   "name": "gap-14-validation-pre-dispatch"
+  },
+  {
    "id": "GAP-18-DRIVER-COMM-TIMELINE",
    "source": ".block-ready",
    "fin": false,
@@ -3176,6 +2906,15 @@
    "name": ""
   },
   {
+   "id": "gap-20-recurring-bills",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "gap-20-recurring-bills"
+  },
+  {
    "id": "GAP-23",
    "source": ".block-ready",
    "fin": false,
@@ -3183,6 +2922,15 @@
    "status": "DONE",
    "evidence": "PR #662 merged 2026-06-07",
    "name": "4-tier Samsara cache hierarchy with scheduled warmer"
+  },
+  {
+   "id": "gap-23-samsara-cache-tiers",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "gap-23-samsara-cache-tiers"
   },
   {
    "id": "GAP-24-FRESHNESS-INDICATOR",
@@ -3201,6 +2949,15 @@
    "status": "DONE",
    "evidence": "PR #707 merged 2026-06-08",
    "name": "Active Driver Set 15-min Recompute"
+  },
+  {
+   "id": "gap-25-active-driver-set",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "gap-25-active-driver-set"
   },
   {
    "id": "GAP-26",
@@ -3257,6 +3014,15 @@
    "name": "Multi-stop extra rate per stop (WF-053)"
   },
   {
+   "id": "gap-31-multi-stop-extra-rates",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-31-multi-stop-extra-rates"
+  },
+  {
    "id": "GAP-32",
    "source": ".block-ready",
    "fin": false,
@@ -3266,6 +3032,15 @@
    "name": "Customer free-time detention catalog"
   },
   {
+   "id": "gap-32-customer-free-time-detention",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-32-customer-free-time-detention"
+  },
+  {
    "id": "GAP-34",
    "source": ".block-ready",
    "fin": false,
@@ -3273,6 +3048,15 @@
    "status": "DONE",
    "evidence": "PR #667 merged 2026-06-07",
    "name": "G22 Driver PWA dispatch view (pickup/delivery cards + doc upload)"
+  },
+  {
+   "id": "gap-34-driver-pwa-dispatch",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "gap-34-driver-pwa-dispatch"
   },
   {
    "id": "GAP-36",
@@ -3291,6 +3075,15 @@
    "status": "DONE",
    "evidence": "PR #765 merged 2026-06-08",
    "name": "G14 Equipment dual-confirm transfer (WF-047)"
+  },
+  {
+   "id": "gap-37-equipment-dual-confirm-transfer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 5 named artifact(s) on main",
+   "name": "gap-37-equipment-dual-confirm-transfer"
   },
   {
    "id": "GAP-38-DAMAGE-INSURANCE-CONTINUITY",
@@ -3320,6 +3113,15 @@
    "name": "Damage photo EXIF chain-of-custody (WF-058)"
   },
   {
+   "id": "gap-40-damage-photo-exif-chain",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-40-damage-photo-exif-chain"
+  },
+  {
    "id": "GAP-41",
    "source": ".block-ready",
    "fin": false,
@@ -3338,6 +3140,15 @@
    "name": "IFTA 4-step quarterly preparer + Owner-only WF-064"
   },
   {
+   "id": "gap-42-ifta-quarterly-preparer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-42-ifta-quarterly-preparer"
+  },
+  {
    "id": "GAP-43",
    "source": ".block-ready",
    "fin": false,
@@ -3345,6 +3156,15 @@
    "status": "DONE",
    "evidence": "PR #768 merged 2026-06-08",
    "name": "6 scheduled reports auto-emailed per Q8"
+  },
+  {
+   "id": "gap-43-scheduled-reports",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 5 named artifact(s) on main",
+   "name": "gap-43-scheduled-reports"
   },
   {
    "id": "GAP-44",
@@ -3392,6 +3212,15 @@
    "name": "GAP-48 Driver Operations Depth — 12 read-only operational sub-views on a new Operations tab"
   },
   {
+   "id": "gap-48-driver-operations-depth",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "gap-48-driver-operations-depth"
+  },
+  {
    "id": "GAP-49",
    "source": ".block-ready",
    "fin": false,
@@ -3401,6 +3230,15 @@
    "name": "Maintenance Pre-Flight DVIR Severity Tagging (major vs minor vs observation) — WF-050 / 49 CFR §396.11"
   },
   {
+   "id": "gap-49-dvir-severity-tagging",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 10 named artifact(s) on main",
+   "name": "gap-49-dvir-severity-tagging"
+  },
+  {
    "id": "GAP-50",
    "source": ".block-ready",
    "fin": false,
@@ -3408,6 +3246,15 @@
    "status": "DONE",
    "evidence": "PR #677 merged 2026-06-07",
    "name": "AI Photo Comparison Pre/Post Trip Damage Detection"
+  },
+  {
+   "id": "gap-50-ai-photo-comparison",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-50-ai-photo-comparison"
   },
   {
    "id": "GAP-51",
@@ -3491,6 +3338,15 @@
    "name": "CAP-9 Vehicle-Driver Pairing At Time of Event — Samsara pairing lookup for WO/accident/fuel attribution"
   },
   {
+   "id": "gap-59-cap-9-vehicle-driver-pairing",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-59-cap-9-vehicle-driver-pairing"
+  },
+  {
    "id": "GAP-60",
    "source": ".block-ready",
    "fin": false,
@@ -3500,6 +3356,15 @@
    "name": "CAP-10 Driver Scoring Page Safety"
   },
   {
+   "id": "gap-60-cap-10-driver-scoring",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 6 named artifact(s) on main",
+   "name": "gap-60-cap-10-driver-scoring"
+  },
+  {
    "id": "GAP-61",
    "source": ".block-ready",
    "fin": false,
@@ -3507,6 +3372,15 @@
    "status": "DONE",
    "evidence": "PR #681 merged 2026-06-07",
    "name": "CAP-11 Fuel card real-time fraud alerts"
+  },
+  {
+   "id": "gap-61-cap-11-fuel-fraud-alerts",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-61-cap-11-fuel-fraud-alerts"
   },
   {
    "id": "GAP-62-CAP-12-TIRE-TREAD",
@@ -3527,6 +3401,15 @@
    "name": "CAP-13 Brake Wear Predictive Maintenance — lining thickness tracking + replacement projections"
   },
   {
+   "id": "gap-63-cap-13-brake-wear",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-63-cap-13-brake-wear"
+  },
+  {
    "id": "GAP-64",
    "source": ".block-ready",
    "fin": false,
@@ -3536,6 +3419,24 @@
    "name": "CAP-14 cargo temp/humidity sensors"
   },
   {
+   "id": "gap-64-cap-14-cargo-sensors",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-64-cap-14-cargo-sensors"
+  },
+  {
+   "id": "gap-65-owner-todays-attention",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 10 named artifact(s) on main",
+   "name": "gap-65-owner-todays-attention"
+  },
+  {
    "id": "GAP-66-DISPATCHER-HOME",
    "source": ".block-ready",
    "fin": false,
@@ -3543,6 +3444,15 @@
    "status": "DONE",
    "evidence": "PR #645 merged 2026-06-07",
    "name": "Dispatcher Home role-specific view"
+  },
+  {
+   "id": "gap-66-dispatcher-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 4 named artifact(s) on main",
+   "name": "gap-66-dispatcher-home-view"
   },
   {
    "id": "GAP-67-ACCOUNTING-HOME",
@@ -3563,6 +3473,15 @@
    "name": "Safety Officer home role-specific view"
   },
   {
+   "id": "gap-68-safety-officer-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 7 named artifact(s) on main",
+   "name": "gap-68-safety-officer-home-view"
+  },
+  {
    "id": "GAP-69-DRIVER-MANAGER-HOME",
    "source": ".block-ready",
    "fin": false,
@@ -3570,6 +3489,15 @@
    "status": "DONE",
    "evidence": "PR #654 merged 2026-06-07",
    "name": "Driver Manager home role-specific view"
+  },
+  {
+   "id": "gap-69-driver-manager-home-view",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 7 named artifact(s) on main",
+   "name": "gap-69-driver-manager-home-view"
   },
   {
    "id": "GAP-7",
@@ -3608,6 +3536,15 @@
    "name": "Customer Relationship Score + Health"
   },
   {
+   "id": "gap-72-customer-relationship-score",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 7 named artifact(s) on main",
+   "name": "gap-72-customer-relationship-score"
+  },
+  {
    "id": "GAP-76",
    "source": ".block-ready",
    "fin": false,
@@ -3624,6 +3561,24 @@
    "status": "DONE",
    "evidence": "PR #661 merged 2026-06-07",
    "name": "G26 assignments inline quicksave (unit/trailer/driver)"
+  },
+  {
+   "id": "gap-81-drug-alcohol-program",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "gap-81-drug-alcohol-program"
+  },
+  {
+   "id": "gap-82-cert-expiry-tracking",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-82-cert-expiry-tracking"
   },
   {
    "id": "GAP-82-MEDICAL-CARD-TRACKING",
@@ -3662,6 +3617,15 @@
    "name": "Permit + toll tag tracking per unit with expiry alerts"
   },
   {
+   "id": "gap-85-permits-toll-tags",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-85-permits-toll-tags"
+  },
+  {
    "id": "GAP-86-INSURANCE-BILL-CREATOR",
    "source": ".block-ready",
    "fin": false,
@@ -3671,6 +3635,15 @@
    "name": "Insurance multi-vehicle policy creator + bill schedule write via createBill()"
   },
   {
+   "id": "gap-86-insurance-module",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "gap-86-insurance-module"
+  },
+  {
    "id": "GAP-86-POLICY-WIZARD",
    "source": ".block-ready",
    "fin": false,
@@ -3678,6 +3651,24 @@
    "status": "DONE",
    "evidence": "PR #737 merged 2026-06-08",
    "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea"
+  },
+  {
+   "id": "gap-87-audit-log-viewer",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 6 named artifact(s) on main",
+   "name": "gap-87-audit-log-viewer"
+  },
+  {
+   "id": "gap-89-cmd-k-quick-switcher",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-89-cmd-k-quick-switcher"
   },
   {
    "id": "GAP-89-UNIVERSAL-SEARCH-CMD-K",
@@ -3705,6 +3696,15 @@
    "status": "DONE",
    "evidence": "PR #659 merged 2026-06-07",
    "name": "Per-tenant and per-user feature flag system"
+  },
+  {
+   "id": "gap-92-feature-flags",
+   "source": "gap-spec",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "gap-92-feature-flags"
   },
   {
    "id": "GAP-CI-WIRE-PREPUSH-GUARDS",
