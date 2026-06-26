@@ -64,3 +64,7 @@ CI gate that proves RLS prevents cross-tenant leaks. Without this, any future sc
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+DEEP-VERIFY 2026-06-26: BUILT on main:
+  - scripts/verify-guards/110-verify-safety-rls-coverage.mjs
+  - scripts/verify-drivers-rls-scope.mjs

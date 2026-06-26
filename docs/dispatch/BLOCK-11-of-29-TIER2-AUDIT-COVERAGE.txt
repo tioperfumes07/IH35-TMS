@@ -74,3 +74,6 @@ ALTER TABLE audit_log
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+DEEP-VERIFY 2026-06-26: BUILT on main:
+  - scripts/verify-audit-coverage.mjs

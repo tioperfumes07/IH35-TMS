@@ -13,3 +13,7 @@ ACCEPTANCE (GUARD live): HOS Location column populated; rows clickable to HOS de
 
 STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
 ═══════════════════════════════════════════════════════════════════════════════
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+DEEP-VERIFY 2026-06-26: BUILT on main:
+  - apps/frontend/src/pages/compliance/ComplianceDashboardPage.tsx

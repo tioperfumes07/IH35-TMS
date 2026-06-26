@@ -35,3 +35,8 @@ Give the Accounting role a dedicated home dashboard focused on AR/AP aging, peri
 ## CI
 
 `npm run verify:accounting-home` — static guard for route registration, role branch, and component wiring.
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+DEEP-VERIFY 2026-06-26: BUILT on main:
+  - apps/backend/src/accounting/role-home/accounting-home.service.ts
+  - apps/backend/src/accounting/role-home/routes.ts

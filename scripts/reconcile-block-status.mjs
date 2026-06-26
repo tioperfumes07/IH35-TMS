@@ -143,10 +143,14 @@ for (const fp of progFiles) {
 //   docs/accounting/block-*.md   (financial posting engine — deep-verified all built 2026-06-24)
 //   docs/dispatch/BLOCK-*-of-29  (enterprise/hardening 29-series — mixed; CURATED from deep feature-grep)
 //   docs/specs/gap-*.md          (forward specs — status-line/PR heuristic; spec-level confidence)
-// CURATED = verdicts confirmed 2026-06-24 by feature-existence grep where no reliable auto-signal exists.
+// CURATED = verdicts confirmed by feature-existence grep where no reliable auto-signal exists.
+// 2026-06-26: BLOCK-07 (pagination) + BLOCK-12 (destruct-preflight) REMOVED — deep-verify found real artifacts
+// (verify-mdata-list-pagination.mjs; equipment-transfer/dual-confirm.service.ts) so they auto-promote via
+// classifyByEvidence. BLOCK-18 (PII-encryption) kept PENDING — genuinely absent (residual build). Financial
+// GATED entries retained (Jorge+GUARD Tier-1).
 const CURATED = {
   "BLOCK-01-of-29": "PENDING (GATED)", "BLOCK-02-of-29": "PENDING (GATED)", "BLOCK-03-of-29": "PENDING (GATED)",
-  "BLOCK-07-of-29": "PENDING", "BLOCK-12-of-29": "PENDING", "BLOCK-17-of-29": "PENDING (GATED)",
+  "BLOCK-17-of-29": "PENDING (GATED)",
   "BLOCK-18-of-29": "PENDING", "BLOCK-19-of-29": "PENDING (GATED)", "BLOCK-24-of-29": "PENDING (GATED)",
   "BLOCK-25-of-29": "PENDING (GATED)",
 };
