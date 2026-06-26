@@ -16,7 +16,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
 
-const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+// Key the skip on DB-URL PRESENCE (not just GITHUB_ACTIONS): build-typecheck runs in CI with NO Postgres,
+// so a GITHUB_ACTIONS-only gate would run this and hard-fail with ECONNREFUSED :5432. Runs only when a DB
+// URL is present (the integration/DB lane); skips in build-typecheck and locally.
+const HAS_DB_URL = Boolean(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL);
+const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true" || !HAS_DB_URL);
 
 describeIntegration("feature_flags RLS write policy (real Postgres) — bypass writes, non-bypass blocked", () => {
   let db: pg.Client;
