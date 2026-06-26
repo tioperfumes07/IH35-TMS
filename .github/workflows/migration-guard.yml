@@ -33,6 +33,21 @@ jobs:
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
 
+      # BLOCK-RELIABILITY-07 — anti-RAISE lint. Self-test BLOCKS (unit test of the lint);
+      # the migration scan is ADVISORY until MIGRATION_RAISE_LINT_ENFORCE is flipped on
+      # (codebase is currently 0 dangerous raise-on-absence, so the flip is safe when ready).
+      - name: Anti-RAISE lint self-test (blocking)
+        run: node scripts/verify-migration-no-runtime-raise.mjs --selftest
+
+      - name: Anti-RAISE lint scan (advisory)
+        run: node scripts/verify-migration-no-runtime-raise.mjs
+
+      # Grant-gap guard (same family that broke the events spine). Advisory/warning-only today.
+      # FOLLOW-UP: add `events` (and ideally all schemas) to the watchlist + make it cross-file
+      # aware so a future missing USAGE/SELECT grant is caught BEFORE deploy, not after.
+      - name: Schema USAGE-grant guard (advisory)
+        run: node scripts/verify-schema-usage-grants.mjs
+
       - name: Reject new 4-digit sequence migrations
         run: |
           NEW_LEGACY=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD -- db/migrations/ \
