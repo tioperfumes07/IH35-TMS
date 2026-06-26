@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { withCurrentUser } from "../../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import {
   createFlag,
@@ -92,7 +92,8 @@ export async function registerFeatureFlagRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
     try {
-      const flag = await withCurrentUser(user.uuid, async (client) => createFlag(client, parsed.data));
+      // RLS: feature_flags_admin policy allows writes only under lucia-bypass (Owner-gated above).
+      const flag = await withLuciaBypass(async (client) => createFlag(client, parsed.data));
       return reply.code(201).send({ flag });
     } catch (err) {
       const msg = String((err as Error)?.message ?? err);
@@ -109,7 +110,7 @@ export async function registerFeatureFlagRoutes(app: FastifyInstance) {
     const flagKey = String(req.params.flag_key ?? "").trim();
     if (!flagKey) return reply.code(400).send({ error: "validation_error" });
 
-    const flag = await withCurrentUser(user.uuid, async (client) => updateFlag(client, flagKey, parsed.data));
+    const flag = await withLuciaBypass(async (client) => updateFlag(client, flagKey, parsed.data));
     if (!flag) return reply.code(404).send({ error: "flag_not_found" });
     return reply.send({ flag });
   });
@@ -124,7 +125,7 @@ export async function registerFeatureFlagRoutes(app: FastifyInstance) {
     }
 
     try {
-      const override = await withCurrentUser(user.uuid, async (client) =>
+      const override = await withLuciaBypass(async (client) =>
         setOverride(client, {
           ...parsed.data,
           set_by_user_uuid: user.uuid,
@@ -146,7 +147,7 @@ export async function registerFeatureFlagRoutes(app: FastifyInstance) {
     const overrideUuid = String(req.params.uuid ?? "").trim();
     if (!overrideUuid) return reply.code(400).send({ error: "validation_error" });
 
-    const removed = await withCurrentUser(user.uuid, async (client) => removeOverride(client, overrideUuid));
+    const removed = await withLuciaBypass(async (client) => removeOverride(client, overrideUuid));
     if (!removed) return reply.code(404).send({ error: "override_not_found" });
     return reply.send({ ok: true, uuid: removed.uuid });
   });
