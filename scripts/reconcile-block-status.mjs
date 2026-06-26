@@ -68,6 +68,33 @@ const dropBoiler = (f) =>
   f === "scripts/block-ready.mjs" || f.startsWith("docs/") || f.endsWith(".md") ||
   f.startsWith("tsconfig") || f === "render.yaml" || f.includes("vitest.config");
 
+// ── Evidence helpers (2026-06-26): a doc that NAMES its built artifacts (migrations / service+route .ts /
+// verify scripts) or a `feat|fix|chore/...` branch is checkable. This replaces the two structural pins that
+// kept program + accounting blocks permanently NEEDS-VERIFY (accounting was a hardcode; program had no file
+// check at all) — so a merge that lands a block's named files/branch now promotes it to DONE.
+function namedArtifacts(body) {
+  const out = new Set();
+  for (const m of body.matchAll(/\b(apps\/[A-Za-z0-9_./-]+\.(?:ts|tsx))\b/g)) if (!m[1].includes(".test.")) out.add(m[1]);
+  for (const m of body.matchAll(/\b(scripts\/verify-[A-Za-z0-9_-]+\.(?:mjs|ts|cjs))\b/g)) out.add(m[1]);
+  for (const m of body.matchAll(/\b(db\/migrations\/[A-Za-z0-9_]+\.sql)\b/g)) out.add(m[1]);
+  for (const m of body.matchAll(/\b((?:\d{4}|\d{12})_[a-z0-9_]+\.sql)\b/g)) out.add(`db/migrations/${m[1]}`);
+  return [...out].filter(isSig);
+}
+const namedBranch = (body) => (body.match(/`(feat\/[A-Za-z0-9._-]+|fix\/[A-Za-z0-9._-]+|chore\/[A-Za-z0-9._-]+)`/) || [])[1] || null;
+// classify a doc-described block purely from on-main evidence (no self-reports trusted as DONE)
+function classifyByEvidence(body, { fin, tokPrId } = {}) {
+  const arts = namedArtifacts(body);
+  const present = arts.filter((a) => mainFiles.has(a));
+  const branch = namedBranch(body);
+  const brPr = branch ? mergedByBranch.get(branch) : null;
+  if (brPr) return { status: "DONE", evidence: `branch ${branch} → PR #${brPr.number} merged ${(brPr.mergedAt || "").slice(0, 10)}` };
+  if (arts.length && present.length === arts.length) return { status: "DONE", evidence: `all ${arts.length} named artifact(s) on main` };
+  if (present.length) return { status: "NEEDS-VERIFY", evidence: `partial ${present.length}/${arts.length} artifact(s) on main — unverified` };
+  const tokPr = tokPrId ? prByToken(tokPrId) : null;
+  if (tokPr) return { status: "NEEDS-VERIFY", evidence: `PR #${tokPr.number} title-match only, unverified` };
+  return { status: fin ? "PENDING (GATED)" : "PENDING", evidence: "forward spec — 0 named artifacts on main" };
+}
+
 const all = [];
 
 // (A) .block-ready/*.json
@@ -102,15 +129,13 @@ for (const fp of progFiles) {
   const name = (titleLine.includes(" — ") ? titleLine.split(" — ").slice(1).join(" — ") : titleLine).slice(0, 120);
   const tier = (sl.match(/Tier\s*([0-9]+)/i) || sl.match(/^([12])\b/) || [])[1] || "";
   const s = sl.toLowerCase();
-  const tokPr = prByToken(id);
-  const doneSignal = /done/i.test(id) || sl.includes("✅") || /\bdone\b/.test(s) || /^verify|shipped|verify-only/.test(s) || !!tokPr;
   const gated = fin || /gated|full ceremony|stops for jorge/.test(s) || tier === "1";
-  let status, evidence;
-  // Program docs carry NO branch-merge / signature-file check — a "done" here is only a self-reported STATUS
-  // line or a PR-title token match. Both are weak → NEEDS-VERIFY (never DONE from a self-report).
-  if (doneSignal && !/\bbuild\b/.test(s.replace(/build load|book load/g, ""))) { status = "NEEDS-VERIFY"; evidence = tokPr ? `PR #${tokPr.number} title-match only, unverified` : `doc self-reports "${sl || "done/verify"}", unverified`; }
-  else if (gated) { status = "PENDING (GATED)"; evidence = sl || "financial / locked — needs Jorge gate"; }
-  else { status = "PENDING"; evidence = sl || "needs build"; }
+  // PIN FIX (2026-06-26): program docs previously had NO file/branch check — a self-report or token match
+  // could only ever read NEEDS-VERIFY, never DONE, so merges never promoted them. Now we check the doc's
+  // OWN named artifacts/branch against main (classifyByEvidence). DONE only from real on-main evidence;
+  // a gated forward spec with nothing built stays PENDING (GATED).
+  let { status, evidence } = classifyByEvidence(lines.join("\n"), { fin, tokPrId: id });
+  if (status === "PENDING" && gated) { status = "PENDING (GATED)"; evidence = sl || "financial / locked — needs Jorge gate"; }
   all.push({ id, source: "program", fin, tier, status, evidence: evidence.slice(0, 90), name });
 }
 
@@ -133,25 +158,14 @@ function scanDir(rel, opts) {
     const id = f.replace(/\.(md|txt)$/i, "");
     const curatedKey = Object.keys(CURATED).find((k) => id.startsWith(k));
     let status, evidence;
-    if (opts.claimedBuilt) {
-      // docs/accounting: the old `allBuilt:true` hardcode printed DONE for EVERY block from a typed boolean.
-      // REMOVED. A bare block-*.md carries no branch-merge / signature-file evidence this tool can check, so a
-      // prior built-claim is only a WEAK signal → NEEDS-VERIFY. Record a title-token PR if any (still unverified).
-      const tokPr = prByToken(id);
-      status = "NEEDS-VERIFY";
-      evidence = tokPr ? `PR #${tokPr.number} title-match only, unverified`
-                       : "claimed built 2026-06-24 — no branch/signature-file evidence; GUARD must verify";
-    }
-    else if (curatedKey) { status = CURATED[curatedKey]; evidence = "deep-verified 2026-06-24 (feature grep)"; }
-    else if (opts.readStatus) {
-      // gap specs: a spec's OWN shipped/done marker is a self-report (no merge/file backing) → NEEDS-VERIFY.
-      const head = fs.readFileSync(path.join(dir, f), "utf8").slice(0, 2500).toLowerCase();
-      if (/\b(shipped|merged on main|status:\s*done|✅\s*done|live on main|already shipped)\b/.test(head)) { status = "NEEDS-VERIFY"; evidence = "spec self-reports shipped/merged, unverified"; }
-      else { status = "PENDING"; evidence = opts.specNote || "gap spec — not shipped"; }
-    } else {
-      const tokPr = prByToken(id);
-      if (tokPr) { status = "NEEDS-VERIFY"; evidence = `PR #${tokPr.number} title-match only, unverified`; }
-      else { status = opts.gated ? "PENDING (GATED)" : "PENDING"; evidence = "spec — not built on main"; }
+    if (curatedKey) { status = CURATED[curatedKey]; evidence = "deep-verified 2026-06-24 (feature grep)"; }
+    else {
+      // PIN FIX (2026-06-26): every doc-described block (accounting / gap-spec / enterprise-29) is now classified
+      // by its OWN named artifacts/branch on main, not a hardcode (accounting) or self-report grep (gap-spec).
+      // DONE only from real on-main evidence; a built block's migration/service/verify files promote it to DONE.
+      const body = fs.readFileSync(path.join(dir, f), "utf8");
+      ({ status, evidence } = classifyByEvidence(body, { fin: !!opts.fin || !!opts.gated, tokPrId: id }));
+      if (status === "PENDING" && opts.specNote) evidence = opts.specNote;
     }
     const tier = (id.match(/TIER([0-9.]+)/i) || [])[1] || "";
     all.push({ id, source: opts.source, fin: !!opts.fin, tier, status, evidence: evidence.slice(0, 90), name: id });
