@@ -21,6 +21,7 @@
 
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
+import { dispatchReliabilityAlarm } from "../notifications/reliability-alarm.js";
 
 const INTERVAL_MS = 15 * 60 * 1000; // every 15 min
 const WINDOW_MIN = 15; // look-back window for "did events land?"
@@ -97,18 +98,30 @@ async function appendHeartbeatAudit(severity: "critical" | "warning", summary: R
   }).catch(() => undefined);
 }
 
-// TODO(00b): wire to the real dispatcher so CRITICAL fans out to ALL THREE channels.
-//   - on-screen: createNotification(...) (notifications/notification.service.ts)
-//   - email + SMS: dispatchNotification(...) (notifications/dispatcher.ts → enqueueEmail + sendSms)
-// Confirm exact signatures/payload keys (email_subject, sms_body, in-app body) before enabling.
-// The alarm path itself must FAIL LOUD (log + retry) — never swallow, or we rebuild the silent failure.
+// Wired to the shared alarm spine (BLOCK-RELIABILITY-08): CRITICAL fans out on-screen + email + SMS
+// per 00b; the helper is fail-loud per channel (logs + returns, never swallows).
 async function alarmOwnerEverywhere(
   app: FastifyInstance,
+  operatingCompanyId: string,
   severity: "critical" | "warning",
   summary: Record<string, unknown>,
 ) {
-  app.log.error({ severity, summary }, "[spine-heartbeat] ALARM — wire to dispatchNotification (00b)");
-  // TODO: await dispatchNotification({ ...email + sms... }); await createNotification({ ...on-screen... });
+  const title =
+    severity === "critical"
+      ? "Event spine SILENT while operations are running"
+      : "Event spine quiet gap";
+  const dispatch = await dispatchReliabilityAlarm(
+    {
+      operatingCompanyId,
+      severity,
+      source: "spine-heartbeat",
+      title,
+      body: `[spine-heartbeat] ${JSON.stringify(summary)}`,
+      smsBody: `IH35 ${severity.toUpperCase()}: event spine — ${String(summary.reason ?? "alarm")}`,
+    },
+    app.log,
+  );
+  app.log.error({ severity, summary, dispatch }, "[spine-heartbeat] ALARM dispatched (00b 3-channel)");
 }
 
 /** TODO: enumerate active operating companies (org.companies WHERE is_active). Skeleton: TRANSP only. */
@@ -133,7 +146,7 @@ export function initializeEventSpineHeartbeatCron(app: FastifyInstance) {
           if (hb.operationalWrites > 0 && hb.eventWrites === 0) {
             const summary = { reason: "spine_silent_with_traffic", ...hb, window_min: WINDOW_MIN };
             await appendHeartbeatAudit("critical", summary);
-            await alarmOwnerEverywhere(app, "critical", summary);
+            await alarmOwnerEverywhere(app, oci, "critical", summary);
             continue;
           }
 
