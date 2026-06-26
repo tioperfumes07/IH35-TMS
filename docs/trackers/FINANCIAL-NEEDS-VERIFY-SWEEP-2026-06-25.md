@@ -76,3 +76,22 @@ from **NOT-BUILT**. "No postings" alone is not proof of "not built."
 **Recommended sweep order:** verify the 8 concrete posting blocks (22–29) first (file+table+JE evidence →
 clean DONE/PENDING/BUILT-BUT-NEVER-RUN), then the AF program blocks by scope. GUARD does the live-prod half
 (table existence + JE evidence) since prod reads are gated.
+
+---
+
+## ✅ RESOLVED 2026-06-26 — final verdicts (both halves complete)
+
+**Posting blocks 22–29 = BUILT (code+schema verified) / behavior-pending-flag.** Repo half: all 8 posters
+on `origin/main` (coder). Prod half: all signature tables exist + migrations 0224 & 0219 applied (GUARD).
+`journal_entry_postings` carries `source_transaction_type='invoice'` ONLY → all 8 are **gated OFF
+(BUILT-BUT-NEVER-RUN), not missing**. Remaining per block = live behavior proof when its flag flips
+(GUARD, part of each money-switch sign-off).
+
+**AF program:** AF-1 **LIVE** · AF-3 **LIVE** (`accounting.periods`, not `accounting_periods`) · AF-7
+**PARTIAL** (`cash_advance_owner_approval_audit` exists; framework scope-level) · AF-8 **NOT-BUILT-YET
+(expected, Cycle-5)** · AF-2 **PARTIAL** (drift detection BUILT via `qbo/sync-conflict-detection.routes.ts`;
+sync-execution gated) · AF-4 **NOT-BUILT (expected; gated, sequenced behind AF-2)** · AF-5 **PARTIAL/
+in-progress** (catalog build-out shipping; per-catalog count pending) · AF-6 **PARTIAL** (FH sub-modules
+built — loan-wizard/amortization/calculator; hub-landing 404-by-design).
+
+Full status + reliability-lane PRs: `docs/trackers/MASTER_TRACKER_2026-06-25.md` §11.
