@@ -15,3 +15,9 @@ Old dead-end string gone. CONFIRMED WORKING.
 
 NOTE: headline clocks flip to verbatim with HOS-PRC2. No further action — kept for the record.
 ═══════════════════════════════════════════════════════════════════════════════
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 evidence sweep 2026-06-26: this block is BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/compliance/HosViewerSection.tsx
+  - apps/backend/src/telematics/hos-tracker.routes.ts
+  - scripts/verify-hos-viewer-picker.mjs
