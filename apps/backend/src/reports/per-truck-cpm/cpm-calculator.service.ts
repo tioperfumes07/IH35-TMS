@@ -76,19 +76,15 @@ export async function calculatePerTruckCpm(
         GROUP BY wo.unit_id
       ),
       insurance AS (
-        SELECT ipu.unit_id,
-               COALESCE(
-                 ROUND(
-                   (COALESCE(ip.annual_premium_cents, 0)::numeric / 365.0)
-                   * GREATEST(1, ($3::date - $2::date + 1))
-                 ),
-                 0
-               )::bigint AS cents
-        FROM insurance.insurance_policy_units ipu
-        JOIN insurance.insurance_policies ip ON ip.id = ipu.policy_id
-        WHERE ip.operating_company_id = $1::uuid
-          AND ip.cancelled_at IS NULL
-        GROUP BY ipu.unit_id
+        -- PER-TRUCK INSURANCE COST = 0 (permanent until the follow-up block, not a stub/swallow).
+        -- The unit-keyed insurance.insurance_policy_units / insurance.insurance_policies this query assumed
+        -- NEVER existed in any migration -> Postgres 42P01 -> the whole report 500'd. The REAL schema is
+        -- insurance.policy + insurance.policy_unit, which is ASSET-keyed (asset_id -> mdata.assets), with a
+        -- policy-level total_premium_cents (not per-unit annual), tenant_id, and status (no cancelled_at).
+        -- Real per-truck insurance (policy -> policy_unit(asset) -> unit + premium allocation by
+        -- insured_value_cents share + policy-term annualization) is a separate [HOLD-FOR-JORGE] follow-up.
+        -- Until then insurance contributes 0 so reports/per-truck-cpm returns 200 (honest 0).
+        SELECT NULL::uuid AS unit_id, 0::bigint AS cents WHERE false
       ),
       permits AS (
         SELECT up.unit_id,
