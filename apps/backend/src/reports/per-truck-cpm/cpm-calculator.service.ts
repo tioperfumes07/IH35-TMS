@@ -87,18 +87,27 @@ export async function calculatePerTruckCpm(
         SELECT NULL::uuid AS unit_id, 0::bigint AS cents WHERE false
       ),
       permits AS (
-        SELECT up.unit_id,
+        -- REPOINTED to the REAL master_data.unit_permits schema (migration 0407_permits_toll_tags):
+        -- the unit FK is unit_uuid (NOT unit_id) and the cost column is cost numeric(8,2) in DOLLARS
+        -- (NOT annual_cost_cents). The prior column names never existed -> Postgres 42703 -> the whole
+        -- report 500'd. Per-truck permit cost = each permit's cost (dollars->cents) pro-rated per-day over
+        -- its own validity term (effective_date..expiration_date), times the report-range days; summed per
+        -- unit. Permits are cleanly unit-keyed (unit_uuid -> mdata.units), so this is a real number.
+        SELECT up.unit_uuid AS unit_id,
                COALESCE(
-                 ROUND(
-                   (COALESCE(up.annual_cost_cents, 0)::numeric / 365.0)
-                   * GREATEST(1, ($3::date - $2::date + 1))
+                 SUM(
+                   ROUND(
+                     (COALESCE(up.cost, 0) * 100)::numeric
+                     / GREATEST(1, (up.expiration_date - up.effective_date + 1))
+                     * GREATEST(1, ($3::date - $2::date + 1))
+                   )
                  ),
                  0
                )::bigint AS cents
         FROM master_data.unit_permits up
         WHERE up.operating_company_id = $1::uuid
           AND up.deleted_at IS NULL
-        GROUP BY up.unit_id
+        GROUP BY up.unit_uuid
       )
       SELECT
         u.id::text AS unit_uuid,
