@@ -62,9 +62,12 @@ describeIntegration("per-truck-cpm calculator (real Postgres schema)", () => {
 
     // Seed: one unit + one unit_permit (real master_data.unit_permits columns) for the permits-CTE proof.
     await withBypass(async () => {
+      // mdata.units.owner_company_id is NOT NULL (migration 0015_company_scoping) — units are owner/lessee
+      // scoped, NOT operating_company_id. Any valid company id satisfies it; the permits CTE links via
+      // master_data.unit_permits.operating_company_id, not units.owner_company_id, so the value is inert here.
       await db.query(
-        `INSERT INTO mdata.units (id, unit_number, vin, status) VALUES ($1::uuid, $2, $3, 'InService')`,
-        [unitId, `CPM-${suffix.slice(0, 8)}`, `CPMVIN${suffix.replace(/-/g, "").slice(0, 11)}`]
+        `INSERT INTO mdata.units (id, unit_number, vin, status, owner_company_id) VALUES ($1::uuid, $2, $3, 'InService', $4::uuid)`,
+        [unitId, `CPM-${suffix.slice(0, 8)}`, `CPMVIN${suffix.replace(/-/g, "").slice(0, 11)}`, companyId]
       );
       await db.query(
         `
