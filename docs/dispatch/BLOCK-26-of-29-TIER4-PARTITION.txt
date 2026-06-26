@@ -78,3 +78,6 @@ CREATE TABLE audit_log_2026_01 PARTITION OF audit_log_new
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+CONFIRM-ABSENT 2026-06-26: deliverable BUILT on main (was false-residual):
+  - db/migrations/202606080940_block26_partition_hot_tables.sql

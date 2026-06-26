@@ -75,3 +75,32 @@ gap-53 bank-multi-company-drift, gap-67 accounting-home-view, gap-70 edi-foundat
 ## CI guard (step 4 — already shipped #1522, re-run green here)
 `scripts/verify-block-stub-artifacts.mjs` (in `verify:arch-design`): a `docs/blocks` stub self-claiming completion
 must name ≥1 real on-main artifact. Kills the false-PENDING/false-DONE class permanently.
+
+---
+
+## 2026-06-26 UPDATE — residual confirm-absent: RESIDUAL IS EMPTY (all already built)
+
+Per the "confirm genuinely-absent before build" gate, each residual block was STEP-0 confirm-checked on main
+before any build. **All 7 turned out already built** — the confirm-absent step prevented 7 duplicate builds:
+
+| residual block | real deliverable on main (verified) |
+|---|---|
+| BLOCK-29 KNOWN-LIMITATIONS | `docs/runbooks/known-limitations.md` (159 ln) |
+| BLOCK-28 VENDOR-LOCKIN | `docs/runbooks/vendor-lockin-analysis.md` (213 ln) |
+| BLOCK-23 DEGRADATION | `docs/runbooks/degradation-matrix.md` (180 ln) |
+| BLOCK-20 SECRETS-ROTATION | `docs/runbooks/secrets-rotation.md` (240 ln) |
+| BLOCK-18 PII-ENCRYPTION | `apps/backend/src/lib/encryption.ts` |
+| BLOCK-09 E2E-PATHS | 16 × `apps/frontend/e2e/critical-paths/*.spec.ts` |
+| BLOCK-26 PARTITION | migration `202606080940_block26_partition_hot_tables.sql` + `scripts/partition-maintenance.mjs` |
+
+All 7 backfilled + promoted to DONE. Classifier gained footer-scoped recognition of doc-deliverables
+(`docs/runbooks/*.md`, `docs/specs/*-DESIGN.md`) so TIER-3/4 ops/design blocks aren't invisible — scoped to the
+controlled evidence footer only (no incidental over-promotion; verified exactly 7 newly-DONE, no surprises).
+
+**RESIDUAL REAL-BUILD LIST (non-financial): EMPTY.** Nothing in the whole tracker needs a fresh build.
+Final honest counts: **DONE 404 · NEEDS-VERIFY 23 · PENDING 5 · GATED 24 → TOTAL PENDING 29.**
+
+Remaining non-DONE non-financial (5): TBL-STANDARD (genuinely PARTIAL — universal table sweep), HOS-BUG-DRIVERASSIGN
+(bug, not a feature), FIX-AUDIT-TRIGGER-DRIFT + FIX-REQUIRED-CHECKS-GATE (.block-ready, empty allowed_files —
+classifier blind), BK7/BLOCK-I/BLOCK-J/PREREQ-A (.block-ready edge). NEEDS-VERIFY 23 ≈ 19 financial (read-only,
+GATED — Jorge+GUARD Tier-1) + the 4 .block-ready edge cases. No non-financial feature build remains.

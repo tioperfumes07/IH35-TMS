@@ -1,21 +1,12 @@
 {
  "date": "2026-06-26",
  "counts": {
-  "PENDING": 6,
+  "PENDING": 5,
   "PENDING (GATED)": 24,
-  "NEEDS-VERIFY": 29,
-  "DONE": 397
+  "NEEDS-VERIFY": 23,
+  "DONE": 404
  },
  "blocks": [
-  {
-   "id": "BLOCK-18-of-29-TIER3-PII-ENCRYPTION",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "3",
-   "status": "PENDING",
-   "evidence": "deep-verified 2026-06-24 (feature grep)",
-   "name": "BLOCK-18-of-29-TIER3-PII-ENCRYPTION"
-  },
   {
    "id": "CASH-FLOW-MODULE",
    "source": ".block-ready",
@@ -368,60 +359,6 @@
    "name": ""
   },
   {
-   "id": "BLOCK-09-of-29-TIER2-E2E-PATHS",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #802 title-match only, unverified",
-   "name": "BLOCK-09-of-29-TIER2-E2E-PATHS"
-  },
-  {
-   "id": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "3",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #806 title-match only, unverified",
-   "name": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION"
-  },
-  {
-   "id": "BLOCK-23-of-29-TIER3-DEGRADATION",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "3",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #808 title-match only, unverified",
-   "name": "BLOCK-23-of-29-TIER3-DEGRADATION"
-  },
-  {
-   "id": "BLOCK-26-of-29-TIER4-PARTITION",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "4",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #809 title-match only, unverified",
-   "name": "BLOCK-26-of-29-TIER4-PARTITION"
-  },
-  {
-   "id": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "4",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #811 title-match only, unverified",
-   "name": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN"
-  },
-  {
-   "id": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS",
-   "source": "enterprise-29",
-   "fin": false,
-   "tier": "4",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #813 title-match only, unverified",
-   "name": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS"
-  },
-  {
    "id": "block-37-qbo-sync-repair-pipeline",
    "source": "accounting",
    "fin": true,
@@ -764,6 +701,15 @@
    "name": "k6 load-test baseline with nightly CI"
   },
   {
+   "id": "BLOCK-09-of-29-TIER2-E2E-PATHS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "BLOCK-09-of-29-TIER2-E2E-PATHS"
+  },
+  {
    "id": "BLOCK-09-TIER2-E2E-PATHS",
    "source": ".block-ready",
    "fin": false,
@@ -881,6 +827,15 @@
    "name": "BLOCK-16-of-29-TIER2.5-FUEL-CARD"
   },
   {
+   "id": "BLOCK-18-of-29-TIER3-PII-ENCRYPTION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "BLOCK-18-of-29-TIER3-PII-ENCRYPTION"
+  },
+  {
    "id": "block-20-cash-basis",
    "source": "accounting",
    "fin": true,
@@ -897,6 +852,15 @@
    "status": "DONE",
    "evidence": "all 9 named artifact(s) on main",
    "name": "block-20-frontend-selector"
+  },
+  {
+   "id": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "BLOCK-20-of-29-TIER3-SECRETS-ROTATION"
   },
   {
    "id": "block-20-period-close-lock",
@@ -953,6 +917,15 @@
    "name": "block-23-escrow-posting-flow"
   },
   {
+   "id": "BLOCK-23-of-29-TIER3-DEGRADATION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "BLOCK-23-of-29-TIER3-DEGRADATION"
+  },
+  {
    "id": "block-24-factoring-posting",
    "source": "accounting",
    "fin": true,
@@ -978,6 +951,15 @@
    "status": "DONE",
    "evidence": "all 10 named artifact(s) on main",
    "name": "block-26-factoring-reconciliation"
+  },
+  {
+   "id": "BLOCK-26-of-29-TIER4-PARTITION",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "BLOCK-26-of-29-TIER4-PARTITION"
   },
   {
    "id": "block-27-fuel-expense-posting",
@@ -1007,6 +989,15 @@
    "name": "block-28-maintenance-ap-posting"
   },
   {
+   "id": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "BLOCK-28-of-29-TIER4-VENDOR-LOCKIN"
+  },
+  {
    "id": "block-29-bank-reconciliation-engine",
    "source": "accounting",
    "fin": true,
@@ -1014,6 +1005,15 @@
    "status": "DONE",
    "evidence": "branch feat/block-29-bank-reconciliation-engine → PR #206 merged 2026-05-23",
    "name": "block-29-bank-reconciliation-engine"
+  },
+  {
+   "id": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS",
+   "source": "enterprise-29",
+   "fin": false,
+   "tier": "4",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS"
   },
   {
    "id": "block-30-bank-reconciliation-ui",
