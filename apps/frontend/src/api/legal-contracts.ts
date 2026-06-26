@@ -77,6 +77,30 @@ function withCompany(path: string, operatingCompanyId: string) {
   return `${path}${separator}operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
 }
 
+// --- Lease-to-Own creator (LEGAL-CONTRACT-CREATOR-01) ---
+export type LeaseToOwnCompany = {
+  id: string;
+  code: string;
+  legal_name: string;
+  short_name: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  postal_code: string | null;
+};
+export type LeaseToOwnFleetUnit = {
+  id: string;
+  unit_number: string;
+  vin: string;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  status: string;
+  unit_type: string | null;
+  owner_company_id: string | null;
+  owner_label: string | null;
+  currently_leased_to_company_id: string | null;
+};
+
 export const legalContractsApi = {
   list(input: { operating_company_id: string; status?: LegalContractStatus; search?: string }) {
     const params = new URLSearchParams();
@@ -105,5 +129,25 @@ export const legalContractsApi = {
         body: payload,
       }
     );
+  },
+
+  // Lease-to-Own: real backend routes (404 when LEGAL_CONTRACTS_ENABLED off). Save reuses create().
+  leaseToOwnFleet(input: { operating_company_id: string; owner_company_id?: string }) {
+    const params = new URLSearchParams();
+    params.set("operating_company_id", input.operating_company_id);
+    if (input.owner_company_id) params.set("owner_company_id", input.owner_company_id);
+    return apiRequest<{ units: LeaseToOwnFleetUnit[]; seller_default: LeaseToOwnCompany | null }>(
+      `/api/v1/legal/contracts/lease-to-own/fleet?${params.toString()}`
+    );
+  },
+
+  ensureLeaseToOwnTemplate(operatingCompanyId: string) {
+    return apiRequest<{
+      template: { id: string; version: number; seeded: boolean };
+      seller_default: LeaseToOwnCompany | null;
+    }>("/api/v1/legal/contracts/lease-to-own/ensure-template", {
+      method: "POST",
+      body: { operating_company_id: operatingCompanyId },
+    });
   },
 };
