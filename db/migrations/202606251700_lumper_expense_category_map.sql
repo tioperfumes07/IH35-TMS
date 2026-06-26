@@ -24,19 +24,13 @@ ALTER TABLE accounting.expense_category_account_map
     'insurance','office','other','cash_advance','lumper'
   ]));
 
--- (2) Fail-loud: TRANSP (the operating carrier) MUST have both lumper accounts; do not silently skip it.
-DO $$
-DECLARE v_transp uuid := '91e0bf0a-133f-4ce8-a734-2586cfa66d96';
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM catalogs.accounts WHERE operating_company_id = v_transp AND account_number = 'QBO-117' AND deactivated_at IS NULL) THEN
-    RAISE EXCEPTION 'lumper STEP 3a: expense account QBO-117 (Warehouse-Lumper Fee) missing for TRANSP %', v_transp;
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM catalogs.accounts WHERE operating_company_id = v_transp AND account_number = 'QBO-1150040160' AND deactivated_at IS NULL) THEN
-    RAISE EXCEPTION 'lumper STEP 3a: income account QBO-1150040160 (Lumper Fee Income) missing for TRANSP %', v_transp;
-  END IF;
-END $$;
-
--- (3) Seed the lumper category->account map PER ENTITY that has BOTH accounts (resolved by account_number).
+-- (2) Seed the lumper category->account map PER ENTITY that has BOTH accounts (resolved by account_number).
+-- REPLAY-SAFE: QBO-117 / QBO-1150040160 are QBO-SYNCED runtime data in catalogs.accounts, NOT created by any
+-- migration — so a fresh-DB build (CI / a brand-new tenant) legitimately has neither yet. The JOIN below
+-- therefore seeds nothing for an entity that lacks the accounts; it does NOT raise (a missing QBO account on
+-- a fresh DB is not an error, and a RAISE here breaks fresh-DB migration replay — §2). The fail-loud lives at
+-- RUNTIME instead: the STEP 3b split engine returns 'lumper_expense_account_missing' if QBO-117 is absent when
+-- it actually tries to post. On prod (accounts present) TRANSP gets both map rows; GUARD verifies that.
 INSERT INTO accounting.expense_category_account_map
   (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
 SELECT c.id, 'lumper', v.category_code, a.id, v.posting_side, true
