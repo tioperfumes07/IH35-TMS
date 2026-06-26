@@ -9,6 +9,8 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SendContractModal } from "./SendContractModal";
+import { LeaseToOwnCreatorModal } from "./LeaseToOwnCreatorModal";
+import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
@@ -44,6 +46,8 @@ export function LegalContractInstancesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDetailId, setActiveDetailId] = useState<string | null>(null);
   const openSend = searchParams.get("openSend") === "1";
+  const { enabled: leaseToOwnEnabled } = useFeatureFlag("LEGAL_CONTRACTS_ENABLED", operatingCompanyId || undefined);
+  const openLeaseToOwn = searchParams.get("openLeaseToOwn") === "1";
 
   const listQuery = useQuery({
     queryKey: ["legal", "contracts", operatingCompanyId, statusFilter, search],
@@ -121,7 +125,16 @@ export function LegalContractInstancesPage() {
       <PageHeader
         title="Legal Contracts"
         subtitle="Instance tracking and signer workflows"
-        actions={<Button onClick={() => setSearchParams({ openSend: "1" })}>+ Create Contract</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button onClick={() => setSearchParams({ openSend: "1" })}>+ Create Contract</Button>
+            {leaseToOwnEnabled && (
+              <Button variant="secondary" onClick={() => setSearchParams({ openLeaseToOwn: "1" })}>
+                + New Lease-to-Own
+              </Button>
+            )}
+          </div>
+        }
       />
 
       <LegalModuleTabs activeTabId="contracts" />
@@ -326,6 +339,12 @@ export function LegalContractInstancesPage() {
         operatingCompanyId={operatingCompanyId}
         onClose={() => setSearchParams({})}
         onSent={refresh}
+      />
+      <LeaseToOwnCreatorModal
+        open={openLeaseToOwn}
+        operatingCompanyId={operatingCompanyId}
+        onClose={() => setSearchParams({})}
+        onSaved={refresh}
       />
     </div>
   );
