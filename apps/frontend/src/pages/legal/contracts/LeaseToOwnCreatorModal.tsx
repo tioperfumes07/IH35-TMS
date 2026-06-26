@@ -223,7 +223,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
           <div className="space-y-2">
             <input className="w-full rounded border px-2 py-1 text-sm" placeholder="Search unit #, VIN, make, model…" value={search} onChange={(e) => setSearch(e.target.value)} />
             <p className="text-xs text-slate-500">{selectedList.length} selected · {filteredUnits.length} shown</p>
-            <div className="max-h-72 overflow-auto rounded border">
+            <div className="max-h-72 overflow-x-auto overflow-y-auto rounded border">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50"><tr><th className="p-1"></th><th className="p-1 text-left">Unit</th><th className="p-1 text-left">VIN</th><th className="p-1 text-left">Make/Model/Yr</th><th className="p-1 text-left">Owner</th><th className="p-1 text-left">Status</th></tr></thead>
                 <tbody>
@@ -246,7 +246,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
 
         {/* Step 3 — Per-truck terms */}
         {stepIdx === 2 && (
-          <div className="max-h-80 overflow-auto rounded border">
+          <div className="max-h-80 overflow-x-auto overflow-y-auto rounded border">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50"><tr><th className="p-1 text-left">Unit</th><th className="p-1 text-left">Lienholder</th><th className="p-1 text-left">Balance owed</th><th className="p-1 text-left">Monthly lease</th><th className="p-1 text-left">Due date</th></tr></thead>
               <tbody>
