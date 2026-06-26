@@ -25,7 +25,7 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
 
   const driversQuery = useQuery({
     queryKey: ["quick-assign-drivers", companyId],
-    queryFn: () => listDrivers({ operating_company_id: companyId, status: "Active" }),
+    queryFn: () => listDrivers({ operating_company_id: companyId, status: "Active", limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: open && Boolean(companyId),
   });
 

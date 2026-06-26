@@ -78,7 +78,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
   });
   const driversQuery = useQuery({
     queryKey: ["vendor-bill-form", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId }),
+    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(operatingCompanyId),
   });
   const unitsQuery = useQuery({

@@ -20,7 +20,10 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
 
   const driversQuery = useQuery({
     queryKey: ["dispatch", "inline-drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active" }),
+    // limit:200 = full active set. The endpoint defaults to 50 (ORDER BY created_at DESC); with >50 active
+    // drivers this picker silently dropped everyone past the newest 50 — a real active driver missing from
+    // Book Load (e.g. Mecor). It filters client-side with no network-on-type, so it MUST load the complete roster.
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
