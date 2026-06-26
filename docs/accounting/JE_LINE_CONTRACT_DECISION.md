@@ -1,5 +1,8 @@
 # JE Line Contract Decision
 
+> **Naming:** the real prod table is `accounting.journal_entry_postings`; `accounting.journal_entry_lines`
+> is **not** implemented (forbidden to write). Canonical mapping: [`docs/specs/SCHEMA-NAMING-NOTES.md`](../specs/SCHEMA-NAMING-NOTES.md).
+
 ## 1) Decision summary
 
 - Decision: **Option (b) approved**.
