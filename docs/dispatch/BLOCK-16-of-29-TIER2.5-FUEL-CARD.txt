@@ -103,3 +103,6 @@ Two-way integration with ComData + Relay fuel cards. Auto-import transactions. M
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+DEEP-VERIFY 2026-06-26: BUILT on main:
+  - apps/backend/src/fuel/loves-upload.routes.ts

@@ -115,3 +115,7 @@ CREATE TABLE IF NOT EXISTS mdata.mx_tolls_ledger (
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+DEEP-VERIFY 2026-06-26: BUILT on main:
+  - apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx
+  - apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx

@@ -79,3 +79,6 @@ node scripts/destructive-op-preflight.mjs \
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+DEEP-VERIFY 2026-06-26: BUILT on main:
+  - apps/backend/src/dispatch/equipment-transfer/dual-confirm.service.ts

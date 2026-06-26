@@ -40,3 +40,8 @@ Both tables are tenant-scoped with RLS (`ih35_app`).
 ## Post-merge
 
 Per-broker setup (CHRW, JBHT, TQL) requires cert exchange and partner-specific segment maps.
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+DEEP-VERIFY 2026-06-26: BUILT on main:
+  - apps/backend/src/integrations/edi/edi.routes.ts
+  - apps/backend/src/integrations/edi/setup.service.ts

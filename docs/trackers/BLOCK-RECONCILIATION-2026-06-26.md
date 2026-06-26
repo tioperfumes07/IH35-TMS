@@ -2,30 +2,23 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (7057 files) + 1440 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (7059 files) + 1441 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
-- **PENDING**: 13
+- **PENDING**: 6
 - **PENDING (GATED)**: 24
-- **NEEDS-VERIFY**: 38
-- **DONE**: 381
+- **NEEDS-VERIFY**: 29
+- **DONE**: 397
 
 ## Every block
 | Block | Status | Fin | Tier | Source | Evidence |
 |-------|--------|-----|------|--------|----------|
-| BLOCK-07-of-29-TIER2-PAGINATION-AUDIT | PENDING |  | T2 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
-| BLOCK-12-of-29-TIER2-DESTRUCT-PREFLIGHT | PENDING |  | T2 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-18-of-29-TIER3-PII-ENCRYPTION | PENDING |  | T3 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | CASH-FLOW-MODULE | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | FIX-AUDIT-TRIGGER-DRIFT | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | FIX-REQUIRED-CHECKS-GATE | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | HOS-BUG-DRIVERASSIGN | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
-| Q9-TZ-timezone-library | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
 | TBL-STANDARD-universal-table-sweep | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
-| UX-B-dispatch-location-column | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
-| UX-C-fleet-location | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
-| UX-D-hos-cycle-drawer | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
-| UX-E-compliance-hos-location | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
 | BLOCK-01-of-29-TIER1.5-DEPRECIATION | PENDING (GATED) |  | T1.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW | PENDING (GATED) |  | T1.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-03-of-29-TIER1.5-IFTA | PENDING (GATED) |  | T1.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
@@ -61,12 +54,6 @@
 | AF-8-payroll-bridge | NEEDS-VERIFY | 💰 | T1 | program | PR #544 title-match only, unverified |
 | BK7-INLINE-CREATE-DRAWERS | NEEDS-VERIFY |  |  | .block-ready | PR #866 title-match only, unverified |
 | BLOCK-09-of-29-TIER2-E2E-PATHS | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #802 title-match only, unverified |
-| BLOCK-10-driver-inactivity | NEEDS-VERIFY |  | T1 | program | PR #1224 title-match only, unverified |
-| BLOCK-10-of-29-TIER2-RLS-TEST-GATE | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1224 title-match only, unverified |
-| BLOCK-11-of-29-TIER2-AUDIT-COVERAGE | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #814 title-match only, unverified |
-| BLOCK-14-of-29-TIER2.5-MEXICO-OPS | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #804 title-match only, unverified |
-| BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #805 title-match only, unverified |
-| BLOCK-16-of-29-TIER2.5-FUEL-CARD | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #701 title-match only, unverified |
 | BLOCK-20-of-29-TIER3-SECRETS-ROTATION | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #806 title-match only, unverified |
 | BLOCK-23-of-29-TIER3-DEGRADATION | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #808 title-match only, unverified |
 | BLOCK-26-of-29-TIER4-PARTITION | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #809 title-match only, unverified |
@@ -83,9 +70,6 @@
 | CHAIN-05-bank-feed-live-proof | NEEDS-VERIFY | 💰 | T1 | program | PR #1268 title-match only, unverified |
 | CHAIN-06-invoice-ar-chain-proof | NEEDS-VERIFY | 💰 | T1 | program | PR #1269 title-match only, unverified |
 | CHAIN-07-settlements-500-fix | NEEDS-VERIFY | 💰 | T1 | program | PR #1270 title-match only, unverified |
-| gap-53-bank-multi-company-drift | NEEDS-VERIFY |  |  | gap-spec | PR #774 title-match only, unverified |
-| gap-67-accounting-home-view | NEEDS-VERIFY |  |  | gap-spec | PR #652 title-match only, unverified |
-| gap-70-edi-foundation | NEEDS-VERIFY |  |  | gap-spec | PR #691 title-match only, unverified |
 | PREREQ-A-SCHEMA-GRANT-GATE | NEEDS-VERIFY |  |  | .block-ready | PR #684 title-match only, unverified |
 | STMT-1-balance-sheet-cash-flow | NEEDS-VERIFY | 💰 | T2 | program | PR #1265 title-match only, unverified |
 | A1-AUDIT-SPINE-LINK-COLUMNS | DONE | 💰 |  | .block-ready | PR #884 merged 2026-06-11 |
@@ -110,14 +94,22 @@
 | BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-05-TIER2-CIRCUIT-BREAKERS | DONE |  |  | .block-ready | PR #800 merged 2026-06-08 |
 | BLOCK-06-of-29-TIER2-OUTBOX-DLQ | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
+| BLOCK-07-of-29-TIER2-PAGINATION-AUDIT | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-08-of-29-TIER2-LOAD-TEST | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-08-TIER2-LOAD-TEST | DONE |  |  | .block-ready | PR #796 merged 2026-06-08 |
 | BLOCK-09-TIER2-E2E-PATHS | DONE |  |  | .block-ready | PR #802 merged 2026-06-09 |
 | block-10-account-balances | DONE | 💰 |  | accounting | branch feat/acct-block-10-account-balances → PR #709 merged 2026-06-08 |
+| BLOCK-10-driver-inactivity | DONE |  | T1 | program | all 2 named artifact(s) on main |
+| BLOCK-10-of-29-TIER2-RLS-TEST-GATE | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-10-TIER2-RLS-TEST-GATE | DONE |  |  | .block-ready | PR #801 merged 2026-06-09 |
+| BLOCK-11-of-29-TIER2-AUDIT-COVERAGE | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
+| BLOCK-12-of-29-TIER2-DESTRUCT-PREFLIGHT | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-13-of-29-TIER2-TUNING-CATALOG | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-13-TIER2-TUNING-CATALOG | DONE |  |  | .block-ready | PR #794 merged 2026-06-08 |
+| BLOCK-14-of-29-TIER2.5-MEXICO-OPS | DONE |  | T2.5 | enterprise-29 | all 2 named artifact(s) on main |
+| BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP | DONE |  | T2.5 | enterprise-29 | all 2 named artifact(s) on main |
 | BLOCK-16-COMPLIANCE-DASHBOARD | DONE |  |  | .block-ready | PR #701 merged 2026-06-07 |
+| BLOCK-16-of-29-TIER2.5-FUEL-CARD | DONE |  | T2.5 | enterprise-29 | all 1 named artifact(s) on main |
 | block-20-cash-basis | DONE | 💰 |  | accounting | all 3 named artifact(s) on main |
 | block-20-frontend-selector | DONE | 💰 |  | accounting | all 9 named artifact(s) on main |
 | block-20-period-close-lock | DONE | 💰 |  | accounting | all 1 named artifact(s) on main |
@@ -358,6 +350,7 @@
 | GAP-52 | DONE |  |  | .block-ready | PR #773 merged 2026-06-08 |
 | gap-52-driver-vendor-mapping-integrity | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-53 | DONE |  |  | .block-ready | PR #774 merged 2026-06-08 |
+| gap-53-bank-multi-company-drift | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-54 | DONE |  |  | .block-ready | PR #775 merged 2026-06-08 |
 | gap-54-wf-051-250-foot-correction | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-55 | DONE |  |  | .block-ready | PR #776 merged 2026-06-08 |
@@ -383,6 +376,7 @@
 | GAP-66-DISPATCHER-HOME | DONE |  |  | .block-ready | PR #645 merged 2026-06-07 |
 | gap-66-dispatcher-home-view | DONE |  |  | gap-spec | all 4 named artifact(s) on main |
 | GAP-67-ACCOUNTING-HOME | DONE |  |  | .block-ready | PR #652 merged 2026-06-07 |
+| gap-67-accounting-home-view | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-68-SAFETY-OFFICER-HOME | DONE |  |  | .block-ready | PR #653 merged 2026-06-07 |
 | gap-68-safety-officer-home-view | DONE |  |  | gap-spec | all 7 named artifact(s) on main |
 | GAP-69-DRIVER-MANAGER-HOME | DONE |  |  | .block-ready | PR #654 merged 2026-06-07 |
@@ -390,6 +384,7 @@
 | GAP-7 | DONE |  |  | .block-ready | PR #660 merged 2026-06-07 |
 | gap-7-severe-repair-oos-estimate | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-70 | DONE |  |  | .block-ready | PR #691 merged 2026-06-07 |
+| gap-70-edi-foundation | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-71 | DONE |  |  | .block-ready | PR #784 merged 2026-06-08 |
 | gap-71-driver-retention-model | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-72 | DONE |  |  | .block-ready | PR #782 merged 2026-06-08 |
@@ -435,6 +430,7 @@
 | P0-BLOCK-3-DRIVER-LOAD-HISTORY | DONE |  |  | .block-ready | PR #731 merged 2026-06-08 |
 | P5-T6-BANKING-TRANSFER | DONE |  |  | .block-ready | PR #862 merged 2026-06-10 |
 | PREREQ-B-SETTLEMENT-DEDUCTION-SVC | DONE |  |  | .block-ready | PR #683 merged 2026-06-07 |
+| Q9-TZ-timezone-library | DONE |  | T2 | program | all 1 named artifact(s) on main |
 | RPT-MODULE | DONE |  |  | program | all 3 named artifact(s) on main |
 | SAFE-W3 | DONE |  |  | program | all 3 named artifact(s) on main |
 | SAFE-W4 | DONE |  |  | program | all 3 named artifact(s) on main |
@@ -458,6 +454,10 @@
 | TIER28-VENDOR-LOCKIN | DONE |  |  | .block-ready | PR #811 merged 2026-06-08 |
 | TIER29-KNOWN-LIMITATIONS | DONE |  |  | .block-ready | PR #813 merged 2026-06-08 |
 | UX-A-table-alignment-DONE | DONE |  |  | program | all 1 named artifact(s) on main |
+| UX-B-dispatch-location-column | DONE |  | T2 | program | all 1 named artifact(s) on main |
+| UX-C-fleet-location | DONE |  | T2 | program | all 2 named artifact(s) on main |
+| UX-D-hos-cycle-drawer | DONE |  | T2 | program | all 1 named artifact(s) on main |
+| UX-E-compliance-hos-location | DONE |  | T2 | program | all 1 named artifact(s) on main |
 | W1-EVENT-LOG-SPINE | DONE | 💰 |  | .block-ready | all 1 file(s) on main |
 | W1A-EVENT-LOG-IMMUTABLE | DONE | 💰 |  | .block-ready | PR #870 merged 2026-06-11 |
 | W1B-TASKS-MODULE | DONE | 💰 |  | .block-ready | PR #872 merged 2026-06-11 |
