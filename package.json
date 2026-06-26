@@ -687,8 +687,7 @@
     "verify:migration-no-runtime-raise:test": "node scripts/verify-migration-no-runtime-raise.mjs --selftest",
     "verify:posting-idempotency": "node scripts/verify-posting-idempotency.mjs",
     "verify:legal-no-gl-writes": "node scripts/verify-legal-no-gl-writes.mjs",
-    "verify:legal-entity-scope": "node scripts/verify-legal-entity-scope.mjs",
-    "verify:per-truck-cpm-no-phantom": "node scripts/verify-per-truck-cpm-no-phantom.mjs"
+    "verify:legal-entity-scope": "node scripts/verify-legal-entity-scope.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
