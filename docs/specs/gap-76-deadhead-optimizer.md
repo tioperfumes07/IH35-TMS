@@ -42,3 +42,8 @@ Response: `{ suggestions: NextLoadSuggestion[] }` (top 5).
 ## Lane lock
 
 Does not touch lane-profitability paths (`apps/backend/src/dispatch/analytics/lane-profitability/**`, `LaneProfitabilityHeatmap.tsx`).
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - apps/backend/src/reports/deadhead.routes.ts
+  - apps/frontend/src/pages/reports/DeadheadReportPage.tsx

@@ -10,3 +10,8 @@ WF-051 shipped at 25-mile radius (40,233.6m). Jorge confirmed correct radius is 
 
 ## Audit date
 `WF_051_RADIUS_CHANGE_AUDIT_DATE = 2026-06-05`
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - apps/backend/src/integrations/samsara/geofences/wf-051-radius.ts
+  - scripts/verify-wf-051-arrival-radius-meters.mjs

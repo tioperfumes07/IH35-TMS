@@ -47,3 +47,7 @@ Replace the lightweight in-transit issue stub with a complete incident reporting
 
 - Command: `npm run verify:driver-pwa-incident-full`
 - Verifies required files, route wiring, endpoint usage, workflow trigger references, block manifest, package script, and CI hook.
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/backend/src/safety/incidents/full-report.service.ts

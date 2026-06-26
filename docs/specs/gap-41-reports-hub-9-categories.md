@@ -27,3 +27,7 @@
 ## CI
 
 `verify:reports-hub-9-categories` — catalog completeness, hover nav, category landing pages.
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/reports/ReportsHub.tsx

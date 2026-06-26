@@ -23,3 +23,7 @@ Validation errors return HTTP 422 with `E_VALIDATION_*` codes.
 ```bash
 npm run verify:assignments-quicksave
 ```
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - apps/backend/src/assignments/quicksave.routes.ts

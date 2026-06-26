@@ -22,3 +22,7 @@
 ```bash
 npm run verify:severe-repair-estimate
 ```
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - apps/backend/src/maintenance/severe-repair-estimate.routes.ts

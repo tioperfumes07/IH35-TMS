@@ -30,3 +30,8 @@ Outliers: CPM > 2× fleet median highlighted in red on the frontend table.
 ## CI
 
 `npm run verify:cash-flow-cpm-routes`
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/backend/src/reports/cash-flow-overview.routes.ts
+  - apps/backend/src/reports/profit-per-truck.routes.ts

@@ -18,3 +18,7 @@ Non-financial operational/integrity anomaly detection (§4 Unified Additions).
 
 ## Add rule
 Insert via RuleEditor (Owner) or POST with `detector_function` matching registry key.
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/safety/tabs/AnomaliesTab.tsx

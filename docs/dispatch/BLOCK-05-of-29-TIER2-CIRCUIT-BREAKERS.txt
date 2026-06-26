@@ -65,3 +65,6 @@ Every external dependency (QBO, Samsara, Plaid, Sentry, OpenAI/LLM, ComData, Rel
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/backend/src/lib/circuit-breaker/index.ts

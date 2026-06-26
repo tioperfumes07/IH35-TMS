@@ -31,3 +31,7 @@ Both routes require authenticated office session and operating-company tenant sc
 
 - `npm run verify:eld-audit-trail`
 - Validates viewer service, routes, tests, frontend surfaces, docs, manifest, CI wiring.
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - scripts/verify-eld-audit-trail.mjs

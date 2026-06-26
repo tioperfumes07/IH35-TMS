@@ -37,3 +37,7 @@ When live Samsara GPS diverges from driver-reported load status, the system prop
 ## CI
 
 `npm run verify:cap-4-auto-status-switch`
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - apps/backend/src/driver/status-suggestions.routes.ts

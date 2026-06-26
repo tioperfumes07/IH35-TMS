@@ -23,3 +23,7 @@ Maintenance role in-app + email (Resend); driver PWA push + SMS (Twilio) when pa
 ## CI
 
 `npm run verify:cap-8-engine-fault-auto-wo`
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - apps/backend/src/maintenance/fault-auto-wo/auto-wo-drafts.routes.ts

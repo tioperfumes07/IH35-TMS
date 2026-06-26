@@ -23,3 +23,8 @@ Formal geofence state transitions: `idle → approaching → at → dwelling →
 - GAP-27 reconciliation
 - GAP-54 250-ft arrival prompt
 - CAP-2 auto-geofence on dispatch
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/backend/src/integrations/samsara/geofences/state-machine/routes.ts
+  - apps/frontend/src/pages/reports/GeofenceDwellReport.tsx

@@ -2,13 +2,13 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (7054 files) + 1439 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (7057 files) + 1440 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
 - **PENDING**: 13
 - **PENDING (GATED)**: 24
-- **NEEDS-VERIFY**: 69
-- **DONE**: 350
+- **NEEDS-VERIFY**: 38
+- **DONE**: 381
 
 ## Every block
 | Block | Status | Fin | Tier | Source | Evidence |
@@ -60,24 +60,16 @@
 | AF-7-money-controls | NEEDS-VERIFY | 💰 | T1 | program | PR #542 title-match only, unverified |
 | AF-8-payroll-bridge | NEEDS-VERIFY | 💰 | T1 | program | PR #544 title-match only, unverified |
 | BK7-INLINE-CREATE-DRAWERS | NEEDS-VERIFY |  |  | .block-ready | PR #866 title-match only, unverified |
-| BLOCK-04-of-29-TIER2-RATE-LIMIT | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1189 title-match only, unverified |
-| BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1192 title-match only, unverified |
-| BLOCK-06-of-29-TIER2-OUTBOX-DLQ | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1196 title-match only, unverified |
-| BLOCK-08-of-29-TIER2-LOAD-TEST | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #796 title-match only, unverified |
 | BLOCK-09-of-29-TIER2-E2E-PATHS | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #802 title-match only, unverified |
 | BLOCK-10-driver-inactivity | NEEDS-VERIFY |  | T1 | program | PR #1224 title-match only, unverified |
 | BLOCK-10-of-29-TIER2-RLS-TEST-GATE | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #1224 title-match only, unverified |
 | BLOCK-11-of-29-TIER2-AUDIT-COVERAGE | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #814 title-match only, unverified |
-| BLOCK-13-of-29-TIER2-TUNING-CATALOG | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #794 title-match only, unverified |
 | BLOCK-14-of-29-TIER2.5-MEXICO-OPS | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #804 title-match only, unverified |
 | BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #805 title-match only, unverified |
 | BLOCK-16-of-29-TIER2.5-FUEL-CARD | NEEDS-VERIFY |  | T2.5 | enterprise-29 | PR #701 title-match only, unverified |
 | BLOCK-20-of-29-TIER3-SECRETS-ROTATION | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #806 title-match only, unverified |
-| BLOCK-21-of-29-TIER3-DR-DRILL | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #807 title-match only, unverified |
-| BLOCK-22-of-29-TIER3-OPS-RUNBOOKS | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #241 title-match only, unverified |
 | BLOCK-23-of-29-TIER3-DEGRADATION | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #808 title-match only, unverified |
 | BLOCK-26-of-29-TIER4-PARTITION | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #809 title-match only, unverified |
-| BLOCK-27-of-29-TIER4-CANARY | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #810 title-match only, unverified |
 | BLOCK-28-of-29-TIER4-VENDOR-LOCKIN | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #811 title-match only, unverified |
 | BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #813 title-match only, unverified |
 | block-37-qbo-sync-repair-pipeline | NEEDS-VERIFY | 💰 |  | accounting | PR #226 title-match only, unverified |
@@ -91,32 +83,9 @@
 | CHAIN-05-bank-feed-live-proof | NEEDS-VERIFY | 💰 | T1 | program | PR #1268 title-match only, unverified |
 | CHAIN-06-invoice-ar-chain-proof | NEEDS-VERIFY | 💰 | T1 | program | PR #1269 title-match only, unverified |
 | CHAIN-07-settlements-500-fix | NEEDS-VERIFY | 💰 | T1 | program | PR #1270 title-match only, unverified |
-| gap-26-border-crossings | NEEDS-VERIFY |  |  | gap-spec | PR #733 title-match only, unverified |
-| gap-27-geofence-reconciliation | NEEDS-VERIFY |  |  | gap-spec | PR #724 title-match only, unverified |
-| gap-28-layover-detection | NEEDS-VERIFY |  |  | gap-spec | PR #726 title-match only, unverified |
-| gap-29-booking-gap-analytics | NEEDS-VERIFY |  |  | gap-spec | PR #729 title-match only, unverified |
-| gap-30-late-arrival-analytics | NEEDS-VERIFY |  |  | gap-spec | PR #665 title-match only, unverified |
-| gap-36-driver-pwa-incident-full | NEEDS-VERIFY |  |  | gap-spec | PR #759 title-match only, unverified |
-| gap-39-geofence-state-machine | NEEDS-VERIFY |  |  | gap-spec | PR #1157 title-match only, unverified |
-| gap-41-reports-hub-9-categories | NEEDS-VERIFY |  |  | gap-spec | PR #672 title-match only, unverified |
-| gap-44-form-425c-exhibits | NEEDS-VERIFY |  |  | gap-spec | PR #674 title-match only, unverified |
-| gap-45-cash-flow-cpm-routes | NEEDS-VERIFY |  |  | gap-spec | PR #763 title-match only, unverified |
-| gap-46-anomaly-detection | NEEDS-VERIFY |  |  | gap-spec | PR #769 title-match only, unverified |
-| gap-47-dispatch-auth-gates | NEEDS-VERIFY |  |  | gap-spec | PR #770 title-match only, unverified |
-| gap-52-driver-vendor-mapping-integrity | NEEDS-VERIFY |  |  | gap-spec | PR #773 title-match only, unverified |
 | gap-53-bank-multi-company-drift | NEEDS-VERIFY |  |  | gap-spec | PR #774 title-match only, unverified |
-| gap-54-wf-051-250-foot-correction | NEEDS-VERIFY |  |  | gap-spec | PR #775 title-match only, unverified |
-| gap-55-cap-1-live-gps | NEEDS-VERIFY |  |  | gap-spec | PR #776 title-match only, unverified |
-| gap-56-cap-4-auto-status-switch | NEEDS-VERIFY |  |  | gap-spec | PR #779 title-match only, unverified |
-| gap-57-cap-5-tri-signal | NEEDS-VERIFY |  |  | gap-spec | PR #781 title-match only, unverified |
-| gap-58-cap-8-engine-fault-auto-wo | NEEDS-VERIFY |  |  | gap-spec | PR #777 title-match only, unverified |
 | gap-67-accounting-home-view | NEEDS-VERIFY |  |  | gap-spec | PR #652 title-match only, unverified |
-| gap-7-severe-repair-oos-estimate | NEEDS-VERIFY |  |  | gap-spec | PR #660 title-match only, unverified |
 | gap-70-edi-foundation | NEEDS-VERIFY |  |  | gap-spec | PR #691 title-match only, unverified |
-| gap-71-driver-retention-model | NEEDS-VERIFY |  |  | gap-spec | PR #784 title-match only, unverified |
-| gap-76-deadhead-optimizer | NEEDS-VERIFY |  |  | gap-spec | PR #844 title-match only, unverified |
-| gap-8-assignments-quicksave | NEEDS-VERIFY |  |  | gap-spec | PR #661 title-match only, unverified |
-| gap-83-eld-audit-trail | NEEDS-VERIFY |  |  | gap-spec | PR #644 title-match only, unverified |
 | PREREQ-A-SCHEMA-GRANT-GATE | NEEDS-VERIFY |  |  | .block-ready | PR #684 title-match only, unverified |
 | STMT-1-balance-sheet-cash-flow | NEEDS-VERIFY | 💰 | T2 | program | PR #1265 title-match only, unverified |
 | A1-AUDIT-SPINE-LINK-COLUMNS | DONE | 💰 |  | .block-ready | PR #884 merged 2026-06-11 |
@@ -137,23 +106,31 @@
 | ACCT-QBOPAR-02 | DONE |  |  | .block-ready | PR #710 merged 2026-06-07 |
 | ACCT-QBOPAR-03 | DONE |  |  | .block-ready | PR #740 merged 2026-06-08 |
 | ACCT-QBOPAR-04 | DONE |  |  | .block-ready | PR #815 merged 2026-06-08 |
+| BLOCK-04-of-29-TIER2-RATE-LIMIT | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
+| BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-05-TIER2-CIRCUIT-BREAKERS | DONE |  |  | .block-ready | PR #800 merged 2026-06-08 |
+| BLOCK-06-of-29-TIER2-OUTBOX-DLQ | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
+| BLOCK-08-of-29-TIER2-LOAD-TEST | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-08-TIER2-LOAD-TEST | DONE |  |  | .block-ready | PR #796 merged 2026-06-08 |
 | BLOCK-09-TIER2-E2E-PATHS | DONE |  |  | .block-ready | PR #802 merged 2026-06-09 |
 | block-10-account-balances | DONE | 💰 |  | accounting | branch feat/acct-block-10-account-balances → PR #709 merged 2026-06-08 |
 | BLOCK-10-TIER2-RLS-TEST-GATE | DONE |  |  | .block-ready | PR #801 merged 2026-06-09 |
+| BLOCK-13-of-29-TIER2-TUNING-CATALOG | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-13-TIER2-TUNING-CATALOG | DONE |  |  | .block-ready | PR #794 merged 2026-06-08 |
 | BLOCK-16-COMPLIANCE-DASHBOARD | DONE |  |  | .block-ready | PR #701 merged 2026-06-07 |
 | block-20-cash-basis | DONE | 💰 |  | accounting | all 3 named artifact(s) on main |
 | block-20-frontend-selector | DONE | 💰 |  | accounting | all 9 named artifact(s) on main |
 | block-20-period-close-lock | DONE | 💰 |  | accounting | all 1 named artifact(s) on main |
 | block-21-expense-category-map | DONE | 💰 |  | accounting | all 1 named artifact(s) on main |
+| BLOCK-21-of-29-TIER3-DR-DRILL | DONE |  | T3 | enterprise-29 | all 1 named artifact(s) on main |
 | block-22-driver-settlement-engine | DONE | 💰 |  | accounting | all 4 named artifact(s) on main |
+| BLOCK-22-of-29-TIER3-OPS-RUNBOOKS | DONE |  | T3 | enterprise-29 | all 1 named artifact(s) on main |
 | block-23-escrow-posting-flow | DONE | 💰 |  | accounting | all 1 named artifact(s) on main |
 | block-24-factoring-posting | DONE | 💰 |  | accounting | all 4 named artifact(s) on main |
 | block-25-factoring-fees-reserves | DONE | 💰 |  | accounting | all 6 named artifact(s) on main |
 | block-26-factoring-reconciliation | DONE | 💰 |  | accounting | all 10 named artifact(s) on main |
 | block-27-fuel-expense-posting | DONE | 💰 |  | accounting | branch feat/block-27-fuel-expense-posting → PR #203 merged 2026-05-23 |
+| BLOCK-27-of-29-TIER4-CANARY | DONE |  | T4 | enterprise-29 | all 1 named artifact(s) on main |
 | block-28-maintenance-ap-posting | DONE | 💰 |  | accounting | branch feat/block-28-maintenance-ap-posting → PR #205 merged 2026-05-23 |
 | block-29-bank-reconciliation-engine | DONE | 💰 |  | accounting | branch feat/block-29-bank-reconciliation-engine → PR #206 merged 2026-05-23 |
 | block-30-bank-reconciliation-ui | DONE | 💰 |  | accounting | all 10 named artifact(s) on main |
@@ -333,10 +310,15 @@
 | GAP-25 | DONE |  |  | .block-ready | PR #707 merged 2026-06-08 |
 | gap-25-active-driver-set | DONE |  |  | gap-spec | all 3 named artifact(s) on main |
 | GAP-26 | DONE |  |  | .block-ready | PR #722 merged 2026-06-08 |
+| gap-26-border-crossings | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-27 | DONE |  |  | .block-ready | PR #724 merged 2026-06-08 |
+| gap-27-geofence-reconciliation | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-28 | DONE |  |  | .block-ready | all 8 file(s) on main |
+| gap-28-layover-detection | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-29 | DONE |  |  | .block-ready | all 7 file(s) on main |
+| gap-29-booking-gap-analytics | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-30 | DONE |  |  | .block-ready | PR #665 merged 2026-06-07 |
+| gap-30-late-arrival-analytics | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-31 | DONE |  |  | .block-ready | PR #761 merged 2026-06-08 |
 | gap-31-multi-stop-extra-rates | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-32 | DONE |  |  | .block-ready | PR #760 merged 2026-06-08 |
@@ -344,21 +326,28 @@
 | GAP-34 | DONE |  |  | .block-ready | PR #667 merged 2026-06-07 |
 | gap-34-driver-pwa-dispatch | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-36 | DONE |  |  | .block-ready | PR #759 merged 2026-06-08 |
+| gap-36-driver-pwa-incident-full | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-37 | DONE |  |  | .block-ready | PR #765 merged 2026-06-08 |
 | gap-37-equipment-dual-confirm-transfer | DONE |  |  | gap-spec | all 5 named artifact(s) on main |
 | GAP-38-DAMAGE-INSURANCE-CONTINUITY | DONE |  |  | .block-ready | PR #671 merged 2026-06-07 |
 | GAP-39 | DONE |  |  | .block-ready | PR #669 merged 2026-06-07 |
+| gap-39-geofence-state-machine | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-40 | DONE |  |  | .block-ready | PR #673 merged 2026-06-07 |
 | gap-40-damage-photo-exif-chain | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-41 | DONE |  |  | .block-ready | PR #672 merged 2026-06-07 |
+| gap-41-reports-hub-9-categories | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-42 | DONE |  |  | .block-ready | PR #767 merged 2026-06-08 |
 | gap-42-ifta-quarterly-preparer | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-43 | DONE |  |  | .block-ready | PR #768 merged 2026-06-08 |
 | gap-43-scheduled-reports | DONE |  |  | gap-spec | all 5 named artifact(s) on main |
 | GAP-44 | DONE |  |  | .block-ready | PR #674 merged 2026-06-07 |
+| gap-44-form-425c-exhibits | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-45 | DONE |  |  | .block-ready | PR #763 merged 2026-06-08 |
+| gap-45-cash-flow-cpm-routes | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-46 | DONE |  |  | .block-ready | PR #769 merged 2026-06-08 |
+| gap-46-anomaly-detection | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-47 | DONE |  |  | .block-ready | PR #770 merged 2026-06-08 |
+| gap-47-dispatch-auth-gates | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-48 | DONE |  |  | .block-ready | PR #676 merged 2026-06-07 |
 | gap-48-driver-operations-depth | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-49 | DONE |  |  | .block-ready | PR #675 merged 2026-06-07 |
@@ -367,12 +356,18 @@
 | gap-50-ai-photo-comparison | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-51 | DONE |  |  | .block-ready | PR #772 merged 2026-06-08 |
 | GAP-52 | DONE |  |  | .block-ready | PR #773 merged 2026-06-08 |
+| gap-52-driver-vendor-mapping-integrity | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-53 | DONE |  |  | .block-ready | PR #774 merged 2026-06-08 |
 | GAP-54 | DONE |  |  | .block-ready | PR #775 merged 2026-06-08 |
+| gap-54-wf-051-250-foot-correction | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-55 | DONE |  |  | .block-ready | PR #776 merged 2026-06-08 |
+| gap-55-cap-1-live-gps | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-56 | DONE |  |  | .block-ready | PR #779 merged 2026-06-08 |
+| gap-56-cap-4-auto-status-switch | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-57 | DONE |  |  | .block-ready | PR #781 merged 2026-06-08 |
+| gap-57-cap-5-tri-signal | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-58 | DONE |  |  | .block-ready | PR #777 merged 2026-06-08 |
+| gap-58-cap-8-engine-fault-auto-wo | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-59 | DONE |  |  | .block-ready | PR #778 merged 2026-06-08 |
 | gap-59-cap-9-vehicle-driver-pairing | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-60 | DONE |  |  | .block-ready | PR #780 merged 2026-06-08 |
@@ -393,15 +388,20 @@
 | GAP-69-DRIVER-MANAGER-HOME | DONE |  |  | .block-ready | PR #654 merged 2026-06-07 |
 | gap-69-driver-manager-home-view | DONE |  |  | gap-spec | all 7 named artifact(s) on main |
 | GAP-7 | DONE |  |  | .block-ready | PR #660 merged 2026-06-07 |
+| gap-7-severe-repair-oos-estimate | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-70 | DONE |  |  | .block-ready | PR #691 merged 2026-06-07 |
 | GAP-71 | DONE |  |  | .block-ready | PR #784 merged 2026-06-08 |
+| gap-71-driver-retention-model | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-72 | DONE |  |  | .block-ready | PR #782 merged 2026-06-08 |
 | gap-72-customer-relationship-score | DONE |  |  | gap-spec | all 7 named artifact(s) on main |
 | GAP-76 | DONE |  |  | .block-ready | all 7 file(s) on main |
+| gap-76-deadhead-optimizer | DONE |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-8 | DONE |  |  | .block-ready | PR #661 merged 2026-06-07 |
+| gap-8-assignments-quicksave | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | gap-81-drug-alcohol-program | DONE |  |  | gap-spec | all 3 named artifact(s) on main |
 | gap-82-cert-expiry-tracking | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-82-MEDICAL-CARD-TRACKING | DONE |  |  | .block-ready | PR #640 merged 2026-06-07 |
+| gap-83-eld-audit-trail | DONE |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-83-ELD-AUDIT-VIEWER | DONE |  |  | .block-ready | PR #644 merged 2026-06-07 |
 | GAP-84-DOT-INSPECTION-GAP-CLOSE | DONE |  |  | .block-ready | PR #649 merged 2026-06-07 |
 | GAP-85-PERMIT-TOLL-TRACKING | DONE |  |  | .block-ready | PR #655 merged 2026-06-07 |
