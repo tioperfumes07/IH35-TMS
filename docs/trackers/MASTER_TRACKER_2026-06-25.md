@@ -243,3 +243,47 @@ no RLS touch); on-branch grant flips SELECT false→true, INSERT stays false (co
 (Part B) in progress — two probes correctly hit the table's own guards (`subject_id NOT NULL`;
 `event_type` CHECK `^[a-z]+\.[a-z_]+$`, no digits) = schema rejecting malformed test payloads, not
 spine defects; re-running well-formed. **Merge held for GUARD's go/no-go.**
+
+---
+
+## 11. UPDATE 2026-06-26 — sweep verdicts resolved + reliability lane status
+
+### 11.1 SPINE-00 — DONE (supersedes §10)
+PR **#1501 MERGED + prod-verified** (`77073c6`, migration `202606252000` applied 03:42 UTC).
+`has_table_privilege(ih35_app,events.event_log,SELECT)=TRUE`; audit-report endpoints no longer 500.
+GUARD write-proof passed (well-formed `log_event` lands a typed row + SHA-256 hash). Empty prod
+`event_log` = **no traffic (confirmed), not a bug**.
+
+### 11.2 Financial NEEDS-VERIFY sweep — RESOLVED (both sides)
+| Block | Verdict | Basis |
+|---|---|---|
+| 22–29 (settlement, escrow, factoring×3, fuel, maint-AP, bank-recon) | **BUILT (code+schema verified) / behavior-pending-flag** | all 8 posters on `origin/main` (repo) + all signature tables on prod + migrations 0224/0219 applied (GUARD); JE postings = `invoice` only → gated OFF, **not missing** |
+| AF-1 entity-COA | **LIVE** | `catalogs.accounts` entity-partitioned (385 rows / 2 entities) |
+| AF-3 registers/period-close | **LIVE** | real table `accounting.periods` + `period_cash_basis_snapshot` (NOT `accounting_periods`) |
+| AF-7 money-controls | **PARTIAL** | `driver_finance.cash_advance_owner_approval_audit` exists; broader approvals framework scope-level |
+| AF-8 payroll→GL bridge | **NOT-BUILT-YET (expected)** | Cycle-5 future; no `qbo_payroll_link`, only settlement tables |
+| AF-2 qbo-drift | **PARTIAL** | drift **detection BUILT** (`qbo/sync-conflict-detection.routes.ts`); sync-execution gated, not built |
+| AF-4 ap-bills-migration | **NOT-BUILT (expected)** | no QBO open-bills→A/P migration tooling; gated + sequenced behind AF-2 |
+| AF-5 stub-catalogs | **PARTIAL / in-progress** | large catalog build-out shipped (#1463/#1474/seeds); per-catalog remaining count pending |
+| AF-6 finance-hub | **PARTIAL** | FH sub-modules BUILT (loan-wizard/amortization/calculator pages+APIs); hub-landing 404-by-design |
+
+### 11.3 Reliability lane — PR status
+| Block | PR | State |
+|---|---|---|
+| SPINE-00 events read-grant | #1501 | **MERGED + live** |
+| docs (tracker/sweep/recon/efficacy) | #1502 | **MERGED** |
+| R-05 event-spine heartbeat | #1503 | DRAFT (skeleton, OFF) |
+| R-07 anti-RAISE lint (+ `schema-usage-grants` wired) | #1504 | **READY** (self-test 5/5, CI-wired, enforce-clean) |
+| R-01 balanced-ledger guard | #1505 | DRAFT (advisory, degrade-safe) |
+| R-04 schema-doc reconcile + posting-idempotency guard | #1506 | **OPEN** (docs + blocking guard, wired into arch-design) |
+
+### 11.4 BLOCK-00 efficacy audit — COMPLETE
+Parts 1–2 (coder) merged in #1502; Part 3 (crons) closed by GUARD: reconciliation-worker / QBO sync /
+samsara / webhooks / reports / outbox / email all **WIRED+FIRING**. `load-test-nightly` fires but its
+**scheduled run 100%-fails** (wrong target/secret in schedule context — flagged). CI guards: 457 enforced
+/ 43 via-aggregate / 52 true-orphan; 5/6 financial contract guards gate via `verify:arch-design`;
+`verify:audit-coverage` + `verify:schema-usage-grants` were true-orphans (latter now wired advisory in #1504).
+
+### 11.5 Next
+R-04 shipped; **R-03 (reconciliation drift report)** and **R-02 (legal-matter link)** remain in the HOLD
+wave; R-06 (hash chain) last. AF-5 per-catalog count + AF-2/AF-4 execution are gated/sequenced.
