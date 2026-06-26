@@ -15,3 +15,8 @@ ACCEPTANCE (GUARD live): raw_call_status deployed_with_driver = 200; live positi
 
 STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
 ═══════════════════════════════════════════════════════════════════════════════
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+NV-29-CLOSE 2026-06-26: bug FIXED on main (Samsara stat-type uses valid types=gps,engineStates; invalid driverAssignments only in comments/response-parsing) + CI guard:
+  - scripts/verify-samsara-stats-types.mjs
+  - apps/backend/src/integrations/samsara/samsara-client.ts

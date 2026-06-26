@@ -52,5 +52,10 @@
     "verify:migration-no-unknown-roles": "PASS",
     "verify:rls-migration-scan": "PASS",
     "verify:migration-filenames": "FAIL only on Block C's settlement_min_net_floor (owned by Block C) — all Block J files pass"
-  }
+  },
+  "allowed_files": [
+    "db/migrations/202606072230_grant_master_data_schema_to_app.sql",
+    "scripts/verify-migration-filenames.mjs"
+  ],
+  "evidence_note": "NV-29-CLOSE 2026-06-26: allowed_files backfilled with verified on-main artifacts (registry was blank; feature already built)."
 }

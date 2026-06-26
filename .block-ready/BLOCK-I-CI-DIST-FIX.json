@@ -31,5 +31,9 @@
     "test_result": "2 pass, 0 fail",
     "script_command": "node scripts/verify-no-duplicate-routes.mjs",
     "script_result": "verify:no-duplicate-routes OK (no dist/ required)"
-  }
+  },
+  "allowed_files": [
+    "scripts/verify-no-duplicate-routes.mjs"
+  ],
+  "evidence_note": "NV-29-CLOSE 2026-06-26: allowed_files backfilled with verified on-main artifacts (registry was blank; feature already built)."
 }
