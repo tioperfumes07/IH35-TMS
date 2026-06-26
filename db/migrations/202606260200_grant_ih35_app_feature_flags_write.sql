@@ -20,7 +20,8 @@
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_app') THEN
-    GRANT INSERT, UPDATE, DELETE ON lib.feature_flags          TO ih35_app;
-    GRANT INSERT, UPDATE, DELETE ON lib.feature_flag_overrides TO ih35_app;
+    -- SELECT re-granted for self-containment (already present from 202606071200; idempotent no-op).
+    GRANT SELECT, INSERT, UPDATE, DELETE ON lib.feature_flags          TO ih35_app;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON lib.feature_flag_overrides TO ih35_app;
   END IF;
 END $$;
