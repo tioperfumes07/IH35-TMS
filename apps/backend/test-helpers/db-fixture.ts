@@ -6,6 +6,100 @@ import { TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID, TEST_OWNER_USER_ID } from "./co
 let cachedOperatingCompanyId: string | null = null;
 let cachedWorkOrderUnitId: string | null = null;
 let cachedWorkOrderDriverId: string | null = null;
+let cachedIntegrationLoadId: string | null = null;
+let cachedSecondEntity: { companyId: string; loadId: string } | null = null;
+
+function connectString(): string {
+  const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
+  if (!cs) throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required for integration tests");
+  return cs;
+}
+
+// Seed a minimal VALID mdata.loads row for a given operating company under app.bypass_rls. Satisfies the real
+// NOT-NULL-no-default columns (operating_company_id, load_number, customer_id, dispatcher_user_id); status defaults
+// 'draft'. Seeds a customer for the company first. Returns the new load id. [VERIFY]'d against the live schema.
+async function seedLoadForCompany(client: pg.Client, companyId: string, suffix: string): Promise<string> {
+  const cust = await client.query<{ id: string }>(
+    `INSERT INTO mdata.customers (customer_name, operating_company_id) VALUES ($1, $2::uuid) RETURNING id`,
+    [`E2E Customer ${suffix}`, companyId]
+  );
+  const customerId = cust.rows[0]!.id;
+  const load = await client.query<{ id: string }>(
+    `
+      INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id)
+      VALUES ($1::uuid, $2, $3::uuid, $4::uuid)
+      RETURNING id
+    `,
+    [companyId, `E2E-${suffix}`, customerId, TEST_OWNER_USER_ID]
+  );
+  return load.rows[0]!.id;
+}
+
+/** Seed (once, cached) a minimal load under the prerequisite TRANSP company; returns its id. */
+export async function ensureIntegrationLoadId(): Promise<string> {
+  if (cachedIntegrationLoadId) return cachedIntegrationLoadId;
+  const companyId = await ensureIntegrationPrerequisites();
+  const client = new pg.Client(buildPgClientConfig(connectString()));
+  await client.connect();
+  try {
+    await client.query("SET ROLE ih35_app");
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    const loadId = await seedLoadForCompany(client, companyId, randomUUID().slice(0, 8));
+    await client.query("COMMIT");
+    cachedIntegrationLoadId = loadId;
+    return loadId;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    await client.end();
+  }
+}
+
+/**
+ * Seed (once, cached) a SECOND, independent operating company (USMCA — a different operating_company_id than
+ * the TRANSP prerequisite) + a load under it. This is the FOREIGN entity used to prove cross-entity RLS hiding:
+ * a cash-advance row written under TRANSP must be INVISIBLE when the session switches to this company's RLS context.
+ */
+export async function ensureSecondEntityLoad(): Promise<{ companyId: string; loadId: string }> {
+  if (cachedSecondEntity) return cachedSecondEntity;
+  await ensureIntegrationPrerequisites();
+  const client = new pg.Client(buildPgClientConfig(connectString()));
+  await client.connect();
+  try {
+    await client.query("SET ROLE ih35_app");
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    const compRes = await client.query<{ id: string }>(`SELECT id FROM org.companies WHERE code = 'USMCA' LIMIT 1`);
+    const companyId = compRes.rows[0]?.id;
+    if (!companyId) throw new Error("integration tests require org.companies seed row code=USMCA (second entity)");
+    const loadId = await seedLoadForCompany(client, companyId, `2E-${randomUUID().slice(0, 8)}`);
+    await client.query("COMMIT");
+    cachedSecondEntity = { companyId, loadId };
+    return cachedSecondEntity;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    await client.end();
+  }
+}
+
+/**
+ * Run a callback with a given operating company's RLS context set on the client — bypass OFF — so RLS is
+ * ENFORCED (matches the real route mechanism: current_setting('app.operating_company_id')). Resets in finally.
+ * Use INSIDE a transaction (the set_config is transaction-local via the `true` is_local flag).
+ */
+export async function withCompanyRls<T>(client: pg.Client, companyId: string, fn: () => Promise<T>): Promise<T> {
+  await client.query(`SELECT set_config('app.bypass_rls', '', true)`);
+  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+  try {
+    return await fn();
+  } finally {
+    await client.query(`SELECT set_config('app.operating_company_id', '', true)`).catch(() => {});
+  }
+}
 
 export async function ensureIntegrationPrerequisites(): Promise<string> {
   if (cachedOperatingCompanyId) return cachedOperatingCompanyId;

@@ -29,6 +29,9 @@ export const driverCreateCashAdvanceRequestSchema = z.object({
   reason: z.string().trim().min(10).max(4000),
   proposed_recovery_per_settlement_cents: z.number().int().positive().optional(),
   submitted_via: z.enum(["pwa", "office", "phone"]).default("pwa"),
+  // [HOLD-FOR-JORGE — TIER 1] Originating load when booked at load creation (office). Driver-initiated
+  // (pwa/phone) advances omit it. Nullable FK to mdata.loads — entity-scoped (same operating company as the request).
+  load_id: z.string().uuid().nullable().optional(),
 });
 
 export const officeApproveBodySchema = z.object({
@@ -189,8 +192,9 @@ export async function createCashAdvanceRequest(
         reason,
         proposed_recovery_per_settlement_cents,
         status,
-        is_above_policy
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)
+        is_above_policy,
+        load_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
       RETURNING *
     `,
     [
@@ -202,6 +206,7 @@ export async function createCashAdvanceRequest(
       input.reason,
       input.proposed_recovery_per_settlement_cents ?? null,
       isAbovePolicy,
+      input.load_id ?? null,
     ]
   );
   const row = ins.rows[0]!;
@@ -620,6 +625,18 @@ export async function approveCashAdvanceRequest(
           linked_driver_bill_id: linkedDriverBillId,
         });
   if (!core.ok) return { error: "advance_create_failed" as const, details: core };
+
+  // [HOLD-FOR-JORGE — TIER 1] #1440 traceability: forward the originating load from the REQUEST onto the
+  // disbursed advance, so driver_finance.driver_advances.load_id mirrors cash_advance_requests.load_id (the
+  // load↔advance trace — the whole point of #1440). Booked cash advances carry a load_id; driver-initiated ones
+  // don't (NULL, no-op). Entity-scoped to the same operating company.
+  if (row.load_id) {
+    await client.query(
+      `UPDATE driver_finance.driver_advances SET load_id = $1::uuid, updated_at = now()
+       WHERE id = $2::uuid AND operating_company_id = $3::uuid AND load_id IS NULL`,
+      [row.load_id, core.advanceId, args.operatingCompanyId]
+    );
+  }
 
   const notes = input.approval_notes?.trim() ?? null;
   const upd = await client.query(

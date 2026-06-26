@@ -484,6 +484,17 @@ export async function ownerTokenApproveCashAdvanceRequest(
       return { error: "advance_create_failed", details: core };
     }
 
+    // [HOLD-FOR-JORGE — TIER 1] #1440 traceability: forward the originating load from the REQUEST onto the
+    // disbursed advance (driver_advances.load_id mirrors cash_advance_requests.load_id). Same as the in-app
+    // approval path. NULL for driver-initiated advances. Entity-scoped to the request's operating company.
+    if (row.load_id) {
+      await client.query(
+        `UPDATE driver_finance.driver_advances SET load_id = $1::uuid, updated_at = now()
+         WHERE id = $2::uuid AND operating_company_id = $3::uuid AND load_id IS NULL`,
+        [row.load_id, core.advanceId, operatingCompanyId]
+      );
+    }
+
     const notes = parsed.data.owner_notes.trim();
     const upd = await client.query(
       `
