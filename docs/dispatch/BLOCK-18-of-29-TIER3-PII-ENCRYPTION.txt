@@ -85,3 +85,6 @@ ALTER TABLE driver_profiles DROP COLUMN tin;
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+CONFIRM-ABSENT 2026-06-26: deliverable BUILT on main (was false-residual):
+  - apps/backend/src/lib/encryption.ts

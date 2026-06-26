@@ -83,3 +83,6 @@ Single document showing exactly what happens when each external dep fails. Build
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+CONFIRM-ABSENT 2026-06-26: deliverable BUILT on main (was false-residual):
+  - docs/runbooks/degradation-matrix.md

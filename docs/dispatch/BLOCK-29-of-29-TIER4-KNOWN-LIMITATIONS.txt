@@ -70,3 +70,6 @@ Single document listing every known limitation. Helps onboarding new staff/dispa
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+CONFIRM-ABSENT 2026-06-26: deliverable BUILT on main (was false-residual):
+  - docs/runbooks/known-limitations.md

@@ -78,7 +78,16 @@ function namedArtifacts(body) {
   for (const m of body.matchAll(/\b(scripts\/verify-[A-Za-z0-9_-]+\.(?:mjs|ts|cjs))\b/g)) out.add(m[1]);
   for (const m of body.matchAll(/\b(db\/migrations\/[A-Za-z0-9_]+\.sql)\b/g)) out.add(m[1]);
   for (const m of body.matchAll(/\b((?:\d{4}|\d{12})_[a-z0-9_]+\.sql)\b/g)) out.add(`db/migrations/${m[1]}`);
-  return [...out].filter(isSig);
+  const arts = [...out].filter(isSig);
+  // Doc-deliverable blocks (TIER-3/4 ops/design: runbooks, *-DESIGN.md) deliver a DOC, not code. Recognize
+  // those — but ONLY inside the controlled "ARTIFACTS ON MAIN" evidence footer, so an incidental runbook
+  // reference in a spec body can never falsely promote a block.
+  const fIdx = body.indexOf("ARTIFACTS ON MAIN (evidence");
+  if (fIdx >= 0) {
+    const footer = body.slice(fIdx);
+    for (const m of footer.matchAll(/\b(docs\/runbooks\/[A-Za-z0-9_-]+\.md|docs\/specs\/[A-Za-z0-9_-]+-DESIGN\.md)\b/g)) arts.push(m[1]);
+  }
+  return arts;
 }
 const namedBranch = (body) => (body.match(/`(feat\/[A-Za-z0-9._-]+|fix\/[A-Za-z0-9._-]+|chore\/[A-Za-z0-9._-]+)`/) || [])[1] || null;
 // classify a doc-described block purely from on-main evidence (no self-reports trusted as DONE)
@@ -151,8 +160,10 @@ for (const fp of progFiles) {
 const CURATED = {
   "BLOCK-01-of-29": "PENDING (GATED)", "BLOCK-02-of-29": "PENDING (GATED)", "BLOCK-03-of-29": "PENDING (GATED)",
   "BLOCK-17-of-29": "PENDING (GATED)",
-  "BLOCK-18-of-29": "PENDING", "BLOCK-19-of-29": "PENDING (GATED)", "BLOCK-24-of-29": "PENDING (GATED)",
+  "BLOCK-19-of-29": "PENDING (GATED)", "BLOCK-24-of-29": "PENDING (GATED)",
   "BLOCK-25-of-29": "PENDING (GATED)",
+  // BLOCK-18 (PII-encryption) REMOVED 2026-06-26 — confirm-absent disproved "absent": apps/backend/src/lib/
+  // encryption.ts exists on main → auto-promotes via classifyByEvidence.
 };
 function scanDir(rel, opts) {
   const dir = path.join(ROOT, rel);

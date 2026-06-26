@@ -76,3 +76,6 @@ Document where IH35-TMS is locked into specific vendors (Render, Neon, Samsara, 
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+CONFIRM-ABSENT 2026-06-26: deliverable BUILT on main (was false-residual):
+  - docs/runbooks/vendor-lockin-analysis.md

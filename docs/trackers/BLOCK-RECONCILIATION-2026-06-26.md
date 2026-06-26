@@ -2,18 +2,17 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (7059 files) + 1441 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (7059 files) + 1442 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
-- **PENDING**: 6
+- **PENDING**: 5
 - **PENDING (GATED)**: 24
-- **NEEDS-VERIFY**: 29
-- **DONE**: 397
+- **NEEDS-VERIFY**: 23
+- **DONE**: 404
 
 ## Every block
 | Block | Status | Fin | Tier | Source | Evidence |
 |-------|--------|-----|------|--------|----------|
-| BLOCK-18-of-29-TIER3-PII-ENCRYPTION | PENDING |  | T3 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | CASH-FLOW-MODULE | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | FIX-AUDIT-TRIGGER-DRIFT | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | FIX-REQUIRED-CHECKS-GATE | PENDING |  |  | .block-ready | no merged PR / no files on main |
@@ -53,12 +52,6 @@
 | AF-7-money-controls | NEEDS-VERIFY | 💰 | T1 | program | PR #542 title-match only, unverified |
 | AF-8-payroll-bridge | NEEDS-VERIFY | 💰 | T1 | program | PR #544 title-match only, unverified |
 | BK7-INLINE-CREATE-DRAWERS | NEEDS-VERIFY |  |  | .block-ready | PR #866 title-match only, unverified |
-| BLOCK-09-of-29-TIER2-E2E-PATHS | NEEDS-VERIFY |  | T2 | enterprise-29 | PR #802 title-match only, unverified |
-| BLOCK-20-of-29-TIER3-SECRETS-ROTATION | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #806 title-match only, unverified |
-| BLOCK-23-of-29-TIER3-DEGRADATION | NEEDS-VERIFY |  | T3 | enterprise-29 | PR #808 title-match only, unverified |
-| BLOCK-26-of-29-TIER4-PARTITION | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #809 title-match only, unverified |
-| BLOCK-28-of-29-TIER4-VENDOR-LOCKIN | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #811 title-match only, unverified |
-| BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS | NEEDS-VERIFY |  | T4 | enterprise-29 | PR #813 title-match only, unverified |
 | block-37-qbo-sync-repair-pipeline | NEEDS-VERIFY | 💰 |  | accounting | PR #226 title-match only, unverified |
 | block-40-accounting-audit-trail | NEEDS-VERIFY | 💰 |  | accounting | PR #227 title-match only, unverified |
 | BLOCK-I-CI-DIST-FIX | NEEDS-VERIFY |  |  | .block-ready | PR #73 title-match only, unverified |
@@ -97,6 +90,7 @@
 | BLOCK-07-of-29-TIER2-PAGINATION-AUDIT | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-08-of-29-TIER2-LOAD-TEST | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-08-TIER2-LOAD-TEST | DONE |  |  | .block-ready | PR #796 merged 2026-06-08 |
+| BLOCK-09-of-29-TIER2-E2E-PATHS | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-09-TIER2-E2E-PATHS | DONE |  |  | .block-ready | PR #802 merged 2026-06-09 |
 | block-10-account-balances | DONE | 💰 |  | accounting | branch feat/acct-block-10-account-balances → PR #709 merged 2026-06-08 |
 | BLOCK-10-driver-inactivity | DONE |  | T1 | program | all 2 named artifact(s) on main |
@@ -110,21 +104,27 @@
 | BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP | DONE |  | T2.5 | enterprise-29 | all 2 named artifact(s) on main |
 | BLOCK-16-COMPLIANCE-DASHBOARD | DONE |  |  | .block-ready | PR #701 merged 2026-06-07 |
 | BLOCK-16-of-29-TIER2.5-FUEL-CARD | DONE |  | T2.5 | enterprise-29 | all 1 named artifact(s) on main |
+| BLOCK-18-of-29-TIER3-PII-ENCRYPTION | DONE |  | T3 | enterprise-29 | all 1 named artifact(s) on main |
 | block-20-cash-basis | DONE | 💰 |  | accounting | all 3 named artifact(s) on main |
 | block-20-frontend-selector | DONE | 💰 |  | accounting | all 9 named artifact(s) on main |
+| BLOCK-20-of-29-TIER3-SECRETS-ROTATION | DONE |  | T3 | enterprise-29 | all 1 named artifact(s) on main |
 | block-20-period-close-lock | DONE | 💰 |  | accounting | all 1 named artifact(s) on main |
 | block-21-expense-category-map | DONE | 💰 |  | accounting | all 1 named artifact(s) on main |
 | BLOCK-21-of-29-TIER3-DR-DRILL | DONE |  | T3 | enterprise-29 | all 1 named artifact(s) on main |
 | block-22-driver-settlement-engine | DONE | 💰 |  | accounting | all 4 named artifact(s) on main |
 | BLOCK-22-of-29-TIER3-OPS-RUNBOOKS | DONE |  | T3 | enterprise-29 | all 1 named artifact(s) on main |
 | block-23-escrow-posting-flow | DONE | 💰 |  | accounting | all 1 named artifact(s) on main |
+| BLOCK-23-of-29-TIER3-DEGRADATION | DONE |  | T3 | enterprise-29 | all 1 named artifact(s) on main |
 | block-24-factoring-posting | DONE | 💰 |  | accounting | all 4 named artifact(s) on main |
 | block-25-factoring-fees-reserves | DONE | 💰 |  | accounting | all 6 named artifact(s) on main |
 | block-26-factoring-reconciliation | DONE | 💰 |  | accounting | all 10 named artifact(s) on main |
+| BLOCK-26-of-29-TIER4-PARTITION | DONE |  | T4 | enterprise-29 | all 1 named artifact(s) on main |
 | block-27-fuel-expense-posting | DONE | 💰 |  | accounting | branch feat/block-27-fuel-expense-posting → PR #203 merged 2026-05-23 |
 | BLOCK-27-of-29-TIER4-CANARY | DONE |  | T4 | enterprise-29 | all 1 named artifact(s) on main |
 | block-28-maintenance-ap-posting | DONE | 💰 |  | accounting | branch feat/block-28-maintenance-ap-posting → PR #205 merged 2026-05-23 |
+| BLOCK-28-of-29-TIER4-VENDOR-LOCKIN | DONE |  | T4 | enterprise-29 | all 1 named artifact(s) on main |
 | block-29-bank-reconciliation-engine | DONE | 💰 |  | accounting | branch feat/block-29-bank-reconciliation-engine → PR #206 merged 2026-05-23 |
+| BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS | DONE |  | T4 | enterprise-29 | all 1 named artifact(s) on main |
 | block-30-bank-reconciliation-ui | DONE | 💰 |  | accounting | all 10 named artifact(s) on main |
 | block-31-sales-tax-handling | DONE | 💰 |  | accounting | all 10 named artifact(s) on main |
 | block-33-invoice-line-revenue-mapping | DONE | 💰 |  | accounting | branch feat/block-33-invoice-line-revenue-mapping → PR #209 merged 2026-05-23 |

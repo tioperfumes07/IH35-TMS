@@ -72,3 +72,6 @@ Playwright E2E tests for the 10 most critical user paths. Catch UI breakage befo
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+CONFIRM-ABSENT 2026-06-26: deliverable BUILT on main (was false-residual):
+  - apps/frontend/e2e/critical-paths/03-invoice-send-paid.spec.ts
