@@ -1,10 +1,10 @@
 {
  "date": "2026-06-26",
  "counts": {
-  "PENDING": 32,
+  "PENDING": 13,
   "PENDING (GATED)": 24,
   "NEEDS-VERIFY": 69,
-  "DONE": 331
+  "DONE": 350
  },
  "blocks": [
   {
@@ -35,69 +35,6 @@
    "name": "BLOCK-18-of-29-TIER3-PII-ENCRYPTION"
   },
   {
-   "id": "CAP-AUTOSTATUS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Auto load-status switch"
-  },
-  {
-   "id": "CAP-CARGOTEMP",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Cargo-temp monitoring"
-  },
-  {
-   "id": "CAP-ENGINEWO",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Engine-fault auto Work Order"
-  },
-  {
-   "id": "CAP-FUELFRAUD",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection"
-  },
-  {
-   "id": "CAP-GPS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking"
-  },
-  {
-   "id": "CAP-PREDICTIVE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive"
-  },
-  {
-   "id": "CAP-SCORING",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring"
-  },
-  {
    "id": "CASH-FLOW-MODULE",
    "source": ".block-ready",
    "fin": false,
@@ -105,33 +42,6 @@
    "status": "PENDING",
    "evidence": "no merged PR / no files on main",
    "name": ""
-  },
-  {
-   "id": "DISP-KANBAN-dispatch-kanban-board",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "DISPATCH / TASK Dispatch Kanban board — Dispatch Kanban board"
-  },
-  {
-   "id": "DISP-OVERVIEW-dispatch-overview",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "DISPATCH / TASK Dispatch Overview — Dispatch Overview"
-  },
-  {
-   "id": "DISP-PROFIT-load-profitability",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "DISPATCH / TASK Load Profitability — Load Profitability"
   },
   {
    "id": "FIX-AUDIT-TRIGGER-DRIFT",
@@ -161,42 +71,6 @@
    "name": "HOS / TASK Bug — deployed_with_driver 400 (invalid stat type)"
   },
   {
-   "id": "HOS-VIEWER-DONE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]"
-  },
-  {
-   "id": "INS-MODULE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "INSURANCE / TASK — Insurance module build-out"
-  },
-  {
-   "id": "MNT-SHOP",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "MAINTENANCE / TASK — Mechanic-shop / Work-Order module"
-  },
-  {
-   "id": "MX-OPS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "MEXICO OPS / TASK — Mexico cross-border operations"
-  },
-  {
    "id": "Q9-TZ-timezone-library",
    "source": "program",
    "fin": false,
@@ -206,42 +80,6 @@
    "name": "FOUNDATIONS / TASK Q9 — Timezone library (lat/lng→IANA primary + override)"
   },
   {
-   "id": "RPT-MODULE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "REPORTS / TASK — Reports module build-out"
-  },
-  {
-   "id": "SAFE-W3",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W3"
-  },
-  {
-   "id": "SAFE-W4",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W4"
-  },
-  {
-   "id": "SAFE-W5",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "SAFETY/PWA / TASK — Safety/PWA wave W5"
-  },
-  {
    "id": "TBL-STANDARD-universal-table-sweep",
    "source": "program",
    "fin": false,
@@ -249,15 +87,6 @@
    "status": "PENDING",
    "evidence": "forward spec — 0 named artifacts on main",
    "name": "TABLE/UX / TASK Standard — Universal table sweep (bespoke → shared DataTable)"
-  },
-  {
-   "id": "UX-A-table-alignment-DONE",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]"
   },
   {
    "id": "UX-B-dispatch-location-column",
@@ -1709,6 +1538,69 @@
    "name": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r"
   },
   {
+   "id": "CAP-AUTOSTATUS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Auto load-status switch"
+  },
+  {
+   "id": "CAP-CARGOTEMP",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Cargo-temp monitoring"
+  },
+  {
+   "id": "CAP-ENGINEWO",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Engine-fault auto Work Order"
+  },
+  {
+   "id": "CAP-FUELFRAUD",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection"
+  },
+  {
+   "id": "CAP-GPS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking"
+  },
+  {
+   "id": "CAP-PREDICTIVE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive"
+  },
+  {
+   "id": "CAP-SCORING",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring"
+  },
+  {
    "id": "CHORE-MASTER-TRACKER-MD",
    "source": ".block-ready",
    "fin": true,
@@ -1889,6 +1781,15 @@
    "name": "Block 13 — Driver fines → auto-deduction policies + drawer confirm/defer card"
   },
   {
+   "id": "DISP-KANBAN-dispatch-kanban-board",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "DISPATCH / TASK Dispatch Kanban board — Dispatch Kanban board"
+  },
+  {
    "id": "DISP-KANBAN-STATES",
    "source": ".block-ready",
    "fin": false,
@@ -1916,6 +1817,15 @@
    "name": "Block 1 — Dispatch Overview command center (default view)"
   },
   {
+   "id": "DISP-OVERVIEW-dispatch-overview",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "DISPATCH / TASK Dispatch Overview — Dispatch Overview"
+  },
+  {
    "id": "DISP-PLANNERS",
    "source": ".block-ready",
    "fin": false,
@@ -1923,6 +1833,15 @@
    "status": "DONE",
    "evidence": "all 11 file(s) on main",
    "name": "DISP-PLANNERS"
+  },
+  {
+   "id": "DISP-PROFIT-load-profitability",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 named artifact(s) on main",
+   "name": "DISPATCH / TASK Load Profitability — Load Profitability"
   },
   {
    "id": "DISP-PROFITABILITY",
@@ -3761,6 +3680,15 @@
    "name": "Lock Global Sort Rule as a UI contract (docs/specs/GLOBAL-SORT-RULE.md) and wire CI guard (scripts/verify-global-sort-ru"
   },
   {
+   "id": "HOS-VIEWER-DONE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]"
+  },
+  {
    "id": "HOTFIX-0327-MIGRATION-ROLE",
    "source": ".block-ready",
    "fin": false,
@@ -3768,6 +3696,15 @@
    "status": "DONE",
    "evidence": "PR #643 merged 2026-06-07",
    "name": "Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)"
+  },
+  {
+   "id": "INS-MODULE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "INSURANCE / TASK — Insurance module build-out"
   },
   {
    "id": "ITEM1-TWO-SIDED-ITEM",
@@ -3815,6 +3752,24 @@
    "name": "Migration runner hardening - fail loud on unrecognized migration filenames to prevent silent skips"
   },
   {
+   "id": "MNT-SHOP",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "MAINTENANCE / TASK — Mechanic-shop / Work-Order module"
+  },
+  {
+   "id": "MX-OPS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "MEXICO OPS / TASK — Mexico cross-border operations"
+  },
+  {
    "id": "OB1-NAV-HEADER-UNIFY",
    "source": ".block-ready",
    "fin": false,
@@ -3849,6 +3804,42 @@
    "status": "DONE",
    "evidence": "PR #683 merged 2026-06-07",
    "name": "createSettlementDeduction() service — unblocks Driver Hub Requests approve→deduction (Block 7)"
+  },
+  {
+   "id": "RPT-MODULE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "REPORTS / TASK — Reports module build-out"
+  },
+  {
+   "id": "SAFE-W3",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W3"
+  },
+  {
+   "id": "SAFE-W4",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W4"
+  },
+  {
+   "id": "SAFE-W5",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 named artifact(s) on main",
+   "name": "SAFETY/PWA / TASK — Safety/PWA wave W5"
   },
   {
    "id": "SETTLEMENTS-SIDEBAR-RENAME-MOVE",
@@ -4011,6 +4002,15 @@
    "status": "DONE",
    "evidence": "PR #813 merged 2026-06-08",
    "name": "Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories"
+  },
+  {
+   "id": "UX-A-table-alignment-DONE",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 named artifact(s) on main",
+   "name": "TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]"
   },
   {
    "id": "W1-EVENT-LOG-SPINE",

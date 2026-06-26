@@ -2,13 +2,13 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (7051 files) + 1438 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (7054 files) + 1439 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
-- **PENDING**: 32
+- **PENDING**: 13
 - **PENDING (GATED)**: 24
 - **NEEDS-VERIFY**: 69
-- **DONE**: 331
+- **DONE**: 350
 
 ## Every block
 | Block | Status | Fin | Tier | Source | Evidence |
@@ -16,31 +16,12 @@
 | BLOCK-07-of-29-TIER2-PAGINATION-AUDIT | PENDING |  | T2 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-12-of-29-TIER2-DESTRUCT-PREFLIGHT | PENDING |  | T2 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-18-of-29-TIER3-PII-ENCRYPTION | PENDING |  | T3 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
-| CAP-AUTOSTATUS | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| CAP-CARGOTEMP | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| CAP-ENGINEWO | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| CAP-FUELFRAUD | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| CAP-GPS | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| CAP-PREDICTIVE | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| CAP-SCORING | PENDING |  |  | program | forward spec — 0 named artifacts on main |
 | CASH-FLOW-MODULE | PENDING |  |  | .block-ready | no merged PR / no files on main |
-| DISP-KANBAN-dispatch-kanban-board | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| DISP-OVERVIEW-dispatch-overview | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| DISP-PROFIT-load-profitability | PENDING |  |  | program | forward spec — 0 named artifacts on main |
 | FIX-AUDIT-TRIGGER-DRIFT | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | FIX-REQUIRED-CHECKS-GATE | PENDING |  |  | .block-ready | no merged PR / no files on main |
 | HOS-BUG-DRIVERASSIGN | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
-| HOS-VIEWER-DONE | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| INS-MODULE | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| MNT-SHOP | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| MX-OPS | PENDING |  |  | program | forward spec — 0 named artifacts on main |
 | Q9-TZ-timezone-library | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
-| RPT-MODULE | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| SAFE-W3 | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| SAFE-W4 | PENDING |  |  | program | forward spec — 0 named artifacts on main |
-| SAFE-W5 | PENDING |  |  | program | forward spec — 0 named artifacts on main |
 | TBL-STANDARD-universal-table-sweep | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
-| UX-A-table-alignment-DONE | PENDING |  |  | program | forward spec — 0 named artifacts on main |
 | UX-B-dispatch-location-column | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
 | UX-C-fleet-location | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
 | UX-D-hos-cycle-drawer | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
@@ -202,6 +183,13 @@
 | C4-CUST-VEND-REBUILD-RECLASSIFY | DONE |  |  | .block-ready | PR #905 merged 2026-06-12 |
 | C6-HOME-DASHBOARD | DONE | 💰 |  | .block-ready | all 3 file(s) on main |
 | C7-ACCT-SUBNAV-CHROME | DONE | 💰 |  | .block-ready | all 10 file(s) on main |
+| CAP-AUTOSTATUS | DONE |  |  | program | all 1 named artifact(s) on main |
+| CAP-CARGOTEMP | DONE |  |  | program | all 2 named artifact(s) on main |
+| CAP-ENGINEWO | DONE |  |  | program | all 2 named artifact(s) on main |
+| CAP-FUELFRAUD | DONE |  |  | program | all 1 named artifact(s) on main |
+| CAP-GPS | DONE |  |  | program | all 3 named artifact(s) on main |
+| CAP-PREDICTIVE | DONE |  |  | program | all 2 named artifact(s) on main |
+| CAP-SCORING | DONE |  |  | program | all 2 named artifact(s) on main |
 | CHORE-MASTER-TRACKER-MD | DONE | 💰 |  | .block-ready | PR #924 merged 2026-06-13 |
 | CHORE-UNVERIFIED-ROWS-RECONCILE | DONE | 💰 |  | .block-ready | PR #928 merged 2026-06-13 |
 | CLOSURE-10-MAINT-PARTS-CATALOG | DONE |  |  | .block-ready | PR #798 merged 2026-06-09 |
@@ -222,10 +210,13 @@
 | DISP-DRAWER-WIRE | DONE |  |  | .block-ready | PR #746 merged 2026-06-08 |
 | DISP-FACTORING-PACKET | DONE |  |  | .block-ready | PR #750 merged 2026-06-08 |
 | DISP-FINES-DEDUCT | DONE |  |  | .block-ready | PR #762 merged 2026-06-08 |
+| DISP-KANBAN-dispatch-kanban-board | DONE |  |  | program | all 2 named artifact(s) on main |
 | DISP-KANBAN-STATES | DONE |  |  | .block-ready | PR #751 merged 2026-06-08 |
 | DISP-LIST-TABLE-ASSIGN | DONE |  |  | .block-ready | PR #758 merged 2026-06-08 |
 | DISP-OVERVIEW | DONE |  |  | .block-ready | PR #752 merged 2026-06-08 |
+| DISP-OVERVIEW-dispatch-overview | DONE |  |  | program | all 2 named artifact(s) on main |
 | DISP-PLANNERS | DONE |  |  | .block-ready | all 11 file(s) on main |
+| DISP-PROFIT-load-profitability | DONE |  |  | program | all 2 named artifact(s) on main |
 | DISP-PROFITABILITY | DONE |  |  | .block-ready | PR #743 merged 2026-06-08 |
 | DISP-QUEUES-NAV | DONE |  |  | .block-ready | PR #753 merged 2026-06-08 |
 | DISP-ROUNDTRIPS | DONE |  |  | .block-ready | PR #756 merged 2026-06-08 |
@@ -430,16 +421,24 @@
 | GAP-IDEMP-KEYS | DONE |  |  | .block-ready | PR #737 merged 2026-06-08 |
 | GAP-PREMERGE-GATES-EXPAND | DONE |  |  | .block-ready | PR #651 merged 2026-06-07 |
 | GLOBAL-SORT-RULE | DONE |  |  | .block-ready | PR #723 merged 2026-06-08 |
+| HOS-VIEWER-DONE | DONE |  |  | program | all 3 named artifact(s) on main |
 | HOTFIX-0327-MIGRATION-ROLE | DONE |  |  | .block-ready | PR #643 merged 2026-06-07 |
+| INS-MODULE | DONE |  |  | program | all 3 named artifact(s) on main |
 | ITEM1-TWO-SIDED-ITEM | DONE | 💰 |  | .block-ready | all 2 file(s) on main |
 | LOCKDOWN-ENFORCEMENT-GUARDS | DONE |  |  | .block-ready | PR #755 merged 2026-06-08 |
 | M1-POSITIONED-PARTS | DONE |  |  | .block-ready | PR #913 merged 2026-06-12 |
 | M2-INTEGRITY-POSITION-HISTORY | DONE |  |  | .block-ready | PR #915 merged 2026-06-13 |
 | MIGRATION-RUNNER-HARDEN | DONE |  |  | .block-ready | PR #914 merged 2026-06-13 |
+| MNT-SHOP | DONE |  |  | program | all 3 named artifact(s) on main |
+| MX-OPS | DONE |  |  | program | all 3 named artifact(s) on main |
 | OB1-NAV-HEADER-UNIFY | DONE |  |  | .block-ready | PR #894 merged 2026-06-12 |
 | P0-BLOCK-3-DRIVER-LOAD-HISTORY | DONE |  |  | .block-ready | PR #731 merged 2026-06-08 |
 | P5-T6-BANKING-TRANSFER | DONE |  |  | .block-ready | PR #862 merged 2026-06-10 |
 | PREREQ-B-SETTLEMENT-DEDUCTION-SVC | DONE |  |  | .block-ready | PR #683 merged 2026-06-07 |
+| RPT-MODULE | DONE |  |  | program | all 3 named artifact(s) on main |
+| SAFE-W3 | DONE |  |  | program | all 3 named artifact(s) on main |
+| SAFE-W4 | DONE |  |  | program | all 3 named artifact(s) on main |
+| SAFE-W5 | DONE |  |  | program | all 3 named artifact(s) on main |
 | SETTLEMENTS-SIDEBAR-RENAME-MOVE | DONE |  |  | .block-ready | PR #893 merged 2026-06-12 |
 | SHADOW-ROUTE-REDIRECTS | DONE |  |  | .block-ready | PR #887 merged 2026-06-12 |
 | SIDEBAR-DRIVER-HUB | DONE |  |  | .block-ready | PR #680 merged 2026-06-07 |
@@ -458,6 +457,7 @@
 | TIER27-CANARY | DONE |  |  | .block-ready | PR #810 merged 2026-06-08 |
 | TIER28-VENDOR-LOCKIN | DONE |  |  | .block-ready | PR #811 merged 2026-06-08 |
 | TIER29-KNOWN-LIMITATIONS | DONE |  |  | .block-ready | PR #813 merged 2026-06-08 |
+| UX-A-table-alignment-DONE | DONE |  |  | program | all 1 named artifact(s) on main |
 | W1-EVENT-LOG-SPINE | DONE | 💰 |  | .block-ready | all 1 file(s) on main |
 | W1A-EVENT-LOG-IMMUTABLE | DONE | 💰 |  | .block-ready | PR #870 merged 2026-06-11 |
 | W1B-TASKS-MODULE | DONE | 💰 |  | .block-ready | PR #872 merged 2026-06-11 |

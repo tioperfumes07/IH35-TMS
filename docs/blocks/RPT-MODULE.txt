@@ -17,3 +17,9 @@ ACCEPTANCE (GUARD live): each sub-surface renders real data per entity to the sp
 
 STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
 ═══════════════════════════════════════════════════════════════════════════════
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 evidence sweep 2026-06-26: this block is BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/reports/ReportsHub.tsx
+  - apps/frontend/src/pages/safety/audit-425c/Audit425cPage.tsx
+  - apps/backend/src/reports/scheduled-reports.routes.ts
