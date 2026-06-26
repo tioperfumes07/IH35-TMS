@@ -9,6 +9,13 @@ import {
   listContractInstances,
   sendContractSigningLink,
 } from "./contracts.service.js";
+import {
+  leaseToOwnEnabled,
+  ensureLeaseToOwnTemplate,
+  listFleetUnitsForPicker,
+  getCompanyForSeller,
+  DEFAULT_SELLER_COMPANY_CODE,
+} from "./lease-to-own.service.js";
 
 const officeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant", "Dispatcher", "Safety", "Mechanic"]);
 const writeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
@@ -168,5 +175,45 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
       }
       return reply.code(500).send({ error: "legal_contract_send_failed" });
     }
+  });
+
+  // ---- Lease-to-Own creator (LEGAL-CONTRACT-CREATOR-01) — behind LEGAL_CONTRACTS_ENABLED (dark when off) ----
+  const leaseFleetQuerySchema = operatingCompanyQuerySchema.extend({
+    owner_company_id: z.string().uuid().optional(),
+  });
+
+  // Vehicle picker: units to lease, CONFIGURABLE owner filter (default TRK, selectable) + owner badge.
+  // Reads ownership as-is (TRK owns / TRANSP leases — no data rewrite). Excludes sold/totaled/disposed.
+  app.get("/api/v1/legal/contracts/lease-to-own/fleet", async (req, reply) => {
+    if (!leaseToOwnEnabled()) return reply.code(404).send({ error: "not_found" });
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
+    const parsed = leaseFleetQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    return withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsed.data.operating_company_id);
+      const [seller, units] = await Promise.all([
+        getCompanyForSeller(client, DEFAULT_SELLER_COMPANY_CODE),
+        listFleetUnitsForPicker(client, { ownerCompanyId: parsed.data.owner_company_id ?? null }),
+      ]);
+      return { units, seller_default: seller };
+    });
+  });
+
+  // Ensure the canonical lease_to_own template (active v1) exists for the entity + return seller defaults.
+  app.post("/api/v1/legal/contracts/lease-to-own/ensure-template", async (req, reply) => {
+    if (!leaseToOwnEnabled()) return reply.code(404).send({ error: "not_found" });
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!writeRoles.has(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const parsed = operatingCompanyQuerySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    return withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsed.data.operating_company_id);
+      const template = await ensureLeaseToOwnTemplate(client, parsed.data.operating_company_id, authUser.uuid);
+      const seller = await getCompanyForSeller(client, DEFAULT_SELLER_COMPANY_CODE);
+      return { template, seller_default: seller };
+    });
   });
 }
