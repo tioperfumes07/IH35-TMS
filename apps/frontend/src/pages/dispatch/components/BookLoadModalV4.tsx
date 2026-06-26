@@ -31,6 +31,7 @@ import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 export const LOAD_WIZARD_V5_FLAG = "LOAD_WIZARD_V5";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
 import { AccessorialEditor } from "../../../components/dispatch/AccessorialEditor";
+import { sumStopExtraRatesCents, stopExtraRateChargeLines } from "../../../components/dispatch/book-load-extra-rates";
 import {
   buildBookLoadChargeLines,
   computeBookLoadSectionTotalCents,
@@ -122,6 +123,7 @@ type FormValues = BookLoadFormValues & {
     site_contact_name?: string;
     site_contact_phone?: string;
     gate_dock_text?: string;
+    extra_rates?: Array<{ rate_type?: string; amount_cents?: number; description?: string }>;
   }>;
 };
 
@@ -365,6 +367,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const linehaul = form.watch("linehaul_cents");
   const fuel = form.watch("fuel_surcharge_cents");
   const accessorialRows = form.watch("accessorial_rows");
+  const stops = form.watch("stops");
   const customerQboId = form.watch("customer_qbo_id");
   const customerName = form.watch("customer_name");
   const loadType = form.watch("load_type");
@@ -392,6 +395,10 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     () => computeBookLoadSectionTotalCents(linehaul || 0, fuel || 0, accessorialRows ?? []),
     [accessorialRows, fuel, linehaul]
   );
+  // W7 — per-stop extra rates (stops[].extra_rates) must bill the customer: roll into the accessorial
+  // subtotal, customer-invoice total, driver-bill preview, and the payload (pure math, unit-tested).
+  const extraRatesCents = useMemo(() => sumStopExtraRatesCents(stops ?? []), [stops]);
+  const customerInvoiceTotal = sectionTotal + extraRatesCents;
 
   useEffect(() => {
     const sum = sumAccessorialCents(accessorialRows ?? []);
@@ -403,8 +410,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     const miles = Number(milesShortest || 0);
     const rate = Number(driverPayRatePerMile || 0);
     if (miles > 0 && rate > 0) return Math.round(miles * rate * 100);
-    return sectionTotal;
-  }, [driverPayRatePerMile, milesShortest, sectionTotal]);
+    return sectionTotal + extraRatesCents;
+  }, [driverPayRatePerMile, milesShortest, sectionTotal, extraRatesCents]);
   const ratePerMile = useMemo(() => {
     const miles = Number(milesShortest || 0);
     if (miles <= 0) return 0;
@@ -560,11 +567,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         charges:
           saveMode === "draft"
             ? []
-            : buildBookLoadChargeLines({
-                linehaul_cents: Number(values.linehaul_cents || 0),
-                fuel_surcharge_cents: Number(values.fuel_surcharge_cents || 0),
-                accessorial_rows: values.accessorial_rows ?? [],
-              }),
+            : [
+                ...buildBookLoadChargeLines({
+                  linehaul_cents: Number(values.linehaul_cents || 0),
+                  fuel_surcharge_cents: Number(values.fuel_surcharge_cents || 0),
+                  accessorial_rows: values.accessorial_rows ?? [],
+                }),
+                // W7 — per-stop extra rates as customer charge lines (were dropped from the payload).
+                ...stopExtraRateChargeLines(values.stops ?? []),
+              ],
         stops: values.stops.map((stop, index) => ({
           stop_type: stop.stop_type,
           sequence_number: index + 1,
@@ -939,9 +950,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                             {money.format(sumAccessorialCents(accessorialRows ?? []) / 100)}
                           </td>
                         </tr>
+                        {extraRatesCents > 0 ? (
+                          <tr className="border-b border-gray-100">
+                            <td className="px-2 py-1.5">Per-stop extra rates</td>
+                            <td className="px-2 py-1.5 text-right font-mono text-gray-800">{money.format(extraRatesCents / 100)}</td>
+                          </tr>
+                        ) : null}
                         <tr className="bg-[#f7f8fa] font-semibold">
                           <td className="px-2 py-1.5">Total customer invoice</td>
-                          <td className="px-2 py-1.5 text-right">{money.format(sectionTotal / 100)}</td>
+                          <td className="px-2 py-1.5 text-right">{money.format(customerInvoiceTotal / 100)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -950,6 +967,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <AccessorialEditor
                     operatingCompanyId={operatingCompanyId}
                     rows={accessorialRows ?? []}
+                    extraSubtotalCents={extraRatesCents}
                     onRowsChange={(rows) => form.setValue("accessorial_rows", rows, { shouldDirty: true })}
                     onDetentionSeed={() => {
                       form.setValue("detention_expected_y_n", true, { shouldDirty: true });
