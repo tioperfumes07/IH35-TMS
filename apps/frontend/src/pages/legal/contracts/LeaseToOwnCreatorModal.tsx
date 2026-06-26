@@ -7,6 +7,7 @@ import { legalContractsApi, type LeaseToOwnFleetUnit } from "../../../api/legal-
 import { legalTemplatesApi } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
@@ -253,8 +254,8 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
                   <tr key={unit.id} className="border-t">
                     <td className="p-1">{unit.unit_number} <span className="text-xs text-slate-500">{[unit.make, unit.model, unit.year].filter(Boolean).join(" ")}</span></td>
                     <td className="p-1"><input className="w-28 rounded border px-1" value={t.lienholder} onChange={(e) => setTruckTerm(unit.id, "lienholder", e.target.value)} /></td>
-                    <td className="p-1"><input className="w-28 rounded border px-1" value={t.balance_owed} onChange={(e) => setTruckTerm(unit.id, "balance_owed", e.target.value)} placeholder="0.00" /></td>
-                    <td className="p-1"><input className="w-28 rounded border px-1" value={t.monthly_lease_amount} onChange={(e) => setTruckTerm(unit.id, "monthly_lease_amount", e.target.value)} placeholder="0.00" /></td>
+                    <td className="p-1"><MoneyInput className="w-28" valueDollars={t.balance_owed ? Number(t.balance_owed) : null} onChangeDollars={(d) => setTruckTerm(unit.id, "balance_owed", d == null ? "" : String(d))} ariaLabel="Balance owed (USD)" /></td>
+                    <td className="p-1"><MoneyInput className="w-28" valueDollars={t.monthly_lease_amount ? Number(t.monthly_lease_amount) : null} onChangeDollars={(d) => setTruckTerm(unit.id, "monthly_lease_amount", d == null ? "" : String(d))} ariaLabel="Monthly lease (USD)" /></td>
                     <td className="p-1"><input className="w-24 rounded border px-1" value={t.payment_due_date} onChange={(e) => setTruckTerm(unit.id, "payment_due_date", e.target.value)} placeholder="1st" /></td>
                   </tr>
                 ))}
