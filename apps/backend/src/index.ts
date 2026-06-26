@@ -64,6 +64,7 @@ import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerDispatchCatalogRoutes } from "./catalogs/dispatch/index.js";
+import { registerFactoringQueueRoutes } from "./dispatch/factoring-queue.routes.js";
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
 import { registerDocsFoundationRoutes } from "./docs/docs.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
@@ -696,6 +697,8 @@ async function main() {
   // was DEFINED in catalogs/dispatch/index.ts but never mounted here alongside its siblings — so
   // GET /api/v1/catalogs/dispatch/additional-charges (the Book Load "+ Create charge" code list) 404'd.
   await registerDispatchCatalogRoutes(app);
+  // Factoring-packet ops surface (DISP-FACTORING-PACKET): the queue routes were built but never mounted.
+  await registerFactoringQueueRoutes(app);
   await registerGenericCatalogRoutes(app);
   await registerStubCatalogPurgeRoutes(app);
   await registerAccountingCatalogRoutes(app);

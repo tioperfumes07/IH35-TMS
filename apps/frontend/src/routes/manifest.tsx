@@ -27,6 +27,7 @@ import { GeofencesPage } from "../pages/operations/GeofencesPage";
 import { DispatchAlertsPage } from "../pages/dispatch/DispatchAlertsPage";
 import { LateArrivalsPage } from "../pages/dispatch/LateArrivalsPage";
 import { AtRiskQueuePage } from "../pages/dispatch/AtRiskQueuePage";
+import { FactoringQueuePage } from "../pages/dispatch/FactoringQueuePage";
 import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
 import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
 import { PlannerCalendarPage } from "../pages/dispatch/PlannerCalendarPage";
@@ -471,7 +472,8 @@ type FactoringTabId =
   | "statements_settings"
   | "faro_imports"
   | "equipment_loans"
-  | "vendor_merges";
+  | "vendor_merges"
+  | "reserve_tracker";
 
 function FactoringTabRoute({ tabId }: { tabId: FactoringTabId }) {
   return <FactoringHomePage initialTab={tabId} />;
@@ -801,6 +803,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AtRiskQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/factoring-queue"
+          element={
+            <ProtectedRoute>
+              <FactoringQueuePage />
             </ProtectedRoute>
           }
         />
@@ -1661,6 +1671,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringTabRoute tabId="vendor_merges" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/reserve-tracker"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="reserve_tracker" />
             </ProtectedRoute>
           }
         />
