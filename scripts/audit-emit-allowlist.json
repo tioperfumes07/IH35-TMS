@@ -406,10 +406,6 @@
       "reason": "Legal template CRUD — template config, not a financial event"
     },
     {
-      "file": "apps/backend/src/legal/lease-to-own.service.ts",
-      "reason": "Lease-to-own: only mutation is the idempotent ensure-template seed (canonical template config, same class as templates.service.ts) — not a financial event; saved contracts go through contracts.service createContractInstance which audits via contract_audit_log"
-    },
-    {
       "file": "apps/backend/src/maint/wo-ap-posting.service.ts",
       "reason": "WO AP posting engine — internal double-entry, spine via maintenance-spine-emit in routes"
     },

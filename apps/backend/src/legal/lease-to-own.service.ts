@@ -19,6 +19,7 @@ import {
   LEASE_TO_OWN_CONTENT_HTML_ES,
   LEASE_TO_OWN_VARIABLE_SCHEMA,
 } from "./templates/lease-to-own.template.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type QueryableClient = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -72,7 +73,16 @@ export async function ensureLeaseToOwnTemplate(
       actorUserId,
     ],
   );
-  if (ins.rows[0]) return { id: ins.rows[0].id, version: ins.rows[0].version, seeded: true };
+  if (ins.rows[0]) {
+    // Ch.11 DIP audit completeness: a template seed is an auditable event (audit.append_event).
+    await appendCrudAudit(client, actorUserId, "legal.lease_to_own_template.seeded", {
+      template_id: ins.rows[0].id,
+      version: ins.rows[0].version,
+      operating_company_id: operatingCompanyId,
+      template_code: LEASE_TO_OWN_TEMPLATE_CODE,
+    });
+    return { id: ins.rows[0].id, version: ins.rows[0].version, seeded: true };
+  }
 
   // lost a race / a draft v1 already existed — re-read the active one.
   const reread = await client.query(
