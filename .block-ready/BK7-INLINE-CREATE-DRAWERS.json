@@ -21,5 +21,11 @@
     "New Account submit disabled (ACCOUNT_CREATE_GATED) — awaiting financial approval",
     "Class/Service/Vendor/Customer create are live (operational)",
     "Service item defaults income account to Service income, not Product income"
-  ]
+  ],
+  "allowed_files": [
+    "apps/frontend/src/components/parity/InlineCreateDrawer.tsx",
+    "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx",
+    "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx"
+  ],
+  "evidence_note": "NV-29-CLOSE 2026-06-26: allowed_files backfilled with verified on-main artifacts (registry was blank; feature already built)."
 }

@@ -30,5 +30,9 @@
     "root_cause": "CREATE SCHEMA notifications + table-level GRANTs added without GRANT USAGE ON SCHEMA notifications TO ih35_app",
     "symptom": "permission denied for schema notifications → login outage",
     "fix_migration": "202606071420_grant_notifications_schema_to_app.sql"
-  }
+  },
+  "allowed_files": [
+    "scripts/verify-migration-schema-grants.mjs"
+  ],
+  "evidence_note": "NV-29-CLOSE 2026-06-26: allowed_files backfilled with verified on-main artifacts (registry was blank; feature already built)."
 }

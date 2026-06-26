@@ -38,5 +38,9 @@
     "premerge-gates / typescript-strict-null"
   ],
   "migration": "none",
-  "app_code_changes": false
+  "app_code_changes": false,
+  "allowed_files": [
+    "scripts/verify-ci-policy-applied.mjs"
+  ],
+  "evidence_note": "NV-29-CLOSE 2026-06-26: allowed_files backfilled with verified on-main artifacts (registry was blank; feature already built)."
 }

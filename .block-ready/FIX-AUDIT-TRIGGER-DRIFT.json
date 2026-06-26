@@ -68,5 +68,9 @@
   "grants_defensive": true,
   "idempotent": true,
   "status": "ready",
-  "merge_gate": "HOLD — awaiting GO from Jorge"
+  "merge_gate": "HOLD — awaiting GO from Jorge",
+  "allowed_files": [
+    "db/migrations/202606080030_audit_trigger_drift_remediation.sql"
+  ],
+  "evidence_note": "NV-29-CLOSE 2026-06-26: allowed_files backfilled with verified on-main artifacts (registry was blank; feature already built)."
 }

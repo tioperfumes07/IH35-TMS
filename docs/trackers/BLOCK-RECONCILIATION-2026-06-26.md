@@ -2,21 +2,18 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (7059 files) + 1442 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (7059 files) + 1443 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
-- **PENDING**: 5
+- **PENDING**: 2
 - **PENDING (GATED)**: 24
-- **NEEDS-VERIFY**: 23
-- **DONE**: 404
+- **NEEDS-VERIFY**: 19
+- **DONE**: 411
 
 ## Every block
 | Block | Status | Fin | Tier | Source | Evidence |
 |-------|--------|-----|------|--------|----------|
 | CASH-FLOW-MODULE | PENDING |  |  | .block-ready | no merged PR / no files on main |
-| FIX-AUDIT-TRIGGER-DRIFT | PENDING |  |  | .block-ready | no merged PR / no files on main |
-| FIX-REQUIRED-CHECKS-GATE | PENDING |  |  | .block-ready | no merged PR / no files on main |
-| HOS-BUG-DRIVERASSIGN | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
 | TBL-STANDARD-universal-table-sweep | PENDING |  | T2 | program | forward spec — 0 named artifacts on main |
 | BLOCK-01-of-29-TIER1.5-DEPRECIATION | PENDING (GATED) |  | T1.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW | PENDING (GATED) |  | T1.5 | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
@@ -51,11 +48,8 @@
 | AF-6-finance-hub | NEEDS-VERIFY | 💰 | T2 | program | PR #540 title-match only, unverified |
 | AF-7-money-controls | NEEDS-VERIFY | 💰 | T1 | program | PR #542 title-match only, unverified |
 | AF-8-payroll-bridge | NEEDS-VERIFY | 💰 | T1 | program | PR #544 title-match only, unverified |
-| BK7-INLINE-CREATE-DRAWERS | NEEDS-VERIFY |  |  | .block-ready | PR #866 title-match only, unverified |
 | block-37-qbo-sync-repair-pipeline | NEEDS-VERIFY | 💰 |  | accounting | PR #226 title-match only, unverified |
 | block-40-accounting-audit-trail | NEEDS-VERIFY | 💰 |  | accounting | PR #227 title-match only, unverified |
-| BLOCK-I-CI-DIST-FIX | NEEDS-VERIFY |  |  | .block-ready | PR #73 title-match only, unverified |
-| BLOCK-J-MASTER-DATA-GRANT | NEEDS-VERIFY |  |  | .block-ready | PR #1063 title-match only, unverified |
 | CHAIN-01-vendor-picker-fix | NEEDS-VERIFY | 💰 | T2 | program | PR #1262 title-match only, unverified |
 | CHAIN-02-account-register-params | NEEDS-VERIFY | 💰 |  | program | PR #1263 title-match only, unverified |
 | CHAIN-03-create-bill-gl-autopost | NEEDS-VERIFY | 💰 | T1 | program | PR #1300 title-match only, unverified |
@@ -63,7 +57,6 @@
 | CHAIN-05-bank-feed-live-proof | NEEDS-VERIFY | 💰 | T1 | program | PR #1268 title-match only, unverified |
 | CHAIN-06-invoice-ar-chain-proof | NEEDS-VERIFY | 💰 | T1 | program | PR #1269 title-match only, unverified |
 | CHAIN-07-settlements-500-fix | NEEDS-VERIFY | 💰 | T1 | program | PR #1270 title-match only, unverified |
-| PREREQ-A-SCHEMA-GRANT-GATE | NEEDS-VERIFY |  |  | .block-ready | PR #684 title-match only, unverified |
 | STMT-1-balance-sheet-cash-flow | NEEDS-VERIFY | 💰 | T2 | program | PR #1265 title-match only, unverified |
 | A1-AUDIT-SPINE-LINK-COLUMNS | DONE | 💰 |  | .block-ready | PR #884 merged 2026-06-11 |
 | A2-AUDIT-EMIT-DISPATCH | DONE |  |  | .block-ready | PR #886 merged 2026-06-12 |
@@ -83,6 +76,7 @@
 | ACCT-QBOPAR-02 | DONE |  |  | .block-ready | PR #710 merged 2026-06-07 |
 | ACCT-QBOPAR-03 | DONE |  |  | .block-ready | PR #740 merged 2026-06-08 |
 | ACCT-QBOPAR-04 | DONE |  |  | .block-ready | PR #815 merged 2026-06-08 |
+| BK7-INLINE-CREATE-DRAWERS | DONE |  |  | .block-ready | all 3 file(s) on main |
 | BLOCK-04-of-29-TIER2-RATE-LIMIT | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | DONE |  | T2 | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-05-TIER2-CIRCUIT-BREAKERS | DONE |  |  | .block-ready | PR #800 merged 2026-06-08 |
@@ -142,6 +136,8 @@
 | BLOCK-F-INSURANCE-CANCELLATION | DONE |  |  | .block-ready | PR #700 merged 2026-06-07 |
 | BLOCK-G-COI-PDF | DONE |  |  | .block-ready | all 4 file(s) on main |
 | BLOCK-H-DETENTION-NOTIFY | DONE |  |  | .block-ready | PR #693 merged 2026-06-07 |
+| BLOCK-I-CI-DIST-FIX | DONE |  |  | .block-ready | all 1 file(s) on main |
+| BLOCK-J-MASTER-DATA-GRANT | DONE |  |  | .block-ready | all 2 file(s) on main |
 | block-ppc-period-comparison | DONE | 💰 |  | accounting | all 1 named artifact(s) on main |
 | BLOCK5-INSURANCE-FORWARD-FIX | DONE |  |  | .block-ready | PR #695 merged 2026-06-07 |
 | BLOCK7-DRIVER-HUB-REQUESTS | DONE |  |  | .block-ready | PR #694 merged 2026-06-07 |
@@ -268,6 +264,7 @@
 | FIX-AUDIT-NESTED-MODALS | DONE |  |  | .block-ready | PR #462 merged 2026-06-04 |
 | FIX-AUDIT-PROD-STUBS | DONE |  |  | .block-ready | PR #471 merged 2026-06-04 |
 | FIX-AUDIT-TEST-DATA-LEAK | DONE |  |  | .block-ready | PR #469 merged 2026-06-04 |
+| FIX-AUDIT-TRIGGER-DRIFT | DONE |  |  | .block-ready | all 1 file(s) on main |
 | FIX-CANARY-SMOKE-DURABLE | DONE |  |  | .block-ready | all 1 file(s) on main |
 | FIX-CI-YML-CONFLICT-MARKERS | DONE | 💰 |  | .block-ready | PR #875 merged 2026-06-11 |
 | FIX-COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE | DONE | 💰 |  | .block-ready | PR #1019 merged 2026-06-15 |
@@ -280,6 +277,7 @@
 | FIX-INSURANCE-POLICY-UNIT-IS-ACTIVE | DONE | 💰 |  | .block-ready | PR #1011 merged 2026-06-15 |
 | FIX-P8-AUDIT-NESTED-MODALS | DONE |  |  | .block-ready | PR #907 merged 2026-06-12 |
 | FIX-REMOVE-LEFT-SIDEBAR-HOVER-DROPDOWN | DONE |  |  | .block-ready | PR #974 merged 2026-06-15 |
+| FIX-REQUIRED-CHECKS-GATE | DONE |  |  | .block-ready | all 1 file(s) on main |
 | FIX-RLS-BILL-EXPENSE-LINES | DONE |  |  | .block-ready | PR #714 merged 2026-06-08 |
 | FIX-SAFETY-NAV-COUNT | DONE |  |  | .block-ready | PR #647 merged 2026-06-07 |
 | FIX-SAMSARA-WEBHOOKS-INVESTIGATION | DONE |  |  | .block-ready | PR #475 merged 2026-06-04 |
@@ -416,6 +414,7 @@
 | GAP-IDEMP-KEYS | DONE |  |  | .block-ready | PR #737 merged 2026-06-08 |
 | GAP-PREMERGE-GATES-EXPAND | DONE |  |  | .block-ready | PR #651 merged 2026-06-07 |
 | GLOBAL-SORT-RULE | DONE |  |  | .block-ready | PR #723 merged 2026-06-08 |
+| HOS-BUG-DRIVERASSIGN | DONE |  | T2 | program | all 2 named artifact(s) on main |
 | HOS-VIEWER-DONE | DONE |  |  | program | all 3 named artifact(s) on main |
 | HOTFIX-0327-MIGRATION-ROLE | DONE |  |  | .block-ready | PR #643 merged 2026-06-07 |
 | INS-MODULE | DONE |  |  | program | all 3 named artifact(s) on main |
@@ -429,6 +428,7 @@
 | OB1-NAV-HEADER-UNIFY | DONE |  |  | .block-ready | PR #894 merged 2026-06-12 |
 | P0-BLOCK-3-DRIVER-LOAD-HISTORY | DONE |  |  | .block-ready | PR #731 merged 2026-06-08 |
 | P5-T6-BANKING-TRANSFER | DONE |  |  | .block-ready | PR #862 merged 2026-06-10 |
+| PREREQ-A-SCHEMA-GRANT-GATE | DONE |  |  | .block-ready | all 1 file(s) on main |
 | PREREQ-B-SETTLEMENT-DEDUCTION-SVC | DONE |  |  | .block-ready | PR #683 merged 2026-06-07 |
 | Q9-TZ-timezone-library | DONE |  | T2 | program | all 1 named artifact(s) on main |
 | RPT-MODULE | DONE |  |  | program | all 3 named artifact(s) on main |
