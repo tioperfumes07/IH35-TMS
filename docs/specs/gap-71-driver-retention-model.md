@@ -9,3 +9,8 @@ Weekly retention risk scoring for drivers using miles trend, late arrivals, and 
 
 ## CI
 `npm run verify:driver-retention`
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - scripts/verify-driver-retention.mjs
+  - apps/frontend/src/pages/drivers/RetentionDashboard.tsx

@@ -14,3 +14,7 @@ Locked in `thresholds.config.ts`: 60 min on-track max slip, 60–180 min behind,
 ## UI
 
 `TriSignalPill` on dispatch board **Status Signal** column (green/amber/red). Hover shows slip, HOS, driver ack age via `TriSignalHoverDetail`.
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main:
+  - scripts/verify-cap-5-tri-signal.mjs

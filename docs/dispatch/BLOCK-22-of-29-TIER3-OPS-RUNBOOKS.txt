@@ -86,3 +86,6 @@ Every operational scenario has a runbook. Currently knowledge is in Jorge's head
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/help/RunbooksIndex.tsx

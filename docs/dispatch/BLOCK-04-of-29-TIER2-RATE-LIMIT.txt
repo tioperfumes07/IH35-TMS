@@ -61,3 +61,6 @@ Add rate limiting per user + per route to prevent runaway scripts, broken loops,
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/backend/src/middleware/rate-limit.ts

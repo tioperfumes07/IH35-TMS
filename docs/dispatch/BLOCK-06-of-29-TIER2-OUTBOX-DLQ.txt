@@ -79,3 +79,6 @@ Existing outbox pattern queues writes to QBO. When QBO fails repeatedly, message
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/backend/src/qbo/sync-state-machine.ts

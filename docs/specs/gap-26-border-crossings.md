@@ -30,3 +30,8 @@ GPS-based detection of vehicle crossings at Laredo-area border bridges. Tracks e
 | Laredo Bridge III (World Trade) | 27.5640 | -99.4697 |
 | Laredo Bridge IV (Colombia Solidarity) | 27.9022 | -99.5340 |
 | Colombia Bridge | 27.9022 | -99.5340 |
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx
+  - apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx

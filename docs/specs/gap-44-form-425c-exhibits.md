@@ -43,3 +43,8 @@ npm run verify:form-425c-exhibits
 
 - Form 425C main page: `/425c`
 - GAP-45 (Lane B) owns cash-flow / per-truck CPM route fixes — disjoint paths
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/form425c/Form425CHome.tsx
+  - apps/frontend/src/pages/safety/audit-425c/Audit425cPage.tsx

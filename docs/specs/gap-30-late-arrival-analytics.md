@@ -39,3 +39,7 @@ Historical late-arrival rate analytics grouped by driver, customer, and lane. Co
 - B21-D6 late-arrival **alerts** (real-time ETA)
 - GAP-69 Driver Manager home (`late_arrivals_7d` KPI)
 - GAP-71 / GAP-72 downstream consumers
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx

@@ -75,3 +75,6 @@ Single document cataloging every tunable parameter: cron schedules, rate limits,
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - scripts/verify-operational-tuning-catalog.mjs

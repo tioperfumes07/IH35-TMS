@@ -21,3 +21,7 @@ Provides billable flag for customer billing and per-diem eligibility tracking.
 ## Frontend
 - `DriverLayoverHistory.tsx` — per-driver layover list
 - `DriverProfilePage.tsx` — layover summary card added
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx

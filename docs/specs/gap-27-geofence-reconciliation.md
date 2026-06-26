@@ -19,3 +19,8 @@ Daily audit of geo.geofence_events to detect integrity anomalies: orphan entries
 
 ## Frontend
 - `/reports/geofence-reconciliation` — daily report with resolve workflow
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx
+  - apps/backend/src/integrations/samsara/geofences/reconciliation.routes.ts

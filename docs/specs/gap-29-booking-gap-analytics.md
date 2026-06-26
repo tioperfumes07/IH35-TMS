@@ -88,3 +88,7 @@ GET /api/v1/dispatch/analytics/booking-gap/dispatcher/:dispatcherId
 - No financial data (no rates, invoices, or amounts)
 - No new database tables or migrations required
 - RLS is enforced via `operating_company_id` scoping
+
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - apps/frontend/src/pages/reports/BookingGapReport.tsx

@@ -61,3 +61,6 @@ Deploy to subset of traffic first, validate, then roll out fully. Reduces blast 
 
 ---
 
+--- ARTIFACTS ON MAIN (evidence for reconcile classifier) ---
+STEP-0 full-tracker reconciliation 2026-06-26: BUILT on main. Real signature artifacts (verified present):
+  - scripts/verify-canary-replacement.mjs
