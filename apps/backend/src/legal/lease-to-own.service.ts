@@ -112,7 +112,9 @@ export type FleetPickerUnit = {
 /**
  * Fleet for the vehicle picker. owner-filter is CONFIGURABLE (param) — default TRK, selectable; when null,
  * returns all owned units with an owner badge (no data rewrite). Excludes sold/totaled/disposed/deactivated.
- * unit_type is returned so the UI can exclude trailers/non-commercial. Reads ownership as-is.
+ * unit_type is returned so the UI can exclude trailers/non-commercial. The real mdata.units column is
+ * vehicle_type (added by 202606161400) — there is NO unit_type column (the original phantom that 500'd with
+ * 42703); we alias vehicle_type AS unit_type to keep the API field name. Reads ownership as-is.
  */
 export async function listFleetUnitsForPicker(
   client: QueryableClient,
@@ -126,7 +128,7 @@ export async function listFleetUnitsForPicker(
   }
   const res = await client.query(
     `SELECT u.id::text, u.unit_number, u.vin, u.make, u.model, u.year,
-            u.status::text AS status, u.unit_type,
+            u.status::text AS status, u.vehicle_type AS unit_type,
             u.owner_company_id::text AS owner_company_id,
             COALESCE(oc.short_name, oc.legal_name) AS owner_label,
             u.currently_leased_to_company_id::text AS currently_leased_to_company_id
