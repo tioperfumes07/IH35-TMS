@@ -329,6 +329,13 @@ export function AccountRegisterPage() {
           From/To dates, then try again.
         </p>
       ) : view === "register" ? (
+        <>
+        {/* C/R (cleared/reconciled) is a bank-reconciliation concept; the GL posting model carries no
+            cleared state and no posting→bank_transaction link exists (verified). Show an honest banner
+            instead of a fake checkmark — bank reconciliation surfaces it once that linkage is built. */}
+        <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-800">
+          Reconciliation not yet available — the C/R column reflects GL postings, which carry no cleared/reconciled state yet.
+        </div>
         <div className="overflow-x-auto rounded border border-gray-200 bg-white">
           <table className="min-w-full text-left text-xs">
             <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
@@ -392,6 +399,7 @@ export function AccountRegisterPage() {
             </tbody>
           </table>
         </div>
+        </>
       ) : (
         <div className="overflow-x-auto rounded border border-gray-200 bg-white">
           <table className="min-w-full text-left text-xs">
