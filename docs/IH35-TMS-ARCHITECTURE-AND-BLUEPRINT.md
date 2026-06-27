@@ -1,11 +1,11 @@
 # IH35-TMS — Architecture & Blueprint (live, honest, verified)
 
 > **Status:** authoritative current-state document.
-> **Verified:** 2026-06-27 (re-audited against `origin/main` + Render live after first-pass numbers were
-> found to be from a stale local clone). Every figure is measured from `origin/main` (`git ls-tree` /
-> `git grep`), Render's live `/healthz`, and `gh` PR data — not memory or older docs. Live **DB** table/row
-> counts are **not** included (Neon access is gated, `CLAUDE.md §1.5`); a one-time read-only introspection
-> can be authorized (§12).
+> **Verified:** 2026-06-27 full audit — `origin/main` (`git ls-tree`/`git grep`), Render live `/healthz`,
+> `gh` PR data, **and an owner-authorized read-only introspection of the production Neon database**
+> (`br-fancy-credit-akjnd07a`, `default_transaction_read_only`). Every figure is measured, not remembered.
+> Earlier drafts used a stale local clone + migration-grep estimates and were wrong; this revision replaces
+> them with live truth (e.g. **619 live tables**, not the ~440 grep estimate).
 > **Git history:** `origin/main` is **498 commits, first commit 2026-06-15** (history was re-baselined that
 > day; 0 merge-commits). **1,454 merged PRs** (1,450 to `main`) span the full project life; **7 open**;
 > **2 authors**; 1,468 remote branches. Render prod runs `origin/main` HEAD — current.
@@ -125,35 +125,42 @@ These are enforced by CI guards and the constitution; violating them is a produc
 
 ---
 
-## 5. Data model — schema-per-domain (DISTINCT tables, measured on origin/main)
+## 5. Data model — LIVE PROD (introspected read-only, 2026-06-27, authorized)
 
-Postgres uses **schema-per-domain across 70 schemas**. Cross-schema writes go through service functions,
-never direct cross-schema `INSERT`. Counting method matters and earlier drafts got it wrong:
+Measured directly from the **production Neon branch `br-fancy-credit-akjnd07a`** (read-only,
+`default_transaction_read_only`, via `neonctl` as `neondb_owner`):
 
-- **645** raw `CREATE TABLE` statements in `db/migrations/` (overcounts — idempotent re-creates appear many times)
-- **478** DISTINCT `schema.table` defined
-- **43** distinct tables dropped → **~440 net tables defined by migrations**
-- **The live prod table/row count is NOT measured here** — direct Neon access is gated (`CLAUDE.md §1.5`).
-  ~440 is the migration-derived estimate; prod has known drift (some catalog tables differ). To get the
-  **true live count**, authorize a one-time read-only introspection (see §12).
+| Live prod metric | Value |
+|------------------|------:|
+| User schemas | **72** |
+| **Base tables** | **619** |
+| Views | **47** |
+| Migrations applied (ledger) | **512** |
+| Estimated total rows | **~2,439,703 (≈2.44M)** |
 
-Largest domains by **distinct, net-of-drop** table count (origin/main):
+> **Correction:** my earlier "~440 net tables" was a **migration-grep estimate and was wrong** — the live DB
+> has **619 tables**. Grep undercounts because many tables are created via functions, partitions, seed
+> migrations, and non-`schema.table` DDL the regex never saw. The 619 figure is the live truth.
 
-| Schema | Tables | Owns |
-|--------|-------:|------|
-| `accounting` | 44 | bills, bill_payments, payments, invoices, journal entries, posting, periods |
-| `safety` | 42 | accidents, inspections, violations, claims, expiry tracking |
-| `mdata` (master_data) | 40 | `loads`, `load_stops`, `units`, `drivers`, `customers`, `vendors`, `equipment` |
-| `catalogs` | 36 | **chart of accounts (`catalogs.accounts`)**, classes, products/services, reference catalogs |
-| `maintenance` | 24 | work orders, parts, PM schedules |
-| `dispatch` | 23 | assignment history, detention, in-transit issues, ETA |
-| `driver_finance` | 22 | `driver_settlements`, settlement_lines, advances, deductions, driver_bills |
-| `integrations` | 20 | QBO/Samsara/Plaid sync state + logs |
-| `compliance` | 12 | HOS/DOT/IFTA compliance records |
-| `legal` | 10 | contracts (lease-to-own), attorney review |
-| `banking` | 8 | `bank_transactions`, bank_accounts, reconciliation |
-| `identity` | 8 | users, sessions, auth, preferences |
-| `insurance` | 7 | policies, claims, coverage |
+Largest domains by **live table count** (prod `pg_tables`):
+
+| Schema | Live tables | Owns |
+|--------|-----------:|------|
+| `catalogs` | **108** | **chart of accounts (`catalogs.accounts`)**, classes, + many factory/reference catalogs |
+| `safety` | 60 | accidents, inspections, violations, claims, expiry tracking |
+| `public` | 52 | legacy/uncategorized + framework tables |
+| `accounting` | 47 | bills, payments, invoices, journal entries, posting, periods |
+| `mdata` (master_data) | 43 | `loads`, `load_stops`, `units`, `drivers`, `customers`, `vendors`, `equipment` |
+| `maintenance` | 33 | work orders, parts, PM schedules |
+| `dispatch` | 23 | assignment history, detention, in-transit, ETA |
+| `driver_finance` | 22 | `driver_settlements`, settlement_lines, advances, deductions |
+| `integrations` | 21 | QBO/Samsara/Plaid sync state + logs |
+| `compliance` | 16 | HOS/DOT/IFTA |
+| `identity` / `legal` | 10 / 10 | users, sessions / lease-to-own contracts |
+| `insurance` / `banking` / `reports` / `reference` | 8 each | policies / bank feeds / report defs / reference data |
+
+(Note: prod has 72 schemas vs 70 seen in migration grep, and `catalogs` is **108 tables live** vs 36 from
+grep — the factory/reference catalog tables are created by seed migrations the regex didn't match.)
 
 **Schema landmines (verify names against `db/migrations/` before writing SQL):**
 - **No `ih35_app.*` data schema** — `ih35_app` is a role; `ih35_app.<table>` 500s.
@@ -167,6 +174,39 @@ Largest domains by **distinct, net-of-drop** table count (origin/main):
   entity independence; **AF-1** is the migration that makes it per-entity (built, **HOLD** — see §7).
 - **Naming canon = `accounting.*`** (never `finance.*`); a `finance.*` drift exists in places
   (e.g. `finance.loans`) and is a known cleanup, not the standard.
+
+---
+
+## 5a. Live operational reality — BUILT vs IN-USE (the honest progress truth)
+
+The single most important finding of this audit: **the software is extensively built but barely transacting
+yet.** Master data is loaded; the money/operations flows are essentially empty. Live prod row counts
+(read-only, 2026-06-27):
+
+| Live dataset | Rows | Read |
+|--------------|-----:|------|
+| Companies (entities) | **3** | TRANSP + TRK active, USMCA inactive |
+| Users | 23 | staff onboarded |
+| Drivers | **92** | master data loaded (Samsara) |
+| Units (trucks) | **93** | fleet loaded (Samsara) |
+| Customers | **1,213** | imported (QBO/RMIS) |
+| Vendors | **878** | imported (QBO) |
+| Chart of accounts (`catalogs.accounts`) | **385** | QBO-mirror present |
+| Bank transactions | **2,649** | Plaid feed flowing |
+| Audit row-changes (evidence) | **2,025** | audit spine active |
+| **Loads** | **10** | ← real dispatch volume is tiny |
+| **Invoices (AR)** | **1** | ← AR barely started |
+| **Bills (AP)** | **0** | ← no AP posted |
+| **Driver settlements** | **0** | ← none run |
+| **Fuel transactions** | **0** | ← none recorded |
+
+**Interpretation (honest):** build progress is very high (619 tables, 1,850 endpoints, 920 pages, all
+modules present); **operational/financial usage is pre-launch.** Master data (drivers, units, customers,
+vendors, CoA, bank feed) is in place, but the transactional spine (loads → invoices → bills → settlements →
+fuel → GL posting) has **near-zero live data** — consistent with posting flags being OFF (§7) and real
+transacting not yet started. "Done building" ≠ "in production use." The remaining work is therefore less
+about new features and more about **activating + verifying the financial flows on real data** (§9, and the
+pending-tasks companion doc).
 
 ---
 
@@ -227,6 +267,60 @@ bar**. The owner-locked, **additive-only** order (`docs/lockdown/00_LOCKED_DECIS
 | **CCG** | Commercial Credit Group — equipment financing |
 | **Cloudflare R2** | Evidence/document object store (`ih35-tms-evidence`), chain-of-custody |
 | **Auth** | Lucia sessions + Google OAuth |
+
+---
+
+## 8a. Core logic & domain flows (how the software actually works)
+
+The whole system is a set of pipelines that converge on the **financial + audit spine**. Each flow is
+entity-scoped (RLS `app.operating_company_id`) and append-only (void, never delete).
+
+1. **Load → cash (the revenue spine):** Book Load (`mdata.loads`, `rate_total_cents` = GROSS customer rate)
+   → assign driver/unit (`dispatch.load_assignment_history`; trailer is a trailer-only assignment row,
+   **not** a column on loads) → stops/POD (`mdata.load_stops` — evidence, never deleted) → deliver → close →
+   **invoice** (`accounting.invoices`, `source_load_id`, cents) → **factor** (Faro: `factoring.*`
+   advance/reserve/fee) → **AR payment** → bank.
+2. **Fuel → expense → IFTA:** Relay/Love's pump txn → `fuel.fuel_transactions` (**must FK to a load**, G18)
+   → fuel expense → IFTA gallons.
+3. **Driver pay:** earnings (`driver_finance.settlement_lines`) → `driver_finance.driver_settlements`
+   (`net_pay`) with advances/deductions → pay via bank txn → 1099 at year end.
+4. **Bill/expense → GL (flag-gated):** bill (`accounting.bills`) → category→GL resolver
+   (`accounting.expense_category_account_map`) → **posting engine (default OFF —
+   `BILL_GL_POSTING_ENABLED` / `EXPENSE_GL_POSTING_ENABLED`)** → QBO mirror via `outbox`.
+5. **Bank reconciliation:** Plaid → `banking.bank_transactions` (For review / Categorized / Excluded) →
+   categorize → match to bill/invoice/settlement → reconcile.
+6. **QBO sync (system of record):** every master/txn write → `outbox` event → push handlers (mostly default
+   ON) → `mdata.qbo_*` mirrors; the **QBO Sync Drift** dashboard surfaces divergence.
+7. **Audit spine (the reason the system exists):** every write → `audit.row_changes` (append-only) +
+   `audit.audit_events`; voids set `voided_at`/`is_active=false`. This is the Chapter-11 evidence trail.
+
+## 8b. Per-module build status (files present on origin/main)
+
+Every module is substantially built (backend domain files · frontend pages):
+
+| Module | Backend files | Frontend pages | Notes |
+|--------|-------------:|---------------:|-------|
+| accounting | 204 | 79 | largest domain; posting engine present but **flag-gated OFF** |
+| safety | 113 | 121 | accidents / inspections / claims / expiry |
+| dispatch | 113 | 87 | board, book-load, assignment, ETA |
+| maintenance | 90 | 85 | work orders, PM, parts |
+| reports | 77 | 73 | incl. Reports→Audit (7 pages) |
+| driver_finance | 46 | 20 | settlements, advances, deductions |
+| banking | 37 | 50 | Plaid feeds, reconcile, transactions |
+| insurance | 38 | 12 | policies, claims |
+| compliance | 20 | 7 | HOS / DOT / IFTA |
+| factoring | 19 | 11 | Faro advances / reserves |
+| lists | 18 | 120 | reference catalogs |
+| drivers | 17 | 44 | driver profiles |
+| legal | 14 | 19 | lease-to-own contracts (**flag-gated**) |
+| finance (hub) | 10 | 7 | amortization / loan / calculator (**flag-gated**) |
+| customers · vendors · fuel · docs · eld | 2–7 | 2–14 | logic also lives in `catalogs/*`, `integrations/*`, `compliance/hos` |
+
+(`fuel` backend is thin because fuel logic lives in `catalogs/fuel`, `integrations/fuel`,
+`safety/fuel-gps-match`; `eld` is a frontend view over `compliance`/HOS data.)
+
+**Full pending/missing task list:** see the companion file
+`docs/IH35-TMS-PENDING-AND-MISSING-TASKS.md`.
 
 ---
 
@@ -310,11 +404,13 @@ led by AF-1.
 - Entities/sidebar/principles: `org.companies` seeds, `00_LOCKED_DECISIONS.md`, `CLAUDE.md`.
 - "Blocks": `npm run reconcile:blocks` — a doc-roll-up of planned work, explicitly **not** a code metric.
 
-### The ONE number not measured here: the live database
-Direct Neon access (even read-only `SELECT`) is gated per `CLAUDE.md §1.5` — I did **not** count live tables,
-rows, or schemas in prod. The ~440 net figure is migration-derived; prod has known drift. **To make this doc
-fully complete, authorize a one-time read-only introspection** (e.g. `information_schema` table/row counts
-per schema via the gated `assert-neon-branch` path) and I will replace the estimates with live truth.
+### Live database (owner-authorized read-only introspection, 2026-06-27)
+Per `CLAUDE.md §1.5` direct Neon access is gated and asked-for each time; the owner authorized this one.
+Method: `neonctl connection-string … --role-name neondb_owner` on prod branch `br-fancy-credit-akjnd07a`,
+all queries under `SET default_transaction_read_only = on` (zero writes), counts from `information_schema`
+/ `pg_tables` and **row estimates from `pg_class.reltuples`** (fast, no table scans). The connection string
+was held in-memory only and never persisted (per §1.5). Live results: **72 schemas, 619 base tables, 47
+views, 512 migrations applied, ~2.44M rows** + the business-data counts in §5a.
 
 _If any number here disagrees with a fresh `git grep` on `origin/main`, a live `/healthz`, or a DB
 introspection, trust the live source and regenerate this file — it is meant to be re-measured, not trusted
