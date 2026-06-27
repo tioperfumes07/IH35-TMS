@@ -131,7 +131,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={exportCsv}
             disabled={rows.length === 0}
-            className="inline-flex h-8 items-center gap-1 rounded border border-slate-300 bg-white px-2 text-[12px] text-slate-700 disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-1 rounded border border-slate-300 bg-white px-2 text-[12px] text-slate-700 disabled:opacity-50"
           >
             <Download className="h-3.5 w-3.5" /> Export CSV
           </button>
@@ -295,7 +295,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="h-8 rounded border border-slate-300 bg-white px-3 disabled:opacity-50"
+            className="h-9 rounded border border-slate-300 bg-white px-3 disabled:opacity-50"
           >
             Previous
           </button>
@@ -306,7 +306,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={() => setPage((p) => (p + 1 < pageCount ? p + 1 : p))}
             disabled={page + 1 >= pageCount}
-            className="h-8 rounded border border-slate-300 bg-white px-3 disabled:opacity-50"
+            className="h-9 rounded border border-slate-300 bg-white px-3 disabled:opacity-50"
           >
             Next
           </button>
