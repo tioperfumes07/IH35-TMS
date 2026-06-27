@@ -2,8 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getAccountingSourceLineage, type AccountingSourceLineageRow } from "../../api/accounting";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 
 function formatMoney(cents: number) {
@@ -44,8 +44,7 @@ export function PostingLineagePage() {
   }, [lineageQuery.data?.rows]);
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title="Posting lineage" subtitle="Trace source transaction -> posting rows -> linked objects" />
+    <AccountingSubNavWrapper title="Posting Lineage" subtitle="Trace source transaction → posting rows → linked objects">
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {lineageQuery.isError ? <ReportBlockVPendingBanner error={lineageQuery.error} onRetry={() => void lineageQuery.reset()} /> : null}
@@ -156,6 +155,6 @@ export function PostingLineagePage() {
           No posting lineage rows found for this source transaction.
         </div>
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

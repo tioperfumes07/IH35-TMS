@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getComparisonReport, type ComparisonReportBasis, type ComparisonReportType } from "../../api/accounting";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -31,12 +30,7 @@ export function PeriodComparisonPage() {
   });
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="Period comparison"
-        subtitle="Side-by-side period variance for P&L or balance sheet with accrual/cash basis selection."
-      />
+    <AccountingSubNavWrapper title="Period comparison" subtitle="Side-by-side period variance for P&L or balance sheet with accrual/cash basis selection.">
 
       {!companyId ? (
         <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before running comparison.</p>
@@ -117,6 +111,6 @@ export function PeriodComparisonPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

@@ -6,10 +6,16 @@ import { DataPanel } from "../../../components/layout/DataPanel";
 import { DataPanelRow } from "../../../components/layout/DataPanelRow";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { AccountingSubNav } from "../AccountingSubNav";
+import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+function humanMemo(memo: string | null | undefined): string {
+  if (!memo) return "—";
+  return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
 }
 
 export function JournalEntryDetailPage() {
@@ -34,8 +40,7 @@ export function JournalEntryDetailPage() {
   const postings = entry.postings ?? [];
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
+    <AccountingSubNavWrapper>
       <PageHeader
         title={`Journal Entry ${entry.id.slice(0, 8)}`}
         backHref="/accounting/journal-entries"
@@ -66,7 +71,7 @@ export function JournalEntryDetailPage() {
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Memo</span>
-          <span className="text-sm text-gray-900">{entry.memo || "—"}</span>
+          <span className="text-sm text-gray-900">{humanMemo(entry.memo)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">QBO Link</span>
@@ -114,6 +119,6 @@ export function JournalEntryDetailPage() {
           </table>
         </div>
       </DataPanel>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

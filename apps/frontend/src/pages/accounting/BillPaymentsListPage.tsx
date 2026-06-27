@@ -6,10 +6,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { PayBillModal } from "./PayBillModal";
 
 function money(cents: number) {
@@ -96,29 +95,22 @@ export function BillPaymentsListPage() {
   const canVoid = user?.role === "Owner";
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="Bill Payments"
-        subtitle="Vendor bill payment ledger"
-        actions={
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              disabled={!selectedBill}
-              onClick={() => {
-                if (!selectedBill) {
-                  pushToast("Select an unpaid bill first", "info");
-                  return;
-                }
-                setPayModalOpen(true);
-              }}
-            >
-              + Record Bill Payment
-            </Button>
-          </div>
-        }
-      />
+    <AccountingSubNavWrapper
+      title="Bill Payments"
+      subtitle="Vendor bill payment ledger"
+      actions={
+        <Button
+          variant="secondary"
+          disabled={!selectedBill}
+          onClick={() => {
+            if (!selectedBill) { pushToast("Select an unpaid bill first", "info"); return; }
+            setPayModalOpen(true);
+          }}
+        >
+          + Record Bill Payment
+        </Button>
+      }
+    >
 
       {paymentsQuery.isError ? <ListErrorBanner onRetry={() => void paymentsQuery.refetch()} /> : null}
 
@@ -256,6 +248,6 @@ export function BillPaymentsListPage() {
           }}
         />
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

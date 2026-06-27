@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { listSettlements } from "../../api/driverFinance";
 import { PreSettlementsPanel } from "../../components/driver-finance/PreSettlementsPanel";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 export function AccountingPreSettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -18,10 +17,8 @@ export function AccountingPreSettlementsPage() {
   );
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader title="Pre-settlements" subtitle="Driver pre-settlement queue" />
+    <AccountingSubNavWrapper title="Pre-settlements" subtitle="Driver pre-settlement queue">
       <PreSettlementsPanel rows={rows} loading={preSettlementsQuery.isLoading} />
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

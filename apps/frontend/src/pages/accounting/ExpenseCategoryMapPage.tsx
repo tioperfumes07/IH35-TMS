@@ -10,10 +10,9 @@ import {
   type ExpenseCategoryMapPostingSide,
 } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 const KIND_OPTIONS: ExpenseCategoryMapKind[] = [
   "fuel",
@@ -105,17 +104,11 @@ export function ExpenseCategoryMapPage() {
   const canSubmit = Boolean(form.category_code.trim() && form.account_id && companyId);
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="Expense Category Map"
-        subtitle="Map category kind + code to posting account + side"
-        actions={
-          <Button onClick={() => setShowAddModal(true)} disabled={!companyId}>
-            + Add Mapping
-          </Button>
-        }
-      />
+    <AccountingSubNavWrapper
+      title="Expense Category Map"
+      subtitle="Map category kind + code to posting account + side"
+      actions={<Button onClick={() => setShowAddModal(true)} disabled={!companyId}>+ Add Mapping</Button>}
+    >
 
       <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         <label className="inline-flex items-center gap-2">
@@ -291,6 +284,6 @@ export function ExpenseCategoryMapPage() {
           </div>
         </div>
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

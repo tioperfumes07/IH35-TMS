@@ -4,12 +4,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listJournalEntries, voidJournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
+
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+function humanMemo(memo: string | null | undefined): string {
+  if (!memo) return "—";
+  return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
+}
 
 export function ManualJEListPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -49,17 +54,11 @@ export function ManualJEListPage() {
   });
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="Manual Journal Entries"
-        subtitle="Filter, review, and void posted entries"
-        actions={
-          <Button onClick={() => setCreateOpen(true)} disabled={!companyId}>
-            + Create
-          </Button>
-        }
-      />
+    <AccountingSubNavWrapper
+      title="Manual Journal Entries"
+      subtitle="Filter, review, and void posted entries"
+      actions={<Button onClick={() => setCreateOpen(true)} disabled={!companyId}>+ Create</Button>}
+    >
       <div className="grid grid-cols-5 gap-2 rounded border border-gray-200 bg-white p-2 text-xs">
         <SelectCombobox className="h-8 rounded border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
           <option value="all">All sources</option>
@@ -98,7 +97,7 @@ export function ManualJEListPage() {
             {(entriesQuery.data?.journal_entries ?? []).map((entry) => (
               <tr key={entry.id} className="border-t border-gray-100">
                 <td className="px-3 py-2">{entry.entry_date?.slice(0, 10)}</td>
-                <td className="px-3 py-2">{entry.memo ?? "-"}</td>
+                <td className="px-3 py-2">{humanMemo(entry.memo)}</td>
                 <td className="px-3 py-2">{entry.source}</td>
                 <td className="px-3 py-2">{entry.status}</td>
                 <td className="px-3 py-2">${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}</td>
@@ -144,6 +143,6 @@ export function ManualJEListPage() {
           }}
         />
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

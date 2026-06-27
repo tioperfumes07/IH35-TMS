@@ -3,10 +3,9 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { closeMonth, getMonthCloseStatus } from "../../api/accounting";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function currentPeriodIso() {
   const now = new Date();
@@ -104,9 +103,7 @@ export function MonthClosePage() {
   const canLock = Boolean(statusQuery.data?.can_lock);
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader title="Month close wizard" subtitle="Review month-end checklist and lock the period only when all required checks are green." />
+    <AccountingSubNavWrapper title="Month close wizard" subtitle="Review month-end checklist and lock the period only when all required checks are green.">
 
       {!companyId ? (
         <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before running month close.</p>
@@ -183,6 +180,6 @@ export function MonthClosePage() {
           Close month
         </Button>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

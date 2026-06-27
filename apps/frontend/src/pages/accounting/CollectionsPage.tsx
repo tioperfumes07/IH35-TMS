@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
@@ -15,7 +14,7 @@ import {
   type CollectionContactType,
   type CollectionTaskResolution,
 } from "../../api/collections";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -103,12 +102,7 @@ export function CollectionsPage() {
   });
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="AR collections workflow"
-        subtitle="Accrual-only overdue follow-up queue with contact history and next-action scheduling."
-      />
+    <AccountingSubNavWrapper title="AR collections workflow" subtitle="Accrual-only overdue follow-up queue with contact history and next-action scheduling.">
 
       {!companyId ? <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before managing collections.</p> : null}
 
@@ -240,6 +234,6 @@ export function CollectionsPage() {
           )}
         </section>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

@@ -10,7 +10,7 @@ import {
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -59,12 +59,7 @@ export function FactorReconciliationPage() {
   const mismatchCount = (itemsQuery.data ?? []).filter((row) => row.ledger_match_state !== "matched").length;
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-gray-900">Factor reconciliation</h1>
-        <p className="text-xs text-gray-600">Statement-to-ledger reconciliation with Q11 tolerance and match-state drilldown.</p>
-      </div>
+    <AccountingSubNavWrapper title="Factor reconciliation" subtitle="Statement-to-ledger reconciliation with Q11 tolerance and match-state drilldown.">
 
       <DataPanel title="Import candidates (Faro statements)">
         <div className="space-y-2">
@@ -160,6 +155,6 @@ export function FactorReconciliationPage() {
           ) : null}
         </DataPanel>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }
