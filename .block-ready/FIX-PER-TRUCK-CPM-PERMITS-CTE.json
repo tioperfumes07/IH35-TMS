@@ -1,0 +1,23 @@
+{
+  "block_id": "FIX-PER-TRUCK-CPM-PERMITS-CTE",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUG-SWEEP",
+  "task": "per-truck-cpm permits CTE 500 fix — repoint phantom CTE to the real unit relation; +static CI guard.",
+  "branch": "fix/per-truck-cpm-permits-cte-repoint",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-PER-TRUCK-CPM-PERMITS-CTE.json",
+    "apps/backend/src/reports/per-truck-cpm/cpm-calculator.service.ts",
+    "scripts/verify-per-truck-cpm-no-phantom.mjs"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [
+    "verify:per-truck-cpm-no-phantom"
+  ],
+  "registered_on": "2026-06-27"
+}

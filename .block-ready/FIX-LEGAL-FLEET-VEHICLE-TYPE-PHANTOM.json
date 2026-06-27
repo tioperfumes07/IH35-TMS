@@ -1,0 +1,20 @@
+{
+  "block_id": "FIX-LEGAL-FLEET-VEHICLE-TYPE-PHANTOM",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUG-SWEEP",
+  "task": "Legal lease-to-own /fleet 500 — phantom u.unit_type → vehicle_type.",
+  "branch": "fix/legal-fleet-vehicle-type-phantom",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-LEGAL-FLEET-VEHICLE-TYPE-PHANTOM.json",
+    "apps/backend/src/legal/lease-to-own.service.ts"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}

@@ -1,0 +1,19 @@
+{
+  "block_id": "DOC-CATALOGS-CLASSES-FK-INVENTORY",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AF-PREP",
+  "task": "catalogs.classes per-entity FK inventory — companion to AF-1.",
+  "branch": "docs/catalogs-classes-fk-inventory",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/DOC-CATALOGS-CLASSES-FK-INVENTORY.json"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}

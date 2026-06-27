@@ -1,0 +1,24 @@
+{
+  "block_id": "FIX-DRIVERS-FULL-NAME-PHANTOM",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUG-SWEEP",
+  "task": "mdata.drivers.full_name phantom across 5 endpoints (42703) → CONCAT_WS(first,last); +db-test guard.",
+  "branch": "fix/drivers-full-name-phantom",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-DRIVERS-FULL-NAME-PHANTOM.json",
+    "apps/backend/src/settlements/approval.service.ts",
+    "apps/backend/src/drivers/document-alerts.service.ts",
+    "apps/backend/src/search/universal/indexer.service.ts",
+    "apps/backend/src/dispatch/validation/pre-dispatch-validator.service.ts",
+    "apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}

@@ -1,0 +1,22 @@
+{
+  "block_id": "FIX-PICKERS-50-CAP-UNITS-VENDORS-CUSTOMERS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUG-SWEEP",
+  "task": "50-cap class — unit/vendor/customer client pickers load full active set (limit forwarded in mdata.ts).",
+  "branch": "fix/picker-50-cap-units-vendors",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-PICKERS-50-CAP-UNITS-VENDORS-CUSTOMERS.json",
+    "apps/frontend/src/api/mdata.ts",
+    "apps/frontend/src/components/dispatch/InlineUnitPicker.tsx",
+    "apps/frontend/src/components/dispatch/InlineTrailerPicker.tsx"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}

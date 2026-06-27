@@ -1,0 +1,20 @@
+{
+  "block_id": "TBL-STANDARD-INSURANCE-POLICIES",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "TBL-STANDARD",
+  "task": "TBL-STANDARD surface 1 — migrate Insurance Policies list to the shared DataTable.",
+  "branch": "feat/tbl-standard-insurance-policies",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/TBL-STANDARD-INSURANCE-POLICIES.json",
+    "apps/frontend/src/pages/insurance/PoliciesList.tsx"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}
