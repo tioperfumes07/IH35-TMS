@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
+import { ACCOUNTING_CLEAN_TABS } from "./subnav-manifest";
 import {
   listBills,
   listBillPayments,
@@ -112,10 +113,6 @@ function isIsoOnOrAfter(left: string | null | undefined, right: string) {
   return left >= right;
 }
 
-function sumCents(rows: Array<{ amount_cents?: number | null }>) {
-  return rows.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0);
-}
-
 function amountOrBalanceCents(row: VendorBill) {
   const balance = row.balance_cents;
   if (balance != null) return Number(balance);
@@ -127,11 +124,6 @@ function relativeRetry(nextAttemptAt: string | null | undefined) {
   const deltaMs = new Date(nextAttemptAt).getTime() - Date.now();
   const minutes = Math.max(1, Math.round(Math.abs(deltaMs) / 60000));
   return `retry ${minutes}m`;
-}
-
-function average(values: number[]) {
-  if (!values.length) return null;
-  return values.reduce((sum, n) => sum + n, 0) / values.length;
 }
 
 function kpiCard(label: string, value: string, sublabel: string, tone: "neutral" | "warn" | "danger" = "neutral") {
@@ -183,7 +175,6 @@ function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?:
 export function AccountingHubPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [activeTab, setActiveTab] = useState<TabId>("home");
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const mtdStart = monthStartIso();
@@ -286,30 +277,8 @@ export function AccountingHubPage() {
   );
 
   const billsMtd = useMemo(() => bills.filter((bill) => isIsoOnOrAfter(bill.bill_date, mtdStart)), [bills, mtdStart]);
-  const billPaymentsMtd = useMemo(
-    () => billPayments.filter((p) => !p.revoked_at && isIsoOnOrAfter(p.payment_date, mtdStart)),
-    [billPayments, mtdStart]
-  );
-
-  const avgDsoDays = useMemo(() => {
-    const paidDurations = invoices.flatMap((invoice) => {
-      if (Number(invoice.amount_open_cents ?? 0) > 0) return [];
-      const paidDates = (invoice.payment_applications ?? [])
-        .map((app) => app.payment_date)
-        .filter((date): date is string => typeof date === "string");
-      if (!paidDates.length) return [];
-      const latestPayment = paidDates.reduce((max, date) => (date > max ? date : max), paidDates[0]);
-      const start = new Date(invoice.issue_date).getTime();
-      const end = new Date(latestPayment).getTime();
-      if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return [];
-      return [(end - start) / 86400000];
-    });
-    return average(paidDurations);
-  }, [invoices]);
-
   const openBillsAmountCents = openBills.reduce((sum, bill) => sum + amountOrBalanceCents(bill), 0);
   const expensesMtdCents = billsMtd.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0);
-  const billsPaidMtdCents = sumCents(billPaymentsMtd);
   const openInvoices = invoices.filter((invoice) => Number(invoice.amount_open_cents ?? 0) > 0);
   const openInvoicesCents = openInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
   const overdueInvoices = openInvoices.filter((invoice) => invoice.due_date < new Date().toISOString().slice(0, 10));
@@ -476,20 +445,24 @@ export function AccountingHubPage() {
       />
       {!companyId ? <p className="text-sm text-amber-800">Select an operating company.</p> : null}
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white px-2 py-1">
+      <nav className="overflow-x-auto rounded border border-gray-200 bg-white px-2 py-1" aria-label="Accounting sub-navigation">
         <div className="flex min-w-max gap-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`rounded px-3 py-1 text-sm ${activeTab === tab.id ? "bg-gray-100 font-semibold text-gray-900" : "text-gray-700 hover:bg-gray-50"}`}
+          {ACCOUNTING_CLEAN_TABS.map((tab) => (
+            <NavLink
+              key={tab.label}
+              to={tab.to}
+              end={tab.to === "/accounting"}
+              className={({ isActive }) =>
+                `rounded px-3 py-1 text-sm whitespace-nowrap ${
+                  isActive ? "border-b-2 border-slate-300 bg-gray-100 font-semibold text-gray-900" : "text-gray-700 hover:bg-gray-50"
+                }`
+              }
             >
               {tab.label}
-            </button>
+            </NavLink>
           ))}
         </div>
-      </div>
+      </nav>
 
       <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
         {kpiCard("Open Bills", money.format(openBillsAmountCents / 100), `${openBills.length} open`, openBills.length ? "danger" : "neutral")}
@@ -500,86 +473,41 @@ export function AccountingHubPage() {
         {kpiCard("QBO Sync", `${qboPending} pending`, qboFailed ? `${qboFailed} failed` : "queue healthy", qboFailed ? "danger" : qboPending ? "warn" : "neutral")}
       </div>
 
-      {activeTab === "home" ? (
-        <div className="grid gap-2 lg:grid-cols-3">
-          {homePanel("Settlements", settlementsRows, settlementsQ.isLoading ? "Loading…" : "No settlements found.", "/driver-finance/settlements", "View all")}
-          {homePanel(
-            "Find Transactions",
-            findTransactionsRows,
-            billPaymentsQ.isLoading || paymentsQ.isLoading ? "Loading…" : "No transactions found.",
-            "/accounting/payments",
-            "Open payments"
-          )}
-          {homePanel(
-            "Unmatched / Needs Review",
-            unmatchedRows,
-            qboQueueQ.isLoading ? "Loading…" : "No unmatched queue items.",
-            "/banking/qbo-sync-queue",
-            "Open queue"
-          )}
-          {homePanel(
-            "BILL FORM",
-            [
-              { key: "billform-layout", left: "12x6 + cost breakdown", right: "UI ready", muted: "locked layout" },
-              { key: "billform-lines", left: "Line persistence", right: "In progress", muted: "API integration pending" },
-            ],
-            "Vendor bill create uses the locked bill form shell.",
-            "/accounting/bills/vendor",
-            "Create bill"
-          )}
-          {homePanel(
-            "BILL ALLOCATION",
-            [
-              { key: "alloc-preview", left: "Allocation panel", right: "UI ready", muted: "available" },
-              { key: "alloc-next", left: "Next integration", right: "Live allocate endpoint", muted: "integration pending" },
-            ],
-            "Bill allocation is available in bills.",
-            "/accounting/bills",
-            "Open bills"
-          )}
-          {homePanel(
-            "TRIAL BALANCE",
-            trialBalanceRows,
-            trialBalanceQ.isError
-              ? "Trial balance snapshot is temporarily unavailable."
-              : `Quarter-to-date ${quarterRange.start} → ${quarterRange.end}.`,
-            "/reports/trial-balance",
-            "Open trial balance"
-          )}
-          {homePanel(
-            "PROFIT & LOSS",
-            profitLossRows,
-            profitLossQ.isError
-              ? "P&L snapshot is temporarily unavailable."
-              : `Month-to-date ${monthRange.start} → ${monthRange.end}.`,
-            "/reports/profit-loss",
-            "Open profit & loss"
-          )}
-          {homePanel(
-            "ASSETS",
-            [
-              { key: "assets-preview", left: "Asset workspace", right: "UI ready", muted: "available" },
-              { key: "assets-next", left: "Next integration", right: "Live endpoint", muted: "integration pending" },
-            ],
-            "Asset workspace is available in vehicles.",
-            "/maintenance/vehicles",
-            "Open vehicles"
-          )}
-        </div>
-      ) : (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
-          {TABS.find((t) => t.id === activeTab)?.to ? (
-            <Link className="font-semibold text-slate-700 hover:underline" to={TABS.find((t) => t.id === activeTab)!.to!}>
-              Open {TABS.find((t) => t.id === activeTab)?.label}
-            </Link>
-          ) : (
-            <p>No dedicated route is currently registered for this tab.</p>
-          )}
-          <p className="mt-2 text-xs text-gray-500">
-            {accountingTabSubtitle(activeTab, { billsPaidMtdCents, avgDsoDays })}
-          </p>
-        </div>
-      )}
+      <div className="grid gap-2 lg:grid-cols-3">
+        {homePanel("Settlements", settlementsRows, settlementsQ.isLoading ? "Loading…" : "No settlements found.", "/driver-finance/settlements", "View all")}
+        {homePanel(
+          "Find Transactions",
+          findTransactionsRows,
+          billPaymentsQ.isLoading || paymentsQ.isLoading ? "Loading…" : "No transactions found.",
+          "/accounting/payments",
+          "Open payments"
+        )}
+        {homePanel(
+          "Unmatched / Needs Review",
+          unmatchedRows,
+          qboQueueQ.isLoading ? "Loading…" : "No unmatched queue items.",
+          "/banking/qbo-sync-queue",
+          "Open queue"
+        )}
+        {homePanel(
+          "TRIAL BALANCE",
+          trialBalanceRows,
+          trialBalanceQ.isError
+            ? "Trial balance snapshot is temporarily unavailable."
+            : `Quarter-to-date ${quarterRange.start} → ${quarterRange.end}.`,
+          "/reports/trial-balance",
+          "Open trial balance"
+        )}
+        {homePanel(
+          "PROFIT & LOSS",
+          profitLossRows,
+          profitLossQ.isError
+            ? "P&L snapshot is temporarily unavailable."
+            : `Month-to-date ${monthRange.start} → ${monthRange.end}.`,
+          "/reports/profit-loss",
+          "Open profit & loss"
+        )}
+      </div>
     </div>
   );
 }

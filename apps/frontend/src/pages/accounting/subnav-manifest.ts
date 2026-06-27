@@ -19,15 +19,15 @@ export type QboSubNavItem = {
 
 export const QBO_ACCOUNTING_SUBNAV: readonly QboSubNavItem[] = [
   { label: "Bank transactions",        path: "/banking" },
-  { label: "Integration transactions", path: "/accounting/integration-transactions", isShell: true },
-  { label: "Receipts",                 path: "/accounting/receipts", isShell: true },
+  { label: "Integration transactions", path: "/accounting/integration-transactions" },
+  { label: "Receipts",                 path: "/accounting/receipts" },
   { label: "Reconcile",                path: "/banking/reconcile" },
   { label: "Rules",                    path: "/banking/categorization-rules" },
   { label: "Chart of accounts",        path: "/lists/accounting/chart-of-accounts" },
   { label: "Recurring transactions",   path: "/accounting/recurring-transactions" },
   { label: "Revenue recognition",      path: "/accounting/revenue-recognition", isShell: true },
   { label: "Fixed assets",             path: "/accounting/fixed-assets", isShell: true },
-  { label: "Prepaid expenses",         path: "/accounting/prepaid-expenses", isShell: true },
+  { label: "Prepaid expenses",         path: "/accounting/prepaid-expenses" },
   { label: "My accountant",            path: "/accounting/my-accountant", isShell: true },
 ] as const;
 
