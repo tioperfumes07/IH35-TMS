@@ -10,6 +10,12 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
 
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+function humanMemo(memo: string | null | undefined): string {
+  if (!memo) return "—";
+  return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
+}
+
 export function ManualJEListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -91,7 +97,7 @@ export function ManualJEListPage() {
             {(entriesQuery.data?.journal_entries ?? []).map((entry) => (
               <tr key={entry.id} className="border-t border-gray-100">
                 <td className="px-3 py-2">{entry.entry_date?.slice(0, 10)}</td>
-                <td className="px-3 py-2">{entry.memo ?? "-"}</td>
+                <td className="px-3 py-2">{humanMemo(entry.memo)}</td>
                 <td className="px-3 py-2">{entry.source}</td>
                 <td className="px-3 py-2">{entry.status}</td>
                 <td className="px-3 py-2">${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}</td>

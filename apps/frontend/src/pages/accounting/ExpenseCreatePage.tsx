@@ -1,7 +1,7 @@
-import { PageHeader } from "../../components/layout/PageHeader";
 import { RecordExpenseForm } from "../../components/expenses/RecordExpenseForm";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 export function ExpenseCreatePage() {
   const { pushToast } = useToast();
@@ -9,8 +9,7 @@ export function ExpenseCreatePage() {
   const companyId = selectedCompanyId ?? "";
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title="Create expense" subtitle="Record a vendor expense or bill payment" />
+    <AccountingSubNavWrapper title="Expenses" subtitle="Record a vendor expense or bill payment">
       {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
       <div className="mx-auto max-w-3xl rounded border border-gray-200 bg-white p-4">
         {companyId ? (
@@ -21,6 +20,6 @@ export function ExpenseCreatePage() {
           />
         ) : null}
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }
