@@ -63,6 +63,16 @@ type/nullability/default — so a clean migrate reproduces prod; verified on the
 `ih35_migrations.applied_migrations.applied_by` (the migrate runner's internal mirror ledger). Both need
 separate, non-`ADD COLUMN` handling.
 
+**FLAGGED — prod-vs-code NOT NULL inconsistency (4 columns):** on prod, `qbo.sync_alerts.kind`/`message`,
+`sms.queue.to_number`, and `whatsapp.queue.body` are **NOT NULL (no default)** — but the Block-H notification
+dispatch code INSERTs into these queues **without supplying them** (proven: capturing them NOT NULL failed
+`notification-e2e` + `driver-settlement-pdf-e2e` with "null value … violates not-null"). So prod's NOT NULL
+is inconsistent with the app code — it would fail on prod too if those queues were exercised (they're empty
+on prod). The capture migration therefore adds these 4 as **NULLABLE** (column + type captured; no-op on prod
+where they already exist). **Owner/GUARD decision:** fix the notification insert path to populate these, then
+tighten the constraint — OR accept them nullable. Until then, clean-build nullability intentionally differs
+from prod on these 4.
+
 ## 2. The 4 ledger-only migrations (benign)
 
 In prod `_system._schema_migrations` but **not** files on `origin/main`:
