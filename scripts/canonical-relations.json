@@ -1,6 +1,6 @@
 {
   "generated_note": "Prod relation snapshot (read-only) — canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes.",
-  "count": 667,
+  "count": 669,
   "relations": [
     "_system._schema_migrations",
     "_system.admin_jobs",
@@ -34,6 +34,8 @@
     "accounting.outbox_events",
     "accounting.payment_applications",
     "accounting.payments",
+    "accounting.prepaid_amortization_rows",
+    "accounting.prepaid_assets",
     "accounting.period_cash_basis_snapshot",
     "accounting.periods",
     "accounting.posting_batches",
