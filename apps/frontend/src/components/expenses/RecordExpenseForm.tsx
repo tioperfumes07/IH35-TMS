@@ -44,7 +44,7 @@ export function RecordExpenseForm({
   });
   const unitsQuery = useQuery({
     queryKey: ["record-expense", "units", operatingCompanyId],
-    queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId }),
+    queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
   const paymentAccountsQuery = useQuery({

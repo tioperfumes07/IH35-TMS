@@ -137,7 +137,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   const unitsQuery = useQuery({
     queryKey: ["insurance", "wizard", "units", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId),
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }).then((r) => r.units as UnitRow[]),
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }).then((r) => r.units as UnitRow[]),
   });
 
   const allUnits = useMemo(() => (unitsQuery.data ?? []).filter((u) => Boolean(u.id)), [unitsQuery.data]);

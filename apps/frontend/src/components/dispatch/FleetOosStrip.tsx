@@ -46,7 +46,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
 
   const unitsQuery = useQuery({
     queryKey: ["dispatch", "fleet-oos-units", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }),
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
     enabled,
     refetchInterval: 60_000,
   });

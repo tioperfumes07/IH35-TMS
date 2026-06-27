@@ -20,7 +20,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
 
   const unitsQuery = useQuery({
     queryKey: ["dispatch", "inline-units", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }),
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: open && Boolean(operatingCompanyId),
   });
 

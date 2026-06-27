@@ -67,7 +67,7 @@ export function RecordPaymentModal({
 
   const customersQuery = useQuery({
     queryKey: ["record-payment", "customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId }).then((res) => res.customers),
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.customers),
     enabled: open,
   });
 
