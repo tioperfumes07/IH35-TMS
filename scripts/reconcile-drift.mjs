@@ -77,7 +77,7 @@ async function writeFinding(client, r, severity) {
 
 async function main() {
   if (!ENABLED) {
-    console.log("[recon-drift] disabled (RECON_DRIFT_CRON_ENABLED!=true) — flip ON at posting go-live.");
+    console.log("[recon-drift] disabled — Jorge flips the cron flag at posting go-live (env RECON_DRIFT_CRON_ENABLED).");
     process.exit(0);
   }
   const cs = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
