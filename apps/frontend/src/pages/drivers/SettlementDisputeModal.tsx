@@ -39,7 +39,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
   const driversQuery = useQuery({
     queryKey: ["drivers", "dispute-modal", companyId],
     enabled: open && Boolean(companyId),
-    queryFn: () => listDrivers({ operating_company_id: companyId, status: "All" }).then((r) => r.drivers),
+    queryFn: () => listDrivers({ operating_company_id: companyId, status: "All", limit: 200 }).then((r) => r.drivers), // full set (endpoint default 50 truncates)
   });
 
   const settlementsQuery = useQuery({

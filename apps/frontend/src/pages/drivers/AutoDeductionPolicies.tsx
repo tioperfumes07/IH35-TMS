@@ -39,7 +39,7 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
   const { createMutation, patchMutation, cancelMutation } = useAutoDeductionPolicyMutations(operatingCompanyId);
   const driversQuery = useQuery({
     queryKey: ["drivers", "auto-deductions", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId }).then((res) => res.drivers),
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.drivers), // full set (endpoint default 50 truncates)
     enabled: Boolean(operatingCompanyId),
   });
 

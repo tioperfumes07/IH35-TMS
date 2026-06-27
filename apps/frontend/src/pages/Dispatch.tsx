@@ -175,7 +175,7 @@ export function DispatchPage({
   });
   const driverLookup = useQuery({
     queryKey: ["dispatch", "drivers", filters.search],
-    queryFn: () => listDrivers({ status: "Active", search: filters.search || undefined }),
+    queryFn: () => listDrivers({ status: "Active", search: filters.search || undefined, limit: 200 }), // full active set (endpoint default 50 truncates >50)
   });
   const preSettlementsQuery = useQuery({
     queryKey: ["dispatch", "pre-settlements", defaultCompanyIds.join(",")],
