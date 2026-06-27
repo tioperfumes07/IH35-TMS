@@ -91,6 +91,15 @@ BEGIN
     FROM catalogs.accounts a
     WHERE NOT EXISTS (SELECT 1 FROM _af1_owners o WHERE o.old_id = a.id);
 
+    -- Q1 OVERRIDE (Jorge-confirmed 2026-06-27): the generic '6999' Uncategorized Expenses is the operating
+    -- carrier's catch-all and belongs to TRANSP — NOT TRK. Its stale chart_of_accounts_roles binding maps it
+    -- to TRK; force it to TRANSP only (single owner, no TRK split copy). 'TRK-6999' is a separate account and
+    -- is unaffected. Verified on the prod-copy: pre-migration '6999' is the lone NULL-entity account.
+    DELETE FROM _af1_owners
+     WHERE old_id IN (SELECT id FROM catalogs.accounts WHERE account_number = '6999');
+    INSERT INTO _af1_owners (old_id, entity_id)
+      SELECT id, v_transp FROM catalogs.accounts WHERE account_number = '6999';
+
     -- rank owners per account so the PRIMARY (TRANSP > TRK > USMCA) keeps the original id
     CREATE TEMP TABLE _af1_map ON COMMIT DROP AS
     WITH ranked AS (
