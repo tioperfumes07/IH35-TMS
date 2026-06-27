@@ -1,0 +1,21 @@
+{
+  "block_id": "FIX-DISPATCH-DRIVER-PICKER-50-CAP",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUG-SWEEP",
+  "task": "Book Load driver picker 50-cap — load full active set (limit:200) so drivers past newest 50 appear (Mecor). Also #1529 inline pickers.",
+  "branch": "fix/book-load-driver-picker-cap",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-DISPATCH-DRIVER-PICKER-50-CAP.json",
+    "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+    "apps/frontend/src/components/dispatch/InlineDriverPicker.tsx"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}

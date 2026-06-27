@@ -122,7 +122,11 @@ for (const f of fs.readdirSync(brDir).filter((x) => x.endsWith(".json"))) {
   else if (tokPr) { status = "NEEDS-VERIFY"; evidence = `PR #${tokPr.number} title-match only, unverified`; }
   else if (present.length) { status = "NEEDS-VERIFY"; evidence = `${present.length}/${sig.length} signature file(s) on main — partial, unverified`; }
   else { status = fin ? "PENDING (GATED)" : "PENDING"; evidence = sig.length ? `0/${sig.length} signature file(s) on main` : "no merged PR / no files on main"; }
-  all.push({ id, source: ".block-ready", fin, tier: "", status, evidence, name: String(j.task || "").slice(0, 120) });
+  const pr = mergedPr?.number ?? tokPr?.number ?? null;
+  // registered_on = date a block was added to the registry (string). Distinct from any `added` field
+  // (some legacy files use `added` as a file list, not a date) so the delta can't false-match.
+  const registeredOn = typeof j.registered_on === "string" ? j.registered_on : null;
+  all.push({ id, source: ".block-ready", fin, tier: "", status, evidence, name: String(j.task || "").slice(0, 120), registered_on: registeredOn, pr });
 }
 
 // (B) docs/blocks/**/*.txt
@@ -204,7 +208,30 @@ const gatedN = blocks.filter((b) => b.status === "PENDING (GATED)").length;
 const c4 = (k) => counts[k] || 0;
 console.log(`[reconcile:blocks] ${blocks.length} blocks — DONE=${c4("DONE")}  NEEDS-VERIFY=${c4("NEEDS-VERIFY")}  PENDING=${c4("PENDING")}  PENDING (GATED)=${c4("PENDING (GATED)")}`);
 
-fs.writeFileSync(path.join(ROOT, "docs/trackers/block-reconciliation-data.json"), JSON.stringify({ date, counts, blocks }, null, 1));
+// DISPATCH-D — per-block PR + delta + universe so "is block X counted?" is a readable yes/no.
+const prOf = (b) => (b.pr ?? Number((String(b.evidence).match(/PR #(\d+)/) || [])[1])) || null;
+const DELTA_SINCE = "2026-06-16";
+const delta = blocks
+  .filter((b) => typeof b.registered_on === "string" && b.registered_on >= DELTA_SINCE)
+  .map((b) => ({ id: b.id, status: b.status, pr: prOf(b), registered_on: b.registered_on, title: b.name }))
+  .sort((a, b) => a.id.localeCompare(b.id));
+// Universe: the reconciler spans 5 sources; the post-dedup block count comes from all of them, NOT just
+// .block-ready. This explains the "456 vs 294 .block-ready files" gap GUARD flagged.
+const bySource = {};
+for (const b of blocks) bySource[b.source] = (bySource[b.source] || 0) + 1;
+const rawCounts = {
+  ".block-ready (*.json files)": fs.readdirSync(brDir).filter((x) => x.endsWith(".json")).length,
+};
+const universe = {
+  total_blocks_after_dedup: blocks.length,
+  by_source_after_dedup: bySource,
+  raw_file_counts: rawCounts,
+  note: "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count.",
+};
+const blocksOut = blocks.map((b) => ({ ...b, pr: prOf(b) }));
+console.log(`[reconcile:blocks] delta (blocks added since ${DELTA_SINCE}): ${delta.length} → ${delta.map((d) => d.id).join(", ") || "none"}`);
+
+fs.writeFileSync(path.join(ROOT, "docs/trackers/block-reconciliation-data.json"), JSON.stringify({ date, counts, universe, delta, blocks: blocksOut }, null, 1));
 
 const legend = [
   `**DONE** = verified on main (branch merged or all signature files present).`,
@@ -212,7 +239,6 @@ const legend = [
   `**PENDING** = needs build.`,
   `**PENDING (GATED)** = financial/locked, needs Jorge's gate first.`,
 ].join("  ");
-const tbl = blocks.map((b) => `| ${b.id} | ${b.status} | ${b.fin ? "💰" : ""} | ${b.tier ? "T" + b.tier : ""} | ${b.source} | ${b.evidence.replace(/\|/g, "/")} |`).join("\n");
 fs.writeFileSync(path.join(ROOT, `docs/trackers/BLOCK-RECONCILIATION-${date}.md`),
 `# BLOCK RECONCILIATION — ${date} (every block, built vs pending — verified)
 
@@ -223,10 +249,22 @@ ${legend}
 ## Counts
 ${Object.entries(counts).map(([k, v]) => `- **${k}**: ${v}`).join("\n")}
 
+## Universe — why ${blocks.length} blocks (the "456 vs 294 .block-ready" gap, explained)
+The reconciler spans **5 sources**, de-duped by id — the block count is the union, **not** the \`.block-ready\` file count.
+- ${universe.note}
+- **\`.block-ready/*.json\` files on disk:** ${rawCounts[".block-ready (*.json files)"]}
+- **By source (after de-dup):** ${Object.entries(bySource).map(([k, v]) => `${k}: ${v}`).join(" · ")}
+
+## Delta — blocks added since ${DELTA_SINCE} (today's work, now counted)
+Blocks whose \`.block-ready\` file carries \`"added" >= ${DELTA_SINCE}\`. If empty, no new blocks were registered.
+${delta.length === 0 ? "_(none)_" : `| Block | Status | PR | Title |
+|-------|--------|----|-------|
+${delta.map((d) => `| ${d.id} | ${d.status} | ${d.pr ? "#" + d.pr : ""} | ${String(d.title).replace(/\|/g, "/")} |`).join("\n")}`}
+
 ## Every block
-| Block | Status | Fin | Tier | Source | Evidence |
-|-------|--------|-----|------|--------|----------|
-${tbl}
+| Block | Status | Fin | Tier | PR | Source | Evidence |
+|-------|--------|-----|------|----|--------|----------|
+${blocksOut.map((b) => `| ${b.id} | ${b.status} | ${b.fin ? "💰" : ""} | ${b.tier ? "T" + b.tier : ""} | ${b.pr ? "#" + b.pr : ""} | ${b.source} | ${String(b.evidence).replace(/\|/g, "/")} |`).join("\n")}
 `);
 
 // xlsx

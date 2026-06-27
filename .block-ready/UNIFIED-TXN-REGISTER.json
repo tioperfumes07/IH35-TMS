@@ -1,0 +1,21 @@
+{
+  "block_id": "UNIFIED-TXN-REGISTER",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH-B",
+  "task": "Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register.",
+  "branch": "feat/unified-transaction-register",
+  "lane": "coder",
+  "details": [
+    "#1536 OPEN — not merged. Signature = the two NEW files (not yet on main) so status reads PENDING until the branch merges, then auto-promotes to DONE."
+  ],
+  "allowed_files": [
+    ".block-ready/UNIFIED-TXN-REGISTER.json",
+    "apps/backend/src/accounting/transaction-register.routes.ts",
+    "apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}

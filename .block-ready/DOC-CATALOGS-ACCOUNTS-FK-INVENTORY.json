@@ -1,0 +1,19 @@
+{
+  "block_id": "DOC-CATALOGS-ACCOUNTS-FK-INVENTORY",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AF-PREP",
+  "task": "Authoritative FK re-key inventory for catalogs.accounts (29 cols/20 tables) — AF-1 input.",
+  "branch": "docs/catalogs-accounts-fk-inventory",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/DOC-CATALOGS-ACCOUNTS-FK-INVENTORY.json"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}

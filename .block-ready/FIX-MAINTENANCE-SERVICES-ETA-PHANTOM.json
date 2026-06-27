@@ -1,0 +1,20 @@
+{
+  "block_id": "FIX-MAINTENANCE-SERVICES-ETA-PHANTOM",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUG-SWEEP",
+  "task": "services/eta 500 — 3 phantom mdata.units cols → telematics.vehicle_latest_position + maintenance.pm_schedules.",
+  "branch": "fix/maintenance-services-eta-phantom-cols",
+  "lane": "coder",
+  "details": [
+    "Registered 2026-06-27 by DISPATCH-D tracker truth-up. Status auto-derived by reconciler from branch→merged-PR / signature files on main."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-MAINTENANCE-SERVICES-ETA-PHANTOM.json",
+    "apps/backend/src/catalogs/maintenance/services.routes.ts"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}

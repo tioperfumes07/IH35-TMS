@@ -1,0 +1,20 @@
+{
+  "block_id": "QBO-SYNC-DRIFT-401-FIX",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH-C",
+  "task": "QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch).",
+  "branch": "fix/qbo-sync-drift-401-credentials",
+  "lane": "coder",
+  "details": [
+    "#1535 OPEN (CI green) — not merged. Edits a pre-existing file, so the reconciler cannot infer DONE from file-presence; auto-promotes to DONE when branch merges.",
+    "No new signature file → stays weak-signal until merge."
+  ],
+  "allowed_files": [
+    ".block-ready/QBO-SYNC-DRIFT-401-FIX.json"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-06-27"
+}
