@@ -210,7 +210,7 @@ pending-tasks companion doc).
 
 ---
 
-## 6. Module map (the locked 23-item sidebar)
+## 6. Module map (the locked 28-item sidebar)
 
 Navigation is a fixed **navy 80px left rail** (`rgb(27,35,51)`); all other nav is the **top horizontal
 bar**. **Measured from the live source `apps/frontend/src/components/layout/sidebar-config.ts`

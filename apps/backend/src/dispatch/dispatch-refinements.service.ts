@@ -238,7 +238,8 @@ export async function replaceLoadStopsRefined(
       );
       if (!load.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
 
-      await client.query(`DELETE FROM mdata.load_stops WHERE load_id = $1`, [loadId]);
+      // INV-1: void-never-delete — soft-delete all existing stops before re-inserting.
+      await client.query(`UPDATE mdata.load_stops SET soft_deleted_at = now() WHERE load_id = $1 AND soft_deleted_at IS NULL`, [loadId]);
 
       for (const s of stops) {
         const st = normalizeStopType(s.stop_type);

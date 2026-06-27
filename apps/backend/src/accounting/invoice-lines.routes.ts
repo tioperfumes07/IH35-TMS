@@ -261,14 +261,17 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
       if (!guard.ok) return guard;
+      // INV-2: void-never-delete — soft-delete, never hard-delete invoice line evidence.
       const rowRes = await client.query(
         `
-          DELETE FROM accounting.invoice_lines
+          UPDATE accounting.invoice_lines
+          SET soft_deleted_at = now(), soft_deleted_by = $3
           WHERE id = $1
             AND invoice_id = $2
+            AND soft_deleted_at IS NULL
           RETURNING *
         `,
-        [params.data.lineId, params.data.id]
+        [params.data.lineId, params.data.id, user.uuid]
       );
       const deleted = rowRes.rows[0] ?? null;
       if (!deleted) return { ok: false as const, code: 404 as const, error: "invoice_line_not_found" };
@@ -282,7 +285,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
           resource_id: params.data.lineId,
           invoice_id: params.data.id,
           operating_company_id: query.data.operating_company_id,
-          action: "deleted",
+          action: "soft_deleted",
         },
         "warning",
         "P3-T11.20.2-INVOICE-FLOW"

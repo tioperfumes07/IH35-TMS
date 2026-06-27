@@ -243,7 +243,8 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     if (!params.success || !q.success) return reply.code(400).send({ error: "validation_error" });
 
     await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
-      await client.query(`DELETE FROM accounting.banking_rules WHERE id = $1 AND operating_company_id = $2`, [
+      // INV-2: void-never-delete — deactivate, never hard-delete banking rule config.
+      await client.query(`UPDATE accounting.banking_rules SET is_active = false, updated_at = now() WHERE id = $1 AND operating_company_id = $2`, [
         params.data.id,
         q.data.operating_company_id,
       ]);

@@ -53,7 +53,7 @@ else pass("Sidebar.tsx Scale import removed");
 const { execSync } = await import("node:child_process");
 try {
   execSync("node scripts/verify-sidebar-contract.mjs", { cwd: ROOT, stdio: "pipe" });
-  pass("verify-sidebar-contract passes (26 items, adjacency correct)");
+  pass("verify-sidebar-contract passes (28 items, adjacency correct)");
 } catch (e) {
   fail(`verify-sidebar-contract failed: ${e.stderr?.toString() ?? e.message}`);
 }

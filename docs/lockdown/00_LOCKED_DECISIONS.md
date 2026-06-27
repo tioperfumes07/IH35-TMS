@@ -58,7 +58,7 @@ RULES:
 6.1 verify-sidebar-contract.mjs — assert exact array; assert never-remove for all ids; assert cash-flow between eld and accounting.
 6.2 verify-cashflow-module.mjs — assert /cash-flow top-level; assert does NOT import /reports/cash-flow-*; assert between eld and accounting.
 6.3 verify-insurance-financial-writes.mjs — assert insurance delegates math to computeInsuranceDispersal; no new journal debit-credit; bill writes carry idempotency key.
-6.4 verify-additive-only (sidebar) — fail if any id in locked 23-array is missing from SIDEBAR_ITEM_IDS.
+6.4 verify-additive-only (sidebar) — fail if any id in locked 28-array is missing from SIDEBAR_ITEM_IDS.
 
 ## 7. QBO-PARITY UI SYSTEM (locked 2026-06-08)
 See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).

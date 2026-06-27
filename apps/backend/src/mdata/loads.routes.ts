@@ -1226,11 +1226,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const removed = await withCurrentUser(authUser.uuid, async (client) => {
+      // INV-1: void-never-delete — soft-delete, never hard-delete POD/stop evidence.
       const res = await client.query(
         `
-          DELETE FROM mdata.load_stops
+          UPDATE mdata.load_stops
+          SET soft_deleted_at = now()
           WHERE load_id = $1
             AND id = $2
+            AND soft_deleted_at IS NULL
           RETURNING id, load_id, sequence_number, stop_type, status
         `,
         [parsedParams.data.id, parsedParams.data.stopId]
@@ -1245,7 +1248,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           resource_id: row.id,
           resource_type: "mdata.load_stops",
           load_id: row.load_id,
-          action: "deleted",
+          action: "soft_deleted",
           sequence_number: row.sequence_number,
           stop_type: row.stop_type,
           prior_status: row.status,

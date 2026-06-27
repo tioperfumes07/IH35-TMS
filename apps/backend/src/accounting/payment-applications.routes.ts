@@ -147,14 +147,17 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
       if (!payment) return { code: 404 as const, error: "payment_not_found" };
       if (payment.voided_at) return { code: 409 as const, error: "payment_voided" };
 
+      // INV-2: void-never-delete — archive with unapplied_at, never hard-delete.
       const deleteRes = await client.query(
         `
-          DELETE FROM accounting.payment_applications
+          UPDATE accounting.payment_applications
+          SET unapplied_at = now(), unapplied_by_user_id = $3
           WHERE id = $1
             AND payment_id = $2
+            AND unapplied_at IS NULL
           RETURNING id, invoice_id, target_kind, target_id, amount_cents
         `,
-        [params.data.id, params.data.paymentId]
+        [params.data.id, params.data.paymentId, user.uuid]
       );
       const deleted = deleteRes.rows[0] ?? null;
       if (!deleted) return { code: 404 as const, error: "payment_application_not_found" };
