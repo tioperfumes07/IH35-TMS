@@ -15,11 +15,11 @@
 | Plaid-connected accounts | **5** | `banking.bank_accounts WHERE plaid_item_id IS NOT NULL` |
 | `accounting.banking_rules` rows | **0** | No rules ever configured |
 | `banking.transaction_categories` rows | **0** | No Plaid→COA mappings ever configured |
-| Categorized transactions | **0** | `autoCategorize()` no-ops: `coa_account_id` column absent |
+| Categorized transactions | **0** | `autoCategorize()` short-circuits: rules table empty, returns null before any UPDATE |
 | JE postings from bank feed | **0** | Code path does not exist |
 | QBO synced from bank feed | **0** | `enqueueSyncJob` only fires on recon-complete + matched txns |
 
-**Root cause summary:** The categorize → post-JE engine does not exist. `autoCategorize()` is a stub (checks for `banking.bank_transactions.coa_account_id` via `information_schema` — column is ABSENT — and silently no-ops). `suggestionFromPlaidCategory()` explicitly returns `null`. No rule table has been seeded. Option A (rules) alone makes suggestions that go nowhere because no posting path exists.
+**Root cause summary:** The categorize → post-JE engine does not exist. `autoCategorize()` is effectively a no-op because `loadCategoryRules()` returns empty (zero rows in `banking.transaction_categories`) and returns null before reaching the UPDATE. `banking.bank_transactions.coa_account_id` **does exist** (migration 0087, 0 populated) — the `information_schema` guard in `autoCategorize()` passes, but there is nothing to match. `suggestionFromPlaidCategory()` also explicitly returns `null`. No rule table has been seeded. Option A (rules) alone makes suggestions that go nowhere because no posting path exists.
 
 ---
 
@@ -333,7 +333,7 @@ Phase 3 — Option C (follow-on Tier-1, separate sign-off):
 |---|---|---|---|
 | `cash_gl_account_id` | `banking.bank_accounts` | **ABSENT** — not in any of 242 migrations | Must add (B-1) |
 | `matched_journal_entry_id` | `banking.bank_transactions` | **ABSENT** | Must add (B-2) |
-| `coa_account_id` | `banking.bank_transactions` | **ABSENT** — `autoCategorize()` checks for this via `information_schema`; always silent no-op | Fix: switch `autoCategorize()` to use `categorization_gl_account_id` (already exists via migration 0165) |
+| `coa_account_id` | `banking.bank_transactions` | **PRESENT** (migration 0087), 0 rows populated — `autoCategorize()` checks for it via `information_schema` (passes), but the UPDATE never fires because `loadCategoryRules()` returns empty. No column fix needed — seed the rules tables. |
 
 **Existing columns that CAN be used immediately (no migration needed):**
 - `banking.bank_transactions.categorization_gl_account_id` (UUID, migration 0165)
@@ -355,17 +355,17 @@ Phase 3 — Option C (follow-on Tier-1, separate sign-off):
 4. `POST /api/v1/banking/transactions/:id/post` route exists in backend
 5. Route is gated on `GL_POSTING_ENABLED`
 6. Re-categorize path triggers reversal (not silent overwrite)
-7. `autoCategorize()` no longer checks for absent `coa_account_id` — uses `categorization_gl_account_id`
+7. `banking.transaction_categories` has at least one seeded rule (confirms autoCategorize is not a no-op at runtime)
 8. Entity scope enforced: `operating_company_id` checked on bank_tx, bank_account, and both GL account IDs
 9. Maker-checker roles enforced on post route (Owner + Administrator only)
 10. No second posting path (no inline `INSERT INTO accounting.journal_entries` in any route handler)
 
 ---
 
-## 7. Open Questions for Jorge
+## 7. Open Questions for Jorge (5 questions)
 
 1. **AF-1 timeline:** Is PR #1528 approved for merge? Option B cannot safely post per-entity JEs without it.
-2. **`autoCategorize()` quick fix (Option A):** Approve switching the `coa_account_id` check to `categorization_gl_account_id` (already in schema, migration 0165)? This is a one-line code fix that unblocks suggestions immediately, with zero GL risk.
+2. **`autoCategorize()` quick fix (Option A):** Approve seeding `banking.transaction_categories` with Plaid→COA mappings? The column (`coa_account_id`, migration 0087) already exists and the `information_schema` guard passes — the issue is zero rows in the rules table, not a missing column. Seeding is the fix.
 3. **Cash GL account mapping:** For each of the 5 live bank accounts — does Jorge want to configure the `cash_gl_account_id` link via a UI screen (build required) or via a one-time admin route / SQL (faster)?
 4. **Auto-post rules:** Should the first seed rules be auto-post (no human click needed) or suggestion-only (human confirms each)? QBO recommends suggestion-only until confidence is proven.
 5. **Maker-checker split:** Is Owner + Administrator for the "Post to GL" button acceptable, or does Jorge want Owner-only?
