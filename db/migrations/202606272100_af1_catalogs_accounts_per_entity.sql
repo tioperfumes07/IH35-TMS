@@ -95,6 +95,9 @@ BEGIN
     -- carrier's catch-all and belongs to TRANSP — NOT TRK. Its stale chart_of_accounts_roles binding maps it
     -- to TRK; force it to TRANSP only (single owner, no TRK split copy). 'TRK-6999' is a separate account and
     -- is unaffected. Verified on the prod-copy: pre-migration '6999' is the lone NULL-entity account.
+    -- NOTE: forcing a SINGLE TRANSP owner here means the stale TRK uncategorized_expense binding (which still
+    -- points at 6999) has no TRK split copy to follow in 3.1 → it would be left cross-entity. STEP 3.4 heals
+    -- it (re-points to TRK's own active uncategorized account, TRK-6999) and fail-loud-checks the result.
     DELETE FROM _af1_owners
      WHERE old_id IN (SELECT id FROM catalogs.accounts WHERE account_number = '6999');
     INSERT INTO _af1_owners (old_id, entity_id)
@@ -225,6 +228,66 @@ BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='banking' AND table_name='bank_accounts' AND column_name='ledger_account_id') THEN
       UPDATE banking.bank_accounts c SET ledger_account_id = m.new_id
         FROM _af1_map m WHERE m.old_id=c.ledger_account_id AND m.entity_id=c.operating_company_id AND m.rn>1;
+    END IF;
+
+    -- ── STEP 3.4: HEAL config bindings orphaned by a SINGLE-OWNER ownership override (e.g. Q1 6999→TRANSP) ─
+    -- STEP 3.1/3.2 re-key a child only when a split copy (rn>1) exists for the child's entity. Q1 collapses
+    -- 6999 to a SINGLE TRANSP owner (no TRK split copy), so a NON-TRANSP entity's binding that pointed at 6999
+    -- has nothing to follow → it is left CROSS-ENTITY. V1 counts cross-entity bindings REGARDLESS of is_active,
+    -- so the already-inactive stale TRK→6999 binding still fails V1. GENERAL fix (not a 6999 one-off): for every
+    -- config binding still pointing at an account owned by a DIFFERENT entity, re-point it to the SAME entity's
+    -- EQUIVALENT account resolved BY account_number — the entity's own account whose number equals the orphan's
+    -- number, else the entity-prefixed form '<CODE>-<number>' (e.g. TRK's equivalent of 6999 is TRK-6999).
+    -- void-not-delete: only account_id is re-pointed (the mig 202606161200_coa_decommingle_trk_stage3 UPDATE
+    -- pattern), never DELETEd; is_active is left untouched so the partial-unique active binding is preserved
+    -- (uq_coa_roles_company_role_active is WHERE is_active=true, so re-pointing the inactive twin never collides).
+    UPDATE accounting.chart_of_accounts_roles c
+       SET account_id = eq.equiv_id, updated_at = now()
+      FROM (
+        SELECT r.id AS binding_id, ea.id AS equiv_id
+          FROM accounting.chart_of_accounts_roles r
+          JOIN catalogs.accounts o  ON o.id = r.account_id
+                                    AND o.operating_company_id <> r.operating_company_id   -- orphan
+          JOIN org.companies     ce ON ce.id = r.operating_company_id
+          JOIN catalogs.accounts ea ON ea.operating_company_id = r.operating_company_id    -- same-entity equivalent
+                                    AND ea.account_number IN (o.account_number, ce.code || '-' || o.account_number)
+      ) eq
+     WHERE c.id = eq.binding_id;
+
+    -- twin orphan in the other binding table (confirmed 0 on the prod-copy, but heal generically all the same)
+    UPDATE accounting.expense_category_account_map c
+       SET account_id = eq.equiv_id, updated_at = now()
+      FROM (
+        SELECT m.id AS map_id, ea.id AS equiv_id
+          FROM accounting.expense_category_account_map m
+          JOIN catalogs.accounts o  ON o.id = m.account_id
+                                    AND o.operating_company_id <> m.operating_company_id
+          JOIN org.companies     ce ON ce.id = m.operating_company_id
+          JOIN catalogs.accounts ea ON ea.operating_company_id = m.operating_company_id
+                                    AND ea.account_number IN (o.account_number, ce.code || '-' || o.account_number)
+      ) eq
+     WHERE c.id = eq.map_id;
+
+    -- FAIL LOUD — the in-migration V1 sub-check across ALL SIX child tables (INCLUDING inactive rows). No child
+    -- may reference an account of another entity. If any survived the heal (e.g. no same-entity equivalent
+    -- account to re-point to) STOP: it needs an explicit per-entity mapping decision, never a silent guess.
+    -- This makes V1 provably 0 on every DB the migration runs against (branch-test AND prod), and guarantees
+    -- the Q1 orphan class can never regress unnoticed.
+    IF EXISTS (
+      SELECT 1 FROM accounting.journal_entry_postings c
+        JOIN catalogs.accounts a ON a.id=c.account_id WHERE a.operating_company_id <> c.operating_company_id
+      UNION ALL SELECT 1 FROM accounting.chart_of_accounts_roles c
+        JOIN catalogs.accounts a ON a.id=c.account_id WHERE a.operating_company_id <> c.operating_company_id
+      UNION ALL SELECT 1 FROM accounting.expense_category_account_map c
+        JOIN catalogs.accounts a ON a.id=c.account_id WHERE a.operating_company_id <> c.operating_company_id
+      UNION ALL SELECT 1 FROM accounting.escrow_accounts c
+        JOIN catalogs.accounts a ON a.id=c.coa_account_id WHERE a.operating_company_id <> c.operating_company_id
+      UNION ALL SELECT 1 FROM payroll.driver_settlement_line_items c
+        JOIN catalogs.accounts a ON a.id=c.posting_account_id WHERE a.operating_company_id <> c.operating_company_id
+      UNION ALL SELECT 1 FROM accounting.banking_rules c
+        JOIN catalogs.accounts a ON a.id=c.then_account_id WHERE a.operating_company_id <> c.operating_company_id
+    ) THEN
+      RAISE EXCEPTION 'AF-1 V1: cross-entity account binding(s) remain after heal — explicit per-entity mapping required (do not guess).';
     END IF;
 
     -- ── STEP 4: enforce NOT NULL on operating_company_id ───────────────────────────────────────────────
