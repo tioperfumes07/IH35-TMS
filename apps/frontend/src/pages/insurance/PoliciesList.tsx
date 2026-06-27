@@ -9,6 +9,7 @@ import {
 } from "../../api/insurance";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { DataTable } from "../../components/DataTable";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
 import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -70,6 +71,19 @@ export function PoliciesList() {
       return remaining >= 0 && remaining <= 30;
     });
   }, [expiringSoonOnly, policiesQuery.data]);
+
+  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
+  const columns = [
+    { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <span className="font-medium text-slate-800">{p.policy_number}</span> },
+    { key: "insurer_name", label: "Insurer", sortable: true },
+    { key: "coverage_type", label: "Type", sortable: true },
+    { key: "total_premium_cents", label: "Coverage Amount", sortable: true, numeric: true, render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
+    { key: "effective_date", label: "Effective Date", sortable: true, align: "right" as const },
+    { key: "expiry_date", label: "Expiry Date", sortable: true, align: "right" as const },
+    { key: "status", label: "Status", sortable: true, render: (p: InsurancePolicy) => (
+      <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${statusBadge(p.status)}`}>{p.status}</span>
+    ) },
+  ];
 
   if (!companyId) {
     return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view policies.</div>;
@@ -136,52 +150,21 @@ export function PoliciesList() {
         </div>
       </section>
 
-      {policiesQuery.isLoading ? <div className="text-sm text-slate-500">Loading policies...</div> : null}
-      {policiesQuery.isError ? (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load insurance policies.</div>
-      ) : null}
-
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-slate-600">
-            <tr>
-              <th className="px-3 py-2 font-semibold">Policy #</th>
-              <th className="px-3 py-2 font-semibold">Insurer</th>
-              <th className="px-3 py-2 font-semibold">Type</th>
-              <th className="px-3 py-2 font-semibold">Coverage Amount</th>
-              <th className="px-3 py-2 font-semibold">Effective Date</th>
-              <th className="px-3 py-2 font-semibold">Expiry Date</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((policy) => (
-              <tr
-                key={policy.id}
-                className="cursor-pointer border-t border-gray-100 hover:bg-slate-100"
-                onClick={() => navigate(`/safety/insurance/policies/${policy.id}`)}
-              >
-                <td className="px-3 py-2 font-medium text-slate-800">{policy.policy_number}</td>
-                <td className="px-3 py-2 text-slate-700">{policy.insurer_name}</td>
-                <td className="px-3 py-2 text-slate-700">{policy.coverage_type}</td>
-                <td className="px-3 py-2 text-slate-700">{formatMoney(policy.total_premium_cents)}</td>
-                <td className="px-3 py-2 text-slate-700">{policy.effective_date}</td>
-                <td className="px-3 py-2 text-slate-700">{policy.expiry_date}</td>
-                <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${statusBadge(policy.status)}`}>{policy.status}</span>
-                </td>
-              </tr>
-            ))}
-            {!policiesQuery.isLoading && rows.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-5 text-center text-sm text-slate-500">
-                  No policies found for the current filters.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Filters (Type/Status/
+          Expiring-soon) above feed `rows`; row-click → policy details preserved exactly. */}
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(policy) => policy.id}
+        onRowClick={(policy) => navigate(`/safety/insurance/policies/${policy.id}`)}
+        loading={policiesQuery.isLoading}
+        tableKey="insurance-policies"
+        errorState={
+          policiesQuery.isError
+            ? { status: 0, message: "Failed to load insurance policies.", onRetry: () => { void policiesQuery.refetch(); } }
+            : undefined
+        }
+      />
 
       <PolicyCreateModal
         open={createOpen}
