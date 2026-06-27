@@ -55,7 +55,7 @@ async function checkDriverCdl(
       SELECT
         cdl_expires_at::text,
         (cdl_expires_at - CURRENT_DATE)::int AS days_until_expiry,
-        full_name,
+        CONCAT_WS(' ', first_name, last_name) AS full_name,
         first_name,
         last_name
       FROM mdata.drivers
