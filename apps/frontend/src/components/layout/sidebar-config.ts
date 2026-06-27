@@ -204,6 +204,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Border Crossing", to: "/dispatch/border-crossing" },
         { label: "Border History", to: "/dispatch/border-crossing/history" },
         { label: "Factoring Packets", to: "/accounting/factoring" },
+        { label: "Factoring Queue", to: "/dispatch/factoring-queue" },
         { label: "Daily Tasks", to: "/daily-tasks" },
         { label: "Drivers", to: "/drivers" },
         { label: "Settlements", to: "/driver-finance/settlements" },

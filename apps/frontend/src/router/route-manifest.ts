@@ -131,6 +131,7 @@ export const FACTORING_TAB_PATH: Record<string, string> = {
   faro_imports: "/factoring/faro-imports",
   equipment_loans: "/factoring/equipment-loans",
   vendor_merges: "/factoring/vendor-merges",
+  reserve_tracker: "/factoring/reserve-tracker",
 };
 
 export function factoringTabFromPath(pathname: string): string {

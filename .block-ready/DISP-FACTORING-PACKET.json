@@ -22,13 +22,13 @@
   "db_required": false,
   "guard_required": false,
   "preview_provided": false,
-  "wiring_pending": {
-    "note": "Lane A registers route + sidebar. Backend index.ts needs registerFactoringQueueRoutes import.",
-    "backend_registration": "apps/backend/src/index.ts — add: import { registerFactoringQueueRoutes } from './dispatch/factoring-queue.routes.js'; await registerFactoringQueueRoutes(app);",
-    "frontend_route": "apps/frontend/src/routes/manifest.tsx — add /dispatch/factoring-queue → FactoringQueuePage",
-    "sidebar": "apps/frontend/src/components/layout/sidebar-config.ts — add Factoring Queue entry to dispatch flyout",
-    "route_manifest": "apps/frontend/src/router/route-manifest.ts — add reserve_tracker to FACTORING_TAB_PATH",
-    "packet_trigger": "apps/backend/src/dispatch/pod.routes.ts — call assembleFactoringPacket() on POD approval"
+  "wired": {
+    "note": "Lane-A wiring (edits 1-4) done. Edit 5 (POD packet_trigger) DEFERRED to a separate Tier-1 block.",
+    "backend_registration": "WIRED — index.ts mounts registerFactoringQueueRoutes(app)",
+    "frontend_route": "WIRED — /dispatch/factoring-queue -> FactoringQueuePage",
+    "sidebar": "WIRED — Factoring Queue in dispatch flyout (top-level sidebar still 18)",
+    "route_manifest": "WIRED — reserve_tracker -> /factoring/reserve-tracker (FACTORING_TAB_PATH + manifest route + FactoringTabId)",
+    "packet_trigger": "DEFERRED [HOLD-FOR-JORGE — TIER 1]: packet-assemble.service.ts WRITES accounting.invoices (auto-creates a draft invoice on POD) — not document-only, so the POD trigger is a financial side-effect, not Tier-3 wiring. Split out + flagged to GUARD per the HARD GATE."
   },
   "forbidden_files_confirmed_untouched": [
     "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
