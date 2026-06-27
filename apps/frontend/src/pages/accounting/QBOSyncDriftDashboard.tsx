@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 type EntitySummary = {
   entity_type: string;
@@ -89,8 +89,7 @@ export function QBOSyncDriftDashboard() {
   const data = dashboardQuery.data;
 
   return (
-    <div className="space-y-6 p-4">
-      <PageHeader title="QBO Sync Drift" subtitle="Ongoing two-way sync health across master data entities" />
+    <AccountingSubNavWrapper title="QBO Sync Drift" subtitle="Ongoing two-way sync health across master data entities">
 
       {!companyId ? (
         <p className="text-muted-foreground">Select an operating company to view sync drift.</p>
@@ -177,6 +176,6 @@ export function QBOSyncDriftDashboard() {
           </div>
         </>
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }
