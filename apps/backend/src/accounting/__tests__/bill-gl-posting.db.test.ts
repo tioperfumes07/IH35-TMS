@@ -60,9 +60,10 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
         [userId, `bill-gl-${suffix}@test.local`]
       );
       // posting CoA: a fuel expense, the uncategorized (QBO-25) expense, and A/P.
-      await db.query(`INSERT INTO catalogs.accounts (id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$2,'Fuel Test','Expense',true)`, [fuelAccountId, `F${suffix}`]);
-      await db.query(`INSERT INTO catalogs.accounts (id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$2,'Uncat Test','Expense',true)`, [uncatAccountId, `U${suffix}`]);
-      await db.query(`INSERT INTO catalogs.accounts (id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$2,'AP Test','Liability',true)`, [apAccountId, `P${suffix}`]);
+      // AF-1 makes catalogs.accounts.operating_company_id NOT NULL (per-entity COA) — seed it with the test company.
+      await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Fuel Test','Expense',true)`, [fuelAccountId, `F${suffix}`, companyId]);
+      await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Uncat Test','Expense',true)`, [uncatAccountId, `U${suffix}`, companyId]);
+      await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'AP Test','Liability',true)`, [apAccountId, `P${suffix}`, companyId]);
       // roles: ap_control (CR side) + uncategorized_expense (no-category DR fallback).
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
