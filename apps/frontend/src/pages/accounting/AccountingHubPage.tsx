@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { Link, NavLink } from "react-router-dom";
-import { ACCOUNTING_CLEAN_TABS } from "./subnav-manifest";
+import { Link } from "react-router-dom";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import {
   listBills,
   listBillPayments,
@@ -12,7 +12,6 @@ import {
 import { getQboSyncQueue, getQboSyncQueueStats } from "../../api/banking";
 import { listSettlements } from "../../api/driverFinance";
 import { getProfitLossReport, getTrialBalanceReport } from "../../api/reports";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -86,14 +85,6 @@ export function accountingTabSubtitle(
       return "Financial statements and account registers.";
   }
 }
-
-const CREATE_MENU: Array<{ label: string; to: string }> = [
-  { label: "Bill", to: "/accounting/bills/vendor" },
-  { label: "Expense", to: "/accounting/expenses" },
-  { label: "Invoice", to: "/accounting/invoices" },
-  { label: "Receive payment", to: "/accounting/payments" },
-  { label: "Journal entry", to: "/accounting/journal-entries" },
-];
 
 function monthStartIso(date = new Date()) {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
@@ -175,8 +166,6 @@ function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?:
 export function AccountingHubPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [createMenuOpen, setCreateMenuOpen] = useState(false);
-  const createMenuRef = useRef<HTMLDivElement | null>(null);
   const mtdStart = monthStartIso();
   const monthRange = useMemo(() => {
     const now = new Date();
@@ -185,17 +174,6 @@ export function AccountingHubPage() {
     return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
   }, []);
   const quarterRange = useMemo(() => currentQuarterRange(), []);
-
-  useEffect(() => {
-    const onDown = (event: MouseEvent) => {
-      if (!createMenuRef.current) return;
-      if (!createMenuRef.current.contains(event.target as Node)) {
-        setCreateMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, []);
 
   const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboQueueQ, trialBalanceQ, profitLossQ] = useQueries({
     queries: [
@@ -404,67 +382,8 @@ export function AccountingHubPage() {
     ];
   }, [profitLossQ.data, profitLossQ.isError, profitLossQ.isLoading]);
 
-  return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Accounting"
-        subtitle="Bills, expenses, invoices, settlements & transaction review"
-        actions={
-          <div className="flex items-center gap-2">
-            <Link
-              to="/vendors"
-              className="rounded border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
-            >
-              + Vendor
-            </Link>
-            <div ref={createMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setCreateMenuOpen((v) => !v)}
-                className="rounded border border-emerald-700 bg-emerald-700 px-3 py-1 text-sm font-semibold text-white hover:bg-emerald-800"
-              >
-                + Create ▾
-              </button>
-              {createMenuOpen ? (
-                <div className="absolute right-0 z-20 mt-1 min-w-[180px] rounded border border-gray-200 bg-white shadow-md">
-                  {CREATE_MENU.map((item) => (
-                    <Link
-                      key={item.label}
-                      to={item.to}
-                      onClick={() => setCreateMenuOpen(false)}
-                      className="block border-b border-gray-100 px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 last:border-b-0"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        }
-      />
-      {!companyId ? <p className="text-sm text-amber-800">Select an operating company.</p> : null}
-
-      <nav className="overflow-x-auto rounded border border-gray-200 bg-white px-2 py-1" aria-label="Accounting sub-navigation">
-        <div className="flex min-w-max gap-1">
-          {ACCOUNTING_CLEAN_TABS.map((tab) => (
-            <NavLink
-              key={tab.label}
-              to={tab.to}
-              end={tab.to === "/accounting"}
-              className={({ isActive }) =>
-                `rounded px-3 py-1 text-sm whitespace-nowrap ${
-                  isActive ? "border-b-2 border-slate-300 bg-gray-100 font-semibold text-gray-900" : "text-gray-700 hover:bg-gray-50"
-                }`
-              }
-            >
-              {tab.label}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
-
-      <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+  const kpiStrip = (
+    <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
         {kpiCard("Open Bills", money.format(openBillsAmountCents / 100), `${openBills.length} open`, openBills.length ? "danger" : "neutral")}
         {kpiCard("MTD Expenses", money.format(expensesMtdCents / 100), `${billsMtd.length} bills`, "warn")}
         {kpiCard("Open Invoices", money.format(openInvoicesCents / 100), `${openInvoices.length} open`)}
@@ -472,7 +391,15 @@ export function AccountingHubPage() {
         {kpiCard("Unmatched", String(unmatchedItems.length), "failed / blocked queue")}
         {kpiCard("QBO Sync", `${qboPending} pending`, qboFailed ? `${qboFailed} failed` : "queue healthy", qboFailed ? "danger" : qboPending ? "warn" : "neutral")}
       </div>
+  );
 
+  return (
+    <AccountingSubNavWrapper
+      title="Accounting"
+      subtitle="Bills, expenses, invoices, settlements & transaction review"
+      kpiStrip={kpiStrip}
+    >
+      {!companyId ? <p className="text-sm text-amber-800">Select an operating company.</p> : null}
       <div className="grid gap-2 lg:grid-cols-3">
         {homePanel("Settlements", settlementsRows, settlementsQ.isLoading ? "Loading…" : "No settlements found.", "/driver-finance/settlements", "View all")}
         {homePanel(
@@ -508,6 +435,6 @@ export function AccountingHubPage() {
           "Open profit & loss"
         )}
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

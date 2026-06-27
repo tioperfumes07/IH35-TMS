@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { listCoaAccountsForJe, listCoaRoles, type CoaRole, COA_ROLE_VALUES, upsertCoaRole, validateCoaRoles } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 const ROLE_LABELS: Record<CoaRole, string> = {
   ar_control: "AR control",
@@ -62,25 +61,23 @@ export function CoaRolesPage() {
   }, [rowsQuery.data?.rows]);
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="CoA Roles"
-        subtitle="Bind required accounting roles to company chart-of-accounts rows"
-        actions={
-          <Button
-            variant="secondary"
-            loading={validateQuery.isFetching}
-            onClick={async () => {
-              const data = await validateQuery.refetch();
-              if (data.data?.valid) pushToast("All required CoA roles are mapped", "success");
-              else pushToast(`Missing roles: ${(data.data?.missing_roles ?? []).join(", ")}`, "error");
-            }}
-          >
-            Validate
-          </Button>
-        }
-      />
+    <AccountingSubNavWrapper
+      title="CoA Roles"
+      subtitle="Bind required accounting roles to company chart-of-accounts rows"
+      actions={
+        <Button
+          variant="secondary"
+          loading={validateQuery.isFetching}
+          onClick={async () => {
+            const data = await validateQuery.refetch();
+            if (data.data?.valid) pushToast("All required CoA roles are mapped", "success");
+            else pushToast(`Missing roles: ${(data.data?.missing_roles ?? []).join(", ")}`, "error");
+          }}
+        >
+          Validate
+        </Button>
+      }
+    >
 
       {!validateQuery.isLoading ? (
         <div className={`rounded border px-3 py-2 text-xs ${validateQuery.data?.valid ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
@@ -144,6 +141,6 @@ export function CoaRolesPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

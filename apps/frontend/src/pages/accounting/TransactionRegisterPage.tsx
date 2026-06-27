@@ -4,11 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRightCircle, Download } from "lucide-react";
 import { listTransactionRegister, type RegisterTransaction, type TransactionSource } from "../../api/accounting";
 import { DataPanel } from "../../components/layout/DataPanel";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 
@@ -121,22 +120,20 @@ export function TransactionRegisterPage() {
   }
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="All Transactions"
-        subtitle="Every bank, fuel, invoice, bill & settlement transaction in one reviewable register"
-        actions={
-          <button
-            type="button"
-            onClick={exportCsv}
-            disabled={rows.length === 0}
-            className="inline-flex h-9 items-center gap-1 rounded border border-slate-300 bg-white px-2 text-[12px] text-slate-700 disabled:opacity-50"
-          >
-            <Download className="h-3.5 w-3.5" /> Export CSV
-          </button>
-        }
-      />
+    <AccountingSubNavWrapper
+      title="All Transactions"
+      subtitle="Every bank, fuel, invoice, bill & settlement transaction in one reviewable register"
+      actions={
+        <button
+          type="button"
+          onClick={exportCsv}
+          disabled={rows.length === 0}
+          className="inline-flex h-9 items-center gap-1 rounded border border-slate-300 bg-white px-2 text-[12px] text-slate-700 disabled:opacity-50"
+        >
+          <Download className="h-3.5 w-3.5" /> Export CSV
+        </button>
+      }
+    >
 
       <DataPanel title="Filters">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -312,7 +309,7 @@ export function TransactionRegisterPage() {
           </button>
         </div>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }
 

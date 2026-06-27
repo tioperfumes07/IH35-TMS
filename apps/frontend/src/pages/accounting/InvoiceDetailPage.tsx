@@ -9,7 +9,7 @@ import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 
 function money(cents: number) {
@@ -109,8 +109,7 @@ export function InvoiceDetailPage() {
   if (!invoice) return <div className="text-sm text-red-600">Invoice not found.</div>;
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
+    <AccountingSubNavWrapper>
       <PageHeader
         title={invoice.display_id}
         backHref="/accounting/invoices"
@@ -387,6 +386,6 @@ export function InvoiceDetailPage() {
           }}
         />
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

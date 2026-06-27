@@ -5,10 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { listFactoringAdvances, type FactoringAdvance } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
@@ -76,9 +75,7 @@ export function FactoringListPage() {
   }, [status, search, fromDate, toDate, pageSize]);
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>} />
+    <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>}>
 
       <DataPanel title="Filters">
         <div className="grid gap-2 md:grid-cols-4">
@@ -198,6 +195,6 @@ export function FactoringListPage() {
           }}
         />
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }
