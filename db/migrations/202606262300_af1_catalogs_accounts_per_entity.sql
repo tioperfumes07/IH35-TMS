@@ -38,10 +38,17 @@
 
 DO $$
 DECLARE
-  v_transp uuid := '91e0bf0a-133f-4ce8-a734-2586cfa66d96';
-  v_trk    uuid := 'b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e';
-  v_usmca  uuid := '5c854333-6ea5-4faa-af31-67cb272fef80';
+  -- Resolve entity ids BY CODE from org.companies — NEVER hardcode UUIDs. On prod these resolve to the
+  -- GUARD-verified ids (TRANSP 91e0bf0a…, TRK b49a737b…, USMCA 5c854333…); on a fresh CI DB the seeded
+  -- companies have DIFFERENT ids, so hardcoding them caused an accounts_operating_company_id_fkey violation.
+  v_transp uuid;
+  v_trk    uuid;
+  v_usmca  uuid;
 BEGIN
+  SELECT id INTO v_transp FROM org.companies WHERE code = 'TRANSP' LIMIT 1;
+  SELECT id INTO v_trk    FROM org.companies WHERE code = 'TRK'    LIMIT 1;
+  SELECT id INTO v_usmca  FROM org.companies WHERE code = 'USMCA'  LIMIT 1;
+
   -- Guard: only run the data migration while catalogs.accounts is still global (operating_company_id nullable).
   -- Once NOT NULL + composite uniques exist this is a no-op (idempotent replay / fresh-DB safe).
   IF NOT EXISTS (
@@ -52,7 +59,11 @@ BEGIN
     ALTER TABLE catalogs.accounts ADD COLUMN operating_company_id uuid;
   END IF;
 
-  IF EXISTS (
+  -- Data migration runs ONLY when the column is still nullable AND the operating carrier (TRANSP) exists —
+  -- the default owner. If TRANSP isn't seeded (bare fresh DB with no accounts), skip data steps; the
+  -- structural steps (uniques/RLS/grants below) still apply. Backfill assigns NULL→TRANSP for unmapped rows,
+  -- so v_transp MUST be non-null before SET NOT NULL.
+  IF v_transp IS NOT NULL AND EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema='catalogs' AND table_name='accounts'
       AND column_name='operating_company_id' AND is_nullable='YES'
@@ -194,10 +205,9 @@ BEGIN
     END IF;
 
     -- ── STEP 4: enforce NOT NULL on operating_company_id ───────────────────────────────────────────────
+    -- The FK to org.companies already exists (accounts_operating_company_id_fkey, added with the column) —
+    -- do NOT add a second one. Only flip NOT NULL now that every row has a valid entity.
     ALTER TABLE catalogs.accounts ALTER COLUMN operating_company_id SET NOT NULL;
-    ALTER TABLE catalogs.accounts
-      ADD CONSTRAINT accounts_operating_company_fk
-      FOREIGN KEY (operating_company_id) REFERENCES org.companies(id);
   END IF;
 END $$;
 
