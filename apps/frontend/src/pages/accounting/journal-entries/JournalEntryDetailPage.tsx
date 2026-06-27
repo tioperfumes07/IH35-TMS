@@ -6,7 +6,7 @@ import { DataPanel } from "../../../components/layout/DataPanel";
 import { DataPanelRow } from "../../../components/layout/DataPanelRow";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { AccountingSubNav } from "../AccountingSubNav";
+import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -34,8 +34,7 @@ export function JournalEntryDetailPage() {
   const postings = entry.postings ?? [];
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
+    <AccountingSubNavWrapper>
       <PageHeader
         title={`Journal Entry ${entry.id.slice(0, 8)}`}
         backHref="/accounting/journal-entries"
@@ -114,6 +113,6 @@ export function JournalEntryDetailPage() {
           </table>
         </div>
       </DataPanel>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

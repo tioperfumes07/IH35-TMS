@@ -13,6 +13,7 @@ const CREATE_MENU = [
 type Props = {
   title?: string;
   subtitle?: string;
+  actions?: ReactNode;
   children: ReactNode;
   kpiStrip?: ReactNode;
 };
@@ -23,7 +24,7 @@ function tabActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-export function AccountingSubNavWrapper({ title = "Accounting", subtitle, children, kpiStrip }: Props) {
+export function AccountingSubNavWrapper({ title = "Accounting", subtitle, actions, children, kpiStrip }: Props) {
   const { pathname } = useLocation();
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
@@ -44,6 +45,7 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, childr
           {subtitle ? <p className="text-sm text-gray-600">{subtitle}</p> : null}
         </div>
         <div className="flex items-center gap-2">
+          {actions}
           <Link
             to="/vendors"
             className="rounded border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"

@@ -2,12 +2,11 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCashForecast, getCashForecastSettings, upsertCashForecastSettings, type CashForecastSettings } from "../../api/accounting";
 import { useToast } from "../../components/Toast";
 import { MoneyInput } from "../../components/forms/MoneyInput";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -64,9 +63,7 @@ export function CashForecastPage() {
   );
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader title="13-week cash forecast" subtitle="Rolling cash projection with AR/AP, factoring, and configurable recurring outflows." />
+    <AccountingSubNavWrapper title="13-week cash forecast" subtitle="Rolling cash projection with AR/AP, factoring, and configurable recurring outflows.">
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
@@ -180,6 +177,6 @@ export function CashForecastPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

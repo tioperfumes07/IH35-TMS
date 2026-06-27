@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMultiEntityAccountingSummary } from "../../api/accounting";
 import { listMyCompanies } from "../../api/org";
 import { Button } from "../../components/Button";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -47,12 +47,7 @@ export function MultiEntityAccountingPage() {
   );
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">Multi-entity accounting</h1>
-        <p className="text-xs text-gray-600">Consolidated accounting summary across selected operating companies.</p>
-      </div>
+    <AccountingSubNavWrapper title="Multi-entity accounting" subtitle="Consolidated accounting summary across selected operating companies.">
 
       <div className="rounded border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Scope</div>
@@ -161,6 +156,6 @@ export function MultiEntityAccountingPage() {
           </div>
         </>
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

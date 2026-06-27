@@ -17,7 +17,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { FactorReserveCard } from "./FactorReserveCard";
 
 function money(cents: number) {
@@ -110,8 +110,7 @@ export function FactoringDetailPage() {
   if (!detail) return <div className="text-sm text-red-600">Factoring batch not found.</div>;
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
+    <AccountingSubNavWrapper>
       <PageHeader
         title={detail.display_id}
         backHref="/accounting/factoring"
@@ -300,6 +299,6 @@ export function FactoringDetailPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }
