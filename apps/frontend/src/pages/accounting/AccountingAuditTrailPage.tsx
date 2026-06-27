@@ -7,9 +7,9 @@ import {
   type AccountingAuditTrailEvent,
   type AccountingSourceLineageRow,
 } from "../../api/accounting";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 
 function fmtMoneyCents(value: number) {
@@ -77,8 +77,7 @@ export function AccountingAuditTrailPage() {
   );
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title="Accounting audit trail" subtitle="Immutable posting events with tenant-scoped source lineage lookup" />
+    <AccountingSubNavWrapper title="Audit Trail" subtitle="Immutable posting events with tenant-scoped source lineage lookup">
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {eventQuery.isError ? <ReportBlockVPendingBanner error={eventQuery.error} onRetry={() => void eventQuery.refetch()} /> : null}
@@ -268,6 +267,6 @@ export function AccountingAuditTrailPage() {
           ) : null}
         </div>
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }
