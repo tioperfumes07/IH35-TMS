@@ -690,7 +690,8 @@
     "verify:legal-no-gl-writes": "node scripts/verify-legal-no-gl-writes.mjs",
     "verify:legal-entity-scope": "node scripts/verify-legal-entity-scope.mjs",
     "verify:block-stub-artifacts": "node scripts/verify-block-stub-artifacts.mjs",
-    "verify:catalogs-accounts-entity-scope": "node scripts/verify-catalogs-accounts-entity-scope.mjs"
+    "verify:catalogs-accounts-entity-scope": "node scripts/verify-catalogs-accounts-entity-scope.mjs",
+    "reconcile:drift": "node scripts/reconcile-drift.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

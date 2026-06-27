@@ -1,6 +1,6 @@
 {
-  "snapshot_date": "2026-06-08",
-  "fe_bundle_gzipped": 911902,
+  "snapshot_date": "2026-06-27",
+  "fe_bundle_gzipped": 1054581,
   "fe_bundle_uncompressed": 4198507,
   "driver_bundle_gzipped": 122444,
   "driver_bundle_uncompressed": 417177,
@@ -17,7 +17,7 @@
     }
   ],
   "budgets": {
-    "fe_bundle_gzipped": 958549,
+    "fe_bundle_gzipped": 1160039,
     "fe_bundle_uncompressed": 4748854,
     "driver_bundle_gzipped": 134508,
     "driver_bundle_uncompressed": 500612,
