@@ -139,6 +139,7 @@ import { ComingSoonPage } from "../pages/ComingSoonPage";
 import { IntegrationTransactionsPage } from "../pages/accounting/IntegrationTransactionsPage";
 import { ReceiptsPage } from "../pages/accounting/ReceiptsPage";
 import { PrepaidExpensesPage } from "../pages/accounting/PrepaidExpensesPage";
+import { DailyReconPage } from "../pages/accounting/DailyReconPage";
 import { BulkDemoPage } from "../pages/dev/BulkDemoPage";
 import { SamsaraIntegrationPage } from "../pages/integrations/SamsaraIntegrationPage";
 import { DriverAppLandingPage } from "../pages/DriverAppLandingPage";
