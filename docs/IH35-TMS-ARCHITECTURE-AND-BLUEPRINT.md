@@ -1,8 +1,14 @@
 # IH35-TMS — Architecture & Blueprint (live, honest, verified)
 
 > **Status:** authoritative current-state document.
-> **Verified:** 2026-06-27, every number measured directly from `origin/main` (`db/migrations/`,
-> `apps/`, `scripts/`, the block reconciler, and merged PRs) — not from memory or older docs.
+> **Verified:** 2026-06-27 (re-audited against `origin/main` + Render live after first-pass numbers were
+> found to be from a stale local clone). Every figure is measured from `origin/main` (`git ls-tree` /
+> `git grep`), Render's live `/healthz`, and `gh` PR data — not memory or older docs. Live **DB** table/row
+> counts are **not** included (Neon access is gated, `CLAUDE.md §1.5`); a one-time read-only introspection
+> can be authorized (§12).
+> **Git history:** `origin/main` is **498 commits, first commit 2026-06-15** (history was re-baselined that
+> day; 0 merge-commits). **1,454 merged PRs** (1,450 to `main`) span the full project life; **7 open**;
+> **2 authors**; 1,468 remote branches. Render prod runs `origin/main` HEAD — current.
 > **Supersedes:** `docs/IH35-TMS-ARCHITECTURE.md` + `docs/IH35-TMS-BLUEPRINT.md` (both last updated
 > 2026-06-15, now stale: they say "2 entities / 4 trucks"; reality is **3 entities**, see §2).
 > **Authority over this doc:** the root `CLAUDE.md` constitution and `docs/lockdown/00_LOCKED_DECISIONS.md`
@@ -109,35 +115,45 @@ These are enforced by CI guards and the constitution; violating them is a produc
 ### Database
 - **Neon Postgres**, project `tiny-field-89581227`, prod branch `br-fancy-credit-akjnd07a`, db `neondb`,
   runtime role `ih35_app`. **The default branch IS production.** Direct prod access is gated.
-- **Schema = `db/migrations/` (the source of truth).** **508 migration files**, highest sequence
-  `202606260200` (mixed 4-digit + 12-digit timestamp numbering; new migrations must exceed main's current
-  max, idempotent `DO`/`IF NOT EXISTS`).
+- **Schema = `db/migrations/` (the source of truth).** **508 migration files** on `origin/main`, highest
+  sequence `202606260200` (mixed 4-digit + 12-digit timestamp numbering; new migrations must exceed main's
+  current max, idempotent `DO`/`IF NOT EXISTS`).
+- **Live prod is current and healthy** (measured 2026-06-27): Render backend serves `origin/main` HEAD
+  (`8ac7cf2`); deep `/api/v1/healthz` reports all critical checks green — `postgres.select1` ✓,
+  `migrations.ledger` ✓ (no pending), `redis.ping` ✓, plus `r2.head_bucket` / `qbo.sync_alerts` /
+  `email.queue` / `background_jobs` all ✓.
 
 ---
 
-## 5. Data model — schema-per-domain (measured table counts)
+## 5. Data model — schema-per-domain (DISTINCT tables, measured on origin/main)
 
-Postgres uses **schema-per-domain** (~70 schemas). Cross-schema writes go through service functions, never
-direct cross-schema `INSERT`. Largest domains by `CREATE TABLE` count in `db/migrations/`:
+Postgres uses **schema-per-domain across 70 schemas**. Cross-schema writes go through service functions,
+never direct cross-schema `INSERT`. Counting method matters and earlier drafts got it wrong:
 
-| Schema | Tables* | Owns |
-|--------|--------:|------|
-| `accounting` | 67 | bills, bill_payments, payments, invoices, journal entries, posting, periods |
-| `safety` | 65 | accidents, inspections, violations, claims, expiry tracking |
-| `catalogs` | 47 | **chart of accounts (`catalogs.accounts`)**, classes, products/services, reference catalogs |
-| `mdata` (master_data) | 46 | `loads`, `load_stops`, `units`, `drivers`, `customers`, `vendors`, `equipment` |
-| `maintenance` | 37 | work orders, parts, PM schedules |
-| `driver_finance` | 31 | `driver_settlements`, settlement_lines, advances, deductions, driver_bills |
-| `dispatch` | 28 | assignment history, detention, in-transit issues, ETA |
-| `integrations` | 25 | QBO/Samsara/Plaid sync state + logs |
-| `compliance` | 19 | HOS/DOT/IFTA compliance records |
-| `banking` | 16 | `bank_transactions`, bank_accounts, reconciliation |
-| `identity` | 13 | users, sessions, auth, preferences |
+- **645** raw `CREATE TABLE` statements in `db/migrations/` (overcounts — idempotent re-creates appear many times)
+- **478** DISTINCT `schema.table` defined
+- **43** distinct tables dropped → **~440 net tables defined by migrations**
+- **The live prod table/row count is NOT measured here** — direct Neon access is gated (`CLAUDE.md §1.5`).
+  ~440 is the migration-derived estimate; prod has known drift (some catalog tables differ). To get the
+  **true live count**, authorize a one-time read-only introspection (see §12).
+
+Largest domains by **distinct, net-of-drop** table count (origin/main):
+
+| Schema | Tables | Owns |
+|--------|-------:|------|
+| `accounting` | 44 | bills, bill_payments, payments, invoices, journal entries, posting, periods |
+| `safety` | 42 | accidents, inspections, violations, claims, expiry tracking |
+| `mdata` (master_data) | 40 | `loads`, `load_stops`, `units`, `drivers`, `customers`, `vendors`, `equipment` |
+| `catalogs` | 36 | **chart of accounts (`catalogs.accounts`)**, classes, products/services, reference catalogs |
+| `maintenance` | 24 | work orders, parts, PM schedules |
+| `dispatch` | 23 | assignment history, detention, in-transit issues, ETA |
+| `driver_finance` | 22 | `driver_settlements`, settlement_lines, advances, deductions, driver_bills |
+| `integrations` | 20 | QBO/Samsara/Plaid sync state + logs |
+| `compliance` | 12 | HOS/DOT/IFTA compliance records |
 | `legal` | 10 | contracts (lease-to-own), attorney review |
-| `insurance` | 8 | policies, claims, coverage |
-
-*Counted from `CREATE TABLE` statements in migrations; the live count differs slightly where prod has drifted
-(see [[prod-migration-deployment-drift]] in memory — prod schema ≠ migrations at scale in some catalog tables).
+| `banking` | 8 | `bank_transactions`, bank_accounts, reconciliation |
+| `identity` | 8 | users, sessions, auth, preferences |
+| `insurance` | 7 | policies, claims, coverage |
 
 **Schema landmines (verify names against `db/migrations/` before writing SQL):**
 - **No `ih35_app.*` data schema** — `ih35_app` is a role; `ih35_app.<table>` 500s.
@@ -214,26 +230,33 @@ bar**. The owner-locked, **additive-only** order (`docs/lockdown/00_LOCKED_DECIS
 
 ---
 
-## 9. Current build state (measured 2026-06-27)
+## 9. Current scale & build state (measured on origin/main, 2026-06-27)
 
-From `npm run reconcile:blocks` — the canonical built/pending truth, verified against `origin/main` + merged
-PRs across **5 block sources** (`.block-ready` 294 · program 61 · enterprise-29 29 · accounting 26 ·
-gap-spec 57, de-duped):
+### Real software scale (measured against `origin/main`, not the local clone)
+| Metric | Count |
+|--------|------:|
+| Backend route files (`*.routes.ts`) | **505** |
+| Backend HTTP handlers (`app.get/post/put/patch/delete`) | **1,850** |
+| Backend source `.ts` (excl. tests) | 1,287 |
+| Frontend page components (`pages/**/*.tsx`) | **920** |
+| Frontend routes (`<Route>` in manifest) | **448** |
+| Frontend `.tsx` (excl. tests) | 1,130 |
+| CI guard scripts (`scripts/verify-*`) | **1,007** |
+| DB migration files | **508** |
+| DISTINCT tables defined / net of drops | 478 / **~440** |
+| Schemas | **70** |
 
-| State | Count | Meaning |
-|-------|------:|---------|
-| **DONE** | 420 | Verified on main (branch merged or all signature files present) |
-| **NEEDS-VERIFY** | 19 | Weak signal — **all financial**; code exists but posting never exercised on prod |
-| **PENDING** | 4 | Needs build (incl. 2 in-flight PRs auto-promoting on merge) |
-| **PENDING (GATED)** | 24 | Financial/locked — needs owner gate |
-| **TOTAL** | **467** | |
+> Earlier figures (475 routes, 1,779 handlers, 906 pages, 702 guards) were read from a **stale local clone
+> that was 3 commits behind `origin/main`**, and the table counts were `CREATE TABLE` statements (645), not
+> distinct tables. The numbers above are the corrected, `origin/main`-true values.
 
-**TOTAL PENDING (PENDING + GATED) = 28.** Effectively the **non-financial board is complete** — the only
-remaining non-financial build is the TBL-STANDARD table sweep; the other ~44 not-DONE items are the
-**financial frontier** behind the owner+GUARD Tier-1 gate, led by AF-1.
-
-**Scale of what's built:** 475 backend route files · **1,779 HTTP handlers** · 906 frontend pages · 447
-routes · **702 CI guard scripts** (`scripts/verify-*`) · 508 migrations.
+### Build state — the block tracker (a project-management abstraction, NOT a software metric)
+`npm run reconcile:blocks` rolls up **"blocks"** (planned units of work) across 5 doc sources
+(`.block-ready` 294 · program 61 · enterprise-29 29 · accounting 26 · gap-spec 57, de-duped = **467**):
+**DONE 420 · NEEDS-VERIFY 19 (all financial) · PENDING 4 · PENDING (GATED) 24** → TOTAL PENDING 28. This
+measures the *plan*, not the codebase — the codebase scale is the table above. The non-financial board is
+effectively complete; the ~44 not-DONE blocks are the financial frontier behind the owner+GUARD Tier-1 gate,
+led by AF-1.
 
 ---
 
@@ -273,16 +296,26 @@ routes · **702 CI guard scripts** (`scripts/verify-*`) · 508 migrations.
 
 ---
 
-## 12. Provenance (how every figure here was measured, 2026-06-27)
+## 12. Provenance & method (how every figure was measured, 2026-06-27)
 
-- Schemas/tables: `grep CREATE TABLE db/migrations/*.sql` → schema/table counts; migration count = file
-  count; max sequence from filenames.
-- Backend: `*.routes.ts` file count + `app.(get|post|put|patch|delete)(` handler count.
-- Frontend: `pages/**/*.tsx` count + `<Route` count in `routes/manifest.tsx`.
-- CI guards: `scripts/verify-*.{mjs,ts}` count. Feature flags: `*_ENABLED` grep in `apps/backend/src`.
-- Entities: `org.companies` seeds + UUIDs in migrations. Sidebar: `00_LOCKED_DECISIONS.md §1` +
-  `sidebar-config.ts`. Build state: `npm run reconcile:blocks` → `block-reconciliation-data.json`.
-- Deploy: `render.yaml`. Stack: `package.json`. Principles: `CLAUDE.md` + `00_LOCKED_DECISIONS.md`.
+**All measured against `origin/main` (not the working tree) after a first pass used a stale local clone.**
+- Tables: `git grep -hiE 'CREATE TABLE' origin/main -- 'db/migrations/*.sql'` → distinct `schema.table`
+  (lowercased, `sort -u`) minus distinct `DROP TABLE` → defined / dropped / **net**. Migration count =
+  `git ls-tree origin/main` file count.
+- Backend: `git ls-tree origin/main` file counts + `git grep -hoE 'app\.(get|post|put|patch|delete)\('`.
+- Frontend: `pages/**/*.tsx` + `<Route` counts via `git ls-tree` / `git grep` on `origin/main`.
+- CI guards: `scripts/verify-*.{mjs,ts,cjs}` via `git ls-tree origin/main`.
+- Git: `git rev-list --count origin/main`, `git shortlog -sn`, `gh pr list --state {merged,open}`.
+- Render live: `curl /api/v1/healthz/shallow` (version) + `/api/v1/healthz` (critical checks).
+- Entities/sidebar/principles: `org.companies` seeds, `00_LOCKED_DECISIONS.md`, `CLAUDE.md`.
+- "Blocks": `npm run reconcile:blocks` — a doc-roll-up of planned work, explicitly **not** a code metric.
 
-_If a number here ever disagrees with a fresh `reconcile:blocks` or a `grep` of `db/migrations/`, trust the
-live command and update this file — it is meant to be regenerated, not trusted blindly._
+### The ONE number not measured here: the live database
+Direct Neon access (even read-only `SELECT`) is gated per `CLAUDE.md §1.5` — I did **not** count live tables,
+rows, or schemas in prod. The ~440 net figure is migration-derived; prod has known drift. **To make this doc
+fully complete, authorize a one-time read-only introspection** (e.g. `information_schema` table/row counts
+per schema via the gated `assert-neon-branch` path) and I will replace the estimates with live truth.
+
+_If any number here disagrees with a fresh `git grep` on `origin/main`, a live `/healthz`, or a DB
+introspection, trust the live source and regenerate this file — it is meant to be re-measured, not trusted
+blindly._
