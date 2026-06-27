@@ -2,7 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const MIGRATION_FILENAME_REGEX = /^(\d{4})_.+\.sql$/i;
+// Match BOTH legacy 4-digit (0010_) AND current 12-digit timestamp (202606272100_) migration numbers.
+// The old /^(\d{4})_/ silently SKIPPED every timestamp migration, so this content-drift parser never saw
+// their CREATE/DROP — e.g. AF-1 (a timestamp migration) DROPs the 0010 global unique indexes, but being
+// skipped, that drop was never recorded → the 0010 indexes were falsely reported as drift.
+const MIGRATION_FILENAME_REGEX = /^(\d{4,})_.+\.sql$/i;
 const IGNORE_FILE_NAME = "migration-content-verifier-ignore.json";
 
 function stripComments(sql) {
