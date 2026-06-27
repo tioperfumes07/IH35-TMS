@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SendContractModal } from "./SendContractModal";
 import { LeaseToOwnCreatorModal } from "./LeaseToOwnCreatorModal";
+import { TruckLeaseCreatorModal } from "./TruckLeaseCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -48,6 +49,7 @@ export function LegalContractInstancesPage() {
   const openSend = searchParams.get("openSend") === "1";
   const { enabled: leaseToOwnEnabled } = useFeatureFlag("LEGAL_CONTRACTS_ENABLED", operatingCompanyId || undefined);
   const openLeaseToOwn = searchParams.get("openLeaseToOwn") === "1";
+  const openTruckLease = searchParams.get("openTruckLease") === "1";
 
   const listQuery = useQuery({
     queryKey: ["legal", "contracts", operatingCompanyId, statusFilter, search],
@@ -131,6 +133,11 @@ export function LegalContractInstancesPage() {
             {leaseToOwnEnabled && (
               <Button variant="secondary" onClick={() => setSearchParams({ openLeaseToOwn: "1" })}>
                 + New Lease-to-Own
+              </Button>
+            )}
+            {leaseToOwnEnabled && (
+              <Button variant="secondary" onClick={() => setSearchParams({ openTruckLease: "1" })}>
+                + Truck Lease
               </Button>
             )}
           </div>
@@ -342,6 +349,12 @@ export function LegalContractInstancesPage() {
       />
       <LeaseToOwnCreatorModal
         open={openLeaseToOwn}
+        operatingCompanyId={operatingCompanyId}
+        onClose={() => setSearchParams({})}
+        onSaved={refresh}
+      />
+      <TruckLeaseCreatorModal
+        open={openTruckLease}
         operatingCompanyId={operatingCompanyId}
         onClose={() => setSearchParams({})}
         onSaved={refresh}

@@ -16,6 +16,10 @@ import {
   getCompanyForSeller,
   DEFAULT_SELLER_COMPANY_CODE,
 } from "./lease-to-own.service.js";
+import {
+  truckLeaseEnabled,
+  ensureTruckLeaseTemplate,
+} from "./truck-lease.service.js";
 
 const officeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant", "Dispatcher", "Safety", "Mechanic"]);
 const writeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
@@ -167,6 +171,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
         [
           "legal_contract_instance_not_found",
           "legal_contract_send_invalid_status",
+          "legal_attorney_review_required",
           "legal_signer_email_required",
           "legal_signer_phone_required",
         ].includes(message)
@@ -175,6 +180,22 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
       }
       return reply.code(500).send({ error: "legal_contract_send_failed" });
     }
+  });
+
+  // ---- Truck Lease Agreement (LEGAL-TRUCK-LEASE-01) — behind LEGAL_CONTRACTS_ENABLED ----
+  // Ensure canonical truck_lease template (active v1) exists for the entity + return it.
+  app.post("/api/v1/legal/contracts/truck-lease/ensure-template", async (req, reply) => {
+    if (!truckLeaseEnabled()) return reply.code(404).send({ error: "not_found" });
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!writeRoles.has(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const parsed = operatingCompanyQuerySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    return withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsed.data.operating_company_id);
+      const template = await ensureTruckLeaseTemplate(client, parsed.data.operating_company_id, authUser.uuid);
+      return { template };
+    });
   });
 
   // ---- Lease-to-Own creator (LEGAL-CONTRACT-CREATOR-01) — behind LEGAL_CONTRACTS_ENABLED (dark when off) ----

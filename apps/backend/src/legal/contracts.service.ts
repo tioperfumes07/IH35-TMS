@@ -326,6 +326,15 @@ export async function sendContractSigningLink(
     throw new Error("legal_contract_send_invalid_status");
   }
 
+  // Attorney-review gate: template must have been attorney-approved before any external send.
+  const templateRes = await client.query(
+    `SELECT attorney_approved_at FROM legal.contract_templates WHERE id = $1 LIMIT 1`,
+    [instance.template_id],
+  );
+  if (!templateRes.rows[0]?.attorney_approved_at) {
+    throw new Error("legal_attorney_review_required");
+  }
+
   const rawToken = crypto.randomBytes(24).toString("hex");
   const tokenHash = normalizeTokenForHash(rawToken);
   const expiresAtSql = `now() + ($3::text || ' hours')::interval`;
