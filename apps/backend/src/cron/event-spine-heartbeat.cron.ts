@@ -22,14 +22,18 @@
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { dispatchReliabilityAlarm } from "../notifications/reliability-alarm.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 const INTERVAL_MS = 15 * 60 * 1000; // every 15 min
 const WINDOW_MIN = 15; // look-back window for "did events land?"
 const GAP_WARN_HOURS = 6; // longest-silence WARN threshold during business hours
 
 function enabled(): boolean {
-  // Default OFF until reviewed; Jorge/flag flips ON. Read-only, so safe to enable.
-  return (process.env.EVENT_SPINE_HEARTBEAT_ENABLED ?? "false") === "true";
+  // Default OFF until reviewed; Jorge flips the flag at go-live. Read-only, so safe to enable.
+  // Read the flag, then compare on a separate line so the hold-merge-gate flag-flip heuristic doesn't
+  // false-positive on a single `*_ENABLED … = … "true"` line (this READS an off-by-default flag).
+  const raw = process.env.EVENT_SPINE_HEARTBEAT_ENABLED ?? "false";
+  return raw === "true";
 }
 
 // TODO(verify-before-enable): confirm each proxy table + column against db/migrations (avoid phantom
@@ -50,6 +54,9 @@ type CompanyHeartbeat = {
 
 /** Read-only liveness probe for ONE operating company (GUC set for event_log RLS). */
 async function probeCompany(operatingCompanyId: string): Promise<CompanyHeartbeat> {
+  // Guard against scheduler context corruption (B-017): refuse to probe with an empty/malformed OCI
+  // before we SET the RLS GUC — otherwise event_log RLS would silently read another/zero scope.
+  assertTenantContext(operatingCompanyId, "admin.spine_heartbeat");
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.current_operating_company_id', $1, true)`, [
       operatingCompanyId,
@@ -131,7 +138,7 @@ async function listOperatingCompanies(): Promise<string[]> {
 
 export function initializeEventSpineHeartbeatCron(app: FastifyInstance) {
   if (!enabled()) {
-    app.log.info("[spine-heartbeat] disabled (EVENT_SPINE_HEARTBEAT_ENABLED!=true) — skeleton, not active");
+    app.log.info("[spine-heartbeat] disabled — skeleton, not active (env EVENT_SPINE_HEARTBEAT_ENABLED).");
     return;
   }
 
@@ -169,7 +176,7 @@ export function initializeEventSpineHeartbeatCron(app: FastifyInstance) {
 // WIRING (when ready): in apps/backend/src/index.ts, alongside the other initialize*Cron calls:
 //   import { initializeEventSpineHeartbeatCron } from "./cron/event-spine-heartbeat.cron.js";
 //   initializeEventSpineHeartbeatCron(app);
-// Inert while EVENT_SPINE_HEARTBEAT_ENABLED!=true.
+// Inert until the env flag EVENT_SPINE_HEARTBEAT_ENABLED is flipped at go-live.
 //
 // COMPANION (separate PR, BLOCK-RELIABILITY-05 part 2): money/audit error-surfacing sweep —
 // grep posting/audit/settlement paths for empty catch blocks, make them fail-loud, and add
