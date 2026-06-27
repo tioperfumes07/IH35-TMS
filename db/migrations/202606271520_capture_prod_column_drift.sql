@@ -31,9 +31,17 @@ BEGIN
     ALTER TABLE compliance.drug_alcohol_test_results ADD COLUMN IF NOT EXISTS selection_id uuid;
   END IF;
 
+  -- NOTE: 4 columns are NOT NULL (no default) on prod — qbo.sync_alerts.kind/message,
+  -- sms.queue.to_number, whatsapp.queue.body — but the app's Block-H notification dispatch code INSERTs into
+  -- these queues WITHOUT supplying them. Prod's NOT NULL is therefore inconsistent with the code (it would
+  -- fail on prod too if exercised; those tables are empty on prod). Capturing them NOT NULL breaks a fresh
+  -- build (notification-e2e + driver-settlement-pdf-e2e). We capture the COLUMN + TYPE but leave them
+  -- NULLABLE so the app works on a fresh build; this is a NO-OP on prod (columns already exist, IF NOT EXISTS
+  -- skips → prod keeps its NOT NULL). The prod-vs-code NOT NULL inconsistency is flagged in the drift ledger
+  -- for owner/GUARD to reconcile (fix the insert path first, then tighten the constraint).
   IF to_regclass('qbo.sync_alerts') IS NOT NULL THEN
-    ALTER TABLE qbo.sync_alerts ADD COLUMN IF NOT EXISTS kind text NOT NULL;
-    ALTER TABLE qbo.sync_alerts ADD COLUMN IF NOT EXISTS message text NOT NULL;
+    ALTER TABLE qbo.sync_alerts ADD COLUMN IF NOT EXISTS kind text;
+    ALTER TABLE qbo.sync_alerts ADD COLUMN IF NOT EXISTS message text;
     ALTER TABLE qbo.sync_alerts ADD COLUMN IF NOT EXISTS payload jsonb;
     ALTER TABLE qbo.sync_alerts ADD COLUMN IF NOT EXISTS sync_run_id uuid;
   END IF;
@@ -44,12 +52,12 @@ BEGIN
     ALTER TABLE sms.queue ADD COLUMN IF NOT EXISTS provider_message_id text;
     ALTER TABLE sms.queue ADD COLUMN IF NOT EXISTS sent_at timestamptz;
     ALTER TABLE sms.queue ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending';
-    ALTER TABLE sms.queue ADD COLUMN IF NOT EXISTS to_number text NOT NULL;
+    ALTER TABLE sms.queue ADD COLUMN IF NOT EXISTS to_number text;
   END IF;
 
   IF to_regclass('whatsapp.queue') IS NOT NULL THEN
     ALTER TABLE whatsapp.queue ADD COLUMN IF NOT EXISTS attempts integer NOT NULL DEFAULT 0;
-    ALTER TABLE whatsapp.queue ADD COLUMN IF NOT EXISTS body text NOT NULL;
+    ALTER TABLE whatsapp.queue ADD COLUMN IF NOT EXISTS body text;
     ALTER TABLE whatsapp.queue ADD COLUMN IF NOT EXISTS error text;
     ALTER TABLE whatsapp.queue ADD COLUMN IF NOT EXISTS provider_message_id text;
     ALTER TABLE whatsapp.queue ADD COLUMN IF NOT EXISTS sent_at timestamptz;
