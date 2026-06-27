@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { ACCOUNTING_CLEAN_TABS } from "./subnav-manifest";
+import { ACCOUNTING_CLEAN_TABS, ACCOUNTING_MORE_TABS } from "./subnav-manifest";
 
 const CREATE_MENU = [
   { label: "New Bill", to: "/accounting/bills/vendor" },
@@ -27,11 +27,16 @@ function tabActive(pathname: string, to: string): boolean {
 export function AccountingSubNavWrapper({ title = "Accounting", subtitle, actions, children, kpiStrip }: Props) {
   const { pathname } = useLocation();
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
+  const moreMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const moreActive = ACCOUNTING_MORE_TABS.some((t) => pathname === t.to || pathname.startsWith(`${t.to}/`));
 
   useEffect(() => {
     const onDown = (event: MouseEvent) => {
       if (!createMenuRef.current?.contains(event.target as Node)) setCreateMenuOpen(false);
+      if (!moreMenuRef.current?.contains(event.target as Node)) setMoreMenuOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -94,6 +99,35 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
               </NavLink>
             );
           })}
+          <div ref={moreMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMoreMenuOpen((o) => !o)}
+              className={`rounded px-3 py-1 text-sm whitespace-nowrap ${
+                moreActive ? "border-b-2 border-slate-300 bg-gray-100 font-semibold text-gray-900" : "text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              More ▾
+            </button>
+            {moreMenuOpen ? (
+              <div className="absolute left-0 top-full z-20 mt-1 min-w-[200px] rounded border border-gray-200 bg-white shadow-md">
+                {ACCOUNTING_MORE_TABS.map((item) => (
+                  <NavLink
+                    key={item.label}
+                    to={item.to}
+                    onClick={() => setMoreMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `block border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 ${
+                        isActive ? "bg-gray-100 font-semibold text-gray-900" : "text-gray-800 hover:bg-gray-50"
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </nav>
 

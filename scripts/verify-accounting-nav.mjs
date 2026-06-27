@@ -3,10 +3,14 @@
  * CI guard: accounting nav unification
  *
  * Checks:
- * 1. Exactly ONE accounting sub-nav component file exists (AccountingSubNavWrapper.tsx)
- * 2. No page component imports the old AccountingSubNav (hover-dropdown) except the component file itself
- * 3. No dev-status placeholder strings appear in page components
- * 4. ACCOUNTING_CLEAN_TABS is defined in exactly one manifest file
+ * 1. AccountingSubNavWrapper.tsx exists
+ * 2. ACCOUNTING_CLEAN_TABS defined in manifest (single source of truth)
+ * 3. No duplicate ACCOUNTING_CLEAN_TABS definitions outside manifest
+ * 4. No legacy AccountingSubNav imports in page components
+ * 5. No dev-placeholder strings in accounting pages
+ * 6. No pure ComingSoon shell pages in accounting directory
+ * 7. QboAccountingSubNav.tsx deleted (was defined, never rendered)
+ * 8. ExpenseCreatePage uses AccountingSubNavWrapper (was bare, no nav)
  */
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join, relative } from "path";
@@ -130,6 +134,28 @@ for (const file of accountingTsxFiles) {
   }
 }
 pass("No pure ComingSoon shell pages in accounting directory");
+
+// ─── Check 7: QboAccountingSubNav.tsx must not exist ────────────────────────
+const qboNavPath = join(ACCOUNTING_DIR, "QboAccountingSubNav.tsx");
+try {
+  readFileSync(qboNavPath, "utf8");
+  fail("QboAccountingSubNav.tsx still exists — delete it (was defined, never rendered)");
+} catch {
+  pass("QboAccountingSubNav.tsx deleted");
+}
+
+// ─── Check 8: ExpenseCreatePage uses AccountingSubNavWrapper ─────────────────
+const expensePath = join(ACCOUNTING_DIR, "ExpenseCreatePage.tsx");
+try {
+  const expenseContent = readFileSync(expensePath, "utf8");
+  if (expenseContent.includes("AccountingSubNavWrapper")) {
+    pass("ExpenseCreatePage uses AccountingSubNavWrapper");
+  } else {
+    fail("ExpenseCreatePage does not use AccountingSubNavWrapper — bare page has no accounting nav");
+  }
+} catch {
+  fail("ExpenseCreatePage.tsx not found");
+}
 
 // ─── Summary ─────────────────────────────────────────────────────────────────
 if (failed) {
