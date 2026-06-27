@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { resolveApiUrl } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 
@@ -34,9 +34,9 @@ type DashboardPayload = {
 
 async function fetchDashboard(operatingCompanyId: string): Promise<DashboardPayload> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  const res = await fetch(resolveApiUrl(`/api/v1/qbo-sync/drift-dashboard?${params}`));
-  if (!res.ok) throw new Error("Failed to load QBO sync drift dashboard");
-  return res.json() as Promise<DashboardPayload>;
+  // Use apiRequest (credentials: "include") so the session cookie is sent — a raw fetch()
+  // omits credentials and the authed route returns 401, leaving the page body empty.
+  return apiRequest<DashboardPayload>(`/api/v1/qbo-sync/drift-dashboard?${params}`);
 }
 
 async function resolveDrift(
@@ -44,13 +44,10 @@ async function resolveDrift(
   operatingCompanyId: string,
   resolution_action: "accept_local" | "accept_qbo" | "manual_merge_recorded"
 ) {
-  const res = await fetch(resolveApiUrl(`/api/v1/qbo-sync/drift-log/${driftId}/resolve`), {
+  return apiRequest(`/api/v1/qbo-sync/drift-log/${driftId}/resolve`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ operating_company_id: operatingCompanyId, resolution_action }),
+    body: { operating_company_id: operatingCompanyId, resolution_action },
   });
-  if (!res.ok) throw new Error(`Resolve failed (${res.status})`);
-  return res.json();
 }
 
 function formatRelative(iso: string | null) {
