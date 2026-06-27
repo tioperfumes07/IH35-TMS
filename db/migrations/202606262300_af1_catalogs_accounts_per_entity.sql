@@ -97,8 +97,7 @@ BEGIN
       SELECT DISTINCT old_id, entity_id,
              row_number() OVER (
                PARTITION BY old_id
-               ORDER BY (CASE entity_id WHEN '91e0bf0a-133f-4ce8-a734-2586cfa66d96' THEN 0
-                                        WHEN 'b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e' THEN 1 ELSE 2 END)
+               ORDER BY (CASE entity_id WHEN v_transp THEN 0 WHEN v_trk THEN 1 ELSE 2 END)
              ) AS rn
       FROM _af1_owners
     )
@@ -111,6 +110,21 @@ BEGIN
        SET operating_company_id = m.entity_id
       FROM _af1_map m
      WHERE m.old_id = a.id AND m.rn = 1;
+
+    -- ── STEP 2a.5: swap global UNIQUEs → per-entity composite BEFORE inserting copies ──────────────────
+    -- The split copies (2b) carry the SAME account_number / qbo_account_id as their original (per-entity
+    -- duplicates). The global UNIQUEs must be gone and the composite (operating_company_id, …) in place FIRST,
+    -- or the copy INSERT violates accounts_account_number_key. Originals already have operating_company_id
+    -- (2a), so the composite indexes build cleanly. Idempotent (also re-applied after the block for the
+    -- no-data path). DDL is allowed directly inside a plpgsql DO block.
+    ALTER TABLE catalogs.accounts DROP CONSTRAINT IF EXISTS accounts_account_number_key;
+    ALTER TABLE catalogs.accounts DROP CONSTRAINT IF EXISTS accounts_qbo_account_id_key;
+    DROP INDEX IF EXISTS catalogs.idx_catalogs_accounts_account_number;
+    DROP INDEX IF EXISTS catalogs.idx_catalogs_accounts_qbo_account_id;
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_accounts_company_account_number
+      ON catalogs.accounts (operating_company_id, account_number);
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_accounts_company_qbo_account_id
+      ON catalogs.accounts (operating_company_id, qbo_account_id) WHERE qbo_account_id IS NOT NULL;
 
     -- ── STEP 2b: SPLIT — insert per-entity COPIES for the additional owning entities (rn > 1) ───────────
     -- Copy every account column; new id; new operating_company_id. (Column list explicit per 0010 schema.)
@@ -222,9 +236,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_accounts_company_qbo_account_id
   ON catalogs.accounts (operating_company_id, qbo_account_id)
   WHERE qbo_account_id IS NOT NULL;
 
--- ── STEP 6: entity-scoped RLS (currently NONE — role-only) ─────────────────────────────────────────────
+-- ── STEP 6: entity-scoped RLS (replaces the old ROLE-ONLY policies) ────────────────────────────────────
 ALTER TABLE catalogs.accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE catalogs.accounts FORCE ROW LEVEL SECURITY;
+-- DROP the old role-only policies (0010): accounts_select was `is_lucia_bypass() OR current_user_role() IS
+-- NOT NULL` — any authenticated user saw ALL accounts. RLS policies are PERMISSIVE (OR'd), so leaving them
+-- would let the old policy override the new entity filter and defeat entity isolation. Branch-test V4 caught
+-- this. Remove them so ONLY the entity-scoped policies apply.
+DROP POLICY IF EXISTS accounts_select ON catalogs.accounts;
+DROP POLICY IF EXISTS accounts_insert ON catalogs.accounts;
+DROP POLICY IF EXISTS accounts_update ON catalogs.accounts;
 DROP POLICY IF EXISTS accounts_entity_select ON catalogs.accounts;
 CREATE POLICY accounts_entity_select ON catalogs.accounts FOR SELECT
   USING (identity.is_lucia_bypass()
