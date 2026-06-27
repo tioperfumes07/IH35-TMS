@@ -109,7 +109,7 @@ export function DailyReconPage() {
 
   const data = query.data;
 
-  const kpiStrip = data?.posting_enabled ? (
+  const kpiStrip = data?.gl_posting_active ? (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {(["matched", "missing_in_qbo", "amount_mismatch", "missing_in_tms"] as DailyReconMatchStatus[]).map((s) => {
         const count = data.days.flatMap((d) => d.rows).filter((r) => r.match_status === s).length;
@@ -143,7 +143,7 @@ export function DailyReconPage() {
         <p className="text-sm text-gray-500">Loading…</p>
       ) : query.isError ? (
         <p className="text-sm text-red-600">Failed to load reconciliation data.</p>
-      ) : !data?.posting_enabled ? (
+      ) : !data?.gl_posting_active ? (
         <div className="rounded border border-amber-200 bg-amber-50 px-4 py-6 text-center">
           <p className="font-semibold text-amber-800">TMS posting not enabled — nothing to reconcile yet.</p>
           <p className="mt-1 text-sm text-amber-700">

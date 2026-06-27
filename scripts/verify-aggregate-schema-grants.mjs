@@ -71,6 +71,7 @@ const SQL_FALSE_SCHEMAS = new Set([
   "qc",
   "qv",
   "process",
+  "q",
 ]);
 
 const missing = [];

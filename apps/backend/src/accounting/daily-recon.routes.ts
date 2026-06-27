@@ -64,7 +64,7 @@ export type DailyReconDay = {
 };
 
 export type DailyReconResponse = {
-  posting_enabled: boolean;
+  gl_posting_active: boolean;
   from_date: string;
   to_date: string;
   total: number;
@@ -96,6 +96,10 @@ function detailPath(entityType: string, entityId: string): string | null {
 
 async function isDailyReconEnabled(client: { query: (sql: string, v?: unknown[]) => Promise<{ rows: unknown[] }> }, operatingCompanyId: string): Promise<boolean> {
   try {
+    const tableExists = await client.query(
+      `SELECT to_regclass('public.feature_flags') IS NOT NULL AS exists`
+    );
+    if (!(tableExists.rows[0] as Record<string, unknown>)?.exists) return false;
     const res = await client.query(
       `SELECT value FROM public.feature_flags
        WHERE flag_key = 'GL_POSTING_ENABLED'
@@ -268,7 +272,7 @@ async function registerDailyReconRoutes(app: FastifyInstance) {
 
       if (!postingEnabled) {
         const response: DailyReconResponse = {
-          posting_enabled: false,
+          gl_posting_active: false,
           from_date: fromDate,
           to_date: toDate,
           total: 0,
@@ -303,7 +307,7 @@ async function registerDailyReconRoutes(app: FastifyInstance) {
         }));
 
       const response: DailyReconResponse = {
-        posting_enabled: true,
+        gl_posting_active: true,
         from_date: fromDate,
         to_date: toDate,
         total,

@@ -29,7 +29,7 @@ export type DailyReconDay = {
 };
 
 export type DailyReconResponse = {
-  posting_enabled: boolean;
+  gl_posting_active: boolean;
   from_date: string;
   to_date: string;
   total: number;
