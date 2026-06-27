@@ -161,7 +161,7 @@ export function DailyReconPage() {
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="h-8 rounded border border-gray-300 px-2 text-sm"
+                className="h-10 rounded border border-gray-300 px-2 text-sm"
               />
             </div>
             <div className="flex flex-col gap-0.5">
@@ -170,7 +170,7 @@ export function DailyReconPage() {
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="h-8 rounded border border-gray-300 px-2 text-sm"
+                className="h-10 rounded border border-gray-300 px-2 text-sm"
               />
             </div>
             <div className="flex flex-col gap-0.5">
@@ -178,7 +178,7 @@ export function DailyReconPage() {
               <select
                 value={entityType}
                 onChange={(e) => setEntityType(e.target.value)}
-                className="h-8 rounded border border-gray-300 px-2 text-sm"
+                className="h-10 rounded border border-gray-300 px-2 text-sm"
               >
                 {ENTITY_TYPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -190,7 +190,7 @@ export function DailyReconPage() {
               <select
                 value={matchStatus}
                 onChange={(e) => setMatchStatus(e.target.value as DailyReconMatchStatus | "all")}
-                className="h-8 rounded border border-gray-300 px-2 text-sm"
+                className="h-10 rounded border border-gray-300 px-2 text-sm"
               >
                 {MATCH_STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
