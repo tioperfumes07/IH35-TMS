@@ -1,5 +1,9 @@
 # IH35-TMS — System Architecture
 
+> ⚠️ **SUPERSEDED (2026-06-27).** This file is from 2026-06-15 and is stale (it says "2 entities / 4
+> trucks"; reality is **3 entities**). The live, verified current-state doc is
+> **`docs/IH35-TMS-ARCHITECTURE-AND-BLUEPRINT.md`**. Kept for history (archive, never delete).
+
 _Current-state architecture. Updated for the Phase 3 module-build cycle._
 
 ---

@@ -1,5 +1,9 @@
 # IH35-TMS — Build Blueprint
 
+> ⚠️ **SUPERSEDED (2026-06-27).** This file is from 2026-06-15 and is stale. The live, verified
+> current-state architecture **and** blueprint is **`docs/IH35-TMS-ARCHITECTURE-AND-BLUEPRINT.md`**
+> (measured build state: 467 blocks, 420 DONE). Kept for history (archive, never delete).
+
 _The build plan, module specs, current state, and the locked process rules. Pairs with the Architecture document._
 
 ---
