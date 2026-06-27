@@ -54,12 +54,6 @@ import { PortalLoadDetailPage } from "../portal/PortalLoadDetailPage";
 import { PortalProfilePage } from "../portal/PortalProfilePage";
 import { PortalRouteGuard } from "../portal/PortalRouteGuard";
 import { FuelPlannerHomePage, type FuelTabId } from "../pages/fuel/FuelPlannerHome";
-import { IntegrationTransactionsPage } from "../pages/accounting/IntegrationTransactionsPage";
-import { ReceiptsPage } from "../pages/accounting/ReceiptsPage";
-import { RevenueRecognitionPage } from "../pages/accounting/RevenueRecognitionPage";
-import { FixedAssetsPage } from "../pages/accounting/FixedAssetsPage";
-import { PrepaidExpensesPage } from "../pages/accounting/PrepaidExpensesPage";
-import { MyAccountantPage } from "../pages/accounting/MyAccountantPage";
 import { BankingHomePage } from "../pages/banking/BankingHome";
 import { TransfersListPage } from "../pages/banking/TransfersListPage";
 import { BankingObligationReconcilePage } from "../pages/banking/BankingObligationReconcilePage";
@@ -3233,54 +3227,15 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/recurring-transactions"
           element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
         />
-        <Route
-          path="/accounting/integration-transactions"
-          element={
-            <ProtectedRoute>
-              <IntegrationTransactionsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accounting/receipts"
-          element={
-            <ProtectedRoute>
-              <ReceiptsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accounting/revenue-recognition"
-          element={
-            <ProtectedRoute>
-              <RevenueRecognitionPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accounting/fixed-assets"
-          element={
-            <ProtectedRoute>
-              <FixedAssetsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accounting/prepaid-expenses"
-          element={
-            <ProtectedRoute>
-              <PrepaidExpensesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accounting/my-accountant"
-          element={
-            <ProtectedRoute>
-              <MyAccountantPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* UI-1 stubs: routes exist but pages are not yet built — ComingSoonPage inline.
+            COMPLETE-BUILD rule: build fully or remove the route. Do NOT add a real page
+            component here until the page is 100% wired end-to-end. */}
+        <Route path="/accounting/integration-transactions" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
+        <Route path="/accounting/receipts" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
+        <Route path="/accounting/revenue-recognition" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
+        <Route path="/accounting/fixed-assets" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
+        <Route path="/accounting/prepaid-expenses" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
+        <Route path="/accounting/my-accountant" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
         <Route
           path="/reports/run/:reportId"
           element={

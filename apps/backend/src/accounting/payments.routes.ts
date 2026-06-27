@@ -401,7 +401,11 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         [params.data.id, user.uuid, body.data.void_reason]
       );
 
-      await client.query(`DELETE FROM accounting.payment_applications WHERE payment_id = $1`, [params.data.id]);
+      // INV-2: void-never-delete — archive all applications when voiding; never hard-delete.
+      await client.query(
+        `UPDATE accounting.payment_applications SET unapplied_at = now(), unapplied_by_user_id = $2 WHERE payment_id = $1 AND unapplied_at IS NULL`,
+        [params.data.id, user.uuid]
+      );
 
       await appendCrudAudit(
         client,
