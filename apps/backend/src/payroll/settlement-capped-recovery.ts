@@ -22,6 +22,8 @@ export type PendingDeduction = {
   remaining_balance_cents: number | null;
   deduction_type?: string | null;
   reason?: string | null;
+  /** Originating load (load_id-direct trace). Pure math ignores it; the caller maps it onto the line. */
+  load_id?: string | null;
 };
 
 export type RecoveryAllocation = {
