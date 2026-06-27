@@ -32,6 +32,10 @@ export type RawPosting = {
   amount_cents: number;
   source_transaction_type: string | null;
   source_transaction_id: string | null;
+  // CA-05 QBO-parity additions (all read-only, derived):
+  payee: string | null; // from the source transaction (bill→vendor, invoice→customer); null when unresolved
+  split_account: string | null; // the contra account(s); "-Split-" when the JE touches >1 other account
+  class_name: string | null; // catalogs.classes via posting.class_id
 };
 
 export type AccountRegisterRow = {
@@ -39,9 +43,15 @@ export type AccountRegisterRow = {
   journal_entry_id: string;
   entry_date: string;
   type: string;
+  source_transaction_type: string | null; // raw type for drill-through routing (label is in `type`)
   reference: string | null;
+  payee: string | null;
   memo: string | null;
   description: string | null;
+  split_account: string | null;
+  class_name: string | null;
+  // QBO labels the amount columns Increase/Decrease by account normal-balance; debit/credit are the raw
+  // ledger sides. The frontend renders Increase/Decrease from these + normal_balance.
   debit_cents: number;
   credit_cents: number;
   running_balance_cents: number;
@@ -93,9 +103,13 @@ export function buildRegisterRows(
       type: p.source_transaction_type
         ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
         : "Journal Entry",
+      source_transaction_type: p.source_transaction_type ?? null,
       reference: p.source_transaction_id ?? null,
+      payee: p.payee ?? null,
       memo: p.memo ?? null,
       description: p.description ?? null,
+      split_account: p.split_account ?? null,
+      class_name: p.class_name ?? null,
       debit_cents: debit,
       credit_cents: credit,
       running_balance_cents: running,
@@ -151,13 +165,39 @@ export async function getAccountRegister(
     where += ` AND (p.description ILIKE $${i} OR je.memo ILIKE $${i} OR p.source_transaction_id ILIKE $${i})`;
   }
 
+  // CA-05 QBO-parity columns, all read-only / derived (no new GL math):
+  //  - split_account: the contra account(s) of the SAME journal entry; "-Split-" when >1 distinct other
+  //    account (QBO register semantics). Computed via a lateral over the other postings of this JE.
+  //  - class_name: catalogs.classes via posting.class_id (honest NULL when unclassed).
+  //  - payee: derived from the source transaction — bill→vendor, invoice→customer (the unambiguous cases);
+  //    honest NULL otherwise. source_transaction_id is text; targets cast to text for a safe compare.
   const res = await client.query<RawPosting & { amount_cents: string | number }>(
     `SELECT p.id::text AS posting_id, je.id::text AS journal_entry_id, je.entry_date::text AS entry_date,
             je.memo, p.description, p.debit_or_credit, p.amount_cents::bigint AS amount_cents,
-            p.source_transaction_type, p.source_transaction_id
+            p.source_transaction_type, p.source_transaction_id,
+            cls.class_name,
+            COALESCE(bv.vendor_name, ic.customer_name) AS payee,
+            sp.split_account
        FROM accounting.journal_entry_postings p
        JOIN accounting.journal_entries je
          ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+       LEFT JOIN catalogs.classes cls ON cls.id = p.class_id
+       LEFT JOIN accounting.bills b
+         ON p.source_transaction_type = 'bill' AND b.id::text = p.source_transaction_id
+       LEFT JOIN mdata.vendors bv ON bv.id::text = b.vendor_uuid
+       LEFT JOIN accounting.invoices inv
+         ON p.source_transaction_type = 'invoice' AND inv.id::text = p.source_transaction_id
+       LEFT JOIN mdata.customers ic ON ic.id = inv.customer_id
+       LEFT JOIN LATERAL (
+         SELECT CASE WHEN count(*) = 0 THEN NULL
+                     WHEN count(*) = 1 THEN max(sa.account_name)
+                     ELSE '-Split-' END AS split_account
+           FROM (SELECT DISTINCT op.account_id
+                   FROM accounting.journal_entry_postings op
+                  WHERE op.journal_entry_uuid = p.journal_entry_uuid
+                    AND op.account_id <> p.account_id) d
+           JOIN catalogs.accounts sa ON sa.id = d.account_id
+       ) sp ON true
       WHERE ${where}
       ORDER BY je.entry_date ASC, p.line_sequence ASC, p.created_at ASC`,
     params
