@@ -96,8 +96,12 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
         [operating_company_id]
       );
 
+      // FIX: mdata.units has NO hub_meter_current and NO operating_company_id (both phantom → 42703, the
+      // /services/eta endpoint 500'd on every call). Real odometer column = odometer_mi (mig 202606211400);
+      // units are tenant-scoped by owner/lessee, not operating_company_id (mig 0015). Alias keeps the
+      // downstream .hub_meter_current shape unchanged.
       const unitRow = await client.query<{ hub_meter_current: number | null }>(
-        "SELECT hub_meter_current FROM mdata.units WHERE id = $1 AND operating_company_id = $2 LIMIT 1",
+        "SELECT odometer_mi AS hub_meter_current FROM mdata.units WHERE id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2 LIMIT 1",
         [unit_id, operating_company_id]
       );
       const currentOdo = (unitRow.rows[0] as { hub_meter_current?: number | null } | undefined)?.hub_meter_current ?? null;
