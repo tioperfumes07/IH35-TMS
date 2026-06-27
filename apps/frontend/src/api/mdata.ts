@@ -828,6 +828,9 @@ type CompanyScopedListParams = {
   search?: string;
   customer_type?: "broker" | "direct_shipper";
   operating_company_id?: string | null;
+  // limit: client-side pickers must pass it — vendors/customers endpoints default to 50, so a >50 set
+  // silently truncates the picker (same class as the driver/unit 50-cap). Endpoint max is 200.
+  limit?: number;
 };
 
 function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedListParams) {
@@ -837,6 +840,7 @@ function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedL
   if (params.search) query.set("search", params.search);
   if (params.customer_type) query.set("customer_type", params.customer_type);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+  if (params.limit != null) query.set("limit", String(params.limit));
 }
 
 export function listCustomers(params: CompanyScopedListParams = {}) {

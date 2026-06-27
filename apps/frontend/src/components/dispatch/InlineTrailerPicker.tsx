@@ -20,7 +20,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
 
   const trailersQuery = useQuery({
     queryKey: ["dispatch", "inline-trailers", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }),
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: open && Boolean(operatingCompanyId),
   });
 

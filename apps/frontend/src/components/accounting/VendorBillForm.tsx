@@ -73,7 +73,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
 
   const vendorsQuery = useQuery({
     queryKey: ["vendor-bill-form", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
     enabled: Boolean(operatingCompanyId),
   });
   const driversQuery = useQuery({
@@ -83,7 +83,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
   });
   const unitsQuery = useQuery({
     queryKey: ["vendor-bill-form", "units", operatingCompanyId],
-    queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId }),
+    queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
 

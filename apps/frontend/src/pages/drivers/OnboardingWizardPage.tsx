@@ -61,7 +61,7 @@ export function OnboardingWizardPage() {
   const unitsQ = useQuery({
     queryKey: ["onboarding-units", companyId],
     enabled: Boolean(companyId),
-    queryFn: () => listUnits({ operating_company_id: companyId }).then((r) => r.units),
+    queryFn: () => listUnits({ operating_company_id: companyId, limit: 500 }).then((r) => r.units),
   });
 
   const session = sessionQ.data?.session;

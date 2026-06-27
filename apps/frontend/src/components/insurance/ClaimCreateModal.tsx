@@ -108,7 +108,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     queryKey: ["insurance", "claim-create", "units", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: async () => {
-      const result = await listUnits({ operating_company_id: operatingCompanyId });
+      const result = await listUnits({ operating_company_id: operatingCompanyId, limit: 500 });
       return (result.units as UnitOption[]).filter((unit) => Boolean(unit.id));
     },
   });

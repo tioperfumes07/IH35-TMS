@@ -45,7 +45,7 @@ export function RecurringBillCreate() {
 
   const vendorsQuery = useQuery({
     queryKey: ["mdata", "vendors", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId }),
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 200 }),
     enabled: !!companyId,
   });
 
