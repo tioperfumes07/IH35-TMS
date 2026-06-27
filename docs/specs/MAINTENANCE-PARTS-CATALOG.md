@@ -114,6 +114,6 @@ the SHAPE:
 
 ## 9. Locks honored
 §7 navy `#1F2A44`; "+ Create" vocab; ARCHIVE‑not‑DELETE; additive‑only; every diesel/roadside expense
-FKs a load (G18); **no hazmat fields**; reuse allocation/posting infra; `mdata.units` make/model/year is
+FKs a load (G18); **hazmat fields GATED** (`mdata.loads.hazmat_*` exists; `l.hazmat` bare column path is a live W-4 bug — STOP for Jorge before touching); reuse allocation/posting infra; `mdata.units` make/model/year is
 the fitment source. Related: maintenance construction package; PM auto‑engine (#37); Samsara odometer
 (#1289, parked feed).
