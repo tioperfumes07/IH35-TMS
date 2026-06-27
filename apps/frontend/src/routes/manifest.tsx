@@ -226,6 +226,7 @@ import { AccountingPreSettlementsPage } from "../pages/accounting/AccountingPreS
 import { PayrollAggregatedPage } from "../pages/accounting/PayrollAggregatedPage";
 import { ExpenseCategoryMapPage } from "../pages/accounting/ExpenseCategoryMapPage";
 import { CoaRolesPage } from "../pages/accounting/CoaRolesPage";
+import { DailyReconPage } from "../pages/accounting/DailyReconPage";
 import { SalesTaxPage } from "../pages/accounting/SalesTaxPage";
 import { AccountingAuditTrailPage } from "../pages/accounting/AccountingAuditTrailPage";
 import { PostingLineagePage } from "../pages/accounting/PostingLineagePage";
@@ -2995,6 +2996,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AccountingReconciliationWorkspacePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/daily-recon"
+          element={
+            <ProtectedRoute>
+              <DailyReconPage />
             </ProtectedRoute>
           }
         />
