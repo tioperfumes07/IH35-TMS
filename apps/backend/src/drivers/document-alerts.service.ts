@@ -109,7 +109,7 @@ export async function listOpenDocumentAlertEvents(client: QueryableClient, opera
       SELECT
         e.id::text,
         e.driver_id::text,
-        d.full_name AS driver_name,
+        CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
         e.document_type,
         e.source_id,
         e.expiry_date::text,
@@ -143,7 +143,7 @@ async function loadExpiryCandidates(
       `
         SELECT
           d.id::text AS driver_id,
-          COALESCE(d.full_name, d.first_name || ' ' || d.last_name) AS driver_name,
+          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
           'cdl'::text AS document_type,
           d.id::text AS source_id,
           'CDL'::text AS label,
@@ -164,7 +164,7 @@ async function loadExpiryCandidates(
       `
         SELECT
           d.id::text AS driver_id,
-          COALESCE(d.full_name, d.first_name || ' ' || d.last_name) AS driver_name,
+          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
           'medical_card'::text AS document_type,
           COALESCE(mc.id::text, d.id::text) AS source_id,
           'DOT medical card'::text AS label,
@@ -194,7 +194,7 @@ async function loadExpiryCandidates(
       `
         SELECT
           tr.driver_id::text,
-          COALESCE(d.full_name, d.first_name || ' ' || d.last_name) AS driver_name,
+          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
           'training'::text AS document_type,
           tr.id::text AS source_id,
           tr.training_name AS label,
@@ -217,7 +217,7 @@ async function loadExpiryCandidates(
       `
         SELECT
           q.driver_id::text,
-          COALESCE(d.full_name, d.first_name || ' ' || d.last_name) AS driver_name,
+          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
           'dqf'::text AS document_type,
           q.id::text AS source_id,
           q.item_name AS label,
@@ -240,7 +240,7 @@ async function loadExpiryCandidates(
       `
         SELECT
           fl.entity_id::text AS driver_id,
-          COALESCE(d.full_name, d.first_name || ' ' || d.last_name) AS driver_name,
+          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
           'doc_file'::text AS document_type,
           f.id::text AS source_id,
           COALESCE(f.original_filename, 'Document') AS label,
@@ -288,7 +288,7 @@ async function loadExpiryCandidates(
       `
         SELECT
           d.id::text AS driver_id,
-          COALESCE(d.full_name, d.first_name || ' ' || d.last_name) AS driver_name,
+          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
           'hazmat'::text AS document_type,
           d.id::text AS source_id,
           'Hazmat endorsement'::text AS label,

@@ -102,7 +102,7 @@ export async function getSettlementSummary(
     SELECT 
       s.id,
       s.driver_id,
-      d.full_name as driver_name,
+      CONCAT_WS(' ', d.first_name, d.last_name) as driver_name,
       s.period_start,
       s.period_end,
       s.approval_status,

@@ -119,7 +119,7 @@ async function checkDriverMedicalCard(
       SELECT
         COALESCE(mc.expiry_date, d.dot_medical_expires_at)::text AS expiry_date,
         (COALESCE(mc.expiry_date, d.dot_medical_expires_at) - CURRENT_DATE)::int AS days_until_expiry,
-        d.full_name,
+        CONCAT_WS(' ', d.first_name, d.last_name) AS full_name,
         d.first_name,
         d.last_name
       FROM mdata.drivers d

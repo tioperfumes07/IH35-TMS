@@ -78,7 +78,7 @@ export async function scanAllDrivers(client: Queryable, operatingCompanyId: stri
       SELECT
         d.id::text AS driver_uuid,
         COALESCE(
-          NULLIF(TRIM(d.full_name), ''),
+          NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), ''),
           NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), ''),
           d.id::text
         ) AS driver_name,
