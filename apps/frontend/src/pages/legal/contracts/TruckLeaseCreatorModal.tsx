@@ -128,7 +128,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
             <h2 className="text-base font-semibold text-gray-900">New Truck Lease Agreement</h2>
             <p className="text-xs text-gray-500">Commercial operating lease — no purchase option. Saves as draft, then send to signer.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded p-1 text-gray-500 hover:bg-gray-100">✕</button>
+          <button type="button" onClick={onClose} aria-label="Close truck lease creator" className="rounded p-1 text-gray-500 hover:bg-gray-100">✕</button>
         </div>
 
         {ensureQuery.isLoading ? (
