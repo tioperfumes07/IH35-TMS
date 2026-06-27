@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 
@@ -10,6 +11,23 @@ import { getAccountRegister, type AccountRegisterReport } from "../../api/accoun
 
 const fmtCents = (cents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((cents ?? 0) / 100);
+
+// Drill-through: map a register row's source transaction to its REAL detail/source route (all verified to
+// exist in routes/manifest.tsx). invoice + customer_payment have true per-id detail; the rest resolve to
+// their source module. Falls back to the journal-entries surface for plain JEs / unmapped types.
+function sourceRoute(type: string | null, reference: string | null): string {
+  const t = (type ?? "").toLowerCase();
+  if (t === "invoice" && reference) return `/accounting/invoices/${reference}`;
+  if (t === "customer_payment" && reference) return `/accounting/payments/${reference}`;
+  if (t === "bill") return "/accounting/bills";
+  if (t === "bill_payment") return "/accounting/bill-payments";
+  if (t === "expense") return "/accounting/expenses";
+  if (t === "settlement") return "/driver-finance/settlements";
+  return "/accounting/journal-entries";
+}
+
+// Density toggle per the qbo-parity table grammar (Regular / Compact / Ultra-compact).
+const DENSITY: Record<string, string> = { regular: "px-3 py-2", compact: "px-2 py-1", ultra: "px-2 py-0.5" };
 
 const TRANSACTION_TYPES = ["Invoice", "Invoice Payment", "Bill", "Bill Payment", "Expense", "Journal Entry", "Settlement", "Transfer"];
 // Map the display label back to the stored source_transaction_type the backend filters on.
@@ -69,8 +87,10 @@ const inputCls = "h-9 rounded border border-gray-300 px-2 text-[13px]";
 export function AccountRegisterPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const navigate = useNavigate();
 
   const initial = monthBounds(new Date());
+  const [density, setDensity] = useState<"regular" | "compact" | "ultra">("regular");
   const [accountId, setAccountId] = useState("");
   const [fromDate, setFromDate] = useState(initial.from);
   const [toDate, setToDate] = useState(initial.to);
@@ -132,21 +152,31 @@ export function AccountRegisterPage() {
 
   const exportCsv = () => {
     if (!report) return;
-    const header = ["Date", "Type", "Reference", "Memo", "Debit", "Credit", "Running balance"];
-    const lines = report.rows.map((r) =>
-      [
+    const nb = report.account.normal_balance;
+    const header = ["Date", "Type", "Ref", "Payee", "Memo", "Account", "Class", "Increase", "Decrease", "Running balance"];
+    const lines = report.rows.map((r) => {
+      const increase = nb === "debit" ? r.debit_cents : r.credit_cents;
+      const decrease = nb === "debit" ? r.credit_cents : r.debit_cents;
+      return [
         r.entry_date,
         r.type,
         r.reference ?? "",
+        (r.payee ?? "").replace(/"/g, '""'),
         (r.memo ?? r.description ?? "").replace(/"/g, '""'),
-        r.debit_cents ? (r.debit_cents / 100).toFixed(2) : "",
-        r.credit_cents ? (r.credit_cents / 100).toFixed(2) : "",
+        (r.split_account ?? "").replace(/"/g, '""'),
+        (r.class_name ?? "").replace(/"/g, '""'),
+        increase ? (increase / 100).toFixed(2) : "",
+        decrease ? (decrease / 100).toFixed(2) : "",
         (r.running_balance_cents / 100).toFixed(2),
       ]
         .map((c) => `"${c}"`)
-        .join(",")
-    );
-    const csv = [header.join(","), `"Opening balance","","","","","","${(report.opening_balance_cents / 100).toFixed(2)}"`, ...lines].join("\n");
+        .join(",");
+    });
+    const csv = [
+      header.join(","),
+      `"Opening balance","","","","","","","","","${(report.opening_balance_cents / 100).toFixed(2)}"`,
+      ...lines,
+    ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -158,6 +188,8 @@ export function AccountRegisterPage() {
 
   const accounts = accountsQuery.data?.accounts ?? [];
   const normalLabel = report ? (report.account.normal_balance === "debit" ? "Dr" : "Cr") : "";
+  const normal: "debit" | "credit" = report?.account.normal_balance ?? "debit";
+  const cell = DENSITY[density];
 
   const kpiStrip = report ? (
     <div className="grid gap-2 md:grid-cols-4">
@@ -238,6 +270,14 @@ export function AccountRegisterPage() {
             </div>
           ) : null}
         </div>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Density
+          <SelectCombobox value={density} onChange={(e) => setDensity(e.target.value as "regular" | "compact" | "ultra")} className={inputCls}>
+            <option value="regular">Regular</option>
+            <option value="compact">Compact</option>
+            <option value="ultra">Ultra-compact</option>
+          </SelectCombobox>
+        </label>
         <button
           type="button"
           onClick={exportCsv}
@@ -293,36 +333,58 @@ export function AccountRegisterPage() {
           <table className="min-w-full text-left text-xs">
             <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
               <tr>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Type</th>
-                <th className="px-3 py-2">Reference</th>
-                <th className="px-3 py-2">Memo</th>
-                <th className="px-3 py-2 text-right">Debit</th>
-                <th className="px-3 py-2 text-right">Credit</th>
-                <th className="px-3 py-2 text-right">Running balance</th>
+                <th className={cell}>Date</th>
+                <th className={cell}>Type</th>
+                <th className={cell}>Ref</th>
+                <th className={cell}>Payee</th>
+                <th className={cell}>Memo</th>
+                <th className={cell}>Account</th>
+                <th className={cell}>Class</th>
+                <th className={cell}>Location</th>
+                <th className={cell}>C/R</th>
+                <th className={`${cell} text-right`}>Increase</th>
+                <th className={`${cell} text-right`}>Decrease</th>
+                <th className={`${cell} text-right`}>Running balance</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-gray-100 bg-gray-50/40 text-gray-600">
-                <td className="px-3 py-2" colSpan={6}>
-                  Opening balance ({report?.account.normal_balance === "debit" ? "Dr" : "Cr"})
+                <td className={cell} colSpan={11}>
+                  Opening balance ({normal === "debit" ? "Dr" : "Cr"})
                 </td>
-                <td className="px-3 py-2 text-right font-medium">{report ? fmtCents(report.opening_balance_cents) : "—"}</td>
+                <td className={`${cell} text-right font-medium`}>{report ? fmtCents(report.opening_balance_cents) : "—"}</td>
               </tr>
-              {report?.rows.map((r) => (
-                <tr key={r.posting_id} className="border-b border-gray-100">
-                  <td className="px-3 py-2 whitespace-nowrap">{r.entry_date}</td>
-                  <td className="px-3 py-2">{r.type}</td>
-                  <td className="px-3 py-2">{r.reference ?? "—"}</td>
-                  <td className="px-3 py-2">{r.memo ?? r.description ?? "—"}</td>
-                  <td className="px-3 py-2 text-right">{r.debit_cents ? fmtCents(r.debit_cents) : ""}</td>
-                  <td className="px-3 py-2 text-right">{r.credit_cents ? fmtCents(r.credit_cents) : ""}</td>
-                  <td className="px-3 py-2 text-right font-medium">{fmtCents(r.running_balance_cents)}</td>
-                </tr>
-              ))}
+              {report?.rows.map((r) => {
+                // QBO labels amounts by the account's normal balance: increase = the natural side.
+                const increase = normal === "debit" ? r.debit_cents : r.credit_cents;
+                const decrease = normal === "debit" ? r.credit_cents : r.debit_cents;
+                return (
+                  <tr
+                    key={r.posting_id}
+                    onClick={() => navigate(sourceRoute(r.source_transaction_type, r.reference))}
+                    title="Open source transaction"
+                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className={`${cell} whitespace-nowrap`}>{r.entry_date}</td>
+                    <td className={cell}>{r.type}</td>
+                    <td className={cell}>{r.reference ?? "—"}</td>
+                    <td className={cell}>{r.payee ?? "—"}</td>
+                    <td className={cell}>{r.memo ?? r.description ?? "—"}</td>
+                    <td className={cell}>{r.split_account ?? "—"}</td>
+                    <td className={cell}>{r.class_name ?? "—"}</td>
+                    {/* Location + C/R are bank-register concepts; the GL posting model carries neither
+                        (verified) → honest "—", never fabricated. */}
+                    <td className={cell}>—</td>
+                    <td className={cell}>—</td>
+                    <td className={`${cell} text-right tabular-nums`}>{increase ? fmtCents(increase) : ""}</td>
+                    <td className={`${cell} text-right tabular-nums`}>{decrease ? fmtCents(decrease) : ""}</td>
+                    <td className={`${cell} text-right font-medium tabular-nums`}>{fmtCents(r.running_balance_cents)}</td>
+                  </tr>
+                );
+              })}
               {report && report.rows.length === 0 ? (
                 <tr>
-                  <td className="px-3 py-6 text-center text-gray-500" colSpan={7}>
+                  <td className="px-3 py-6 text-center text-gray-500" colSpan={12}>
                     {registerQuery.isLoading ? "Loading…" : "No transactions in this range."}
                   </td>
                 </tr>

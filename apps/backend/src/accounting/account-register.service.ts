@@ -43,6 +43,7 @@ export type AccountRegisterRow = {
   journal_entry_id: string;
   entry_date: string;
   type: string;
+  source_transaction_type: string | null; // raw type for drill-through routing (label is in `type`)
   reference: string | null;
   payee: string | null;
   memo: string | null;
@@ -102,6 +103,7 @@ export function buildRegisterRows(
       type: p.source_transaction_type
         ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
         : "Journal Entry",
+      source_transaction_type: p.source_transaction_type ?? null,
       reference: p.source_transaction_id ?? null,
       payee: p.payee ?? null,
       memo: p.memo ?? null,

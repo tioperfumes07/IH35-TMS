@@ -5,9 +5,13 @@ export type AccountRegisterRow = {
   journal_entry_id: string;
   entry_date: string;
   type: string;
+  source_transaction_type: string | null;
   reference: string | null;
+  payee: string | null;
   memo: string | null;
   description: string | null;
+  split_account: string | null;
+  class_name: string | null;
   debit_cents: number;
   credit_cents: number;
   running_balance_cents: number;
