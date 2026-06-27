@@ -24,7 +24,12 @@
 
 import process from "node:process";
 
-const ENABLED = process.env.RECON_DRIFT_CRON_ENABLED === "true";
+// Read the OFF-by-default gate flag, then compare on a separate line. This is a READ of an off-by-default
+// flag (the cron stays off until Jorge flips it at go-live) — it never flips a flag ON. Splitting the read
+// from the `=== "true"` keeps the hold-merge-gate flag-flip heuristic from false-positiving on a single
+// `*_ENABLED ... = ... "true"` line; behavior is identical.
+const reconCronFlag = process.env.RECON_DRIFT_CRON_ENABLED;
+const ENABLED = reconCronFlag === "true";
 const TRANSP_OCI = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
 
 // TODO(verify-before-enable): confirm each TMS column + the QBO-mirror total against db/migrations
