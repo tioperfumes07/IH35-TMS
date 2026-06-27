@@ -107,12 +107,17 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
       );
       const currentOdo = (unitRow.rows[0] as { hub_meter_current?: number | null } | undefined)?.hub_meter_current ?? null;
 
-      const lastWoRow = await client.query<{ completed_at: string | null; hub_meter_at_completion: number | null }>(
-        `SELECT completed_at::text, hub_meter_at_completion FROM maintenance.work_orders WHERE unit_id = $1 AND operating_company_id = $2 AND status = 'completed' ORDER BY completed_at DESC LIMIT 1`,
+      // FIX (verified vs prod-copy): maintenance.work_orders has NEITHER completed_at NOR
+      // hub_meter_at_completion (both phantom → 42703 — this endpoint never worked on prod). The real PM
+      // tracking is maintenance.pm_schedules (unit_id + last_service_odometer). Use the unit's furthest
+      // last-service odometer; there is no last-service DATE column on pm_schedules → date-based eta degrades
+      // to null (mile-based eta still computes). Stops the 500 with correct mileage data.
+      const lastSvcRow = await client.query<{ last_odo: number | null }>(
+        `SELECT MAX(last_service_odometer) AS last_odo FROM maintenance.pm_schedules WHERE unit_id = $1 AND operating_company_id = $2 AND is_active = true`,
         [unit_id, operating_company_id]
       );
-      const lastCompletedDate = (lastWoRow.rows[0] as { completed_at?: string | null } | undefined)?.completed_at ?? null;
-      const lastCompletedOdo = (lastWoRow.rows[0] as { hub_meter_at_completion?: number | null } | undefined)?.hub_meter_at_completion ?? null;
+      const lastCompletedDate: string | null = null;
+      const lastCompletedOdo = (lastSvcRow.rows[0] as { last_odo?: number | null } | undefined)?.last_odo ?? null;
 
       return services.rows.map((svc) => ({
         ...svc,
