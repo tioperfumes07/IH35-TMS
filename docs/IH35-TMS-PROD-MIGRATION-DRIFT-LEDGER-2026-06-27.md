@@ -4,38 +4,64 @@
 > diff the **live prod Neon DB** (`br-fancy-credit-akjnd07a`, read-only) against the migration set on
 > `origin/main` + the backend code. Fixes are gated migrations (separate, owner-gated).
 
-## Summary of drift
+## Summary of drift (DEFINITIVE — fresh-DB build vs live prod)
+
+Method (the real one, not grep): created an **empty Neon DB**, ran `db:migrate` from `0001` (all 508 applied
+clean), then diffed its `information_schema` against the **live prod** DB.
+
+| Metric | Clean build (migrations) | Live prod | Gap |
+|--------|------------------------:|----------:|----:|
+| Schemas | 72 | 72 | 0 |
+| Base tables | **605** | **619** | **14** (prod-only) |
+| Views | 47 | 47 | 0 |
+| Columns (shared tables) | — | — | **23** (prod-only) |
 
 | Drift class | Finding | Action |
 |-------------|---------|--------|
-| Table-count gap | Live prod = **619 tables**; `CREATE TABLE` grep in migrations = **478 distinct**; **147 prod tables unmatched** | Mostly benign (partitions + seed tables); finalize with a fresh-DB migrate count |
-| Ledger orphans | **4 migrations in prod ledger not on main** (all `0408_*`) | Benign — renamed equivalents applied; document |
-| Confirmed schema drift | **`mdata.loads.trailer_type` exists on prod, NOT created by any migration** (8 backend callers) | **Capture migration needed** (gated) |
-| Phantom columns | `work_orders.completed_at` / `hub_meter_at_completion` don't exist on prod | **Already fixed** (#1532) — no remaining callers |
+| Prod-only TABLES | **14** — all **orphan (0 backend references)** | Benign (legacy/pre-rebaseline); document, optionally archive |
+| Prod-only COLUMNS | **23** on shared tables — the real gap | **21 captured** by migration `202606271520` (PR #1542); 2 documented exceptions |
+| Ledger orphans | **4** prod-ledger migrations not on main (all `0408_*`) | Benign — renamed equivalents applied; document |
+| Phantom columns | `work_orders.completed_at`/`hub_meter_at_completion` absent on prod | **Already fixed** (#1532) |
 | Schema fragmentation | duplicate-domain schemas (mdata/master_data, maintenance/maint, …) | Document or consolidate (owner-gated; never drop without approval) |
 
 ---
 
-## 1. The 619-vs-478 table gap (147 unmatched) — mostly benign
+## 1. Prod-only TABLES — 14, all orphan (benign)
 
-147 prod base tables are not matched by a `CREATE TABLE schema.table` statement in migrations. By schema:
+The clean migrate produces **605 of prod's 619** tables (including the 48 `audit_log` partitions + the
+`catalogs` factory tables — the earlier "147" was a grep artifact; regex can't see partition/seed DDL). The
+**14** genuinely prod-only tables are **all unreferenced by backend code** (verified) — legacy/orphan, almost
+certainly left over from before the 2026-06-15 history re-baseline:
 
-| Schema | Unmatched | Almost certainly |
-|--------|----------:|------------------|
-| `catalogs` | 72 | factory/reference catalog tables created by **seed migrations** (INSERT/dynamic DDL the grep can't see) |
-| `public` | 48 | the `audit_log_2024_01 … 2027_12` **partition tables** (created by partition DDL/function) |
-| `safety` | 7 | created later / dynamic |
-| `reference` | 5 | reference data schema (not in grep's CREATE pattern) |
-| `migration` | 5 | internal test-seed ledgers |
-| `compliance` | 5 | dynamic |
-| `integrity` / `_system` / `ih35_migrations` | 5 | framework |
+| Schema | Prod-only tables (0 code refs) |
+|--------|-------------------------------|
+| `safety` | `accidents`, `citations`, `event_documents`, `fmcsa_events`, `roadside_inspections`, `violations` (code uses `safety.accident_reports` etc., not these) |
+| `catalogs` | `cdl_endorsements`, `cdl_restrictions`, `employment_statuses`, `license_classes`, `medical_card_statuses` |
+| `integrity` | `anomaly`, `driver_metric`, `metric` |
 
-**This 147 is an UPPER BOUND on drift** — the grep undercounts partitions and seed/function-created tables,
-so most of these *are* produced by a clean migrate; they just aren't visible to a regex.
-**Definitive measurement (recommended next step):** run `db:migrate` from `0001` on a fresh empty database
-and count `information_schema` tables; subtract from 619 to get the *true* prod-only set. CI's
-`build-typecheck` already runs a fresh migrate (green), which indicates the migration set applies cleanly —
-but it does not count tables, so the exact prod-only list needs this run.
+**Action:** benign — document; archive only with owner approval (additive/void-not-delete). They do not block
+a fresh deploy (no code path uses them).
+
+## 1b. Prod-only COLUMNS — 23 (the real gap; 21 captured)
+
+The table diff looked benign, but the **column** diff is what would break a fresh deploy: 23 columns exist on
+prod but the clean build's `CREATE TABLE` produces older shapes (notably `qbo.sync_alerts`, `sms.queue`,
+`whatsapp.queue`). **Migration `202606271520` (PR #1542, HOLD) captures 21** — matched to exact prod
+type/nullability/default — so a clean migrate reproduces prod; verified on the fresh branch (23 → 2).
+
+| Table | Prod-only columns |
+|-------|-------------------|
+| `mdata.loads` | `trailer_type` |
+| `accounting.journal_entries` | `idempotency_key` |
+| `compliance.drug_alcohol_test_results` | `clearinghouse_reference`, `created_by`, `selection_id` |
+| `qbo.sync_alerts` | `kind`, `message`, `payload`, `sync_run_id` |
+| `sms.queue` | `attempts`, `error`, `provider_message_id`, `sent_at`, `status`, `to_number` |
+| `whatsapp.queue` | `attempts`, `body`, `error`, `provider_message_id`, `sent_at`, `status` |
+
+**2 documented exceptions (not in the capture migration):**
+`maintenance.v_arriving_soon.final_destination_location_id` (a **view** column — view-definition drift) and
+`ih35_migrations.applied_migrations.applied_by` (the migrate runner's internal mirror ledger). Both need
+separate, non-`ADD COLUMN` handling.
 
 ## 2. The 4 ledger-only migrations (benign)
 
@@ -54,19 +80,13 @@ Each has a **renamed equivalent applied on main**, so prod's schema is complete:
 **0 files on main are unapplied on prod.** The boot-check (every file in the ledger) holds. **Action: document
 only** — optionally a note migration recording these as superseded.
 
-## 3. CONFIRMED real drift — `mdata.loads.trailer_type`
+## 3. Column-drift capture — STATUS (§1b detail)
 
-- Live prod: `mdata.loads.trailer_type` **exists**.
-- Migrations: **no `ALTER TABLE mdata.loads ADD COLUMN … trailer_type`** anywhere (the 4 `trailer_type`
-  matches in migrations target other tables — catalogs/lists, not `mdata.loads`).
-- Backend callers: **8 files** (`book-load.service.ts`, `loads.routes.ts`, `dispatch-refinements.routes.ts`,
-  `driver-optimizer.service.ts`, `profit-per-truck.routes.ts`, `catalogs/fleet/index.ts`,
-  samsara cargo ingester, lists count spec).
-- **Impact:** works on prod (column present) but a **fresh deploy / CI DB has no `loads.trailer_type` →
-  these 8 paths 42703 → 500.** The migration set does not honestly describe prod.
-- **Fix (gated):** idempotent capture migration
-  `ALTER TABLE mdata.loads ADD COLUMN IF NOT EXISTS trailer_type text;` (match the prod column type) + a
-  db-test asserting the column exists after migrate.
+The 23 prod-only columns (incl. the originally-flagged `mdata.loads.trailer_type`, 8 callers) are captured by
+migration `202606271520` (**PR #1542, HOLD**) — 21 via idempotent `ADD COLUMN IF NOT EXISTS` matched to exact
+prod types, + a `prod-column-drift-capture.db.test.ts` guard. **Branch-verified**: after the capture, the
+fresh-DB column drift drops **23 → 2** (only the view + internal-ledger exceptions). 2 exceptions need
+separate handling (view-def + mirror ledger). Awaiting GUARD prod-branch verify + owner gate.
 
 ## 4. Phantom columns — status
 
