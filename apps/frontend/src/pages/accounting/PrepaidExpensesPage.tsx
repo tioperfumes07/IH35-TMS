@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   getPrepaidExpenses, getPrepaidExpenseDetail, createPrepaidExpense,
@@ -93,7 +94,7 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
     description: "", asset_number: "",
     purchase_date: new Date().toISOString().slice(0, 10),
     start_date: new Date().toISOString().slice(0, 10),
-    periods: "12", total_amount_cents: "",
+    periods: "12", total_amount_dollars: null as number | null,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -105,14 +106,14 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
       purchase_date: form.purchase_date,
       start_date: form.start_date,
       periods: Number(form.periods),
-      total_amount_cents: Math.round(parseFloat(form.total_amount_cents) * 100),
+      total_amount_cents: Math.round((form.total_amount_dollars ?? 0) * 100),
     }),
     onSuccess: () => { onCreated(); onClose(); },
     onError: (e: unknown) => setError(e instanceof Error ? e.message : "Failed to create."),
   });
 
   const valid = form.description.trim() && form.purchase_date && form.start_date
-    && Number(form.periods) > 0 && parseFloat(form.total_amount_cents) > 0;
+    && Number(form.periods) > 0 && (form.total_amount_dollars ?? 0) > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
@@ -149,9 +150,11 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Total Amount ($) *</label>
-              <input type="number" min="0.01" step="0.01"
-                className="w-full rounded border border-gray-300 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                value={form.total_amount_cents} onChange={(e) => setForm({ ...form, total_amount_cents: e.target.value })} placeholder="0.00" />
+              <MoneyInput
+                valueDollars={form.total_amount_dollars}
+                onChangeDollars={(v) => setForm({ ...form, total_amount_dollars: v })}
+                className="w-full"
+                placeholder="0.00" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Periods (months) *</label>
@@ -160,9 +163,9 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
                 value={form.periods} onChange={(e) => setForm({ ...form, periods: e.target.value })} />
             </div>
           </div>
-          {parseFloat(form.total_amount_cents) > 0 && Number(form.periods) > 0 && (
+          {(form.total_amount_dollars ?? 0) > 0 && Number(form.periods) > 0 && (
             <p className="text-xs text-gray-500 rounded bg-gray-50 px-2 py-1">
-              Monthly: {fmtCents(Math.floor(parseFloat(form.total_amount_cents) * 100 / Number(form.periods)))} (GL posting GATED — flag OFF)
+              Monthly: {fmtCents(Math.floor((form.total_amount_dollars ?? 0) * 100 / Number(form.periods)))} (GL posting GATED — flag OFF)
             </p>
           )}
         </div>
