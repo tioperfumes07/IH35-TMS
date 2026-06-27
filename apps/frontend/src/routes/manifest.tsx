@@ -207,6 +207,7 @@ import { AuditVoidReversalPage } from "../pages/reports/audit/AuditVoidReversalP
 import { AuditPeriodCloseHistoryPage } from "../pages/reports/audit/AuditPeriodCloseHistoryPage";
 import { QboSyncDetailPage } from "../pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "../pages/accounting/InvoicesListPage";
+import { TransactionRegisterPage } from "../pages/accounting/TransactionRegisterPage";
 import { MultiEntityAccountingPage } from "../pages/accounting/MultiEntityAccountingPage";
 import { AccountingHubPage } from "../pages/accounting/AccountingHubPage";
 import { DisputeQueuePage } from "../pages/accounting/DisputeQueuePage";
@@ -2912,6 +2913,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <InvoicesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/transactions"
+          element={
+            <ProtectedRoute>
+              <TransactionRegisterPage />
             </ProtectedRoute>
           }
         />

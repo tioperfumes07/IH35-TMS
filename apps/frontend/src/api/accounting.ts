@@ -1608,3 +1608,54 @@ export function generateRecurringBillNow(
     }
   );
 }
+
+// DISPATCH-B — Unified Transaction Register (read-only, all sources in one list).
+export type TransactionSource = "bank" | "fuel" | "invoice" | "bill" | "settlement";
+
+export type RegisterTransaction = {
+  source: TransactionSource;
+  id: string;
+  date: string | null;
+  description: string | null;
+  counterparty: string | null;
+  type: string;
+  amount_in_cents: number;
+  amount_out_cents: number;
+  status: string | null;
+  detail_path: string | null;
+};
+
+export type TransactionRegisterResponse = {
+  rows: RegisterTransaction[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export function listTransactionRegister(
+  operatingCompanyId: string,
+  params: {
+    source?: TransactionSource[];
+    status?: string[];
+    direction?: "in" | "out" | "all";
+    date_from?: string;
+    date_to?: string;
+    q?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+) {
+  const query = new URLSearchParams();
+  (params.source ?? []).forEach((s) => query.append("source", s));
+  (params.status ?? []).forEach((s) => query.append("status", s));
+  if (params.direction && params.direction !== "all") query.set("direction", params.direction);
+  if (params.date_from) query.set("date_from", params.date_from);
+  if (params.date_to) query.set("date_to", params.date_to);
+  if (params.q) query.set("q", params.q);
+  if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.offset != null) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<TransactionRegisterResponse>(
+    withCompany(`/api/v1/accounting/transaction-register${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
+}

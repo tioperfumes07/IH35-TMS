@@ -74,6 +74,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Vendor balances", path: "/accounting/vendor-balances", section: "direct" },
   { label: "Accounts payable", path: "/accounting/accounts-payable", section: "direct" },
   { label: "Journal entries", path: "/accounting/journal-entries", section: "direct" },
+  { label: "All Transactions", path: "/accounting/transactions", section: "direct" },
   { label: "Expense category map", path: "/accounting/settings/expense-category-map", section: "settings" },
   { label: "CoA roles", path: "/accounting/settings/coa-roles", section: "settings" },
 ] as const;
@@ -96,6 +97,7 @@ export const ACCOUNTING_CLEAN_TABS = [
   { label: "Account Register",        to: "/accounting/account-register" },
   { label: "A/P Aging",               to: "/accounting/accounts-payable" },
   { label: "Find Transactions",       to: "/banking/qbo-sync-queue" },
+  { label: "All Transactions",        to: "/accounting/transactions" },
   { label: "Reports",                 to: "/reports" },
   { label: "Settings",                to: "/accounting/settings/expense-category-map" },
 ] as const;
