@@ -146,7 +146,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                   <div key={k}>
                     <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">{l}</label>
                     <input value={lessor[k]} onChange={(e) => setLessor((p) => ({ ...p, [k]: e.target.value }))}
-                      className="w-full h-8 rounded border border-gray-300 px-2 text-sm" />
+                      className="w-full h-10 rounded border border-gray-300 px-2 text-sm" />
                   </div>
                 ))}
               </div>
@@ -159,12 +159,12 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                 <div>
                   <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Legal Name *</label>
                   <input value={lessee.legal_name} onChange={(e) => setLessee((p) => ({ ...p, legal_name: e.target.value }))}
-                    className="w-full h-8 rounded border border-gray-300 px-2 text-sm" />
+                    className="w-full h-10 rounded border border-gray-300 px-2 text-sm" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Entity Type</label>
                   <select value={lessee.entity_type} onChange={(e) => setLessee((p) => ({ ...p, entity_type: e.target.value }))}
-                    className="w-full h-8 rounded border border-gray-300 px-2 text-sm">
+                    className="w-full h-10 rounded border border-gray-300 px-2 text-sm">
                     {["LLC","Inc.","Corp.","LP","LLLP","Sole Proprietor"].map((t) => <option key={t}>{t}</option>)}
                   </select>
                 </div>
@@ -172,7 +172,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                   <div key={k}>
                     <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">{l}</label>
                     <input value={lessee[k]} onChange={(e) => setLessee((p) => ({ ...p, [k]: e.target.value }))}
-                      className="w-full h-8 rounded border border-gray-300 px-2 text-sm"
+                      className="w-full h-10 rounded border border-gray-300 px-2 text-sm"
                       type={k === "signer_email" ? "email" : "text"} />
                   </div>
                 ))}
@@ -195,7 +195,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                   <div key={k}>
                     <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">{l}</label>
                     <input type={t} value={terms[k]} onChange={(e) => setTerms((p) => ({ ...p, [k]: e.target.value }))}
-                      className="w-full h-8 rounded border border-gray-300 px-2 text-sm" />
+                      className="w-full h-10 rounded border border-gray-300 px-2 text-sm" />
                   </div>
                 ))}
               </div>
@@ -223,7 +223,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                         <div key={k}>
                           <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">{l}</label>
                           <input value={v[k]} onChange={(e) => updateVehicle(v.key, k, e.target.value)}
-                            className="w-full h-8 rounded border border-gray-300 px-2 text-sm" />
+                            className="w-full h-10 rounded border border-gray-300 px-2 text-sm" />
                         </div>
                       ))}
                     </div>
