@@ -20,3 +20,11 @@ Hook: `.cursor/hooks.json` → on **subagentStop**, injects follow-up to dispatc
 ## If coordinator looks stale
 
 Say: `agent is idle and stale` — or run `/loop 10m STATUS both lanes — abb queue, dispatch if idle`
+
+## Canonical rules (tracked source of truth)
+
+- **Sidebar / module count = 28 items**, defined in
+  `apps/frontend/src/components/layout/sidebar-config.ts` → `SIDEBAR_ITEM_IDS`, enforced by
+  `scripts/verify-sidebar-contract.mjs` (`LOCKED_ORDER`). The number **rendered** depends on role, and `eld`
+  is a hidden stub. **Source of truth is the config array — never a hardcoded number.** (Supersedes any
+  older "15 modules" / "23 items" claim in local `CLAUDE.md` or `docs/lockdown/00_LOCKED_DECISIONS.md`.)

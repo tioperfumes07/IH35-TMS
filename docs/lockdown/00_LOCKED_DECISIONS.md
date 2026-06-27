@@ -1,8 +1,13 @@
 # IH35-TMS — LOCKED DECISIONS (single source of truth)
 Last locked: 2026-06-08 by Jorge. Repo doc WINS over any handoff/STATUS/memory. Do not re-ask Jorge any item below.
 
-## 1. SIDEBAR — FINAL ORDER (23 items, additive, owner-locked)
-Exact id order (left rail, top→bottom):
+## 1. SIDEBAR — FINAL ORDER (additive, owner-locked)
+> **Count source of truth = `apps/frontend/src/components/layout/sidebar-config.ts` (`SIDEBAR_ITEM_IDS`),
+> enforced by `scripts/verify-sidebar-contract.mjs`. It is currently 28 items (render count is role-dependent;
+> `eld` is a hidden stub). The historical list below is kept for record; the live array (now 28) is
+> authoritative — do not trust a hardcoded number here.**
+
+Historical id order (left rail, top→bottom):
   1 home          9 eld
   2 maintenance  10 cash-flow        ← MODULE, between eld and accounting
   3 fuel         11 accounting
