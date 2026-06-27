@@ -84,7 +84,7 @@ export async function indexDriversForCompany(client: DbClient, operatingCompanyI
   const res = await client.query<{ entity_uuid: string; display_text: string; secondary_text: string | null }>(
     `
       SELECT d.id::text AS entity_uuid,
-             COALESCE(d.full_name, d.id::text) AS display_text,
+             COALESCE(NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), ''), d.id::text) AS display_text,
              COALESCE(d.driver_code, '') AS secondary_text
       FROM mdata.drivers d
       WHERE d.operating_company_id = $1::uuid
