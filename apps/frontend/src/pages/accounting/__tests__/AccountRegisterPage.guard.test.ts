@@ -43,4 +43,8 @@ describe("AccountRegisterPage CA-05 guard", () => {
     expect(page).toContain("No transactions in this range.");
     expect(page).not.toMatch(/TODO|FIXME|coming soon|not implemented/i);
   });
+
+  it("shows an honest C/R reconciliation banner (not a fake checkmark)", () => {
+    expect(page).toContain("Reconciliation not yet available");
+  });
 });

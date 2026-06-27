@@ -6,7 +6,6 @@ import { ArrowRightCircle } from "lucide-react";
 import { listInvoices, type InvoiceStatus } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -16,7 +15,7 @@ import { DriverMiscInvoiceModal } from "./modals/DriverMiscInvoiceModal";
 import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
 import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 import { InvoiceCreateModal } from "./InvoiceCreateModal";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import {
   BulkActionBar,
@@ -117,39 +116,34 @@ export function InvoicesListPage() {
   }, [invoices]);
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="Invoices"
-        subtitle="Accounts receivable invoice list"
-        actions={
-          <div className="flex items-center gap-2">
-            <SelectCombobox
-              value={createType}
-              onChange={(event) => setCreateType(event.target.value as typeof createType)}
-              className="h-8 rounded border border-gray-300 bg-white px-2 text-[12px]"
-            >
-              <option value="from_load">From load</option>
-              <option value="driver_damage">Driver damage</option>
-              <option value="driver_misc">Driver misc</option>
-              <option value="vendor_chargeback">Vendor chargeback</option>
-              <option value="customer_adjustment">Customer adjustment</option>
-              <option value="manual">Manual</option>
-            </SelectCombobox>
-            <Button
-              onClick={() => {
-                if (createType === "from_load") {
-                  setCreateFlowOpen(true);
-                  return;
-                }
-                setOpenModalType(createType);
-              }}
-            >
-              + Create
-            </Button>
-          </div>
-        }
-      />
+    <AccountingSubNavWrapper
+      title="Invoices"
+      subtitle="Accounts receivable invoice list"
+      actions={
+        <div className="flex items-center gap-2">
+          <SelectCombobox
+            value={createType}
+            onChange={(event) => setCreateType(event.target.value as typeof createType)}
+            className="h-8 rounded border border-gray-300 bg-white px-2 text-[12px]"
+          >
+            <option value="from_load">From load</option>
+            <option value="driver_damage">Driver damage</option>
+            <option value="driver_misc">Driver misc</option>
+            <option value="vendor_chargeback">Vendor chargeback</option>
+            <option value="customer_adjustment">Customer adjustment</option>
+            <option value="manual">Manual</option>
+          </SelectCombobox>
+          <Button
+            onClick={() => {
+              if (createType === "from_load") { setCreateFlowOpen(true); return; }
+              setOpenModalType(createType);
+            }}
+          >
+            + Create
+          </Button>
+        </div>
+      }
+    >
       <DataPanel title="Filters">
         <div className="grid gap-2 md:grid-cols-5">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -399,6 +393,6 @@ export function InvoicesListPage() {
           <InvoiceCreateModal open={createFlowOpen} operatingCompanyId={selectedCompanyId} onClose={() => setCreateFlowOpen(false)} />
         </>
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

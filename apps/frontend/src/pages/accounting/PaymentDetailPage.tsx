@@ -8,7 +8,7 @@ import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { PaymentApplyModal } from "./PaymentApplyModal";
 
 function money(cents: number) {
@@ -82,8 +82,7 @@ export function PaymentDetailPage() {
   if (!payment) return <div className="text-sm text-red-600">Payment not found.</div>;
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
+    <AccountingSubNavWrapper>
       <PageHeader
         title={payment.display_id}
         backHref="/accounting/payments"
@@ -220,6 +219,6 @@ export function PaymentDetailPage() {
         onClose={() => setApplyOpen(false)}
         onSubmit={(payload) => applyMutation.mutate(payload)}
       />
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

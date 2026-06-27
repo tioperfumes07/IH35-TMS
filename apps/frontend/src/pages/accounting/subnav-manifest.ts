@@ -19,15 +19,15 @@ export type QboSubNavItem = {
 
 export const QBO_ACCOUNTING_SUBNAV: readonly QboSubNavItem[] = [
   { label: "Bank transactions",        path: "/banking" },
-  { label: "Integration transactions", path: "/accounting/integration-transactions", isShell: true },
-  { label: "Receipts",                 path: "/accounting/receipts", isShell: true },
+  { label: "Integration transactions", path: "/accounting/integration-transactions" },
+  { label: "Receipts",                 path: "/accounting/receipts" },
   { label: "Reconcile",                path: "/banking/reconcile" },
   { label: "Rules",                    path: "/banking/categorization-rules" },
   { label: "Chart of accounts",        path: "/lists/accounting/chart-of-accounts" },
   { label: "Recurring transactions",   path: "/accounting/recurring-transactions" },
   { label: "Revenue recognition",      path: "/accounting/revenue-recognition", isShell: true },
   { label: "Fixed assets",             path: "/accounting/fixed-assets", isShell: true },
-  { label: "Prepaid expenses",         path: "/accounting/prepaid-expenses", isShell: true },
+  { label: "Prepaid expenses",         path: "/accounting/prepaid-expenses" },
   { label: "My accountant",            path: "/accounting/my-accountant", isShell: true },
 ] as const;
 
@@ -83,24 +83,32 @@ function bySection(section: AccountingSubNavItem["section"]): AccountingSubNavIt
   return SUBNAV_ITEMS.filter((item) => item.section === section);
 }
 
-/** OB1 — unified 12-tab clean nav (replaces the legacy 38-item hover-dropdown). All accounting pages use this. */
+/** OB1 — canonical QBO-parity accounting tab bar. Rendered identically on every accounting route. */
 export const ACCOUNTING_CLEAN_TABS = [
-  { label: "Home",                    to: "/accounting" },
-  { label: "Bills",                   to: "/accounting/bills" },
-  { label: "Expenses",                to: "/accounting/expenses" },
-  { label: "Bill Payment",            to: "/accounting/bill-payments" },
-  { label: "Invoices",                to: "/accounting/invoices" },
-  { label: "Receive Payment",         to: "/accounting/payments" },
-  { label: "Settlements",             to: "/driver-finance/settlements" },
-  { label: "Factoring",               to: "/accounting/factoring" },
-  { label: "Journal Entries",         to: "/accounting/journal-entries" },
-  { label: "Account Register",        to: "/accounting/account-register" },
-  { label: "A/P Aging",               to: "/accounting/accounts-payable" },
-  { label: "Find Transactions",       to: "/banking/qbo-sync-queue" },
-  { label: "All Transactions",        to: "/accounting/transactions" },
-  { label: "Daily Recon",             to: "/accounting/daily-recon" },
-  { label: "Reports",                 to: "/reports" },
-  { label: "Settings",                to: "/accounting/settings/expense-category-map" },
+  { label: "Home",             to: "/accounting" },
+  { label: "Bills",            to: "/accounting/bills" },
+  { label: "Expenses",         to: "/accounting/expenses" },
+  { label: "Bill Payment",     to: "/accounting/bill-payments" },
+  { label: "Invoices",         to: "/accounting/invoices" },
+  { label: "Receive Payment",  to: "/accounting/payments" },
+  { label: "Settlements",      to: "/driver-finance/settlements" },
+  { label: "Factoring",        to: "/accounting/factoring" },
+  { label: "Journal Entries",  to: "/accounting/journal-entries" },
+  { label: "Account Register", to: "/accounting/account-register" },
+  { label: "A/P Aging",        to: "/accounting/accounts-payable" },
+  { label: "All Transactions", to: "/accounting/transactions" },
+  { label: "Daily Recon",      to: "/accounting/daily-recon" },
+  { label: "Reports",          to: "/reports" },
+] as const;
+
+/** Back-office / operator items — shown in a "More ▾" submenu, not top-level tabs. */
+export const ACCOUNTING_MORE_TABS = [
+  { label: "Month Close",       to: "/accounting/month-close" },
+  { label: "Multi-entity",      to: "/accounting/multi-entity" },
+  { label: "Audit Trail",       to: "/accounting/audit-trail" },
+  { label: "Posting Lineage",   to: "/accounting/posting-lineage" },
+  { label: "QBO Sync Drift",    to: "/accounting/qbo-sync" },
+  { label: "Settings",          to: "/accounting/settings/expense-category-map" },
 ] as const;
 
 export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [

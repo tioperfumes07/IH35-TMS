@@ -10,10 +10,9 @@ import {
   prepareSalesTaxReturn,
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -87,9 +86,7 @@ export function SalesTaxPage() {
   }, [returnsQuery.data?.returns]);
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader title="Sales tax handling" subtitle="Manage sales tax agencies, prepare returns, and track filed/paid states." />
+    <AccountingSubNavWrapper title="Sales tax handling" subtitle="Manage sales tax agencies, prepare returns, and track filed/paid states.">
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <div className="rounded border border-gray-200 bg-white p-3 text-sm">
@@ -226,6 +223,6 @@ export function SalesTaxPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

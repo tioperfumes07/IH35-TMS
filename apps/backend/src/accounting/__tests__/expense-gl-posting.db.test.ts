@@ -57,8 +57,9 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
         [userId, `gl-post-${suffix}@test.local`]
       );
       // posting CoA accounts + the uncategorized_expense role for this company
-      await db.query(`INSERT INTO catalogs.accounts (id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$2,'Uncat Test','Expense',true)`, [uncatAccountId, `T${suffix.slice(0,6)}`]);
-      await db.query(`INSERT INTO catalogs.accounts (id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$2,'Bank Test','Asset',true)`, [cashAccountId, `B${suffix.slice(0,6)}`]);
+      // AF-1 makes catalogs.accounts.operating_company_id NOT NULL (per-entity COA) — seed it with the test company.
+      await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Uncat Test','Expense',true)`, [uncatAccountId, `T${suffix.slice(0,6)}`, companyId]);
+      await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Bank Test','Asset',true)`, [cashAccountId, `B${suffix.slice(0,6)}`, companyId]);
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
          VALUES ($1::uuid,'uncategorized_expense',$2::uuid,true)

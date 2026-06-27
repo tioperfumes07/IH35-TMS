@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAggregatedPayroll, refreshAggregatedPayroll } from "../../api/payrollAggregated";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -37,12 +36,7 @@ export function PayrollAggregatedPage() {
   const data = aggregatedQuery.data;
 
   return (
-    <div className="space-y-3" data-testid="payroll-aggregated-page">
-      <AccountingSubNav />
-      <PageHeader
-        title="Payroll (aggregated)"
-        subtitle="Option B — driver settlements in TMS + W-2 runs mirrored from QBO Payroll"
-      />
+    <AccountingSubNavWrapper title="Payroll (aggregated)" subtitle="Option B — driver settlements in TMS + W-2 runs mirrored from QBO Payroll">
       {aggregatedQuery.isError ? <ListErrorBanner message="Failed to load aggregated payroll view." /> : null}
       <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-3 text-sm">
         <span>
@@ -114,6 +108,6 @@ export function PayrollAggregatedPage() {
           </div>
         </section>
       </div>
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

@@ -26,7 +26,10 @@ describe("account-register service guard", () => {
     expect(svc).toContain("AS split_account"); // contra-account lateral
     expect(svc).toMatch(/'-Split-'/); // multi-line marker
     expect(svc).toContain("catalogs.classes"); // class join
-    expect(svc).toMatch(/COALESCE\(bv\.vendor_name,\s*ic\.customer_name\)/); // payee derivation
+    // payee covers all unambiguous parties: bill→vendor, invoice→customer, payment→customer, settlement→driver
+    expect(svc).toMatch(/COALESCE\(bv\.vendor_name,\s*ic\.customer_name/); // payee derivation
+    expect(svc).toContain("driver_finance.driver_settlements"); // settlement→driver
+    expect(svc).toMatch(/source_transaction_type = 'customer_payment'/); // payment→customer
   });
 
   it("has no stub / placeholder strings", () => {

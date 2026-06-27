@@ -5,11 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { listPayments, type Payment, type PaymentMethod } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/layout/StatusBadge";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
-import { AccountingSubNav } from "./AccountingSubNav";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function money(cents: number) {
@@ -92,20 +91,16 @@ export function PaymentsListPage() {
   }, [rows]);
 
   return (
-    <div className="space-y-3">
-      <AccountingSubNav />
-      <PageHeader
-        title="Payments"
-        subtitle="Customer payment recording and application"
-        actions={
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => navigate("/accounting/invoices")}>
-              Invoices
-            </Button>
-            <Button onClick={() => setRecordOpen(true)}>+ Record Payment</Button>
-          </div>
-        }
-      />
+    <AccountingSubNavWrapper
+      title="Payments"
+      subtitle="Customer payment recording and application"
+      actions={
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => navigate("/accounting/invoices")}>Invoices</Button>
+          <Button onClick={() => setRecordOpen(true)}>+ Record Payment</Button>
+        </div>
+      }
+    >
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
@@ -210,6 +205,6 @@ export function PaymentsListPage() {
           }}
         />
       ) : null}
-    </div>
+    </AccountingSubNavWrapper>
   );
 }

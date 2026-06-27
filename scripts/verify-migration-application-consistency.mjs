@@ -13,7 +13,21 @@ const { Client } = pg;
 
 const ROOT = path.resolve(".");
 const DEFAULT_MIGRATIONS_DIR = path.join(ROOT, "db/migrations");
-const MIGRATION_FILENAME_REGEX = /^\d{4}[a-z]?_.+\.sql$/i;
+// Match BOTH legacy 4-digit (0010_, 0193a_) AND current 12-digit timestamp (202606272100_) migration
+// numbers. The old /^\d{4}[a-z]?_/ silently SKIPPED every timestamp migration, so the guard never parsed
+// their CREATE/DROP/ALTER — e.g. AF-1's retire of the 0010 global unique indexes was invisible, leaving them
+// permanently "expected" (false "index missing"). \d{4,} reads the full prefix; \d{4}[a-z]? still covers 0193a.
+const MIGRATION_FILENAME_REGEX = /^\d{4,}[a-z]?_.+\.sql$/i;
+
+// The runner (scripts/db-migrate.mjs) applies every migration under this search_path, so UNQUALIFIED object
+// names resolve to the first schema in this list that contains them — NOT "public". The guard must replicate
+// that to key objects in the same schema the DB actually creates them in (e.g. `CREATE INDEX … ON loads`
+// lands in mdata, not public). Kept in sync with db-migrate.mjs SEARCH_PATH.
+const RUNNER_SEARCH_PATH = [
+  "mdata", "dispatch", "docs", "catalogs", "identity", "org", "integrations", "qbo_archive", "accounting",
+  "banking", "factor", "documents", "pwa", "audit", "outbox", "safety", "fuel", "driver_finance",
+  "maintenance", "views", "public", "email",
+];
 
 function parseArgs(argv) {
   const out = {};
@@ -159,6 +173,24 @@ function tableKey(schema, table) {
   return `${schema}.${table}`;
 }
 
+// Resolve a (possibly unqualified) table reference to its schema, replicating Postgres search_path semantics.
+// Qualified ("schema.table") → as written. Unqualified → the first schema (in-migration search_path first,
+// then the runner's RUNNER_SEARCH_PATH) that ALREADY declares the table → matches where the DB really has it.
+// For CREATE TABLE of a not-yet-declared table, Postgres creates it in the first search_path schema, so use
+// `effectiveDefault` (the in-migration search_path head, else RUNNER_SEARCH_PATH[0]). This avoids the old
+// "everything unqualified == public" mis-key WITHOUT name-only cross-schema matching (which would mask bugs).
+function resolveTableRef(rawToken, effectiveDefault, expectedTables, { forCreate = false } = {}) {
+  const cleaned = String(rawToken).trim().replace(/[(),]+$/g, "");
+  const parts = cleaned.split(".").map((p) => p.trim()).filter(Boolean);
+  if (parts.length === 2) return { schema: normalizeIdent(parts[0]), name: normalizeIdent(parts[1]) };
+  const name = normalizeIdent(parts[0]);
+  const order = [effectiveDefault, ...RUNNER_SEARCH_PATH].filter(Boolean);
+  for (const sch of order) {
+    if (expectedTables.has(tableKey(sch, name))) return { schema: sch, name };
+  }
+  return { schema: forCreate ? (effectiveDefault || RUNNER_SEARCH_PATH[0]) : effectiveDefault, name };
+}
+
 function indexKey(schema, indexName) {
   return `${schema}.${indexName}`;
 }
@@ -250,7 +282,9 @@ function collectExpectedObjects(migrationsDirectory) {
     const fullPath = path.join(migrationsDirectory, filename);
     const rawSql = fs.readFileSync(fullPath, "utf8");
     const statements = splitStatements(rawSql);
-    let defaultSchema = "public";
+    // Default to the runner's search_path HEAD (not "public") — an unqualified CREATE TABLE lands there.
+    // In-migration `SET search_path` overrides this below.
+    let defaultSchema = RUNNER_SEARCH_PATH[0];
 
     for (const stmt of statements) {
       const normalizedStmt = stmt.text.replace(/\s+/g, " ").trim();
@@ -281,7 +315,7 @@ function collectExpectedObjects(migrationsDirectory) {
               /^drop\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)/i
             );
             if (dropTableInDo) {
-              const { schema, name } = parseQualifiedName(dropTableInDo[1], defaultSchema);
+              const { schema, name } = resolveTableRef(dropTableInDo[1], defaultSchema, expectedTables);
               expectedTables.delete(tableKey(schema, name));
               removeTableOwnedObjects(expectedIndexes, expectedFks, schema, name);
               continue;
@@ -291,7 +325,7 @@ function collectExpectedObjects(migrationsDirectory) {
               /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+rename\s+to\s+("?[\w$]+"?)/i
             );
             if (renameInDo) {
-              const from = parseQualifiedName(renameInDo[1], defaultSchema);
+              const from = resolveTableRef(renameInDo[1], defaultSchema, expectedTables);
               const toName = normalizeIdent(renameInDo[2]);
               renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, from.schema, toName, opSource);
               continue;
@@ -301,7 +335,7 @@ function collectExpectedObjects(migrationsDirectory) {
               /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+set\s+schema\s+("?[\w$]+"?)/i
             );
             if (setSchemaInDo) {
-              const from = parseQualifiedName(setSchemaInDo[1], defaultSchema);
+              const from = resolveTableRef(setSchemaInDo[1], defaultSchema, expectedTables);
               const toSchema = normalizeIdent(setSchemaInDo[2]);
               renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, toSchema, from.name, opSource);
               continue;
@@ -323,7 +357,7 @@ function collectExpectedObjects(migrationsDirectory) {
               /^create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+on\s+((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)/i
             );
             if (createIndexInDo) {
-              const tableParts = parseQualifiedName(createIndexInDo[2], defaultSchema);
+              const tableParts = resolveTableRef(createIndexInDo[2], defaultSchema, expectedTables);
               const indexParts = parseQualifiedName(createIndexInDo[1], tableParts.schema);
               expectedIndexes.set(indexKey(indexParts.schema, indexParts.name), {
                 indexSchema: indexParts.schema,
@@ -392,7 +426,7 @@ function collectExpectedObjects(migrationsDirectory) {
         /^create\s+table\s+(?:if\s+not\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s*\(/i
       );
       if (createTableMatch) {
-        const { schema, name } = parseQualifiedName(createTableMatch[1], defaultSchema);
+        const { schema, name } = resolveTableRef(createTableMatch[1], defaultSchema, expectedTables, { forCreate: true });
         expectedTables.set(tableKey(schema, name), { schema, table: name, file: filename, line: stmt.line });
         for (const constraint of extractInlineFks(normalizedStmt)) {
           expectedFks.set(fkKey(schema, name, constraint), {
@@ -410,7 +444,7 @@ function collectExpectedObjects(migrationsDirectory) {
         /^drop\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)/i
       );
       if (dropTableMatch) {
-        const { schema, name } = parseQualifiedName(dropTableMatch[1], defaultSchema);
+        const { schema, name } = resolveTableRef(dropTableMatch[1], defaultSchema, expectedTables);
         expectedTables.delete(tableKey(schema, name));
         removeTableOwnedObjects(expectedIndexes, expectedFks, schema, name);
         continue;
@@ -420,7 +454,7 @@ function collectExpectedObjects(migrationsDirectory) {
         /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+rename\s+to\s+("?[\w$]+"?)/i
       );
       if (alterTableRenameMatch) {
-        const from = parseQualifiedName(alterTableRenameMatch[1], defaultSchema);
+        const from = resolveTableRef(alterTableRenameMatch[1], defaultSchema, expectedTables);
         const toName = normalizeIdent(alterTableRenameMatch[2]);
         renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, from.schema, toName, {
           file: filename,
@@ -433,7 +467,7 @@ function collectExpectedObjects(migrationsDirectory) {
         /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+set\s+schema\s+("?[\w$]+"?)/i
       );
       if (alterTableSetSchemaMatch) {
-        const from = parseQualifiedName(alterTableSetSchemaMatch[1], defaultSchema);
+        const from = resolveTableRef(alterTableSetSchemaMatch[1], defaultSchema, expectedTables);
         const toSchema = normalizeIdent(alterTableSetSchemaMatch[2]);
         renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, toSchema, from.name, {
           file: filename,
@@ -460,7 +494,7 @@ function collectExpectedObjects(migrationsDirectory) {
         /^create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+on\s+((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)/i
       );
       if (createIndexMatch) {
-        const tableParts = parseQualifiedName(createIndexMatch[2], defaultSchema);
+        const tableParts = resolveTableRef(createIndexMatch[2], defaultSchema, expectedTables);
         const indexParts = parseQualifiedName(createIndexMatch[1], tableParts.schema);
         expectedIndexes.set(indexKey(indexParts.schema, indexParts.name), {
           indexSchema: indexParts.schema,

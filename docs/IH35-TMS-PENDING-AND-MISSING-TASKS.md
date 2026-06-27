@@ -122,9 +122,7 @@ Code debt markers (origin/main, excl tests): **58 TODO · 3 HACK · 10 @deprecat
 
 ## 6. Doc / constitution drifts to reconcile (housekeeping)
 
-1. **Sidebar count (3-way drift):** `CLAUDE.md §7` says "15 modules"; `00_LOCKED_DECISIONS.md` says "23";
-   the **live code + deployed bundle have 28 items (27 rendered, `eld` hidden)** — `SIDEBAR_ITEM_IDS` in
-   `sidebar-config.ts` is the truth. Reconcile both docs to 28.
+1. **Sidebar count:** RESOLVED in #1544 — `00_LOCKED_DECISIONS.md §6.4` corrected to 28; `SIDEBAR_ITEM_IDS` (28) is the truth. `CLAUDE.md §7` is gitignored/local — corrected locally.
 2. `CLAUDE.md §4` "no hazmat fields" vs `mdata.loads.hazmat_*` columns — owner to declare canonical.
 3. `catalogs.accounts` global → per-entity is **AF-1** (gated).
 4. `finance.*` stray objects vs canonical `accounting.*` — cleanup.
