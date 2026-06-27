@@ -176,7 +176,11 @@ export async function getAccountRegister(
             je.memo, p.description, p.debit_or_credit, p.amount_cents::bigint AS amount_cents,
             p.source_transaction_type, p.source_transaction_id,
             cls.class_name,
-            COALESCE(bv.vendor_name, ic.customer_name) AS payee,
+            -- Payee derived from the source transaction's real party (verified FKs, no phantom columns):
+            --   bill→vendor, invoice→customer, customer_payment→customer, settlement→driver.
+            --   bill_payment/expense have no clean direct party link → honest NULL (not fabricated).
+            COALESCE(bv.vendor_name, ic.customer_name, pc.customer_name,
+                     NULLIF(TRIM(CONCAT_WS(' ', dr.first_name, dr.last_name)), '')) AS payee,
             sp.split_account
        FROM accounting.journal_entry_postings p
        JOIN accounting.journal_entries je
@@ -188,6 +192,12 @@ export async function getAccountRegister(
        LEFT JOIN accounting.invoices inv
          ON p.source_transaction_type = 'invoice' AND inv.id::text = p.source_transaction_id
        LEFT JOIN mdata.customers ic ON ic.id = inv.customer_id
+       LEFT JOIN accounting.payments pay
+         ON p.source_transaction_type = 'customer_payment' AND pay.id::text = p.source_transaction_id
+       LEFT JOIN mdata.customers pc ON pc.id = pay.customer_id
+       LEFT JOIN driver_finance.driver_settlements ds
+         ON p.source_transaction_type = 'settlement' AND ds.id::text = p.source_transaction_id
+       LEFT JOIN mdata.drivers dr ON dr.id = ds.driver_id
        LEFT JOIN LATERAL (
          SELECT CASE WHEN count(*) = 0 THEN NULL
                      WHEN count(*) = 1 THEN max(sa.account_name)
