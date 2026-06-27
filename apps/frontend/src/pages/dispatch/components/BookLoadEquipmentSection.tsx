@@ -83,8 +83,12 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     enabled: Boolean(operatingCompanyId),
   });
   const driversQuery = useQuery({
+    // THE Book Load driver picker. status:Active + limit:200 = the COMPLETE active set (all 91 today).
+    // Was unbounded → endpoint default limit=50 (ORDER BY created_at DESC); after filterHumanDrivers only
+    // ~26 showed, so an active driver created before the newest-50 window (e.g. Mecor) was unselectable.
+    // Endpoint max=200; 91<<200. This picker filters client-side, so it must load the full active roster.
     queryKey: ["book-load-drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId }),
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
     enabled: Boolean(operatingCompanyId),
   });
   const teamsQuery = useQuery({
