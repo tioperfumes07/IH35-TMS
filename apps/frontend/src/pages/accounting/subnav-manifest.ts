@@ -98,6 +98,7 @@ export const ACCOUNTING_CLEAN_TABS = [
   { label: "A/P Aging",               to: "/accounting/accounts-payable" },
   { label: "Find Transactions",       to: "/banking/qbo-sync-queue" },
   { label: "All Transactions",        to: "/accounting/transactions" },
+  { label: "Daily Recon",             to: "/accounting/daily-recon" },
   { label: "Reports",                 to: "/reports" },
   { label: "Settings",                to: "/accounting/settings/expense-category-map" },
 ] as const;
