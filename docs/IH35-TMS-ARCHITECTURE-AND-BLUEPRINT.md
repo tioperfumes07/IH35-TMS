@@ -213,24 +213,29 @@ pending-tasks companion doc).
 ## 6. Module map (the locked 23-item sidebar)
 
 Navigation is a fixed **navy 80px left rail** (`rgb(27,35,51)`); all other nav is the **top horizontal
-bar**. The owner-locked, **additive-only** order (`docs/lockdown/00_LOCKED_DECISIONS.md §1`, enforced by
-`verify-sidebar-contract.mjs`):
+bar**. **Measured from the live source `apps/frontend/src/components/layout/sidebar-config.ts`
+(`SIDEBAR_ITEM_IDS`) and confirmed in the deployed bundle** — the rail has **28 defined items, 27 rendered**
+(`eld` is a hidden stub). 7 items are role-gated (`fleet`, `reports`, `legal`, `docs`, `eld`, `users`,
+`help`), so a non-owner sees fewer:
 
 ```
- 1 home          9 eld              17 form_425 (425C)
- 2 maintenance  10 cash-flow*       18 drv_app (driver PWA)
- 3 fuel         11 accounting       19 lists
- 4 dispatch     12 bank             20 reports
- 5 driver-hub*  13 factoring        21 docs
- 6 safety       14 vendors          22 users
- 7 drivers      15 customers        23 help
- 8 insurance    16 legal
+ 1 home          11 insurance       21 vendors
+ 2 tasks         12 legal           22 inventory
+ 3 fuel          13 eld (hidden)    23 form_425 (425C)
+ 4 dispatch      14 cash-flow       24 lists
+ 5 driver-hub    15 settlements     25 reports
+ 6 maintenance   16 accounting      26 docs
+ 7 safety        17 bank            27 users
+ 8 compliance    18 factoring       28 help
+ 9 drivers       19 finance (hub)
+10 fleet         20 customers
 ```
-`*` driver-hub (#5) and cash-flow (#10, a **module not a report**) are the newest; main currently ships the
-21-array and grows to 23 as those land. **Frontend scale today: 906 page components, 447 routes.**
+**Frontend scale today: 920 page components, 448 routes.**
 
-> **Honesty note:** `CLAUDE.md §7` still says "15 fixed modules." That is **stale** — the locked,
-> CI-enforced reality is this **23-item** list. Flagged in §11 as a doc drift to reconcile.
+> **Honesty note (corrected 2026-06-27):** my earlier "23-item" figure came from
+> `docs/lockdown/00_LOCKED_DECISIONS.md` (stale) — the **live code + deployed bundle have 28 items (27
+> rendered)**. And `CLAUDE.md §7` says "15 fixed modules" — also stale. Both are flagged in §11. The single
+> source of truth is `SIDEBAR_ITEM_IDS` in `sidebar-config.ts`, enforced by `verify-sidebar-contract.mjs`.
 
 ---
 
@@ -372,8 +377,10 @@ led by AF-1.
 
 ## 11. Known drifts (flagged honestly, not hidden)
 
-1. **Module count:** `CLAUDE.md §7` says "15 fixed modules"; the locked, CI-enforced sidebar is **23 items**
-   (§6). → reconcile `CLAUDE.md` to the 23-array.
+1. **Module count (3-way drift):** `CLAUDE.md §7` says "15 fixed modules"; `00_LOCKED_DECISIONS.md` says
+   "23 items"; the **live code + deployed bundle have 28 (27 rendered)** — `SIDEBAR_ITEM_IDS` in
+   `sidebar-config.ts` is the real source of truth (§6). → reconcile both `CLAUDE.md` and the locked-decisions
+   doc to the 28-item array.
 2. **Entity count in old docs:** `docs/IH35-TMS-ARCHITECTURE.md` / `BLUEPRINT.md` (2026-06-15) say "2
    entities / 4 trucks." Reality is **3 entities** (USMCA pre-launch). → this file supersedes them.
 3. **`catalogs.accounts` is global** (not yet per-entity) — violates entity independence until **AF-1**
