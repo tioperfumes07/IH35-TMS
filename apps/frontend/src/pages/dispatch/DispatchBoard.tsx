@@ -645,6 +645,8 @@ export function DispatchBoard({
   const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
+    // DB-6: Load # sits immediately after Trailer in the shared column model (app-wide list + table).
+    { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
     // DISPATCH-UI-REFINE-2 ITEM 5 — the locked Samsara 6-clock set on the live board. The old summary
     // pair was REMOVED per Jorge (it overlapped Drive/Shift/Cycle and cluttered the grid); only these 6
@@ -661,7 +663,8 @@ export function DispatchBoard({
         />
       ),
     })),
-    // UX-B: Location (last-known unit city) sits right after the HOS clocks (Resume At), before Load #.
+    // UX-B: Location (last-known unit city) sits right after the HOS clocks (Resume At).
+    // (DB-6 moved Load # up to immediately after Trailer in the shared column model.)
     {
       key: "location",
       header: "Location",
@@ -671,7 +674,6 @@ export function DispatchBoard({
         return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-[10px] text-slate-400">—</span>;
       },
     },
-    { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "customer", header: "Customer", cell: renderCustomerCell },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
     { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
