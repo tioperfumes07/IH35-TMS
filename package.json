@@ -89,6 +89,8 @@
     "verify:schema-usage-grants": "node scripts/verify-schema-usage-grants.mjs",
     "verify:border-geofence-seed": "node scripts/verify-border-geofence-seed.mjs",
     "verify:bank-feed-category-seed": "node scripts/verify-bank-feed-category-seed.mjs",
+    "verify:financial-column-contracts": "node scripts/verify-financial-column-contracts.mjs",
+    "verify:posting-column-contract": "node scripts/verify-posting-column-contract.mjs",
     "db:verify:reference-order": "node scripts/verify-reference-before-introduction.mjs",
     "db:verify:rename-fallout": "node scripts/verify-rename-fallout.mjs",
     "db:verify:backend-contract": "node scripts/verify-backend-schema-contract.mjs",

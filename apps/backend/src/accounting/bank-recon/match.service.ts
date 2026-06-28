@@ -178,14 +178,14 @@ async function fetchLedgerCandidates(client: DbClient, operatingCompanyId: strin
     `
       SELECT
         je.id::text,
-        COALESCE(SUM(ABS(jep.amount_cents)) FILTER (WHERE jep.side = 'debit'), 0)::int AS amount_cents,
+        COALESCE(SUM(jep.amount_cents) FILTER (WHERE jep.debit_or_credit = 'debit'), 0)::int AS amount_cents,
         je.entry_date::text AS event_date,
-        COALESCE(je.memo, je.reference_no)::text AS memo
+        je.memo::text AS memo
       FROM accounting.journal_entries je
-      LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_id = je.id
+      LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
       WHERE je.operating_company_id = $1::uuid
         AND je.entry_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
-      GROUP BY je.id, je.entry_date, je.memo, je.reference_no
+      GROUP BY je.id, je.entry_date, je.memo
       LIMIT 200
     `,
     [operatingCompanyId, txnDate]
@@ -247,9 +247,9 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
   }
   const res = await client.query<{ amount_cents: number }>(
     `
-      SELECT COALESCE(SUM(ABS(jep.amount_cents)) FILTER (WHERE jep.side = 'debit'), 0)::int AS amount_cents
+      SELECT COALESCE(SUM(jep.amount_cents) FILTER (WHERE jep.debit_or_credit = 'debit'), 0)::int AS amount_cents
       FROM accounting.journal_entries je
-      LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_id = je.id
+      LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
       WHERE je.id = $1::uuid
         AND je.operating_company_id = $2::uuid
       GROUP BY je.id
@@ -372,17 +372,15 @@ async function postDifferenceJournalEntry(
         operating_company_id,
         entry_date,
         memo,
-        reference_no,
         source,
-        created_by,
+        created_by_user_id,
         created_at,
         updated_at
       )
       VALUES (
         $1::uuid,
         $2::date,
-        'Bank reconciliation resolve-difference',
-        concat('bank-recon:', $3::text),
+        $3,
         'bank_reconciliation',
         $4::uuid,
         now(),
@@ -390,7 +388,7 @@ async function postDifferenceJournalEntry(
       )
       RETURNING id::text
     `,
-    [input.operating_company_id, input.transaction_date, input.bank_transaction_id, input.actor_user_uuid]
+    [input.operating_company_id, input.transaction_date, `bank-recon:${input.bank_transaction_id}`, input.actor_user_uuid]
   );
   const journalEntryId = journalEntry.rows[0]?.id;
   if (!journalEntryId) throw new Error("failed_to_create_reconciliation_journal_entry");
@@ -401,16 +399,19 @@ async function postDifferenceJournalEntry(
     `
       INSERT INTO accounting.journal_entry_postings (
         operating_company_id,
-        journal_entry_id,
+        journal_entry_uuid,
         account_id,
-        side,
+        debit_or_credit,
         amount_cents,
-        memo,
-        created_at
+        description,
+        line_sequence,
+        idempotency_key,
+        created_at,
+        updated_at
       )
       VALUES
-        ($1::uuid, $2::uuid, $3::uuid, $4::text, $5::int, 'Bank reconciliation variance leg', now()),
-        ($1::uuid, $2::uuid, $6::uuid, $7::text, $5::int, 'Bank reconciliation offset leg', now())
+        ($1::uuid, $2::uuid, $3::uuid, $4::text, $5::int, 'Bank reconciliation variance leg', 1, concat('bank-recon-var:', $2::text), now(), now()),
+        ($1::uuid, $2::uuid, $6::uuid, $7::text, $5::int, 'Bank reconciliation offset leg',  2, concat('bank-recon-off:', $2::text), now(), now())
     `,
     [input.operating_company_id, journalEntryId, cashAccountId, cashSide, magnitude, input.difference_account_id, diffSide]
   );

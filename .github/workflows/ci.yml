@@ -933,6 +933,12 @@ jobs:
       - name: verify:backend-column-references
         run: npm run verify:backend-column-references
 
+      - name: verify:financial-column-contracts (phantom column guard — 7 financial tables)
+        run: npm run verify:financial-column-contracts
+
+      - name: verify:posting-column-contract (journal_entry_postings write contract)
+        run: npm run verify:posting-column-contract
+
       - name: verify:users-add-user-submits
         run: npm run verify:users-add-user-submits
 
