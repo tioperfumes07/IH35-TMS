@@ -74,3 +74,37 @@ describe("DispatchKanban — Awaiting-assignment truck card opens Book", () => {
     expect(onLoadClick).not.toHaveBeenCalled();
   });
 });
+
+describe("DispatchKanban — DB-2 lane headers link to the filtered List view", () => {
+  it("a status lane header is a BUTTON that fires onColumnHeaderClick with that lane's statuses", async () => {
+    const onColumnHeaderClick = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <DispatchKanban
+        loads={[]}
+        loading={false}
+        onLoadClick={vi.fn()}
+        onStatusDrop={vi.fn()}
+        onColumnHeaderClick={onColumnHeaderClick}
+      />
+    );
+    const headerLink = screen.getByTestId("kanban-column-header-link-assigned");
+    expect(headerLink.tagName).toBe("BUTTON");
+    await user.click(headerLink);
+    // carries the lane's status filter (so the List view can pre-filter via the `statuses` param)
+    expect(onColumnHeaderClick).toHaveBeenCalledWith(["assigned", "assigned_not_dispatched"]);
+  });
+
+  it("synthetic lanes with no statuses (awaiting_assignment) render a plain heading, not a link", () => {
+    render(
+      <DispatchKanban
+        loads={[]}
+        loading={false}
+        onLoadClick={vi.fn()}
+        onStatusDrop={vi.fn()}
+        onColumnHeaderClick={vi.fn()}
+      />
+    );
+    expect(screen.queryByTestId("kanban-column-header-link-awaiting_assignment")).toBeNull();
+  });
+});

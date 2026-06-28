@@ -22,6 +22,9 @@ type Props = {
   // rather than opening a (non-existent) load drawer. Receives the bare unit id.
   onBookForUnit?: (unitId: string) => void;
   onStatusDrop: (loadId: string, nextStatus: LoadStatus) => Promise<void>;
+  // DB-2: clicking a lane header navigates to the List view pre-filtered to that lane's statuses
+  // (reuses the existing `statuses` + `view` URL params; additive — header becomes a button).
+  onColumnHeaderClick?: (statuses: string[]) => void;
   listError?: DataTableErrorState;
 };
 
@@ -523,20 +526,39 @@ function KanbanDispatchColumn({
   density,
   activeGeofenceBreachVehicleIds,
   onLoadClick,
+  onColumnHeaderClick,
 }: {
   column: KanbanColumnDef;
   loads: DispatchLoadRow[];
   density: KanbanDensity;
   activeGeofenceBreachVehicleIds?: Set<string>;
   onLoadClick: (loadId: string) => void;
+  onColumnHeaderClick?: (statuses: string[]) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
+
+  // DB-2: lanes that map to real load statuses get a clickable header → filtered List view.
+  // Synthetic lanes (awaiting_assignment has statuses: []) stay plain.
+  const headerLink =
+    onColumnHeaderClick && column.statuses.length > 0 ? (
+      <button
+        type="button"
+        onClick={() => onColumnHeaderClick(column.statuses)}
+        className="text-left text-sm font-semibold text-gray-700 hover:text-slate-900 hover:underline"
+        data-testid={`kanban-column-header-link-${column.key}`}
+        title={`View ${column.title} loads in the list`}
+      >
+        {column.title}
+      </button>
+    ) : (
+      <h3 className="text-sm font-semibold text-gray-700">{column.title}</h3>
+    );
 
   if (column.collapsedByDefault) {
     return (
       <section className="min-w-[270px] rounded border border-gray-200 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
         <header className="flex items-center justify-between border-b border-gray-100 pb-2">
-          <h3 className="text-sm font-semibold text-gray-700">{column.title}</h3>
+          {headerLink}
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </header>
       </section>
@@ -551,7 +573,7 @@ function KanbanDispatchColumn({
       data-testid={`kanban-column-${column.key}`}
     >
       <header className="mb-2 flex items-center justify-between border-b border-gray-100 pb-2">
-        <h3 className="text-sm font-semibold text-gray-700">{column.title}</h3>
+        {headerLink}
         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
       </header>
       <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}>
@@ -583,7 +605,7 @@ function KanbanDispatchColumn({
   );
 }
 
-export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreachVehicleIds, loading, onLoadClick, onBookForUnit, onStatusDrop, listError }: Props) {
+export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreachVehicleIds, loading, onLoadClick, onBookForUnit, onStatusDrop, onColumnHeaderClick, listError }: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
   // DISPATCH-UI-REFINE-2 ITEM 1 — default to STANDARD (2-line) density. Compact (1-line) + Detailed
   // (~5-line) remain available via the toggle (additive). Standard balances fleet density vs readability.
@@ -675,6 +697,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                   ? (cardId) => onBookForUnit(cardId.replace(/^unit:/, ""))
                   : onLoadClick
               }
+              onColumnHeaderClick={onColumnHeaderClick}
             />
           ))}
         </div>
