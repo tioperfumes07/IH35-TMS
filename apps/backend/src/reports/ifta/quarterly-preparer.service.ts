@@ -202,18 +202,17 @@ export async function ownerApproveFiling(
   if (!row) return null;
 
   try {
-    const auditOk = await client.query(`SELECT to_regclass('audit.audit_log') IS NOT NULL AS ok`);
-    if (auditOk.rows[0]?.ok) {
-      await client.query(
-        `
-          INSERT INTO audit.audit_log
-            (table_name, record_id, action, actor_user_id, after_json, operating_company_id)
-          VALUES
-            ('reports.ifta_filings', $1::uuid, 'owner_approved', $2::uuid, $3::jsonb, $4::uuid)
-        `,
-        [filingUuid, approvedByUserUuid, JSON.stringify({ quarter: row.quarter, wf064: "WF-064" }), operatingCompanyId]
-      );
-    }
+    // Canonical audit sink = audit.audit_events (audit.audit_log never existed — G5).
+    await client.query(
+      `
+        INSERT INTO audit.audit_events (event_class, severity, payload, actor_user_uuid, source)
+        VALUES ('reports.ifta_filings.owner_approved', 'info', $1::jsonb, $2::uuid, 'reports.ifta')
+      `,
+      [
+        JSON.stringify({ table_name: "reports.ifta_filings", record_id: filingUuid, action: "owner_approved", quarter: row.quarter, wf064: "WF-064", operating_company_id: operatingCompanyId }),
+        approvedByUserUuid,
+      ]
+    );
   } catch {
     // audit write failure is non-fatal
   }
@@ -245,23 +244,17 @@ export async function markFilingFiled(
   if (!row) return null;
 
   try {
-    const auditOk = await client.query(`SELECT to_regclass('audit.audit_log') IS NOT NULL AS ok`);
-    if (auditOk.rows[0]?.ok) {
-      await client.query(
-        `
-          INSERT INTO audit.audit_log
-            (table_name, record_id, action, actor_user_id, after_json, operating_company_id)
-          VALUES
-            ('reports.ifta_filings', $1::uuid, 'filed', $2::uuid, $3::jsonb, $4::uuid)
-        `,
-        [
-          filingUuid,
-          actorUserUuid,
-          JSON.stringify({ quarter: row.quarter, confirmation_number: confirmationNumber }),
-          operatingCompanyId,
-        ]
-      );
-    }
+    // Canonical audit sink = audit.audit_events (audit.audit_log never existed — G5).
+    await client.query(
+      `
+        INSERT INTO audit.audit_events (event_class, severity, payload, actor_user_uuid, source)
+        VALUES ('reports.ifta_filings.filed', 'info', $1::jsonb, $2::uuid, 'reports.ifta')
+      `,
+      [
+        JSON.stringify({ table_name: "reports.ifta_filings", record_id: filingUuid, action: "filed", quarter: row.quarter, confirmation_number: confirmationNumber, operating_company_id: operatingCompanyId }),
+        actorUserUuid,
+      ]
+    );
   } catch {
     // audit write failure is non-fatal
   }

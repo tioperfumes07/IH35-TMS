@@ -119,7 +119,7 @@ check(
   "dismiss audits the action",
   () => fileContains(
     "apps/backend/src/owner/todays-attention/routes.ts",
-    "audit.audit_log",
+    "audit.audit_events",
     "dismiss"
   )
 );

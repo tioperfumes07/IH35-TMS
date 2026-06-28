@@ -1,0 +1,26 @@
+{
+  "note": "Existing CREATE TABLE in deprecated schemas (ratchet — may only shrink; consolidation = CAS-04).",
+  "deprecated": [
+    "master_data",
+    "bank",
+    "reporting",
+    "maint",
+    "geofence"
+  ],
+  "allow": [
+    "0164_scheduled_reports.sql: CREATE TABLE reporting.scheduled_report_runs",
+    "0164_scheduled_reports.sql: CREATE TABLE reporting.scheduled_reports",
+    "0219_block_29_bank_reconciliation_matches.sql: CREATE TABLE bank.reconciliation_matches",
+    "0272_maint_parts_pm.sql: CREATE TABLE maint.part",
+    "0272_maint_parts_pm.sql: CREATE TABLE maint.pm_schedule",
+    "0407_permits_toll_tags.sql: CREATE TABLE master_data.unit_permits",
+    "0407_permits_toll_tags.sql: CREATE TABLE master_data.unit_toll_tags",
+    "202606080203_customer_free_time_detention.sql: CREATE TABLE master_data.customer_terms_history",
+    "202606080221_customer_relationship_scores.sql: CREATE TABLE master_data.customer_relationship_scores",
+    "202606111200_w3a_geofence_engine.sql: CREATE TABLE geofence.event",
+    "202606111200_w3a_geofence_engine.sql: CREATE TABLE geofence.fence",
+    "202606122215_m1_positioned_parts_picker.sql: CREATE TABLE maint.part_position_assignment",
+    "202606122215_m1_positioned_parts_picker.sql: CREATE TABLE maint.position_set",
+    "202606122230_m2_position_history.sql: CREATE TABLE maint.position_history"
+  ]
+}
