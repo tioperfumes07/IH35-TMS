@@ -12,7 +12,7 @@ const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString("en-US
 const STATUS_COLOR: Record<string, string> = {
   synced: "bg-emerald-100 text-emerald-800",
   pending: "bg-yellow-100 text-yellow-800",
-  in_flight: "bg-blue-100 text-blue-800",
+  in_flight: "bg-slate-100 text-slate-700",
   failed: "bg-red-100 text-red-800",
   blocked: "bg-gray-100 text-gray-700",
 };
@@ -120,8 +120,8 @@ export function IntegrationTransactionsPage() {
                     <td className="px-3 py-2 whitespace-nowrap text-center text-gray-600">{row.attempt_count}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{fmtDate(row.synced_at)}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs">
-                      {bt?.matched_load_id && <Link to={`/dispatch/loads/${bt.matched_load_id}`} className="text-blue-600 hover:underline mr-2">Load</Link>}
-                      {bt?.matched_bill_id && <Link to={`/accounting/bills/${bt.matched_bill_id}`} className="text-blue-600 hover:underline">Bill</Link>}
+                      {bt?.matched_load_id && <Link to={`/dispatch/loads/${bt.matched_load_id}`} className="text-slate-700 hover:underline mr-2">Load</Link>}
+                      {bt?.matched_bill_id && <Link to={`/accounting/bills/${bt.matched_bill_id}`} className="text-slate-700 hover:underline">Bill</Link>}
                       {!bt?.matched_load_id && !bt?.matched_bill_id && <span className="text-gray-400">—</span>}
                     </td>
                   </tr>

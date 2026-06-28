@@ -13,7 +13,7 @@ const fmtBytes = (n: number) =>
 
 const STATUS_COLOR: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700", posted: "bg-emerald-100 text-emerald-800",
-  void: "bg-red-100 text-red-700", approved: "bg-blue-100 text-blue-800",
+  void: "bg-red-100 text-red-700", approved: "bg-slate-100 text-slate-700",
   pending_approval: "bg-yellow-100 text-yellow-800",
 };
 
@@ -45,7 +45,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             <hr />
             <div className="flex gap-2">
               <span className="text-gray-500 w-28 shrink-0">Linked to</span>
-              <Link to={data.source.detail_path} className="text-blue-600 hover:underline capitalize">
+              <Link to={data.source.detail_path} className="text-slate-700 hover:underline capitalize">
                 {data.source.type} {data.source.type === "expense" ? data.source.expense_number : data.source.bill_number}
               </Link>
             </div>
@@ -128,7 +128,7 @@ export function ReceiptsPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{fmtDate(row.uploaded_at)}</td>
                   <td className="px-3 py-2 max-w-[180px] truncate">
                     <button onClick={() => setDetailId(row.id)}
-                      className="text-blue-600 hover:underline text-left truncate max-w-full" title={row.filename}>
+                      className="text-slate-700 hover:underline text-left truncate max-w-full" title={row.filename}>
                       {row.filename}
                     </button>
                   </td>
@@ -137,7 +137,7 @@ export function ReceiptsPage() {
                     <span className="inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700 capitalize">{row.source.type}</span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <Link to={row.source.detail_path} className="text-blue-600 hover:underline text-xs">
+                    <Link to={row.source.detail_path} className="text-slate-700 hover:underline text-xs">
                       {row.source.type === "expense" ? (row.source.expense_number ?? "—") : (row.source.bill_number ?? "—")}
                     </Link>
                   </td>
@@ -151,7 +151,7 @@ export function ReceiptsPage() {
                     )}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <button onClick={() => setDetailId(row.id)} className="text-xs text-blue-600 hover:underline">View</button>
+                    <button onClick={() => setDetailId(row.id)} className="text-xs text-slate-700 hover:underline">View</button>
                   </td>
                 </tr>
               ))}

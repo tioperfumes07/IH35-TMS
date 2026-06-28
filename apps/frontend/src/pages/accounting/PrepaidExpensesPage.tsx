@@ -13,7 +13,7 @@ const fmtCents = (c: number) =>
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString("en-US") : "—");
 
 const STATUS_COLOR: Record<string, string> = {
-  active: "bg-blue-100 text-blue-800",
+  active: "bg-slate-100 text-slate-700",
   fully_amortized: "bg-emerald-100 text-emerald-800",
   voided: "bg-red-100 text-red-700",
 };
@@ -257,7 +257,7 @@ export function PrepaidExpensesPage() {
                 <tr key={row.id} className="hover:bg-gray-50">
                   <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{row.asset_number ?? "—"}</td>
                   <td className="px-3 py-2 max-w-[200px] truncate font-medium">
-                    <button onClick={() => setDetailId(row.id)} className="text-blue-600 hover:underline text-left">{row.description}</button>
+                    <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left">{row.description}</button>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(row.purchase_date)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-center text-gray-600">{row.periods}</td>
@@ -271,7 +271,7 @@ export function PrepaidExpensesPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <button onClick={() => setDetailId(row.id)} className="text-xs text-blue-600 hover:underline">Schedule</button>
+                    <button onClick={() => setDetailId(row.id)} className="text-xs text-slate-700 hover:underline">Schedule</button>
                   </td>
                 </tr>
               ))}
