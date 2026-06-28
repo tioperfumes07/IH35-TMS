@@ -1,5 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
-import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
+import { getCurrentClocks, getCurrentClocksForDrivers } from "../telematics/hos-clocks.service.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -69,34 +69,50 @@ export function detectPlannerConflict(
   return { conflict: false };
 }
 
-async function listDriverBlackouts(
+type PlannerBlackout = { start_at: string; end_at: string; reason: string };
+
+// Batched equivalent of the former per-driver listDriverBlackouts — ONE query for all drivers in
+// the week window (kills the planner N+1). Returns a Map keyed by driver id; a driver with no
+// blackouts is simply absent (callers default to []). Grouped in id order then started_at ASC, the
+// same clamping (GREATEST/LEAST over now()) and the same filter as the per-driver query, so each
+// driver's list is identical to before.
+export async function listDriverBlackoutsForDrivers(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
   operatingCompanyId: string,
-  driverId: string,
+  driverIds: string[],
   weekStartIso: string,
   weekEndIso: string
-) {
+): Promise<Map<string, PlannerBlackout[]>> {
+  const result = new Map<string, PlannerBlackout[]>();
+  if (driverIds.length === 0) return result;
   const res = await client.query(
     `
       SELECT
+        e.driver_id::text AS driver_id,
         GREATEST(e.started_at, $3::timestamptz)::text AS start_at,
         LEAST(COALESCE(e.ended_at, now()), $4::timestamptz)::text AS end_at,
         e.duty_status::text AS duty_status
       FROM hos.duty_status_events e
       WHERE e.operating_company_id = $1::uuid
-        AND e.driver_id = $2::uuid
+        AND e.driver_id = ANY($2::uuid[])
         AND e.duty_status IN ('off_duty', 'sleeper', 'personal_conveyance')
         AND e.started_at < $4::timestamptz
         AND COALESCE(e.ended_at, now()) > $3::timestamptz
-      ORDER BY e.started_at ASC
+      ORDER BY e.driver_id, e.started_at ASC
     `,
-    [operatingCompanyId, driverId, weekStartIso, weekEndIso]
+    [operatingCompanyId, driverIds, weekStartIso, weekEndIso]
   );
-  return res.rows.map((row) => ({
-    start_at: String(row.start_at),
-    end_at: String(row.end_at),
-    reason: String(row.duty_status),
-  }));
+  for (const row of res.rows) {
+    const driverId = String(row.driver_id);
+    const arr = result.get(driverId) ?? [];
+    arr.push({
+      start_at: String(row.start_at),
+      end_at: String(row.end_at),
+      reason: String(row.duty_status),
+    });
+    result.set(driverId, arr);
+  }
+  return result;
 }
 
 export async function getPlannerWeek(userId: string, operatingCompanyId: string, weekStartInput?: string): Promise<PlannerWeekPayload> {
@@ -169,19 +185,31 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
       [operatingCompanyId, weekStartIso, weekEndIso]
     );
 
-    const drivers: PlannerDriverRow[] = [];
-    for (const row of driversRes.rows) {
+    // Batched: 2 set-based queries for ALL drivers instead of 2 per driver (was the ~8.7s N+1).
+    // Output is assembled in the same driver order (driversRes is ORDER BY last_name, first_name)
+    // with identical hos_status + blackouts per driver.
+    const driverIds = driversRes.rows.map((row) => String(row.id));
+    const clocksByDriver = await getCurrentClocksForDrivers(client, operatingCompanyId, driverIds);
+    const blackoutsByDriver = await listDriverBlackoutsForDrivers(
+      client,
+      operatingCompanyId,
+      driverIds,
+      weekStartIso,
+      weekEndIso
+    );
+    const drivers: PlannerDriverRow[] = driversRes.rows.map((row) => {
       const driverId = String(row.id);
-      const clocks = await getCurrentClocks(client, operatingCompanyId, driverId);
-      const blackouts = await listDriverBlackouts(client, operatingCompanyId, driverId, weekStartIso, weekEndIso);
-      drivers.push({
+      // getCurrentClocksForDrivers returns an entry for every requested id; the "ok" branch is
+      // unreachable and kept only to satisfy strict-null without re-deriving computeHosClocks([]).
+      const clocks = clocksByDriver.get(driverId);
+      return {
         id: driverId,
         name: String(row.name ?? "Driver"),
         unit_number: row.unit_number ? String(row.unit_number) : null,
-        hos_status: clocks.status,
-        blackouts,
-      });
-    }
+        hos_status: clocks ? clocks.status : "ok",
+        blackouts: blackoutsByDriver.get(driverId) ?? [],
+      };
+    });
 
     const loads: PlannerLoadEvent[] = loadsRes.rows.map((row) => ({
       id: String(row.id),
