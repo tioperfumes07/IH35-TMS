@@ -442,6 +442,14 @@ export function DispatchPage({
               next.set("load_id", id);
               setSearchParams(next);
             }}
+            onColumnHeaderClick={(statuses) => {
+              // DB-2: jump to the List view pre-filtered to this lane's statuses (reuse view + statuses params).
+              const next = new URLSearchParams(searchParams);
+              next.set("view", "list");
+              next.set("statuses", statuses.join(","));
+              next.delete("load_id");
+              setSearchParams(next);
+            }}
             onBookForUnit={(unitId) => {
               setBookUnitId(unitId);
               setNewLoadOpen(true);
