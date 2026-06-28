@@ -6,8 +6,9 @@ captures UI/spec only. Any build of the reclassify-apply action = financial clus
 Jorge + wait for OK. No posting, no GL math here.
 **Date:** 2026-06-28
 **Author:** Cascade (design lane)
-**Grounding:** built from the written design law (§B4) + the locked safety rules — **not from memory of
-QBO**. QBO-exact portal contents are marked `[LIVE-CONFIRM]`.
+**Grounding:** built from the written design law (§B4) + the locked safety rules, **then verified
+against the LIVE QBO UI** (IH 35 Transportation LLC, captured 2026-06-28; screenshots local-only — real
+financial data — never committed). The owed "More filters" capture is now resolved in §3.
 
 ---
 
@@ -25,16 +26,18 @@ RLS-scoped, period-lock-respecting, and writes `audit.row_changes` per line (emb
 
 | Control | Options |
 |---|---|
-| Account types | Profit and loss · Balance sheet |
+| Account types | **Profit and loss · Balance sheet** (live-confirmed, top-left dropdown) |
 | Basis | Accrual · Cash |
-| From: / To: | date range (period pickers) |
+| From: / To: | date range (period pickers; live default 05/01–05/31) |
 | Type | All · Bill · Check · Credit Card Credit · Credit Memo · Deposit · Expense · Invoice · Journal Entry · Refund · Sales Receipt · Vendor Credit |
-| Class | None · All · [class codes — live: 10006, 10012, 10035, …] |
-| Location | None · All · [DRIVER/OPERATOR names — IH35 maps Location → driver] |
+| Class | Select · [live class codes — data-dependent] |
+| **Filters** (funnel icon) | opens the **Filter By** panel — contents live-confirmed in §3 |
 | Find an account | text search over the account tree |
-| **More filters** | portal — contents enumerated in §3 (the owed capture) |
 
-Account tree: grouped, each account row shows a **running AMOUNT**.
+Account tree: grouped (Income Accounts, Cost of Goods Sold, Operational Expenses, …), each row shows a
+**running AMOUNT**. **Live note:** the top filter row shows **Type** and **Class** inline; **Location**
+is NOT inline — it lives inside the **Filter By** panel (§3). The entry control is labeled **"Filters"**
+(funnel icon), not "More filters".
 
 ---
 
@@ -49,30 +52,28 @@ Account tree: grouped, each account row shows a **running AMOUNT**.
 
 ---
 
-## 3. "More filters" panel contents — THE OWED CAPTURE
+## 3. "Filter By" panel contents — OWED CAPTURE, NOW LIVE-CONFIRMED (2026-06-28)
 
-> §B4 marks this `[TODO] "More filters" portal contents — enumerate live`. Below is the **proposed TMS
-> filter set** (grounded in the §B4 left-pane filters + the §B6 advancedmatch filter vocabulary that
-> QBO reuses across financial grids). Each QBO-exact entry that needs a screenshot is `[LIVE-CONFIRM]`.
+Clicking **"Filters"** (funnel icon, top-right of the filter row) opens a **"Filter By"** popover panel.
+Live-confirmed contents (in order):
 
-**Proposed "More filters" portal (Reclassify):**
-1. **Transaction type** — same enum as the Type filter (redundant-but-scoped multi-select). `[LIVE-CONFIRM]` whether QBO repeats it here.
-2. **Name / Payee** — vendor/customer/employee picker (filter lines by payee).
-3. **Amount** — operator (=, >, <, between) + value(s) in cents.
-4. **Memo/Description contains** — text.
-5. **Reference no.** — text.
-6. **Modified date** — date range (distinct from the transaction From/To).
-7. **Entered/Created by** — user (audit dimension — who booked it).
-8. **Cleared/Reconciled status** — All · Cleared · Reconciled · Not reconciled (drives the "can't
-   reclassify into a reconciled/closed period" guard preview).
-9. **Currency** — if multi-currency ever enabled (IH35 = USD; show only if >1 currency). `[LIVE-CONFIRM]`.
+1. **From:** / **To:** — date range (live default 05/01/2026–05/31/2026).
+2. **Type** — transaction-type dropdown (All · the §1 Type enum).
+3. **Class** — dropdown (Select · live class list).
+4. **Location** — dropdown (Select · IH35 = driver names; see §4 mapping). *(Lives in the panel, not the
+   inline row.)*
+5. **Customer/Vendor** — dropdown (Select).
+6. **Modify** — dropdown (default All). *(New vs the prior spec; controls which transactions are eligible
+   to modify; option list not fully expanded in capture — a minor follow-up, non-blocking.)*
+7. Footer: **Clear all** · **Apply** (green).
 
-**Proposed "More filters" portal (Bank match / §B6 advancedmatch)** — captured here too since the index
-lists it as owed:
-1. **Record type** — All transactions · Money in · Money out · Suggested matches · Transfers · Rules ·
-   Missing payee/customer · Uncategorized (from §B6).
-2. **Date range** · **Amount** (operator + value) · **Search** (description / check no. / amount).
-3. **Payee/Name** · **Status** (open/cleared). `[LIVE-CONFIRM]` exact portal grouping + any extra rows.
+> **Reconciliation with my earlier draft:** the live panel is **leaner** than the placeholder I had
+> guessed (no Amount / Memo / Reference no. / Modified date / Entered-by / Cleared-status / Currency
+> rows). The real set is **From · To · Type · Class · Location · Customer/Vendor · Modify**. The TMS
+> Reclassify page should mirror exactly this panel.
+
+> **Bank match (§B6 advancedmatch) "More filters"** is a separate screen; its filters were not opened in
+> this pass (Reclassify was the priority). Capture in a later targeted pass — tracked, low priority.
 
 ---
 
@@ -90,11 +91,12 @@ lists it as owed:
 
 ---
 
-## 5. [LIVE-CONFIRM] items still owed from a QBO screenshot
-- `[LIVE-CONFIRM]` exact "More filters" portal rows + order + grouping (Reclassify and Bank match).
-- `[LIVE-CONFIRM]` whether "More filters" is a slide-in portal vs inline expander.
-- `[LIVE-CONFIRM]` exact label strings + any default-selected values.
-- `[LIVE-CONFIRM]` the full live Class code list and Location(driver) list (data-dependent).
+## 5. Capture status (2026-06-28)
+- **RESOLVED:** Filter By panel rows + order + footer (§3); it is a **popover panel** anchored to the
+  "Filters" funnel; Account types = Profit and loss / Balance sheet (§1).
+- **Minor follow-ups (non-blocking):** the **Modify** dropdown option list (panel was captured with it
+  closed); the full live **Class** + **Location(driver)** lists (data-dependent, change over time); the
+  separate **Bank-match** advancedmatch "More filters" screen.
 
 ---
 
@@ -109,4 +111,4 @@ lists it as owed:
 - DO NOT build the reclassify-apply (financial) without Jorge's explicit OK.
 - DO NOT add new GL math — reclassify only re-points existing postings.
 - DO NOT reclassify into closed periods; DO NOT skip the per-line audit row.
-- DO NOT fabricate QBO-exact portal contents; `[LIVE-CONFIRM]` items wait for a live screenshot.
+- DO NOT commit the source screenshots (real financial data — kept local-only, gitignored).
