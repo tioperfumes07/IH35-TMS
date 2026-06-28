@@ -671,6 +671,7 @@
     "verify:bookload-stop-boolean-coercion": "node scripts/verify-bookload-stop-boolean-coercion.mjs",
     "verify:multi-entity-separation": "node scripts/verify-multi-entity-separation.mjs",
     "verify:sql-write-targets": "node scripts/verify-sql-write-targets.mjs",
+    "verify:sql-read-targets": "node scripts/verify-sql-read-targets.mjs",
     "verify:dispatch-kanban-densities": "node scripts/verify-dispatch-kanban-densities.mjs",
     "verify:dispatch-card-unit-first": "node scripts/verify-dispatch-card-unit-first.mjs",
     "verify:bookload-section-b-hos": "node scripts/verify-bookload-section-b-hos.mjs",
