@@ -94,21 +94,17 @@ function detailPath(entityType: string, entityId: string): string | null {
   }
 }
 
-async function isDailyReconEnabled(client: { query: (sql: string, v?: unknown[]) => Promise<{ rows: unknown[] }> }, operatingCompanyId: string): Promise<boolean> {
+async function isDailyReconEnabled(client: { query: (sql: string, v?: unknown[]) => Promise<{ rows: unknown[] }> }, _operatingCompanyId: string): Promise<boolean> {
   try {
-    const tableExists = await client.query(
-      `SELECT to_regclass('public.feature_flags') IS NOT NULL AS exists`
-    );
-    if (!(tableExists.rows[0] as Record<string, unknown>)?.exists) return false;
+    // Canonical flag table is lib.feature_flags (GLOBAL: flag_key, default_enabled boolean).
+    // public.feature_flags never existed, so this gate was permanently inert (R08). Repointed.
+    // NOTE: flag key kept as 'GL_POSTING_ENABLED'; if a different key should gate Daily Recon
+    // that is an owner config decision — behavior stays OFF until the flag exists + is enabled.
     const res = await client.query(
-      `SELECT value FROM public.feature_flags
-       WHERE flag_key = 'GL_POSTING_ENABLED'
-         AND (operating_company_id = $1 OR operating_company_id IS NULL)
-       ORDER BY operating_company_id NULLS LAST LIMIT 1`,
-      [operatingCompanyId]
+      `SELECT default_enabled FROM lib.feature_flags WHERE flag_key = 'GL_POSTING_ENABLED' LIMIT 1`,
+      []
     );
-    const val = String((res.rows[0] as Record<string, unknown>)?.value ?? "false");
-    return val === "true" || val === "1";
+    return (res.rows[0] as Record<string, unknown> | undefined)?.default_enabled === true;
   } catch {
     return false;
   }

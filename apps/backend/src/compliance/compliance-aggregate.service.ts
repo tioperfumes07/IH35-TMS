@@ -106,19 +106,19 @@ const AGGREGATE_SQL = `
     SELECT 'trailer_us_insurance', 'equipment', e.id, COALESCE(e.equipment_number, e.id::text), 'Trailer US Insurance',
            e.us_insurance_expiration, NULL
     FROM mdata.equipment e
-    WHERE e.operating_company_id = $1::uuid AND e.us_insurance_expiration IS NOT NULL
+    WHERE (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid) AND e.us_insurance_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'trailer_mx_insurance', 'equipment', e.id, COALESCE(e.equipment_number, e.id::text), 'Trailer MX Insurance',
            e.mx_insurance_expiration, NULL
     FROM mdata.equipment e
-    WHERE e.operating_company_id = $1::uuid AND e.mx_insurance_expiration IS NOT NULL
+    WHERE (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid) AND e.mx_insurance_expiration IS NOT NULL
 
     UNION ALL
     SELECT 'dot_inspection', 'equipment', e.id, COALESCE(e.equipment_number, e.id::text), 'DOT Inspection',
            e.dot_inspection_next_due, NULL
     FROM mdata.equipment e
-    WHERE e.operating_company_id = $1::uuid AND e.dot_inspection_next_due IS NOT NULL
+    WHERE (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid) AND e.dot_inspection_next_due IS NOT NULL
 
     UNION ALL
     SELECT 'unit_plate', 'unit_plate', p.id, COALESCE(u.unit_number, u.id::text),

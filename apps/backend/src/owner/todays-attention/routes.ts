@@ -171,23 +171,25 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
 
       // Audit log — best-effort, don't fail the dismiss if audit write fails
       try {
-        const auditOk = await client.query(`SELECT to_regclass('audit.audit_log') IS NOT NULL AS ok`);
-        if (auditOk.rows[0]?.ok) {
-          await client.query(
-            `
-              INSERT INTO audit.audit_log
-                (table_name, record_id, action, actor_user_id, after_json, operating_company_id)
-              VALUES
-                ('owner.todays_attention_snapshot', $1::uuid, 'dismiss', $2::uuid, $3::jsonb, $4::uuid)
-            `,
-            [
-              updated.rows[0]?.id,
-              user.uuid,
-              JSON.stringify({ item_id, dismissed_at: new Date().toISOString() }),
+        // Canonical audit sink is audit.audit_events (audit.audit_log never existed, so these
+        // events were silently dropped — G5). Repointed; still best-effort inside the try/catch.
+        await client.query(
+          `
+            INSERT INTO audit.audit_events (event_class, severity, payload, actor_user_uuid, source)
+            VALUES ('owner.todays_attention.dismiss', 'info', $1::jsonb, $2::uuid, 'owner.todays-attention')
+          `,
+          [
+            JSON.stringify({
+              table_name: "owner.todays_attention_snapshot",
+              record_id: updated.rows[0]?.id,
+              action: "dismiss",
+              item_id,
+              dismissed_at: new Date().toISOString(),
               operating_company_id,
-            ]
-          );
-        }
+            }),
+            user.uuid,
+          ]
+        );
       } catch {
         // audit write failure is non-fatal
       }
