@@ -112,21 +112,27 @@ GRANT SELECT, INSERT, UPDATE ON accounting.revenue_contracts        TO ih35_app;
 GRANT SELECT, INSERT, UPDATE ON accounting.revenue_obligations      TO ih35_app;
 GRANT SELECT, INSERT, UPDATE ON accounting.revenue_recognition_rows TO ih35_app;
 
-DO $$
-DECLARE t text;
-BEGIN
-  FOREACH t IN ARRAY ARRAY['revenue_contracts','revenue_obligations','revenue_recognition_rows']
-  LOOP
-    EXECUTE format('ALTER TABLE accounting.%I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('ALTER TABLE accounting.%I FORCE  ROW LEVEL SECURITY', t);
-    EXECUTE format('DROP POLICY IF EXISTS %I ON accounting.%I', t || '_company_scope', t);
-    EXECUTE format(
-      'CREATE POLICY %I ON accounting.%I FOR ALL TO ih35_app '
-      || 'USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting(''app.operating_company_id'', true), '''')::uuid) '
-      || 'WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting(''app.operating_company_id'', true), '''')::uuid)',
-      t || '_company_scope', t);
-  END LOOP;
-END $$;
+-- Literal per-table RLS (static rls-migration-scan requires literal ALTER ... ENABLE statements).
+ALTER TABLE accounting.revenue_contracts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting.revenue_contracts FORCE  ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS revenue_contracts_company_scope ON accounting.revenue_contracts;
+CREATE POLICY revenue_contracts_company_scope ON accounting.revenue_contracts FOR ALL TO ih35_app
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+
+ALTER TABLE accounting.revenue_obligations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting.revenue_obligations FORCE  ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS revenue_obligations_company_scope ON accounting.revenue_obligations;
+CREATE POLICY revenue_obligations_company_scope ON accounting.revenue_obligations FOR ALL TO ih35_app
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+
+ALTER TABLE accounting.revenue_recognition_rows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting.revenue_recognition_rows FORCE  ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS revenue_recognition_rows_company_scope ON accounting.revenue_recognition_rows;
+CREATE POLICY revenue_recognition_rows_company_scope ON accounting.revenue_recognition_rows FOR ALL TO ih35_app
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 -- §6 — feature flags (posting GATED OFF)
 INSERT INTO lib.feature_flags (flag_key, description, default_enabled)
