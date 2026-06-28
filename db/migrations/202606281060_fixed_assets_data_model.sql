@@ -136,21 +136,34 @@ GRANT SELECT, INSERT, UPDATE ON accounting.fixed_assets               TO ih35_ap
 GRANT SELECT, INSERT, UPDATE ON accounting.depreciation_schedule_rows TO ih35_app;
 GRANT SELECT, INSERT, UPDATE ON accounting.fixed_asset_disposals      TO ih35_app;
 
-DO $$
-DECLARE t text;
-BEGIN
-  FOREACH t IN ARRAY ARRAY['fixed_asset_classes','fixed_assets','depreciation_schedule_rows','fixed_asset_disposals']
-  LOOP
-    EXECUTE format('ALTER TABLE accounting.%I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('ALTER TABLE accounting.%I FORCE  ROW LEVEL SECURITY', t);
-    EXECUTE format('DROP POLICY IF EXISTS %I ON accounting.%I', t || '_company_scope', t);
-    EXECUTE format(
-      'CREATE POLICY %I ON accounting.%I FOR ALL TO ih35_app '
-      || 'USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting(''app.operating_company_id'', true), '''')::uuid) '
-      || 'WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting(''app.operating_company_id'', true), '''')::uuid)',
-      t || '_company_scope', t);
-  END LOOP;
-END $$;
+-- Literal per-table RLS (static rls-migration-scan requires literal ALTER ... ENABLE statements).
+ALTER TABLE accounting.fixed_asset_classes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting.fixed_asset_classes FORCE  ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS fixed_asset_classes_company_scope ON accounting.fixed_asset_classes;
+CREATE POLICY fixed_asset_classes_company_scope ON accounting.fixed_asset_classes FOR ALL TO ih35_app
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+
+ALTER TABLE accounting.fixed_assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting.fixed_assets FORCE  ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS fixed_assets_company_scope ON accounting.fixed_assets;
+CREATE POLICY fixed_assets_company_scope ON accounting.fixed_assets FOR ALL TO ih35_app
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+
+ALTER TABLE accounting.depreciation_schedule_rows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting.depreciation_schedule_rows FORCE  ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS depreciation_schedule_rows_company_scope ON accounting.depreciation_schedule_rows;
+CREATE POLICY depreciation_schedule_rows_company_scope ON accounting.depreciation_schedule_rows FOR ALL TO ih35_app
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+
+ALTER TABLE accounting.fixed_asset_disposals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting.fixed_asset_disposals FORCE  ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS fixed_asset_disposals_company_scope ON accounting.fixed_asset_disposals;
+CREATE POLICY fixed_asset_disposals_company_scope ON accounting.fixed_asset_disposals FOR ALL TO ih35_app
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 -- §7 — feature flags (posting GATED OFF)
 INSERT INTO lib.feature_flags (flag_key, description, default_enabled)
