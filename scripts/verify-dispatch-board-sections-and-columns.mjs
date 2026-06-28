@@ -71,4 +71,17 @@ if (/key:\s*"awaiting"[\s\S]{0,80}loads\.filter\(isUnassignedLoad\)/.test(src)) 
 }
 if (!src.includes("enabled: Boolean(companyId),")) fail("unitsWithoutLoad must load in every mode (not just assignment) for the truck-derived Awaiting section");
 
+// 5. DB-4 honest count: the List/Table shows the full (un-paginated) awaiting-truck roster in its
+// own section alongside the paginated loads inside one table, so the pagination label must scope to
+// loads and surface the roster total — never a bare ambiguous "Showing X of Y" that reads as if it
+// counted every visible row.
+if (!src.includes("loadCountSummary")) fail("List/Table count label must use loadCountSummary (DB-4 honest count)");
+if (!/of \$\{totalCount\} \$\{totalCount === 1 \? "load" : "loads"\}/.test(src)) {
+  fail("loadCountSummary must scope the pagination count to loads ('of {totalCount} load(s)')");
+}
+if (!/awaitingTruckCount/.test(src)) fail("loadCountSummary must surface the awaiting-truck roster total (awaitingTruckCount)");
+if (/Showing \{from\}-\{to\} of \{totalCount\}\s*<\/(div|span)>/.test(src)) {
+  fail("bare 'Showing {from}-{to} of {totalCount}' label is ambiguous against the truck roster — use loadCountSummary");
+}
+
 console.log("PASS verify-dispatch-board-sections-and-columns");
