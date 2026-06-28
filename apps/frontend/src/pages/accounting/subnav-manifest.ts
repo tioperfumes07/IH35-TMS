@@ -108,6 +108,7 @@ export const ACCOUNTING_MORE_TABS = [
   { label: "Audit Trail",       to: "/accounting/audit-trail" },
   { label: "Posting Lineage",   to: "/accounting/posting-lineage" },
   { label: "QBO Sync Drift",    to: "/accounting/qbo-sync" },
+  { label: "Account Type Catalog", to: "/accounting/account-type-catalog" },
   { label: "Settings",          to: "/accounting/settings/expense-category-map" },
 ] as const;
 

@@ -139,6 +139,7 @@ import { ComingSoonPage } from "../pages/ComingSoonPage";
 import { IntegrationTransactionsPage } from "../pages/accounting/IntegrationTransactionsPage";
 import { ReceiptsPage } from "../pages/accounting/ReceiptsPage";
 import { PrepaidExpensesPage } from "../pages/accounting/PrepaidExpensesPage";
+import { AccountTypeCatalogPage } from "../pages/accounting/AccountTypeCatalogPage";
 import { BulkDemoPage } from "../pages/dev/BulkDemoPage";
 import { SamsaraIntegrationPage } from "../pages/integrations/SamsaraIntegrationPage";
 import { DriverAppLandingPage } from "../pages/DriverAppLandingPage";
@@ -3263,6 +3264,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/accounting/revenue-recognition" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
         <Route path="/accounting/fixed-assets" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
         <Route path="/accounting/prepaid-expenses" element={<ProtectedRoute><PrepaidExpensesPage /></ProtectedRoute>} />
+        <Route path="/accounting/account-type-catalog" element={<ProtectedRoute><AccountTypeCatalogPage /></ProtectedRoute>} />
         <Route path="/accounting/my-accountant" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
         <Route
           path="/reports/run/:reportId"
