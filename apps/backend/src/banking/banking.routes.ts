@@ -508,4 +508,87 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
     return { ok: true };
   });
+
+  // ── Cash-GL setup (B-1, fork-A: reuse banking.bank_accounts.ledger_account_id) ───────────────────────
+  // Maps each bank account → its COA cash GL account, per entity. NO posting, NO flag — setup only.
+  // GET returns the bank accounts + their current mapping + the entity's COA asset accounts to choose from.
+  app.get("/api/v1/banking/accounts/cash-gl-mapping", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const companyId = query.data.operating_company_id;
+    const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const banks = await client.query<{ id: string; account_name: string; ledger_account_id: string | null; ledger_account_name: string | null; ledger_account_number: string | null }>(
+        `SELECT ba.id::text, ba.account_name,
+                ba.ledger_account_id::text,
+                a.account_name AS ledger_account_name, a.account_number AS ledger_account_number
+           FROM banking.bank_accounts ba
+           LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id
+          WHERE ba.operating_company_id = $1 AND ba.deactivated_at IS NULL
+          ORDER BY ba.account_name ASC`,
+        [companyId]
+      );
+      const coa = await client.query<{ id: string; account_number: string; account_name: string }>(
+        `SELECT id::text, account_number, account_name
+           FROM catalogs.accounts
+          WHERE operating_company_id = $1 AND deactivated_at IS NULL AND account_type ILIKE 'asset'
+          ORDER BY account_number ASC`,
+        [companyId]
+      );
+      return { bank_accounts: banks.rows, coa_cash_accounts: coa.rows };
+    });
+    return payload;
+  });
+
+  // PUT sets a bank account's cash GL account. Owner/Administrator only. Cross-entity is rejected fail-loud:
+  // the chosen COA account's operating_company_id MUST equal the bank account's (both already entity-scoped).
+  app.put("/api/v1/banking/accounts/:id/cash-gl", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!["Owner", "Administrator"].includes(String((user as { role?: string }).role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden", detail: "cash-GL mapping is Owner/Administrator only" });
+    }
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = z.object({ ledger_account_id: z.string().uuid().nullable() }).safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const companyId = query.data.operating_company_id;
+
+    const result = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const bank = await client.query<{ id: string }>(
+        `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+        [params.data.id, companyId]
+      );
+      if (!bank.rows[0]) return { error: "bank_account_not_found" as const };
+      // Cross-entity guard: the chosen COA account must belong to THIS entity.
+      if (body.data.ledger_account_id) {
+        const acct = await client.query<{ id: string }>(
+          `SELECT id FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+          [body.data.ledger_account_id, companyId]
+        );
+        if (!acct.rows[0]) return { error: "account_not_in_entity" as const };
+      }
+      await client.query(
+        `UPDATE banking.bank_accounts SET ledger_account_id = $1, updated_at = now() WHERE id = $2 AND operating_company_id = $3`,
+        [body.data.ledger_account_id, params.data.id, companyId]
+      );
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "banking.bank_account.cash_gl_mapped",
+        { resource_type: "banking.bank_accounts", resource_id: params.data.id, operating_company_id: companyId, ledger_account_id: body.data.ledger_account_id },
+        "info",
+        "B-1-CASH-GL-SETUP"
+      );
+      return { ok: true as const };
+    });
+    if ("error" in result) {
+      const code = result.error === "bank_account_not_found" ? 404 : 400;
+      return reply.code(code).send({ error: result.error });
+    }
+    return result;
+  });
 }
