@@ -943,3 +943,28 @@ export function bulkReconcileAction(
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ ok: true; updated_count: number }>(`/api/v1/banking/reconcile/bulk?${q}`, { method: "POST", body });
 }
+
+// ── Cash-GL setup (B-1, fork-A: reuses banking.bank_accounts.ledger_account_id) ─────────────────────────
+export type CashGlBankAccount = {
+  id: string;
+  account_name: string;
+  ledger_account_id: string | null;
+  ledger_account_name: string | null;
+  ledger_account_number: string | null;
+};
+export type CashGlCoaAccount = { id: string; account_number: string; account_name: string };
+
+export function getCashGlMapping(operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ bank_accounts: CashGlBankAccount[]; coa_cash_accounts: CashGlCoaAccount[] }>(
+    `/api/v1/banking/accounts/cash-gl-mapping?${q}`
+  );
+}
+
+export function setBankAccountCashGl(operatingCompanyId: string, bankAccountId: string, ledgerAccountId: string | null) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true }>(`/api/v1/banking/accounts/${bankAccountId}/cash-gl?${q}`, {
+    method: "PUT",
+    body: { ledger_account_id: ledgerAccountId },
+  });
+}
