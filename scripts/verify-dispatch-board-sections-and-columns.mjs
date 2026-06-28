@@ -31,9 +31,12 @@ if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alia
 // LOCKED COUNT CHANGE 2026-06-18 (Jorge-approved, AUTO-04 / PR #1249): 15 → 16 columns — "location"
 // added. POSITION UPDATE 2026-06-23 (Jorge-approved, C2 / PR #1378, UX-B): "location" moved to sit
 // right after the HOS clocks (after "driver", before "load") instead of after "live_gps". Same 16
-// columns — only the position changed. This 16-column order is the contract going forward.
+// columns — only the position changed.
+// POSITION UPDATE 2026-06-28 (DB-6, GUARD construction block): "load" (Load #) moved to sit
+// immediately after "trailer" (app-wide shared column model). Same 16 columns — position only.
+// This 16-column order is the contract going forward.
 const expectedOrder = [
-  "unit", "trailer", "driver", "location", "load", "customer",
+  "unit", "trailer", "load", "driver", "location", "customer",
   "commodity", "pickup", "delivery", "wo", "cargo_temp", "linehaul", "status_signal",
   "live_gps", "risk", "status",
 ];
