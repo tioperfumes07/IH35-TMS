@@ -52,9 +52,11 @@ for (let i = 0; i < lines.length; i++) {
   }
 }
 
-// 4. the approve path forwards the originating load onto the recovery deduction
-if (!/sourceType:\s*"cash_advance_repayment"[\s\S]{0,200}loadId:/.test(approve) && !/loadId:\s*row\.load_id/.test(approve)) {
-  fail("cash-advance-requests.service.ts: approve path must pass loadId (row.load_id) into createSettlementDeduction");
+// 4. the approve path forwards the originating load onto the recovery deduction. Accept both the plain
+//    form `loadId: row.load_id` and the TS-cast form `loadId: (row.load_id as ...)` (the row type may not
+//    carry load_id, requiring a cast) — the INTENT (pass the request's load_id) is what matters.
+if (!/loadId:\s*\(?\s*row\.load_id\b/.test(approve)) {
+  fail("cash-advance-requests.service.ts: approve path must pass loadId from row.load_id into createSettlementDeduction");
 }
 
 console.log("PASS verify-advance-recovery-load-id");
