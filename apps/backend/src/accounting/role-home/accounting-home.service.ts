@@ -54,6 +54,19 @@ async function tableExists(client: { query: (sql: string, values?: unknown[]) =>
   return Boolean(res.rows[0]?.ok);
 }
 
+async function columnExists(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok?: boolean }> }> },
+  schema: string,
+  table: string,
+  column: string
+) {
+  const res = await client.query(
+    `SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3) AS ok`,
+    [schema, table, column]
+  );
+  return Boolean(res.rows[0]?.ok);
+}
+
 export async function getAccountingHomeData(input: {
   userId: string;
   operating_company_id: string;
@@ -132,7 +145,13 @@ export async function getAccountingHomeData(input: {
       }
 
       let earlyPayExpiring = 0;
-      if (await tableExists(client, "catalogs.payment_terms")) {
+      // accounting.bills has no payment_terms_id linkage yet (the early-pay-discount window can't be
+      // computed for bills until a future migration adds it). Guard on the column's existence so the
+      // home page never 500s on a phantom column; lights up automatically once the column is added.
+      if (
+        (await tableExists(client, "catalogs.payment_terms")) &&
+        (await columnExists(client, "accounting", "bills", "payment_terms_id"))
+      ) {
         const earlyRes = await client.query(
           `
             SELECT COUNT(*)::text AS c
