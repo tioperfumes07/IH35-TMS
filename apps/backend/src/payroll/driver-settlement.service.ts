@@ -213,6 +213,9 @@ export async function buildDraftLines(client: DbClient, input: ComputeSettlement
         line_type: "advance_recovery",
         description: "Cash advance recovery",
         amount_cents: -deductionsCents,
+        // load_id-aggregate-exempt: LEGACY blunt path (capped-ledger flag OFF) sums MULTIPLE approved
+        // advances into one line, so no single load_id applies. The canonical per-deduction capped-ledger
+        // path below stamps load_id directly. (Flagged to Jorge — deprecate this path once capped-ledger is on.)
         load_id: null,
         posting_account_id: deductionAccountId,
       });
@@ -236,12 +239,14 @@ export async function buildDraftLines(client: DbClient, input: ComputeSettlement
     amount_cents: string | number;
     remaining_balance_cents: string | number | null;
     deduction_type: string;
+    load_id: string | null;
   }>(
     `
       SELECT id::text,
              amount_cents::bigint AS amount_cents,
              remaining_balance_cents::bigint AS remaining_balance_cents,
-             deduction_type
+             deduction_type,
+             load_id::text AS load_id
       FROM driver_finance.driver_settlement_deductions
       WHERE operating_company_id = $1::uuid
         AND driver_id = $2::uuid
@@ -258,7 +263,11 @@ export async function buildDraftLines(client: DbClient, input: ComputeSettlement
     amount_cents: asCents(r.amount_cents),
     remaining_balance_cents: r.remaining_balance_cents == null ? null : asCents(r.remaining_balance_cents),
     deduction_type: r.deduction_type,
+    load_id: r.load_id ?? null,
   }));
+  // load_id-direct: map each pending deduction → its originating load so the recovery LINE carries it
+  // straight (not transitively). RecoveryAllocation.deduction_id resolves back to this map.
+  const loadIdByDeduction = new Map(pending.map((p) => [p.id, p.load_id ?? null]));
 
   const recoveryPlan = computeCappedAdvanceRecovery({ grossCents, floorCents, pending });
 
@@ -270,7 +279,7 @@ export async function buildDraftLines(client: DbClient, input: ComputeSettlement
         line_type: "advance_recovery",
         description: "Cash advance recovery (capped)",
         amount_cents: -a.recovered_cents,
-        load_id: null,
+        load_id: loadIdByDeduction.get(a.deduction_id) ?? null,
         posting_account_id: mapped.account_id,
       });
     }

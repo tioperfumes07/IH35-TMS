@@ -714,6 +714,9 @@ export async function approveCashAdvanceRequest(
     amountCents,
     sourceType: "cash_advance_repayment",
     reason: `Cash advance ${core.displayId} (request ${String(updated.display_id ?? args.requestId)})`,
+    // #1440/load_id-direct: carry the originating load straight onto the recovery deduction (mirrors the
+    // load_id we just stamped on driver_advances). Booked advances carry it; driver-initiated → null.
+    loadId: (row.load_id as string | null | undefined) ?? null,
     createdByUserId: args.actorUserId,
   });
 

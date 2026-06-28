@@ -28,6 +28,12 @@ export type CreateSettlementDeductionInput = {
    * deferred to the deduction-cap migration block.
    */
   sourcePendingId?: string;
+  /**
+   * Originating load for direct traceability (Jorge LOCKED 2026-06-27): a load-linked cash-advance
+   * recovery deduction carries load_id DIRECTLY (not transitively via the advance/liability). Callers
+   * that source from a load-linked advance pass driver_advances.load_id; non-load sources leave it null.
+   */
+  loadId?: string | null;
   createdByUserId: string;
 };
 
@@ -41,6 +47,7 @@ export type SettlementDeductionRow = {
   applied_to_settlement_id: string | null;
   created_by_user_id: string;
   source_pending_id: string | null;
+  load_id: string | null;
   created_at: string;
 };
 
@@ -54,6 +61,7 @@ const RETURNING_COLUMNS = `
   applied_to_settlement_id,
   created_by_user_id,
   source_pending_id,
+  load_id,
   created_at::text AS created_at
 `;
 
@@ -100,12 +108,13 @@ export async function createSettlementDeduction(
         applied_to_settlement_id,
         created_by_user_id,
         source_pending_id,
+        load_id,
         remaining_balance_cents
       )
       -- A3-2: initialise the carry-forward balance to the full amount on insert (status defaults to
       -- 'pending'). The recovery engine treats NULL as = amount_cents (A3-1 lock); this just makes
-      -- new rows explicit going forward. $4 = amount_cents.
-      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $4)
+      -- new rows explicit going forward. $4 = amount_cents. $8 = load_id (direct trace, nullable).
+      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $4)
       RETURNING ${RETURNING_COLUMNS}
     `,
     [
@@ -116,6 +125,7 @@ export async function createSettlementDeduction(
       input.reason.trim(),
       input.createdByUserId,
       input.sourcePendingId ?? null,
+      input.loadId ?? null,
     ]
   );
 

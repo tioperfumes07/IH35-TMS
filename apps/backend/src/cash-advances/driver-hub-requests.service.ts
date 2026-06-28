@@ -41,6 +41,7 @@ type CashAdvanceRequestLockRow = {
   requested_amount_cents: string | number;
   expires_at: string;
   is_above_policy: boolean;
+  load_id: string | null | undefined;
 };
 
 async function resolveActorLabel(client: QueryableClient, userUuid: string): Promise<string | null> {
@@ -159,6 +160,8 @@ export async function approveHubCashAdvanceRequest(
     amountCents,
     reason,
     sourceType: "cash_advance_repayment",
+    // load_id-direct: driver-initiated requests are usually load-less (null), but carry it if present.
+    loadId: (row.load_id as string | null | undefined) ?? null,
     createdByUserId: args.actorUserId,
   });
 
