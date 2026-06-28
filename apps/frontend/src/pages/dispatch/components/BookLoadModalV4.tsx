@@ -591,10 +591,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           time_window_type: stop.time_window_type,
           appointment_start_at: stop.appointment_start_at ? new Date(stop.appointment_start_at).toISOString() : undefined,
           appointment_end_at: stop.appointment_end_at ? new Date(stop.appointment_end_at).toISOString() : undefined,
-          lumper_required: stop.lumper_required,
+          // Stop booleans: RHF hidden inputs read as "" when empty → never send "" for a boolean field
+          // (backend Zod boolean rejects the string). Coerce to a strict boolean on the wire. (GUARD live
+          // repro: stops posted is_tarp_stop:"" → 400 "expected boolean, received string".)
+          lumper_required: stop.lumper_required === true || (stop.lumper_required as unknown) === "true",
           lumper_paid_by: stop.lumper_paid_by,
           lumper_amount_cents: Number(stop.lumper_amount_cents || 0),
-          is_tarp_stop: stop.is_tarp_stop,
+          is_tarp_stop: stop.is_tarp_stop === true || (stop.is_tarp_stop as unknown) === "true",
           tarp_count: Number(stop.tarp_count || 0),
           stop_notes: stop.stop_notes || undefined,
           site_contact_name: stop.site_contact_name || undefined,
