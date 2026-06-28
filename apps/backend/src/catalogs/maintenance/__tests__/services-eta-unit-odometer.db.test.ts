@@ -47,8 +47,10 @@ describeIntegration("services/eta odometer (telematics.vehicle_latest_position, 
     const cols = await db.query<{ column_name: string }>(
       `SELECT column_name FROM information_schema.columns
        WHERE table_schema='mdata' AND table_name='units'
-         AND column_name IN ('hub_meter_current','operating_company_id','odometer_mi')`
+         AND column_name IN ('hub_meter_current','operating_company_id')`
+      // odometer_mi intentionally omitted: it is a REAL column added by migration
+      // 202606280001_mdata_units_odometer_mi.sql — not phantom.
     );
-    expect(cols.rows.map((r) => r.column_name)).toEqual([]); // none exist → the old query was guaranteed 42703
+    expect(cols.rows.map((r) => r.column_name)).toEqual([]); // hub_meter_current + operating_company_id still phantom
   });
 });

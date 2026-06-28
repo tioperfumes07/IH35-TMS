@@ -124,6 +124,9 @@ jobs:
       - name: Verify content drift check
         run: npm run verify:content-drift-check
 
+      - name: Verify schema parity (fresh-DB vs baseline — catches missing migrations and untracked ALTERs)
+        run: npm run verify:schema-parity
+
       - name: Verify applied migrations immutable
         run: npm run verify:applied-migrations-immutable
 

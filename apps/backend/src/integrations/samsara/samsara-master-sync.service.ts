@@ -208,6 +208,7 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
     return { added: 0, updated: 0, removed: 0, errors };
   }
   const hasUnitsVehicleId = await columnExists(client, "mdata", "units", "samsara_vehicle_id");
+  const hasUnitsOdometerMi = await columnExists(client, "mdata", "units", "odometer_mi");
 
   const vehicles = await api.listVehicles();
   let added = 0;
@@ -324,6 +325,10 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
       );
 
       if (existingUnit.rows[0]) {
+        const unitId = String(existingUnit.rows[0].id);
+        const odoClause = hasUnitsOdometerMi
+          ? `, odometer_mi = (SELECT odometer_mi FROM telematics.vehicle_latest_position WHERE unit_id = $7::uuid AND operating_company_id = $8::uuid LIMIT 1)`
+          : "";
         await client.query(
           `
             UPDATE mdata.units
@@ -334,22 +339,19 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
                 license_plate = COALESCE($5, license_plate),
                 license_state = COALESCE($6, license_state),
                 updated_at = now()
+                ${odoClause}
             WHERE id = $7::uuid
           `,
-          [
-            vinRaw,
-            make,
-            model,
-            Number.isFinite(year as number) ? year : null,
-            licensePlate,
-            licenseState,
-            String(existingUnit.rows[0].id),
-          ]
+          hasUnitsOdometerMi
+            ? [vinRaw, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, unitId, operatingCompanyId]
+            : [vinRaw, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, unitId]
         );
       } else {
         const numRes = await client.query(`SELECT gen_random_uuid() AS g`);
         const suffix = String(numRes.rows[0]?.g ?? v.id).replace(/-/g, "").slice(0, 8);
         const unitNumber = `SAM-${suffix}`;
+        const insertOdoCol = hasUnitsOdometerMi ? `,\n              odometer_mi` : "";
+        const insertOdoVal = hasUnitsOdometerMi ? `,\n              NULL` : "";
         await client.query(
           `
             INSERT INTO mdata.units (
@@ -363,7 +365,7 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
               owner_company_id,
               currently_leased_to_company_id,
               samsara_vehicle_id,
-              status
+              status${insertOdoCol}
             ) VALUES (
               $1,
               $2,
@@ -375,7 +377,7 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
               $8::uuid,
               $8::uuid,
               $9,
-              'InService'
+              'InService'${insertOdoVal}
             )
           `,
           [unitNumber, vinRaw ?? `SAMVIN-${suffix}`, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, operatingCompanyId, v.id]
