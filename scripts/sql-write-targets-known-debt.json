@@ -25,8 +25,6 @@
     "apps/backend/src/maintenance/two-section-service.ts: INSERT INTO accounting.expenses \u2014 column \"linked_work_order_uuid\" does not exist",
     "apps/backend/src/maintenance/two-section-service.ts: INSERT INTO accounting.expenses \u2014 column \"total_amount\" does not exist",
     "apps/backend/src/maintenance/vehicles.routes.ts: INSERT INTO mdata.units \u2014 column \"mileage\" does not exist",
-    "apps/backend/src/owner/todays-attention/routes.ts: INSERT INTO audit.audit_log \u2014 TABLE not in migrated schema",
-    "apps/backend/src/reports/ifta/quarterly-preparer.service.ts: INSERT INTO audit.audit_log \u2014 TABLE not in migrated schema",
     "apps/backend/src/routes/safety/dot-inspections.ts: INSERT INTO safety.csa_scores \u2014 column \"score_date\" does not exist",
     "apps/backend/src/routes/safety/dot-inspections.ts: INSERT INTO safety.csa_scores \u2014 column \"source_dot_inspection_count\" does not exist",
     "apps/backend/src/routes/safety/dot-inspections.ts: INSERT INTO safety.csa_scores \u2014 column \"total_points\" does not exist",
