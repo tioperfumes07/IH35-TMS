@@ -41,6 +41,7 @@ type CashAdvanceRequestLockRow = {
   requested_amount_cents: string | number;
   expires_at: string;
   is_above_policy: boolean;
+  load_id: string | null | undefined;
 };
 
 async function resolveActorLabel(client: QueryableClient, userUuid: string): Promise<string | null> {
