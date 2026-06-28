@@ -4,7 +4,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { getAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../api/account-type-catalog";
 
 const STATEMENT_COLOR: Record<string, string> = {
-  "Balance Sheet": "bg-sky-100 text-sky-800",
+  "Balance Sheet": "bg-slate-100 text-slate-700",
   "Profit and Loss": "bg-emerald-100 text-emerald-800",
   "Profit & Loss": "bg-emerald-100 text-emerald-800",
 };
