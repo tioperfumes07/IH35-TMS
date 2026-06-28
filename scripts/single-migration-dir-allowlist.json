@@ -1,0 +1,16 @@
+{
+  "note": "Known orphaned migration files outside db/migrations (ratchet — may only shrink; CC-05 relocates them).",
+  "allow": [
+    "apps/backend/migrations/0167_p7_block_e_notif_prefs.sql",
+    "apps/backend/src/migrations/0392-auto-deductions.sql",
+    "apps/backend/src/migrations/0393-settlement-disputes.sql",
+    "apps/backend/src/migrations/0394-team-splits.sql",
+    "apps/backend/src/migrations/0395-road-service-tickets.sql",
+    "apps/backend/src/migrations/0396-archive-test-users.sql",
+    "apps/backend/src/migrations/0403-onboarding-state.sql",
+    "apps/backend/src/migrations/202606080241-payroll-integration-cache.sql",
+    "apps/backend/src/migrations/202606080242-maintenance-parts-catalog.sql",
+    "apps/backend/src/migrations/202606080243-maintenance-services-catalog.sql",
+    "apps/backend/src/migrations/202606080244-usmca-activation-state.sql"
+  ]
+}
