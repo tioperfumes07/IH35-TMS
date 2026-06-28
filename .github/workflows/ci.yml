@@ -918,6 +918,9 @@ jobs:
       - name: verify:factoring-destructive-actions-have-confirm
         run: npm run verify:factoring-destructive-actions-have-confirm
 
+      - name: verify:factoring-eligibility-filter (backwards 'paid' filter regression guard)
+        run: npm run verify:factoring-eligibility-filter
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 

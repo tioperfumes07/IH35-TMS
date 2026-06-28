@@ -121,7 +121,7 @@ export async function createDraftBatch(
       FROM accounting.invoices i
       WHERE i.operating_company_id = $1::uuid
         AND i.id = ANY($2::uuid[])
-        AND i.status = 'paid'
+        AND i.status IN ('sent', 'partial')
         AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
         AND NOT EXISTS (
           SELECT 1
@@ -357,7 +357,7 @@ export async function listCandidateInvoices(
       FROM accounting.invoices i
       LEFT JOIN mdata.customers c ON c.id = i.customer_id
       WHERE i.operating_company_id = $1::uuid
-        AND i.status = 'paid'
+        AND i.status IN ('sent', 'partial')
         AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
         AND NOT EXISTS (
           SELECT 1
