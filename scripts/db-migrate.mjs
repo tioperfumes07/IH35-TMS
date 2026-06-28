@@ -21,6 +21,62 @@ if (!connectionString) {
   process.exit(1);
 }
 
+// ── PROD-MIGRATE SAFETY GUARD (2026-06-28) ───────────────────────────────────
+// Why: this repo loads .env via dotenv.config() (above) and resolves
+// DATABASE_DIRECT_URL || DATABASE_URL. When .env carries the PROD Neon URL, an
+// inline local DATABASE_URL is silently overridden and `db:migrate` connects to
+// PROD. This guard makes the target EXPLICIT every run and REFUSES the prod
+// endpoint unless ALLOW_PROD_MIGRATE=1 is set on purpose.
+function resolveTargetHost(cs) {
+  try {
+    const u = new URL(cs);
+    if (u.hostname) return u.hostname;
+  } catch {
+    /* not a standard URL — fall through to query-string host */
+  }
+  const m = /[?&]host=([^&\s]+)/.exec(cs);
+  return m ? decodeURIComponent(m[1]) : "";
+}
+function resolveTargetDb(cs) {
+  try {
+    const u = new URL(cs);
+    const p = (u.pathname || "").replace(/^\//, "");
+    if (p) return p;
+  } catch {
+    /* fall through */
+  }
+  const m = /\/([^/?]+)(\?|$)/.exec(cs);
+  return m ? m[1] : "?";
+}
+const RESOLVED_HOST = resolveTargetHost(connectionString);
+const RESOLVED_DB = resolveTargetDb(connectionString);
+// Prod Neon compute endpoint id (pooler + direct share it). Override/extend via
+// PROD_MIGRATE_BLOCKLIST (comma-separated host substrings) if the prod endpoint changes.
+const PROD_HOST_MARKERS = (process.env.PROD_MIGRATE_BLOCKLIST || "ep-broad-block-akykk7bw")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const TARGET_IS_PROD = PROD_HOST_MARKERS.some((m) => RESOLVED_HOST.includes(m));
+console.error(
+  `[db:migrate] target: host=${RESOLVED_HOST || "(local socket)"} db=${RESOLVED_DB}` +
+    (TARGET_IS_PROD ? " [PRODUCTION]" : "")
+);
+if (TARGET_IS_PROD && process.env.ALLOW_PROD_MIGRATE !== "1") {
+  console.error("──────────────────────────────────────────────────────────────");
+  console.error("[db:migrate] REFUSED — resolved host matches the PRODUCTION Neon endpoint.");
+  console.error(`             host=${RESOLVED_HOST}`);
+  console.error("  An inline DATABASE_URL is overridden by .env's DATABASE_DIRECT_URL (dotenv).");
+  console.error("  LOCAL migrate:");
+  console.error("    DATABASE_DIRECT_URL= DATABASE_URL='postgres://<user>@/<db>?host=/tmp&port=5432&sslmode=disable' npm run db:migrate");
+  console.error("  Intentional PROD migrate (ceremony only): set ALLOW_PROD_MIGRATE=1 explicitly.");
+  console.error("──────────────────────────────────────────────────────────────");
+  process.exit(1);
+}
+if (TARGET_IS_PROD && process.env.ALLOW_PROD_MIGRATE === "1") {
+  console.error("[db:migrate] WARNING: ALLOW_PROD_MIGRATE=1 — proceeding against PRODUCTION.");
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const SEARCH_PATH =
   "mdata, dispatch, docs, catalogs, identity, org, integrations, qbo_archive, accounting, banking, factor, documents, pwa, audit, outbox, safety, fuel, driver_finance, maintenance, views, public, email";
 const MIGRATIONS_DIR = path.resolve("db/migrations");
