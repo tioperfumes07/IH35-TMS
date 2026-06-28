@@ -918,6 +918,9 @@ jobs:
       - name: verify:factoring-destructive-actions-have-confirm
         run: npm run verify:factoring-destructive-actions-have-confirm
 
+      - name: verify:bank-feed-category-seed (TRANSP-only scope + suggestion-only guard)
+        run: npm run verify:bank-feed-category-seed
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
