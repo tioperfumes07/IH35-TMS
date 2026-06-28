@@ -13,6 +13,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 const PREPAID_POST_FLAG = "PREPAID_EXPENSES_POST_ENABLED";
@@ -308,6 +309,14 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
            row.amount, row.balance, row.userId]
         );
       }
+
+      await appendCrudAudit(client, user.uuid, "prepaid_asset.created", {
+        asset_id: asset.id,
+        operating_company_id: input.operating_company_id,
+        total_amount_cents: input.total_amount_cents,
+        periods: input.periods,
+        gl_posting_status: "deferred",
+      }, "info", "UI-1-prepaid");
 
       return reply.code(201).send({
         id: asset.id,
