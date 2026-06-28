@@ -1,7 +1,7 @@
 # Bank-Feed Categorize → GL Posting Engine · DESIGN PROPOSAL (Tier-1)
 
-**Date:** 2026-06-27 · **Status:** `[HOLD-FOR-JORGE — TIER 1]`
-**DESIGN-ONLY — NO migration, NO posting code, NO flag flip, NO seed built until Jorge reviews + approves and GUARD verifies on a Neon branch. Never self-merge.**
+**Date:** 2026-06-27 · **Updated:** 2026-06-28 · **Status:** `[HOLD-FOR-JORGE — TIER 1 (Option B)] · §7 ANSWERED`
+**Option B (posting) — HOLD until AF-1 (#1528) merges. TRANSP suggestion-only seed (§7 Q2) approved and building now. No GL writes, no flag flip, no posting code.**
 **Author/Verifier:** Cascade (independently from source, not from recon summary)
 **Related:** PR #1553 (DailyReconPage), PR #1528 (AF-1 — prerequisite), `docs/specs/manual-je-posting-path-divergence-design-2026-06-24.md`
 
@@ -362,14 +362,38 @@ Phase 3 — Option C (follow-on Tier-1, separate sign-off):
 
 ---
 
-## 7. Open Questions for Jorge (5 questions)
+## 7. Open Questions for Jorge — ANSWERED 2026-06-28
 
-1. **AF-1 timeline:** Is PR #1528 approved for merge? Option B cannot safely post per-entity JEs without it.
-2. **`autoCategorize()` quick fix (Option A):** Approve seeding `banking.transaction_categories` with Plaid→COA mappings? The column (`coa_account_id`, migration 0087) already exists and the `information_schema` guard passes — the issue is zero rows in the rules table, not a missing column. Seeding is the fix.
-3. **Cash GL account mapping:** For each of the 5 live bank accounts — does Jorge want to configure the `cash_gl_account_id` link via a UI screen (build required) or via a one-time admin route / SQL (faster)?
-4. **Auto-post rules:** Should the first seed rules be auto-post (no human click needed) or suggestion-only (human confirms each)? QBO recommends suggestion-only until confidence is proven.
-5. **Maker-checker split:** Is Owner + Administrator for the "Post to GL" button acceptable, or does Jorge want Owner-only?
+> Jorge's scope-lock: "Option B does NOT build until #1528 is green and merged. The only piece
+> buildable now is #2 (TRANSP suggestion-only seed). HOLD all B-1..B-10 until AF-1 merges."
+
+| # | Question | Jorge's Answer (2026-06-28) | Status |
+|---|---|---|---|
+| 1 | **AF-1 timeline (#1528)** — approved for merge? | AF-1 is the hard prerequisite. **Option B does NOT build until #1528 is green and merged.** Fix #1528's CI first. | ⚠️ Hard gate — wait for #1528 |
+| 2 | **`autoCategorize()` seed** — approve seeding `banking.transaction_categories`? | **APPROVED** — TRANSP-only, suggestion-only. No auto-categorize that writes GL. Hold TRK/USMCA seeds until AF-1 merges (entity-scope safety). Tier-2/3, no GL writes. Build it + CI guard, ship on green. | ✅ **BUILD NOW** — TRANSP only |
+| 3 | **Cash GL account mapping** — UI setup screen vs. one-time SQL? | **Build the proper UI setup screen.** No one-time SQL / admin-route patch — it must exist permanently for USMCA and future accounts. | 🔒 HOLD — build after AF-1 merges (B-1 migration) |
+| 4 | **Auto-post rules** — auto-post or suggestion-only? | **Suggestion-only.** Per-rule auto-post can be enabled later once accuracy is proven. | ✅ Confirmed: suggestion-only |
+| 5 | **Maker-checker split** — Owner + Administrator or Owner-only for Post to GL? | **As proposed:** Post to GL = Owner + Administrator; Reverse = Owner-only. | ✅ Confirmed: Owner+Admin post, Owner-only reverse |
+
+### Sequencing (as of 2026-06-28, Jorge-locked)
+
+```
+NOW (Tier-2/3, no GL writes):
+  ✅ BUILD: Seed banking.transaction_categories — TRANSP-only, suggestion-only, no auto-post writes.
+             Add CI guard. Ship on green. (This PR.)
+
+GATE — wait for #1528 (AF-1) to be green + merged:
+  🔒 HOLD B-1: banking.bank_accounts.cash_gl_account_id migration
+  🔒 HOLD B-2: banking.bank_transactions.matched_journal_entry_id migration
+  🔒 HOLD B-3..B-8: posting engine, routes, flag, guard
+  🔒 HOLD B-9: accounting.banking_rules seed (all entities, after AF-1)
+  🔒 HOLD B-10: banking.transaction_categories for TRK + USMCA (after AF-1, entity safety)
+  🔒 HOLD: UI setup screen for cash_gl_account_id (Jorge: "must exist permanently")
+  🔒 HOLD: all Option B posting code, flag flips, GL writes
+
+No self-merge. No flag flip. No GL writes. JORGE-APPROVED label required for any Tier-1 item.
+```
 
 ---
 
-*Status: DESIGN PROPOSAL — awaiting Jorge's approval. No code, no migration, no flag change until Jorge replies to §7 and provides Tier-1 sign-off.*
+*Status: §7 answered 2026-06-28. Building TRANSP-only suggestion seed now. All B-1..B-10 HOLD until AF-1 (#1528) merges.*
