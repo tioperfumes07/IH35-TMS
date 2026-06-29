@@ -64,11 +64,21 @@ export async function completeWorkOrderConsole(workOrderId: string, operatingCom
   });
 }
 
-export async function cancelWorkOrderConsole(workOrderId: string, operatingCompanyId: string, cancellation_reason?: string) {
+// Cancel/Void are Owner/Administrator-only on the backend and require a reason (>=3 chars). The WO is
+// never deleted — it is soft-cancelled/voided with the reason captured in the immutable audit trail.
+export async function cancelWorkOrderConsole(workOrderId: string, operatingCompanyId: string, cancellation_reason: string) {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ work_order: WoConsoleRow }>(`/api/v1/work-orders/${encodeURIComponent(workOrderId)}/cancel?${qs.toString()}`, {
     method: "POST",
-    body: { cancellation_reason: cancellation_reason ?? null },
+    body: { cancellation_reason },
+  });
+}
+
+export async function voidWorkOrderConsole(workOrderId: string, operatingCompanyId: string, reason: string) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ work_order: WoConsoleRow }>(`/api/v1/work-orders/${encodeURIComponent(workOrderId)}/void?${qs.toString()}`, {
+    method: "POST",
+    body: { reason },
   });
 }
 

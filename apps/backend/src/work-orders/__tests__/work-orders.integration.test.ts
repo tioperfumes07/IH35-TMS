@@ -109,6 +109,36 @@ describeIntegration("work-orders.routes integration", () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it("POST /api/v1/work-orders/:id/cancel rejects non Owner/Admin (Manager) — cancel is Owner/Admin only", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/work-orders/00000000-0000-4000-8000-000000000999/cancel?operating_company_id=${companyId}`,
+      headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Manager") },
+      payload: { cancellation_reason: "manager should not be allowed" },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("POST /api/v1/work-orders/:id/void rejects non Owner/Admin (Manager) — void is Owner/Admin only", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/work-orders/00000000-0000-4000-8000-000000000999/void?operating_company_id=${companyId}`,
+      headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Manager") },
+      payload: { reason: "manager should not be allowed" },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("POST /api/v1/work-orders/:id/void requires a reason (Owner, empty reason -> 400)", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/work-orders/00000000-0000-4000-8000-000000000999/void?operating_company_id=${companyId}`,
+      headers: { "content-type": "application/json", ...testAuthHeaders() },
+      payload: { reason: "" },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
   it("POST /api/v1/work-orders validates payloads before persistence", async () => {
     const res = await app.inject({
       method: "POST",
