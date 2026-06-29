@@ -8,28 +8,24 @@ export type AccountingSubNavItem = {
 };
 
 /**
- * C7 — QBO 12-item Accounting module sub-nav (exact live order from QBO walkthrough 2026-06-10).
- * Maps to existing TMS routes where they exist; shells route to /accounting/… stubs.
+ * C7 — QBO-parity Accounting sub-nav (SUPERSEDED by the nav-unification, PR #1552 / commit e8933bb7).
+ *
+ * The original C7 design rendered these items through a standalone `QboAccountingSubNav.tsx`
+ * component laid out as a vertical left-rail strip. That component was deliberately deleted in the
+ * nav-unification work and is now CI-enforced absent (`scripts/verify-accounting-nav.mjs` Check 7),
+ * because a left-rail nav strip violates the locked UI rule (CLAUDE.md §7: all nav lives on the top
+ * horizontal bar; the 80px navy sidebar is the ONLY left panel — no second left tree).
+ *
+ * The live, unified accounting chrome is `AccountingSubNavWrapper`, which renders
+ * `ACCOUNTING_CLEAN_TABS` (top tab bar) + `ACCOUNTING_MORE_TABS` (More ▾) + a `+ Create ▾` menu.
+ * Those constants (below) are the single source of truth; the QBO-parity shell routes
+ * (Receipts / Integration transactions / Revenue recognition / Fixed assets / Prepaid expenses /
+ * My accountant) already exist as routed pages wrapped by `AccountingSubNavWrapper`.
+ *
+ * The former `QBO_ACCOUNTING_SUBNAV` array + `QboSubNavItem` type were dead exports (consumed by
+ * nothing after the component's removal) and have been retired to remove schema/nav drift.
+ * Do NOT re-introduce a competing QBO subnav component — see the CI guard above.
  */
-export type QboSubNavItem = {
-  label: string;
-  path: string;
-  isShell?: boolean;
-};
-
-export const QBO_ACCOUNTING_SUBNAV: readonly QboSubNavItem[] = [
-  { label: "Bank transactions",        path: "/banking" },
-  { label: "Integration transactions", path: "/accounting/integration-transactions" },
-  { label: "Receipts",                 path: "/accounting/receipts" },
-  { label: "Reconcile",                path: "/banking/reconcile" },
-  { label: "Rules",                    path: "/banking/categorization-rules" },
-  { label: "Chart of accounts",        path: "/lists/accounting/chart-of-accounts" },
-  { label: "Recurring transactions",   path: "/accounting/recurring-transactions" },
-  { label: "Revenue recognition",      path: "/accounting/revenue-recognition", isShell: true },
-  { label: "Fixed assets",             path: "/accounting/fixed-assets", isShell: true },
-  { label: "Prepaid expenses",         path: "/accounting/prepaid-expenses" },
-  { label: "My accountant",            path: "/accounting/my-accountant", isShell: true },
-] as const;
 
 const GROUP_LABELS: Record<Exclude<AccountingSubNavItem["section"], "direct">, string> = {
   bills: "Bills",
