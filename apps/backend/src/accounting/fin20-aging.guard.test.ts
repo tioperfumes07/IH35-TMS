@@ -38,11 +38,19 @@ describe("FIN-20 AR/AP aging is read-only", () => {
   });
 
   it("is operating_company_id-scoped on every read (no cross-entity bleed)", () => {
-    // every aging/drill query filters by the company param
+    // every live aging/drill query filters by the company param
     const filters = svc.match(/operating_company_id = \$1::uuid/g) ?? [];
     expect(filters.length).toBeGreaterThanOrEqual(4);
     // and the row-level scope GUC is set before reading
     expect(svc).toContain("set_config('app.operating_company_id'");
+  });
+
+  it("reconstructs TRUE historical aging via the opco-scoped as-of functions for past dates", () => {
+    // a past as_of date routes to the parameterized, opco-scoped reconstruction functions
+    expect(svc).toContain("accounting.ar_aging_as_of($1::uuid, $2::date)");
+    expect(svc).toContain("accounting.ap_aging_as_of($1::uuid, $2::date)");
+    // and the today-vs-historical branch is driven by isHistorical (not CURRENT_DATE everywhere)
+    expect(svc).toContain("isHistorical(input.as_of_date)");
   });
 });
 

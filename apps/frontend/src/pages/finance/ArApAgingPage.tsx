@@ -52,10 +52,10 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
 
 // ---- Drill panels (read-only) ---------------------------------------------------------------
 
-function ArInvoicesDrill({ operatingCompanyId, customer }: { operatingCompanyId: string; customer: ArAgingCustomerRow }) {
+function ArInvoicesDrill({ operatingCompanyId, customer, asOfDate }: { operatingCompanyId: string; customer: ArAgingCustomerRow; asOfDate: string }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["fin20-ar-invoices", operatingCompanyId, customer.customer_id],
-    queryFn: () => getArAgingInvoices(operatingCompanyId, customer.customer_id),
+    queryKey: ["fin20-ar-invoices", operatingCompanyId, customer.customer_id, asOfDate],
+    queryFn: () => getArAgingInvoices(operatingCompanyId, customer.customer_id, asOfDate),
   });
   const invoices = data?.invoices ?? [];
   return (
@@ -105,10 +105,10 @@ function ArInvoicesDrill({ operatingCompanyId, customer }: { operatingCompanyId:
   );
 }
 
-function ApBillsDrill({ operatingCompanyId, vendor }: { operatingCompanyId: string; vendor: ApAgingVendorRow }) {
+function ApBillsDrill({ operatingCompanyId, vendor, asOfDate }: { operatingCompanyId: string; vendor: ApAgingVendorRow; asOfDate: string }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["fin20-ap-bills", operatingCompanyId, vendor.vendor_id],
-    queryFn: () => getApAgingBills(operatingCompanyId, vendor.vendor_id),
+    queryKey: ["fin20-ap-bills", operatingCompanyId, vendor.vendor_id, asOfDate],
+    queryFn: () => getApAgingBills(operatingCompanyId, vendor.vendor_id, asOfDate),
   });
   const bills = data?.bills ?? [];
   return (
@@ -166,11 +166,13 @@ export function ArApAgingPage() {
   const { enabled, loading: flagLoading } = useFeatureFlag(AR_AP_AGING_UI_FLAG, operatingCompanyId || undefined);
 
   const [mode, setMode] = useState<Mode>("ar");
-  // Aging is ALWAYS as-of today: views.ar_aging/ap_aging and the drill queries compute buckets at
-  // CURRENT_DATE, so there is no historical snapshot to select. No backdated as-of input is exposed
-  // (a past date would mislead at close by stamping today's aging with an old date).
-  const asOfDate = todayIso();
+  // TRUE historical as-of: today reads the live canonical views; a PAST date reconstructs each
+  // invoice/bill's open balance AS OF that date via accounting.ar_aging_as_of / ap_aging_as_of
+  // (migration 202606290040). Future dates are clamped to today.
+  const today = todayIso();
+  const [asOfDate, setAsOfDate] = useState<string>(today);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const isHistorical = asOfDate < today;
 
   const queryReady = Boolean(operatingCompanyId) && enabled;
 
@@ -240,14 +242,23 @@ export function ArApAgingPage() {
     <div className="space-y-4">
       <PageHeader
         title="AR / AP Aging"
-        subtitle="Accounts receivable & payable aging as of today (read-only, per entity)"
+        subtitle="Accounts receivable & payable aging, as of any date (read-only, per entity)"
         actions={
           <div className="flex flex-wrap items-end gap-2 print:hidden">
             <div className="flex flex-col">
               <span className="text-[11px] font-medium text-gray-500">As of</span>
-              <span className="h-9 px-2 inline-flex items-center text-[13px] rounded border border-gray-200 bg-gray-50 text-gray-700 tabular-nums">
-                {fmtDate(asOfDate)} (today)
-              </span>
+              <input
+                type="date"
+                value={asOfDate}
+                max={today}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  // Clamp to today; ignore empties so the report always has a valid as-of.
+                  setAsOfDate(v && v <= today ? v : today);
+                  setExpanded(null);
+                }}
+                className="h-9 px-2 text-[13px] rounded border border-gray-300 bg-white text-gray-700 tabular-nums"
+              />
             </div>
             <button
               type="button"
@@ -293,8 +304,10 @@ export function ArApAgingPage() {
       </div>
 
       <p className="text-xs text-gray-400">
-        Aging as of today ({fmtDate(asOfDate)}), computed live from the canonical ledger views. Click a row to drill
-        into open {mode === "ar" ? "invoices" : "bills"}.
+        {isHistorical
+          ? `Historical aging as of ${fmtDate(asOfDate)} — each ${mode === "ar" ? "invoice" : "bill"}'s open balance reconstructed from payments dated on or before that date.`
+          : `Aging as of today (${fmtDate(asOfDate)}), computed live from the canonical ledger views.`}{" "}
+        Click a row to drill into open {mode === "ar" ? "invoices" : "bills"}.
       </p>
 
       {!operatingCompanyId ? (
@@ -338,7 +351,7 @@ export function ArApAgingPage() {
                       ))}
                     </tr>
                     {expanded === r.customer_id && (
-                      <ArInvoicesDrill operatingCompanyId={operatingCompanyId} customer={r} />
+                      <ArInvoicesDrill operatingCompanyId={operatingCompanyId} customer={r} asOfDate={asOfDate} />
                     )}
                   </Fragment>
                 ))
@@ -358,7 +371,7 @@ export function ArApAgingPage() {
                       ))}
                     </tr>
                     {expanded === r.vendor_id && (
-                      <ApBillsDrill operatingCompanyId={operatingCompanyId} vendor={r} />
+                      <ApBillsDrill operatingCompanyId={operatingCompanyId} vendor={r} asOfDate={asOfDate} />
                     )}
                   </Fragment>
                 ))

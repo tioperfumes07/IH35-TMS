@@ -44,10 +44,20 @@ const summaryQuerySchema = companyQuerySchema.extend({
 
 const arDrillQuerySchema = companyQuerySchema.extend({
   customer_id: z.string().uuid(),
+  // Optional as-of date — when in the past, the drill reconstructs each invoice's open balance AS OF
+  // that date (TRUE historical); omitted/today stays live.
+  as_of_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 const apDrillQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().min(1).max(256),
+  as_of_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 export async function registerFin20AgingRoutes(app: FastifyInstance) {
@@ -85,6 +95,7 @@ export async function registerFin20AgingRoutes(app: FastifyInstance) {
       userId: user.uuid,
       operating_company_id: query.data.operating_company_id,
       customer_id: query.data.customer_id,
+      as_of_date: query.data.as_of_date,
     });
     return reply.code(200).send({ invoices });
   });
@@ -123,6 +134,7 @@ export async function registerFin20AgingRoutes(app: FastifyInstance) {
       userId: user.uuid,
       operating_company_id: query.data.operating_company_id,
       vendor_id: query.data.vendor_id,
+      as_of_date: query.data.as_of_date,
     });
     return reply.code(200).send({ bills });
   });

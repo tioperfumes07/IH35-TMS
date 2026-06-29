@@ -1,12 +1,19 @@
 // FIN-20 — AR / AP aging (READ-ONLY).
 //
-// Reads the canonical, opco-scoped aging summaries straight from `views.ar_aging` / `views.ap_aging`
-// (both security_invoker=true, RLS-safe; buckets computed at CURRENT_DATE inside the view). Drill-down
-// reads the open source rows (accounting.invoices / accounting.bills) for display only. NO new aging
-// math is invented here and NOTHING is written — every statement is a SELECT.
+// Today (as_of = today): reads the canonical, opco-scoped aging summaries straight from
+// `views.ar_aging` / `views.ap_aging` (both security_invoker=true, RLS-safe; buckets computed at
+// CURRENT_DATE inside the view). Drill-down reads the open source rows for display.
 //
-// Buckets (as defined by the views): current | 1-30 | 31-60 | 61-90 | 91+ days past due, plus the
-// per-row open total. Money is integer cents.
+// TRUE HISTORICAL (as_of < today): reads the parameterized table functions
+// `accounting.ar_aging_as_of(opco, as_of)` / `accounting.ap_aging_as_of(opco, as_of)` (migration
+// 202606290040), which RECONSTRUCT each invoice/bill's open balance AS OF the chosen past date from
+// the dated application rows (payments.payment_date / bill_payments.payment_date, with point-in-time
+// awareness of voids/reversals). This answers "what was open as of last month-end" — the QBO/NetSuite
+// report FIN-20 #1643 deferred. The drill queries reconstruct the same open-as-of per row.
+//
+// NO new aging math is invented in TS and NOTHING is written — every statement is a SELECT (or a
+// SELECT over a STABLE read-only function). Buckets: current | 1-30 | 31-60 | 61-90 | 91+ days past
+// due, plus the per-row open total. Money is integer cents.
 
 import { withCurrentUser } from "../auth/db.js";
 
@@ -95,6 +102,17 @@ async function scopeCompany(client: { query: (sql: string, values?: unknown[]) =
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// A true historical request is a valid YYYY-MM-DD strictly before today. Today (or anything not a
+// past date) stays on the live canonical views; a past date reconstructs open-as-of via the
+// accounting.*_aging_as_of functions. A future date is never historical (falls back to live/today).
+function isHistorical(asOfDate: string | undefined | null): boolean {
+  return typeof asOfDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(asOfDate) && asOfDate < todayIsoDate();
+}
+
 export async function getArAgingSummary(input: {
   userId: string;
   operating_company_id: string;
@@ -103,25 +121,45 @@ export async function getArAgingSummary(input: {
   return withCurrentUser(input.userId, async (client) => {
     await scopeCompany(client, input.operating_company_id);
 
-    const res = await client.query<Record<string, unknown>>(
-      `
-        SELECT
-          customer_id::text       AS customer_id,
-          COALESCE(customer_name, '') AS customer_name,
-          open_invoice_count::bigint  AS open_invoice_count,
-          current_cents::bigint       AS current_cents,
-          bucket_1_30_cents::bigint   AS bucket_1_30_cents,
-          bucket_31_60_cents::bigint  AS bucket_31_60_cents,
-          bucket_61_90_cents::bigint  AS bucket_61_90_cents,
-          bucket_91_plus_cents::bigint AS bucket_91_plus_cents,
-          total_open_cents::bigint    AS total_open_cents
-        FROM views.ar_aging
-        WHERE operating_company_id = $1::uuid
-          AND total_open_cents > 0
-        ORDER BY total_open_cents DESC, customer_name ASC
-      `,
-      [input.operating_company_id]
-    );
+    const res = isHistorical(input.as_of_date)
+      ? await client.query<Record<string, unknown>>(
+          // TRUE HISTORICAL: open balance reconstructed AS OF input.as_of_date.
+          `
+            SELECT
+              customer_id::text       AS customer_id,
+              COALESCE(customer_name, '') AS customer_name,
+              open_invoice_count::bigint  AS open_invoice_count,
+              current_cents::bigint       AS current_cents,
+              bucket_1_30_cents::bigint   AS bucket_1_30_cents,
+              bucket_31_60_cents::bigint  AS bucket_31_60_cents,
+              bucket_61_90_cents::bigint  AS bucket_61_90_cents,
+              bucket_91_plus_cents::bigint AS bucket_91_plus_cents,
+              total_open_cents::bigint    AS total_open_cents
+            FROM accounting.ar_aging_as_of($1::uuid, $2::date)
+            WHERE total_open_cents > 0
+            ORDER BY total_open_cents DESC, customer_name ASC
+          `,
+          [input.operating_company_id, input.as_of_date]
+        )
+      : await client.query<Record<string, unknown>>(
+          `
+            SELECT
+              customer_id::text       AS customer_id,
+              COALESCE(customer_name, '') AS customer_name,
+              open_invoice_count::bigint  AS open_invoice_count,
+              current_cents::bigint       AS current_cents,
+              bucket_1_30_cents::bigint   AS bucket_1_30_cents,
+              bucket_31_60_cents::bigint  AS bucket_31_60_cents,
+              bucket_61_90_cents::bigint  AS bucket_61_90_cents,
+              bucket_91_plus_cents::bigint AS bucket_91_plus_cents,
+              total_open_cents::bigint    AS total_open_cents
+            FROM views.ar_aging
+            WHERE operating_company_id = $1::uuid
+              AND total_open_cents > 0
+            ORDER BY total_open_cents DESC, customer_name ASC
+          `,
+          [input.operating_company_id]
+        );
 
     const customers: ArAgingCustomerRow[] = res.rows.map((r) => ({
       customer_id: String(r.customer_id),
@@ -148,25 +186,45 @@ export async function getApAgingSummary(input: {
   return withCurrentUser(input.userId, async (client) => {
     await scopeCompany(client, input.operating_company_id);
 
-    const res = await client.query<Record<string, unknown>>(
-      `
-        SELECT
-          vendor_id::text         AS vendor_id,
-          COALESCE(vendor_name, 'Unknown vendor') AS vendor_name,
-          open_bill_count::bigint     AS open_bill_count,
-          current_cents::bigint       AS current_cents,
-          bucket_1_30_cents::bigint   AS bucket_1_30_cents,
-          bucket_31_60_cents::bigint  AS bucket_31_60_cents,
-          bucket_61_90_cents::bigint  AS bucket_61_90_cents,
-          bucket_91_plus_cents::bigint AS bucket_91_plus_cents,
-          total_open_cents::bigint    AS total_open_cents
-        FROM views.ap_aging
-        WHERE operating_company_id = $1::uuid
-          AND total_open_cents > 0
-        ORDER BY total_open_cents DESC, vendor_name ASC
-      `,
-      [input.operating_company_id]
-    );
+    const res = isHistorical(input.as_of_date)
+      ? await client.query<Record<string, unknown>>(
+          // TRUE HISTORICAL: open balance reconstructed AS OF input.as_of_date.
+          `
+            SELECT
+              vendor_id::text         AS vendor_id,
+              COALESCE(vendor_name, 'Unknown vendor') AS vendor_name,
+              open_bill_count::bigint     AS open_bill_count,
+              current_cents::bigint       AS current_cents,
+              bucket_1_30_cents::bigint   AS bucket_1_30_cents,
+              bucket_31_60_cents::bigint  AS bucket_31_60_cents,
+              bucket_61_90_cents::bigint  AS bucket_61_90_cents,
+              bucket_91_plus_cents::bigint AS bucket_91_plus_cents,
+              total_open_cents::bigint    AS total_open_cents
+            FROM accounting.ap_aging_as_of($1::uuid, $2::date)
+            WHERE total_open_cents > 0
+            ORDER BY total_open_cents DESC, vendor_name ASC
+          `,
+          [input.operating_company_id, input.as_of_date]
+        )
+      : await client.query<Record<string, unknown>>(
+          `
+            SELECT
+              vendor_id::text         AS vendor_id,
+              COALESCE(vendor_name, 'Unknown vendor') AS vendor_name,
+              open_bill_count::bigint     AS open_bill_count,
+              current_cents::bigint       AS current_cents,
+              bucket_1_30_cents::bigint   AS bucket_1_30_cents,
+              bucket_31_60_cents::bigint  AS bucket_31_60_cents,
+              bucket_61_90_cents::bigint  AS bucket_61_90_cents,
+              bucket_91_plus_cents::bigint AS bucket_91_plus_cents,
+              total_open_cents::bigint    AS total_open_cents
+            FROM views.ap_aging
+            WHERE operating_company_id = $1::uuid
+              AND total_open_cents > 0
+            ORDER BY total_open_cents DESC, vendor_name ASC
+          `,
+          [input.operating_company_id]
+        );
 
     const vendors: ApAgingVendorRow[] = res.rows.map((r) => ({
       vendor_id: String(r.vendor_id),
@@ -191,32 +249,73 @@ export async function getArAgingCustomerInvoices(input: {
   userId: string;
   operating_company_id: string;
   customer_id: string;
+  as_of_date?: string;
 }): Promise<ArAgingInvoiceRow[]> {
   return withCurrentUser(input.userId, async (client) => {
     await scopeCompany(client, input.operating_company_id);
 
-    const res = await client.query<Record<string, unknown>>(
-      `
-        SELECT
-          i.id::text          AS invoice_id,
-          i.display_id        AS display_id,
-          i.status            AS status,
-          i.issue_date::text  AS issue_date,
-          i.due_date::text    AS due_date,
-          i.total_cents::bigint        AS total_cents,
-          i.amount_paid_cents::bigint  AS amount_paid_cents,
-          i.amount_open_cents::bigint  AS amount_open_cents,
-          GREATEST((CURRENT_DATE - i.due_date), 0)::int AS days_overdue
-        FROM accounting.invoices i
-        WHERE i.operating_company_id = $1::uuid
-          AND i.customer_id = $2::uuid
-          AND i.voided_at IS NULL
-          AND i.status IN ('sent', 'partial')
-          AND i.amount_open_cents > 0
-        ORDER BY i.due_date ASC, i.display_id ASC
-      `,
-      [input.operating_company_id, input.customer_id]
-    );
+    const res = isHistorical(input.as_of_date)
+      ? await client.query<Record<string, unknown>>(
+          // TRUE HISTORICAL drill: per-invoice open balance reconstructed AS OF $3 (mirrors the
+          // accounting.ar_aging_as_of math). amount_paid_cents / amount_open_cents are as-of, not live.
+          `
+            WITH inv AS (
+              SELECT
+                i.id, i.display_id, i.status, i.issue_date, i.due_date, i.total_cents,
+                COALESCE((
+                  SELECT SUM(pa.amount_cents)
+                  FROM accounting.payment_applications pa
+                  JOIN accounting.payments p ON p.id = pa.payment_id
+                  WHERE pa.invoice_id = i.id
+                    AND p.payment_date <= $3::date
+                    AND (p.voided_at IS NULL OR p.voided_at::date > $3::date)
+                    AND (pa.unapplied_at IS NULL OR pa.unapplied_at::date > $3::date)
+                ), 0)::bigint AS paid_as_of
+              FROM accounting.invoices i
+              WHERE i.operating_company_id = $1::uuid
+                AND i.customer_id = $2::uuid
+                AND i.issue_date <= $3::date
+                AND i.status NOT IN ('draft', 'factored')
+                AND (i.voided_at IS NULL OR i.voided_at::date > $3::date)
+            )
+            SELECT
+              inv.id::text         AS invoice_id,
+              inv.display_id       AS display_id,
+              inv.status           AS status,
+              inv.issue_date::text AS issue_date,
+              inv.due_date::text   AS due_date,
+              inv.total_cents::bigint AS total_cents,
+              inv.paid_as_of::bigint  AS amount_paid_cents,
+              GREATEST(inv.total_cents - inv.paid_as_of, 0)::bigint AS amount_open_cents,
+              GREATEST(($3::date - inv.due_date), 0)::int AS days_overdue
+            FROM inv
+            WHERE GREATEST(inv.total_cents - inv.paid_as_of, 0) > 0
+            ORDER BY inv.due_date ASC, inv.display_id ASC
+          `,
+          [input.operating_company_id, input.customer_id, input.as_of_date]
+        )
+      : await client.query<Record<string, unknown>>(
+          `
+            SELECT
+              i.id::text          AS invoice_id,
+              i.display_id        AS display_id,
+              i.status            AS status,
+              i.issue_date::text  AS issue_date,
+              i.due_date::text    AS due_date,
+              i.total_cents::bigint        AS total_cents,
+              i.amount_paid_cents::bigint  AS amount_paid_cents,
+              i.amount_open_cents::bigint  AS amount_open_cents,
+              GREATEST((CURRENT_DATE - i.due_date), 0)::int AS days_overdue
+            FROM accounting.invoices i
+            WHERE i.operating_company_id = $1::uuid
+              AND i.customer_id = $2::uuid
+              AND i.voided_at IS NULL
+              AND i.status IN ('sent', 'partial')
+              AND i.amount_open_cents > 0
+            ORDER BY i.due_date ASC, i.display_id ASC
+          `,
+          [input.operating_company_id, input.customer_id]
+        );
 
     return res.rows.map((r) => ({
       invoice_id: String(r.invoice_id),
@@ -238,33 +337,73 @@ export async function getApAgingVendorBills(input: {
   userId: string;
   operating_company_id: string;
   vendor_id: string;
+  as_of_date?: string;
 }): Promise<ApAgingBillRow[]> {
   return withCurrentUser(input.userId, async (client) => {
     await scopeCompany(client, input.operating_company_id);
 
-    const res = await client.query<Record<string, unknown>>(
-      `
-        SELECT
-          b.id::text         AS bill_id,
-          b.bill_number      AS bill_number,
-          b.status           AS status,
-          b.bill_date::text  AS bill_date,
-          b.due_date::text   AS due_date,
-          b.memo             AS memo,
-          COALESCE(b.amount_cents, 0)::bigint AS amount_cents,
-          COALESCE(b.paid_cents, 0)::bigint   AS paid_cents,
-          GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::bigint AS open_cents,
-          GREATEST((CURRENT_DATE - COALESCE(b.due_date, b.bill_date)), 0)::int AS days_overdue
-        FROM accounting.bills b
-        WHERE b.operating_company_id = $1::uuid
-          AND b.revoked_at IS NULL
-          AND b.status IN ('unpaid', 'partial')
-          AND GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0) > 0
-          AND COALESCE(NULLIF(TRIM(b.vendor_uuid), ''), b.vendor_id, 'unknown') = $2::text
-        ORDER BY COALESCE(b.due_date, b.bill_date) ASC, b.bill_number ASC
-      `,
-      [input.operating_company_id, input.vendor_id]
-    );
+    const res = isHistorical(input.as_of_date)
+      ? await client.query<Record<string, unknown>>(
+          // TRUE HISTORICAL drill: per-bill open balance reconstructed AS OF $3 (mirrors the
+          // accounting.ap_aging_as_of math). paid_cents / open_cents are as-of, not live.
+          `
+            WITH bill AS (
+              SELECT
+                b.id, b.bill_number, b.status, b.bill_date, b.due_date, b.memo,
+                COALESCE(b.amount_cents, 0)::bigint AS amount_cents,
+                COALESCE((
+                  SELECT SUM(COALESCE(bp.amount_cents, 0))
+                  FROM accounting.bill_payments bp
+                  WHERE bp.bill_id = b.id
+                    AND bp.payment_date <= $3::date
+                    AND (bp.revoked_at IS NULL OR bp.revoked_at::date > $3::date)
+                ), 0)::bigint AS paid_as_of
+              FROM accounting.bills b
+              WHERE b.operating_company_id = $1::uuid
+                AND b.bill_date <= $3::date
+                AND (b.revoked_at IS NULL OR b.revoked_at::date > $3::date)
+                AND COALESCE(NULLIF(TRIM(b.vendor_uuid), ''), b.vendor_id, 'unknown') = $2::text
+            )
+            SELECT
+              bill.id::text        AS bill_id,
+              bill.bill_number     AS bill_number,
+              bill.status          AS status,
+              bill.bill_date::text AS bill_date,
+              bill.due_date::text  AS due_date,
+              bill.memo            AS memo,
+              bill.amount_cents    AS amount_cents,
+              bill.paid_as_of      AS paid_cents,
+              GREATEST(bill.amount_cents - bill.paid_as_of, 0)::bigint AS open_cents,
+              GREATEST(($3::date - COALESCE(bill.due_date, bill.bill_date)), 0)::int AS days_overdue
+            FROM bill
+            WHERE GREATEST(bill.amount_cents - bill.paid_as_of, 0) > 0
+            ORDER BY COALESCE(bill.due_date, bill.bill_date) ASC, bill.bill_number ASC
+          `,
+          [input.operating_company_id, input.vendor_id, input.as_of_date]
+        )
+      : await client.query<Record<string, unknown>>(
+          `
+            SELECT
+              b.id::text         AS bill_id,
+              b.bill_number      AS bill_number,
+              b.status           AS status,
+              b.bill_date::text  AS bill_date,
+              b.due_date::text   AS due_date,
+              b.memo             AS memo,
+              COALESCE(b.amount_cents, 0)::bigint AS amount_cents,
+              COALESCE(b.paid_cents, 0)::bigint   AS paid_cents,
+              GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::bigint AS open_cents,
+              GREATEST((CURRENT_DATE - COALESCE(b.due_date, b.bill_date)), 0)::int AS days_overdue
+            FROM accounting.bills b
+            WHERE b.operating_company_id = $1::uuid
+              AND b.revoked_at IS NULL
+              AND b.status IN ('unpaid', 'partial')
+              AND GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0) > 0
+              AND COALESCE(NULLIF(TRIM(b.vendor_uuid), ''), b.vendor_id, 'unknown') = $2::text
+            ORDER BY COALESCE(b.due_date, b.bill_date) ASC, b.bill_number ASC
+          `,
+          [input.operating_company_id, input.vendor_id]
+        );
 
     return res.rows.map((r) => ({
       bill_id: String(r.bill_id),
