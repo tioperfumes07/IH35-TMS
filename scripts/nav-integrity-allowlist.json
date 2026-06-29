@@ -471,6 +471,10 @@
     {
       "path": "/accounting/qbo-reconciliation",
       "reason": "CASCADE-14 read-only Finance-Hub page, behind OFF flag TMS_QBO_RECON_UI_ENABLED; subnav wiring deferred until flag ON"
+    },
+    {
+      "path": "/finance/statements",
+      "reason": "FIN-19 read-only Finance-Hub page, behind OFF flag FINANCE_STATEMENTS_UI_ENABLED; subnav wiring deferred until flag ON"
     }
   ]
 }
