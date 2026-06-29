@@ -173,6 +173,8 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
         `INSERT INTO legal.contract_templates
            (operating_company_id, template_code, version, display_name_en, display_name_es, category, content_html_en, content_html_es)
          VALUES ($1::uuid,'driver_deduction_auth',1,'Driver Deduction Auth','Autorizacion','hr','<p>en</p>','<p>es</p>')
+         ON CONFLICT (operating_company_id, template_code, version)
+           DO UPDATE SET display_name_en = EXCLUDED.display_name_en
          RETURNING id::text`,
         [companyId]
       );
