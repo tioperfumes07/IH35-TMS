@@ -8,6 +8,11 @@ declare module "*.tsx?raw" {
   export default content;
 }
 
+declare module "*.ts?raw" {
+  const content: string;
+  export default content;
+}
+
 // Lazy-import shim for exceljs (installed at runtime, not as a dev dependency)
 declare module "exceljs" {
   const ExcelJS: {
