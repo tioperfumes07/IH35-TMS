@@ -37,12 +37,20 @@ function isOwnerOrAdmin(role: string) {
 }
 
 function mapServiceError(error: unknown, reply: FastifyReply) {
-  const message = String((error as Error)?.message ?? "unknown_error");
+  const err = error as { message?: string; code?: string; constraint?: string };
+  const message = String(err?.message ?? "unknown_error");
   if (message === "settlement_not_found") return reply.code(404).send({ error: message });
   if (message === "driver_bank_configuration_required") return reply.code(409).send({ error: message });
   if (message === "settlement_must_be_final") return reply.code(409).send({ error: message });
   if (message === "invalid_payment_state_transition") return reply.code(409).send({ error: message });
-  return reply.code(500).send({ error: "settlement_payment_operation_failed", message });
+  // CHAIN-07: surface the Postgres error code + constraint name (NEVER `detail`, which can carry
+  // row data) so an otherwise-opaque settlement-payment 500 is diagnosable instead of a bare envelope.
+  return reply.code(500).send({
+    error: "settlement_payment_operation_failed",
+    message,
+    ...(typeof err?.code === "string" && err.code ? { pg_code: err.code } : {}),
+    ...(typeof err?.constraint === "string" && err.constraint ? { pg_constraint: err.constraint } : {}),
+  });
 }
 
 export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
