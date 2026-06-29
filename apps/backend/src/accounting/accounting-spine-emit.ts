@@ -25,7 +25,9 @@ export type AccountingSpineEvent =
   | "settlement.reversed"
   // FIN-21 (appended additively): prepaid-amortization + fixed-asset-depreciation GL posting.
   // Emitted only for unit-linked assets (subject_type='unit' is allowlisted by event_log).
-  | "amortization.posted";
+  | "amortization.posted"
+  // FIN-22 (appended additively): lessor lease ASC 842 GL posting event. One event type for the block.
+  | "lease.posted";
 
 export async function emitAccountingSpineEvent(
   client: DbClient,
