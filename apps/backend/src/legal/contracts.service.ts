@@ -6,6 +6,8 @@ import { renderSignedContractPdf } from "./pdf-renderer.service.js";
 import { getR2BucketName } from "../storage/r2-client.js";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { validateFilledVariablesAgainstSchema } from "./templates.service.js";
+import { applySignedOperationalLinks } from "./signed-links.service.js";
+import { applySignedFinanceHandoff } from "./signed-finance-handoff.service.js";
 
 type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -792,6 +794,34 @@ export async function completePublicSigning(
       ipAddress: auditMeta.ipAddress ?? null,
       userAgent: auditMeta.userAgent ?? null,
     });
+
+    // Phase 4 (operational, ON) + Phase 5 (Option-B financial handoff — link+consent+
+    // event only, NO posting). Best-effort: a link/handoff failure must not void a
+    // completed signature, but is surfaced in logs.
+    try {
+      await applySignedOperationalLinks(client, {
+        operatingCompanyId: String(token.operating_company_id),
+        contractInstanceId: String(token.contract_instance_id),
+        signedAttachmentId: signedAttachmentId ? String(signedAttachmentId) : null,
+        signedR2Key: r2ObjectKey,
+        signedFileName: pdf.filename,
+        actorUserId: token.created_by_user_id ? String(token.created_by_user_id) : null,
+      });
+      await applySignedFinanceHandoff(client, {
+        operatingCompanyId: String(token.operating_company_id),
+        contractInstanceId: String(token.contract_instance_id),
+        actorUserId: token.created_by_user_id ? String(token.created_by_user_id) : null,
+      });
+    } catch (linkErr) {
+      await appendContractAuditLog(client, {
+        operatingCompanyId: String(token.operating_company_id),
+        contractInstanceId: String(token.contract_instance_id),
+        eventType: "contract_links_handoff_failed",
+        eventPayload: { error: String((linkErr as Error)?.message ?? linkErr) },
+        actorName: input.signed_by_name,
+      });
+    }
+
     return {
       ok: true,
       contract_instance_id: token.contract_instance_id,

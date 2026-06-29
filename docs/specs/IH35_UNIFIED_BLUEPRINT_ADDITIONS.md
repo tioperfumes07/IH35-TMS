@@ -1142,3 +1142,36 @@ Spec: `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md`. ADDITIVE-ONLY — restruc
 9. **Bank Register** = **CA-05** running-balance register (not a plain list), reuse posting reads, **GATED read**.
 
 Cross-cutting: shared table grammar (density + configurable per-page), inline "+ Add new" in every dropdown, ~30% drawers / full-page editors, Location = driver/operator. Reuse existing posting/GL functions — no new GL math.
+
+---
+
+## Legal ↔ Finance separation of duties (LOCKED 2026-06-29 — Option B)
+
+The module that captures consent must NEVER post money. Authoritative detail:
+`docs/specs/LEGAL-FINANCE-OWNERSHIP-AND-FLIP-READINESS.md` (indexed in
+`docs/lockdown/00_LOCKED_DECISIONS.md §6.5`). This supersedes the literal Phase 5 of
+`CODER-BLOCK_Legal-Template-Library.md`.
+
+- **Legal owns:** the contract template + lifecycle, the executed instance, the
+  e-signature, the consent record, the audit trail, and the handoff —
+  `legal.contract_instance_links` (`link_type='deduction_schedule'` for a signed
+  driver deduction authorization; `link_type='fixed_asset'` per Exhibit-A unit for a
+  signed lease) plus one `events.log_event` (`'lease.signed'`, subject `document`) so
+  Finance can pick the signed lease up. Legal also exposes the "is there a signed
+  deduction authorization on file for this driver?" consent gate.
+- **Finance owns (Legal builds NEITHER):** **FIN-18** settlement/deduction GL posting
+  (calls the Legal consent gate before posting — FLSA), **FIN-22** lease ASC 842
+  classification + schedule + lease GL, **FIN-21** prepaid amortization + depreciation.
+  All classification, schedules, and journal entries live here.
+- **The Legal module never posts money.** Enforced by CI guard
+  `scripts/verify-steps/80-verify-legal-no-gl-posting.mjs` (fails the build if anything
+  under `apps/backend/src/legal/` writes `accounting.journal_entries` /
+  `journal_entry_postings` or imports a posting engine).
+- **Money flags** `SETTLEMENT_GL_POSTING_ENABLED` (FIN-18), `LEASE_GL_POSTING_ENABLED`
+  (FIN-22), `AMORTIZATION_GL_POSTING_ENABLED` (FIN-21) flip ON only via a Tier-1 ceremony
+  after CPA sign-off + a Neon balanced-entry test. **FIN-18 and FIN-22 are REQUIRED, not
+  optional** — Legal's link-and-consent handoff is not shipped to production money flow
+  without the Finance engines committed, or the math is orphaned.
+
+See also `docs/specs/MULTI-ENTITY-SEPARATION.md` — each entity (TRANSP/TRK/USMCA) books
+its own side of any lease/deduction in its own opco; the Legal handoff is opco-scoped.

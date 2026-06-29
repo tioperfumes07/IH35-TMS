@@ -155,4 +155,11 @@ export const legalTemplatesApi = {
       method: "POST",
     });
   },
+
+  // Clone into a new draft version (the only way to revise an active body).
+  newVersion(id: string, operatingCompanyId: string) {
+    return apiRequest<LegalTemplateSummary>(withCompany(`/api/v1/legal/templates/${id}/new-version`, operatingCompanyId), {
+      method: "POST",
+    });
+  },
 };

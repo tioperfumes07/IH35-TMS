@@ -150,4 +150,28 @@ export const legalContractsApi = {
       body: { operating_company_id: operatingCompanyId },
     });
   },
+
+  // Watermarked DRAFT preview (preview/print only — creates NO instance row).
+  draftPreview(
+    operatingCompanyId: string,
+    payload: {
+      template_id?: string;
+      template_code?: string;
+      language: LegalContractLanguage;
+      filled_variables?: Record<string, unknown>;
+    }
+  ) {
+    return apiRequest<{ template_code: string; template_version: number; html: string }>(
+      withCompany("/api/v1/legal/contracts/draft-preview", operatingCompanyId),
+      { method: "POST", body: payload }
+    );
+  },
+
+  // Idempotently seed the 7 owner-activated library templates for this entity.
+  ensureLibrary(operatingCompanyId: string) {
+    return apiRequest<{ total: number; inserted: number; already_present: number }>(
+      withCompany("/api/v1/legal/templates/library/ensure", operatingCompanyId),
+      { method: "POST", body: {} }
+    );
+  },
 };
