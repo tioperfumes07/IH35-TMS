@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { listCustomers } from "../../../api/mdata";
+import { listCustomers, type Customer } from "../../../api/mdata";
+import { DataTable } from "../../../components/DataTable";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
-import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 function statusPillClass(status: string) {
@@ -32,6 +32,15 @@ export function BrokersListPage() {
 
   const rows = query.data?.customers ?? [];
 
+  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
+  const columns = [
+    { key: "name", label: "Name", sortable: true, render: (row: Customer) => <span className="font-medium text-slate-800">{row.name}</span> },
+    { key: "customer_code", label: "Code", sortable: true, render: (row: Customer) => <span className="text-xs tracking-normal [font-variant-ligatures:none]">{row.customer_code ?? "—"}</span> },
+    { key: "mc_number", label: "MC #", sortable: true, render: (row: Customer) => row.mc_number ?? "—" },
+    { key: "email", label: "Email", sortable: true, render: (row: Customer) => <span className="text-slate-600">{row.email ?? "—"}</span> },
+    { key: "status", label: "Status", sortable: true, render: (row: Customer) => <span className={statusPillClass(row.status)}>{row.status === "active" ? "Active" : row.status}</span> },
+  ];
+
   return (
     <div className="space-y-3">
       <BackArrowHeader
@@ -40,7 +49,6 @@ export function BrokersListPage() {
         title="Brokers"
         countBadge={rows.length}
       />
-      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-600">
         Brokers are customers with the <strong>Broker</strong> type — a role on the customer record, not a
@@ -56,50 +64,21 @@ export function BrokersListPage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">Name</th>
-              <th className="px-3 py-2 text-left">Code</th>
-              <th className="px-3 py-2 text-left">MC #</th>
-              <th className="px-3 py-2 text-left">Email</th>
-              <th className="px-3 py-2 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {query.isLoading ? (
-              <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={5}>
-                  Loading brokers...
-                </td>
-              </tr>
-            ) : null}
-            {!query.isLoading && rows.length === 0 ? (
-              <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={5}>
-                  No brokers found. Set a customer's type to “Broker” to list it here.
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                onClick={() => navigate(`/customers/${row.id}`)}
-              >
-                <td className="px-3 py-2 font-medium text-slate-800">{row.name}</td>
-                <td className="px-3 py-2 text-xs tracking-normal [font-variant-ligatures:none]">{row.customer_code ?? "—"}</td>
-                <td className="px-3 py-2">{row.mc_number ?? "—"}</td>
-                <td className="px-3 py-2 text-slate-600">{row.email ?? "—"}</td>
-                <td className="px-3 py-2">
-                  <span className={statusPillClass(row.status)}>{row.status === "active" ? "Active" : row.status}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search filter above feeds
+          `rows`; row-click → customer record preserved exactly. */}
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/customers/${row.id}`)}
+        loading={query.isLoading}
+        tableKey="names-brokers"
+        errorState={
+          query.isError
+            ? { status: 0, message: "Failed to load brokers.", onRetry: () => { void query.refetch(); } }
+            : undefined
+        }
+      />
 
       <div className="text-xs text-slate-500">Total brokers: {rows.length}</div>
     </div>
