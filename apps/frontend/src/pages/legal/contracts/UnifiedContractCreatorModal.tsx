@@ -30,16 +30,6 @@ const SIGNER_TYPES: Array<{ value: LegalSignerType; label: string }> = [
   { value: "other", label: "Other / manual" },
 ];
 
-// Role-driven NDA suggestion (suggestion only, never a hard lock).
-function suggestedNdaForRole(role: string): string | null {
-  const r = role.toLowerCase();
-  if (r === "driver") return "nda_ebt_confidentiality";
-  if (["dispatcher", "safety", "administrator", "accountant", "sales", "manager", "owner"].includes(r)) {
-    return "nda_polished_full";
-  }
-  return null;
-}
-
 export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose, onSaved }: Props) {
   const { pushToast } = useToast();
   const [step, setStep] = useState(1);
@@ -307,7 +297,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               {selectedTemplate?.display_name_en} · v{selectedTemplate?.version}
             </div>
             {Object.keys(fields).length === 0 ? (
-              <div className="rounded border border-slate-200 bg-slate-50 px-2 py-2 text-sm text-slate-600">
+              <div className="rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-[13px] text-slate-600">
                 This template has no fill-in fields. Continue to the party step.
               </div>
             ) : (
