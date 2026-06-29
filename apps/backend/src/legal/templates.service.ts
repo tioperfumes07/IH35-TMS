@@ -762,6 +762,95 @@ export async function retireTemplate(
   return row;
 }
 
+// Clone the latest content of a template into a NEW draft version (version+1).
+// This is the lifecycle path for changing an ACTIVE template: you never edit an
+// active body in place (updateTemplate forbids it) — you new-version, edit the
+// draft, submit/approve/activate. The clone copies content/schema/names verbatim.
+export async function createNewVersion(
+  client: QueryableClient,
+  args: {
+    operatingCompanyId: string;
+    actorUserId: string;
+    id: string;
+  }
+) {
+  const srcRes = await client.query(
+    `
+      SELECT template_code, display_name_en, display_name_es, category,
+             content_html_en, content_html_es, variable_schema, requires_witness
+      FROM legal.contract_templates
+      WHERE operating_company_id = $1
+        AND id = $2
+      LIMIT 1
+    `,
+    [args.operatingCompanyId, args.id]
+  );
+  const src = srcRes.rows[0] ?? null;
+  if (!src) return { error: "legal_template_not_found" as const };
+
+  const versionRes = await client.query(
+    `
+      SELECT COALESCE(MAX(version), 0) + 1 AS next_version
+      FROM legal.contract_templates
+      WHERE operating_company_id = $1
+        AND template_code = $2
+    `,
+    [args.operatingCompanyId, src.template_code]
+  );
+  const nextVersion = Number(versionRes.rows[0]?.next_version ?? 1);
+
+  const insertRes = await client.query(
+    `
+      INSERT INTO legal.contract_templates (
+        operating_company_id,
+        template_code,
+        version,
+        display_name_en,
+        display_name_es,
+        category,
+        content_html_en,
+        content_html_es,
+        variable_schema,
+        requires_witness,
+        status,
+        created_by_user_id,
+        updated_by_user_id
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,'draft',$11,$11
+      )
+      RETURNING id, template_code, version, status, created_at, updated_at
+    `,
+    [
+      args.operatingCompanyId,
+      src.template_code,
+      nextVersion,
+      src.display_name_en,
+      src.display_name_es,
+      src.category,
+      src.content_html_en,
+      src.content_html_es,
+      JSON.stringify(src.variable_schema ?? {}),
+      src.requires_witness,
+      args.actorUserId,
+    ]
+  );
+  const created = insertRes.rows[0];
+
+  await appendContractAuditLog(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    contractTemplateId: String(created.id),
+    eventType: "template_new_version",
+    eventPayload: {
+      template_code: created.template_code,
+      version: created.version,
+      cloned_from_template_id: args.id,
+    },
+    actorUserId: args.actorUserId,
+  });
+
+  return { row: created };
+}
+
 export function validateFilledVariablesAgainstSchema(
   variableSchema: unknown,
   filledVariables: Record<string, unknown>
