@@ -107,3 +107,69 @@ No false positives or false negatives found in the spot-checks.
 **CAS-03 verdict: PASS.** The merged gates (#1575 read, #1571/#1572 write) are sound and would have
 caught both 2026-06-28 prod 500s at PR time. Handoff to Coder: shrink the write known-debt by the 5
 proven-fixed entries; continue CC-04 read known-debt remediation.
+
+---
+
+## 6. Extension — the remaining #1572 pieces (added 2026-06-28, second pass)
+
+The first pass covered the read/write **target** gates. This pass exercises the other three #1572
+guards the dispatch named: the two static **column-contract** gates + the runtime **startup probe**.
+All static; the probe was run with a mock client + read directly. No prod touch; throwaway probe files
+created and deleted in-session.
+
+### 6.1 `verify:financial-column-contracts` (static)
+Clean run:
+```
+verify-financial-column-contracts OK — 1294 files scanned, 7 financial tables covered, 0 phantom column references.
+```
+Planted fault (`SELECT je.cas03_phantom_col FROM accounting.journal_entries je` + deprecated posting
+columns) →
+```
+verify-financial-column-contracts FAILED:
+  ✗ ...__cas03_contract_probe.ts: references accounting.journal_entry_postings.credit_cents — not in migration-derived column set
+  ✗ ...__cas03_contract_probe.ts: references accounting.journal_entry_postings.debit_cents — not in migration-derived column set
+  ✗ ...__cas03_contract_probe.ts: references accounting.journal_entry_postings.journal_entry_id — not in migration-derived column set
+```
+**CAUGHT.** Probe removed → returns to OK. **Verdict: gate works.**
+
+### 6.2 `verify:posting-column-contract` (static)
+Clean run (3 pre-existing non-blocking WARNs for missing `idempotency_key` in
+period-close/recurring/void services — flagged for Coder, not failures):
+```
+verify-posting-column-contract OK — 1294 backend files scanned, 0 posting column contract violations.
+```
+Planted fault (`INSERT INTO accounting.journal_entry_postings (journal_entry_id, debit_cents, credit_cents)`) →
+```
+verify-posting-column-contract FAILED:
+  ✗ ...__cas03_contract_probe.ts: INSERT ... missing `debit_or_credit` (use split model, not debit_cents/credit_cents)
+  ✗ ...__cas03_contract_probe.ts: INSERT ... missing `operating_company_id` (entity-scope safety)
+  ✗ ...__cas03_contract_probe.ts: INSERT ... uses `journal_entry_id` — renamed to `journal_entry_uuid` in migration 0092
+  ✗ ...__cas03_contract_probe.ts: INSERT ... uses deprecated `credit_cents` — use `debit_or_credit` + `amount_cents`
+```
+**CAUGHT** (all four contract rules). Probe removed → returns to OK. **Verdict: gate works.**
+
+### 6.3 startup-column-probe (runtime — `apps/backend/src/accounting/startup-column-probe.ts`)
+The probe checks **4 posting tables** on boot — `accounting.journal_entries`,
+`accounting.journal_entry_postings`, `accounting.posting_batches`,
+`accounting.transaction_source_links` — and throws `StartupColumnProbeError` if any referenced column
+is absent (skips when `DATABASE_URL` is unset). Exercised via a throwaway runner with a mock client:
+```
+A PASS: startup probe OK when all 4 tables have their required columns.
+B PASS: threw StartupColumnProbeError on missing journal_entry_postings.idempotency_key:
+    STARTUP COLUMN PROBE FAILED — required columns missing from live DB.
+    ...
+    Missing:
+      accounting.journal_entry_postings.idempotency_key
+```
+**Verdict: probe works** — fails loud (refuses to boot) when a required posting column is missing,
+catching the "migration not applied" class before any write. Runner deleted in-session.
+
+### 6.4 Extension acceptance
+- **B1:** financial-column-contracts catches a planted phantom column, clean after removal. ✅
+- **B2:** posting-column-contract catches deprecated names + missing entity scope, clean after removal. ✅
+- **B3:** startup-column-probe passes with full columns and throws on a missing required column. ✅
+- **B4 (note):** 3 pre-existing `idempotency_key` WARNs in posting-column-contract (period-close,
+  recurring, void services) — non-blocking; handed to Coder to add the key for idempotency safety.
+
+**Extension verdict: PASS.** All five #1572-class guards (read-target, write-target, financial-column-
+contract, posting-column-contract, startup-column-probe) are sound and fail-closed on their bug class.

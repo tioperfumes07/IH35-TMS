@@ -31,9 +31,12 @@ if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alia
 // LOCKED COUNT CHANGE 2026-06-18 (Jorge-approved, AUTO-04 / PR #1249): 15 → 16 columns — "location"
 // added. POSITION UPDATE 2026-06-23 (Jorge-approved, C2 / PR #1378, UX-B): "location" moved to sit
 // right after the HOS clocks (after "driver", before "load") instead of after "live_gps". Same 16
-// columns — only the position changed. This 16-column order is the contract going forward.
+// columns — only the position changed.
+// POSITION UPDATE 2026-06-28 (DB-6, GUARD construction block): "load" (Load #) moved to sit
+// immediately after "trailer" (app-wide shared column model). Same 16 columns — position only.
+// This 16-column order is the contract going forward.
 const expectedOrder = [
-  "unit", "trailer", "driver", "location", "load", "customer",
+  "unit", "trailer", "load", "driver", "location", "customer",
   "commodity", "pickup", "delivery", "wo", "cargo_temp", "linehaul", "status_signal",
   "live_gps", "risk", "status",
 ];
@@ -70,5 +73,18 @@ if (/key:\s*"awaiting"[\s\S]{0,80}loads\.filter\(isUnassignedLoad\)/.test(src)) 
   fail("Awaiting must NOT be derived from loads.filter — it is truck-derived now");
 }
 if (!src.includes("enabled: Boolean(companyId),")) fail("unitsWithoutLoad must load in every mode (not just assignment) for the truck-derived Awaiting section");
+
+// 5. DB-4 honest count: the List/Table shows the full (un-paginated) awaiting-truck roster in its
+// own section alongside the paginated loads inside one table, so the pagination label must scope to
+// loads and surface the roster total — never a bare ambiguous "Showing X of Y" that reads as if it
+// counted every visible row.
+if (!src.includes("loadCountSummary")) fail("List/Table count label must use loadCountSummary (DB-4 honest count)");
+if (!/of \$\{totalCount\} \$\{totalCount === 1 \? "load" : "loads"\}/.test(src)) {
+  fail("loadCountSummary must scope the pagination count to loads ('of {totalCount} load(s)')");
+}
+if (!/awaitingTruckCount/.test(src)) fail("loadCountSummary must surface the awaiting-truck roster total (awaitingTruckCount)");
+if (/Showing \{from\}-\{to\} of \{totalCount\}\s*<\/(div|span)>/.test(src)) {
+  fail("bare 'Showing {from}-{to} of {totalCount}' label is ambiguous against the truck roster — use loadCountSummary");
+}
 
 console.log("PASS verify-dispatch-board-sections-and-columns");
