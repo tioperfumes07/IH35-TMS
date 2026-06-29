@@ -16,6 +16,10 @@ type LegalPdfPayload = {
   drawnSignatureSvg: string;
   ipAddress: string | null;
   userAgent: string | null;
+  // When true, render an UNSIGNED preview: stamp a "DRAFT — NOT EXECUTED" watermark/header and OMIT
+  // the electronic-signature evidence block. Additive + default-off so the signed path stays
+  // byte-identical when draft is falsy (the signed PDF sha256 must never shift). See draft-pdf route.
+  draft?: boolean;
 };
 
 let activeRenders = 0;
@@ -66,7 +70,20 @@ function buildSignatureFooter(payload: LegalPdfPayload) {
 function buildPdfHtml(payload: LegalPdfPayload) {
   const resolvedEn = renderTemplate(payload.contentHtmlEn, payload.filledVariables);
   const resolvedEs = renderTemplate(payload.contentHtmlEs, payload.filledVariables);
-  const signatureFooter = buildSignatureFooter(payload);
+  // Draft preview: no signature evidence, and stamp the page so an unsigned draft can never be
+  // mistaken for an executed contract. Both pieces are empty strings on the signed path, injected
+  // with no surrounding whitespace, so a non-draft render is byte-identical to before.
+  const signatureFooter = payload.draft ? "" : buildSignatureFooter(payload);
+  const draftStyles = payload.draft
+    ? `
+        .draft-watermark { position: fixed; top: 42%; left: 0; right: 0; text-align: center; font: bold 64px Arial, sans-serif; color: rgba(220, 38, 38, 0.12); transform: rotate(-24deg); letter-spacing: 0.06em; pointer-events: none; z-index: 9999; white-space: nowrap; }
+        .draft-banner { border: 1px solid #dc2626; background: #fef2f2; color: #b91c1c; font-weight: bold; text-align: center; padding: 8px; margin-bottom: 14px; letter-spacing: 0.04em; }`
+    : "";
+  const draftBanner = payload.draft
+    ? `
+      <div class="draft-watermark">DRAFT — NOT EXECUTED</div>
+      <div class="draft-banner">DRAFT — NOT EXECUTED · ${payload.templateCode} v${payload.templateVersion} · ${payload.language.toUpperCase()}</div>`
+    : "";
   const body =
     payload.language === "en"
       ? resolvedEn
@@ -111,10 +128,10 @@ function buildPdfHtml(payload: LegalPdfPayload) {
           background: #fff;
           padding: 6px;
         }
-        p { margin: 6px 0; }
+        p { margin: 6px 0; }${draftStyles}
       </style>
     </head>
-    <body>
+    <body>${draftBanner}
       <section class="contract-meta">
         <p><strong>Template:</strong> ${payload.templateCode} v${payload.templateVersion}</p>
         <p><strong>Contract instance:</strong> ${payload.contractInstanceId}</p>
@@ -124,6 +141,11 @@ function buildPdfHtml(payload: LegalPdfPayload) {
     </body>
   </html>`;
 }
+
+// Exported for unit testing only (no Chromium needed): asserts draft watermarking + signature
+// omission without launching a browser. Do NOT use on the request path — go through
+// renderSignedContractPdf so launch/render failures are mapped to legal_pdf_render_failed.
+export const __test__ = { buildPdfHtml };
 
 export async function renderSignedContractPdf(payload: LegalPdfPayload) {
   await acquireRenderSlot();

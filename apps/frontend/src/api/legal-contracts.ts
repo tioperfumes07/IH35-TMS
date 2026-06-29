@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, resolveApiUrl } from "./client";
 
 export type LegalContractStatus = "draft" | "sent" | "viewed" | "signed_electronically" | "voided" | "expired";
 export type LegalSignerType = "driver" | "employee" | "customer" | "vendor" | "other";
@@ -112,6 +112,12 @@ export const legalContractsApi = {
 
   get(contractId: string, operatingCompanyId: string) {
     return apiRequest<LegalContractDetail>(withCompany(`/api/v1/legal/contracts/${contractId}`, operatingCompanyId));
+  },
+
+  // Absolute URL to the inline DRAFT PDF (watermarked, unsigned) of a SAVED instance. Open in a new
+  // tab — the backend streams application/pdf and auth rides on the session cookie (credentials).
+  draftPdfUrl(contractId: string, operatingCompanyId: string) {
+    return resolveApiUrl(withCompany(`/api/v1/legal/contracts/${contractId}/draft-pdf`, operatingCompanyId));
   },
 
   create(operatingCompanyId: string, payload: CreateLegalContractInput) {
