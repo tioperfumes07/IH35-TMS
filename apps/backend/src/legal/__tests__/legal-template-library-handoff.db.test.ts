@@ -19,6 +19,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { ensureLegalTemplateLibrary } from "../template-library.service.js";
 import { renderDraftContractHtml } from "../draft-preview.service.js";
 import { applySignedOperationalLinks } from "../signed-links.service.js";
@@ -29,7 +30,11 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("legal template library + Option-B handoff (real Postgres)", () => {
   let db: pg.Client;
   let companyId: string;
-  const actorId = randomUUID();
+  // Reuse the pre-seeded owner user (created by ensureIntegrationPrerequisites) as the actor —
+  // created_by_user_id is an FK to identity.users. driver/unit ids are plain uuids (NO FK on
+  // signer_entity_id / contract_instance_links.target_id / safety.driver_documents.driver_id), so
+  // we do NOT insert mdata.drivers / mdata.units (which carry forensic-audit triggers).
+  const actorId = TEST_OWNER_USER_ID;
   const driverId = randomUUID();
   const unitId = randomUUID();
 
@@ -54,23 +59,7 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
-
-    await withBypass(async () => {
-      await db.query(`INSERT INTO identity.users (id, email) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [
-        actorId,
-        `legal-test-${actorId}@ih35.local`,
-      ]);
-      await db.query(
-        `INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone)
-         VALUES ($1,$2,'Legal','Tester',$3) ON CONFLICT DO NOTHING`,
-        [driverId, companyId, `+1555${Math.floor(1000000 + Math.random() * 8999999)}`]
-      );
-      await db.query(
-        `INSERT INTO mdata.units (id, unit_number, vin, status, owner_company_id, vehicle_type)
-         VALUES ($1,$2,$3,'Active',$4,'truck') ON CONFLICT DO NOTHING`,
-        [unitId, `LGL-${unitId.slice(0, 6)}`, `VINLGL${unitId.slice(0, 11)}`, companyId]
-      );
-    });
+    // No fixture inserts needed — actor user is pre-seeded; driver/unit ids are plain uuids.
   });
 
   afterAll(async () => {
