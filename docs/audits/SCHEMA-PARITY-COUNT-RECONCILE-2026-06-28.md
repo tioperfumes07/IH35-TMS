@@ -89,6 +89,32 @@ partitioned parent.)
    "base tables parsed from CREATE TABLE DDL — excludes views, partitions, and dynamically-created
    tables" so the next reader doesn't re-chase this gap.
 
+## 4. PROD ground-truth (GUARD-verified) — locks the verdict
+
+GUARD verified the 3 "baseline-only" names directly against **prod** (Neon
+`br-fancy-credit-akjnd07a`) via `information_schema`. **Result: none of the 3 exist on prod.**
+This confirms (does not just infer) the parser-artifact conclusion — they were CREATE'd under old
+schema names in early migrations, then moved/renamed/replaced, and the DDL parser still counts the
+old names. **No STOP-flag. No missing table.** The 654-vs-493 (now 666-vs-502) item is **BENIGN, closed.**
+
+### Each renamed-away name → its current canonical table (targets verified to exist)
+| Baseline-only name (parser artifact) | Exists on prod? | Canonical table(s) today | How verified |
+|---|---|---|---|
+| `dispatch.loads` | no | **`mdata.loads`** | `CREATE TABLE mdata.loads` present; `CREATE TABLE dispatch.loads` count = 0 (§4 known phantom) |
+| `driver_pay.settlements` | no | **`driver_finance.driver_settlements`** (header) + **`driver_finance.settlement_lines`** (lines); related `settlement_disputes`, `driver_settlement_deductions` | `CREATE TABLE driver_pay.settlements` count = 0; the `driver_finance.*` set is CREATE'd in migrations |
+| `safety.fines` | no | **`safety.civil_fines`** (external/civil) + **`safety.internal_fines`** (internal) | `safety.fines` was CREATE'd then `ALTER … RENAME`'d (RENAME ×2); `civil_fines` has 0 `CREATE` (came from the rename) and exists on the fresh-migrated DB; `internal_fines` is separately CREATE'd |
+
+(Safety v6.4 lock splits fines into **Internal Fines** + **External Fines** tabs — consistent with
+`safety.internal_fines` + `safety.civil_fines` being the live tables, and bare `safety.fines` being gone.)
+
+### Recommendation (propose only — NOT implemented here)
+Teach `verify-schema-parity.mjs` to honor later `DROP TABLE` / `ALTER TABLE … RENAME TO` /
+`ALTER TABLE … SET SCHEMA` so the parser stops counting renamed-away names (it currently tracks the
+original `CREATE` and never follows the move). This removes the 3 false-positives and makes the
+baseline a faithful "live base tables from DDL" model. **Baseline/parser changes are their own
+reviewed PR** — not this read-only doc, and not bundled with migration PRs (which already touch
+`schema-parity-baseline.json`).
+
 ## Reproduction
 ```bash
 # fresh local DB (local socket only — never prod)
