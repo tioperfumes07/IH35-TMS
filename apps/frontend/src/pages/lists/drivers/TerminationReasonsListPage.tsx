@@ -12,9 +12,9 @@ import {
   type UpdateDriverTerminationReasonInput,
 } from "../../../api/catalogs";
 import { Button } from "../../../components/Button";
+import { DataTable } from "../../../components/DataTable";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
-import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type StatusFilter = "active" | "inactive" | "all";
@@ -122,6 +122,14 @@ export function TerminationReasonsListPage() {
 
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
 
+  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
+  const columns = [
+    { key: "code", label: "Code", sortable: true, render: (row: DriverTerminationReason) => <span className="text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</span> },
+    { key: "label", label: "Label", sortable: true },
+    { key: "severity", label: "Severity", sortable: true, render: (row: DriverTerminationReason) => <span className={severityBadgeClass(row.severity)}>{SEVERITY_LABELS[row.severity]}</span> },
+    { key: "is_active", label: "Status", sortable: true, render: (row: DriverTerminationReason) => <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span> },
+  ];
+
   return (
     <div className="space-y-3">
       <BackArrowHeader
@@ -141,7 +149,6 @@ export function TerminationReasonsListPage() {
           </Button>
         }
       />
-      {listQuery.isError ? <ListErrorBanner onRetry={() => void listQuery.refetch()} /> : null}
 
       <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-600">
         Termination / separation reason taxonomy used on driver safety events. Severity influences how
@@ -157,54 +164,25 @@ export function TerminationReasonsListPage() {
         </SelectCombobox>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">Code</th>
-              <th className="px-3 py-2 text-left">Label</th>
-              <th className="px-3 py-2 text-left">Severity</th>
-              <th className="px-3 py-2 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listQuery.isLoading ? (
-              <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={4}>
-                  Loading termination reasons...
-                </td>
-              </tr>
-            ) : null}
-            {!listQuery.isLoading && rows.length === 0 ? (
-              <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={4}>
-                  No termination reasons match these filters
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                onClick={() => {
-                  setConflictError(null);
-                  setActiveRow(row);
-                  setModalOpen(true);
-                }}
-              >
-                <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</td>
-                <td className="px-3 py-2">{row.label}</td>
-                <td className="px-3 py-2">
-                  <span className={severityBadgeClass(row.severity)}>{SEVERITY_LABELS[row.severity]}</span>
-                </td>
-                <td className="px-3 py-2">
-                  <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
+          feed `rows`; row-click → edit modal preserved exactly. */}
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        onRowClick={(row) => {
+          setConflictError(null);
+          setActiveRow(row);
+          setModalOpen(true);
+        }}
+        loading={listQuery.isLoading}
+        tableKey="driver-termination-reasons"
+        errorState={
+          listQuery.isError
+            ? { status: 0, message: "Failed to load termination reasons.", onRetry: () => { void listQuery.refetch(); } }
+            : undefined
+        }
+      />
 
       <div className="text-xs text-slate-500">Total rows: {rows.length}</div>
 

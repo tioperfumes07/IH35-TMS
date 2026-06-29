@@ -12,6 +12,7 @@ import {
   type UpdateLoadCancellationReasonInput,
 } from "../../../api/catalogs";
 import { Button } from "../../../components/Button";
+import { DataTable } from "../../../components/DataTable";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -132,6 +133,16 @@ export function LoadCancellationReasonsListPage() {
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Dispatch", "Load Cancellation Reasons"], []);
 
+  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
+  const columns = [
+    { key: "reason_code", label: "Code", sortable: true, render: (row: LoadCancellationReason) => <span className="font-semibold text-slate-800">{row.reason_code}</span> },
+    { key: "display_name", label: "Display Name", sortable: true, render: (row: LoadCancellationReason) => <span className="text-slate-800">{row.display_name}</span> },
+    { key: "category", label: "Category", sortable: true, render: (row: LoadCancellationReason) => <span className="text-slate-700">{CATEGORY_LABELS[row.category] ?? row.category}</span> },
+    { key: "description", label: "Desc", sortable: true, render: (row: LoadCancellationReason) => <span className="block max-w-[280px] truncate text-slate-600">{row.description ?? "—"}</span> },
+    { key: "sort_order", label: "Order", sortable: true, numeric: true, render: (row: LoadCancellationReason) => <span className="text-slate-700">{row.sort_order}</span> },
+    { key: "is_active", label: "Status", sortable: true, render: (row: LoadCancellationReason) => <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span> },
+  ];
+
   return (
     <div className="space-y-3">
       <BackArrowHeader
@@ -181,56 +192,25 @@ export function LoadCancellationReasonsListPage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded border border-slate-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-slate-50">
-            <tr className="text-slate-600">
-              <th className="px-3 py-2 font-semibold">Code</th>
-              <th className="px-3 py-2 font-semibold">Display Name</th>
-              <th className="px-3 py-2 font-semibold">Category</th>
-              <th className="px-3 py-2 font-semibold">Desc</th>
-              <th className="px-3 py-2 font-semibold">Order</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listQuery.isLoading ? (
-              <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={6}>
-                  Loading entries...
-                </td>
-              </tr>
-            ) : null}
-            {!listQuery.isLoading && rows.length === 0 ? (
-              <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={6}>
-                  No entries match these filters
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer border-t border-slate-100 hover:bg-slate-50"
-                onClick={() => {
-                  setConflictError(null);
-                  setActiveRow(row);
-                  setModalMode("edit");
-                }}
-              >
-                <td className="px-3 py-2 font-semibold text-slate-800">{row.reason_code}</td>
-                <td className="px-3 py-2 text-slate-800">{row.display_name}</td>
-                <td className="px-3 py-2 text-slate-700">{CATEGORY_LABELS[row.category] ?? row.category}</td>
-                <td className="max-w-[280px] truncate px-3 py-2 text-slate-600">{row.description ?? "—"}</td>
-                <td className="px-3 py-2 text-slate-700">{row.sort_order}</td>
-                <td className="px-3 py-2">
-                  <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
+          feed `rows`; row-click → edit modal preserved exactly. */}
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        onRowClick={(row) => {
+          setConflictError(null);
+          setActiveRow(row);
+          setModalMode("edit");
+        }}
+        loading={listQuery.isLoading}
+        tableKey="load-cancellation-reasons"
+        errorState={
+          listQuery.isError
+            ? { status: 0, message: "Failed to load cancellation reasons.", onRetry: () => { void listQuery.refetch(); } }
+            : undefined
+        }
+      />
 
       <div className="text-xs text-slate-500">Total rows: {rows.length}</div>
 
