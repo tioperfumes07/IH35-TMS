@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getDispatchPlannerWeek, type PlannerDriverRow, type PlannerLoadEvent } from "../../../api/dispatch";
@@ -6,6 +6,7 @@ import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
+import { BookLoadModalV4 } from "../components/BookLoadModalV4";
 
 /**
  * Unified Dispatch Planner — Phase 1 "Timeline" view (Tasks-module pattern: one dataset, resource rows ×
@@ -84,6 +85,15 @@ export function UnifiedTimelinePlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { range, days } = usePlannerRange();
+  // DB-7 Phase 2: idle "+ Book" opens the Book Load wizard PREFILLED to that truck — same in-page modal
+  // pattern Dispatch.tsx uses (BookLoadModalV4 + prefillUnitId), not a URL param. unit_id comes from the
+  // planner feed (PlannerDriverRow.unit_id).
+  const [bookUnitId, setBookUnitId] = useState<string | null>(null);
+  const [bookOpen, setBookOpen] = useState(false);
+  const closeBook = () => {
+    setBookOpen(false);
+    setBookUnitId(null);
+  };
 
   const timelineQuery = useQuery({
     queryKey: ["dispatch", "planners", "timeline", operatingCompanyId, range.start, range.end],
@@ -110,7 +120,10 @@ export function UnifiedTimelinePlanner() {
   const leaveByCell = useMemo(() => parseLeaveCells(leaveQuery.data?.leave_day_cells), [leaveQuery.data]);
 
   const openLoad = (loadId: string) => navigate(`/dispatch?load_id=${encodeURIComponent(loadId)}`);
-  const openBookForUnit = () => navigate(`/dispatch?view=kanban`);
+  const openBookForUnit = (unitId: string | null | undefined) => {
+    setBookUnitId(unitId ?? null);
+    setBookOpen(true);
+  };
 
   const driverHasLeave = useMemo(() => {
     const s = new Set<string>();
@@ -199,7 +212,7 @@ export function UnifiedTimelinePlanner() {
                         <button
                           type="button"
                           data-testid={`timeline-book-${driver.id}`}
-                          onClick={openBookForUnit}
+                          onClick={() => openBookForUnit(driver.unit_id)}
                           className="ml-2 rounded bg-[#1F2A44] px-1.5 py-0.5 text-[9px] font-semibold text-white"
                         >
                           + Book
@@ -215,6 +228,18 @@ export function UnifiedTimelinePlanner() {
           </tbody>
         </table>
       </div>
+      {bookOpen ? (
+        <BookLoadModalV4
+          open={bookOpen}
+          operatingCompanyId={operatingCompanyId}
+          prefillUnitId={bookUnitId}
+          onClose={closeBook}
+          onCreated={() => {
+            closeBook();
+            void timelineQuery.refetch();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

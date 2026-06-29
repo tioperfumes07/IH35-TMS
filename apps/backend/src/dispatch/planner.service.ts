@@ -7,6 +7,7 @@ export type PlannerDriverRow = {
   id: string;
   name: string;
   unit_number: string | null;
+  unit_id?: string | null;
   hos_status: "ok" | "warning_1hr" | "warning_15min" | "violation";
   blackouts: Array<{ start_at: string; end_at: string; reason: string }>;
 };
@@ -131,7 +132,8 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         SELECT
           d.id::text AS id,
           TRIM(CONCAT_WS(' ', d.first_name, d.last_name)) AS name,
-          u.unit_number
+          u.unit_number,
+          u.id::text AS unit_id
         FROM mdata.drivers d
         -- §4 landmine: mdata.units has NO operating_company_id (it carries owner_company_id +
         -- currently_leased_to_company_id). The old "u.operating_company_id = d.operating_company_id" join
@@ -206,6 +208,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         id: driverId,
         name: String(row.name ?? "Driver"),
         unit_number: row.unit_number ? String(row.unit_number) : null,
+        unit_id: row.unit_id ? String(row.unit_id) : null,
         hos_status: clocks ? clocks.status : "ok",
         blackouts: blackoutsByDriver.get(driverId) ?? [],
       };

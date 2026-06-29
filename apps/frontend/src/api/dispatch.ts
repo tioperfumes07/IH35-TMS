@@ -793,6 +793,7 @@ export type PlannerDriverRow = {
   id: string;
   name: string;
   unit_number: string | null;
+  unit_id?: string | null;
   hos_status: "ok" | "warning_1hr" | "warning_15min" | "violation";
   blackouts: Array<{ start_at: string; end_at: string; reason: string }>;
 };
