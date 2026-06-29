@@ -1,4 +1,5 @@
 import type pg from "pg";
+import { provisionLegalTemplateLibraryForCompany } from "../legal/template-library-provision.service.js";
 
 export type BootstrapStepResult = {
   table: string;
@@ -11,6 +12,7 @@ export type BootstrapCarrierResult = {
   new_carrier_id: string;
   steps: BootstrapStepResult[];
   coa_cloned: number;
+  legal_templates_seeded: number;
   storage_prefix: string;
 };
 
@@ -176,7 +178,8 @@ async function cloneCoaIfEmpty(
 export async function bootstrapCarrier(
   client: Queryable,
   templateCarrierId: string,
-  newCarrierId: string
+  newCarrierId: string,
+  actorUserId: string
 ): Promise<BootstrapCarrierResult> {
   const steps: BootstrapStepResult[] = [];
   for (const spec of CATALOG_COPY_SPECS) {
@@ -188,11 +191,19 @@ export async function bootstrapCarrier(
     [newCarrierId]
   );
   const code = String(codeRes.rows[0]?.code ?? "carrier").toLowerCase();
+  // LEGAL-SEED-01: a newly-bootstrapped/activated entity auto-gets its OWN legal template library
+  // (per-entity, idempotent). Done LAST because it sets app.operating_company_id to the new
+  // carrier for its insert scope. Reuses ensureLegalTemplateLibrary — no insert logic duplicated.
+  const legalSeed = await provisionLegalTemplateLibraryForCompany(client, {
+    operatingCompanyId: newCarrierId,
+    actorUserId,
+  });
   return {
     template_carrier_id: templateCarrierId,
     new_carrier_id: newCarrierId,
     steps,
     coa_cloned: coaCloned,
+    legal_templates_seeded: legalSeed.inserted,
     storage_prefix: `tenants/${code}/`,
   };
 }

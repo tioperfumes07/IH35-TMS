@@ -701,6 +701,7 @@
     "verify:posting-idempotency": "node scripts/verify-posting-idempotency.mjs",
     "verify:legal-no-gl-writes": "node scripts/verify-legal-no-gl-writes.mjs",
     "verify:legal-entity-scope": "node scripts/verify-legal-entity-scope.mjs",
+    "verify:legal-template-library-seedable": "node scripts/verify-legal-template-library-seedable.mjs",
     "verify:block-stub-artifacts": "node scripts/verify-block-stub-artifacts.mjs",
     "verify:catalogs-accounts-entity-scope": "node scripts/verify-catalogs-accounts-entity-scope.mjs",
     "reconcile:drift": "node scripts/reconcile-drift.mjs",

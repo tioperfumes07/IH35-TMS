@@ -328,6 +328,7 @@ import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeBankReconAutoMatchCron } from "./cron/bank-recon-auto-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
+import { backfillLegalTemplateLibraries } from "./legal/template-library-provision.service.js";
 import { initializeSafetyRemindersCron } from "./safety/reminders.cron.js";
 import { initializeIntegrityAlertEngineCron } from "./safety/integrity-alert-engine.cron.js";
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
@@ -1373,6 +1374,26 @@ async function main() {
       app.log.info("Outbox processor started");
     }
     app.log.info({ port, host }, "Server started");
+
+    // LEGAL-SEED-01: provision the per-entity legal template library for every active entity on
+    // boot (idempotent — ON CONFLICT DO NOTHING). Fire-and-forget AFTER listen so it can never
+    // block or fail the boot; the library works on deploy with no manual "Seed library" click.
+    void backfillLegalTemplateLibraries({
+      logInfo: (obj, msg) => app.log.info(obj, msg),
+      logError: (obj, msg) => app.log.error(obj, msg),
+    })
+      .then((res) =>
+        app.log.info(
+          {
+            companies_seen: res.companies_seen,
+            companies_seeded: res.companies_seeded,
+            companies_skipped: res.companies_skipped,
+            total_inserted: res.total_inserted,
+          },
+          "[STARTUP] legal-template-library backfill complete"
+        )
+      )
+      .catch((err) => app.log.error({ err }, "[STARTUP] legal-template-library backfill failed"));
   } catch (err) {
     app.log.error(err, "Server failed to start");
     process.exit(1);

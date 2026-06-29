@@ -60,7 +60,7 @@ export async function registerUsmcaCarrierBootstrapRoutes(app: FastifyInstance) 
         if (!templateId || !targetId) {
           throw new Error("carrier_not_found");
         }
-        return bootstrapCarrier(client, templateId, targetId);
+        return bootstrapCarrier(client, templateId, targetId, user.uuid);
       });
       return reply.code(200).send(result);
     } catch (err) {
