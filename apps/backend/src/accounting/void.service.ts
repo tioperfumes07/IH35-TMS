@@ -207,8 +207,10 @@ export async function postVoidReversal(
     await client.query(
       `
         INSERT INTO accounting.journal_entry_postings
-          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description)
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9)
+          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key)
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10)
+        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
+          WHERE idempotency_key IS NOT NULL DO NOTHING
       `,
       [
         params.operatingCompanyId,
@@ -220,6 +222,9 @@ export async function postVoidReversal(
         line.debit_or_credit,
         line.amount_cents,
         line.description,
+        // BLOCK 2: deterministic key per voided entity so a second void of the same entity cannot
+        // double-post a reversing JE (uq_jep_company_idempotency_line). Shared across reversal lines.
+        `void:${params.entityType}:${params.entityId}`,
       ]
     );
   }

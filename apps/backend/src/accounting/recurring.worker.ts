@@ -270,10 +270,13 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
           debit_or_credit,
           amount_cents,
           description,
+          idempotency_key,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6::uuid,$7,$8,$9,now(),now())
+        VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6::uuid,$7,$8,$9,$10,now(),now())
+        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
+          WHERE idempotency_key IS NOT NULL DO NOTHING
       `,
       [
         oc,
@@ -285,6 +288,10 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
         String(p.debit_or_credit),
         Number(p.amount_cents ?? 0),
         p.description ?? null,
+        // BLOCK 2: deterministic key per recurring template+period so a re-materialization of the
+        // same template for the same entry_date is a safe no-op (uq_jep_company_idempotency_line),
+        // never a double-posted automated entry. Shared across lines; line_sequence distinguishes them.
+        `recurring_je:${String(tmpl.id)}:${entryDate}`,
       ]
     );
     seq += 1;

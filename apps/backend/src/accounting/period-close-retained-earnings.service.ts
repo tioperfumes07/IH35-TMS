@@ -175,12 +175,27 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
           debit_or_credit,
           amount_cents,
           description,
+          idempotency_key,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, now(), now())
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, now(), now())
+        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
+          WHERE idempotency_key IS NOT NULL DO NOTHING
       `,
-      [params.operating_company_id, jeId, seq, ln.account_id, ln.debit_or_credit, ln.amount_cents, ln.description]
+      [
+        params.operating_company_id,
+        jeId,
+        seq,
+        ln.account_id,
+        ln.debit_or_credit,
+        ln.amount_cents,
+        ln.description,
+        // BLOCK 2: deterministic key per fiscal-year close so a re-run of the same year-end close is a
+        // safe no-op (uq_jep_company_idempotency_line) — a double-posted retained-earnings close is the
+        // worst-case duplicate, so this path is protected first.
+        `period_close:FY${params.fiscal_year}:${params.period_end.slice(0, 10)}`,
+      ]
     );
     seq += 1;
   }
