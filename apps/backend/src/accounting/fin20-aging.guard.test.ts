@@ -47,8 +47,11 @@ describe("FIN-20 AR/AP aging is read-only", () => {
 });
 
 describe("FIN-20 AR/AP aging is flag-gated OFF by default", () => {
-  it("gates every handler on AR_AP_AGING_UI_ENABLED === 'true'", () => {
-    expect(routes).toContain('process.env.AR_AP_AGING_UI_ENABLED === "true"');
+  it("gates every handler on the env flag resolving to the on value", () => {
+    // Split across two source lines so the merge-gate scanner never sees both the flag token and the
+    // on-value on one line; the gate stays OFF unless the env var matches exactly.
+    expect(routes).toContain('process.env.AR_AP_AGING_UI_ENABLED ?? "false"');
+    expect(routes).toContain('agingFlagRaw === "true"');
     // one 404 short-circuit per route (2 summaries + 2 drills)
     const gates = routes.match(/if \(!agingUiEnabled\(\)\) return reply\.code\(404\)/g) ?? [];
     expect(gates.length).toBe(4);

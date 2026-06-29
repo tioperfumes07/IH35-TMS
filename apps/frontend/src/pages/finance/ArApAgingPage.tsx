@@ -166,7 +166,10 @@ export function ArApAgingPage() {
   const { enabled, loading: flagLoading } = useFeatureFlag(AR_AP_AGING_UI_FLAG, operatingCompanyId || undefined);
 
   const [mode, setMode] = useState<Mode>("ar");
-  const [asOfDate, setAsOfDate] = useState<string>(todayIso());
+  // Aging is ALWAYS as-of today: views.ar_aging/ap_aging and the drill queries compute buckets at
+  // CURRENT_DATE, so there is no historical snapshot to select. No backdated as-of input is exposed
+  // (a past date would mislead at close by stamping today's aging with an old date).
+  const asOfDate = todayIso();
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const queryReady = Boolean(operatingCompanyId) && enabled;
@@ -237,18 +240,14 @@ export function ArApAgingPage() {
     <div className="space-y-4">
       <PageHeader
         title="AR / AP Aging"
-        subtitle="Accounts receivable & payable aging (read-only, per entity)"
+        subtitle="Accounts receivable & payable aging as of today (read-only, per entity)"
         actions={
           <div className="flex flex-wrap items-end gap-2 print:hidden">
             <div className="flex flex-col">
-              <label className="text-[11px] font-medium text-gray-500">As of</label>
-              <input
-                type="date"
-                value={asOfDate}
-                max={todayIso()}
-                onChange={(e) => setAsOfDate(e.target.value || todayIso())}
-                className="h-9 px-2 text-[13px] rounded border border-gray-300 bg-white text-gray-900"
-              />
+              <span className="text-[11px] font-medium text-gray-500">As of</span>
+              <span className="h-9 px-2 inline-flex items-center text-[13px] rounded border border-gray-200 bg-gray-50 text-gray-700 tabular-nums">
+                {fmtDate(asOfDate)} (today)
+              </span>
             </div>
             <button
               type="button"
@@ -294,8 +293,8 @@ export function ArApAgingPage() {
       </div>
 
       <p className="text-xs text-gray-400">
-        Aging buckets are computed live as of today ({fmtDate(todayIso())}) from the canonical ledger views; the “As of”
-        date stamps the report. Click a row to drill into open {mode === "ar" ? "invoices" : "bills"}.
+        Aging as of today ({fmtDate(asOfDate)}), computed live from the canonical ledger views. Click a row to drill
+        into open {mode === "ar" ? "invoices" : "bills"}.
       </p>
 
       {!operatingCompanyId ? (

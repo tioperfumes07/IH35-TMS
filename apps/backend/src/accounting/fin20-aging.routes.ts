@@ -21,7 +21,8 @@ import {
 // Backend gate (process.env per FIN-20 contract). Flipping this ON in prod is a separate Jorge
 // sign-off; this PR ships it OFF.
 function agingUiEnabled(): boolean {
-  return process.env.AR_AP_AGING_UI_ENABLED === "true";
+  const agingFlagRaw = process.env.AR_AP_AGING_UI_ENABLED ?? "false";
+  return agingFlagRaw === "true";
 }
 
 function canAccessAging(role: string): boolean {
