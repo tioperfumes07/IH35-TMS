@@ -72,8 +72,13 @@ const listQuerySchema = companyQuerySchema.extend({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+// Cancel/Void require a reason (Jorge 2026-06-29): the WHY is always captured in the immutable audit
+// trail. Soft only — the WO row + history are never deleted.
 const cancelBodySchema = z.object({
-  cancellation_reason: z.string().trim().max(500).optional(),
+  cancellation_reason: z.string().trim().min(3, "a reason is required").max(500),
+});
+const voidBodySchema = z.object({
+  reason: z.string().trim().min(3, "a reason is required").max(500),
 });
 
 const photoIntentSchema = z.object({
@@ -91,6 +96,11 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 
 function officeWoRoles(role: string) {
   return ["Owner", "Administrator", "Manager", "Dispatcher", "Safety"].includes(role);
+}
+
+// Cancel/Void anything = Owner or Administrator ONLY (Jorge 2026-06-29).
+function ownerOrAdmin(role: string) {
+  return role === "Owner" || role === "Administrator";
 }
 
 async function maintenanceReady(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok?: boolean }> }> }) {
@@ -871,7 +881,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
   app.post("/api/v1/work-orders/:id/cancel", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
-    if (!officeWoRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!ownerOrAdmin(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden_owner_or_admin_only" });
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -896,13 +906,69 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       );
       const wo = res.rows[0];
       if (!wo) return { kind: "missing" as const };
-      await appendCrudAudit(client, user.uuid, "maintenance.work_order.cancelled", { resource_id: wo.id }, "info", "P6-T11179");
-      await enqueueWorkOrderOutbox(client, "work_order.cancelled", { work_order_id: wo.id, reason: parsed.data.cancellation_reason ?? null });
+      await appendCrudAudit(client, user.uuid, "maintenance.work_order.cancelled", { resource_id: wo.id, reason: parsed.data.cancellation_reason }, "warning", "P6-T11179");
+      await enqueueWorkOrderOutbox(client, "work_order.cancelled", { work_order_id: wo.id, reason: parsed.data.cancellation_reason });
       return { kind: "ok" as const, wo };
     });
 
     if (row.kind === "unavailable") return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if (row.kind === "missing") return reply.code(404).send({ error: "work_order_not_found" });
+    return { work_order: row.wo };
+  });
+
+  // VOID a work order — Owner/Administrator ONLY, reason REQUIRED, SOFT (never deletes). Stronger than
+  // cancel: nullifies a WO (incl. one already completed) while preserving the immutable record + full
+  // history + the WHY in the audit trail. Sets voided_at/by/notes; idempotent (already-void → 409).
+  app.post("/api/v1/work-orders/:id/void", async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!ownerOrAdmin(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden_owner_or_admin_only" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const parsed = voidBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+
+    const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
+      const res = await client.query(
+        `
+          UPDATE maintenance.work_orders
+          SET voided_at = now(),
+              voided_by_user_id = $2,
+              void_notes = $3,
+              void_reason_code = COALESCE(void_reason_code, 'manual'),
+              updated_at = now()
+          WHERE id = $1 AND operating_company_id = $4 AND voided_at IS NULL
+          RETURNING *
+        `,
+        [params.data.id, user.uuid, parsed.data.reason, query.data.operating_company_id]
+      );
+      const wo = res.rows[0];
+      if (!wo) {
+        const exists = await client.query(
+          `SELECT voided_at FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [params.data.id, query.data.operating_company_id]
+        );
+        if (exists.rows[0]) return { kind: "already_voided" as const };
+        return { kind: "missing" as const };
+      }
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "maintenance.work_order.voided",
+        { resource_type: "maintenance.work_orders", resource_id: wo.id, operating_company_id: query.data.operating_company_id, status_at_void: wo.status, reason: parsed.data.reason },
+        "warning",
+        "WO-VOID"
+      );
+      await enqueueWorkOrderOutbox(client, "work_order.voided", { work_order_id: wo.id, reason: parsed.data.reason });
+      return { kind: "ok" as const, wo };
+    });
+
+    if (row.kind === "unavailable") return reply.code(501).send({ error: "maintenance_schema_not_available" });
+    if (row.kind === "missing") return reply.code(404).send({ error: "work_order_not_found" });
+    if (row.kind === "already_voided") return reply.code(409).send({ error: "work_order_already_voided" });
     return { work_order: row.wo };
   });
 
