@@ -42,12 +42,29 @@ CREATE POLICY usmca_activation_audit_open ON usmca_ops.activation_audit
   USING ( identity.is_lucia_bypass() OR identity.current_user_role() = ANY (ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]) )
   WITH CHECK ( identity.is_lucia_bypass() OR identity.current_user_role() = ANY (ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]) );
 
--- TARGET 3 — identity.user_notification_preferences. A properly-scoped policy already exists
--- (user_notification_preferences_scope: user_uuid = current_setting('app.user_id') OR bypass). The
--- redundant permissive `_open` policy (USING true) OR-overrides it (permissive policies are OR'd), so
--- it nullifies the scope. The correct fix is to DROP the open policy — the scope policy then isolates.
--- Additive-safe: removes an over-permissive grant; the existing scoped policy is untouched.
+-- TARGET 3 — identity.user_notification_preferences (GUARD correction, 2026-06-29).
+-- On PROD this table has ONLY `user_notification_preferences_open` (USING true) — there is NO scoped
+-- twin on THIS table (the scoped twin lives on notifications.user_notification_preferences, a
+-- different table). A bare DROP would leave this table RLS-enabled with ZERO policies → default-deny →
+-- notification prefs break for every user. So: drop the open policy AND create a real scope here.
+-- VERIFIED: withCurrentUser sets app.current_user_id (auth/db.ts:232 — NOT app.user_id); the prefs
+-- routes read/write WHERE user_uuid=self under withCurrentUser; the dispatcher reads arbitrary
+-- recipients' prefs under withLuciaBypass (dispatcher.ts:262). So bypass-OR-(user_uuid =
+-- app.current_user_id) isolates per-user while letting the dispatcher send to anyone. A stale `_scope`
+-- (using the wrong GUC app.user_id) exists on the fresh-migrated DB → drop it too so this migration is
+-- correct + idempotent on BOTH prod (open-only) and CI (open + stale scope).
 DROP POLICY IF EXISTS user_notification_preferences_open ON identity.user_notification_preferences;
+DROP POLICY IF EXISTS user_notification_preferences_scope ON identity.user_notification_preferences;
+CREATE POLICY user_notification_preferences_scope ON identity.user_notification_preferences
+  FOR ALL TO PUBLIC
+  USING (
+    identity.is_lucia_bypass()
+    OR user_uuid = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+  )
+  WITH CHECK (
+    identity.is_lucia_bypass()
+    OR user_uuid = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+  );
 
 -- TARGET 4 — mdata.load_stops INSERT + UPDATE: role-gated but not tenant-gated. The SELECT policy
 -- already scopes via EXISTS(mdata.loads). Bring INSERT/UPDATE to parity by ALSO requiring the parent
