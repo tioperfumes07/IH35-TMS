@@ -63,11 +63,18 @@ describeIntegration("legal template library — per-entity provisioning isolatio
     if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required");
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
-    await db.query("SET ROLE ih35_app");
+    // Create the throwaway companies as the OWNER role (the connection role), BEFORE SET ROLE
+    // ih35_app. Inserting into org.companies fires trg_org_companies_safety_settings, which inserts
+    // into safety.safety_settings — a table that has only SELECT/UPDATE RLS policies (no INSERT/ALL
+    // policy) and is NOT FORCE RLS. ih35_app would be denied that trigger-insert (no permissive
+    // INSERT policy), but the table owner bypasses non-forced RLS. org.companies IS force-RLS, so we
+    // still set app.bypass_rls='lucia' inside withBypass to satisfy its policy. Provisioning under
+    // test then runs as ih35_app (production fidelity).
     await withBypass(async () => {
       await createEntity(entityA);
       await createEntity(entityB);
     });
+    await db.query("SET ROLE ih35_app");
   });
 
   afterAll(async () => {
