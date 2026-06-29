@@ -49,4 +49,30 @@ describe("FIN-23 QBO reconcile captures — read-only", () => {
   it("is gated behind the OFF flag QBO_RECONCILE_UI_ENABLED", () => {
     expect(routesSrc.includes('process.env.QBO_RECONCILE_UI_ENABLED === "true"')).toBe(true);
   });
+
+  // FIN-23 hardening: the RLS SELECT policy on these two tables scopes by the user's company
+  // MEMBERSHIP, not the selected app.operating_company_id, so a multi-entity user would
+  // otherwise see another entity's QBO rows. Every read must carry an EXPLICIT per-entity
+  // predicate. These assertions lock that in so it can't silently regress.
+  /** Extract a single exported function body from the service source by name. */
+  function fnBody(name: string): string {
+    const start = serviceSrc.indexOf(`export async function ${name}`);
+    expect(start, `${name} not found in service`).toBeGreaterThanOrEqual(0);
+    // Next exported function (or EOF) bounds this one's body.
+    const after = serviceSrc.indexOf("\nexport async function ", start + 1);
+    return serviceSrc.slice(start, after === -1 ? undefined : after);
+  }
+
+  it("listQboModifyCaptures carries an explicit operating_company_id predicate", () => {
+    const body = fnBody("listQboModifyCaptures");
+    // Threads operatingCompanyId in and pins the SELECT to it.
+    expect(body).toMatch(/operatingCompanyId/);
+    expect(body).toMatch(/operating_company_id = \$\$\{params\.length\}::uuid/);
+  });
+
+  it("listQboSyncConflicts carries an explicit operating_company_id predicate", () => {
+    const body = fnBody("listQboSyncConflicts");
+    expect(body).toMatch(/operatingCompanyId/);
+    expect(body).toMatch(/operating_company_id = \$1::uuid/);
+  });
 });

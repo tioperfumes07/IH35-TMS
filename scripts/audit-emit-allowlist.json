@@ -636,6 +636,10 @@
     {
       "file": "apps/backend/src/legal/template-library.service.ts",
       "reason": "Legal template library seed — audits via appendContractAuditLog; template config like legal/templates.service.ts"
+    },
+    {
+      "file": "apps/backend/src/accounting/settlement-posting/bucket-ledger.service.ts",
+      "reason": "FIN-18 bucket ledger — writes its own append-only driver_deduction_bucket_events history (charge/application audit trail) in the same tx; that IS the audit emit, not the generic appendCrudAudit/log_event spine"
     }
   ]
 }
