@@ -11,6 +11,11 @@ export const COA_ROLE_VALUES = [
   "cash_basis_adjustment_equity",
   "retained_earnings",
   "uncategorized_expense",
+  // FIN-22 lessor lease (ASC 842) roles — per-opco (TRK) mappings in accounting.chart_of_accounts_roles.
+  "rental_income",
+  "lease_receivable",
+  "interest_income",
+  "gain_loss_on_disposal",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

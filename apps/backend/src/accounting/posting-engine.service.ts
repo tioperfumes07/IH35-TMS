@@ -166,7 +166,9 @@ async function resolveCashLikeAccountForCompany(client: DbClient, operatingCompa
   );
 }
 
-async function ensureOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string) {
+// Exported for reuse by sibling posters (e.g. FIN-22 lease ASC 842) so the closed-period gate is
+// enforced identically everywhere (no duplicated period-lock logic). Additive — no behavior change.
+export async function ensureOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string) {
   const cutoff = await client.query<{ cutoff: string | null }>(
     `SELECT accounting.closed_period_cutoff($1::uuid)::text AS cutoff`,
     [operatingCompanyId]
