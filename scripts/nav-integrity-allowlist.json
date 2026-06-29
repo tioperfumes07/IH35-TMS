@@ -483,6 +483,10 @@
     {
       "path": "/finance/statements",
       "reason": "FIN-19 read-only Finance-Hub page, behind OFF flag FINANCE_STATEMENTS_UI_ENABLED; subnav wiring deferred until flag ON"
+    },
+    {
+      "path": "/finance/hub",
+      "reason": "AF-6 read-only Finance Hub landing dashboard, behind OFF flag FINANCE_HUB_UI_ENABLED; subnav wiring deferred until flag ON"
     }
   ]
 }
