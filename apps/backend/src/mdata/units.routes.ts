@@ -46,7 +46,11 @@ const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(50),
   offset: z.coerce.number().int().min(0).default(0),
-  status: unitStatusSchema.optional(),
+  // CODER-17 hardening: an unrecognized status filter (e.g. the expenses unit-picker passing
+  // status=Active, which is not a fleet status enum) must NOT 400 the list — degrade to no status
+  // filter. The default `deactivated_at IS NULL` clause still returns active units, which is the
+  // intent. Valid fleet statuses (InService, etc.) are unaffected.
+  status: unitStatusSchema.optional().catch(undefined),
   type: fleetTypeFilterSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
   operating_company_id: z.string().uuid().optional(),
