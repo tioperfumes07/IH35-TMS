@@ -4,6 +4,18 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
+// CODER-16 USMCA pre-activation: USMCA (5c854333…) is HIDDEN until the July-2026 launch. Today it is
+// hidden only by access-scoping (org.user_accessible_company_ids) + deactivated_at — there is no
+// explicit launch gate, so a mis-grant or an un-deactivated row would leak it into the company picker.
+// Defense-in-depth for the entity-independence LAW: filter not-yet-launched entities out of the
+// company-list responses regardless of access/deactivated state, behind USMCA_ACTIVE (default OFF).
+// Flip USMCA_ACTIVE=1 at launch to expose it. Entity ids are share-nothing; this only hides USMCA.
+const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const USMCA_ACTIVE = process.env.USMCA_ACTIVE === "1";
+function filterPreLaunchEntities<T extends { id: string }>(rows: T[]): T[] {
+  return USMCA_ACTIVE ? rows : rows.filter((row) => row.id !== USMCA_COMPANY_ID);
+}
+
 const idParamSchema = z.object({
   id: z.string().uuid(),
 });
@@ -64,7 +76,8 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
           ORDER BY legal_name
         `
       );
-      return { companies: res.rows };
+      // Defense-in-depth: hide not-yet-launched entities (USMCA) until USMCA_ACTIVE.
+      return { companies: filterPreLaunchEntities(res.rows) };
     });
   });
 
@@ -202,7 +215,8 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
         `,
         [user.uuid]
       );
-      return { companies: res.rows };
+      // Defense-in-depth: never surface a not-yet-launched entity (USMCA) in the picker before launch.
+      return { companies: filterPreLaunchEntities(res.rows) };
     });
   });
 
