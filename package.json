@@ -318,6 +318,7 @@
     "verify:fh4-no-posting": "node scripts/verify-fh4-no-posting.mjs",
     "verify:fh3-no-posting": "node scripts/verify-fh3-no-posting.mjs",
     "verify:expense-gl-posting": "node scripts/verify-expense-gl-posting.mjs",
+    "verify:settlement-gl-flag-gate": "node scripts/verify-settlement-gl-flag-gate.mjs",
     "verify:record-expense-driverless-posting": "node scripts/verify-record-expense-driverless-posting.mjs",
     "verify:samsara-stats-reversegeo-ingest": "node scripts/verify-samsara-stats-reversegeo-ingest.mjs",
     "verify:dispatch-load-patch-money-evidence-guard": "node scripts/verify-dispatch-load-patch-money-evidence-guard.mjs",

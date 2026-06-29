@@ -18,7 +18,11 @@ export type AccountingSpineEvent =
   | "expense.reattributed"
   | "payment.created"
   | "payment.voided"
-  | "customer_payment.created";
+  | "customer_payment.created"
+  // FIN-18 (appended additively): driver settlement + bucketed-deduction GL posting events.
+  // subject_type='driver' is within the events.event_log allowlist (verified live).
+  | "settlement.posted"
+  | "settlement.reversed";
 
 export async function emitAccountingSpineEvent(
   client: DbClient,
@@ -34,10 +38,12 @@ export async function emitAccountingSpineEvent(
   }
 ): Promise<void> {
   const correlationId = opts.correlation_id ?? randomUUID();
+  // DISTINCT placeholders for entity_id used as text (subject_id $5) vs ::uuid (source_reference_id $10):
+  // reusing one $n as BOTH text and ::uuid makes Postgres fail "inconsistent types deduced for parameter".
   await client.query(
     `SELECT events.log_event(
       $1, $2, 'user', $3, $4, $5, $6, now(), 'accounting',
-      $7, $5::uuid, $8::uuid, $9::uuid
+      $7, $10::uuid, $8::uuid, $9::uuid
     )`,
     [
       opts.operating_company_id,
@@ -49,6 +55,7 @@ export async function emitAccountingSpineEvent(
       opts.source_table,
       opts.actor_user_id,
       correlationId,
+      opts.entity_id,
     ]
   );
 }
