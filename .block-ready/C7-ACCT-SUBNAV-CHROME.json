@@ -21,5 +21,15 @@
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": false,
+  "resolution": {
+    "verdict": "B — SUPERSEDED / REDUNDANT",
+    "date": "2026-06-29",
+    "finding": "The audit reported QboAccountingSubNav.tsx as a 'missing' component leaving QBO_ACCOUNTING_SUBNAV a dead export. Investigation shows the component was INTENTIONALLY deleted in PR #1552 (commit e8933bb7, nav-unification) and its absence is now CI-enforced by scripts/verify-accounting-nav.mjs Check 7. The deleted component rendered as a vertical left-rail strip, which violates the locked UI rule (CLAUDE.md §7: all nav on the top horizontal bar, no second left panel). The live accounting chrome is AccountingSubNavWrapper rendering ACCOUNTING_CLEAN_TABS + ACCOUNTING_MORE_TABS + a '+ Create' menu. The QBO-parity shell routes (Receipts/Integration transactions/Revenue recognition/Fixed assets/Prepaid expenses/My accountant) already exist as routed pages wrapped by AccountingSubNavWrapper.",
+    "fix": "Did NOT rebuild QboAccountingSubNav.tsx (would fail the CI guard and re-add a forbidden left rail). Retired the dead QBO_ACCOUNTING_SUBNAV export + QboSubNavItem type from subnav-manifest.ts and left a breadcrumb comment so future audits do not re-flag the drift. No user-facing surface changes; additive-safe.",
+    "files_touched": [
+      "apps/frontend/src/pages/accounting/subnav-manifest.ts",
+      ".block-ready/C7-ACCT-SUBNAV-CHROME.json"
+    ]
+  }
 }
