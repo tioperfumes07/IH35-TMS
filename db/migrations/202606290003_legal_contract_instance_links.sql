@@ -61,11 +61,11 @@ DROP POLICY IF EXISTS rls_legal_contract_instance_links_isolation ON legal.contr
 CREATE POLICY rls_legal_contract_instance_links_isolation ON legal.contract_instance_links
   FOR ALL TO ih35_app
   USING (
-    operating_company_id = current_setting('app.operating_company_id', true)::uuid
+    operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
     OR current_setting('app.bypass_rls', true) = 'lucia'
   )
   WITH CHECK (
-    operating_company_id = current_setting('app.operating_company_id', true)::uuid
+    operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
     OR current_setting('app.bypass_rls', true) = 'lucia'
   );
 
