@@ -197,7 +197,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
         `SELECT
           fa.id, fa.asset_number, fa.name,
           fa.owner_operating_company_id::text AS owner_operating_company_id,
-          owner.name                           AS owner_company_name,
+          COALESCE(owner.short_name, owner.legal_name) AS owner_company_name,
           fa.class_id::text                    AS class_id,
           fac.class_name,
           fa.purchase_price_cents::text        AS purchase_price_cents,
@@ -278,7 +278,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
           fa.in_service_date::text              AS in_service_date_s,
           fa.created_at::text                   AS created_at_s,
           fa.owner_operating_company_id::text   AS owner_id_s,
-          fac.class_name, owner.name AS owner_company_name
+          fac.class_name, COALESCE(owner.short_name, owner.legal_name) AS owner_company_name
          FROM accounting.fixed_assets fa
          LEFT JOIN accounting.fixed_asset_classes fac ON fac.id = fa.class_id
          LEFT JOIN org.companies owner ON owner.id = fa.owner_operating_company_id
