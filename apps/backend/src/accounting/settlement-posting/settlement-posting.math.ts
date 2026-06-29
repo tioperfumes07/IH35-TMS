@@ -15,8 +15,12 @@ export function dollarsToCents(dollars: number | string | null | undefined): num
   return Math.round(n * 100);
 }
 
-/** Clamp a configured floor pct into [0,1]; fall back to the 10% default when absent/invalid. */
+/** Clamp a configured floor pct into [0,1]; fall back to the 10% default when ABSENT/invalid. */
 export function normalizeFloorPct(floorPct: number | string | null | undefined): number {
+  // null/undefined/empty => "not set" => default (Number(null) would coerce to 0 — a different meaning).
+  if (floorPct === null || floorPct === undefined || (typeof floorPct === "string" && floorPct.trim() === "")) {
+    return DEFAULT_NET_PAY_FLOOR_PCT;
+  }
   const pct = Number(floorPct);
   if (!Number.isFinite(pct) || pct < 0 || pct > 1) return DEFAULT_NET_PAY_FLOOR_PCT;
   return pct;

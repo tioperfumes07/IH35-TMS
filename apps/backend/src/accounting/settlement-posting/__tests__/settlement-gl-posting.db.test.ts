@@ -53,10 +53,12 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
       await db.query(
+        `DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid AND user_uuid IS NULL`,
+        [companyId]
+      );
+      await db.query(
         `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ('SETTLEMENT_GL_POSTING_ENABLED', $1::uuid, NULL, $2, $3::uuid)
-         ON CONFLICT (flag_key, operating_company_id) WHERE user_uuid IS NULL
-         DO UPDATE SET enabled = EXCLUDED.enabled, set_at = now()`,
+         VALUES ('SETTLEMENT_GL_POSTING_ENABLED', $1::uuid, NULL, $2, $3::uuid)`,
         [companyId, enabled, userId]
       );
     });
