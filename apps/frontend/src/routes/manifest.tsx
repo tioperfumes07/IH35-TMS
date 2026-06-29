@@ -379,6 +379,7 @@ import { CalculatorPage } from "../pages/finance/CalculatorPage";
 import { AmortizationPage } from "../pages/finance/AmortizationPage";
 import { FinanceScenariosPage } from "../pages/finance/FinanceScenariosPage";
 import { ArApAgingPage } from "../pages/finance/ArApAgingPage"; // FIN-20 (read-only, flag-gated)
+import { FinancialStatementsPage } from "../pages/finance/FinancialStatementsPage";
 
 // Inventory module (SIDEBAR-V2-REORG-25)
 import { InventoryPartsStockPage } from "../pages/inventory/InventoryPartsStockPage";
@@ -3496,6 +3497,8 @@ export const ROUTES = React.Children.toArray(
         <Route path="/finance/calculator" element={<ProtectedRoute><CalculatorPage /></ProtectedRoute>} />
         <Route path="/finance/amortization" element={<ProtectedRoute><AmortizationPage /></ProtectedRoute>} />
         <Route path="/finance/ar-ap-aging" element={<ProtectedRoute><ArApAgingPage /></ProtectedRoute>} />
+        {/* FIN-19 — Financial statements (P&L / BS / TB). Read-only; gated behind FINANCE_STATEMENTS_UI_ENABLED (default OFF). */}
+        <Route path="/finance/statements" element={<ProtectedRoute><FinancialStatementsPage /></ProtectedRoute>} />
         {/* Inventory module (SIDEBAR-V2-REORG-25) */}
         <Route path="/inventory" element={<ProtectedRoute><InventoryPartsStockPage /></ProtectedRoute>} />
         <Route path="/inventory/assignments" element={<ProtectedRoute><InventoryAssignmentsPage /></ProtectedRoute>} />
