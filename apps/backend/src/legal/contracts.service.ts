@@ -609,7 +609,8 @@ export async function confirmPublicSigningVerification(
       `
         UPDATE legal.contract_signing_tokens
         SET verification_code_hash = NULL,
-            verification_code_expires_at = NULL
+            verification_code_expires_at = NULL,
+            verified_at = now()
         WHERE id = $1
           AND operating_company_id = $2
       `,
@@ -659,11 +660,42 @@ export async function completePublicSigning(
   return withValidToken(rawToken, async (client, token) => {
     if (!["sent", "viewed"].includes(String(token.contract_status))) throw new Error("legal_contract_not_signable");
 
+    // POSITIVE-PROOF verification gate (was a bypass): a fresh sms/email token has
+    // verification_code_hash NULL, and confirmPublicSigningVerification also NULLs that column on a
+    // SUCCESSFUL code check — the two are indistinguishable. We now require verified_at IS NOT NULL,
+    // which is only set when a code is actually confirmed. Channel "none" still signs without a code.
     if (String(token.verification_channel) !== "none") {
-      if (token.verification_code_hash) throw new Error("legal_verification_required_before_sign");
+      if (!token.verified_at) throw new Error("legal_verification_required_before_sign");
     }
 
     const signedAt = new Date().toISOString();
+
+    // Render the signed PDF BEFORE any DB writes. The render needs no DB and is the only
+    // failure-prone (Chromium/Puppeteer) step; running it first keeps signing atomic so a render
+    // failure never leaves a half-written signature row. Order: gate → render → INSERT signature →
+    // upload R2 → INSERT attachment → UPDATE instance/token.
+    const pdf = await renderSignedContractPdf({
+      templateCode: String(token.template_code),
+      templateVersion: Number(token.template_version),
+      contractInstanceId: String(token.contract_instance_id),
+      language: String(token.language) as "en" | "es" | "bilingual",
+      signerName: input.signed_by_name,
+      contentHtmlEn: String(token.content_html_en ?? ""),
+      contentHtmlEs: String(token.content_html_es ?? ""),
+      filledVariables:
+        token.filled_variables && typeof token.filled_variables === "object" && !Array.isArray(token.filled_variables)
+          ? (token.filled_variables as Record<string, unknown>)
+          : {},
+      signedAtIso: signedAt,
+      typedSignature: input.typed_signature,
+      drawnSignatureSvg: input.drawn_signature_svg,
+      ipAddress: auditMeta.ipAddress ?? null,
+      userAgent: auditMeta.userAgent ?? null,
+    });
+    // 0-byte guard: an empty buffer would trip the documents.attachments size CHECK and surface as a
+    // raw 23514 — map it to the clean render-failed error instead.
+    if (!pdf.pdfBuffer || pdf.pdfBuffer.length === 0) throw new Error("legal_pdf_render_failed");
+
     const signatureRes = await client.query(
       `
         INSERT INTO legal.signatures (
@@ -697,24 +729,6 @@ export async function completePublicSigning(
     );
     const signatureId = signatureRes.rows[0]?.id;
 
-    const pdf = await renderSignedContractPdf({
-      templateCode: String(token.template_code),
-      templateVersion: Number(token.template_version),
-      contractInstanceId: String(token.contract_instance_id),
-      language: String(token.language) as "en" | "es" | "bilingual",
-      signerName: input.signed_by_name,
-      contentHtmlEn: String(token.content_html_en ?? ""),
-      contentHtmlEs: String(token.content_html_es ?? ""),
-      filledVariables:
-        token.filled_variables && typeof token.filled_variables === "object" && !Array.isArray(token.filled_variables)
-          ? (token.filled_variables as Record<string, unknown>)
-          : {},
-      signedAtIso: signedAt,
-      typedSignature: input.typed_signature,
-      drawnSignatureSvg: input.drawn_signature_svg,
-      ipAddress: auditMeta.ipAddress ?? null,
-      userAgent: auditMeta.userAgent ?? null,
-    });
     const r2ObjectKey = await uploadSignedPdfToR2(
       String(token.operating_company_id),
       String(token.contract_instance_id),

@@ -127,27 +127,37 @@ function buildPdfHtml(payload: LegalPdfPayload) {
 
 export async function renderSignedContractPdf(payload: LegalPdfPayload) {
   await acquireRenderSlot();
+  // --no-sandbox / --disable-setuid-sandbox are required so headless Chromium launches inside the
+  // Render container (no user namespaces). Any launch/render failure is mapped to a single clean
+  // error (legal_pdf_render_failed) so a raw Chromium stack never escapes onto the signing hot path,
+  // and the browser is always closed in finally if it launched.
+  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
   try {
     const html = buildPdfHtml(payload);
-    const browser = await puppeteer.launch({ headless: true });
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
-    try {
-      await page.setContent(html, { waitUntil: "load" });
-      const pdf = await page.pdf({ format: "Letter", printBackground: true });
-      const pdfBuffer = Buffer.from(pdf);
-      const sha256 = crypto.createHash("sha256").update(pdfBuffer).digest("hex");
-      const filename = `contract-${payload.templateCode}-v${payload.templateVersion}-${payload.contractInstanceId}.pdf`;
-      return {
-        html,
-        pdfBuffer,
-        filename,
-        mimeType: "application/pdf",
-        sha256,
-      };
-    } finally {
-      await browser.close();
-    }
+    await page.setContent(html, { waitUntil: "load" });
+    const pdf = await page.pdf({ format: "Letter", printBackground: true });
+    const pdfBuffer = Buffer.from(pdf);
+    const sha256 = crypto.createHash("sha256").update(pdfBuffer).digest("hex");
+    const filename = `contract-${payload.templateCode}-v${payload.templateVersion}-${payload.contractInstanceId}.pdf`;
+    return {
+      html,
+      pdfBuffer,
+      filename,
+      mimeType: "application/pdf",
+      sha256,
+    };
+  } catch (error) {
+    console.error("legal_pdf_render_failed", (error as Error)?.message ?? error);
+    throw new Error("legal_pdf_render_failed");
   } finally {
+    if (browser) {
+      await browser.close().catch(() => undefined);
+    }
     releaseRenderSlot();
   }
 }
