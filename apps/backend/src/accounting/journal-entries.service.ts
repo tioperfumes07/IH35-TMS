@@ -120,10 +120,13 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
             debit_or_credit,
             amount_cents,
             description,
+            idempotency_key,
             created_at,
             updated_at
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),now())
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())
+          ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
+            WHERE idempotency_key IS NOT NULL DO NOTHING
         `,
         [
           input.operating_company_id,
@@ -135,6 +138,10 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
           posting.debit_or_credit,
           posting.amount_cents,
           posting.description ?? null,
+          // BLOCK 2: every money insert carries a key. A manual JE has no natural idempotency token,
+          // so the key is keyed to its freshly-generated header id (unique per entry) — this populates
+          // the column + satisfies the unique-index backstop without changing manual-JE behavior.
+          `manual_je:${header.id}`,
         ]
       );
       lineSequence += 1;

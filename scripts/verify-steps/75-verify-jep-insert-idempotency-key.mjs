@@ -7,17 +7,11 @@ import path from "node:path";
 // guard FAILS if a NEW poster omits idempotency_key from its column list — a key-less insert writes
 // NULL, which the partial index does not cover, leaving that GL path unprotected against a retry.
 //
-// GRANDFATHERED (key-less BY DESIGN, surfaced in the CODER-28B PR for Jorge): four existing posters
-// insert with a NULL idempotency_key. They have no machine-retry idempotency token today; adding
-// deterministic keys to those money paths is a separate, reviewed follow-up (do NOT silently expand
-// scope). They are allowlisted here so the ratchet protects against regression without forcing an
-// in-PR change to working ledger writers.
-const KEYLESS_BY_DESIGN = new Set([
-  "apps/backend/src/accounting/journal-entries.service.ts", // manual JE
-  "apps/backend/src/accounting/void.service.ts", // standalone void reversal
-  "apps/backend/src/accounting/recurring.worker.ts", // recurring template materialization
-  "apps/backend/src/accounting/period-close-retained-earnings.service.ts", // year-end close
-]);
+// BLOCK 2 (2026-06-29) CLEARED the grandfather list: the four formerly key-less posters (manual JE,
+// void, recurring, period-close) now set deterministic idempotency keys + ON CONFLICT DO NOTHING, so
+// EVERY journal_entry_postings INSERT carries a key. The allowlist is intentionally empty — any
+// key-less insert (existing posters included) now fails the guard. Do NOT re-add entries here.
+const KEYLESS_BY_DESIGN = new Set([]);
 
 // Capture each `INSERT INTO accounting.journal_entry_postings ( <column-list> )`. Column lists here
 // are flat (no nested parens), so [^)]* reliably spans to the closing paren of the column list.
