@@ -142,6 +142,7 @@ import { PrepaidExpensesPage } from "../pages/accounting/PrepaidExpensesPage";
 import { RevenueRecognitionPage } from "../pages/accounting/RevenueRecognitionPage";
 import { FixedAssetsPage } from "../pages/accounting/FixedAssetsPage";
 import { AccountTypeCatalogPage } from "../pages/accounting/AccountTypeCatalogPage";
+import { MyAccountantPage } from "../pages/accounting/MyAccountantPage";
 import { BulkDemoPage } from "../pages/dev/BulkDemoPage";
 import { SamsaraIntegrationPage } from "../pages/integrations/SamsaraIntegrationPage";
 import { DriverAppLandingPage } from "../pages/DriverAppLandingPage";
@@ -3260,14 +3261,14 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/recurring-transactions"
           element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
         />
-        {/* UI-1: 3/6 modules built. Remaining stubs: revenue-recognition, fixed-assets, my-accountant */}
+        {/* UI-1: 6/6 modules built (prepaid, integration-transactions, receipts, revenue-recognition, fixed-assets, my-accountant). */}
         <Route path="/accounting/integration-transactions" element={<ProtectedRoute><IntegrationTransactionsPage /></ProtectedRoute>} />
         <Route path="/accounting/receipts" element={<ProtectedRoute><ReceiptsPage /></ProtectedRoute>} />
         <Route path="/accounting/revenue-recognition" element={<ProtectedRoute><RevenueRecognitionPage /></ProtectedRoute>} />
         <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssetsPage /></ProtectedRoute>} />
         <Route path="/accounting/prepaid-expenses" element={<ProtectedRoute><PrepaidExpensesPage /></ProtectedRoute>} />
         <Route path="/accounting/account-type-catalog" element={<ProtectedRoute><AccountTypeCatalogPage /></ProtectedRoute>} />
-        <Route path="/accounting/my-accountant" element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>} />
+        <Route path="/accounting/my-accountant" element={<ProtectedRoute><MyAccountantPage /></ProtectedRoute>} />
         <Route
           path="/reports/run/:reportId"
           element={
