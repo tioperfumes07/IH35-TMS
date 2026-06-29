@@ -94,6 +94,7 @@ export async function registerLegalSignRoutes(app: FastifyInstance) {
           "legal_sign_token_invalid_or_expired",
           "legal_contract_not_signable",
           "legal_verification_required_before_sign",
+          "legal_pdf_render_failed",
           "r2_not_configured",
         ].includes(message)
       ) {
