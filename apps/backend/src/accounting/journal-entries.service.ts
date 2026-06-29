@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { emitAccountingSpineEvent, writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
@@ -108,7 +109,7 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
 
     let lineSequence = 1;
     for (const posting of input.postings) {
-      await client.query(
+      const lineRes = await client.query<{ id: string }>(
         `
           INSERT INTO accounting.journal_entry_postings (
             operating_company_id,
@@ -127,6 +128,7 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())
           ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
             WHERE idempotency_key IS NOT NULL DO NOTHING
+          RETURNING id::text
         `,
         [
           input.operating_company_id,
@@ -144,8 +146,30 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
           `manual_je:${header.id}`,
         ]
       );
+      // CODER-12 audit-spine: one source link per inserted posting line, same transaction. On a
+      // BLOCK-2 ON CONFLICT no-op (no row returned) the original line already carries its link → skip.
+      const postingId = lineRes.rows[0]?.id;
+      if (postingId) {
+        await writeTransactionSourceLink(client, {
+          operating_company_id: input.operating_company_id,
+          journal_entry_posting_id: postingId,
+          linked_object_type: "journal_entry",
+          linked_object_id: header.id,
+          relationship_role: "manual_entry",
+        });
+      }
       lineSequence += 1;
     }
+
+    // CODER-12 audit-spine: one event per posted batch (atomic with the GL write; fail-loud).
+    await emitAccountingSpineEvent(client, {
+      operating_company_id: input.operating_company_id,
+      actor_user_id: actor.userId,
+      event_type: "journal_entry.created",
+      entity_id: header.id,
+      entity_type: "journal_entry",
+      source_table: "accounting.journal_entries",
+    });
 
     await appendCrudAudit(
       client,
