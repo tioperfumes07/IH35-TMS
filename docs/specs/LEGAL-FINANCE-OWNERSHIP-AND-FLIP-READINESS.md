@@ -43,7 +43,7 @@ separation of duties.
   and **every GL/JE posting** for leases. Behind `LEASE_GL_POSTING_ENABLED` (default OFF).
 - **FIN-18 (settlement / deduction posting):** the deduction math and **every GL posting** that
   reduces a driver settlement. It must call the Legal **consent gate** ("signed auth on file?")
-  before posting (FLSA). Behind `LEGAL_FIN_LINK_ENABLED` (default OFF).
+  before posting (FLSA). Behind `SETTLEMENT_GL_POSTING_ENABLED` (FIN-18, default OFF).
 
 ### Net effect on the legal block's Phase 5
 Phase 5 in the legal build is **trimmed to link-and-consent-only**:
@@ -61,7 +61,7 @@ are not in the legal block.
 
 ## 2. Flip-readiness gate (GUARD condition #2 — in writing)
 
-**No lease or deduction posting flag (`LEASE_GL_POSTING_ENABLED`, `LEGAL_FIN_LINK_ENABLED`) ever
+**No lease or deduction posting flag (`LEASE_GL_POSTING_ENABLED`, `SETTLEMENT_GL_POSTING_ENABLED`) ever
 flips ON until the owning Finance engine is:**
 1. **Built** — FIN-22 (lease) / FIN-18 (deduction→GL) committed and merged.
 2. **Unit-tested** on a Neon branch (balanced JE asserted; ASC 842 classification correct per
@@ -92,7 +92,7 @@ Legal block (this build, [HOLD-FOR-JORGE])
   └─ does NOT ship: ASC 842 engine, lease schedule, deduction math, any GL posting
 
 FIN-22 (lease subledger)  ── REQUIRED before LEASE_GL_POSTING_ENABLED may flip
-FIN-18 (settlement/deduction posting) ── REQUIRED before LEGAL_FIN_LINK_ENABLED may flip
+FIN-18 (settlement/deduction posting) ── REQUIRED before SETTLEMENT_GL_POSTING_ENABLED may flip
   └─ both consume the Legal link + consent gate; both own their own GL; both Tier-1 to flip
 ```
 

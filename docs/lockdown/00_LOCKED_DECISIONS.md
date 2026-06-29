@@ -68,7 +68,7 @@ Phase 5 of `CODER-BLOCK_Legal-Template-Library.md`).
   trail, `legal.contract_instance_links` + handoff event, and the "signed-auth-on-file?" gate.
   **Finance owns** the engines: **FIN-22** = lease ASC 842 classification + schedule + lease GL;
   **FIN-18** = deduction math + settlement→GL. Legal builds NEITHER engine.
-- **Flip-readiness gate:** `LEASE_GL_POSTING_ENABLED` / `LEGAL_FIN_LINK_ENABLED` never flip ON until
+- **Flip-readiness gate:** `SETTLEMENT_GL_POSTING_ENABLED` (FIN-18) / `LEASE_GL_POSTING_ENABLED` (FIN-22) / `AMORTIZATION_GL_POSTING_ENABLED` (FIN-21) never flip ON until
   the owning Finance engine is built + Neon-unit-tested (balanced JE, correct ASC 842, deduction
   refuses without signed-auth link) + CPA-confirmed + Neon-branch end-to-end verified. Flipping =
   Tier-1, never self-merged. No live-money hole meanwhile (flags OFF → Legal can only sign+store).
