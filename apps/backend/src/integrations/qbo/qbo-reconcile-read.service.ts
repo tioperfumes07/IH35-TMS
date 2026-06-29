@@ -141,10 +141,19 @@ export async function getLastRemoteCountAt(client: QueryClient): Promise<string 
  */
 export async function listQboModifyCaptures(
   client: QueryClient,
-  opts: { status?: string; entityType?: string; limit: number; offset: number },
+  opts: { operatingCompanyId: string; status?: string; entityType?: string; limit: number; offset: number },
 ): Promise<{ items: QboModifyCapture[]; total: number }> {
   const where: string[] = [];
   const params: unknown[] = [];
+
+  // FIN-23 hardening (CASCADE-14 discipline): explicit per-entity predicate. RLS alone is
+  // NOT sufficient here — the SELECT policy on integrations.qbo_inbound_events scopes by the
+  // user's company MEMBERSHIP (every company in org.user_company_access), not the selected
+  // app.operating_company_id. For a multi-entity owner that would blend another entity's QBO
+  // captures into this view once a 2nd entity connects QBO. Pin every read to the active entity.
+  params.push(opts.operatingCompanyId);
+  where.push(`operating_company_id = $${params.length}::uuid`);
+
   if (opts.status) {
     params.push(opts.status);
     where.push(`status = $${params.length}`);
@@ -153,7 +162,7 @@ export async function listQboModifyCaptures(
     params.push(opts.entityType);
     where.push(`qbo_entity_type = $${params.length}`);
   }
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const whereSql = `WHERE ${where.join(" AND ")}`;
 
   const countRes = await client.query(
     `SELECT count(*)::int AS total FROM integrations.qbo_inbound_events ${whereSql}`,
@@ -179,12 +188,19 @@ export async function listQboModifyCaptures(
 /** Open/closed sync conflicts with local (TMS) vs QBO snapshots side by side. */
 export async function listQboSyncConflicts(
   client: QueryClient,
-  opts: { openOnly?: boolean; limit: number; offset: number },
+  opts: { operatingCompanyId: string; openOnly?: boolean; limit: number; offset: number },
 ): Promise<{ items: QboSyncConflict[]; total: number }> {
-  const whereSql = opts.openOnly ? "WHERE resolved_at IS NULL" : "";
+  // FIN-23 hardening (CASCADE-14 discipline): explicit per-entity predicate. The RLS SELECT
+  // policy on integrations.qbo_sync_conflicts scopes by the user's company MEMBERSHIP, not the
+  // selected app.operating_company_id — so without this an owner with access to multiple
+  // entities would see every accessible entity's conflicts. Pin every read to the active entity.
+  const where: string[] = ["operating_company_id = $1::uuid"];
+  if (opts.openOnly) where.push("resolved_at IS NULL");
+  const whereSql = `WHERE ${where.join(" AND ")}`;
 
   const countRes = await client.query(
     `SELECT count(*)::int AS total FROM integrations.qbo_sync_conflicts ${whereSql}`,
+    [opts.operatingCompanyId],
   );
   const total = Number(countRes.rows[0]?.total ?? 0);
 
@@ -194,8 +210,8 @@ export async function listQboSyncConflicts(
        FROM integrations.qbo_sync_conflicts
        ${whereSql}
       ORDER BY (resolved_at IS NULL) DESC, detected_at DESC
-      LIMIT $1 OFFSET $2`,
-    [opts.limit, opts.offset],
+      LIMIT $2 OFFSET $3`,
+    [opts.operatingCompanyId, opts.limit, opts.offset],
   );
   return { items: res.rows as unknown as QboSyncConflict[], total };
 }
