@@ -628,6 +628,14 @@
     {
       "file": "apps/backend/src/work-orders/wo-number.service.ts",
       "reason": "Work order number generator — sequence counter, spine on WO create route"
+    },
+    {
+      "file": "apps/backend/src/legal/signed-links.service.ts",
+      "reason": "Legal Phase-4 operational links — audits via appendContractAuditLog → legal.contract_audit_log (append-only); same pattern as legal/contracts.service.ts"
+    },
+    {
+      "file": "apps/backend/src/legal/template-library.service.ts",
+      "reason": "Legal template library seed — audits via appendContractAuditLog; template config like legal/templates.service.ts"
     }
   ]
 }
