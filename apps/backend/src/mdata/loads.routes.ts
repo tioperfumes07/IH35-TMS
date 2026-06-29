@@ -69,11 +69,17 @@ const listLoadsQuerySchema = z.object({
   from_date: isoDateSchema.optional(),
   to_date: isoDateSchema.optional(),
   search: z.string().trim().min(1).max(120).optional(),
+  // CODER-17 hardening: a sort value the endpoint doesn't recognize (e.g. the invoices page's
+  // "-pickup_date" dash-prefix convention) must NOT 400 the whole list — degrade to the default.
+  // SQL injection is impossible regardless: the actual ORDER BY column comes from the fixed
+  // sortColumnMap whitelist below, never raw input. `.catch` makes an unrecognized/ill-formatted
+  // sort fall back to created_at:desc instead of failing validation.
   sort: z
     .string()
     .trim()
     .regex(/^(created_at|load_number|status|rate_total_cents):(asc|desc)$/i)
-    .default("created_at:desc"),
+    .default("created_at:desc")
+    .catch("created_at:desc"),
   include_progress: z.coerce.boolean().default(false),
 });
 

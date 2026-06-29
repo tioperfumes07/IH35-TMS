@@ -62,4 +62,19 @@ describe("mdata loads routes", () => {
       loads: [],
     });
   });
+
+  // CODER-17 hardening regression: an unrecognized sort (the invoices page's "-pickup_date"
+  // dash-prefix convention, or any junk) must degrade to the default sort with 200 — never 400.
+  // The ORDER BY column stays whitelisted via sortColumnMap, so this is safe.
+  it("GET /api/v1/mdata/loads degrades an unknown sort to default (no 400)", async () => {
+    const app = await buildApp();
+    for (const sort of ["-pickup_date", "totally_bogus:asc", "load_number"]) {
+      const response = await app.inject({
+        method: "GET",
+        url: `/api/v1/mdata/loads?operating_company_id=11111111-1111-4111-8111-111111111111&sort=${encodeURIComponent(sort)}`,
+      });
+      expect(response.statusCode, `sort=${sort}`).toBe(200);
+      expect(response.statusCode).not.toBe(400);
+    }
+  });
 });
