@@ -7,7 +7,10 @@ const WORKER_NAME = "drivers.retention_scorer_worker";
 const CRON_EXPRESSION = "0 4 * * 1";
 const CRON_TZ = "America/Chicago";
 
-let task: cron.ScheduledTask | undefined;
+// Version-agnostic across node-cron majors: infer the scheduled-task type from cron.schedule itself
+// rather than the `cron.ScheduledTask` namespace type (removed/renamed in newer node-cron type defs,
+// which broke build-typecheck on the dependency bump PRs #1634/#1635).
+let task: ReturnType<typeof cron.schedule> | undefined;
 
 export async function runDriverRetentionScorerTick(): Promise<{ drivers_scored: number }> {
   let driversScored = 0;
