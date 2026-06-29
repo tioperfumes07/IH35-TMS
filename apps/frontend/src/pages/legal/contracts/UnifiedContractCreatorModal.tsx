@@ -228,7 +228,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                   setCategory(e.target.value);
                   setTemplateCode("");
                 }}
-                className="h-9 rounded border border-slate-300 px-2 text-sm"
+                className="w-full"
               >
                 <option value="">All categories</option>
                 {categories.map((c) => (
@@ -244,7 +244,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               <SelectCombobox
                 value={templateCode}
                 onChange={(e) => setTemplateCode(e.target.value)}
-                className="h-9 rounded border border-slate-300 px-2 text-sm"
+                className="w-full"
               >
                 <option value="">Select a template…</option>
                 {templatesInCategory.map((t) => (
@@ -267,7 +267,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               <SelectCombobox
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as LegalContractLanguage)}
-                className="h-9 rounded border border-slate-300 px-2 text-sm"
+                className="w-full"
               >
                 <option value="en">English (controls)</option>
                 <option value="es">Español (traducción certificada pendiente)</option>
@@ -410,7 +410,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                   setSignerType(e.target.value as LegalSignerType);
                   setSignerEntityId("");
                 }}
-                className="h-9 rounded border border-slate-300 px-2 text-sm"
+                className="w-full"
               >
                 {SIGNER_TYPES.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -438,7 +438,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                       setSignerPhone(p.phone ?? "");
                     }
                   }}
-                  className="h-9 rounded border border-slate-300 px-2 text-sm"
+                  className="w-full"
                 >
                   <option value="">Select…</option>
                   {partyOptions.map((p) => (
