@@ -419,6 +419,18 @@ export function DispatchBoard({
 
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
+
+  // DB-4 (honest count): the List/Table renders the FULL awaiting-truck roster (un-paginated)
+  // in its own section alongside the paginated loads, all inside one table (locked structure for
+  // global sort). A bare "Showing X of Y" therefore read as if it described every visible row
+  // (e.g. "Showing 1-5 of 5" with 44 rows on screen = 5 loads + 39 awaiting trucks). Scope the
+  // pagination count to loads and surface the roster total separately so the numbers reconcile.
+  const awaitingTruckCount = unassignedUnits.length;
+  const loadCountSummary =
+    `Showing ${from}-${to} of ${totalCount} ${totalCount === 1 ? "load" : "loads"}` +
+    (awaitingTruckCount > 0
+      ? ` · ${awaitingTruckCount} ${awaitingTruckCount === 1 ? "truck" : "trucks"} awaiting (full roster)`
+      : "");
   const hasPrev = offset > 0;
   const hasNext = offset + limit < totalCount;
 
@@ -645,6 +657,8 @@ export function DispatchBoard({
   const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
+    // DB-6: Load # sits immediately after Trailer in the shared column model (app-wide list + table).
+    { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
     // DISPATCH-UI-REFINE-2 ITEM 5 — the locked Samsara 6-clock set on the live board. The old summary
     // pair was REMOVED per Jorge (it overlapped Drive/Shift/Cycle and cluttered the grid); only these 6
@@ -661,7 +675,8 @@ export function DispatchBoard({
         />
       ),
     })),
-    // UX-B: Location (last-known unit city) sits right after the HOS clocks (Resume At), before Load #.
+    // UX-B: Location (last-known unit city) sits right after the HOS clocks (Resume At).
+    // (DB-6 moved Load # up to immediately after Trailer in the shared column model.)
     {
       key: "location",
       header: "Location",
@@ -671,7 +686,6 @@ export function DispatchBoard({
         return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-[10px] text-slate-400">—</span>;
       },
     },
-    { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "customer", header: "Customer", cell: renderCustomerCell },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
     { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
@@ -726,7 +740,7 @@ export function DispatchBoard({
       <section className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            Showing {from}-{to} of {totalCount}
+            {loadCountSummary}
           </div>
           <div className="flex items-center gap-2">
             {selection.count > 0 ? (
@@ -839,7 +853,7 @@ export function DispatchBoard({
             Previous
           </Button>
           <span className="text-gray-600">
-            Showing {from}-{to} of {totalCount}
+            {loadCountSummary}
           </span>
           <Button type="button" variant="secondary" size="sm" disabled={!hasNext} onClick={() => onPageChange(offset + limit)}>
             Next
