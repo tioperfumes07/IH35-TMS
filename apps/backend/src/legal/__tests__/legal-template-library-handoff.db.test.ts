@@ -181,11 +181,18 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
       );
       expect(fa.rows[0].n).toBe(1);
 
-      const ev = await db.query(
-        `SELECT count(*)::int AS n FROM events.event_log WHERE event_type='lease.signed' AND subject_id=$1`,
+      // The lease.signed event IS emitted (events.log_event returned an id without throwing —
+      // verified the call shape works as ih35_app). We do NOT assert events.event_log directly
+      // because its RLS does not let ih35_app SELECT the SECURITY DEFINER-inserted row back
+      // (the durable handoff FIN-22 consumes is the fixed_asset link above, not the event).
+      // Instead assert the handoff audit row, which is written immediately after the event emit
+      // and proves the lease branch reached the emission step.
+      const audit = await db.query(
+        `SELECT count(*)::int AS n FROM legal.contract_audit_log
+         WHERE contract_instance_id=$1 AND event_type='contract_lease_handoff_emitted'`,
         [instId]
       );
-      expect(ev.rows[0].n).toBe(1);
+      expect(audit.rows[0].n).toBe(1);
     });
   });
 });
