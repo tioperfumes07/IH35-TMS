@@ -1,5 +1,6 @@
 import { withLuciaBypass } from "../../auth/db.js";
-import { emitAccountingSpineEvent, writeTransactionSourceLink } from "../accounting-spine-emit.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 
 export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je";
@@ -431,16 +432,19 @@ async function postDifferenceJournalEntry(
     });
   }
 
-  // CODER-12 audit-spine: one event per variance batch (atomic with the GL write; fail-loud).
-  await emitAccountingSpineEvent(client, {
-    operating_company_id: input.operating_company_id,
-    actor_user_id: input.actor_user_uuid,
-    event_type: "bank_reconciliation.variance_posted",
-    entity_id: journalEntryId,
-    entity_type: "journal_entry",
-    source_table: "accounting.journal_entries",
-    payload: { bank_transaction_id: input.bank_transaction_id },
-  });
+  // CODER-12 audit-spine: write the immutable audit event for the variance posting to
+  // audit.audit_events (canonical, DB-trigger immutable per the blueprint), atomic with the GL write
+  // and fail-loud-SAFE (audit_events' only CHECK is severity). NOT events.log_event (its
+  // valid_subject_type CHECK rejects accounting subjects -> would roll back the variance post). This
+  // poster previously wrote NO audit event — CODER-12 closes that gap.
+  await appendCrudAudit(
+    client,
+    input.actor_user_uuid,
+    "accounting.bank_reconciliation.variance_posted",
+    { journal_entry_id: journalEntryId, bank_transaction_id: input.bank_transaction_id, variance_cents: input.variance_cents },
+    "info",
+    "CODER-12-BANK-RECON-SPINE"
+  );
 
   return journalEntryId;
 }

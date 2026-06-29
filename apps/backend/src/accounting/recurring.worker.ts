@@ -5,7 +5,7 @@ import crypto from "node:crypto";
 import { withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
-import { emitAccountingSpineEvent, writeTransactionSourceLink } from "./accounting-spine-emit.js";
+import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
@@ -311,17 +311,10 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
     seq += 1;
   }
 
-  // CODER-12 audit-spine: one event per materialized batch (atomic with the GL write; fail-loud).
-  await emitAccountingSpineEvent(client, {
-    operating_company_id: oc,
-    actor_user_id: actorId,
-    event_type: "recurring.posted",
-    entity_id: jeId,
-    entity_type: "journal_entry",
-    source_table: "accounting.journal_entries",
-    payload: { template_id: String(tmpl.id) },
-  });
-
+  // CODER-12 audit-spine: the immutable audit event for this materialized JE is the
+  // audit.append_event -> audit.audit_events call below (canonical, DB-trigger immutable per the
+  // blueprint). events.log_event is NOT used (its valid_subject_type CHECK rejects accounting subjects
+  // -> would fail-loud + roll back the materialization). The per-line links above carry traceability.
   await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
     "accounting.recurring_template.materialized",
     "info",

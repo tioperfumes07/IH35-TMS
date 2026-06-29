@@ -18,13 +18,7 @@ export type AccountingSpineEvent =
   | "expense.reattributed"
   | "payment.created"
   | "payment.voided"
-  | "customer_payment.created"
-  // CODER-12 audit-spine: events for the 5 posters that previously emitted no spine.
-  | "journal_entry.created"
-  | "journal_entry.reversed"
-  | "recurring.posted"
-  | "period_close.posted"
-  | "bank_reconciliation.variance_posted";
+  | "customer_payment.created";
 
 export async function emitAccountingSpineEvent(
   client: DbClient,

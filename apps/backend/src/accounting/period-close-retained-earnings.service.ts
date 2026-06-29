@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
-import { emitAccountingSpineEvent, writeTransactionSourceLink } from "./accounting-spine-emit.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 
 function isDec31(isoDate: string) {
   return isoDate.slice(0, 10).endsWith("-12-31");
@@ -214,16 +215,23 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
     seq += 1;
   }
 
-  // CODER-12 audit-spine: one event per close batch (atomic with the GL write; fail-loud).
-  await emitAccountingSpineEvent(client, {
-    operating_company_id: params.operating_company_id,
-    actor_user_id: params.closer_user_id,
-    event_type: "period_close.posted",
-    entity_id: jeId,
-    entity_type: "journal_entry",
-    source_table: "accounting.journal_entries",
-    payload: { fiscal_year: params.fiscal_year },
-  });
+  // CODER-12 audit-spine: write the immutable audit event for the year-end close posting to
+  // audit.audit_events (canonical, DB-trigger immutable per the blueprint), atomic with the GL write
+  // and fail-loud-SAFE (audit_events' only CHECK is severity). NOT events.log_event (its
+  // valid_subject_type CHECK rejects accounting subjects -> would roll back the close). This poster
+  // previously wrote NO audit event — CODER-12 closes that gap.
+  await appendCrudAudit(
+    client,
+    params.closer_user_id,
+    "accounting.period_close.posted",
+    {
+      journal_entry_id: jeId,
+      fiscal_year: params.fiscal_year,
+      period_end: params.period_end.slice(0, 10),
+    },
+    "info",
+    "CODER-12-PERIOD-CLOSE-SPINE"
+  );
 
   return jeId;
 }

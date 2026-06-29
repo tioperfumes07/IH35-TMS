@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { emitAccountingSpineEvent, writeTransactionSourceLink } from "./accounting-spine-emit.js";
+import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
@@ -161,16 +161,11 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
       lineSequence += 1;
     }
 
-    // CODER-12 audit-spine: one event per posted batch (atomic with the GL write; fail-loud).
-    await emitAccountingSpineEvent(client, {
-      operating_company_id: input.operating_company_id,
-      actor_user_id: actor.userId,
-      event_type: "journal_entry.created",
-      entity_id: header.id,
-      entity_type: "journal_entry",
-      source_table: "accounting.journal_entries",
-    });
-
+    // CODER-12 audit-spine: the immutable audit event for this posting is the appendCrudAudit
+    // ("accounting.journal_entry.created") call below -> audit.audit_events (the canonical, DB-trigger
+    // immutable 5-yr audit log per the blueprint). events.log_event is NOT used (its valid_subject_type
+    // CHECK rejects accounting subjects -> would fail-loud + roll back the posting). The per-line
+    // source links above are the source->posting traceability half of the spine.
     await appendCrudAudit(
       client,
       actor.userId,

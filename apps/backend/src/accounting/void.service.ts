@@ -12,7 +12,7 @@
 // are atomic. This module does not open its own transaction and does not modify the posting engine.
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { emitAccountingSpineEvent, writeTransactionSourceLink } from "./accounting-spine-emit.js";
+import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 export const VOID_FLAG_KEY = "VOID_ENFORCEMENT_ENABLED";
@@ -244,16 +244,24 @@ export async function postVoidReversal(
     }
   }
 
-  // CODER-12 audit-spine: one event per reversal batch (atomic with the GL write; fail-loud).
-  await emitAccountingSpineEvent(client, {
-    operating_company_id: params.operatingCompanyId,
-    actor_user_id: actor.userId,
-    event_type: "journal_entry.reversed",
-    entity_id: reversalJeId,
-    entity_type: "journal_entry",
-    source_table: "accounting.journal_entries",
-    payload: { reversed_entity_type: params.entityType, reversed_entity_id: params.entityId },
-  });
+  // CODER-12 audit-spine: write the immutable audit event for the reversal posting to
+  // audit.audit_events (canonical, DB-trigger immutable per the blueprint) — atomic with the GL write
+  // and guaranteed inside the poster (not caller-dependent). NOT events.log_event (its valid_subject_type
+  // CHECK rejects accounting subjects -> would fail-loud + roll back the reversal). The per-line links
+  // above carry the source->reversal traceability.
+  await appendCrudAudit(
+    client,
+    actor.userId,
+    "accounting.journal_entry.reversed",
+    {
+      reversal_journal_entry_id: reversalJeId,
+      reversed_entity_type: params.entityType,
+      reversed_entity_id: params.entityId,
+      reversed_line_count: reversalLines.length,
+    },
+    "info",
+    "CODER-12-VOID-SPINE"
+  );
 
   return {
     reversal_journal_entry_id: reversalJeId,
