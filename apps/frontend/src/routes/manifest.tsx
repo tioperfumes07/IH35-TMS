@@ -235,6 +235,7 @@ import { PayrollAggregatedPage } from "../pages/accounting/PayrollAggregatedPage
 import { ExpenseCategoryMapPage } from "../pages/accounting/ExpenseCategoryMapPage";
 import { CoaRolesPage } from "../pages/accounting/CoaRolesPage";
 import { DailyReconPage } from "../pages/accounting/DailyReconPage";
+import { QboReconciliationPage } from "../pages/accounting/QboReconciliationPage";
 import { SalesTaxPage } from "../pages/accounting/SalesTaxPage";
 import { AccountingAuditTrailPage } from "../pages/accounting/AccountingAuditTrailPage";
 import { PostingLineagePage } from "../pages/accounting/PostingLineagePage";
@@ -3029,6 +3030,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DailyReconPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/qbo-reconciliation"
+          element={
+            <ProtectedRoute>
+              <QboReconciliationPage />
             </ProtectedRoute>
           }
         />
