@@ -77,3 +77,9 @@ fuel, banking. No constraint, unique index, or RLS policy on entity-scoped data 
   resolved by Path B Stage 3.
 - `USMCA-MISSING-UNCATEGORIZED-MAPPING` — USMCA has no `uncategorized_expense` mapping; resolved by
   Path B Stage 5. Blocks July launch.
+
+## Legal ↔ Finance separation of duties (Option B)
+See `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` → "Legal ↔ Finance separation of duties"
+and `docs/specs/LEGAL-FINANCE-OWNERSHIP-AND-FLIP-READINESS.md`. Legal captures consent + emits the
+opco-scoped handoff (`legal.contract_instance_links` + `events.log_event`); Finance (FIN-18/FIN-21/
+FIN-22) owns all GL posting. Each entity books its own side of a lease/deduction in its own opco.
