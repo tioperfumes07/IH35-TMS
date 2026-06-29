@@ -95,6 +95,7 @@ export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       listQboModifyCaptures(client, {
+        operatingCompanyId: query.data.operating_company_id,
         status: query.data.status,
         entityType: query.data.entity_type,
         limit: query.data.limit,
@@ -118,6 +119,7 @@ export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const [conflicts, alerts] = await Promise.all([
         listQboSyncConflicts(client, {
+          operatingCompanyId: query.data.operating_company_id,
           openOnly: query.data.open_only,
           limit: query.data.limit,
           offset: query.data.offset,
