@@ -96,6 +96,7 @@ export async function registerListsHubRoutes(app: FastifyInstance) {
       await client.query(
         `
           INSERT INTO outbox.queue (
+            operating_company_id,
             target_system,
             operation,
             entity_type,
@@ -106,6 +107,7 @@ export async function registerListsHubRoutes(app: FastifyInstance) {
             audit_user_id
           )
           VALUES (
+            $4::uuid,
             'qbo',
             'force_full_sync',
             'lists_hub',
@@ -125,6 +127,7 @@ export async function registerListsHubRoutes(app: FastifyInstance) {
             scope: "catalogs",
           }),
           user.uuid,
+          body.data.operating_company_id,
         ]
       );
       return { started: true, idempotency_key: idempotencyKey };
