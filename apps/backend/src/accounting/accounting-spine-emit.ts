@@ -22,7 +22,10 @@ export type AccountingSpineEvent =
   // FIN-18 (appended additively): driver settlement + bucketed-deduction GL posting events.
   // subject_type='driver' is within the events.event_log allowlist (verified live).
   | "settlement.posted"
-  | "settlement.reversed";
+  | "settlement.reversed"
+  // FIN-21 (appended additively): prepaid-amortization + fixed-asset-depreciation GL posting.
+  // Emitted only for unit-linked assets (subject_type='unit' is allowlisted by event_log).
+  | "amortization.posted";
 
 export async function emitAccountingSpineEvent(
   client: DbClient,
