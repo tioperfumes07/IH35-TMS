@@ -78,6 +78,8 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "documents.evidence_records", why: "forward-ref — legacy docs schema; canonical=docs.*" },
   { rel: "accounting.factoring_companies", why: "forward-ref — canonical=catalogs/mdata factoring refs" },
   { rel: "maintenance.road_service_tickets", why: "forward-ref — roadside ticket module unbuilt" },
+  { rel: "accounting.revenue_contracts", why: "forward-ref — Revenue Recognition UI-1 (read-only) ships ahead of RR-MIG #1590 reaching prod; route dark behind REVENUE_RECOGNITION_ENABLED until tables land" },
+  { rel: "accounting.revenue_obligations", why: "forward-ref — Revenue Recognition UI-1 (read-only) ships ahead of RR-MIG #1590 reaching prod; route dark behind REVENUE_RECOGNITION_ENABLED until tables land" },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 
