@@ -56,27 +56,27 @@
   "BLOCK_43_TODO": [
     {
       "path": "/banking/reconciliation",
-      "reason": "Banking workflow orphan \u2014 subnav deferred Block 43"
+      "reason": "Banking workflow orphan — subnav deferred Block 43"
     },
     {
       "path": "/banking/reconciliation-workspace",
-      "reason": "Banking workflow orphan \u2014 subnav deferred Block 43"
+      "reason": "Banking workflow orphan — subnav deferred Block 43"
     },
     {
       "path": "/banking/categorization-rules",
-      "reason": "Banking workflow orphan \u2014 subnav deferred Block 43"
+      "reason": "Banking workflow orphan — subnav deferred Block 43"
     },
     {
       "path": "/banking/qbo-sync-queue",
-      "reason": "Banking workflow orphan \u2014 subnav deferred Block 43"
+      "reason": "Banking workflow orphan — subnav deferred Block 43"
     },
     {
       "path": "/banking/email-queue",
-      "reason": "Banking workflow orphan \u2014 subnav deferred Block 43"
+      "reason": "Banking workflow orphan — subnav deferred Block 43"
     },
     {
       "path": "/banking/accounts/:id",
-      "reason": "Bank account detail deep-link \u2014 subnav deferred Block 43"
+      "reason": "Bank account detail deep-link — subnav deferred Block 43"
     },
     {
       "path": "/factoring",
@@ -84,19 +84,19 @@
     },
     {
       "path": "/factoring/batches/new",
-      "reason": "Batch wizard orphan \u2014 wiring deferred Block 43"
+      "reason": "Batch wizard orphan — wiring deferred Block 43"
     },
     {
       "path": "/factoring/factors",
-      "reason": "Factor admin orphan \u2014 wiring deferred Block 43"
+      "reason": "Factor admin orphan — wiring deferred Block 43"
     },
     {
       "path": "/factoring/reserves",
-      "reason": "Reserve dashboard orphan \u2014 wiring deferred Block 43"
+      "reason": "Reserve dashboard orphan — wiring deferred Block 43"
     },
     {
       "path": "/factoring/batches/:id",
-      "reason": "Factoring batch detail dynamic route \u2014 Block 43"
+      "reason": "Factoring batch detail dynamic route — Block 43"
     },
     {
       "path": "/fleet/transfers-in-progress",
@@ -116,15 +116,15 @@
     },
     {
       "path": "/dispatch/loads",
-      "reason": "Legacy alias redirect \u2192 /dispatch?view=loads (B21-D1)"
+      "reason": "Legacy alias redirect → /dispatch?view=loads (B21-D1)"
     },
     {
       "path": "/dispatch/factoring-packets",
-      "reason": "Legacy alias redirect \u2192 /accounting/factoring (B21-D1)"
+      "reason": "Legacy alias redirect → /accounting/factoring (B21-D1)"
     },
     {
       "path": "/dispatch/incidents",
-      "reason": "Legacy alias redirect \u2192 /dispatch/alerts (B21-D1)"
+      "reason": "Legacy alias redirect → /dispatch/alerts (B21-D1)"
     },
     {
       "path": "/dispatch/alerts/late-arrivals",
@@ -148,11 +148,11 @@
     },
     {
       "path": "/dispatch/loads/:id",
-      "reason": "Load detail deep-link alias \u2192 /dispatch?load_id= (B21-D1)"
+      "reason": "Load detail deep-link alias → /dispatch?load_id= (B21-D1)"
     },
     {
       "path": "/dispatch/borders/geofence-history",
-      "reason": "GPS border crossing geofence history \u2014 subnav wiring deferred (GAP-26)"
+      "reason": "GPS border crossing geofence history — subnav wiring deferred (GAP-26)"
     },
     {
       "path": "/safety/accidents-incidents",
@@ -208,91 +208,91 @@
     },
     {
       "path": "/lists/safety",
-      "reason": "Lists domain hub hits ComingSoon catch-all \u2014 Block 43"
+      "reason": "Lists domain hub hits ComingSoon catch-all — Block 43"
     },
     {
       "path": "/lists/maintenance",
-      "reason": "Lists domain hub hits ComingSoon catch-all \u2014 Block 43"
+      "reason": "Lists domain hub hits ComingSoon catch-all — Block 43"
     },
     {
       "path": "/lists/dispatch",
-      "reason": "Lists domain hub hits ComingSoon catch-all \u2014 Block 43"
+      "reason": "Lists domain hub hits ComingSoon catch-all — Block 43"
     },
     {
       "path": "/lists/fuel",
-      "reason": "Lists domain hub hits ComingSoon catch-all \u2014 Block 43"
+      "reason": "Lists domain hub hits ComingSoon catch-all — Block 43"
     },
     {
       "path": "/lists/drivers",
-      "reason": "Lists domain hub hits ComingSoon catch-all \u2014 Block 43"
+      "reason": "Lists domain hub hits ComingSoon catch-all — Block 43"
     },
     {
       "path": "/lists/fleet",
-      "reason": "Lists domain hub hits ComingSoon catch-all \u2014 Block 43"
+      "reason": "Lists domain hub hits ComingSoon catch-all — Block 43"
     },
     {
       "path": "/lists/accounting",
-      "reason": "Lists domain hub hits ComingSoon catch-all \u2014 Block 43"
+      "reason": "Lists domain hub hits ComingSoon catch-all — Block 43"
     },
     {
       "path": "/lists/names",
-      "reason": "Names Master cross-module navigator (A18) \u2014 dedicated route before catch-all"
+      "reason": "Names Master cross-module navigator (A18) — dedicated route before catch-all"
     },
     {
       "path": "/legal/privacy",
-      "reason": "Public legal page \u2014 not in module subnav"
+      "reason": "Public legal page — not in module subnav"
     },
     {
       "path": "/legal/terms",
-      "reason": "Public legal page \u2014 not in module subnav"
+      "reason": "Public legal page — not in module subnav"
     },
     {
       "path": "/legal/matters/new",
-      "reason": "Legal workflow create \u2014 deep link only"
+      "reason": "Legal workflow create — deep link only"
     },
     {
       "path": "/liabilities",
-      "reason": "Legacy liabilities home \u2014 no sidebar module"
+      "reason": "Legacy liabilities home — no sidebar module"
     },
     {
       "path": "/integrations/samsara",
-      "reason": "Owner integration page \u2014 not in subnav"
+      "reason": "Owner integration page — not in subnav"
     },
     {
       "path": "/samsara/vendor-mapping-integrity",
-      "reason": "Samsara integrity tool \u2014 deep link only"
+      "reason": "Samsara integrity tool — deep link only"
     },
     {
       "path": "/catalogs/equipment-types",
-      "reason": "Legacy catalog route \u2014 Block 43 lists migration"
+      "reason": "Legacy catalog route — Block 43 lists migration"
     },
     {
       "path": "/catalogs/driver-load-statuses",
-      "reason": "Legacy catalog route \u2014 Block 43"
+      "reason": "Legacy catalog route — Block 43"
     },
     {
       "path": "/catalogs/accounts",
-      "reason": "Legacy catalog redirect stub \u2014 Block 43"
+      "reason": "Legacy catalog redirect stub — Block 43"
     },
     {
       "path": "/catalogs/classes",
-      "reason": "Legacy catalog redirect stub \u2014 Block 43"
+      "reason": "Legacy catalog redirect stub — Block 43"
     },
     {
       "path": "/catalogs/items",
-      "reason": "Legacy catalog redirect stub \u2014 Block 43"
+      "reason": "Legacy catalog redirect stub — Block 43"
     },
     {
       "path": "/catalogs/payment-terms",
-      "reason": "Legacy catalog redirect stub \u2014 Block 43"
+      "reason": "Legacy catalog redirect stub — Block 43"
     },
     {
       "path": "/catalogs/posting-templates",
-      "reason": "Legacy catalog redirect stub \u2014 Block 43"
+      "reason": "Legacy catalog redirect stub — Block 43"
     },
     {
       "path": "/catalogs/account-role-bindings",
-      "reason": "Legacy catalog route \u2014 Block 43"
+      "reason": "Legacy catalog route — Block 43"
     },
     {
       "path": "/maintenance/drivers",
@@ -316,11 +316,11 @@
     },
     {
       "path": "/compliance",
-      "reason": "Master compliance dashboard \u2014 Safety flyout deep link (Block 16)"
+      "reason": "Master compliance dashboard — Safety flyout deep link (Block 16)"
     },
     {
       "path": "/cash-advances",
-      "reason": "Legacy cash advances home \u2014 separate from driver-finance requests"
+      "reason": "Legacy cash advances home — separate from driver-finance requests"
     },
     {
       "path": "/cash-flow",
@@ -328,83 +328,83 @@
     },
     {
       "path": "/attorney-review/:token",
-      "reason": "Tokenized attorney review deep link \u2014 Block 43"
+      "reason": "Tokenized attorney review deep link — Block 43"
     },
     {
       "path": "/catalogs",
-      "reason": "Legacy catalogs index \u2014 Block 43 lists migration"
+      "reason": "Legacy catalogs index — Block 43 lists migration"
     },
     {
       "path": "/documents",
-      "reason": "Documents hub \u2014 Block 43"
+      "reason": "Documents hub — Block 43"
     },
     {
       "path": "/driver",
-      "reason": "Driver PWA shell parent \u2014 Block 43"
+      "reason": "Driver PWA shell parent — Block 43"
     },
     {
       "path": "/form-425c",
-      "reason": "425C form route alias \u2014 sidebar uses /425c"
+      "reason": "425C form route alias — sidebar uses /425c"
     },
     {
       "path": "/login/reset",
-      "reason": "Auth password reset \u2014 no module subnav"
+      "reason": "Auth password reset — no module subnav"
     },
     {
       "path": "/notifications",
-      "reason": "Notification center \u2014 reachable via Topbar bell; not in module subnav (Block 17)"
+      "reason": "Notification center — reachable via Topbar bell; not in module subnav (Block 17)"
     },
     {
       "path": "/login/reset/confirm",
-      "reason": "Auth password reset confirm \u2014 no module subnav"
+      "reason": "Auth password reset confirm — no module subnav"
     },
     {
       "path": "/owner-approval/:token",
-      "reason": "Owner approval token deep link \u2014 Block 43"
+      "reason": "Owner approval token deep link — Block 43"
     },
     {
       "path": "/apply/:token",
-      "reason": "Public pre-hire driver application portal \u2014 token-protected (A24-12)"
+      "reason": "Public pre-hire driver application portal — token-protected (A24-12)"
     },
     {
       "path": "/portal/login",
-      "reason": "Shipper portal public login \u2014 separate auth domain (Block 18)"
+      "reason": "Shipper portal public login — separate auth domain (Block 18)"
     },
     {
       "path": "/portal",
-      "reason": "Shipper portal shell \u2014 customer-facing, not in office subnav (Block 18)"
+      "reason": "Shipper portal shell — customer-facing, not in office subnav (Block 18)"
     },
     {
       "path": "/portal/dashboard",
-      "reason": "Shipper portal loads list \u2014 Block 18"
+      "reason": "Shipper portal loads list — Block 18"
     },
     {
       "path": "/portal/profile",
-      "reason": "Shipper portal notification prefs \u2014 Block 18"
+      "reason": "Shipper portal notification prefs — Block 18"
     },
     {
       "path": "/portal/loads/:id",
-      "reason": "Shipper portal load detail deep link \u2014 Block 18"
+      "reason": "Shipper portal load detail deep link — Block 18"
     },
     {
       "path": "/qbo/sync-dashboard",
-      "reason": "QBO sync dashboard \u2014 Block 43"
+      "reason": "QBO sync dashboard — Block 43"
     },
     {
       "path": "/settings",
-      "reason": "User settings \u2014 Block 43"
+      "reason": "User settings — Block 43"
     },
     {
       "path": "/settings/notifications",
-      "reason": "Notification settings \u2014 Block 43"
+      "reason": "Notification settings — Block 43"
     },
     {
       "path": "/sign/:token",
-      "reason": "E-sign token deep link \u2014 Block 43"
+      "reason": "E-sign token deep link — Block 43"
     },
     {
       "path": "/work-orders",
-      "reason": "Legacy work-orders alias \u2014 Block 43"
+      "reason": "Legacy work-orders alias — Block 43"
     },
     {
       "path": "/dev/bulk-demo",
@@ -426,11 +426,11 @@
   "URL_SYNC_DEFERRED": [
     {
       "path": "/fuel",
-      "reason": "8 state tabs on single route \u2014 URL sync Block 43"
+      "reason": "8 state tabs on single route — URL sync Block 43"
     },
     {
       "path": "/banking",
-      "reason": "5 state tabs on single route \u2014 URL sync Block 43"
+      "reason": "5 state tabs on single route — URL sync Block 43"
     },
     {
       "path": "/factoring",
@@ -442,11 +442,11 @@
     },
     {
       "path": "/dispatch",
-      "reason": "5 views including ?view=loads \u2014 partial query sync Block 43"
+      "reason": "5 views including ?view=loads — partial query sync Block 43"
     },
     {
       "path": "/accounting",
-      "reason": "Hub state tabs home + find-transactions \u2014 URL sync Block 43"
+      "reason": "Hub state tabs home + find-transactions — URL sync Block 43"
     },
     {
       "path": "/dispatch/borders/geofence-history",
@@ -467,6 +467,10 @@
     {
       "path": "/home",
       "reason": "C6 — legacy /home route retained for bookmark/direct-link compat; sidebar HOME now points to /app/homepage (QBO dashboard)"
+    },
+    {
+      "path": "/finance/statements",
+      "reason": "FIN-19 read-only Finance-Hub page, behind OFF flag FINANCE_STATEMENTS_UI_ENABLED; subnav wiring deferred until flag ON"
     }
   ]
 }
