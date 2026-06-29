@@ -63,8 +63,6 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "insurance.insurance_policies", why: "forward-ref — insurance module unbuilt" },
   { rel: "insurance.insurance_policy_units", why: "forward-ref — insurance module unbuilt" },
   { rel: "insurance.policies", why: "forward-ref — insurance module unbuilt" },
-  { rel: "settlements.team_split_configs", why: "forward-ref — team-split settlements unbuilt" },
-  { rel: "settlements.team_split_load_overrides", why: "forward-ref — team-split settlements unbuilt" },
   { rel: "fuel.loves_prices_daily", why: "forward-ref — Love's price feed unbuilt" },
   { rel: "fuel.recommended_stops", why: "forward-ref — fuel routing unbuilt" },
   { rel: "fuel.route_recommendations", why: "forward-ref — fuel routing unbuilt" },
@@ -73,13 +71,9 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "safety.csa_scores_cache", why: "forward-ref — CSA scores cache unbuilt" },
   { rel: "safety.training_completions", why: "forward-ref — training module unbuilt" },
   { rel: "banking.bank_account_balances", why: "forward-ref — balances cache unbuilt" },
-  { rel: "driver_finance.auto_deduction_policies", why: "forward-ref — auto-deduction policy unbuilt" },
   { rel: "mdata.load_assignments", why: "forward-ref — legacy; canonical=dispatch.load_assignment_history" },
   { rel: "documents.evidence_records", why: "forward-ref — legacy docs schema; canonical=docs.*" },
   { rel: "accounting.factoring_companies", why: "forward-ref — canonical=catalogs/mdata factoring refs" },
-  { rel: "maintenance.road_service_tickets", why: "forward-ref — roadside ticket module unbuilt" },
-  { rel: "accounting.revenue_contracts", why: "forward-ref — Revenue Recognition UI-1 (read-only) ships ahead of RR-MIG #1590 reaching prod; route dark behind REVENUE_RECOGNITION_ENABLED until tables land" },
-  { rel: "accounting.revenue_obligations", why: "forward-ref — Revenue Recognition UI-1 (read-only) ships ahead of RR-MIG #1590 reaching prod; route dark behind REVENUE_RECOGNITION_ENABLED until tables land" },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 
