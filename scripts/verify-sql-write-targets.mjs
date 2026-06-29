@@ -18,7 +18,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const BACKEND = path.join(ROOT, "apps/backend/src");
+// Test-only overrides (same pattern as verify-phantom-relations' PHANTOM_SCAN_DIR): let the unit test
+// point the scanner/model/allowlist at fixtures without a DB. Production runs set none of these.
+const BACKEND = process.env.WRITE_TARGETS_SCAN_DIR
+  ? path.resolve(process.cwd(), process.env.WRITE_TARGETS_SCAN_DIR)
+  : path.join(ROOT, "apps/backend/src");
 const BASELINE = path.join(ROOT, "docs/schema-parity-baseline.json");
 
 const fail = (lines) => { console.error("verify-sql-write-targets FAILED:"); for (const l of lines) console.error("  " + l); process.exit(1); };
@@ -27,6 +31,13 @@ const fail = (lines) => { console.error("verify-sql-write-targets FAILED:"); for
 // set in CI's from-migrations gate). The schema-parity-baseline.json is a FALLBACK only — its generator has
 // blind spots (e.g. it missed migration 0392's CREATE TABLE/ADD COLUMN), so DB introspection is authoritative.
 async function loadModel() {
+  // Test-only: a fixture model JSON ({ "schema.table": ["col",...] }) is treated as the authoritative
+  // LIVE model so the unit test can exercise the stale-FAIL path without a database.
+  if (process.env.WRITE_TARGETS_MODEL_JSON) {
+    const tables = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), process.env.WRITE_TARGETS_MODEL_JSON), "utf8"));
+    console.log(`verify-sql-write-targets: model = TEST fixture (${Object.keys(tables).length} tables).`);
+    return { tables, isLive: true };
+  }
   const cs = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (cs) {
     const pg = (await import("pg")).default;
@@ -42,14 +53,17 @@ async function loadModel() {
       const m = {};
       for (const r of rows) (m[r.t] ??= []).push(r.c);
       console.log(`verify-sql-write-targets: model = LIVE migrated DB (${Object.keys(m).length} tables).`);
-      return m;
+      return { tables: m, isLive: true };
     } finally { await client.end(); }
   }
   console.log("verify-sql-write-targets: model = schema-parity baseline (FALLBACK — set DATABASE_URL for authoritative DB introspection).");
-  return JSON.parse(fs.readFileSync(BASELINE, "utf8")).tables;
+  return { tables: JSON.parse(fs.readFileSync(BASELINE, "utf8")).tables, isLive: false };
 }
 
-const model = await loadModel(); // { "schema.table": [cols...] }
+// MODEL_IS_LIVE: stale-debt enforcement (CODER-28A) is only authoritative against the LIVE migrated
+// DB. The FALLBACK baseline model is column-incomplete, so it would falsely mark real debt as "stale"
+// — we only WARN there, and only FAIL on stale when the live model proves an entry is truly resolved.
+const { tables: model, isLive: MODEL_IS_LIVE } = await loadModel(); // { "schema.table": [cols...] }
 const trackedSchemas = new Set(Object.keys(model).map((t) => t.split(".")[0]));
 
 // Known out-of-scope write targets (temp tables, dynamic, or intentionally-not-baseline). Keep TINY + justified.
@@ -120,7 +134,9 @@ console.log(`verify-sql-write-targets: scanned ${inserts} INSERT + ${updates} UP
 // RATCHET: a known-debt allowlist (the 2026-06-28 audit) may only SHRINK. NEW phantom writes fail the gate;
 // fixing a known one (so it no longer appears) is required to remove its allowlist line. This locks the door
 // against future drift immediately while the pre-existing debt is remediated.
-const DEBT_FILE = path.join(ROOT, "scripts/sql-write-targets-known-debt.json");
+const DEBT_FILE = process.env.WRITE_TARGETS_DEBT_FILE
+  ? path.resolve(process.cwd(), process.env.WRITE_TARGETS_DEBT_FILE)
+  : path.join(ROOT, "scripts/sql-write-targets-known-debt.json");
 let debt = new Set();
 try { debt = new Set(JSON.parse(fs.readFileSync(DEBT_FILE, "utf8")).debt); } catch { /* no allowlist → all problems are new */ }
 
@@ -128,9 +144,17 @@ const seen = new Set(problems);
 const newPhantoms = problems.filter((p) => !debt.has(p));
 const staleDebt = [...debt].filter((d) => !seen.has(d)); // allowlisted but no longer found → should be removed
 
-if (staleDebt.length) {
-  console.log(`verify-sql-write-targets: ${staleDebt.length} known-debt entr(y/ies) are now FIXED — remove them from sql-write-targets-known-debt.json (the list must shrink):`);
-  for (const d of staleDebt) console.log("  ✓ fixed: " + d);
+if (staleDebt.length && MODEL_IS_LIVE) {
+  // Self-cleaning ratchet: against the authoritative live model, an allowlist line whose phantom
+  // write no longer exists is FIXED — it must be removed so the list only ever shrinks.
+  fail([
+    `${staleDebt.length} STALE known-debt entr(y/ies) — the code no longer makes these phantom writes; remove them from sql-write-targets-known-debt.json (the ratchet is shrink-only):`,
+    ...staleDebt.map((d) => "stale (remove me): " + d),
+  ]);
+}
+if (staleDebt.length && !MODEL_IS_LIVE) {
+  console.log(`verify-sql-write-targets: ${staleDebt.length} possibly-stale known-debt entr(y/ies) (FALLBACK model — not enforced; re-run with DATABASE_URL to confirm + remove).`);
+  for (const d of staleDebt) console.log("  ? possibly-fixed: " + d);
 }
 if (newPhantoms.length) {
   fail([
