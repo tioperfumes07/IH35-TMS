@@ -1,6 +1,6 @@
 {
   "generated_note": "Prod relation snapshot (read-only) — canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes. GATED prod access (CLAUDE.md §1.5).",
-  "count": 682,
+  "count": 686,
   "relations": [
     "_system._schema_migrations",
     "_system.admin_jobs",
@@ -59,6 +59,7 @@
     "accounting.revenue_recognition_rows",
     "accounting.sales_tax_agencies",
     "accounting.sales_tax_returns",
+    "accounting.settlement_posting_config",
     "accounting.transaction_source_links",
     "accounting.vendor_balances",
     "accounting.vendor_classifications",
@@ -246,7 +247,10 @@
     "driver_finance.deduction_schedule",
     "driver_finance.driver_advances",
     "driver_finance.driver_bills",
+    "driver_finance.driver_deduction_bucket_events",
+    "driver_finance.driver_deduction_buckets",
     "driver_finance.driver_liabilities",
+    "driver_finance.driver_pay_settings",
     "driver_finance.driver_settlement_deductions",
     "driver_finance.driver_settlement_disputes",
     "driver_finance.driver_settlements",

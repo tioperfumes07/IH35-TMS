@@ -18,7 +18,11 @@ export type AccountingSpineEvent =
   | "expense.reattributed"
   | "payment.created"
   | "payment.voided"
-  | "customer_payment.created";
+  | "customer_payment.created"
+  // FIN-18 (appended additively): driver settlement + bucketed-deduction GL posting events.
+  // subject_type='driver' is within the events.event_log allowlist (verified live).
+  | "settlement.posted"
+  | "settlement.reversed";
 
 export async function emitAccountingSpineEvent(
   client: DbClient,
