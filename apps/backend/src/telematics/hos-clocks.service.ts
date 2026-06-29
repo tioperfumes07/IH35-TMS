@@ -216,3 +216,42 @@ export async function getCurrentClocks(client: DbClient, operatingCompanyId: str
   );
   return computeHosClocks(res.rows, asOf);
 }
+
+// Batched equivalent of getCurrentClocks for many drivers in ONE query (kills the planner N+1).
+// Returns a Map keyed by driver id with EVERY requested driver present — a driver with no events
+// gets computeHosClocks([]) exactly like the per-driver path. Rows are grouped in id order then by
+// started_at ASC, identical to the single-driver query, so computeHosClocks sees the same input and
+// produces the same status. One asOf is used so all drivers are computed against the same instant.
+export async function getCurrentClocksForDrivers(
+  client: DbClient,
+  operatingCompanyId: string,
+  driverIds: string[],
+  asOf = new Date()
+): Promise<Map<string, HosClocks>> {
+  const result = new Map<string, HosClocks>();
+  if (driverIds.length === 0) return result;
+  const res = await client.query<HosDutyStatusEvent & { driver_id: string }>(
+    `
+      SELECT
+        e.driver_id::text AS driver_id,
+        e.started_at::text,
+        e.ended_at::text,
+        e.duty_status
+      FROM hos.duty_status_events e
+      WHERE e.operating_company_id = $1::uuid
+        AND e.driver_id = ANY($2::uuid[])
+      ORDER BY e.driver_id, e.started_at ASC
+    `,
+    [operatingCompanyId, driverIds]
+  );
+  const byDriver = new Map<string, HosDutyStatusEvent[]>();
+  for (const row of res.rows) {
+    const arr = byDriver.get(row.driver_id) ?? [];
+    arr.push({ started_at: row.started_at, ended_at: row.ended_at, duty_status: row.duty_status });
+    byDriver.set(row.driver_id, arr);
+  }
+  for (const driverId of driverIds) {
+    result.set(driverId, computeHosClocks(byDriver.get(driverId) ?? [], asOf));
+  }
+  return result;
+}
