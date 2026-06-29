@@ -61,6 +61,31 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
           ? `COALESCE(l.completed_at, l.delivered_at, l.updated_at, l.created_at)::date BETWEEN $2::date AND $3::date`
           : `l.created_at::date BETWEEN $2::date AND $3::date`;
 
+      // CODER-14 500-safety: driver_finance.settlement_lines has NO load_id (§4) — it links to a load
+      // via driver_settlements, not directly. The old tolls CTE joined sl.load_id → 42703 → 500. Guard
+      // the column: only attribute per-load tolls when settlement_lines.load_id exists (degrade to 0
+      // otherwise). Forward-compatible — when the Tier-1 load_id-on-settlement work lands, this
+      // re-activates automatically with no further change.
+      const settlementHasLoadId =
+        (
+          await client.query(
+            `SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'driver_finance' AND table_name = 'settlement_lines' AND column_name = 'load_id'
+             LIMIT 1`
+          )
+        ).rows.length > 0;
+      const tollsCte = settlementHasLoadId
+        ? `tolls AS (
+            SELECT sl.load_id, COALESCE(SUM(ROUND(sl.amount::numeric * 100)), 0)::bigint AS tolls_cents
+            FROM driver_finance.settlement_lines sl
+            INNER JOIN load_scope ls ON ls.id = sl.load_id
+            WHERE sl.line_type::text ILIKE '%toll%'
+            GROUP BY sl.load_id
+          )`
+        : `tolls AS (
+            SELECT NULL::uuid AS load_id, 0::bigint AS tolls_cents WHERE false
+          )`;
+
       const res = await client.query(
         `
           WITH load_scope AS (
@@ -88,13 +113,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
             WHERE ft.operating_company_id = $1
             GROUP BY ft.load_id
           ),
-          tolls AS (
-            SELECT sl.load_id, COALESCE(SUM(ROUND(sl.amount::numeric * 100)), 0)::bigint AS tolls_cents
-            FROM driver_finance.settlement_lines sl
-            INNER JOIN load_scope ls ON ls.id = sl.load_id
-            WHERE sl.line_type::text ILIKE '%toll%'
-            GROUP BY sl.load_id
-          ),
+          ${tollsCte},
           chargebacks AS (
             SELECT ac.load_id, COALESCE(SUM(ac.total_chargeback_cents), 0)::bigint AS chargebacks_cents
             FROM driver_finance.abandonment_chargebacks ac
