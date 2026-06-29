@@ -887,6 +887,38 @@ export async function getContractInstanceDetail(
   return { ...instance, signatures: signatures.rows, audit_log: audit.rows };
 }
 
+// Loads everything the PDF renderer needs for an existing instance: the instance metadata plus the
+// template's content_html_en/es (which getContractInstanceDetail does NOT return — content lives on
+// the template, not the instance row). Opco-scoped; returns null when the instance does not exist.
+// Read-only — no writes, no R2. Used by the on-demand DRAFT pdf endpoint.
+export async function getContractInstanceForRender(
+  client: QueryableClient,
+  args: { operatingCompanyId: string; contractInstanceId: string }
+) {
+  const res = await client.query(
+    `
+      SELECT
+        ci.id,
+        ci.template_code,
+        ci.template_version,
+        ci.signer_name,
+        ci.language,
+        ci.filled_variables,
+        ct.content_html_en,
+        ct.content_html_es
+      FROM legal.contract_instances ci
+      JOIN legal.contract_templates ct
+        ON ct.id = ci.template_id
+       AND ct.operating_company_id = ci.operating_company_id
+      WHERE ci.operating_company_id = $1
+        AND ci.id = $2
+      LIMIT 1
+    `,
+    [args.operatingCompanyId, args.contractInstanceId]
+  );
+  return res.rows[0] ?? null;
+}
+
 export const contractSchemas = {
   contractCreateSchema,
   tokenSendSchema,

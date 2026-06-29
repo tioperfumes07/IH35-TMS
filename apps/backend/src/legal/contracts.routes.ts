@@ -6,9 +6,11 @@ import {
   contractSchemas,
   createContractInstance,
   getContractInstanceDetail,
+  getContractInstanceForRender,
   listContractInstances,
   sendContractSigningLink,
 } from "./contracts.service.js";
+import { renderSignedContractPdf } from "./pdf-renderer.service.js";
 import {
   leaseToOwnEnabled,
   ensureLeaseToOwnTemplate,
@@ -112,6 +114,62 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
     });
     if (!detail) return reply.code(404).send({ error: "legal_contract_instance_not_found" });
     return detail;
+  });
+
+  // On-demand DRAFT PDF of a SAVED instance — lets the owner view/download the contract as a PDF
+  // BEFORE e-signing (the signed PDF is only generated at sign-time). READ-ONLY: renders from the
+  // instance's stored content/variables with EMPTY signature fields + a "DRAFT — NOT EXECUTED"
+  // watermark, returns the PDF inline, and never uploads to R2 or mutates the instance. Reuses the
+  // hardened renderSignedContractPdf (draft:true).
+  app.get("/api/v1/legal/contracts/:id/draft-pdf", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
+    const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const instance = await withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsedQuery.data.operating_company_id);
+      return getContractInstanceForRender(client, {
+        operatingCompanyId: parsedQuery.data.operating_company_id,
+        contractInstanceId: parsedParams.data.id,
+      });
+    });
+    if (!instance) return reply.code(404).send({ error: "legal_contract_instance_not_found" });
+
+    try {
+      const pdf = await renderSignedContractPdf({
+        templateCode: String(instance.template_code),
+        templateVersion: Number(instance.template_version),
+        contractInstanceId: String(instance.id),
+        language: String(instance.language) as "en" | "es" | "bilingual",
+        signerName: String(instance.signer_name ?? ""),
+        contentHtmlEn: String(instance.content_html_en ?? ""),
+        contentHtmlEs: String(instance.content_html_es ?? ""),
+        filledVariables:
+          instance.filled_variables && typeof instance.filled_variables === "object" && !Array.isArray(instance.filled_variables)
+            ? (instance.filled_variables as Record<string, unknown>)
+            : {},
+        // Draft preview: empty signature fields + DRAFT watermark, no signed-at timestamp.
+        signedAtIso: new Date().toISOString(),
+        typedSignature: "",
+        drawnSignatureSvg: "",
+        ipAddress: null,
+        userAgent: null,
+        draft: true,
+      });
+      if (!pdf.pdfBuffer || pdf.pdfBuffer.length === 0) throw new Error("legal_pdf_render_failed");
+      return reply
+        .header("content-type", "application/pdf")
+        .header("content-disposition", 'inline; filename="contract-draft.pdf"')
+        .send(pdf.pdfBuffer);
+    } catch (error) {
+      const message = String((error as Error).message ?? "legal_pdf_render_failed");
+      if (message === "legal_pdf_render_failed") return reply.code(409).send({ error: message });
+      return reply.code(500).send({ error: "legal_contract_draft_pdf_failed" });
+    }
   });
 
   // Watermarked DRAFT preview — preview/print only, creates NO instance row.

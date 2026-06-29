@@ -236,13 +236,32 @@ export function LegalContractInstancesPage() {
             onClick={async () => {
               for (const row of selectedRows) {
                 const detail = await legalContractsApi.get(row.id, operatingCompanyId);
-                if (detail.signed_pdf_storage_url) {
-                  window.open(detail.signed_pdf_storage_url, "_blank", "noopener,noreferrer");
-                }
+                // Signed instances open the executed PDF; unsigned drafts open the on-demand,
+                // watermarked DRAFT PDF (the signed PDF does not exist until e-signing).
+                const url = detail.signed_pdf_storage_url
+                  ? detail.signed_pdf_storage_url
+                  : legalContractsApi.draftPdfUrl(row.id, operatingCompanyId);
+                window.open(url, "_blank", "noopener,noreferrer");
               }
             }}
           >
             Download
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={selectedRows.length === 0}
+            onClick={() => {
+              for (const row of selectedRows) {
+                window.open(
+                  legalContractsApi.draftPdfUrl(row.id, operatingCompanyId),
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+              }
+            }}
+          >
+            View draft PDF
           </Button>
         </div>
 
