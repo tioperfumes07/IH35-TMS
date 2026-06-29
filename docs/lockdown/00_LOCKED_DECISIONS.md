@@ -60,6 +60,20 @@ RULES:
 6.3 verify-insurance-financial-writes.mjs — assert insurance delegates math to computeInsuranceDispersal; no new journal debit-credit; bill writes carry idempotency key.
 6.4 verify-additive-only (sidebar) — fail if any id in locked 28-array is missing from SIDEBAR_ITEM_IDS.
 
+## 6.5 LEGAL ↔ FINANCE OWNERSHIP (locked 2026-06-29 — Option B)
+See `docs/specs/LEGAL-FINANCE-OWNERSHIP-AND-FLIP-READINESS.md` (canonical; supersedes the literal
+Phase 5 of `CODER-BLOCK_Legal-Template-Library.md`).
+- **Separation of duties:** the module that captures consent never posts the money. **Legal owns**
+  template/lifecycle, executed instance + signed PDF, e-signature, the consent record, the audit
+  trail, `legal.contract_instance_links` + handoff event, and the "signed-auth-on-file?" gate.
+  **Finance owns** the engines: **FIN-22** = lease ASC 842 classification + schedule + lease GL;
+  **FIN-18** = deduction math + settlement→GL. Legal builds NEITHER engine.
+- **Flip-readiness gate:** `LEASE_GL_POSTING_ENABLED` / `LEGAL_FIN_LINK_ENABLED` never flip ON until
+  the owning Finance engine is built + Neon-unit-tested (balanced JE, correct ASC 842, deduction
+  refuses without signed-auth link) + CPA-confirmed + Neon-branch end-to-end verified. Flipping =
+  Tier-1, never self-merged. No live-money hole meanwhile (flags OFF → Legal can only sign+store).
+  FIN-18/FIN-22 are REQUIRED, not optional — the engine is never orphaned.
+
 ## 7. QBO-PARITY UI SYSTEM (locked 2026-06-08)
 See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).
 7.1 **Location dimension = driver/operator.** IH35 uses the QBO Location field to mean driver/operator; map Location→driver in TMS (CPA to confirm).
