@@ -11,6 +11,7 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SendContractModal } from "./SendContractModal";
 import { LeaseToOwnCreatorModal } from "./LeaseToOwnCreatorModal";
 import { TruckLeaseCreatorModal } from "./TruckLeaseCreatorModal";
+import { UnifiedContractCreatorModal } from "./UnifiedContractCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -47,9 +48,18 @@ export function LegalContractInstancesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDetailId, setActiveDetailId] = useState<string | null>(null);
   const openSend = searchParams.get("openSend") === "1";
+  const openCreate = searchParams.get("openCreate") === "1";
   const { enabled: leaseToOwnEnabled } = useFeatureFlag("LEGAL_CONTRACTS_ENABLED", operatingCompanyId || undefined);
   const openLeaseToOwn = searchParams.get("openLeaseToOwn") === "1";
   const openTruckLease = searchParams.get("openTruckLease") === "1";
+
+  const ensureLibraryMutation = useMutation({
+    mutationFn: () => legalContractsApi.ensureLibrary(operatingCompanyId),
+    onSuccess: (res) => {
+      pushToast(`Library ready — ${res.inserted} added, ${res.already_present} already present.`, "success");
+    },
+    onError: (error) => pushToast(String((error as Error).message || "Seed failed"), "error"),
+  });
 
   const listQuery = useQuery({
     queryKey: ["legal", "contracts", operatingCompanyId, statusFilter, search],
@@ -129,10 +139,20 @@ export function LegalContractInstancesPage() {
         subtitle="Instance tracking and signer workflows"
         actions={
           <div className="flex gap-2">
-            <Button onClick={() => setSearchParams({ openSend: "1" })}>+ Create Contract</Button>
+            <Button onClick={() => setSearchParams({ openCreate: "1" })}>+ Create</Button>
+            <Button variant="secondary" onClick={() => setSearchParams({ openSend: "1" })}>
+              Manual send
+            </Button>
+            <Button
+              variant="secondary"
+              loading={ensureLibraryMutation.isPending}
+              onClick={() => ensureLibraryMutation.mutate()}
+            >
+              Seed library
+            </Button>
             {leaseToOwnEnabled && (
               <Button variant="secondary" onClick={() => setSearchParams({ openLeaseToOwn: "1" })}>
-                + New Lease-to-Own
+                + Lease-to-Own
               </Button>
             )}
             {leaseToOwnEnabled && (
@@ -341,6 +361,12 @@ export function LegalContractInstancesPage() {
         </div>
       ) : null}
 
+      <UnifiedContractCreatorModal
+        open={openCreate}
+        operatingCompanyId={operatingCompanyId}
+        onClose={() => setSearchParams({})}
+        onSaved={refresh}
+      />
       <SendContractModal
         open={openSend}
         operatingCompanyId={operatingCompanyId}

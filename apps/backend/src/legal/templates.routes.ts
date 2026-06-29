@@ -4,6 +4,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
   approveTemplate,
+  createNewVersion,
   createTemplate,
   getTemplate,
   legalTemplateDraftSchema,
@@ -16,6 +17,7 @@ import {
   activateTemplate,
   updateTemplate,
 } from "./templates.service.js";
+import { ensureLegalTemplateLibrary } from "./template-library.service.js";
 
 const officeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant", "Dispatcher", "Safety", "Mechanic"]);
 const adminWriteRoles = new Set(["Owner", "Administrator"]);
@@ -188,6 +190,48 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     if (updated.error === "legal_template_not_found") return reply.code(404).send({ error: updated.error });
     if (updated.error === "legal_template_edit_requires_draft_status") return reply.code(409).send({ error: updated.error });
     return updated.row;
+  });
+
+  // Seed the 7 owner-activated library templates for this entity (idempotent).
+  app.post("/api/v1/legal/templates/library/ensure", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
+
+    const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsedQuery.data.operating_company_id);
+      return ensureLegalTemplateLibrary(client, {
+        operatingCompanyId: parsedQuery.data.operating_company_id,
+        actorUserId: authUser.uuid,
+      });
+    });
+    return result;
+  });
+
+  // Clone a template into a new draft version (the only way to revise an active body).
+  app.post("/api/v1/legal/templates/:id/new-version", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
+
+    const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsedQuery.data.operating_company_id);
+      return createNewVersion(client, {
+        operatingCompanyId: parsedQuery.data.operating_company_id,
+        actorUserId: authUser.uuid,
+        id: parsedParams.data.id,
+      });
+    });
+    if (result.error === "legal_template_not_found") return reply.code(404).send({ error: result.error });
+    return reply.code(201).send(result.row);
   });
 
   app.post("/api/v1/legal/templates/:id/submit", async (req, reply) => {

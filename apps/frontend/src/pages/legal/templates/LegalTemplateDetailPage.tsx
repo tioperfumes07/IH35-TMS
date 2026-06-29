@@ -149,6 +149,18 @@ export function LegalTemplateDetailPage() {
     onError: (error) => setSubmitError(parseError(error, "Failed to retire template.")),
   });
 
+  const newVersionMutation = useMutation({
+    mutationFn: async () => {
+      if (!template) return null;
+      return legalTemplatesApi.newVersion(template.id, operatingCompanyId);
+    },
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: ["legal", "templates"] });
+      if (created?.id) navigate(`/legal/templates/${created.id}`);
+    },
+    onError: (error) => setSubmitError(parseError(error, "Failed to create new version.")),
+  });
+
   if (query.isLoading) {
     return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading template...</div>;
   }
@@ -183,6 +195,9 @@ export function LegalTemplateDetailPage() {
             </Button>
             <Button variant="secondary" onClick={() => void retireMutation.mutate()} disabled={template.status === "retired" || retireMutation.isPending}>
               Retire
+            </Button>
+            <Button variant="secondary" onClick={() => void newVersionMutation.mutate()} disabled={newVersionMutation.isPending}>
+              New version
             </Button>
           </div>
         }

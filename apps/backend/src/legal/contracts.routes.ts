@@ -20,6 +20,7 @@ import {
   truckLeaseEnabled,
   ensureTruckLeaseTemplate,
 } from "./truck-lease.service.js";
+import { renderDraftContractHtml } from "./draft-preview.service.js";
 
 const officeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant", "Dispatcher", "Safety", "Mechanic"]);
 const writeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
@@ -111,6 +112,44 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
     });
     if (!detail) return reply.code(404).send({ error: "legal_contract_instance_not_found" });
     return detail;
+  });
+
+  // Watermarked DRAFT preview — preview/print only, creates NO instance row.
+  const draftPreviewBodySchema = z.object({
+    template_id: z.string().uuid().optional(),
+    template_code: z.string().trim().min(2).max(120).optional(),
+    language: z.enum(["en", "es", "bilingual"]).default("en"),
+    filled_variables: z.record(z.string(), z.unknown()).default({}),
+  });
+  app.post("/api/v1/legal/contracts/draft-preview", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
+    const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const parsedBody = draftPreviewBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    if (!parsedBody.data.template_id && !parsedBody.data.template_code) {
+      return reply.code(400).send({ error: "template_id_or_code_required" });
+    }
+    try {
+      const result = await withCurrentUser(authUser.uuid, async (client) => {
+        await setOperatingCompany(client, parsedQuery.data.operating_company_id);
+        return renderDraftContractHtml(client, {
+          operatingCompanyId: parsedQuery.data.operating_company_id,
+          template_id: parsedBody.data.template_id ?? null,
+          template_code: parsedBody.data.template_code ?? null,
+          language: parsedBody.data.language,
+          filled_variables: parsedBody.data.filled_variables,
+        });
+      });
+      return result;
+    } catch (err) {
+      if ((err as Error)?.message === "legal_active_template_required") {
+        return reply.code(404).send({ error: "legal_active_template_required" });
+      }
+      throw err;
+    }
   });
 
   app.post("/api/v1/legal/contracts", async (req, reply) => {
