@@ -69,6 +69,19 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
   });
   const activeTemplates: LegalTemplateSummary[] = templatesQuery.data?.templates ?? [];
 
+  // Safety net: when this entity has zero active templates (library never provisioned), offer a
+  // one-click seed reusing the existing ensure-library mutation, instead of a silent empty picker.
+  const seedLibraryMutation = useMutation({
+    mutationFn: () => legalContractsApi.ensureLibrary(operatingCompanyId),
+    onSuccess: async (res) => {
+      pushToast(`Standard library ready — ${res.inserted} added, ${res.already_present} already present.`, "success");
+      await templatesQuery.refetch();
+    },
+    onError: (error) => pushToast(String((error as Error).message || "Seed failed"), "error"),
+  });
+  const noActiveTemplates =
+    Boolean(operatingCompanyId) && !templatesQuery.isLoading && !templatesQuery.isError && activeTemplates.length === 0;
+
   const categories = useMemo(
     () => Array.from(new Set(activeTemplates.map((t) => t.category))).sort(),
     [activeTemplates]
@@ -220,6 +233,24 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
 
         {step === 1 && (
           <div className="space-y-3">
+            {noActiveTemplates ? (
+              <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                <div className="font-semibold text-slate-800">No active templates for this entity yet.</div>
+                <p className="mt-0.5 text-xs text-slate-600">
+                  The standard contract library (lease &amp; NDA templates) has not been provisioned for this
+                  operating company. Seed it once to enable the template picker below.
+                </p>
+                <div className="mt-2">
+                  <Button
+                    size="sm"
+                    loading={seedLibraryMutation.isPending}
+                    onClick={() => seedLibraryMutation.mutate()}
+                  >
+                    Seed standard library
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-semibold text-slate-700">Document category</span>
               <SelectCombobox
