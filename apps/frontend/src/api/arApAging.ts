@@ -80,14 +80,20 @@ export function getApAging(operatingCompanyId: string, asOfDate: string) {
   );
 }
 
-export function getArAgingInvoices(operatingCompanyId: string, customerId: string) {
+export function getArAgingInvoices(operatingCompanyId: string, customerId: string, asOfDate: string) {
   return apiRequest<{ invoices: ArAgingInvoiceRow[] }>(
-    withCompany(`/api/v1/accounting/fin20/ar-aging/invoices?customer_id=${encodeURIComponent(customerId)}`, operatingCompanyId)
+    withCompany(
+      `/api/v1/accounting/fin20/ar-aging/invoices?customer_id=${encodeURIComponent(customerId)}&as_of_date=${encodeURIComponent(asOfDate)}`,
+      operatingCompanyId
+    )
   );
 }
 
-export function getApAgingBills(operatingCompanyId: string, vendorId: string) {
+export function getApAgingBills(operatingCompanyId: string, vendorId: string, asOfDate: string) {
   return apiRequest<{ bills: ApAgingBillRow[] }>(
-    withCompany(`/api/v1/accounting/fin20/ap-aging/bills?vendor_id=${encodeURIComponent(vendorId)}`, operatingCompanyId)
+    withCompany(
+      `/api/v1/accounting/fin20/ap-aging/bills?vendor_id=${encodeURIComponent(vendorId)}&as_of_date=${encodeURIComponent(asOfDate)}`,
+      operatingCompanyId
+    )
   );
 }
