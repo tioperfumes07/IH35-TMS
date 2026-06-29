@@ -469,6 +469,10 @@
       "reason": "C6 — legacy /home route retained for bookmark/direct-link compat; sidebar HOME now points to /app/homepage (QBO dashboard)"
     },
     {
+      "path": "/accounting/qbo-reconciliation",
+      "reason": "CASCADE-14 read-only Finance-Hub page, behind OFF flag TMS_QBO_RECON_UI_ENABLED; subnav wiring deferred until flag ON"
+    },
+    {
       "path": "/accounting/qbo-reconcile",
       "reason": "FIN-23 read-only Finance-Hub page, behind OFF flag QBO_RECONCILE_UI_ENABLED; subnav wiring deferred until flag ON"
     },
