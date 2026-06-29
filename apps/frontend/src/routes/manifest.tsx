@@ -141,6 +141,7 @@ import { ReceiptsPage } from "../pages/accounting/ReceiptsPage";
 import { PrepaidExpensesPage } from "../pages/accounting/PrepaidExpensesPage";
 import { RevenueRecognitionPage } from "../pages/accounting/RevenueRecognitionPage";
 import { FixedAssetsPage } from "../pages/accounting/FixedAssetsPage";
+import { QboReconcileCapturesPage } from "../pages/accounting/QboReconcileCapturesPage";
 import { AccountTypeCatalogPage } from "../pages/accounting/AccountTypeCatalogPage";
 import { MyAccountantPage } from "../pages/accounting/MyAccountantPage";
 import { BulkDemoPage } from "../pages/dev/BulkDemoPage";
@@ -3276,6 +3277,8 @@ export const ROUTES = React.Children.toArray(
         <Route path="/accounting/receipts" element={<ProtectedRoute><ReceiptsPage /></ProtectedRoute>} />
         <Route path="/accounting/revenue-recognition" element={<ProtectedRoute><RevenueRecognitionPage /></ProtectedRoute>} />
         <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssetsPage /></ProtectedRoute>} />
+        {/* FIN-23 — QBO reconcile / modify captures (read-only, behind QBO_RECONCILE_UI_ENABLED). */}
+        <Route path="/accounting/qbo-reconcile" element={<ProtectedRoute><QboReconcileCapturesPage /></ProtectedRoute>} />
         <Route path="/accounting/prepaid-expenses" element={<ProtectedRoute><PrepaidExpensesPage /></ProtectedRoute>} />
         <Route path="/accounting/account-type-catalog" element={<ProtectedRoute><AccountTypeCatalogPage /></ProtectedRoute>} />
         <Route path="/accounting/my-accountant" element={<ProtectedRoute><MyAccountantPage /></ProtectedRoute>} />

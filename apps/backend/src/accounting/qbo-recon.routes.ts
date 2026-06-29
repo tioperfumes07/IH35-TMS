@@ -28,7 +28,8 @@ import { fetchQboReconciliation, type QboReconResult } from "./qbo-recon-reads.j
 export const TMS_QBO_RECON_UI_FLAG = "TMS_QBO_RECON_UI_ENABLED";
 
 export function isQboReconUiEnabled(): boolean {
-  return process.env[TMS_QBO_RECON_UI_FLAG] === "true";
+  const flagRaw = process.env[TMS_QBO_RECON_UI_FLAG] ?? "false";
+  return flagRaw === "true";
 }
 
 export type QboReconResponse = QboReconResult & {
