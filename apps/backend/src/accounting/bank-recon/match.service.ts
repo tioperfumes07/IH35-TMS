@@ -1,4 +1,6 @@
 import { withLuciaBypass } from "../../auth/db.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 
 export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je";
@@ -395,7 +397,7 @@ async function postDifferenceJournalEntry(
 
   const cashSide = shouldDebitCash ? "debit" : "credit";
   const diffSide = shouldDebitCash ? "credit" : "debit";
-  await client.query(
+  const linesRes = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.journal_entry_postings (
         operating_company_id,
@@ -412,8 +414,36 @@ async function postDifferenceJournalEntry(
       VALUES
         ($1::uuid, $2::uuid, $3::uuid, $4::text, $5::int, 'Bank reconciliation variance leg', 1, concat('bank-recon-var:', $2::text), now(), now()),
         ($1::uuid, $2::uuid, $6::uuid, $7::text, $5::int, 'Bank reconciliation offset leg',  2, concat('bank-recon-off:', $2::text), now(), now())
+      RETURNING id::text
     `,
     [input.operating_company_id, journalEntryId, cashAccountId, cashSide, magnitude, input.difference_account_id, diffSide]
+  );
+
+  // CODER-12 audit-spine: link each variance posting line to the bank transaction it reconciles
+  // (per-line grain), same transaction. (The match-only path / bank.reconciliation_matches write
+  // posts no GL JE and gets no link.)
+  for (const row of linesRes.rows) {
+    await writeTransactionSourceLink(client, {
+      operating_company_id: input.operating_company_id,
+      journal_entry_posting_id: row.id,
+      linked_object_type: "bank_transaction",
+      linked_object_id: input.bank_transaction_id,
+      relationship_role: "bank_reconciliation_variance",
+    });
+  }
+
+  // CODER-12 audit-spine: write the immutable audit event for the variance posting to
+  // audit.audit_events (canonical, DB-trigger immutable per the blueprint), atomic with the GL write
+  // and fail-loud-SAFE (audit_events' only CHECK is severity). NOT events.log_event (its
+  // valid_subject_type CHECK rejects accounting subjects -> would roll back the variance post). This
+  // poster previously wrote NO audit event — CODER-12 closes that gap.
+  await appendCrudAudit(
+    client,
+    input.actor_user_uuid,
+    "accounting.bank_reconciliation.variance_posted",
+    { journal_entry_id: journalEntryId, bank_transaction_id: input.bank_transaction_id, variance_cents: input.variance_cents },
+    "info",
+    "CODER-12-BANK-RECON-SPINE"
   );
 
   return journalEntryId;

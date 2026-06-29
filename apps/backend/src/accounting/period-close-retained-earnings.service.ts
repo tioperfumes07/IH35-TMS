@@ -1,4 +1,6 @@
 import type { PoolClient } from "pg";
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 
 function isDec31(isoDate: string) {
   return isoDate.slice(0, 10).endsWith("-12-31");
@@ -165,7 +167,7 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
 
   let seq = 1;
   for (const ln of lines) {
-    await client.query(
+    const lineRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.journal_entry_postings (
           operating_company_id,
@@ -182,6 +184,7 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
         VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, now(), now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
+        RETURNING id::text
       `,
       [
         params.operating_company_id,
@@ -197,8 +200,38 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
         `period_close:FY${params.fiscal_year}:${params.period_end.slice(0, 10)}`,
       ]
     );
+    // CODER-12 audit-spine: link each closing line to the fiscal-year close. Skip on a BLOCK-2
+    // conflict no-op (no row returned).
+    const postingId = lineRes.rows[0]?.id;
+    if (postingId) {
+      await writeTransactionSourceLink(client, {
+        operating_company_id: params.operating_company_id,
+        journal_entry_posting_id: postingId,
+        linked_object_type: "period_close",
+        linked_object_id: `FY${params.fiscal_year}`,
+        relationship_role: "period_close",
+      });
+    }
     seq += 1;
   }
+
+  // CODER-12 audit-spine: write the immutable audit event for the year-end close posting to
+  // audit.audit_events (canonical, DB-trigger immutable per the blueprint), atomic with the GL write
+  // and fail-loud-SAFE (audit_events' only CHECK is severity). NOT events.log_event (its
+  // valid_subject_type CHECK rejects accounting subjects -> would roll back the close). This poster
+  // previously wrote NO audit event — CODER-12 closes that gap.
+  await appendCrudAudit(
+    client,
+    params.closer_user_id,
+    "accounting.period_close.posted",
+    {
+      journal_entry_id: jeId,
+      fiscal_year: params.fiscal_year,
+      period_end: params.period_end.slice(0, 10),
+    },
+    "info",
+    "CODER-12-PERIOD-CLOSE-SPINE"
+  );
 
   return jeId;
 }

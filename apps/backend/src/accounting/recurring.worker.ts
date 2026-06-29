@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import { withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
+import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
@@ -258,7 +259,7 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
 
   let seq = 1;
   for (const p of postings) {
-    await client.query(
+    const lineRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.journal_entry_postings (
           operating_company_id,
@@ -277,6 +278,7 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6::uuid,$7,$8,$9,$10,now(),now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
+        RETURNING id::text
       `,
       [
         oc,
@@ -294,9 +296,25 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
         `recurring_je:${String(tmpl.id)}:${entryDate}`,
       ]
     );
+    // CODER-12 audit-spine: link each materialized line to its recurring template. Skip on a
+    // BLOCK-2 conflict no-op (no row returned).
+    const postingId = lineRes.rows[0]?.id;
+    if (postingId) {
+      await writeTransactionSourceLink(client, {
+        operating_company_id: oc,
+        journal_entry_posting_id: postingId,
+        linked_object_type: "recurring_template",
+        linked_object_id: String(tmpl.id),
+        relationship_role: "recurring_source",
+      });
+    }
     seq += 1;
   }
 
+  // CODER-12 audit-spine: the immutable audit event for this materialized JE is the
+  // audit.append_event -> audit.audit_events call below (canonical, DB-trigger immutable per the
+  // blueprint). events.log_event is NOT used (its valid_subject_type CHECK rejects accounting subjects
+  // -> would fail-loud + roll back the materialization). The per-line links above carry traceability.
   await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
     "accounting.recurring_template.materialized",
     "info",
