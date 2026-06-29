@@ -128,11 +128,14 @@ export async function applySignedFinanceHandoff(
     // are within the events.event_log allowlist (verified live). Actor must be non-null
     // (actor_id is NOT NULL) — use the instance creator.
     if (actor) {
+      // Distinct placeholders per position — reusing $2/$3 as both text (actor_id/subject_id)
+      // and ::uuid (actor_user_id/source_reference_id) makes Postgres fail with "inconsistent
+      // types deduced for parameter". $5/$6 repeat the same values with their own casts.
       await client.query(
         `SELECT events.log_event(
           $1, 'lease.signed', 'user', $2,
           'document', $3,
-          $4::jsonb, now(), 'legal', 'legal.contract_instances', $3::uuid, $2::uuid, NULL
+          $4::jsonb, now(), 'legal', 'legal.contract_instances', $5::uuid, $6::uuid, NULL
         )`,
         [
           args.operatingCompanyId,
@@ -143,6 +146,8 @@ export async function applySignedFinanceHandoff(
             asc842_election: election,
             exhibit_a_unit_ids: unitIds,
           }),
+          instance.id,
+          actor,
         ]
       );
     }
