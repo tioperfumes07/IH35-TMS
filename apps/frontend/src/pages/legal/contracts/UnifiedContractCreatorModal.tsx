@@ -52,6 +52,8 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
   const [signerName, setSignerName] = useState("");
   const [signerEmail, setSignerEmail] = useState("");
   const [signerPhone, setSignerPhone] = useState("");
+  const [leaseUnitIds, setLeaseUnitIds] = useState<string[]>([]);
+  const [leaseElection, setLeaseElection] = useState<"option_a_fmv" | "option_b_payoff" | "">("");
 
   useEffect(() => {
     if (!open) {
@@ -65,6 +67,8 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
       setSignerName("");
       setSignerEmail("");
       setSignerPhone("");
+      setLeaseUnitIds([]);
+      setLeaseElection("");
     }
   }, [open]);
 
@@ -134,6 +138,16 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
     return [];
   }, [signerType, driversQuery.data, customersQuery.data]);
 
+  const isLease = selectedTemplate?.category === "lease";
+  const leaseUnits = unitsQuery.data?.units ?? [];
+
+  // Merge schema fields with lease-only handoff payload (Exhibit-A units + ASC 842
+  // election) that FIN-22 reads off filled_variables. Legal stores it; Finance classifies.
+  const buildFilledVariables = (): Record<string, unknown> => ({
+    ...filled,
+    ...(isLease ? { exhibit_a_unit_ids: leaseUnitIds, asc842_election: leaseElection || "unspecified" } : {}),
+  });
+
   const ndaSuggestion = signerType === "driver" ? "nda_ebt_confidentiality" : null;
 
   const missingRequired = useMemo(
@@ -150,7 +164,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
       legalContractsApi.draftPreview(operatingCompanyId, {
         template_code: templateCode,
         language,
-        filled_variables: filled,
+        filled_variables: buildFilledVariables(),
       }),
     onSuccess: (res) => {
       const win = window.open("", "_blank", "noopener,noreferrer,width=900,height=1100");
@@ -175,7 +189,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         signer_email: signerEmail.trim() || undefined,
         signer_phone: signerPhone.trim() || undefined,
         language,
-        filled_variables: filled,
+        filled_variables: buildFilledVariables(),
       });
       const deliveryChannel = signerEmail.trim() ? "email" : signerPhone.trim() ? "sms" : null;
       if (deliveryChannel) {
@@ -315,6 +329,64 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                 ))}
               </div>
             )}
+            {isLease ? (
+              <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Exhibit A — units & ASC 842 election (handed to Finance / FIN-22)
+                </div>
+                <div className="text-xs text-slate-600">
+                  Lessor is IH 35 Trucking, LLC. Select the units this lease covers. Legal links the units and the
+                  election to the signed lease; the Finance lease subledger (FIN-22) computes classification, schedule,
+                  and any GL — Legal posts nothing.
+                </div>
+                <div className="max-h-36 space-y-1 overflow-auto rounded border border-slate-200 bg-white p-2">
+                  {leaseUnits.length === 0 ? (
+                    <div className="text-xs text-slate-500">No eligible units found for this entity.</div>
+                  ) : (
+                    leaseUnits.map((u) => (
+                      <label key={u.id} className="flex items-center gap-2 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={leaseUnitIds.includes(u.id)}
+                          onChange={(e) =>
+                            setLeaseUnitIds((prev) =>
+                              e.target.checked ? [...prev, u.id] : prev.filter((x) => x !== u.id)
+                            )
+                          }
+                        />
+                        <span>
+                          {u.unit_number} · {u.year ?? ""} {u.make ?? ""} {u.model ?? ""}
+                          <span className="ml-1 font-mono text-[10px] text-slate-400">{u.vin}</span>
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="asc842"
+                      checked={leaseElection === "option_a_fmv"}
+                      onChange={() => setLeaseElection("option_a_fmv")}
+                    />
+                    Option A — FMV purchase (operating)
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="asc842"
+                      checked={leaseElection === "option_b_payoff"}
+                      onChange={() => setLeaseElection("option_b_payoff")}
+                    />
+                    Option B — fixed payoff (sales-type)
+                  </label>
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  The election guides the CPA's ASC 842 classification per deal; FIN-22 confirms and posts.
+                </div>
+              </div>
+            ) : null}
             {missingRequired.length > 0 ? (
               <div className="text-xs text-[#dc2626]">Required: {missingRequired.join(", ")}</div>
             ) : null}
