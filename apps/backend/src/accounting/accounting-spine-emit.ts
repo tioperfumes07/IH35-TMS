@@ -52,3 +52,35 @@ export async function emitAccountingSpineEvent(
     ]
   );
 }
+
+/**
+ * CODER-12 audit-spine: write ONE accounting.transaction_source_links row tying a posting line back
+ * to its source object. Mirrors posting-engine's inline insert (grain = per posting line). Idempotent
+ * via uq_tsl_posting_object_role (ON CONFLICT DO NOTHING) so a re-run never duplicates a link.
+ * MUST be called on the SAME client/transaction as the GL posting (atomic, fail-loud).
+ */
+export async function writeTransactionSourceLink(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    journal_entry_posting_id: string;
+    linked_object_type: string;
+    linked_object_id: string; // TEXT NOT NULL — cast uuids to text at the call site
+    relationship_role?: string | null;
+  }
+): Promise<void> {
+  await client.query(
+    `INSERT INTO accounting.transaction_source_links
+       (operating_company_id, journal_entry_posting_id, linked_object_type, linked_object_id, relationship_role, created_at)
+     VALUES ($1::uuid, $2::uuid, $3, $4, $5, now())
+     ON CONFLICT (journal_entry_posting_id, linked_object_type, linked_object_id, COALESCE(relationship_role, ''))
+     DO NOTHING`,
+    [
+      opts.operating_company_id,
+      opts.journal_entry_posting_id,
+      opts.linked_object_type,
+      opts.linked_object_id,
+      opts.relationship_role ?? null,
+    ]
+  );
+}
