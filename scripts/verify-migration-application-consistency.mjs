@@ -11,6 +11,51 @@ const require = createRequire(import.meta.url);
 const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
 const { Client } = pg;
 
+// CODER-21 §1.5 landmine fix: this guard reads a DB's information_schema. `dotenv.config()` above
+// loads .env, whose DATABASE_DIRECT_URL is the PROD Neon endpoint — so a BARE run silently connected
+// to production (read-only, but ungated). We (1) drop DATABASE_DIRECT_URL from the resolution chain,
+// (2) require an explicit fresh-migrated DB url, and (3) hard-REFUSE any prod endpoint. CI provides
+// DATABASE_URL for its fresh DB; local runs pass --database-url. Standing Order #16: fresh-DB only.
+const PROD_HOST_MARKERS = (process.env.PROD_MIGRATE_BLOCKLIST || "ep-broad-block-akykk7bw")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function resolveHostFromConnectionString(cs) {
+  if (!cs) return "";
+  try {
+    const u = new URL(cs);
+    if (u.hostname) return u.hostname;
+  } catch {
+    /* not a standard URL — fall through to the query-string host= form */
+  }
+  const m = /[?&]host=([^&\s]+)/.exec(cs);
+  return m ? decodeURIComponent(m[1]) : "";
+}
+
+// Returns the connection string to use, or exits(1) with a clear message. NOTE: DATABASE_DIRECT_URL
+// is intentionally NOT in the chain — in this repo .env sets it to the prod endpoint (the landmine).
+function resolveConsistencyDbUrl(args) {
+  const cs = args["database-url"] || process.env.DATABASE_URL || "";
+  if (!cs) {
+    console.error(
+      "verify:migration-application-consistency FAILED: no database url. Pass --database-url=<fresh-migrated DB> " +
+        "(or set DATABASE_URL in the CI/job env). This guard must run against a FRESH-migrated DB, never prod " +
+        "(Standing Order #16). It will NOT fall back to .env DATABASE_DIRECT_URL."
+    );
+    process.exit(1);
+  }
+  const host = resolveHostFromConnectionString(cs);
+  if (PROD_HOST_MARKERS.some((marker) => host.includes(marker))) {
+    console.error(
+      `verify:migration-application-consistency FAILED: refusing to connect to the PRODUCTION endpoint (${host}). ` +
+        "This guard verifies a FRESH-migrated DB only — pass --database-url to a local/CI fresh DB."
+    );
+    process.exit(1);
+  }
+  return cs;
+}
+
 const ROOT = path.resolve(".");
 const DEFAULT_MIGRATIONS_DIR = path.join(ROOT, "db/migrations");
 // Match BOTH legacy 4-digit (0010_, 0193a_) AND current 12-digit timestamp (202606272100_) migration
@@ -635,10 +680,12 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const migrationsDir = path.resolve(args["migrations-dir"] || DEFAULT_MIGRATIONS_DIR);
   const stateFile = args["state-file"] ? path.resolve(args["state-file"]) : null;
-  const connectionString = args["database-url"] || process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-
   const expected = collectExpectedObjects(migrationsDir);
-  const actual = stateFile ? readActualStateFromFile(stateFile) : await readActualStateFromDb(connectionString);
+  // DB mode resolves + validates the url (refuses prod, requires explicit fresh-DB). state-file mode
+  // (used by unit tests) reads a snapshot and never connects.
+  const actual = stateFile
+    ? readActualStateFromFile(stateFile)
+    : await readActualStateFromDb(resolveConsistencyDbUrl(args));
   const missing = verifyConsistency(expected, actual);
 
   if (missing.length > 0) {

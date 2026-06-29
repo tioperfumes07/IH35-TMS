@@ -97,3 +97,30 @@ test("fails when declared foreign key is missing out-of-band", () => {
   assert.equal(run.status, 1);
   assert.match(run.stderr, /foreign_key missing: qa\.child\.fk_child_parent/);
 });
+
+// ── CODER-21: §1.5 no-prod-fallback lock ──────────────────────────────────────
+// The guard must REFUSE the prod endpoint and REQUIRE an explicit fresh-DB url, so a bare run can
+// never silently connect to production via .env DATABASE_DIRECT_URL.
+
+test("refuses to connect to the production endpoint (no silent prod read)", () => {
+  const migrationsDir = path.resolve(fixturesRoot, "ok-migrations");
+  const prodUrl = "postgres://u:p@ep-broad-block-akykk7bw.us-east-1.aws.neon.tech/neondb?sslmode=require";
+  const run = spawnSync("node", [scriptPath, "--migrations-dir", migrationsDir, "--database-url", prodUrl], {
+    encoding: "utf8",
+    env: { ...process.env, DATABASE_URL: "", DATABASE_DIRECT_URL: "" },
+  });
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /refusing to connect to the PRODUCTION endpoint/);
+});
+
+test("requires an explicit database url (no .env DATABASE_DIRECT_URL fallback)", () => {
+  const migrationsDir = path.resolve(fixturesRoot, "ok-migrations");
+  // No --database-url, no --state-file, and a cleared env: must fail with the require-url message,
+  // NOT fall back to .env prod creds.
+  const run = spawnSync("node", [scriptPath, "--migrations-dir", migrationsDir], {
+    encoding: "utf8",
+    env: { ...process.env, DATABASE_URL: "", DATABASE_DIRECT_URL: "" },
+  });
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /no database url|FRESH-migrated DB/);
+});
