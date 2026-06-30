@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { shouldUseDevFixturesForMaintenance, triageDevFixtures } from "./dev-fixtures.js";
 import { listWorkOrdersByBucket } from "./work-orders.service.js";
+import { avgAgeYears } from "./fleet-age.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -199,6 +200,10 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     const companyId = parsed.data.operating_company_id;
 
     const payload = await withCompany(user.uuid, companyId, async (client) => {
+      // FLEET-1: avg age MUST be derived from the model `year`, not acquired_date/created_at
+      // (which collapsed the KPI to ~0). Aggregate only the year-bearing units' model years and
+      // compute the average in JS via the avgAgeYears helper so null/0-year units (the 72
+      // trailers) are excluded from BOTH numerator and denominator.
       const units = await client.query(
         `
           SELECT
@@ -206,19 +211,28 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             COUNT(*) FILTER (WHERE status = 'InService')::int AS active_units,
             COUNT(*) FILTER (WHERE status = 'InMaintenance')::int AS in_shop_units,
             COUNT(*) FILTER (WHERE COALESCE(is_oos, false))::int AS out_of_service_units,
-            COALESCE(AVG(EXTRACT(YEAR FROM age(now(), COALESCE(acquired_date::timestamp, created_at)))), 0)::numeric AS avg_age_years
+            COALESCE(
+              array_agg(year) FILTER (WHERE year IS NOT NULL AND year > 0),
+              ARRAY[]::int[]
+            )::int[] AS model_years
           FROM mdata.units
           WHERE owner_company_id = $1::uuid
             AND deactivated_at IS NULL
         `,
         [companyId]
       );
-      return units.rows[0] ?? {
+      const row = units.rows[0] ?? {
         total_units: 0,
         active_units: 0,
         in_shop_units: 0,
         out_of_service_units: 0,
-        avg_age_years: 0,
+        model_years: [],
+      };
+      const { model_years, ...counts } = row;
+      return {
+        ...counts,
+        // null when no unit has a usable model year — the UI renders "-" (never "0.0 y").
+        avg_age_years: avgAgeYears((model_years ?? []) as Array<number | null>),
       };
     });
 
