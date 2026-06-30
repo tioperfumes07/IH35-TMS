@@ -428,6 +428,7 @@
     "verify:samsara-positions-cron-registered": "node scripts/verify-samsara-positions-cron-registered.mjs",
     "verify:positions-latest-rls": "node scripts/verify-positions-latest-rls.mjs",
     "verify:master-data-write-routes": "node scripts/verify-master-data-write-routes.mjs",
+    "verify:qbo-masterdata-recurring-all-connected-opcos": "node scripts/verify-qbo-masterdata-recurring-all-connected-opcos.mjs",
     "verify:csv-import-gated-for-projected-entities": "node scripts/verify-csv-import-gated-for-projected-entities.mjs",
     "verify:safety-tab-coverage": "node scripts/verify-safety-tab-coverage.mjs",
     "verify:csa-score-pull-recency": "node scripts/verify-csa-score-pull-recency.mjs",

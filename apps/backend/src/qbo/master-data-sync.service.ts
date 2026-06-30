@@ -413,20 +413,41 @@ export async function syncAccounts(params: SyncParams) {
   return syncEntity({ ...params, entity: "account" });
 }
 
+/**
+ * Operating companies that participate in the recurring QBO master-data (CDC) sync.
+ *
+ * ENTITY-INDEPENDENT: this returns EVERY active operating company that has an active
+ * (non-revoked) QBO connection — no hard-coded opco. Previously this hard-coded ["TRK"]
+ * and only added TRANSP behind QBO_MASTERDATA_TRANSP_ENABLED=1, which silently dropped
+ * TRANSP off the recurring schedule (its master-data went stale while TRK kept syncing).
+ *
+ * Optional operational lever: QBO_MASTERDATA_SYNC_COMPANY_CODES, a comma-separated list of
+ * company codes (e.g. "TRK,TRANSP"), restricts the set when set; UNSET (default) = every
+ * connected opco. This is a staging knob, NOT a per-opco hard-code.
+ */
 export async function listMasterDataCompanyIds(): Promise<string[]> {
   return withLuciaBypass(async (client) => {
-    const codes = ["TRK"];
-    if ((process.env.QBO_MASTERDATA_TRANSP_ENABLED ?? "").trim() === "1") {
-      codes.push("TRANSP");
-    }
+    const rawCodes = (process.env.QBO_MASTERDATA_SYNC_COMPANY_CODES ?? "").trim();
+    const codeFilter = rawCodes
+      ? rawCodes
+          .split(",")
+          .map((c) => c.trim().toUpperCase())
+          .filter((c) => c.length > 0)
+      : null;
+
     const res = await client.query<{ id: string }>(
       `
-        SELECT id::text
-        FROM org.companies
-        WHERE code = ANY($1::text[])
-          AND COALESCE(is_active, true) = true
+        SELECT DISTINCT c.id::text AS id
+        FROM org.companies c
+        JOIN integrations.qbo_connections qc
+          ON qc.operating_company_id = c.id
+         AND qc.revoked_at IS NULL
+        WHERE COALESCE(c.is_active, true) = true
+          AND c.deactivated_at IS NULL
+          AND ($1::text[] IS NULL OR upper(c.code) = ANY($1::text[]))
+        ORDER BY id
       `,
-      [codes]
+      [codeFilter]
     );
     return res.rows.map((row) => row.id);
   });

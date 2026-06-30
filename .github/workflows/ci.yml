@@ -151,6 +151,9 @@ jobs:
       - name: Verify master-data write routes
         run: npm run verify:master-data-write-routes
 
+      - name: Verify QBO master-data recurring sync covers all connected opcos
+        run: npm run verify:qbo-masterdata-recurring-all-connected-opcos
+
       - name: Verify CSV import gating for projected entities
         run: npm run verify:csv-import-gated-for-projected-entities
 
