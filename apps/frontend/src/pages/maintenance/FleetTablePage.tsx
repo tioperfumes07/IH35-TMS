@@ -86,7 +86,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         active_units: number;
         in_shop_units: number;
         out_of_service_units: number;
-        avg_age_years: number;
+        avg_age_years: number | null;
       }>(`/api/v1/maintenance/fleet-table/kpis?operating_company_id=${encodeURIComponent(operatingCompanyId)}`),
     enabled: Boolean(operatingCompanyId),
   });
@@ -116,7 +116,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
     active_units: 0,
     in_shop_units: 0,
     out_of_service_units: 0,
-    avg_age_years: 0,
+    avg_age_years: null as number | null,
   };
   const allRows = useMemo(() => (rowsQuery.data?.rows ?? []) as UnifiedUnitRow[], [rowsQuery.data?.rows]);
 
@@ -248,7 +248,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           active={effectiveStatus === "OutOfService"}
           onClick={() => setStatus("OutOfService")}
         />
-        <KpiCard label="Avg Age" value={`${Number(kpis.avg_age_years ?? 0).toFixed(1)} y`} />
+        <KpiCard
+          label="Avg Age"
+          value={kpis.avg_age_years == null ? "-" : `${Number(kpis.avg_age_years).toFixed(1)} y`}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs">
