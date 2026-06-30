@@ -413,43 +413,20 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const body = splitBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const total = body.data.lines.reduce((sum, line) => sum + Number(line.amount), 0);
-    const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      const txnRes = await client.query<{ amount_cents: number; status: string }>(
-        `
-          SELECT amount_cents, status
-          FROM banking.bank_transactions
-          WHERE id = $1
-            AND operating_company_id = $2
-          LIMIT 1
-        `,
-        [params.data.id, body.data.operating_company_id]
-      ).catch(() => ({ rows: [] as { amount_cents: number; status: string }[] }));
-      const txn = txnRes.rows[0];
-      if (!txn) return { error: "not_found" as const };
-      const pending = txn.status === "pending_categorization" || txn.status === "uncategorized";
-      if (!pending) return { error: "already_categorized" as const };
-      const txnDollars = Number(txn.amount_cents) / 100;
-      if (Math.abs(txnDollars - total) > 0.01) return { error: "split_mismatch" as const };
-
-      await client.query(
-        `
-          UPDATE banking.bank_transactions
-          SET category = 'split_transaction',
-              status = 'categorized',
-              updated_at = now()
-          WHERE id = $1
-        `,
-        [params.data.id]
-      ).catch(() => {});
-      return { ok: true as const };
+    // HONEST INTERIM (QA-sweep): a real bank-transaction split needs a persisted multi-line
+    // split-lines model that does not exist yet — banking.bank_transactions has a single `category`
+    // column and there is no split-lines table. The previous implementation silently wrote
+    // category='split_transaction' / status='categorized' with NO line allocation, mis-categorizing
+    // the transaction (and the client even toasted "Split posted as single-line placeholder").
+    // Until a true balanced N-line split is built (financial — requires a new table + migration),
+    // this endpoint performs NO write and returns 501 so nothing is mis-categorized.
+    return reply.code(501).send({
+      error: "split_not_implemented",
+      message:
+        "Multi-line transaction split is not implemented yet (no split-lines model). The transaction was left unchanged.",
+      transaction_id: params.data.id,
+      requested_line_count: body.data.lines.length,
     });
-    if ("error" in result) {
-      if (result.error === "not_found") return reply.code(404).send({ error: "transaction_not_found" });
-      if (result.error === "split_mismatch") return reply.code(400).send({ error: "split_total_must_equal_transaction_amount" });
-      return reply.code(409).send({ error: "transaction_already_categorized" });
-    }
-    return result;
   });
 
   app.post("/api/v1/banking/transactions/:id/undo-categorization", async (req, reply) => {
