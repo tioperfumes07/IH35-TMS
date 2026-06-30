@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getFuelActiveRoutes,
   getFuelComplianceSummary,
@@ -10,6 +10,8 @@ import {
   getFuelRecommendationDetail,
   getFuelSavingsSummary,
   sendFuelRecommendationToDriver,
+  updateFuelPlannerSettings,
+  type FuelPlannerSettings,
 } from "../../api/fuelPlanner";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
@@ -187,27 +189,15 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       ) : null}
 
       {tab === "settings" ? (
-        <section className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
-          <h3 className="text-sm font-semibold text-gray-900">Planner settings</h3>
-          <dl className="mt-3 grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
-            <div>
-              <dt className="font-semibold text-gray-600">Max miles per shift</dt>
-              <dd>{Number(settingsQuery.data?.max_miles_per_shift ?? 720)}</dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-gray-600">Max off-highway miles</dt>
-              <dd>{Number(settingsQuery.data?.max_off_highway_miles ?? 5)}</dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-gray-600">Max backwards miles</dt>
-              <dd>{Number(settingsQuery.data?.max_backwards_miles ?? 5)}</dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-gray-600">Expensive states</dt>
-              <dd>{expensiveStates.join(", ")}</dd>
-            </div>
-          </dl>
-        </section>
+        settingsQuery.isLoading ? (
+          <section className="rounded border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading planner settings…</section>
+        ) : settingsQuery.data ? (
+          <PlannerSettingsForm companyId={companyId} key={companyId} settings={settingsQuery.data} />
+        ) : (
+          <section className="rounded border border-gray-200 bg-white p-4 text-xs text-gray-500">
+            Planner settings are unavailable for the selected company.
+          </section>
+        )
       ) : null}
 
       {tab === "expense_mapping" ? (
@@ -337,5 +327,89 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         }}
       />
     </div>
+  );
+}
+
+// FUEL-3: editable Planner settings. The backend PATCH /api/v1/fuel/planner/settings already exists
+// and audits the change; the Settings tab was display-only until now.
+function PlannerSettingsForm({ companyId, settings }: { companyId: string; settings: FuelPlannerSettings }) {
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
+  const [maxMilesPerShift, setMaxMilesPerShift] = useState(String(settings.max_miles_per_shift ?? 720));
+  const [maxOffHighway, setMaxOffHighway] = useState(String(settings.max_off_highway_miles ?? 5));
+  const [maxBackwards, setMaxBackwards] = useState(String(settings.max_backwards_miles ?? 5));
+  const [overfillPct, setOverfillPct] = useState(String(settings.overfill_threshold_pct ?? 95));
+  const [expensiveStates, setExpensiveStates] = useState((settings.expensive_states ?? []).join(", "));
+
+  const mutation = useMutation({
+    mutationFn: () => {
+      const states = expensiveStates
+        .split(",")
+        .map((s) => s.trim().toUpperCase())
+        .filter((s) => s.length === 2);
+      return updateFuelPlannerSettings(companyId, {
+        max_miles_per_shift: Number(maxMilesPerShift),
+        max_off_highway_miles: Number(maxOffHighway),
+        max_backwards_miles: Number(maxBackwards),
+        overfill_threshold_pct: Number(overfillPct),
+        ...(states.length > 0 ? { expensive_states: states } : {}),
+      });
+    },
+    onSuccess: () => {
+      pushToast("Planner settings saved", "success");
+      void queryClient.invalidateQueries({ queryKey: ["fuel", "planner", "settings", companyId] });
+    },
+    onError: (err) => pushToast(err instanceof Error ? err.message : "Failed to save settings", "error"),
+  });
+
+  const numbers: Array<[string, string, (v: string) => void]> = [
+    ["Max miles per shift", maxMilesPerShift, setMaxMilesPerShift],
+    ["Max off-highway miles", maxOffHighway, setMaxOffHighway],
+    ["Max backwards miles", maxBackwards, setMaxBackwards],
+    ["Overfill threshold %", overfillPct, setOverfillPct],
+  ];
+  const invalid =
+    numbers.some(([, v]) => !(Number(v) > 0)) || Number(overfillPct) > 100;
+
+  return (
+    <section className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
+      <h3 className="text-sm font-semibold text-gray-900">Planner settings</h3>
+      <p className="mt-1 text-xs text-gray-500">Routing limits used when generating fuel-stop recommendations.</p>
+      <div className="mt-3 grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
+        {numbers.map(([label, value, setter]) => (
+          <label key={label} className="flex flex-col gap-1">
+            <span className="font-semibold text-gray-600">{label}</span>
+            <input
+              type="number"
+              min={1}
+              value={value}
+              onChange={(e) => setter(e.target.value)}
+              className="rounded border border-gray-300 px-2 py-1"
+            />
+          </label>
+        ))}
+        <label className="flex flex-col gap-1 md:col-span-2">
+          <span className="font-semibold text-gray-600">Expensive states (2-letter, comma-separated)</span>
+          <input
+            type="text"
+            value={expensiveStates}
+            onChange={(e) => setExpensiveStates(e.target.value)}
+            placeholder="NY, PA, NJ, CA"
+            className="rounded border border-gray-300 px-2 py-1 uppercase"
+          />
+        </label>
+      </div>
+      <div className="mt-3 flex items-center gap-3">
+        <button
+          type="button"
+          disabled={invalid || mutation.isPending}
+          onClick={() => mutation.mutate()}
+          className="rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+        >
+          {mutation.isPending ? "Saving…" : "Save settings"}
+        </button>
+        {invalid ? <span className="text-xs text-red-700">All limits must be &gt; 0; overfill % ≤ 100.</span> : null}
+      </div>
+    </section>
   );
 }

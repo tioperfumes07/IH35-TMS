@@ -109,15 +109,34 @@ export function getFuelSavingsSummary(companyId: string) {
   }>(`/api/v1/fuel/planner/savings/summary?${q(companyId)}`);
 }
 
+export type FuelPlannerSettings = {
+  operating_company_id: string;
+  expensive_states: string[];
+  max_off_highway_miles: number;
+  max_backwards_miles: number;
+  max_miles_per_shift: number;
+  overfill_threshold_pct: number;
+};
+
 export function getFuelPlannerSettings(companyId: string) {
-  return apiRequest<{
-    operating_company_id: string;
-    expensive_states: string[];
-    max_off_highway_miles: number;
-    max_backwards_miles: number;
-    max_miles_per_shift: number;
-    overfill_threshold_pct: number;
-  }>(`/api/v1/fuel/planner/settings?${q(companyId)}`);
+  return apiRequest<FuelPlannerSettings>(`/api/v1/fuel/planner/settings?${q(companyId)}`);
+}
+
+export type FuelPlannerSettingsPatch = Partial<{
+  expensive_states: string[];
+  max_off_highway_miles: number;
+  max_backwards_miles: number;
+  max_miles_per_shift: number;
+  overfill_threshold_pct: number;
+}>;
+
+// FUEL-3: persist Planner settings via the existing backend PATCH. apiRequest does the single
+// JSON.stringify — pass a raw object body.
+export function updateFuelPlannerSettings(companyId: string, patch: FuelPlannerSettingsPatch) {
+  return apiRequest<FuelPlannerSettings>(`/api/v1/fuel/planner/settings?${q(companyId)}`, {
+    method: "PATCH",
+    body: patch,
+  });
 }
 
 export async function uploadLovesPrices(
