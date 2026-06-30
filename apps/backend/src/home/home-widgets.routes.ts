@@ -3,10 +3,9 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
-  countActiveDispatchLoads,
   countDriversOnActiveLoads,
-  countOpenMaintenanceWorkOrders,
 } from "../kpi/canonical-kpis.js";
+import { getOpenLoadsBreakdown } from "../dispatch/active-loads-count.js";
 
 function officeRole(role: string) {
   return role !== "Driver";
@@ -68,7 +67,9 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const out = { open: 0, in_progress: 0, awaiting_parts: 0, completed: 0, cancelled: 0 };
+      // Canonical WO chart buckets — includes 'draft' so Samsara fault auto-WOs (status='draft')
+      // are not silently dropped (HOME-4). 'unknown' captures any genuinely unmapped status.
+      const out = { draft: 0, open: 0, in_progress: 0, awaiting_parts: 0, completed: 0, cancelled: 0, unknown: 0 };
       try {
         const rel = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
         if (!rel.rows[0]?.ok) return out;
@@ -85,11 +86,13 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         for (const row of res.rows) {
           const k = String(row.status ?? "").toLowerCase();
           const n = Number(row.c ?? 0);
-          if (k === "open") out.open += n;
+          if (k === "draft") out.draft += n;
+          else if (k === "open") out.open += n;
           else if (k.includes("progress")) out.in_progress += n;
           else if (k.includes("await") || k.includes("parts")) out.awaiting_parts += n;
           else if (k.includes("complete")) out.completed += n;
           else if (k.includes("cancel")) out.cancelled += n;
+          else out.unknown += n;
         }
         return out;
       } catch {
@@ -110,7 +113,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         const loadsOk = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
         const unitsOk = await client.query(`SELECT to_regclass('mdata.units') IS NOT NULL AS ok`);
         if (!loadsOk.rows[0]?.ok || !unitsOk.rows[0]?.ok) {
-          return { totalUnits: 0, activeUnits: 0, utilizationPct: 0 };
+          return { active_units: 0, total_units: 0, percentage: 0 };
         }
 
         const totalRes = await client.query(
@@ -136,9 +139,10 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         const totalUnits = Number(totalRes.rows[0]?.c ?? 0);
         const activeUnits = Number(activeRes.rows[0]?.c ?? 0);
         const utilizationPct = totalUnits > 0 ? Math.round((activeUnits / totalUnits) * 1000) / 10 : 0;
-        return { totalUnits, activeUnits, utilizationPct };
+        // snake_case to match the frontend gauge (api/home.ts fetchHomeFleetUtilization).
+        return { active_units: activeUnits, total_units: totalUnits, percentage: utilizationPct };
       } catch {
-        return { totalUnits: 0, activeUnits: 0, utilizationPct: 0 };
+        return { active_units: 0, total_units: 0, percentage: 0 };
       }
     });
   });
@@ -153,7 +157,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       try {
         const rel = await client.query(`SELECT to_regclass('accounting.invoices') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { cents: 0 };
+        if (!rel.rows[0]?.ok) return { revenue_cents: 0 };
 
         const res = await client.query(
           `
@@ -164,9 +168,10 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
           `,
           [parsed.data.operating_company_id]
         );
-        return { cents: Number(res.rows[0]?.cents ?? 0) };
+        // revenue_cents to match the frontend tile (api/home.ts fetchHomeTodayRevenue).
+        return { revenue_cents: Number(res.rows[0]?.cents ?? 0) };
       } catch {
-        return { cents: 0 };
+        return { revenue_cents: 0 };
       }
     });
   });
@@ -181,11 +186,11 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       try {
         const rel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { count: 0 };
-        const count = await countActiveDispatchLoads(client, parsed.data.operating_company_id);
-        return { count };
+        if (!rel.rows[0]?.ok) return { total: 0, in_transit: 0, assigned: 0, unassigned: 0 };
+        // Rich breakdown (total + mutually-exclusive sub-buckets) for the Home OPEN LOADS tile.
+        return await getOpenLoadsBreakdown(client, parsed.data.operating_company_id);
       } catch {
-        return { count: 0 };
+        return { total: 0, in_transit: 0, assigned: 0, unassigned: 0 };
       }
     });
   });
@@ -200,11 +205,25 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       try {
         const rel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { count: 0 };
-        const count = await countDriversOnActiveLoads(client, parsed.data.operating_company_id);
-        return { count };
+        if (!rel.rows[0]?.ok) return { active: 0, total_drivers: 0, on_break: 0 };
+        // Numerator = drivers on a canonical active load. Denominator = active driver roster
+        // (HOME-3: the "/0" was wrong — there is no roster query feeding the denominator).
+        const active = await countDriversOnActiveLoads(client, parsed.data.operating_company_id);
+        const rosterRes = await client.query(
+          `
+            SELECT count(*)::text AS c
+            FROM mdata.drivers
+            WHERE operating_company_id = $1::uuid
+              AND deactivated_at IS NULL
+              AND is_sample_data = false
+          `,
+          [parsed.data.operating_company_id]
+        );
+        const total_drivers = Number(rosterRes.rows[0]?.c ?? 0);
+        // on_break is not yet wired to live HOS duty-status; report 0 honestly rather than fake it.
+        return { active, total_drivers, on_break: 0 };
       } catch {
-        return { count: 0 };
+        return { active: 0, total_drivers: 0, on_break: 0 };
       }
     });
   });
@@ -219,11 +238,25 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       try {
         const rel = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { count: 0 };
-        const count = await countOpenMaintenanceWorkOrders(client, parsed.data.operating_company_id);
-        return { count };
+        if (!rel.rows[0]?.ok) return { open: 0, in_progress: 0 };
+        // open = canonical open set (matches the Maintenance dashboard open_wos); in_progress = subset.
+        // Returns { open, in_progress } to match the Home tile (api/home.ts fetchHomeWosOpenCount).
+        const res = await client.query(
+          `
+            SELECT
+              count(*) FILTER (WHERE status IN ('open','in_progress','waiting_parts'))::text AS open,
+              count(*) FILTER (WHERE status = 'in_progress')::text AS in_progress
+            FROM maintenance.work_orders
+            WHERE operating_company_id = $1::uuid
+          `,
+          [parsed.data.operating_company_id]
+        );
+        return {
+          open: Number(res.rows[0]?.open ?? 0),
+          in_progress: Number(res.rows[0]?.in_progress ?? 0),
+        };
       } catch {
-        return { count: 0 };
+        return { open: 0, in_progress: 0 };
       }
     });
   });

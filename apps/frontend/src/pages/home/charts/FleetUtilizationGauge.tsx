@@ -40,6 +40,18 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
   }
 
   const d = query.data ?? { active_units: 0, total_units: 0, percentage: 0 };
+
+  if (Number(d.total_units) <= 0) {
+    return (
+      <div className="home-recharts-print w-full">
+        <h3 className="mb-2 text-sm font-semibold text-slate-900">Fleet utilization</h3>
+        <div className="flex h-[260px] items-center justify-center rounded border border-dashed border-slate-200 text-sm text-slate-500">
+          No active units for this company.
+        </div>
+      </div>
+    );
+  }
+
   const pct = Math.max(0, Math.min(100, Number(d.percentage) || 0));
   const rest = Math.max(0, 100 - pct);
   const { active: fillActive, rest: fillRest } = gaugeFillForUtilization(pct);

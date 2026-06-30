@@ -7,15 +7,23 @@ import { formatWoStatusLabel } from "../../../lib/chartLegend";
 
 const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
   draft: "#94a3b8",
-  approved: "#64748b",
+  open: "#334155",
   in_progress: "#f59e0b",
+  awaiting_parts: "#64748b",
   completed: "#1A7A3C",
   cancelled: "#dc2626",
 };
 const UNKNOWN_STATUS_COLOR = "#64748b";
 
 function isKnownStatus(value: unknown): value is HomeWoStatusCount["status"] {
-  return value === "draft" || value === "approved" || value === "in_progress" || value === "completed" || value === "cancelled";
+  return (
+    value === "draft" ||
+    value === "open" ||
+    value === "in_progress" ||
+    value === "awaiting_parts" ||
+    value === "completed" ||
+    value === "cancelled"
+  );
 }
 
 type Props = {
@@ -47,13 +55,24 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
 
   const rows = query.data ?? [];
   const total = rows.reduce((s, r) => s + r.count, 0);
-  const data: Array<{ status: ChartStatus; count: number }> =
-    total === 0
-      ? [{ status: "unknown", count: 0 }]
-      : rows.filter((r) => r.count > 0).map((r) => ({
-          status: isKnownStatus((r as { status?: unknown }).status) ? r.status : "unknown",
-          count: r.count,
-        }));
+
+  if (total === 0) {
+    return (
+      <div className="home-recharts-print w-full">
+        <h3 className="mb-2 text-sm font-semibold text-slate-900">Work orders by status</h3>
+        <div className="flex h-[260px] items-center justify-center rounded border border-dashed border-slate-200 text-sm text-slate-500">
+          No open work orders.
+        </div>
+      </div>
+    );
+  }
+
+  const data: Array<{ status: ChartStatus; count: number }> = rows
+    .filter((r) => r.count > 0)
+    .map((r) => ({
+      status: isKnownStatus((r as { status?: unknown }).status) ? r.status : "unknown",
+      count: r.count,
+    }));
 
   return (
     <div className="home-recharts-print w-full">
