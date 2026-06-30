@@ -57,7 +57,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900">Import drivers from Master Contacts List (CSV)</h2>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700">✕</button>
+          <button type="button" onClick={onClose} aria-label="Close import drivers dialog" className="text-slate-400 hover:text-slate-700">✕</button>
         </div>
 
         <p className="mb-3 text-xs text-slate-600">
