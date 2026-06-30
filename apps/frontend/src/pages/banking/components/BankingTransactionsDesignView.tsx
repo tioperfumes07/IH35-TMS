@@ -8,7 +8,6 @@ import {
   getCoaAccounts,
   getPlaidCompanyTransactions,
   skipBankTransactionInvestigation,
-  splitTransaction,
   uploadBankStatementCsv,
   type PlaidBankAccount,
   type PlaidBankTransaction,
@@ -919,20 +918,19 @@ export function BankingTransactionsDesignView({
                         </button>
                         {menuOpen ? (
                           <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded border border-gray-200 bg-white shadow-md">
+                            {/* Split is intentionally disabled (QA-sweep): a real multi-line split needs a
+                            persisted split-lines model that does not exist yet. The old handler silently
+                            mis-categorized the txn as a single full-amount 'split_transaction' line and
+                            showed a "posted as single-line placeholder" success toast — wrong financial
+                            categorization. Disabled until a true balanced N-line split is built
+                            (financial, HOLD-FOR-JORGE). */}
                             <button
                               type="button"
-                              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
-                              onClick={() => {
-                                setActionMenuTxId(null);
-                                void splitTransaction(tx.id, companyId, [{ category: "split", amount: Number((tx.amount_cents / 100).toFixed(2)) }])
-                                  .then(() => {
-                                    pushToast("Split posted as single-line placeholder", "success");
-                                    onDataChanged();
-                                  })
-                                  .catch((error) => pushToast(String((error as Error).message || "Split failed"), "error"));
-                              }}
+                              disabled
+                              title="Split into multiple categories is coming soon"
+                              className="block w-full cursor-not-allowed border-b border-gray-100 px-3 py-2 text-left text-xs text-gray-400"
                             >
-                              Split
+                              Split <span className="text-[10px] font-semibold text-gray-400">(coming soon)</span>
                             </button>
                             <button
                               type="button"
