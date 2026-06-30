@@ -342,8 +342,20 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         values
       );
       values.push(q.limit, q.offset);
+      // MAINT-3: join the unit so the table renders the unit number (e.g. T139) instead of a raw
+      // UUID fragment. The JOIN is entity-scoped (mdata.units has no operating_company_id — it uses
+      // owner_company_id / currently_leased_to_company_id) so a unit name can NEVER leak across
+      // operating companies (USMCA isolation); a foreign unit LEFT-JOINs to NULL → UUID fallback.
       const rowsRes = await client.query(
-        `SELECT * FROM maintenance.work_orders w WHERE ${where.join(" AND ")} ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`,
+        `SELECT w.*, u.unit_number
+           FROM maintenance.work_orders w
+           LEFT JOIN mdata.units u
+             ON u.id = w.unit_id
+            AND (u.owner_company_id = w.operating_company_id
+                 OR u.currently_leased_to_company_id = w.operating_company_id)
+          WHERE ${where.join(" AND ")}
+          ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
+          LIMIT $${values.length - 1} OFFSET $${values.length}`,
         values
       );
       return { rows: rowsRes.rows, total: Number((countRes.rows[0] as { cnt?: number } | undefined)?.cnt ?? 0) };
