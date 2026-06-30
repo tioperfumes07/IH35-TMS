@@ -441,6 +441,7 @@
     "mdata.mx_permits",
     "mdata.mx_tolls_ledger",
     "mdata.qbo_accounts",
+    "mdata.qbo_ap_bills",
     "mdata.qbo_bills",
     "mdata.qbo_classes",
     "mdata.qbo_customers",
