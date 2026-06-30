@@ -3,6 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDotInspection, followUpDotInspectionEvent, getDotInspections, listDotInspectionEvents } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -11,7 +12,7 @@ type Props = {
 export function DotInspectionsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
-    inspection_date: new Date().toISOString().slice(0, 10),
+    inspection_date: companyToday(),
     inspector_name: "",
     inspection_level: 1,
     outcome: "PASS",
@@ -27,7 +28,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
   const createMutation = useMutation({
     mutationFn: () => createDotInspection(operatingCompanyId, form),
     onSuccess: async () => {
-      setForm({ inspection_date: new Date().toISOString().slice(0, 10), inspector_name: "", inspection_level: 1, outcome: "PASS", notes: "" });
+      setForm({ inspection_date: companyToday(), inspector_name: "", inspection_level: 1, outcome: "PASS", notes: "" });
       await queryClient.invalidateQueries({ queryKey: ["safety", "dot-inspections", operatingCompanyId] });
     },
   });

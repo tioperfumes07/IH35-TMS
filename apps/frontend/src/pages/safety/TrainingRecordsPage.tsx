@@ -5,6 +5,7 @@ import { createSafetyTrainingRecord, getTrainingCompletions } from "../../api/sa
 import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -23,7 +24,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState("");
   const [trainingName, setTrainingName] = useState("");
-  const [completedAt, setCompletedAt] = useState(new Date().toISOString().slice(0, 10));
+  const [completedAt, setCompletedAt] = useState(companyToday());
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
 

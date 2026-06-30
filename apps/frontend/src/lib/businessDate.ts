@@ -20,6 +20,28 @@ export function companyToday(date: Date = new Date()): string {
   }).format(date);
 }
 
+// Current "now" in the company timezone, formatted 'YYYY-MM-DDTHH:mm' for `<input type="datetime-local">`.
+//
+// WHY: the same UTC bug as `companyToday`, but for datetime fields. `new Date().toISOString()` returns
+// the UTC instant, so after ~19:00 Central a datetime-local default shows tomorrow's date and the wrong
+// hour (e.g. an HOS "occurred" field pre-filling 06/30 01:24 AM while the company clock reads 06/29
+// 8:24 PM). We assemble the parts in America/Chicago wall-clock time — never via `.toISOString()`.
+export function companyNow(date: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: COMPANY_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  // Intl can emit "24" for midnight in some engines; normalize to "00".
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  return `${get("year")}-${get("month")}-${get("day")}T${hour}:${get("minute")}`;
+}
+
 // Add (or subtract) whole days to a 'YYYY-MM-DD' string, returning 'YYYY-MM-DD'. Uses UTC math on
 // the calendar parts only (no timezone shift), so it is DST-safe for date-only arithmetic.
 export function addDaysIso(iso: string, days: number): string {

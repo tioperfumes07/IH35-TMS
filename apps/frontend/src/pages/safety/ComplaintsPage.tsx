@@ -3,6 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createComplaint, getComplaints } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -13,7 +14,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   const canView = useMemo(() => ["Owner", "Administrator", "Safety"].includes(String(role ?? "")), [role]);
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
-    complaint_date: new Date().toISOString().slice(0, 10),
+    complaint_date: companyToday(),
     complainant_type: "external",
     respondent_type: "driver",
     respondent_uuid: "",

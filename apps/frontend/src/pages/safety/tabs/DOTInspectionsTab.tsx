@@ -4,13 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createDotInspection, listDotInspections, uploadDotInspectionPdf, voidDotInspection } from "../../../api/safetyV64";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { companyToday } from "../../../lib/businessDate";
 
 export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
-    inspection_date: new Date().toISOString().slice(0, 10),
+    inspection_date: companyToday(),
     driver_id: "",
     unit_id: "",
     inspector_name: "",

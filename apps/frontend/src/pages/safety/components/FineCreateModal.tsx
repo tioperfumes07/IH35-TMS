@@ -5,6 +5,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { companyToday } from "../../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -19,7 +20,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   const [issuedByAuthority, setIssuedByAuthority] = useState("DOT");
   const [jurisdiction, setJurisdiction] = useState("");
   const [violationDescription, setViolationDescription] = useState("");
-  const [issuedDate, setIssuedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [issuedDate, setIssuedDate] = useState(companyToday());
   const [amountUsd, setAmountUsd] = useState("");
   const [notes, setNotes] = useState("");
 
