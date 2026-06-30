@@ -1,0 +1,30 @@
+name: SonarCloud
+
+# Code-auditor dashboard (bugs / logic smells / security hotspots / coverage + Quality Gate).
+# Skips cleanly until the owner adds the SONAR_TOKEN secret (see sonar-project.properties).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history → accurate new-code/blame attribution
+      - name: SonarCloud scan
+        if: ${{ env.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Sonar not configured (no-op)
+        if: ${{ env.SONAR_TOKEN == '' }}
+        run: echo "SONAR_TOKEN secret not set — skipping SonarCloud. See sonar-project.properties to activate."
