@@ -62,7 +62,10 @@ function tenantFilter(values: unknown[], operatingCompanyId: string): string {
 export async function fetchUnifiedFleetList(
   client: PgClient,
   options: {
-    operating_company_id?: string;
+    // Entity scope (USMCA cross-entity leak fix): REQUIRED. This service blends mdata.units +
+    // mdata.equipment, neither entity-scoped by RLS — callers must resolve and pass the operating
+    // company so the owner/leased tenant predicate is ALWAYS applied to both halves.
+    operating_company_id: string;
     status?: string;
     search?: string;
     type?: FleetTypeFilter;
@@ -90,9 +93,8 @@ export async function fetchUnifiedFleetList(
       `(unit_number ILIKE $${idx} OR vin ILIKE $${idx} OR make ILIKE $${idx} OR model ILIKE $${idx})`
     );
   }
-  if (options.operating_company_id) {
-    truckFilters.push(tenantFilter(truckValues, options.operating_company_id));
-  }
+  // ALWAYS bind the tenant predicate (operating_company_id is required) — never blend entities.
+  truckFilters.push(tenantFilter(truckValues, options.operating_company_id));
 
   const trailerValues: unknown[] = [];
   const trailerFilters: string[] = [excludeDemoPhantomSql("equipment_number")];
@@ -111,9 +113,8 @@ export async function fetchUnifiedFleetList(
       `(equipment_number ILIKE $${idx} OR vin ILIKE $${idx} OR make ILIKE $${idx} OR model ILIKE $${idx})`
     );
   }
-  if (options.operating_company_id) {
-    trailerFilters.push(tenantFilter(trailerValues, options.operating_company_id));
-  }
+  // ALWAYS bind the tenant predicate (operating_company_id is required) — never blend entities.
+  trailerFilters.push(tenantFilter(trailerValues, options.operating_company_id));
 
   const truckRes = await client.query(
     `

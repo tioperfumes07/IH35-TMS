@@ -4,6 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
@@ -255,10 +256,14 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         const idx = values.length;
         filters.push(`(first_name ILIKE $${idx} OR last_name ILIKE $${idx} OR cdl_number ILIKE $${idx})`);
       }
-      if (operating_company_id) {
-        values.push(operating_company_id);
-        filters.push(`operating_company_id = $${values.length}`);
-      }
+      // Entity scope (USMCA cross-entity leak fix): driver PII must never blend across operating
+      // companies. mdata.drivers RLS is role-scoped, not entity-scoped, so ALWAYS bind the
+      // operating_company_id predicate — using the requested company or the user's current one.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
+      if (!scopedCompanyId) return { rows: [], total: 0 };
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      values.push(scopedCompanyId);
+      filters.push(`operating_company_id = $${values.length}`);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const countRes = await client.query<{ total: number }>(
         `SELECT count(*)::int AS total FROM mdata.drivers ${whereClause}`,
@@ -935,6 +940,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     }
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
+      // Entity scope (USMCA cross-entity leak fix): a by-id driver read must not return a driver
+      // belonging to another operating company. Scope to the user's current company.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
           SELECT
@@ -951,9 +961,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
           WHERE id = $1
+            AND operating_company_id = $2
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, scopedCompanyId]
       );
       return res.rows[0] ?? null;
     });

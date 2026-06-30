@@ -232,7 +232,12 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
     const companyId = (req.query as { operating_company_id?: string })?.operating_company_id;
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
     const updated = await withCompany(user.uuid, companyId, async (client) => {
-      const oldRes = await client.query(`SELECT * FROM mdata.units WHERE id = $1 LIMIT 1`, [params.data.id]);
+      // Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and its
+      // RLS is identity/role-scoped, so a by-id read/update must scope by the owner/leased pair.
+      const oldRes = await client.query(
+        `SELECT * FROM mdata.units WHERE id = $1 AND (owner_company_id = $2 OR currently_leased_to_company_id = $2) LIMIT 1`,
+        [params.data.id, companyId]
+      );
       const oldRow = oldRes.rows[0];
       if (!oldRow) return null;
       const setParts: string[] = [];
@@ -250,8 +255,11 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
       if ("notes" in body.data) add("notes", body.data.notes ?? null);
       add("updated_by_user_id", user.uuid);
       values.push(params.data.id);
+      const idIdx = values.length;
+      values.push(companyId);
+      const coIdx = values.length;
       const row = await client.query(
-        `UPDATE mdata.units SET ${setParts.join(", ")} WHERE id = $${values.length} RETURNING *`,
+        `UPDATE mdata.units SET ${setParts.join(", ")} WHERE id = $${idIdx} AND (owner_company_id = $${coIdx} OR currently_leased_to_company_id = $${coIdx}) RETURNING *`,
         values
       );
       const newRow = row.rows[0];
@@ -282,8 +290,10 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
     const result = await withCompany(user.uuid, companyId, async (client) => {
       const res = await client.query(
-        `UPDATE mdata.units SET deactivated_at = now(), notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE E'\n' END, '[VOID] ', $2), updated_by_user_id = $3 WHERE id = $1 RETURNING id`,
-        [params.data.id, body.data.void_reason, user.uuid]
+        // Entity scope (USMCA cross-entity leak fix): scope the void by the owner/leased pair so a unit
+        // in another operating company cannot be voided by id.
+        `UPDATE mdata.units SET deactivated_at = now(), notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE E'\n' END, '[VOID] ', $2), updated_by_user_id = $3 WHERE id = $1 AND (owner_company_id = $4 OR currently_leased_to_company_id = $4) RETURNING id`,
+        [params.data.id, body.data.void_reason, user.uuid, companyId]
       );
       if (!res.rows[0]) return null;
       const pushed = await enqueueVehiclePushIfProjected(client, params.data.id, companyId, user.uuid);

@@ -732,7 +732,15 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       });
     }
     const existingRow = await withCurrentUser(authUser.uuid, async (client) => {
-      const res = await client.query(`SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      // Entity scope (USMCA cross-entity leak fix): a by-id customer update must not touch a customer
+      // belonging to another operating company. Scope to the user's current company.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      const res = await client.query(
+        `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.id, scopedCompanyId]
+      );
       return res.rows[0] ?? null;
     });
     if (!existingRow) return reply.code(404).send({ error: "mdata_customer_not_found" });
@@ -815,7 +823,15 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const oldRes = await client.query(`SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+        // Entity scope (USMCA cross-entity leak fix): re-confirm the row is in the user's company
+        // before the UPDATE (existingRow already gated it above).
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        if (!scopedCompanyId) return null;
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        const oldRes = await client.query(
+          `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [parsedParams.data.id, scopedCompanyId]
+        );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
 
@@ -971,15 +987,22 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
-      const oldRes = await client.query(`SELECT id, operating_company_id, deactivated_at FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      // Entity scope (USMCA cross-entity leak fix): never deactivate a customer in another company.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      const oldRes = await client.query(
+        `SELECT id, operating_company_id, deactivated_at FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.id, scopedCompanyId]
+      );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
       let deactivatedAt = oldRow.deactivated_at as string | null;
       let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
       if (!wasAlreadyDeactivated) {
         const res = await client.query(
-          `UPDATE mdata.customers SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND deactivated_at IS NULL RETURNING id, deactivated_at`,
-          [parsedParams.data.id, authUser.uuid]
+          `UPDATE mdata.customers SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3 AND deactivated_at IS NULL RETURNING id, deactivated_at`,
+          [parsedParams.data.id, authUser.uuid, scopedCompanyId]
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
         wasAlreadyDeactivated = false;

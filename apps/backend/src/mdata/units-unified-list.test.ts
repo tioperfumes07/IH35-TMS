@@ -108,6 +108,7 @@ describe("units unified list", () => {
       limit: 500,
       offset: 0,
       type: "Reefer",
+      operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
     });
 
     expect(queries.some((sql) => sql.includes("mdata.units") && sql.includes("FALSE"))).toBe(true);

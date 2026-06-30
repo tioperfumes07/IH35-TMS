@@ -906,9 +906,13 @@ export async function getFleetSchedule(
       FROM mdata.units u
       WHERE u.deactivated_at IS NULL
         AND u.assigned_driver_id IS NULL
+        -- Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and
+        -- its RLS is identity/role-scoped, so scope the vacant-unit picker by the owner/leased pair.
+        AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
       ORDER BY u.unit_number
       LIMIT 200
-    `
+    `,
+    [args.operatingCompanyId]
   );
 
   return {

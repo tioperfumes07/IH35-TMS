@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { buildEquipmentAggregate } from "./equipment-aggregate.service.js";
 import { registerEquipmentPdfExportRoutes } from "./equipment-pdf-export.routes.js";
 import { registerEquipmentPlatesRoutes } from "./equipment-plates.routes.js";
@@ -161,11 +162,15 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         const idx = values.length;
         filters.push(`(equipment_number ILIKE $${idx} OR vin ILIKE $${idx} OR make ILIKE $${idx} OR model ILIKE $${idx})`);
       }
-      if (operating_company_id) {
-        values.push(operating_company_id);
-        const idx = values.length;
-        filters.push(`(owner_company_id = $${idx} OR currently_leased_to_company_id = $${idx})`);
-      }
+      // Entity scope (USMCA cross-entity leak fix): mdata.equipment has no operating_company_id and
+      // its RLS is identity/role-scoped, so scope by the owner/leased pair. ALWAYS bind it — resolve
+      // the company from the param or user context so equipment from another entity never leaks.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
+      if (!scopedCompanyId) return [];
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      values.push(scopedCompanyId);
+      const ownerLeasedIdx = values.length;
+      filters.push(`(owner_company_id = $${ownerLeasedIdx} OR currently_leased_to_company_id = $${ownerLeasedIdx})`);
       values.push(limit);
       values.push(offset);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";

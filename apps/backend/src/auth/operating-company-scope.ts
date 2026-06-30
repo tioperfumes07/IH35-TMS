@@ -64,3 +64,40 @@ export async function withOperatingCompanyScope<T>(
 export async function assertScopeBeforeQuery(client: Queryable): Promise<string> {
   return requireOperatingCompanyScope(client);
 }
+
+/**
+ * Resolve the operating company to scope a query to: the explicitly-requested id when present,
+ * otherwise the requesting user's default (or first-accessible) company. Returns null when none
+ * resolvable.
+ *
+ * RLS on mdata.* is role-scoped, NOT entity-scoped, so an optional `operating_company_id` filter
+ * that is only applied "if present" leaks rows across operating companies (TRANSP ↔ TRK ↔ USMCA).
+ * Resolving the user's current company here lets list/by-id endpoints ALWAYS bind an entity
+ * predicate without hard-400ing a working caller that omitted the param.
+ */
+export async function resolveOperatingCompanyId(
+  client: {
+    query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }>;
+  },
+  userId: string,
+  requested?: string | null
+): Promise<string | null> {
+  if (requested) return requested;
+  const res = await client.query(
+    `
+      SELECT c.id
+      FROM identity.users u
+      JOIN org.companies c ON c.id = u.default_company_id
+      WHERE u.id = $1
+        AND c.deactivated_at IS NULL
+      UNION
+      SELECT c.id
+      FROM org.companies c
+      WHERE c.id IN (SELECT org.user_accessible_company_ids())
+      ORDER BY id
+      LIMIT 1
+    `,
+    [userId]
+  );
+  return res.rows[0]?.id ?? null;
+}
