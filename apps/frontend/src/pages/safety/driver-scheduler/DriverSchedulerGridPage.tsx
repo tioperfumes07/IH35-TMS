@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { companyToday } from "../../../lib/businessDate";
 
 function addDaysIso(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -19,7 +20,9 @@ export function DriverSchedulerGridPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const [windowDays, setWindowDays] = useState(30);
   const range = useMemo(() => {
-    const start = new Date().toISOString().slice(0, 10);
+    // Company-local "today" (Central), not UTC — otherwise the grid starts on tomorrow's column
+    // in the evening. See lib/businessDate.
+    const start = companyToday();
     return { start, end: addDaysIso(start, windowDays - 1) };
   }, [windowDays]);
 

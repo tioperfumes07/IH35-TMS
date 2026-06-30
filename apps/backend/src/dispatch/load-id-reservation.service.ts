@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { companyBusinessDateCompact } from "../lib/company-business-date.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -30,7 +31,9 @@ export type ReserveNextLoadIdResult = {
 };
 
 function makeLoadNumber(seq: number, date = new Date()) {
-  const ymd = date.toISOString().slice(0, 10).replace(/-/g, "");
+  // Business date in the company timezone — NOT UTC. A load booked at 7 PM Central must carry the
+  // Central calendar date, or the persisted Load Number reads as tomorrow. (see company-business-date)
+  const ymd = companyBusinessDateCompact(date);
   return `L-${ymd}-${String(seq).padStart(4, "0")}`;
 }
 
@@ -52,7 +55,7 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput): 
   await expireStaleLoadIdReservations(client, input.operatingCompanyId);
 
   const now = new Date();
-  const prefix = `L-${now.toISOString().slice(0, 10).replace(/-/g, "")}-%`;
+  const prefix = `L-${companyBusinessDateCompact(now)}-%`;
 
   const existing = await client.query<{ id: string; reserved_load_number: string; expires_at: string }>(
     `
@@ -106,7 +109,7 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput): 
       FROM dispatch.load_id_reservations
       WHERE operating_company_id = $1
         AND reserved_load_number LIKE $2
-        AND reserved_at::date = current_date
+        AND (reserved_at AT TIME ZONE 'America/Chicago')::date = (now() AT TIME ZONE 'America/Chicago')::date
     `,
     [input.operatingCompanyId, prefix]
   );

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDriverDaySummary, type HomeDriverDaySummaryRow } from "../../api/home";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string | null;
@@ -9,7 +10,9 @@ type Props = {
 
 type SortKey = "driver_name" | "miles" | "hours_on_duty" | "fuel_stops" | "on_time_arrivals" | "late_arrivals";
 
-const TODAY = new Date().toISOString().slice(0, 10);
+// Company-local "today" (Central), not UTC — at 7 PM Central UTC is already tomorrow, which
+// defaulted this picker to a date with no HOS data. See lib/businessDate.
+const TODAY = companyToday();
 
 function compareRows(a: HomeDriverDaySummaryRow, b: HomeDriverDaySummaryRow, sortKey: SortKey): number {
   if (sortKey === "driver_name") return a.driver_name.localeCompare(b.driver_name);
