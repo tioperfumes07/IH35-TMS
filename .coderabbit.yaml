@@ -1,0 +1,49 @@
+# CodeRabbit — AI code reviewer on every PR (architecture/logic/security, not syntax).
+# ACTIVATION (one-time, owner): install the GitHub App at https://github.com/apps/coderabbitai
+# and grant it access to the IH35-TMS repo. This config takes effect automatically once installed.
+language: en-US
+early_access: false
+reviews:
+  profile: assertive            # thorough, opinionated review (vs "chill")
+  request_changes_workflow: false
+  high_level_summary: true       # plain-English PR summary
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+  path_filters:
+    - '!**/*.lock'
+    - '!**/dist/**'
+    - '!**/*.min.js'
+    - '!docs/schema-parity-baseline.json'
+    - '!scripts/canonical-relations.json'
+  # Domain rules so the bot reviews THIS system's invariants, not generic ones:
+  path_instructions:
+    - path: 'apps/backend/src/accounting/**'
+      instructions: >-
+        Financial/GL code. Flag: any NEW general-ledger math (must reuse the posting engine, not
+        re-implement debits/credits); a posting whose debits != credits; money posted/voided/reversed
+        without an append-only audit row; an ungated financial WRITE (must sit behind an *_ENABLED
+        flag that defaults OFF); and any control-account resolution that could silently pick the
+        wrong account instead of failing closed.
+    - path: 'apps/backend/src/**'
+      instructions: >-
+        Multi-tenant carrier app. Flag any SQL on mdata.* / catalogs.{accounts,classes} that lacks an
+        explicit operating_company_id / owner_company_id / currently_leased_to_company_id predicate
+        (RLS alone is not enough — cross-entity leak risk at USMCA launch). Flag writes to a
+        table/column that may not exist in db/migrations (phantom write).
+    - path: 'db/migrations/**'
+      instructions: >-
+        Migrations must be idempotent (IF NOT EXISTS / DO blocks), NEVER DELETE rows (void-not-delete:
+        set deactivated_at / voided_at), include RLS enable+force + GRANTs for any new table, use a
+        number strictly above the current max, and must NOT flip a money/feature flag on.
+    - path: 'apps/frontend/src/**'
+      instructions: >-
+        Flag date defaults built from new Date().toISOString() (use the company-tz helper), and any
+        money/count tile whose API reader field-names don't match the backend response shape.
+chat:
+  auto_reply: true
