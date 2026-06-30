@@ -513,6 +513,28 @@ export function getInsuranceSummary(operatingCompanyId: string) {
   );
 }
 
+export type InsuranceCoverageGapUnit = {
+  unit_id: string;
+  unit_number: string | null;
+  missing_types: InsuranceCoverageType[];
+};
+
+// Coverage Gaps detail (INSURANCE-1) — the drill-down behind the Landing "Coverage Gap Count" KPI.
+// Backed by the SAME canonical query as /insurance/summary, so coverage_gap_count ===
+// uncovered_units.length + mismatched_units.length and the headline number is traceable to this list.
+export type InsuranceCoverageGaps = {
+  required_types: InsuranceCoverageType[];
+  uncovered_units: InsuranceCoverageGapUnit[];
+  mismatched_units: InsuranceCoverageGapUnit[];
+  coverage_gap_count: number;
+};
+
+export function getInsuranceCoverageGaps(operatingCompanyId: string) {
+  return apiRequest<InsuranceCoverageGaps>(
+    `/api/v1/insurance/coverage-gaps?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`
+  );
+}
+
 export function listInsuranceCoiRequests(params: {
   operating_company_id: string;
   customer_id?: string;

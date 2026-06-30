@@ -3,15 +3,16 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
+import { addDaysIso, companyToday } from "../../../lib/businessDate";
 
+// CASHFLOW-1: range must end on the company business date (Central), not the UTC date — otherwise the
+// "To" defaults to tomorrow after ~7 PM Central. See lib/businessDate.
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function sevenDaysAgoIso(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 7);
-  return d.toISOString().slice(0, 10);
+  return addDaysIso(companyToday(), -7);
 }
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
