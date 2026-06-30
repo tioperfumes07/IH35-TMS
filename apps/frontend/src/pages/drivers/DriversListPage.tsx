@@ -85,6 +85,37 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   const canPrev = page > 0;
   const canNext = rangeEnd < totalDrivers;
 
+  const [exporting, setExporting] = useState(false);
+  // Export the FULL driver roster (not just the current page) to CSV for offline review — names + hire/term
+  // dates + pay basis + status + CDL. Reads through the authenticated session (correct per-entity RLS).
+  async function handleExportCsv() {
+    if (!companyId || exporting) return;
+    setExporting(true);
+    try {
+      const all = await listDrivers({ operating_company_id: companyId, status: "All", limit: 500, offset: 0 });
+      const esc = (value: unknown) => {
+        const s = value == null ? "" : String(value);
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const header = ["Last name", "First name", "Hire date", "Termination date", "Pay basis", "Status", "CDL number", "CDL state", "Phone", "Driver ID"];
+      const lines = all.drivers.map((d) =>
+        [d.last_name, d.first_name, d.hire_date ?? "", d.termination_date ?? "", d.pay_basis ?? "", d.status ?? "", d.cdl_number ?? "", d.cdl_state ?? "", d.phone ?? "", d.id]
+          .map(esc)
+          .join(",")
+      );
+      const csv = [header.map(esc).join(","), ...lines].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const href = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.download = `IH35-driver-profiles-${new Date().toISOString().slice(0, 10)}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(href);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (!companyId) {
     return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
@@ -95,15 +126,25 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         title="Driver qualification profiles"
         subtitle="Fleet DQF checklist and compliance status chips"
         actions={
-          <input
-            className="h-8 w-[220px] rounded border border-gray-300 px-2 text-xs"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(0);
-            }}
-            placeholder="Search drivers"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              className="h-8 w-[220px] rounded border border-gray-300 px-2 text-xs"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(0);
+              }}
+              placeholder="Search drivers"
+            />
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={exporting || !companyId}
+              className="h-8 rounded border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+            >
+              {exporting ? "Exporting…" : "Export profiles (CSV)"}
+            </button>
+          </div>
         }
       />
 
