@@ -370,6 +370,30 @@ export function BankingTransactionsDesignView({
       .map(([monthKey, rows]) => ({ monthKey, title: monthTitleFromKey(monthKey), rows }));
   }, [pagedRows, viewSettings.turnOffGrouping]);
 
+  // Running balance ("Balance" column), computed over the FULL account ledger — not the visible page —
+  // so each row shows its true post-transaction balance even when the view is filtered or paginated.
+  // Anchor = the account's current balance (balance AFTER the newest transaction); we walk newest->oldest:
+  //   balanceAfter(newest) = currentBalance; balanceAfter(older) = balanceAfter(newer) - signed(newer).
+  // signed = received - spent (cents). This is only meaningful in date order (the default sort) and when the
+  // full history is present (post-reconnect it is) — matching how a QuickBooks/bank register behaves.
+  const runningBalanceById = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!selectedAccount) return map;
+    let running = Number(selectedAccount.current_balance_cents ?? 0);
+    const ordered = [...scopedRows].sort((a, b) => {
+      const da = a.transaction_date ?? "";
+      const db = b.transaction_date ?? "";
+      if (da === db) return 0;
+      return da < db ? 1 : -1; // date descending (newest first)
+    });
+    for (const tx of ordered) {
+      map.set(tx.id, running);
+      const { spent, received } = spentReceived(tx);
+      running -= received - spent;
+    }
+    return map;
+  }, [scopedRows, selectedAccount]);
+
   function makeDefaultDraft(tx: PlaidBankTransaction): RowDetailDraft {
     const description = tx.description || tx.merchant_name || "";
     return {
@@ -735,15 +759,17 @@ export function BankingTransactionsDesignView({
                     className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-gray-50"
                     onClick={() => {
                       setPrintExportMenuOpen(false);
-                      const header = ["Date", "Description", "Spent", "Received", "From/To", "Customer", "Product/Service"];
+                      const header = ["Date", "Description", "Spent", "Received", "Balance", "From/To", "Customer", "Product/Service"];
                       const lines = tableRows.map((tx) => {
                         const { spent, received } = spentReceived(tx);
                         const draft = getDraft(tx);
+                        const bal = runningBalanceById.get(tx.id);
                         return [
                           formatBankTransactionDate(tx.transaction_date),
                           transactionLabel(tx),
                           spent > 0 ? (spent / 100).toFixed(2) : "",
                           received > 0 ? (received / 100).toFixed(2) : "",
+                          bal == null ? "" : (bal / 100).toFixed(2),
                           draft.fromTo,
                           draft.customerProject,
                           draft.productService,
@@ -795,6 +821,7 @@ export function BankingTransactionsDesignView({
                 <th className="w-[6%] px-1 py-2">Spent</th>
                 <th className="w-[6%] px-1 py-2">Received</th>
               </>}
+              <th className="w-[8%] px-1 py-2 text-right">Balance</th>
               <th className="w-[12%] px-1 py-2">From/To</th>
               <th className="w-[10%] px-1 py-2">Customer</th>
               <th className="w-[10%] px-1 py-2">Product/Service</th>
@@ -809,14 +836,14 @@ export function BankingTransactionsDesignView({
           <tbody>
             {transactionsQuery.isLoading ? (
               <tr>
-                <td className="px-3 py-4 text-sm text-gray-500" colSpan={15}>
+                <td className="px-3 py-4 text-sm text-gray-500" colSpan={16}>
                   Loading Plaid transactions...
                 </td>
               </tr>
             ) : null}
             {!transactionsQuery.isLoading && pagedRows.length === 0 ? (
               <tr>
-                <td className="px-3 py-4 text-sm text-gray-500" colSpan={15}>
+                <td className="px-3 py-4 text-sm text-gray-500" colSpan={16}>
                   No transactions for selected account and filters.
                 </td>
               </tr>
@@ -827,7 +854,7 @@ export function BankingTransactionsDesignView({
                 <Fragment key={group.monthKey}>
                   {!viewSettings.turnOffGrouping ? (
                     <tr className="border-t border-gray-200 bg-[#F8F8F4]">
-                      <td colSpan={15} className="px-2 py-1.5">
+                      <td colSpan={16} className="px-2 py-1.5">
                         <button
                           type="button"
                           className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700"
@@ -892,6 +919,14 @@ export function BankingTransactionsDesignView({
                         <td className="px-1 py-2 align-top text-emerald-700">{received > 0 ? USD.format(received / 100) : "—"}</td>
                       </>
                     )}
+                    {(() => {
+                      const bal = runningBalanceById.get(tx.id);
+                      return (
+                        <td className={`whitespace-nowrap px-1 py-2 text-right align-top tabular-nums ${bal != null && bal < 0 ? "text-red-700" : "text-gray-900"}`}>
+                          {bal == null ? "—" : USD.format(bal / 100)}
+                        </td>
+                      );
+                    })()}
                     <td className="truncate px-1 py-2 align-top text-gray-700">{draft.fromTo || "—"}</td>
                     <td className="truncate px-1 py-2 align-top text-gray-700">{draft.customerProject || "—"}</td>
                     <td className="truncate px-1 py-2 align-top text-gray-700">{draft.productService || "—"}</td>
@@ -967,7 +1002,7 @@ export function BankingTransactionsDesignView({
                   </tr>
                   {expanded ? (
                     <tr key={`${tx.id}-expanded`} className="border-t border-gray-100 bg-gray-50">
-                      <td className="px-3 py-3" colSpan={15}>
+                      <td className="px-3 py-3" colSpan={16}>
                         <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                           <div className="rounded border border-gray-200 bg-white p-2">
                             <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
