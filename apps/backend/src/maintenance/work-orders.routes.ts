@@ -342,8 +342,16 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         values
       );
       values.push(q.limit, q.offset);
+      // MAINT-3: join the unit so the table renders the unit number (e.g. T139) instead of a raw
+      // UUID fragment. LEFT JOIN keeps WOs with no/unknown unit. RLS on mdata.units is satisfied —
+      // the surrounding withCompany() sets app.operating_company_id and the WO is already opco-scoped.
       const rowsRes = await client.query(
-        `SELECT * FROM maintenance.work_orders w WHERE ${where.join(" AND ")} ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`,
+        `SELECT w.*, u.unit_number
+           FROM maintenance.work_orders w
+           LEFT JOIN mdata.units u ON u.id = w.unit_id
+          WHERE ${where.join(" AND ")}
+          ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
+          LIMIT $${values.length - 1} OFFSET $${values.length}`,
         values
       );
       return { rows: rowsRes.rows, total: Number((countRes.rows[0] as { cnt?: number } | undefined)?.cnt ?? 0) };
