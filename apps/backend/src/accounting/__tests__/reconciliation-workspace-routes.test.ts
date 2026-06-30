@@ -67,7 +67,7 @@ describe("accounting reconciliation workspace — autoload registration contract
       "utf8"
     );
     expect(accountingIndex).toContain("@fastify/autoload");
-    // matchFilter must keep matching `.routes.` files or this route file is dropped from autoload.
+    // matchFilter must keep matching `.routes.` files or the autoloader silently drops this route file.
     expect(accountingIndex).toMatch(/matchFilter:\s*\/\\\.routes\\\.\(ts\|js\)\$\//);
   });
 
