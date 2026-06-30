@@ -42,10 +42,14 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
           SELECT id, assigned_driver_id
           FROM mdata.equipment
           WHERE id = $1
+            -- Entity scope (USMCA cross-entity leak fix): mdata.equipment has no operating_company_id
+            -- and its RLS is identity/role-scoped, so confirm the equipment is owned-by/leased-to the
+            -- transferring company before locking it.
+            AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
           LIMIT 1
           FOR UPDATE
         `,
-        [input.equipment_id]
+        [input.equipment_id, input.operating_company_id]
       );
       const row = equipment.rows[0];
       if (!row?.id) throw new Error("E_EQUIPMENT_NOT_FOUND");

@@ -211,7 +211,9 @@ export async function refreshDeadheadCache(client: PoolClient, operatingCompanyI
     `
       SELECT id::text
       FROM mdata.units
-      WHERE operating_company_id = $1::uuid
+      -- Entity scope + phantom-column fix (USMCA): mdata.units has NO operating_company_id column
+      -- (the old predicate was a 42703 error that 500'd this refresh). Scope by the owner/leased pair.
+      WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
         AND deactivated_at IS NULL
     `,
     [operatingCompanyId]

@@ -1230,6 +1230,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ON p.unit_id = u.id
             AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
           WHERE u.deactivated_at IS NULL
+            -- Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and
+            -- its RLS is identity/role-scoped, so the GUC alone does not filter units. Scope by the
+            -- owner/leased pair so another entity's trucks never appear in this dispatcher picker.
+            AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
             -- ACTIVE trucks only. Excludes Sold/Totaled (some are not deactivated_at — a known
             -- active/inactive desync that inflated "Awaiting assignment" to ~49 vs ~32 active) and
             -- OutOfService/InMaintenance (those belong to the In-shop / Fleet-OOS surfaces, not Awaiting).
@@ -1238,7 +1242,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           GROUP BY u.id, u.unit_number, ud.id, ud.first_name, ud.last_name,
             p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at
           ORDER BY COALESCE(MAX(ls.actual_departure_at), now() - interval '999 days') ASC
-        `
+        `,
+        [operatingCompanyId]
       );
       // Live-location is older than this -> show the gold "stale" dot (Samsara positions poll every ~5 min;
       // >10 min = a couple of missed polls). The "as of HH:MM CT" timestamp always renders when a fix exists.

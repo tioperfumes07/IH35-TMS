@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../../auth/db.js";
+import { resolveOperatingCompanyId } from "../../auth/operating-company-scope.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -324,12 +325,17 @@ export async function getDispatcherHomeData(
   options: DispatcherHomeOptions = {}
 ): Promise<DispatcherHomeData> {
   return withCurrentUser(userId, async (client) => {
+    // Entity scope (USMCA cross-entity leak fix): the dispatcher home blends mdata.loads across
+    // entities (these queries scope by dispatcher_user_id but NOT by operating company). ALWAYS
+    // resolve the operating company so every one of the five queries binds the company predicate.
+    const operatingCompanyId =
+      options.operatingCompanyId ?? (await resolveOperatingCompanyId(client, userId)) ?? undefined;
     const [kpis, activeLoads, bookingGap, detentionApprovals, incomingQueue] = await Promise.all([
-      loadKpis(client, userId, options.operatingCompanyId),
-      loadActiveLoads(client, userId, options.operatingCompanyId),
-      loadBookingGap(client, userId, options.operatingCompanyId),
-      loadPendingDetentionApprovals(client, userId, options.operatingCompanyId),
-      loadIncomingMessageQueue(client, userId, options.operatingCompanyId),
+      loadKpis(client, userId, operatingCompanyId),
+      loadActiveLoads(client, userId, operatingCompanyId),
+      loadBookingGap(client, userId, operatingCompanyId),
+      loadPendingDetentionApprovals(client, userId, operatingCompanyId),
+      loadIncomingMessageQueue(client, userId, operatingCompanyId),
     ]);
 
     return {

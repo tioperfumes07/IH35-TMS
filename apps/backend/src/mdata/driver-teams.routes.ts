@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -127,10 +128,13 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
         values.push(parsedQuery.data.is_active === "true");
         filters.push(`t.is_active = $${values.length}`);
       }
-      if (parsedQuery.data.operating_company_id) {
-        values.push(parsedQuery.data.operating_company_id);
-        filters.push(`t.operating_company_id = $${values.length}`);
-      }
+      // Entity scope (USMCA cross-entity leak fix): ALWAYS bind operating_company_id so driver-team
+      // rosters never blend across operating companies. Resolve from the param or user context.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid, parsedQuery.data.operating_company_id);
+      if (!scopedCompanyId) return [];
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      values.push(scopedCompanyId);
+      filters.push(`t.operating_company_id = $${values.length}`);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
@@ -173,6 +177,11 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const team = await withCurrentUser(user.uuid, async (client) => {
+      // Entity scope (USMCA cross-entity leak fix): a by-id team read must not cross operating
+      // companies. Scope to the user's current company.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
           SELECT
@@ -197,9 +206,10 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
           JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
           JOIN mdata.drivers sd ON sd.id = t.secondary_driver_id
           WHERE t.id = $1
+            AND t.operating_company_id = $2
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, scopedCompanyId]
       );
       return res.rows[0] ?? null;
     });

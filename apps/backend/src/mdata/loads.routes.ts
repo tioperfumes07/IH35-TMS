@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -497,9 +498,19 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         values.push(driver_id);
         filters.push(`(l.assigned_primary_driver_id = $${values.length} OR l.assigned_secondary_driver_id = $${values.length})`);
       }
+      // Entity scope (USMCA cross-entity leak fix): mdata.loads RLS is role-scoped, not
+      // entity-scoped, so the operating_company_id predicate must ALWAYS be bound. Use the
+      // requested company set when provided, else resolve the user's current company so a caller
+      // that omits the param is scoped (never leaked across TRANSP/TRK/USMCA) and never hard-400ed.
       if (operating_company_id && operating_company_id.length > 0) {
         values.push(operating_company_id);
         filters.push(`l.operating_company_id = ANY($${values.length}::uuid[])`);
+      } else {
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        if (!scopedCompanyId) return { rows: [], totalCount: 0 };
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        values.push(scopedCompanyId);
+        filters.push(`l.operating_company_id = $${values.length}::uuid`);
       }
       const pickupFrom = pickup_date_from ?? from_date;
       const pickupTo = pickup_date_to ?? to_date;

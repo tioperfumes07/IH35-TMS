@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 
 const customerIdParamSchema = z.object({ customer_id: z.string().uuid() });
 const customerContactParamsSchema = z.object({
@@ -56,21 +57,46 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
+/**
+ * Entity scope (USMCA cross-entity leak fix): customer contacts carry no operating_company_id of
+ * their own — they inherit it from the parent customer. This controller previously had NO entity
+ * concept, so a user in one operating company could read/write contact PII for a customer in another
+ * (mdata.customers RLS is role-scoped, not entity-scoped). Gating every handler on a parent-customer
+ * existence check that is bound to the resolved operating company closes that leak for read AND write.
+ */
 async function ensureCustomerExists(
   client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
-  customerId: string
+  customerId: string,
+  operatingCompanyId: string
 ) {
   const res = await client.query(
     `
       SELECT id
       FROM mdata.customers
       WHERE id = $1
+        AND operating_company_id = $2
         AND deactivated_at IS NULL
       LIMIT 1
     `,
-    [customerId]
+    [customerId, operatingCompanyId]
   );
   return res.rows.length > 0;
+}
+
+/**
+ * Resolve the user's operating company, pin it on the session, and confirm the parent customer
+ * belongs to it. Returns the company id when the customer is in-scope, otherwise null (→ 404).
+ */
+async function ensureCustomerInScope(
+  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  customerId: string
+): Promise<string | null> {
+  const operatingCompanyId = await resolveOperatingCompanyId(client, userId);
+  if (!operatingCompanyId) return null;
+  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  const ok = await ensureCustomerExists(client, customerId, operatingCompanyId);
+  return ok ? operatingCompanyId : null;
 }
 
 export async function registerCustomerContactRoutes(app: FastifyInstance) {
@@ -88,8 +114,8 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
     }
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      const hasCustomer = await ensureCustomerExists(client, parsedParams.data.customer_id);
-      if (!hasCustomer) return reply.code(404).send({ error: "mdata_customer_not_found" });
+      const scopedCompanyId = await ensureCustomerInScope(client, authUser.uuid, parsedParams.data.customer_id);
+      if (!scopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
       const inactiveFilter = includeInactive ? "" : "AND cc.deactivated_at IS NULL";
       const contactsRes = await client.query(
         `
@@ -130,8 +156,8 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      const hasCustomer = await ensureCustomerExists(client, parsedParams.data.customer_id);
-      if (!hasCustomer) return reply.code(404).send({ error: "mdata_customer_not_found" });
+      const scopedCompanyId = await ensureCustomerInScope(client, authUser.uuid, parsedParams.data.customer_id);
+      if (!scopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
 
       if (parsedBody.data.is_primary === true) {
         await client.query(
@@ -215,8 +241,8 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
       if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
       return withCurrentUser(authUser.uuid, async (client) => {
-        const hasCustomer = await ensureCustomerExists(client, parsedParams.data.customer_id);
-        if (!hasCustomer) return reply.code(404).send({ error: "mdata_customer_not_found" });
+        const scopedCompanyId = await ensureCustomerInScope(client, authUser.uuid, parsedParams.data.customer_id);
+        if (!scopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
 
         const existingRes = await client.query(
           `
@@ -316,6 +342,10 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
       return withCurrentUser(authUser.uuid, async (client) => {
+        // Entity scope (USMCA cross-entity leak fix): confirm the parent customer is in the user's
+        // operating company before touching its contact PII.
+        const scopedCompanyId = await ensureCustomerInScope(client, authUser.uuid, parsedParams.data.customer_id);
+        if (!scopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
         const res = await client.query(
           `
             UPDATE mdata.customer_contacts
@@ -357,6 +387,10 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
       return withCurrentUser(authUser.uuid, async (client) => {
+        // Entity scope (USMCA cross-entity leak fix): confirm the parent customer is in the user's
+        // operating company before touching its contact PII.
+        const scopedCompanyId = await ensureCustomerInScope(client, authUser.uuid, parsedParams.data.customer_id);
+        if (!scopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
         const res = await client.query(
           `
             UPDATE mdata.customer_contacts
