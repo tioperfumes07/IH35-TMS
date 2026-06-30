@@ -147,7 +147,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               <>
                 {/* Trip planning is read from active dispatch routes (no manual create endpoint yet).
                     Honest disabled affordance instead of a silent no-op button (QA-sweep). */}
-                <span title="Trip planning is coming soon — routes are generated from active dispatch loads">
+                <span title="Trip planning is generated from active dispatch loads — there is no manual trip-create here">
                   <ActionButton disabled>+ Plan trip</ActionButton>
                 </span>
                 <ActionButton onClick={() => setUploadOpen(true)}>Upload Loves prices</ActionButton>
