@@ -11,7 +11,8 @@ import path from "node:path";
 
 const SRC = path.resolve("apps/backend/src");
 const WRITE_RE = /(INSERT\s+INTO|UPDATE)\s+banking\.bank_accounts\b/i;
-const OPCO_SET_RE = /set_config\(\s*['"]app\.operating_company_id['"]/;
+// Accept either scoping form: set_config('app.operating_company_id', ...) OR SET [LOCAL] app.operating_company_id = ...
+const OPCO_SET_RE = /set_config\(\s*['"]app\.operating_company_id['"]|SET\s+(?:LOCAL\s+)?app\.operating_company_id\b/i;
 const HAS_CURRENT_USER = /\bwithCurrentUser\b/;
 
 function walk(dir, acc = []) {
