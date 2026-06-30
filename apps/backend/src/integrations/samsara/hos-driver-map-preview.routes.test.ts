@@ -51,8 +51,8 @@ const PATH = "/api/v1/telematics/hos-driver-map/preview";
 describe("hos driver-map preview route (read-only smoke)", () => {
   beforeEach(() => { requireAuthResult = true; recordedSql = []; });
 
-  it("registers the preview endpoint", () => {
-    expect(Object.keys(captureRoutes())).toEqual([PATH]);
+  it("registers the preview endpoints", () => {
+    expect(Object.keys(captureRoutes())).toEqual([PATH, "/api/v1/telematics/driver-hire-date/preview"]);
   });
 
   it("401s when unauthenticated and never touches the db", async () => {
