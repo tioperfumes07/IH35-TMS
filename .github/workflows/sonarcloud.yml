@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0 # full history → accurate new-code/blame attribution
       - name: SonarCloud scan
         if: ${{ env.SONAR_TOKEN != '' }}
-        uses: SonarSource/sonarqube-scan-action@v4
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Sonar not configured (no-op)
