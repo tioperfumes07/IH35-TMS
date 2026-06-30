@@ -174,8 +174,9 @@ export function DispatchPage({
     queryFn: () => listCustomers({ status: "active", search: filters.search || undefined }),
   });
   const driverLookup = useQuery({
-    queryKey: ["dispatch", "drivers", filters.search],
-    queryFn: () => listDrivers({ status: "Active", search: filters.search || undefined, limit: 200 }), // full active set (endpoint default 50 truncates >50)
+    queryKey: ["dispatch", "drivers", selectedCompanyId, filters.search],
+    enabled: Boolean(selectedCompanyId),
+    queryFn: () => listDrivers({ operating_company_id: selectedCompanyId, status: "Active", search: filters.search || undefined, limit: 200 }), // full active set (endpoint default 50 truncates >50)
   });
   const preSettlementsQuery = useQuery({
     queryKey: ["dispatch", "pre-settlements", defaultCompanyIds.join(",")],

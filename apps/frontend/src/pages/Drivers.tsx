@@ -407,9 +407,14 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   }, [returningDetection, terminatedMatches]);
 
   const driversQuery = useQuery({
-    queryKey: ["drivers", { search, listScope: "all-statuses" }],
+    // DRIVERPROFILE-1: the roster MUST be scoped to the selected company — an unscoped
+    // /mdata/drivers read returns 0 (entity-scoped table), which emptied the roster despite 83
+    // real drivers. Re-scopes when the user switches company; gated until a company is selected.
+    queryKey: ["drivers", { companyId: selectedCompanyId, search, listScope: "all-statuses" }],
+    enabled: Boolean(selectedCompanyId),
     queryFn: () =>
       listDrivers({
+        operating_company_id: selectedCompanyId,
         status: "All",
         search,
         limit: 200, // GO-LIVE Block 1A: fetch the full roster (was capped at 50) so the DataTable pager + KPIs reflect the real total

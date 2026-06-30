@@ -2,10 +2,15 @@ import { apiRequest } from "./client";
 import { filterHumanDrivers } from "../lib/driver-pseudo-user";
 import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateResponse, MilesBasis, UpdateDriverInput } from "../types/api";
 
+// DRIVERPROFILE-1 guard: `operating_company_id` is REQUIRED (not optional) so a caller can never
+// silently omit the company scope. An unscoped /mdata/drivers read fail-closes to 0 rows (the table
+// is entity-scoped), which silently emptied the Driver roster despite 83 real drivers. Pass the
+// current company id (or null when none is selected yet + gate the query with `enabled`). This
+// compile-time requirement supersedes a grep guard — an omitted scope no longer compiles.
 export function listDrivers(params: {
   status?: string;
   search?: string;
-  operating_company_id?: string | null;
+  operating_company_id: string | null | undefined; // REQUIRED key (no `?`): can't be silently omitted
   include_system?: boolean;
   limit?: number;
   offset?: number;

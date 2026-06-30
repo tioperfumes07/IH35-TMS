@@ -21,6 +21,7 @@ import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { useAuth } from "../auth/useAuth";
+import { useCompanyContext } from "../contexts/CompanyContext";
 
 type Tab = "profile" | "companies" | "safety" | "activity";
 
@@ -63,6 +64,7 @@ export function UserDetailPage() {
   const params = useParams<{ id: string }>();
   const userId = params.id ?? "";
   const auth = useAuth();
+  const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("profile");
@@ -107,8 +109,9 @@ export function UserDetailPage() {
   });
 
   const driversQuery = useQuery({
-    queryKey: ["drivers", "for-dispatcher-safety"],
-    queryFn: () => listDrivers({}).then((result) => result.drivers),
+    queryKey: ["drivers", "for-dispatcher-safety", selectedCompanyId],
+    enabled: Boolean(selectedCompanyId),
+    queryFn: () => listDrivers({ operating_company_id: selectedCompanyId }).then((result) => result.drivers),
   });
 
   const safetyEventsQuery = useQuery({
