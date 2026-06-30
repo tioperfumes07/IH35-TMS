@@ -6,6 +6,7 @@ import { pullChartOfAccountsFromQbo } from "./chart-of-accounts-puller.js";
 import { reconcileChartOfAccounts } from "./chart-of-accounts-reconciler.js";
 import { pullItemsFromQbo } from "./items-puller.js";
 import { reconcileItems } from "./items-reconciler.js";
+import { pullApBillsFromQbo, projectApBillsToLedger } from "./ap-bills-puller.js";
 import { countUnresolvedDrift, detectDriftForCompany } from "./drift-detector.js";
 import { maybeFireDriftAlert } from "./sync-alerts.js";
 
@@ -47,6 +48,12 @@ async function runScheduledSyncForCompany(operatingCompanyId: string, log?: Fast
 
   await pullEntityIfModuleExists("./vendors-puller.js", "pullVendorsFromQbo", operatingCompanyId);
   await reconcileEntityIfModuleExists("./vendors-reconciler.js", "reconcileVendors", operatingCompanyId);
+
+  // Inbound A/P (QBO Bills -> mdata.qbo_ap_bills mirror -> accounting.bills). Both stages are
+  // internally gated by default-OFF flags (QBO_AP_MIRROR_PULL_ENABLED / QBO_AP_BILLS_PROJECTION_ENABLED)
+  // and no-op until the owner enables them, so default scheduler behavior is unchanged.
+  await pullApBillsFromQbo(operatingCompanyId);
+  await projectApBillsToLedger(operatingCompanyId);
 
   const driftResults = await detectDriftForCompany(operatingCompanyId);
   for (const result of driftResults) {
