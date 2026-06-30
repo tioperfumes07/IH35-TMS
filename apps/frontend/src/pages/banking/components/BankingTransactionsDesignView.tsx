@@ -277,9 +277,14 @@ export function BankingTransactionsDesignView({
     return out;
   }, [scopedRows]);
 
+  const [sortBy, setSortBy] = useState<{ key: "date" | "description" | "spent" | "received"; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
+  const toggleSort = (key: "date" | "description" | "spent" | "received") =>
+    setSortBy((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
+  const sortCaret = (key: "date" | "description" | "spent" | "received") => (sortBy.key === key ? (sortBy.dir === "asc" ? " ▲" : " ▼") : "");
+
   const tableRows = useMemo(() => {
     const source = reviewTabBuckets[activeReviewTab];
-    return source.filter((tx) => {
+    const filtered = source.filter((tx) => {
       const { spent, received } = spentReceived(tx);
       const txDate = tx.transaction_date ? new Date(tx.transaction_date) : null;
       if (amountFilter === "spent" && spent <= 0) return false;
@@ -319,7 +324,21 @@ export function BankingTransactionsDesignView({
           return true;
       }
     });
-  }, [activeReviewTab, amountFilter, dateFrom, dateTo, reviewTabBuckets, selectedTransactionType]);
+    const sortDir = sortBy.dir === "asc" ? 1 : -1;
+    const sortVal = (tx: PlaidBankTransaction): string | number => {
+      if (sortBy.key === "description") return (tx.description ?? tx.merchant_name ?? "").toLowerCase();
+      if (sortBy.key === "spent") return spentReceived(tx).spent;
+      if (sortBy.key === "received") return spentReceived(tx).received;
+      return tx.transaction_date ?? "";
+    };
+    return [...filtered].sort((a, b) => {
+      const va = sortVal(a);
+      const vb = sortVal(b);
+      if (va < vb) return -1 * sortDir;
+      if (va > vb) return 1 * sortDir;
+      return 0;
+    });
+  }, [activeReviewTab, amountFilter, dateFrom, dateTo, reviewTabBuckets, selectedTransactionType, sortBy]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -815,13 +834,13 @@ export function BankingTransactionsDesignView({
                   cap={bulkSelection.cap}
                 />
               </th>
-              <th className="w-[7%] px-1 py-2">Date</th>
-              <th className="w-[17%] px-1 py-2">Full bank description</th>
+              <th className="w-[7%] cursor-pointer select-none px-1 py-2 hover:bg-gray-100" onClick={() => toggleSort("date")}>Date{sortCaret("date")}</th>
+              <th className="w-[17%] cursor-pointer select-none px-1 py-2 hover:bg-gray-100" onClick={() => toggleSort("description")}>Full bank description{sortCaret("description")}</th>
               {viewSettings.showAmountsInOneColumn ? <th className="px-2 py-2">Amount</th> : <>
-                <th className="w-[6%] px-1 py-2">Spent</th>
-                <th className="w-[6%] px-1 py-2">Received</th>
+                <th className="w-[6%] cursor-pointer select-none px-1 py-2 hover:bg-gray-100" onClick={() => toggleSort("spent")}>Spent{sortCaret("spent")}</th>
+                <th className="w-[6%] cursor-pointer select-none px-1 py-2 hover:bg-gray-100" onClick={() => toggleSort("received")}>Received{sortCaret("received")}</th>
               </>}
-              <th className="w-[8%] px-1 py-2 text-right">Balance</th>
+              <th className={`w-[8%] px-1 py-2 text-right ${sortBy.key !== "date" ? "text-gray-300" : ""}`} title={sortBy.key !== "date" ? "Running balance is only meaningful when sorted by date" : undefined}>Balance</th>
               <th className="w-[12%] px-1 py-2">From/To</th>
               <th className="w-[10%] px-1 py-2">Customer</th>
               <th className="w-[10%] px-1 py-2">Product/Service</th>
@@ -922,7 +941,7 @@ export function BankingTransactionsDesignView({
                     {(() => {
                       const bal = runningBalanceById.get(tx.id);
                       return (
-                        <td className={`whitespace-nowrap px-1 py-2 text-right align-top tabular-nums ${bal != null && bal < 0 ? "text-red-700" : "text-gray-900"}`}>
+                        <td className={`whitespace-nowrap px-1 py-2 text-right align-top tabular-nums ${sortBy.key !== "date" ? "text-gray-300" : bal != null && bal < 0 ? "text-red-700" : "text-gray-900"}`}>
                           {bal == null ? "—" : USD.format(bal / 100)}
                         </td>
                       );
