@@ -640,7 +640,7 @@ export function BankingTransactionsDesignView({
           <SelectCombobox
             value={selectedTransactionType}
             onChange={(event) => setSelectedTransactionType(event.target.value)}
-            className="h-8 rounded border border-gray-300 px-2 text-xs"
+            className="w-48 text-xs"
           >
             {TRANSACTION_TYPE_FILTER_OPTIONS.map((option) => (
               <option key={option.id} value={option.id}>
@@ -1033,7 +1033,7 @@ export function BankingTransactionsDesignView({
                             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                               <label className="text-xs text-gray-600">
                                 Transaction type
-                                <SelectCombobox className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm" value={draft.transactionType} onChange={(event) => setDraft(tx, { transactionType: event.target.value })}>
+                                <SelectCombobox className="mt-0.5 w-full" value={draft.transactionType} onChange={(event) => setDraft(tx, { transactionType: event.target.value })}>
                                   <option value="Money in">Money in</option>
                                   <option value="Money out">Money out</option>
                                   <option value="Transfer">Transfer</option>
@@ -1067,7 +1067,7 @@ export function BankingTransactionsDesignView({
                               <label className="text-xs text-gray-600">
                                 Account
                                 <SelectCombobox
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full"
                                   value={draft.accountId}
                                   onChange={(event) => setDraft(tx, { accountId: event.target.value })}
                                 >
