@@ -19,3 +19,22 @@ export function companyToday(date: Date = new Date()): string {
     day: "2-digit",
   }).format(date);
 }
+
+// Add (or subtract) whole days to a 'YYYY-MM-DD' string, returning 'YYYY-MM-DD'. Uses UTC math on
+// the calendar parts only (no timezone shift), so it is DST-safe for date-only arithmetic.
+export function addDaysIso(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d) + days * 86_400_000);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+// First and last calendar day of the month that contains the given 'YYYY-MM-DD'.
+export function monthBoundsIso(iso: string): { start: string; end: string } {
+  const [y, m] = iso.split("-").map(Number);
+  const start = `${y}-${String(m).padStart(2, "0")}-01`;
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { start, end: `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}` };
+}
