@@ -283,7 +283,7 @@ export type HomeFactoringBalance = {
 export type HomeWeeklyRevenuePoint = { date: string; revenue_cents: number };
 
 export type HomeWoStatusCount = {
-  status: "draft" | "approved" | "in_progress" | "completed" | "cancelled";
+  status: "draft" | "open" | "in_progress" | "awaiting_parts" | "completed" | "cancelled";
   count: number;
 };
 
@@ -390,19 +390,24 @@ export async function fetchHomeFactoringBalance(companyId: string): Promise<Home
 }
 
 function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenuePoint[] {
+  // Backend (home-widgets) returns { days: [{ date, cents }], totalCents }. Also accept a bare
+  // array / { rows } / { points } with revenue_cents for forward-compat.
   const list: unknown[] = Array.isArray(raw)
     ? raw
-    : raw && typeof raw === "object" && Array.isArray((raw as { rows?: unknown }).rows)
-      ? ((raw as { rows: unknown[] }).rows ?? [])
-      : raw && typeof raw === "object" && Array.isArray((raw as { points?: unknown }).points)
-        ? ((raw as { points: unknown[] }).points ?? [])
-        : [];
+    : raw && typeof raw === "object" && Array.isArray((raw as { days?: unknown }).days)
+      ? ((raw as { days: unknown[] }).days ?? [])
+      : raw && typeof raw === "object" && Array.isArray((raw as { rows?: unknown }).rows)
+        ? ((raw as { rows: unknown[] }).rows ?? [])
+        : raw && typeof raw === "object" && Array.isArray((raw as { points?: unknown }).points)
+          ? ((raw as { points: unknown[] }).points ?? [])
+          : [];
   return list
     .map((row) => {
       if (!row || typeof row !== "object") return null;
       const o = row as Record<string, unknown>;
       const date = typeof o.date === "string" ? o.date : "";
-      const revenue_cents = num(o.revenue_cents);
+      // backend sends `cents`; accept `revenue_cents` too.
+      const revenue_cents = o.revenue_cents !== undefined ? num(o.revenue_cents) : num(o.cents);
       if (!date) return null;
       return { date, revenue_cents };
     })
@@ -415,20 +420,26 @@ export async function fetchHomeWeeklyRevenue(companyId: string, days = 7): Promi
   return coerceWeeklyRevenue(raw);
 }
 
-const WO_STATUSES = ["draft", "approved", "in_progress", "completed", "cancelled"] as const;
+const WO_STATUSES = ["draft", "open", "in_progress", "awaiting_parts", "completed", "cancelled"] as const;
 
 function coerceWoStatusCounts(raw: unknown): HomeWoStatusCount[] {
-  const list: unknown[] = Array.isArray(raw)
-    ? raw
-    : raw && typeof raw === "object" && Array.isArray((raw as { rows?: unknown }).rows)
-      ? ((raw as { rows: unknown[] }).rows ?? [])
-      : [];
   const map = new Map<string, number>();
-  for (const row of list) {
-    if (!row || typeof row !== "object") continue;
-    const o = row as Record<string, unknown>;
-    const status = typeof o.status === "string" ? o.status.toLowerCase() : "";
-    map.set(status, num(o.count));
+  if (Array.isArray(raw) || (raw && typeof raw === "object" && Array.isArray((raw as { rows?: unknown }).rows))) {
+    // array / { rows: [...] } shape with { status, count } rows.
+    const list = Array.isArray(raw) ? raw : ((raw as { rows: unknown[] }).rows ?? []);
+    for (const row of list) {
+      if (!row || typeof row !== "object") continue;
+      const o = row as Record<string, unknown>;
+      const status = typeof o.status === "string" ? o.status.toLowerCase() : "";
+      if (status) map.set(status, num(o.count));
+    }
+  } else if (raw && typeof raw === "object") {
+    // Backend (home-widgets) returns a keyed object: { draft, open, in_progress, awaiting_parts,
+    // completed, cancelled, unknown }. Read each known bucket directly.
+    const o = raw as Record<string, unknown>;
+    for (const status of WO_STATUSES) {
+      if (o[status] !== undefined) map.set(status, num(o[status]));
+    }
   }
   return WO_STATUSES.map((status) => ({
     status,

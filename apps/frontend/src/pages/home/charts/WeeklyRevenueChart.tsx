@@ -39,6 +39,18 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
     revenue_dollars: row.revenue_cents / 100,
   }));
 
+  const hasRevenue = data.some((d) => d.revenue_cents > 0);
+  if (data.length === 0 || !hasRevenue) {
+    return (
+      <div className="home-recharts-print w-full">
+        <h3 className="mb-2 text-sm font-semibold text-slate-900">Weekly revenue</h3>
+        <div className="flex h-[240px] items-center justify-center rounded border border-dashed border-slate-200 text-sm text-slate-500">
+          No revenue recorded in the last 7 days.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="home-recharts-print w-full">
       <h3 className="mb-2 text-sm font-semibold text-slate-900">Weekly revenue</h3>

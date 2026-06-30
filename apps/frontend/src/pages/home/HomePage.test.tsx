@@ -66,7 +66,7 @@ describe("HomePage (T11.19)", () => {
     );
     vi.spyOn(homeApi, "fetchHomeWoStatusCounts").mockResolvedValue([
       { status: "draft", count: 1 },
-      { status: "approved", count: 2 },
+      { status: "open", count: 2 },
       { status: "in_progress", count: 3 },
       { status: "completed", count: 4 },
       { status: "cancelled", count: 1 },

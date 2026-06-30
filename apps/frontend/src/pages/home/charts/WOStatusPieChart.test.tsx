@@ -28,7 +28,7 @@ describe("WOStatusPieChart", () => {
   it("renders PieChart with five status buckets", async () => {
     vi.spyOn(homeApi, "fetchHomeWoStatusCounts").mockResolvedValue([
       { status: "draft", count: 1 },
-      { status: "approved", count: 1 },
+      { status: "open", count: 1 },
       { status: "in_progress", count: 1 },
       { status: "completed", count: 1 },
       { status: "cancelled", count: 1 },

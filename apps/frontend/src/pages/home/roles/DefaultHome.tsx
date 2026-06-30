@@ -163,7 +163,13 @@ export function DefaultHome({ auth }: Props) {
     { label: "Tracked Assets", number: String(kpiSummaryQuery.data?.tracked_assets ?? 0), meta: "company-scoped total assets" },
     { label: "Assigned / Working", number: String(kpiSummaryQuery.data?.assigned_working ?? 0), meta: "on active loads" },
     { label: "Maint Past Due", number: String(kpiSummaryQuery.data?.maint_past_due ?? 0), meta: "work orders past due", alert: "crit" as const },
-    { label: "QBO Vendors", number: "284", meta: "synced 9:38 AM" },
+    {
+      label: "QBO Vendors",
+      number: qboVendorsPushStatusQuery.data ? String(qboVendorsPushStatusQuery.data.synced) : "—",
+      meta: qboVendorsPushStatusQuery.data
+        ? `${qboVendorsPushStatusQuery.data.synced}/${qboVendorsPushStatusQuery.data.total_local} synced to QBO`
+        : "—",
+    },
     { label: "Vehicles in Service", number: String(kpiSummaryQuery.data?.live_units ?? 0), meta: "tenant-scoped active units", healthy: true },
     { label: "Open Damage", number: String(kpiSummaryQuery.data?.open_damage ?? 0), meta: "open accidents", alert: "warn" as const },
     { label: "Pending QBO Sync", number: String(kpiSummaryQuery.data?.pending_qbo_sync ?? 0), meta: "outbox events pending", alert: "warn" as const },
