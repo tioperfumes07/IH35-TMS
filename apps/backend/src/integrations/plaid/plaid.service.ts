@@ -24,6 +24,7 @@ type SyncCounts = {
   added: number;
   modified: number;
   removed: number;
+  rowErrors: number;
   autoCategorizeTotal: number;
   autoCategorizeMatched: number;
   autoCategorizeUnmatched: number;
@@ -482,6 +483,7 @@ export async function syncTransactions(itemId: string) {
       added: 0,
       modified: 0,
       removed: 0,
+      rowErrors: 0,
       autoCategorizeTotal: 0,
       autoCategorizeMatched: 0,
       autoCategorizeUnmatched: 0,
@@ -503,6 +505,7 @@ export async function syncTransactions(itemId: string) {
     added: 0,
     modified: 0,
     removed: 0,
+    rowErrors: 0,
     autoCategorizeTotal: 0,
     autoCategorizeMatched: 0,
     autoCategorizeUnmatched: 0,
@@ -520,9 +523,25 @@ export async function syncTransactions(itemId: string) {
     cursor = syncRes.data.next_cursor;
 
     await withLuciaBypass(async (client) => {
+      // Per-row isolation: each row runs inside its own SAVEPOINT so a single bad row (a 'modified'
+      // UPDATE that collides on the dedup index, malformed data, or any FUTURE constraint) rolls back
+      // ONLY that row — tallied in counts.rowErrors — and can never abort the whole sync batch (the
+      // all-or-nothing failure class that produced the 0-transactions / 500).
+      const runRow = async (work: () => Promise<void>) => {
+        await client.query("SAVEPOINT plaid_row");
+        try {
+          await work();
+          await client.query("RELEASE SAVEPOINT plaid_row");
+        } catch {
+          await client.query("ROLLBACK TO SAVEPOINT plaid_row");
+          counts.rowErrors += 1;
+        }
+      };
+
       for (const transaction of syncRes.data.added) {
+       await runRow(async () => {
         const bankAccount = accountByPlaidId.get(transaction.account_id);
-        if (!bankAccount) continue;
+        if (!bankAccount) return;
         const descParts = [transaction.name, transaction.merchant_name].filter(Boolean).join(" ");
         const normalizedDescription = normalizeBankTransactionDescription(descParts);
         const dedupHash = computeBankTransactionDedupHash({
@@ -552,7 +571,12 @@ export async function syncTransactions(itemId: string) {
               updated_at
             )
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::text[],$10,$11,$12,$13,'plaid',now(),now())
-            ON CONFLICT (plaid_transaction_id) DO NOTHING
+            -- Arbitrate on the dedup index uq_bank_transactions_account_dedup (bank_account_id, dedup_hash):
+            -- a re-synced txn shares both plaid_transaction_id AND the dedup hash, and a cross-source dupe
+            -- shares the dedup hash — so this single arbiter covers every collision in the 'added' batch and
+            -- skips it instead of aborting the whole transaction (the 0-transactions / 500 bug). 'modified'
+            -- txns (same plaid_transaction_id, changed fields) take the separate UPDATE path, not this insert.
+            ON CONFLICT (bank_account_id, dedup_hash) DO NOTHING
             RETURNING id, operating_company_id, plaid_category
           `,
           [
@@ -599,11 +623,13 @@ export async function syncTransactions(itemId: string) {
             else counts.autoCategorizeUnmatched += 1;
           }
         }
+       });
       }
 
       for (const transaction of syncRes.data.modified) {
+       await runRow(async () => {
         const bankAccount = accountByPlaidId.get(transaction.account_id);
-        if (!bankAccount) continue;
+        if (!bankAccount) return;
         const modDescParts = [transaction.name, transaction.merchant_name].filter(Boolean).join(" ");
         const modNormalized = normalizeBankTransactionDescription(modDescParts);
         const modDedupHash = computeBankTransactionDedupHash({
@@ -649,9 +675,11 @@ export async function syncTransactions(itemId: string) {
           ]
         );
         counts.modified += Number(update.rowCount ?? 0);
+       });
       }
 
       for (const transaction of syncRes.data.removed) {
+       await runRow(async () => {
         const update = await client.query(
           `
             UPDATE banking.bank_transactions
@@ -663,6 +691,7 @@ export async function syncTransactions(itemId: string) {
           [transaction.transaction_id]
         );
         counts.removed += Number(update.rowCount ?? 0);
+       });
       }
     });
   }
