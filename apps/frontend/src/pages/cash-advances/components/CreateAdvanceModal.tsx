@@ -48,9 +48,9 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
   const [abovePolicyWarn, setAbovePolicyWarn] = useState<string | null>(null);
 
   const driversQuery = useQuery({
-    queryKey: ["cash-advances", "drivers"],
-    queryFn: () => listDrivers({ status: "Active", search: "" }),
-    enabled: open,
+    queryKey: ["cash-advances", "drivers", operatingCompanyId],
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", search: "" }),
+    enabled: open && Boolean(operatingCompanyId),
   });
   const billsQuery = useQuery({
     queryKey: ["cash-advances", "unpaid-bills", operatingCompanyId],

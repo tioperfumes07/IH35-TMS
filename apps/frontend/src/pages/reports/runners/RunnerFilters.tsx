@@ -34,8 +34,8 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
   const { selectedCompanyId, companies } = useCompanyContext();
   const driversQuery = useQuery({
     queryKey: ["runner-filters", "drivers", selectedCompanyId ?? ""],
-    queryFn: () => listDrivers({ status: "Active", search: "", operating_company_id: selectedCompanyId ?? undefined }),
-    enabled: filters.some((f) => f.type === "driver_select"),
+    queryFn: () => listDrivers({ status: "Active", search: "", operating_company_id: selectedCompanyId ?? null }),
+    enabled: filters.some((f) => f.type === "driver_select") && Boolean(selectedCompanyId),
   });
   const unitsQuery = useQuery({
     queryKey: ["runner-filters", "units", selectedCompanyId ?? ""],
