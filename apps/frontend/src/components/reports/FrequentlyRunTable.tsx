@@ -10,9 +10,8 @@ export function FrequentlyRunTable({ rows, onRun }: Props) {
     <section className="rounded border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
         <h3 className="text-sm font-semibold text-slate-900">Frequently run</h3>
-        <a href="#" className="text-xs font-semibold text-[#1f2a44] hover:underline">
-          View all 68
-        </a>
+        {/* Removed dead "View all" href="#" link — this table already lives on the reports
+            landing; there is no separate all-reports destination (QA-sweep). */}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-xs">

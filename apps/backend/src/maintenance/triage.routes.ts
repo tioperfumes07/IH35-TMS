@@ -140,12 +140,100 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
     const body = convertToDamageBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    return reply.code(501).send({
-      error: "damage_conversion_not_implemented",
-      message: "Damage conversion is a Phase 4 follow-up (tracked: P3-T11.6-FOLLOWUP-1).",
-      issue_id: params.data.issue_id,
-      damage_category: body.data.damage_category,
-      additional_notes: body.data.additional_notes ?? null,
+    // In-transit issue -> formal damage register (safety.incidents). This reuses the existing
+    // damage-report register exactly like convert-to-wo reuses maintenance.work_orders — it is a
+    // safety/maintenance record, NOT a GL/financial posting (damage_amount_cents defaults to 0 and
+    // is owner-edited later in the register). Mirror of the convert-to-wo flow above (QA-sweep).
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      if (!(await relationExists(client, "dispatch.intransit_issues")) || !(await relationExists(client, "safety.incidents"))) {
+        return { unavailable: true as const };
+      }
+
+      const issueRes = await client.query(
+        `
+          SELECT *
+          FROM dispatch.intransit_issues
+          WHERE id = $1
+            AND promoted_to_wo_id IS NULL
+            AND promoted_to_damage_report_id IS NULL
+          LIMIT 1
+        `,
+        [params.data.issue_id]
+      );
+      const issue = issueRes.rows[0];
+      if (!issue) return { notFound: true as const };
+
+      const description = [
+        issue.issue_description ?? "",
+        body.data.additional_notes ?? "",
+        `Damage category: ${body.data.damage_category}`,
+        `Converted from in-transit issue ${params.data.issue_id}`,
+      ]
+        .filter((part) => String(part).trim().length > 0)
+        .join("\n")
+        .trim();
+
+      const incidentRes = await client.query(
+        `
+          INSERT INTO safety.incidents (
+            operating_company_id, incident_type, status, location, description,
+            driver_id, unit_id, load_id, photo_keys
+          )
+          VALUES ($1, 'damage_report', 'open', $2, $3, $4, $5, $6, (COALESCE($7::text[], '{}'::text[]))[1:10])
+          RETURNING id
+        `,
+        [
+          query.data.operating_company_id,
+          issue.gps_label ?? "",
+          description,
+          issue.driver_id ?? null,
+          issue.unit_id ?? null,
+          issue.load_id ?? null,
+          issue.photo_keys ?? null,
+        ]
+      );
+      const damageReportId = String(incidentRes.rows[0].id);
+
+      await client.query(`UPDATE dispatch.intransit_issues SET promoted_to_damage_report_id = $2 WHERE id = $1`, [
+        params.data.issue_id,
+        damageReportId,
+      ]);
+
+      const notifications = ["dispatcher", "safety", "owner"];
+      for (const target of notifications) {
+        await client.query(
+          `
+            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
+            VALUES ($1,$2,$3,$4::jsonb)
+          `,
+          [
+            "dispatch.intransit_issues",
+            params.data.issue_id,
+            "maintenance.triage.converted_to_damage",
+            JSON.stringify({ issue_id: params.data.issue_id, damage_report_id: damageReportId, notify_target: target }),
+          ]
+        );
+      }
+
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.incident.created",
+        {
+          resource_type: "safety.incidents",
+          resource_id: damageReportId,
+          source_issue_id: params.data.issue_id,
+          conversion: "intransit_to_damage",
+        },
+        "info",
+        "BT-3-MAINTENANCE-REBUILD"
+      );
+
+      return { unavailable: false as const, damage_report_id: damageReportId };
     });
+
+    if ("unavailable" in result) return reply.code(501).send({ error: "safety_or_intransit_schema_not_available" });
+    if ("notFound" in result) return reply.code(404).send({ error: "intransit_issue_not_found_or_already_promoted" });
+    return reply.code(201).send(result);
   });
 }

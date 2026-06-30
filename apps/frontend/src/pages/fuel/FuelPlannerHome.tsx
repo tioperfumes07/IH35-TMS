@@ -145,7 +145,11 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
             </HoverDropdown>
             {tab === "planner" ? (
               <>
-                <ActionButton onClick={() => {}}>+ Plan trip</ActionButton>
+                {/* Trip planning is read from active dispatch routes (no manual create endpoint yet).
+                    Honest disabled affordance instead of a silent no-op button (QA-sweep). */}
+                <span title="Trip planning is coming soon — routes are generated from active dispatch loads">
+                  <ActionButton disabled>+ Plan trip</ActionButton>
+                </span>
                 <ActionButton onClick={() => setUploadOpen(true)}>Upload Loves prices</ActionButton>
                 <ActionButton
                   onClick={() => {
