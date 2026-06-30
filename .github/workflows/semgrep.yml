@@ -1,0 +1,46 @@
+name: Semgrep SAST
+
+# Semgrep = an independent "outside auditor" static-analysis pass over the whole codebase.
+# Runs OWASP Top-Ten + security-audit + secrets + TS rulesets (no account/token needed) and uploads
+# the findings as a build artifact. Advisory to start (does not block merges) — flip `continue-on-error`
+# to false to make it a hard gate once the existing backlog of findings is triaged.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 8 * * 1' # weekly full audit, Mondays 08:00 UTC
+
+jobs:
+  semgrep:
+    name: Semgrep audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: semgrep/semgrep
+    # Semgrep's container has no GH context for forks; skip on dependabot to avoid noise.
+    if: (github.actor != 'dependabot[bot]')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Semgrep scan
+        continue-on-error: true
+        run: |
+          semgrep scan \
+            --config p/owasp-top-ten \
+            --config p/security-audit \
+            --config p/secrets \
+            --config p/typescript \
+            --sarif --output semgrep.sarif \
+            --json --output semgrep.json \
+            --metrics off
+      - name: Upload Semgrep results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-findings
+          path: |
+            semgrep.sarif
+            semgrep.json
+          if-no-files-found: ignore
