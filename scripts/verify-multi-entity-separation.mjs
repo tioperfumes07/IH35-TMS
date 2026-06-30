@@ -34,6 +34,8 @@ const must = [
   [/deactivation trap/i, "must document the RLS deactivation-trap failure class + fix"],
   [/ih35_app/i, "must require the app pool run as ih35_app (RLS enforced)"],
   [/neondb_owner/i, "must forbid the neondb_owner superuser fallback (#878)"],
+  [/per-domain, per-entity reason catalog/i, "must document per-domain, per-entity reason catalogs (cancel vs financial-void) — never regress to a global table"],
+  [/void_cancel_reasons/i, "must name catalogs.void_cancel_reasons as the financial void/cancel reason catalog"],
 ];
 for (const [re, msg] of must) if (!re.test(doc)) fail(msg);
 console.log("PASS verify-multi-entity-separation");
