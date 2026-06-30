@@ -51,6 +51,12 @@ CREATE INDEX IF NOT EXISTS idx_void_cancel_reasons_company_active
 -- 2. SEED per entity BEFORE enabling RLS (new table; FORCE policy would otherwise deny the seed insert).
 --    CROSS JOIN org.companies x the 6 reasons x the first Owner user. Fresh CI DB (no companies / no Owner)
 --    -> 0 rows -> clean no-op. 'other' requires_note=true.
+--    FIX B (re-run safety): on a manual RE-RUN, RLS+FORCE is already on from the prior run, so the seed
+--    INSERT would be denied (the runner has no user/lucia context). Set the lucia bypass GUC that
+--    is_lucia_bypass() reads (current_setting('app.bypass_rls')) AROUND THE SEED ONLY, then clear it.
+--    First-run behavior is unchanged (RLS not yet enabled -> bypass is a harmless no-op).
+SET LOCAL app.bypass_rls = 'lucia';
+
 WITH owner_user AS (
   SELECT id FROM identity.users WHERE role = 'Owner' ORDER BY created_at LIMIT 1
 ),
@@ -71,6 +77,9 @@ CROSS JOIN seed s
 CROSS JOIN owner_user o
 WHERE c.deactivated_at IS NULL
 ON CONFLICT (operating_company_id, reason_code) DO NOTHING;
+
+-- FIX B: clear the seed-only bypass so nothing downstream runs under it (transaction-local either way).
+SET LOCAL app.bypass_rls = '';
 
 -- 3. RLS: ENABLE + FORCE, policies replicate 0035 + GUARD opco-scope hardening on write.
 ALTER TABLE catalogs.void_cancel_reasons ENABLE ROW LEVEL SECURITY;
@@ -152,7 +161,63 @@ CREATE INDEX IF NOT EXISTS idx_void_cancel_requests_reason_code
   ON governance.void_cancel_requests (reason_code_id);
 
 COMMENT ON COLUMN governance.void_cancel_requests.reason_code_id IS
-  'FK -> catalogs.void_cancel_reasons(id): controlled reason chosen from the per-entity financial void/cancel catalog (Task #24). App enforces note_text present when the reason has requires_note=true. Legacy free-text `reason` kept for history.';
+  'FK -> catalogs.void_cancel_reasons(id): controlled reason chosen from the per-entity financial void/cancel catalog (Task #24). Enforced at the DB by trg_void_cancel_request_reason_check (note-required + same-entity). Legacy free-text `reason` kept for history.';
+
+-- 6. FIX C — DB-LEVEL enforcement on governance.void_cancel_requests (no app-only trust; MOR integrity):
+--    (a) requires_note: a reason with requires_note=true (e.g. 'Other') is IMPOSSIBLE to record without a
+--        non-blank note_text via ANY path.
+--    (b) entity-independence: the chosen reason MUST belong to the SAME operating_company_id as the request
+--        (reject a cross-entity reason reference).
+--    The reason lookup is via a SECURITY DEFINER function that briefly sets the lucia bypass GUC and
+--    RESTORES it, so it reads catalogs.void_cancel_reasons reliably under FORCE RLS regardless of the
+--    caller's company access, without leaking the bypass to the rest of the transaction.
+CREATE OR REPLACE FUNCTION governance.enforce_void_cancel_request_reason()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $fn$
+DECLARE
+  v_requires_note boolean;
+  v_reason_opco   uuid;
+  v_old_bypass    text := current_setting('app.bypass_rls', true);
+BEGIN
+  IF NEW.reason_code_id IS NULL THEN
+    RETURN NEW;  -- legacy/unmapped requests stay valid (additive); the app supplies reason_code_id going forward
+  END IF;
+
+  -- bypass-read the reason regardless of caller's entity access, then restore the prior GUC immediately.
+  PERFORM set_config('app.bypass_rls', 'lucia', true);
+  SELECT vcr.requires_note, vcr.operating_company_id
+    INTO v_requires_note, v_reason_opco
+  FROM catalogs.void_cancel_reasons vcr
+  WHERE vcr.id = NEW.reason_code_id;
+  PERFORM set_config('app.bypass_rls', COALESCE(v_old_bypass, ''), true);
+
+  IF v_reason_opco IS NULL THEN
+    RAISE EXCEPTION 'void_cancel_request: reason_code_id % does not exist', NEW.reason_code_id
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  IF v_reason_opco <> NEW.operating_company_id THEN
+    RAISE EXCEPTION 'void_cancel_request: reason % belongs to entity %, not the request entity % (cross-entity reason forbidden)',
+      NEW.reason_code_id, v_reason_opco, NEW.operating_company_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_requires_note AND (NEW.note_text IS NULL OR btrim(NEW.note_text) = '') THEN
+    RAISE EXCEPTION 'void_cancel_request: reason % requires a note (note_text must not be blank)', NEW.reason_code_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$fn$;
+
+DROP TRIGGER IF EXISTS trg_void_cancel_request_reason_check ON governance.void_cancel_requests;
+CREATE TRIGGER trg_void_cancel_request_reason_check
+  BEFORE INSERT OR UPDATE ON governance.void_cancel_requests
+  FOR EACH ROW EXECUTE FUNCTION governance.enforce_void_cancel_request_reason();
 
 COMMIT;
 
