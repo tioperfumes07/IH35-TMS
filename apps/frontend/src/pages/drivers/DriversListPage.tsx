@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
+import { DriverImportModal } from "./DriverImportModal";
 import { listDriverQualificationItems, type DriverQualificationFileItem } from "../../api/safety";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
@@ -23,9 +24,11 @@ type DriverDqfSummaryRow = {
 
 export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   const { selectedCompanyId } = useCompanyContext();
+  const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [showImport, setShowImport] = useState(false);
   const pageSize = 25;
 
   // Server-side pagination (GO-LIVE Block 1A): fetch only the current page + a real total, so the FULL
@@ -144,9 +147,25 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
             >
               {exporting ? "Exporting…" : "Export profiles (CSV)"}
             </button>
+            <button
+              type="button"
+              onClick={() => setShowImport(true)}
+              disabled={!companyId}
+              className="h-8 rounded border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+            >
+              Import drivers (CSV)
+            </button>
           </div>
         }
       />
+
+      {showImport ? (
+        <DriverImportModal
+          companyId={companyId}
+          onClose={() => setShowImport(false)}
+          onImported={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}
+        />
+      ) : null}
 
       <KpiStrip>
         <KpiCard label="Drivers" number={String(totals.total)} accent={colors.info.strong} />
