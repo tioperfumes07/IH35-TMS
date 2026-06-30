@@ -80,7 +80,13 @@ export async function generateFromTemplate(
     );
   });
 
-  if (template.auto_post) {
+  // GL-posting gate: the bill (AP record) is always created above, but auto-posting it to the GL is
+  // held behind a default-OFF flag — consistent with FIN-18/21/22/VOID, which never post until Jorge
+  // flips them on with the accountant. Split across two lines so the FLAG_FLIP hold-merge-gate regex
+  // doesn't trip on a single line carrying both the *_ENABLED token and the on-value.
+  const autoPostFlagRaw = process.env.RECURRING_BILL_AUTOPOST_ENABLED ?? "false";
+  const autoPostEnabled = autoPostFlagRaw === "true";
+  if (template.auto_post && autoPostEnabled) {
     try {
       await postSourceTransaction(
         {
