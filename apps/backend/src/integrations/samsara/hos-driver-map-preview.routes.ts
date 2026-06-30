@@ -6,6 +6,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { previewDriverSamsaraMap } from "./hos-driver-map-preview.service.js";
+import { previewSamsaraHireDates } from "./samsara-hire-date.service.js";
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
@@ -30,6 +31,23 @@ export async function registerHosDriverMapPreviewRoutes(app: FastifyInstance) {
     const preview = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
       return previewDriverSamsaraMap(client, oc);
+    });
+    return reply.send(preview);
+  });
+
+  // READ-ONLY hire-date cross-validation: classifies every driver by comparing the master-list hire date
+  // against the Samsara createdAtTime already stored in raw_payload (no API call). Writes NOTHING — the
+  // file/HR date is authoritative; 'samsara_estimate' fills gaps, 'needs_review' (>180d) are likely rehires.
+  app.get("/api/v1/telematics/driver-hire-date/preview", async (req, reply) => {
+    const user = currentOfficeAdmin(req, reply);
+    if (!user) return;
+    const parsed = querySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const oc = parsed.data.operating_company_id;
+
+    const preview = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
+      return previewSamsaraHireDates(client, oc);
     });
     return reply.send(preview);
   });

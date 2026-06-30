@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, apiRequestFormData } from "./client";
 import { filterHumanDrivers } from "../lib/driver-pseudo-user";
 import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateResponse, MilesBasis, UpdateDriverInput } from "../types/api";
 
@@ -32,6 +32,47 @@ export function listDrivers(params: {
     drivers: params.include_system ? payload.drivers : filterHumanDrivers(payload.drivers),
     total: payload.total ?? payload.drivers.length,
   }));
+}
+
+export type DriverImportSummary = {
+  total: number;
+  will_create: number;
+  dup_existing: number;
+  dup_in_file: number;
+  invalid: number;
+  will_create_no_phone: number;
+};
+
+export type DriverImportSampleRow = {
+  rowNumber: number;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  phoneMissing: boolean;
+  hire_date: string | null;
+  termination_date: string | null;
+  cdl_number: string | null;
+  status: "Active" | "Terminated";
+  klass: "will_create" | "dup_existing" | "dup_in_file" | "invalid";
+  reason?: string;
+};
+
+export type DriverImportResponse = {
+  mode: "preview" | "commit";
+  operating_company_id: string;
+  summary: DriverImportSummary;
+  sample?: DriverImportSampleRow[];
+  created?: number;
+};
+
+// Import the Driver Master Contacts List CSV. mode="preview" writes nothing (returns counts + a sample);
+// mode="commit" creates the will_create rows. Ex-drivers (termination date present) import as Terminated.
+export function importDriversCsv(file: File, operatingCompanyId: string, mode: "preview" | "commit") {
+  const form = new FormData();
+  form.append("csv_file", file);
+  form.append("operating_company_id", operatingCompanyId);
+  form.append("mode", mode);
+  return apiRequestFormData<DriverImportResponse>(`/api/v1/mdata/drivers/import`, form);
 }
 
 export function quicksaveEquipmentAssignment(payload: {
