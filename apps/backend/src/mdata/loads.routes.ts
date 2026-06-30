@@ -676,6 +676,19 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             reefer_temp_f, reefer_mode, pre_cool, tarp_qty, tarp_size
           FROM mdata.loads
           WHERE id = $1
+            -- Tier-1 entity-scope (money by-id IDOR): rate_total_cents is GROSS customer revenue.
+            -- Defense-in-depth mirror of the two SELECT RLS policies (loads_select_office +
+            -- loads_select_driver) so an office user only reads loads of their accessible companies
+            -- (Owner = all) while an assigned driver still reads their own load. Without this, a
+            -- bypass/unforced-RLS regression would leak cross-entity revenue/customer/detention.
+            AND (
+              operating_company_id IN (SELECT org.user_accessible_company_ids())
+              OR EXISTS (
+                SELECT 1 FROM mdata.drivers d
+                WHERE d.identity_user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                  AND (d.id = mdata.loads.assigned_primary_driver_id OR d.id = mdata.loads.assigned_secondary_driver_id)
+              )
+            )
           LIMIT 1
         `,
         [parsedParams.data.id]
@@ -750,8 +763,16 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     const { new_status: newStatus, cancellation_reason_code: cancellationReasonCode, cancellation_notes: cancellationNotes } = parsedBody.data;
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
+      // Tier-1 entity-scope (money by-id IDOR): the loads_update_office RLS policy is role-only
+      // (no operating_company_id predicate) so a non-Owner office user could mutate ANOTHER
+      // entity's load (reassign customer/rate, emit escrow events). This route is office-role
+      // gated (isOfficeWriteRole), so membership-scope is the correct guard: Owner = all companies,
+      // others = only their accessible companies.
       const currentRes = await client.query<{ id: string; status: z.infer<typeof loadStatusSchema> }>(
-        `SELECT id, status FROM mdata.loads WHERE id = $1 AND soft_deleted_at IS NULL LIMIT 1`,
+        `SELECT id, status FROM mdata.loads
+         WHERE id = $1 AND soft_deleted_at IS NULL
+           AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+         LIMIT 1`,
         [parsedParams.data.id]
       );
       const current = currentRes.rows[0] ?? null;
@@ -772,6 +793,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           UPDATE mdata.loads
           SET status = $2
           WHERE id = $1
+            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
           RETURNING
             id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
             assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
@@ -903,6 +925,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
             FROM mdata.loads
             WHERE id = $1
+              -- Tier-1 entity-scope (money by-id IDOR): same loads_update_office role-only RLS gap.
+              -- Office-role gated route → membership-scope guard (Owner = all, others = accessible).
+              AND operating_company_id IN (SELECT org.user_accessible_company_ids())
             LIMIT 1
           `,
           [parsedParams.data.id]
@@ -915,6 +940,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             UPDATE mdata.loads
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
+              AND operating_company_id IN (SELECT org.user_accessible_company_ids())
             RETURNING
               id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
               assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,

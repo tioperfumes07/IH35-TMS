@@ -9,7 +9,11 @@ export type CoaReconcileResult = {
   reconciledAt: string;
 };
 
-async function markLocalOnlyDrift(client: PoolClient): Promise<number> {
+async function markLocalOnlyDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
+  // Entity-scope (Tier-1 RLS fix): this runs under withLuciaBypass (RLS OFF), so the
+  // operating_company_id predicate is the ONLY thing keeping this drift-flag UPDATE from
+  // mutating another entity's catalogs.accounts rows. catalogs.accounts IS partitioned by
+  // operating_company_id (migrations 202606161000 stage1 + 202606272100 af1).
   const res = await client.query<{ c: string }>(
     `
       WITH updated AS (
@@ -19,12 +23,14 @@ async function markLocalOnlyDrift(client: PoolClient): Promise<number> {
           qbo_sync_error = 'local row has no qbo_account_id link',
           updated_at = now()
         WHERE qbo_account_id IS NULL
+          AND operating_company_id = $1::uuid
           AND deactivated_at IS NULL
           AND COALESCE(qbo_sync_status, '') <> 'local_only'
         RETURNING 1
       )
       SELECT COUNT(*)::text AS c FROM updated
-    `
+    `,
+    [operatingCompanyId]
   );
   return Number(res.rows[0]?.c ?? 0);
 }
@@ -34,6 +40,7 @@ async function createMissingFromMirror(client: PoolClient, operatingCompanyId: s
     `
       WITH inserted AS (
         INSERT INTO catalogs.accounts (
+          operating_company_id,
           account_number,
           account_name,
           account_type,
@@ -45,6 +52,7 @@ async function createMissingFromMirror(client: PoolClient, operatingCompanyId: s
           qbo_sync_status
         )
         SELECT
+          qa.operating_company_id,
           CONCAT('QBO-', qa.qbo_id),
           qa.name,
           CASE
@@ -68,7 +76,12 @@ async function createMissingFromMirror(client: PoolClient, operatingCompanyId: s
         WHERE qa.operating_company_id = $1::uuid
           AND qa.qbo_id IS NOT NULL
           AND NOT EXISTS (
-            SELECT 1 FROM catalogs.accounts ca WHERE ca.qbo_account_id = qa.qbo_id
+            -- dedup must be entity-scoped: the same qbo_id can legitimately exist in another
+            -- entity's catalogs.accounts; without ca.operating_company_id = qa.operating_company_id
+            -- a colliding qbo_id in a DIFFERENT entity would suppress this entity's insert.
+            SELECT 1 FROM catalogs.accounts ca
+            WHERE ca.qbo_account_id = qa.qbo_id
+              AND ca.operating_company_id = qa.operating_company_id
           )
         RETURNING 1
       )
@@ -104,6 +117,9 @@ async function healFieldDrift(client: PoolClient, operatingCompanyId: string): P
           updated_at = now()
         FROM mdata.qbo_accounts qa
         WHERE qa.operating_company_id = $1::uuid
+          -- ca is NOT otherwise entity-bound here; without this predicate a colliding qbo_id in
+          -- another entity's catalogs.accounts gets overwritten with THIS entity's QBO field values.
+          AND ca.operating_company_id = $1::uuid
           AND qa.qbo_id = ca.qbo_account_id
           AND (
             ca.account_name IS DISTINCT FROM qa.name
@@ -118,9 +134,10 @@ async function healFieldDrift(client: PoolClient, operatingCompanyId: string): P
   return Number(res.rows[0]?.c ?? 0);
 }
 
-async function countLocalOnly(client: PoolClient): Promise<number> {
+async function countLocalOnly(client: PoolClient, operatingCompanyId: string): Promise<number> {
   const res = await client.query<{ c: string }>(
-    `SELECT COUNT(*)::text AS c FROM catalogs.accounts WHERE qbo_sync_status = 'local_only' AND deactivated_at IS NULL`
+    `SELECT COUNT(*)::text AS c FROM catalogs.accounts WHERE qbo_sync_status = 'local_only' AND operating_company_id = $1::uuid AND deactivated_at IS NULL`,
+    [operatingCompanyId]
   );
   return Number(res.rows[0]?.c ?? 0);
 }
@@ -133,10 +150,10 @@ export async function reconcileChartOfAccounts(operatingCompanyId: string): Prom
   let localOnly = 0;
 
   await withLuciaBypass(async (client) => {
-    driftDetected = await markLocalOnlyDrift(client);
+    driftDetected = await markLocalOnlyDrift(client, operatingCompanyId);
     createdFromQbo = await createMissingFromMirror(client, operatingCompanyId);
     healed = await healFieldDrift(client, operatingCompanyId);
-    localOnly = await countLocalOnly(client);
+    localOnly = await countLocalOnly(client, operatingCompanyId);
   });
 
   return { driftDetected, createdFromQbo, healed, localOnly, reconciledAt };
@@ -169,7 +186,9 @@ export async function fetchChartOfAccountsSyncStatus(operatingCompanyId: string)
           COUNT(*) FILTER (WHERE qbo_sync_status = 'local_only' AND deactivated_at IS NULL)::text AS local_only,
           COUNT(*) FILTER (WHERE qbo_sync_status = 'sync_error' AND deactivated_at IS NULL)::text AS sync_error
         FROM catalogs.accounts
-      `
+        WHERE operating_company_id = $1::uuid
+      `,
+      [operatingCompanyId]
     );
     const meta = await client.query<{ last_pull_at: string | null; last_reconcile_at: string | null }>(
       `
@@ -177,7 +196,9 @@ export async function fetchChartOfAccountsSyncStatus(operatingCompanyId: string)
           MAX(qbo_synced_at) FILTER (WHERE qbo_sync_status = 'synced')::text AS last_pull_at,
           MAX(updated_at) FILTER (WHERE qbo_sync_status IN ('synced', 'drift_detected'))::text AS last_reconcile_at
         FROM catalogs.accounts
-      `
+        WHERE operating_company_id = $1::uuid
+      `,
+      [operatingCompanyId]
     );
     const row = counts.rows[0];
     const metaRow = meta.rows[0];
