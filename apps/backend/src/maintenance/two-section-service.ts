@@ -657,11 +657,6 @@ export async function autoCreateExpenseFromWO(
   }
 
   const hasLoadIdColumn = await columnExists(client, "accounting.expenses", "load_id");
-  // accounting.expenses money lives on the CENTS spine: the real column is total_amount_cents (bigint
-  // integer cents), NOT total_amount (which does not exist — the prior INSERT 500'd at 42703). wo.total_amount
-  // is computed in DOLLARS above, so convert to integer cents here. linked_work_order_uuid is migration-backed
-  // as of 202606290071 so the WO->expense link actually persists.
-  const totalAmountCents = Math.round(Number(wo.total_amount ?? 0) * 100);
   const expenseRes = await client.query<{ id: string }>(
     hasLoadIdColumn
       ? `
@@ -672,7 +667,7 @@ export async function autoCreateExpenseFromWO(
             load_id,
             status,
             transaction_date,
-            total_amount_cents,
+            total_amount,
             payment_account_uuid
           )
           VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6)
@@ -685,15 +680,15 @@ export async function autoCreateExpenseFromWO(
             linked_work_order_uuid,
             status,
             transaction_date,
-            total_amount_cents,
+            total_amount,
             payment_account_uuid
           )
           VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5)
           RETURNING id
         `,
     hasLoadIdColumn
-      ? [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, totalAmountCents, paymentAccountUuid ?? null]
-      : [wo.operating_company_id, wo.vendor_uuid, woUuid, totalAmountCents, paymentAccountUuid ?? null]
+      ? [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount, paymentAccountUuid ?? null]
+      : [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount, paymentAccountUuid ?? null]
   );
   const expenseId = String(expenseRes.rows[0]?.id ?? "");
   if (!expenseId) return null;
