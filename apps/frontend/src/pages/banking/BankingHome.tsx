@@ -185,6 +185,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <ActionButton onClick={() => setTransferModalOpen(true)}>+ Record Transfer</ActionButton>
         <ActionButton onClick={() => setCcPaymentModalOpen(true)}>+ Pay Credit Card</ActionButton>
         <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
+        <ActionButton onClick={() => navigate("/lists/accounting/chart-of-accounts")}>Chart of Accounts</ActionButton>
       </div>
     ) : activeTab === "reconciliation" ? (
       <div className="flex flex-wrap items-center gap-2">
