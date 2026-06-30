@@ -10,11 +10,14 @@ export const plaidWebhookBodySchema = z.object({
   webhook_type: z.string().trim().min(1),
   webhook_code: z.string().trim().min(1),
   item_id: z.string().trim().min(1).optional(),
+  // Plaid sends `"error": null` on normal (non-error) webhooks, e.g. TRANSACTIONS updates. `.optional()`
+  // accepts undefined but NOT null, so every such webhook was rejected as invalid_body (233 events) and
+  // sync never fired. `.nullish()` = nullable + optional → accepts the object, null, and absent.
   error: z
     .object({
       error_code: z.string().trim().optional(),
     })
-    .optional(),
+    .nullish(),
 });
 
 async function appendSystemAudit(eventClass: string, payload: Record<string, unknown>, severity: "info" | "warning" = "info") {
