@@ -244,6 +244,31 @@ export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
       if (error instanceof Error && error.message === "plaid_access_token_missing_for_item") {
         return reply.code(404).send({ error: "plaid_item_not_found" });
       }
+      // DIAGNOSTIC: this 500 path is a NON-Plaid local exception (a recognized Plaid error returns 502
+      // above). Render logs aren't reliably reachable, so record the real message + pg code to the audit
+      // trail to make the root cause observable. Best-effort — auditing must never mask the original error.
+      try {
+        await withCompanyScope(user.uuid, operatingCompanyId, async (client) => {
+          await appendCrudAudit(
+            client,
+            user.uuid,
+            "banking.plaid.sync_failed",
+            {
+              operating_company_id: operatingCompanyId,
+              item_id: params.data.itemId,
+              error_name: error instanceof Error ? error.name : typeof error,
+              error_message: error instanceof Error ? error.message : String(error),
+              pg_code: (error as { code?: string } | null)?.code ?? null,
+              stack_head:
+                error instanceof Error && error.stack ? error.stack.split("\n").slice(0, 5).join(" | ") : null,
+            },
+            "warning",
+            "P5-T1.3-PLAID-DIAG"
+          );
+        });
+      } catch {
+        /* auditing must never mask the original error */
+      }
       return reply.code(500).send({ error: "internal_error" });
     }
   });
