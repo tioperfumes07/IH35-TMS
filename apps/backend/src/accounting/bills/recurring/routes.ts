@@ -15,6 +15,8 @@ import { generateFromTemplate } from "./generator.service.js";
 import { DateTime } from "luxon";
 
 const templateBodySchema = z.object({
+  // FE (RecurringBillCreate.tsx) sends operating_company_id in the JSON body, not the query string.
+  operating_company_id: z.string().uuid(),
   vendor_uuid: z.string().uuid(),
   template_name: z.string().trim().min(1).max(255),
   amount: z.number().positive(),
@@ -57,16 +59,14 @@ const generateNowBodySchema = z.object({
 });
 
 async function recurringBillRoutes(app: FastifyInstance) {
-  // POST /api/accounting/recurring-bills/templates
-  app.post("/api/accounting/recurring-bills/templates", async (req, reply) => {
+  // POST /api/v1/accounting/recurring-bill-templates
+  app.post("/api/v1/accounting/recurring-bill-templates", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query);
-    if (!query.success) return validationError(reply, query.error);
     const body = templateBodySchema.safeParse(req.body);
     if (!body.success) return validationError(reply, body.error);
 
-    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
+    await assertCompanyMembership(String(user.uuid), body.data.operating_company_id);
 
     const idempotencyKey = (req.headers["idempotency-key"] as string | undefined) ?? undefined;
     if (!idempotencyKey) {
@@ -75,7 +75,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
 
     const uuid = await createTemplate(
       {
-        operatingCompanyId: query.data.operating_company_id,
+        operatingCompanyId: body.data.operating_company_id,
         vendorUuid: body.data.vendor_uuid,
         templateName: body.data.template_name,
         amount: body.data.amount,
@@ -93,8 +93,8 @@ async function recurringBillRoutes(app: FastifyInstance) {
     return reply.code(201).send({ uuid });
   });
 
-  // GET /api/accounting/recurring-bills/templates
-  app.get("/api/accounting/recurring-bills/templates", async (req, reply) => {
+  // GET /api/v1/accounting/recurring-bill-templates
+  app.get("/api/v1/accounting/recurring-bill-templates", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query);
@@ -109,8 +109,8 @@ async function recurringBillRoutes(app: FastifyInstance) {
     return reply.send({ rows });
   });
 
-  // GET /api/accounting/recurring-bills/templates/:uuid
-  app.get("/api/accounting/recurring-bills/templates/:uuid", async (req, reply) => {
+  // GET /api/v1/accounting/recurring-bill-templates/:uuid
+  app.get("/api/v1/accounting/recurring-bill-templates/:uuid", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = uuidParamsSchema.safeParse(req.params);
@@ -131,8 +131,8 @@ async function recurringBillRoutes(app: FastifyInstance) {
     }
   });
 
-  // PATCH /api/accounting/recurring-bills/templates/:uuid
-  app.patch("/api/accounting/recurring-bills/templates/:uuid", async (req, reply) => {
+  // PATCH /api/v1/accounting/recurring-bill-templates/:uuid
+  app.patch("/api/v1/accounting/recurring-bill-templates/:uuid", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = uuidParamsSchema.safeParse(req.params);
@@ -167,8 +167,9 @@ async function recurringBillRoutes(app: FastifyInstance) {
     }
   });
 
-  // PATCH /api/accounting/recurring-bills/templates/:uuid/deactivate
-  app.patch("/api/accounting/recurring-bills/templates/:uuid/deactivate", async (req, reply) => {
+  // POST /api/v1/accounting/recurring-bill-templates/:uuid/deactivate
+  // FE (RecurringBillList.tsx → deactivateRecurringBillTemplate) calls this with POST.
+  app.post("/api/v1/accounting/recurring-bill-templates/:uuid/deactivate", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = uuidParamsSchema.safeParse(req.params);
@@ -185,8 +186,8 @@ async function recurringBillRoutes(app: FastifyInstance) {
     }
   });
 
-  // POST /api/accounting/recurring-bills/templates/:uuid/generate-now
-  app.post("/api/accounting/recurring-bills/templates/:uuid/generate-now", async (req, reply) => {
+  // POST /api/v1/accounting/recurring-bill-templates/:uuid/generate-now
+  app.post("/api/v1/accounting/recurring-bill-templates/:uuid/generate-now", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = uuidParamsSchema.safeParse(req.params);
@@ -214,8 +215,8 @@ async function recurringBillRoutes(app: FastifyInstance) {
     }
   });
 
-  // GET /api/accounting/recurring-bills/generation-log
-  app.get("/api/accounting/recurring-bills/generation-log", async (req, reply) => {
+  // GET /api/v1/accounting/recurring-bill-templates/generation-log
+  app.get("/api/v1/accounting/recurring-bill-templates/generation-log", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = generationLogQuerySchema.safeParse(req.query);
