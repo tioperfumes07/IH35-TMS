@@ -798,30 +798,49 @@ export function listMaintParts(operatingCompanyId: string, params: { search?: st
   return apiRequest<{ rows: MaintPartRow[] }>(`/api/v1/maint/parts?${q.toString()}`);
 }
 
-export async function getWorkOrderPostingPreview(workOrderId: string, operatingCompanyId: string) {
+/** Backend serves the AP posting preview at `/api/v1/maint/wo/:id/posting-preview`
+ *  (apps/backend/src/maint/wo-ap.routes.ts) as `{ preview: { ...bill_total_cents, lines } }`.
+ *  Read-only PREVIEW — no posting is performed. We normalize the wrapped server shape to the
+ *  flat `WorkOrderPostingPreview` the WO detail screen renders. 404/405/501 → null (graceful). */
+type MaintWoApPreviewResponse = {
+  preview?: {
+    work_order_id?: string | null;
+    vendor_id?: string | null;
+    bill_total_cents?: number | null;
+    lines?: Array<{ line_type?: string | null; description?: string | null; amount_cents?: number | null }>;
+  } | null;
+};
+
+export async function getWorkOrderPostingPreview(
+  workOrderId: string,
+  operatingCompanyId: string
+): Promise<WorkOrderPostingPreview | null> {
   const q = `operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
-  const candidatePaths = [
-    `/api/v1/maint/work-orders/${encodeURIComponent(workOrderId)}/posting-preview?${q}`,
-    `/api/v1/maintenance/work-orders/${encodeURIComponent(workOrderId)}/posting-preview?${q}`,
-  ];
-
-  let lastError: unknown = null;
-  for (const path of candidatePaths) {
-    try {
-      return await apiRequest<WorkOrderPostingPreview>(path);
-    } catch (error) {
-      lastError = error;
-      if (error instanceof ApiError && [404, 405, 501].includes(error.status)) {
-        continue;
-      }
-      throw error;
+  const path = `/api/v1/maint/wo/${encodeURIComponent(workOrderId)}/posting-preview?${q}`;
+  try {
+    const res = await apiRequest<MaintWoApPreviewResponse>(path);
+    const p = res?.preview;
+    if (!p) return null;
+    return {
+      work_order_id: p.work_order_id ?? workOrderId,
+      currency: "USD",
+      vendor_id: p.vendor_id ?? null,
+      bill_date: null,
+      due_date: null,
+      total_cents: p.bill_total_cents ?? 0,
+      lines: (p.lines ?? []).map((line) => ({
+        line_type: line.line_type ?? "other",
+        description: line.description ?? "",
+        quantity: 1,
+        amount_cents: line.amount_cents ?? 0,
+      })),
+    };
+  } catch (error) {
+    if (error instanceof ApiError && [404, 405, 501].includes(error.status)) {
+      return null;
     }
+    throw error;
   }
-
-  if (lastError instanceof ApiError && [404, 405, 501].includes(lastError.status)) {
-    return null;
-  }
-  throw lastError;
 }
 
 export type PmScheduleRow = {

@@ -75,6 +75,7 @@ import { registerLoadSettlementSummaryRoutes } from "./dispatch/load-settlement-
 // them, but they were never registered (404). Verified uncalled + collision-free before mounting.
 import { registerLoadProfitabilityRoutes } from "./dispatch/load-profitability.routes.js";
 import { registerCancellationsReportRoutes } from "./dispatch/cancellations-report.routes.js";
+import { registerLoadCancellationsAnalyticsRoutes } from "./dispatch/load-cancellations-analytics.routes.js";
 import { registerLoadGeofenceTimelineRoutes } from "./dispatch/load-geofence-timeline.routes.js";
 import { registerTripPairingBoardRoutes } from "./dispatch/trip-pairing-board.routes.js";
 import { registerDriverCommunicationsRoutes } from "./drivers/communications.routes.js";
@@ -722,6 +723,7 @@ async function main() {
   // Orphan-route mounts (batch 1, non-financial) — see import block above.
   await registerLoadProfitabilityRoutes(app);
   await registerCancellationsReportRoutes(app);
+  await registerLoadCancellationsAnalyticsRoutes(app);
   await registerLoadGeofenceTimelineRoutes(app);
   await registerTripPairingBoardRoutes(app);
   await registerDriverCommunicationsRoutes(app);
