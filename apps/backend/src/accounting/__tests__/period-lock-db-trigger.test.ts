@@ -50,7 +50,22 @@ describe("period lock DB trigger guard (AI-1)", () => {
         }
         if (sql.includes("FROM catalogs.account_role_bindings")) return { rows: [] };
         if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: REV_ACCOUNT }] };
-        if (sql.includes("JOIN catalogs.items")) return { rows: [] }; // invoice lines
+        if (sql.includes("FROM accounting.invoice_lines il")) {
+          // One revenue line resolving to its mapped income account (per-line revenue contract).
+          return {
+            rows: [
+              {
+                id: "dddd0000-0000-4000-8000-000000000001",
+                line_type: "linehaul",
+                line_total_cents: 50000,
+                display_order: 0,
+                description: "Linehaul",
+                qbo_item_id: null,
+                income_account_id: REV_ACCOUNT,
+              },
+            ],
+          };
+        }
         if (sql.includes("SELECT accounting.closed_period_cutoff"))
           return { rows: [{ cutoff: "2026-04-30" }] }; // April closed → PERIOD_LOCKED
         return { rows: [] };
@@ -108,7 +123,22 @@ describe("period lock DB trigger guard (AI-1)", () => {
         }
         if (sql.includes("FROM catalogs.account_role_bindings")) return { rows: [] };
         if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: REV_ACCOUNT }] };
-        if (sql.includes("JOIN catalogs.items")) return { rows: [] }; // invoice lines
+        if (sql.includes("FROM accounting.invoice_lines il")) {
+          // One revenue line resolving to its mapped income account (per-line revenue contract).
+          return {
+            rows: [
+              {
+                id: "dddd0000-0000-4000-8000-000000000001",
+                line_type: "linehaul",
+                line_total_cents: 50000,
+                display_order: 0,
+                description: "Linehaul",
+                qbo_item_id: null,
+                income_account_id: REV_ACCOUNT,
+              },
+            ],
+          };
+        }
         // Posting batch INSERT succeeds
         if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: BATCH_ID }] };
         if (sql.includes("INSERT INTO accounting.posting_batches") && sql.includes("ON CONFLICT"))

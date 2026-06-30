@@ -61,6 +61,40 @@ export class CoaRoleResolutionError extends Error {
   }
 }
 
+// Control accounts (A/R, A/P) MUST be uniquely designated. Unlike "default" roles, they can never be
+// resolved by a loose `account_subtype` LIMIT 1 tiebreaker: several accounts legitimately carry
+// account_subtype='AccountsReceivable'/'AccountsPayable' (real control + mis-classified advances), so an
+// arbitrary pick silently posts to the WRONG account (root cause of the GUARD Module 15 invoice A/R bug —
+// A/R was debited to "Unauthorized Expenses Ignacio Muñoz"). For these roles we FAIL CLOSED.
+const CONTROL_ROLES: ReadonlySet<CoaRole> = new Set<CoaRole>(["ar_control", "ap_control"]);
+
+export class ControlAccountDesignationError extends Error {
+  code: "CONTROL_ACCOUNT_NOT_UNIQUELY_DESIGNATED";
+  role: CoaRole;
+  operating_company_id: string;
+  candidate_count: number;
+  designation_source: "role_mapping" | "account_subtype_fallback";
+
+  constructor(
+    operatingCompanyId: string,
+    role: CoaRole,
+    candidateCount: number,
+    source: "role_mapping" | "account_subtype_fallback"
+  ) {
+    super(
+      `${role}_account_not_uniquely_designated: found ${candidateCount} candidate account(s) via ` +
+        `${source} for operating_company_id=${operatingCompanyId}. Exactly one explicitly-designated ` +
+        `control account is required — refusing to silently pick one via account_subtype. ` +
+        `Designate the control account in accounting.chart_of_accounts_roles (role='${role}').`
+    );
+    this.code = "CONTROL_ACCOUNT_NOT_UNIQUELY_DESIGNATED";
+    this.role = role;
+    this.operating_company_id = operatingCompanyId;
+    this.candidate_count = candidateCount;
+    this.designation_source = source;
+  }
+}
+
 async function resolveMappedRoleAccount(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string | null> {
   const mapped = await client.query<{ account_id: string }>(
     `
@@ -99,9 +133,13 @@ async function resolveLegacyRoleBinding(client: DbClient, role: CoaRole): Promis
   return legacy.rows[0]?.account_id ?? null;
 }
 
-function buildFallbackQueryParts(fallback: { subtype?: string[]; type?: string[]; nameHints?: string[] }) {
+function buildFallbackQueryParts(operatingCompanyId: string, fallback: { subtype?: string[]; type?: string[]; nameHints?: string[] }) {
+  // operating_company_id is bound as $1 and added as a LITERAL `operating_company_id = $1::uuid`
+  // predicate in each query template below — both for entity isolation (never resolve a control
+  // account from another company) and so the static entity-scope guard sees the predicate. Fallback
+  // params therefore start at $2.
   const clauses: string[] = ["deactivated_at IS NULL", "is_postable = true"];
-  const values: unknown[] = [];
+  const values: unknown[] = [operatingCompanyId];
   if (fallback.subtype?.length) {
     values.push(fallback.subtype);
     clauses.push(`account_subtype = ANY($${values.length}::text[])`);
@@ -121,15 +159,15 @@ function buildFallbackQueryParts(fallback: { subtype?: string[]; type?: string[]
   return { clauses, values };
 }
 
-async function resolveFallbackByAccountShape(client: DbClient, role: CoaRole): Promise<string | null> {
+async function resolveFallbackByAccountShape(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string | null> {
   const fallback = ROLE_FALLBACKS[role];
   if (!fallback) return null;
-  const { clauses, values } = buildFallbackQueryParts(fallback);
+  const { clauses, values } = buildFallbackQueryParts(operatingCompanyId, fallback);
   const fallbackRow = await client.query<{ id: string }>(
     `
       SELECT id::text
       FROM catalogs.accounts
-      WHERE ${clauses.join(" AND ")}
+      WHERE operating_company_id = $1::uuid AND ${clauses.join(" AND ")}
       ORDER BY updated_at DESC
       LIMIT 1
     `,
@@ -138,14 +176,80 @@ async function resolveFallbackByAccountShape(client: DbClient, role: CoaRole): P
   return fallbackRow.rows[0]?.id ?? null;
 }
 
+// Count-based variant of resolveMappedRoleAccount: returns the DISTINCT designated account ids for a role
+// (no ORDER BY / LIMIT), so control-role resolution can detect ambiguity (>1) and fail closed instead of
+// silently picking the most-recently-updated mapping.
+async function listMappedRoleAccountIds(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string[]> {
+  const mapped = await client.query<{ account_id: string }>(
+    `
+      SELECT DISTINCT car.account_id::text AS account_id
+      FROM accounting.chart_of_accounts_roles car
+      JOIN catalogs.accounts a ON a.id = car.account_id
+      WHERE car.operating_company_id = $1::uuid
+        AND car.role = $2
+        AND car.is_active = true
+        AND a.deactivated_at IS NULL
+        AND a.is_postable = true
+    `,
+    [operatingCompanyId, role]
+  );
+  return mapped.rows.map((r) => r.account_id);
+}
+
+// Count-based variant of resolveFallbackByAccountShape: returns ALL DISTINCT account ids matching the
+// role's account-shape fallback (no LIMIT), so a control role can refuse to guess when the subtype is
+// shared by more than one account.
+async function listFallbackAccountIds(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string[]> {
+  const fallback = ROLE_FALLBACKS[role];
+  if (!fallback) return [];
+  const { clauses, values } = buildFallbackQueryParts(operatingCompanyId, fallback);
+  const rows = await client.query<{ id: string }>(
+    `
+      SELECT DISTINCT id::text AS id
+      FROM catalogs.accounts
+      WHERE operating_company_id = $1::uuid AND ${clauses.join(" AND ")}
+    `,
+    values
+  );
+  return rows.rows.map((r) => r.id);
+}
+
+// Fail-closed resolution for control accounts (A/R, A/P). Authoritative source is the explicit
+// designation in accounting.chart_of_accounts_roles; the account_subtype fallback is allowed ONLY when it
+// resolves to exactly one account. 0 or >1 candidates -> throw rather than mis-post.
+async function resolveControlRoleAccount(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string | null> {
+  // 1) Explicit designation (the field the resolver keys on — NOT catalogs.accounts.system_purpose).
+  const mapped = await listMappedRoleAccountIds(client, operatingCompanyId, role);
+  if (mapped.length > 1) {
+    throw new ControlAccountDesignationError(operatingCompanyId, role, mapped.length, "role_mapping");
+  }
+  if (mapped.length === 1) return mapped[0] ?? null;
+
+  // 2) Legacy single binding (catalogs.account_role_bindings — unique by role_key).
+  const fromLegacyBinding = await resolveLegacyRoleBinding(client, role);
+  if (fromLegacyBinding) return fromLegacyBinding;
+
+  // 3) account_subtype fallback — FAIL CLOSED: never silently pick one of many.
+  const candidates = await listFallbackAccountIds(client, operatingCompanyId, role);
+  if (candidates.length > 1) {
+    throw new ControlAccountDesignationError(operatingCompanyId, role, candidates.length, "account_subtype_fallback");
+  }
+  if (candidates.length === 1) return candidates[0] ?? null;
+  return null;
+}
+
 export async function resolveRoleAccountOptional(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string | null> {
+  if (CONTROL_ROLES.has(role)) {
+    return resolveControlRoleAccount(client, operatingCompanyId, role);
+  }
+
   const fromMapped = await resolveMappedRoleAccount(client, operatingCompanyId, role);
   if (fromMapped) return fromMapped;
 
   const fromLegacyBinding = await resolveLegacyRoleBinding(client, role);
   if (fromLegacyBinding) return fromLegacyBinding;
 
-  return resolveFallbackByAccountShape(client, role);
+  return resolveFallbackByAccountShape(client, operatingCompanyId, role);
 }
 
 export async function resolveRoleAccount(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string> {
