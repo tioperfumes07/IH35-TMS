@@ -64,6 +64,7 @@ export type PostingErrorCode =
   | "ACCOUNT_MAPPING_MISSING"
   | "ADVANCE_NOT_POSTING_ELIGIBLE"
   | "BILL_LINE_ACCOUNT_UNRESOLVED"
+  | "INVOICE_LINE_REVENUE_UNRESOLVED"
   | "EXPENSE_NOT_POSTING_ELIGIBLE";
 
 export class PostingEngineError extends Error {
@@ -72,6 +73,39 @@ export class PostingEngineError extends Error {
   constructor(code: PostingErrorCode, message: string) {
     super(message);
     this.code = code;
+  }
+}
+
+// Per-line invoice revenue must resolve to that line's mapped income account (the line's explicit
+// account_id override → its Product/Service item's default_income_account_id). There is NO default
+// revenue account: a revenue-bearing line with no resolvable income account FAILS CLOSED (refuse to
+// post) instead of silently lumping revenue into a generic/native 4100 account. Mirrors the
+// ControlAccountDesignationError fail-closed contract the AR-control fix added — owner decision
+// (ACCOUNTING-1, locked 2026-06-30): revenue = hard-fail, no default account.
+export class InvoiceRevenueAccountError extends PostingEngineError {
+  invoice_line_id: string | null;
+  display_order: number | null;
+  qbo_item_id: string | null;
+
+  constructor(
+    operatingCompanyId: string,
+    invoiceLineId: string | null,
+    displayOrder: number | null,
+    qboItemId: string | null,
+    detail?: string
+  ) {
+    super(
+      "INVOICE_LINE_REVENUE_UNRESOLVED",
+      detail ??
+        `invoice_line_revenue_account_unresolved: invoice line ${invoiceLineId ?? "(none)"} ` +
+          `(display_order=${displayOrder ?? "?"}, qbo_item_id=${qboItemId ?? "none"}) has no mapped, ` +
+          `active income account for operating_company_id=${operatingCompanyId}. Map the line's ` +
+          `Product/Service item to an income account (catalogs.items.default_income_account_id) or set ` +
+          `the line's account_id — refusing to post revenue to a default account.`
+    );
+    this.invoice_line_id = invoiceLineId;
+    this.display_order = displayOrder;
+    this.qbo_item_id = qboItemId;
   }
 }
 
@@ -133,22 +167,6 @@ export function buildPostingMvpIdempotencyKey(input: {
     input.source_transaction_line_id ?? "-",
     input.posting_purpose,
   ].join(":");
-}
-
-async function resolveFirstAccountByType(client: DbClient, accountType: string): Promise<string | null> {
-  const account = await client.query<{ id: string }>(
-    `
-      SELECT id::text AS id
-      FROM catalogs.accounts
-      WHERE account_type = $1
-        AND deactivated_at IS NULL
-        AND is_postable = true
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `,
-    [accountType]
-  );
-  return account.rows[0]?.id ?? null;
 }
 
 async function resolveArAccountForCompany(client: DbClient, operatingCompanyId: string): Promise<string | null> {
@@ -396,42 +414,95 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
   const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
   if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
 
-  const revenueFromLines = await client.query<{ account_id: string }>(
+  // PER-LINE revenue resolution (owner decision ACCOUNTING-1, 2026-06-30): each revenue-bearing invoice
+  // line credits the income account mapped to THAT line — its explicit account_id (Block 33, migration
+  // 0221), else its Product/Service item's catalogs.items.default_income_account_id (keyed on qbo_item_id).
+  // Both candidate accounts must be active (deactivated_at IS NULL) + postable. No default fallback:
+  // a line with no resolvable income account FAILS CLOSED below.
+  const lineRows = await client.query<{
+    id: string | null;
+    line_type: string | null;
+    line_total_cents: number | null;
+    display_order: number | null;
+    description: string | null;
+    qbo_item_id: string | null;
+    income_account_id: string | null;
+  }>(
     `
-      SELECT i.default_income_account_id::text AS account_id
+      SELECT
+        il.id::text AS id,
+        il.line_type::text AS line_type,
+        il.line_total_cents::bigint AS line_total_cents,
+        il.display_order,
+        il.description,
+        il.qbo_item_id,
+        COALESCE(expl.id, itm.id)::text AS income_account_id
       FROM accounting.invoice_lines il
-      JOIN catalogs.items i ON i.qbo_item_id = il.qbo_item_id
+      LEFT JOIN catalogs.accounts expl
+        ON expl.id = il.account_id
+        AND expl.deactivated_at IS NULL
+        AND expl.is_postable = true
+      LEFT JOIN catalogs.items it
+        ON it.qbo_item_id = il.qbo_item_id
+        AND it.deactivated_at IS NULL
+      LEFT JOIN catalogs.accounts itm
+        ON itm.id = it.default_income_account_id
+        AND itm.deactivated_at IS NULL
+        AND itm.is_postable = true
       WHERE il.invoice_id = $1::uuid
-        AND i.default_income_account_id IS NOT NULL
-      LIMIT 1
+      ORDER BY il.display_order ASC, il.id ASC
     `,
     [sourceId]
   );
-  const revenueAccountId =
-    revenueFromLines.rows[0]?.account_id ??
-    (await resolveRoleAccountOptional(client, operatingCompanyId, "revenue_default")) ??
-    (await resolveFirstAccountByType(client, "Income"));
-  if (!revenueAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Revenue account mapping is missing");
-  const salesTaxPayableAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, "sales_tax_payable");
 
-  const amount = Number(invoice.total_cents ?? 0);
-  const taxAmountRaw = Number(invoice.tax_cents ?? 0);
-  const taxAmount = Math.max(0, Math.min(taxAmountRaw, amount));
-  const revenueAmount = amount - taxAmount;
-  if (taxAmount > 0 && !salesTaxPayableAccountId) {
-    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Sales tax payable account mapping is missing");
-  }
   const descriptionBase = invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`;
-  const creditLines: PostingLineDraft[] = [];
-  if (revenueAmount > 0) {
-    creditLines.push({
-      account_id: revenueAccountId,
+  const accountResolutionTrace: Array<Record<string, unknown>> = [];
+  const revenueCredits: PostingLineDraft[] = [];
+  let revenueTotal = 0;
+
+  for (const row of lineRows.rows) {
+    // Tax is posted from the invoice header (tax_cents) to sales_tax_payable below — a 'tax' line
+    // is not a revenue line and is intentionally not resolved to an income account.
+    if ((row.line_type ?? "").toLowerCase() === "tax") continue;
+    const lineCents = row.line_total_cents != null ? Number(row.line_total_cents) : 0;
+    if (lineCents <= 0) continue; // non-revenue-bearing line (zero/credit) — nothing to post.
+    if (!row.income_account_id) {
+      // HARD FAIL — no default. Refuse to post revenue to a generic account.
+      throw new InvoiceRevenueAccountError(operatingCompanyId, row.id, row.display_order, row.qbo_item_id);
+    }
+    revenueCredits.push({
+      account_id: row.income_account_id,
       debit_or_credit: "credit",
-      amount_cents: revenueAmount,
-      description: `${descriptionBase} Revenue`,
-      source_transaction_line_id: null,
+      amount_cents: lineCents,
+      description: row.description ? `${descriptionBase} Revenue — ${row.description}` : `${descriptionBase} Revenue`,
+      source_transaction_line_id: row.id ?? null,
+    });
+    revenueTotal += lineCents;
+    accountResolutionTrace.push({
+      invoice_line_id: row.id,
+      display_order: row.display_order,
+      qbo_item_id: row.qbo_item_id,
+      account_id: row.income_account_id,
+      method: "invoice_line_income_account",
     });
   }
+
+  const taxAmount = Math.max(0, Number(invoice.tax_cents ?? 0));
+  let salesTaxPayableAccountId: string | null = null;
+  if (taxAmount > 0) {
+    salesTaxPayableAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, "sales_tax_payable");
+    if (!salesTaxPayableAccountId) {
+      throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Sales tax payable account mapping is missing");
+    }
+  }
+
+  if (revenueCredits.length === 0 && taxAmount <= 0) {
+    // No revenue-bearing lines and no header tax — nothing resolvable. Fail loud (mirror the bill path's
+    // empty/unresolved fail-closed) rather than emitting a zero/AR-only entry.
+    throw new InvoiceRevenueAccountError(operatingCompanyId, null, null, null, "Invoice has no revenue-bearing lines to resolve");
+  }
+
+  const creditLines: PostingLineDraft[] = [...revenueCredits];
   if (taxAmount > 0 && salesTaxPayableAccountId) {
     creditLines.push({
       account_id: salesTaxPayableAccountId,
@@ -441,14 +512,19 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
       source_transaction_line_id: null,
     });
   }
+
+  // AR debit is built from the resolved parts (per-line revenue + header tax) so the entry is balanced
+  // by construction regardless of any header total_cents drift.
+  const arAmount = revenueTotal + taxAmount;
   return {
     postingDate: invoice.issue_date,
     memo: `${descriptionBase} posting`,
+    accountResolutionTrace,
     lines: [
       {
         account_id: arAccountId,
         debit_or_credit: "debit",
-        amount_cents: amount,
+        amount_cents: arAmount,
         description: `${descriptionBase} AR`,
         source_transaction_line_id: null,
       },
