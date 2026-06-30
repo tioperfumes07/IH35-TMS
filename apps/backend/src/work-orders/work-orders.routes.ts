@@ -8,6 +8,7 @@ import { enqueueEmail } from "../email/queue.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
 import { auditVoid, postVoidReversal, type VoidReversalResult } from "../accounting/void.service.js";
+import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 import { generatePresignedUploadUrl, isR2Configured } from "../storage/r2-client.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import {
@@ -99,11 +100,6 @@ function officeWoRoles(role: string) {
   return ["Owner", "Administrator", "Manager", "Dispatcher", "Safety"].includes(role);
 }
 
-// Cancel/Void anything = Owner or Administrator ONLY (Jorge 2026-06-29).
-function ownerOrAdmin(role: string) {
-  return role === "Owner" || role === "Administrator";
-}
-
 async function maintenanceReady(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok?: boolean }> }> }) {
   const res = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
   return Boolean(res.rows[0]?.ok);
@@ -133,16 +129,16 @@ async function enqueueWorkOrderOutbox(
 // (migrations 0090 / 0123; written by two-section-service.autoCreateBillFromWO + the poster). Voiding or
 // cancelling a WO that has posted financials WITHOUT reversing them would orphan those entries, so:
 //   - flag OFF + WO has financial linkage  -> REFUSE (never orphan).
-//   - flag ON  + WO has linked bill(s)     -> reverse each bill's GL via the SHARED void engine
-//     (void.service.postVoidReversal, entityType 'bill') + flip the bill to status='void' (canonical
-//     accounting.bills void columns) + auditVoid, all on the SAME transaction client (atomic).
+//   - flag ON  + WO has linked bill(s)/expense(s) -> reverse each one's GL via the SHARED void engine
+//     (void.service.postVoidReversal, entityType 'bill'/'expense') + flip the source to status='void'
+//     (canonical void columns) + auditVoid, all on the SAME transaction client (atomic). The cash-path
+//     expense (accounting.expenses) is KEPT, not retired (Jorge 2026-06-29) — its linked WO reverses it.
 // NO new GL math is written here — the equal-and-opposite reversing JE is produced entirely by
 // void.service. The reversing JE id is surfaced back to the caller to persist into
 // maintenance.work_orders.reversing_entry_ref.
 type WoFinancialSettleResult =
   | { kind: "ok"; reversing_entry_ref: string | null }
   | { kind: "financial_blocked" }
-  | { kind: "expense_unsupported" }
   | { kind: "bill_has_payments" };
 
 type SettleClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
@@ -155,7 +151,9 @@ async function columnPresent(client: SettleClient, schema: string, table: string
   return Boolean(res.rows[0]?.ok);
 }
 
-async function settleWorkOrderFinancialLinkage(
+// Exported so the governance maker-checker executor (governance/void-cancel-executors.ts) reverses a
+// WO's financials through the SAME money-safe path when an executor approves a void/cancel request.
+export async function settleWorkOrderFinancialLinkage(
   client: SettleClient,
   operatingCompanyId: string,
   workOrderId: string,
@@ -178,9 +176,9 @@ async function settleWorkOrderFinancialLinkage(
   const linkedBills = billsRes.rows.map((r) => ({ id: String(r.id), bill_date: String(r.bill_date ?? "") }));
   const billIds = linkedBills.map((b) => b.id);
 
-  // WO → expense linkage is NOT migration-backed (accounting.expenses has no linked_work_order_uuid in
-  // db/migrations even though two-section-service inserts it) — so detect it DEFENSIVELY (column-existence
-  // guarded) to avoid a 42703 500, and never reverse it (the void engine has no 'expense' entityType).
+  // WO → expense linkage is migration-backed as of 202606290071 (accounting.expenses.linked_work_order_uuid).
+  // Still detect it DEFENSIVELY (column-existence guarded) so a fresh/old DB without the column can't 42703;
+  // when present + flag ON, a posted linked expense is REVERSED below via the same shared void engine.
   let linkedExpenseCount = 0;
   if (await columnPresent(client, "accounting", "expenses", "linked_work_order_uuid")) {
     const expRes = await client.query(
@@ -214,10 +212,6 @@ async function settleWorkOrderFinancialLinkage(
   // Financial linkage present: gated. Default OFF refuses so we can NEVER orphan posted entries.
   if (!woVoidEnabled) return { kind: "financial_blocked" };
 
-  // The shared void engine reverses invoice/journal_entry/bill only. A linked expense cannot be reversed
-  // by it — refuse rather than invent expense GL math or leave it orphaned.
-  if (linkedExpenseCount > 0) return { kind: "expense_unsupported" };
-
   // Mirror accounting.bills.service.voidBill: a bill with live payments cannot be voided.
   const payRes = await client.query(
     `SELECT COUNT(*)::int AS n
@@ -229,16 +223,23 @@ async function settleWorkOrderFinancialLinkage(
   );
   if (Number(payRes.rows[0]?.n ?? 0) > 0) return { kind: "bill_has_payments" };
 
-  // Reverse + void each linked bill on THIS transaction client (atomic with the WO status flip).
+  // All reversals below run on THIS transaction client (the route's withCompanyScope BEGIN/COMMIT), so the
+  // bill reversal + the expense reversal + the WO status flip are ALL-OR-NOTHING — a throw rolls back the
+  // whole set, never leaving a half-reversed WO. NO new GL math: postVoidReversal builds every reversing JE.
   let reversingEntryRef: string | null = null;
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Reverse + void each linked bill.
   for (const bill of linkedBills) {
+    // Guard an empty/short bill_date (COALESCE(null) -> '') so resolveReversalDate gets a real ISO date.
+    const originalDate = bill.bill_date && bill.bill_date.length >= 10 ? bill.bill_date.slice(0, 10) : today;
     const reversal: VoidReversalResult = await postVoidReversal(
       client,
       {
         operatingCompanyId,
         entityType: "bill",
         entityId: bill.id,
-        originalDate: bill.bill_date.slice(0, 10),
+        originalDate,
         memo: `Void reversal of bill ${bill.id} (work order ${workOrderId} voided): ${reason}`,
       },
       { userId }
@@ -258,6 +259,51 @@ async function settleWorkOrderFinancialLinkage(
     await auditVoid(client, userId, "bill", { operatingCompanyId, entityId: bill.id, reason, reversal });
     if (reversal.reversal_journal_entry_id) reversingEntryRef = reversal.reversal_journal_entry_id;
   }
+
+  // Reverse + void each linked EXPENSE (KEEP the cash path — Jorge 2026-06-29). Same bill grain: whole
+  // expense = one net-zero reversing JE via the shared engine (entityType 'expense'). Unposted expenses
+  // (no GL) just flip to void. Atomic with the bills above + the WO flip.
+  if (linkedExpenseCount > 0) {
+    const expRes = await client.query<{ id: string; transaction_date: string | null }>(
+      `SELECT id::text AS id, transaction_date::text AS transaction_date
+         FROM accounting.expenses
+        WHERE operating_company_id = $1::uuid
+          AND linked_work_order_uuid = $2::uuid
+          AND status <> 'void'`,
+      [operatingCompanyId, workOrderId]
+    );
+    for (const exp of expRes.rows) {
+      const td = exp.transaction_date && exp.transaction_date.length >= 10 ? exp.transaction_date.slice(0, 10) : today;
+      const reversal: VoidReversalResult = await postVoidReversal(
+        client,
+        {
+          operatingCompanyId,
+          entityType: "expense",
+          entityId: exp.id,
+          originalDate: td,
+          memo: `Void reversal of expense ${exp.id} (work order ${workOrderId} voided): ${reason}`,
+        },
+        { userId }
+      );
+      await client.query(
+        `UPDATE accounting.expenses
+            SET status = 'void',
+                posting_status = CASE WHEN posting_status = 'posted' THEN 'reversed' ELSE posting_status END,
+                reversed_by_je_id = COALESCE($3::uuid, reversed_by_je_id),
+                voided_at = now(),
+                voided_by_user_id = $4::uuid,
+                void_reason = $5,
+                updated_at = now()
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND status <> 'void'`,
+        [exp.id, operatingCompanyId, reversal.reversal_journal_entry_id, userId, reason]
+      );
+      await auditVoid(client, userId, "expense", { operatingCompanyId, entityId: exp.id, reason, reversal });
+      if (reversal.reversal_journal_entry_id) reversingEntryRef = reversal.reversal_journal_entry_id;
+    }
+  }
+
   return { kind: "ok", reversing_entry_ref: reversingEntryRef };
 }
 
@@ -1017,7 +1063,9 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
   app.post("/api/v1/work-orders/:id/cancel", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
-    if (!ownerOrAdmin(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden_owner_or_admin_only" });
+    // Void/cancel EXECUTORS = Owner|Administrator|Accountant (canVoidCancel). Non-executors get a 403
+    // telling them to file a governance void/cancel request for approval.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -1041,20 +1089,26 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
       // Already-cancelled is an idempotent no-op: skip the financial settle (a prior cancel already reversed
       // its bill, so linkedBills would be empty anyway) and re-run the no-op flip.
-      let reversingEntryRef: string | null = null;
-      if (priorStatus !== "cancelled") {
-        const fin = await settleWorkOrderFinancialLinkage(
-          client,
-          query.data.operating_company_id,
-          params.data.id,
-          user.uuid,
-          parsed.data.cancellation_reason
+      // Already-cancelled is an idempotent no-op: short-circuit BEFORE re-settling, re-auditing, or
+      // re-enqueuing so a second cancel can't write a duplicate audit event / outbox row.
+      if (priorStatus === "cancelled") {
+        const existing = await client.query(
+          `SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [params.data.id, query.data.operating_company_id]
         );
-        if (fin.kind === "financial_blocked") return { kind: "financial_blocked" as const };
-        if (fin.kind === "expense_unsupported") return { kind: "expense_unsupported" as const };
-        if (fin.kind === "bill_has_payments") return { kind: "bill_has_payments" as const };
-        reversingEntryRef = fin.reversing_entry_ref;
+        return { kind: "ok" as const, wo: existing.rows[0] };
       }
+
+      const fin = await settleWorkOrderFinancialLinkage(
+        client,
+        query.data.operating_company_id,
+        params.data.id,
+        user.uuid,
+        parsed.data.cancellation_reason
+      );
+      if (fin.kind === "financial_blocked") return { kind: "financial_blocked" as const };
+      if (fin.kind === "bill_has_payments") return { kind: "bill_has_payments" as const };
+      const reversingEntryRef = fin.reversing_entry_ref;
 
       const res = await client.query(
         `
@@ -1088,20 +1142,20 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     if (row.kind === "missing") return reply.code(404).send({ error: "work_order_not_found" });
     if (row.kind === "financial_blocked")
       return reply.code(409).send({ error: "wo_has_posted_financial_entries", message: "WO has posted financial entries; financial void is disabled (WO_VOID_ENABLED off)" });
-    if (row.kind === "expense_unsupported")
-      return reply.code(409).send({ error: "wo_linked_expense_void_unsupported", message: "WO has a linked posted expense; reverse/void the expense before cancelling the work order" });
     if (row.kind === "bill_has_payments")
       return reply.code(409).send({ error: "wo_linked_bill_has_payments", message: "WO's linked bill has live payments; void the bill payment before cancelling the work order" });
     return { work_order: row.wo };
   });
 
-  // VOID a work order — Owner/Administrator ONLY, reason REQUIRED, SOFT (never deletes). Stronger than
+  // VOID a work order — EXECUTORS (Owner|Administrator|Accountant) ONLY, reason REQUIRED, SOFT (never deletes). Stronger than
   // cancel: nullifies a WO (incl. one already completed) while preserving the immutable record + full
   // history + the WHY in the audit trail. Sets voided_at/by/notes; idempotent (already-void → 409).
   app.post("/api/v1/work-orders/:id/void", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
-    if (!ownerOrAdmin(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden_owner_or_admin_only" });
+    // Void/cancel EXECUTORS = Owner|Administrator|Accountant (canVoidCancel). Non-executors get a 403
+    // telling them to file a governance void/cancel request for approval.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -1131,7 +1185,6 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         parsed.data.reason
       );
       if (fin.kind === "financial_blocked") return { kind: "financial_blocked" as const };
-      if (fin.kind === "expense_unsupported") return { kind: "expense_unsupported" as const };
       if (fin.kind === "bill_has_payments") return { kind: "bill_has_payments" as const };
 
       const res = await client.query(
@@ -1175,8 +1228,6 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     if (row.kind === "already_voided") return reply.code(409).send({ error: "work_order_already_voided" });
     if (row.kind === "financial_blocked")
       return reply.code(409).send({ error: "wo_has_posted_financial_entries", message: "WO has posted financial entries; financial void is disabled (WO_VOID_ENABLED off)" });
-    if (row.kind === "expense_unsupported")
-      return reply.code(409).send({ error: "wo_linked_expense_void_unsupported", message: "WO has a linked posted expense; reverse/void the expense before voiding the work order" });
     if (row.kind === "bill_has_payments")
       return reply.code(409).send({ error: "wo_linked_bill_has_payments", message: "WO's linked bill has live payments; void the bill payment before voiding the work order" });
     return { work_order: row.wo };
