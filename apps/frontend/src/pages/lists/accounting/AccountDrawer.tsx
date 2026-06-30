@@ -33,6 +33,22 @@ const ACCOUNT_TYPES = [
   "OtherExpense",
 ] as const;
 
+// catalogs.accounts.account_type is the 8-value COA group enum, but the account-type catalog
+// (catalogs.account_types) is keyed by the 15 finer QBO types (codes BANK/AR/OCA/EXP/…). The Detail Type
+// dropdown was always empty ("No detail types available") because the 8-enum never matched a 15-type
+// code/name. Map each enum to its catalog code(s) so the dependent dropdown populates with the right
+// detail types (Asset → Bank/AR/OtherCurrentAsset/FixedAsset/OtherAsset detail types, etc.).
+const COA_ENUM_TO_CATALOG_CODES: Record<string, string[]> = {
+  Asset: ["BANK", "AR", "OCA", "FA", "OA"],
+  Liability: ["CC", "AP", "OCL", "LTL"],
+  Equity: ["EQ"],
+  Income: ["INC"],
+  OtherIncome: ["OINC"],
+  CostOfGoodsSold: ["COGS"],
+  Expense: ["EXP"],
+  OtherExpense: ["OEXP"],
+};
+
 type FormState = {
   account_name: string;
   account_number: string;
@@ -111,10 +127,20 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
 
   const detailTypesForType = useMemo<AccountTypeCatalogEntry["detailTypes"]>(() => {
     if (!typeCatalogQuery.data || !form.account_type) return [];
-    const entry = typeCatalogQuery.data.find(
-      (e) => e.accountType === form.account_type || e.code === form.account_type
-    );
-    return entry?.detailTypes ?? [];
+    // Match by the catalog code(s) that the selected COA group enum maps to; also keep the legacy
+    // direct match (accountType/code) so an exact 15-type value still works.
+    const codes = new Set(COA_ENUM_TO_CATALOG_CODES[form.account_type] ?? []);
+    const out: AccountTypeCatalogEntry["detailTypes"] = [];
+    const seen = new Set<string>();
+    for (const e of typeCatalogQuery.data) {
+      if (!(codes.has(e.code) || e.accountType === form.account_type || e.code === form.account_type)) continue;
+      for (const dt of e.detailTypes) {
+        if (seen.has(dt.name)) continue;
+        seen.add(dt.name);
+        out.push(dt);
+      }
+    }
+    return out;
   }, [typeCatalogQuery.data, form.account_type]);
 
   useEffect(() => {
