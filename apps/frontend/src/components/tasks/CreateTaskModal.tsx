@@ -6,6 +6,7 @@ import { useToast } from "../Toast";
 import { createTask, type TaskCategory } from "../../api/tasks";
 import { listUsers } from "../../api/identity";
 import type { IdentityUser } from "../../types/api";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -35,8 +36,10 @@ function userLabel(u: IdentityUser): string {
   return u.name || full || u.email || u.id;
 }
 
+// Company-local "today" (Central), not UTC — avoids defaulting the scheduled date to tomorrow
+// when booked in the evening. See lib/businessDate.
 function todayISO(): string {
-  return new Date().toISOString().split("T")[0];
+  return companyToday();
 }
 
 export function CreateTaskModal({ open, operatingCompanyId, defaultDate, onClose, onCreated }: Props) {

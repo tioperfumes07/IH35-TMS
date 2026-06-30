@@ -7,6 +7,7 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
+import { companyBusinessDateCompact } from "../lib/company-business-date.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -244,7 +245,9 @@ async function nextLoadNumber(
   const company = companyRes.rows[0];
   if (!company) throw new Error("operating_company_not_found");
   const token = toCompanyLoadToken(company.short_name ?? company.code);
-  const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  // Company-timezone business date — NOT UTC — so the persisted Load Number date matches the
+  // booking day in Central (see lib/company-business-date).
+  const datePart = companyBusinessDateCompact();
   const prefix = `L${token}-${datePart}-`;
 
   const seqRes = await client.query<{ next_seq: number }>(
