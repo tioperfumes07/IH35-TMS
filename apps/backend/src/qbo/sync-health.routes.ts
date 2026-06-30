@@ -213,17 +213,41 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
 
       const connTbl = await client.query(`SELECT to_regclass('integrations.qbo_connections') IS NOT NULL AS ok`);
       let refreshTokenExpiresAt: string | null = null;
+      let hasActiveConnection = false;
 
       if (connTbl.rows[0]?.ok) {
-        const connRes = await client.query<{ exp: string | null }>(
+        const connRes = await client.query<{ exp: string | null; has_active: boolean | null }>(
           `
-            SELECT MIN(refresh_token_expires_at) FILTER (WHERE revoked_at IS NULL)::text AS exp
+            SELECT
+              MIN(refresh_token_expires_at) FILTER (WHERE revoked_at IS NULL)::text AS exp,
+              bool_or(revoked_at IS NULL) AS has_active
             FROM integrations.qbo_connections
             WHERE operating_company_id = $1::uuid
           `,
           [parsed.data.operating_company_id]
         );
         refreshTokenExpiresAt = connRes.rows[0]?.exp ?? null;
+        hasActiveConnection = Boolean(connRes.rows[0]?.has_active);
+      }
+
+      // Master-data (CDC) freshness: the recurring vendor/customer/item/account sync writes to
+      // mdata.qbo_sync_runs (NOT qbo.sync_runs), so a connected opco that fell off the recurring
+      // schedule (e.g. TRANSP) shows ZERO rows here and must NOT read as healthy. A successful run
+      // is finished_at IS NOT NULL AND error_message IS NULL.
+      let masterDataLastSuccessAt: string | null = null;
+      const mdataRunsExist = await client.query(`SELECT to_regclass('mdata.qbo_sync_runs') IS NOT NULL AS ok`);
+      if (mdataRunsExist.rows[0]?.ok) {
+        const mdRes = await client.query<{ t: string | null }>(
+          `
+            SELECT MAX(finished_at)::text AS t
+            FROM mdata.qbo_sync_runs
+            WHERE operating_company_id = $1::uuid
+              AND finished_at IS NOT NULL
+              AND error_message IS NULL
+          `,
+          [parsed.data.operating_company_id]
+        );
+        masterDataLastSuccessAt = mdRes.rows[0]?.t ?? null;
       }
 
       let tokenAlertCount = 0;
@@ -246,10 +270,13 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
       }
 
       const now = Date.now();
-      const lastOkMs =
-        lastSuccessfulSyncAt && !Number.isNaN(new Date(lastSuccessfulSyncAt).getTime())
-          ? now - new Date(lastSuccessfulSyncAt).getTime()
-          : null;
+      // Effective freshness = the most recent successful sync across BOTH the push/queue sync
+      // (qbo.sync_runs) and the recurring master-data CDC (mdata.qbo_sync_runs).
+      const successCandidates = [lastSuccessfulSyncAt, masterDataLastSuccessAt]
+        .filter((t): t is string => Boolean(t) && !Number.isNaN(new Date(String(t)).getTime()))
+        .map((t) => new Date(String(t)).getTime());
+      const effectiveLastSuccessMs = successCandidates.length > 0 ? Math.max(...successCandidates) : null;
+      const lastOkMs = effectiveLastSuccessMs !== null ? now - effectiveLastSuccessMs : null;
 
       const refreshExpired =
         Boolean(refreshTokenExpiresAt) && !Number.isNaN(Date.parse(String(refreshTokenExpiresAt)))
@@ -273,7 +300,9 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
       } else if (neverSucceededWithFailures) {
         status = "error";
       } else if (lastOkMs === null) {
-        status = "healthy";
+        // A connected opco with NO recorded successful sync is stale (the misleading-green case),
+        // not healthy. With no connection there is nothing to sync, so leave it healthy.
+        status = hasActiveConnection ? "stale" : "healthy";
       } else if (lastOkMs > STALE_AFTER_MS) {
         status = "stale";
       } else if (pendingCount > 0 && lastOkMs < 5 * 60 * 1000) {
@@ -291,6 +320,8 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
       return {
         status,
         last_successful_sync_at: lastSuccessfulSyncAt,
+        master_data_last_success_at: masterDataLastSuccessAt,
+        has_active_connection: hasActiveConnection,
         last_failed_sync_at: lastFailedSyncAt,
         pending_count: pendingCount,
         error_count: errorCount,
