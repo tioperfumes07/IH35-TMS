@@ -82,8 +82,8 @@ export function SettlementsPage() {
           { label: "Cash Advances",      to: "/cash-advances" },
           { label: "Liabilities",        to: "/liabilities" },
           { label: "Escrow",             to: "/accounting/escrow" },
-          { label: "Driver Pay Catalog", to: "/accounting/settings/expense-category-map" },
-          { label: "Deduction Catalog",  to: "/accounting/settings/expense-category-map" },
+          { label: "Pay Rate Templates", to: "/drivers/pay-rate-templates" },
+          { label: "Deductions",         to: "/drivers/deductions" },
         ]}
       />
 
