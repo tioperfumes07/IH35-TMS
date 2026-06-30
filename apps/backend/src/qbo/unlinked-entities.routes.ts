@@ -181,6 +181,13 @@ export async function registerQboUnlinkedEntitiesRoutes(app: FastifyInstance) {
       );
       const vendors = vendorRes.rows;
 
+      // Entity-scope (Tier-1 RLS fix): the sibling vendor query above is scoped by
+      // `v.operating_company_id = $1`, but catalogs.classes has NO operating_company_id column
+      // (only catalogs.accounts was per-entity re-keyed). Its RLS `classes_select` policy is
+      // role-only ("any logged-in role reads ALL classes") → cross-entity leak. The entity
+      // partition for classes lives in the QBO mirror mdata.qbo_classes (operating_company_id +
+      // qbo_id), the same QBO-mirror family the vendor query uses. Scope via EXISTS against that
+      // mirror so only the requested entity's QBO classes surface — no phantom column.
       const classRes = await client.query<ClassRow>(
         `
           SELECT DISTINCT ON (c.qbo_class_id)
@@ -190,9 +197,15 @@ export async function registerQboUnlinkedEntitiesRoutes(app: FastifyInstance) {
           WHERE c.qbo_class_id IS NOT NULL
             AND trim(c.qbo_class_id) <> ''
             AND c.deactivated_at IS NULL
+            AND EXISTS (
+              SELECT 1 FROM mdata.qbo_classes qc
+              WHERE qc.qbo_id = c.qbo_class_id
+                AND qc.operating_company_id = $1::uuid
+            )
           ORDER BY c.qbo_class_id, c.updated_at DESC
           LIMIT 2000
-        `
+        `,
+        [oc]
       );
       const classes = classRes.rows;
 
