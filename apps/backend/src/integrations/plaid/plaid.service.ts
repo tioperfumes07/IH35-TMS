@@ -266,6 +266,14 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
 
   const createdIds: string[] = [];
   await withCurrentUser(actorUserId, async (client) => {
+    // DS-AUDIT (USMCA Plaid connect fix): withCurrentUser sets app.current_user_id but NOT
+    // app.operating_company_id. The banking.bank_accounts RLS WITH CHECK is
+    // `is_lucia_bypass() OR operating_company_id = app.operating_company_id`, so with the opco GUC
+    // unset every INSERT/UPDATE here is RLS-rejected and the whole exchange rolls back (0 accounts
+    // persisted; only link_token_created in the audit). SUPPLY the target scope (mirrors the
+    // withCompanyScope pattern every read route uses) — this does NOT bypass RLS: the writes can
+    // still only touch the scoped opco, so a USMCA connect can never write a TRANSP/TRK row.
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     for (const account of accountsResponse.data.accounts) {
       const accountName = account.name || account.official_name || "Bank Account";
       const accountType = mapPlaidTypeToAccountType(account.subtype || account.type);
