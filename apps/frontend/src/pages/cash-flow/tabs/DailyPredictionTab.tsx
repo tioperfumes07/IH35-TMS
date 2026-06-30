@@ -8,6 +8,7 @@ import {
   type DailyPredictionResult,
   type SevenDayEntry,
 } from "../../../api/cashFlow";
+import { addDaysIso, companyToday } from "../../../lib/businessDate";
 
 function fmtDate(iso: string): string {
   const [y, m, d] = iso.split("-");
@@ -18,14 +19,15 @@ function fmtDate(iso: string): string {
   });
 }
 
+// CASHFLOW-1: "today" must be the company business date (America/Chicago), NOT the UTC date —
+// after ~7 PM Central UTC is already tomorrow, so the cash-position page was fetching tomorrow's
+// prediction and hiding today's real expected revenue. See lib/businessDate.
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function addDays(iso: string, delta: number): string {
-  const d = new Date(iso + "T00:00:00Z");
-  d.setUTCDate(d.getUTCDate() + delta);
-  return d.toISOString().slice(0, 10);
+  return addDaysIso(iso, delta);
 }
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
