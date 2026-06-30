@@ -27,10 +27,15 @@ export function PreFlightDvirQueue() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<DvirSeverityLevel>("major");
 
+  // FLAGGED (QA-sweep): the `/api/v1/maintenance/pre-flight-dvir/*` backend (queue + severity +
+  // route-to-WO) is not built yet — it needs a dedicated maintenance block (auto-WO creation is
+  // non-trivial). Until then this screen degrades to an empty/unavailable state; `retry: false`
+  // avoids hammering the missing endpoint.
   const q = useQuery({
     queryKey: ["maintenance", "pre-flight-dvir", operatingCompanyId, tab],
     queryFn: () => listPreFlightDvirQueue(operatingCompanyId, { severity: tab, status: "open" }),
     enabled: Boolean(operatingCompanyId),
+    retry: false,
   });
 
   const rows = useMemo(() => q.data?.defects ?? [], [q.data?.defects]);

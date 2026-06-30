@@ -328,6 +328,10 @@ export function bulkCategorizeBankTransactions(
   });
 }
 
+/** FLAGGED (QA-sweep): path `/mark-transfer` 404s — BE serves `/transfer`, but the BE body
+ *  contract differs (`{ destination_bank_account_id, transfer_kind, paired_transaction_id? }`)
+ *  and that route enqueues a QBO accounting outbox event. Realigning needs a financial-aware
+ *  rework of both this helper and its TransferModal caller — deferred, not a blind path swap. */
 export function markBankTransactionTransfer(
   transactionId: string,
   companyId: string,
@@ -339,11 +343,13 @@ export function markBankTransactionTransfer(
   });
 }
 
-/** Skip / investigate flag + note (P6-T11204). */
+/** Skip / exclude a transaction from review (P6-T11204). BE serves POST
+ *  /banking/transactions/:id/skip with body `{ reason }` (categorization.routes.ts) — the prior
+ *  `/skip-investigate` path 404'd. Caller signature `{ note }` is preserved; mapped to `{ reason }`. */
 export function skipBankTransactionInvestigation(transactionId: string, companyId: string, body: { note: string }) {
-  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/skip-investigate?${q(companyId)}`, {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/skip?${q(companyId)}`, {
     method: "POST",
-    body,
+    body: { reason: body.note },
   });
 }
 
@@ -916,6 +922,9 @@ export function reconcileBankTransaction(
   return apiRequest<{ ok: true }>(`/api/v1/banking/reconcile?${q}`, { method: "POST", body });
 }
 
+/** FLAGGED (QA-sweep): `/banking/reconcile/factoring/apply` has NO backend route. Building it is
+ *  a financial change (factoring batch reconcile / money matching) — deferred to a dedicated
+ *  financial block, not part of the non-financial 404 sweep. Caller already surfaces the error. */
 export function applyFactoringBankMatch(operatingCompanyId: string, suggestionId: string) {
   return apiRequest<{ ok: true; applied: { id: string; bank_txn_id: string; batch_id: string; applied_at: string } }>(
     `/api/v1/banking/reconcile/factoring/apply`,
