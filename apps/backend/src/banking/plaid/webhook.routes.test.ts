@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import Fastify from "fastify";
 import jwt from "jsonwebtoken";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { processPlaidWebhookAsync, verifyPlaidWebhookJwt } from "../../integrations/plaid/webhook-core.js";
+import { plaidWebhookBodySchema, processPlaidWebhookAsync, verifyPlaidWebhookJwt } from "../../integrations/plaid/webhook-core.js";
 import { registerBankingPlaidWebhookRoutes } from "./webhook.routes.js";
 
 const plaidMocks = vi.hoisted(() => ({
@@ -34,6 +34,12 @@ describe("banking/plaid/webhook.routes.ts", () => {
   afterEach(() => {
     vi.clearAllMocks();
     delete process.env.PLAID_WEBHOOK_VERIFICATION_KEY;
+  });
+
+  it("plaidWebhookBodySchema accepts error:null (Plaid sends it on normal webhooks — regression for 233 rejected events)", () => {
+    expect(plaidWebhookBodySchema.safeParse({ webhook_type: "TRANSACTIONS", webhook_code: "DEFAULT_UPDATE", item_id: "i1", error: null }).success).toBe(true);
+    expect(plaidWebhookBodySchema.safeParse({ webhook_type: "ITEM", webhook_code: "ERROR", item_id: "i1", error: { error_code: "ITEM_LOGIN_REQUIRED" } }).success).toBe(true);
+    expect(plaidWebhookBodySchema.safeParse({ webhook_type: "ITEM", webhook_code: "WEBHOOK_UPDATE_ACKNOWLEDGED", item_id: "i1" }).success).toBe(true);
   });
 
   it("registers POST /api/v1/banking/plaid/webhook", async () => {
