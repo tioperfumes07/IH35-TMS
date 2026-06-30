@@ -18,11 +18,14 @@ import {
 } from "./bill-gl-draft.service.js";
 import { BillLineAccountError } from "./bill-account-resolver.js";
 import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
-// CHAIN-03 posting gate (default OFF). The draft-preview endpoint is read-only and never posts; the
-// post-gl endpoint below refuses to post unless this flag is true. Flipping the flag ON in prod is a
-// separate Jorge sign-off (this PR ships it OFF).
-const BILL_GL_POSTING_ENABLED = process.env.BILL_GL_POSTING_ENABLED === "true";
+// CHAIN-03 posting gate (default OFF). Resolved PER-ENTITY via lib.feature_flags (isEnabled) inside the
+// request handler — NOT a global process.env read — so a flag flip is per-operating_company_id and
+// turning posting on for one entity (e.g. USMCA) cannot enable it for TRANSP/TRK. The draft-preview is
+// read-only and never posts; the post-gl endpoint refuses to post unless the flag resolves true for the
+// request's entity. Flipping it ON in prod is a separate Jorge sign-off.
+const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
 const draftLineSchema = z.object({
   category_kind: z.enum(EXPENSE_CATEGORY_MAP_KIND_VALUES).nullish(),
@@ -60,8 +63,8 @@ export async function registerBillGlDraftRoutes(app: FastifyInstance) {
     }
 
     try {
-      const draft = await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
-        computeBillGlDraft(client, body.operating_company_id, {
+      const { draft, postingEnabled } = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+        const draft = await computeBillGlDraft(client, body.operating_company_id, {
           bill_label: body.bill_label ?? null,
           posting_date: body.posting_date ?? null,
           lines: body.lines.map((l) => ({
@@ -70,12 +73,17 @@ export async function registerBillGlDraftRoutes(app: FastifyInstance) {
             amount_cents: l.amount_cents,
             description: l.description ?? null,
           })),
-        })
-      );
+        });
+        const postingEnabled = await isEnabled(client, BILL_GL_POSTING_FLAG_KEY, {
+          operating_company_id: body.operating_company_id,
+          user_uuid: String(user.uuid),
+        });
+        return { draft, postingEnabled };
+      });
 
       return {
         step: "CHAIN-03-STEP-1-draft-je",
-        posting_enabled: BILL_GL_POSTING_ENABLED,
+        posting_enabled: postingEnabled,
         wrote_to_ledger: false,
         draft,
       };
@@ -110,11 +118,17 @@ export async function registerBillGlDraftRoutes(app: FastifyInstance) {
       });
     }
 
-    if (!BILL_GL_POSTING_ENABLED) {
+    const postingEnabled = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      isEnabled(client, BILL_GL_POSTING_FLAG_KEY, {
+        operating_company_id: query.data.operating_company_id,
+        user_uuid: String(user.uuid),
+      })
+    );
+    if (!postingEnabled) {
       return reply.code(409).send({
         error: "posting_disabled",
         message:
-          "Bill→GL posting is disabled (BILL_GL_POSTING_ENABLED=false). Use draft-je-preview, or enable the flag on a Neon branch to verify.",
+          "Bill→GL posting is disabled for this entity (BILL_GL_POSTING_ENABLED per-entity override OFF). Use draft-je-preview, or enable the per-entity override on a Neon branch to verify.",
       });
     }
 
