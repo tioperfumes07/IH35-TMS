@@ -47,6 +47,7 @@ import { registerPasswordResetRoutes } from "./identity/password-reset.routes.js
 import { registerNotificationPreferenceRoutes } from "./identity/notification-prefs.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
+import { registerVoidCancelRequestRoutes } from "./governance/void-cancel-requests.routes.js";
 import { registerIdentityApplicantRoutes } from "./identity/applicants.routes.js";
 import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js";
 import { registerDriverCatalogRoutes } from "./catalogs/driver/index.js";
@@ -664,6 +665,7 @@ async function main() {
   await registerNotificationPreferenceRoutes(app);
   await registerUserPreferencesRoutes(app);
   await registerWorkflowRoutes(app);
+  await registerVoidCancelRequestRoutes(app);
   await registerIdentityApplicantRoutes(app);
   await registerMdataRoutes(app);
   await registerUnitPermitsRoutes(app);
