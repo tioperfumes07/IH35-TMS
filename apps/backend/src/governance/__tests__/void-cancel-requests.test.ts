@@ -15,8 +15,12 @@ function mockClient(handlers: Handler[]) {
     query: async (sql: string) => {
       seen.push(String(sql));
       const h = handlers.find((x) => x.match(String(sql)));
-      if (!h) throw new Error(`unexpected SQL in mock: ${String(sql).slice(0, 120)}`);
-      return { rows: h.rows };
+      if (h) return { rows: h.rows };
+      // Default: feature-flag lookups (isEnabled) resolve to OFF (no row). The WO-void financial gate
+      // now reads WO_VOID_ENABLED per-entity via lib.feature_flags instead of process.env; these tests
+      // assert the flag-OFF behavior, so an unseeded flag (= OFF) is exactly right.
+      if (String(sql).includes("lib.feature_flags")) return { rows: [] };
+      throw new Error(`unexpected SQL in mock: ${String(sql).slice(0, 120)}`);
     },
   };
   return { client, seen };
