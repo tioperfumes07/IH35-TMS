@@ -157,3 +157,14 @@ QBO bank categorization is not one operation. All flags OFF until owner sign-off
 
 ## Build order once approved
 B0 (Stage 4 RLS + A1) → B1 (USMCA seed) → B2 (bridge + backfill) → B3 (register) → B4 (mapping) → B5 (posting, flags OFF). GUARD schema-verifies this doc; Jorge approves; only then the first migration.
+
+---
+
+## VERIFIED RECONCILIATION (2026-06-30, GUARD prod + coder fresh-DB) — supersedes earlier assumptions
+- **af1 entity-RLS is LIVE on prod** (`accounts_entity_select`/`accounts_entity_write`, GUC-scoped, RLS forced). So B0/Stage-4 is **already done** — A1 (#1697) is purely the GUC-supply + caller fix, not a policy change. The empty Account picker was the unset-GUC bug (af1 returns 0 rows without `app.operating_company_id`).
+- **catalogs.accounts WRITE path is broken under af1** (verified): POST create / PATCH / deactivate run unscoped AND the create INSERT **omits `operating_company_id`** → account creation fails the WITH CHECK today (only QBO lucia-bypass writes). The Phase-B "+Add account" / DRV write path must set the GUC **and** insert `operating_company_id`. (A1 #1697 fixes only the reads.)
+- **Schema already supports the QBO model — no new columns:** `catalogs.accounts` has `account_type` (8-value COA enum) + `account_subtype` (= detail type) + `parent_account_id` (hierarchy). Bridge column = `bank_accounts.ledger_account_id` (exists; reuse, no `coa_account_id`).
+- **CA-01 is already built** (migration `202606080010`: `catalogs.account_types` 15 + `catalogs.detail_types` 144 + `account-type-catalog.routes.ts`). The New-Account "No detail types available" bug was a **dialog mismatch** (the drawer filtered the 15-type catalog by the 8-value COA enum) — fixed in #1701 via an enum→codes map. A full 15-type Account Type dropdown (with edit-mode reverse-mapping from the lossy 8-enum) is a follow-up for visual review.
+- **USMCA COA = 0 accounts** (TRANSP 371, TRK 31). B1 (seed USMCA chart) remains the single backbone unblock; seed must populate account_type + account_subtype + parent_account_id.
+- **DRV per-driver escrow/advance accounts: PARKED** by Jorge until driver data is updated. When resumed: NEW current parents ("Current Driver Cash Advance Accounts" = Other Current Asset; "Current Driver Escrow Accounts" = Other Current Liability — fixes the long-term-liability mis-type); per-driver subs named `{Complete Name}-{MM-DD-YYYY hire date}`; QBO push deferred until accounting is fully functional; embezzlement COA ids (Ignacio Munoz / Anarely Alcazar) on an active denylist.
+- **Hire-date provenance:** `mdata.drivers.hire_date_source` column added (#1702, HOLD) — required before any hire-date backfill (file_import = HR truth; samsara_estimate from createdAtTime already in raw_payload, median ~1d accurate; needs_review for >180d rehire divergence). Samsara cross-validation preview = #1700.
