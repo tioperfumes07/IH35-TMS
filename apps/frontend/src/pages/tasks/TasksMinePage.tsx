@@ -55,6 +55,7 @@ export function TasksMinePage() {
         ) : tasks.length === 0 ? (
           <div className="p-6 text-center text-xs text-slate-500">No tasks assigned to you in this window.</div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">
             <thead className="border-b border-slate-200 text-slate-500">
               <tr>
@@ -87,6 +88,7 @@ export function TasksMinePage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

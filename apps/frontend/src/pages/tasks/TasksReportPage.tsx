@@ -116,6 +116,7 @@ export function TasksReportPage() {
         {byEmployee.length === 0 ? (
           <div className="p-6 text-center text-xs text-slate-500">No tasks in this window.</div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">
             <thead className="border-b border-slate-200 text-slate-500">
               <tr>
@@ -140,6 +141,7 @@ export function TasksReportPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
