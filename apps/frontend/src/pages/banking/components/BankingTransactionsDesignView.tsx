@@ -927,10 +927,10 @@ export function BankingTransactionsDesignView({
                             <button
                               type="button"
                               disabled
-                              title="Split into multiple categories is coming soon"
+                              title="Split into multiple categories is not available in this build"
                               className="block w-full cursor-not-allowed border-b border-gray-100 px-3 py-2 text-left text-xs text-gray-400"
                             >
-                              Split <span className="text-[10px] font-semibold text-gray-400">(coming soon)</span>
+                              Split <span className="text-[10px] font-semibold text-gray-400">(unavailable)</span>
                             </button>
                             <button
                               type="button"
