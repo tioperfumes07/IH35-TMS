@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -9,6 +9,7 @@ import {
   listMaintenanceVehicles,
   listSevereRepairEstimates,
 } from "../../api/maintenance";
+import { cancelWorkOrderConsole, voidWorkOrderConsole } from "../../api/workOrdersConsole";
 import { Button } from "../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/forms/TwoSectionLineEditor";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
@@ -17,6 +18,8 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useAuth } from "../../auth/useAuth";
+import { useToast } from "../../components/Toast";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
@@ -165,6 +168,47 @@ export function WorkOrderDetailPage() {
   const companyId = selectedCompanyId ?? "";
   const [selectedAssetId, setSelectedAssetId] = useState("");
   const [lineDraft, setLineDraft] = useState<TwoSectionLine[]>([]);
+
+  // Cancel/Void = Owner/Administrator ONLY, reason REQUIRED (>=3), soft (never deletes). These hit the
+  // SAME backend as the WO Console (cancelWorkOrderConsole/voidWorkOrderConsole) — which reverses the
+  // WO's linked bill/GL via the shared void engine when WO_VOID_ENABLED is on, and refuses (no orphan)
+  // when posted financials exist and the flag is off.
+  const auth = useAuth();
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
+  const canCancelVoid = ["Owner", "Administrator"].includes(String(auth.user?.role ?? ""));
+  const [reasonModal, setReasonModal] = useState<{ kind: "cancel" | "void" } | null>(null);
+  const [reasonText, setReasonText] = useState("");
+  const invalidateWo = () => {
+    void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", id, companyId] });
+    void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-posting-preview", id, companyId] });
+  };
+  const cancelMut = useMutation({
+    mutationFn: (reason: string) => cancelWorkOrderConsole(String(id), companyId, reason),
+    onSuccess: () => {
+      pushToast("Work order cancelled", "success");
+      setReasonModal(null);
+      setReasonText("");
+      invalidateWo();
+    },
+    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Cancel failed"), "error"),
+  });
+  const voidMut = useMutation({
+    mutationFn: (reason: string) => voidWorkOrderConsole(String(id), companyId, reason),
+    onSuccess: () => {
+      pushToast("Work order voided", "success");
+      setReasonModal(null);
+      setReasonText("");
+      invalidateWo();
+    },
+    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
+  });
+  const reasonValid = reasonText.trim().length >= 3;
+  const submitReason = () => {
+    if (!reasonValid || !reasonModal) return;
+    if (reasonModal.kind === "cancel") void cancelMut.mutateAsync(reasonText.trim());
+    else void voidMut.mutateAsync(reasonText.trim());
+  };
 
   const [woQ, costQ] = useQueries({
     queries: [
@@ -319,8 +363,81 @@ export function WorkOrderDetailPage() {
         >
           Print WO PDF
         </Button>
+        {canCancelVoid ? (
+          <>
+            <Button
+              type="button"
+              variant="danger"
+              disabled={cancelMut.isPending}
+              onClick={() => {
+                setReasonText("");
+                setReasonModal({ kind: "cancel" });
+              }}
+            >
+              Cancel WO
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              disabled={voidMut.isPending}
+              onClick={() => {
+                setReasonText("");
+                setReasonModal({ kind: "void" });
+              }}
+            >
+              Void
+            </Button>
+          </>
+        ) : null}
         {invoiceMismatch ? <span className="text-xs text-red-700">Resolve invoice vs line total before saving.</span> : null}
       </div>
+
+      {reasonModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-xl">
+            <h2 className="text-sm font-semibold text-slate-900">
+              {reasonModal.kind === "cancel" ? "Cancel work order" : "Void work order"}
+            </h2>
+            <p className="mt-1 text-xs text-slate-600">
+              {reasonModal.kind === "cancel"
+                ? "This cancels the work order. It is never deleted — it stays on record with your reason in the audit trail. Any linked bill is reversed when financial void is enabled."
+                : "This voids the work order (incl. completed). It is never deleted — it stays on record with your reason in the audit trail. Any linked bill/GL is reversed when financial void is enabled."}
+            </p>
+            <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-reason">
+              Reason (required)
+            </label>
+            <textarea
+              id="wo-reason"
+              className="mt-1 w-full rounded border border-slate-300 p-2 text-sm"
+              rows={3}
+              value={reasonText}
+              onChange={(event) => setReasonText(event.target.value)}
+              placeholder="Why is this being cancelled/voided?"
+              autoFocus
+            />
+            <div className="mt-3 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setReasonModal(null);
+                  setReasonText("");
+                }}
+              >
+                Close
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={submitReason}
+                disabled={!reasonValid || cancelMut.isPending || voidMut.isPending}
+              >
+                {reasonModal.kind === "cancel" ? "Confirm cancel" : "Confirm void"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-3">

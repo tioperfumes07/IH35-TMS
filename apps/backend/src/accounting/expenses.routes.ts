@@ -9,6 +9,7 @@ import { generateExpenseNumber } from "../expense-attribution/expense-number.js"
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { postSourceTransaction, reversePostedSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
 import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
+import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
@@ -616,7 +617,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
 
     const pre = await withCompanyScope(user.uuid, oci, async (client) => {
       if (!(await isVoidEnforcementEnabled(client, oci, String(user.uuid)))) return { kind: "disabled" as const };
-      if (!canVoid(String(user.role ?? ""))) return { kind: "forbidden" as const };
+      // Void executors = Owner + Administrator + Accountant (Jorge-aligned 2026-06-29; was Owner+Accountant).
+      if (!canVoidCancel(String(user.role ?? ""))) return { kind: "forbidden" as const };
       const r = await client.query(
         `SELECT posting_status, status FROM accounting.expenses WHERE id=$1::uuid AND operating_company_id=$2::uuid LIMIT 1`,
         [expenseId, oci]

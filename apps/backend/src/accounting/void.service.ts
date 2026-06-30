@@ -17,7 +17,11 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 
 export const VOID_FLAG_KEY = "VOID_ENFORCEMENT_ENABLED";
 
-export type VoidableEntityType = "invoice" | "journal_entry" | "bill";
+// 'expense' reuses the SAME source-linked reversal path as bill/invoice: the expense poster writes GL
+// to journal_entry_postings with source_transaction_type='expense' inside a posting batch, so
+// readOriginalGlPostings flips those lines with NO new GL math. Lets WO void/cancel reverse a linked
+// posted expense on the caller's transaction (atomic) instead of orphaning it.
+export type VoidableEntityType = "invoice" | "journal_entry" | "bill" | "expense";
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -287,6 +291,7 @@ export async function auditVoid(
     invoice: "accounting.invoices",
     journal_entry: "accounting.journal_entries",
     bill: "accounting.bills",
+    expense: "accounting.expenses",
   };
   const resourceType = resourceTypeByEntity[entityType];
   await appendCrudAudit(
