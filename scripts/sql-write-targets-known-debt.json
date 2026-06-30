@@ -11,8 +11,6 @@
     "apps/backend/src/factoring/factoring.routes.ts: UPDATE accounting.factoring_companies — TABLE not in migrated schema",
     "apps/backend/src/fuel/loves-upload.routes.ts: INSERT INTO fuel.loves_prices_daily — TABLE not in migrated schema",
     "apps/backend/src/fuel/loves-upload.routes.ts: UPDATE fuel.loves_prices_daily — TABLE not in migrated schema",
-    "apps/backend/src/maintenance/two-section-service.ts: INSERT INTO accounting.expenses — column \"linked_work_order_uuid\" does not exist",
-    "apps/backend/src/maintenance/two-section-service.ts: INSERT INTO accounting.expenses — column \"total_amount\" does not exist",
     "apps/backend/src/maintenance/vehicles.routes.ts: INSERT INTO mdata.units — column \"mileage\" does not exist",
     "apps/backend/src/routes/safety/dot-inspections.ts: INSERT INTO safety.csa_scores — column \"score_date\" does not exist",
     "apps/backend/src/routes/safety/dot-inspections.ts: INSERT INTO safety.csa_scores — column \"source_dot_inspection_count\" does not exist",
