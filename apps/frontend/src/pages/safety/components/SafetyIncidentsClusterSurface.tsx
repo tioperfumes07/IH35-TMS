@@ -8,6 +8,7 @@ import {
   type SafetyIncidentType,
 } from "../../../api/safety";
 import { Button } from "../../../components/Button";
+import { companyNow } from "../../../lib/businessDate";
 
 export type IncidentsClusterConfig = {
   incidentType: SafetyIncidentType;
@@ -28,7 +29,7 @@ function createDraftIncident(incidentType: SafetyIncidentType): Record<string, u
     id: "__create__",
     incident_type: incidentType,
     status: "open",
-    incident_at: new Date().toISOString(),
+    incident_at: companyNow(),
     location: "",
     description: "",
   };

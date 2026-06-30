@@ -4,6 +4,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createInternalFine, getInternalFines } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -15,7 +16,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     driver_uuid: "",
     reason_uuid: "",
     amount: 25,
-    imposed_date: new Date().toISOString().slice(0, 10),
+    imposed_date: companyToday(),
     status: "pending",
     notes: "",
   });

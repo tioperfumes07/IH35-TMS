@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSafetyAccidents } from "../../api/safety";
 import { Button } from "../../components/Button";
 import { AccidentReportDrawer } from "../../components/safety/AccidentReportDrawer";
+import { companyNow } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -12,7 +13,7 @@ function createDraftAccident(): Record<string, unknown> {
   return {
     id: "__create__",
     status: "open",
-    accident_at: new Date().toISOString(),
+    accident_at: companyNow(),
     location: "",
     notes: "",
     driver_id: "",

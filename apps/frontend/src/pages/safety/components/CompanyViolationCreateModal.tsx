@@ -5,6 +5,7 @@ import { createCompanyViolation } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { companyToday } from "../../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -16,7 +17,7 @@ type Props = {
 export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const [violationType, setViolationType] = useState("DOT_inspection");
   const [severity, setSeverity] = useState("minor");
-  const [reportedDate, setReportedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [reportedDate, setReportedDate] = useState(companyToday());
   const [description, setDescription] = useState("");
   const [correctivePlan, setCorrectivePlan] = useState("");
 

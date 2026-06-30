@@ -4,6 +4,7 @@ import { createInternalFine, createSafetyFine } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useAutoDeductionPolicyMutations } from "../../../hooks/useAutoDeductionPolicies";
+import { companyToday } from "../../../lib/businessDate";
 
 export type FineEntryKind = "dot" | "internal";
 
@@ -67,7 +68,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
   const [issuedByAuthority, setIssuedByAuthority] = useState("DOT");
   const [jurisdiction, setJurisdiction] = useState("");
   const [violationDescription, setViolationDescription] = useState("");
-  const [issuedDate, setIssuedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [issuedDate, setIssuedDate] = useState(companyToday());
   const [amountUsd, setAmountUsd] = useState("");
   const [notes, setNotes] = useState("");
   const [scheduleMode, setScheduleMode] = useState<"one" | "split">("one");

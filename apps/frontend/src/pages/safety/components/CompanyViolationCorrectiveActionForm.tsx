@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Button } from "../../../components/Button";
+import { companyToday } from "../../../lib/businessDate";
 
 type Props = {
   loading?: boolean;
@@ -8,7 +9,7 @@ type Props = {
 };
 
 export function CompanyViolationCorrectiveActionForm({ loading, onComplete }: Props) {
-  const [completedDate, setCompletedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [completedDate, setCompletedDate] = useState(companyToday());
   const [notes, setNotes] = useState("");
 
   return (

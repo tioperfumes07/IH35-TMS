@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { companyNow } from "../../../lib/businessDate";
 
 export function HOSViolationsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -12,7 +13,7 @@ export function HOSViolationsTab() {
     driver_id: "",
     violation_code: "",
     violation_description: "",
-    occurred_at: new Date().toISOString(),
+    occurred_at: companyNow(),
     source: "manual" as "manual" | "eld_import" | "dot_inspection",
     duty_status: "",
     severity: "medium" as "low" | "medium" | "high" | "critical",

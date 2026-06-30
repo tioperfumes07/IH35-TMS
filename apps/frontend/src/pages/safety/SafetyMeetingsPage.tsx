@@ -10,6 +10,7 @@ import {
 import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -19,7 +20,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [topic, setTopic] = useState("");
-  const [meetingDate, setMeetingDate] = useState(new Date().toISOString().slice(0, 10));
+  const [meetingDate, setMeetingDate] = useState(companyToday());
   const [requiredAttendees, setRequiredAttendees] = useState<string[]>([]);
   const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
 

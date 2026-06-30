@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
+import { companyToday } from "../../../lib/businessDate";
 import {
   advanceRtdCase,
   createDrugProgramTest,
@@ -56,7 +57,7 @@ export function DrugAlcoholTab() {
   const [driverId, setDriverId] = useState("");
   const [testType, setTestType] = useState<(typeof TEST_TYPES)[number]>("random");
   const [testResult, setTestResult] = useState<(typeof TEST_RESULTS)[number]>("negative");
-  const [testDate, setTestDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [testDate, setTestDate] = useState(() => companyToday());
 
   const driversQ = useQuery({
     queryKey: ["drivers", "drug-ui", companyId],
