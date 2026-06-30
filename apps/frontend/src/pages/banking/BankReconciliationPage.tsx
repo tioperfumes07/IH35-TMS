@@ -47,8 +47,9 @@ export function BankReconciliationPage() {
   });
 
   const coaQuery = useQuery({
-    queryKey: ["banking", "coa-accounts"],
-    queryFn: () => getCoaAccounts().then((res) => res.accounts),
+    queryKey: ["banking", "coa-accounts", selectedCompanyId],
+    queryFn: () => getCoaAccounts(selectedCompanyId ?? undefined).then((res) => res.accounts),
+    enabled: Boolean(selectedCompanyId),
   });
 
   const worklistQuery = useQuery({

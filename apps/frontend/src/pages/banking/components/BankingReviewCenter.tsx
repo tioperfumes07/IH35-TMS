@@ -73,8 +73,8 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
   });
 
   const coaQuery = useQuery({
-    queryKey: ["catalogs", "coa-accounts", "review-center"],
-    queryFn: () => getCoaAccounts(),
+    queryKey: ["catalogs", "coa-accounts", "review-center", companyId],
+    queryFn: () => getCoaAccounts(companyId),
     enabled: Boolean(companyId) && tab === "review",
     staleTime: 120_000,
   });

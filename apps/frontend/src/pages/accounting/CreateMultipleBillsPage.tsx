@@ -86,7 +86,7 @@ export function CreateMultipleBillsPage() {
 
   const coaQuery = useQuery({
     queryKey: ["multi-bills", "coa", companyId],
-    queryFn: getCoaAccounts,
+    queryFn: () => getCoaAccounts(companyId),
     enabled: Boolean(companyId),
   });
 
