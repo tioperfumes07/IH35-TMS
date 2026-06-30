@@ -78,6 +78,27 @@ fuel, banking. No constraint, unique index, or RLS policy on entity-scoped data 
 - `USMCA-MISSING-UNCATEGORIZED-MAPPING` — USMCA has no `uncategorized_expense` mapping; resolved by
   Path B Stage 5. Blocks July launch.
 
+## Per-domain, per-entity reference catalogs (cancel/void reasons)
+
+Reference/lookup catalogs that drive **distinct operational domains stay separate AND per-entity** —
+this is the house pattern, not a fork to "unify later." Specifically:
+
+- **Load cancellations** use `catalogs.load_cancellation_reasons` (operational: why a *load* was
+  cancelled — WEATHER, TRUCK_BREAKDOWN, NO_PICKUP, …).
+- **Financial void/cancel** (invoices, bills, payments, journal entries, settlements, work-order
+  voids) uses `catalogs.void_cancel_reasons` (financial: duplicate, error, wrong_amount,
+  customer_dispute, cancelled_load, other). Migration `202606300030`.
+
+These are **different semantic domains and must not be merged** — a financial-void dropdown must
+never show "Weather", and a load-cancel dropdown must never show "Wrong Amount". Each such
+**per-domain, per-entity reason catalog** carries `operating_company_id NOT NULL` + RLS modeled on
+`catalogs.load_cancellation_reasons` (`is_lucia_bypass()` OR `org.user_company_access` membership for
+SELECT; `identity.current_user_role()` Owner/Administrator/Manager **AND** opco-membership for
+INSERT/UPDATE; no DELETE — void-not-delete via `is_active`/`deactivated_at`). The legacy global
+`catalogs.cancellation_reasons` (no `operating_company_id`) is **deprecated**; do **not** extend it
+and do **not** route new surfaces to it. A future agent must keep these catalogs **per-entity** —
+never regress a reason catalog to a global, entity-less table.
+
 ## Legal ↔ Finance separation of duties (Option B)
 See `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` → "Legal ↔ Finance separation of duties"
 and `docs/specs/LEGAL-FINANCE-OWNERSHIP-AND-FLIP-READINESS.md`. Legal captures consent + emits the
