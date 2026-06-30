@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { ScheduledReport } from "../../api/reports";
 
 type Props = {
@@ -9,9 +10,9 @@ export function ScheduledReportsPanel({ rows }: Props) {
     <section className="rounded border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
         <h3 className="text-sm font-semibold text-slate-900">Scheduled auto-emailed</h3>
-        <a href="#" className="text-xs font-semibold text-[#1f2a44] hover:underline">
+        <Link to="/reports/scheduled" className="text-xs font-semibold text-[#1f2a44] hover:underline">
           Manage
-        </a>
+        </Link>
       </div>
       <div className="space-y-2 px-3 py-2">
         {rows.map((row) => (
