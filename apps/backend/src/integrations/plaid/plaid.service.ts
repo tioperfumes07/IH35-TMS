@@ -552,7 +552,12 @@ export async function syncTransactions(itemId: string) {
               updated_at
             )
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::text[],$10,$11,$12,$13,'plaid',now(),now())
-            ON CONFLICT (plaid_transaction_id) DO NOTHING
+            -- Arbitrate on the dedup index uq_bank_transactions_account_dedup (bank_account_id, dedup_hash):
+            -- a re-synced txn shares both plaid_transaction_id AND the dedup hash, and a cross-source dupe
+            -- shares the dedup hash — so this single arbiter covers every collision in the 'added' batch and
+            -- skips it instead of aborting the whole transaction (the 0-transactions / 500 bug). 'modified'
+            -- txns (same plaid_transaction_id, changed fields) take the separate UPDATE path, not this insert.
+            ON CONFLICT (bank_account_id, dedup_hash) DO NOTHING
             RETURNING id, operating_company_id, plaid_category
           `,
           [
