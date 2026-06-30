@@ -9,6 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
 import { auditVoid, postVoidReversal, type VoidReversalResult } from "../accounting/void.service.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import { generatePresignedUploadUrl, isR2Configured } from "../storage/r2-client.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import {
@@ -160,9 +161,9 @@ export async function settleWorkOrderFinancialLinkage(
   userId: string,
   reason: string
 ): Promise<WoFinancialSettleResult> {
-  // FLAG_FLIP-gate-safe: read the raw env on one line, compare on the next (never `=== "true"` inline a flag literal).
-  const woVoidFlagRaw = process.env.WO_VOID_ENABLED ?? "false";
-  const woVoidEnabled = woVoidFlagRaw === "true";
+  // PER-ENTITY gate (NOT a global process.env read): resolve WO_VOID_ENABLED via lib.feature_flags for
+  // THIS operating company, so enabling WO-void for one entity cannot enable it for another. Default OFF.
+  const woVoidEnabled = await isEnabled(client as never, "WO_VOID_ENABLED", { operating_company_id: operatingCompanyId });
 
   // WO → bill (the reliable, migration-backed linkage). Active = revoked_at IS NULL.
   const billsRes = await client.query(
