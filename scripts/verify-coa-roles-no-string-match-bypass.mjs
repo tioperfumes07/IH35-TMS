@@ -24,6 +24,27 @@ for (const required of [resolverPath, routesPath, migrationPath]) {
   }
 }
 
+// Control accounts (A/R, A/P) must FAIL CLOSED: the resolver may never silently pick one of several
+// account_subtype matches (root cause of the GUARD Module 15 invoice A/R mis-post). Lock that in so the
+// loose-fallback regression can't return.
+if (fs.existsSync(resolverPath)) {
+  const resolver = fs.readFileSync(resolverPath, "utf8");
+  if (!/CONTROL_ROLES/.test(resolver)) {
+    failures.push("resolver must define CONTROL_ROLES (fail-closed control-account set incl. ar_control/ap_control)");
+  }
+  if (!/ControlAccountDesignationError/.test(resolver)) {
+    failures.push("resolver must throw ControlAccountDesignationError on ambiguous control accounts (fail-closed)");
+  }
+  if (!/_account_not_uniquely_designated/.test(resolver)) {
+    failures.push("resolver must surface *_account_not_uniquely_designated for ambiguous control accounts");
+  }
+  for (const controlRole of ['"ar_control"', '"ap_control"']) {
+    if (!resolver.includes(controlRole)) {
+      failures.push(`resolver CONTROL_ROLES must include ${controlRole}`);
+    }
+  }
+}
+
 if (fs.existsSync(postingEnginePath)) {
   const postingEngine = fs.readFileSync(postingEnginePath, "utf8");
   if (!/resolveRoleAccountOptional/.test(postingEngine)) {
