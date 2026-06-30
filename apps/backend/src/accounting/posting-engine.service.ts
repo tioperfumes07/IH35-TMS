@@ -440,19 +440,22 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
       FROM accounting.invoice_lines il
       LEFT JOIN catalogs.accounts expl
         ON expl.id = il.account_id
+        AND expl.operating_company_id = $2::uuid
         AND expl.deactivated_at IS NULL
         AND expl.is_postable = true
       LEFT JOIN catalogs.items it
         ON it.qbo_item_id = il.qbo_item_id
+        AND it.operating_company_id = $2::uuid
         AND it.deactivated_at IS NULL
       LEFT JOIN catalogs.accounts itm
         ON itm.id = it.default_income_account_id
+        AND itm.operating_company_id = $2::uuid
         AND itm.deactivated_at IS NULL
         AND itm.is_postable = true
       WHERE il.invoice_id = $1::uuid
       ORDER BY il.display_order ASC, il.id ASC
     `,
-    [sourceId]
+    [sourceId, operatingCompanyId]
   );
 
   const descriptionBase = invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`;
