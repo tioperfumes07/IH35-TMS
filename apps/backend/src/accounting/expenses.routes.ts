@@ -228,7 +228,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
   // 202607011600_bank_recon_expense_match_part2a.sql), never a hardcoded value. Entity-scoped through
   // withCompanyScope (SET app.operating_company_id → RLS) + an explicit operating_company_id filter.
   // Only real columns from 202606151300_expenses_header_phase1_foundation.sql are read.
-  app.get("/api/v1/expenses", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/expenses", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
