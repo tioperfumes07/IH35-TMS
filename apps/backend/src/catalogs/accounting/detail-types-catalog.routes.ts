@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { isCatalogWriteRole } from "../../auth/role-helpers.js";
 import { companyQuerySchema, currentAuthUser, idParamSchema, listQuerySchema, validationError } from "./shared.js";
 
@@ -125,7 +126,14 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
          RETURNING id`,
         [b.account_type_id, opco, b.name, b.code ?? null, b.description ?? null, b.sort_order, b.is_active],
       );
-      return res.rows[0]?.id as string;
+      const id = res.rows[0]?.id as string;
+      await appendCrudAudit(client, authUser.uuid, "catalog.detail_type.create", {
+        id,
+        account_type_id: b.account_type_id,
+        name: b.name,
+        operating_company_id: opco,
+      });
+      return id;
     });
     return reply.code(201).send({ id: created });
   });
@@ -171,6 +179,13 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
          RETURNING id`,
         values,
       );
+      if (res.rows[0]) {
+        await appendCrudAudit(client, authUser.uuid, "catalog.detail_type.update", {
+          id: parsedParams.data.id,
+          operating_company_id: opco,
+          fields: Object.keys(b),
+        });
+      }
       return { status: res.rows[0] ? (200 as const) : (404 as const) };
     });
     if (result.status === 404) return reply.code(404).send({ error: "catalog_detail_type_not_found" });
@@ -202,6 +217,10 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
          WHERE id = $1 AND operating_company_id = $2 AND is_system = false`,
         [parsedParams.data.id, opco],
       );
+      await appendCrudAudit(client, authUser.uuid, "catalog.detail_type.deactivate", {
+        id: parsedParams.data.id,
+        operating_company_id: opco,
+      });
       return { status: 200 as const };
     });
     if (result.status === 404) return reply.code(404).send({ error: "catalog_detail_type_not_found" });
