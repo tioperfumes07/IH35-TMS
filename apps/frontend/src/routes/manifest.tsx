@@ -8,6 +8,7 @@ import { Shell } from "../components/Shell";
 import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
 import { ListsHubPage } from "../pages/lists/ListsHubPage";
+import { DomainCatalogHubPage } from "../pages/lists/DomainCatalogHubPage";
 import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
 import { BrokersListPage } from "../pages/lists/names/BrokersListPage";
 import { DriverDetailPage } from "../pages/DriverDetail";
@@ -2416,6 +2417,17 @@ export const ROUTES = React.Children.toArray(
             }
           />
         ))}
+        {/* Per-domain Lists hub — registered BEFORE the /lists/:domain(/:catalogKey) catch-alls so
+            /lists/hub/<domain> resolves to the real hub (static "hub" segment out-ranks the dynamic
+            :domain/:catalogKey pattern). Additive. */}
+        <Route
+          path="/lists/hub/:domain"
+          element={
+            <ProtectedRoute>
+              <DomainCatalogHubPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/lists/:domain"
           element={

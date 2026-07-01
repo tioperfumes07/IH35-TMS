@@ -1,21 +1,24 @@
 import { CATALOG_IN_PREPARATION } from "../../../lib/prodEmptyStateCopy";
 import { DomainRowCountBadge } from "./DomainRowCountBadge";
 
-type CatalogItem = {
+export type CatalogItem = {
   name: string;
   description: string;
   live: boolean;
   catalogKey?: string;
 };
 
-type DomainConfig = {
+export type DomainConfig = {
   key: string;
   label: string;
   pillClass: string;
   catalogs: CatalogItem[];
 };
 
-const DOMAIN_CONFIG: DomainConfig[] = [
+// Single source of truth for the Lists domain map. Both AllCatalogsMap (main hub) and
+// DomainCatalogHubPage (per-domain hub) render from this same array via sortDomainsForDisplay —
+// never a second hand-ordered copy, so a newly-added catalog auto-places by name.
+export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "safety",
     label: "Safety",
@@ -146,46 +149,141 @@ const DOMAIN_CONFIG: DomainConfig[] = [
   },
 ];
 
-type Props = {
+// Accounting is pinned FIRST; every other domain follows alphabetically by label; catalogs within
+// each domain are alphabetical by name. Pure + data-driven so new catalogs auto-place (no drift).
+export function sortDomainsForDisplay(config: DomainConfig[] = DOMAIN_CONFIG): DomainConfig[] {
+  const byLabel = (a: DomainConfig, b: DomainConfig) => a.label.localeCompare(b.label);
+  const accounting = config.filter((d) => d.key === "accounting").sort(byLabel);
+  const rest = config.filter((d) => d.key !== "accounting").sort(byLabel);
+  return [...accounting, ...rest].map((domain) => ({
+    ...domain,
+    catalogs: [...domain.catalogs].sort((a, b) => a.name.localeCompare(b.name)),
+  }));
+}
+
+export function findDomainByKey(key: string, config: DomainConfig[] = DOMAIN_CONFIG): DomainConfig | undefined {
+  return config.find((d) => d.key === key);
+}
+
+export function listsDomainSectionId(domainKey: string): string {
+  return `lists-domain-${domainKey}`;
+}
+
+function normalizeListsDomain(domain: string): string {
+  if (domain === "drivers") return "driver";
+  return domain;
+}
+
+// Single route resolver shared by the main hub and every per-domain hub. Centralizing the per-domain
+// route maps here (was inline in ListsHubPage.openCatalog) keeps navigation from diverging between
+// the two surfaces.
+export function buildCatalogPath(domain: string, catalogKey: string): string {
+  const routeDomain = normalizeListsDomain(domain);
+  if (catalogKey === "_create") return `/lists/${routeDomain}`;
+  if (domain === "dispatch") {
+    const dispatchRouteMap: Record<string, string> = {
+      "load-types": "/lists/dispatch/load-types",
+      load_types: "/lists/dispatch/load-types",
+      "detention-reasons": "/lists/dispatch/detention-reasons",
+      detention_reasons: "/lists/dispatch/detention-reasons",
+      "pickup-time-types": "/lists/dispatch/pickup-time-types",
+      pickup_time_types: "/lists/dispatch/pickup-time-types",
+      "additional-charges": "/lists/dispatch/additional-charges",
+      additional_charges: "/lists/dispatch/additional-charges",
+      "load-cancellation-reasons": "/lists/dispatch/load-cancellation-reasons",
+      load_cancellation_reasons: "/lists/dispatch/load-cancellation-reasons",
+    };
+    const dispatchPath = dispatchRouteMap[catalogKey];
+    if (dispatchPath) return dispatchPath;
+  }
+  if (domain === "names_master") {
+    if (catalogKey === "brokers") return "/lists/names/brokers";
+    return "/lists/names";
+  }
+  if (domain === "drivers") {
+    const driversReferenceRouteMap: Record<string, string> = {
+      "license-classes": "/lists/drivers/license-classes",
+      endorsements: "/lists/drivers/endorsements",
+      restrictions: "/lists/drivers/restrictions",
+      "medical-card-status": "/lists/drivers/medical-card-status",
+      "employment-status": "/lists/drivers/employment-status",
+      "termination-reasons": "/lists/drivers/termination-reasons",
+    };
+    const driversReferencePath = driversReferenceRouteMap[catalogKey];
+    if (driversReferencePath) return driversReferencePath;
+  }
+  if (domain === "maintenance") {
+    const maintenanceRouteMap: Record<string, string> = {
+      "oem-parts-reference": "/lists/maintenance/oem-parts-reference",
+    };
+    const maintenancePath = maintenanceRouteMap[catalogKey];
+    if (maintenancePath) return maintenancePath;
+  }
+  return `/lists/${routeDomain}/${catalogKey}`;
+}
+
+type DomainSectionProps = {
+  domain: DomainConfig;
   onCatalogClick: (domain: string, catalogKey: string) => void;
+  onDomainClick?: (domainKey: string) => void;
 };
 
-export function AllCatalogsMap({ onCatalogClick }: Props) {
-
+// One domain's card — header + catalog grid. Reused by AllCatalogsMap and DomainCatalogHubPage so
+// both surfaces render identically from DOMAIN_CONFIG.
+export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: DomainSectionProps) {
   return (
-    <div className="rounded border border-slate-200 bg-white p-3">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">All Catalogs Domain Map</div>
-      <div className="space-y-2">
-        {DOMAIN_CONFIG.map((domain) => {
-          return (
-            <div key={domain.key} className="rounded border border-slate-100 px-2 py-2 text-xs">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <span className={`rounded px-2 py-0.5 font-semibold ${domain.pillClass}`}>{domain.label}</span>
-                {/* #P3 parity — live row count via the same useModuleCount source as the ribbon badge
-                    (was domain.catalogs.length, a static catalog-type count that disagreed with the ribbon). */}
-                <DomainRowCountBadge domain={domain.key} className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600" />
+    <div id={listsDomainSectionId(domain.key)} className="rounded border border-slate-100 px-2 py-2 text-xs">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        {onDomainClick ? (
+          <button
+            type="button"
+            data-testid="domain-header-link"
+            onClick={() => onDomainClick(domain.key)}
+            className={`rounded px-2 py-0.5 font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-slate-400 ${domain.pillClass}`}
+          >
+            {domain.label}
+          </button>
+        ) : (
+          <span className={`rounded px-2 py-0.5 font-semibold ${domain.pillClass}`}>{domain.label}</span>
+        )}
+        {/* #P3 parity — live row count via the same useModuleCount source as the ribbon badge. */}
+        <DomainRowCountBadge domain={domain.key} className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600" />
+      </div>
+      <div className="grid gap-1.5 md:grid-cols-2">
+        {domain.catalogs.map((catalog) => (
+          <div key={`${domain.key}-${catalog.name}`} className="rounded border border-slate-100 px-2 py-1.5">
+            {catalog.live && catalog.catalogKey ? (
+              <button type="button" className="text-left font-semibold text-slate-700 hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
+                {catalog.name}
+              </button>
+            ) : (
+              <div className="font-semibold text-slate-500">
+                {catalog.name} <span className="text-[10px] uppercase tracking-wide">({CATALOG_IN_PREPARATION})</span>
               </div>
-              <div className="grid gap-1.5 md:grid-cols-2">
-                {domain.catalogs.map((catalog) => (
-                  <div key={`${domain.key}-${catalog.name}`} className="rounded border border-slate-100 px-2 py-1.5">
-                    {catalog.live && catalog.catalogKey ? (
-                      <button type="button" className="text-left font-semibold text-slate-700 hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
-                        {catalog.name}
-                      </button>
-                    ) : (
-                      <div className="font-semibold text-slate-500">
-                        {catalog.name} <span className="text-[10px] uppercase tracking-wide">({CATALOG_IN_PREPARATION})</span>
-                      </div>
-                    )}
-                    <div className="text-[11px] text-slate-500">{catalog.description}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+            )}
+            <div className="text-[11px] text-slate-500">{catalog.description}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
+type Props = {
+  onCatalogClick: (domain: string, catalogKey: string) => void;
+  onDomainClick?: (domainKey: string) => void;
+};
+
+export function AllCatalogsMap({ onCatalogClick, onDomainClick }: Props) {
+  const domains = sortDomainsForDisplay(DOMAIN_CONFIG);
+  return (
+    <div className="rounded border border-slate-200 bg-white p-3">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">All Catalogs Domain Map</div>
+      <div className="space-y-2">
+        {domains.map((domain) => (
+          <DomainCatalogSection key={domain.key} domain={domain} onCatalogClick={onCatalogClick} onDomainClick={onDomainClick} />
+        ))}
+      </div>
+    </div>
+  );
+}

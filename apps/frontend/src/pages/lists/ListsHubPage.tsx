@@ -1,17 +1,41 @@
+import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getListsInventory, getListsQboSyncHealth, getListsRecentActivity, postForceListsQboSync } from "../../api/listsHub";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AllCatalogsMap } from "./components/AllCatalogsMap";
+import { AllCatalogsMap, buildCatalogPath, listsDomainSectionId } from "./components/AllCatalogsMap";
 import { DomainRibbon } from "./components/DomainRibbon";
 import { ListsSubNav } from "./ListsSubNav";
 import { QboSyncHealthCard } from "./components/QboSyncHealthCard";
 import { RecentActivityCard } from "./components/RecentActivityCard";
 
+// Pure scroll-position helpers (per pathname) so browser-back to the Lists hub restores where you
+// were instead of snapping to the top of the mega-list. Storage-injected for unit testing.
+export function listsScrollKey(pathname: string): string {
+  return `lists-scroll:${pathname}`;
+}
+export function saveScrollPosition(storage: Pick<Storage, "setItem">, pathname: string, y: number): void {
+  try {
+    storage.setItem(listsScrollKey(pathname), String(Math.max(0, Math.round(y))));
+  } catch {
+    /* sessionStorage unavailable (private mode / SSR) — non-fatal */
+  }
+}
+export function readScrollPosition(storage: Pick<Storage, "getItem">, pathname: string): number {
+  try {
+    const raw = storage.getItem(listsScrollKey(pathname));
+    const n = raw == null ? 0 : Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function ListsHubPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -38,70 +62,37 @@ export function ListsHubPage() {
     onError: (error) => pushToast(String((error as Error).message || "Failed to start force sync"), "error"),
   });
 
-  function normalizeListsDomain(domain: string) {
-    if (domain === "drivers") return "driver";
-    return domain;
-  }
+  // On mount / navigation: deep-link ?domain=<key> wins and scrolls to that section; otherwise
+  // restore the saved scroll offset for this pathname (browser-back friendliness).
+  useEffect(() => {
+    const domainParam = new URLSearchParams(location.search).get("domain");
+    if (domainParam) {
+      const el = document.getElementById(listsDomainSectionId(domainParam));
+      if (el) {
+        el.scrollIntoView({ behavior: "auto", block: "start" });
+        return;
+      }
+    }
+    const y = readScrollPosition(window.sessionStorage, location.pathname);
+    if (y > 0) window.scrollTo(0, y);
+  }, [location.pathname, location.search]);
+
+  // Persist scroll offset continuously + on unmount so it survives navigation away.
+  useEffect(() => {
+    const onScroll = () => saveScrollPosition(window.sessionStorage, location.pathname, window.scrollY);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      saveScrollPosition(window.sessionStorage, location.pathname, window.scrollY);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [location.pathname]);
 
   function openCatalog(domain: string, catalogKey: string) {
-    const routeDomain = normalizeListsDomain(domain);
-    if (catalogKey === "_create") {
-      navigate(`/lists/${routeDomain}`);
-      return;
-    }
-    if (domain === "dispatch") {
-      const dispatchRouteMap: Record<string, string> = {
-        "load-types": "/lists/dispatch/load-types",
-        load_types: "/lists/dispatch/load-types",
-        "detention-reasons": "/lists/dispatch/detention-reasons",
-        detention_reasons: "/lists/dispatch/detention-reasons",
-        "pickup-time-types": "/lists/dispatch/pickup-time-types",
-        pickup_time_types: "/lists/dispatch/pickup-time-types",
-        "additional-charges": "/lists/dispatch/additional-charges",
-        additional_charges: "/lists/dispatch/additional-charges",
-        "load-cancellation-reasons": "/lists/dispatch/load-cancellation-reasons",
-        load_cancellation_reasons: "/lists/dispatch/load-cancellation-reasons",
-      };
-      const dispatchPath = dispatchRouteMap[catalogKey];
-      if (dispatchPath) {
-        navigate(dispatchPath);
-        return;
-      }
-    }
-    if (domain === "names_master") {
-      if (catalogKey === "brokers") {
-        navigate("/lists/names/brokers");
-        return;
-      }
-      navigate("/lists/names");
-      return;
-    }
-    if (domain === "drivers") {
-      const driversReferenceRouteMap: Record<string, string> = {
-        "license-classes": "/lists/drivers/license-classes",
-        endorsements: "/lists/drivers/endorsements",
-        restrictions: "/lists/drivers/restrictions",
-        "medical-card-status": "/lists/drivers/medical-card-status",
-        "employment-status": "/lists/drivers/employment-status",
-        "termination-reasons": "/lists/drivers/termination-reasons",
-      };
-      const driversReferencePath = driversReferenceRouteMap[catalogKey];
-      if (driversReferencePath) {
-        navigate(driversReferencePath);
-        return;
-      }
-    }
-    if (domain === "maintenance") {
-      const maintenanceRouteMap: Record<string, string> = {
-        "oem-parts-reference": "/lists/maintenance/oem-parts-reference",
-      };
-      const maintenancePath = maintenanceRouteMap[catalogKey];
-      if (maintenancePath) {
-        navigate(maintenancePath);
-        return;
-      }
-    }
-    navigate(`/lists/${routeDomain}/${catalogKey}`);
+    navigate(buildCatalogPath(domain, catalogKey));
+  }
+
+  function openDomainHub(domainKey: string) {
+    navigate(`/lists/hub/${domainKey}`);
   }
 
   const inventory = inventoryQuery.data?.inventory ?? [];
@@ -116,7 +107,7 @@ export function ListsHubPage() {
       {inventoryQuery.isLoading ? <div className="rounded border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading lists inventory...</div> : null}
       {!inventoryQuery.isLoading ? <DomainRibbon inventory={inventory} onCatalogClick={openCatalog} /> : null}
 
-      <AllCatalogsMap onCatalogClick={openCatalog} />
+      <AllCatalogsMap onCatalogClick={openCatalog} onDomainClick={openDomainHub} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <RecentActivityCard rows={activity} />
@@ -125,4 +116,3 @@ export function ListsHubPage() {
     </div>
   );
 }
-
