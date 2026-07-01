@@ -6,6 +6,7 @@ import { useToast } from "../../../components/Toast";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
+import { MatchDrawer } from "./MatchDrawer";
 
 export type BankingReviewDataSource = "uncategorized" | "review";
 
@@ -65,6 +66,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
   const { pushToast } = useToast();
   const [tab, setTab] = useState<TabId>("review");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [matchTxnId, setMatchTxnId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<
     Record<string, { category_kind: string; gl_account_id: string; memo: string; driver_id: string; driver_name: string }>
   >({});
@@ -194,9 +196,9 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                         </ActionButton>
                         <button
                           type="button"
-                          className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] text-gray-500"
-                          disabled
-                          title="Match drawer ships with Wave 2 /banking/transactions/:id/match-candidates"
+                          data-testid="banking-match-open"
+                          className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                          onClick={() => setMatchTxnId(id)}
                         >
                           Match
                         </button>
@@ -315,6 +317,13 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
           </div>
         ) : null}
       </div>
+
+      <MatchDrawer
+        open={Boolean(matchTxnId)}
+        bankTransactionId={matchTxnId}
+        operatingCompanyId={companyId}
+        onClose={() => setMatchTxnId(null)}
+      />
     </div>
   );
 }

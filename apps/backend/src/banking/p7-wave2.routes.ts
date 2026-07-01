@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { BankingRuleRow, mergeSuggestionPreferHigher, suggestionFromPlaidCategory, suggestionFromRules } from "./suggestion-engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { findCandidates } from "../accounting/bank-recon/match.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -125,6 +126,35 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     });
 
     return { items: rows, next_cursor: (q.cursor ?? 0) + rows.length };
+  });
+
+  // Ranked match candidates for a single bank transaction. Replaces the Wave-2 stub that returned
+  // match_candidates_count:0. Read-only (Part 1): returns the scored/ranked ledger candidates (open
+  // bills + expenses + bill_payments + transfers + payments/AR + JEs, direction-aware). The
+  // operating_company_id is taken from the validated query + membership guard (server-side active
+  // entity), NEVER trusted from a client body. findCandidates may auto-store a single high-confidence
+  // match into bank.reconciliation_matches — that write pre-exists, is additive, and posts NO GL, so
+  // this endpoint stays Tier-3.
+  app.get("/api/v1/banking/transactions/:id/match-candidates", async (req, reply) => {
+    const user = financeUser(req, reply);
+    if (!user) return;
+
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const operatingCompanyId = parsed.data.operating_company_id;
+
+    // Membership guard: a user may only pull candidates for an entity they belong to.
+    await assertCompanyMembership(user.uuid, operatingCompanyId);
+
+    const candidates = await findCandidates({
+      operating_company_id: operatingCompanyId,
+      bank_transaction_id: params.data.id,
+      actor_user_uuid: user.uuid,
+    });
+
+    return { candidates, match_candidates_count: candidates.length };
   });
 
   app.get("/api/v1/banking/rules", async (req, reply) => {
