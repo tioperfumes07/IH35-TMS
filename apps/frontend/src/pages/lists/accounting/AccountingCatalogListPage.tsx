@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { Button } from "../../../components/Button";
@@ -24,6 +25,8 @@ type Props = {
   readOnly?: boolean;
   metadataFields?: AccountingMetadataField[];
   metadataSummary?: (row: AccountingCatalogRow) => string;
+  // Optional in-context explainer link (e.g. Expense Categories → the GL account map).
+  helperLink?: { label: string; to: string; note?: string };
   // Opt-in (Block 7): multi-select checkboxes + a caller-rendered bulk-action bar.
   enableBulkSelect?: boolean;
   bulkBar?: (ctx: { selectedIds: string[]; rows: AccountingCatalogRow[]; clearSelection: () => void; refetch: () => void }) => ReactNode;
@@ -43,6 +46,7 @@ export function AccountingCatalogListPage({
   readOnly = false,
   metadataFields,
   metadataSummary,
+  helperLink,
   enableBulkSelect = false,
   bulkBar,
 }: Props) {
@@ -72,6 +76,8 @@ export function AccountingCatalogListPage({
 
   const rows = query.data?.rows ?? [];
   const total = query.data?.total ?? 0;
+  // Default sort order for a new row = max(existing)+1 (QBO/NetSuite convention: append to the end).
+  const nextSortOrder = rows.length ? Math.max(...rows.map((r) => r.sort_order ?? 0)) + 1 : 1;
   const emptyText = useMemo(() => {
     if (query.isLoading) return `Loading ${displayName.toLowerCase()}...`;
     if (rows.length > 0) return "";
@@ -100,6 +106,15 @@ export function AccountingCatalogListPage({
         }
       />
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
+
+      {helperLink ? (
+        <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          {helperLink.note ? <span className="mr-1">{helperLink.note}</span> : null}
+          <Link to={helperLink.to} className="font-semibold text-slate-700 underline focus:outline-none focus:ring-2 focus:ring-slate-400">
+            {helperLink.label}
+          </Link>
+        </div>
+      ) : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input
@@ -181,6 +196,7 @@ export function AccountingCatalogListPage({
         displayName={displayName}
         codeLabel={codeLabel}
         metadataFields={metadataFields}
+        nextSortOrder={nextSortOrder}
         client={client}
         mode={modalMode}
         row={selectedRow}

@@ -29,6 +29,8 @@ type Props = {
   mode: "create" | "edit";
   row: AccountingCatalogRow | null;
   metadataFields?: AccountingMetadataField[];
+  // Default sort order for a NEW row = max(existing)+1, computed by the list page.
+  nextSortOrder?: number;
   onClose: () => void;
   onSaved: () => void;
 };
@@ -38,6 +40,7 @@ type FormState = {
   display_name: string;
   description: string;
   is_active: boolean;
+  sort_order: number;
   metadata: Record<string, unknown>;
 };
 
@@ -51,10 +54,11 @@ export function AccountingCatalogModal({
   mode,
   row,
   metadataFields = [],
+  nextSortOrder,
   onClose,
   onSaved,
 }: Props) {
-  const [form, setForm] = useState<FormState>({ code: "", display_name: "", description: "", is_active: true, metadata: {} });
+  const [form, setForm] = useState<FormState>({ code: "", display_name: "", description: "", is_active: true, sort_order: 0, metadata: {} });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -66,11 +70,19 @@ export function AccountingCatalogModal({
       display_name: row?.display_name ?? "",
       description: row?.description ?? "",
       is_active: row?.is_active ?? true,
+      sort_order: row?.sort_order ?? nextSortOrder ?? 0,
       metadata: row?.metadata ?? {},
     });
     setErrors({});
     setSubmitError("");
-  }, [open, row]);
+  }, [open, row, nextSortOrder]);
+
+  // Disabled-until-valid: Create/Save is disabled until code + name + every required metadata field
+  // is present (the on-submit validate() below still produces per-field error messages).
+  const canSubmit =
+    Boolean(form.code.trim()) &&
+    Boolean(form.display_name.trim()) &&
+    metadataFields.every((field) => !field.required || String(form.metadata[field.key] ?? "").trim() !== "");
 
   function validate() {
     const next: Record<string, string> = {};
@@ -96,6 +108,7 @@ export function AccountingCatalogModal({
       display_name: form.display_name.trim(),
       description: form.description.trim() || undefined,
       is_active: form.is_active,
+      sort_order: Number.isFinite(form.sort_order) ? form.sort_order : undefined,
       metadata: form.metadata,
     };
     try {
@@ -141,17 +154,22 @@ export function AccountingCatalogModal({
         <label className="block text-xs font-semibold text-gray-600">
           {codeLabel}
           <input
+            data-testid="catalog-code-input"
             value={form.code}
-            disabled={readOnly}
+            disabled={readOnly || mode === "edit"}
             onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
             className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm disabled:bg-slate-100"
           />
+          {mode === "edit" ? (
+            <span className="mt-1 block text-[10px] font-normal text-slate-400">Stable identifier — immutable after create.</span>
+          ) : null}
           {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Display Name
           <input
+            data-testid="catalog-name-input"
             value={form.display_name}
             disabled={readOnly}
             onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))}
@@ -217,6 +235,18 @@ export function AccountingCatalogModal({
           />
         </label>
 
+        <label className="block text-xs font-semibold text-gray-600">
+          Sort order
+          <input
+            type="number"
+            value={form.sort_order}
+            disabled={readOnly}
+            onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))}
+            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+          />
+          <span className="mt-1 block text-[10px] font-normal text-slate-400">Dropdown display order (lower = earlier). Defaults to next available.</span>
+        </label>
+
         <label className="flex items-center gap-2 text-xs text-gray-700">
           <input
             type="checkbox"
@@ -226,6 +256,12 @@ export function AccountingCatalogModal({
           />
           Active
         </label>
+
+        {mode === "edit" && row ? (
+          <div className="border-t border-gray-100 pt-2 text-[10px] text-slate-400">
+            Created {new Date(row.created_at).toLocaleString()} · Updated {new Date(row.updated_at).toLocaleString()}
+          </div>
+        ) : null}
 
         {submitError ? <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
 
@@ -242,7 +278,7 @@ export function AccountingCatalogModal({
               Close
             </Button>
             {!readOnly ? (
-              <Button type="button" onClick={() => void submit()} disabled={isSaving}>
+              <Button type="button" data-testid="catalog-submit" onClick={() => void submit()} disabled={isSaving || !canSubmit}>
                 {mode === "create" ? "Create" : "Save Changes"}
               </Button>
             ) : null}
