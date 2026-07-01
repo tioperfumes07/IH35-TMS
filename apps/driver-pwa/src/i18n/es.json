@@ -622,6 +622,12 @@
     "all_chats": "Todos los chats",
     "removed": "mensaje eliminado",
     "no_messages": "Aún no hay mensajes.",
-    "placeholder": "Mensaje a despacho…"
+    "placeholder": "Mensaje a despacho…",
+    "confirmation": "Confirmación",
+    "acknowledged": "confirmado",
+    "acknowledge": "Confirmar recibido",
+    "cash_advance": "Adelanto de efectivo",
+    "ack_failed": "No se pudo confirmar — reintentar.",
+    "request_advance": "Solicitar adelanto de efectivo"
   }
 }

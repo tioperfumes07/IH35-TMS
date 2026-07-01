@@ -622,6 +622,12 @@
     "all_chats": "All chats",
     "removed": "message removed",
     "no_messages": "No messages yet.",
-    "placeholder": "Message dispatch…"
+    "placeholder": "Message dispatch…",
+    "confirmation": "Confirmation",
+    "acknowledged": "acknowledged",
+    "acknowledge": "Acknowledge",
+    "cash_advance": "Cash advance",
+    "ack_failed": "Could not acknowledge — retry.",
+    "request_advance": "Request cash advance"
   }
 }

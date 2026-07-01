@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
-import { listDriverChatThreads, getDriverThreadMessages, postDriverChatMessage, type DriverChatThread } from "../api/chat";
+import { listDriverChatThreads, getDriverThreadMessages, postDriverChatMessage, ackConfirmation, type DriverChatThread, type DriverChatMessage } from "../api/chat";
 
 function formatWhen(iso: string) {
   const d = new Date(iso);
@@ -47,6 +47,14 @@ export function ChatPage() {
     onError: () => pushToast(t("chat.send_failed", "Failed to send — retry."), "error"),
   });
 
+  const ackMutation = useMutation({
+    mutationFn: (m: DriverChatMessage) => ackConfirmation(activeThreadId, m.id, m.body ?? ""),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["pwa", "chat-messages", activeThreadId] });
+    },
+    onError: () => pushToast(t("chat.ack_failed", "Could not acknowledge — retry."), "error"),
+  });
+
   function threadLabel(th: DriverChatThread) {
     if (th.kind === "load") return th.load_ref_cache ? `${t("chat.load", "Load")} ${th.load_ref_cache}` : t("chat.load_thread", "Load chat");
     return th.subject || t("chat.message", "Message");
@@ -83,16 +91,37 @@ export function ChatPage() {
               ← {t("chat.all_chats", "All chats")}
             </button>
             <div className="mb-3 max-h-[50vh] space-y-2 overflow-y-auto" data-testid="pwa-chat-messages">
-              {messages.map((m) => (
-                <div key={m.id} className="text-sm">
-                  <span className="mr-2 text-xs text-pwa-text-secondary">#{m.seq} · {formatWhen(m.server_ts)} · {m.sender_party_type}</span>
-                  {m.status === "tombstoned" ? (
-                    <span className="italic text-pwa-text-secondary">{t("chat.removed", "message removed")}</span>
-                  ) : (
-                    <span>{m.body}</span>
-                  )}
-                </div>
-              ))}
+              {messages.map((m) => {
+                const dollars = m.cash_advance_amount_cents != null ? `$${(m.cash_advance_amount_cents / 100).toFixed(2)}` : "";
+                return (
+                  <div key={m.id} className="text-sm">
+                    <span className="mr-2 text-xs text-pwa-text-secondary">#{m.seq} · {formatWhen(m.server_ts)} · {m.sender_party_type}</span>
+                    {m.status === "tombstoned" ? (
+                      <span className="italic text-pwa-text-secondary">{t("chat.removed", "message removed")}</span>
+                    ) : m.msg_type === "cash_advance_card" ? (
+                      <span className="font-semibold">{t("chat.cash_advance", "Cash advance")} {dollars} · {m.cash_advance_status ?? "pending"}</span>
+                    ) : m.msg_type === "confirmation_request" ? (
+                      <span>
+                        <span className="font-semibold">{t("chat.confirmation", "Confirmation")}:</span> {m.body}{" "}
+                        {m.acked_at ? (
+                          <span className="text-xs text-pwa-text-secondary">✓ {t("chat.acknowledged", "acknowledged")}</span>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={ackMutation.isPending}
+                            onClick={() => ackMutation.mutate(m)}
+                            className="ml-1 rounded border border-pwa-border px-2 py-0.5 text-xs font-semibold disabled:opacity-40"
+                          >
+                            {t("chat.acknowledge", "Acknowledge")}
+                          </button>
+                        )}
+                      </span>
+                    ) : (
+                      <span>{m.body}</span>
+                    )}
+                  </div>
+                );
+              })}
               {messages.length === 0 ? <p className="text-sm text-pwa-text-secondary">{t("chat.no_messages", "No messages yet.")}</p> : null}
             </div>
             <textarea
@@ -105,6 +134,9 @@ export function ChatPage() {
             <PwaButton disabled={!draft.trim() || sendMutation.isPending} onClick={() => sendMutation.mutate(draft.trim())}>
               {t("chat.send", "Send")}
             </PwaButton>
+            <Link to="/cash-advance/new" className="mt-2 block text-center text-xs font-semibold text-pwa-text-secondary hover:underline">
+              {t("chat.request_advance", "Request cash advance")}
+            </Link>
           </PwaCard>
         )}
       </div>

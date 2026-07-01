@@ -24,6 +24,11 @@ export type ChatMessage = {
   body: string | null;
   status: "active" | "tombstoned";
   server_ts: string;
+  // CHAT-5 read-only enrichment:
+  cash_advance_status?: string | null;
+  cash_advance_amount_cents?: number | null;
+  ack_message_id?: string | null;
+  acked_at?: string | null;
 };
 
 export function newClientKey(): string {
@@ -58,7 +63,13 @@ export async function postChatMessage(
   threadId: string,
   operating_company_id: string,
   body: string,
-  opts: { client_key?: string; msg_type?: ChatMessage["msg_type"] } = {},
+  opts: {
+    client_key?: string;
+    msg_type?: ChatMessage["msg_type"];
+    references_message_id?: string;
+    ack_content_sha256?: string;
+    cash_advance_request_id?: string;
+  } = {},
 ) {
   return apiRequest<{ message: ChatMessage; deduped: boolean }>(`/api/v1/chat/threads/${threadId}/messages`, {
     method: "POST",
@@ -68,6 +79,9 @@ export async function postChatMessage(
       content_sha256: await contentSha256(body),
       msg_type: opts.msg_type ?? "text",
       body,
+      references_message_id: opts.references_message_id,
+      ack_content_sha256: opts.ack_content_sha256,
+      cash_advance_request_id: opts.cash_advance_request_id,
     },
   });
 }

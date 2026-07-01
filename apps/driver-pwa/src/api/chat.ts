@@ -22,6 +22,11 @@ export type DriverChatMessage = {
   body: string | null;
   status: "active" | "tombstoned";
   server_ts: string;
+  // CHAT-5 read-only enrichment:
+  cash_advance_status?: string | null;
+  cash_advance_amount_cents?: number | null;
+  ack_message_id?: string | null;
+  acked_at?: string | null;
 };
 
 export function newClientKey(): string {
@@ -42,9 +47,36 @@ export function getDriverThreadMessages(threadId: string, after_seq = 0) {
   return apiRequest<{ messages: DriverChatMessage[] }>(`/api/v1/driver/chat/threads/${threadId}/messages?after_seq=${after_seq}`);
 }
 
-export async function postDriverChatMessage(threadId: string, body: string, client_key?: string) {
+export async function postDriverChatMessage(
+  threadId: string,
+  body: string,
+  opts: {
+    client_key?: string;
+    msg_type?: DriverChatMessage["msg_type"];
+    references_message_id?: string;
+    ack_content_sha256?: string;
+    cash_advance_request_id?: string;
+  } = {},
+) {
   return apiRequest<{ message: DriverChatMessage; deduped: boolean }>(`/api/v1/driver/chat/threads/${threadId}/messages`, {
     method: "POST",
-    body: { client_key: client_key ?? newClientKey(), content_sha256: await contentSha256(body), msg_type: "text", body },
+    body: {
+      client_key: opts.client_key ?? newClientKey(),
+      content_sha256: await contentSha256(body),
+      msg_type: opts.msg_type ?? "text",
+      body,
+      references_message_id: opts.references_message_id,
+      ack_content_sha256: opts.ack_content_sha256,
+      cash_advance_request_id: opts.cash_advance_request_id,
+    },
+  });
+}
+
+/** Acknowledge a confirmation_request: posts a confirmation_ack referencing it + the acked content hash. */
+export async function ackConfirmation(threadId: string, confirmationMessageId: string, confirmationBody: string) {
+  return postDriverChatMessage(threadId, "Acknowledged", {
+    msg_type: "confirmation_ack",
+    references_message_id: confirmationMessageId,
+    ack_content_sha256: await contentSha256(confirmationBody),
   });
 }
