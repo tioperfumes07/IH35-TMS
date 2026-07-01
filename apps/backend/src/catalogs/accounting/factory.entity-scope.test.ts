@@ -1,4 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 // AF-2c — regression guard for the entity-scoped legacy-catalog factory. After AF-2 put FORCE-RLS +
 // NOT NULL operating_company_id on catalogs.items, the factory MUST (a) require operating_company_id,
@@ -128,6 +130,21 @@ describe("legacy accounting catalog factory — entityScoped (AF-2c)", () => {
     await h[GET]({ user: OWNER, query: { operating_company_id: OC } }, reply);
     expect(recorded.some((r) => r.sql.includes("set_config('app.operating_company_id'"))).toBe(true);
     expect(recorded.some((r) => r.sql.includes("t.operating_company_id = $"))).toBe(true);
+  });
+
+  it("every entity-scoped legacy catalog kind (accounts/classes/items) sets entityScoped in index.ts", () => {
+    // Guard: catalogs.accounts (AF-1), catalogs.classes (AF-3), catalogs.items (AF-2) are per-entity
+    // under FORCE-RLS. Their legacy factory registrations MUST set entityScoped:true or the routes leak
+    // across entities / 500 on create. This catches a future entity-scoped kind that forgets the flag.
+    const src = readFileSync(fileURLToPath(new URL("./index.ts", import.meta.url)), "utf8");
+    for (const table of ["accounts", "classes", "items"]) {
+      // find the config object opened by `tableName: "<table>"` and assert entityScoped:true before the next tableName
+      const start = src.indexOf(`tableName: "${table}"`);
+      expect(start, `config for ${table} not found`).toBeGreaterThan(-1);
+      const nextTable = src.indexOf("tableName:", start + 1);
+      const block = src.slice(start, nextTable === -1 ? undefined : nextTable);
+      expect(block, `${table} config must set entityScoped: true`).toMatch(/entityScoped:\s*true/);
+    }
   });
 
   it("non-entity kind is untouched: no GUC, no operating_company_id column on insert", async () => {

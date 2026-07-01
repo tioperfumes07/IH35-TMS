@@ -18,6 +18,9 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     nameColumn: "account_name",
     descriptionColumn: "notes",
     activeMode: "deactivated_at",
+    // AF-1: catalogs.accounts is per-entity under FORCE-RLS. Without scoping this legacy list would
+    // leak other entities' accounts (lucia-bypass session) — scope by + require operating_company_id.
+    entityScoped: true,
     requiredMetadata: ["account_type"],
     selectMetadataSql: [
       "'account_type', t.account_type::text",
@@ -70,6 +73,9 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     codeColumn: "class_code",
     nameColumn: "class_name",
     descriptionColumn: "notes",
+    // AF-3: catalogs.classes is per-entity under FORCE-RLS → scope by + require operating_company_id
+    // (else create 500s on NOT NULL + WITH CHECK, and the list leaks other entities' classes).
+    entityScoped: true,
     activeMode: "deactivated_at",
     selectMetadataSql: ["'parent_class_id', t.parent_class_id", "'qbo_class_id', t.qbo_class_id"],
     createMapper: (metadata) => ({
