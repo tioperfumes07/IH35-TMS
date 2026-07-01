@@ -76,6 +76,9 @@ jobs:
       - name: Verify expenses cents spine + void-not-delete (GAP-EXPENSES Phase 1)
         run: npm run verify:expenses-cents-void
 
+      - name: Verify expenses list is read-only + entity-scoped (GAP-EXPENSES browse)
+        run: npm run verify:expenses-list-readonly
+
       - name: Verify expense balance invariant (GAP-EXPENSES Phase 1.5)
         run: npm run verify:expense-balance-invariant
 

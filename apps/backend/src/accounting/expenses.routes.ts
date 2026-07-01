@@ -3,7 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
-import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
+import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
@@ -104,7 +104,160 @@ const reattributeBodySchema = z.object({
   reason: z.string().trim().min(5).max(500),
 });
 
+// GAP-EXPENSES browse (read-only): GET list query. status values match the header CHECK
+// (accounting.expenses.status IN ('draft','posted','void')); date filters read transaction_date.
+const listExpensesQuerySchema = companyQuerySchema.extend({
+  status: z.enum(["draft", "posted", "void"]).optional(),
+  date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export type ExpenseListFilters = {
+  status?: "draft" | "posted" | "void";
+  dateFrom?: string;
+  dateTo?: string;
+  limit: number;
+  offset: number;
+};
+
+export type ExpenseListRow = {
+  id: string;
+  expense_number: string | null;
+  transaction_date: string;
+  total_amount_cents: string;
+  status: string;
+  posting_status: string;
+  memo: string | null;
+  load_id: string | null;
+  vendor_uuid: string | null;
+  driver_uuid: string | null;
+  created_at: string;
+  vendor_name: string | null;
+  driver_first_name: string | null;
+  driver_last_name: string | null;
+  load_number: string | null;
+  line_description: string | null;
+  is_reconciled: boolean;
+};
+
+/**
+ * READ-ONLY expenses list query (GAP-EXPENSES browse). SELECT only — no writes.
+ * Entity-scoped by an explicit operating_company_id filter (the caller also SETs
+ * app.operating_company_id via withCompanyScope so RLS agrees). is_reconciled is derived
+ * from a REAL EXISTS against bank.reconciliation_matches (ledger_entry_kind='expense'),
+ * following the #1755 Bills/Bill-Payments reconciliation-status precedent; 'rejected' is
+ * excluded (the only non-active match_state on that table). LEFT JOINs never drop a row.
+ */
+export async function queryExpensesList(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: ExpenseListRow[] }> },
+  operatingCompanyId: string,
+  filters: ExpenseListFilters
+): Promise<ExpenseListRow[]> {
+  const values: unknown[] = [operatingCompanyId];
+  const where: string[] = ["e.operating_company_id = $1::uuid"];
+  if (filters.status) {
+    values.push(filters.status);
+    where.push(`e.status = $${values.length}`);
+  }
+  if (filters.dateFrom) {
+    values.push(filters.dateFrom);
+    where.push(`e.transaction_date >= $${values.length}::date`);
+  }
+  if (filters.dateTo) {
+    values.push(filters.dateTo);
+    where.push(`e.transaction_date <= $${values.length}::date`);
+  }
+  values.push(filters.limit);
+  const limitIdx = values.length;
+  values.push(filters.offset);
+  const offsetIdx = values.length;
+
+  const res = await client.query(
+    `
+      SELECT
+        e.id::text                                   AS id,
+        e.expense_number                             AS expense_number,
+        e.transaction_date                           AS transaction_date,
+        e.total_amount_cents::text                   AS total_amount_cents,
+        e.status                                     AS status,
+        e.posting_status                             AS posting_status,
+        e.memo                                       AS memo,
+        e.load_id::text                              AS load_id,
+        e.vendor_uuid::text                          AS vendor_uuid,
+        e.driver_uuid::text                          AS driver_uuid,
+        e.created_at                                 AS created_at,
+        v.vendor_name                                AS vendor_name,
+        dr.first_name                                AS driver_first_name,
+        dr.last_name                                 AS driver_last_name,
+        l.load_number                                AS load_number,
+        (
+          SELECT el.description
+          FROM accounting.expense_lines el
+          WHERE el.expense_id = e.id
+          ORDER BY el.line_sequence
+          LIMIT 1
+        )                                            AS line_description,
+        EXISTS (
+          SELECT 1
+          FROM bank.reconciliation_matches rm
+          WHERE rm.ledger_entry_kind = 'expense'
+            AND rm.ledger_entry_id = e.id
+            AND rm.operating_company_id = e.operating_company_id
+            AND rm.match_state IN ('auto_matched', 'user_matched')
+        )                                            AS is_reconciled
+      FROM accounting.expenses e
+      LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+      LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
+      LEFT JOIN mdata.loads l ON l.id = e.load_id
+      WHERE ${where.join(" AND ")}
+      ORDER BY e.transaction_date DESC, e.created_at DESC
+      LIMIT $${limitIdx} OFFSET $${offsetIdx}
+    `,
+    values
+  );
+  return res.rows;
+}
+
 export async function registerExpenseRoutes(app: FastifyInstance) {
+  // GAP-EXPENSES browse side (READ-ONLY). Paginated list of accounting.expenses for the Expenses
+  // list screen. STRICTLY read-only — SELECT only, no INSERT/UPDATE/DELETE. Mirrors the read-only
+  // reconciliation-status precedent of PR #1755 (Bills/Bill-Payments lists): a Bank Match is derived
+  // via an EXISTS against bank.reconciliation_matches (ledger_entry_kind='expense', added by
+  // 202607011600_bank_recon_expense_match_part2a.sql), never a hardcoded value. Entity-scoped through
+  // withCompanyScope (SET app.operating_company_id → RLS) + an explicit operating_company_id filter.
+  // Only real columns from 202606151300_expenses_header_phase1_foundation.sql are read.
+  app.get("/api/v1/expenses", async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
+    const parsed = listExpensesQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const q = parsed.data;
+
+    const result = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client) => {
+      // Guard like the create handler: if the header table isn't present (fresh/partial schema),
+      // return an empty browse rather than 500 — read-only, non-breaking.
+      if (!(await relationExists(client, "accounting.expenses"))) {
+        return { unavailable: true as const };
+      }
+
+      const rows = await queryExpensesList(client, q.operating_company_id, {
+        status: q.status,
+        dateFrom: q.date_from,
+        dateTo: q.date_to,
+        limit: q.limit,
+        offset: q.offset,
+      });
+      return { rows };
+    });
+
+    if ("unavailable" in result) return reply.code(200).send({ rows: [] });
+    return reply.code(200).send(result);
+  });
+
   app.post("/api/v1/expenses", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
