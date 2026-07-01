@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -31,6 +32,39 @@ export function num(n: number | string | null | undefined, digits = 0): string {
 }
 
 const HOS_WARN_MIN = 60; // shift/drive remaining under this → amber
+
+// COMPLIANCE-1: a "Live Fleet · refreshes every 5 min" view should only show units that are
+// actually reporting. Units last seen years/weeks ago (decommissioned/sold/offline demo units)
+// dilute the live picture, inflate the row count, and mislead DOT/insurer reviewers. Defense-in-
+// depth on top of the fleet-cleanup migration: units whose last fix is older than this single
+// named threshold (or that have never reported) are SEGREGATED out of the default live table into
+// a collapsible "Offline / stale (N)" group — additive, the data is never removed. The backend
+// `stale` amber flag (hours/1–2 days borderline) is preserved for the units that stay live.
+export const OFFLINE_STALE_THRESHOLD_DAYS = 7;
+export const OFFLINE_STALE_THRESHOLD_MINUTES = OFFLINE_STALE_THRESHOLD_DAYS * 24 * 60;
+
+/** A row is "offline" when it has no fix at all, or its last fix is older than the threshold. */
+export function isFleetRowOffline(
+  row: Pick<FleetLocationHosRow, "minutes_since_fix">,
+  thresholdMinutes: number = OFFLINE_STALE_THRESHOLD_MINUTES
+): boolean {
+  const mins = row.minutes_since_fix;
+  if (mins == null) return true; // never reported → not part of the live picture
+  return mins > thresholdMinutes;
+}
+
+/** Split the fleet feed into the default live list and the segregated offline/stale group. */
+export function partitionFleetByFreshness(
+  rows: FleetLocationHosRow[],
+  thresholdMinutes: number = OFFLINE_STALE_THRESHOLD_MINUTES
+): { live: FleetLocationHosRow[]; offline: FleetLocationHosRow[] } {
+  const live: FleetLocationHosRow[] = [];
+  const offline: FleetLocationHosRow[] = [];
+  for (const r of rows) {
+    (isFleetRowOffline(r, thresholdMinutes) ? offline : live).push(r);
+  }
+  return { live, offline };
+}
 
 // GLOBAL-TABLE-CONTROLS: every column sortable (click asc→desc→off) + resizable (drag edge, persists per user).
 // "LAST UPDATE" (the real position date+time) replaces the confusing standalone "MIN AGO" as the prominent
@@ -92,9 +126,15 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
     staleTime: 60_000,
   });
 
-  const rows = query.data?.rows ?? [];
+  const [showOffline, setShowOffline] = useState(false);
+
+  const allRows = query.data?.rows ?? [];
+  // COMPLIANCE-1: default view = only units reporting within the freshness threshold; years/weeks-
+  // stale (or never-reported) units are segregated into the collapsible group below.
+  const { live: liveRows, offline: offlineRows } = useMemo(() => partitionFleetByFreshness(allRows), [allRows]);
+
   const table = useTableController<FleetLocationHosRow>({
-    rows,
+    rows: liveRows,
     columns: FLEET_HOS_COLUMNS,
     tableKey: "compliance-fleet-hos",
     searchText: fleetHosSearchText,
@@ -116,7 +156,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
         onSearchChange={table.setSearch}
         searchPlaceholder="Search unit, driver, city…"
         filteredCount={table.filteredCount}
-        totalCount={rows.length}
+        totalCount={liveRows.length}
         columns={FLEET_HOS_COLUMNS}
         hidden={table.hidden}
         onToggleColumn={table.toggleColumn}
@@ -224,6 +264,59 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
       )}
 
       <Paginator page={table.page} pageCount={table.pageCount} onPageChange={table.setPage} />
+
+      {offlineRows.length > 0 ? (
+        <div className="mt-4" data-testid="compliance-fleet-hos-offline">
+          <button
+            type="button"
+            onClick={() => setShowOffline((v) => !v)}
+            className="flex w-full items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            aria-expanded={showOffline}
+          >
+            <span className="text-slate-400">{showOffline ? "▾" : "▸"}</span>
+            Offline / stale ({offlineRows.length})
+            <span className="ml-2 font-normal text-slate-500">
+              no fix in the last {OFFLINE_STALE_THRESHOLD_DAYS} days — hidden from the live view
+            </span>
+          </button>
+          {showOffline ? (
+            <div className="mt-2 overflow-x-auto rounded border border-slate-200 bg-white">
+              <table className="w-full table-fixed text-left text-xs">
+                <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-2 py-1.5">Unit</th>
+                    <th className="px-2 py-1.5">Driver</th>
+                    <th className="px-2 py-1.5">City</th>
+                    <th className="px-2 py-1.5">State</th>
+                    <th className="px-2 py-1.5">Last Update (Laredo)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {offlineRows.map((r) => (
+                    <tr
+                      key={r.unit_id}
+                      onClick={() => navigate(`/fleet/units/${r.unit_id}`)}
+                      className="cursor-pointer border-t border-slate-100 hover:bg-slate-50"
+                      title="Open unit detail"
+                    >
+                      <td className="px-2 py-1.5 font-medium">{r.unit_number ?? "—"}</td>
+                      <td className={`px-2 py-1.5 ${r.driver_name ? "" : "text-slate-400 italic"}`}>{r.driver_name ?? "Not assigned"}</td>
+                      <td className={`px-2 py-1.5 ${r.city ? "" : "text-slate-400"}`}>{r.city ?? "—"}</td>
+                      <td className={`px-2 py-1.5 ${r.state ? "" : "text-slate-400"}`}>{r.state ?? "—"}</td>
+                      <td className="px-2 py-1.5 whitespace-nowrap font-semibold text-amber-700">
+                        {r.captured_at_local ?? "Never reported"}
+                        {r.minutes_since_fix != null ? (
+                          <span className="ml-1 text-[10px] font-normal text-slate-400">({r.minutes_since_fix} min ago)</span>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }
