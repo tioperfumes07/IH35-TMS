@@ -1,13 +1,14 @@
 // CHAT-4 — driver PWA per-load dispatch chat. Lists the driver's load threads, opens a thread
 // (messages + composer). Transport v1 = polling. ES/EN chrome via i18n. Dark PWA theme.
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
-import { listDriverChatThreads, getDriverThreadMessages, postDriverChatMessage, ackConfirmation, type DriverChatThread, type DriverChatMessage } from "../api/chat";
+import { listDriverChatThreads, getDriverThreadMessages, postDriverChatMessage, ackConfirmation, newClientKey, type DriverChatThread, type DriverChatMessage } from "../api/chat";
+import * as chatOutbox from "../lib/chatOutbox";
 
 function formatWhen(iso: string) {
   const d = new Date(iso);
@@ -37,15 +38,36 @@ export function ChatPage() {
   });
   const messages = messagesQuery.data?.messages ?? [];
 
-  const sendMutation = useMutation({
-    mutationFn: (body: string) => postDriverChatMessage(activeThreadId, body),
-    onSuccess: async () => {
-      setDraft("");
+  // CHAT-7 offline outbox: a message is queued locally the instant Send is tapped, then flushed —
+  // now, on reconnect (window 'online'), and on mount. client_key idempotency makes retries safe.
+  const [pending, setPending] = useState(0);
+  const flushOutbox = useCallback(async () => {
+    const sent = await chatOutbox.flush((item) =>
+      postDriverChatMessage(item.thread_id, item.body, { client_key: item.client_key }).then(() => undefined),
+    );
+    setPending(chatOutbox.pendingCount());
+    if (sent > 0) {
       await queryClient.invalidateQueries({ queryKey: ["pwa", "chat-messages", activeThreadId] });
       await queryClient.invalidateQueries({ queryKey: ["pwa", "chat-threads"] });
-    },
-    onError: () => pushToast(t("chat.send_failed", "Failed to send — retry."), "error"),
-  });
+    }
+  }, [queryClient, activeThreadId]);
+
+  useEffect(() => {
+    setPending(chatOutbox.pendingCount());
+    void flushOutbox();
+    const onOnline = () => void flushOutbox();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [flushOutbox]);
+
+  function handleSend() {
+    const body = draft.trim();
+    if (!body) return;
+    chatOutbox.enqueue({ thread_id: activeThreadId, body, client_key: newClientKey(), created_at: Date.now() });
+    setDraft("");
+    setPending(chatOutbox.pendingCount());
+    void flushOutbox();
+  }
 
   const ackMutation = useMutation({
     mutationFn: (m: DriverChatMessage) => ackConfirmation(activeThreadId, m.id, m.body ?? ""),
@@ -135,11 +157,14 @@ export function ChatPage() {
               className="mb-2 w-full resize-none rounded border border-pwa-border bg-pwa-bg px-2 py-1 text-sm"
             />
             <PwaButton
-              disabled={!draft.trim() || sendMutation.isPending || threads.find((x) => x.id === activeThreadId)?.status === "archived"}
-              onClick={() => sendMutation.mutate(draft.trim())}
+              disabled={!draft.trim() || threads.find((x) => x.id === activeThreadId)?.status === "archived"}
+              onClick={handleSend}
             >
               {t("chat.send", "Send")}
             </PwaButton>
+            {pending > 0 ? (
+              <p className="mt-1 text-center text-xs text-pwa-text-secondary">{t("chat.queued", "{{n}} queued — sending when online").replace("{{n}}", String(pending))}</p>
+            ) : null}
             <Link to="/cash-advance/new" className="mt-2 block text-center text-xs font-semibold text-pwa-text-secondary hover:underline">
               {t("chat.request_advance", "Request cash advance")}
             </Link>
