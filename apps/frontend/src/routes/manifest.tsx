@@ -227,6 +227,7 @@ import { ReconciliationWorkspacePage as AccountingReconciliationWorkspacePage } 
 import { VendorBillCreatePage } from "../pages/accounting/VendorBillCreatePage";
 import { CreateMultipleBillsPage } from "../pages/accounting/CreateMultipleBillsPage";
 import { ExpenseCreatePage } from "../pages/accounting/ExpenseCreatePage";
+import { ExpensesListPage } from "../pages/accounting/ExpensesListPage";
 import { BillsPage } from "../pages/accounting/BillsPage";
 import { VendorBalancesPage } from "../pages/accounting/VendorBalancesPage";
 import { ManualJEListPage } from "../pages/accounting/ManualJEListPage";
@@ -3242,6 +3243,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ExpenseCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/expenses/list"
+          element={
+            <ProtectedRoute>
+              <ExpensesListPage />
             </ProtectedRoute>
           }
         />

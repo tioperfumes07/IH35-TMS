@@ -452,6 +452,49 @@ export function listVendorBills(
 }
 
 /** All vendors when `vendor_id` omitted; supports balance columns from list API. */
+// GAP-EXPENSES browse (read-only). Mirrors listBills; hits GET /api/v1/expenses.
+export type ExpenseListStatus = "draft" | "posted" | "void";
+export type ExpensePostingStatus = "unposted" | "posted" | "reversed";
+
+export type ExpenseListRow = {
+  id: string;
+  expense_number: string | null;
+  transaction_date: string;
+  total_amount_cents: number | string;
+  status: ExpenseListStatus;
+  posting_status: ExpensePostingStatus;
+  memo: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  vendor_uuid: string | null;
+  driver_uuid: string | null;
+  vendor_name: string | null;
+  driver_first_name: string | null;
+  driver_last_name: string | null;
+  line_description: string | null;
+  is_reconciled: boolean;
+};
+
+export function listExpenses(
+  operatingCompanyId: string,
+  params: {
+    status?: ExpenseListStatus;
+    date_from?: string;
+    date_to?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.date_from) query.set("date_from", params.date_from);
+  if (params.date_to) query.set("date_to", params.date_to);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<{ rows: ExpenseListRow[] }>(withCompany(`/api/v1/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
 export function listBills(
   operatingCompanyId: string,
   params: {

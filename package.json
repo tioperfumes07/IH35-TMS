@@ -311,6 +311,7 @@
     "verify:qbo-sync-health-tenant-scope": "node scripts/verify-qbo-sync-health-tenant-scope.mjs",
     "verify:no-test-units-in-prod": "node scripts/verify-no-test-units-in-prod.mjs",
     "verify:expenses-cents-void": "node scripts/verify-expenses-cents-and-void-not-delete.mjs",
+    "verify:expenses-list-readonly": "node scripts/verify-expenses-list-readonly.mjs",
     "verify:expense-balance-invariant": "node scripts/verify-expense-balance-invariant.mjs",
     "verify:uncategorized-expense-seed": "node scripts/verify-uncategorized-expense-seed.mjs",
     "verify:bill-resolver-single-source": "node scripts/verify-bill-resolver-single-source.mjs",
