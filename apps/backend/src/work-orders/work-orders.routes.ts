@@ -138,7 +138,7 @@ async function enqueueWorkOrderOutbox(
 // void.service. The reversing JE id is surfaced back to the caller to persist into
 // maintenance.work_orders.reversing_entry_ref.
 type WoFinancialSettleResult =
-  | { kind: "ok"; reversing_entry_ref: string | null }
+  | { kind: "ok"; reversing_entry_ref: string | null; closed_period_reversal: boolean }
   | { kind: "financial_blocked" }
   | { kind: "bill_has_payments" };
 
@@ -207,7 +207,7 @@ export async function settleWorkOrderFinancialLinkage(
   const hasFinancialLinkage = linkedBills.length > 0 || linkedExpenseCount > 0 || postedCount > 0;
   if (!hasFinancialLinkage) {
     // Open/unposted WO (e.g. DEMO-WO-001/002) — pure status change, no money. Proceeds regardless of flag.
-    return { kind: "ok", reversing_entry_ref: null };
+    return { kind: "ok", reversing_entry_ref: null, closed_period_reversal: false };
   }
 
   // Financial linkage present: gated. Default OFF refuses so we can NEVER orphan posted entries.
@@ -228,6 +228,10 @@ export async function settleWorkOrderFinancialLinkage(
   // bill reversal + the expense reversal + the WO status flip are ALL-OR-NOTHING — a throw rolls back the
   // whole set, never leaving a half-reversed WO. NO new GL math: postVoidReversal builds every reversing JE.
   let reversingEntryRef: string | null = null;
+  // Task #24: surface whether ANY reversal dated into a different (current) period — i.e. the source
+  // touched a closed period. The reversal itself already dates into the open period (void.service); this
+  // is only the register-facing flag.
+  let closedPeriod = false;
   const today = new Date().toISOString().slice(0, 10);
 
   // Reverse + void each linked bill.
@@ -259,6 +263,7 @@ export async function settleWorkOrderFinancialLinkage(
     );
     await auditVoid(client, userId, "bill", { operatingCompanyId, entityId: bill.id, reason, reversal });
     if (reversal.reversal_journal_entry_id) reversingEntryRef = reversal.reversal_journal_entry_id;
+    if (reversal.closed_period_reversal) closedPeriod = true;
   }
 
   // Reverse + void each linked EXPENSE (KEEP the cash path — Jorge 2026-06-29). Same bill grain: whole
@@ -302,10 +307,11 @@ export async function settleWorkOrderFinancialLinkage(
       );
       await auditVoid(client, userId, "expense", { operatingCompanyId, entityId: exp.id, reason, reversal });
       if (reversal.reversal_journal_entry_id) reversingEntryRef = reversal.reversal_journal_entry_id;
+      if (reversal.closed_period_reversal) closedPeriod = true;
     }
   }
 
-  return { kind: "ok", reversing_entry_ref: reversingEntryRef };
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
 }
 
 function centsFromNumeric(value: unknown): number | null {

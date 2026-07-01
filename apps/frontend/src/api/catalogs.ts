@@ -315,6 +315,68 @@ export function reactivateLoadCancellationReason(id: string) {
   });
 }
 
+// ── Task #24: per-entity FINANCIAL void/cancel reason catalog (catalogs.void_cancel_reasons) ──────────
+// Serves the financial void surfaces (invoices, bills, payments, journal entries, settlements, WO voids).
+// Distinct from load-cancellation-reasons (dispatch operational domain).
+export type VoidCancelReason = {
+  id: string;
+  operating_company_id: string;
+  reason_code: string;
+  reason_label: string;
+  requires_note: boolean;
+  is_active: boolean;
+  sort_order: number;
+  system_seeded: boolean;
+  deactivated_at: string | null;
+};
+
+export type CreateVoidCancelReasonInput = {
+  operating_company_id: string;
+  reason_code: string;
+  reason_label: string;
+  requires_note?: boolean;
+  sort_order?: number;
+};
+
+export type UpdateVoidCancelReasonInput = Partial<{
+  reason_code: string;
+  reason_label: string;
+  requires_note: boolean;
+  sort_order: number;
+}>;
+
+export function listVoidCancelReasons(operatingCompanyId: string, includeInactive = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ reasons: VoidCancelReason[] }>(`/api/v1/catalogs/void-cancel-reasons?${query.toString()}`);
+}
+
+export function createVoidCancelReason(payload: CreateVoidCancelReasonInput) {
+  return apiRequest<{ reason: VoidCancelReason }>("/api/v1/catalogs/void-cancel-reasons", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateVoidCancelReason(id: string, payload: UpdateVoidCancelReasonInput) {
+  return apiRequest<{ reason: VoidCancelReason }>(`/api/v1/catalogs/void-cancel-reasons/${id}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function deactivateVoidCancelReason(id: string) {
+  return apiRequest<{ reason: VoidCancelReason }>(`/api/v1/catalogs/void-cancel-reasons/${id}/deactivate`, {
+    method: "POST",
+  });
+}
+
+export function reactivateVoidCancelReason(id: string) {
+  return apiRequest<{ reason: VoidCancelReason }>(`/api/v1/catalogs/void-cancel-reasons/${id}/reactivate`, {
+    method: "POST",
+  });
+}
+
 export type DriverTerminationSeverity = "info" | "warning" | "severe";
 
 export type DriverTerminationReason = {
