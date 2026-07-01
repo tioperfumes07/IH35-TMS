@@ -81,7 +81,7 @@ type Decision = { ok: false; reason: BankFeedGlSkipReason; message?: string } | 
 /**
  * Read-only decision phase (inside one company-scoped transaction): checks the flag, reads the bank
  * transaction + its bank-account cash-GL bridge + the chosen account's validity, applies the three
- * double-post interlocks, and derives direction from is_credit. Never writes.
+ * double-post interlocks, and derives direction from the is_credit flag. Never writes.
  */
 async function decide(input: MaybePostBankCategorizationInput): Promise<Decision> {
   return withCompanyScope(input.actorUserUuid, input.companyId, async (client): Promise<Decision> => {
@@ -187,7 +187,7 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
     // Fail-closed bank cash-GL bridge (the direction-appropriate bank leg).
     if (!txn.bank_ledger_account_id) return { ok: false, reason: "bank_account_ledger_unlinked" };
 
-    // Sign landmine: money-out is stored NEGATIVE. Magnitude only; direction from is_credit.
+    // Sign landmine: money-out is stored NEGATIVE. Magnitude only; direction from the is_credit flag.
     const amountCents = Math.abs(Number(txn.amount_cents ?? 0));
     if (!Number.isFinite(amountCents) || amountCents <= 0) return { ok: false, reason: "zero_amount" };
 
