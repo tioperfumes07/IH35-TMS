@@ -86,7 +86,7 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
     await bypass(async () => {
       await db.query(
         `INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone, status)
-         VALUES ($1::uuid,$2::uuid,'B6','Drv',$3,'active')`,
+         VALUES ($1::uuid,$2::uuid,'B6','Drv',$3,'Active')`,
         [id, companyId, `+1006${randomUUID().slice(0, 7)}`]
       );
     });
