@@ -328,7 +328,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
   // opco is resolved FROM the task (never trusted from the client) then set as the RLS GUC.
 
   // GET /tasks/:id/comments — threaded comments for a task (oldest → newest), author enriched.
-  fastify.get("/:id/comments", async (request, reply) => {
+  fastify.get("/:id/comments", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (request, reply) => {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
@@ -354,7 +354,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
   });
 
   // POST /tasks/:id/comments — add a comment (+ @mentions); also writes a 'comment' activity row.
-  fastify.post("/:id/comments", async (request, reply) => {
+  fastify.post("/:id/comments", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (request, reply) => {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
@@ -397,7 +397,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
   });
 
   // GET /tasks/:id/activity — unified per-task activity feed (newest → oldest), actor enriched.
-  fastify.get("/:id/activity", async (request, reply) => {
+  fastify.get("/:id/activity", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (request, reply) => {
     const user = authUser(request, reply);
     if (!user) return;
     const { id } = IdParamSchema.parse(request.params);
