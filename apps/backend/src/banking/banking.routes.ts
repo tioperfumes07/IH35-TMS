@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { countPendingBills } from "../kpi/canonical-kpis.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
+import { countUncategorizedTransactions } from "./pending-categorization.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -150,6 +151,14 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         )
         .catch(() => ({ rows: [{ total_cash: 0 }] }));
       const authoritativeTotalCash = Number(cashRes.rows[0]?.total_cash ?? 0);
+      // BANKING-1: the UNCATEGORIZED headline must count the SAME population the Transactions
+      // "For review" queue lists — entity-scoped status IN ('pending_categorization','uncategorized')
+      // across all accounts. The tile view's uncategorized_count counts only 'uncategorized', so it
+      // read 0 while ~2,650 CSV-imported 'pending_categorization' rows sat in the queue. One shared
+      // count (pending-categorization.ts) now feeds both so they can never diverge.
+      const uncategorizedCount = await countUncategorizedTransactions(client, companyId).catch(() =>
+        Number(kpiRes.rows[0]?.total_uncategorized ?? 0)
+      );
       return {
         ...(kpiRes.rows[0] ?? {
           operating_company_id: companyId,
@@ -162,6 +171,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           total_uncategorized: 0,
         }),
         total_cash: authoritativeTotalCash,
+        total_uncategorized: uncategorizedCount,
         pending_bills: pendingBills,
         ...escrowCounts,
       };
