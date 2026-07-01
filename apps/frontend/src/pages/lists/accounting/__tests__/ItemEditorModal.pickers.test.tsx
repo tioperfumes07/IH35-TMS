@@ -31,4 +31,13 @@ describe("ItemEditorModal — real account/category pickers (PS-A)", () => {
     expect(SRC).toContain("invalidateQueries");
     expect(SRC).toMatch(/\+ New category/);
   });
+
+  it("persists the QBO two-sided purchasing side incl. a real preferred-vendor reference (AF-2c.2)", () => {
+    expect(SRC).toContain("purchase_description");
+    expect(SRC).toContain("purchase_cost_cents");
+    expect(SRC).toContain("preferred_vendor_id");
+    // the vendor picker must read the mdata.vendors master (the FK target), with the 200-cap fix
+    expect(SRC).toContain("listVendors");
+    expect(SRC).toMatch(/limit:\s*200/);
+  });
 });

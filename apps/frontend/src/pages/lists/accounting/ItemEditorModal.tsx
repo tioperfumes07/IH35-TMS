@@ -23,6 +23,7 @@ import { ApiError } from "../../../api/client";
 import type { AccountingCatalogCreateBody, AccountingCatalogRow, AccountingCatalogUpdateBody } from "../../../api/catalogs-accounting";
 import { classesCatalogClient, qboCategoriesCatalogClient } from "../../../api/catalogs-accounting";
 import { getCoaAccounts } from "../../../api/banking";
+import { listVendors } from "../../../api/mdata";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
@@ -62,6 +63,9 @@ type FormState = {
   incomeAccountId: string | null;
   buyEnabled: boolean;
   expenseAccountId: string | null;
+  purchaseDescription: string;
+  purchaseCostDollars: string;
+  preferredVendorId: string | null;
   categoryId: string | null;
   classId: string | null;
 };
@@ -79,8 +83,11 @@ function rowToForm(row: AccountingCatalogRow | null): FormState {
     description: row?.description ?? "",
     priceDollars: m.unit_price_cents != null ? String(Number(m.unit_price_cents) / 100) : "",
     incomeAccountId: asId(m.default_income_account_id),
-    buyEnabled: asId(m.default_expense_account_id) != null,
+    buyEnabled: asId(m.default_expense_account_id) != null || asId(m.preferred_vendor_id) != null || m.purchase_cost_cents != null,
     expenseAccountId: asId(m.default_expense_account_id),
+    purchaseDescription: typeof m.purchase_description === "string" ? m.purchase_description : "",
+    purchaseCostDollars: m.purchase_cost_cents != null ? String(Number(m.purchase_cost_cents) / 100) : "",
+    preferredVendorId: asId(m.preferred_vendor_id),
     categoryId: asId(m.category_id),
     classId: asId(m.default_class_id),
   };
@@ -109,6 +116,12 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
     enabled: open && !!operatingCompanyId,
   });
+  const vendorsQuery = useQuery({
+    // limit 200: the vendors endpoint defaults to 50 and would silently truncate the picker otherwise.
+    queryKey: ["mdata", "vendors", "for-items", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 200 }),
+    enabled: open && !!operatingCompanyId,
+  });
 
   const accounts = accountsQuery.data?.accounts ?? [];
   const incomeOptions: ComboboxOption[] = useMemo(
@@ -132,6 +145,10 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   const classOptions: ComboboxOption[] = useMemo(
     () => (classesQuery.data?.rows ?? []).map((c) => ({ value: c.id, label: c.display_name })),
     [classesQuery.data]
+  );
+  const vendorOptions: ComboboxOption[] = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).filter((v) => !v.deactivated_at).map((v) => ({ value: v.id, label: v.name })),
+    [vendorsQuery.data]
   );
 
   useEffect(() => {
@@ -194,6 +211,9 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
       taxable: form.taxable,
       default_income_account_id: form.sellEnabled ? form.incomeAccountId : null,
       default_expense_account_id: form.buyEnabled ? form.expenseAccountId : null,
+      purchase_description: form.buyEnabled ? form.purchaseDescription.trim() || null : null,
+      purchase_cost_cents: form.buyEnabled && form.purchaseCostDollars ? Math.round(parseFloat(form.purchaseCostDollars) * 100) : null,
+      preferred_vendor_id: form.buyEnabled ? form.preferredVendorId : null,
       default_class_id: form.classId,
       category_id: form.categoryId,
     };
@@ -366,6 +386,38 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           </label>
           {form.buyEnabled && (
             <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+              <label className="block md:col-span-2">
+                <span className="text-xs font-semibold text-gray-600">Purchase description</span>
+                <span className="ml-1 font-normal text-gray-400">(shows on POs / bills / checks)</span>
+                <textarea
+                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                  rows={2}
+                  value={form.purchaseDescription}
+                  onChange={(e) => set("purchaseDescription", e.target.value)}
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold text-gray-600">Purchase cost ($)</span>
+                <MoneyInput
+                  valueDollars={form.purchaseCostDollars ? Number(form.purchaseCostDollars) : null}
+                  onChangeDollars={(d) => set("purchaseCostDollars", d == null ? "" : String(d))}
+                  ariaLabel="Purchase cost"
+                  className="mt-1 w-full"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold text-gray-600">Preferred vendor</span>
+                <div className="mt-1">
+                  <Combobox
+                    options={vendorOptions}
+                    value={form.preferredVendorId}
+                    onChange={(v) => set("preferredVendorId", v)}
+                    placeholder="No preferred vendor"
+                    loading={vendorsQuery.isLoading}
+                    allowClear
+                  />
+                </div>
+              </label>
               <label className="block md:col-span-2">
                 <span className="text-xs font-semibold text-gray-600">Expense account *</span>
                 <div className="mt-1">
