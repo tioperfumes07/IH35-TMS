@@ -19,6 +19,11 @@ describeE2E("book-load reservation — E2E (FIX-NEW-409 stale-reservation guard)
   let companyId: string;
   let customerId: string;
   const createdLoadIds: string[] = [];
+  // Capture booked load numbers so afterAll can also delete the dispatch.load_id_reservations rows
+  // reserveNextLoadId leaves behind. Without this the reservation row survives the suite, and the
+  // SECOND run against the same CI DB (backend-vitest → test:coverage) regenerates the same date+seq
+  // load number and 23505-collides on (operating_company_id, reserved_load_number).
+  const createdLoadNumbers: string[] = [];
 
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
@@ -42,6 +47,11 @@ describeE2E("book-load reservation — E2E (FIX-NEW-409 stale-reservation guard)
       await client.query("BEGIN");
       await client.query("SET LOCAL app.bypass_rls = 'lucia'");
       for (const id of createdLoadIds) await client.query(`DELETE FROM mdata.loads WHERE id = $1::uuid`, [id]);
+      for (const ln of createdLoadNumbers)
+        await client.query(
+          `DELETE FROM dispatch.load_id_reservations WHERE operating_company_id = $1::uuid AND reserved_load_number = $2`,
+          [companyId, ln]
+        );
       await client.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
       await client.query("COMMIT");
     } catch {
@@ -69,5 +79,6 @@ describeE2E("book-load reservation — E2E (FIX-NEW-409 stale-reservation guard)
     expect(typeof result.row.load_number).toBe("string");
     expect(String(result.row.load_number).length).toBeGreaterThan(0);
     createdLoadIds.push(String(result.row.id));
+    createdLoadNumbers.push(String(result.row.load_number));
   });
 });
