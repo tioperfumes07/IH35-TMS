@@ -30,7 +30,10 @@ const { registerHosDriverMapPreviewRoutes } = await import("./hos-driver-map-pre
 
 function captureRoutes() {
   const handlers: Record<string, (req: unknown, reply: unknown) => Promise<unknown>> = {};
-  const app = { get: (path: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[path] = h; } } as never;
+  const app = {
+    get: (path: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[path] = h; },
+    post: (path: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[path] = h; },
+  } as never;
   registerHosDriverMapPreviewRoutes(app);
   return handlers;
 }
@@ -51,8 +54,12 @@ const PATH = "/api/v1/telematics/hos-driver-map/preview";
 describe("hos driver-map preview route (read-only smoke)", () => {
   beforeEach(() => { requireAuthResult = true; recordedSql = []; });
 
-  it("registers the preview endpoints", () => {
-    expect(Object.keys(captureRoutes())).toEqual([PATH, "/api/v1/telematics/driver-hire-date/preview"]);
+  it("registers the preview + apply endpoints", () => {
+    expect(Object.keys(captureRoutes())).toEqual([
+      PATH,
+      "/api/v1/telematics/driver-hire-date/preview",
+      "/api/v1/telematics/driver-hire-date/apply",
+    ]);
   });
 
   it("401s when unauthenticated and never touches the db", async () => {
