@@ -6,7 +6,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { previewDriverSamsaraMap } from "./hos-driver-map-preview.service.js";
-import { previewSamsaraHireDates, applySamsaraHireDateEstimates } from "./samsara-hire-date.service.js";
+import { previewSamsaraHireDates } from "./samsara-hire-date.service.js";
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
@@ -50,22 +50,5 @@ export async function registerHosDriverMapPreviewRoutes(app: FastifyInstance) {
       return previewSamsaraHireDates(client, oc);
     });
     return reply.send(preview);
-  });
-
-  // WRITE (owner-triggered gap-fill): fills hire_date from Samsara createdAtTime ONLY where it's currently
-  // empty, tagged hire_date_source='samsara_estimate'. Never overwrites a file/HR date; rehire divergences
-  // are left for human review. Owner/Admin only. Idempotent (skips rows that already have a date).
-  app.post("/api/v1/telematics/driver-hire-date/apply", async (req, reply) => {
-    const user = currentOfficeAdmin(req, reply);
-    if (!user) return;
-    const parsed = querySchema.safeParse((req.body as Record<string, unknown>) ?? req.query ?? {});
-    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
-    const oc = parsed.data.operating_company_id;
-
-    const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
-      return applySamsaraHireDateEstimates(client, oc, user.uuid);
-    });
-    return reply.send({ operating_company_id: oc, ...result });
   });
 }
