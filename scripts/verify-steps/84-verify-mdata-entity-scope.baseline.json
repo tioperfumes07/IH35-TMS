@@ -41,31 +41,6 @@
       "preview": "` SELECT BOOL_AND(COALESCE(c.factoring_recourse_type, 'recourse') = 'recourse') AS all_recourse FROM accounting.invoices"
     },
     {
-      "key": "apps/backend/src/accounting/fuel-posting/poster.service.ts#3bbf23d45d609a783aa69bf575a2bcdf87824704",
-      "file": "apps/backend/src/accounting/fuel-posting/poster.service.ts",
-      "preview": "` SELECT id::text FROM catalogs.accounts WHERE account_type = 'Liability' AND deactivated_at IS NULL AND is_postable = t"
-    },
-    {
-      "key": "apps/backend/src/accounting/fuel-posting/poster.service.ts#930d808e9532419f9c6f983be2abf22ebe520a2e",
-      "file": "apps/backend/src/accounting/fuel-posting/poster.service.ts",
-      "preview": "` SELECT id::text FROM catalogs.accounts WHERE account_subtype IN ('UndepositedFunds', 'Checking', 'Savings', 'CashOnHan"
-    },
-    {
-      "key": "apps/backend/src/accounting/fuel-posting/poster.service.ts#ad42453d1b6c0c66fb9dc10b5c9d3ef3bac2d6e4",
-      "file": "apps/backend/src/accounting/fuel-posting/poster.service.ts",
-      "preview": "` SELECT id::text FROM catalogs.accounts WHERE account_type = 'Liability' AND account_subtype IN ('OtherCurrentLiabiliti"
-    },
-    {
-      "key": "apps/backend/src/accounting/fuel-posting/poster.service.ts#d2e3362aaddf81497c24d362a22ae567e6f8d356",
-      "file": "apps/backend/src/accounting/fuel-posting/poster.service.ts",
-      "preview": "` SELECT arb.account_id::text AS account_id FROM catalogs.account_role_bindings arb JOIN catalogs.accounts a ON a.id = a"
-    },
-    {
-      "key": "apps/backend/src/accounting/fuel-posting/poster.service.ts#d431ced3d3680d73c43b96ef876b1e30a19e1161",
-      "file": "apps/backend/src/accounting/fuel-posting/poster.service.ts",
-      "preview": "` SELECT id::text FROM catalogs.accounts WHERE account_subtype = 'AccountsPayable' AND deactivated_at IS NULL AND is_pos"
-    },
-    {
       "key": "apps/backend/src/accounting/invoice-render.routes.ts#b17ab76048e22940489285f4a2f192e81cd6b5e6",
       "file": "apps/backend/src/accounting/invoice-render.routes.ts",
       "preview": "`SELECT * FROM mdata.loads WHERE id = $1 LIMIT 1`"
