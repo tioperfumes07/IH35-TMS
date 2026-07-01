@@ -44,7 +44,7 @@ describe("CODER-12 audit-spine — bank-recon variance JE", () => {
         };
       }
       if (sql.includes("SELECT amount_cents::int FROM accounting.payments")) return { rows: [{ amount_cents: 9000 }] };
-      if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ coa_account_id: "cash-account-1" }] };
+      if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ ledger_account_id: "cash-account-1" }] };
       if (sql.includes("INSERT INTO bank.reconciliation_matches")) return { rows: [] };
       if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-diff-1" }] };
       // the variance JE inserts two posting lines; RETURNING id now yields both

@@ -41,7 +41,7 @@ describe("bank-recon resolve difference Q8 compliance", () => {
         return { rows: [{ amount_cents: 9000 }] };
       }
       if (sql.includes("FROM banking.bank_accounts")) {
-        return { rows: [{ coa_account_id: "cash-account-1" }] };
+        return { rows: [{ ledger_account_id: "cash-account-1" }] };
       }
       if (sql.includes("INSERT INTO bank.reconciliation_matches")) {
         return { rows: [] };

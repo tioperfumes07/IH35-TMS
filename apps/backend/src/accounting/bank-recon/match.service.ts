@@ -495,9 +495,11 @@ async function postDifferenceJournalEntry(
 ) {
   if (input.variance_cents === 0) return null;
 
-  const accountRes = await client.query<{ coa_account_id: string | null }>(
+  // Bank→GL bridge is banking.bank_accounts.ledger_account_id (FK → catalogs.accounts), NOT coa_account_id
+  // (that column does not exist — reading it threw 42703 on every variance post). Same bridge CHAIN-04/05 use.
+  const accountRes = await client.query<{ ledger_account_id: string | null }>(
     `
-      SELECT coa_account_id::text
+      SELECT ledger_account_id::text
       FROM banking.bank_accounts
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -505,9 +507,9 @@ async function postDifferenceJournalEntry(
     `,
     [input.bank_account_id, input.operating_company_id]
   );
-  const cashAccountId = accountRes.rows[0]?.coa_account_id;
+  const cashAccountId = accountRes.rows[0]?.ledger_account_id;
   if (!cashAccountId) {
-    throw new Error("bank_account_missing_coa_account_id");
+    throw new Error("bank_account_missing_ledger_account_id");
   }
 
   const magnitude = Math.abs(input.variance_cents);
