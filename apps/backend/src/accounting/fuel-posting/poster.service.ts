@@ -65,7 +65,14 @@ async function ensureOpenPeriod(client: DbClient, operatingCompanyId: string, po
   }
 }
 
-async function resolveRoleBoundAccount(client: DbClient, roleKey: string): Promise<string | null> {
+// USMCA cross-entity-leak fix: this poster runs on withLuciaBypass (is_lucia_bypass()=true), so the
+// entity-scoped catalogs.accounts RLS (operating_company_id = app.operating_company_id GUC) is DEFEATED
+// and every catalogs.accounts read below would otherwise resolve an ARBITRARY entity's GL account
+// (ORDER BY ... LIMIT 1 across the whole per-entity COA). That would post a TRANSP fuel expense against
+// a TRK/USMCA account. catalogs.accounts is per-entity (AF-1, operating_company_id NOT NULL), so we pin
+// every resolver to the posting entity via an explicit operating_company_id predicate. Behavior is
+// identical for the correct entity (today only TRANSP has a populated COA).
+async function resolveRoleBoundAccount(client: DbClient, operatingCompanyId: string, roleKey: string): Promise<string | null> {
   const row = await client.query<{ account_id: string }>(
     `
       SELECT arb.account_id::text AS account_id
@@ -75,14 +82,15 @@ async function resolveRoleBoundAccount(client: DbClient, roleKey: string): Promi
         AND arb.deactivated_at IS NULL
         AND a.deactivated_at IS NULL
         AND a.is_postable = true
+        AND a.operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [roleKey]
+    [roleKey, operatingCompanyId]
   );
   return row.rows[0]?.account_id ?? null;
 }
 
-async function resolveFuelAdvanceLiabilityAccount(client: DbClient): Promise<string> {
+async function resolveFuelAdvanceLiabilityAccount(client: DbClient, operatingCompanyId: string): Promise<string> {
   const byName = await client.query<{ id: string }>(
     `
       SELECT id::text
@@ -90,6 +98,7 @@ async function resolveFuelAdvanceLiabilityAccount(client: DbClient): Promise<str
       WHERE account_type = 'Liability'
         AND deactivated_at IS NULL
         AND is_postable = true
+        AND operating_company_id = $1::uuid
         AND (
           account_name ILIKE '%fuel%advance%'
           OR account_name ILIKE '%driver%advance%'
@@ -97,7 +106,8 @@ async function resolveFuelAdvanceLiabilityAccount(client: DbClient): Promise<str
         )
       ORDER BY updated_at DESC
       LIMIT 1
-    `
+    `,
+    [operatingCompanyId]
   );
   if (byName.rows[0]?.id) return byName.rows[0].id;
 
@@ -109,18 +119,24 @@ async function resolveFuelAdvanceLiabilityAccount(client: DbClient): Promise<str
         AND account_subtype IN ('OtherCurrentLiabilities', 'CurrentLiabilities')
         AND deactivated_at IS NULL
         AND is_postable = true
+        AND operating_company_id = $1::uuid
       ORDER BY updated_at DESC
       LIMIT 1
-    `
+    `,
+    [operatingCompanyId]
   );
   if (bySubtype.rows[0]?.id) return bySubtype.rows[0].id;
 
   throw new Error("Fuel advance liability account mapping is missing");
 }
 
-async function resolveCompanyDirectCreditAccount(client: DbClient, preference: CompanyDirectCredit): Promise<{ account_id: string; source: string }> {
+async function resolveCompanyDirectCreditAccount(
+  client: DbClient,
+  operatingCompanyId: string,
+  preference: CompanyDirectCredit
+): Promise<{ account_id: string; source: string }> {
   if (preference === "ap") {
-    const apBound = await resolveRoleBoundAccount(client, "ap_clearing");
+    const apBound = await resolveRoleBoundAccount(client, operatingCompanyId, "ap_clearing");
     if (apBound) return { account_id: apBound, source: "role_binding:ap_clearing" };
     const apSubtype = await client.query<{ id: string }>(
       `
@@ -129,15 +145,17 @@ async function resolveCompanyDirectCreditAccount(client: DbClient, preference: C
         WHERE account_subtype = 'AccountsPayable'
           AND deactivated_at IS NULL
           AND is_postable = true
+          AND operating_company_id = $1::uuid
         ORDER BY updated_at DESC
         LIMIT 1
-      `
+      `,
+      [operatingCompanyId]
     );
     if (apSubtype.rows[0]?.id) return { account_id: apSubtype.rows[0].id, source: "account_subtype:AccountsPayable" };
     throw new Error("AP credit account mapping is missing for company-direct fuel posting");
   }
 
-  const undeposited = await resolveRoleBoundAccount(client, "undeposited_funds");
+  const undeposited = await resolveRoleBoundAccount(client, operatingCompanyId, "undeposited_funds");
   if (undeposited) return { account_id: undeposited, source: "role_binding:undeposited_funds" };
 
   const cashLike = await client.query<{ id: string }>(
@@ -147,9 +165,11 @@ async function resolveCompanyDirectCreditAccount(client: DbClient, preference: C
       WHERE account_subtype IN ('UndepositedFunds', 'Checking', 'Savings', 'CashOnHand')
         AND deactivated_at IS NULL
         AND is_postable = true
+        AND operating_company_id = $1::uuid
       ORDER BY updated_at DESC
       LIMIT 1
-    `
+    `,
+    [operatingCompanyId]
   );
   if (cashLike.rows[0]?.id) return { account_id: cashLike.rows[0].id, source: "account_subtype:cash_like" };
 
@@ -219,10 +239,10 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
     let creditAccountId = "";
     let creditResolutionSource = "";
     if (input.posting_path === "driver_advance") {
-      creditAccountId = await resolveFuelAdvanceLiabilityAccount(client);
+      creditAccountId = await resolveFuelAdvanceLiabilityAccount(client, input.operating_company_id);
       creditResolutionSource = "driver_advance_liability_account";
     } else {
-      const companyDirect = await resolveCompanyDirectCreditAccount(client, input.company_direct_credit ?? "cash");
+      const companyDirect = await resolveCompanyDirectCreditAccount(client, input.operating_company_id, input.company_direct_credit ?? "cash");
       creditAccountId = companyDirect.account_id;
       creditResolutionSource = companyDirect.source;
     }
