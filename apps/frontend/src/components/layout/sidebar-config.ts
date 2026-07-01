@@ -186,6 +186,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       return [
         { label: "Dispatch Home", to: "/dispatch" },
         { label: "Loads", to: "/dispatch?view=loads" },
+        { label: "Dispatch Chat", to: "/dispatch/chat" },
         { label: "At-Risk Queue", to: "/dispatch/at-risk" },
         { label: "In-Transit Issues", to: "/dispatch/in-transit-issues" },
         { label: "Assignment History", to: "/dispatch/assignment-history" },
