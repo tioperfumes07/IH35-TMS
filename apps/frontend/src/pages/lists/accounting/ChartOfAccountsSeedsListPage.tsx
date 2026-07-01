@@ -22,8 +22,23 @@ export function ChartOfAccountsSeedsListPage() {
             { value: "Expense", label: "Expense" },
           ],
         },
+        { key: "detail_type", label: "Detail Type", type: "text" },
+        {
+          key: "normal_balance",
+          label: "Normal Balance",
+          type: "select",
+          options: [
+            { value: "debit", label: "Debit" },
+            { value: "credit", label: "Credit" },
+          ],
+        },
       ]}
-      metadataSummary={(row) => `Type: ${String(row.metadata.account_type ?? "—")}`}
+      metadataSummary={(row) => `Type: ${String(row.metadata.account_type ?? "—")}${row.metadata.detail_type ? ` · ${String(row.metadata.detail_type)}` : ""}`}
+      helperLink={{
+        note: "Onboarding template rows — these seed a new company's Chart of Accounts; they are not live GL accounts.",
+        label: "Open Chart of Accounts",
+        to: "/lists/accounting/chart-of-accounts",
+      }}
     />
   );
 }
