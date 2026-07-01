@@ -67,10 +67,12 @@ contains("apps/frontend/src/components/safety/CertExpiryBadge.tsx", badge, [
   { pattern: /warn/, label: "warn badge state" },
 ]);
 
-const nav = read("apps/frontend/src/components/safety/SafetyGroupNav.tsx");
-contains("apps/frontend/src/components/safety/SafetyGroupNav.tsx", nav, [
+// SAFETY-2: Cert Expiry now has its own route /safety/cert-expiry (was aliased onto /safety/dot-compliance,
+// which broke active-tab/breadcrumb). Its nav config now lives in SAFETY_TABS_CONFIG.ts.
+const nav = read("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts");
+contains("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts", nav, [
   { pattern: /cert-expiry/, label: "cert expiry nav entry" },
-  { pattern: /\/safety\/dot-compliance/, label: "cert expiry target route" },
+  { pattern: /\/safety\/cert-expiry/, label: "cert expiry target route" },
 ]);
 
 const dotTab = read("apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx");
