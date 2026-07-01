@@ -375,6 +375,7 @@ import { TaskBoardPage } from "../pages/tasks/TaskBoardPage";
 import { TasksCalendarPage } from "../pages/tasks/TasksCalendarPage";
 import { TasksMinePage } from "../pages/tasks/TasksMinePage";
 import { TasksChatPage } from "../pages/tasks/TasksChatPage";
+import { DispatchChatPage } from "../pages/chat/DispatchChatPage";
 import { TasksReportPage } from "../pages/tasks/TasksReportPage";
 
 // Finance module (SIDEBAR-V2-REORG-25)
@@ -3550,6 +3551,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/tasks/calendar" element={<ProtectedRoute><TasksCalendarPage /></ProtectedRoute>} />
         <Route path="/tasks/mine" element={<ProtectedRoute><TasksMinePage /></ProtectedRoute>} />
         <Route path="/tasks/chat" element={<ProtectedRoute><TasksChatPage /></ProtectedRoute>} />
+        <Route path="/dispatch/chat" element={<ProtectedRoute><DispatchChatPage /></ProtectedRoute>} />
         <Route path="/tasks/report" element={<ProtectedRoute><TasksReportPage /></ProtectedRoute>} />
         {/* Finance module (SIDEBAR-V2-REORG-25) */}
         <Route path="/finance" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />
