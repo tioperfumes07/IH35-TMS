@@ -15,6 +15,23 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
+// BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
+// matched = green check, unmatched = neutral. Additive column only.
+function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
+  if (isReconciled) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-800">
+        <span aria-hidden="true">✓</span> Matched
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+      Unmatched
+    </span>
+  );
+}
+
 function displayBillLabel(bill: VendorBill) {
   const remaining = Math.max(0, Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
   const billRef = bill.bill_number || bill.id.slice(0, 8);
@@ -181,20 +198,21 @@ export function BillPaymentsListPage() {
               <th className="px-3 py-2 font-semibold">Vendor ID</th>
               <th className="px-3 py-2 font-semibold">Reference</th>
               <th className="px-3 py-2 font-semibold">Memo</th>
+              <th className="px-3 py-2 font-semibold">Reconciled</th>
               <th className="px-3 py-2 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paymentsQuery.isLoading ? (
               <tr>
-                <td colSpan={8} className="px-3 py-3 text-gray-500">
+                <td colSpan={9} className="px-3 py-3 text-gray-500">
                   Loading bill payments...
                 </td>
               </tr>
             ) : null}
             {!paymentsQuery.isLoading && rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-3 text-gray-500">
+                <td colSpan={9} className="px-3 py-3 text-gray-500">
                   No bill payments found.
                 </td>
               </tr>
@@ -208,6 +226,9 @@ export function BillPaymentsListPage() {
                 <td className="px-3 py-2 font-mono text-[11px] text-gray-700">{row.vendor_id ?? "-"}</td>
                 <td className="px-3 py-2 text-gray-700">{row.reference_number ?? row.check_number ?? "-"}</td>
                 <td className="px-3 py-2 text-gray-700">{row.memo ?? "-"}</td>
+                <td className="px-3 py-2">
+                  <ReconciledBadge isReconciled={row.is_reconciled} />
+                </td>
                 <td className="px-3 py-2">
                   {canVoid ? (
                     <Button
