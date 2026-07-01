@@ -100,6 +100,9 @@ jobs:
       - name: Verify Product & Service Categories rename + single-source category client
         run: npm run verify:product-service-categories
 
+      - name: Verify Detail Type catalog (extends detail_types, no dup table, route registered, Lists wired)
+        run: npm run verify:detail-type-catalog
+
       - name: Verify INS-COVERAGE gap counts units not assets (GUARD #40)
         run: npm run verify:insurance-coverage-gap-units
 
