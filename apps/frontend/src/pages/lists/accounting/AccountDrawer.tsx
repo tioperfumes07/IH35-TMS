@@ -8,7 +8,9 @@ import {
   type CatalogAccount,
 } from "../../../api/catalog-accounts";
 import { fetchAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../../api/coa-list";
+import { getCoaAccounts } from "../../../api/banking";
 import { Button } from "../../../components/Button";
+import { Combobox, type ComboboxOption } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 type Mode = "create" | "edit";
@@ -49,6 +51,21 @@ const COA_ENUM_TO_CATALOG_CODES: Record<string, string[]> = {
   OtherExpense: ["OEXP"],
 };
 
+// Preview-pane display mappings. All source values come straight from catalogs.account_types (seeded in
+// Block 2, migration 202606080010): statement ∈ {BS, P&L}; normal_balance ∈ {Debit, Credit};
+// default_action ∈ {view_register, run_report}; group_label ∈ {ASSET, LIABILITY, EQUITY, INCOME, EXPENSE}.
+// We only humanize those catalog codes here — the classification (BS/P&L, Debit/Credit, Register/Report)
+// is NOT hardcoded per account type; it is read from the fetched AccountTypeCatalogEntry.
+const STATEMENT_LABELS: Record<string, string> = { BS: "Balance Sheet", "P&L": "Profit & Loss" };
+const ACTION_LABELS: Record<string, string> = { view_register: "Account register", run_report: "Report" };
+const GROUP_LABELS: Record<string, string> = {
+  ASSET: "Assets",
+  LIABILITY: "Liabilities",
+  EQUITY: "Equity",
+  INCOME: "Income",
+  EXPENSE: "Expenses",
+};
+
 type FormState = {
   account_name: string;
   account_number: string;
@@ -58,6 +75,8 @@ type FormState = {
   opening_balance_cents: string;
   opening_balance_as_of: string;
   is_locked: boolean;
+  is_subaccount: boolean;
+  parent_account_id: string;
 };
 
 function emptyForm(): FormState {
@@ -70,6 +89,8 @@ function emptyForm(): FormState {
     opening_balance_cents: "",
     opening_balance_as_of: "",
     is_locked: false,
+    is_subaccount: false,
+    parent_account_id: "",
   };
 }
 
@@ -86,6 +107,8 @@ function formFromAccount(account: CatalogAccount): FormState {
         : "",
     opening_balance_as_of: account.opening_balance_as_of ?? "",
     is_locked: account.is_locked,
+    is_subaccount: Boolean(account.parent_account_id),
+    parent_account_id: account.parent_account_id ?? "",
   };
 }
 
@@ -143,6 +166,48 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
     return out;
   }, [typeCatalogQuery.data, form.account_type]);
 
+  // Parent-account candidates for the subaccount picker. getCoaAccounts is entity-scoped server-side
+  // (passes operating_company_id → af1 RLS), so this NEVER lists another entity's accounts. We further
+  // filter to the SAME account_type as the one being created (an Expense subaccount only nests under an
+  // Expense parent) and exclude self (edit mode) so an account cannot parent itself.
+  const parentAccountsQuery = useQuery({
+    queryKey: ["coa-accounts-for-parent", operatingCompanyId],
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId),
+    staleTime: 60 * 1000,
+  });
+
+  const parentOptions = useMemo<ComboboxOption[]>(() => {
+    const rows = parentAccountsQuery.data?.accounts ?? [];
+    return rows
+      .filter((a) => a.account_type === form.account_type)
+      .filter((a) => !a.deactivated_at)
+      .filter((a) => a.id !== account?.id)
+      .map((a) => ({
+        value: a.id,
+        label: a.account_name,
+        sublabel: a.account_number || undefined,
+      }));
+  }, [parentAccountsQuery.data, form.account_type, account?.id]);
+
+  // Live preview metadata — sourced from the fetched account_types catalog, NOT hardcoded. Find the
+  // catalog entry the selected COA group enum maps to; when a Detail Type is chosen, prefer the exact
+  // entry that owns that detail type (e.g. Asset+Checking → the "Bank" entry → BS / Debit / Register).
+  const previewEntry = useMemo<AccountTypeCatalogEntry | null>(() => {
+    const data = typeCatalogQuery.data;
+    if (!data || !form.account_type) return null;
+    const codes = new Set(COA_ENUM_TO_CATALOG_CODES[form.account_type] ?? []);
+    const matches = data.filter(
+      (e) => codes.has(e.code) || e.accountType === form.account_type || e.code === form.account_type,
+    );
+    if (matches.length === 0) return null;
+    if (form.account_subtype) {
+      const withDetail = matches.find((e) => e.detailTypes.some((dt) => dt.name === form.account_subtype));
+      if (withDetail) return withDetail;
+    }
+    return matches[0];
+  }, [typeCatalogQuery.data, form.account_type, form.account_subtype]);
+
   useEffect(() => {
     if (!open) return;
     setForm(account ? formFromAccount(account) : emptyForm());
@@ -167,6 +232,9 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
     if (form.opening_balance_cents.trim() && Number.isNaN(parseFloat(form.opening_balance_cents))) {
       next.opening_balance_cents = "Enter a valid dollar amount.";
     }
+    if (form.is_subaccount && !form.parent_account_id.trim()) {
+      next.parent_account_id = "Select a parent account.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -176,6 +244,11 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
     setIsSaving(true);
     setSubmitError("");
     try {
+      // parent_account_id (self-FK on catalogs.accounts, already persisted by the create/update routes).
+      // The create schema types it .optional() (NOT .nullable()), so on CREATE an unset parent must be
+      // omitted (undefined) — sending null would be a validation_error. On UPDATE the schema is nullable,
+      // so we send null to CLEAR a parent (unchecking "Make this a subaccount" on an existing subaccount).
+      const parentId = form.is_subaccount && form.parent_account_id.trim() ? form.parent_account_id : null;
       const body = {
         account_name: form.account_name.trim(),
         account_type: form.account_type,
@@ -186,6 +259,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         notes: form.notes.trim() || undefined,
         opening_balance_cents: centsFromDollarString(form.opening_balance_cents),
         opening_balance_as_of: form.opening_balance_as_of.trim() || null,
+        parent_account_id: mode === "create" ? (parentId ?? undefined) : parentId,
         is_locked: form.is_locked,
         operating_company_id: operatingCompanyId || undefined,
       };
@@ -326,6 +400,8 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 onChange={(e) => {
                   setField("account_type", e.target.value);
                   setField("account_subtype", "");
+                  // A parent must share the new account_type, so clear any stale same-type selection.
+                  setField("parent_account_id", "");
                 }}
                 className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               >
@@ -358,6 +434,99 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               </select>
             </FieldLabel>
 
+            {/* Make this a subaccount (§ additive) — reveals a same-type, per-entity parent picker. */}
+            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-3" data-testid="subaccount-section">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  data-testid="make-subaccount-checkbox"
+                  checked={form.is_subaccount}
+                  disabled={readOnly}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setField("is_subaccount", checked);
+                    if (!checked) setField("parent_account_id", "");
+                  }}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-slate-400 disabled:cursor-not-allowed"
+                />
+                <div>
+                  <div className="text-xs font-semibold text-gray-800">Make this a subaccount</div>
+                  <div className="mt-0.5 text-[11px] text-gray-500">
+                    Nest this account under a parent of the same account type (current entity only).
+                  </div>
+                </div>
+              </label>
+
+              {form.is_subaccount ? (
+                <div className="mt-3" data-testid="parent-account-picker">
+                  <div className="mb-1 text-xs font-semibold text-gray-600">
+                    Parent account<span className="ml-0.5 text-red-500">*</span>
+                  </div>
+                  <Combobox
+                    options={parentOptions}
+                    value={form.parent_account_id || null}
+                    onChange={(v) => setField("parent_account_id", v ?? "")}
+                    placeholder={
+                      parentOptions.length === 0 && !parentAccountsQuery.isLoading
+                        ? `No other ${form.account_type} accounts to nest under`
+                        : "Select parent account"
+                    }
+                    loading={parentAccountsQuery.isLoading}
+                    disabled={readOnly}
+                    allowClear
+                    error={errors.parent_account_id}
+                  />
+                </div>
+              ) : null}
+            </div>
+
+            {/* Live preview — sourced from catalogs.account_types (Block 2), never hardcoded. */}
+            {previewEntry ? (
+              <div
+                className="rounded border border-slate-200 bg-slate-50 px-3 py-3"
+                data-testid="account-preview-pane"
+              >
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Preview
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-700">
+                  <div className="font-semibold text-slate-900" data-testid="preview-name">
+                    {(form.account_number ? `${form.account_number} ` : "") +
+                      (form.account_name.trim() || "Untitled account")}
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-500">Classification</span>
+                    <span className="text-right" data-testid="preview-classification">
+                      {`${GROUP_LABELS[previewEntry.group] ?? previewEntry.group} › ${previewEntry.accountType} › ${
+                        form.account_subtype || "—"
+                      }`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-500">Statement</span>
+                    <span data-testid="preview-statement">
+                      {STATEMENT_LABELS[previewEntry.statement] ?? previewEntry.statement}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-500">Normal balance</span>
+                    <span data-testid="preview-normal-balance">{previewEntry.normalBalance}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-500">Opens as</span>
+                    <span data-testid="preview-opens-as">
+                      {ACTION_LABELS[previewEntry.defaultAction] ?? previewEntry.defaultAction}
+                    </span>
+                  </div>
+                  <div className="pt-1 text-[11px] text-slate-500" data-testid="preview-description">
+                    {`Lands under ${GROUP_LABELS[previewEntry.group] ?? previewEntry.group} on your ${
+                      STATEMENT_LABELS[previewEntry.statement] ?? previewEntry.statement
+                    }${form.is_subaccount ? ", nested as a subaccount." : "."}`}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             {/* Description / Notes */}
             <FieldLabel label="Description">
               <textarea
@@ -385,11 +554,16 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               </FieldLabel>
 
               <FieldLabel label="Balance As Of">
+                {/* Box-in-box fix: DatePicker renders its own single bordered control (the trigger button).
+                    Passing border/height on the wrapper produced a nested border. Match the Opening Balance
+                    field (MoneyInput) exactly — wrapper is layout-only (mt-1 w-full); the control's own
+                    border is the single box. */}
                 <DatePicker
+                  data-testid="balance-as-of-datepicker"
                   value={form.opening_balance_as_of}
                   disabled={readOnly}
                   onChange={(next) => setField("opening_balance_as_of", next)}
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                  className="mt-1 w-full"
                 />
               </FieldLabel>
             </div>
