@@ -9,7 +9,9 @@ export type ItemsReconcileResult = {
   reconciledAt: string;
 };
 
-async function markLocalOnlyDrift(client: PoolClient): Promise<number> {
+async function markLocalOnlyDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
+  // Entity-scoped: runs under lucia-bypass (RLS off), so without operating_company_id this would
+  // drift-flag EVERY entity's items. Same fix the COA reconciler already carries.
   const res = await client.query<{ c: string }>(
     `
       WITH updated AS (
@@ -18,13 +20,15 @@ async function markLocalOnlyDrift(client: PoolClient): Promise<number> {
           qbo_sync_status = 'drift_detected',
           qbo_sync_error = 'local row has no qbo_item_id link',
           updated_at = now()
-        WHERE qbo_item_id IS NULL
+        WHERE operating_company_id = $1::uuid
+          AND qbo_item_id IS NULL
           AND deactivated_at IS NULL
           AND COALESCE(qbo_sync_status, '') <> 'local_only'
         RETURNING 1
       )
       SELECT COUNT(*)::text AS c FROM updated
-    `
+    `,
+    [operatingCompanyId]
   );
   return Number(res.rows[0]?.c ?? 0);
 }
@@ -34,6 +38,7 @@ async function createMissingFromMirror(client: PoolClient, operatingCompanyId: s
     `
       WITH inserted AS (
         INSERT INTO catalogs.items (
+          operating_company_id,
           item_name,
           item_code,
           item_type,
@@ -45,6 +50,7 @@ async function createMissingFromMirror(client: PoolClient, operatingCompanyId: s
           qbo_sync_status
         )
         SELECT
+          qi.operating_company_id,
           qi.name,
           COALESCE(qi.sku, CONCAT('QBO-', qi.qbo_id)),
           CASE
@@ -64,7 +70,12 @@ async function createMissingFromMirror(client: PoolClient, operatingCompanyId: s
         WHERE qi.operating_company_id = $1::uuid
           AND qi.qbo_id IS NOT NULL
           AND NOT EXISTS (
-            SELECT 1 FROM catalogs.items ci WHERE ci.qbo_item_id = qi.qbo_id
+            -- dedup MUST be entity-scoped: the same qbo_id can legitimately exist in another entity's
+            -- catalogs.items; without ci.operating_company_id = qi.operating_company_id a colliding
+            -- qbo_id in a DIFFERENT entity would suppress this entity's insert.
+            SELECT 1 FROM catalogs.items ci
+            WHERE ci.qbo_item_id = qi.qbo_id
+              AND ci.operating_company_id = qi.operating_company_id
           )
         RETURNING 1
       )
@@ -90,6 +101,7 @@ async function healFieldDrift(client: PoolClient, operatingCompanyId: string): P
           updated_at = now()
         FROM mdata.qbo_items qi
         WHERE qi.operating_company_id = $1::uuid
+          AND ci.operating_company_id = qi.operating_company_id
           AND qi.qbo_id = ci.qbo_item_id
           AND (
             ci.item_name IS DISTINCT FROM qi.name
@@ -104,9 +116,10 @@ async function healFieldDrift(client: PoolClient, operatingCompanyId: string): P
   return Number(res.rows[0]?.c ?? 0);
 }
 
-async function countLocalOnly(client: PoolClient): Promise<number> {
+async function countLocalOnly(client: PoolClient, operatingCompanyId: string): Promise<number> {
   const res = await client.query<{ c: string }>(
-    `SELECT COUNT(*)::text AS c FROM catalogs.items WHERE qbo_sync_status = 'local_only' AND deactivated_at IS NULL`
+    `SELECT COUNT(*)::text AS c FROM catalogs.items WHERE operating_company_id = $1::uuid AND qbo_sync_status = 'local_only' AND deactivated_at IS NULL`,
+    [operatingCompanyId]
   );
   return Number(res.rows[0]?.c ?? 0);
 }
@@ -119,10 +132,10 @@ export async function reconcileItems(operatingCompanyId: string): Promise<ItemsR
   let localOnly = 0;
 
   await withLuciaBypass(async (client) => {
-    driftDetected = await markLocalOnlyDrift(client);
+    driftDetected = await markLocalOnlyDrift(client, operatingCompanyId);
     createdFromQbo = await createMissingFromMirror(client, operatingCompanyId);
     healed = await healFieldDrift(client, operatingCompanyId);
-    localOnly = await countLocalOnly(client);
+    localOnly = await countLocalOnly(client, operatingCompanyId);
   });
 
   return { driftDetected, createdFromQbo, healed, localOnly, reconciledAt };
@@ -138,8 +151,10 @@ export type ItemsSyncStatus = {
   last_reconcile_at: string | null;
 };
 
-export async function fetchItemsSyncStatus(_operatingCompanyId: string): Promise<ItemsSyncStatus> {
+export async function fetchItemsSyncStatus(operatingCompanyId: string): Promise<ItemsSyncStatus> {
   return withLuciaBypass(async (client) => {
+    // Entity-scoped: the status API takes an operating_company_id and must report THAT entity's counts,
+    // not the whole fleet's (was returning aggregate across all entities under lucia-bypass).
     const counts = await client.query<{
       total_local: string;
       synced: string;
@@ -155,7 +170,9 @@ export async function fetchItemsSyncStatus(_operatingCompanyId: string): Promise
           COUNT(*) FILTER (WHERE qbo_sync_status = 'local_only' AND deactivated_at IS NULL)::text AS local_only,
           COUNT(*) FILTER (WHERE qbo_sync_status = 'sync_error' AND deactivated_at IS NULL)::text AS sync_error
         FROM catalogs.items
-      `
+        WHERE operating_company_id = $1::uuid
+      `,
+      [operatingCompanyId]
     );
     const meta = await client.query<{ last_pull_at: string | null; last_reconcile_at: string | null }>(
       `
@@ -163,7 +180,9 @@ export async function fetchItemsSyncStatus(_operatingCompanyId: string): Promise
           MAX(qbo_synced_at) FILTER (WHERE qbo_sync_status = 'synced')::text AS last_pull_at,
           MAX(updated_at) FILTER (WHERE qbo_sync_status IN ('synced', 'drift_detected'))::text AS last_reconcile_at
         FROM catalogs.items
-      `
+        WHERE operating_company_id = $1::uuid
+      `,
+      [operatingCompanyId]
     );
     const row = counts.rows[0];
     const metaRow = meta.rows[0];

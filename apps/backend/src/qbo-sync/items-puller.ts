@@ -84,9 +84,13 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
     typeof rawPrice === "number" ? Math.round(rawPrice * 100) : rawPrice != null ? Math.round(Number(rawPrice) * 100) : null;
   const active = row.Active === undefined ? true : Boolean(row.Active);
 
+  // AF-2 made catalogs.items per-entity: operating_company_id is NOT NULL and the single-col unique on
+  // qbo_item_id was replaced by (operating_company_id, qbo_item_id). This write must carry
+  // operating_company_id and conflict on the composite arbiter, or it 500s AND cross-entity clobbers.
   await client.query(
     `
       INSERT INTO catalogs.items (
+        operating_company_id,
         item_name,
         item_code,
         item_type,
@@ -98,20 +102,20 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
         qbo_sync_status,
         qbo_sync_error
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,now(),'synced',NULL)
-      ON CONFLICT (qbo_item_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),'synced',NULL)
+      ON CONFLICT (operating_company_id, qbo_item_id) WHERE qbo_item_id IS NOT NULL
       DO UPDATE SET
         item_name = EXCLUDED.item_name,
         item_code = EXCLUDED.item_code,
         item_type = EXCLUDED.item_type,
         unit_price_cents = EXCLUDED.unit_price_cents,
-        deactivated_at = CASE WHEN $8::boolean THEN NULL ELSE COALESCE(catalogs.items.deactivated_at, now()) END,
+        deactivated_at = CASE WHEN $9::boolean THEN NULL ELSE COALESCE(catalogs.items.deactivated_at, now()) END,
         qbo_synced_at = now(),
         qbo_sync_status = 'synced',
         qbo_sync_error = NULL,
         updated_at = now()
     `,
-    [name, sku ?? `QBO-${qboId}`, itemType, unitPrice, qboId, `Synced from QBO (${operatingCompanyId})`, active ? null : new Date(), active]
+    [operatingCompanyId, name, sku ?? `QBO-${qboId}`, itemType, unitPrice, qboId, `Synced from QBO (${operatingCompanyId})`, active ? null : new Date(), active]
   );
 }
 
