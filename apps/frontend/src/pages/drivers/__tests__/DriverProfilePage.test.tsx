@@ -98,4 +98,52 @@ describe("DriverProfilePage", () => {
     expect(screen.getByTestId("dp-section-11-documents")).toBeTruthy();
     expect(screen.getByTestId("dp-section-12-action-bar")).toBeTruthy();
   });
+
+  // DRIVERPROFILE-1 (HOME-6): a driver with sparse/null data must still render every scaffolded
+  // section with no console error — no field may throw or silently drop on missing data.
+  it("renders all scaffolded sections for a driver with sparse/null data, without console errors", async () => {
+    const sparseDriver = { id: "d-sparse", first_name: null, last_name: null, status: "Active" };
+    const sparseAggregate = {
+      driver: sparseDriver,
+      license: {},
+      medical_card: {},
+      drug_program: {},
+      hos: null,
+      current_assignment: {},
+      performance_scorecard: null,
+      settlements: {},
+      training_records: [],
+      border_credentials: {},
+      documents: [],
+    };
+    vi.spyOn(mdataApi, "getDriver").mockResolvedValue(sparseDriver as never);
+    vi.spyOn(clientApi, "apiRequest").mockResolvedValue(sparseAggregate as never);
+    vi.spyOn(safetyApi, "listDriverQualificationItems").mockResolvedValue({ items: [] } as never);
+
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      renderPage();
+      // Every scaffolded section id 1..12 (+ layovers) renders on sparse data.
+      expect(await screen.findByTestId("dp-section-1-identity")).toBeTruthy();
+      for (const id of [
+        "dp-section-2-license",
+        "dp-section-3-medical",
+        "dp-section-4-drug",
+        "dp-section-5-hos",
+        "dp-section-6-assignment",
+        "dp-section-7-performance",
+        "dp-section-8-settlements",
+        "dp-section-layovers",
+        "dp-section-9-training",
+        "dp-section-10-border",
+        "dp-section-11-documents",
+        "dp-section-12-action-bar",
+      ]) {
+        expect(screen.getByTestId(id)).toBeTruthy();
+      }
+      expect(errorSpy).not.toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
 });
