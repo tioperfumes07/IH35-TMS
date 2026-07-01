@@ -629,6 +629,7 @@
     "cash_advance": "Cash advance",
     "ack_failed": "Could not acknowledge — retry.",
     "request_advance": "Request cash advance",
-    "archived_banner": "Archived — load closed, read-only"
+    "archived_banner": "Archived — load closed, read-only",
+    "queued": "{{n}} queued — sending when online"
   }
 }
