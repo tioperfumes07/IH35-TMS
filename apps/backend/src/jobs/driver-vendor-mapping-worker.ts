@@ -17,7 +17,7 @@ async function runScan(app: FastifyInstance) {
     );
     for (const { id } of companies.rows) {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [id]);
-      const findings = await checkAllMappings(client);
+      const findings = await checkAllMappings(client, id);
       await persistFindings(client, id, findings);
       const critical = findings.filter((f) => f.severity === "critical");
       if (critical.length > 0) {
