@@ -83,6 +83,32 @@ export function summarizeHireDates(rows: HireDateRow[]) {
   };
 }
 
+/**
+ * Backfill hire_date from Samsara createdAtTime ONLY for drivers that currently have no hire date
+ * (file/HR date always wins), tagged hire_date_source='samsara_estimate'. Never overwrites an existing
+ * date; rehire divergences (needs_review) are left for human decision, not auto-written. Returns the count
+ * filled. The caller must set app.operating_company_id first (mdata.drivers is entity-scoped).
+ */
+export async function applySamsaraHireDateEstimates(client: PgClient, operatingCompanyId: string, userId: string) {
+  const res = await client.query(
+    `UPDATE mdata.drivers d
+        SET hire_date = substring(sd.raw_payload->>'createdAtTime' from 1 for 10)::date,
+            hire_date_source = 'samsara_estimate',
+            updated_by_user_id = $2::uuid,
+            updated_at = now()
+       FROM integrations.samsara_drivers sd
+      WHERE sd.local_driver_id = d.id
+        AND sd.operating_company_id = $1::uuid
+        AND d.operating_company_id = $1::uuid
+        AND d.deactivated_at IS NULL
+        AND d.hire_date IS NULL
+        AND sd.raw_payload->>'createdAtTime' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}'
+      RETURNING d.id`,
+    [operatingCompanyId, userId]
+  );
+  return { filled: res.rows.length };
+}
+
 export async function previewSamsaraHireDates(client: PgClient, operatingCompanyId: string) {
   const res = await client.query(
     `SELECT d.id::text AS id, d.first_name, d.last_name, d.hire_date::text AS hire_date,
