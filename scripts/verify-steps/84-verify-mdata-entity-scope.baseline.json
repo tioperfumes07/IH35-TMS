@@ -566,11 +566,6 @@
       "preview": "` SELECT id, operating_company_id, customer_name, mc_number, dot_number, fmcsa_verified_at, fmcsa_last_checked_at, fmcsa"
     },
     {
-      "key": "apps/backend/src/integrations/integrity-monitors/driver-vendor-mapping.ts#63f19d85e825cd0453045969259be50834276480",
-      "file": "apps/backend/src/integrations/integrity-monitors/driver-vendor-mapping.ts",
-      "preview": "`SELECT d.id::text, concat_ws(' ', d.first_name, d.last_name) AS display_name, d.qbo_vendor_id::text, sd.samsara_driver_"
-    },
-    {
       "key": "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts#1ef48529c0f8f6cf923063a0b413e2b3a7d0ced5",
       "file": "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts",
       "preview": "`SELECT unit_number, make, model FROM mdata.units WHERE id = $1 LIMIT 1`"

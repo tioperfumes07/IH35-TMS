@@ -26,7 +26,7 @@ export async function registerDriverVendorMappingIntegrityRoutes(app: FastifyIns
 
     const findings = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
-      const result = await checkAllMappings(client);
+      const result = await checkAllMappings(client, body.data.operating_company_id);
       await persistFindings(client, body.data.operating_company_id, result);
       return result;
     });

@@ -21,7 +21,7 @@ describe("checkAllMappings", () => {
         return { rows: [] };
       },
     };
-    const findings = await checkAllMappings(client as never);
+    const findings = await checkAllMappings(client as never, "00000000-0000-0000-0000-000000000000");
     expect(findings[0].drift_reason).toBe("qbo_vendor_missing");
     expect(findings[0].severity).toBe("critical");
   });

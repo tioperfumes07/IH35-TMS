@@ -37,9 +37,16 @@ function normalizeName(v: string): string {
   return v.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export async function checkAllMappings(client: PoolClient): Promise<MappingFinding[]> {
+export async function checkAllMappings(
+  client: PoolClient,
+  operatingCompanyId: string
+): Promise<MappingFinding[]> {
   const findings: MappingFinding[] = [];
 
+  // USMCA cross-entity leak fix: mdata.drivers RLS is role/identity-scoped, not entity-scoped, and the
+  // daily worker scans on a lucia-bypass connection (RLS off), so an unscoped read blends every operating
+  // company's drivers into each company's findings. Bind the operating company explicitly so a scan for
+  // one carrier (TRANSP/TRK/USMCA) only ever sees — and persists findings for — its own drivers.
   const drivers = await client.query<{
     id: string;
     display_name: string | null;
@@ -50,7 +57,9 @@ export async function checkAllMappings(client: PoolClient): Promise<MappingFindi
             d.qbo_vendor_id::text, sd.samsara_driver_id
      FROM mdata.drivers d
      LEFT JOIN integrations.samsara_drivers sd ON sd.local_driver_id = d.id
-     WHERE d.qbo_vendor_id IS NOT NULL AND d.deactivated_at IS NULL`
+     WHERE d.qbo_vendor_id IS NOT NULL AND d.deactivated_at IS NULL
+       AND d.operating_company_id = $1::uuid`,
+    [operatingCompanyId]
   );
 
   for (const driver of drivers.rows) {
