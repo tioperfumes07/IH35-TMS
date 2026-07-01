@@ -91,6 +91,9 @@ jobs:
       - name: Verify bank-recon variance poster reads ledger_account_id (not phantom coa_account_id)
         run: npm run verify:bank-recon-poster-ledger-account-id
 
+      - name: Verify bank-recon expense-match Part 2a (expense persistable, bill not; posted+idempotency guards)
+        run: npm run verify:bank-recon-expense-match-part2a
+
       - name: Verify INS-COVERAGE gap counts units not assets (GUARD #40)
         run: npm run verify:insurance-coverage-gap-units
 

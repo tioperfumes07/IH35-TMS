@@ -6,18 +6,30 @@ import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/en
 export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
-// bank.reconciliation_matches.ledger_entry_kind has a CHECK constraint that (as of migration
-// 0219_block_29_bank_reconciliation_matches.sql) only permits these four kinds. "bill"/"expense"
-// candidates are surfaced as read-only match SUGGESTIONS in Part 1 but MUST NOT be persisted here —
-// inserting them would violate the CHECK and 500 at runtime. Part 2 (Tier-1, gated) adds the
-// migration that widens the CHECK and wires the accept path. Keeping this guard is what keeps Part 1
-// Tier-3 (no schema change).
+// bank.reconciliation_matches.ledger_entry_kind has a CHECK constraint. Migration
+// 202607011600_bank_recon_expense_match_part2a.sql widened it to permit 'expense' (BLOCK-01
+// Part 2a: expense-link accept). 'bill' remains NON-persistable: recording a bill payment with
+// no GL JE is an orphan write — that's Part 2b (BLOCK-02 CHAIN-04), still gated. Inserting a kind
+// outside this set would violate the CHECK and 500 at runtime, so keep this guard as the source of
+// truth and keep it in lockstep with the migration's CHECK list.
 const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntryKind>([
   "payment",
   "bill_payment",
   "transfer",
   "je",
+  "expense",
 ]);
+
+// Denormalized convenience FK on banking.bank_transactions (migration 0182 + Part 2a's
+// matched_expense_id) set to 'matched' on accept, so the Accounting Bills/Expenses lists and the
+// worklist can show clear status without re-deriving from bank.reconciliation_matches.
+const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
+  payment: "matched_payment_id",
+  bill_payment: "matched_bill_payment_id",
+  transfer: "matched_transfer_id",
+  je: "matched_journal_entry_id",
+  expense: "matched_expense_id",
+};
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -33,6 +45,7 @@ type BankTxn = {
   description: string | null;
   merchant_name: string | null;
   notes: string | null;
+  review_state: string | null;
 };
 
 export type MatchCandidate = {
@@ -134,7 +147,8 @@ async function loadTransaction(client: DbClient, operatingCompanyId: string, ban
         is_credit,
         description,
         merchant_name,
-        notes
+        notes,
+        review_state
       FROM banking.bank_transactions
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -666,6 +680,33 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     if (!txn) {
       throw new Error("bank_transaction_not_found");
     }
+
+    // Only persist kinds the reconciliation_matches CHECK constraint permits (Part 2a widened it to
+    // include 'expense'). 'bill' is a read-only suggestion — accepting it is Part 2b (CHAIN-04).
+    if (!PERSISTABLE_MATCH_KINDS.has(input.ledger_entry_kind)) {
+      throw new Error(`match_kind_not_acceptable:${input.ledger_entry_kind}`);
+    }
+
+    // Idempotency: a bank line already cleared (review_state='matched') must not be re-matched.
+    if (txn.review_state === "matched") {
+      throw new Error("bank_transaction_already_matched");
+    }
+
+    // Expense accept is link + clear only (no new JE): the expense must already be posted to GL,
+    // otherwise clearing it against a bank line would leave the expense's own JE unrecorded.
+    if (input.ledger_entry_kind === "expense") {
+      const posted = await client.query<{ posting_status: string }>(
+        `SELECT posting_status::text
+           FROM accounting.expenses
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          LIMIT 1`,
+        [input.ledger_entry_id, input.operating_company_id]
+      );
+      const status = posted.rows[0]?.posting_status;
+      if (!status) throw new Error("expense_not_found");
+      if (status !== "posted") throw new Error("expense_not_posted");
+    }
+
     const ledgerAmountAbs = await loadLedgerAmountCents(client, input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id);
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
     const varianceCents = txnAmountAbs - ledgerAmountAbs;
@@ -698,6 +739,22 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       variance_cents: varianceCents,
       is_credit: txn.is_credit,
     });
+
+    // Clear the bank line: mark it 'matched' + stamp the denormalized matched_<kind>_id so the
+    // worklist and the Accounting Bills/Expenses lists show status without re-deriving from
+    // bank.reconciliation_matches. Column name comes from a fixed whitelist (never user input).
+    const matchedColumn = MATCHED_COLUMN_BY_KIND[input.ledger_entry_kind];
+    if (matchedColumn) {
+      await client.query(
+        `UPDATE banking.bank_transactions
+            SET review_state = 'matched',
+                reviewed_at = now(),
+                ${matchedColumn} = $3::uuid
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid`,
+        [input.bank_transaction_id, input.operating_company_id, input.ledger_entry_id]
+      );
+    }
 
     const cashBasisRevenueCents = computeCashBasisRevenueFromActualCashHit({
       bankAmountCents: txnAmountAbs,
