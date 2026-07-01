@@ -3,10 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Combobox, type ComboboxOption } from "../../components/Combobox";
 import { listDrivers } from "../../api/mdata";
 import { getHosDaily, getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosDutyStatus } from "../../api/hosTracker";
+import { companyToday } from "../../lib/businessDate";
 
-// Laredo (America/Chicago) calendar today as YYYY-MM-DD.
+// SAFETY-1: the HOS date filter defaults to the current duty day in the CARRIER timezone
+// (America/Chicago), never the UTC calendar date (which rolls to "tomorrow" after ~19:00 CT and
+// showed empty/next-day data). Reuse the canonical `companyToday()` — do not reinvent a local Intl
+// formatter (kept in lockstep with lib/businessDate + backend lib/company-business-date).
 function laredoToday(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  return companyToday();
 }
 // 8-day strip ending today (Laredo), oldest→newest — quick day picker.
 function buildDayStrip(today: string): { date: string; mon: string; day: string; weekday: string }[] {
