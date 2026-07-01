@@ -858,6 +858,13 @@ export async function getFleetSchedule(
         AND u.deactivated_at IS NULL
       WHERE d.operating_company_id = $1
         AND d.deactivated_at IS NULL
+        -- DRIVERHUB-2: never list non-genuine drivers on the Scheduler. Exclude onboarding sample
+        -- rows (is_sample_data) plus DEMO/DUMMY/TEST seed-marker name rows. Read-only filter — the
+        -- rows stay in mdata.drivers (void-not-delete), just hidden from the live schedule grid.
+        AND d.is_sample_data IS NOT TRUE
+        AND concat_ws(' ', d.first_name, d.last_name) NOT ILIKE '%DEMO%'
+        AND concat_ws(' ', d.first_name, d.last_name) NOT ILIKE '%DUMMY%'
+        AND concat_ws(' ', d.first_name, d.last_name) NOT ILIKE 'TEST%'
       ORDER BY d.last_name, d.first_name
     `,
     [args.operatingCompanyId]

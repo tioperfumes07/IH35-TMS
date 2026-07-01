@@ -305,6 +305,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!(await maintenanceReady(client))) return { rows: [], total: 0 };
       const values: unknown[] = [q.operating_company_id];
       const where: string[] = ["w.operating_company_id = $1"];
+      // MAINT-1: hide DEMO-/TEST- seed work orders (e.g. DEMO-WO-001) from the live Maintenance WO
+      // list. Applied to the shared `where` so both the count and the rows exclude them. Read-only —
+      // the WO rows stay in maintenance.work_orders (void-not-delete), just hidden from live views.
+      where.push("COALESCE(w.display_id, '') NOT ILIKE 'DEMO-%'");
+      where.push("COALESCE(w.display_id, '') NOT ILIKE 'TEST-%'");
       if (q.status) {
         values.push(q.status);
         where.push(`w.status = $${values.length}`);

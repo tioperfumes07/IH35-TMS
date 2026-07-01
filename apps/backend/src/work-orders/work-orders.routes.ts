@@ -416,6 +416,11 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
       const values: unknown[] = [q.operating_company_id];
       const where: string[] = ["w.operating_company_id = $1"];
+      // MAINT-1: hide DEMO-/TEST- seed work orders (e.g. DEMO-WO-001) from the live WO list. Applied
+      // to the shared `where` so both the tab counts and the rows exclude them. Read-only — the WO
+      // rows stay in maintenance.work_orders (void-not-delete), just hidden from operational views.
+      where.push("COALESCE(w.display_id, '') NOT ILIKE 'DEMO-%'");
+      where.push("COALESCE(w.display_id, '') NOT ILIKE 'TEST-%'");
 
       if (q.wo_billing_type) {
         values.push(q.wo_billing_type);

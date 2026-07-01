@@ -186,6 +186,11 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
+      // DISPATCH-4: onboarding sample/demo units (is_sample_data) must never surface on the live
+      // Fleet OOS / In-shop board or the units roster. Read-only exclusion — the sample rows stay in
+      // the table (void-not-delete), just hidden from operational views. is_sample_data is NOT NULL
+      // DEFAULT false (migration 0403), so `IS NOT TRUE` is a total, index-friendly predicate.
+      filters.push("is_sample_data IS NOT TRUE");
       if (type) {
         filters.push(truckTypeSqlFilter(type));
       }
