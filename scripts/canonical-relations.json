@@ -193,6 +193,7 @@
     "catalogs.truck_parts",
     "catalogs.unit_ownership_types",
     "catalogs.us_states",
+    "catalogs.void_cancel_reasons",
     "catalogs.wo_cancellation_reasons",
     "catalogs.work_order_statuses",
     "catalogs.work_order_templates",
