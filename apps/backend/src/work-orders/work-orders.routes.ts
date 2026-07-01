@@ -1167,7 +1167,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
   // VOID a work order — EXECUTORS (Owner|Administrator|Accountant) ONLY, reason REQUIRED, SOFT (never deletes). Stronger than
   // cancel: nullifies a WO (incl. one already completed) while preserving the immutable record + full
   // history + the WHY in the audit trail. Sets voided_at/by/notes; idempotent (already-void → 409).
-  app.post("/api/v1/work-orders/:id/void", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/work-orders/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     // Void/cancel EXECUTORS = Owner|Administrator|Accountant (canVoidCancel). Non-executors get a 403
