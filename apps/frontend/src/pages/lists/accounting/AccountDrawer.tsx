@@ -35,6 +35,14 @@ const ACCOUNT_TYPES = [
   "OtherExpense",
 ] as const;
 
+// QBO groups the account-type picker under its two financial statements (Balance Sheet vs Profit &
+// Loss). Same 8 enum values, just presented in statement-grouped <optgroup>s so the picker reads like
+// QBO's New-Account dialog. Additive — the stored value is still the flat account_type enum.
+const ACCOUNT_TYPE_GROUPS: Array<{ label: string; types: Array<(typeof ACCOUNT_TYPES)[number]> }> = [
+  { label: "Balance Sheet", types: ["Asset", "Liability", "Equity"] },
+  { label: "Profit & Loss", types: ["Income", "CostOfGoodsSold", "Expense", "OtherIncome", "OtherExpense"] },
+];
+
 // catalogs.accounts.account_type is the 8-value COA group enum, but the account-type catalog
 // (catalogs.account_types) is keyed by the 15 finer QBO types (codes BANK/AR/OCA/EXP/…). The Detail Type
 // dropdown was always empty ("No detail types available") because the 8-enum never matched a 15-type
@@ -406,10 +414,14 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               >
                 <option value="">Select type…</option>
-                {ACCOUNT_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+                {ACCOUNT_TYPE_GROUPS.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.types.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
               <FieldError msg={errors.account_type} />

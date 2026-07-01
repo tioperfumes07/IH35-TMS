@@ -103,6 +103,9 @@ jobs:
       - name: Verify Detail Type catalog (extends detail_types, no dup table, route registered, Lists wired)
         run: npm run verify:detail-type-catalog
 
+      - name: Verify CoA creator Account Type → Detail Type cascade (statement-grouped picker, no empty dropdown)
+        run: npm run verify:coa-account-detail-type-cascade
+
       - name: Verify INS-COVERAGE gap counts units not assets (GUARD #40)
         run: npm run verify:insurance-coverage-gap-units
 
