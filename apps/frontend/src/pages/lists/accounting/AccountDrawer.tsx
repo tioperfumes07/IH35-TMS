@@ -180,8 +180,10 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         account_name: form.account_name.trim(),
         account_type: form.account_type,
         account_number: form.account_number.trim() || null,
-        account_subtype: form.account_subtype.trim() || null,
-        notes: form.notes.trim() || null,
+        // account_subtype + notes are .optional() (not .nullable()) on the create schema, so an empty value
+        // must be omitted (undefined), NOT sent as null — sending null was the "validation_error" on save.
+        account_subtype: form.account_subtype.trim() || undefined,
+        notes: form.notes.trim() || undefined,
         opening_balance_cents: centsFromDollarString(form.opening_balance_cents),
         opening_balance_as_of: form.opening_balance_as_of.trim() || null,
         is_locked: form.is_locked,
