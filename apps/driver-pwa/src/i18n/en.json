@@ -607,5 +607,21 @@
   },
   "photo": {
     "angle_label": "Angle"
+  },
+  "chat": {
+    "title": "Chat",
+    "subtitle": "Messages with dispatch",
+    "loading": "Loading…",
+    "empty": "No chats yet.",
+    "load": "Load",
+    "load_thread": "Load chat",
+    "message": "Message",
+    "back": "Back",
+    "send": "Send",
+    "send_failed": "Failed to send — retry.",
+    "all_chats": "All chats",
+    "removed": "message removed",
+    "no_messages": "No messages yet.",
+    "placeholder": "Message dispatch…"
   }
 }

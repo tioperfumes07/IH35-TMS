@@ -46,9 +46,14 @@ export function MessagesPage() {
   return (
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-24">
-        <Link to="/profile" className="text-sm text-pwa-text-secondary hover:underline">
-          {t("messages.back_to_profile")}
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link to="/profile" className="text-sm text-pwa-text-secondary hover:underline">
+            {t("messages.back_to_profile")}
+          </Link>
+          <Link to="/chat" className="text-sm font-semibold text-pwa-text-primary hover:underline">
+            {t("chat.title", "Chat")} →
+          </Link>
+        </div>
         <PwaCard title={t("messages.title")} subtitle={t("messages.subtitle")}>
           {query.isLoading ? <p className="text-sm text-pwa-text-secondary">{t("messages.loading")}</p> : null}
           {!query.isLoading && messages.length === 0 ? (

@@ -607,5 +607,21 @@
   },
   "photo": {
     "angle_label": "Ángulo"
+  },
+  "chat": {
+    "title": "Chat",
+    "subtitle": "Mensajes con despacho",
+    "loading": "Cargando…",
+    "empty": "Aún no hay chats.",
+    "load": "Carga",
+    "load_thread": "Chat de carga",
+    "message": "Mensaje",
+    "back": "Atrás",
+    "send": "Enviar",
+    "send_failed": "No se pudo enviar — reintentar.",
+    "all_chats": "Todos los chats",
+    "removed": "mensaje eliminado",
+    "no_messages": "Aún no hay mensajes.",
+    "placeholder": "Mensaje a despacho…"
   }
 }
