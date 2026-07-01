@@ -7,6 +7,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError } from "./shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { TRANSP_OPERATING_COMPANY_ID } from "./bill-gl-draft.service.js";
 import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
 import {
@@ -15,7 +16,7 @@ import {
 } from "./bill-payment-gl.service.js";
 
 export async function registerBillPaymentGlRoutes(app: FastifyInstance) {
-  app.post("/api/v1/accounting/bill-payments/:id/post-gl", async (req, reply) => {
+  app.post("/api/v1/accounting/bill-payments/:id/post-gl", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(user.role)) {
@@ -26,6 +27,9 @@ export async function registerBillPaymentGlRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+
+    // Tenant guard — verify the caller actually belongs to the target entity before any posting work.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     // SCOPE LOCK — TRANSPORTATION ONLY (Jorge: finish TRANSP, then clone for TRK + USMCA).
     if (query.data.operating_company_id !== TRANSP_OPERATING_COMPANY_ID) {
