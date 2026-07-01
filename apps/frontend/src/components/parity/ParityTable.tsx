@@ -14,7 +14,17 @@
  *  - optional row 3-dots action menu
  *  - toolbar slot (Print / Export / etc.)
  */
-import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+  type TouchEvent as ReactTouchEvent,
+} from "react";
 import { colors, typography } from "../../design/tokens";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
@@ -202,7 +212,7 @@ export function ParityTable<T>({
     e.preventDefault();
     e.stopPropagation();
     const th = (e.currentTarget as HTMLElement).closest("th");
-    const startW = colWidths[key] ?? th?.getBoundingClientRect().width ?? 120;
+    const startW = colWidths[key] || th?.getBoundingClientRect().width || 120;
     resizing.current = { key, startX: e.clientX, startW };
     const onMove = (ev: MouseEvent) => {
       if (!resizing.current) return;
@@ -222,6 +232,50 @@ export function ParityTable<T>({
     };
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
+  }
+
+  // Touch drag mirrors the mouse path so column resize works on tablets. Additive — the mouse
+  // drag in startResize is unchanged.
+  function startResizeTouch(key: string, e: ReactTouchEvent) {
+    e.stopPropagation();
+    const th = (e.currentTarget as HTMLElement).closest("th");
+    const startX = e.touches[0]?.clientX ?? 0;
+    const startW = colWidths[key] || th?.getBoundingClientRect().width || 120;
+    const onMove = (ev: TouchEvent) => {
+      const delta = (ev.touches[0]?.clientX ?? startX) - startX;
+      const w = Math.max(48, Math.round(startW + delta));
+      setColWidths((prev) => ({ ...prev, [key]: w }));
+    };
+    const onEnd = () => {
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onEnd);
+      setColWidths((cur) => {
+        savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: cur });
+        return cur;
+      });
+    };
+    document.addEventListener("touchmove", onMove, { passive: true });
+    document.addEventListener("touchend", onEnd);
+  }
+
+  // Keyboard resize: ←/→ nudge the focused column ±8px (Shift = ±32px). Additive a11y path so the
+  // resize handle is reachable without a mouse; widths persist exactly like a drag.
+  function nudgeWidth(key: string, delta: number, thEl: HTMLElement | null) {
+    setColWidths((prev) => {
+      const base = prev[key] || thEl?.getBoundingClientRect().width || 120;
+      const w = Math.max(48, Math.round(base + delta));
+      const next = { ...prev, [key]: w };
+      savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: next });
+      return next;
+    });
+  }
+
+  function onResizeKey(key: string, e: ReactKeyboardEvent) {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    e.stopPropagation();
+    const step = (e.shiftKey ? 32 : 8) * (e.key === "ArrowLeft" ? -1 : 1);
+    nudgeWidth(key, step, (e.currentTarget as HTMLElement).closest("th"));
   }
 
   function exportCsv() {
@@ -443,10 +497,15 @@ export function ParityTable<T>({
                   {enableColumnResize ? (
                     <span
                       role="separator"
+                      aria-orientation="vertical"
                       aria-label={`Resize ${column.label}`}
+                      aria-valuenow={w ? Math.round(w) : undefined}
+                      tabIndex={0}
                       onMouseDown={(e) => startResize(key, e)}
+                      onTouchStart={(e) => startResizeTouch(key, e)}
+                      onKeyDown={(e) => onResizeKey(key, e)}
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-gray-300"
+                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none select-none hover:bg-gray-300 focus:bg-gray-400 focus:outline-none"
                     />
                   ) : null}
                 </th>

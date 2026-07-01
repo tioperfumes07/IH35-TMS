@@ -92,6 +92,19 @@ describe("ParityTable (A1 grammar)", () => {
     expect(screen.queryByLabelText("Resize Name")).toBeNull();
   });
 
+  it("resize handle is keyboard-accessible and ArrowRight widens the column (persists)", () => {
+    window.localStorage.clear();
+    render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-cols" />);
+    const handle = screen.getByLabelText("Resize Name");
+    // Focusable a11y separator, not mouse-only.
+    expect(handle).toHaveAttribute("tabindex", "0");
+    expect(handle).toHaveAttribute("role", "separator");
+    fireEvent.keyDown(handle, { key: "ArrowRight" });
+    const persisted = JSON.parse(window.localStorage.getItem("paritytable:test-cols") ?? "{}");
+    expect(persisted.colWidths?.name).toBeGreaterThan(48);
+    window.localStorage.clear();
+  });
+
   it("renderExpanded: no expander column by default; toggle reveals/hides the detail row", () => {
     const { rerender } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
     // Additive: existing consumers (no renderExpanded) get no expander toggle.

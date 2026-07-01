@@ -204,6 +204,7 @@
     "verify:bulk-action-bar-mounted": "node scripts/verify-bulk-action-bar-mounted.mjs",
     "verify:all-list-pages-have-bulk-select": "node scripts/verify-all-list-pages-have-bulk-select.mjs",
     "verify:tables-use-resizable-th": "node scripts/verify-tables-use-resizable-th.mjs",
+    "verify:parity-table-resize-sort-contract": "node scripts/verify-parity-table-resize-sort-contract.mjs",
     "verify:customers-vendors-have-list-view": "node scripts/verify-customers-vendors-have-list-view.mjs",
     "verify:customers-vendors-default-is-prior-design": "node scripts/verify-customers-vendors-default-is-prior-design.mjs",
     "verify:no-horizontal-overflow-at-1024": "node scripts/verify-no-horizontal-overflow-at-1024.mjs",
