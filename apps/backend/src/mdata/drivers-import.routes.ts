@@ -83,23 +83,29 @@ export function isJunkName(full: string): boolean {
   return /^(terminated drive|active drive|driver dummy|safety|test driver|seed|na|n a|none|unknown)/.test(k);
 }
 
+/** Format only if (year,month,day) is a REAL calendar date — rejects 2021-02-30, 31/04, 29/02 non-leap, etc.
+ * (Postgres would 22008 on ::date; returning null instead keeps the driver importable with no hire date.) */
+function realIsoDate(year: number, month: number, day: number): string | null {
+  if (!Number.isFinite(year) || month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const dt = new Date(Date.UTC(year, month - 1, day));
+  if (dt.getUTCFullYear() !== year || dt.getUTCMonth() + 1 !== month || dt.getUTCDate() !== day) return null;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 /** Normalize a master-list date to ISO YYYY-MM-DD. Handles ISO, "YYYY-MM-DD 00:00", and DD/MM/YYYY (file locale). */
 export function normalizeImportDate(raw: string | null | undefined): string | null {
   const s = String(raw ?? "").trim();
   if (!s || /^none$/i.test(s)) return null;
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  if (iso) return realIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
   const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
   if (slash) {
-    let [, a, b, y] = slash;
-    // file locale is DD/MM/YYYY; if the first field can't be a day-of-month it's ambiguous → bail
+    const [, a, b, y] = slash;
+    // file locale is DD/MM/YYYY; if the first field can't be a day-of-month it's ambiguous → tolerate MM/DD
     let day = Number(a), month = Number(b);
-    if (month > 12 && day <= 12) { const t = day; day = month; month = t; } // tolerate MM/DD
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    if (month > 12 && day <= 12) { const t = day; day = month; month = t; }
     const year = y.length === 2 ? 2000 + Number(y) : Number(y);
-    const mm = String(month).padStart(2, "0");
-    const dd = String(day).padStart(2, "0");
-    return `${year}-${mm}-${dd}`;
+    return realIsoDate(year, month, day);
   }
   return null;
 }
@@ -259,26 +265,37 @@ export async function registerDriversImportRoutes(app: FastifyInstance) {
       }
 
       let created = 0;
+      // Per-row SAVEPOINT isolation: a single bad row (e.g. an out-of-range date that slipped past
+      // validation, or a constraint hit) rolls back ONLY that row, never the whole batch.
+      let rowErrors = 0;
       for (const r of toCreate) {
         const note = r.phoneMissing ? "Imported from Driver Master Contacts List (phone missing in source)" : "Imported from Driver Master Contacts List";
-        const ins = await client.query(
-          `INSERT INTO mdata.drivers
-             (first_name, last_name, phone, cdl_number, hire_date, termination_date, status, notes, operating_company_id, created_by_user_id, updated_by_user_id)
-           VALUES ($1,$2,$3,$4,$5::date,$6::date,$7::mdata.driver_status,$8,$9::uuid,$10,$10)
-           RETURNING id`,
-          [r.first_name, r.last_name, r.phone, r.cdl_number, r.hire_date, r.termination_date, r.status, note, operatingCompanyId, user.uuid]
-        );
-        if ((ins.rows as unknown[]).length > 0) created += 1;
+        await client.query("SAVEPOINT drv_import_row");
+        try {
+          const ins = await client.query(
+            `INSERT INTO mdata.drivers
+               (first_name, last_name, phone, cdl_number, hire_date, termination_date, status, notes, operating_company_id, created_by_user_id, updated_by_user_id)
+             VALUES ($1,$2,$3,$4,$5::date,$6::date,$7::mdata.driver_status,$8,$9::uuid,$10,$10)
+             RETURNING id`,
+            [r.first_name, r.last_name, r.phone, r.cdl_number, r.hire_date, r.termination_date, r.status, note, operatingCompanyId, user.uuid]
+          );
+          await client.query("RELEASE SAVEPOINT drv_import_row");
+          if ((ins.rows as unknown[]).length > 0) created += 1;
+        } catch {
+          await client.query("ROLLBACK TO SAVEPOINT drv_import_row");
+          rowErrors += 1;
+        }
       }
 
       await appendCrudAudit(client, user.uuid, "mdata.drivers.bulk_imported", {
         operating_company_id: operatingCompanyId,
         created,
+        row_errors: rowErrors,
         summary,
         source: "driver_master_contacts_csv",
       });
 
-      return { mode: "commit" as const, operating_company_id: operatingCompanyId, summary, created };
+      return { mode: "commit" as const, operating_company_id: operatingCompanyId, summary, created, row_errors: rowErrors };
     });
 
     if (result && "error" in result) {
