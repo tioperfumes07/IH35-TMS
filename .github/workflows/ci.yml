@@ -85,6 +85,9 @@ jobs:
       - name: Verify CHAIN-03 single bill resolver (draft preview == poster)
         run: npm run verify:bill-resolver-single-source
 
+      - name: Verify CHAIN-04 bill-payment poster (real-bank ledger, ap_control, bill-first, flag OFF)
+        run: npm run verify:bill-payment-posting-uses-resolver
+
       - name: Verify INS-COVERAGE gap counts units not assets (GUARD #40)
         run: npm run verify:insurance-coverage-gap-units
 

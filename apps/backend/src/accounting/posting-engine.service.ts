@@ -66,6 +66,7 @@ export type PostingErrorCode =
   | "INVOICE_NOT_POSTING_ELIGIBLE"
   | "BILL_NOT_POSTING_ELIGIBLE"
   | "PAYMENT_NOT_POSTING_ELIGIBLE"
+  | "BILL_AP_NOT_POSTED"
   | "PERIOD_LOCKED"
   | "UNBALANCED_ENTRY"
   | "ACCOUNT_MAPPING_MISSING"
@@ -194,6 +195,30 @@ async function resolveCashLikeAccountForCompany(client: DbClient, operatingCompa
     (await resolveRoleAccountOptional(client, operatingCompanyId, "undeposited_funds")) ??
     (await resolveRoleAccountOptional(client, operatingCompanyId, "cash_clearing"))
   );
+}
+
+// CHAIN-04 — resolve a bank account's cash GL account via the bank->GL bridge
+// banking.bank_accounts.ledger_account_id (the column the Cash-GL setup screen reads/writes; FK to
+// catalogs.accounts added by migration 202606280100, backfilled by 202606300070). Returns null when
+// the bank account is not found for this entity OR has no ledger_account_id mapped (caller fails
+// closed). Deliberately does NOT read a "coa-account" column — no such column exists on
+// banking.bank_accounts and reading it was the documented CHAIN-04 bug.
+async function resolveBankLedgerAccountId(
+  client: DbClient,
+  operatingCompanyId: string,
+  bankAccountId: string
+): Promise<string | null> {
+  const res = await client.query<{ ledger_account_id: string | null }>(
+    `
+      SELECT ledger_account_id::text AS ledger_account_id
+      FROM banking.bank_accounts
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [bankAccountId, operatingCompanyId]
+  );
+  return res.rows[0]?.ledger_account_id ?? null;
 }
 
 // Exported for reuse by sibling posters (e.g. FIN-22 lease ASC 842) so the closed-period gate is
@@ -898,6 +923,7 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
 async function buildBillPaymentLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const paymentRes = await client.query<{
     id: string;
+    bill_id: string | null;
     payment_date: string;
     amount_cents: number | null;
     amount: string | null;
@@ -908,6 +934,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     `
       SELECT
         id::text,
+        bill_id::text,
         payment_date::text,
         amount_cents::bigint,
         amount::text,
@@ -928,10 +955,46 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided bill payment is not posting-eligible");
   }
 
+  // CHAIN-04 GAP #3 — accrual-sequencing guard (bill-posted-first). The payment JE always does
+  // DR ap_control / CR bank, which ASSUMES CHAIN-03 already posted DR expense / CR ap_control for
+  // this bill. If the bill's A/P leg was never posted, debiting ap_control here has no matching
+  // credit -> A/P goes NEGATIVE and the QBO A/P tie-out breaks. Refuse to post; NEVER post an A/P
+  // leg from the payment path (design doc §10-A open decision #2 = enforce bill-posted-first).
+  if (!payment.bill_id) {
+    throw new PostingEngineError("BILL_AP_NOT_POSTED", "Bill payment has no bill_id; cannot verify the bill's A/P leg is posted");
+  }
+  const billPosting = await getPostingBySource(client, operatingCompanyId, "bill", payment.bill_id, "initial_post");
+  if (!billPosting || billPosting.result !== "already_posted") {
+    throw new PostingEngineError(
+      "BILL_AP_NOT_POSTED",
+      `Bill ${payment.bill_id} A/P leg is not posted (CHAIN-03) — refusing to post the bill payment to avoid a negative A/P`
+    );
+  }
+
   const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
   if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
-  const cashAccountId = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
-  if (!cashAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
+
+  // CHAIN-04 GAP #2 — bank leg fix. The engine used to CR resolveCashLikeAccountForCompany
+  // (undeposited_funds / cash_clearing) and IGNORE the payment's own from_bank_account_id. Fix:
+  // credit the REAL bank the money left, via the bank->GL bridge banking.bank_accounts.ledger_account_id
+  // (migrations 202606280100 FK + 202606300070 backfill). NB: a "coa-account" column does NOT exist on
+  // banking.bank_accounts (reading it was the documented bug) — never read it. Fail-closed if the chosen
+  // bank has no ledger_account_id. When the payment carries no from_bank_account_id (e.g. a cash
+  // payment recorded without a bank), keep the company-default cash-like fallback (mirrors
+  // buildCustomerPaymentLines' deposited_to_account_id-then-cash-like resolution).
+  let cashAccountId: string | null;
+  if (payment.from_bank_account_id) {
+    cashAccountId = await resolveBankLedgerAccountId(client, operatingCompanyId, payment.from_bank_account_id);
+    if (!cashAccountId) {
+      throw new PostingEngineError(
+        "ACCOUNT_MAPPING_MISSING",
+        `Bank ledger account mapping is missing (banking.bank_accounts.ledger_account_id) for from_bank_account_id ${payment.from_bank_account_id}`
+      );
+    }
+  } else {
+    cashAccountId = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
+    if (!cashAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
+  }
 
   const amount = Number(payment.amount_cents ?? Math.round(Number(payment.amount ?? "0") * 100));
   const label = `Bill payment ${sourceId}`;
