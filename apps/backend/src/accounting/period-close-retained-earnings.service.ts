@@ -83,8 +83,22 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
   if (lines.length === 0) return null;
 
   let reAccountId: string | null = null;
+  // USMCA cross-entity-leak fix: pin the retained_earnings binding to this entity (prefer the entity-scoped
+  // binding, fall back to a legacy global NULL-entity binding) AND require the resolved account to belong to
+  // this entity — never resolve another entity's equity account. Identical for TRANSP.
   const reRes = await client.query<{ account_id: string }>(
-    `SELECT account_id::text FROM catalogs.account_role_bindings WHERE role_key = 'retained_earnings' LIMIT 1`
+    `
+      SELECT arb.account_id::text AS account_id
+      FROM catalogs.account_role_bindings arb
+      JOIN catalogs.accounts a ON a.id = arb.account_id
+      WHERE arb.role_key = 'retained_earnings'
+        AND arb.deactivated_at IS NULL
+        AND (arb.operating_company_id = $1::uuid OR arb.operating_company_id IS NULL)
+        AND a.operating_company_id = $1::uuid
+      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
+      LIMIT 1
+    `,
+    [params.operating_company_id]
   );
   reAccountId = reRes.rows[0]?.account_id ?? null;
   if (!reAccountId) {

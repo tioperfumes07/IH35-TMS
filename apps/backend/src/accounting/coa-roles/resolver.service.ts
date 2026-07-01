@@ -114,7 +114,14 @@ async function resolveMappedRoleAccount(client: DbClient, operatingCompanyId: st
   return mapped.rows[0]?.account_id ?? null;
 }
 
-async function resolveLegacyRoleBinding(client: DbClient, role: CoaRole): Promise<string | null> {
+// USMCA cross-entity-leak fix: catalogs.account_role_bindings is now per-entity (operating_company_id).
+// This resolver can run on the is_lucia_bypass() poster path, where the entity-scoped catalogs.accounts RLS
+// is DEFEATED, so we pin resolution to the posting entity via TWO explicit predicates: (a) the binding must
+// be this entity's row OR a legacy global (NULL-entity) binding, preferring the entity-scoped one; and
+// (b) the resolved account must itself belong to this entity. Behavior is identical for TRANSP (all existing
+// bindings backfilled to TRANSP → the entity-scoped branch matches), and a foreign-entity account can never
+// be returned (fail-closed) even under bypass.
+async function resolveLegacyRoleBinding(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string | null> {
   const roleKey = LEGACY_ROLE_BINDINGS[role];
   if (!roleKey) return null;
   const legacy = await client.query<{ account_id: string }>(
@@ -126,9 +133,12 @@ async function resolveLegacyRoleBinding(client: DbClient, role: CoaRole): Promis
         AND arb.deactivated_at IS NULL
         AND a.deactivated_at IS NULL
         AND a.is_postable = true
+        AND (arb.operating_company_id = $2::uuid OR arb.operating_company_id IS NULL)
+        AND a.operating_company_id = $2::uuid
+      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
       LIMIT 1
     `,
-    [roleKey]
+    [roleKey, operatingCompanyId]
   );
   return legacy.rows[0]?.account_id ?? null;
 }
@@ -225,8 +235,8 @@ async function resolveControlRoleAccount(client: DbClient, operatingCompanyId: s
   }
   if (mapped.length === 1) return mapped[0] ?? null;
 
-  // 2) Legacy single binding (catalogs.account_role_bindings — unique by role_key).
-  const fromLegacyBinding = await resolveLegacyRoleBinding(client, role);
+  // 2) Legacy single binding (catalogs.account_role_bindings — entity-scoped, falls back to global).
+  const fromLegacyBinding = await resolveLegacyRoleBinding(client, operatingCompanyId, role);
   if (fromLegacyBinding) return fromLegacyBinding;
 
   // 3) account_subtype fallback — FAIL CLOSED: never silently pick one of many.
@@ -246,7 +256,7 @@ export async function resolveRoleAccountOptional(client: DbClient, operatingComp
   const fromMapped = await resolveMappedRoleAccount(client, operatingCompanyId, role);
   if (fromMapped) return fromMapped;
 
-  const fromLegacyBinding = await resolveLegacyRoleBinding(client, role);
+  const fromLegacyBinding = await resolveLegacyRoleBinding(client, operatingCompanyId, role);
   if (fromLegacyBinding) return fromLegacyBinding;
 
   return resolveFallbackByAccountShape(client, operatingCompanyId, role);
