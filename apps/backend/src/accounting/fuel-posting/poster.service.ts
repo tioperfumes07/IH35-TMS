@@ -82,7 +82,9 @@ async function resolveRoleBoundAccount(client: DbClient, operatingCompanyId: str
         AND arb.deactivated_at IS NULL
         AND a.deactivated_at IS NULL
         AND a.is_postable = true
+        AND (arb.operating_company_id = $2::uuid OR arb.operating_company_id IS NULL)
         AND a.operating_company_id = $2::uuid
+      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
       LIMIT 1
     `,
     [roleKey, operatingCompanyId]

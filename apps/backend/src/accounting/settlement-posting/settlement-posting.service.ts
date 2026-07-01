@@ -127,8 +127,15 @@ async function loadDeductions(client: DbClient, operatingCompanyId: string, sett
   return res.rows;
 }
 
-/** Resolve an account by role_key from the GLOBAL catalogs.account_role_bindings registry. NULL when unmapped. */
-async function resolveRoleAccountByKey(client: DbClient, roleKey: string): Promise<string | null> {
+/**
+ * Resolve an account by role_key from catalogs.account_role_bindings, PINNED to the posting entity.
+ * USMCA cross-entity-leak fix: the binding registry is now per-entity (operating_company_id). We require
+ * (a) the binding to be this entity's row OR a legacy global (NULL-entity) binding, preferring the
+ * entity-scoped one, and (b) the resolved account to belong to this entity — so even though this poster
+ * runs under withCurrentUser today, a foreign-entity account can never be posted. Identical for TRANSP
+ * (bindings backfilled to TRANSP). NULL when unmapped.
+ */
+async function resolveRoleAccountByKey(client: DbClient, operatingCompanyId: string, roleKey: string): Promise<string | null> {
   const res = await client.query<{ account_id: string }>(
     `
       SELECT arb.account_id::text AS account_id
@@ -138,9 +145,12 @@ async function resolveRoleAccountByKey(client: DbClient, roleKey: string): Promi
         AND arb.deactivated_at IS NULL
         AND a.deactivated_at IS NULL
         AND a.is_postable = true
+        AND (arb.operating_company_id = $2::uuid OR arb.operating_company_id IS NULL)
+        AND a.operating_company_id = $2::uuid
+      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
       LIMIT 1
     `,
-    [roleKey]
+    [roleKey, operatingCompanyId]
   );
   return res.rows[0]?.account_id ?? null;
 }
@@ -277,13 +287,13 @@ export async function postSettlementToGl(
     }
 
     // --- Resolve role accounts (by role_key; missing => STOP, never guess) ---
-    const driverPayAccount = await resolveRoleAccountByKey(client, "driver_pay_expense");
+    const driverPayAccount = await resolveRoleAccountByKey(client, input.operatingCompanyId, "driver_pay_expense");
     if (!driverPayAccount) {
       throw new SettlementPostingError("ACCOUNT_ROLE_BINDING_MISSING", "No active 'driver_pay_expense' role binding", {
         role_key: "driver_pay_expense",
       });
     }
-    const netPayClearingAccount = await resolveRoleAccountByKey(client, "driver_payroll_clearing");
+    const netPayClearingAccount = await resolveRoleAccountByKey(client, input.operatingCompanyId, "driver_payroll_clearing");
     if (!netPayClearingAccount) {
       throw new SettlementPostingError("ACCOUNT_ROLE_BINDING_MISSING", "No active 'driver_payroll_clearing' (net-pay clearing) role binding", {
         role_key: "driver_payroll_clearing",
@@ -301,7 +311,7 @@ export async function postSettlementToGl(
     ];
 
     if (reimbCents > 0) {
-      const reimbAccount = await resolveRoleAccountByKey(client, "reimbursement_expense");
+      const reimbAccount = await resolveRoleAccountByKey(client, input.operatingCompanyId, "reimbursement_expense");
       if (!reimbAccount) {
         throw new SettlementPostingError("ACCOUNT_ROLE_BINDING_MISSING", "No active 'reimbursement_expense' role binding", {
           role_key: "reimbursement_expense",
@@ -318,7 +328,7 @@ export async function postSettlementToGl(
 
     for (const d of deductions) {
       const roleKey = bucketRecoveryRoleKey(d.deduction_type);
-      const target = await resolveRoleAccountByKey(client, roleKey);
+      const target = await resolveRoleAccountByKey(client, input.operatingCompanyId, roleKey);
       if (!target) {
         throw new SettlementPostingError(
           "ACCOUNT_ROLE_BINDING_MISSING",
