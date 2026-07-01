@@ -816,6 +816,9 @@ jobs:
       - name: verify:tables-use-resizable-th
         run: npm run verify:tables-use-resizable-th
 
+      - name: verify:parity-table-resize-sort-contract
+        run: npm run verify:parity-table-resize-sort-contract
+
       - name: verify:customers-vendors-have-list-view
         run: npm run verify:customers-vendors-have-list-view
 
