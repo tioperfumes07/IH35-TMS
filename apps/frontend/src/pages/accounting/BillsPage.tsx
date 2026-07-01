@@ -34,6 +34,23 @@ function statusBadgeClass(status: BillStatus) {
   return "bg-red-50 text-red-800";
 }
 
+// BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side,
+// rolled up from bill_payments). matched = green check, unmatched = neutral. Additive column only.
+function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
+  if (isReconciled) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-800">
+        <span aria-hidden="true">✓</span> Matched
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+      Unmatched
+    </span>
+  );
+}
+
 function parseBillCategory(raw: string | null): BillListCategory | "" {
   if (!raw) return "";
   return (BILL_LIST_CATEGORIES as readonly string[]).includes(raw) ? (raw as BillListCategory) : "";
@@ -274,20 +291,21 @@ export function BillsPage() {
               <th className="px-3 py-2 text-right">Paid</th>
               <th className="px-3 py-2 text-right">Balance</th>
               <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Reconciled</th>
               <th className="px-3 py-2">Allocate</th>
             </tr>
           </thead>
           <tbody>
             {billsQuery.isLoading ? (
               <tr>
-                <td colSpan={10} className="px-3 py-4 text-gray-500">
+                <td colSpan={11} className="px-3 py-4 text-gray-500">
                   Loading…
                 </td>
               </tr>
             ) : null}
             {!billsQuery.isLoading && rows.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-3 py-4 text-gray-500">
+                <td colSpan={11} className="px-3 py-4 text-gray-500">
                   No bills found.
                 </td>
               </tr>
@@ -324,6 +342,9 @@ export function BillsPage() {
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(bill.status)}`}>{bill.status}</span>
                     </td>
                     <td className="px-3 py-2">
+                      <ReconciledBadge isReconciled={bill.is_reconciled} />
+                    </td>
+                    <td className="px-3 py-2">
                       {bill.status === "voided" ? (
                         "—"
                       ) : (
@@ -343,7 +364,7 @@ export function BillsPage() {
                   </tr>
                   {expand && open ? (
                     <tr key={`${bill.id}-sub`} className="bg-gray-50">
-                      <td colSpan={10} className="px-3 py-2">
+                      <td colSpan={11} className="px-3 py-2">
                         {paymentsQuery.isLoading && expandedBill?.id === bill.id ? (
                           <div className="text-xs text-gray-500">Loading payments…</div>
                         ) : (

@@ -213,6 +213,9 @@ export type VendorBill = {
   created_at: string;
   updated_at: string;
   revoked_at: string | null;
+  // BANKREC-LISTSTATUS-01: true iff any of this bill's payments has an active (not-rejected)
+  // bank.reconciliation_matches row. Read-only, derived server-side.
+  is_reconciled?: boolean;
 };
 
 export type BillPayment = {
@@ -230,6 +233,9 @@ export type BillPayment = {
   created_by_user_id: string | null;
   created_at: string;
   revoked_at: string | null;
+  // BANKREC-LISTSTATUS-01: true iff this bill_payment has an active (not-rejected)
+  // bank.reconciliation_matches row. Read-only, derived server-side.
+  is_reconciled?: boolean;
 };
 
 function withCompany(path: string, operatingCompanyId: string) {
