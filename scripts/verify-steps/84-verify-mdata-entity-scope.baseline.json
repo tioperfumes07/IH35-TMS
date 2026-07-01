@@ -991,16 +991,6 @@
       "preview": "` SELECT id, operating_company_id, assigned_primary_driver_id, assigned_secondary_driver_id, assigned_unit_id FROM mdata"
     },
     {
-      "key": "apps/backend/src/safety/dvir-submit.service.ts#46220bd3862ed134130971f7435fae5f04131112",
-      "file": "apps/backend/src/safety/dvir-submit.service.ts",
-      "preview": "` SELECT id FROM mdata.units WHERE id = $1 OR unit_number = $2 LIMIT 1 `"
-    },
-    {
-      "key": "apps/backend/src/safety/dvir-submit.service.ts#79a4553e6295fb084e97bd51a38775808f8fd669",
-      "file": "apps/backend/src/safety/dvir-submit.service.ts",
-      "preview": "` SELECT id FROM mdata.units WHERE id::text = $1 OR unit_number = $1 LIMIT 1 `"
-    },
-    {
       "key": "apps/backend/src/safety/dvir.routes.ts#2ae29c2f9c5ba7d3410ca65e3c5278482ed94708",
       "file": "apps/backend/src/safety/dvir.routes.ts",
       "preview": "` SELECT id FROM mdata.drivers WHERE identity_user_id = $1 LIMIT 1 `"
