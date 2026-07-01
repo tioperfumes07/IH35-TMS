@@ -77,6 +77,12 @@ const UpdateTaskStatusSchema = z.object({
 
 const IdParamSchema = z.object({ id: z.string().uuid() });
 
+// TASK-3 Team Chat — threaded comments + @mentions body.
+const CreateCommentSchema = z.object({
+  body: z.string().min(1).max(5000),
+  mentions: z.array(z.string().uuid()).max(50).default([]),
+});
+
 function authUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user!;
@@ -314,6 +320,104 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         [parsed.data.progress_pct, id]
       );
       return { task: res.rows[0] };
+    });
+  });
+
+  // ── TASK-3 Team Chat (task-scoped collaboration) ──────────────────────────────────────────────
+  // Entity-scoped threaded comments + @mentions + a per-task activity feed. NON-FINANCIAL.
+  // opco is resolved FROM the task (never trusted from the client) then set as the RLS GUC.
+
+  // GET /tasks/:id/comments — threaded comments for a task (oldest → newest), author enriched.
+  fastify.get("/:id/comments", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (request, reply) => {
+    const user = authUser(request, reply);
+    if (!user) return;
+    const { id } = IdParamSchema.parse(request.params);
+
+    return withCurrentUser(user.uuid, async (client) => {
+      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
+      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+
+      const res = await (client as Queryable).query(
+        `SELECT c.id, c.task_id, c.author_user_id, c.body, c.mentions, c.created_at,
+                u.email AS author_email,
+                COALESCE(u.first_name || ' ' || u.last_name, u.email) AS author_name
+         FROM tasks.task_comments c
+         LEFT JOIN identity.users u ON u.id = c.author_user_id
+         WHERE c.task_id = $1 AND c.operating_company_id = $2 AND c.deleted_at IS NULL
+         ORDER BY c.created_at ASC`,
+        [id, ocId]
+      );
+      return { comments: res.rows };
+    });
+  });
+
+  // POST /tasks/:id/comments — add a comment (+ @mentions); also writes a 'comment' activity row.
+  fastify.post("/:id/comments", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (request, reply) => {
+    const user = authUser(request, reply);
+    if (!user) return;
+    const { id } = IdParamSchema.parse(request.params);
+    const parsed = CreateCommentSchema.safeParse(request.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const input = parsed.data;
+
+    return withCurrentUser(user.uuid, async (client) => {
+      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
+      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+
+      const ins = await (client as Queryable).query(
+        `INSERT INTO tasks.task_comments (operating_company_id, task_id, author_user_id, body, mentions)
+         VALUES ($1, $2, $3, $4, $5::uuid[])
+         RETURNING id, task_id, author_user_id, body, mentions, created_at`,
+        [ocId, id, user.uuid, input.body, input.mentions]
+      );
+      const comment = ins.rows[0] as { id: string; body: string; mentions: string[] };
+
+      // Append the unified activity-feed row for this comment.
+      await (client as Queryable).query(
+        `INSERT INTO tasks.task_activity (operating_company_id, task_id, actor_user_id, event_type, payload)
+         VALUES ($1, $2, $3, 'comment', $4::jsonb)`,
+        [ocId, id, user.uuid, JSON.stringify({ comment_id: comment.id, mentions: input.mentions })]
+      );
+
+      // Enrich author for immediate render.
+      const authorRes = await (client as Queryable).query(
+        `SELECT email AS author_email, COALESCE(first_name || ' ' || last_name, email) AS author_name
+         FROM identity.users WHERE id = $1`,
+        [user.uuid]
+      );
+      const author = (authorRes.rows[0] ?? {}) as { author_email?: string; author_name?: string };
+
+      reply.status(201);
+      return { comment: { ...comment, author_email: author.author_email ?? null, author_name: author.author_name ?? null } };
+    });
+  });
+
+  // GET /tasks/:id/activity — unified per-task activity feed (newest → oldest), actor enriched.
+  fastify.get("/:id/activity", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (request, reply) => {
+    const user = authUser(request, reply);
+    if (!user) return;
+    const { id } = IdParamSchema.parse(request.params);
+
+    return withCurrentUser(user.uuid, async (client) => {
+      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
+      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+
+      const res = await (client as Queryable).query(
+        `SELECT a.id, a.task_id, a.actor_user_id, a.event_type, a.payload, a.created_at,
+                COALESCE(u.first_name || ' ' || u.last_name, u.email) AS actor_name
+         FROM tasks.task_activity a
+         LEFT JOIN identity.users u ON u.id = a.actor_user_id
+         WHERE a.task_id = $1 AND a.operating_company_id = $2
+         ORDER BY a.created_at DESC`,
+        [id, ocId]
+      );
+      return { activity: res.rows };
     });
   });
 }
