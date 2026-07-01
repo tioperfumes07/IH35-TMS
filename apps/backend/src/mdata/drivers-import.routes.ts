@@ -274,10 +274,10 @@ export async function registerDriversImportRoutes(app: FastifyInstance) {
         try {
           const ins = await client.query(
             `INSERT INTO mdata.drivers
-               (first_name, last_name, phone, cdl_number, hire_date, termination_date, status, notes, operating_company_id, created_by_user_id, updated_by_user_id)
-             VALUES ($1,$2,$3,$4,$5::date,$6::date,$7::mdata.driver_status,$8,$9::uuid,$10,$10)
+               (first_name, last_name, phone, cdl_number, hire_date, hire_date_source, termination_date, status, notes, operating_company_id, created_by_user_id, updated_by_user_id)
+             VALUES ($1,$2,$3,$4,$5::date,$6,$7::date,$8::mdata.driver_status,$9,$10::uuid,$11,$11)
              RETURNING id`,
-            [r.first_name, r.last_name, r.phone, r.cdl_number, r.hire_date, r.termination_date, r.status, note, operatingCompanyId, user.uuid]
+            [r.first_name, r.last_name, r.phone, r.cdl_number, r.hire_date, r.hire_date ? "file_import" : null, r.termination_date, r.status, note, operatingCompanyId, user.uuid]
           );
           await client.query("RELEASE SAVEPOINT drv_import_row");
           if ((ins.rows as unknown[]).length > 0) created += 1;
