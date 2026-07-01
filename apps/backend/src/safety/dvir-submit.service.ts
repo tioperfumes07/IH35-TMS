@@ -81,15 +81,19 @@ export async function submitDriverDvir(
   }
   if (!load.assigned_unit_id) return { error: "load_missing_unit" };
 
+  // Entity scope (USMCA cross-entity leak fix): mdata.units is NOT entity-scoped by RLS, and the
+  // driver-typed unit_number can collide across operating companies. Bind the load's operating
+  // entity (owner_company_id OR currently_leased_to_company_id — §4: units have no
+  // operating_company_id) so a DVIR can never resolve to another carrier's unit.
   const unitRes = await client.query<{ id: string }>(
     `
       SELECT id
       FROM mdata.units
-      WHERE id = $1
-         OR unit_number = $2
+      WHERE (id = $1 OR unit_number = $2)
+        AND (owner_company_id = $3 OR currently_leased_to_company_id = $3)
       LIMIT 1
     `,
-    [load.assigned_unit_id, body.unit]
+    [load.assigned_unit_id, body.unit, load.operating_company_id]
   );
   const unit = unitRes.rows[0] ?? null;
   if (!unit) return { error: "unit_not_found" };
@@ -99,11 +103,11 @@ export async function submitDriverDvir(
         `
           SELECT id
           FROM mdata.units
-          WHERE id::text = $1
-             OR unit_number = $1
+          WHERE (id::text = $1 OR unit_number = $1)
+            AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
           LIMIT 1
         `,
-        [body.trailer]
+        [body.trailer, load.operating_company_id]
       )
     : { rows: [] as Array<{ id: string }> };
   const trailerId = trailerRes.rows[0]?.id ?? null;
