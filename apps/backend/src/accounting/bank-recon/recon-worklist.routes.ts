@@ -15,7 +15,7 @@ const worklistQuerySchema = companyQuerySchema.extend({
 const acceptBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je"]),
+  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
   ledger_entry_id: z.string().uuid(),
   variance_account_id: z.string().uuid().optional(),
 });
@@ -23,14 +23,14 @@ const acceptBodySchema = z.object({
 const rejectBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je"]),
+  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
   ledger_entry_id: z.string().uuid(),
 });
 
 const manualBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je"]),
+  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
   ledger_entry_id: z.string().uuid(),
   variance_account_id: z.string().uuid().optional(),
 });

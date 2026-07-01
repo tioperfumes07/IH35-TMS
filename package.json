@@ -315,6 +315,7 @@
     "verify:bill-resolver-single-source": "node scripts/verify-bill-resolver-single-source.mjs",
     "verify:bill-payment-posting-uses-resolver": "node scripts/verify-bill-payment-posting-uses-resolver.mjs",
     "verify:bank-recon-poster-ledger-account-id": "node scripts/verify-bank-recon-poster-ledger-account-id.mjs",
+    "verify:bank-recon-expense-match-part2a": "node scripts/verify-bank-recon-expense-match-part2a.mjs",
     "verify:fh1-fixed-assets": "node scripts/verify-fh1-fixed-assets.mjs",
     "verify:fh2-no-posting": "node scripts/verify-fh2-no-posting.mjs",
     "verify:fh4-no-posting": "node scripts/verify-fh4-no-posting.mjs",
