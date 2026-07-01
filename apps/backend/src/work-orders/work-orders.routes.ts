@@ -82,6 +82,11 @@ const cancelBodySchema = z.object({
 });
 const voidBodySchema = z.object({
   reason: z.string().trim().min(3, "a reason is required").max(500),
+  // Task #24 / CODER-11 re-point: the DIRECT WO financial-void now carries a controlled reason from the
+  // per-entity catalogs.void_cancel_reasons (the financial VOID catalog — separate from the operational
+  // WO-cancel catalog). Optional for back-compat; when set it's validated same-entity + note-required.
+  reason_code: z.string().trim().min(1).max(64).optional(),
+  note_text: z.string().trim().max(1000).optional(),
 });
 
 const photoIntentSchema = z.object({
@@ -1187,6 +1192,21 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       if (!pre.rows[0]) return { kind: "missing" as const };
       if ((pre.rows[0] as { voided_at?: string | null }).voided_at) return { kind: "already_voided" as const };
 
+      // Task #24 / CODER-11: when a controlled reason_code is supplied, validate it against the per-entity
+      // financial-void catalog (same-entity + active) and enforce note-required — mirrors the governed path.
+      let resolvedReasonCode: string | null = null;
+      if (parsed.data.reason_code) {
+        const rc = await client.query(
+          `SELECT reason_code, requires_note FROM catalogs.void_cancel_reasons
+            WHERE operating_company_id = $1 AND reason_code = $2 AND is_active = true LIMIT 1`,
+          [query.data.operating_company_id, parsed.data.reason_code]
+        );
+        const rrow = rc.rows[0] as { reason_code: string; requires_note: boolean } | undefined;
+        if (!rrow) return { kind: "invalid_reason" as const };
+        if (rrow.requires_note && !parsed.data.note_text?.trim()) return { kind: "note_required" as const };
+        resolvedReasonCode = rrow.reason_code;
+      }
+
       // Reverse/void linked financials FIRST (gated WO_VOID_ENABLED; refuses when posted + flag OFF so we
       // can NEVER orphan posted GL). NO new GL math — void.service.postVoidReversal builds the reversing JE.
       const fin = await settleWorkOrderFinancialLinkage(
@@ -1205,13 +1225,13 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           SET voided_at = now(),
               voided_by_user_id = $2,
               void_notes = $3,
-              void_reason_code = COALESCE(void_reason_code, 'manual'),
+              void_reason_code = COALESCE($6, void_reason_code, 'manual'),
               reversing_entry_ref = COALESCE($5, reversing_entry_ref),
               updated_at = now()
           WHERE id = $1 AND operating_company_id = $4 AND voided_at IS NULL
           RETURNING *
         `,
-        [params.data.id, user.uuid, parsed.data.reason, query.data.operating_company_id, fin.reversing_entry_ref]
+        [params.data.id, user.uuid, parsed.data.note_text?.trim() || parsed.data.reason, query.data.operating_company_id, fin.reversing_entry_ref, resolvedReasonCode]
       );
       const wo = res.rows[0];
       if (!wo) return { kind: "already_voided" as const };
@@ -1242,6 +1262,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       return reply.code(409).send({ error: "wo_has_posted_financial_entries", message: "WO has posted financial entries; financial void is disabled (WO_VOID_ENABLED off)" });
     if (row.kind === "bill_has_payments")
       return reply.code(409).send({ error: "wo_linked_bill_has_payments", message: "WO's linked bill has live payments; void the bill payment before voiding the work order" });
+    if (row.kind === "invalid_reason")
+      return reply.code(400).send({ error: "invalid_void_reason_code", message: "reason_code is not an active reason for this entity" });
+    if (row.kind === "note_required")
+      return reply.code(400).send({ error: "void_note_required", message: "this reason requires a note (note_text)" });
     return { work_order: row.wo };
   });
 
