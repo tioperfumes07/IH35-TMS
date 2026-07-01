@@ -196,6 +196,11 @@ export async function registerAccountRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        // catalogs.accounts is per-entity under af1 RLS. Resolve the active entity, set the GUC, and STORE
+        // operating_company_id — otherwise accounts_entity_write's WITH CHECK rejects the insert (was a 500).
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (!operatingCompanyId) return { __no_company: true } as const;
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         const res = await client.query(
           `
             INSERT INTO catalogs.accounts (
@@ -203,9 +208,9 @@ export async function registerAccountRoutes(app: FastifyInstance) {
               qbo_account_id, qbo_account_qrn, is_postable, currency_code,
               opening_balance_cents, opening_balance_as_of,
               is_locked, notes,
-              created_by_user_id, updated_by_user_id
+              operating_company_id, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15
             )
             RETURNING ${ACCOUNT_SELECT_COLS}
           `,
@@ -223,6 +228,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
             b.opening_balance_as_of ?? null,
             b.is_locked,
             b.notes ?? null,
+            operatingCompanyId,
             authUser.uuid,
           ]
         );
@@ -235,16 +241,16 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           account_name: row.account_name,
           account_type: row.account_type,
         });
-        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
-        if (operatingCompanyId) {
-          await enqueueTmsAccountPushRequested(client, {
-            operating_company_id: operatingCompanyId,
-            account_id: String(row.id),
-            operation: "create",
-          });
-        }
+        await enqueueTmsAccountPushRequested(client, {
+          operating_company_id: operatingCompanyId,
+          account_id: String(row.id),
+          operation: "create",
+        });
         return row;
       });
+      if (created && typeof created === "object" && "__no_company" in created) {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
       return reply.code(201).send(created);
     } catch (err) {
       const code = (err as { code?: string }).code;
@@ -326,6 +332,11 @@ export async function registerAccountRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        // Scope to the active entity so af1 RLS lets us read + update this per-entity account.
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (operatingCompanyId) {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+        }
         const oldRes = await client.query(
           `
             SELECT ${ACCOUNT_SELECT_COLS}
@@ -363,7 +374,6 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           resource_type: "catalogs.accounts",
           changes,
         });
-        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (operatingCompanyId) {
           await enqueueTmsAccountPushRequested(client, {
             operating_company_id: operatingCompanyId,
@@ -393,7 +403,14 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
+    const bodyOc = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.body ?? {});
+    const requestedOc = bodyOc.success ? bodyOc.data.operating_company_id : undefined;
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      // Scope to the entity so af1 RLS lets us read + soft-delete this per-entity account.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, requestedOc);
+      if (operatingCompanyId) {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      }
       const oldRes = await client.query(
         `
           SELECT id, deactivated_at, is_locked
@@ -432,7 +449,6 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         resource_type: "catalogs.accounts",
         was_already_deactivated: wasAlreadyDeactivated,
       });
-      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (operatingCompanyId) {
         await enqueueTmsAccountPushRequested(client, {
           operating_company_id: operatingCompanyId,
