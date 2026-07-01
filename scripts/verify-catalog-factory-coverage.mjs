@@ -20,13 +20,10 @@ const EXCLUDED_TABLE_SUFFIXES = [
 ];
 
 /** Grandfathered catalog tables that exist in schema but are not yet on the generic factory. */
-const KNOWN_STUB_TABLES = [
-  // void_cancel_reasons (Task #24): per-entity financial void/cancel reason catalog. Its DEDICATED
-  // CRUD route + Lists "Cancellation Reasons" profile ship in Task #24 Block 09 (it has specialized
-  // per-entity RLS + a requires-note/same-entity DB trigger the generic factory does not model).
-  // Grandfathered until Block 09 registers it; that PR removes this entry.
-  "void_cancel_reasons",
-];
+// void_cancel_reasons was grandfathered here until Task #24 Block 09; Block 09 ships its DEDICATED
+// CRUD route + Lists profile (specialized per-entity RLS + requires-note/same-entity DB trigger the
+// generic factory can't model), so it is now registered and removed from this stub list.
+const KNOWN_STUB_TABLES = [];
 
 function fail(message) {
   console.error(`verify:catalog-factory-coverage FAIL: ${message}`);
