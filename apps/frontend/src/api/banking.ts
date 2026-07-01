@@ -587,9 +587,17 @@ export function getCoaAccounts(operatingCompanyId?: string) {
   // catalogs.accounts is per-entity (af1 RLS). Pass the active entity so the correct entity's chart loads
   // (e.g. USMCA's, not the user's default company's). Omitting it falls back to the user's default company.
   const scope = operatingCompanyId ? `&operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
-  return apiRequest<{ accounts: Array<{ id: string; account_number: string; account_name: string; deactivated_at?: string | null }> }>(
-    `/api/v1/catalogs/accounts?status=active&limit=200${scope}`
-  );
+  // account_type is already returned at runtime by /catalogs/accounts; expose it so item pickers can filter
+  // income (Income/OtherIncome) vs expense (Expense/CostOfGoodsSold/OtherExpense) accounts (AF-2c).
+  return apiRequest<{
+    accounts: Array<{
+      id: string;
+      account_number: string;
+      account_name: string;
+      account_type?: string;
+      deactivated_at?: string | null;
+    }>;
+  }>(`/api/v1/catalogs/accounts?status=active&limit=200${scope}`);
 }
 
 export function getQboSyncQueue(

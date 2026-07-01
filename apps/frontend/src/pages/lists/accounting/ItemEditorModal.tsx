@@ -1,26 +1,31 @@
 /**
- * ITEM1 — Two-sided item editor modal.
+ * ITEM1 / AF-2c — Products & Services editor with REAL referential links (QBO / NetSuite parity).
  *
- * An item carries both sides of a GL mapping:
- *   SELL side: "I sell this" → Description · Price/rate · Income account*
- *   BUY side:  "I purchase this from a vendor" → Purchase description ·
- *              Purchase cost · Preferred vendor · Expense account*
+ * QBO and NetSuite both model an item's income/expense accounts and its Category as REFERENCED
+ * records, never freeform text. This editor writes the real FK columns on catalogs.items:
+ *   default_income_account_id · default_expense_account_id · default_class_id · category_id
+ *   plus item_type · unit_price_cents · taxable · description (the backend maps these metadata keys
+ *   straight to columns; keys it doesn't recognise are dropped — so we send ONLY the real ones).
  *
- * Income account defaults to "Sales of Service Income" for carrier services
- * (TMS over QBO default — never "Sales of Product Income").
+ * Pickers:
+ *   Income account  → Combobox over getCoaAccounts filtered to Income / Other Income
+ *                     (carrier default: "Sales of Service Income").
+ *   Expense account → Combobox filtered to Expense / Cost of Goods Sold / Other Expense.
+ *   Category        → Combobox over the per-entity qbo_categories catalog with a REPEATABLE inline
+ *                     "+ New category" (creates via the categories catalog, refetches, re-selects).
+ *   Class           → Combobox over the per-entity classes catalog (optional).
  *
- * Data stored in catalogs.items.metadata:
- *   item_type, sku, sell_enabled, sell_description, sell_price_cents,
- *   income_account, buy_enabled, buy_description, buy_cost_cents,
- *   preferred_vendor, expense_account
- *
- * NON-FINANCIAL gate: catalog data, no posting.
+ * NON-FINANCIAL gate: catalog data, no posting. Same-entity + account-type are enforced server-side.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import type { AccountingCatalogCreateBody, AccountingCatalogRow, AccountingCatalogUpdateBody } from "../../../api/catalogs-accounting";
+import { classesCatalogClient, qboCategoriesCatalogClient } from "../../../api/catalogs-accounting";
+import { getCoaAccounts } from "../../../api/banking";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
+import { Combobox, type ComboboxOption } from "../../../components/Combobox";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -30,6 +35,10 @@ const ITEM_TYPES = [
   { value: "Inventory", label: "Inventory" },
   { value: "Bundle", label: "Bundle" },
 ];
+
+const INCOME_TYPES = ["Income", "OtherIncome"];
+const EXPENSE_TYPES = ["Expense", "CostOfGoodsSold", "OtherExpense"];
+const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
 
 type Props = {
   open: boolean;
@@ -45,44 +54,85 @@ type FormState = {
   code: string;
   displayName: string;
   itemType: string;
-  sku: string;
   isActive: boolean;
+  taxable: boolean;
   sellEnabled: boolean;
-  sellDescription: string;
-  sellPriceDollars: string;
-  incomeAccount: string;
+  description: string;
+  priceDollars: string;
+  incomeAccountId: string | null;
   buyEnabled: boolean;
-  buyDescription: string;
-  buyCostDollars: string;
-  preferredVendor: string;
-  expenseAccount: string;
+  expenseAccountId: string | null;
+  categoryId: string | null;
+  classId: string | null;
 };
 
 function rowToForm(row: AccountingCatalogRow | null): FormState {
   const m = row?.metadata ?? {};
+  const asId = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
   return {
     code: row?.code ?? "",
     displayName: row?.display_name ?? "",
     itemType: String(m.item_type ?? "Service"),
-    sku: String(m.sku ?? ""),
     isActive: row?.is_active ?? true,
-    sellEnabled: m.sell_enabled !== false,
-    sellDescription: String(m.sell_description ?? ""),
-    sellPriceDollars: m.sell_price_cents ? String(Number(m.sell_price_cents) / 100) : "",
-    incomeAccount: String(m.income_account ?? "Sales of Service Income"),
-    buyEnabled: Boolean(m.buy_enabled),
-    buyDescription: String(m.buy_description ?? ""),
-    buyCostDollars: m.buy_cost_cents ? String(Number(m.buy_cost_cents) / 100) : "",
-    preferredVendor: String(m.preferred_vendor ?? ""),
-    expenseAccount: String(m.expense_account ?? ""),
+    taxable: Boolean(m.taxable),
+    sellEnabled: asId(m.default_income_account_id) != null || row == null,
+    description: row?.description ?? "",
+    priceDollars: m.unit_price_cents != null ? String(Number(m.unit_price_cents) / 100) : "",
+    incomeAccountId: asId(m.default_income_account_id),
+    buyEnabled: asId(m.default_expense_account_id) != null,
+    expenseAccountId: asId(m.default_expense_account_id),
+    categoryId: asId(m.category_id),
+    classId: asId(m.default_class_id),
   };
 }
 
 export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, onClose, onSaved }: Props) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(rowToForm(null));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
+  const accountsQuery = useQuery({
+    queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    enabled: open && !!operatingCompanyId,
+  });
+  const categoriesQuery = useQuery({
+    queryKey: ["catalogs", "accounting", "qbo-categories", operatingCompanyId],
+    queryFn: () => qboCategoriesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: open && !!operatingCompanyId,
+  });
+  const classesQuery = useQuery({
+    queryKey: ["catalogs", "accounting", "classes", operatingCompanyId],
+    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: open && !!operatingCompanyId,
+  });
+
+  const accounts = accountsQuery.data?.accounts ?? [];
+  const incomeOptions: ComboboxOption[] = useMemo(
+    () =>
+      accounts
+        .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
+        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+    [accounts]
+  );
+  const expenseOptions: ComboboxOption[] = useMemo(
+    () =>
+      accounts
+        .filter((a) => a.account_type && EXPENSE_TYPES.includes(a.account_type))
+        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+    [accounts]
+  );
+  const categoryOptions: ComboboxOption[] = useMemo(
+    () => (categoriesQuery.data?.rows ?? []).map((c) => ({ value: c.id, label: c.display_name })),
+    [categoriesQuery.data]
+  );
+  const classOptions: ComboboxOption[] = useMemo(
+    () => (classesQuery.data?.rows ?? []).map((c) => ({ value: c.id, label: c.display_name })),
+    [classesQuery.data]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -91,16 +141,44 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     setSubmitError("");
   }, [open, row]);
 
-  function set<K extends keyof FormState>(key: K, value: string | boolean) {
+  // Carrier default: on a NEW sellable item with nothing chosen, preselect "Sales of Service Income".
+  useEffect(() => {
+    if (!open || mode !== "create") return;
+    if (form.incomeAccountId || !form.sellEnabled) return;
+    const dflt = accounts.find((a) => a.account_name === CARRIER_DEFAULT_INCOME_NAME && a.account_type && INCOME_TYPES.includes(a.account_type));
+    if (dflt) setForm((prev) => (prev.incomeAccountId ? prev : { ...prev, incomeAccountId: dflt.id }));
+  }, [open, mode, accounts, form.incomeAccountId, form.sellEnabled]);
+
+  function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleAddCategory(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || creatingCategory) return;
+    setCreatingCategory(true);
+    setSubmitError("");
+    try {
+      // Repeatable inline create against the per-entity qbo_categories catalog (QBO "keep creating").
+      const created = await qboCategoriesCatalogClient.create(operatingCompanyId, {
+        code: trimmed.toUpperCase().replace(/[^A-Z0-9]+/g, "-").slice(0, 60) || "CAT",
+        display_name: trimmed,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["catalogs", "accounting", "qbo-categories", operatingCompanyId] });
+      set("categoryId", created.id);
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? String((err.data as Record<string, unknown>)?.error ?? err.message) : "Failed to create category.");
+    } finally {
+      setCreatingCategory(false);
+    }
   }
 
   function validate(): boolean {
     const next: Record<string, string> = {};
     if (!form.code.trim()) next.code = "Code is required.";
     if (!form.displayName.trim()) next.displayName = "Name is required.";
-    if (form.sellEnabled && !form.incomeAccount.trim()) next.incomeAccount = "Income account is required.";
-    if (form.buyEnabled && !form.expenseAccount.trim()) next.expenseAccount = "Expense account is required.";
+    if (form.sellEnabled && !form.incomeAccountId) next.incomeAccountId = "Income account is required.";
+    if (form.buyEnabled && !form.expenseAccountId) next.expenseAccountId = "Expense account is required.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -109,22 +187,20 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     if (!validate()) return;
     setSaving(true);
     setSubmitError("");
+    // ONLY real-column keys — the backend maps these to columns; anything else is dropped.
     const metadata: Record<string, unknown> = {
       item_type: form.itemType,
-      sku: form.sku.trim() || null,
-      sell_enabled: form.sellEnabled,
-      sell_description: form.sellDescription.trim() || null,
-      sell_price_cents: form.sellPriceDollars ? Math.round(parseFloat(form.sellPriceDollars) * 100) : null,
-      income_account: form.incomeAccount.trim() || null,
-      buy_enabled: form.buyEnabled,
-      buy_description: form.buyDescription.trim() || null,
-      buy_cost_cents: form.buyCostDollars ? Math.round(parseFloat(form.buyCostDollars) * 100) : null,
-      preferred_vendor: form.preferredVendor.trim() || null,
-      expense_account: form.expenseAccount.trim() || null,
+      unit_price_cents: form.priceDollars ? Math.round(parseFloat(form.priceDollars) * 100) : null,
+      taxable: form.taxable,
+      default_income_account_id: form.sellEnabled ? form.incomeAccountId : null,
+      default_expense_account_id: form.buyEnabled ? form.expenseAccountId : null,
+      default_class_id: form.classId,
+      category_id: form.categoryId,
     };
     const body: AccountingCatalogCreateBody & AccountingCatalogUpdateBody = {
       code: form.code.trim(),
       display_name: form.displayName.trim(),
+      description: form.description.trim() || undefined,
       is_active: form.isActive,
       metadata,
     };
@@ -171,7 +247,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
       title={mode === "create" ? "New product/service" : `Edit: ${row?.display_name ?? ""}`}
       sizePreset="lg"
     >
-      <div className="flex flex-col gap-3 text-sm">
+      <div className="flex max-h-[80vh] flex-col gap-3 overflow-y-auto text-sm">
         {/* Basic fields */}
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
@@ -185,7 +261,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
             {errors.displayName ? <p className="mt-1 text-[11px] text-red-700">{errors.displayName}</p> : null}
           </label>
           <label className="block">
-            <span className="text-xs font-semibold text-gray-600">Code / ID *</span>
+            <span className="text-xs font-semibold text-gray-600">SKU / Code *</span>
             <input
               className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
               value={form.code}
@@ -208,13 +284,20 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               ))}
             </select>
           </label>
+          {/* Category — QBO places this right under Name. Repeatable inline "+ New category". */}
           <label className="block">
-            <span className="text-xs font-semibold text-gray-600">SKU</span>
-            <input
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
-              value={form.sku}
-              onChange={(e) => set("sku", e.target.value)}
-            />
+            <span className="text-xs font-semibold text-gray-600">Category</span>
+            <div className="mt-1">
+              <Combobox
+                options={categoryOptions}
+                value={form.categoryId}
+                onChange={(v) => set("categoryId", v)}
+                placeholder={creatingCategory ? "Creating…" : "Uncategorized"}
+                loading={categoriesQuery.isLoading || creatingCategory}
+                allowClear
+                allowAddNew={{ label: "+ New category", onAdd: (query) => void handleAddCategory(query) }}
+              />
+            </div>
           </label>
         </div>
 
@@ -232,20 +315,19 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           {form.sellEnabled && (
             <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
               <label className="block md:col-span-2">
-                <span className="text-xs font-semibold text-gray-600">Sales description</span>
+                <span className="text-xs font-semibold text-gray-600">Description</span>
                 <textarea
                   className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
                   rows={2}
-                  value={form.sellDescription}
-                  onChange={(e) => set("sellDescription", e.target.value)}
+                  value={form.description}
+                  onChange={(e) => set("description", e.target.value)}
                 />
               </label>
               <label className="block">
                 <span className="text-xs font-semibold text-gray-600">Sales price / rate ($)</span>
-                {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
                 <MoneyInput
-                  valueDollars={form.sellPriceDollars ? Number(form.sellPriceDollars) : null}
-                  onChangeDollars={(d) => set("sellPriceDollars", d == null ? "" : String(d))}
+                  valueDollars={form.priceDollars ? Number(form.priceDollars) : null}
+                  onChangeDollars={(d) => set("priceDollars", d == null ? "" : String(d))}
                   ariaLabel="Sales price"
                   className="mt-1 w-full"
                 />
@@ -255,13 +337,17 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                   Income account *{" "}
                   <span className="font-normal text-gray-400">(carrier default: Service income)</span>
                 </span>
-                <input
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
-                  value={form.incomeAccount}
-                  onChange={(e) => set("incomeAccount", e.target.value)}
-                  placeholder="Sales of Service Income"
-                />
-                {errors.incomeAccount ? <p className="mt-1 text-[11px] text-red-700">{errors.incomeAccount}</p> : null}
+                <div className="mt-1">
+                  <Combobox
+                    options={incomeOptions}
+                    value={form.incomeAccountId}
+                    onChange={(v) => set("incomeAccountId", v)}
+                    placeholder="Select income account"
+                    loading={accountsQuery.isLoading}
+                    allowClear
+                  />
+                </div>
+                {errors.incomeAccountId ? <p className="mt-1 text-[11px] text-red-700">{errors.incomeAccountId}</p> : null}
               </label>
             </div>
           )}
@@ -281,54 +367,58 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           {form.buyEnabled && (
             <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
               <label className="block md:col-span-2">
-                <span className="text-xs font-semibold text-gray-600">Purchase description</span>
-                <textarea
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                  rows={2}
-                  value={form.buyDescription}
-                  onChange={(e) => set("buyDescription", e.target.value)}
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs font-semibold text-gray-600">Purchase cost ($)</span>
-                <MoneyInput
-                  valueDollars={form.buyCostDollars ? Number(form.buyCostDollars) : null}
-                  onChangeDollars={(d) => set("buyCostDollars", d == null ? "" : String(d))}
-                  ariaLabel="Purchase cost"
-                  className="mt-1 w-full"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs font-semibold text-gray-600">Preferred vendor</span>
-                <input
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
-                  value={form.preferredVendor}
-                  onChange={(e) => set("preferredVendor", e.target.value)}
-                />
-              </label>
-              <label className="block md:col-span-2">
                 <span className="text-xs font-semibold text-gray-600">Expense account *</span>
-                <input
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
-                  value={form.expenseAccount}
-                  onChange={(e) => set("expenseAccount", e.target.value)}
-                  placeholder="e.g. Operating Expenses"
-                />
-                {errors.expenseAccount ? <p className="mt-1 text-[11px] text-red-700">{errors.expenseAccount}</p> : null}
+                <div className="mt-1">
+                  <Combobox
+                    options={expenseOptions}
+                    value={form.expenseAccountId}
+                    onChange={(v) => set("expenseAccountId", v)}
+                    placeholder="Select expense account"
+                    loading={accountsQuery.isLoading}
+                    allowClear
+                  />
+                </div>
+                {errors.expenseAccountId ? <p className="mt-1 text-[11px] text-red-700">{errors.expenseAccountId}</p> : null}
               </label>
             </div>
           )}
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-gray-700">
-          <input
-            type="checkbox"
-            checked={form.isActive}
-            onChange={(e) => set("isActive", e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300"
-          />
-          Active
-        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs font-semibold text-gray-600">Class</span>
+            <div className="mt-1">
+              <Combobox
+                options={classOptions}
+                value={form.classId}
+                onChange={(v) => set("classId", v)}
+                placeholder="No class"
+                loading={classesQuery.isLoading}
+                allowClear
+              />
+            </div>
+          </label>
+          <div className="flex flex-col justify-end gap-2">
+            <label className="flex items-center gap-2 text-xs text-gray-700">
+              <input
+                type="checkbox"
+                checked={form.taxable}
+                onChange={(e) => set("taxable", e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Taxable
+            </label>
+            <label className="flex items-center gap-2 text-xs text-gray-700">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => set("isActive", e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Active
+            </label>
+          </div>
+        </div>
 
         {submitError ? (
           <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div>
