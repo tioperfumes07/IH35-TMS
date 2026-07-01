@@ -1,7 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { FleetHosBoardSection, num } from "./FleetHosBoardSection";
+import {
+  FleetHosBoardSection,
+  num,
+  isFleetRowOffline,
+  partitionFleetByFreshness,
+  OFFLINE_STALE_THRESHOLD_MINUTES,
+  OFFLINE_STALE_THRESHOLD_DAYS,
+} from "./FleetHosBoardSection";
+import type { FleetLocationHosRow } from "../../api/reports";
 
 const getFleetLocationHos = vi.fn();
 
@@ -14,7 +23,9 @@ function renderSection() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <FleetHosBoardSection operatingCompanyId="11111111-1111-4111-8111-111111111111" />
+      <MemoryRouter>
+        <FleetHosBoardSection operatingCompanyId="11111111-1111-4111-8111-111111111111" />
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -28,6 +39,43 @@ describe("num() coercion (regression: e.toFixed is not a function)", () => {
     expect(num(null)).toBe("—");
     expect(num("" as unknown as number)).toBe("—");
     expect(num("not-a-number" as unknown as number)).toBe("—");
+  });
+});
+
+describe("Live Fleet freshness view-model (COMPLIANCE-1)", () => {
+  const row = (minutes_since_fix: number | null, unit_number = "T?"): FleetLocationHosRow =>
+    ({
+      unit_id: `u-${unit_number}`,
+      unit_number,
+      minutes_since_fix,
+    } as unknown as FleetLocationHosRow);
+
+  it("threshold is a single named constant (7 days), not a magic number", () => {
+    expect(OFFLINE_STALE_THRESHOLD_DAYS).toBe(7);
+    expect(OFFLINE_STALE_THRESHOLD_MINUTES).toBe(7 * 24 * 60);
+  });
+
+  it("classifies a unit older than the threshold as offline (excluded from the live list)", () => {
+    // T140 last seen 06/22/2022 -> minutes_since_fix ≫ threshold.
+    const years = 4 * 365 * 24 * 60;
+    expect(isFleetRowOffline(row(years))).toBe(true);
+  });
+
+  it("keeps a freshly-reporting unit (3 min ago) in the live list", () => {
+    expect(isFleetRowOffline(row(3))).toBe(false);
+  });
+
+  it("treats a never-reported unit (null) as offline", () => {
+    expect(isFleetRowOffline(row(null))).toBe(true);
+  });
+
+  it("partitions the feed: live keeps fresh rows, offline holds stale/never-reported rows", () => {
+    const rows = [row(3, "T139"), row(4 * 365 * 24 * 60, "T140"), row(null, "T200"), row(120, "T141")];
+    const { live, offline } = partitionFleetByFreshness(rows);
+    expect(live.map((r) => r.unit_number)).toEqual(["T139", "T141"]);
+    expect(offline.map((r) => r.unit_number)).toEqual(["T140", "T200"]);
+    // The stale unit must NOT appear in the default live list.
+    expect(live.some((r) => r.unit_number === "T140")).toBe(false);
   });
 });
 
