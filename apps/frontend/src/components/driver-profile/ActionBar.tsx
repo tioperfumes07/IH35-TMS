@@ -33,7 +33,7 @@ export function ActionBar({
     <>
       <div
         className="sticky bottom-0 z-10 flex flex-wrap gap-2 border-t border-gray-200 bg-white/95 p-3 backdrop-blur"
-        data-testid="dp-section-12-action-bar"
+        data-testid="dp-action-bar"
       >
         <Button size="sm" variant="secondary" onClick={() => navigate(`/drivers/${driverId}`)} data-testid="dp-action-edit">
           Edit
