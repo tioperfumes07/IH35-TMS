@@ -23,6 +23,7 @@ import { FUEL_TAB_PATH, fuelTabFromPath } from "../../router/route-manifest";
 import { ActiveTripStrip } from "./components/ActiveTripStrip";
 import { AvoidStatesBanner } from "./components/AvoidStatesBanner";
 import { CompliancePanel } from "./components/CompliancePanel";
+import { FuelGlMappingCoverage } from "./components/FuelGlMappingCoverage";
 import { FuelKpiRow } from "./components/FuelKpiRow";
 import { HosRulesBox } from "./components/HosRulesBox";
 import { RouteDiagramSvg } from "./components/RouteDiagramSvg";
@@ -201,13 +202,17 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       ) : null}
 
       {tab === "expense_mapping" ? (
-        <section className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
-          <h3 className="text-sm font-semibold text-gray-900">Expense mapping</h3>
-          <p className="mt-2 text-xs text-gray-600">Map fuel card spend to GL expense categories for posting.</p>
-          <Link to="/accounting/settings/expense-category-map" className="mt-3 inline-block text-xs font-semibold text-slate-700 underline">
-            Open expense category map →
-          </Link>
-        </section>
+        <div className="space-y-2">
+          {/* FUEL-2: read-only coverage check surfaces unmapped fuel categories (verify-only, no posting). */}
+          <FuelGlMappingCoverage companyId={companyId} />
+          <section className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
+            <h3 className="text-sm font-semibold text-gray-900">Expense mapping</h3>
+            <p className="mt-2 text-xs text-gray-600">Map fuel card spend to GL expense categories for posting.</p>
+            <Link to="/accounting/settings/expense-category-map" className="mt-3 inline-block text-xs font-semibold text-slate-700 underline">
+              Open expense category map →
+            </Link>
+          </section>
+        </div>
       ) : null}
 
       {tab === "history" ? (
