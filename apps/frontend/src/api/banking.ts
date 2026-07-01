@@ -298,6 +298,9 @@ export function categorizeBankTransaction(
     gl_account_id?: string;
     vendor_id?: string;
     customer_id?: string;
+    // BLOCK-6 (additive dimension): tag the transaction to a driver. Stored as a tag; a driver-advance
+    // account posts a recoverable receivable behind the OFF-by-default BANK_DRIVER_ADVANCE_ENABLED flag.
+    driver_id?: string;
     memo?: string;
   }
 ) {
