@@ -20,7 +20,8 @@ export type ChatSender =
 
 export type PostMessageInput = {
   thread_id: string;
-  operating_company_id: string;
+  /** Ignored for writes — the locked thread's own operating_company_id is authoritative. Kept for callers. */
+  operating_company_id?: string;
   sender: ChatSender;
   msg_type: "text" | "photo" | "document" | "confirmation_request" | "confirmation_ack" | "cash_advance_card" | "system_event";
   body?: string | null;
@@ -58,8 +59,8 @@ export async function getOrCreateLoadThread(
   }
 
   const load = await client.query<{ load_number: string | null; assigned_primary_driver_id: string | null }>(
-    `SELECT load_number, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 LIMIT 1`,
-    [args.load_id],
+    `SELECT load_number, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+    [args.load_id, args.operating_company_id],
   );
   if (!load.rows[0]) throw new Error("load_not_found");
 
@@ -124,6 +125,8 @@ export async function postMessage(
     [input.thread_id],
   );
   if (!locked.rows[0]) throw new Error("thread_not_found");
+  // The thread's own entity is authoritative — never trust a caller-supplied operating_company_id.
+  const operatingCompanyId = locked.rows[0].operating_company_id;
 
   // 2. dedup BEFORE consuming a seq — a retried client_key returns the existing row, no gap.
   const dup = await client.query(
@@ -145,7 +148,7 @@ export async function postMessage(
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
      RETURNING ${MESSAGE_COLS}`,
     [
-      input.thread_id, input.operating_company_id, nextSeq, s.party_type,
+      input.thread_id, operatingCompanyId, nextSeq, s.party_type,
       s.party_type === "office" ? s.office_user_id : null,
       s.party_type === "driver" ? s.driver_id : null,
       input.msg_type, input.body ?? null, input.body_lang ?? null, input.client_key, input.content_sha256,
@@ -171,7 +174,7 @@ export async function postMessage(
   const evActorId = actorId ?? eventSubject.subject_id;
   const ev = await client.query<{ log_event: string }>(
     `SELECT events.log_event($1, $2, $3, $4, $5, $6, $7::jsonb, $8) AS log_event`,
-    [input.operating_company_id, eventType, evActorType, evActorId, eventSubject.subject_type, eventSubject.subject_id, JSON.stringify(payload), message.server_ts],
+    [operatingCompanyId, eventType, evActorType, evActorId, eventSubject.subject_type, eventSubject.subject_id, JSON.stringify(payload), message.server_ts],
   );
   await client.query(`UPDATE chat.messages SET event_log_id = $2 WHERE id = $1`, [messageId, ev.rows[0].log_event]);
 
@@ -183,7 +186,7 @@ export async function postMessage(
        AND NOT (p.party_type = 'office' AND p.office_user_id = $4)
        AND NOT (p.party_type = 'driver' AND p.driver_id = $5)
      ON CONFLICT (message_id, participant_id) DO NOTHING`,
-    [messageId, input.operating_company_id, input.thread_id,
+    [messageId, operatingCompanyId, input.thread_id,
      s.party_type === "office" ? s.office_user_id : null,
      s.party_type === "driver" ? s.driver_id : null],
   );
@@ -194,15 +197,16 @@ export async function postMessage(
 /** Advance a recipient's receipt state forward only (sent -> delivered -> read). */
 export async function advanceReceipt(
   client: Client,
-  args: { message_id: string; participant_id: string; operating_company_id: string; state: "delivered" | "read" },
+  args: { message_id: string; participant_id: string; state: "delivered" | "read" },
 ): Promise<void> {
   const rank = args.state === "read" ? 2 : 1;
+  // operating_company_id is derived from the message (chat.* — the message's entity is authoritative).
   await client.query(
     `INSERT INTO chat.message_receipts (message_id, participant_id, operating_company_id, state, state_at)
-     VALUES ($1, $2, $3, $4, now())
+     SELECT $1, $2, m.operating_company_id, $3, now() FROM chat.messages m WHERE m.id = $1
      ON CONFLICT (message_id, participant_id) DO UPDATE SET state = EXCLUDED.state, state_at = now()
-     WHERE (CASE chat.message_receipts.state WHEN 'read' THEN 2 WHEN 'delivered' THEN 1 ELSE 0 END) < $5`,
-    [args.message_id, args.participant_id, args.operating_company_id, args.state, rank],
+     WHERE (CASE chat.message_receipts.state WHEN 'read' THEN 2 WHEN 'delivered' THEN 1 ELSE 0 END) < $4`,
+    [args.message_id, args.participant_id, args.state, rank],
   );
 }
 

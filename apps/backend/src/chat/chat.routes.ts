@@ -48,13 +48,6 @@ async function resolveEventSubject(client: Client, threadId: string): Promise<{ 
   return { subject_type: "driver", subject_id: driverId };
 }
 
-async function driverCompanyId(client: Client, driverId: string): Promise<string> {
-  const r = await client.query(`SELECT operating_company_id FROM mdata.drivers WHERE id = $1 LIMIT 1`, [driverId]);
-  const oc = r.rows[0]?.operating_company_id as string | undefined;
-  if (!oc) throw new Error("driver_company_missing");
-  return oc;
-}
-
 export async function registerChatRoutes(app: FastifyInstance) {
   // ── Office ────────────────────────────────────────────────────────────────
   app.post("/api/v1/chat/threads/for-load", RL_WRITE, async (req: FastifyRequest, reply: FastifyReply) => {
@@ -99,7 +92,7 @@ export async function registerChatRoutes(app: FastifyInstance) {
     const p = receiptSchema.safeParse(req.body ?? {}); if (!p.success) return validationError(reply, p.error);
     const messageId = (req.params as { id: string }).id;
     await withCompanyScope(String(user.uuid), p.data.operating_company_id, (client: Client) =>
-      advanceReceipt(client, { message_id: messageId, participant_id: p.data.participant_id, operating_company_id: p.data.operating_company_id, state: p.data.state }));
+      advanceReceipt(client, { message_id: messageId, participant_id: p.data.participant_id, state: p.data.state }));
     return reply.send({ ok: true });
   });
 
@@ -144,23 +137,20 @@ export async function registerChatRoutes(app: FastifyInstance) {
     const threadId = (req.params as { id: string }).id;
     const sender: ChatSender = { party_type: "driver", driver_id: driver.id };
     const out = await withCurrentUser(String(u.uuid), async (client: Client) => {
-      const oc = await driverCompanyId(client, driver.id);
       const subject = await resolveEventSubject(client, threadId);
-      return postMessage(client, { thread_id: threadId, operating_company_id: oc, sender, msg_type: p.data.msg_type, body: p.data.body ?? null, body_lang: p.data.body_lang ?? null, client_key: p.data.client_key, content_sha256: p.data.content_sha256, cash_advance_request_id: p.data.cash_advance_request_id ?? null, references_message_id: p.data.references_message_id ?? null, ack_content_sha256: p.data.ack_content_sha256 ?? null }, subject);
+      return postMessage(client, { thread_id: threadId, sender, msg_type: p.data.msg_type, body: p.data.body ?? null, body_lang: p.data.body_lang ?? null, client_key: p.data.client_key, content_sha256: p.data.content_sha256, cash_advance_request_id: p.data.cash_advance_request_id ?? null, references_message_id: p.data.references_message_id ?? null, ack_content_sha256: p.data.ack_content_sha256 ?? null }, subject);
     });
     return reply.send(out);
   });
 
   app.post("/api/v1/driver/chat/messages/:id/receipt", RL, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!(await requireDriverSession(req, reply))) return;
-    const driver = req.driver!, u = req.user!;
+    const u = req.user!;
     const q = z.object({ participant_id: z.string().uuid(), state: z.enum(["delivered", "read"]) }).safeParse(req.body ?? {});
     if (!q.success) return validationError(reply, q.error);
     const messageId = (req.params as { id: string }).id;
-    await withCurrentUser(String(u.uuid), async (client: Client) => {
-      const oc = await driverCompanyId(client, driver.id);
-      return advanceReceipt(client, { message_id: messageId, participant_id: q.data.participant_id, operating_company_id: oc, state: q.data.state });
-    });
+    await withCurrentUser(String(u.uuid), (client: Client) =>
+      advanceReceipt(client, { message_id: messageId, participant_id: q.data.participant_id, state: q.data.state }));
     return reply.send({ ok: true });
   });
 }
