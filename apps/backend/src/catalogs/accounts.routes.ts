@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsAccountPushRequested } from "../qbo/tms-account-push-chain.service.js";
@@ -24,6 +25,7 @@ const listQuerySchema = z.object({
   search: z.string().trim().min(1).max(100).optional(),
   account_type: accountTypeSchema.optional(),
   parent_account_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -82,6 +84,23 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
+// catalogs.accounts is per-entity: the af1 RLS policy (accounts_entity_select) returns rows only where
+// operating_company_id = current_setting('app.operating_company_id'). Reading under withCurrentUser WITHOUT
+// that GUC therefore returns ZERO rows (the empty "Select account" picker) AND, if it ever returned rows,
+// would be a cross-entity leak. This helper sets the GUC for the active entity and asserts the caller is a
+// member of it (mirrors accounting/shared.withCompanyScope; kept local to avoid a cross-module import).
+async function withScopedCompany<T>(
+  userId: string,
+  operatingCompanyId: string,
+  fn: (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }) => Promise<T>,
+) {
+  await assertCompanyMembership(userId, operatingCompanyId);
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    return fn(client);
+  });
+}
+
 function mapAccountConflict(constraint?: string): string {
   if (!constraint) return "catalog_account_conflict";
   if (constraint.includes("account_number")) return "catalog_account_conflict_account_number";
@@ -122,7 +141,14 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const { limit, offset, status, search, account_type, parent_account_id } = parsed.data;
 
-    const accounts = await withCurrentUser(authUser.uuid, async (client) => {
+    // Resolve the active entity (explicit param, else the user's default/accessible company) and read its
+    // per-entity COA. Without this the af1 RLS returns 0 rows — the empty "Select account" picker.
+    const operatingCompanyId =
+      parsed.data.operating_company_id ??
+      (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
+    if (!operatingCompanyId) return { accounts: [] };
+
+    const accounts = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
@@ -235,8 +261,15 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const row = await withCurrentUser(authUser.uuid, async (client) => {
+    const operatingCompanyId =
+      parsedQuery.data.operating_company_id ??
+      (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
+    if (!operatingCompanyId) return reply.code(404).send({ error: "catalog_account_not_found" });
+
+    const row = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
       const res = await client.query(
         `
           SELECT ${ACCOUNT_SELECT_COLS}

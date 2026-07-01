@@ -153,8 +153,8 @@ export function BankTxCategorizationPage() {
   });
 
   const coaQuery = useQuery({
-    queryKey: ["banking", "coa-accounts", "categorize"],
-    queryFn: getCoaAccounts,
+    queryKey: ["banking", "coa-accounts", "categorize", companyId],
+    queryFn: () => getCoaAccounts(companyId),
     enabled: Boolean(companyId),
   });
 

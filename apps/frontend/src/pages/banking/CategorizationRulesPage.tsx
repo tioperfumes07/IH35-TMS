@@ -41,9 +41,9 @@ export function CategorizationRulesPage() {
     enabled: Boolean(companyId && canAccess(auth.user?.role)),
   });
   const accountsQuery = useQuery({
-    queryKey: ["banking", "coa-accounts"],
-    queryFn: () => getCoaAccounts(),
-    enabled: canAccess(auth.user?.role),
+    queryKey: ["banking", "coa-accounts", companyId],
+    queryFn: () => getCoaAccounts(companyId),
+    enabled: Boolean(companyId) && canAccess(auth.user?.role),
   });
   const previewQuery = useQuery({
     queryKey: ["banking", "categorization-rules-preview", companyId],

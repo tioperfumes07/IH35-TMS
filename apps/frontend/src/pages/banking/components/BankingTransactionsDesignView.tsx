@@ -242,7 +242,7 @@ export function BankingTransactionsDesignView({
 
   const coaQuery = useQuery({
     queryKey: ["banking", "tx-coa", companyId],
-    queryFn: () => getCoaAccounts(),
+    queryFn: () => getCoaAccounts(companyId),
     enabled: Boolean(companyId),
     staleTime: 120_000,
   });

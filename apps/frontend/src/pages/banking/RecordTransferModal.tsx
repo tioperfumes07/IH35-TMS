@@ -70,8 +70,8 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
   });
   const coaAccountsQuery = useQuery({
     queryKey: ["banking", "coa-accounts", operatingCompanyId],
-    queryFn: () => getCoaAccounts(),
-    enabled: open,
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId),
   });
 
   const bankAccounts = useMemo(
