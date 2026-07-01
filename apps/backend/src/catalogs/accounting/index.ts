@@ -18,6 +18,9 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     nameColumn: "account_name",
     descriptionColumn: "notes",
     activeMode: "deactivated_at",
+    // AF-1: catalogs.accounts is per-entity under FORCE-RLS. Without scoping this legacy list would
+    // leak other entities' accounts (lucia-bypass session) — scope by + require operating_company_id.
+    entityScoped: true,
     requiredMetadata: ["account_type"],
     selectMetadataSql: [
       "'account_type', t.account_type::text",
@@ -70,6 +73,9 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     codeColumn: "class_code",
     nameColumn: "class_name",
     descriptionColumn: "notes",
+    // AF-3: catalogs.classes is per-entity under FORCE-RLS → scope by + require operating_company_id
+    // (else create 500s on NOT NULL + WITH CHECK, and the list leaks other entities' classes).
+    entityScoped: true,
     activeMode: "deactivated_at",
     selectMetadataSql: ["'parent_class_id', t.parent_class_id", "'qbo_class_id', t.qbo_class_id"],
     createMapper: (metadata) => ({
@@ -134,12 +140,18 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     descriptionColumn: "description",
     activeMode: "deactivated_at",
     requiredMetadata: ["item_type"],
+    // AF-2: catalogs.items is per-entity under FORCE-RLS → every route must scope by + write operating_company_id.
+    entityScoped: true,
     selectMetadataSql: [
       "'item_type', t.item_type::text",
       "'unit_price_cents', t.unit_price_cents",
       "'default_income_account_id', t.default_income_account_id",
       "'default_expense_account_id', t.default_expense_account_id",
       "'default_class_id', t.default_class_id",
+      "'category_id', t.category_id",
+      "'purchase_description', t.purchase_description",
+      "'purchase_cost_cents', t.purchase_cost_cents",
+      "'preferred_vendor_id', t.preferred_vendor_id",
       "'qbo_item_id', t.qbo_item_id",
       "'taxable', t.taxable",
       "'notes', t.notes",
@@ -150,6 +162,10 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
       default_income_account_id: (metadata.default_income_account_id as string | null | undefined) ?? null,
       default_expense_account_id: (metadata.default_expense_account_id as string | null | undefined) ?? null,
       default_class_id: (metadata.default_class_id as string | null | undefined) ?? null,
+      category_id: (metadata.category_id as string | null | undefined) ?? null,
+      purchase_description: (metadata.purchase_description as string | null | undefined) ?? null,
+      purchase_cost_cents: metadata.purchase_cost_cents === undefined ? null : Number(metadata.purchase_cost_cents),
+      preferred_vendor_id: (metadata.preferred_vendor_id as string | null | undefined) ?? null,
       qbo_item_id: (metadata.qbo_item_id as string | null | undefined) ?? null,
       taxable: metadata.taxable === undefined ? false : Boolean(metadata.taxable),
       notes: (metadata.notes as string | null | undefined) ?? null,
@@ -166,10 +182,51 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
         ? { default_expense_account_id: metadata.default_expense_account_id as string | null }
         : {}),
       ...(metadata.default_class_id !== undefined ? { default_class_id: metadata.default_class_id as string | null } : {}),
+      ...(metadata.category_id !== undefined ? { category_id: metadata.category_id as string | null } : {}),
+      ...(metadata.purchase_description !== undefined ? { purchase_description: metadata.purchase_description as string | null } : {}),
+      ...(metadata.purchase_cost_cents !== undefined
+        ? { purchase_cost_cents: metadata.purchase_cost_cents === null ? null : Number(metadata.purchase_cost_cents) }
+        : {}),
+      ...(metadata.preferred_vendor_id !== undefined ? { preferred_vendor_id: metadata.preferred_vendor_id as string | null } : {}),
       ...(metadata.qbo_item_id !== undefined ? { qbo_item_id: metadata.qbo_item_id as string | null } : {}),
       ...(metadata.taxable !== undefined ? { taxable: Boolean(metadata.taxable) } : {}),
       ...(metadata.notes !== undefined ? { notes: metadata.notes as string | null } : {}),
     }),
+    // NetSuite-style server-side account-type guard: income must be Income/OtherIncome, expense must be
+    // Expense/CostOfGoodsSold/OtherExpense. Same-entity is already enforced by AF-2 composite FKs; this
+    // adds type-correctness so an item can never point revenue at an expense account (or vice-versa).
+    validate: async (client, mapped, oc) => {
+      const checkType = async (
+        accountId: string | null | undefined,
+        allowed: string[],
+        notFoundErr: string,
+        wrongTypeErr: string
+      ): Promise<string | null> => {
+        if (!accountId) return null;
+        const res = await client.query(
+          `SELECT account_type::text AS t FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [accountId, oc]
+        );
+        const t = res.rows[0]?.t as string | undefined;
+        if (!t) return notFoundErr;
+        if (!allowed.includes(t)) return wrongTypeErr;
+        return null;
+      };
+      return (
+        (await checkType(
+          mapped.default_income_account_id as string | null | undefined,
+          ["Income", "OtherIncome"],
+          "income_account_not_found",
+          "income_account_wrong_type"
+        )) ??
+        (await checkType(
+          mapped.default_expense_account_id as string | null | undefined,
+          ["Expense", "CostOfGoodsSold", "OtherExpense"],
+          "expense_account_not_found",
+          "expense_account_wrong_type"
+        ))
+      );
+    },
   });
 
   registerLegacyAccountingCatalogRoutes(app, {
