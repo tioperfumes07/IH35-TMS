@@ -95,7 +95,14 @@ export async function listThreads(client: Client): Promise<Array<Record<string, 
   return res.rows;
 }
 
-/** Thread messages after a seq cursor (RLS enforces participant membership). */
+// Same columns, prefixed for the enriched join read.
+const MESSAGE_COLS_M = MESSAGE_COLS.split(", ").map((c) => `m.${c}`).join(", ");
+
+/**
+ * Thread messages after a seq cursor (RLS enforces participant membership). Read-only enrichment
+ * (CHAT-5): cash_advance_card rows carry the linked request's live status/amount; confirmation_request
+ * rows carry whether a confirmation_ack references them. All LEFT JOINs — never writes.
+ */
 export async function getThreadMessages(
   client: Client,
   threadId: string,
@@ -103,8 +110,17 @@ export async function getThreadMessages(
 ): Promise<Array<Record<string, unknown>>> {
   const limit = Math.min(Math.max(opts.limit ?? 100, 1), 200);
   const res = await client.query(
-    `SELECT ${MESSAGE_COLS} FROM chat.messages
-     WHERE thread_id = $1 AND seq > $2 ORDER BY seq ASC LIMIT $3`,
+    `SELECT ${MESSAGE_COLS_M},
+            ca.status                 AS cash_advance_status,
+            ca.requested_amount_cents AS cash_advance_amount_cents,
+            ack.id                    AS ack_message_id,
+            ack.server_ts             AS acked_at
+     FROM chat.messages m
+     LEFT JOIN driver_finance.cash_advance_requests ca
+       ON ca.id = m.cash_advance_request_id AND ca.operating_company_id = m.operating_company_id
+     LEFT JOIN chat.messages ack
+       ON ack.references_message_id = m.id AND ack.msg_type = 'confirmation_ack' AND ack.status = 'active'
+     WHERE m.thread_id = $1 AND m.seq > $2 ORDER BY m.seq ASC LIMIT $3`,
     [threadId, opts.after_seq ?? 0, limit],
   );
   return res.rows;
