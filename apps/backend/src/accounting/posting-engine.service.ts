@@ -3,7 +3,10 @@ import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
 
-export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense";
+// CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
+// JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
+// prefix-matches the leading four MVP types on a single line.
+export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense" | "bank_categorization";
 export type PostingPurpose = "initial_post" | "reversal";
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
@@ -69,7 +72,8 @@ export type PostingErrorCode =
   | "ADVANCE_NOT_POSTING_ELIGIBLE"
   | "BILL_LINE_ACCOUNT_UNRESOLVED"
   | "INVOICE_LINE_REVENUE_UNRESOLVED"
-  | "EXPENSE_NOT_POSTING_ELIGIBLE";
+  | "EXPENSE_NOT_POSTING_ELIGIBLE"
+  | "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -129,7 +133,11 @@ const INVOICE_ELIGIBLE_STATUSES = new Set(["sent", "partial", "paid", "factored"
 const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
 function assertKnownSourceType(value: string): asserts value is PostingSourceType {
-  if (!["invoice", "bill", "customer_payment", "bill_payment", "cash_advance", "driver_advance", "expense"].includes(value)) {
+  if (
+    !["invoice", "bill", "customer_payment", "bill_payment", "cash_advance", "driver_advance", "expense", "bank_categorization"].includes(
+      value
+    )
+  ) {
     throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source_transaction_type: ${value}`);
   }
 }
@@ -1110,6 +1118,101 @@ async function buildDriverAdvanceLines(
   };
 }
 
+// CHAIN-05 (BLOCK-03) — a categorized bank-feed line → a direction-aware balanced JE. This is the
+// GENERALIZATION of BLOCK-6 (bank-driver-advance): the same two-leg cash↔category structure, for ANY
+// categorized bank transaction (not just the driver-advance branch). NO new GL math — it reads the row
+// the operator already tagged and the bank's cash-GL bridge, then emits the standard double entry.
+//
+//   CAT  = banking.bank_transactions.categorization_gl_account_id  (the account the operator chose)
+//   BANK = banking.bank_accounts.ledger_account_id                 (the source bank's COA register)
+//
+// DIRECTION IS DRIVEN ONLY BY is_credit — NEVER by the sign of amount_cents (money-out is stored as a
+// NEGATIVE amount_cents; we post Math.abs). This mirrors bank-driver-advance.service.ts exactly:
+//   is_credit=false (money OUT): DR CAT / CR BANK   (paid an expense / bought an asset / paid a liability)
+//   is_credit=true  (money IN):  DR BANK / CR CAT   (deposited revenue / borrowed / received held funds)
+// Both legs equal by construction → balanced. Fails CLOSED on any unresolved input (the higher-level
+// interlocks — flag, transfer, matched-to-bill, driver-advance cede — live in bank-feed-gl-posting.service).
+async function buildBankCategorizationLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const txnRes = await client.query<{
+    id: string;
+    status: string | null;
+    is_credit: boolean;
+    amount_cents: string | number | null;
+    transaction_date: string;
+    categorization_gl_account_id: string | null;
+    bank_ledger_account_id: string | null;
+  }>(
+    `
+      SELECT
+        bt.id::text,
+        bt.status::text,
+        bt.is_credit,
+        bt.amount_cents::bigint AS amount_cents,
+        bt.transaction_date::text AS transaction_date,
+        bt.categorization_gl_account_id::text AS categorization_gl_account_id,
+        ba.ledger_account_id::text AS bank_ledger_account_id
+      FROM banking.bank_transactions bt
+      LEFT JOIN banking.bank_accounts ba
+        ON ba.id = bt.bank_account_id
+        AND ba.operating_company_id = bt.operating_company_id
+      WHERE bt.operating_company_id = $1::uuid
+        AND bt.id::text = $2
+      LIMIT 1
+      FOR UPDATE OF bt
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const txn = txnRes.rows[0];
+  if (!txn) throw new PostingEngineError("SOURCE_NOT_FOUND", "Bank transaction not found");
+  if (txn.status !== "categorized") {
+    throw new PostingEngineError(
+      "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE",
+      `Bank transaction is not posting-eligible (status=${txn.status ?? "null"}; must be 'categorized')`
+    );
+  }
+
+  const catAccountId = txn.categorization_gl_account_id;
+  if (!catAccountId) {
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Bank transaction has no categorization_gl_account_id to post against");
+  }
+  const bankAccountId = txn.bank_ledger_account_id;
+  if (!bankAccountId) {
+    throw new PostingEngineError(
+      "ACCOUNT_MAPPING_MISSING",
+      "Source bank account has no linked ledger_account_id (cash-GL bridge) — cannot post the bank leg"
+    );
+  }
+
+  // Sign landmine: money-out is stored NEGATIVE. Post the magnitude; take direction from is_credit only.
+  const amountCents = Math.abs(Number(txn.amount_cents ?? 0));
+  if (!Number.isFinite(amountCents) || amountCents <= 0) {
+    throw new PostingEngineError("BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE", "Bank transaction has a zero/non-finite amount");
+  }
+
+  const label = `Bank categorization ${sourceId}`;
+  const moneyIn = txn.is_credit === true;
+  const catLine: PostingLineDraft = {
+    account_id: catAccountId,
+    debit_or_credit: moneyIn ? "credit" : "debit",
+    amount_cents: amountCents,
+    description: `${label} category`,
+    source_transaction_line_id: null,
+  };
+  const bankLine: PostingLineDraft = {
+    account_id: bankAccountId,
+    debit_or_credit: moneyIn ? "debit" : "credit",
+    amount_cents: amountCents,
+    description: `${label} bank`,
+    source_transaction_line_id: null,
+  };
+  // Order legs debit-first for readability (money-in → bank debit first; money-out → category debit first).
+  return {
+    postingDate: txn.transaction_date,
+    memo: `${label} posting`,
+    lines: moneyIn ? [bankLine, catLine] : [catLine, bankLine],
+  };
+}
+
 async function buildPostingDraft(
   client: DbClient,
   sourceType: PostingSourceType,
@@ -1124,6 +1227,7 @@ async function buildPostingDraft(
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
+  if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);
   throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source type: ${sourceType}`);
 }
 
@@ -1277,7 +1381,8 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
         error.code !== "INVOICE_NOT_POSTING_ELIGIBLE" &&
         error.code !== "BILL_NOT_POSTING_ELIGIBLE" &&
         error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE" &&
-        error.code !== "ADVANCE_NOT_POSTING_ELIGIBLE"
+        error.code !== "ADVANCE_NOT_POSTING_ELIGIBLE" &&
+        error.code !== "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE"
       ) {
         await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       }

@@ -7,6 +7,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { pendingCategorizationPredicate } from "./pending-categorization.js";
 import { maybePostBankDriverAdvanceForCategorization } from "./bank-driver-advance.service.js";
+import { maybePostBankCategorizationToGl } from "./bank-feed-gl-posting.service.js";
 import {
   BULK_TXN_MAX,
   bulkCategorizeTransactions,
@@ -340,7 +341,28 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       }
     }
 
-    return driverAdvance ? { ...result.data, driver_advance: driverAdvance } : result.data;
+    // CHAIN-05 (BLOCK-03) [HOLD] — the GENERAL case: post a direction-aware balanced JE for ANY categorized
+    // line. Runs AFTER the BLOCK-6 driver-advance call (§7 ordering); its cede predicate (driver tagged +
+    // the driver-advance account) returns driver_advance_branch so it NEVER re-posts a row BLOCK-6 owns.
+    // Behind BANK_FEED_GL_POSTING_ENABLED (OFF): with the flag off this returns { posted:false,
+    // reason:"flag_off" } and posts nothing — the tag committed above is untouched.
+    let bankFeedGl: Awaited<ReturnType<typeof maybePostBankCategorizationToGl>> | undefined;
+    try {
+      bankFeedGl = await maybePostBankCategorizationToGl({
+        companyId,
+        actorUserUuid: String(user.uuid),
+        bankTransactionId: params.data.id,
+      });
+    } catch (e) {
+      // Surface, never silently swallow (the tag is committed; the financial post is best-effort).
+      bankFeedGl = { posted: false, reason: "post_failed", message: String((e as Error)?.message ?? e) };
+    }
+
+    return {
+      ...result.data,
+      ...(driverAdvance ? { driver_advance: driverAdvance } : {}),
+      ...(bankFeedGl ? { bank_feed_gl: bankFeedGl } : {}),
+    };
   });
 
   app.post("/api/v1/banking/transactions/categorize-bulk", async (req, reply) => {
