@@ -6,11 +6,6 @@
       "preview": "`SELECT account_number::text AS account_number, account_name::text AS account_name FROM catalogs.accounts WHERE id = $1:"
     },
     {
-      "key": "apps/backend/src/accounting/coa-roles/resolver.service.ts#275f99ffee1c27173eaaa94e0d2f7274ae1d7ad0",
-      "file": "apps/backend/src/accounting/coa-roles/resolver.service.ts",
-      "preview": "` SELECT id::text FROM catalogs.accounts WHERE ${clauses.join(\" AND \")} ORDER BY updated_at DESC LIMIT 1 `"
-    },
-    {
       "key": "apps/backend/src/accounting/coa-roles/resolver.service.ts#d2e3362aaddf81497c24d362a22ae567e6f8d356",
       "file": "apps/backend/src/accounting/coa-roles/resolver.service.ts",
       "preview": "` SELECT arb.account_id::text AS account_id FROM catalogs.account_role_bindings arb JOIN catalogs.accounts a ON a.id = a"
@@ -114,11 +109,6 @@
       "key": "apps/backend/src/accounting/period-close-retained-earnings.service.ts#23ce923a0a3802fb11f31152475e854644527ef8",
       "file": "apps/backend/src/accounting/period-close-retained-earnings.service.ts",
       "preview": "` SELECT id::text FROM catalogs.accounts WHERE account_type = 'Equity' ORDER BY account_number NULLS LAST LIMIT 1 `"
-    },
-    {
-      "key": "apps/backend/src/accounting/posting-engine.service.ts#98f5a700d5c743d3cdc2ae5e1e891c5eff72c6b0",
-      "file": "apps/backend/src/accounting/posting-engine.service.ts",
-      "preview": "` SELECT id::text AS id FROM catalogs.accounts WHERE account_type = $1 AND deactivated_at IS NULL AND is_postable = true"
     },
     {
       "key": "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts#d2e3362aaddf81497c24d362a22ae567e6f8d356",
@@ -571,11 +561,6 @@
       "preview": "` SELECT a.id::text, a.unit_code, a.asset_type, a.status FROM mdata.assets a WHERE a.tenant_id = $1::uuid AND ( a.id = $"
     },
     {
-      "key": "apps/backend/src/insurance/summary.routes.ts#b0cdc0b38e64a88f9e4eb41f581c5c496bec3081",
-      "file": "apps/backend/src/insurance/summary.routes.ts",
-      "preview": "`SELECT count(*)::int AS count FROM mdata.units u WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) ="
-    },
-    {
       "key": "apps/backend/src/integrations/fmcsa/safer.service.ts#23acf3e3511e45d7369d27157d77704b4038e009",
       "file": "apps/backend/src/integrations/fmcsa/safer.service.ts",
       "preview": "` SELECT id, operating_company_id, customer_name, mc_number, dot_number, fmcsa_verified_at, fmcsa_last_checked_at, fmcsa"
@@ -891,24 +876,9 @@
       "preview": "` SELECT id, equipment_number, vin, equipment_type, make, model, year, status, current_unit_id, current_location_id, own"
     },
     {
-      "key": "apps/backend/src/mdata/loads.routes.ts#2ad2fa7c2d9ec79a064d16378a536298456d4952",
-      "file": "apps/backend/src/mdata/loads.routes.ts",
-      "preview": "` SELECT id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code, assigned_unit_id, "
-    },
-    {
       "key": "apps/backend/src/mdata/loads.routes.ts#5eac589addf095467f769660a3c18b90cf9192db",
       "file": "apps/backend/src/mdata/loads.routes.ts",
       "preview": "` SELECT COUNT(*)::int AS total_count FROM mdata.loads l JOIN mdata.customers c ON c.id = l.customer_id LEFT JOIN mdata."
-    },
-    {
-      "key": "apps/backend/src/mdata/loads.routes.ts#6f63cb25b2e7a1a1d0eca5a27b01d444d8a01ad9",
-      "file": "apps/backend/src/mdata/loads.routes.ts",
-      "preview": "`SELECT id, status FROM mdata.loads WHERE id = $1 AND soft_deleted_at IS NULL LIMIT 1`"
-    },
-    {
-      "key": "apps/backend/src/mdata/loads.routes.ts#c26e9e9114f19f9860a02302a77293e105702b66",
-      "file": "apps/backend/src/mdata/loads.routes.ts",
-      "preview": "` SELECT id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code, assigned_unit_id, "
     },
     {
       "key": "apps/backend/src/mdata/loads.routes.ts#f3b8ad9dcf9f11d760054599b0a975585e86cbfc",
@@ -996,29 +966,9 @@
       "preview": "` SELECT id::text AS id FROM mdata.units WHERE unit_number = 'TEST-001' LIMIT 1 `"
     },
     {
-      "key": "apps/backend/src/qbo-sync/chart-of-accounts-reconciler.ts#005ae7f57575d6ace791f3ad99c0ee3f2315f164",
-      "file": "apps/backend/src/qbo-sync/chart-of-accounts-reconciler.ts",
-      "preview": "` SELECT MAX(qbo_synced_at) FILTER (WHERE qbo_sync_status = 'synced')::text AS last_pull_at, MAX(updated_at) FILTER (WHE"
-    },
-    {
-      "key": "apps/backend/src/qbo-sync/chart-of-accounts-reconciler.ts#064c81ac2ee14b8c5f85a752e4e330190dd34331",
-      "file": "apps/backend/src/qbo-sync/chart-of-accounts-reconciler.ts",
-      "preview": "` SELECT COUNT(*) FILTER (WHERE deactivated_at IS NULL)::text AS total_local, COUNT(*) FILTER (WHERE qbo_sync_status = '"
-    },
-    {
-      "key": "apps/backend/src/qbo-sync/chart-of-accounts-reconciler.ts#16c3c01aaeb59153a663e863a63d8753b4f80f31",
-      "file": "apps/backend/src/qbo-sync/chart-of-accounts-reconciler.ts",
-      "preview": "`SELECT COUNT(*)::text AS c FROM catalogs.accounts WHERE qbo_sync_status = 'local_only' AND deactivated_at IS NULL`"
-    },
-    {
       "key": "apps/backend/src/qbo-sync/drift-detector.ts#47fa9248ace0debffccc395a9074e4881db63ca2",
       "file": "apps/backend/src/qbo-sync/drift-detector.ts",
       "preview": "` SELECT id::text AS id, account_name FROM catalogs.accounts WHERE deactivated_at IS NULL AND qbo_account_id IS NULL AND"
-    },
-    {
-      "key": "apps/backend/src/qbo/unlinked-entities.routes.ts#c070d32927c869e19585c9860a25edef538065e6",
-      "file": "apps/backend/src/qbo/unlinked-entities.routes.ts",
-      "preview": "` SELECT DISTINCT ON (c.qbo_class_id) c.qbo_class_id AS qbo_class_qbo_id, c.class_name AS display_name FROM catalogs.cla"
     },
     {
       "key": "apps/backend/src/reconciliation/reconciliation-worker.service.ts#e6d99df0f1bf60750c98f9d8ef4dce1d185367e8",
