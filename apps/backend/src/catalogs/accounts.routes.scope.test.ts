@@ -35,3 +35,24 @@ describe("catalogs.accounts read routes are entity-scoped (A1 / af1 RLS)", () =>
     expect(handler).toContain("withScopedCompany");
   });
 });
+
+// Static regression guard for the WRITE path (#1708). Under af1 FORCE RLS, create/update/deactivate must
+// set app.operating_company_id (and create must STORE operating_company_id) or accounts_entity_write's
+// WITH CHECK rejects the write. This fails if any write route regresses to an unscoped write.
+describe("catalogs.accounts write routes are entity-scoped (write-path / af1 RLS)", () => {
+  it("POST create sets the GUC and stores operating_company_id in the INSERT", () => {
+    const handler = sliceBetween(SRC, 'app.post("/api/v1/catalogs/accounts"', 'app.get("/api/v1/catalogs/accounts/:id"');
+    expect(handler).toContain("set_config('app.operating_company_id'");
+    expect(handler).toMatch(/INSERT INTO catalogs\.accounts[\s\S]*operating_company_id/);
+  });
+
+  it("PATCH update sets the GUC before the read/write", () => {
+    const handler = sliceBetween(SRC, 'app.patch("/api/v1/catalogs/accounts/:id"', 'app.post("/api/v1/catalogs/accounts/:id/deactivate"');
+    expect(handler).toContain("set_config('app.operating_company_id'");
+  });
+
+  it("POST deactivate sets the GUC before the read/write", () => {
+    const start = SRC.indexOf('app.post("/api/v1/catalogs/accounts/:id/deactivate"');
+    expect(SRC.slice(start)).toContain("set_config('app.operating_company_id'");
+  });
+});
