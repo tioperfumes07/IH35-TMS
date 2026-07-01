@@ -10,9 +10,17 @@ import {
   type PostingSourceType,
 } from "./posting-engine.service.js";
 import { enforcePsePostingOnBillPost } from "./pse-enforce.middleware.js";
-import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
+
+// CHAIN-06 GAP #1 kill switch (default OFF). Resolved PER-ENTITY via lib.feature_flags (isEnabled)
+// INSIDE the request handler — NOT a global process.env read — so a flip is per-operating_company_id
+// and turning invoice A/R posting on for one entity cannot enable it for another. Mirrors
+// BILL_GL_POSTING_ENABLED (bill-gl-draft.routes.ts). Until this flag resolves true for the request's
+// entity, invoice -> A/R posting via the generic MVP route (and the backfill sweep) is refused/no-op.
+const INVOICE_AR_GL_POSTING_FLAG_KEY = "INVOICE_AR_GL_POSTING_ENABLED";
 
 const postBodySchema = z.object({
   source_transaction_type: z.enum(["invoice", "bill", "customer_payment", "bill_payment"]),
@@ -67,6 +75,27 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const body = postBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    // CHAIN-06 GAP #1 — kill switch for invoice -> A/R posting. This route posts invoice A/R with only
+    // a role gate today; add the per-entity feature-flag gate so it cannot post to the books unless the
+    // entity's INVOICE_AR_GL_POSTING_ENABLED override is ON. Only the invoice source is gated; bills and
+    // payments keep their existing behavior. Reversal purpose is NOT gated (a posted entry must always be
+    // reversible). When OFF -> 409 posting_disabled, nothing written (no-op).
+    if (body.data.source_transaction_type === "invoice" && (body.data.posting_purpose ?? "initial_post") === "initial_post") {
+      const invoiceArEnabled = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        isEnabled(client, INVOICE_AR_GL_POSTING_FLAG_KEY, {
+          operating_company_id: query.data.operating_company_id,
+          user_uuid: String(user.uuid),
+        })
+      );
+      if (!invoiceArEnabled) {
+        return reply.code(409).send({
+          error: "posting_disabled",
+          message:
+            "Invoice→A/R posting is disabled for this entity (INVOICE_AR_GL_POSTING_ENABLED per-entity override OFF). Enable the per-entity override on a Neon branch to verify.",
+        });
+      }
+    }
 
     const pseOk = await enforcePsePostingOnBillPost(req, reply);
     if (!pseOk) return;
@@ -125,9 +154,20 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
+    // CHAIN-06 GAP #1 — the backfill sweep also posts invoice A/R, so it is the SAME kill switch: resolve
+    // the per-entity flag and only let the sweep post invoices when it is ON for this entity. Bills and
+    // payments continue to backfill unaffected.
+    const invoiceArEnabled = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      isEnabled(client, INVOICE_AR_GL_POSTING_FLAG_KEY, {
+        operating_company_id: query.data.operating_company_id,
+        user_uuid: String(user.uuid),
+      })
+    );
+
     const result = await runPostingEngineMvpBackfill(
       {
         operating_company_id: query.data.operating_company_id,
+        invoiceArPostingEnabled: invoiceArEnabled,
       },
       { userId: user.uuid }
     );
