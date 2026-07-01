@@ -19,6 +19,7 @@ import { PaymentMethodsListPage } from "../pages/lists/accounting/PaymentMethods
 import { PostingTemplatesListPage } from "../pages/lists/accounting/PostingTemplatesListPage";
 import { QboCategoriesListPage } from "../pages/lists/accounting/QboCategoriesListPage";
 import { TaxCodesListPage } from "../pages/lists/accounting/TaxCodesListPage";
+import { VoidCancelReasonsListPage } from "../pages/lists/accounting/VoidCancelReasonsListPage";
 import { AdditionalChargesListPage } from "../pages/lists/dispatch/AdditionalChargesListPage";
 import { DetentionReasonsListPage } from "../pages/lists/dispatch/DetentionReasonsListPage";
 import { LoadCancellationReasonsListPage } from "../pages/lists/dispatch/LoadCancellationReasonsListPage";
@@ -142,6 +143,7 @@ const LIST_ROUTES = [
   row("/lists/accounting/payment-methods", <PaymentMethodsListPage />, /payment methods/i),
   row("/lists/accounting/tax-codes", <TaxCodesListPage />, /tax codes/i),
   row("/lists/accounting/currency-codes", <CurrencyCodesListPage />, /currency codes/i),
+  row("/lists/accounting/void-cancel-reasons", <VoidCancelReasonsListPage />, /void\/cancel reasons/i),
   row("/lists/safety/internal-fine-reasons", <InternalFineReasonsListPage />, /internal fine reasons/i),
   row("/lists/safety/civil-fine-types", <CivilFineTypesListPage />, /civil fine types/i),
   row("/lists/safety/company-violation-types", <CompanyViolationTypesListPage />, /company violation types/i),

@@ -82,6 +82,11 @@ const cancelBodySchema = z.object({
 });
 const voidBodySchema = z.object({
   reason: z.string().trim().min(3, "a reason is required").max(500),
+  // Task #24 / CODER-11 re-point: the DIRECT WO financial-void now carries a controlled reason from the
+  // per-entity catalogs.void_cancel_reasons (the financial VOID catalog — separate from the operational
+  // WO-cancel catalog). Optional for back-compat; when set it's validated same-entity + note-required.
+  reason_code: z.string().trim().min(1).max(64).optional(),
+  note_text: z.string().trim().max(1000).optional(),
 });
 
 const photoIntentSchema = z.object({
@@ -138,7 +143,7 @@ async function enqueueWorkOrderOutbox(
 // void.service. The reversing JE id is surfaced back to the caller to persist into
 // maintenance.work_orders.reversing_entry_ref.
 type WoFinancialSettleResult =
-  | { kind: "ok"; reversing_entry_ref: string | null }
+  | { kind: "ok"; reversing_entry_ref: string | null; closed_period_reversal: boolean }
   | { kind: "financial_blocked" }
   | { kind: "bill_has_payments" };
 
@@ -207,7 +212,7 @@ export async function settleWorkOrderFinancialLinkage(
   const hasFinancialLinkage = linkedBills.length > 0 || linkedExpenseCount > 0 || postedCount > 0;
   if (!hasFinancialLinkage) {
     // Open/unposted WO (e.g. DEMO-WO-001/002) — pure status change, no money. Proceeds regardless of flag.
-    return { kind: "ok", reversing_entry_ref: null };
+    return { kind: "ok", reversing_entry_ref: null, closed_period_reversal: false };
   }
 
   // Financial linkage present: gated. Default OFF refuses so we can NEVER orphan posted entries.
@@ -228,6 +233,10 @@ export async function settleWorkOrderFinancialLinkage(
   // bill reversal + the expense reversal + the WO status flip are ALL-OR-NOTHING — a throw rolls back the
   // whole set, never leaving a half-reversed WO. NO new GL math: postVoidReversal builds every reversing JE.
   let reversingEntryRef: string | null = null;
+  // Task #24: surface whether ANY reversal dated into a different (current) period — i.e. the source
+  // touched a closed period. The reversal itself already dates into the open period (void.service); this
+  // is only the register-facing flag.
+  let closedPeriod = false;
   const today = new Date().toISOString().slice(0, 10);
 
   // Reverse + void each linked bill.
@@ -259,6 +268,7 @@ export async function settleWorkOrderFinancialLinkage(
     );
     await auditVoid(client, userId, "bill", { operatingCompanyId, entityId: bill.id, reason, reversal });
     if (reversal.reversal_journal_entry_id) reversingEntryRef = reversal.reversal_journal_entry_id;
+    if (reversal.closed_period_reversal) closedPeriod = true;
   }
 
   // Reverse + void each linked EXPENSE (KEEP the cash path — Jorge 2026-06-29). Same bill grain: whole
@@ -302,10 +312,11 @@ export async function settleWorkOrderFinancialLinkage(
       );
       await auditVoid(client, userId, "expense", { operatingCompanyId, entityId: exp.id, reason, reversal });
       if (reversal.reversal_journal_entry_id) reversingEntryRef = reversal.reversal_journal_entry_id;
+      if (reversal.closed_period_reversal) closedPeriod = true;
     }
   }
 
-  return { kind: "ok", reversing_entry_ref: reversingEntryRef };
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
 }
 
 function centsFromNumeric(value: unknown): number | null {
@@ -1156,7 +1167,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
   // VOID a work order — EXECUTORS (Owner|Administrator|Accountant) ONLY, reason REQUIRED, SOFT (never deletes). Stronger than
   // cancel: nullifies a WO (incl. one already completed) while preserving the immutable record + full
   // history + the WHY in the audit trail. Sets voided_at/by/notes; idempotent (already-void → 409).
-  app.post("/api/v1/work-orders/:id/void", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/work-orders/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     // Void/cancel EXECUTORS = Owner|Administrator|Accountant (canVoidCancel). Non-executors get a 403
@@ -1181,6 +1192,21 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       if (!pre.rows[0]) return { kind: "missing" as const };
       if ((pre.rows[0] as { voided_at?: string | null }).voided_at) return { kind: "already_voided" as const };
 
+      // Task #24 / CODER-11: when a controlled reason_code is supplied, validate it against the per-entity
+      // financial-void catalog (same-entity + active) and enforce note-required — mirrors the governed path.
+      let resolvedReasonCode: string | null = null;
+      if (parsed.data.reason_code) {
+        const rc = await client.query(
+          `SELECT reason_code, requires_note FROM catalogs.void_cancel_reasons
+            WHERE operating_company_id = $1 AND reason_code = $2 AND is_active = true LIMIT 1`,
+          [query.data.operating_company_id, parsed.data.reason_code]
+        );
+        const rrow = rc.rows[0] as { reason_code: string; requires_note: boolean } | undefined;
+        if (!rrow) return { kind: "invalid_reason" as const };
+        if (rrow.requires_note && !parsed.data.note_text?.trim()) return { kind: "note_required" as const };
+        resolvedReasonCode = rrow.reason_code;
+      }
+
       // Reverse/void linked financials FIRST (gated WO_VOID_ENABLED; refuses when posted + flag OFF so we
       // can NEVER orphan posted GL). NO new GL math — void.service.postVoidReversal builds the reversing JE.
       const fin = await settleWorkOrderFinancialLinkage(
@@ -1199,13 +1225,13 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           SET voided_at = now(),
               voided_by_user_id = $2,
               void_notes = $3,
-              void_reason_code = COALESCE(void_reason_code, 'manual'),
+              void_reason_code = COALESCE($6, void_reason_code, 'manual'),
               reversing_entry_ref = COALESCE($5, reversing_entry_ref),
               updated_at = now()
           WHERE id = $1 AND operating_company_id = $4 AND voided_at IS NULL
           RETURNING *
         `,
-        [params.data.id, user.uuid, parsed.data.reason, query.data.operating_company_id, fin.reversing_entry_ref]
+        [params.data.id, user.uuid, parsed.data.note_text?.trim() || parsed.data.reason, query.data.operating_company_id, fin.reversing_entry_ref, resolvedReasonCode]
       );
       const wo = res.rows[0];
       if (!wo) return { kind: "already_voided" as const };
@@ -1236,6 +1262,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       return reply.code(409).send({ error: "wo_has_posted_financial_entries", message: "WO has posted financial entries; financial void is disabled (WO_VOID_ENABLED off)" });
     if (row.kind === "bill_has_payments")
       return reply.code(409).send({ error: "wo_linked_bill_has_payments", message: "WO's linked bill has live payments; void the bill payment before voiding the work order" });
+    if (row.kind === "invalid_reason")
+      return reply.code(400).send({ error: "invalid_void_reason_code", message: "reason_code is not an active reason for this entity" });
+    if (row.kind === "note_required")
+      return reply.code(400).send({ error: "void_note_required", message: "this reason requires a note (note_text)" });
     return { work_order: row.wo };
   });
 

@@ -272,6 +272,7 @@ import { ExpenseCategoriesListPage } from "../pages/lists/accounting/ExpenseCate
 import { ItemsListPage } from "../pages/lists/accounting/ItemsListPage";
 import { JournalEntryTypesListPage } from "../pages/lists/accounting/JournalEntryTypesListPage";
 import { PaymentTermsListPage } from "../pages/lists/accounting/PaymentTermsListPage";
+import { VoidCancelReasonsListPage } from "../pages/lists/accounting/VoidCancelReasonsListPage";
 import { PaymentMethodsListPage } from "../pages/lists/accounting/PaymentMethodsListPage";
 import { PostingTemplatesListPage } from "../pages/lists/accounting/PostingTemplatesListPage";
 import { QBOBulkLinkPage } from "../pages/lists/accounting/QBOBulkLinkPage";
@@ -2249,6 +2250,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <PaymentTermsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/void-cancel-reasons"
+          element={
+            <ProtectedRoute>
+              <VoidCancelReasonsListPage />
             </ProtectedRoute>
           }
         />

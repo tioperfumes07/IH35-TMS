@@ -129,6 +129,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Payment Methods", description: "Cash application and disbursement rails", live: true, catalogKey: "payment-methods" },
       { name: "Tax Codes", description: "Sales and use tax buckets (map to QBO as wired)", live: true, catalogKey: "tax-codes" },
       { name: "Currency Codes", description: "ISO currency list for multi-currency hints", live: true, catalogKey: "currency-codes" },
+      { name: "Void/Cancel Reasons", description: "Financial void/cancel reason catalog (invoices, bills, payments, JEs, settlements, WO voids)", live: true, catalogKey: "void-cancel-reasons" },
     ],
   },
   {

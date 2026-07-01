@@ -17,6 +17,14 @@ import { withCompanyScope } from "../accounting/shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { canVoidCancel, VOID_REQUIRES_REQUEST_ERROR } from "../lib/authz/void-cancel-authz.js";
 import { executeVoidCancel, isVoidCancelEntitySupported } from "./void-cancel-executors.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import {
+  buildClosedPeriodFlag,
+  buildQboVoidMirror,
+  reasonEntityMatches,
+  validateReasonNote,
+  VOID_QBO_MIRROR_FLAG_KEY,
+} from "./void-cancel-reason-linkage.js";
 
 const createBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -24,6 +32,10 @@ const createBodySchema = z.object({
   entity_id: z.string().trim().min(1).max(200),
   action: z.enum(["void", "cancel"]),
   reason: z.string().trim().min(3, "a reason is required").max(1000),
+  // Task #24: controlled reason from catalogs.void_cancel_reasons + optional note. The DB trigger
+  // (202606300030) enforces same-entity + note-required; validated here first for a clean 400.
+  reason_code_id: z.string().uuid().optional(),
+  note_text: z.string().trim().max(1000).optional(),
 });
 
 const listQuerySchema = z.object({
@@ -63,6 +75,8 @@ type RequestRow = {
   decided_at: string | null;
   decision_reason: string | null;
   reversing_entry_ref: string | null;
+  reason_code_id: string | null;
+  note_text: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -71,7 +85,8 @@ type RequestRow = {
 const SELECT_COLS = `
   id::text, operating_company_id::text, entity_type, entity_id, action, reason, status,
   requested_by_user_id::text, requested_at::text, decided_by_user_id::text, decided_at::text,
-  decision_reason, reversing_entry_ref, is_active, created_at::text, updated_at::text
+  decision_reason, reversing_entry_ref, reason_code_id::text, note_text, is_active,
+  created_at::text, updated_at::text
 `;
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
@@ -85,20 +100,37 @@ function badRequest(reply: FastifyReply, error: z.ZodError) {
 
 export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
   // FILE a request — any authenticated user.
-  app.post("/api/v1/governance/void-cancel-requests", async (req, reply) => {
+  app.post("/api/v1/governance/void-cancel-requests", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createBodySchema.safeParse(req.body ?? {});
     if (!body.success) return badRequest(reply, body.error);
     const d = body.data;
 
-    const row = await withCompanyScope(user.uuid, d.operating_company_id, async (client: TenantClient) => {
+    const outcome = await withCompanyScope(user.uuid, d.operating_company_id, async (client: TenantClient) => {
+      // If a controlled catalog reason is supplied, pre-validate same-entity + note-required for a clean
+      // 400 (the DB trigger trg_void_cancel_request_reason_check is the final net).
+      if (d.reason_code_id) {
+        const reasonRes = await client.query<{ requires_note: boolean; operating_company_id: string }>(
+          `SELECT requires_note, operating_company_id::text AS operating_company_id
+             FROM catalogs.void_cancel_reasons WHERE id = $1::uuid LIMIT 1`,
+          [d.reason_code_id]
+        );
+        const reason = reasonRes.rows[0];
+        if (!reason) return { validation: { error: "reason_not_found", message: "The chosen reason does not exist for this entity." } };
+        if (!reasonEntityMatches(reason.operating_company_id, d.operating_company_id)) {
+          return { validation: { error: "reason_cross_entity", message: "The chosen reason belongs to a different entity." } };
+        }
+        const noteCheck = validateReasonNote(reason.requires_note, d.note_text);
+        if (!noteCheck.ok) return { validation: { error: noteCheck.error, message: noteCheck.message } };
+      }
+
       const inserted = await client.query<RequestRow>(
         `INSERT INTO governance.void_cancel_requests
-           (operating_company_id, entity_type, entity_id, action, reason, requested_by_user_id)
-         VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid)
+           (operating_company_id, entity_type, entity_id, action, reason, requested_by_user_id, reason_code_id, note_text)
+         VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid, $7::uuid, $8)
          RETURNING ${SELECT_COLS}`,
-        [d.operating_company_id, d.entity_type, d.entity_id, d.action, d.reason, user.uuid]
+        [d.operating_company_id, d.entity_type, d.entity_id, d.action, d.reason, user.uuid, d.reason_code_id ?? null, d.note_text ?? null]
       );
       const created = inserted.rows[0];
       await appendCrudAudit(
@@ -117,14 +149,26 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
         "info",
         "VOID-CANCEL-GOV"
       );
-      return created;
+      return { created };
+    }).catch((err: unknown) => {
+      // Final net: the DB trigger enforces note-required + same-entity. Map its errors to a clean 400.
+      const code = (err as { code?: string }).code;
+      if (code === "23514" || code === "23503") {
+        return { validation: { error: "reason_constraint_violation", message: "The chosen reason is invalid or requires a note." } };
+      }
+      throw err;
     });
 
-    return reply.code(201).send({ request: row, entity_supported: isVoidCancelEntitySupported(d.entity_type) });
+    if ("validation" in outcome && outcome.validation) {
+      return reply.code(400).send({ error: outcome.validation.error, message: outcome.validation.message });
+    }
+    const created = "created" in outcome ? outcome.created : undefined;
+    if (!created) return reply.code(500).send({ error: "request_create_failed" });
+    return reply.code(201).send({ request: created, entity_supported: isVoidCancelEntitySupported(d.entity_type) });
   });
 
   // LIST — executors see all; requesters see their own.
-  app.get("/api/v1/governance/void-cancel-requests", async (req, reply) => {
+  app.get("/api/v1/governance/void-cancel-requests", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = listQuerySchema.safeParse(req.query ?? {});
@@ -163,7 +207,7 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
   });
 
   // APPROVE — executors only; self-approval blocked; executes the underlying void/cancel atomically.
-  app.post("/api/v1/governance/void-cancel-requests/:id/approve", async (req, reply) => {
+  app.post("/api/v1/governance/void-cancel-requests/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canVoidCancel(String(user.role ?? ""))) return reply.code(403).send(VOID_REQUIRES_REQUEST_ERROR);
@@ -197,6 +241,15 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
       });
       if (exec.kind !== "ok") return { exec_error: exec.kind };
 
+      // Task #24 step 5/6: the void executed. The TMS→QBO mirror is gated OFF (writes nothing; the register
+      // shows QBO guidance). The closed-period flag tells the register the original touched a closed period
+      // (the reversal already dated into the open period inside void.service).
+      const qboMirrorEnabled = await isEnabled(client, VOID_QBO_MIRROR_FLAG_KEY, {
+        operating_company_id: d.operating_company_id,
+      });
+      const qboMirror = buildQboVoidMirror(qboMirrorEnabled);
+      const closedPeriod = buildClosedPeriodFlag(Boolean(exec.closed_period_reversal));
+
       const updated = await client.query<RequestRow>(
         `UPDATE governance.void_cancel_requests
             SET status = 'approved',
@@ -226,7 +279,7 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
         "warning",
         "VOID-CANCEL-GOV"
       );
-      return { row: updated.rows[0] };
+      return { row: updated.rows[0], qbo_mirror: qboMirror, closed_period: closedPeriod };
     });
 
     if ("error" in result) {
@@ -239,19 +292,19 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
         unsupported_entity: { code: 422, error: "entity_not_wired", message: "This entity type is not yet wired for governed void/cancel execution." },
         not_found: { code: 404, error: "target_entity_not_found", message: "The target entity no longer exists." },
         already_done: { code: 409, error: "target_already_void_or_cancelled", message: "The target entity is already voided/cancelled." },
-        not_completable: { code: 409, error: "target_not_cancellable", message: "A completed work order cannot be cancelled." },
-        financial_blocked: { code: 409, error: "wo_has_posted_financial_entries", message: "Target has posted financial entries; financial void is disabled (WO_VOID_ENABLED off)." },
-        bill_has_payments: { code: 409, error: "wo_linked_bill_has_payments", message: "Target's linked bill has live payments; void the payment first." },
+        not_completable: { code: 409, error: "target_not_voidable", message: "This target cannot be voided/cancelled in its current state (e.g. a completed work order or a paid invoice)." },
+        financial_blocked: { code: 409, error: "target_has_posted_financial_entries", message: "Target has posted financial entries; financial void is disabled for this entity (posting flag off)." },
+        bill_has_payments: { code: 409, error: "target_linked_bill_has_payments", message: "Target has live payments; void the payment first." },
       };
       const key = String(result.exec_error);
       const m = map[key] ?? { code: 409, error: key, message: "Void/cancel execution failed." };
       return reply.code(m.code).send({ error: m.error, message: m.message });
     }
-    return { request: result.row };
+    return { request: result.row, qbo_mirror: result.qbo_mirror, closed_period: result.closed_period };
   });
 
   // DENY — executors only; decision_reason required.
-  app.post("/api/v1/governance/void-cancel-requests/:id/deny", async (req, reply) => {
+  app.post("/api/v1/governance/void-cancel-requests/:id/deny", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canVoidCancel(String(user.role ?? ""))) return reply.code(403).send(VOID_REQUIRES_REQUEST_ERROR);
