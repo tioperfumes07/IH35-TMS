@@ -59,6 +59,37 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
           )
         : { rows: [] };
 
+      // HOME-7: the recurring master-data (CDC) sync writes to mdata.qbo_sync_runs, NOT qbo.sync_runs.
+      // Reading only qbo.sync_runs made "Last run" show "never/No runs" on a page that already showed the
+      // per-domain "synced HH:MM" badge (fed by the master-data run). Consider BOTH sources and surface
+      // whichever ran most recently so the card is consistent with the domain badges.
+      const mdataRunsExist = await client.query(`SELECT to_regclass('mdata.qbo_sync_runs') IS NOT NULL AS ok`);
+      const latestMasterDataRun = mdataRunsExist.rows[0]?.ok
+        ? await client.query<{
+            status: string;
+            started_at: string | null;
+            completed_at: string | null;
+            run_kind: string | null;
+          }>(
+            `
+              SELECT
+                CASE
+                  WHEN error_message IS NOT NULL THEN 'failed'
+                  WHEN finished_at IS NOT NULL THEN 'success'
+                  ELSE 'running'
+                END AS status,
+                started_at::text,
+                finished_at::text AS completed_at,
+                entity_type AS run_kind
+              FROM mdata.qbo_sync_runs
+              WHERE operating_company_id = $1::uuid
+              ORDER BY COALESCE(finished_at, started_at) DESC, started_at DESC
+              LIMIT 1
+            `,
+            [parsed.data.operating_company_id]
+          )
+        : { rows: [] };
+
       const openAlertsCount = alertsExist.rows[0]?.ok
         ? await client.query<{ c: string }>(
             `
@@ -100,7 +131,16 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
           )
         : { rows: [{ c: "0" }] };
 
-      const row = latestRun.rows[0];
+      // Pick whichever recorded run (push-sync vs master-data CDC) has the most recent effective time.
+      const runEffectiveMs = (r?: { started_at: string | null; completed_at: string | null }): number => {
+        if (!r) return -Infinity;
+        const t = r.completed_at ?? r.started_at;
+        const ms = t ? Date.parse(t) : NaN;
+        return Number.isNaN(ms) ? -Infinity : ms;
+      };
+      const pushRun = latestRun.rows[0];
+      const cdcRun = latestMasterDataRun.rows[0];
+      const row = runEffectiveMs(cdcRun) > runEffectiveMs(pushRun) ? cdcRun : pushRun;
       return {
         latest_run: row
           ? {
