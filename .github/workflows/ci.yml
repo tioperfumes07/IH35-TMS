@@ -88,6 +88,9 @@ jobs:
       - name: Verify CHAIN-04 bill-payment poster (real-bank ledger, ap_control, bill-first, flag OFF)
         run: npm run verify:bill-payment-posting-uses-resolver
 
+      - name: Verify CHAIN-05 bank-feed GL posting (categorize→post behind BANK_FEED_GL_POSTING_ENABLED, flag OFF)
+        run: npm run verify:bank-feed-gl-posting
+
       - name: Verify bank-recon variance poster reads ledger_account_id (not phantom coa_account_id)
         run: npm run verify:bank-recon-poster-ledger-account-id
 

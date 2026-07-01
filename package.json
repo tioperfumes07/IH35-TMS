@@ -315,6 +315,7 @@
     "verify:uncategorized-expense-seed": "node scripts/verify-uncategorized-expense-seed.mjs",
     "verify:bill-resolver-single-source": "node scripts/verify-bill-resolver-single-source.mjs",
     "verify:bill-payment-posting-uses-resolver": "node scripts/verify-bill-payment-posting-uses-resolver.mjs",
+    "verify:bank-feed-gl-posting": "node scripts/verify-bank-feed-gl-posting.mjs",
     "verify:bank-recon-poster-ledger-account-id": "node scripts/verify-bank-recon-poster-ledger-account-id.mjs",
     "verify:bank-recon-expense-match-part2a": "node scripts/verify-bank-recon-expense-match-part2a.mjs",
     "verify:bankrec-confirm-exact-only": "node scripts/verify-bankrec-confirm-exact-only.mjs",
