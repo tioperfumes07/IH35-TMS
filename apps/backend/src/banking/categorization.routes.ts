@@ -5,6 +5,7 @@ import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
+import { pendingCategorizationPredicate } from "./pending-categorization.js";
 import {
   BULK_TXN_MAX,
   bulkCategorizeTransactions,
@@ -85,8 +86,11 @@ function mapBulkError(reply: FastifyReply, message: string) {
   return null;
 }
 
+// BANKING-1: the For-review queue and the Banking Home UNCATEGORIZED KPI share ONE definition of
+// "needs categorization" (pending-categorization.ts) so the headline count can never diverge from
+// the list.
 function pendingStatusesSql(): string {
-  return `(bt.status = 'pending_categorization' OR bt.status = 'uncategorized')`;
+  return pendingCategorizationPredicate("bt");
 }
 
 export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
