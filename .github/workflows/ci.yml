@@ -94,6 +94,9 @@ jobs:
       - name: Verify bank-recon expense-match Part 2a (expense persistable, bill not; posted+idempotency guards)
         run: npm run verify:bank-recon-expense-match-part2a
 
+      - name: Verify bank-recon Confirm-match exact-only (BANKREC-CONFIRM-01; bill + variance held)
+        run: npm run verify:bankrec-confirm-exact-only
+
       - name: Verify accounting catalog shared creator (sort-order + code-immutable + disabled-until-valid + metadata)
         run: npm run verify:accounting-catalog-creator
 
