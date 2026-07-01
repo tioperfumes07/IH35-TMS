@@ -97,6 +97,9 @@ jobs:
       - name: Verify accounting catalog shared creator (sort-order + code-immutable + disabled-until-valid + metadata)
         run: npm run verify:accounting-catalog-creator
 
+      - name: Verify Product & Service Categories rename + single-source category client
+        run: npm run verify:product-service-categories
+
       - name: Verify INS-COVERAGE gap counts units not assets (GUARD #40)
         run: npm run verify:insurance-coverage-gap-units
 
