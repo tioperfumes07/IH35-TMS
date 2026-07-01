@@ -628,6 +628,7 @@
     "acknowledge": "Acknowledge",
     "cash_advance": "Cash advance",
     "ack_failed": "Could not acknowledge — retry.",
-    "request_advance": "Request cash advance"
+    "request_advance": "Request cash advance",
+    "archived_banner": "Archived — load closed, read-only"
   }
 }

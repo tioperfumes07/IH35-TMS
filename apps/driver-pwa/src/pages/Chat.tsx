@@ -90,6 +90,9 @@ export function ChatPage() {
             <button type="button" onClick={() => setActiveThreadId("")} className="mb-2 text-xs text-pwa-text-secondary hover:underline">
               ← {t("chat.all_chats", "All chats")}
             </button>
+            {threads.find((x) => x.id === activeThreadId)?.status === "archived" ? (
+              <div className="mb-2 rounded bg-pwa-bg px-2 py-1 text-xs text-pwa-text-secondary">{t("chat.archived_banner", "Archived — load closed, read-only")}</div>
+            ) : null}
             <div className="mb-3 max-h-[50vh] space-y-2 overflow-y-auto" data-testid="pwa-chat-messages">
               {messages.map((m) => {
                 const dollars = m.cash_advance_amount_cents != null ? `$${(m.cash_advance_amount_cents / 100).toFixed(2)}` : "";
@@ -131,7 +134,10 @@ export function ChatPage() {
               placeholder={t("chat.placeholder", "Message dispatch…")}
               className="mb-2 w-full resize-none rounded border border-pwa-border bg-pwa-bg px-2 py-1 text-sm"
             />
-            <PwaButton disabled={!draft.trim() || sendMutation.isPending} onClick={() => sendMutation.mutate(draft.trim())}>
+            <PwaButton
+              disabled={!draft.trim() || sendMutation.isPending || threads.find((x) => x.id === activeThreadId)?.status === "archived"}
+              onClick={() => sendMutation.mutate(draft.trim())}
+            >
               {t("chat.send", "Send")}
             </PwaButton>
             <Link to="/cash-advance/new" className="mt-2 block text-center text-xs font-semibold text-pwa-text-secondary hover:underline">
