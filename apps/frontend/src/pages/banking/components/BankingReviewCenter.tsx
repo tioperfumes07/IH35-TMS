@@ -5,6 +5,7 @@ import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 
 export type BankingReviewDataSource = "uncategorized" | "review";
 
@@ -64,7 +65,9 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
   const { pushToast } = useToast();
   const [tab, setTab] = useState<TabId>("review");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, { category_kind: string; gl_account_id: string; memo: string }>>({});
+  const [drafts, setDrafts] = useState<
+    Record<string, { category_kind: string; gl_account_id: string; memo: string; driver_id: string; driver_name: string }>
+  >({});
 
   const uncQuery = useQuery({
     queryKey: ["banking", "review-center", "uncategorized", companyId, dataSource, uncategorizedFilters],
@@ -80,10 +83,23 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
   });
 
   const acceptMutation = useMutation({
-    mutationFn: async ({ id, category_kind, gl_account_id, memo }: { id: string; category_kind: string; gl_account_id: string; memo: string }) => {
+    mutationFn: async ({
+      id,
+      category_kind,
+      gl_account_id,
+      memo,
+      driver_id,
+    }: {
+      id: string;
+      category_kind: string;
+      gl_account_id: string;
+      memo: string;
+      driver_id: string;
+    }) => {
       await categorizeBankTransaction(id, companyId, {
         category_kind,
         gl_account_id: gl_account_id || undefined,
+        driver_id: driver_id || undefined,
         memo: memo || undefined,
       });
     },
@@ -133,6 +149,8 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                   category_kind: String(tx.suggested_category_kind ?? "bank_expense"),
                   gl_account_id: "",
                   memo: "",
+                  driver_id: "",
+                  driver_name: "",
                 };
                 const expanded = expandedId === id;
                 const amountCents = txAmountCents(tx);
@@ -168,6 +186,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                               category_kind: draft.category_kind.trim(),
                               gl_account_id: draft.gl_account_id,
                               memo: draft.memo,
+                              driver_id: draft.driver_id,
                             })
                           }
                         >
@@ -232,6 +251,34 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                             ))}
                           </SelectCombobox>
                         </label>
+                        <div className="block text-[11px] font-medium text-gray-600">
+                          Driver
+                          {/* BLOCK-6 dimension: tag a driver. If the GL account chosen above is the
+                              entity's Driver-Advance account, this posts a recoverable receivable behind
+                              the OFF-by-default BANK_DRIVER_ADVANCE_ENABLED flag; otherwise it is an
+                              analytics-only tag and the transaction stays an expense. limit=200 dodges
+                              the listDrivers 50-cap so no active driver is silently hidden. */}
+                          <div className="mt-0.5">
+                            <DriverAutocomplete
+                              companyId={companyId}
+                              value={draft.driver_id}
+                              limit={200}
+                              placeholder="Search driver (optional)"
+                              onChange={(driverId, driverName) =>
+                                setDrafts((d) => ({ ...d, [id]: { ...draft, driver_id: driverId, driver_name: driverName } }))
+                              }
+                            />
+                          </div>
+                          {draft.driver_id ? (
+                            <button
+                              type="button"
+                              className="mt-0.5 text-[11px] text-slate-700 underline"
+                              onClick={() => setDrafts((d) => ({ ...d, [id]: { ...draft, driver_id: "", driver_name: "" } }))}
+                            >
+                              Clear driver{draft.driver_name ? ` (${draft.driver_name})` : ""}
+                            </button>
+                          ) : null}
+                        </div>
                         <label className="block text-[11px] font-medium text-gray-600">
                           Memo
                           <input

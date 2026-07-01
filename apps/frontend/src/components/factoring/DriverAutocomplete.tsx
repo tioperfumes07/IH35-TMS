@@ -7,14 +7,18 @@ type Props = {
   value: string;
   onChange: (driverId: string, driverName: string) => void;
   placeholder?: string;
+  // Optional page size. Callers that must not miss active drivers past the newest 50 (the listDrivers
+  // default cap) pass e.g. 200. Omitted → unchanged behavior for existing callers.
+  limit?: number;
 };
 
-export function DriverAutocomplete({ companyId, value, onChange, placeholder = "Search driver by name" }: Props) {
+export function DriverAutocomplete({ companyId, value, onChange, placeholder = "Search driver by name", limit }: Props) {
   const [search, setSearch] = useState("");
 
   const driversQuery = useQuery({
-    queryKey: ["factoring", "driver-autocomplete", companyId, search],
-    queryFn: () => listDrivers({ operating_company_id: companyId, search: search || undefined, status: "active" }).then((res) => res.drivers),
+    queryKey: ["factoring", "driver-autocomplete", companyId, search, limit ?? null],
+    queryFn: () =>
+      listDrivers({ operating_company_id: companyId, search: search || undefined, status: "active", limit }).then((res) => res.drivers),
     enabled: Boolean(companyId),
   });
 

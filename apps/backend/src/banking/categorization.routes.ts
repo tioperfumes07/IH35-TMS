@@ -6,6 +6,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { pendingCategorizationPredicate } from "./pending-categorization.js";
+import { maybePostBankDriverAdvanceForCategorization } from "./bank-driver-advance.service.js";
 import {
   BULK_TXN_MAX,
   bulkCategorizeTransactions,
@@ -31,6 +32,10 @@ const categorizeBodySchema = z.object({
   category_kind: z.string().trim().min(1).max(120),
   customer_id: z.string().uuid().optional(),
   vendor_id: z.string().uuid().optional(),
+  // BLOCK-6 (additive dimension): the Driver a transaction belongs to. Stored as a TAG only; the
+  // ACCOUNT chosen decides treatment (driver-advance account → recoverable receivable, behind the
+  // OFF-by-default BANK_DRIVER_ADVANCE_ENABLED flag; any other account → analytics-only, stays expense).
+  driver_id: z.string().uuid().optional(),
   gl_account_id: z.string().uuid().optional(),
   project_id: z.string().uuid().optional(),
   memo: z.string().trim().max(4000).optional(),
@@ -250,6 +255,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             suggested_match_bill_id = $9,
             coa_account_id = COALESCE($10, coa_account_id),
             linked_entity_id = COALESCE($11, linked_entity_id),
+            categorization_driver_id = COALESCE($13, categorization_driver_id),
             skip_reason = NULL,
             investigate_note = NULL,
             categorized_at = now(),
@@ -270,6 +276,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           body.data.gl_account_id ?? null,
           linked,
           companyId,
+          body.data.driver_id ?? null,
         ]
       );
 
@@ -310,7 +317,30 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         payload: { category_kind: body.data.category_kind },
       })
     ).catch(() => undefined);
-    return result.data;
+
+    // BLOCK-6 [HOLD] — only when a Driver was tagged do we consult the driver-advance path (so callers
+    // that never send driver_id get byte-identical behavior). Behind BANK_DRIVER_ADVANCE_ENABLED (OFF):
+    // with the flag off this returns { posted:false, reason:"flag_off" } and posts nothing. The tag is
+    // already committed above, so a non-posting outcome (expense/tag-only, or fail-closed) never loses it.
+    let driverAdvance: Awaited<ReturnType<typeof maybePostBankDriverAdvanceForCategorization>> | undefined;
+    if (body.data.driver_id) {
+      try {
+        driverAdvance = await maybePostBankDriverAdvanceForCategorization({
+          companyId,
+          actorUserUuid: String(user.uuid),
+          actorRole: String((user as { role?: string }).role ?? ""),
+          bankTransactionId: params.data.id,
+          driverId: body.data.driver_id,
+          glAccountId: body.data.gl_account_id ?? null,
+          memo: body.data.memo ?? null,
+        });
+      } catch (e) {
+        // Surface, never silently swallow (the tag is committed; the financial post is best-effort).
+        driverAdvance = { posted: false, reason: "disburse_failed", message: String((e as Error)?.message ?? e) };
+      }
+    }
+
+    return driverAdvance ? { ...result.data, driver_advance: driverAdvance } : result.data;
   });
 
   app.post("/api/v1/banking/transactions/categorize-bulk", async (req, reply) => {
