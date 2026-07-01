@@ -805,7 +805,10 @@ export function acceptBankReconMatch(
   input: {
     operating_company_id: string;
     bank_transaction_id: string;
-    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
+    // BANKREC-CONFIRM-01: backend accept-match zod schema (recon-worklist.routes.ts) also accepts
+    // "expense" (Part 2a, #1747) — link-and-clear only, no new GL math. "bill" stays excluded here
+    // (CHAIN-04 / Part 2b records the bill payment, not a plain accept).
+    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je" | "expense";
     ledger_entry_id: string;
     variance_account_id?: string;
   }

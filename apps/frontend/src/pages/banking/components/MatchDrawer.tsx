@@ -1,7 +1,19 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getMatchCandidates, type BankMatchCandidate, type BankMatchCandidateKind } from "../../../api/banking";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  acceptBankReconMatch,
+  getMatchCandidates,
+  type BankMatchCandidate,
+  type BankMatchCandidateKind,
+} from "../../../api/banking";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { useToast } from "../../../components/Toast";
+
+// BANKREC-CONFIRM-01 (Tier 2): Confirm is enabled ONLY for an exact-amount match (amount_gap_cents
+// === 0) on a persistable non-bill kind. gap=0 = pure link-and-clear (review_state='matched' +
+// matched_<kind>_id) — NO journal entry is posted. "bill" always stays held (CHAIN-04 / Part 2b
+// records the bill payment). Any variance (gap !== 0) stays held pending the balanced-JE proof.
+const VARIANCE_HELD_NOTE = "Variance posting pending balanced-JE proof (Tier-1)";
 
 type Props = {
   open: boolean;
@@ -38,11 +50,32 @@ function kindBadge(kind: BankMatchCandidateKind) {
 
 export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClose }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const { pushToast } = useToast();
 
   const candidatesQuery = useQuery({
     queryKey: ["banking", "match-candidates", operatingCompanyId, bankTransactionId],
     queryFn: () => getMatchCandidates(String(bankTransactionId), operatingCompanyId),
     enabled: open && Boolean(operatingCompanyId && bankTransactionId),
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: (candidate: BankMatchCandidate) =>
+      acceptBankReconMatch({
+        operating_company_id: operatingCompanyId,
+        bank_transaction_id: String(bankTransactionId),
+        ledger_entry_kind: candidate.ledger_entry_kind as "payment" | "bill_payment" | "transfer" | "je" | "expense",
+        ledger_entry_id: candidate.ledger_entry_id,
+      }),
+    onMutate: (candidate) => setConfirmingId(candidate.ledger_entry_id),
+    onSuccess: async () => {
+      pushToast("Match confirmed — transaction cleared.", "success");
+      await candidatesQuery.refetch();
+    },
+    onError: (error) => {
+      pushToast(String((error as Error).message ?? "Confirm match failed"), "error");
+    },
+    onSettled: () => setConfirmingId(null),
   });
 
   if (!open || !bankTransactionId) return null;
@@ -70,7 +103,8 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
         </div>
 
         <p className="mb-3 text-[11px] text-slate-500">
-          Ranked matchable records (amount, date, memo). Review-only in this build; confirming a match wires in a later step.
+          Ranked matchable records (amount, date, memo). Exact-amount matches can be confirmed to link and
+          clear — no journal entry is posted. Bill payments and any amount variance stay held.
         </p>
 
         {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
@@ -81,6 +115,9 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
             const isTopAuto = c.ledger_entry_id === topAutoMatchId;
             const isSelected = c.ledger_entry_id === selectedId;
             const isBill = c.ledger_entry_kind === "bill";
+            const isExactMatch = c.amount_gap_cents === 0;
+            const canConfirm = !isBill && isExactMatch;
+            const isConfirming = confirmMutation.isPending && confirmingId === c.ledger_entry_id;
             return (
               <div
                 key={`${c.ledger_entry_kind}:${c.ledger_entry_id}`}
@@ -128,19 +165,30 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                 <div className="mt-2 flex items-center justify-end gap-2">
                   {isBill ? (
                     <span className="text-[10px] text-slate-400">Posting available after CHAIN-04</span>
+                  ) : !isExactMatch ? (
+                    <span className="text-[10px] text-slate-400" data-testid="match-candidate-variance-held">
+                      {VARIANCE_HELD_NOTE}
+                    </span>
                   ) : null}
                   <button
                     type="button"
                     data-testid="match-candidate-confirm"
-                    className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-400"
-                    disabled
+                    className={
+                      canConfirm
+                        ? "rounded border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-white hover:bg-slate-800 disabled:opacity-60"
+                        : "rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-400"
+                    }
+                    disabled={!canConfirm || isConfirming}
                     title={
                       isBill
                         ? "Recording the bill payment is CHAIN-04 (Part 2b)"
-                        : "Confirming a match wires in Part 2"
+                        : !isExactMatch
+                        ? VARIANCE_HELD_NOTE
+                        : "Confirm this match — links and clears the transaction, no journal entry posted"
                     }
+                    onClick={canConfirm ? () => confirmMutation.mutate(c) : undefined}
                   >
-                    Confirm match
+                    {isConfirming ? "Confirming…" : "Confirm match"}
                   </button>
                 </div>
               </div>
