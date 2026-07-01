@@ -124,7 +124,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Posting Templates", description: "Code-managed debit/credit posting templates", live: true, catalogKey: "posting-templates" },
       { name: "Journal Entry Types", description: "Journal source and purpose classifications", live: true, catalogKey: "journal-entry-types" },
       { name: "QBO bulk-link", description: "Match drivers and assets to QBO vendors/classes", live: true, catalogKey: "qbo-bulk-link" },
-      { name: "QBO Categories", description: "QuickBooks category and mapping helper list", live: true, catalogKey: "qbo-categories" },
+      { name: "Product & Service Categories", description: "Groups items for sales reporting (no GL account link)", live: true, catalogKey: "qbo-categories" },
       { name: "Items", description: "Invoiceable services and products catalog", live: true, catalogKey: "items" },
       { name: "Account Role Bindings", description: "Role-to-account mapping controls (read-only v1)", live: true, catalogKey: "account-role-bindings" },
       { name: "Chart of Accounts Seeds", description: "Per-company template rows for onboarding GL", live: true, catalogKey: "chart-of-accounts-seeds" },
