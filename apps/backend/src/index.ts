@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
+import rateLimit from "@fastify/rate-limit";
 import cron from "node-cron";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerEmailAuthRoutes } from "./auth/email-routes.js";
@@ -577,6 +578,9 @@ async function main() {
   });
   await app.register(cookie);
   await app.register(multipart);
+  // Per-route rate limiting (opt-in only: global:false → zero effect on routes that don't set
+  // config.rateLimit). Applied to the task-chat write/read routes to prevent comment-spam/DoS.
+  await app.register(rateLimit, { global: false });
   await registerSessionMiddleware(app);
   app.addHook("preHandler", async (req, _reply) => {
     const url = req.raw.url ?? "";

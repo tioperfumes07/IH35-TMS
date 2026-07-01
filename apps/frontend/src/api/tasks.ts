@@ -86,3 +86,41 @@ export async function updateTaskProgress(task_id: string, progress_pct: number) 
     body: { progress_pct },
   });
 }
+
+// ── TASK-3 Team Chat (task-scoped collaboration) ────────────────────────────────────────────────
+export type TaskComment = {
+  id: string;
+  task_id: string;
+  author_user_id: string;
+  body: string;
+  mentions: string[];
+  created_at: string;
+  author_email: string | null;
+  author_name: string | null;
+};
+
+export type TaskActivity = {
+  id: string;
+  task_id: string;
+  actor_user_id: string | null;
+  event_type: "comment" | "status_change" | "assignment";
+  payload: Record<string, unknown>;
+  created_at: string;
+  actor_name: string | null;
+};
+
+export async function fetchTaskComments(task_id: string) {
+  return apiRequest<{ comments: TaskComment[] }>(`/api/v1/tasks/${task_id}/comments`);
+}
+
+export async function createTaskComment(task_id: string, body: string, mentions: string[]) {
+  // Pass the raw object; apiRequest does the single JSON.stringify.
+  return apiRequest<{ comment: TaskComment }>(`/api/v1/tasks/${task_id}/comments`, {
+    method: "POST",
+    body: { body, mentions },
+  });
+}
+
+export async function fetchTaskActivity(task_id: string) {
+  return apiRequest<{ activity: TaskActivity[] }>(`/api/v1/tasks/${task_id}/activity`);
+}
