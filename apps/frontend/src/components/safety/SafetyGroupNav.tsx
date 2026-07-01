@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { NavLink } from "react-router-dom";
-import type { SafetyGroup, SafetyTab } from "./SAFETY_TABS_CONFIG";
+import type { SafetyGroup } from "./SAFETY_TABS_CONFIG";
+import { SAFETY_ALIAS_TABS } from "./SAFETY_TABS_CONFIG";
 import { HoverDropdown } from "../shared/HoverDropdown";
 
 type Props = {
@@ -12,15 +13,11 @@ type Props = {
 export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
   const groupsWithCertExpiry = useMemo(() => {
     return groups.map((group) => {
-      if (group.id !== "compliance-monitoring") return group;
-      if (group.tabs.some((tab) => tab.id === "cert-expiry")) return group;
-      const certExpiryTab: SafetyTab = {
-        id: "cert-expiry",
-        label: "Cert Expiry",
-        route: "/safety/dot-compliance",
-        badge: "new",
-      };
-      return { ...group, tabs: [...group.tabs, certExpiryTab] };
+      const aliases = SAFETY_ALIAS_TABS.filter((alias) => alias.groupId === group.id).map((alias) => alias.tab);
+      if (aliases.length === 0) return group;
+      const missing = aliases.filter((alias) => !group.tabs.some((tab) => tab.id === alias.id));
+      if (missing.length === 0) return group;
+      return { ...group, tabs: [...group.tabs, ...missing] };
     });
   }, [groups]);
 
@@ -36,9 +33,7 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
     <div className="relative border-b border-gray-200 bg-white">
       <div className="flex items-center gap-0 px-[22px]">
         {groupsWithCertExpiry.map((group) => {
-          const hasActive = group.tabs.some(
-            (tab) => tab.id === activeTabId || (tab.id === "cert-expiry" && activeMeta?.tab.route === tab.route)
-          );
+          const hasActive = group.tabs.some((tab) => tab.id === activeTabId);
           return (
             <HoverDropdown
               key={group.id}
@@ -54,12 +49,12 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
               minWidth={240}
             >
               {group.tabs.map((tab) => {
-                const active = tab.id === activeTabId || (tab.id === "cert-expiry" && activeMeta?.tab.route === tab.route);
+                const active = tab.id === activeTabId;
                 return (
                   <NavLink
                     key={tab.id}
                     to={tab.route}
-                    onClick={() => onTabChange?.(tab.id === "cert-expiry" ? "dot-compliance" : tab.id)}
+                    onClick={() => onTabChange?.(tab.id)}
                     className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-600 hover:bg-gray-50 hover:text-[#1f2a44]"
                     style={active ? { color: "#1f2a44", borderLeft: "3px solid #1f2a44", background: "#f8fafc", fontWeight: 600 } : { borderLeft: "3px solid transparent" }}
                   >

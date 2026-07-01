@@ -1265,6 +1265,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />
           <Route path="dot-compliance" element={<DOTComplianceTab />} />
+          <Route path="cert-expiry" element={<DOTComplianceTab />} />
           <Route path="safety-events" element={<SafetyEventsTab />} />
           <Route path="/safety/safety-events" element={<SafetyEventsTab />} />
           <Route path="accidents" element={<AccidentsIncidentsTab />} />

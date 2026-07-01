@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getUserPreferences, patchUserPreferences } from "../../api/safety";
-import { SAFETY_GROUPS, findSafetyTab } from "../../components/safety/SAFETY_TABS_CONFIG";
+import { SAFETY_ALIAS_TABS, SAFETY_GROUPS, findSafetyTab } from "../../components/safety/SAFETY_TABS_CONFIG";
 import {
   SafetyDashboardFilter,
   type SafetyActivityWindow,
@@ -62,6 +62,11 @@ export function SafetyLayout() {
       for (const tab of group.tabs) {
         if (tab.route === path) return tab.id;
       }
+    }
+    // Alias entry points (e.g. Cert Expiry) reuse a screen under a different group but have their own
+    // route, so the active-tab + breadcrumb reflect the group the user clicked from.
+    for (const alias of SAFETY_ALIAS_TABS) {
+      if (alias.tab.route === path) return alias.tab.id;
     }
     return "driver-files";
   }, [location.pathname]);

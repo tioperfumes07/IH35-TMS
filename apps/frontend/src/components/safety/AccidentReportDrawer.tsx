@@ -5,6 +5,7 @@ import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLi
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { Combobox } from "../shared/Combobox";
 import { useToast } from "../Toast";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -88,7 +89,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
               <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.accident_at ?? "").slice(0, 10)} />
             </Field>
             <Field label="Report Date" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={new Date().toISOString().slice(0, 10)} />
+              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={companyToday()} />
             </Field>
             <Field label="Bill or Expense Number (if applicable)" className="col-span-1">
               <input className="h-8 w-full rounded border border-gray-300 px-2" />

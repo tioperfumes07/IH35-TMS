@@ -165,6 +165,9 @@ jobs:
       - name: Verify safety tab coverage
         run: npm run verify:safety-tab-coverage
 
+      - name: Verify safety form date defaults (company-tz, not UTC)
+        run: npm run verify:safety-form-date-defaults
+
       - name: Verify CSA pull recency guard
         run: npm run verify:csa-score-pull-recency
 
