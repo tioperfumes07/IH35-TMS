@@ -47,6 +47,10 @@ type ReverseBatchInput = {
 
 type BackfillInput = {
   operating_company_id: string;
+  // CHAIN-06 GAP #1 kill switch — the backfill sweep posts invoice A/R too, so it must honor the same
+  // per-entity INVOICE_AR_GL_POSTING_ENABLED gate. Resolved by the caller (route) and passed in.
+  // Safe-by-default: when omitted or false, the sweep SKIPS invoices and posts nothing for them.
+  invoiceArPostingEnabled?: boolean;
 };
 
 type Actor = {
@@ -1456,6 +1460,9 @@ export async function runPostingEngineMvpBackfill(input: BackfillInput, actor: A
     posted: 0,
     already_posted: 0,
     failed: 0,
+    // CHAIN-06 GAP #1 — count invoices deliberately skipped because the per-entity kill switch is OFF,
+    // so the sweep is auditable (skipped != failed).
+    skipped_invoice_ar_disabled: 0,
     by_source: {
       invoice: 0,
       bill: 0,
@@ -1517,6 +1524,12 @@ export async function runPostingEngineMvpBackfill(input: BackfillInput, actor: A
   // approve path (which supplies the credit account), not this unposted-source sweep.
   const sourceOrder = ["invoice", "bill", "customer_payment", "bill_payment"] as const;
   for (const sourceType of sourceOrder) {
+    // CHAIN-06 GAP #1 — invoice A/R stays behind the per-entity kill switch. When it is not explicitly
+    // enabled for this entity, do NOT post any invoices (no-op) — same behavior as the MVP post route's OFF path.
+    if (sourceType === "invoice" && input.invoiceArPostingEnabled !== true) {
+      totals.skipped_invoice_ar_disabled += ids.invoice.length;
+      continue;
+    }
     for (const sourceId of ids[sourceType]) {
       try {
         const result = await postSourceTransaction(
