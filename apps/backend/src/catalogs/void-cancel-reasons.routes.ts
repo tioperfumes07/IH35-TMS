@@ -80,7 +80,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 
 export async function registerVoidCancelReasonRoutes(app: FastifyInstance) {
   // LIST — per-entity (defaults to the caller's default/first accessible company).
-  app.get("/api/v1/catalogs/void-cancel-reasons", async (req, reply) => {
+  app.get("/api/v1/catalogs/void-cancel-reasons", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -129,7 +129,7 @@ export async function registerVoidCancelReasonRoutes(app: FastifyInstance) {
   });
 
   // CREATE — Owner/Administrator/Manager only; per-entity (RLS WITH CHECK also enforces same-entity).
-  app.post("/api/v1/catalogs/void-cancel-reasons", async (req, reply) => {
+  app.post("/api/v1/catalogs/void-cancel-reasons", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureCatalogWriteRole(req, reply);
     if (!user) return;
     const parsedBody = createReasonBodySchema.safeParse(req.body ?? {});

@@ -100,7 +100,7 @@ function badRequest(reply: FastifyReply, error: z.ZodError) {
 
 export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
   // FILE a request — any authenticated user.
-  app.post("/api/v1/governance/void-cancel-requests", async (req, reply) => {
+  app.post("/api/v1/governance/void-cancel-requests", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createBodySchema.safeParse(req.body ?? {});
@@ -168,7 +168,7 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
   });
 
   // LIST — executors see all; requesters see their own.
-  app.get("/api/v1/governance/void-cancel-requests", async (req, reply) => {
+  app.get("/api/v1/governance/void-cancel-requests", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = listQuerySchema.safeParse(req.query ?? {});
@@ -207,7 +207,7 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
   });
 
   // APPROVE — executors only; self-approval blocked; executes the underlying void/cancel atomically.
-  app.post("/api/v1/governance/void-cancel-requests/:id/approve", async (req, reply) => {
+  app.post("/api/v1/governance/void-cancel-requests/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canVoidCancel(String(user.role ?? ""))) return reply.code(403).send(VOID_REQUIRES_REQUEST_ERROR);
@@ -304,7 +304,7 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
   });
 
   // DENY — executors only; decision_reason required.
-  app.post("/api/v1/governance/void-cancel-requests/:id/deny", async (req, reply) => {
+  app.post("/api/v1/governance/void-cancel-requests/:id/deny", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canVoidCancel(String(user.role ?? ""))) return reply.code(403).send(VOID_REQUIRES_REQUEST_ERROR);

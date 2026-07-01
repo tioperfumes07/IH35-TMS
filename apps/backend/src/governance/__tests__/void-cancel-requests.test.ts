@@ -34,8 +34,8 @@ const REQUESTER = "44444444-4444-4444-4444-444444444444";
 describe("governance void/cancel — dispatch map", () => {
   it("wires work_order and registers other entities as unsupported (no silent no-op)", () => {
     expect(isVoidCancelEntitySupported("work_order")).toBe(true);
-    expect(isVoidCancelEntitySupported("invoice")).toBe(false);
-    expect(isVoidCancelEntitySupported("bill")).toBe(false);
+    expect(isVoidCancelEntitySupported("invoice")).toBe(true);
+    expect(isVoidCancelEntitySupported("bill")).toBe(true);
     expect(isVoidCancelEntitySupported("expense")).toBe(false);
     expect(isVoidCancelEntitySupported("not_a_real_entity")).toBe(false);
     expect(knownVoidCancelEntities()).toContain("work_order");
@@ -43,7 +43,7 @@ describe("governance void/cancel — dispatch map", () => {
 
   it("returns unsupported_entity for an unwired entity instead of executing", async () => {
     const { client } = mockClient([]);
-    const res = await executeVoidCancel("invoice", {
+    const res = await executeVoidCancel("journal_entry", {
       client: client as never,
       operatingCompanyId: OCI,
       entityId: "x",
@@ -79,7 +79,7 @@ describe("governance void/cancel — execute (request -> approve -> execute) for
       reason: "approved void request",
     });
 
-    expect(res).toEqual({ kind: "ok", reversing_entry_ref: null });
+    expect(res).toEqual({ kind: "ok", reversing_entry_ref: null, closed_period_reversal: false });
     // proves it actually flipped the WO and wrote the immutable audit event
     expect(seen.some((s) => s.includes("UPDATE maintenance.work_orders") && s.includes("voided_at = now()"))).toBe(true);
     expect(seen.some((s) => s.includes("audit.append_event"))).toBe(true);
