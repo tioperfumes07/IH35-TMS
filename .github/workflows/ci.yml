@@ -118,6 +118,9 @@ jobs:
       - name: Verify CHAT-1 dispatch-chat schema integrity (participant-RLS, event_log reuse, real FKs, restrict, no-delete)
         run: npm run verify:chat-schema-integrity
 
+      - name: Verify CHAT-2 backend contract (rate-limits, gap-free seq via row-lock, event_log reuse, append-only)
+        run: npm run verify:chat-backend-contract
+
       - name: Verify INS-COVERAGE gap counts units not assets (GUARD #40)
         run: npm run verify:insurance-coverage-gap-units
 
