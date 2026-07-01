@@ -628,6 +628,7 @@
     "acknowledge": "Confirmar recibido",
     "cash_advance": "Adelanto de efectivo",
     "ack_failed": "No se pudo confirmar — reintentar.",
-    "request_advance": "Solicitar adelanto de efectivo"
+    "request_advance": "Solicitar adelanto de efectivo",
+    "archived_banner": "Archivado — carga cerrada, solo lectura"
   }
 }

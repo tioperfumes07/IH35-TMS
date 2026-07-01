@@ -86,11 +86,25 @@ export async function getOrCreateLoadThread(
   return { id: threadId, created: true };
 }
 
-/** List the caller's threads (RLS already restricts to threads they participate in). */
+// Load statuses that mean the load is done → its chat thread is archived (kept short, read-only).
+// status cast ::text before comparison (§4: some enum values like 'abandoned' aren't native members).
+const TERMINAL_LOAD_STATUSES =
+  "('delivered','delivered_pending_docs','closed','invoiced','cancelled','completed_docs_received','abandoned','driver_walkoff','driver_no_show')";
+
+/**
+ * List the caller's threads (RLS already restricts to threads they participate in). CHAT-6: a
+ * load-thread is presented as 'archived' once its load reaches a terminal status (or was explicitly
+ * archived) — read-only derivation, no write-path hook, no migration.
+ */
 export async function listThreads(client: Client): Promise<Array<Record<string, unknown>>> {
   const res = await client.query(
-    `SELECT id, kind, load_id, load_ref_cache, subject, status, last_seq, updated_at
-     FROM chat.threads ORDER BY updated_at DESC LIMIT 200`,
+    `SELECT t.id, t.kind, t.load_id, t.load_ref_cache, t.subject,
+            CASE WHEN t.status = 'archived' OR l.status::text IN ${TERMINAL_LOAD_STATUSES}
+                 THEN 'archived' ELSE t.status END AS status,
+            t.last_seq, t.updated_at
+     FROM chat.threads t
+     LEFT JOIN mdata.loads l ON l.id = t.load_id AND l.operating_company_id = t.operating_company_id
+     ORDER BY t.updated_at DESC LIMIT 200`,
   );
   return res.rows;
 }

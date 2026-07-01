@@ -93,6 +93,9 @@ export function DispatchChatPage() {
             ) : (
               <>
                 <div className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-[#1f2a44]">{threadLabel(activeThread)}</div>
+                {activeThread.status === "archived" ? (
+                  <div className="bg-slate-50 px-4 py-1 text-xs text-slate-500">Archived — load closed, read-only</div>
+                ) : null}
                 <div className="flex-1 space-y-2 overflow-y-auto p-4">
                   {messages.map((m) => {
                     const dollars = m.cash_advance_amount_cents != null ? `$${(m.cash_advance_amount_cents / 100).toFixed(2)}` : "";
@@ -132,7 +135,7 @@ export function DispatchChatPage() {
                   <div className="flex flex-col gap-1 self-end">
                     <button
                       type="button"
-                      disabled={!draft.trim() || sendMutation.isPending}
+                      disabled={!draft.trim() || sendMutation.isPending || activeThread.status === "archived"}
                       onClick={() => sendMutation.mutate({ body: draft.trim() })}
                       className="rounded bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
                     >
@@ -140,7 +143,7 @@ export function DispatchChatPage() {
                     </button>
                     <button
                       type="button"
-                      disabled={!draft.trim() || sendMutation.isPending}
+                      disabled={!draft.trim() || sendMutation.isPending || activeThread.status === "archived"}
                       onClick={() => sendMutation.mutate({ body: draft.trim(), msgType: "confirmation_request" })}
                       className="rounded border border-[#1f2a44] px-3 py-1 text-xs font-semibold text-[#1f2a44] disabled:opacity-40"
                     >
