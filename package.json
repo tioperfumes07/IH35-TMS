@@ -324,6 +324,7 @@
     "verify:product-service-categories": "node scripts/verify-product-service-categories.mjs",
     "verify:detail-type-catalog": "node scripts/verify-detail-type-catalog.mjs",
     "verify:coa-account-detail-type-cascade": "node scripts/verify-coa-account-detail-type-cascade.mjs",
+    "verify:chat-schema-integrity": "node scripts/verify-chat-schema-integrity.mjs --self-test",
     "verify:fh1-fixed-assets": "node scripts/verify-fh1-fixed-assets.mjs",
     "verify:fh2-no-posting": "node scripts/verify-fh2-no-posting.mjs",
     "verify:fh4-no-posting": "node scripts/verify-fh4-no-posting.mjs",

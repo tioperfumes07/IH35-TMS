@@ -1,8 +1,25 @@
 # Per-Load Dispatch Chat — Design & Build Plan
 
-**Status:** DESIGN / build-and-hold. Nothing in here is merged. The CHAT-1 schema is a
-migration → §1.3 Jorge merge gate. This doc is the reviewable artifact; Jorge approves the
-schema + open decisions before any migration is cut.
+**Status:** DESIGN / build-and-hold. The CHAT-1 schema is a migration → §1.3 Jorge merge gate.
+
+> **RECONCILED 2026-07-01 to the CHAT-1 build directive (authoritative).** The migration
+> `db/migrations/202607012000_chat_dispatch_schema.sql` is now the source of truth for the schema;
+> §6 below is the superseded draft, kept for history. Four corrections were applied to the draft:
+> 1. **Hash-chain** — NO `prev_hash`/`hash` columns on `chat.*`; each event emits into
+>    `events.event_log` via `events.log_event()` (auto-chained by `events.event_log_append_only_trigger`),
+>    with `chat.messages.event_log_id` as the forward trace. (`subject_type` CHECK excludes
+>    'message' → CHAT-2 emits `subject_type='load'/'driver'`, `message_id` in payload — no spine ALTER.)
+> 2. **Participants + two-layer RLS** — added `chat.participants`; RLS is entity **AND** participant
+>    membership (a driver sees only threads they're in). The draft's entity-only policy was a leak.
+> 3. **Real FKs** — `cash_advance_request_id → driver_finance.cash_advance_requests(id)` and
+>    `attachments.document_id → docs.files(id)` (which carries `dispatch_load_id → mdata.loads`), both
+>    `ON DELETE RESTRICT`.
+> 4. **Thread kinds** — `load | driver_direct | broadcast` (no `office` kind; office-internal stays in
+>    the existing Task Team Chat, never in the driver-facing store).
+>
+> Verified live (not guessed): `identity.users(id)` [uuid→id renamed in 0005], `org.companies(id)`,
+> `mdata.loads(id)`, `mdata.drivers(id)` + `idx_drivers_identity_user_id`, `docs.files.dispatch_load_id`,
+> `identity.set_updated_at()`, RLS helpers. CI guard `verify:chat-schema-integrity` locks all four.
 
 **Owner intent (Jorge, 2026-07-01, verbatim):** the "chat" is the office↔driver dispatch
 channel. Office↔office AND office↔driver via the driver app. Send dispatch confirmations there;
@@ -115,7 +132,7 @@ Transport v1 = **polling** (react-query interval) — deliberately avoids the kn
 MIME bug; WS/SSE later. Everything depends on the CHAT-1 migration, so v1 is effectively gated
 behind Jorge merging the schema.
 
-## 6. CHAT-1 schema — DRAFT DDL (for Jorge's review; not cut into a migration yet)
+## 6. CHAT-1 schema — SUPERSEDED DRAFT (authoritative schema = the migration; see RECONCILED note above)
 
 Conventions carried from §2/§4: schema `chat.*`; UUIDv7-style server PKs (`gen_random_uuid()` until
 UUIDv7 helper confirmed); `operating_company_id` on every table + RLS **ENABLE + FORCE** with the

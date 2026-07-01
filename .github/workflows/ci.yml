@@ -115,6 +115,9 @@ jobs:
       - name: Verify CoA creator Account Type → Detail Type cascade (statement-grouped picker, no empty dropdown)
         run: npm run verify:coa-account-detail-type-cascade
 
+      - name: Verify CHAT-1 dispatch-chat schema integrity (participant-RLS, event_log reuse, real FKs, restrict, no-delete)
+        run: npm run verify:chat-schema-integrity
+
       - name: Verify INS-COVERAGE gap counts units not assets (GUARD #40)
         run: npm run verify:insurance-coverage-gap-units
 
