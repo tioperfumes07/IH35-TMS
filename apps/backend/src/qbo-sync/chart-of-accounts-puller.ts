@@ -95,9 +95,13 @@ async function upsertCatalogAccount(
   const active = row.Active === undefined ? true : Boolean(row.Active);
   const mappedType = mapAccountType(accountType);
 
+  // AF-1 made catalogs.accounts per-entity: operating_company_id is NOT NULL and the single-col unique on
+  // qbo_account_id was replaced by (operating_company_id, qbo_account_id). This write must carry
+  // operating_company_id and conflict on the composite arbiter, or it 500s AND cross-entity clobbers.
   await client.query(
     `
       INSERT INTO catalogs.accounts (
+        operating_company_id,
         account_number,
         account_name,
         account_type,
@@ -109,19 +113,19 @@ async function upsertCatalogAccount(
         qbo_sync_status,
         qbo_sync_error
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,now(),'synced',NULL)
-      ON CONFLICT (qbo_account_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),'synced',NULL)
+      ON CONFLICT (operating_company_id, qbo_account_id) WHERE qbo_account_id IS NOT NULL
       DO UPDATE SET
         account_name = EXCLUDED.account_name,
         account_type = EXCLUDED.account_type,
         account_subtype = EXCLUDED.account_subtype,
-        deactivated_at = CASE WHEN $8::boolean THEN NULL ELSE COALESCE(catalogs.accounts.deactivated_at, now()) END,
+        deactivated_at = CASE WHEN $9::boolean THEN NULL ELSE COALESCE(catalogs.accounts.deactivated_at, now()) END,
         qbo_synced_at = now(),
         qbo_sync_status = 'synced',
         qbo_sync_error = NULL,
         updated_at = now()
     `,
-    [`QBO-${qboId}`, name, mappedType, accountSubType, qboId, `Synced from QBO (${operatingCompanyId})`, active ? null : new Date(), active]
+    [operatingCompanyId, `QBO-${qboId}`, name, mappedType, accountSubType, qboId, `Synced from QBO (${operatingCompanyId})`, active ? null : new Date(), active]
   );
 }
 
