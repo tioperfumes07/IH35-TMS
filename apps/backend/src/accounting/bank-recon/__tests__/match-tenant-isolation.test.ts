@@ -72,4 +72,57 @@ describe("bank-recon match tenant isolation", () => {
     );
     expect(paymentSql).toContain("operating_company_id = $1::uuid");
   });
+
+  it("a TRANSP withdrawal returns ZERO USMCA bills/expenses (entity-param scoped)", async () => {
+    mockQuery.mockReset();
+    mockWithLuciaBypass.mockClear();
+
+    const TRANSP = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
+    const USMCA = "22222222-2222-4222-8222-222222222222";
+
+    mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (sql.includes("FROM banking.bank_transactions")) {
+        return {
+          rows: [
+            {
+              id: "tx-transp",
+              bank_account_id: "acct-transp",
+              operating_company_id: TRANSP,
+              transaction_date: "2026-05-20",
+              amount_cents: 50000,
+              is_credit: false, // withdrawal → bills/expenses are in-scope kinds
+              description: "Pilot Fuel",
+              merchant_name: "Pilot",
+              notes: null,
+            },
+          ],
+        };
+      }
+      // Simulate per-entity scoping: USMCA rows only exist for the USMCA company id. Since
+      // findCandidates queries with the TRANSP id (params[0]), these return nothing.
+      if (sql.includes("FROM accounting.bills b")) {
+        return { rows: params?.[0] === USMCA ? [{ id: "usmca-bill", amount_cents: 50000, event_date: "2026-05-20", memo: "USMCA bill" }] : [] };
+      }
+      if (sql.includes("FROM accounting.expenses e")) {
+        return { rows: params?.[0] === USMCA ? [{ id: "usmca-exp", amount_cents: 50000, event_date: "2026-05-20", memo: "USMCA exp" }] : [] };
+      }
+      return { rows: [] };
+    });
+
+    const candidates = await findCandidates({
+      operating_company_id: TRANSP,
+      bank_transaction_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    });
+
+    const kinds = candidates.map((c) => c.ledger_entry_kind);
+    expect(kinds).not.toContain("bill");
+    expect(kinds).not.toContain("expense");
+
+    const billSql = String(mockQuery.mock.calls.find(([sql]) => String(sql).includes("FROM accounting.bills b"))?.[0] ?? "");
+    expect(billSql).toContain("operating_company_id = $1::uuid");
+    const billParams = mockQuery.mock.calls.find(([sql]) => String(sql).includes("FROM accounting.bills b"))?.[1] as unknown[];
+    expect(billParams?.[0]).toBe(TRANSP);
+    const expenseSql = String(mockQuery.mock.calls.find(([sql]) => String(sql).includes("FROM accounting.expenses e"))?.[0] ?? "");
+    expect(expenseSql).toContain("operating_company_id = $1::uuid");
+  });
 });

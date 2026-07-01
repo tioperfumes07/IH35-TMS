@@ -3,8 +3,21 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 
-export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je";
+export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
+
+// bank.reconciliation_matches.ledger_entry_kind has a CHECK constraint that (as of migration
+// 0219_block_29_bank_reconciliation_matches.sql) only permits these four kinds. "bill"/"expense"
+// candidates are surfaced as read-only match SUGGESTIONS in Part 1 but MUST NOT be persisted here —
+// inserting them would violate the CHECK and 500 at runtime. Part 2 (Tier-1, gated) adds the
+// migration that widens the CHECK and wires the accept path. Keeping this guard is what keeps Part 1
+// Tier-3 (no schema change).
+const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntryKind>([
+  "payment",
+  "bill_payment",
+  "transfer",
+  "je",
+]);
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -140,42 +153,176 @@ type RawLedgerCandidate = {
   memo: string;
 };
 
-async function fetchLedgerCandidates(client: DbClient, operatingCompanyId: string, txnDate: string): Promise<RawLedgerCandidate[]> {
-  const payments = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
-    `
-      SELECT id::text, amount_cents::int, payment_date::text AS event_date, display_id::text AS memo
-      FROM accounting.payments
-      WHERE operating_company_id = $1::uuid
-        AND payment_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
-        AND voided_at IS NULL
-      LIMIT 200
-    `,
-    [operatingCompanyId, txnDate]
-  );
+// Open-state list for accounting.bills. accounting.bills.status is plain text with NO
+// enum/CHECK constraint (confirmed against 0090_p5_d2_bill_payment_balance.sql), so there is no
+// CHECK to read literally. The authoritative open-state set is the one that migration itself uses
+// in its partial index idx_accounting_bills_company_due_open AND the accounting.vendor_balances
+// view: ('open','partial','partially_paid','unpaid'), gated on a real open balance (amount_cents >
+// paid_cents) and revoked_at IS NULL.
+const OPEN_BILL_STATUSES = ["open", "partial", "partially_paid", "unpaid"] as const;
 
-  const billPayments = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
-    `
-      SELECT id::text, amount_cents::int, payment_date::text AS event_date, COALESCE(reference_number, memo)::text AS memo
-      FROM accounting.bill_payments
-      WHERE operating_company_id = $1::uuid
-        AND payment_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
-        AND revoked_at IS NULL
-      LIMIT 200
-    `,
-    [operatingCompanyId, txnDate]
-  );
+// Direction of a bank line vs the money-flow direction of each candidate source. A withdrawal
+// (is_credit=false, money OUT) can only reconcile against money-out records (bills, expenses,
+// bill_payments, and transfers OUT of this account). A deposit (is_credit=true, money IN) can only
+// reconcile against money-in records (customer/AR payments and transfers INTO this account).
+// Journal entries are double-sided and genuinely ambiguous, so they are offered in both directions.
+// Never cross the streams (a deposit must not surface a bill; a withdrawal must not surface an AR
+// receipt).
+async function fetchLedgerCandidates(
+  client: DbClient,
+  operatingCompanyId: string,
+  txnDate: string,
+  isCredit: boolean,
+  bankAccountId: string
+): Promise<RawLedgerCandidate[]> {
+  const results: RawLedgerCandidate[] = [];
 
+  // --- MONEY IN (deposit) sources ------------------------------------------------
+  if (isCredit) {
+    const payments = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
+      `
+        SELECT id::text, amount_cents::int, payment_date::text AS event_date, display_id::text AS memo
+        FROM accounting.payments
+        WHERE operating_company_id = $1::uuid
+          AND payment_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+          AND voided_at IS NULL
+        LIMIT 200
+      `,
+      [operatingCompanyId, txnDate]
+    );
+    for (const row of payments.rows) {
+      results.push({
+        ledger_entry_kind: "payment",
+        ledger_entry_id: row.id,
+        amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
+        event_date: row.event_date,
+        memo: row.memo ?? "",
+      });
+    }
+  }
+
+  // --- MONEY OUT (withdrawal) sources --------------------------------------------
+  if (!isCredit) {
+    const billPayments = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
+      `
+        SELECT id::text, amount_cents::int, payment_date::text AS event_date, COALESCE(reference_number, memo)::text AS memo
+        FROM accounting.bill_payments
+        WHERE operating_company_id = $1::uuid
+          AND payment_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+          AND revoked_at IS NULL
+        LIMIT 200
+      `,
+      [operatingCompanyId, txnDate]
+    );
+    for (const row of billPayments.rows) {
+      results.push({
+        ledger_entry_kind: "bill_payment",
+        ledger_entry_id: row.id,
+        amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
+        event_date: row.event_date,
+        memo: row.memo ?? "",
+      });
+    }
+
+    // OPEN BILLS (candidate kind 'bill'). Open-states passed as $3 text[] (b.status = ANY($3)).
+    // amount = open balance (amount_cents − paid_cents). Read-only SUGGESTION only in Part 1.
+    const bills = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
+      `
+        SELECT
+          b.id::text,
+          (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS amount_cents,
+          b.bill_date::text AS event_date,
+          COALESCE(b.display_id, b.bill_number, b.memo)::text AS memo
+        FROM accounting.bills b
+        WHERE b.operating_company_id = $1::uuid
+          AND b.bill_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+          AND b.revoked_at IS NULL
+          AND b.status = ANY($3::text[])
+          AND (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0
+          AND NOT EXISTS (
+            SELECT 1 FROM bank.reconciliation_matches m
+            WHERE m.ledger_entry_kind = 'bill'
+              AND m.ledger_entry_id = b.id
+              AND m.match_state IN ('auto_matched', 'user_matched')
+          )
+        LIMIT 200
+      `,
+      [operatingCompanyId, txnDate, OPEN_BILL_STATUSES as unknown as string[]]
+    );
+    for (const row of bills.rows) {
+      results.push({
+        ledger_entry_kind: "bill",
+        ledger_entry_id: row.id,
+        amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
+        event_date: row.event_date,
+        memo: row.memo ?? "",
+      });
+    }
+
+    // EXPENSES (candidate kind 'expense'). Columns confirmed from
+    // 202606151300_expenses_header_phase1_foundation.sql: total_amount_cents, transaction_date, memo,
+    // expense_number, is_active, voided_at. amount = total_amount_cents. Read-only SUGGESTION only.
+    const expenses = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
+      `
+        SELECT
+          e.id::text,
+          e.total_amount_cents::int AS amount_cents,
+          e.transaction_date::text AS event_date,
+          COALESCE(e.expense_number, e.memo)::text AS memo
+        FROM accounting.expenses e
+        WHERE e.operating_company_id = $1::uuid
+          AND e.transaction_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+          AND e.is_active = true
+          AND e.voided_at IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM bank.reconciliation_matches m
+            WHERE m.ledger_entry_kind = 'expense'
+              AND m.ledger_entry_id = e.id
+              AND m.match_state IN ('auto_matched', 'user_matched')
+          )
+        LIMIT 200
+      `,
+      [operatingCompanyId, txnDate]
+    );
+    for (const row of expenses.rows) {
+      results.push({
+        ledger_entry_kind: "expense",
+        ledger_entry_id: row.id,
+        amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
+        event_date: row.event_date,
+        memo: row.memo ?? "",
+      });
+    }
+  }
+
+  // --- TRANSFERS (direction-scoped to this bank account's side) -------------------
+  // money OUT of this account = from_account_id side; money IN = to_account_id side.
+  const transferDirectionClause = isCredit
+    ? "t.to_account_id = $3::uuid AND t.to_account_kind = 'bank'"
+    : "t.from_account_id = $3::uuid AND t.from_account_kind = 'bank'";
   const transfers = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
     `
-      SELECT id::text, amount_cents::int, transfer_date::text AS event_date, COALESCE(memo, reference)::text AS memo
-      FROM banking.transfers
-      WHERE operating_company_id = $1::uuid
-        AND transfer_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+      SELECT t.id::text, t.amount_cents::int, t.transfer_date::text AS event_date, COALESCE(t.memo, t.reference_number)::text AS memo
+      FROM banking.transfers t
+      WHERE t.operating_company_id = $1::uuid
+        AND t.transfer_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+        AND t.revoked_at IS NULL
+        AND (${transferDirectionClause})
       LIMIT 200
     `,
-    [operatingCompanyId, txnDate]
+    [operatingCompanyId, txnDate, bankAccountId]
   );
+  for (const row of transfers.rows) {
+    results.push({
+      ledger_entry_kind: "transfer",
+      ledger_entry_id: row.id,
+      amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
+      event_date: row.event_date,
+      memo: row.memo ?? "",
+    });
+  }
 
+  // --- JOURNAL ENTRIES (double-sided; offered in both directions) -----------------
   const journalEntries = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
     `
       SELECT
@@ -192,37 +339,17 @@ async function fetchLedgerCandidates(client: DbClient, operatingCompanyId: strin
     `,
     [operatingCompanyId, txnDate]
   );
+  for (const row of journalEntries.rows) {
+    results.push({
+      ledger_entry_kind: "je",
+      ledger_entry_id: row.id,
+      amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
+      event_date: row.event_date,
+      memo: row.memo ?? "",
+    });
+  }
 
-  return [
-    ...payments.rows.map((row) => ({
-      ledger_entry_kind: "payment" as const,
-      ledger_entry_id: row.id,
-      amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
-      event_date: row.event_date,
-      memo: row.memo ?? "",
-    })),
-    ...billPayments.rows.map((row) => ({
-      ledger_entry_kind: "bill_payment" as const,
-      ledger_entry_id: row.id,
-      amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
-      event_date: row.event_date,
-      memo: row.memo ?? "",
-    })),
-    ...transfers.rows.map((row) => ({
-      ledger_entry_kind: "transfer" as const,
-      ledger_entry_id: row.id,
-      amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
-      event_date: row.event_date,
-      memo: row.memo ?? "",
-    })),
-    ...journalEntries.rows.map((row) => ({
-      ledger_entry_kind: "je" as const,
-      ledger_entry_id: row.id,
-      amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
-      event_date: row.event_date,
-      memo: row.memo ?? "",
-    })),
-  ];
+  return results;
 }
 
 async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: string, kind: LedgerEntryKind, entryId: string) {
@@ -243,6 +370,23 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
   if (kind === "transfer") {
     const res = await client.query<{ amount_cents: number }>(
       `SELECT amount_cents::int FROM banking.transfers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      [entryId, operatingCompanyId]
+    );
+    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+  }
+  if (kind === "bill") {
+    // bill amount = OPEN BALANCE (amount_cents − paid_cents), same basis as the candidate query.
+    const res = await client.query<{ amount_cents: number }>(
+      `SELECT (COALESCE(amount_cents, 0) - COALESCE(paid_cents, 0))::int AS amount_cents
+         FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      [entryId, operatingCompanyId]
+    );
+    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+  }
+  if (kind === "expense") {
+    const res = await client.query<{ amount_cents: number }>(
+      `SELECT total_amount_cents::int AS amount_cents
+         FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
       [entryId, operatingCompanyId]
     );
     return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
@@ -458,7 +602,13 @@ export async function findCandidates(input: { operating_company_id: string; bank
     const toleranceCents = toleranceForAmount(txn.amount_cents);
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
     const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""} ${txn.notes ?? ""}`.trim();
-    const rawCandidates = await fetchLedgerCandidates(client, input.operating_company_id, txn.transaction_date);
+    const rawCandidates = await fetchLedgerCandidates(
+      client,
+      input.operating_company_id,
+      txn.transaction_date,
+      txn.is_credit,
+      txn.bank_account_id
+    );
 
     const ranked = rawCandidates
       .map((candidate) => {
@@ -487,7 +637,10 @@ export async function findCandidates(input: { operating_company_id: string; bank
       .sort((a, b) => b.match_score - a.match_score)
       .slice(0, 50);
 
-    const best = ranked.find((row) => row.auto_match);
+    // Only persist an auto-match whose kind the bank.reconciliation_matches CHECK constraint
+    // accepts. 'bill'/'expense' auto-matches are returned as ranked suggestions but never written in
+    // Part 1 (see PERSISTABLE_MATCH_KINDS) — that keeps this Tier-3 and avoids a CHECK-violation 500.
+    const best = ranked.find((row) => row.auto_match && PERSISTABLE_MATCH_KINDS.has(row.ledger_entry_kind));
     if (best) {
       await storeMatch(client, {
         operating_company_id: input.operating_company_id,

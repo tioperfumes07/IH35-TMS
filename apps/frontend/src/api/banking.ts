@@ -222,6 +222,29 @@ export function getBankingKpis(companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/banking/dashboard/kpis?${q(companyId)}`);
 }
 
+export type BankMatchCandidateKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
+
+export type BankMatchCandidate = {
+  ledger_entry_kind: BankMatchCandidateKind;
+  ledger_entry_id: string;
+  amount_cents: number;
+  event_date: string;
+  memo: string;
+  amount_gap_cents: number;
+  date_gap_days: number;
+  memo_similarity: number;
+  match_score: number;
+  auto_match: boolean;
+};
+
+// Ranked match candidates for one bank transaction (Match drawer). Read-only.
+// companyId is the active entity from useCompanyContext; the server re-scopes + membership-guards it.
+export function getMatchCandidates(bankTxnId: string, companyId: string) {
+  return apiRequest<{ candidates: BankMatchCandidate[]; match_candidates_count: number }>(
+    `/api/v1/banking/transactions/${bankTxnId}/match-candidates?${q(companyId)}`
+  );
+}
+
 export function getBankingTiles(companyId: string) {
   return apiRequest<{ tiles: BankingTile[] }>(`/api/v1/banking/account-tiles?${q(companyId)}`);
 }
