@@ -63,6 +63,7 @@ export type DriverImportResponse = {
   summary: DriverImportSummary;
   sample?: DriverImportSampleRow[];
   created?: number;
+  row_errors?: number;
 };
 
 // Import the Driver Master Contacts List CSV. mode="preview" writes nothing (returns counts + a sample);

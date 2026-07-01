@@ -51,6 +51,12 @@ describe("driver import — date normalization", () => {
   it("tolerates MM/DD when the day field is clearly a month", () => {
     expect(normalizeImportDate("13/06/2023")).toBe("2023-06-13"); // 13 can't be a month → DD/MM
   });
+  it("rejects impossible calendar dates (would 22008 on ::date and crash the commit)", () => {
+    expect(normalizeImportDate("31/04/2021")).toBeNull(); // April has 30 days
+    expect(normalizeImportDate("2021-02-30")).toBeNull();
+    expect(normalizeImportDate("29/02/2021")).toBeNull(); // non-leap
+    expect(normalizeImportDate("29/02/2024")).toBe("2024-02-29"); // leap year OK
+  });
 });
 
 describe("driver import — phone", () => {
