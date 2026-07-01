@@ -9,6 +9,7 @@ import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
 import { ListsHubPage } from "../pages/lists/ListsHubPage";
 import { DomainCatalogHubPage } from "../pages/lists/DomainCatalogHubPage";
+import { DetailTypesListPage } from "../pages/lists/accounting/DetailTypesListPage";
 import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
 import { BrokersListPage } from "../pages/lists/names/BrokersListPage";
 import { DriverDetailPage } from "../pages/DriverDetail";
@@ -2235,6 +2236,23 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ChartOfAccountsListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Block 4: Account Type (read-only reference, reuses the existing catalog page) + Detail Type (creator). */}
+        <Route
+          path="/lists/accounting/account-types"
+          element={
+            <ProtectedRoute>
+              <AccountTypeCatalogPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/detail-types"
+          element={
+            <ProtectedRoute>
+              <DetailTypesListPage />
             </ProtectedRoute>
           }
         />

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { createCatalogRoutes as createCompanyScopedCatalogRoutes } from "../fuel/factory.js";
 import { registerAccountTypeCatalogRoutes } from "./account-type-catalog.routes.js";
+import { registerDetailTypesCatalogRoutes } from "./detail-types-catalog.routes.js";
 import {
   registerJournalEntryTypesReadOnlyRoutes,
   registerLegacyAccountingCatalogRoutes,
@@ -300,4 +301,5 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
   });
 
   registerAccountTypeCatalogRoutes(app);
+  registerDetailTypesCatalogRoutes(app);
 }

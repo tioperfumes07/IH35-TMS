@@ -119,6 +119,8 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     pillClass: "bg-slate-200 text-slate-800",
     catalogs: [
       { name: "Chart of Accounts", description: "GL account catalog and hierarchy", live: true, catalogKey: "chart-of-accounts" },
+      { name: "Account Type", description: "Fixed account-type taxonomy (read-only reference)", live: true, catalogKey: "account-types" },
+      { name: "Detail Type", description: "Account-type sub-classifications: canonical system set + per-entity custom", live: true, catalogKey: "detail-types" },
       { name: "Classes", description: "Operational and financial classification tags", live: true, catalogKey: "classes" },
       { name: "Payment Terms", description: "Net-term and due-date definitions", live: true, catalogKey: "payment-terms" },
       { name: "Posting Templates", description: "Code-managed debit/credit posting templates", live: true, catalogKey: "posting-templates" },
