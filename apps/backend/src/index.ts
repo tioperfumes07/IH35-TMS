@@ -452,6 +452,7 @@ import { registerDispatchAuthGateRoutes } from "./dispatch/auth-gates/routes.js"
 import { registerAnomalyDetectionRoutes } from "./safety/anomaly/routes.js";
 import { initializeAnomalyDetectorWorker } from "./jobs/anomaly-detector-worker.js";
 import { registerDispatchDetentionApprovalRoutes } from "./dispatch/detention-approval.routes.js";
+import { registerChatRoutes } from "./chat/chat.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -769,6 +770,7 @@ async function main() {
   await registerDispatcherRoleViewRoutes(app);
   await registerDriverRoutes(app);
   await registerDriversMessagesRoutes(app);
+  await registerChatRoutes(app);
   await registerDriversDocumentAlertsRoutes(app);
   await registerGeofencesRoutes(app);
   await registerDriverDaySummaryRoutes(app);
