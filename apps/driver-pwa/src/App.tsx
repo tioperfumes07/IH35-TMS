@@ -23,6 +23,7 @@ import { LoginPage } from "./pages/Login";
 import { MyDocumentsPage } from "./pages/MyDocuments";
 import { MyDisputesPage } from "./pages/MyDisputes";
 import { MessagesPage } from "./pages/Messages";
+import { ChatPage } from "./pages/Chat";
 import { ProfilePage } from "./pages/Profile";
 import { SchedulerHomePage } from "./pages/SchedulerHome";
 import { StopActionPage } from "./pages/StopAction";
@@ -90,6 +91,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <MessagesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute>
+            <ChatPage />
           </ProtectedRoute>
         }
       />
