@@ -175,7 +175,7 @@ export async function registerVoidCancelReasonRoutes(app: FastifyInstance) {
   });
 
   // UPDATE — edit label/requires_note/sort_order/code (per-entity via RLS).
-  app.patch<{ Params: { id: string } }>("/api/v1/catalogs/void-cancel-reasons/:id", async (req, reply) => {
+  app.patch<{ Params: { id: string } }>("/api/v1/catalogs/void-cancel-reasons/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureCatalogWriteRole(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -242,7 +242,7 @@ export async function registerVoidCancelReasonRoutes(app: FastifyInstance) {
   });
 
   // DEACTIVATE — void-not-delete (is_active=false + deactivated_at). NO DELETE route.
-  app.post<{ Params: { id: string } }>("/api/v1/catalogs/void-cancel-reasons/:id/deactivate", async (req, reply) => {
+  app.post<{ Params: { id: string } }>("/api/v1/catalogs/void-cancel-reasons/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureCatalogWriteRole(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -280,7 +280,7 @@ export async function registerVoidCancelReasonRoutes(app: FastifyInstance) {
   });
 
   // REACTIVATE — restore a deactivated reason (is_active=true + clear deactivated_at).
-  app.post<{ Params: { id: string } }>("/api/v1/catalogs/void-cancel-reasons/:id/reactivate", async (req, reply) => {
+  app.post<{ Params: { id: string } }>("/api/v1/catalogs/void-cancel-reasons/:id/reactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureCatalogWriteRole(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
