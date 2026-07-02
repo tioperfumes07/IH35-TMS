@@ -40,7 +40,11 @@ describe("driver escrow sub-account provisioning (STOP-DECISION #1: unprefixed p
     expect(insert.sql).toContain("true"); // is_postable
     expect(insert.sql).toContain("NULL, $1"); // account_number NULL
     // parent resolved by NAME + Liability type, not a UUID — and NOT the year-prefixed parent
-    expect(sqls[0].params).toEqual(["Damage Claim Escrow", "Liability"]);
+    expect(sqls[0].sql).toContain("operating_company_id = $3::uuid"); // AF-1 entity scope
+    expect(sqls[0].params).toEqual(["Damage Claim Escrow", "Liability", "oc"]);
+    // INSERT carries operating_company_id (per-entity nesting, no cross-entity leak)
+    expect(insert.sql).toContain("operating_company_id");
+    expect(insert.params[4]).toBe("oc");
   });
 
   it("is idempotent — skips when the escrow sub-account already exists (no INSERT)", async () => {

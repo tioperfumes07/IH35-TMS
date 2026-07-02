@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
@@ -11,6 +12,7 @@ const listQuerySchema = z.object({
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
   parent_class_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -21,6 +23,7 @@ const createBodySchema = z.object({
   parent_class_id: z.string().uuid().optional(),
   qbo_class_id: z.string().trim().max(100).optional(),
   notes: z.string().trim().max(2000).optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const updateBodySchema = z
@@ -31,6 +34,7 @@ const updateBodySchema = z
     qbo_class_id: z.string().trim().max(100).nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
+    operating_company_id: z.string().uuid().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -39,6 +43,7 @@ const bulkBodySchema = z.object({
   op: z.enum(["deactivate", "reparent"]),
   ids: z.array(z.string().uuid()).min(1).max(200),
   parent_class_id: z.string().uuid().nullable().optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -48,6 +53,48 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
+}
+
+// catalogs.classes is per-entity after AF-3 (migration 202606300090): the classes_entity_select RLS policy
+// returns rows only where operating_company_id = current_setting('app.operating_company_id'). Reading under
+// withCurrentUser WITHOUT that GUC therefore returns ZERO rows AND, under a bypass role, would blend classes
+// across TRANSP/TRK/USMCA. These helpers set the GUC for the active entity + assert membership (mirrors
+// catalogs/accounts.routes.ts exactly — kept local to avoid a cross-module route import).
+async function withScopedCompany<T>(
+  userId: string,
+  operatingCompanyId: string,
+  fn: (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }) => Promise<T>,
+) {
+  await assertCompanyMembership(userId, operatingCompanyId);
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    return fn(client);
+  });
+}
+
+async function resolveOperatingCompanyId(
+  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  requested?: string,
+) {
+  if (requested) return requested;
+  const res = await client.query(
+    `
+      SELECT c.id
+      FROM identity.users u
+      JOIN org.companies c ON c.id = u.default_company_id
+      WHERE u.id = $1::uuid
+        AND c.deactivated_at IS NULL
+      UNION
+      SELECT c.id
+      FROM org.companies c
+      WHERE c.id IN (SELECT org.user_accessible_company_ids())
+      ORDER BY id
+      LIMIT 1
+    `,
+    [userId],
+  );
+  return res.rows[0]?.id ?? null;
 }
 
 function mapClassConflict(constraint?: string): string {
@@ -66,7 +113,14 @@ export async function registerClassRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const { limit, offset, status, search, parent_class_id } = parsed.data;
 
-    const classes = await withCurrentUser(authUser.uuid, async (client) => {
+    // Resolve the active entity (explicit param, else the user's default/accessible company) and read its
+    // per-entity classes. Without the scoped GUC the AF-3 RLS returns 0 rows (empty Class picker).
+    const operatingCompanyId =
+      parsed.data.operating_company_id ??
+      (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
+    if (!operatingCompanyId) return { classes: [] };
+
+    const classes = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
@@ -112,18 +166,24 @@ export async function registerClassRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        // catalogs.classes is per-entity under AF-3 RLS. Resolve the active entity, set the GUC, and STORE
+        // operating_company_id — otherwise classes_entity_write's WITH CHECK rejects the insert.
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (!operatingCompanyId) return { __no_company: true } as const;
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         const res = await client.query(
           `
             INSERT INTO catalogs.classes (
-              class_name, class_code, parent_class_id, qbo_class_id, notes, created_by_user_id, updated_by_user_id
+              class_name, class_code, parent_class_id, qbo_class_id, notes,
+              operating_company_id, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$6
+              $1,$2,$3,$4,$5,$6,$7,$7
             )
             RETURNING
               id, class_name, class_code, parent_class_id, qbo_class_id, notes,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
-          [b.class_name, b.class_code ?? null, b.parent_class_id ?? null, b.qbo_class_id ?? null, b.notes ?? null, authUser.uuid]
+          [b.class_name, b.class_code ?? null, b.parent_class_id ?? null, b.qbo_class_id ?? null, b.notes ?? null, operatingCompanyId, authUser.uuid]
         );
         const row = res.rows[0];
         await appendCrudAudit(client, authUser.uuid, "catalogs.classes.created", {
@@ -135,6 +195,9 @@ export async function registerClassRoutes(app: FastifyInstance) {
         });
         return row;
       });
+      if (created && typeof created === "object" && "__no_company" in created) {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
       return reply.code(201).send(created);
     } catch (err) {
       const code = (err as { code?: string }).code;
@@ -150,8 +213,15 @@ export async function registerClassRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const row = await withCurrentUser(authUser.uuid, async (client) => {
+    const operatingCompanyId =
+      parsedQuery.data.operating_company_id ??
+      (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
+    if (!operatingCompanyId) return reply.code(404).send({ error: "catalog_class_not_found" });
+
+    const row = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
       const res = await client.query(
         `
           SELECT
@@ -201,6 +271,11 @@ export async function registerClassRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        // Scope to the active entity so AF-3 RLS lets us read + update this per-entity class.
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (operatingCompanyId) {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+        }
         const oldRes = await client.query(
           `
             SELECT
@@ -263,6 +338,11 @@ export async function registerClassRoutes(app: FastifyInstance) {
     }
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        // Scope to the active entity so AF-3 RLS confines the bulk UPDATE to this entity's classes.
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsed.data.operating_company_id);
+        if (operatingCompanyId) {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+        }
         let count = 0;
         for (const id of ids) {
           if (op === "deactivate") {
@@ -314,7 +394,14 @@ export async function registerClassRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
+    const bodyOc = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.body ?? {});
+    const requestedOc = bodyOc.success ? bodyOc.data.operating_company_id : undefined;
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      // Scope to the entity so AF-3 RLS lets us read + soft-delete this per-entity class.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, requestedOc);
+      if (operatingCompanyId) {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      }
       const oldRes = await client.query(
         `
           SELECT id, deactivated_at

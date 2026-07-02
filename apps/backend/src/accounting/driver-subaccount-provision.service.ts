@@ -4,11 +4,14 @@
 // Both sides: the ASSET sub-account (under "Driver Cash Advance") and the LIABILITY/escrow sub-account
 // (under "Damage Claim Escrow" — STOP-DECISION #1 locked: unprefixed, year-agnostic).
 //
-// PORTABLE: parents resolved by the stable business key (account_name + type + top-level), NEVER by
-// hardcoded UUID (the B1-seed lesson). catalogs.accounts is a single global chart (no
-// operating_company_id) = effectively the TRANSP chart; resolution returns the canonical parent or
-// null (a no-op for companies whose chart lacks it, e.g. TRK).
-// IDEMPOTENT: never double-creates — checks by (account_name, parent_account_id) first.
+// PORTABLE: parents resolved by the stable business key (account_name + type + top-level + entity),
+// NEVER by hardcoded UUID (the B1-seed lesson). catalogs.accounts is PER-ENTITY since AF-1 (each row
+// carries operating_company_id + entity RLS): every parent lookup, idempotency check and INSERT is
+// scoped to operating_company_id so a driver's sub-accounts land under THEIR entity's chart — resolving
+// or nesting under another entity's account (TRANSP/TRK/USMCA) would be a cross-entity GL leak. Callers
+// MUST set app.operating_company_id on the transaction (AF-1 RLS returns 0 rows otherwise). Resolution
+// returns the canonical parent or null (a no-op for companies whose chart lacks it, e.g. TRK).
+// IDEMPOTENT: never double-creates — checks by (operating_company_id, account_name, parent_account_id).
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
@@ -26,10 +29,14 @@ export type ProvisionResult =
   | { created: true; accountId: string; accountName: string }
   | { created: false; reason: "parent_not_found" | "already_exists"; accountId?: string };
 
-/** Resolve the canonical top-level parent by NAME + type (stable key, never a hardcoded UUID). */
+/**
+ * Resolve the canonical top-level parent by NAME + type WITHIN the given entity (stable key, never a
+ * hardcoded UUID). operating_company_id is REQUIRED and predicated so a lookup never crosses into another
+ * entity's chart (AF-1). Caller must have set app.operating_company_id on the transaction.
+ */
 export async function resolveCanonicalParentAccount(
   client: DbClient,
-  args: { accountName: string; accountType: string }
+  args: { accountName: string; accountType: string; operatingCompanyId: string }
 ): Promise<string | null> {
   const res = await client.query<{ id: string }>(
     `
@@ -39,10 +46,11 @@ export async function resolveCanonicalParentAccount(
         AND account_type = $2
         AND parent_account_id IS NULL
         AND deactivated_at IS NULL
+        AND operating_company_id = $3::uuid
       ORDER BY created_at ASC
       LIMIT 1
     `,
-    [args.accountName, args.accountType]
+    [args.accountName, args.accountType, args.operatingCompanyId]
   );
   return res.rows[0]?.id ?? null;
 }
@@ -59,11 +67,12 @@ export type SubAccountPlan =
 
 export async function planDriverSubAccount(
   client: DbClient,
-  args: { parentName: string; parentType: string; subAccountName: string }
+  args: { parentName: string; parentType: string; subAccountName: string; operatingCompanyId: string }
 ): Promise<SubAccountPlan> {
   const parentId = await resolveCanonicalParentAccount(client, {
     accountName: args.parentName,
     accountType: args.parentType,
+    operatingCompanyId: args.operatingCompanyId,
   });
   if (!parentId) return { action: "skip_no_parent", subAccountName: args.subAccountName };
 
@@ -74,9 +83,10 @@ export async function planDriverSubAccount(
       WHERE account_name = $1
         AND parent_account_id = $2::uuid
         AND deactivated_at IS NULL
+        AND operating_company_id = $3::uuid
       LIMIT 1
     `,
-    [args.subAccountName, parentId]
+    [args.subAccountName, parentId, args.operatingCompanyId]
   );
   if (existing.rows[0]) return { action: "skip_exists", parentId, existingId: existing.rows[0].id, subAccountName: args.subAccountName };
   return { action: "create", parentId, subAccountName: args.subAccountName };
@@ -108,6 +118,7 @@ export async function provisionDriverAdvanceSubAccount(
     parentName: DRIVER_ADVANCE_PARENT_NAME,
     parentType: "Asset",
     subAccountName: name,
+    operatingCompanyId: input.operatingCompanyId,
   });
   if (plan.action === "skip_no_parent") return { created: false, reason: "parent_not_found" };
   if (plan.action === "skip_exists") return { created: false, reason: "already_exists", accountId: plan.existingId };
@@ -118,15 +129,15 @@ export async function provisionDriverAdvanceSubAccount(
       INSERT INTO catalogs.accounts (
         account_number, account_name, account_type, account_subtype, parent_account_id,
         qbo_account_id, is_postable, currency_code,
-        notes, created_by_user_id, updated_by_user_id
+        notes, created_by_user_id, updated_by_user_id, operating_company_id
       ) VALUES (
         NULL, $1, 'Asset', NULL, $2::uuid,
         NULL, true, 'USD',
-        $3, $4::uuid, $4::uuid
+        $3, $4::uuid, $4::uuid, $5::uuid
       )
       RETURNING id::text
     `,
-    [name, parentId, `Auto-provisioned driver advance sub-account (driver ${input.driverId})`, input.actorUserId]
+    [name, parentId, `Auto-provisioned driver advance sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId]
   );
   const accountId = ins.rows[0]!.id;
 
@@ -168,6 +179,7 @@ export async function provisionDriverEscrowSubAccount(
     parentName: DRIVER_ESCROW_PARENT_NAME,
     parentType: "Liability",
     subAccountName: name,
+    operatingCompanyId: input.operatingCompanyId,
   });
   if (plan.action === "skip_no_parent") return { created: false, reason: "parent_not_found" };
   if (plan.action === "skip_exists") return { created: false, reason: "already_exists", accountId: plan.existingId };
@@ -178,15 +190,15 @@ export async function provisionDriverEscrowSubAccount(
       INSERT INTO catalogs.accounts (
         account_number, account_name, account_type, account_subtype, parent_account_id,
         qbo_account_id, is_postable, currency_code,
-        notes, created_by_user_id, updated_by_user_id
+        notes, created_by_user_id, updated_by_user_id, operating_company_id
       ) VALUES (
         NULL, $1, 'Liability', NULL, $2::uuid,
         NULL, true, 'USD',
-        $3, $4::uuid, $4::uuid
+        $3, $4::uuid, $4::uuid, $5::uuid
       )
       RETURNING id::text
     `,
-    [name, parentId, `Auto-provisioned driver escrow sub-account (driver ${input.driverId})`, input.actorUserId]
+    [name, parentId, `Auto-provisioned driver escrow sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId]
   );
   const accountId = ins.rows[0]!.id;
 

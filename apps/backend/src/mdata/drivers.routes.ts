@@ -706,6 +706,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         // error must NOT fail driver creation.
         try {
           if (resolvedOperatingCompanyId) {
+            // AF-1 entity scope: catalogs.accounts is per-entity. This handler runs under withCurrentUser
+            // (lucia-bypass, GUC unset) — set app.operating_company_id so the sub-account parent lookup +
+            // INSERTs resolve/land inside THIS driver's entity chart. Without it, AF-1 RLS returns 0 rows and
+            // the sub-accounts are silently never created (a live break even for TRANSP); under bypass they
+            // would nest under another entity's parent (cross-entity GL leak).
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
             const provisionArgs = {
               operatingCompanyId: resolvedOperatingCompanyId,
               driverId: String(row.id),
