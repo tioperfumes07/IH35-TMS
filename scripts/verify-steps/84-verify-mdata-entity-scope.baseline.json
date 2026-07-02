@@ -6,24 +6,9 @@
       "preview": "`SELECT account_number::text AS account_number, account_name::text AS account_name FROM catalogs.accounts WHERE id = $1:"
     },
     {
-      "key": "apps/backend/src/accounting/coa-roles/resolver.service.ts#d2e3362aaddf81497c24d362a22ae567e6f8d356",
-      "file": "apps/backend/src/accounting/coa-roles/resolver.service.ts",
-      "preview": "` SELECT arb.account_id::text AS account_id FROM catalogs.account_role_bindings arb JOIN catalogs.accounts a ON a.id = a"
-    },
-    {
       "key": "apps/backend/src/accounting/collections.service.ts#bb72c21d1183aa03a839ce32384694ea47bde34f",
       "file": "apps/backend/src/accounting/collections.service.ts",
       "preview": "` SELECT t.id::text, t.operating_company_id::text, t.customer_id::text, c.customer_name, t.invoice_id::text, t.owed_cent"
-    },
-    {
-      "key": "apps/backend/src/accounting/driver-subaccount-provision.service.ts#29636517ad145d94ae8e17b4b6e2c3c0a9eed920",
-      "file": "apps/backend/src/accounting/driver-subaccount-provision.service.ts",
-      "preview": "` SELECT id::text FROM catalogs.accounts WHERE account_name = $1 AND parent_account_id = $2::uuid AND deactivated_at IS "
-    },
-    {
-      "key": "apps/backend/src/accounting/driver-subaccount-provision.service.ts#f75fa740edfecdd1ee1954b5bb82ce499eec515d",
-      "file": "apps/backend/src/accounting/driver-subaccount-provision.service.ts",
-      "preview": "` SELECT id::text FROM catalogs.accounts WHERE account_name = $1 AND account_type = $2 AND parent_account_id IS NULL AND"
     },
     {
       "key": "apps/backend/src/accounting/expense-category-map/routes.ts#2309cc94fb9241bb9d38776195da336d78e5332c",
@@ -79,16 +64,6 @@
       "key": "apps/backend/src/accounting/payments.routes.ts#7dfa63a75594454038977a5c38c154409307f30a",
       "file": "apps/backend/src/accounting/payments.routes.ts",
       "preview": "` SELECT COUNT(*)::int AS total FROM accounting.payments p JOIN mdata.customers c ON c.id = p.customer_id WHERE ${where."
-    },
-    {
-      "key": "apps/backend/src/accounting/period-close-retained-earnings.service.ts#23ce923a0a3802fb11f31152475e854644527ef8",
-      "file": "apps/backend/src/accounting/period-close-retained-earnings.service.ts",
-      "preview": "` SELECT id::text FROM catalogs.accounts WHERE account_type = 'Equity' ORDER BY account_number NULLS LAST LIMIT 1 `"
-    },
-    {
-      "key": "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts#d2e3362aaddf81497c24d362a22ae567e6f8d356",
-      "file": "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts",
-      "preview": "` SELECT arb.account_id::text AS account_id FROM catalogs.account_role_bindings arb JOIN catalogs.accounts a ON a.id = a"
     },
     {
       "key": "apps/backend/src/admin/launch-readiness.service.ts#20f46d6feec2504609c7b09022dd483d08c7175e",
@@ -829,6 +804,11 @@
       "key": "apps/backend/src/mdata/equipment-aggregate.service.ts#6d1c91e7acac2663b32977f3f3a554c0ece056d1",
       "file": "apps/backend/src/mdata/equipment-aggregate.service.ts",
       "preview": "`SELECT id::text AS unit_id, unit_number, vin FROM mdata.units WHERE id = $1::uuid LIMIT 1`"
+    },
+    {
+      "key": "apps/backend/src/mdata/equipment-log.routes.ts#3d5061da7964ce53c7ac95da9cd2fc91d008c554",
+      "file": "apps/backend/src/mdata/equipment-log.routes.ts",
+      "preview": "` SELECT el.id, el.equipment_id, el.event_type, el.event_at, el.from_unit_id, el.to_unit_id, el.from_location_id, el.to_"
     },
     {
       "key": "apps/backend/src/mdata/equipment.routes.ts#1148edd5b425bcd20189ea89ad61fd5697fb99ad",
