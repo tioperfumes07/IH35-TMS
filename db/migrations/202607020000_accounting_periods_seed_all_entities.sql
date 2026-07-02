@@ -46,12 +46,16 @@ SELECT
   EXTRACT(YEAR FROM m)::int                            AS fiscal_year,   -- calendar year = fiscal year
   to_char(m, 'Mon YYYY')                              AS period_label,
   'open'
+-- Only seed companies that actually exist (FK to org.companies). On a FRESH CI DB the carrier rows
+-- (TRK/USMCA are prod runtime data, not migration-seeded) are absent → this JOIN yields 0 rows and the
+-- migration is a clean no-op (no FK violation). On prod all three exist (verified live 2026-07-02) → full seed.
 FROM (
   VALUES
     ('91e0bf0a-133f-4ce8-a734-2586cfa66d96'::uuid, DATE '2024-01-01'),  -- TRANSP
     ('b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e'::uuid, DATE '2024-01-01'),  -- TRK
     ('5c854333-6ea5-4faa-af31-67cb272fef80'::uuid, DATE '2026-01-01')   -- USMCA (no QBO, 0 balances)
 ) AS ent(company_id, start_date)
+JOIN org.companies c ON c.id = ent.company_id
 CROSS JOIN LATERAL generate_series(ent.start_date, DATE '2027-12-01', INTERVAL '1 month') AS m
 ON CONFLICT (operating_company_id, period_start) DO NOTHING;
 
