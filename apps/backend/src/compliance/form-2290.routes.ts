@@ -137,6 +137,24 @@ export async function registerForm2290Routes(app: FastifyInstance) {
 
     const periodEnd = taxPeriodEnd(body.data.tax_period_start);
     const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      // EVIDENCE GUARD: never regenerate over an already-filed period. The upsert below resets
+      // filing_status to 'draft' and DELETEs all filing vehicles — if the existing filing was
+      // submitted/accepted, that would silently overwrite IRS-submitted evidence. Only a draft (or an
+      // absent filing) may be (re)generated; anything else is refused (409).
+      const existingRes = await client.query<{ filing_status: string }>(
+        `
+          SELECT filing_status
+          FROM compliance.form_2290_filings
+          WHERE operating_company_id = $1 AND tax_period_start = $2 AND tax_period_end = $3
+          LIMIT 1
+        `,
+        [body.data.operating_company_id, body.data.tax_period_start, periodEnd]
+      );
+      const existingStatus = existingRes.rows[0]?.filing_status;
+      if (existingStatus && existingStatus !== "draft") {
+        return { blocked_status: existingStatus } as const;
+      }
+
       const tractors = await loadActiveTractors(client, body.data.operating_company_id);
       const computed = computeForm2290Vehicles(tractors, body.data.tax_period_start);
       const totalTaxDue = computed.reduce((sum, row) => sum + row.taxDue, 0);
@@ -209,6 +227,15 @@ export async function registerForm2290Routes(app: FastifyInstance) {
 
       return { filing_id: filingId, total_tax_due: totalTaxDue, vehicle_count: computed.length, pdf_base64: pdf.pdfBuffer.toString("base64") };
     });
+
+    if ("blocked_status" in result) {
+      return reply.code(409).send({
+        error: "filing_already_submitted",
+        filing_status: result.blocked_status,
+        detail:
+          "A Form 2290 for this tax period has already been submitted/accepted. Regenerating would overwrite IRS-filed evidence; it is refused. Void or amend the existing filing instead.",
+      });
+    }
 
     return reply.code(201).send(result);
   });
