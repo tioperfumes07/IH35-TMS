@@ -1,22 +1,22 @@
 {
- "date": "2026-06-27",
+ "date": "2026-07-02",
  "counts": {
   "PENDING": 4,
-  "PENDING (GATED)": 24,
-  "NEEDS-VERIFY": 19,
-  "DONE": 420
+  "PENDING (GATED)": 25,
+  "NEEDS-VERIFY": 20,
+  "DONE": 422
  },
  "universe": {
-  "total_blocks_after_dedup": 467,
+  "total_blocks_after_dedup": 471,
   "by_source_after_dedup": {
-   ".block-ready": 294,
+   ".block-ready": 298,
    "program": 61,
    "enterprise-29": 29,
    "accounting": 26,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 305
+   ".block-ready (*.json files)": 309
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count."
  },
@@ -79,10 +79,31 @@
   },
   {
    "id": "QBO-SYNC-DRIFT-401-FIX",
-   "status": "PENDING",
-   "pr": null,
+   "status": "DONE",
+   "pr": 1535,
    "registered_on": "2026-06-27",
    "title": "QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch)."
+  },
+  {
+   "id": "RECON-00",
+   "status": "PENDING",
+   "pr": null,
+   "registered_on": "2026-07-02",
+   "title": "RECON-00 Design lock: commit the TMS↔QBO Reconciliation Module architecture spec (double-books/no-sync, twice-daily pass"
+  },
+  {
+   "id": "RECON-01",
+   "status": "PENDING (GATED)",
+   "pr": null,
+   "registered_on": "2026-07-02",
+   "title": "RECON-01 Schema + scheduled jobs + exception engine: additive CREATE TABLE accounting.recon_runs + accounting.recon_exce"
+  },
+  {
+   "id": "RECON-02",
+   "status": "PENDING",
+   "pr": null,
+   "registered_on": "2026-07-02",
+   "title": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma"
   },
   {
    "id": "TBL-STANDARD-INSURANCE-POLICIES",
@@ -93,8 +114,8 @@
   },
   {
    "id": "UNIFIED-TXN-REGISTER",
-   "status": "PENDING",
-   "pr": null,
+   "status": "DONE",
+   "pr": 1536,
    "registered_on": "2026-06-27",
    "title": "Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register."
   }
@@ -112,14 +133,25 @@
    "pr": null
   },
   {
-   "id": "QBO-SYNC-DRIFT-401-FIX",
+   "id": "RECON-00",
    "source": ".block-ready",
    "fin": false,
    "tier": "",
    "status": "PENDING",
    "evidence": "no merged PR / no files on main",
-   "name": "QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch).",
-   "registered_on": "2026-06-27",
+   "name": "RECON-00 Design lock: commit the TMS↔QBO Reconciliation Module architecture spec (double-books/no-sync, twice-daily pass",
+   "registered_on": "2026-07-02",
+   "pr": null
+  },
+  {
+   "id": "RECON-02",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "0/2 signature file(s) on main",
+   "name": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma",
+   "registered_on": "2026-07-02",
    "pr": null
   },
   {
@@ -130,17 +162,6 @@
    "status": "PENDING",
    "evidence": "forward spec — 0 named artifacts on main",
    "name": "TABLE/UX / TASK Standard — Universal table sweep (bespoke → shared DataTable)",
-   "pr": null
-  },
-  {
-   "id": "UNIFIED-TXN-REGISTER",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "0/2 signature file(s) on main",
-   "name": "Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register.",
-   "registered_on": "2026-06-27",
    "pr": null
   },
   {
@@ -344,6 +365,17 @@
    "pr": null
   },
   {
+   "id": "RECON-01",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "0/4 signature file(s) on main",
+   "name": "RECON-01 Schema + scheduled jobs + exception engine: additive CREATE TABLE accounting.recon_runs + accounting.recon_exce",
+   "registered_on": "2026-07-02",
+   "pr": null
+  },
+  {
    "id": "STMT-2-opening-balances",
    "source": "program",
    "fin": true,
@@ -399,9 +431,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #530 title-match only, unverified",
+   "evidence": "PR #1717 title-match only, unverified",
    "name": "STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)",
-   "pr": 530
+   "pr": 1717
   },
   {
    "id": "AF-2-qbo-drift",
@@ -409,9 +441,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #532 title-match only, unverified",
+   "evidence": "PR #1717 title-match only, unverified",
    "name": "STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)",
-   "pr": 532
+   "pr": 1717
   },
   {
    "id": "AF-3-account-registers",
@@ -419,9 +451,9 @@
    "fin": true,
    "tier": "2",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #534 title-match only, unverified",
+   "evidence": "PR #1715 title-match only, unverified",
    "name": "STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)",
-   "pr": 534
+   "pr": 1715
   },
   {
    "id": "AF-4-ap-bills-migration",
@@ -449,9 +481,9 @@
    "fin": true,
    "tier": "2",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #540 title-match only, unverified",
+   "evidence": "PR #1656 title-match only, unverified",
    "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)",
-   "pr": 540
+   "pr": 1656
   },
   {
    "id": "AF-7-money-controls",
@@ -494,6 +526,17 @@
    "pr": 227
   },
   {
+   "id": "C7-ACCT-SUBNAV-CHROME",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "9/10 signature file(s) on main — partial, unverified",
+   "name": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "CHAIN-01-vendor-picker-fix",
    "source": "program",
    "fin": true,
@@ -529,9 +572,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #1267 title-match only, unverified",
+   "evidence": "PR #1745 title-match only, unverified",
    "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)",
-   "pr": 1267
+   "pr": 1745
   },
   {
    "id": "CHAIN-05-bank-feed-live-proof",
@@ -539,9 +582,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #1268 title-match only, unverified",
+   "evidence": "PR #1756 title-match only, unverified",
    "name": "ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE",
-   "pr": 1268
+   "pr": 1756
   },
   {
    "id": "CHAIN-06-invoice-ar-chain-proof",
@@ -549,9 +592,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #1269 title-match only, unverified",
+   "evidence": "PR #1743 title-match only, unverified",
    "name": "ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof",
-   "pr": 1269
+   "pr": 1743
   },
   {
    "id": "CHAIN-07-settlements-500-fix",
@@ -559,9 +602,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #1270 title-match only, unverified",
+   "evidence": "PR #1655 title-match only, unverified",
    "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out",
-   "pr": 1270
+   "pr": 1655
   },
   {
    "id": "STMT-1-balance-sheet-cash-flow",
@@ -1502,17 +1545,6 @@
    "status": "DONE",
    "evidence": "all 3 file(s) on main",
    "name": "QBO-style home dashboard at /app/homepage. Read-only aggregation. Sidebar HOME item wired to /app/homepage. No financial",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "C7-ACCT-SUBNAV-CHROME",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 10 file(s) on main",
-   "name": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r",
    "registered_on": null,
    "pr": null
   },
@@ -4645,6 +4677,28 @@
    "pr": null
   },
   {
+   "id": "QBO-SYNC-DRIFT-401-FIX",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1535 merged 2026-06-27",
+   "name": "QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch).",
+   "registered_on": "2026-06-27",
+   "pr": 1535
+  },
+  {
+   "id": "QSTD-00",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1780 merged 2026-07-02",
+   "name": "Make Jorge's quality standard the first standing law (Rule #0). Adds docs/specs/QUALITY-STANDARD-LOCKED.md (verbatim), w",
+   "registered_on": null,
+   "pr": 1780
+  },
+  {
    "id": "RPT-MODULE",
    "source": "program",
    "fin": false,
@@ -4892,6 +4946,17 @@
    "name": "Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories",
    "registered_on": null,
    "pr": 813
+  },
+  {
+   "id": "UNIFIED-TXN-REGISTER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1536 merged 2026-06-27",
+   "name": "Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register.",
+   "registered_on": "2026-06-27",
+   "pr": 1536
   },
   {
    "id": "UX-A-table-alignment-DONE",
