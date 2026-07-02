@@ -34,15 +34,19 @@ function formatRelative(iso: string | null) {
   return new Date(iso).toLocaleString();
 }
 
+// Decision #5 (parallel-books lock): TMS holds its own CLONE of QBO and reconciles daily — there is NO
+// two-way sync. Retire the "Synced X of Y" parallel counter; show the clone total + open exceptions +
+// last-reconciled instead. Empty-state marker "Not cloned yet" is pinned by the status-endpoint guard.
 function renderStatusLine(status: CustomersSyncStatus) {
   if (status.total_local === 0 && !status.last_pull_at) {
-    return "No sync yet — click Sync now to pull customers from QBO";
+    return "Not cloned yet — click Refresh from QBO to clone the current customers";
   }
+  const exceptions = status.drift_detected + status.sync_error;
   return (
     <>
-      Synced: {status.synced} of {status.total_local}
-      {status.drift_detected > 0 ? ` · Drift: ${status.drift_detected}` : ""}
-      {" · "}Last sync: {formatRelative(status.last_pull_at)}
+      Cloned from QBO: {status.total_local}
+      {exceptions > 0 ? ` · ${exceptions} exception${exceptions === 1 ? "" : "s"}` : ""}
+      {" · "}Last reconciled: {formatRelative(status.last_reconcile_at ?? status.last_pull_at)}
     </>
   );
 }
@@ -107,7 +111,7 @@ export function CustomersSyncPanel({ operatingCompanyId }: Props) {
         disabled={busy || !operatingCompanyId}
         onClick={() => pullMutation.mutate()}
       >
-        {pullMutation.isPending ? "Syncing…" : "Sync now"}
+        {pullMutation.isPending ? "Refreshing…" : "Refresh from QBO"}
       </button>
       <button
         type="button"
