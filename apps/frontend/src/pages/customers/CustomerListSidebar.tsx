@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { Customer } from "../../api/mdata";
+import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { CardLink } from "../../components/shared/CardLink";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -11,16 +12,10 @@ function fmtMoney(cents: number) {
 }
 
 function customerQualityRating(paymentScore: string | null | undefined, overallFlag: "preferred" | "standard" | "caution" | "avoid") {
-  const numeric = Number(paymentScore ?? "");
-  if (Number.isFinite(numeric)) {
-    if (numeric >= 90) return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
-    if (numeric >= 70) return { label: "Watch", className: "bg-amber-100 text-amber-800" };
-    return { label: "Late-pay", className: "bg-red-100 text-red-800" };
-  }
-  if (overallFlag === "preferred") return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
-  if (overallFlag === "caution") return { label: "Watch", className: "bg-amber-100 text-amber-800" };
-  if (overallFlag === "avoid") return { label: "Late-pay", className: "bg-red-100 text-red-800" };
-  return { label: "Watch", className: "bg-amber-100 text-amber-800" };
+  // CUST-2: rate only from real data; no score/flag → neutral "No history" (was defaulting to amber "Watch").
+  const kind = customerQualityKind(paymentScore, overallFlag);
+  const label = kind === "good" ? "Good" : kind === "watch" ? "Watch" : kind === "late" ? "Late-pay" : "No history";
+  return { label, className: customerQualityClass(kind) };
 }
 
 type Props = {
