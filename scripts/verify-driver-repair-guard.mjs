@@ -39,7 +39,9 @@ if (!routeSource.includes("reply.code(409).send")) {
 if (!serviceSource.includes("operating_company_id = $2")) {
   fail("driver availability query must include tenant filter (operating_company_id = $2)");
 }
-if (!serviceSource.includes("SET LOCAL app.operating_company_id")) {
+// Accept legacy `SET LOCAL app.operating_company_id` OR the SQLi-hardened parameterized
+// `set_config('app.operating_company_id', $1, true)` form.
+if (!/(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/.test(serviceSource)) {
   fail("driver availability service must set tenant context via app.operating_company_id");
 }
 

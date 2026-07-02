@@ -48,7 +48,7 @@ describeIntegration("FIN-20 as-of AR/AP aging (real Postgres)", () => {
     await db.query("SET ROLE ih35_app");
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
 
     await db.query(
       `INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,

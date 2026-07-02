@@ -47,7 +47,7 @@ describeIntegration("double-entry balance trigger (real Postgres)", () => {
     // Bypass RLS so we can read any account regardless of operating_company_id.
     await db.query("SET ROLE ih35_app");
     await db.query("SET app.bypass_rls = 'lucia'");
-    await db.query(`SET app.operating_company_id = '${companyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, false)", [companyId]);
 
     const acctRes = await db.query<{ id: string }>(
       `SELECT id FROM catalogs.accounts WHERE deactivated_at IS NULL LIMIT 1`
@@ -70,7 +70,7 @@ describeIntegration("double-entry balance trigger (real Postgres)", () => {
 
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
 
     await db.query(
       `
@@ -110,7 +110,7 @@ describeIntegration("double-entry balance trigger (real Postgres)", () => {
 
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
 
     await db.query(
       `

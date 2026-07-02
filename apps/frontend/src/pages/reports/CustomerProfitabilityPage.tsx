@@ -45,11 +45,11 @@ function currentQuarterRange() {
   return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
-const FLAG_UI: Record<CustomerProfitFlag, { emoji: string; className: string; label: string }> = {
-  high_margin: { emoji: "🟢", className: "border-emerald-200 bg-emerald-50 text-emerald-900", label: "high_margin" },
-  low_margin: { emoji: "🔴", className: "border-rose-200 bg-rose-50 text-rose-900", label: "low_margin" },
-  past_due: { emoji: "🟡", className: "border-amber-200 bg-amber-50 text-amber-900", label: "past_due" },
-  declining_revenue: { emoji: "⬇️", className: "border-slate-200 bg-slate-50 text-slate-800", label: "declining_revenue" },
+const FLAG_UI: Record<CustomerProfitFlag, { className: string; label: string }> = {
+  high_margin: { className: "border-slate-300 bg-slate-100 text-[#1f2a44]", label: "high_margin" },
+  low_margin: { className: "border-slate-300 bg-slate-100 text-slate-700", label: "low_margin" },
+  past_due: { className: "border-slate-300 bg-slate-100 text-slate-700", label: "past_due" },
+  declining_revenue: { className: "border-slate-200 bg-slate-50 text-slate-800", label: "declining_revenue" },
 };
 
 type SortKey = keyof CustomerProfitabilityRow;
@@ -279,7 +279,7 @@ export function CustomerProfitabilityPage() {
                           const meta = FLAG_UI[f];
                           return (
                             <span key={f} className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
-                              {meta.emoji} {meta.label}
+                              {meta.label}
                             </span>
                           );
                         })}

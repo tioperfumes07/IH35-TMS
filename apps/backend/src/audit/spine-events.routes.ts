@@ -117,7 +117,7 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
 
     return withCurrentUser(req.user!.uuid, async (client) => {
       await client.query(
-        `SET LOCAL app.operating_company_id = '${p.operating_company_id}'`
+        "SELECT set_config('app.operating_company_id', $1, true)", [p.operating_company_id]
       );
       const res = await client.query<SpineEventRow>(sql, values);
       return {

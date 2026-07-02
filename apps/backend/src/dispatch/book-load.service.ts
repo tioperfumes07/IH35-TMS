@@ -454,7 +454,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   }
 
   return withCurrentUser(input.requestingUserUuid, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
 
     const wf044Warnings: Array<Record<string, unknown>> = [];
     const insuranceCoverageWarnings: Array<Record<string, unknown>> = [];

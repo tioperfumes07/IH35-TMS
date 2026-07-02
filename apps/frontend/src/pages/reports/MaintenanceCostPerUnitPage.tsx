@@ -29,11 +29,11 @@ function currentQuarterRange() {
   return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
-const FLAG_META: Record<MaintenanceCostFlag, { emoji: string; label: string }> = {
-  high_cost: { emoji: "🚨", label: "high_cost" },
-  low_cost: { emoji: "🟢", label: "low_cost" },
-  inspection_due: { emoji: "🔧", label: "inspection_due" },
-  reliable: { emoji: "⭐", label: "reliable" },
+const FLAG_META: Record<MaintenanceCostFlag, { label: string }> = {
+  high_cost: { label: "high_cost" },
+  low_cost: { label: "low_cost" },
+  inspection_due: { label: "inspection_due" },
+  reliable: { label: "reliable" },
 };
 
 const PIE_COLORS = ["#0d9488", "#155e75", "#f59e0b", "#dc2626", "#64748b", "#1e293b"];
@@ -211,8 +211,8 @@ export function MaintenanceCostPerUnitPage() {
                     <td className="px-2 py-2">
                       <div className="flex flex-wrap gap-1">
                         {(r.flags ?? []).map((f) => (
-                          <span key={f} className="rounded border border-gray-200 px-1 py-0.5 text-[10px] font-semibold" title={FLAG_META[f].label}>
-                            {FLAG_META[f].emoji} {FLAG_META[f].label}
+                          <span key={f} className="rounded border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
+                            {FLAG_META[f].label}
                           </span>
                         ))}
                       </div>

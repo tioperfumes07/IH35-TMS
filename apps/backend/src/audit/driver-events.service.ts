@@ -109,7 +109,7 @@ export function buildDriverAuditEventsQuery(input: ListDriverAuditEventsInput): 
 
 export async function listDriverAuditEvents(userId: string, input: ListDriverAuditEventsInput) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const query = buildDriverAuditEventsQuery(input);
     const res = await (client as Queryable).query<DriverAuditEventRow>(query.sql, query.values);
     const events = res.rows.map((row) => ({

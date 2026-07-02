@@ -61,6 +61,9 @@ export async function registerDispatchAuthGateRoutes(app: FastifyInstance) {
     const body = (req.body ?? {}) as Record<string, unknown>;
     const oci = String(body.operating_company_id ?? req.headers["x-operating-company-id"] ?? "");
     if (!oci) return;
+    // Edge guard: oci flows into the tenant-scoping GUC below. Parameterization closes injection;
+    // a non-UUID can never match a real tenant, so treat it as "no gate context" (skip), not a 500.
+    if (!z.string().uuid().safeParse(oci).success) return;
     const gateResult = await withCurrentUser(req.user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oci]);
       return checkGates(extractBodyContext(body, match.action, oci), client);

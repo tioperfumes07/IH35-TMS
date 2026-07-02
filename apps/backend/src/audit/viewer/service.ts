@@ -108,7 +108,7 @@ export function buildQueryAuditEventsSQL(input: QueryAuditEventsInput): { sql: s
 export async function queryAuditEvents(userId: string, input: QueryAuditEventsInput) {
   return withCurrentUser(userId, async (client) => {
     await (client as Queryable).query(
-      `SET LOCAL app.operating_company_id = '${input.operating_company_id}'`,
+      "SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id],
     );
     const q = buildQueryAuditEventsSQL(input);
     const res = await (client as Queryable).query<AuditViewerRow>(q.sql, q.values);
@@ -133,7 +133,7 @@ export async function queryAuditEvents(userId: string, input: QueryAuditEventsIn
 export async function getEventDetail(userId: string, operatingCompanyId: string, eventUuid: string) {
   return withCurrentUser(userId, async (client) => {
     await (client as Queryable).query(
-      `SET LOCAL app.operating_company_id = '${operatingCompanyId}'`,
+      "SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId],
     );
     const res = await (client as Queryable).query<AuditViewerRow>(
       `

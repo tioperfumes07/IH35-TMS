@@ -52,7 +52,7 @@ export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
 
     const oc = parsed.data.operating_company_id;
     const row = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       return getSamsaraConfigForCompany(client, oc);
     });
     return toPublicConfig(row);
@@ -71,7 +71,7 @@ export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const out = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       const before = await getSamsaraConfigForCompany(client, oc);
       await upsertSamsaraConfig(client, oc, {
         api_token: body.api_token,
@@ -129,7 +129,7 @@ export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
     const oc = parsed.data.operating_company_id;
 
     await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       const before = await getSamsaraConfigForCompany(client, oc);
       if (!before) return;
       await disableSamsaraConfig(client, oc);

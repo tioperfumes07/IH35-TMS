@@ -286,7 +286,7 @@ export function VendorsPage() {
                   <div className="mb-2 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900">{selectedVendor.name}</h2>
-                      <p className="text-sm text-gray-500">{selectedVendor.vendor_code || "Vendor"} · {selectedVendor.vendor_type ?? "Type not set"}</p>
+                      <p className="text-sm text-gray-500">{selectedVendor.vendor_code || "Vendor"} — {selectedVendor.vendor_type ?? "Type not set"}</p>
                       <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${vendorQualityLabel(selectedVendor.notes).className}`}>
                         Vendor quality: {vendorQualityLabel(selectedVendor.notes).label}
                       </p>
@@ -337,7 +337,7 @@ export function VendorsPage() {
                       <option value="200">200</option>
                       <option value="300">300</option>
                     </SelectCombobox>
-                    <button type="button" className="ml-auto rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50" onClick={() => setShowColumnChooser((open) => !open)}>⚙</button>
+                    <button type="button" aria-label="Columns" className="ml-auto rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50" onClick={() => setShowColumnChooser((open) => !open)}>Columns</button>
                     {showFilterBox ? (
                       <div className="absolute left-0 top-9 z-10 w-[320px] rounded border border-gray-200 bg-white p-2 shadow">
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>

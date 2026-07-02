@@ -230,7 +230,7 @@ export async function createInsurancePolicyWithBills(
   return withCurrentUser(input.userId, async (rawClient) => {
     const client = rawClient as unknown as PoolClient;
     await client.query(
-      `SET LOCAL app.operating_company_id = '${input.operatingCompanyId}'`
+      "SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]
     );
 
     const coverageTypeRes = await client.query<{ id: string }>(

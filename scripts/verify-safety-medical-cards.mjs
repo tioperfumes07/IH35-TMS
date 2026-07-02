@@ -30,7 +30,9 @@ requirePattern(indexSource, /await registerSafetyMedicalCardsRoutes\(app\)/, "in
 requirePattern(routesSource, /app\.get\("\/api\/v1\/safety\/medical-cards\/drivers\/:driver_id"/, "missing list route");
 requirePattern(routesSource, /app\.post\("\/api\/v1\/safety\/medical-cards"/, "missing create route");
 requirePattern(routesSource, /app\.patch\("\/api\/v1\/safety\/medical-cards\/:id"/, "missing patch route");
-requirePattern(routesSource, /SET LOCAL app\.operating_company_id/, "routes must set tenant scope");
+// Tenant scope may be set via the legacy `SET LOCAL app.operating_company_id = '...'` form OR the
+// SQLi-hardened parameterized `set_config('app.operating_company_id', $1, true)` form — accept both.
+requirePattern(routesSource, /(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/, "routes must set tenant scope");
 requirePattern(routesSource, /expiry_pill/, "routes must compute expiry pill");
 
 requirePattern(migrationSource, /idx_medical_cards_tenant_driver_active/, "migration must add active driver index");

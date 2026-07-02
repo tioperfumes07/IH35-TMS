@@ -23,7 +23,9 @@ pass("spine-events.routes.ts exists");
 if (!routeSrc.includes("events.event_log")) fail("spine-events.routes.ts does not query events.event_log");
 else pass("spine-events.routes.ts queries events.event_log");
 
-if (!routeSrc.includes("SET LOCAL app.operating_company_id")) fail("spine-events.routes.ts missing RLS SET LOCAL");
+// Accept legacy `SET LOCAL app.operating_company_id` OR the SQLi-hardened parameterized
+// `set_config('app.operating_company_id', $1, true)` form.
+if (!/(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/.test(routeSrc)) fail("spine-events.routes.ts missing RLS tenant scope");
 else pass("spine-events.routes.ts sets RLS operating_company_id");
 
 if (!routeSrc.includes("LIMIT")) fail("spine-events.routes.ts missing LIMIT");

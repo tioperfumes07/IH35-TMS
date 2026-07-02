@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCompanyViolations } from "../../api/safety";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CompanyViolationCreateModal } from "./components/CompanyViolationCreateModal";
 import { CompanyViolationDetailDrawer } from "./components/CompanyViolationDetailDrawer";
 
 type Props = {
   operatingCompanyId: string;
 };
+
+type CompanyViolationRow = Record<string, unknown>;
 
 export function CompanyViolationsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -18,6 +21,25 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
     queryFn: () => getCompanyViolations(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+
+  // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" detail action
+  // are preserved verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<CompanyViolationRow>> = [
+    { key: "reported_date", label: "Reported", sortable: true, render: (row) => String(row.reported_date ?? "").slice(0, 10) },
+    { key: "violation_type", label: "Type", sortable: true, render: (row) => String(row.violation_type ?? "—") },
+    { key: "violation_severity", label: "Severity", sortable: true, render: (row) => String(row.violation_severity ?? "—") },
+    { key: "description", label: "Description", render: (row) => String(row.description ?? "—") },
+    { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
+    {
+      key: "action",
+      label: "Action",
+      render: (row) => (
+        <button type="button" className="text-slate-700 underline" onClick={() => setSelected(row)}>
+          Open
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-3" data-testid="company-violations-page">
@@ -31,43 +53,16 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
           + Create Company Violation
         </button>
       </div>
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-[980px] w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-1">Reported</th>
-              <th className="px-2 py-1">Type</th>
-              <th className="px-2 py-1">Severity</th>
-              <th className="px-2 py-1">Description</th>
-              <th className="px-2 py-1">Status</th>
-              <th className="px-2 py-1">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(query.data?.company_violations ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.reported_date ?? "").slice(0, 10)}</td>
-                <td className="px-2 py-1">{String(row.violation_type ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.violation_severity ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.description ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.status ?? "open")}</td>
-                <td className="px-2 py-1">
-                  <button type="button" className="text-slate-700 underline" onClick={() => setSelected(row)}>
-                    Open
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {(query.data?.company_violations ?? []).length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-2 py-3 text-center text-gray-500">
-                  No company violations found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<CompanyViolationRow>
+        columns={columns}
+        rows={query.data?.company_violations ?? []}
+        rowKey={(row) => String(row.id)}
+        loading={query.isLoading}
+        emptyText="No company violations found."
+        storageKey="safety-company-violations"
+        exportFilename="company-violations"
+        tableTestId="company-violations-table"
+      />
 
       <CompanyViolationCreateModal
         open={createOpen}

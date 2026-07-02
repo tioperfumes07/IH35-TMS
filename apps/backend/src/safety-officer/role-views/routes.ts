@@ -43,7 +43,7 @@ export async function registerSafetyOfficerRoleHomeRoutes(app: FastifyInstance) 
     const { operating_company_id } = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
 
       const data = await getSafetyHomeData(client, operating_company_id);

@@ -60,7 +60,7 @@ export function ObservabilityPage() {
               data.sentry_configured ? (
                 <span className="text-green-700 font-medium">Configured ✓</span>
               ) : (
-                <span className="text-yellow-700 font-medium">
+                <span className="text-slate-700 font-medium">
                   Not configured — set SENTRY_DSN env var
                 </span>
               )

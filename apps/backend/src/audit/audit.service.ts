@@ -104,7 +104,7 @@ export function buildAuditRowChangesQuery(input: ListAuditRowChangesInput): Quer
 
 export async function listAuditRowChanges(userId: string, input: ListAuditRowChangesInput) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const query = buildAuditRowChangesQuery(input);
     const res = await (client as Queryable).query<AuditRowChangeRecord>(query.sql, query.values);
     const rowChanges = res.rows.map((row) => ({

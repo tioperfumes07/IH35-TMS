@@ -10,6 +10,7 @@ import {
 import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
@@ -129,6 +130,32 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     },
   });
 
+  // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Assign drivers"
+  // action are preserved verbatim (§7 additive-only).
+  const programColumns: Array<ParityColumn<ProgramRow>> = [
+    { key: "name", label: "Program", sortable: true },
+    { key: "category", label: "Category", sortable: true, render: (p) => p.category.replace("_", " ") },
+    { key: "frequency", label: "Recertify", sortable: true, render: (p) => p.frequency.replace("_", " ") },
+    { key: "passing_grade", label: "Passing grade", render: (p) => p.passing_grade ?? "—" },
+    {
+      key: "action",
+      label: "Action",
+      render: (p) => (
+        <button
+          type="button"
+          className="text-slate-700 underline"
+          data-testid={`training-program-assign-${p.id}`}
+          onClick={() => {
+            setSelectedProgram(p);
+            setAssignOpen(true);
+          }}
+        >
+          Assign drivers
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-3" data-testid="training-programs-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
@@ -141,49 +168,17 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-full text-xs" data-testid="training-programs-table">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Program</th>
-              <th className="px-2 py-1 text-left">Category</th>
-              <th className="px-2 py-1 text-left">Recertify</th>
-              <th className="px-2 py-1 text-left">Passing grade</th>
-              <th className="px-2 py-1 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {programs.map((program) => (
-              <tr key={program.id} className="border-t border-gray-100" data-testid={`training-program-row-${program.id}`}>
-                <td className="px-2 py-1">{program.name}</td>
-                <td className="px-2 py-1">{program.category.replace("_", " ")}</td>
-                <td className="px-2 py-1">{program.frequency.replace("_", " ")}</td>
-                <td className="px-2 py-1">{program.passing_grade ?? "—"}</td>
-                <td className="px-2 py-1">
-                  <button
-                    type="button"
-                    className="text-slate-700 underline"
-                    data-testid={`training-program-assign-${program.id}`}
-                    onClick={() => {
-                      setSelectedProgram(program);
-                      setAssignOpen(true);
-                    }}
-                  >
-                    Assign drivers
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {programs.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-2 py-3 text-center text-slate-500">
-                  No training programs found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<ProgramRow>
+        columns={programColumns}
+        rows={programs}
+        rowKey={(p) => p.id}
+        loading={completionsQuery.isLoading}
+        emptyText="No training programs found."
+        storageKey="safety-training-programs"
+        exportFilename="training-programs"
+        tableTestId="training-programs-table"
+        rowTestId={(p) => `training-program-row-${p.id}`}
+      />
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Program">
         <form

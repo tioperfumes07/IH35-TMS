@@ -7,7 +7,8 @@ const routeSrc = fs.readFileSync(routeFile, "utf8");
 const migrationSrc = fs.readFileSync(migrationFile, "utf8");
 
 const routeRequired = [
-  "SET LOCAL app.operating_company_id",
+  // Tenant scope: legacy `SET LOCAL app.operating_company_id` OR SQLi-hardened parameterized set_config.
+  /(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/,
   "operating_company_id: z.string().uuid()",
   "WHERE operating_company_id = $1::uuid",
 ];
@@ -17,9 +18,10 @@ const migrationRequired = [
   "CREATE POLICY dashcam_clips_company_scope",
 ];
 
+const has = (text, s) => (s instanceof RegExp ? s.test(text) : text.includes(s));
 const missing = [
-  ...routeRequired.filter((s) => !routeSrc.includes(s)).map((s) => `route: ${s}`),
-  ...migrationRequired.filter((s) => !migrationSrc.includes(s)).map((s) => `migration: ${s}`),
+  ...routeRequired.filter((s) => !has(routeSrc, s)).map((s) => `route: ${s}`),
+  ...migrationRequired.filter((s) => !has(migrationSrc, s)).map((s) => `migration: ${s}`),
 ];
 
 if (missing.length > 0) {

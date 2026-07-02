@@ -30,7 +30,7 @@ export async function registerSamsaraHealthRoutes(app: FastifyInstance) {
 
     const oc = parsed.data.operating_company_id;
     const row = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       return getSamsaraConfigForCompany(client, oc);
     });
     const pub = toPublicConfig(row);

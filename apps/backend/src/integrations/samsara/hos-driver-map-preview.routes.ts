@@ -29,7 +29,7 @@ export async function registerHosDriverMapPreviewRoutes(app: FastifyInstance) {
     const oc = parsed.data.operating_company_id;
 
     const preview = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       return previewDriverSamsaraMap(client, oc);
     });
     return reply.send(preview);
