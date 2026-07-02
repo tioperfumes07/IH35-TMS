@@ -81,3 +81,22 @@ See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).
 7.3 **Inline "+ Add new" is mandatory in every reference dropdown software-wide** (Category, Class, accounts, Payee, Vendor, Customer, Item, Terms, Payment method, Location). Opens an inline mini-create without closing the parent; returns with the new value selected. Account dropdowns KEEP the existing TMS lock-account control alongside.
 7.4 **Sizing:** create/edit panels = bounded right drawers ~30% viewport (~576–582px); transaction editors (Expense/Bill/Check/Invoice/etc.) = full-page (the exception); match/reconcile summaries = sticky bottom bar.
 7.5 **Every data table uses the shared QBO-parity table grammar** with density toggle (Regular/Compact/Ultra-compact) + configurable per-page. This is the fix for "TMS too wide/too large."
+
+## 8. ACCOUNTING ARCHITECTURE — PARALLEL DOUBLE-BOOKS, CLONE-ONCE + RECONCILE-ONLY (locked 2026-07-02)
+**This SUPERSEDES the old "QBO auto-sync + replay / lockstep" model in `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` §3.12.** Agents keep re-reading §3.12 and rebuilding a two-way sync — it is retired. The current architecture:
+
+8.1 **Two independent systems, not a sync.** TMS and QuickBooks Online run in **parallel** (double books). **QBO is the system of record through 12/31/2025; TMS mirrors.** There is **NO bidirectional sync and NO write-back from TMS to QBO.** The old §3.12 "local-write-first then push to QBO, both stay in lockstep, replay on reconnect" is retired.
+
+8.2 **Clone-once, then reconcile-only.** A one-time full backfill imports QBO data — **master data (customers/vendors) + AR (invoices/payments) + AP (bills/bill-payments) + GL** — into the TMS database (store-once). After backfill the QBO connection exists **only to reconcile/compare**: a twice-daily module flags rows added / voided / changed in either system. Specs: `docs/specs/QBO-CLONE-PROGRAM.md` (master data + AR/AP clone, MD-1..MD-RECON), `docs/specs/TMS-QBO-RECONCILIATION.md`, and the QBO-IMPORT GL program (IMPORT-0..4v2).
+
+8.3 **No write-back — enforced, not aspirational.** (a) JE→QBO push **kill-switch** = `QBO_JE_PUSH_ENABLED` (default OFF, per-entity-only in `POSTING_FLAG_KEYS`) + a structural refusal of any `source_system != 'tms'` JE, consulted by BOTH push paths (immediate + the every-minute queue drain). See IMPORT-P0 (`apps/backend/src/accounting/qbo-je-push-gate.ts`, guard `verify-qbo-push-gates.mjs`). (b) All **money-posting flags default OFF**, per-entity-only. (c) The pre-existing `T11.20.6.2` write-back cuts (customers/vendors/accounts/invoices/bills `tms.*.push_requested` → `push.service.ts`) must stay OFF; when the clone engines import invoices/bills, those cloned rows carry a clone `source` and are **excluded from every outbound push** (same guard pattern as IMPORT-P0).
+
+8.4 **Both bases.** The canonical imported ledger is **accrual** detail (store-once). **Cash-basis is mirrored from QBO's own cash reports** — QBO computes it; TMS never re-derives cash during the QBO-SoR window. A native TMS cash-conversion engine is a **post-12/31/2025-cutover** block, not now.
+
+8.5 **Conversion + entities.** Convert **01/01/2024** for TRANSP + TRK; opening position = **Balance Sheet as of 12/31/2023 → Opening Balance Equity** (OBE is a *temporary clearing* account, expected ≈ 0; a permanent OBE balance is a defect — plan OBE→Retained-Earnings reclass). **USMCA has no QuickBooks** → it is **TMS-authoritative from day one** (2026), never part of the clone/reconcile. Two QBO realms: TRANSP `123145885549599`, TRK `1432746210`; assert realm↔opco on the unrevoked connection only.
+
+8.6 **Factoring = secured borrowing (recourse), not a sale.** (Faro today → RTS planned.) See `[[cpa-locked-decisions-2026-07-01]]` + `[[driver-escrow-is-liability]]`.
+
+8.7 **Cutover.** After the 12/31/2025 book-lock, TMS becomes authoritative; period-lock + a final court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation window.
+
+**Canonical cross-refs:** `docs/specs/TMS-QBO-RECONCILIATION.md`, `docs/specs/QBO-CLONE-PROGRAM.md`, the QBO-IMPORT program blocks, and auto-memory `qbo-import-design-corrections` + `cpa-locked-decisions-2026-07-01`.
