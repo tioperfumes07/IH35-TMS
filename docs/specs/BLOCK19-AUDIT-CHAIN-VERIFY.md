@@ -29,41 +29,62 @@ earlier `occurred_at`, or two events sharing an `occurred_at`, break the assumpt
 `occurred_at`" can disagree with the actual link order the trigger used — producing **false tamper
 positives**. For court/CPA-grade audit that is worse than no verifier.
 
-**Robust verification requires a monotonic, insert-order sequence.** Recommended:
-- **ADD COLUMN `chain_seq bigint`** to `events.event_log`, assigned by the append-only trigger from a
-  per-company sequence at INSERT (authoritative insert order going forward). *ADD COLUMN is DDL, not a row
-  mutation — the append-only immutability (no UPDATE/DELETE of rows) is preserved.*
-- **Backfill** historical rows' `chain_seq` in `(operating_company_id, occurred_at, event_id)` order — an
-  **approximation** of the lost historical insert order, explicitly documented as best-effort for pre-retrofit
-  rows. From the retrofit forward, `chain_seq` is exact.
-- The trigger's `prev_hash` lookup also moves to `ORDER BY chain_seq DESC` (deterministic) instead of
-  `occurred_at`.
+**Robust verification requires a monotonic, insert-order sequence — retrofitted GENESIS-ANCHORED, with NO
+backfill of historical rows** (owner-ratified 2026-07-02):
+- **ADD COLUMN `chain_seq bigint` NULL** on `events.event_log`. *ADD COLUMN is DDL, not a row mutation —
+  append-only immutability (no UPDATE/DELETE of existing rows) is preserved.*
+- **`chain_seq` is populated EXCLUSIVELY by the INSERT path** (the append-only trigger, from a per-company
+  sequence). **Existing rows are NEVER UPDATEd to set `chain_seq`** — writing a sequence onto historical
+  audit rows is an UPDATE against a WORM (write-once-read-many) audit log, the exact thing an auditor flags,
+  even when payload columns are untouched. **No backfill. Ever.**
+- **Genesis anchor:** at deployment, each company's sequence starts from a genesis value; the first
+  post-deploy event is `chain_seq = genesis`. Pre-retrofit rows keep `chain_seq = NULL`.
+- **Two verification regimes, split at the anchor:**
+  - **Pre-retrofit rows (`chain_seq IS NULL`):** verified by the **existing `prev_hash` linkage only** — walk
+    by the stored `prev_hash → hash` chain (each row's `prev_hash` must equal some earlier row's `hash`), and
+    recompute each row's own `hash`. Ordering isn't asserted for these (it was never deterministically
+    captured); tampering with a row's content still fails the per-row hash recompute.
+  - **Post-retrofit rows (`chain_seq IS NOT NULL`):** verified by **`chain_seq` order** (deterministic) — the
+    full ordering + linkage check.
+- The trigger's `prev_hash` lookup moves to `ORDER BY chain_seq DESC NULLS LAST` (deterministic for the
+  post-anchor chain).
+- **Hard invariant + CI guard:** there must be **NO UPDATE or DELETE path against `events.event_log`
+  anywhere** (the migration itself must not backfill; the trigger only fires on INSERT). A static guard
+  asserts this.
 
-**OWNER DECISION:** (a) approve ADD COLUMN + trigger change on the immutable `event_log`; (b) accept the
-historical backfill approximation (alternative: mark pre-retrofit rows "unverifiable-order" and only verify
-forward). Nothing is built until ratified.
+**OWNER DECISION (RATIFIED):** ADD COLUMN + genesis-anchor + INSERT-only population, **no historical
+backfill**. ALTER TABLE trips PROTECTED on the hold-merge-gate → Tier-1 build-and-hold; GUARD verifies these
+§3 claims against the PR before any JORGE-APPROVED label.
 
 ## 4. Verification — recompute IN SQL (never in JS)
 The hash mixes `occurred_at::text` and `payload::text` — Postgres' `timestamptz`/`jsonb` text formatting is
 non-trivial to reproduce byte-for-byte in JS. **The verifier must recompute via the existing
-`events.calculate_event_hash` SQL function**, guaranteeing parity. Per company:
+`events.calculate_event_hash` SQL function**, guaranteeing parity. Per company. **Per-row hash recompute
+applies to ALL rows** (catches content tampering regardless of regime); the **ordering/linkage check applies
+only to the post-anchor deterministic chain** (`chain_seq IS NOT NULL`):
 ```sql
 WITH chain AS (
   SELECT event_id, chain_seq, prev_hash, hash,
     events.calculate_event_hash(prev_hash, event_id, occurred_at, actor_id, event_type, subject_id, payload)
       AS recomputed,
-    lag(hash) OVER (PARTITION BY operating_company_id ORDER BY chain_seq) AS expected_prev
+    -- expected_prev only for the post-anchor chain; NULL chain_seq rows are excluded from ordering.
+    lag(hash) OVER (PARTITION BY operating_company_id ORDER BY chain_seq)
+      FILTER (WHERE chain_seq IS NOT NULL) AS expected_prev
   FROM events.event_log WHERE operating_company_id = $1
 )
 SELECT count(*) AS checked,
-       count(*) FILTER (WHERE recomputed <> hash) AS hash_breaks,
-       count(*) FILTER (WHERE prev_hash IS DISTINCT FROM expected_prev) AS link_breaks,
-       min(chain_seq) FILTER (WHERE recomputed <> hash OR prev_hash IS DISTINCT FROM expected_prev)
+       count(*) FILTER (WHERE recomputed <> hash) AS hash_breaks,          -- all rows
+       count(*) FILTER (WHERE chain_seq IS NOT NULL
+                          AND prev_hash IS DISTINCT FROM expected_prev) AS link_breaks,  -- post-anchor only
+       min(chain_seq) FILTER (WHERE recomputed <> hash
+                          OR (chain_seq IS NOT NULL AND prev_hash IS DISTINCT FROM expected_prev))
          AS first_break_seq
 FROM chain;
 ```
-A row where `recomputed <> hash` = the row itself was altered; `prev_hash <> expected_prev` = a row was
-inserted/removed/reordered in the chain. Either → tamper.
+`recomputed <> hash` (any row) = that row's content was altered. `prev_hash <> expected_prev` (post-anchor) =
+a row was inserted/removed/reordered in the deterministic chain. Either → tamper. (Pre-anchor rows also carry
+a `prev_hash` linkage that can be walked pointer-by-pointer for a weaker, order-independent linkage check;
+the per-row hash recompute is the strong guarantee for them.)
 
 ## 5. Record table (Tier-1 migration, build-and-hold)
 `ops.audit_chain_verifications` (ops schema exists; grant USAGE + table grants per the 0192 pattern):
@@ -78,7 +99,9 @@ inserted/removed/reordered in the chain. Either → tamper.
   `first_break_seq`. Read-only against `event_log` (never writes/deletes it).
 - **CI guard** `verify-audit-chain-verify.mjs`: assert (a) `ops.audit_chain_verifications` migration present
   with FORCED RLS + no-DELETE grant, (b) the verifier uses `events.calculate_event_hash` (no JS sha256 of
-  event fields), (c) the cron is registered.
+  event fields), (c) the cron is registered, and (d) **the WORM invariant — NO `UPDATE events.event_log` /
+  `DELETE FROM events.event_log` anywhere in `db/migrations/**` or `apps/backend/src/**` (the `chain_seq`
+  retrofit migration must ADD COLUMN only, never backfill; population is INSERT-trigger-only).**
 
 ## 7. Build order (all Tier-1 / build-and-hold — Jorge merges)
 1. **B19-V1** (after owner ratifies §3): migration = `chain_seq` ADD COLUMN + trigger reorder + backfill.
