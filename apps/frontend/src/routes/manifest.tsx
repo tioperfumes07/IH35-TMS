@@ -3569,9 +3569,9 @@ export const ROUTES = React.Children.toArray(
         <Route path="/finance/calculator" element={<ProtectedRoute><CalculatorPage /></ProtectedRoute>} />
         <Route path="/finance/amortization" element={<ProtectedRoute><AmortizationPage /></ProtectedRoute>} />
         <Route path="/finance/ar-ap-aging" element={<ProtectedRoute><ArApAgingPage /></ProtectedRoute>} />
-        {/* FIN-19 — Financial statements (P&L / BS / TB). Read-only; gated behind FINANCE_STATEMENTS_UI_ENABLED (default OFF). */}
+        {/* FIN-19 — Financial statements (P&L / BS / TB). flag FINANCE_STATEMENTS_UI_ENABLED — default_enabled=true in lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no money posting. */}
         <Route path="/finance/statements" element={<ProtectedRoute><FinancialStatementsPage /></ProtectedRoute>} />
-        {/* AF-6 — Finance Hub landing dashboard. Read-only; gated behind FINANCE_HUB_UI_ENABLED (default OFF). */}
+        {/* AF-6 — Finance Hub landing dashboard. flag FINANCE_HUB_UI_ENABLED — default_enabled=true in lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no money posting. */}
         <Route path="/finance/hub" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />
         {/* Inventory module (SIDEBAR-V2-REORG-25) */}
         <Route path="/inventory" element={<ProtectedRoute><InventoryPartsStockPage /></ProtectedRoute>} />

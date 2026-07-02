@@ -259,8 +259,10 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "finance":
       return [
         { label: "Overview", to: "/finance" },
+        { label: "Hub", to: "/finance/hub" },
         { label: "Projections", to: "/finance/projections" },
         { label: "Scenarios", to: "/finance/scenarios" },
+        { label: "Statements", to: "/finance/statements" },
         // Finance Hub is now surfaced (un-hidden); this submenu renders. Loan Wizard / Calculator /
         // Amortization remain flag-gated TABS inside FinanceModuleTabs, so their flyout links are
         // route-reachability entries here while their visibility is controlled by the flags.
