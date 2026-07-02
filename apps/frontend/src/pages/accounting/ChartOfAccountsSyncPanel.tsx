@@ -82,9 +82,12 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
         <span className="text-muted-foreground">Loading sync status…</span>
       ) : status ? (
         <span>
-          Synced: {status.synced} of {status.total_local}
-          {status.drift_detected > 0 ? ` · Drift: ${status.drift_detected}` : ""}
-          {" · "}Last sync: {formatRelative(status.last_pull_at)}
+          {/* Decision #5: clone-and-reconcile, not two-way sync. Show clone total + open exceptions. */}
+          Cloned from QBO: {status.total_local}
+          {status.drift_detected + status.sync_error > 0
+            ? ` · ${status.drift_detected + status.sync_error} exception${status.drift_detected + status.sync_error === 1 ? "" : "s"}`
+            : ""}
+          {" · "}Last reconciled: {formatRelative(status.last_reconcile_at ?? status.last_pull_at)}
         </span>
       ) : (
         <span className="text-destructive">Unable to load sync status</span>
@@ -95,7 +98,7 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
         disabled={busy}
         onClick={() => pullMutation.mutate()}
       >
-        {pullMutation.isPending ? "Syncing…" : "Sync now"}
+        {pullMutation.isPending ? "Refreshing…" : "Refresh from QBO"}
       </button>
       <button
         type="button"
