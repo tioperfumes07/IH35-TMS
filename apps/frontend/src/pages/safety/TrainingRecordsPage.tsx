@@ -5,7 +5,10 @@ import { createSafetyTrainingRecord, getTrainingCompletions } from "../../api/sa
 import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
+
+type TrainingRecordRow = Record<string, unknown>;
 
 type Props = {
   operatingCompanyId: string;
@@ -70,6 +73,32 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
 
   const rows = recordsQuery.data?.training_completions ?? [];
 
+  // Migrated to the shared QBO-parity grid — columns, order, and the per-row expiry status tone
+  // are preserved verbatim (§7 additive-only).
+  const recordColumns: Array<ParityColumn<TrainingRecordRow>> = [
+    { key: "completed_at", label: "Completed", sortable: true, render: (row) => String(row.completed_at ?? "").slice(0, 10) },
+    {
+      key: "driver_id",
+      label: "Driver",
+      render: (row) => driverNameById.get(String(row.driver_id ?? "")) ?? String(row.driver_id ?? "—"),
+    },
+    {
+      key: "training_name",
+      label: "Training",
+      sortable: true,
+      render: (row) => String(row.training_type ?? row.training_name ?? row.name ?? "Training"),
+    },
+    { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => String(row.expiry_date ?? row.due_at ?? "—") },
+    {
+      key: "status",
+      label: "Status",
+      render: (row) => {
+        const expiry = expiryLabel((row.expiry_date as string | undefined) ?? (row.due_at as string | undefined));
+        return <span className={expiry.tone}>{expiry.text}</span>;
+      },
+    },
+  ];
+
   return (
     <div className="space-y-3" data-testid="training-records-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
@@ -82,40 +111,17 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-full text-xs" data-testid="training-records-table">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Completed</th>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-left">Training</th>
-              <th className="px-2 py-1 text-left">Expiry</th>
-              <th className="px-2 py-1 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const expiry = expiryLabel((row.expiry_date as string | undefined) ?? (row.due_at as string | undefined));
-              return (
-                <tr key={String(row.id)} className="border-t border-gray-100" data-testid={`training-record-row-${String(row.id)}`}>
-                  <td className="px-2 py-1">{String(row.completed_at ?? "").slice(0, 10)}</td>
-                  <td className="px-2 py-1">{driverNameById.get(String(row.driver_id ?? "")) ?? String(row.driver_id ?? "—")}</td>
-                  <td className="px-2 py-1">{String(row.training_type ?? row.training_name ?? row.name ?? "Training")}</td>
-                  <td className="px-2 py-1">{String(row.expiry_date ?? row.due_at ?? "—")}</td>
-                  <td className={`px-2 py-1 ${expiry.tone}`}>{expiry.text}</td>
-                </tr>
-              );
-            })}
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-2 py-3 text-center text-slate-500">
-                  No training records found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<TrainingRecordRow>
+        columns={recordColumns}
+        rows={rows}
+        rowKey={(row) => String(row.id)}
+        loading={recordsQuery.isLoading}
+        emptyText="No training records found."
+        storageKey="safety-training-records"
+        exportFilename="training-records"
+        tableTestId="training-records-table"
+        rowTestId={(row) => `training-record-row-${String(row.id)}`}
+      />
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Record">
         <form
