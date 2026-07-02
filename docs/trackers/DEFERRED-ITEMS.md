@@ -9,31 +9,30 @@ Each item: **what** · **why deferred** · **what unblocks it** · **source**.
 
 ---
 
-## A. OPEN OWNER DECISIONS (need Jorge's call — do not decide unilaterally)
+## A. OWNER DECISIONS — ★ ALL 8 LOCKED 2026-07-02 (PR #1801 / ACCOUNTING-ARCHITECTURE.md "Locked owner decisions")
 
-1. **factoring_advance JE push under no-write-back.** The `factoring_advance` outbound entity composes a
-   QBO **JournalEntry** from `accounting.factoring_advances` (not `journal_entries`, so IMPORT-P0/P0b do
-   NOT gate it). Decision: should this TMS→QBO push also be disabled under the parallel-books
-   architecture? · unblock: owner ruling · src: PR #1797/#1802, ACCOUNTING-ARCHITECTURE.md "Open owner decisions".
-2. **Per-entity push-flag override policy during the parallel window.** `QBO_JE_PUSH_ENABLED` /
-   `QBO_ENTITY_PUSH_ENABLED` are per-entity-only (default OFF). Recommendation: keep OFF for every entity
-   the whole window; enable only per-entity by explicit owner action. Not yet ratified as policy.
-3. **P0b #4 — vendor-linkage QBO vendor creation.** `qbo-vendor-linkage.createQboVendor` pushes a vendor
-   to QBO on **driver-create**, and `createDriverWithQboVendor` **hard-requires** the `qbo_vendor_id`
-   (throws if absent). Gating it as-is BREAKS driver onboarding. Decision: does driver-create still create
-   a QBO vendor under reconcile-only, or make the QBO vendor optional? · src: PR #1802 (deferred with reason).
-4. **FIN-2 — /finance landing + subnav unification.** Land `/finance` on the Hub, unify one subnav
-   (Hub/Statements/Calculator), keep Overview reachable — ADDITIVE. Needs owner approval (design change).
-   · src: SWEEP-FIX-17-27 block / PR #1798 PR-body.
-5. **CUST-3 / VEND-4 — dual QBO-sync bookkeeping source of truth.** One truth for customer/vendor sync
-   state: backfill the qbo-sync bookkeeping from the archive projection vs retire the parallel counter.
-   Interim: banner copy states the true state. · src: SWEEP-FIX-17-27 decisions.
-6. **DOCS — required document types per entity type** (drivers/units/customers/vendors) so "Missing
-   required" means something. Owner list requested. · src: SWEEP-FIX-17-27 decisions.
-7. **FACT-3 — canonical Faro factoring vendor row.** · src: FACT-FIX-1 PR-body.
-8. **Opening-conversion report semantics.** Balance-sheet-only 12/31/2023 opening is owner-accepted; the
-   TMS report engine must be verified **fiscal-year-close aware** (2023 P&L rolls to RE, excluded from
-   2024 P&L). · src: qbo-import-design-corrections memory (R1).
+Kept for history (append-only). Each now carries its resolution. Items whose resolution is itself a build
+are pointed to Section C.
+
+1. **factoring_advance JE push** → **LOCKED: GATED OFF** — folded into the JE kill-switch
+   (`QBO_JE_PUSH_ENABLED`, default OFF) in `syncEntityToQbo` + static guard. Shipped in IMPORT-P0b
+   (#1802, MERGED+DEPLOYED). Booked in QBO via bank feed + reconciled, never pushed.
+2. **Per-entity push-flag policy** → **LOCKED: OFF for ALL entities, EVENT-gated** (cutover ceremony, not a
+   date — 12/31/2025 has passed). Enable only per-entity by explicit owner action post-cutover.
+3. **Driver→QBO vendor creation** → **LOCKED: best-effort, no synchronous create** — `createDriverWithQboVendor`
+   made best-effort (SHIPPED #1804, DEPLOYED); driver onboarding never blocks on QBO; the daily reconcile
+   links the vendor (MD-2).
+4. **FIN-2 finance landing** → **LOCKED: APPROVED + BUILT** — land on Hub, unified subnav, Overview kept as a
+   tab; FIN-1 honest period KPI in same PR (#1805).
+5. **CUST-3/VEND-4 sync bookkeeping** → **LOCKED: retire the parallel counter** — archive projection +
+   reconciliation exceptions are the only truth. Build tracked in Section C (retire-counter / reconcile-only
+   panel).
+6. **Required document types** → **LOCKED: FMCSA/IRS regulatory-default matrix, warn-first, per-carrier
+   configurable** — spec #1806 (`docs/specs/REQUIRED-DOCUMENT-TYPES.md`). Build tracked in Section C (DOC-REQ).
+7. **Canonical Faro vendor row** → **LOCKED: `3585f27e` canonical, merge terms from `6dd1f7f5`, repoint FKs,
+   VOID dup.** Read-only diagnostic + owner ceremony plan shipped (#1807). Execution = owner's hand (Section B/C).
+8. **Opening-conversion semantics** → **LOCKED: BS-only opening + a MANDATORY RE-roll boundary tieout test in
+   IMPORT-4v2** (assert the engine reproduces QBO's Retained-Earnings roll to the cent on a Neon branch).
 
 ## B. HARD PREREQUISITES / CONTRACTS (must be done before the dependent work runs)
 
@@ -52,7 +51,17 @@ Each item: **what** · **why deferred** · **what unblocks it** · **source**.
 
 ## C. GATED / HOLD BUILDS (specced or built behind OFF flags — awaiting JORGE-APPROVED / go)
 
-- **IMPORT-P0b** entity-push kill-switch — HOLD PR #1802.
+- **IMPORT-P0b** entity-push kill-switch — ✅ MERGED + DEPLOYED (#1802, prod 06b0975); flag
+  `QBO_ENTITY_PUSH_ENABLED` seeded default OFF. factoring_advance folded into the JE gate (decision #1).
+- **DOC-REQ (required documents, decision #6):** DOC-REQ-1 (migration: `compliance.required_document_types`
+  catalog + FORCED RLS + grants + FMCSA/IRS seed — Tier-1 HOLD, Jorge merges) → DOC-REQ-2 (read-only
+  `resolveMissingRequired` + "Missing required: N" chip + per-type warn⇄hard-block config, Tier-3 ships on
+  green) → DOC-REQ-3 (per-surface hard-block gate, owner-approved per gate). Spec: REQUIRED-DOCUMENT-TYPES.md (#1806).
+- **Retire sync counter (decision #5):** replace the customer/vendor "Synced X of Y / Sync now" panel counter
+  with archive-projection + reconciliation-exceptions truth (reconcile-only framing) — aligns the UI with the
+  parallel-books lock. Non-financial UI+read build. (Recon in progress 2026-07-02.)
+- **Faro vendor dedupe (decision #7):** read-only diagnostic + owner ceremony plan shipped (#1807); the
+  merge/repoint/VOID execution is owner's hand against a gated connection.
 - **QBO-IMPORT GL program:** IMPORT-1v2 (TRK 917-acct COA + equity, Tier-2), IMPORT-2v2 (schema),
   IMPORT-3v2 (opening BS engine), IMPORT-4v2 (GL detail) — build-and-hold. IMPORT-0 (client) merged #1796.
 - **Clone program (QBO-CLONE-PROGRAM.md / PR #1799):** MD-1 customers, MD-2 vendors, MD-3 AR/AP schema,
