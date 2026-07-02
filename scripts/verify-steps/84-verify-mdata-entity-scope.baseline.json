@@ -831,6 +831,11 @@
       "preview": "`SELECT id::text AS unit_id, unit_number, vin FROM mdata.units WHERE id = $1::uuid LIMIT 1`"
     },
     {
+      "key": "apps/backend/src/mdata/equipment-log.routes.ts#3d5061da7964ce53c7ac95da9cd2fc91d008c554",
+      "file": "apps/backend/src/mdata/equipment-log.routes.ts",
+      "preview": "` SELECT el.id, el.equipment_id, el.event_type, el.event_at, el.from_unit_id, el.to_unit_id, el.from_location_id, el.to_"
+    },
+    {
       "key": "apps/backend/src/mdata/equipment.routes.ts#1148edd5b425bcd20189ea89ad61fd5697fb99ad",
       "file": "apps/backend/src/mdata/equipment.routes.ts",
       "preview": "` SELECT id, equipment_number, vin, equipment_type, make, model, year, status, current_unit_id, current_location_id, own"
