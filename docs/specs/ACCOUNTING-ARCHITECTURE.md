@@ -19,7 +19,7 @@ two books in parallel and reconciling is how a clean QBO→new-system conversion
 lets QuickBooks stay the CPA's system of record while the reconciliation is being proven, and it makes the
 cutover a deliberate event, not a silent drift.
 
-## The rules (all enforced, not aspirational)
+## The rules (enforcement status noted per rule — do not assume "enforced" without the citation)
 
 1. **Clone-once, then reconcile-only.**
    - One-time full backfill: QBO **customers, vendors, invoices, payments, bills, bill-payments, and the
@@ -30,15 +30,19 @@ cutover a deliberate event, not a silent drift.
    - Specs: `QBO-CLONE-PROGRAM.md` (master data + AR/AP, blocks MD-1…MD-RECON),
      `TMS-QBO-RECONCILIATION.md`, and the QBO-IMPORT GL program (IMPORT-0…4v2).
 
-2. **No write-back to QBO.**
-   - JE→QBO push **kill-switch**: flag `QBO_JE_PUSH_ENABLED` (default OFF, **per-entity-only**) + a
-     structural refusal of any journal entry whose `source_system != 'tms'`, enforced on **both** push
-     paths (immediate best-effort AND the every-minute queue-drain cron) via one shared gate
-     (`apps/backend/src/accounting/qbo-je-push-gate.ts`; CI guard `verify-qbo-push-gates.mjs`). — IMPORT-P0.
+2. **No write-back to QBO** (the target state; enforcement is partial today — stated honestly below).
+   - **JE path — ENFORCED (merged).** `QBO_JE_PUSH_ENABLED` (default OFF, **per-entity-only**) + a
+     structural refusal of any journal entry whose `source_system != 'tms'`, on **both** push paths
+     (immediate best-effort AND the every-minute queue-drain cron) via one shared gate
+     (`apps/backend/src/accounting/qbo-je-push-gate.ts`; CI guard `verify-qbo-push-gates.mjs`). — IMPORT-P0
+     (PR #1797, merged).
+   - **Entity paths — NOT YET IN FORCE.** The six `T11.20.6.2` write-back handlers (customer / vendor /
+     account / invoice / bill / item `tms.*.push_requested` → `push.service.ts`) are **default-ON via env
+     var with NO origin guard today** (latent, not live — zero `tms.*.push_requested` rows exist yet).
+     **IMPORT-P0b** closes this: flag `QBO_ENTITY_PUSH_ENABLED` (default OFF, per-entity-only) +
+     clone-origin refusal on all six, mirroring IMPORT-P0. **Until IMPORT-P0b merges, this bullet is the
+     intended state, not the current state** — do not cite it as enforced.
    - All **money-posting flags default OFF and are per-entity-only** (`POSTING_FLAG_KEYS`).
-   - The legacy `T11.20.6.2` write-back cuts (customers/vendors/accounts/invoices/bills
-     `tms.*.push_requested` → `push.service.ts`) stay OFF; cloned invoice/bill rows carry a clone `source`
-     and are excluded from every outbound push, same as the JE guard.
 
 3. **Both accounting bases.**
    - Canonical imported ledger = **accrual** detail.
