@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { getAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../api/account-type-catalog";
@@ -48,6 +49,13 @@ export function AccountTypeCatalogPage() {
       title="Account Type Catalog"
       subtitle="QBO-parity account type → detail-type taxonomy (read-only). Account types are universal; account instances are per-entity (see Chart of Accounts)."
     >
+      <Link
+        to="/lists"
+        aria-label="Back to Lists & Catalogs"
+        className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:underline"
+      >
+        ← Lists &amp; Catalogs / Accounting
+      </Link>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           value={search}
