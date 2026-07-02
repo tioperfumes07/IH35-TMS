@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isPostingFlag,
   isRolloutEnabled,
   resolveFlagEnabled,
   rolloutBucket,
@@ -91,5 +92,78 @@ describe("resolveFlagEnabled", () => {
     const user = "55555555-5555-4555-8555-555555555555";
     const flagWithRollout: FeatureFlagRow = { ...FLAG, default_enabled: false, rollout_pct: 100 };
     expect(resolveFlagEnabled(flagWithRollout, [], { user_uuid: user })).toBe(true);
+  });
+});
+
+describe("isPostingFlag", () => {
+  it("recognizes known posting flag keys", () => {
+    for (const key of [
+      "FACTORING_GL_POSTING_ENABLED",
+      "BILL_GL_POSTING_ENABLED",
+      "INVOICE_AR_GL_POSTING_ENABLED",
+      "SETTLEMENT_GL_POSTING_ENABLED",
+      "GL_POSTING_ENABLED",
+    ]) {
+      expect(isPostingFlag(key)).toBe(true);
+    }
+  });
+
+  it("recognizes future posting flags by pattern", () => {
+    expect(isPostingFlag("SOMETHING_NEW_GL_POSTING_ENABLED")).toBe(true);
+    expect(isPostingFlag("PAYROLL_POSTING_ENABLED")).toBe(true);
+  });
+
+  it("does not treat non-posting flags as posting flags", () => {
+    expect(isPostingFlag("usmca_hidden")).toBe(false);
+    expect(isPostingFlag("QBO_RECONCILE_UI_ENABLED")).toBe(false);
+  });
+});
+
+describe("resolveFlagEnabled — posting flags are per-entity-only", () => {
+  const POSTING: FeatureFlagRow = {
+    flag_key: "FACTORING_GL_POSTING_ENABLED",
+    description: "Factoring GL posting",
+    default_enabled: false,
+    rollout_pct: 0,
+  };
+  const postingOverride = (partial: Partial<FeatureFlagOverrideRow>): FeatureFlagOverrideRow => ({
+    ...override(partial),
+    flag_key: POSTING.flag_key,
+  });
+
+  it("stays OFF when global default_enabled is true (global default ignored)", () => {
+    const flag: FeatureFlagRow = { ...POSTING, default_enabled: true };
+    expect(resolveFlagEnabled(flag, [], { operating_company_id: "company-1", user_uuid: "user-1" })).toBe(false);
+  });
+
+  it("stays OFF when global rollout is 100% (global rollout ignored)", () => {
+    const flag: FeatureFlagRow = { ...POSTING, rollout_pct: 100 };
+    expect(resolveFlagEnabled(flag, [], { user_uuid: "user-1" })).toBe(false);
+  });
+
+  it("turns ON only via an explicit per-entity override", () => {
+    expect(
+      resolveFlagEnabled(
+        POSTING,
+        [postingOverride({ operating_company_id: "company-1", enabled: true })],
+        { operating_company_id: "company-1" }
+      )
+    ).toBe(true);
+  });
+
+  it("honors an explicit per-entity OFF override", () => {
+    const flag: FeatureFlagRow = { ...POSTING, default_enabled: true };
+    expect(
+      resolveFlagEnabled(
+        flag,
+        [postingOverride({ operating_company_id: "company-1", enabled: false })],
+        { operating_company_id: "company-1" }
+      )
+    ).toBe(false);
+  });
+
+  it("one entity's ON override does not leak to another entity", () => {
+    const overrides = [postingOverride({ operating_company_id: "company-1", enabled: true })];
+    expect(resolveFlagEnabled(POSTING, overrides, { operating_company_id: "company-2" })).toBe(false);
   });
 });
