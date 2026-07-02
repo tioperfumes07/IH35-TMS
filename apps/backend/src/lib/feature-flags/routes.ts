@@ -5,6 +5,7 @@ import { requireAuth } from "../../auth/session-middleware.js";
 import {
   createFlag,
   isEnabled,
+  isPostingFlag,
   listFlags,
   listOverrides,
   removeOverride,
@@ -109,6 +110,16 @@ export async function registerFeatureFlagRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const flagKey = String(req.params.flag_key ?? "").trim();
     if (!flagKey) return reply.code(400).send({ error: "validation_error" });
+
+    // Defense-in-depth: money-posting flags are per-entity-only (resolveFlagEnabled ignores global
+    // rollout/default for them). Reject a global enable attempt outright so an admin can't believe they
+    // turned posting on globally — posting is enabled ONLY via a per-entity override.
+    if (isPostingFlag(flagKey) && (parsed.data.default_enabled === true || Number(parsed.data.rollout_pct) > 0)) {
+      return reply.code(400).send({
+        error: "posting_flag_global_enable_forbidden",
+        detail: "Posting flags are per-entity only. Enable via a per-entity override, not default_enabled/rollout_pct.",
+      });
+    }
 
     const flag = await withLuciaBypass(async (client) => updateFlag(client, flagKey, parsed.data));
     if (!flag) return reply.code(404).send({ error: "flag_not_found" });

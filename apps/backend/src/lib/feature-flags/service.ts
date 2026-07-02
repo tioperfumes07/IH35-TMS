@@ -27,6 +27,34 @@ export type FeatureFlagOverrideRow = {
   expires_at: string | null;
 };
 
+// ── Money-posting flags are PER-ENTITY-ONLY ────────────────────────────────────────────────────────
+// A posting flag gates whether TMS writes to the GL for a given operating company. It must NEVER be
+// turnable on globally: a global `default_enabled`/`rollout_pct` would flip posting on for EVERY entity
+// (incl. USMCA / TRK), defeating the per-entity kill-switch and cross-entity isolation. So for these
+// flags we honor ONLY an explicit per-entity (operating_company_id) or per-user override; the global
+// rollout and default paths are ignored (treated OFF). Known keys are enumerated for clarity; the
+// pattern fallback auto-covers any future `*_GL_POSTING_*` / `*_POSTING_ENABLED` flag.
+export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
+  "GL_POSTING_ENABLED",
+  "AMORTIZATION_GL_POSTING_ENABLED",
+  "BANK_FEED_GL_POSTING_ENABLED",
+  "BILL_GL_POSTING_ENABLED",
+  "BILL_PAYMENT_GL_POSTING_ENABLED",
+  "EXPENSE_GL_POSTING_ENABLED",
+  "FACTORING_GL_POSTING_ENABLED",
+  "INVOICE_AR_GL_POSTING_ENABLED",
+  "LEASE_GL_POSTING_ENABLED",
+  "SETTLEMENT_GL_POSTING_ENABLED",
+]);
+
+export function isPostingFlag(flagKey: string): boolean {
+  return (
+    POSTING_FLAG_KEYS.has(flagKey) ||
+    /_GL_POSTING(_ENABLED)?$/.test(flagKey) ||
+    /_POSTING_ENABLED$/.test(flagKey)
+  );
+}
+
 export function rolloutBucket(flagKey: string, userUuid: string): number {
   const digest = createHash("sha256").update(`${flagKey}:${userUuid}`).digest();
   return digest.readUInt32BE(0) % 10000;
@@ -57,6 +85,13 @@ export function resolveFlagEnabled(
       (row) => row.user_uuid == null && row.operating_company_id === context.operating_company_id
     );
     if (tenantOverride) return tenantOverride.enabled;
+  }
+
+  // Posting flags stop here: with no explicit per-entity/user override above, a money-posting flag is
+  // OFF. Global rollout_pct / default_enabled can never turn it on (would enable posting for all
+  // entities). This is the enforcement half of the per-entity kill-switch.
+  if (isPostingFlag(flag.flag_key)) {
+    return false;
   }
 
   if (context.user_uuid && Number(flag.rollout_pct) > 0) {
