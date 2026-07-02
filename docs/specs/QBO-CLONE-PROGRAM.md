@@ -1,5 +1,8 @@
 # QBO → TMS Full Clone Program (master data + AR/AP sub-ledgers) — design spec
 
+> **Governed by `docs/specs/ACCOUNTING-ARCHITECTURE.md`** (and `docs/lockdown/00_LOCKED_DECISIONS.md` §8).
+> For any TMS↔QBO data-flow question (parallel books, no write-back, reconcile-only), that doc wins.
+
 **Status:** design spec (Tier-3 docs). The engines it defines are Tier-1 financial → BUILD-AND-HOLD
 behind `QBO_HISTORICAL_IMPORT_ENABLED` (OFF), owner-triggered, per the operating constitution §1.4.
 **Owner decision that motivates this (2026-07-02):** *"Clone every transaction for the time period, for

@@ -1,5 +1,8 @@
 # TMS ↔ QBO Reconciliation Module — Architecture Spec (RECON-00)
 
+> **Governed by `docs/specs/ACCOUNTING-ARCHITECTURE.md`** (and `docs/lockdown/00_LOCKED_DECISIONS.md` §8).
+> For any TMS↔QBO data-flow question (parallel books, no write-back, reconcile-only), that doc wins.
+
 **Status:** DESIGN LOCK (docs-only). No application code, no migration, no flag change ships in RECON-00.
 **Block family:** RECON-00 (this doc, done) → RECON-01 (schema + jobs + engine, Tier-2 gated) → RECON-02 (UI, Tier-3).
 **Book of record:** QuickBooks Online (QBO) for **TRANSP** (`operating_company_id 91e0bf0a-133f-4ce8-a734-2586cfa66d96`).

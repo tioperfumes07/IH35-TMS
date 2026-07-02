@@ -1,15 +1,17 @@
 # IH35-TMS — Accounting Architecture (CANONICAL, locked 2026-07-02)
 
 > **Single source of truth for how accounting works. If any older doc (esp. the master blueprint
-> §3.12 "QBO AUTO-SYNC + REPLAY") disagrees, THIS wins.** Mirrors
+> §3.12 "QBO AUTO-SYNC + REPLAY") disagrees, THIS wins.** Aligned with
 > `docs/lockdown/00_LOCKED_DECISIONS.md` §8. Purpose: stop agents from rebuilding a two-way QBO sync.
 
 ## The one-paragraph version
 TMS and QuickBooks Online run as **two independent systems in parallel (double books)**. **QBO is the
-system of record through 12/31/2025; TMS mirrors it.** We **clone QBO once** — all master data, AR, AP,
-and GL — into the TMS database, and after that the QBO connection exists **only to reconcile and compare**
-(twice daily): flag anything added, voided, or changed in either system. **There is NO write-back from TMS
-to QBO and NO two-way sync.** After the 12/31/2025 book-lock, TMS becomes authoritative.
+system of record through 12/31/2025; TMS runs in parallel and is reconciled against it — TMS is NOT a
+mirror of QBO.** We **clone QBO once** — all master data, AR, AP, and GL — into the TMS database, and after
+that the QBO connection exists **only to reconcile and compare** (twice daily — the two Jorge-locked
+scheduled passes in `TMS-QBO-RECONCILIATION.md` §2): flag anything added, voided, or changed in either
+system. **There is NO write-back from TMS to QBO and NO two-way sync.** After the 12/31/2025 book-lock, TMS
+becomes authoritative.
 
 ## Why (the decision)
 Owner + CPA locked this to avoid the fragility and double-entry risk of a bidirectional sync. Running the
@@ -40,8 +42,8 @@ cutover a deliberate event, not a silent drift.
 
 3. **Both accounting bases.**
    - Canonical imported ledger = **accrual** detail.
-   - **Cash-basis is mirrored from QBO's own cash reports** — QBO computes it, TMS never re-derives cash
-     during the QBO-SoR window. A native cash-conversion engine is a **post-cutover** block.
+   - **Cash-basis is copied verbatim from QBO's own cash reports** — QBO computes it, TMS never re-derives
+     cash during the QBO-SoR window. A native cash-conversion engine is a **post-cutover** block.
 
 4. **Conversion + entities.**
    - Convert **01/01/2024** for **TRANSP** + **TRK**; opening position = **Balance Sheet as of
@@ -67,6 +69,16 @@ Do not rebuild a two-way sync.
 ## Cutover
 After 12/31/2025 book-lock: TMS becomes authoritative; period-lock + a final court/CPA-grade tieout
 snapshot. Nothing locks/closes during the reconciliation window.
+
+## Open owner decisions (not yet resolved — do not assume)
+1. **`factoring_advance` JE push.** The `factoring_advance` outbound entity composes a QBO JournalEntry
+   from `accounting.factoring_advances` (not `accounting.journal_entries`, so IMPORT-P0 does not gate it,
+   and it is not an import-echo risk). Whether TMS→QBO factoring-advance JE sync should also be turned
+   OFF under this no-write-back architecture is an **owner decision, still open**.
+2. **Per-entity override policy during the import/parallel window.** The push flags are per-entity-only
+   (`POSTING_FLAG_KEYS`); the standing recommendation is to keep every entity's outbound push **OFF** for
+   the entire parallel window and only ever enable per-entity by explicit owner action. Formal policy not
+   yet ratified.
 
 ---
 *Cross-refs: `docs/lockdown/00_LOCKED_DECISIONS.md` §8 · `docs/specs/TMS-QBO-RECONCILIATION.md` ·
