@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const equipmentStatusSchema = z.enum(["InService", "OutOfService", "InMaintenance", "Sold", "Lost"]);
@@ -14,6 +15,7 @@ const listQuerySchema = z.object({
   event_type: eventTypeSchema.optional(),
   event_at_from: z.string().datetime().optional(),
   event_at_to: z.string().datetime().optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -70,25 +72,38 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, equipment_id, event_type, event_at_from, event_at_to } = parsedQuery.data;
+    const { limit, offset, equipment_id, event_type, event_at_from, event_at_to, operating_company_id } =
+      parsedQuery.data;
     const equipment_log = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
+      // Entity scope (USMCA cross-entity leak fix): mdata.equipment_log has NO company column and its
+      // RLS is role-scoped, not entity-scoped, so join mdata.equipment and scope by the owner/leased
+      // pair. ALWAYS bind it — resolve the company from the param or user context so another entity's
+      // equipment history never leaks (mirrors mdata/equipment.routes.ts).
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
+      if (!scopedCompanyId) return [];
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      values.push(scopedCompanyId);
+      const ownerLeasedIdx = values.length;
+      filters.push(
+        `(e.owner_company_id = $${ownerLeasedIdx} OR e.currently_leased_to_company_id = $${ownerLeasedIdx})`
+      );
       if (equipment_id) {
         values.push(equipment_id);
-        filters.push(`equipment_id = $${values.length}`);
+        filters.push(`el.equipment_id = $${values.length}`);
       }
       if (event_type) {
         values.push(event_type);
-        filters.push(`event_type = $${values.length}`);
+        filters.push(`el.event_type = $${values.length}`);
       }
       if (event_at_from) {
         values.push(event_at_from);
-        filters.push(`event_at >= $${values.length}::timestamptz`);
+        filters.push(`el.event_at >= $${values.length}::timestamptz`);
       }
       if (event_at_to) {
         values.push(event_at_to);
-        filters.push(`event_at <= $${values.length}::timestamptz`);
+        filters.push(`el.event_at <= $${values.length}::timestamptz`);
       }
       values.push(limit);
       values.push(offset);
@@ -96,24 +111,25 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT
-            id,
-            equipment_id,
-            event_type,
-            event_at,
-            from_unit_id,
-            to_unit_id,
-            from_location_id,
-            to_location_id,
-            status_before,
-            status_after,
-            notes,
-            created_at,
-            updated_at,
-            created_by_user_id,
-            updated_by_user_id
-          FROM mdata.equipment_log
+            el.id,
+            el.equipment_id,
+            el.event_type,
+            el.event_at,
+            el.from_unit_id,
+            el.to_unit_id,
+            el.from_location_id,
+            el.to_location_id,
+            el.status_before,
+            el.status_after,
+            el.notes,
+            el.created_at,
+            el.updated_at,
+            el.created_by_user_id,
+            el.updated_by_user_id
+          FROM mdata.equipment_log el
+          JOIN mdata.equipment e ON e.id = el.equipment_id
           ${whereClause}
-          ORDER BY event_at DESC, created_at DESC
+          ORDER BY el.event_at DESC, el.created_at DESC
           LIMIT $${values.length - 1}
           OFFSET $${values.length}
         `,

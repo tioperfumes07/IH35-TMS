@@ -227,7 +227,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
                 e.equipment_number,
                 e.equipment_type
               FROM mdata.equipment e
-              WHERE e.operating_company_id = $1::uuid
+              WHERE (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid)
                 AND e.current_unit_id = $2::uuid
                 AND e.status::text NOT IN ('Sold', 'Lost')
               ORDER BY e.updated_at DESC
