@@ -9,6 +9,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { getSafetyHomeData } from "./safety-home.service.js";
 
@@ -42,6 +43,7 @@ export async function registerSafetyOfficerRoleHomeRoutes(app: FastifyInstance) 
 
     const { operating_company_id } = parsed.data;
 
+    await assertCompanyMembership(user.uuid, operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);

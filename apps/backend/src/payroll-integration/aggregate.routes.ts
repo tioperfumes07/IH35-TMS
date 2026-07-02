@@ -7,6 +7,7 @@ import fp from "fastify-plugin";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { pullTmsSettlements } from "./tms-settlements-pull.js";
 import { pullQboPayroll } from "./qbo-payroll-pull.js";
@@ -28,6 +29,7 @@ async function withCompany<T>(
   companyId: string,
   fn: (client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }) => Promise<T>
 ): Promise<T> {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     return fn(client as Parameters<typeof fn>[0]);

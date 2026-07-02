@@ -92,6 +92,7 @@
     "verify:bank-feed-category-seed": "node scripts/verify-bank-feed-category-seed.mjs",
     "verify:financial-column-contracts": "node scripts/verify-financial-column-contracts.mjs",
     "verify:posting-column-contract": "node scripts/verify-posting-column-contract.mjs",
+    "verify:company-membership-assert": "node scripts/verify-company-membership-assert.mjs",
     "db:verify:reference-order": "node scripts/verify-reference-before-introduction.mjs",
     "db:verify:rename-fallout": "node scripts/verify-rename-fallout.mjs",
     "db:verify:backend-contract": "node scripts/verify-backend-schema-contract.mjs",
