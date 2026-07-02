@@ -179,7 +179,7 @@ async function checkDriverActive(
     `
       SELECT
         deactivated_at::text,
-        full_name,
+        CONCAT_WS(' ', first_name, last_name) AS full_name,
         first_name,
         last_name
       FROM mdata.drivers
