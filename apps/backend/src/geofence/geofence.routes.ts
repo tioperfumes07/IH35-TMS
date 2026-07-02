@@ -50,7 +50,7 @@ export default async function geofenceRoutes(fastify: FastifyInstance) {
       .parse(request.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT * FROM geofence.fence
          WHERE operating_company_id = $1 AND is_active = true AND soft_deleted_at IS NULL
@@ -69,7 +69,7 @@ export default async function geofenceRoutes(fastify: FastifyInstance) {
     const input = FenceCreateSchema.parse(request.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const result = await (client as Queryable).query(
         `INSERT INTO geofence.fence
            (operating_company_id, name, center_lat, center_lng, radius_meters, fence_type, created_by_user_id)
@@ -101,7 +101,7 @@ export default async function geofenceRoutes(fastify: FastifyInstance) {
       .parse(request.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `UPDATE geofence.fence
          SET soft_deleted_at = now(), is_active = false
@@ -125,7 +125,7 @@ export default async function geofenceRoutes(fastify: FastifyInstance) {
     const input = EventRecordSchema.parse(request.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const result = await (client as Queryable).query(
         `INSERT INTO geofence.event
            (operating_company_id, fence_id, unit_id, load_id, event_type, occurred_at, lat, lng, dwell_seconds)
@@ -163,7 +163,7 @@ export default async function geofenceRoutes(fastify: FastifyInstance) {
       .parse(request.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT e.*, f.name AS fence_name
          FROM geofence.event e

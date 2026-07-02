@@ -68,7 +68,7 @@ async function withCompanyScope<T>(
   fn: (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> }) => Promise<T>
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client);
   });
 }
@@ -90,7 +90,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const rows = await withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       return listMyLeaveRequests(client, oc, d.id);
     });
     return { requests: rows };
@@ -104,7 +104,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const payload = await withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       return getMySchedule(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -123,7 +123,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const result = await withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       return createDriverLeaveRequest(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -145,7 +145,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const row = await withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       return cancelDriverLeaveRequest(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -167,7 +167,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const result = await withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       return attachLeaveRequestDocumentation(client, {
         operatingCompanyId: oc,
         driverId: d.id,

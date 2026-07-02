@@ -333,7 +333,7 @@ export async function commitFaroCsvImport(input: {
 
   const { withCurrentUser } = await import("../auth/db.js");
   const { sideEffects, advanceActuals, postingEnabled } = await withCurrentUser(input.userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operatingCompanyId}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]);
     const factorId = await resolveActiveFactorId(client, input.operatingCompanyId);
     const effects = await applyInvoiceAndReserveUpdates(client, input.operatingCompanyId, parsed.lines, factorId);
     // Reconciliation point 2 (at funding): aggregate FARO's actuals per advance for variance flagging + the

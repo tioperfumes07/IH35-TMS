@@ -169,10 +169,10 @@ export async function withLuciaBypass<T>(
     }
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
     await client.query(
-      `SET LOCAL app.active_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`
+      "SELECT set_config('app.active_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID]
     );
     await client.query(
-      `SET LOCAL app.operating_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`
+      "SELECT set_config('app.operating_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID]
     );
     const result = await fn(instrumentClientForDev(client));
     await client.query("COMMIT");

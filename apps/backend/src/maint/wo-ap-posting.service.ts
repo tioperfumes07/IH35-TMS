@@ -170,7 +170,7 @@ export async function buildMaintWoApPostingPreview(
   input: WoApContextInput & { actor_user_id?: string }
 ): Promise<MaintWoApPostingPreview> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const wo = await loadWorkOrder(client as DbClient, input);
     if (!wo) {
       return {

@@ -1,6 +1,13 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { canAssignLoadToDriver } from "./driver-availability.service.js";
+
+const uuidSchema = z.string().uuid();
+/** Edge guard: these ids flow into the tenant-scoping GUC (app.operating_company_id) downstream. */
+function isUuid(v: string): boolean {
+  return uuidSchema.safeParse(v).success;
+}
 
 function readBodyRecord(req: FastifyRequest): Record<string, unknown> {
   if (typeof req.body === "object" && req.body !== null) {
@@ -20,6 +27,11 @@ export async function registerDispatchLoadAssignRoutes(app: FastifyInstance) {
     const overrideRepairBlock = body.override_repair_block === true;
 
     if (!driverId || !tenantId) return;
+    if (!isUuid(driverId) || !isUuid(tenantId)) {
+      return reply
+        .code(400)
+        .send({ error: "validation_error", message: "driver_id and operating_company_id must be UUIDs" });
+    }
 
     const availability = await canAssignLoadToDriver(driverId, tenantId);
     if (!availability.ok && !overrideRepairBlock) {
@@ -38,7 +50,9 @@ export async function registerDispatchLoadAssignRoutes(app: FastifyInstance) {
     const query = (req.query ?? {}) as Record<string, unknown>;
     const driverId = typeof params.driver_id === "string" ? params.driver_id : "";
     const tenantId = typeof query.operating_company_id === "string" ? query.operating_company_id : "";
-    if (!driverId || !tenantId) return reply.code(400).send({ error: "validation_error" });
+    if (!driverId || !tenantId || !isUuid(driverId) || !isUuid(tenantId)) {
+      return reply.code(400).send({ error: "validation_error" });
+    }
 
     const availability = await canAssignLoadToDriver(driverId, tenantId);
     return reply.send(availability);

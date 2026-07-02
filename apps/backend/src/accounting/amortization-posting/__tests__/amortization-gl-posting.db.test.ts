@@ -46,8 +46,8 @@ describeIntegration("FIN-21 amortization + depreciation GL posting (real Postgre
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
     if (companyId) {
-      await db.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
-      await db.query(`SET LOCAL app.current_operating_company_id = '${companyId}'`);
+      await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      await db.query("SELECT set_config('app.current_operating_company_id', $1, true)", [companyId]);
     }
     try { await fn(); await db.query("COMMIT"); }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
@@ -56,8 +56,8 @@ describeIntegration("FIN-21 amortization + depreciation GL posting (real Postgre
   async function scopedRead<T = Record<string, unknown>>(sql: string, params: unknown[]): Promise<T[]> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
-    await db.query(`SET LOCAL app.current_operating_company_id = '${companyId}'`); // events.event_log RLS GUC
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await db.query("SELECT set_config('app.current_operating_company_id', $1, true)", [companyId]); // events.event_log RLS GUC
     try { const r = await db.query(sql, params); await db.query("COMMIT"); return r.rows as T[]; }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }

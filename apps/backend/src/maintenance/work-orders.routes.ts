@@ -268,7 +268,7 @@ async function hasLoadRequiredExpenseCategories(
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     return fn(client);
   });
 }

@@ -54,7 +54,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     const { operating_company_id } = z.object({ operating_company_id: z.string().uuid() }).parse(request.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT * FROM alerts.profile WHERE operating_company_id = $1 AND is_active = true ORDER BY profile_type, name`,
         [operating_company_id]
@@ -72,7 +72,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     const ocId = (request.body as { operating_company_id: string }).operating_company_id;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${ocId}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [ocId]);
       const sql = `
         INSERT INTO alerts.profile (operating_company_id, profile_type, name, created_by_user_id)
         VALUES ($1, $2, $3, $4) RETURNING *
@@ -94,7 +94,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     }).parse(request.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT * FROM alerts.rule WHERE profile_id = $1 AND is_active = true ORDER BY created_at`,
         [profile_id]
@@ -112,7 +112,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     const ocId = (request.body as { operating_company_id: string }).operating_company_id;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${ocId}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [ocId]);
       const sql = `
         INSERT INTO alerts.rule (
           operating_company_id, profile_id, trigger_event, audience, channel,
@@ -141,7 +141,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     const { operating_company_id } = z.object({ operating_company_id: z.string().uuid() }).parse(request.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const sql = `
         SELECT 
           q.*,
@@ -168,7 +168,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     const ocId = (request.body as { operating_company_id: string }).operating_company_id;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${ocId}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [ocId]);
       
       const sql = `
         UPDATE alerts.broker_queue

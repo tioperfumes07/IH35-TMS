@@ -53,7 +53,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${d.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [d.operating_company_id]);
       const res = await client.query(sql, values);
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0), limit: d.limit, offset: d.offset };
     });
@@ -80,7 +80,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${d.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [d.operating_company_id]);
       const res = await client.query(sql, values);
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0), limit: d.limit, offset: d.offset };
     });
@@ -109,7 +109,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${d.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [d.operating_company_id]);
       const res = await client.query(sql, values);
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0), limit: d.limit, offset: d.offset };
     });
@@ -138,7 +138,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${d.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [d.operating_company_id]);
       const res = await client.query(sql, values);
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0), limit: d.limit, offset: d.offset };
     });
@@ -170,7 +170,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${d.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [d.operating_company_id]);
       const res = await client.query(sql, values);
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0), limit: d.limit, offset: d.offset };
     });
@@ -236,7 +236,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
       ORDER BY c.occurred_at DESC
       LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${d.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [d.operating_company_id]);
       const res = await client.query(sql, values);
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0), limit: d.limit, offset: d.offset };
     });
@@ -265,7 +265,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${d.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [d.operating_company_id]);
       const res = await client.query(sql, values);
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0), limit: d.limit, offset: d.offset };
     });

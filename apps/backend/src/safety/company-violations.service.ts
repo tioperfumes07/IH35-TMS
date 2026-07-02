@@ -16,7 +16,7 @@ export async function resolveCompanyViolation(input: ResolveInput): Promise<{
   finalAmountCents: number | null;
 }> {
   return withCurrentUser(input.resolvedByUserUuid, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operatingCompanyId}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]);
 
     const existingRes = await client.query<{
       id: string;

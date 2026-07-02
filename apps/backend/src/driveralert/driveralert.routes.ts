@@ -27,7 +27,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.current_operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.current_operating_company_id', $1, true)", [input.operating_company_id]);
       await (client as Queryable).query("BEGIN");
 
       const { rows } = await (client as Queryable).query<{ id: string }>(
@@ -77,7 +77,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
       .parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.current_operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.current_operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT id, alert_type, message, severity, requires_ack, ack_deadline_at,
                 re_alarm_count, created_at
@@ -105,7 +105,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.current_operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.current_operating_company_id', $1, true)", [input.operating_company_id]);
       await (client as Queryable).query("BEGIN");
 
       const { rows } = await (client as Queryable).query<{ id: string }>(
@@ -148,7 +148,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
       .parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.current_operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.current_operating_company_id', $1, true)", [operating_company_id]);
       await (client as Queryable).query("BEGIN");
 
       const { rows } = await (client as Queryable).query<{ id: string }>(
@@ -191,7 +191,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
       .parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.current_operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.current_operating_company_id', $1, true)", [operating_company_id]);
       const { rows: dispatchRows } = await (client as Queryable).query(
         `SELECT id, driver_id, load_id, alert_type, message, severity,
                 requires_ack, acked_at, acked_by_driver_id, ack_method,

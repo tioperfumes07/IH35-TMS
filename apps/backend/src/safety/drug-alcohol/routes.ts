@@ -87,7 +87,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const enrollments = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       return listEnrollments(client, parsed.data.operating_company_id, parsed.data.active_only ?? true);
     });
     return reply.send({ enrollments });
@@ -101,7 +101,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const enrollment = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       const row = await enrollDriver(
         client,
         parsed.data.operating_company_id,
@@ -129,7 +129,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const ok = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${body.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
       return deactivateEnrollment(client, body.data.operating_company_id, params.data.uuid);
     });
     if (!ok) return reply.code(404).send({ error: "not_found" });
@@ -150,7 +150,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const tests = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       return listTestRecords(client, parsed.data.operating_company_id, {
         driverUuid: parsed.data.driver_uuid,
         result: parsed.data.result as TestResult | undefined,
@@ -167,7 +167,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const test = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       const row = await scheduleTest(
         client,
         parsed.data.operating_company_id,
@@ -198,7 +198,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
       return reply.code(400).send({ error: "validation_error" });
 
     const test = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       const row = await recordResult(
         client,
         parsed.data.operating_company_id,
@@ -232,7 +232,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!params.success || !parsed.success) return reply.code(400).send({ error: "validation_error" });
 
     const test = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       const row = await flagPositive(
         client,
         parsed.data.operating_company_id,
@@ -258,7 +258,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const draws = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       return listDrawHistory(client, parsed.data.operating_company_id);
     });
     return reply.send({ draws });
@@ -272,7 +272,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       const draw = await drawRandomPool(client, parsed.data.operating_company_id, {
         targetDrugPct: parsed.data.target_drug_pct,
         targetAlcoholPct: parsed.data.target_alcohol_pct,

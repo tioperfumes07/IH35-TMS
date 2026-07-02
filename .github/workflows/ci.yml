@@ -222,6 +222,9 @@ jobs:
       - name: Verify no cross-carrier data leak guard
         run: npm run verify:no-cross-carrier-data-leak
 
+      - name: Verify no interpolated GUC (SQLi→RLS-bypass) guard
+        run: npm run verify:no-interpolated-guc
+
       - name: Verify catalog factory coverage guard
         run: npm run verify:catalog-factory-coverage
 

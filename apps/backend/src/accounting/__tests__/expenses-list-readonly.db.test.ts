@@ -37,7 +37,7 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
   async function bypass<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${scopeCompanyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [scopeCompanyId]);
     try {
       const result = await fn();
       await db.query("COMMIT");
@@ -139,7 +139,7 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
 
     // Run the list query under REAL RLS (no bypass) — proves the entity scope end-to-end.
     await db.query("BEGIN");
-    await db.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     const rows = await queryExpensesList(db, companyId, { limit: 200, offset: 0 });
     await db.query("COMMIT");
 
