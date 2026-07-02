@@ -1,0 +1,21 @@
+MODULES 19+20 CUSTOMERS & VENDORS — STANDARDS-PARITY AUDIT (Layer 2)
+Date: 2026-07-02 · GUARD · Fresh research: QBO customer-statements official doc (Balance Forward / Open Item / Transaction statement types, per-customer Statements tab, auto-update on txn change, sub-customer bill-with-parent), QBO credit-limit behavior (warning/permission gate at transaction entry when limit exceeded), QBO vendor-credit workflow (record credit → apply to bills → remainder stays on file), QBO vendor report set (Balance Detail/Summary, Expenses by Vendor, Transaction List, Contact List). Compared vs live IH35 module + queued blocks (SWEEP-FIX-17-27 covers pager/badges/sync-banner — not re-logged).
+
+VERDICTS:
+
+SURPASSES BAR (trucking-specific, QBO has none of these):
+1. FMCSA/SAFER authority verification with last-checked stamp on customer detail.
+2. Factor-aware credit limit (Manual vs Factor source w/ daily FARO sync intent).
+3. Detention + layover billing configuration per customer.
+4. COI Requests, Opportunities, Conversations, Tasks tabs — CRM depth beyond QBO's center.
+
+MEETS BAR:
+5. Master-detail + list views, Active/Inactive/All, transaction list per customer, notes, recurring transactions — matches QBO center structure.
+6. Statements tab EXISTS per customer — STRUCTURE meets; FUNCTION (the three QBO statement types + send/email + auto-refresh) cannot be honestly verified until the ledger has AR data. NOT a defect: sequenced as a mandatory post-import verification item (listed in the block below) — verify, don't assume.
+
+GAPS → BUILD BLOCK (CUSTVEND-PAR-1):
+G1 CREDIT-LIMIT ENFORCEMENT — QBO warns (and can permission-gate) at transaction entry when a new transaction pushes the balance over the customer/vendor credit limit. IH35 STORES credit_limit but nothing enforces it at invoice creation or load booking. For a factored carrier this is a real money control: booking a load for a customer past their factor-set limit risks an unfundable invoice.
+G2 VENDOR CREDITS SURFACE — no vendor-credit record/apply UI observed in the sweep (record credit → apply against open bills → remainder on file). CONDITION: coder must first check docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md — if already tracked/queued there, link it and do not double-build.
+G3 CUSTOMER STATEMENT ENGINE VERIFICATION (post-import) — after the QBO historical import lands, verify the Statements tab produces Balance Forward / Open Item / Transaction statements with correct balances vs QBO's own statements for the same customer; any mismatch = defect block.
+
+NOT ADOPTED (owner-visible, deliberate): sub-customer hierarchy / bill-with-parent — no trucking use case identified for IH35's operation; adopt only if Jorge names one.

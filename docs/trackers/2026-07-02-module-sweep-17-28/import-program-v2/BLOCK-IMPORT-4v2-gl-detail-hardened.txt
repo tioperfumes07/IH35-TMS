@@ -1,0 +1,32 @@
+Block 4 of 5 — PHASE QBO-IMPORT-V2 / TASK IMPORT-4v2 — GL Detail Import Engine (hardened tieout + forward invalidation) — [HOLD-FOR-JORGE]
+Branch target: feat/qbo-gl-detail-import  →  open PR to main titled with [HOLD-FOR-JORGE]
+PREREQUISITES for any RUN: IMPORT-P0 proven, IMPORT-1v2 run verified, IMPORT-2v2 merged, IMPORT-3v2 opening JE tied out per entity.
+
+STANDING ORDERS: foreground only; no retries — STOP and paste exact error; 5-min live updates CST; confirm worktree; `git diff --staged --stat` before commit; SO#16 v2 + full backend vitest.
+
+TIER: 1. BUILD-SOLO-AND-HOLD, design+code+branch-proof in the PR before label (same §1.4 posture as 3v2).
+
+The v1 IMPORT-4 block stands EXCEPT as amended below. Amendments (owner-accepted from the finance review, each verified applicable):
+
+A. TIEOUT — leaf-level, signed, union, void-aware:
+1. Tieout compares at LEAF account level (parent rollups are validation only, never the comparison unit).
+2. Signed comparison: normalize both sides to signed balances by the account's normal side (debit-normal positive on debit; credit-normal positive on credit) so a sign-flip can never net to a false zero.
+3. UNION semantics: the tieout row-set = every account with a nonzero QBO balance UNION every account with a nonzero TMS balance as of periodEnd. An account present on one side only is an automatic variance row — nothing can hide by being absent from one report.
+4. VOIDS: verify (against the GeneralLedger report reference, cite it in the PR) that QBO's GL report excludes voided transactions by default with the parameters used; assert the columns/params chosen make voided lines impossible to import. TMS side: superseded entries voided by the re-run path are excluded from TMS balances (status='posted' only). Add a test where a voided TMS mirror entry exists and the tieout still balances.
+5. Inactive accounts participate fully (account_active_at_source recorded).
+
+B. RE-RUN-FORWARD ORCHESTRATION (re-categorization in QBO through 12/31/2025 changes history behind already-imported months):
+6. A re-run of period N for an entity, or an opening-balance re-run, atomically marks every later run/tieout for that entity 'stale'/is_stale=true (invalidated_by_run_id set).
+7. No period may present status 'tied_out' while any earlier period for the entity is stale or has a later-timestamped re-run — the run ledger enforces sequence: re-verify forward, oldest-first, until current. The admin job exposes 'qbo.import.gl_reverify_forward' that re-runs N→present sequentially and stops loudly on the first variance.
+8. The Import UI (IMPORT-5) surfaces stale states explicitly — a stale month renders as STALE, never as its old tied_out.
+
+C. SCOPE / CURRENCY:
+9. Home-currency assert per chunk (same rule as 3v2): any non-home-currency line aborts the run with the list. No FX invention.
+10. periodStart floor 2024-01-01 (owner rule) stands; chunking monthly stands; accounting_method='Accrual' for the mirrored ledger stands; the Cash TrialBalance mirror refresh per periodEnd stands.
+
+D. UNCHANGED from v1 (restated as binding): GeneralLedger REPORT is the source (QBO computes every posting — zero guessed mappings, all txn types via one mechanism); group lines per (txn_type, qbo_txn_id) reassembled ACROSS the whole report before composing; per-transaction balance assert to the cent, no partial posts; upsert by idempotency_key 'qbo-gl:{opco}:{txn_type}:{qbo_txn_id}', version_int++, supersede-void never delete; source_transaction_type/id/line_id populated; source_system='qbo_import', qbo_sync_pending=false; unmatched account aborts; realm↔opco assert; advisory lock; owner-triggered only; import entries can never reach the QBO push (P0 refusal + fetch-spy test).
+
+BRANCH-PROOF PACK BEFORE LABEL (GUARD independent, fresh Neon branch): TRANSP 2024-01 import ties to 0 variance on the signed-union-leaf tieout; 2024-02 imports and both tie; re-run of 2024-01 marks 2024-02 stale, reverify-forward restores tied_out, zero duplicate entries (counts + version_int evidence); one QBO Invoice and one BillPayment shown as composed JEs; TRK equivalent after its prerequisites; ZERO QBO POST calls in the run logs; prod untouched.
+
+allowed_files: apps/backend/src/integrations/qbo/import/**, admin-jobs additive entries, tests, scripts/verify-import-idempotency-keys.mjs (extend), .block-ready/IMPORT-4v2.json.
+FORBIDDEN: migrations (2v2 owns schema), push service (P0 owns it), posting flags, existing posters, period close.

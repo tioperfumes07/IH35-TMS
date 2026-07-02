@@ -1,0 +1,20 @@
+MODULES 24 REPORTS + 18 FINANCE HUB/STATEMENTS — STANDARDS-PARITY AUDIT (Layer 2)
+Date: 2026-07-02 · GUARD · Fresh research: QBO official docs — Run reports / Customize reports / Custom-report email scheduling (daily/weekly/monthly/2x-month, Excel attach) / Management reports (branded compilations: Company Overview=P&L+BS; Sales Performance=P&L+AR Aging Detail+Sales by Customer; Expenses Performance=P&L+AP Aging Detail+Expenses by Vendor; cover page, TOC, custom branding, KPI chart widgets, multi-entity KPIs in Advanced/IES) / modern-view features (Cash-vs-Accrual header toggle, zero-balance drilldowns, per-account Run-report from COA).
+
+VERDICTS:
+
+SURPASSES BAR:
+1. Trucking operations report set (per-truck CPM, fuel reconciliation card-vs-WO, geofence dwell, dispatch margin, settlement summary, CSA fleet, driver pay history) — QBO has nothing comparable; this is McLeod-territory reporting living beside QBO-grade financials.
+2. Cancellations + Audit tabs on the reports surface — governance QBO does not expose.
+3. Honest real/stub status labels in the report library — QBO does not disclose report maturity.
+
+MEETS BAR:
+4. Category hub + search, Cash/Accrual toggle wired end-to-end, PDF/XLSX/Print exports, TB Balance Check, scheduled auto-email framework (schedule/manage present; recurrence coverage to be exercised as schedules get created), Frequently-run.
+5. Finance Hub KPI grid with drills + read-only posture ≈ QBO business-overview; Statements page (P&L/BS/TB, dual basis, date range, export) = the QBO statement trio. FIN-1 fabricated-period fix already queued (SWEEP-FIX) — not re-logged.
+
+GAPS → BUILD BLOCK (RPT-PAR-1):
+G1 MANAGEMENT REPORT PACKAGES — no branded multi-report compilation (cover page, TOC, P&L+BS+agings as one lender/stakeholder-ready PDF package). For IH35 this is not cosmetic: lender/court/insurance-grade financial packages are a stated review audience. Build the three QBO-standard compilations first (Company Overview, Sales Performance, Expenses Performance) on the existing report engines, entity-scoped, with company branding.
+G2 REPORT-ROW DRILLDOWN — QBO bar: every report number drills to transaction detail. The account register page EXISTS (CA-05, QBO-parity columns). Gap = wiring TB/P&L/BS row links → register filtered to account+period, and drill from aging rows → invoices/bills. Verify against real data post-import; build the links now (they render empty-honest until then).
+G3 CUSTOM REPORT BUILDER — "+ Custom report" button exists; function unverified. VERIFY FIRST: if stub, it stays honestly labeled and goes to roadmap with a design doc; do not fake-build a builder in one block.
+
+SEQUENCING: G1/G2 buildable now (render honest zeros); their VERIFICATION completes after the QBO historical import lands.

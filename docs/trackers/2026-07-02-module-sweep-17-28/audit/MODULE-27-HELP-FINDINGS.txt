@@ -1,0 +1,14 @@
+MODULE 27 — HELP (/help) — LIVE AUDIT + ELD NOTE
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep. Console: zero errors.
+
+STATE (verified)
+Help center renders with search and six populated categories: Getting Started (welcome, roles/permissions), Dispatching Loads (dispatch board, booking checklist), Driver Settlements (overview, exceptions/disputes), Banking & Reconciliation (Plaid connect, reconciliation basics), Reports (hub navigation, scheduled reports), Account & Billing (security/passwords, bulk import). Real article content, not placeholders.
+
+DEFECTS
+None live-reproduced.
+
+OBSERVATION
+Article set will need to grow with the accounting buildout (QBO import, opening balances, statements) — content roadmap, not a defect.
+
+ELD (sidebar item 13) — SWEEP NOTE
+eld remains the hidden stub by design (28-item locked config; 27 rendered for owner). Nothing to render-sweep; no change since the locked-decisions doc. Status unchanged: hidden pending build.

@@ -1,0 +1,19 @@
+Block — PHASE FACTORING-PARITY / TASK FACT-PAR-2 — NOA Stamp + Remit-To Enforcement + Letter-of-Release Lifecycle — BUILD-AND-HOLD
+Branch: feat/factoring-noa-remit-enforcement → PR to main
+PREREQ: none (independent of PAR-1; both read customer_factor_assignment).
+
+STANDING ORDERS: foreground only; no retries — STOP paste exact error; 5-min updates CST; confirm worktree; diff --staged --stat before commit; SO#16 v2.
+
+TIER: 2 (invoice rendering + guard rails; no GL). Owner merges.
+
+PARITY BASIS (researched 2026-07-02, cite in PR): Alvys per-subsidiary NOA stamp in Document Configuration printed on invoices ("THIS INVOICE HAS BEEN ASSIGNED TO AND MUST BE PAID [factor remit-to]"); UCC 9-406 — after notice, debtor payment must go to assignee; misdirected payment = contract violation + chargeback; letter of release reassigns receivables back to carrier on factor termination.
+
+BUILD:
+1. NOA CONFIG — per-factor, per-entity: NOA stamp text + factor remit-to address block stored on the factor record (Statements & Settings tab, additive fields). Default template provided; owner edits.
+2. INVOICE STAMP ENFORCEMENT — when the invoice customer has an ACTIVE factor assignment: invoice render (PDF/HTML) MUST print the NOA stamp + factor remit-to in place of the carrier remit-to. HARD GUARD: invoice generation/send for an assigned customer REFUSES (422, explicit message) if the factor record lacks NOA text/remit-to — never silently print carrier remit-to on an assigned account (misdirected-payment prevention; this is the UCC 9-406 money risk).
+3. UNASSIGNED PATH UNCHANGED — customers without assignment keep the carrier remit-to exactly as today (additive-only).
+4. LETTER-OF-RELEASE LIFECYCLE — on factor deactivation (existing owner-gated flow): require an LOR record (date, document upload ref, effective date) before assignments can be released; released customers revert remit-to; audit rows throughout. No deactivation completes with active assignments and no LOR.
+5. Tests: stamp renders for assigned customer; refusal when NOA config missing; unassigned invoice byte-identical to current render (regression proof); LOR gate blocks deactivation; entity isolation.
+
+EVIDENCE IN PR: parity/UCC citations, before/after invoice renders, test output, diff --stat.
+allowed_files: invoice render service/templates (additive branch), factor settings page + routes (additive fields), factor deactivation flow (additive gate), tests, .block-ready json. FORBIDDEN: GL, posting flags, migrations with ALTER on existing tables (additive columns on factoring.factor = ALTER = PROTECTED → if needed, isolate the migration and title [HOLD-FOR-JORGE]).

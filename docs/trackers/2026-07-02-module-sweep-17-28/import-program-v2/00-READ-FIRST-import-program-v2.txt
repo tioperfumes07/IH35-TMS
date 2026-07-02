@@ -1,0 +1,30 @@
+QBO → TMS HISTORICAL IMPORT — PROGRAM V2 (supersedes the 2026-07-02 v1 zip for blocks P0/1/2/3/4; IMPORT-0 Reports client and IMPORT-5 UI stand unchanged from v1)
+Prepared by GUARD 2026-07-02 (CST/Laredo). Every correction below is live-verified in prod DB or repo code this session. Owner is the decision maker; decisions recorded here are his.
+
+WHAT CHANGED FROM V1, AND THE VERIFIED WHY:
+
+1. NEW HARD PREREQUISITE — IMPORT-P0 (JE→QBO push kill-switch).
+   Verified in code: journal-entry-qbo-push.service.ts has NO feature-flag gate, and its skip-probe only protects entries that already carry a qbo_journal_entry_id. An imported JE (id NULL, qbo_sync_pending=false) would proceed to POST to QuickBooks. lib.feature_flags has no JE-push flag to flip — the gate must be BUILT. Without it, importing two years of history risks replaying that history back into the system of record. Three layers: QBO_JE_PUSH_ENABLED default OFF, structural refusal of source_system='qbo_import' independent of the flag, enqueue/replay exclusion — plus a fetch-spy proof of zero HTTP. The masterdata accounts push gets the same echo guard before the TRK COA sync runs.
+
+2. TRK EQUITY — owner's correction, verified live.
+   TRK's QuickBooks realm (1432746210) holds 917 accounts including a full 7-account equity section: Member Contributions (-1,590,728.60), Member- Asset Investment (-157,420.00), Opening Balance Equity (8,964.73), Partner Contribution/Jorge Muñoz, Retained Earnings, Withdrawal Capital-Ana Munoz Loans, Withdrawal Capital-Owner-Jorge Munoz. The TMS mirror had projected only 32 accounts with zero equity — a projection defect, not a fact about TRK's books. IMPORT-1v2 syncs all 917 INCLUDING inactive accounts (required so the 12/31/2023 balance sheet and 2024-2025 GL lines can always resolve their accounts), finds and fixes the root cause of the 32-row drop, and carries the 7 equity accounts as a named acceptance list.
+
+3. OPENING BALANCES — balance-sheet-only as of 12/31/2023 (owner-accepted recommendation).
+   The QBO Balance Sheet's Retained Earnings line already contains all prior-year P&L (QBO computes the close). Importing the full trial balance would drag 2023 P&L balances in and force the TMS to re-derive a fiscal close — dependency + double-count risk. Balance-sheet-only is the QuickBooks/NetSuite conversion standard. One balanced JE per entity (balances by construction; assert 0¢ residual). OBE is a TEMPORARY CLEARING account only: any residual posts there, flags the run 'variance', and creates a visible OBE→Retained-Earnings reclass task. A permanent OBE balance is a defect.
+
+4. TIEOUT HARDENED (IMPORT-4v2): leaf-level, signed by normal balance side, UNION of both sides (an account with balance on only one side is an automatic variance), void-aware on both sides, inactive accounts included.
+
+5. RE-RUN-FORWARD ORCHESTRATION: because QBO re-categorization through 12/31/2025 changes history behind imported months, any re-run of period N (or of the opening balance) marks all later periods STALE; nothing shows tied_out until re-verified forward oldest-first. Schema delta in IMPORT-2v2 ('stale' status, invalidated_by_run_id, is_stale) — still CREATE-only.
+
+6. CURRENCY GUARD: home currency verified per entity before any opening/GL run; any non-home-currency balance aborts with the list. FX opening treatment is an undecided owner call — the engines refuse rather than invent one.
+
+EXECUTION ORDER (strict):
+  IMPORT-0 (v1, unchanged: Reports client, TrialBalance+GeneralLedger+BalanceSheet parsing per v2 needs — coder adds parseBalanceSheet in 3v2)
+  → IMPORT-P0 kill-switch [HOLD-FOR-JORGE] — nothing runs before this is merged + zero-call proven
+  → IMPORT-1v2 TRK full COA (build parallel OK; RUN only after P0)
+  → IMPORT-2v2 schema [HOLD-FOR-JORGE]
+  → IMPORT-3v2 opening balance, balance-sheet-only [HOLD-FOR-JORGE, branch-proof before label]
+  → IMPORT-4v2 GL detail hardened [HOLD-FOR-JORGE, branch-proof before label]
+  → IMPORT-5 (v1, unchanged + STALE state rendering)
+
+STANDING SAFETY (all engines): realm↔opco assert on the unrevoked connection only · advisory lock per opco · source_system='qbo_import' + qbo_sync_pending=false · unmatched account = abort (no guessed mappings) · unbalanced = abort · tieout to the cent or the run fails loudly · void-never-delete · QBO_HISTORICAL_IMPORT_ENABLED default OFF · owner-triggered only · zero QBO writes, proven by fetch-spy in CI and run logs in every branch proof.

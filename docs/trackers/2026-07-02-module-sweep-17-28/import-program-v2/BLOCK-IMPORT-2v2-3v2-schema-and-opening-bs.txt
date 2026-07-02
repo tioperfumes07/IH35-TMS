@@ -1,0 +1,35 @@
+Block 3 of 5 — PHASE QBO-IMPORT-V2 / TASK IMPORT-2v2 + IMPORT-3v2 — Schema delta + Opening Balance Engine (BALANCE-SHEET-ONLY, 12/31/2023) — [HOLD-FOR-JORGE]
+Branch targets: feat/qbo-import-schema (2v2) then feat/qbo-opening-balance-import (3v2). Two PRs, both [HOLD-FOR-JORGE].
+PREREQUISITES for any RUN: IMPORT-P0 merged with zero-call proof; IMPORT-1v2 TRK sync run verified (917 accts, equity present).
+
+STANDING ORDERS: foreground only; no retries — STOP and paste exact error; 5-min live updates CST; confirm worktree; `git diff --staged --stat` before commit; SO#16 v2 + fresh-DB CI validation for the migration.
+
+TIER: 1 both. BUILD-SOLO-AND-HOLD. 3v2 is DESIGN-DOC + DRAFT-CODE + BRANCH-PROOF first (per owner §1.4 for posting code): the PR must contain the full engine code AND a Neon-branch proof pack (real TRANSP + TRK pulls, composed JEs, tieout SQL results) before any label.
+
+=== IMPORT-2v2 — SCHEMA (deltas to the v1 spec; everything else in the v1 IMPORT-2 block stands) ===
+1. accounting.qbo_import_runs.status CHECK adds 'stale' → ('running','tied_out','variance','error','stale').
+2. accounting.qbo_import_runs adds: invalidated_by_run_id uuid NULL REFERENCES accounting.qbo_import_runs(id); basis_home_currency text NOT NULL DEFAULT 'USD'.
+3. accounting.qbo_import_tieouts adds: is_stale boolean NOT NULL DEFAULT false; account_active_at_source boolean NOT NULL DEFAULT true.
+4. Tieout uniqueness stands; all tables CREATE-only, forced RLS, entity-scoped policies, ih35_app grants + DEFAULT PRIVILEGES, per the v1 block. If ANY ALTER on an existing table appears necessary, STOP and report.
+
+=== IMPORT-3v2 — OPENING BALANCE ENGINE (supersedes v1's full-TB approach — OWNER-ACCEPTED RECOMMENDATION) ===
+
+WHY BALANCE-SHEET-ONLY (locked rationale, do not re-open): the QBO Balance Sheet as of 12/31/2023 already contains all 2023-and-prior P&L inside its Retained Earnings line (QBO computes the fiscal close). Importing the full trial balance would bring 2023 P&L account balances into the TMS and require the TMS to re-derive a 2023 year-end close — a dependency and a double-count risk. Balance-sheet-only is the QuickBooks/NetSuite conversion standard: opening position = balance sheet accounts (incl. RE); P&L truth begins at the 01/01/2024 detail import.
+
+ENGINE — apps/backend/src/integrations/qbo/import/opening-balance.service.ts:
+1. runOpeningBalanceImport(opco): realm↔opco assert (unrevoked connection only), per-opco advisory lock, refuse unless IMPORT-P0 flag/gates verified present in code at runtime (probe the refusal path exists — belt and suspenders), refuse unless entity COA sync is complete (TRK: equity acceptance list present).
+2. Pull QBO **BalanceSheet report** as of 2023-12-31, accounting_method='Accrual', per entity, via qboReport + a parseBalanceSheet added to the parser module (leaf-account rows only — parse the Rows tree to leaf ColData with qbo account ids; section summaries are validation, not import rows). Assert QBO's own equation to the cent: TotalAssets = TotalLiabilities + TotalEquity from the report summaries.
+3. HOME CURRENCY: read the entity home currency (CompanyInfo or connection metadata — verify source, no guess). Every parsed line must be home-currency; if the report exposes any non-home-currency structure or IMPORT-1v2 flagged foreign-currency accounts with balances → ABORT with the list. FX opening treatment is an owner decision that has not been made; do not invent one.
+4. Map every leaf line to catalogs.accounts by (opco, qbo_account_id) — INCLUDING inactive accounts (IMPORT-1v2 synced them; account_active_at_source recorded on the tieout row). ANY unmatched line = abort with the full unmatched list; fix path = re-run COA sync.
+5. Compose ONE balanced opening JE per entity: entry_date 2023-12-31, source_system='qbo_import', source='qbo_opening_balance_sheet', qbo_sync_pending=false, deterministic idempotency_key 'qbo-opening-bs:{opco}:2023-12-31'. Lines: each balance-sheet account on its natural signed side (Retained Earnings included as QBO reports it). The entry balances BY CONSTRUCTION; assert residual = 0 cents. IF a nonzero residual ever appears (rounding/report anomaly): post the residual line to the entity's Opening Balance Equity account, mark the run 'variance', and create a visible follow-up record "OBE residual {amount} — owner reclass OBE→Retained Earnings required". OBE is a TEMPORARY CLEARING account only — a permanent OBE balance is a defect, never an outcome.
+6. Idempotent re-run (QBO 2023 balances can shift during the cleanup): upsert on idempotency_key — atomically replace the entry's postings, version_int++, audit row per run (created/replaced + variance). A re-run also marks all later GL-detail runs/tieouts for the entity STALE (forward invalidation — see IMPORT-4v2).
+7. Set opening_balance_cents + opening_balance_as_of='2023-12-31' on balance-sheet accounts from the report (same txn). P&L accounts get NO opening balance (by design).
+8. Cash mirror: same run pulls TrialBalance as of 2023-12-31 accounting_method='Cash' → accounting.qbo_cash_basis_balances upsert (report data for the cash-basis financials during the QBO-SoR window; unmatched rows land matched=false, logged loudly, do not abort the accrual JE).
+9. Tieout rows per account (leaf-level, signed): qbo_balance_cents vs tms_balance_cents; nonzero variance → run 'variance', loud failure. Owner-triggered only ('qbo.import.opening_balance').
+
+TESTS: balanced-by-construction assert; unmatched abort; inactive-account mapping resolves; FX-presence abort; idempotent replace; forward-invalidation marks later runs stale; OBE-residual path posts + flags; realm mismatch refusal; import JEs never reach the push path (fetch-spy, reusing the P0 harness); RLS write scoping (TRANSP run writes zero TRK rows).
+
+BRANCH-PROOF PACK REQUIRED BEFORE LABEL (GUARD runs independently on a fresh Neon branch): TRANSP real pull → one balanced opening JE, residual 0, per-account tieout variance 0; TRK same after its COA sync (equity lines present in the JE — Member Contributions et al. on the credit side); re-run zero dupes; zero QBO POSTs recorded; prod untouched.
+
+allowed_files (3v2): apps/backend/src/integrations/qbo/import/**, qbo-report-parser.ts (parseBalanceSheet additive), admin-jobs additive entry, tests, scripts/verify-import-idempotency-keys.mjs, .block-ready/IMPORT-3v2.json.
+FORBIDDEN: touching the push service (P0's scope), period-close code, posting flags, existing posters, any TB-full-import fallback path.

@@ -1,0 +1,14 @@
+Block — PHASE PARITY / TASK CUSTVEND-PAR-1 — Credit-Limit Enforcement + Vendor Credits + Statement Verification — BUILD-AND-HOLD
+Branch: feat/custvend-parity-1 → PR to main
+PREREQ: G2 requires checking docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md FIRST — if vendor credits are already tracked there, link and skip that part (no double-build).
+
+STANDING ORDERS: foreground only; no retries — STOP paste exact error; 5-min updates CST; confirm worktree; diff --staged --stat; SO#16 v2.
+TIER: 2 (G1/G2 touch AR/AP records but post nothing to GL; GL stays behind existing flags). Owner merges.
+
+PARITY BASIS (researched 2026-07-02, cite in PR): QBO warns/permission-gates transactions exceeding a stored credit limit; QBO vendor credits = record → apply to open bills → remainder stays on file; QBO statements = Balance Forward / Open Item / Transaction types per customer.
+
+1. G1 CREDIT-LIMIT ENFORCEMENT: at invoice creation AND load booking for a customer with credit_limit set — compute open exposure (open invoices + unbilled booked loads); if new txn exceeds limit → blocking warning with explicit override (role-gated: Manager+; audit row on override). Factor-sourced limits show "Factor-set (FARO)" in the warning. Never silent. Tests: under/at/over limit, override audit, no-limit customers unaffected.
+2. G2 VENDOR CREDITS (conditional per prereq): vendor credit record (vendor, date, amount, category/account ref, memo) + apply-to-bill flow reducing bill balance, remainder on file, void-never-delete, entity-scoped, NO GL posting (marks qbo-parity data only until posting flags turn on; GL treatment rides the existing bill-GL chain later). Tests: partial apply, over-apply refused, remainder math.
+3. G3 STATEMENT VERIFICATION CHECKLIST (post-import, no code unless mismatch): script/checklist comparing TMS statements vs QBO statements for 3 sample customers across the 3 types once AR data exists — attach results to the import program's verification pack.
+
+allowed_files: invoices/loads create paths (additive guard), vendors module (additive credit surface), tests, .block-ready json. FORBIDDEN: GL posting, migrations with ALTER on existing tables (new vendor_credits table = CREATE-only OK, forced RLS, entity-scoped, grants per SO#16), pager/badge files (SWEEP-FIX lane).
