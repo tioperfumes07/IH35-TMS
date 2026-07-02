@@ -29,6 +29,7 @@
     const loadId = String(data?.load_id ?? "").trim();
     const settlementId = String(data?.settlement_id ?? "").trim();
     const disputeId = String(data?.dispute_id ?? "").trim();
+    const threadId = String(data?.thread_id ?? "").trim();
     if (kind === "load_assigned" || kind === "load_reassigned_away") {
       return loadId ? `/loads/${loadId}` : "/today";
     }
@@ -39,6 +40,9 @@
       return disputeId ? `/my-disputes?highlight=${disputeId}` : "/my-disputes";
     }
     if (kind === "hos_warning") return "/hos";
+    if (kind === "chat_confirmation" || kind === "chat_message" || kind === "cash_advance_decision") {
+      return threadId ? `/chat?threadId=${threadId}` : "/chat";
+    }
     if (kind === "dispatch_message") return "/messages";
     return "/today";
   }
@@ -106,13 +110,18 @@
           raw = event.data?.text?.();
         }
         const payload = parsePushPayload(raw);
-        await self.registration.showNotification(payload.title ?? "IH35 Driver", {
+        const perThreadTag = payload.tag ?? "ih35-driver";
+        const notificationOptions = {
           body: payload.body ?? "",
-          tag: payload.tag ?? "ih35-driver",
+          tag: perThreadTag,
+          renotify: true,
+          requireInteraction: true,
+          vibrate: [400, 150, 400, 150, 400],
           data: payload.data ?? {},
           icon: "/icons/icon-192.png",
           badge: "/icons/icon-192.png"
-        });
+        };
+        await self.registration.showNotification(payload.title ?? "IH35 Driver", notificationOptions);
       })()
     );
   });

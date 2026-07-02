@@ -631,5 +631,13 @@
     "request_advance": "Request cash advance",
     "archived_banner": "Archived — load closed, read-only",
     "queued": "{{n}} queued — sending when online"
+  },
+  "loud_alert": {
+    "tag": "Action required",
+    "confirmation_title": "Dispatch needs your confirmation",
+    "confirmation_body": "Tap Acknowledge to confirm you received this.",
+    "acknowledge": "Acknowledge",
+    "acknowledging": "Acknowledging…",
+    "hint": "This alert stays until you acknowledge it."
   }
 }

@@ -321,6 +321,7 @@ import { initializeQboCdcPollCron } from "./cron/qbo-cdc-poll.cron.js";
 import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cron.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
+import { initializeChatConfirmationEscalationCron } from "./cron/chat-confirmation-escalation.cron.js";
 import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
 import { initializeSamsaraWebhookProjectionCron } from "./cron/samsara-webhook-projection.cron.js";
 import { initializeSamsaraRemoteCountCollectorCron } from "./cron/samsara-remote-count-collector.cron.js";
@@ -1023,6 +1024,13 @@ async function main() {
     app.log.info("[STARTUP] cash-advance-request-expiry-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] cash-advance-request-expiry-cron failed");
+  }
+
+  try {
+    initializeChatConfirmationEscalationCron(app);
+    app.log.info("[STARTUP] chat-confirmation-escalation-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] chat-confirmation-escalation-cron failed");
   }
 
   try {

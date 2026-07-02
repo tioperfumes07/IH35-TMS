@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useAuth } from "./auth/useAuth";
 import { BottomNav } from "./components/BottomNav";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { LoudAlertWatcher } from "./components/LoudAlertWatcher";
 import { PendingSyncBar } from "./components/PendingSyncBar";
 import { AcceptancePage } from "./pages/Acceptance";
 import { CashAdvanceListPage } from "./pages/CashAdvanceListPage";
@@ -58,6 +59,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
     <>
       <SyncBootstrap />
       {children}
+      <LoudAlertWatcher />
       <PendingSyncBar />
       <BottomNav />
     </>

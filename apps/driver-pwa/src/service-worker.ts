@@ -43,6 +43,7 @@ function resolvePushDeepLink(data?: Record<string, string>): string {
   const loadId = String(data?.load_id ?? "").trim();
   const settlementId = String(data?.settlement_id ?? "").trim();
   const disputeId = String(data?.dispute_id ?? "").trim();
+  const threadId = String(data?.thread_id ?? "").trim();
 
   if (kind === "load_assigned" || kind === "load_reassigned_away") {
     return loadId ? `/loads/${loadId}` : "/today";
@@ -54,6 +55,10 @@ function resolvePushDeepLink(data?: Record<string, string>): string {
     return disputeId ? `/my-disputes?highlight=${disputeId}` : "/my-disputes";
   }
   if (kind === "hos_warning") return "/hos";
+  // NOTIF-A: per-load dispatch chat (confirmations, cash-advance decisions) deep-link into the thread.
+  if (kind === "chat_confirmation" || kind === "chat_message" || kind === "cash_advance_decision") {
+    return threadId ? `/chat?threadId=${threadId}` : "/chat";
+  }
   if (kind === "dispatch_message") return "/messages";
   return "/today";
 }
@@ -136,13 +141,23 @@ self.addEventListener("push", (event) => {
         raw = event.data?.text?.();
       }
       const payload = parsePushPayload(raw);
-      await self.registration.showNotification(payload.title ?? "IH35 Driver", {
+      // NOTIF-A (A2) — loud, can't-miss background notification:
+      //   requireInteraction: stays on screen until the driver acts (no auto-dismiss).
+      //   renotify + per-thread tag: a re-fired escalation re-alerts instead of silently collapsing.
+      //   vibrate: haptic buzz on arrival (where the platform honors it).
+      const perThreadTag = payload.tag ?? "ih35-driver";
+      // renotify + vibrate are valid Notification options but absent from the lib DOM type → widen.
+      const notificationOptions: NotificationOptions & { renotify?: boolean; vibrate?: number[] } = {
         body: payload.body ?? "",
-        tag: payload.tag ?? "ih35-driver",
+        tag: perThreadTag,
+        renotify: true,
+        requireInteraction: true,
+        vibrate: [400, 150, 400, 150, 400],
         data: payload.data ?? {},
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-192.png",
-      });
+      };
+      await self.registration.showNotification(payload.title ?? "IH35 Driver", notificationOptions);
     })()
   );
 });

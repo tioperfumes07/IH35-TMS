@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
@@ -20,8 +20,15 @@ export function ChatPage() {
   const { t } = useTranslation();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [activeThreadId, setActiveThreadId] = useState<string>("");
   const [draft, setDraft] = useState("");
+
+  // NOTIF-A: open the thread deep-linked from a notification click (/chat?threadId=…).
+  useEffect(() => {
+    const deepLinked = searchParams.get("threadId");
+    if (deepLinked) setActiveThreadId(deepLinked);
+  }, [searchParams]);
 
   const threadsQuery = useQuery({
     queryKey: ["pwa", "chat-threads"],

@@ -95,16 +95,47 @@ const TERMINAL_LOAD_STATUSES =
  * List the caller's threads (RLS already restricts to threads they participate in). CHAT-6: a
  * load-thread is presented as 'archived' once its load reaches a terminal status (or was explicitly
  * archived) — read-only derivation, no write-path hook, no migration.
+ *
+ * NOTIF-A (A1/A3): two read-only derived booleans — no migration, no schema change:
+ *   - has_pending_confirmation      — any active confirmation_request with NO active confirmation_ack
+ *                                     (any age) → drives the driver PWA foreground loud alert.
+ *   - has_unacknowledged_confirmation — the same, but older than the escalation badge threshold
+ *                                     (post-max-retries) → drives the office UNACKNOWLEDGED badge.
+ * A read receipt is NOT an ack (§ NOTIF-A) — only a real confirmation_ack clears these.
  */
-export async function listThreads(client: Client): Promise<Array<Record<string, unknown>>> {
+export async function listThreads(
+  client: Client,
+  opts: { unackBadgeMinutes?: number } = {},
+): Promise<Array<Record<string, unknown>>> {
+  const unackBadgeMinutes = opts.unackBadgeMinutes ?? 17;
   const res = await client.query(
     `SELECT t.id, t.kind, t.load_id, t.load_ref_cache, t.subject,
             CASE WHEN t.status = 'archived' OR l.status::text IN ${TERMINAL_LOAD_STATUSES}
                  THEN 'archived' ELSE t.status END AS status,
-            t.last_seq, t.updated_at
+            t.last_seq, t.updated_at,
+            EXISTS (
+              SELECT 1 FROM chat.messages cm
+              WHERE cm.thread_id = t.id AND cm.msg_type = 'confirmation_request' AND cm.status = 'active'
+                AND NOT EXISTS (
+                  SELECT 1 FROM chat.messages ack
+                  WHERE ack.references_message_id = cm.id
+                    AND ack.msg_type = 'confirmation_ack' AND ack.status = 'active'
+                )
+            ) AS has_pending_confirmation,
+            EXISTS (
+              SELECT 1 FROM chat.messages cm2
+              WHERE cm2.thread_id = t.id AND cm2.msg_type = 'confirmation_request' AND cm2.status = 'active'
+                AND cm2.server_ts < now() - ($1 * interval '1 minute')
+                AND NOT EXISTS (
+                  SELECT 1 FROM chat.messages ack2
+                  WHERE ack2.references_message_id = cm2.id
+                    AND ack2.msg_type = 'confirmation_ack' AND ack2.status = 'active'
+                )
+            ) AS has_unacknowledged_confirmation
      FROM chat.threads t
      LEFT JOIN mdata.loads l ON l.id = t.load_id AND l.operating_company_id = t.operating_company_id
      ORDER BY t.updated_at DESC LIMIT 200`,
+    [unackBadgeMinutes],
   );
   return res.rows;
 }
