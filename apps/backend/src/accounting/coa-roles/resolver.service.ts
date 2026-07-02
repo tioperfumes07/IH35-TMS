@@ -16,6 +16,16 @@ export const COA_ROLE_VALUES = [
   "lease_receivable",
   "interest_income",
   "gain_loss_on_disposal",
+  // CODER-34 factoring secured-borrowing roles (per-opco TRANSP) — migration
+  // 202607013000_factoring_secured_borrowing_coa_roles.sql. factor_reserve_held is the canonical reserve
+  // role (an ASSET; supersedes the code's old factor_reserve_default, which the shape-fallback mis-typed
+  // as a Liability). factor_fee_expense/default_interest_expense are sub-accounts of Interest & Financing.
+  "factoring_advance_liability",
+  "ar_assigned_to_factor",
+  "factoring_recoursed_ar",
+  "default_interest_expense",
+  "factor_reserve_held",
+  "factor_fee_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

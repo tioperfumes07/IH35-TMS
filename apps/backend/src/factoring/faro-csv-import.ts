@@ -1,5 +1,10 @@
 import { upsertFaroDailyImport } from "../data-infra/data-infra.service.js";
 import { postReserveMovement } from "./reserve.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import {
+  FACTORING_GL_POSTING_FLAG,
+  postFactoringAdvanceEvent,
+} from "../accounting/factoring-posting/poster.service.js";
 
 export const FARO_CSV_REQUIRED_HEADERS = [
   "invoice number",
@@ -207,6 +212,104 @@ async function applyInvoiceAndReserveUpdates(
   return { invoices_updated, reserve_movements };
 }
 
+// CODER-34 scope C — the FARO funding report is the posting TRIGGER + the reconciliation ("match our
+// numbers with FARO's") point. We map each imported invoice line to its factoring_advance (batch), sum
+// FARO's ACTUAL gross/reserve/fee per advance, and (1) flag any variance vs our expected figures BEFORE
+// posting, and (2) when FACTORING_GL_POSTING_ENABLED is ON for this entity, drive the secured-borrowing
+// FUNDING post with FARO's actuals. The poster is idempotent (memo-keyed) so a re-import cannot double-post
+// (draft-vs-posted immutability): a funded batch's funding JE posts once; a later FARO correction is a
+// separate, reason-coded true-up adjustment, never a silent edit of the posted entry.
+export type FaroFundingVariance = {
+  factoring_advance_id: string;
+  display_id: string;
+  expected_invoice_total_cents: number;
+  actual_gross_cents: number;
+  expected_reserve_cents: number;
+  actual_reserve_cents: number;
+  expected_fee_cents: number;
+  actual_fee_cents: number;
+  has_variance: boolean;
+};
+
+type AdvanceActuals = {
+  factoring_advance_id: string;
+  display_id: string;
+  expected_invoice_total_cents: number;
+  expected_reserve_cents: number;
+  expected_fee_cents: number;
+  actual_gross_cents: number;
+  actual_reserve_cents: number;
+  actual_fee_cents: number;
+};
+
+async function aggregateFaroActualsByAdvance(
+  client: Queryable,
+  companyId: string,
+  lines: FaroCsvLine[]
+): Promise<AdvanceActuals[]> {
+  const byAdvance = new Map<string, AdvanceActuals>();
+  for (const line of lines) {
+    const res = await client.query<{
+      factoring_advance_id: string | null;
+      display_id: string | null;
+      invoice_total_cents: number | null;
+      reserve_amount_cents: number | null;
+      factor_fee_cents: number | null;
+    }>(
+      `
+        SELECT
+          fa.id::text            AS factoring_advance_id,
+          fa.display_id          AS display_id,
+          fa.invoice_total_cents::int AS invoice_total_cents,
+          fa.reserve_amount_cents::int AS reserve_amount_cents,
+          fa.factor_fee_cents::int     AS factor_fee_cents
+        FROM accounting.invoices i
+        JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+        WHERE i.operating_company_id = $1::uuid
+          AND i.display_id = $2::text
+        LIMIT 1
+      `,
+      [companyId, line.invoice_number]
+    );
+    const row = res.rows[0];
+    if (!row?.factoring_advance_id) continue;
+    const key = row.factoring_advance_id;
+    const entry = byAdvance.get(key) ?? {
+      factoring_advance_id: key,
+      display_id: String(row.display_id ?? ""),
+      expected_invoice_total_cents: Number(row.invoice_total_cents ?? 0),
+      expected_reserve_cents: Number(row.reserve_amount_cents ?? 0),
+      expected_fee_cents: Number(row.factor_fee_cents ?? 0),
+      actual_gross_cents: 0,
+      actual_reserve_cents: 0,
+      actual_fee_cents: 0,
+    };
+    entry.actual_gross_cents += Number(line.gross_amount_cents ?? 0);
+    entry.actual_reserve_cents += Number(line.reserve_amount_cents ?? 0);
+    entry.actual_fee_cents += Number(line.fee_amount_cents ?? 0);
+    byAdvance.set(key, entry);
+  }
+  return Array.from(byAdvance.values());
+}
+
+function toVariance(a: AdvanceActuals): FaroFundingVariance {
+  const has_variance =
+    a.actual_gross_cents !== a.expected_invoice_total_cents ||
+    a.actual_reserve_cents !== a.expected_reserve_cents ||
+    a.actual_fee_cents !== a.expected_fee_cents;
+  return {
+    factoring_advance_id: a.factoring_advance_id,
+    display_id: a.display_id,
+    expected_invoice_total_cents: a.expected_invoice_total_cents,
+    actual_gross_cents: a.actual_gross_cents,
+    expected_reserve_cents: a.expected_reserve_cents,
+    actual_reserve_cents: a.actual_reserve_cents,
+    expected_fee_cents: a.expected_fee_cents,
+    actual_fee_cents: a.actual_fee_cents,
+    has_variance,
+  };
+}
+
 export async function commitFaroCsvImport(input: {
   userId: string;
   operatingCompanyId: string;
@@ -229,15 +332,52 @@ export async function commitFaroCsvImport(input: {
   });
 
   const { withCurrentUser } = await import("../auth/db.js");
-  const sideEffects = await withCurrentUser(input.userId, async (client) => {
+  const { sideEffects, advanceActuals, postingEnabled } = await withCurrentUser(input.userId, async (client) => {
     await client.query(`SET LOCAL app.operating_company_id = '${input.operatingCompanyId}'`);
     const factorId = await resolveActiveFactorId(client, input.operatingCompanyId);
-    return applyInvoiceAndReserveUpdates(client, input.operatingCompanyId, parsed.lines, factorId);
+    const effects = await applyInvoiceAndReserveUpdates(client, input.operatingCompanyId, parsed.lines, factorId);
+    // Reconciliation point 2 (at funding): aggregate FARO's actuals per advance for variance flagging + the
+    // funding-post trigger. Read-only here (posting happens after this tx, via the flag-gated poster).
+    const actuals = await aggregateFaroActualsByAdvance(client, input.operatingCompanyId, parsed.lines);
+    const enabled = await isEnabled(client, FACTORING_GL_POSTING_FLAG, { operating_company_id: input.operatingCompanyId });
+    return { sideEffects: effects, advanceActuals: actuals, postingEnabled: enabled };
   });
+
+  const variances = advanceActuals.map(toVariance);
+
+  // FUNDING post trigger — only when the per-entity flag is ON (default OFF => inert). The poster itself
+  // re-checks the flag and is idempotent, so this is safe even if the flag flips between the read and the call.
+  const funding_posts: Array<{ factoring_advance_id: string; posted: boolean; reason?: string; journal_entry_id?: string }> = [];
+  if (postingEnabled) {
+    for (const a of advanceActuals) {
+      const result = await postFactoringAdvanceEvent({
+        operating_company_id: input.operatingCompanyId,
+        factoring_advance_id: a.factoring_advance_id,
+        actor_user_id: input.userId,
+        advanced_at_iso: statementDate,
+        funding_figures: {
+          invoice_total_cents: a.actual_gross_cents,
+          reserve_cents: a.actual_reserve_cents,
+          fee_cents: a.actual_fee_cents,
+          ach_cents: 0, // FARO CSV carries no ACH/transaction-fee column; supply via funding_figures when available.
+        },
+      });
+      funding_posts.push({
+        factoring_advance_id: a.factoring_advance_id,
+        posted: result.posted,
+        reason: result.reason,
+        journal_entry_id: result.journal_entry_id,
+      });
+    }
+  }
 
   return {
     import_id: importResult.id,
     line_count: parsed.lines.length,
     ...sideEffects,
+    factoring_gl_posting_enabled: postingEnabled,
+    variances,
+    variance_count: variances.filter((v) => v.has_variance).length,
+    funding_posts,
   };
 }
