@@ -179,6 +179,13 @@ async function relationExists(
   return Boolean(res.rows[0]?.exists);
 }
 
+// Postgres SQLSTATE codes that mean "this relation/column/function/schema is simply
+// not present in THIS environment" (a feature not yet deployed) — safe to skip. ANY
+// other error (RLS 42501, constraint, type mismatch, connection loss, 25P02 abort) is
+// a REAL failure: for a dispatch SAFETY gate, silently swallowing it into an empty
+// result would let the gate fail OPEN. Those must propagate and fail CLOSED.
+const RELATION_ABSENT_CODES = new Set(["42P01", "42703", "42883", "3F000", "42704"]);
+
 async function optionalQuery<T = Record<string, unknown>>(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
   sql: string,
@@ -190,10 +197,16 @@ async function optionalQuery<T = Record<string, unknown>>(
     const res = await client.query<T>(sql, values);
     await client.query(`RELEASE SAVEPOINT ${savepoint}`);
     return res.rows;
-  } catch {
+  } catch (err) {
     await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`).catch(() => undefined);
     await client.query(`RELEASE SAVEPOINT ${savepoint}`).catch(() => undefined);
-    return [] as T[];
+    const code = (err as { code?: string } | null)?.code;
+    if (code && RELATION_ABSENT_CODES.has(code)) {
+      // Feature/relation not present in this environment — skip gracefully.
+      return [] as T[];
+    }
+    // Real query error → fail CLOSED (never silently open a dispatch gate).
+    throw err;
   }
 }
 
@@ -630,6 +643,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       }
     }
 
+    // HOS violation gate. SCOPE: primary driver only. A co-driver
+    // (assigned_secondary_driver_id) is intentionally NOT HOS-gated here because in
+    // team operation a co-driver in HOS violation does not necessarily block the load
+    // — the qualified driver drives while the other rests. Full team-HOS eligibility
+    // (who-can-drive-now) belongs with the HOS/settlement engine, not this booking
+    // gate. NOTE: the co-driver IS still hard-gated for active/CDL/medical below
+    // (E_DRIVER_NOT_QUALIFIED covers every assigned driver).
     if (input.assigned_primary_driver_id) {
       const hosRows = await optionalQuery(
         client,
@@ -779,6 +799,106 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
               insurance_coverage_gap_warnings: insuranceCoverageWarnings,
             },
           };
+        }
+      }
+    }
+
+    // SAFETY HARD GATE (BT-3): the real booking path must independently enforce driver
+    // qualification — deactivated / archived drivers, expired-or-missing CDL, and
+    // expired-or-missing DOT medical card are DOT hard-stops. This mirrors the
+    // pre-dispatch-validator checks (which only run on the advisory panel endpoint);
+    // before this gate the booking service itself performed NO driver credential
+    // validation. Evaluated for EVERY assigned driver (primary + secondary co-driver +
+    // team members). BLOCKS the booking (422) — it does not merely warn.
+    //
+    // A DIRECT client.query (not optionalQuery): mdata.drivers always exists, so any
+    // error here must fail CLOSED (abort the booking), never be swallowed into [].
+    {
+      const gatedDriverIds = await collectAssignedDriverIdsForDrugGate(client, input);
+      if (gatedDriverIds.length > 0) {
+        const credRows = await client.query<{
+          id: string;
+          driver_name: string | null;
+          is_deactivated: boolean;
+          is_archived: boolean;
+          cdl_missing: boolean;
+          cdl_expired: boolean;
+          cdl_expires_at: string | null;
+          med_missing: boolean;
+          med_expired: boolean;
+          med_expiry_date: string | null;
+        }>(
+          `
+            SELECT
+              d.id::text AS id,
+              CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+              (d.deactivated_at IS NOT NULL) AS is_deactivated,
+              (d.archived_at IS NOT NULL) AS is_archived,
+              (d.cdl_expires_at IS NULL) AS cdl_missing,
+              (d.cdl_expires_at IS NOT NULL AND d.cdl_expires_at < CURRENT_DATE) AS cdl_expired,
+              d.cdl_expires_at::text AS cdl_expires_at,
+              (COALESCE(mc.expiry_date, d.dot_medical_expires_at) IS NULL) AS med_missing,
+              (COALESCE(mc.expiry_date, d.dot_medical_expires_at) IS NOT NULL
+                AND COALESCE(mc.expiry_date, d.dot_medical_expires_at) < CURRENT_DATE) AS med_expired,
+              COALESCE(mc.expiry_date, d.dot_medical_expires_at)::text AS med_expiry_date
+            FROM mdata.drivers d
+            LEFT JOIN LATERAL (
+              SELECT expiry_date
+              FROM safety.medical_cards
+              WHERE driver_id = d.id
+                AND operating_company_id = $2::uuid
+                AND voided_at IS NULL
+              ORDER BY expiry_date DESC
+              LIMIT 1
+            ) mc ON true
+            WHERE d.id = ANY($1::uuid[])
+              AND d.operating_company_id = $2::uuid
+          `,
+          [gatedDriverIds, input.operating_company_id]
+        );
+
+        for (const dr of credRows.rows) {
+          const reasons: string[] = [];
+          if (dr.is_deactivated) reasons.push("driver_deactivated");
+          if (dr.is_archived) reasons.push("driver_archived");
+          if (dr.cdl_missing) reasons.push("cdl_missing");
+          else if (dr.cdl_expired) reasons.push("cdl_expired");
+          if (dr.med_missing) reasons.push("medical_card_missing");
+          else if (dr.med_expired) reasons.push("medical_card_expired");
+
+          if (reasons.length > 0) {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.book_load_blocked_by_driver_qualification",
+              {
+                operating_company_id: input.operating_company_id,
+                driver_id: dr.id,
+                block_code: "E_DRIVER_NOT_QUALIFIED",
+                reasons,
+                cdl_expires_at: dr.cdl_expires_at,
+                medical_expiry_date: dr.med_expiry_date,
+              },
+              "warning",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            return {
+              kind: "error",
+              status: 422,
+              payload: {
+                error: "E_DRIVER_NOT_QUALIFIED",
+                message: `Driver ${dr.driver_name ?? dr.id} cannot be dispatched: ${reasons.join(", ")}.`,
+                details: {
+                  driver_id: dr.id,
+                  reasons,
+                  cdl_expires_at: dr.cdl_expires_at,
+                  medical_expiry_date: dr.med_expiry_date,
+                },
+                wf_044_maintenance_warnings: wf044Warnings,
+                insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+              },
+            };
+          }
         }
       }
     }

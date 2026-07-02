@@ -102,10 +102,13 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
         [company.data.operating_company_id, params.data.driver_id]
       );
       return res.rows.map((row) => {
-        const days = Number((row as { days_to_expiry?: number | null }).days_to_expiry);
+        // Number(null) === 0 would coerce a NULL expiry (no card on file) into an
+        // "amber" pill; keep null as null so it maps to the "unknown" pill.
+        const raw = (row as { days_to_expiry?: number | null }).days_to_expiry;
+        const days = raw == null ? null : Number(raw);
         return {
           ...row,
-          expiry_pill: expiryPill(Number.isFinite(days) ? days : null),
+          expiry_pill: expiryPill(days != null && Number.isFinite(days) ? days : null),
         };
       });
     });
