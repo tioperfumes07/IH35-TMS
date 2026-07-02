@@ -482,6 +482,7 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         AND expl.is_postable = true
       LEFT JOIN catalogs.items it
         ON it.qbo_item_id = il.qbo_item_id
+        AND it.operating_company_id = $2::uuid
         AND it.deactivated_at IS NULL
       LEFT JOIN catalogs.accounts itm
         ON itm.id = it.default_income_account_id

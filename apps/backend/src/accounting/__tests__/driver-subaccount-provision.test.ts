@@ -43,7 +43,11 @@ describe("driver advance sub-account provisioning", () => {
     // parent resolved by NAME + type, not a hardcoded uuid
     const parentLookup = sqls[0].sql;
     expect(parentLookup).toContain("account_name = $1");
-    expect(sqls[0].params).toEqual(["Driver Cash Advance", "Asset"]);
+    expect(parentLookup).toContain("operating_company_id = $3::uuid"); // AF-1 entity scope
+    expect(sqls[0].params).toEqual(["Driver Cash Advance", "Asset", "oc"]);
+    // INSERT carries operating_company_id (per-entity nesting, no cross-entity leak)
+    expect(insert.sql).toContain("operating_company_id");
+    expect(insert.params[4]).toBe("oc");
   });
 
   it("is idempotent — skips when the sub-account already exists (no INSERT)", async () => {

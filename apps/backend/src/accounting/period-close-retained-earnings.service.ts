@@ -122,9 +122,11 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
         SELECT id::text
         FROM catalogs.accounts
         WHERE account_type = 'Equity'
+          AND operating_company_id = $1::uuid
         ORDER BY account_number NULLS LAST
         LIMIT 1
-      `
+      `,
+      [params.operating_company_id]
     );
     reAccountId = anyEq.rows[0]?.id ?? null;
   }

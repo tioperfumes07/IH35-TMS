@@ -67,6 +67,10 @@ export async function runDriverSubAccountBackfill(
   input: { operatingCompanyId: string; apply?: boolean; drivers?: BackfillDriver[]; actorUserId?: string }
 ): Promise<BackfillReport> {
   const apply = input.apply === true; // DEFAULT OFF — explicit `true` required for any write.
+  // AF-1 entity scope: catalogs.accounts is per-entity. Set the GUC so the plan reads + provision writes
+  // resolve/land inside THIS entity's chart only (otherwise RLS returns 0 rows, or under bypass a driver's
+  // sub-accounts would nest under another entity's parent — a cross-entity GL leak).
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
   const drivers = input.drivers ?? (await loadDriverRoster(client, input.operatingCompanyId));
 
   const rows: BackfillRow[] = [];
@@ -79,11 +83,13 @@ export async function runDriverSubAccountBackfill(
       parentName: DRIVER_ADVANCE_PARENT_NAME,
       parentType: "Asset",
       subAccountName: driverAdvanceSubAccountName(d.driverName),
+      operatingCompanyId: input.operatingCompanyId,
     });
     const escrowPlan = await planDriverSubAccount(client, {
       parentName: DRIVER_ESCROW_PARENT_NAME,
       parentType: "Liability",
       subAccountName: driverEscrowSubAccountName(d.driverName),
+      operatingCompanyId: input.operatingCompanyId,
     });
 
     if (assetPlan.action === "create") totals.asset_to_create += 1;
