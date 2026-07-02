@@ -1,3 +1,8 @@
+## Rule #0 — QUALITY STANDARD (LOCKED, supersedes on conflict)
+Before any work, read docs/specs/QUALITY-STANDARD-LOCKED.md. It is the first law of this project and wins over every other rule or doc on conflict. Summary: never take the short/easy way that adds risk; never patch, never defer, never guess; verify against live data and against QuickBooks / NetSuite / McLeod / Alvys standards and accepted accounting principles; no 'done' without proof; when speed vs trust, choose trust; when moving-forward vs protecting the company, protect the company.
+
+---
+
 # IH35-TMS — PERMANENT CURSOR RULES (read at start of EVERY block)
 
 > **Cursor: read this file before starting any block. These rules supersede defaults and apply to every task.**

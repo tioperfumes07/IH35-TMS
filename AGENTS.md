@@ -1,5 +1,7 @@
 # IH35-TMS — Agent coordination
 
+> **Rule #0 (LOCKED):** Before any work, read [docs/specs/QUALITY-STANDARD-LOCKED.md](docs/specs/QUALITY-STANDARD-LOCKED.md) — the first standing law of this project; it supersedes every other rule/doc on conflict.
+
 ## Dual lanes (always parallel when queue has work)
 
 | Lane | Path | Role |
