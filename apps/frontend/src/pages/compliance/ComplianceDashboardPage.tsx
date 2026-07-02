@@ -18,16 +18,18 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
 import { HosTrackerSection } from "./HosTrackerSection";
 import { HosViewerSection } from "./HosViewerSection";
+import { RequiredDocumentsSection } from "./RequiredDocumentsSection";
 import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
-type ComplianceTab = "overview" | "hos_tracker" | "hos_viewer" | "violations" | "hos_history";
+type ComplianceTab = "overview" | "hos_tracker" | "hos_viewer" | "violations" | "hos_history" | "required_docs";
 const COMPLIANCE_TABS: { id: ComplianceTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "hos_tracker", label: "HOS Tracker" },
   { id: "hos_viewer", label: "HOS Viewer" },
   { id: "violations", label: "Violations" },
   { id: "hos_history", label: "HOS History" },
+  { id: "required_docs", label: "Required Documents" },
 ];
 
 function ComplianceEmptyState({ title, message }: { title: string; message: string }) {
@@ -154,6 +156,11 @@ export function ComplianceDashboardPage() {
       ) : null}
       {tab === "hos_history" ? (
         <ComplianceEmptyState title="HOS History" message="No HOS history in this range." />
+      ) : null}
+      {tab === "required_docs" ? (
+        <SectionErrorBoundary name="Required Documents">
+          <RequiredDocumentsSection operatingCompanyId={companyId} />
+        </SectionErrorBoundary>
       ) : null}
 
       {tab !== "overview" ? null : (
