@@ -1,0 +1,42 @@
+{
+  "block_id": "IMPORT-0",
+  "status": "pending",
+  "classification": "Integration client — Tier-3 (read-only QBO Reports client + pure parsers; no migration, no posting, no flag flip, no schema). Self-mergeable on green per the standing auto-merge rule.",
+  "phase": "QBO-IMPORT",
+  "task": "IMPORT-0 QBO Reports API client (TrialBalance + GeneralLedger, v2 response shape) + exact-cents parsers + monthly date chunker. Generic qboReport(reportName) reusing the existing auth/retry/circuit-breaker; parseTrialBalance/parseGeneralLedger resolve every field by column metadata (never index) and coerce '' -> 0; amountToCents is exact BigInt string math (never parseFloat/Number). Foundation for IMPORT-1..5.",
+  "branch": "feat/qbo-reports-client",
+  "lane": "coder",
+  "details": [
+    "Tier-3 non-financial: ships NO migration and touches NO accounting.* schema or money-posting path -> self-mergeable on green.",
+    "New files: apps/backend/src/integrations/qbo/qbo-report-parser.ts (parsers + amountToCents + chunkDateRangeMonthly), its vitest, scripts/verify-qbo-money-parse.mjs (permanent guard).",
+    "Extends (additive): apps/backend/src/integrations/qbo/qbo-client.ts (adds qboReport + report envelope types; no change to existing exports).",
+    "Also fixed (surfaced by the new guard): sync-inbound-apply-guard.ts (centsFromQboMoney) AND forensic-import.service.ts (amountCents) were Math.round(Number(amount|txn.TotalAmt)*100) -> now exact amountToCents. Pre-existing latent float-precision bugs in QBO sync-conflict comparison + forensic-evidence amounts; non-financial (read/compare/flag only, no posting/schema/migration).",
+    "Adversarial code review (subagent) fixed HIGH bug before merge: GL txn id was read via firstCellId (first non-empty id across ALL cells) -> under v2 column reorder the Name cell's customer id could win -> corrupt/unstable posting_line_key. Now idFromColumns scans ONLY transaction columns (Date/Num/Type). Regression test added (Name cell carries a customer id, Date cell the txn id). Also: TB no longer double-counts a section-header account; parsers return skippedRowCount telemetry; parseISODate validates date semantics.",
+    "GL id finding (Report Entities Reference + CData column docs, 2026-07-02): GL exposes NO txn-id as a `columns` value; the stable txn id is carried on the JSON ColData cell `id` attribute; there is NO native per-posting-line id, so posting_line_key is a DOCUMENTED deterministic composite {qbo_txn_id}:{qbo_account_id}:{seq}, derived transparently in the parser (not a silent synthetic).",
+    "v2 Reports migration (deadline 2026-08-31): parsers treat '' as zero, coerce every money value via BigInt string math, and resolve columns by ColTitle/ColType so column re-ordering between v1/v2 backends cannot corrupt output. Both shapes fixture-tested.",
+    "Guard verify:qbo-money-parse registered at the tail of verify:arch-design; self-tested to flag Number(amount)/parseFloat(balanceStr) while passing the exact wrapper Number(amountToCents(...)) and dotted cents-integer reads."
+  ],
+  "allowed_files": [
+    ".block-ready/IMPORT-0.json",
+    "apps/backend/src/integrations/qbo/qbo-client.ts",
+    "apps/backend/src/integrations/qbo/qbo-report-parser.ts",
+    "apps/backend/src/integrations/qbo/__tests__/qbo-report-parser.test.ts",
+    "apps/backend/src/integrations/qbo/sync-inbound-apply-guard.ts",
+    "apps/backend/src/integrations/qbo/forensic-import.service.ts",
+    "scripts/verify-qbo-money-parse.mjs",
+    "package.json"
+  ],
+  "extends_existing": [
+    "apps/backend/src/integrations/qbo/qbo-client.ts",
+    "apps/backend/src/integrations/qbo/sync-inbound-apply-guard.ts",
+    "apps/backend/src/integrations/qbo/forensic-import.service.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "flag": null,
+  "flag_default": null,
+  "depends_on": [],
+  "registered_on": "2026-07-02"
+}

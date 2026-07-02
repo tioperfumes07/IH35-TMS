@@ -1,10 +1,18 @@
 import type { PoolClient } from "pg";
 import { insertQboSyncConflictRow } from "./qbo-sync-conflict.util.js";
+import { amountToCents } from "./qbo-report-parser.js";
 
 function centsFromQboMoney(amount: unknown): number | null {
-  const n = Number(amount);
-  if (!Number.isFinite(n)) return null;
-  return Math.round(n * 100);
+  // Exact integer-cents via string math (amountToCents), not Math.round(Number(amount) * 100) — float
+  // multiply loses precision on money values and would flag phantom sync conflicts. Non-numeric /
+  // non-finite inputs return null (unchanged behavior), preserving the "unknown → don't compare" path.
+  if (amount === null || amount === undefined || amount === "") return null;
+  if (typeof amount !== "number" && typeof amount !== "string") return null;
+  try {
+    return Number(amountToCents(amount));
+  } catch {
+    return null;
+  }
 }
 
 function parsePgTs(raw: string | null): number {
