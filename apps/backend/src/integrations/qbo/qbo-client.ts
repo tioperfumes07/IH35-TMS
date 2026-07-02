@@ -175,3 +175,87 @@ export async function qboCompanyContext(operatingCompanyId: string): Promise<Qbo
   };
 }
 
+// ── QBO Reports API (IMPORT-0) ──────────────────────────────────────────────
+// GET {base}/{realmId}/reports/{ReportName}?start_date&end_date&accounting_method&minorversion=75
+// Generic by design (reportName param) so TrialBalance / GeneralLedger today and
+// JournalReport / ProfitAndLoss / BalanceSheet later are callable with no client change.
+//
+// v2 response-shape note (Intuit Reports API v2 migration, deadline 2026-08-31): empty cells
+// come back as "" (never null/0). The report *envelope* below is intentionally loose — every
+// consumer (qbo-report-parser.ts) resolves columns by ColTitle/ColType metadata and coerces
+// "" → 0, never by index and never by numeric assumption. See qbo-report-parser.ts.
+
+export type QboAccountingMethod = "Accrual" | "Cash";
+
+/** A single cell of a report row. QBO attaches `id`/`href` to cells that link to an entity
+ *  (e.g. the account-section header cell carries the account id; a GL transaction row's first
+ *  cell carries the transaction id). `value` is "" for empty cells under the v2 shape. */
+export type QboReportColData = {
+  value?: string;
+  id?: string;
+  href?: string;
+};
+
+/** Column metadata. Resolve every field by ColTitle/ColType — never by positional index. */
+export type QboReportColumn = {
+  ColTitle?: string;
+  ColType?: string;
+  MetaData?: Array<{ Name: string; Value: string }>;
+};
+
+/** Report rows are recursive: a row may be a data row (ColData), a section
+ *  (Header + nested Rows + Summary), or a summary/total row. */
+export type QboReportRow = {
+  type?: string;
+  group?: string;
+  Header?: { ColData?: QboReportColData[] };
+  Rows?: { Row?: QboReportRow[] };
+  Summary?: { ColData?: QboReportColData[] };
+  ColData?: QboReportColData[];
+};
+
+export type QboReportResponse = {
+  Header?: {
+    ReportName?: string;
+    StartPeriod?: string;
+    EndPeriod?: string;
+    ReportBasis?: string;
+    Currency?: string;
+    Time?: string;
+    Option?: Array<{ Name: string; Value: string }>;
+  };
+  Columns?: { Column?: QboReportColumn[] };
+  Rows?: { Row?: QboReportRow[] };
+};
+
+/**
+ * Fetch a QBO report. Same auth / retry / circuit-breaker / redacted-logging / error path as qboQuery.
+ * The caller supplies params (start_date, end_date, accounting_method, columns, …); minorversion=75 is
+ * always appended. The caller is responsible for chunking date ranges (≤6 months best practice) — use
+ * chunkDateRangeMonthly from qbo-report-parser.ts.
+ */
+export async function qboReport<T = QboReportResponse>(
+  ctx: QboApiContext,
+  reportName: string,
+  params: Record<string, string> = {}
+): Promise<T> {
+  const { accessToken, realmId } = await ensureAccessToken(ctx);
+  const search = new URLSearchParams(params);
+  search.set("minorversion", "75");
+  const url = `${qboApiBase()}/${realmId}/reports/${encodeURIComponent(reportName)}?${search.toString()}`;
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    Authorization: `Bearer ${accessToken}`,
+  };
+  console.info({ url, headers: redactHeaders(headers) }, "QBO report");
+  const response = await requestWithRetry(url, { method: "GET", headers }, ctx.onRetry);
+  const responseText = await response.text();
+  if (!response.ok) {
+    const preview = sanitizeBodyPreview(responseText);
+    console.error({ url, status: response.status, bodyPreview: preview }, "QBO report failed");
+    throw new Error(`QBO report failed: status=${response.status}; body=${preview}`);
+  }
+  const payload = JSON.parse(responseText) as T;
+  return payload;
+}
+
