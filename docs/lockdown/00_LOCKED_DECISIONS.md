@@ -97,6 +97,7 @@ See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).
 
 8.6 **Factoring = secured borrowing (recourse), not a sale.** (Faro today → RTS planned.) See `[[cpa-locked-decisions-2026-07-01]]` + `[[driver-escrow-is-liability]]`.
 
-8.7 **Cutover.** After the 12/31/2025 book-lock, TMS becomes authoritative; period-lock + a final court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation window.
+8.7 **Cutover — EVENT-gated, not date-gated.** Authority flips at the **cutover ceremony** (final clone + to-the-cent tieout proving the books agree + book-lock), NOT on a calendar date. **12/31/2025 was the target and has already passed — we remain parallel until the ceremony completes; no agent may treat the date as permission to flip a push flag.** At cutover TMS becomes authoritative; period-lock + a final court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation window.
+8.8 **Owner decisions LOCKED 2026-07-02** (details in `docs/specs/ACCOUNTING-ARCHITECTURE.md` "Locked owner decisions"): (1) factoring_advance push GATED OFF (folded into the JE kill-switch); (2) all push flags OFF for all entities, EVENT-gated; (3) driver→QBO vendor = no synchronous create, reconcile links it; (4) FIN-2 approved; (5) retire the sync counter; (6) required-doc regulatory defaults, warn-first; (7) canonical Faro vendor `3585f27e`; (8) BS-only opening + a mandatory RE-roll tieout test in IMPORT-4v2. Reconcile: AM bank pass reads QBO's real register (not the sync queue) + row-level match.
 
 **Canonical cross-refs:** `docs/specs/TMS-QBO-RECONCILIATION.md`, `docs/specs/QBO-CLONE-PROGRAM.md`, the QBO-IMPORT program blocks, and auto-memory `qbo-import-design-corrections` + `cpa-locked-decisions-2026-07-01`.

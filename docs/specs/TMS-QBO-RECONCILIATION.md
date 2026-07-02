@@ -43,6 +43,20 @@ RECON's PM categorization-diff must read QBO's **actual** GL/bank transactions v
 (`integrations/qbo/qbo-reconcile-read.service.ts`), **never** "what TMS pushed" (the `qbo.sync_*` queue) —
 the queue is TMS's own record and would mask exactly the divergences RECON exists to catch.
 
+### RECON-01 BUILD CORRECTIONS (locked 2026-07-02 — MUST be in the build)
+The daily reconcile is a **correctness test that both books independently registered the same events**
+(bank feeds, expenses, bills, payments). Two corrections to the AM bank pass below are mandatory:
+
+- **R2 (CRITICAL) — read QBO's REAL bank register.** The AM pass must compare against QBO's actual account
+  register (`TransactionList` / `GeneralLedger` report **per bank account**), **NOT** `listQboReconAlerts`
+  / `listQboSyncConflicts` (sync-era leftovers). Reading the sync queue compares TMS to itself and defeats
+  the entire purpose.
+- **R1 — bank match must be ROW-LEVEL, not count+sum.** Add a per-transaction match sub-pass (match by
+  **date + amount + reference**); every unmatched row on either side is its own exception. Count+sum alone
+  is blind to a missing $500 debit paired with a different wrong $500 debit (same count, same sum).
+- Sequencing: the document-level "same bills/payments created in both" test is **MD-RECON** (last clone
+  block) — it switches on after MD-1…5; until then the daily reconcile covers bank + categorization only.
+
 ---
 
 ## 1. PURPOSE + STANDARDS — benchmark, ADOPT / SURPASS
