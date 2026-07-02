@@ -22,7 +22,7 @@ export function LoudAlertOverlay({ visible, title, body, acknowledging, onAcknow
       aria-modal="true"
       aria-label={title}
       data-testid="loud-alert-overlay"
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 bg-[#1f2a44] px-6 text-center"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 overflow-y-auto bg-[#1f2a44] px-6 py-8 text-center"
     >
       <div className="text-xs font-semibold uppercase tracking-widest text-slate-300">
         {t("loud_alert.tag", "Action required")}
