@@ -221,10 +221,59 @@ const GL_V2_REORDERED: QboReportResponse = {
   },
 };
 
+// CRITICAL regression fixture: the Name column comes FIRST (v2 reorder) and its cell carries the
+// customer list-id, while the Date cell carries the real transaction id. The txn id must come from the
+// transaction columns, NEVER from the Name cell — otherwise qbo_txn_id/posting_line_key silently become
+// the customer id and destabilize the import idempotency key.
+const GL_NAME_CELL_HAS_ID: QboReportResponse = {
+  Header: { ReportName: "GeneralLedger", ReportBasis: "Accrual", StartPeriod: "2024-01-01", EndPeriod: "2024-01-31", Currency: "USD" },
+  Columns: {
+    Column: [
+      { ColTitle: "Name", ColType: "String" },
+      { ColTitle: "Date", ColType: "Date" },
+      { ColTitle: "Transaction Type", ColType: "String" },
+      { ColTitle: "Debit", ColType: "Money" },
+      { ColTitle: "Credit", ColType: "Money" },
+    ],
+  },
+  Rows: {
+    Row: [
+      {
+        type: "Section",
+        Header: { ColData: [{ value: "Checking", id: "35" }] },
+        Rows: {
+          Row: [
+            {
+              type: "Data",
+              ColData: [
+                { value: "Acme Corp", id: "CUST-99" }, // Name cell carries the CUSTOMER id (a trap)
+                { value: "2024-01-05", id: "TXN-1001" }, // Date cell carries the real transaction id
+                { value: "Invoice" },
+                { value: "1200.00" },
+                { value: "" },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  },
+};
+
 describe("parseGeneralLedger", () => {
+  it("takes the txn id from transaction columns, never the Name cell's customer id (v2 reorder)", () => {
+    const parsed = parseGeneralLedger(GL_NAME_CELL_HAS_ID);
+    expect(parsed.lines).toHaveLength(1);
+    expect(parsed.lines[0].qbo_txn_id).toBe("TXN-1001"); // NOT "CUST-99"
+    expect(parsed.lines[0].posting_line_key.startsWith("TXN-1001:35:")).toBe(true);
+    expect(parsed.lines[0].name).toBe("Acme Corp");
+    expect(parsed.lines[0].debit_cents).toBe(120000n);
+  });
+
   it("flattens transaction lines grouped by account, skipping non-transaction rows", () => {
     const parsed = parseGeneralLedger(GL_V1);
     expect(parsed.lines).toHaveLength(3); // Beginning Balance skipped
+    expect(parsed.skippedRowCount).toBe(1); // the one Beginning-Balance row
     const byKey = new Map(parsed.lines.map((l) => [l.posting_line_key, l]));
 
     const invoiceDebit = byKey.get("1001:35:0");
@@ -310,5 +359,12 @@ describe("chunkDateRangeMonthly", () => {
   it("handles a single-day range and rejects an inverted range", () => {
     expect(chunkDateRangeMonthly("2024-06-15", "2024-06-15")).toEqual([{ start: "2024-06-15", end: "2024-06-15" }]);
     expect(() => chunkDateRangeMonthly("2024-06-15", "2024-06-10")).toThrow(/after end/);
+  });
+
+  it("rejects semantically-invalid dates (not just malformed strings)", () => {
+    expect(() => chunkDateRangeMonthly("2024-13-01", "2024-13-05")).toThrow(/Invalid month/);
+    expect(() => chunkDateRangeMonthly("2024-02-30", "2024-03-01")).toThrow(/Invalid day/);
+    expect(() => chunkDateRangeMonthly("2025-02-29", "2025-03-01")).toThrow(/Invalid day/); // 2025 not leap
+    expect(() => chunkDateRangeMonthly("2024/01/01", "2024-02-01")).toThrow(/YYYY-MM-DD/);
   });
 });

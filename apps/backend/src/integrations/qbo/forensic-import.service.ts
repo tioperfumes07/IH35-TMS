@@ -10,6 +10,7 @@ import {
   type QboApiContext,
 } from "./qbo-client.js";
 import { getQboConnectionStatus } from "./qbo-oauth.service.js";
+import { amountToCents } from "./qbo-report-parser.js";
 import { auditBatchEvent, auditForensicImportError } from "./forensic-audit.service.js";
 import {
   appendForensicProgressError,
@@ -70,9 +71,16 @@ function getTxId(txn: QboTransaction) {
   return String(txn.Id ?? "");
 }
 
-function amountCents(txn: QboTransaction) {
-  const raw = Number(txn.TotalAmt ?? txn.Amount ?? 0);
-  return Number.isFinite(raw) ? Math.round(raw * 100) : null;
+function amountCents(txn: QboTransaction): number | null {
+  // Exact integer cents via string math (amountToCents), not Math.round(Number(...) * 100) — QBO money
+  // fields are decimal-dollar strings and float-multiply loses precision on forensic evidence amounts.
+  const raw = txn.TotalAmt ?? txn.Amount ?? 0;
+  if (typeof raw !== "number" && typeof raw !== "string") return null;
+  try {
+    return Number(amountToCents(raw));
+  } catch {
+    return null;
+  }
 }
 
 function getCreateTime(txn: QboTransaction) {

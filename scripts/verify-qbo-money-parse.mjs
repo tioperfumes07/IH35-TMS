@@ -22,9 +22,16 @@ const SCAN_DIR = path.join(ROOT, "apps", "backend", "src", "integrations", "qbo"
 // converts an already-exact BigInt) nor dotted reads like Number(tms.total_cents ?? 0) (cents-integer
 // columns). It flags the real hazard: float-parsing a raw money value.
 const MONEY = "[A-Za-z0-9_]*(amount|cents|balance|debit|credit)[A-Za-z0-9_]*(?![A-Za-z0-9_(])";
+// QBO API objects expose money as DECIMAL-DOLLAR strings on PascalCase fields (Amount / Balance /
+// TotalAmt / HomeTotalAmt / HomeBalance / Amt). Float-parsing those (Number(txn.TotalAmt)) is the exact
+// hazard this guard exists to stop, and a dotted read isn't caught by the identifier pattern above — so
+// flag it explicitly. Use amountToCents(...) instead.
+const QBO_FIELD = "[A-Za-z0-9_]+\\.(TotalAmt|HomeTotalAmt|HomeBalance|Balance|Amount|Amt)\\b";
 const BANNED = [
   new RegExp(`parseFloat\\s*\\(\\s*${MONEY}`, "i"),
   new RegExp(`\\bNumber\\s*\\(\\s*${MONEY}`, "i"),
+  new RegExp(`parseFloat\\s*\\(\\s*${QBO_FIELD}`),
+  new RegExp(`\\bNumber\\s*\\(\\s*${QBO_FIELD}`),
 ];
 
 function walk(dir, out = []) {

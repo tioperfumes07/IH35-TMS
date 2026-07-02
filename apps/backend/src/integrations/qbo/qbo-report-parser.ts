@@ -102,11 +102,27 @@ function cellValue(colData: QboReportColData[] | undefined, idx: number): string
   return colData[idx]?.value ?? "";
 }
 
-/** First non-empty `id` attribute across a row's cells (QBO puts the entity id on the linking cell). */
+/** First non-empty `id` attribute across a row's cells (QBO puts the entity id on the linking cell).
+ *  Use ONLY for single-entity rows (an account-section header, which links to exactly one account). */
 function firstCellId(colData: QboReportColData[] | undefined): string {
   if (!colData) return "";
   for (const cell of colData) {
     if (cell?.id && cell.id.trim() !== "") return cell.id.trim();
+  }
+  return "";
+}
+
+/** First non-empty `id` found among a specific, ordered set of columns. Critical for GL transaction rows:
+ *  QBO attaches `id`/`href` to EVERY entity-linking cell — the Name cell carries the customer/vendor
+ *  list-id, not the transaction id — so scanning all cells (firstCellId) would return the wrong id under
+ *  v2 column reordering and destabilize posting_line_key. We scan only the transaction-identifying columns
+ *  (Date / Num / Transaction Type), which link to the transaction itself. */
+function idFromColumns(colData: QboReportColData[] | undefined, indices: number[]): string {
+  if (!colData) return "";
+  for (const idx of indices) {
+    if (idx < 0) continue;
+    const id = colData[idx]?.id;
+    if (id && id.trim() !== "") return id.trim();
   }
   return "";
 }
@@ -130,6 +146,8 @@ export type ParsedTrialBalance = {
   endPeriod: string; // ISO date — the "as of" date for a TB
   currency: string;
   lines: TrialBalanceLine[];
+  /** Count of ColData rows dropped for lacking an account id (grand-total/summary rows). */
+  skippedRowCount: number;
 };
 
 /**
@@ -145,27 +163,26 @@ export function parseTrialBalance(report: QboReportResponse): ParsedTrialBalance
 
   const acctCol = accountIdx >= 0 ? accountIdx : 0; // account is conventionally the first column
   const lines: TrialBalanceLine[] = [];
+  let skippedRowCount = 0;
 
   const walk = (rows: QboReportRow[] | undefined) => {
     for (const row of flattenRows(rows)) {
       if (row.Rows?.Row) {
-        // A section header may itself be an account with an id (parent account) — capture it too.
-        const headerId = firstCellId(row.Header?.ColData);
-        if (headerId) {
-          lines.push({
-            qbo_account_id: headerId,
-            account_name: cellValue(row.Header?.ColData, acctCol) || cellValue(row.Header?.ColData, 0),
-            debit_cents: amountToCents(cellValue(row.Summary?.ColData ?? row.Header?.ColData, debitIdx)),
-            credit_cents: amountToCents(cellValue(row.Summary?.ColData ?? row.Header?.ColData, creditIdx)),
-          });
-        }
+        // Section header = a GROUPING row (e.g. "Bank Accounts"), NOT an account itself — its balance is
+        // the sum of its children, so we do NOT push it (that would double-count against the leaf rows we
+        // recurse into next). Real QBO TB is flat; if a future report ever put a real account balance only
+        // on a section header, the per-account tieout (IMPORT-3/4) fails loud rather than silently
+        // double-counting here.
         walk(row.Rows.Row);
         continue;
       }
       const colData = row.ColData;
       if (!colData) continue;
       const acctId = colData[acctCol]?.id?.trim() ?? "";
-      if (!acctId) continue; // summary / grand-total row → skip
+      if (!acctId) {
+        skippedRowCount += 1; // summary / grand-total row (no account id) → skip
+        continue;
+      }
       lines.push({
         qbo_account_id: acctId,
         account_name: cellValue(colData, acctCol),
@@ -182,6 +199,7 @@ export function parseTrialBalance(report: QboReportResponse): ParsedTrialBalance
     endPeriod: report.Header?.EndPeriod ?? "",
     currency: report.Header?.Currency ?? "",
     lines,
+    skippedRowCount,
   };
 }
 
@@ -209,6 +227,9 @@ export type ParsedGeneralLedger = {
   endPeriod: string;
   currency: string;
   lines: GeneralLedgerLine[];
+  /** Count of ColData rows dropped for lacking a transaction id (Beginning-Balance/total rows). Lets the
+   *  import engine sanity-check that no REAL posting silently vanished before the tieout runs. */
+  skippedRowCount: number;
 };
 
 /**
@@ -229,6 +250,7 @@ export function parseGeneralLedger(report: QboReportResponse): ParsedGeneralLedg
   const amountIdx = findColIndex(columns, { title: ["Amount"] });
 
   const lines: GeneralLedgerLine[] = [];
+  let skippedRowCount = 0;
   // seq counter per (txn, account) so the composite posting_line_key is stable and unique within a report.
   const seqByTxnAccount = new Map<string, number>();
 
@@ -244,8 +266,13 @@ export function parseGeneralLedger(report: QboReportResponse): ParsedGeneralLedg
       const colData = row.ColData;
       if (!colData) continue;
 
-      const txnId = firstCellId(colData);
-      if (!txnId) continue; // Beginning Balance / total / non-transaction row → skip
+      // Resolve the transaction id ONLY from transaction-identifying columns (Date/Num/Type) — never
+      // from the Name cell (which carries the customer/vendor id). See idFromColumns.
+      const txnId = idFromColumns(colData, [dateIdx, docIdx, typeIdx]);
+      if (!txnId) {
+        skippedRowCount += 1; // Beginning Balance / total / non-transaction row (no txn id) → skip
+        continue;
+      }
 
       // Debit/Credit: prefer explicit columns; fall back to a signed Amount column if that's all we got.
       let debit: bigint;
@@ -286,6 +313,7 @@ export function parseGeneralLedger(report: QboReportResponse): ParsedGeneralLedg
     endPeriod: report.Header?.EndPeriod ?? "",
     currency: report.Header?.Currency ?? "",
     lines,
+    skippedRowCount,
   };
 }
 
@@ -296,7 +324,14 @@ type YMD = { y: number; m: number; d: number }; // m is 1-12
 function parseISODate(iso: string): YMD {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
   if (!match) throw new Error(`Expected YYYY-MM-DD date, got: ${JSON.stringify(iso)}`);
-  return { y: Number(match[1]), m: Number(match[2]), d: Number(match[3]) };
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  // Validate semantics, not just format — a nonsense month/day (e.g. 2024-13-40) would otherwise feed
+  // garbage into the month chunker.
+  if (m < 1 || m > 12) throw new Error(`Invalid month in date: ${JSON.stringify(iso)}`);
+  if (d < 1 || d > daysInMonth(y, m)) throw new Error(`Invalid day in date: ${JSON.stringify(iso)}`);
+  return { y, m, d };
 }
 
 function daysInMonth(y: number, m: number): number {
