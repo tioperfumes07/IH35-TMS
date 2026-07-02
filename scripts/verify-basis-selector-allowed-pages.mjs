@@ -9,6 +9,11 @@ const allowedImportPages = new Set([
   "apps/frontend/src/pages/reports/TrialBalancePage.tsx",
   "apps/frontend/src/pages/reports/ProfitLossPage.tsx",
   "apps/frontend/src/pages/reports/ReportsHome.tsx",
+  // FIN-19 read-only statements page (flag FINANCE_STATEMENTS_UI_ENABLED, OFF):
+  // basis legitimately feeds the P&L/BS/TB queries here. Landed after this
+  // allowlist was written and was only ever flagged because this guard never
+  // ran (arch-design runner poison-pill, now fixed).
+  "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx",
 ]);
 
 const deniedPages = [
