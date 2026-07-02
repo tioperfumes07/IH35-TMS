@@ -687,6 +687,7 @@
     "verify:samsara-hos-readiness-no-secret": "node scripts/verify-samsara-hos-readiness-no-secret.mjs",
     "verify:advance-recovery-load-id": "node scripts/verify-advance-recovery-load-id.mjs",
     "verify:af1-coa-role-binding-heal": "node scripts/verify-af1-coa-role-binding-heal.mjs",
+    "verify:coa-resolver-entity-scope": "node scripts/verify-coa-resolver-entity-scope.mjs",
     "verify:bookload-stop-boolean-coercion": "node scripts/verify-bookload-stop-boolean-coercion.mjs",
     "verify:multi-entity-separation": "node scripts/verify-multi-entity-separation.mjs",
     "verify:sql-write-targets": "node scripts/verify-sql-write-targets.mjs",
