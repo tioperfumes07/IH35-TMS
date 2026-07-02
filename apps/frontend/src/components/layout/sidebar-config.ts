@@ -121,7 +121,9 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   tasks: { id: "tasks", label: "TASKS", Icon: CheckSquare, to: "/tasks" },
   "cash-flow": { id: "cash-flow", label: "CASH FLOW", Icon: LineChart, to: "/cash-flow" },
   settlements: { id: "settlements", label: "SETTLEMENTS", Icon: Receipt, to: "/driver-finance/settlements" },
-  finance: { id: "finance", label: "FINANCE HUB", Icon: TrendingUp, to: "/finance" },
+  // FIN-2: "FINANCE HUB" lands on the real Hub dashboard (/finance/hub), not the placeholder Overview stub.
+  // Overview stays reachable as a tab (FinanceModuleTabs) and in the sidebar flyout; no route removed.
+  finance: { id: "finance", label: "FINANCE HUB", Icon: TrendingUp, to: "/finance/hub" },
   inventory: { id: "inventory", label: "INVENTORY", Icon: Package, to: "/inventory" },
   users: {
     id: "users",

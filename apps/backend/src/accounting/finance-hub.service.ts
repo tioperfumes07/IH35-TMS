@@ -107,10 +107,15 @@ async function readApTotals(
 async function readCurrentPeriod(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
   operatingCompanyId: string,
-): Promise<{ period_label: string | null; status: string | null } | null> {
+): Promise<{ period_label: string | null; status: string | null; covers_today: boolean } | null> {
+  // FIN-1 honesty: a period is only "current" if CURRENT_DATE actually falls inside it. The old ordering
+  // preferred a covering period but still returned the most-recent one when NONE covered today — mislabeling
+  // a stale/future period as the current open period (the fabricated-period defect). We now surface
+  // covers_today so the caller can refuse to present a non-current period as current.
   const res = await client.query(
     `
-      SELECT period_label, status
+      SELECT period_label, status,
+        (CURRENT_DATE BETWEEN period_start AND period_end) AS covers_today
       FROM accounting.periods
       WHERE operating_company_id = $1::uuid
       ORDER BY
@@ -122,7 +127,27 @@ async function readCurrentPeriod(
   );
   const r = res.rows[0];
   if (!r) return null;
-  return { period_label: r.period_label == null ? null : String(r.period_label), status: r.status == null ? null : String(r.status) };
+  return {
+    period_label: r.period_label == null ? null : String(r.period_label),
+    status: r.status == null ? null : String(r.status),
+    covers_today: r.covers_today === true,
+  };
+}
+
+/**
+ * FIN-1 honesty: turn the current-period read into the KPI's display cells WITHOUT ever presenting a
+ * non-current period as current. Pure + exported so it can be unit-tested for all three truthful states.
+ */
+export function describeCurrentPeriodKpi(
+  period: { period_label: string | null; status: string | null; covers_today: boolean } | null,
+): { value: string; secondary: string } {
+  if (!period) {
+    return { value: "No periods initialized", secondary: "No accounting periods defined — set one up" };
+  }
+  if (!period.covers_today) {
+    return { value: "No open period for today", secondary: "No period covers today — set the current period up" };
+  }
+  return { value: period.period_label ?? "Unlabeled period", secondary: `Status: ${period.status ?? "unknown"}` };
 }
 
 async function readFixedAssets(
@@ -235,10 +260,10 @@ export async function getFinanceHubOverview(input: {
       },
       {
         key: "accounting_period",
+        // FIN-1 honesty: never present a non-current period as "current" (see describeCurrentPeriodKpi).
         label: "Current accounting period",
         value_kind: "text",
-        value: period?.period_label ?? "Not set up",
-        secondary: period ? `Status: ${period.status ?? "unknown"}` : "No accounting periods defined",
+        ...describeCurrentPeriodKpi(period),
         drill_to: "/finance/statements",
         drill_label: "View financial statements",
       },
