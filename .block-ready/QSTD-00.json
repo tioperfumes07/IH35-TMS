@@ -1,0 +1,20 @@
+{
+  "block_id": "QSTD-00",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "GOVERNANCE",
+  "task": "Make Jorge's quality standard the first standing law (Rule #0). Adds docs/specs/QUALITY-STANDARD-LOCKED.md (verbatim), wires a Rule #0 pointer at the top of CURSOR-PERMANENT-RULES.md, and a static CI guard (verify-quality-standard-present.mjs) chained into verify:arch-design that fails if the doc is missing, an anchor phrase is removed, or Rule #0 is dropped. Tier 3: docs + static guard only — no app code, no migration, no flag, no schema. NOTE: registered via the inline package.json verify:arch-design chain (the reliable path) rather than a scripts/verify-guards/ directory wrapper, because guard 139-verify-kpi-sources-of-truth-exists.mjs self-exits at import time and short-circuits loadExtraGuards — a directory wrapper would never execute (fake-green). This landmine is flagged for a separate block.",
+  "branch": "docs/quality-standard-locked",
+  "lane": "QSTD",
+  "allowed_files": [
+    ".block-ready/QSTD-00.json",
+    "docs/specs/QUALITY-STANDARD-LOCKED.md",
+    "docs/specs/CURSOR-PERMANENT-RULES.md",
+    "scripts/verify-quality-standard-present.mjs",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": []
+}
