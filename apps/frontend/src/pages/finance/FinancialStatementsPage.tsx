@@ -20,7 +20,9 @@ import {
 // FIN-19 — Finance-Hub financial statements (P&L / Balance Sheet / Trial Balance).
 // READ-ONLY: every fetch is a GET against the existing accounting report endpoints; nothing
 // here writes, posts, or mutates. Per-entity only (one operating_company_id at a time) — no
-// cross-entity totals. Gated behind the OFF-by-default flag FINANCE_STATEMENTS_UI_ENABLED.
+// cross-entity totals. Gated behind flag FINANCE_STATEMENTS_UI_ENABLED — default_enabled=true in
+// lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no
+// money posting.
 
 type ReportTab = "pl" | "bs" | "tb";
 
