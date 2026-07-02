@@ -20,13 +20,15 @@ const routes = fs.readFileSync(routesPath, "utf8");
 
 const requiredRouteSnippets = [
   "const companyQuerySchema = z.object",
-  "SET LOCAL app.operating_company_id",
+  // Tenant scope: legacy `SET LOCAL app.operating_company_id` OR SQLi-hardened parameterized set_config.
+  /(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/,
   "operating_company_id = $1::uuid",
   "operating_company_id = $2::uuid",
 ];
 
 for (const snippet of requiredRouteSnippets) {
-  if (!routes.includes(snippet)) fail(`routes must enforce tenant scoping with: ${snippet}`);
+  const present = snippet instanceof RegExp ? snippet.test(routes) : routes.includes(snippet);
+  if (!present) fail(`routes must enforce tenant scoping with: ${snippet}`);
 }
 
 const requiredMigrationSnippets = [

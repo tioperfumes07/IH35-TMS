@@ -33,7 +33,9 @@ requirePattern(indexSource, /initializeSafetyRemindersCron/, "index must import/
 requirePattern(routesSource, /app\.get\("\/api\/v1\/safety\/reminders"/, "missing reminders list route");
 requirePattern(routesSource, /app\.patch\("\/api\/v1\/safety\/reminders\/:id"/, "missing reminders patch route");
 requirePattern(routesSource, /refreshSafetyReminders/, "routes must refresh reminders snapshot");
-requirePattern(routesSource, /SET LOCAL app\.operating_company_id/, "routes must set tenant scope");
+// Tenant scope may be set via the legacy `SET LOCAL app.operating_company_id = '...'` form OR the
+// SQLi-hardened parameterized `set_config('app.operating_company_id', $1, true)` form — accept both.
+requirePattern(routesSource, /(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/, "routes must set tenant scope");
 
 requirePattern(cronSource, /safety\.reminders_cron/, "cron job key must be safety.reminders_cron");
 requirePattern(cronSource, /safety\.compliance_reminders/, "cron must write compliance reminders table");

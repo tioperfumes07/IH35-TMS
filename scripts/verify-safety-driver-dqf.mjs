@@ -30,7 +30,9 @@ requirePattern(indexSource, /await registerSafetyDriverQualificationRoutes\(app\
 requirePattern(routesSource, /app\.get\("\/api\/v1\/safety\/driver-qualification\/drivers\/:driver_id\/items"/, "missing list route");
 requirePattern(routesSource, /app\.post\("\/api\/v1\/safety\/driver-qualification\/items"/, "missing create route");
 requirePattern(routesSource, /app\.patch\("\/api\/v1\/safety\/driver-qualification\/items\/:id"/, "missing patch route");
-requirePattern(routesSource, /SET LOCAL app\.operating_company_id/, "routes must set tenant scope");
+// Tenant scope may be set via the legacy `SET LOCAL app.operating_company_id = '...'` form OR the
+// SQLi-hardened parameterized `set_config('app.operating_company_id', $1, true)` form — accept both.
+requirePattern(routesSource, /(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/, "routes must set tenant scope");
 requirePattern(routesSource, /expiry_pill/, "routes must compute expiry pill");
 
 requirePattern(migrationSource, /driver_qualification_files_status_check/, "migration must enforce status check");
