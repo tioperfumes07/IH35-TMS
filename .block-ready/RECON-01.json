@@ -1,0 +1,49 @@
+{
+  "block_id": "RECON-01",
+  "status": "pending-gated",
+  "classification": "FINANCIAL — Tier-2 gated migration (accounting.* schema; read-only, no money movement)",
+  "phase": "TMS-QBO-Reconciliation",
+  "task": "RECON-01 Schema + scheduled jobs + exception engine: additive CREATE TABLE accounting.recon_runs + accounting.recon_exceptions (idempotent, RLS ENABLE+FORCE canonical entity policy, ih35_app grants, void-not-delete), two cron passes (AM bank-count, PM categorization-diff) on the background_jobs pattern, and the read-only exception engine (writes ONLY recon_*, no autofix). Behind flag TMS_QBO_RECON_ENABLED (default OFF).",
+  "branch": "feat/recon-01-schema-jobs-engine",
+  "lane": "coder",
+  "details": [
+    "GATED (Tier-2): carries db/migrations/*.sql and touches accounting.* schema → financial-cluster for MERGE. Build locally, run migration on a Neon TEST branch only, show Jorge git diff --staged --stat + full SQL, WAIT for explicit OK to merge. Never self-merge (constitution §1.3/§1.4). Flag OFF at merge.",
+    "Read-only / no-autofix: engine writes only accounting.recon_runs + accounting.recon_exceptions; no INSERT/UPDATE/DELETE on any other financial table; no QBO write client ever imported.",
+    "Maker≠checker: resolved_by must differ from run preparer; system/scheduled-job identity can never resolve. resolution_note NOT NULL on resolve.",
+    "Every state change emits events.log_event (actor attribution source for MODIFIED_AFTER_VERIFIED).",
+    "CI guard verify:recon-read-only extends the FIN-23 test at apps/backend/src/integrations/qbo/__tests__/qbo-reconcile-read.read-only.test.ts and is REQUIRED in ci.yml.",
+    "Reuse: qbo-reconcile-read.service.ts (QBO side), banking.bank_transactions (TMS side), qbo.sync_alerts healthz, background_jobs pattern, reconciled-status (#1755), bank-rec Confirm (#1754), Match Drawer (#1737/#1747)."
+  ],
+  "allowed_files": [
+    ".block-ready/RECON-01.json",
+    "db/migrations/RECON01_recon_runs_exceptions.sql",
+    "apps/backend/src/accounting/recon/recon-engine.service.ts",
+    "apps/backend/src/accounting/recon/recon.routes.ts",
+    "apps/backend/src/integrations/qbo/__tests__/qbo-reconcile-read.read-only.test.ts",
+    "scripts/verify-recon-read-only.mjs",
+    ".github/workflows/ci.yml",
+    "package.json",
+    "render.yaml",
+    "docs/specs/TMS-QBO-RECONCILIATION.md"
+  ],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:recon-read-only"],
+  "migration": {
+    "filename": "<TS>_recon_runs_exceptions.sql",
+    "path": "db/migrations/<TS>_recon_runs_exceptions.sql",
+    "note": "Timestamp assigned strictly above main's current max at push time. Idempotent DO $$ + IF NOT EXISTS.",
+    "tables_created": [
+      "accounting.recon_runs",
+      "accounting.recon_exceptions"
+    ]
+  },
+  "flag": "TMS_QBO_RECON_ENABLED",
+  "flag_default": "OFF",
+  "acceptance": {
+    "merge_gate": "HOLD — requires explicit OK-to-merge from Jorge; show full SQL + git diff --staged --stat first; flag OFF at merge",
+    "local": "typecheck green; migration runs on a Neon TEST branch only; verify:recon-read-only green"
+  },
+  "registered_on": "2026-07-02"
+}

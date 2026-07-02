@@ -1,0 +1,37 @@
+{
+  "block_id": "RECON-02",
+  "status": "pending",
+  "classification": "UI — Tier-3 (additive frontend + read-only GET routes, no money movement, no schema, behind OFF flag)",
+  "phase": "TMS-QBO-Reconciliation",
+  "task": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable grammar), run dashboard (complete/open/late + owner), side-by-side TMS|QBO value cells, one-click source drill-down (McLeod rule) + qbo_ref display, and resolve/explain actions (resolution_note required on resolve; maker≠checker enforced in API). Renders data RECON-01 produces. Additive only; §7 palette; ES/EN keys. Behind flag TMS_QBO_RECON_ENABLED.",
+  "branch": "feat/recon-02-ui-tabs",
+  "lane": "coder",
+  "details": [
+    "Tier-3 non-financial: ships NO migration and touches NO accounting.* schema or money path → self-mergeable on green per the standing auto-merge rule. If any change touches a migration or accounting.* schema it becomes financial and re-gates to Jorge.",
+    "New files (block signature): apps/frontend/src/pages/accounting/recon/ReconRunsTab.tsx + ReconExceptionsTab.tsx. These are ADDITIVELY mounted into the existing QboReconcileCapturesPage.tsx (extends_existing) — no existing tab/column/module removed or reordered (constitution §7).",
+    "Also extends (already on main): apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx (mount tabs), apps/frontend/src/api/accounting.ts (read methods), apps/frontend/src/i18n/en.json + es.json (ES/EN keys).",
+    "§7 palette: --navy #1f2a44, --navy-dk #0f1729, --slate/--slate-lt, --bg #f8fafc; --red #dc2626 for elevated/high severity only; no purple/blue/pink; no emojis. Module header keeps ← back-arrow + breadcrumb.",
+    "Guards: verify:arch-design green (locked-UI surface untouched), verify:nav-integrity, verify:no-internal-language-in-prod-ui, responsive audit new_vs_baseline=0.",
+    "Depends on RECON-01 (read routes + data). Renders only when TMS_QBO_RECON_ENABLED is ON; OFF today → app unchanged."
+  ],
+  "allowed_files": [
+    ".block-ready/RECON-02.json",
+    "apps/frontend/src/pages/accounting/recon/ReconRunsTab.tsx",
+    "apps/frontend/src/pages/accounting/recon/ReconExceptionsTab.tsx",
+    "apps/frontend/src/i18n/en.json",
+    "apps/frontend/src/i18n/es.json",
+    "docs/specs/TMS-QBO-RECONCILIATION.md"
+  ],
+  "extends_existing": [
+    "apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx",
+    "apps/frontend/src/api/accounting.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "flag": "TMS_QBO_RECON_ENABLED",
+  "flag_default": "OFF",
+  "depends_on": ["RECON-01"],
+  "registered_on": "2026-07-02"
+}
