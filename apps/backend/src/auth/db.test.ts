@@ -39,11 +39,22 @@ describe("withLuciaBypass session context", () => {
       "BEGIN",
       // #878 fail-closed: non-superuser app role forced transaction-locally before any bypass SQL.
       "SET LOCAL ROLE ih35_app",
+      // bypass_rls is a literal constant (no interpolation) — still set via SET LOCAL.
       "SET LOCAL app.bypass_rls = 'lucia'",
-      "SELECT set_config('app.active_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID],
-      "SELECT set_config('app.operating_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID],
+      // SQLi→RLS-bypass hardening: sentinel company GUCs are now PARAMETERIZED via set_config
+      // (bound value), never string-interpolated into the SQL text.
+      "SELECT set_config('app.active_company_id', $1, true)",
+      "SELECT set_config('app.operating_company_id', $1, true)",
       "COMMIT",
     ]);
+    // Prove the sentinel is passed as a BOUND value (not interpolated) to each set_config call.
+    const setConfigCalls = queryMock.mock.calls.filter(([sql]) =>
+      String(sql).startsWith("SELECT set_config(")
+    );
+    expect(setConfigCalls).toHaveLength(2);
+    for (const [, values] of setConfigCalls) {
+      expect(values).toEqual([LUCIA_BYPASS_SENTINEL_COMPANY_ID]);
+    }
     expect(releaseMock).toHaveBeenCalledTimes(1);
   });
 
