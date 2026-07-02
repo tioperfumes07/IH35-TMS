@@ -171,9 +171,9 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   return (
     <div className="space-y-3" data-testid="drawer-fines-deductions-card">
-      <div className="rounded border border-yellow-200 bg-yellow-50 p-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-yellow-800">Fines &amp; Deductions</h3>
-        <p className="mt-1 text-xs text-yellow-900">
+      <div className="rounded border border-slate-200 bg-slate-50 p-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Fines &amp; Deductions</h3>
+        <p className="mt-1 text-xs text-slate-700">
           Fine auto-deduction policies apply per settlement (net-floor cap; over-cap rolls to next period). Confirm or defer
           pending escrow proposals before they post.
         </p>
