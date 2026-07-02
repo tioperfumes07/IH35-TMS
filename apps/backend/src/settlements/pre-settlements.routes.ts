@@ -74,7 +74,7 @@ export async function registerPreSettlementsRoutes(app: FastifyInstance) {
       WHERE s.operating_company_id = $1::uuid AND s.is_active = true`;
 
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${p.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [p.operating_company_id]);
       const [rows, agg] = await Promise.all([
         client.query(sql, values),
         client.query(aggSql, [p.operating_company_id]),
@@ -127,7 +127,7 @@ export async function registerPreSettlementsRoutes(app: FastifyInstance) {
       ORDER BY created_at ASC`;
 
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
       const [settle, lines, deductions] = await Promise.all([
         client.query(settleSql, [params.data.id, companyId]),
         client.query(linesSql,  [params.data.id]),
@@ -165,7 +165,7 @@ export async function registerPreSettlementsRoutes(app: FastifyInstance) {
       LIMIT $3 OFFSET $4`;
 
     return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${p.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [p.operating_company_id]);
       const res = await client.query(sql, [p.operating_company_id, p.driver_id, p.limit, p.offset]);
       return { pending_deductions: res.rows, limit: p.limit, offset: p.offset };
     });

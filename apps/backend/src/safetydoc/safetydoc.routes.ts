@@ -23,7 +23,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `INSERT INTO safetydoc.document (operating_company_id, title, body_html, doc_type, created_by_user_id)
          VALUES ($1,$2,$3,$4,$5) RETURNING id`,
@@ -42,7 +42,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
       .parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT id, title, doc_type, version, is_active, created_at
          FROM safetydoc.document
@@ -66,7 +66,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `INSERT INTO safetydoc.assignment
            (operating_company_id, document_id, driver_id, expires_at, created_by_user_id)
@@ -87,7 +87,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
       .parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT a.id, a.status, a.sent_at, a.read_at, a.signed_at, a.expires_at,
                 d.title, d.body_html, d.doc_type
@@ -114,7 +114,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
       .parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE safetydoc.assignment
          SET status = 'read', read_at = now()
@@ -138,7 +138,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE safetydoc.assignment
          SET status = 'signed',
@@ -173,7 +173,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
       .parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const { rows } = await (client as Queryable).query(
         `SELECT a.id, a.status, a.sent_at, a.read_at, a.signed_at,
                 a.signed_by_driver_id, a.signature_ip, a.signature_user_agent,

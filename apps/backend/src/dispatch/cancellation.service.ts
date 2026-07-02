@@ -22,7 +22,7 @@ export async function cancelLoad(
   }
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     await client.query("BEGIN");
     try {
       const loadRes = await client.query(
@@ -130,7 +130,7 @@ export async function listCancellations(
   input: { operating_company_id: string; since?: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const values: unknown[] = [input.operating_company_id];
     const filters = ["c.operating_company_id = $1"];
     if (input.since) {
@@ -172,7 +172,7 @@ export async function approveCancellation(
 ) {
   if (!isOwner(role)) throw new Error("E_OWNER_ONLY");
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     await client.query("BEGIN");
     try {
       const row = await client.query<{ id: string; load_id: string; status: string }>(

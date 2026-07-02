@@ -13,7 +13,7 @@ type DistributionInput = {
 
 export async function distributeLoadInstructions(input: DistributionInput) {
   return withCurrentUser(input.requested_by_user_id, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const hasPwaNotifications = await client
       .query<{ exists: boolean }>(`SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS exists`)
       .then((res) => Boolean(res.rows[0]?.exists))

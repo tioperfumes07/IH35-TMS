@@ -76,8 +76,8 @@ function requireAdminWriteRole(reply: FastifyReply, role: string) {
   return true;
 }
 
-async function setOperatingCompany(client: { query: (sql: string) => Promise<unknown> }, operatingCompanyId: string) {
-  await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
+async function setOperatingCompany(client: { query: (sql: string, values?: unknown[]) => Promise<unknown> }, operatingCompanyId: string) {
+  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
 }
 
 export async function registerLegalTemplateRoutes(app: FastifyInstance) {

@@ -143,7 +143,7 @@ export function validationError(reply: FastifyReply, error: z.ZodError) {
 
 export async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: any) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client);
   });
 }

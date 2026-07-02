@@ -40,8 +40,8 @@ describe("withLuciaBypass session context", () => {
       // #878 fail-closed: non-superuser app role forced transaction-locally before any bypass SQL.
       "SET LOCAL ROLE ih35_app",
       "SET LOCAL app.bypass_rls = 'lucia'",
-      `SET LOCAL app.active_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`,
-      `SET LOCAL app.operating_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`,
+      "SELECT set_config('app.active_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID],
+      "SELECT set_config('app.operating_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID],
       "COMMIT",
     ]);
     expect(releaseMock).toHaveBeenCalledTimes(1);

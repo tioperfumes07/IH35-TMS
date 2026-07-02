@@ -27,7 +27,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `INSERT INTO brokerupdate.profile
            (operating_company_id, broker_name, email, auto_send_enabled, auto_send_classes, created_by_user_id)
@@ -54,7 +54,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
       .parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT id, broker_name, email, auto_send_enabled, auto_send_classes, is_active, created_at
          FROM brokerupdate.profile
@@ -83,7 +83,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
 
       // Check if auto-send is enabled for this event class on this profile
       const { rows: profileRows } = await (client as Queryable).query<{
@@ -129,7 +129,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
       .parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT s.id, s.load_id, s.event_class, s.subject, s.body_text,
                 s.status, s.auto_sent, s.created_at,
@@ -156,7 +156,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
       .parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE brokerupdate.send
          SET status = 'approved', reviewed_by_user_id = $1, reviewed_at = now()
@@ -179,7 +179,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
       .parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE brokerupdate.send
          SET status = 'rejected', reviewed_by_user_id = $1, reviewed_at = now()
