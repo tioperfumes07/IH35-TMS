@@ -114,6 +114,13 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
       const prep = await loadPreparation(client, query.data.operating_company_id, params.data.id);
       if (!prep) return { code: 404 as const, error: "preparation_not_found" as const };
 
+      // EVIDENCE GUARD: once the return's filing artifact is produced (csv_generated) or it is submitted,
+      // re-aggregating would DELETE + rewrite the state-miles rows and regress the status — silently
+      // overwriting already-filed FMCSA/IFTA evidence. Refuse; require an explicit amend/reset instead.
+      if (prep.status === "submitted" || prep.status === "csv_generated") {
+        return { code: 409 as const, error: "preparation_already_filed" as const };
+      }
+
       const window = quarterWindow(Number(prep.quarter), Number(prep.year));
       const rows = await aggregateStateMiles(client, query.data.operating_company_id, window);
 
@@ -150,6 +157,11 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const prep = await loadPreparation(client, query.data.operating_company_id, params.data.id);
       if (!prep) return { code: 404 as const, error: "preparation_not_found" as const };
+
+      // EVIDENCE GUARD (see aggregate-miles): refuse to rewrite gallons once the return is filed.
+      if (prep.status === "submitted" || prep.status === "csv_generated") {
+        return { code: 409 as const, error: "preparation_already_filed" as const };
+      }
 
       const window = quarterWindow(Number(prep.quarter), Number(prep.year));
       const rows = await aggregateStateGallons(client, query.data.operating_company_id, window);
