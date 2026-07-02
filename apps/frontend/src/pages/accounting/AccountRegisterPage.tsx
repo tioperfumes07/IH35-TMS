@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 
@@ -88,14 +88,21 @@ export function AccountRegisterPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
+  // Deep-link: the Chart of Accounts "View register" link routes to
+  // /accounting/chart-of-accounts/register/:accountId — preselect that account here.
+  const { accountId: routeAccountId } = useParams<{ accountId?: string }>();
 
   const initial = monthBounds(new Date());
   const [density, setDensity] = useState<"regular" | "compact" | "ultra">("regular");
-  const [accountId, setAccountId] = useState("");
+  const [accountId, setAccountId] = useState(routeAccountId ?? "");
   const [fromDate, setFromDate] = useState(initial.from);
   const [toDate, setToDate] = useState(initial.to);
   const [preset, setPreset] = useState("this_month");
   const [view, setView] = useState<"register" | "audit">("register");
+
+  useEffect(() => {
+    if (routeAccountId) setAccountId(routeAccountId);
+  }, [routeAccountId]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeLabel, setTypeLabel] = useState("");

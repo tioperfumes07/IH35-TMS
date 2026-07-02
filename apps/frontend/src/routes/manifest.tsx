@@ -3280,6 +3280,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/accounting/chart-of-accounts/register/:accountId"
+          element={
+            <ProtectedRoute>
+              <AccountRegisterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/journal-entries/:id"
           element={
             <ProtectedRoute>
