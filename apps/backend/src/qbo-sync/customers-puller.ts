@@ -102,11 +102,15 @@ async function upsertLocalCustomer(client: PoolClient, operatingCompanyId: strin
         deactivated_at,
         qbo_synced_at,
         qbo_sync_status,
-        qbo_sync_error
+        qbo_sync_error,
+        source_system,
+        source
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),'synced',NULL)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),'synced',NULL,'qbo','qbo_clone')
       ON CONFLICT (operating_company_id, qbo_customer_id)
       DO UPDATE SET
+        source_system = 'qbo',
+        source = 'qbo_clone',
         customer_name = EXCLUDED.customer_name,
         billing_email = EXCLUDED.billing_email,
         billing_phone = EXCLUDED.billing_phone,
@@ -140,15 +144,40 @@ export async function pullCustomersFromQbo(operatingCompanyId: string): Promise<
   let rowsPulled = 0;
   let rowsUpserted = 0;
 
+  const pulledQboIds: string[] = [];
+
   await withLuciaBypass(async (client) => {
     const ctx = await qboCompanyContext(operatingCompanyId);
     for await (const page of qboPaginateEntity<Record<string, unknown>>(ctx, "Customer", "", { pageSize: 1000 })) {
       for (const row of page) {
         rowsPulled += 1;
+        const qboId = String(row.Id ?? "");
+        if (qboId) pulledQboIds.push(qboId);
         await upsertMirror(client, operatingCompanyId, row);
         await upsertLocalCustomer(client, operatingCompanyId, row);
         rowsUpserted += 1;
       }
+    }
+
+    // MD-1 void-gone-from-QBO: a cloned customer absent from the FULL QBO pull was deleted in QBO →
+    // void it (deactivate, never delete). Guarded: only runs when the pull returned rows, so a transient
+    // empty/failed pull can never mass-deactivate. Only touches origin='qbo_clone' rows — never a
+    // TMS-created customer.
+    if (pulledQboIds.length > 0) {
+      await client.query(
+        `
+          UPDATE mdata.customers
+          SET status = 'inactive'::mdata.customer_status,
+              deactivated_at = COALESCE(deactivated_at, now()),
+              updated_at = now()
+          WHERE operating_company_id = $1
+            AND source = 'qbo_clone'
+            AND deactivated_at IS NULL
+            AND qbo_customer_id IS NOT NULL
+            AND NOT (qbo_customer_id = ANY($2::text[]))
+        `,
+        [operatingCompanyId, pulledQboIds]
+      );
     }
   });
 
