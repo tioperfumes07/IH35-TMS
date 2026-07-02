@@ -1,0 +1,29 @@
+MODULE 19 — CUSTOMERS (/customers) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep · Sources: live app (render + real API replay), prod Neon, origin/main. Console: zero errors (list + detail).
+
+SCOPE SWEPT
+/customers (List view), customer detail (3 Rivers Logistics), API replay: /api/v1/mdata/customers, /qbo-sync/customers/status, /mdata/customers/:id/billing-summary — all 200, entity-scoped.
+
+STATE (verified)
+Real QBO-projected customer master data renders (1,209 TRANSP customers in API). Detail page is strong: FMCSA/SAFER verification with last-checked stamp, Relationship Health honestly shows "Unknown — /100" when unscored, honest empty states (No invoice history / No open AR / No loads), full billing config (credit limit w/ Factor-vs-Manual source, detention, layover), 9 sub-tabs render.
+
+DEFECTS (live-reproduced, root-caused)
+
+CUST-1 · HIGH · Pagination ignores API total — 1,159 of 1,209 customers unreachable in the UI
+- Live proof: API /mdata/customers returns {"total":1209, customers:[50 rows]}; UI renders "1-50 of 50 · Page 1 of 1", Next/Last disabled. The list paginates on the returned page length, not the `total` field.
+- Same defect class as DRIVERPROFILE-1 (data present, UI hides it). Fix: wire total from the response into the pager (count text, page count, Next/Last), pass page/limit params on navigation; test asserting pager math from a mocked total>pageSize.
+
+CUST-2 · MED · Every customer wears a red "Late-pay" chip with zero invoice history — worst-rating default for missing data
+- Live proof: 50/50 rows show the red Late-pay badge; system has 1 invoice total and no payment-score data.
+- Root cause (code): quality-badge logic returns {label:"Late-pay", red} as the FALLBACK when quality_payment_score is null/unparseable — missing data defaults to the worst rating. Duplicated in FOUR files: CustomersListView.tsx, Customers.tsx, CustomerListSidebar.tsx, CustomerDetail.tsx (detail's qualityRatingFromScores same fallback; but the detail header Relationship Health correctly shows "Unknown" — the honest pattern already exists in this codebase).
+- Fix: null/absent score → neutral "No history" badge (gray), never red; extract ONE shared qualityBadge util (kills the 4-copy drift) + unit tests for null/0/69/70/90 boundaries. A customer must EARN Late-pay from data.
+
+CUST-3 · MED · Two QBO-customer sync mechanisms disagree — banner says "Synced: 0 of 1209 · Last sync: never" on data that came FROM QBO
+- Live proof: /qbo-sync/customers/status returns {"total_local":1209,"synced":0,"last_pull_at":null}. The 1,209 customers were projected from qbo_archive.entities_snapshot (verified vendor rows carry that provenance note; same projection wave), but the qbo-sync puller's bookkeeping was never run, so its banner reports never-synced/0 — misleading an operator into "Sync now" on already-QBO-sourced data, and drift_detected=0 is meaningless when reconcile never ran.
+- Fix (root, not cosmetic): one source of truth for customer↔QBO sync state. Either backfill qbo-sync bookkeeping from the archive projection (link qbo ids, set synced counts, stamp provenance) or retire the parallel counter — decide once, apply the same decision to vendors (same dual-mechanism exists there). Until reconciled, the banner should state "Imported from QBO archive 2026-05; live sync not yet enabled" — the true state.
+
+POSITIVES
+- Honest "Unknown" health handling on detail; FMCSA/SAFER verify; factor-aware credit-limit source; entity-scoped APIs; no console errors; "+ Create Customer" vocabulary correct.
+
+CARRYOVER
+- CUST-3's dual-sync-mechanism decision applies to VENDORS (Module 20) — reference, don't duplicate.

@@ -158,14 +158,35 @@ export function parseMonthWindow(month: string) {
 }
 
 export function getCurrentQuarterInfo(now = new Date()) {
-  const month = now.getUTCMonth();
+  // RPT-1: report the NEXT IFTA return that is actually due, not the current calendar quarter's future
+  // deadline. During a filing month (e.g. July) the just-ended quarter (Q2, due Jul 31) is what's due —
+  // the old logic skipped it and showed Q3/Oct 31. Texas Comptroller IFTA guidance: a quarter's return is
+  // due the last day of the month following that quarter's end. https://comptroller.texas.gov/taxes/fuels/ifta.php
+  const month = now.getUTCMonth(); // 0-11
   const year = now.getUTCFullYear();
-  const quarter = Math.floor(month / 3) + 1;
-  const quarterEndMonth = quarter * 3;
-  const quarterEnd = new Date(Date.UTC(year, quarterEndMonth, 0, 23, 59, 59, 999));
-  // Texas Comptroller IFTA guidance: returns are due on the last day of the month
-  // following quarter end: https://comptroller.texas.gov/taxes/fuels/ifta.php
-  const dueAt = new Date(Date.UTC(quarterEnd.getUTCFullYear(), quarterEnd.getUTCMonth() + 2, 0, 23, 59, 59, 999));
+  const currentQuarter = Math.floor(month / 3) + 1; // 1-4
+
+  // Deadline for quarter q of a given year: q ends at month (q*3-1) 0-based (Mar/Jun/Sep/Dec); the return
+  // is due the last day of the following month. Date.UTC(y, (q*3-1)+2, 0) = last day of that next month.
+  const dueForQuarter = (qYear: number, q: number) =>
+    new Date(Date.UTC(qYear, q * 3 + 1, 0, 23, 59, 59, 999));
+
+  // The just-ended (previous) quarter and its deadline — for Q1 that is the prior year's Q4 (due Jan 31).
+  const prevQuarter = currentQuarter === 1 ? 4 : currentQuarter - 1;
+  const prevQuarterYear = currentQuarter === 1 ? year - 1 : year;
+  const prevDue = dueForQuarter(prevQuarterYear, prevQuarter);
+
+  let quarter: number;
+  let dueAt: Date;
+  if (now.getTime() <= prevDue.getTime()) {
+    // Still inside the previous quarter's filing window → that return is what's next due.
+    quarter = prevQuarter;
+    dueAt = prevDue;
+  } else {
+    // Previous quarter's window has closed → the current quarter is next due (after it ends).
+    quarter = currentQuarter;
+    dueAt = dueForQuarter(year, currentQuarter);
+  }
   const daysUntilDue = Math.max(0, Math.ceil((dueAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
   return { quarter: `Q${quarter}`, dueAt: dueAt.toISOString().slice(0, 10), daysUntilDue };
 }

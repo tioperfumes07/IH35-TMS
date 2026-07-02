@@ -1,0 +1,19 @@
+MODULE 26 — USERS (/users) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep. Console: zero errors.
+
+STATE (verified)
+Users admin renders: 9 records, KPI strip (Total/Active/Pending/Deactivated), status filters, role/auth-method/last-login columns, "+ Create User" vocabulary correct, working pager.
+
+DEFECTS (live-reproduced)
+
+USERS-1 · HIGH (access control) · THREE test accounts hold OWNER role, ACTIVE, in production
+- Live proof (rendered on prod /users): m2-stop-d8e4945e@example.com · m2-probe-trk-bee368ac@example.com · m2-probe-transp-bee368ac@example.com — all role=Owner, status=Active, auth=Google, last login Never. Plus "Verify Fix CI" (tioperfumes07+verifyfix@gmail.com), role=Dispatcher, Active.
+- Owner role gates money actions (factor deactivation, Tier-1 approvals surface, user management). Active never-logged-in Owner accounts on @example.com domains are standing privileged access with no owner behind them — fake data in prod with SECURITY impact (worse class than TEST-VENDOR).
+- Fix (owner-gated action + root guard): (1) owner deactivates the 4 accounts (deactivate, never delete — audit trail); (2) root cause: these are probe/CI artifacts (m2-probe/m2-stop naming = migration/probe harness) — find the creation path and ensure test harnesses can never create ACTIVE users in production (env guard on the user-create path rejecting @example.com and +suffix probe patterns in prod, mirroring the TEST-VENDOR guard); (3) CI guard asserting no fixture-pattern emails in seed/migration files targeting prod.
+
+OBSERVATIONS
+- David Davila shows Active with "Invite pending" auth and Never logged in — status semantics show Active before first login; consider a distinct "Invited" status so ACTIVE means has-credentials (LOW, UX truthfulness).
+- jorge@ih35trucking.net = Manager while tioperfumes07 = Owner — assumed intentional dual accounts; owner to confirm.
+
+POSITIVES
+- Role model visible and differentiated; auth methods surfaced; deactivated bucket exists (void-never-delete pattern); honest last-login data.

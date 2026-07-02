@@ -1,0 +1,24 @@
+MODULE 24 — REPORTS (/reports) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep. Console: zero errors.
+
+SCOPE SWEPT
+Reports hub (all/financial categories, basis toggle, KPI strip), /reports/trial-balance, /reports/cancellations, top tabs (Reports / Run report / Cancellations / Audit).
+
+STATE (verified)
+Strong module. Report library is API-driven with honest real/stub status per report (15 available). Trial Balance page: dual Accrual/Cash basis, From/To, Print/Export PDF/XLSX, GRAND TOTAL DEBITS/CREDITS with an explicit BALANCE CHECK "Balanced", honest "No rows" (empty ledger). Basis toggle on the hub correctly re-labels TB/P&L/BS chips to CASH while operational reports stay ACCRUAL. Cancellations tab renders with proper loading state. Scheduled auto-email framework present (0 schedules, honest).
+
+DEFECTS (live-reproduced, root-caused)
+
+RPT-1 · MED-HIGH (compliance) · IFTA due KPI computes the WRONG quarter — under-warns by a full quarter
+- Live proof: today 2026-07-02 the KPI reads "IFTA Q3 DUE · 122d · 2026-10-31 — file before". The IFTA return actually due next is Q2 (quarter ended 06/30), due 2026-07-31 — 29 days away.
+- Root cause (apps/backend/src/reports/shared.ts getCurrentQuarterInfo): it computes the CURRENT calendar quarter and its future deadline. During the filing month (the month after quarter end), the just-ended quarter's deadline is the one that matters; the function skips it entirely. On 2026-07-30 — one day before the real Q2 deadline — this KPI would say "Q3 due in 93d". For a DOT/IFTA compliance KPI that is a real risk.
+- Fix (root): next-due logic — if today ≤ (last day of month following the PREVIOUS quarter end), the due filing is the PREVIOUS quarter with that deadline; otherwise the current quarter with its deadline. Covers the January case (prior-year Q4 due Jan 31). Unit tests at boundaries: Jul 1, Jul 31, Aug 1, Jan 1, Jan 31, Feb 1. Cite the Texas Comptroller rule already referenced in the code comment.
+
+RPT-2 · LOW-MED · Loading fallback fabricates "Q2 · 0d · TBD"
+- Live proof: first render showed "IFTA Q2 DUE / 0d / TBD — file before" before the KPI query resolved (frontend ReportsHome.tsx fallbacks ?? "Q2" / ?? 0 / ?? "TBD"). "0d" reads as DUE TODAY — a fabricated urgent value. Fix: loading skeleton/"—" until data resolves; never default a compliance countdown to 0.
+
+CHECK-MANUALLY (not logged as defect)
+- Hub report cards are buttons; a synthetic JS click on "Trial balance" did not navigate, but the direct route works and the hub says "Hover a domain category, then open a report" (hover-driven flow). Verify by hand that a real click/hover opens each report; log only if a human click dead-ends.
+
+POSITIVES
+- Balance-check surfaced on TB; honest stub labeling in the report library; dual basis wired end-to-end; exports present; entity-scoped.
