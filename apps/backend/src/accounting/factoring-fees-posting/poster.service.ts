@@ -1,7 +1,4 @@
 import { withLuciaBypass } from "../../auth/db.js";
-import { createJournalEntry } from "../journal-entries.service.js";
-import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
-import { resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
 
 type Actor = {
   user_id: string;
@@ -28,88 +25,23 @@ type ReserveEventRow = {
   occurred_at: string;
 };
 
+// DEPRECATED (CODER-34 secured-borrowing rebuild): the factoring fee is a FINANCING (interest) cost that
+// is booked at FUNDING as part of the funding entry (Dr Factoring Fees / Cr Factoring Advance liability) in
+// factoring-posting/poster.service.ts — NOT at release, and NEVER netted against A/R. The old
+// implementation here posted `Dr Factoring Fee / Cr ar_control`, which (a) credited A/R (the sale-model
+// defect this task removes) and (b) double-booked the fee already captured at funding. It is now a documented
+// no-op so the existing route call at /release cannot post a spurious A/R credit or a duplicate fee. Kept
+// (void-not-delete / additive-only) so the route + tests keep compiling; safe to remove the route call in a
+// follow-up.
 export async function postFactoringFeeExpenseEvent(input: {
   operating_company_id: string;
   factoring_advance_id: string;
   factor_fee_cents: number;
   released_at_iso: string;
   actor: Actor;
-}) {
-  if (input.factor_fee_cents <= 0) return { posted: false };
-
-  const context = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    const advanceRes = await client.query<{ display_id: string }>(
-      `
-        SELECT display_id
-        FROM accounting.factoring_advances
-        WHERE id = $1::uuid
-          AND operating_company_id = $2::uuid
-        LIMIT 1
-      `,
-      [input.factoring_advance_id, input.operating_company_id]
-    );
-    const advance = advanceRes.rows[0];
-    if (!advance) throw new Error("factoring_advance_not_found");
-
-    const memo = `Factoring fee expense ${advance.display_id}`;
-    const existing = await client.query<{ id: string }>(
-      `
-        SELECT id::text
-        FROM accounting.journal_entries
-        WHERE operating_company_id = $1::uuid
-          AND source = 'auto'
-          AND memo = $2
-        LIMIT 1
-      `,
-      [input.operating_company_id, memo]
-    );
-    if (existing.rows[0]?.id) {
-      return {
-        already_posted: true,
-        memo,
-        fee_account_id: "",
-        ar_account_id: "",
-      };
-    }
-
-    const feeMapping = await resolveAccountForCategory(input.operating_company_id, "factoring_fee", "default");
-    const arAccountId = await resolveRoleAccount(client, input.operating_company_id, "ar_control");
-    return {
-      already_posted: false,
-      memo,
-      fee_account_id: feeMapping.account_id,
-      ar_account_id: arAccountId,
-    };
-  });
-
-  if (context.already_posted) return { posted: false };
-
-  await createJournalEntry(
-    {
-      operating_company_id: input.operating_company_id,
-      entry_date: input.released_at_iso.slice(0, 10),
-      memo: context.memo,
-      source: "auto",
-      postings: [
-        {
-          account_id: context.fee_account_id,
-          debit_or_credit: "debit",
-          amount_cents: input.factor_fee_cents,
-          description: "Factoring fee expense",
-        },
-        {
-          account_id: context.ar_account_id,
-          debit_or_credit: "credit",
-          amount_cents: input.factor_fee_cents,
-          description: "Factoring fee netted against customer collection",
-        },
-      ],
-    },
-    { userId: input.actor.user_id, role: input.actor.role }
-  );
-
-  return { posted: true };
+}): Promise<{ posted: false; reason: "fee_booked_at_funding" }> {
+  void input;
+  return { posted: false, reason: "fee_booked_at_funding" };
 }
 
 export async function listFactorReserveBalances(input: { operating_company_id: string }): Promise<{

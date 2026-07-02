@@ -50,10 +50,11 @@ for (const ep of ENDPOINTS) {
 if (/\bINSERT\b|\bUPDATE\b|\bDELETE\b/i.test(routes)) fail("audit-reports.routes.ts contains mutation SQL — must be read-only");
 else pass("routes are read-only (no INSERT/UPDATE/DELETE)");
 
-// 3. All routes use SET LOCAL RLS
-const rlsCount = (routes.match(/SET LOCAL app\.operating_company_id/g) || []).length;
-if (rlsCount < ENDPOINTS.length) fail(`only ${rlsCount} of ${ENDPOINTS.length} routes apply SET LOCAL RLS`);
-else pass(`all ${rlsCount} routes apply SET LOCAL RLS`);
+// 3. All routes set the tenant RLS GUC — legacy `SET LOCAL app.operating_company_id` OR the
+//    SQLi-hardened parameterized `set_config('app.operating_company_id', $1, true)` form.
+const rlsCount = (routes.match(/(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/g) || []).length;
+if (rlsCount < ENDPOINTS.length) fail(`only ${rlsCount} of ${ENDPOINTS.length} routes apply tenant RLS scope`);
+else pass(`all ${rlsCount} routes apply tenant RLS scope`);
 
 // 4. All routes paginate (LIMIT/OFFSET)
 if (!routes.includes("LIMIT") || !routes.includes("OFFSET")) fail("routes missing LIMIT/OFFSET pagination");

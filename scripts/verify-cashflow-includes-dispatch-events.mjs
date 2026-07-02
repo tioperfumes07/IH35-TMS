@@ -5,12 +5,17 @@
  * Verifies that the four dispatch money events are wired through posting paths
  * that the cash-flow statement's direct-method classifier maps to the Operating section:
  *
- *   factoring_advance   → postFactoringAdvanceEvent → customer_payment → DR cash / CR AR (Asset:AccountsReceivable → operating)
- *   factoring_fee       → postFactoringFeeExpenseEvent → JE DR Expense / CR AR (Expense → operating)
+ *   factoring_advance   → postFactoringAdvanceEvent → SECURED-BORROWING funding JE:
+ *                         DR cash + reserve + fee / CR Factoring Advance liability (financing/operating legs).
+ *                         A/R is UNTOUCHED at funding; it clears only when the customer pays FARO.
+ *   factoring_fee       → booked at FUNDING as a Factoring Fees (Interest & Financing) expense line via
+ *                         createJournalEntry (Expense → operating). NOT netted against A/R.
  *   settlement_payout   → postSettlement → createBill + payBill → bill_payment → DR AP / CR cash (Liability:AccountsPayable → operating)
  *   detention_revenue   → invoice line_type=detention → invoice posting → customer_payment → DR AR / CR Income (Income → operating)
  *
- * NO posting math is modified. Read/verify only.
+ * CODER-34: the factoring sections assert the SECURED-BORROWING model (ASC 860 / CPA ruling) — the sale-model
+ * customer_payment assertions were removed here to stay consistent with scripts/verify-factoring-treatment.mjs
+ * (the two guards must agree, never contradict). NO posting math is modified. Read/verify only.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -40,24 +45,31 @@ try {
   }
 } catch (e) { failures.push(e.message); }
 
-// ── 2. Factoring advance posts via customer_payment backbone ──
+// ── 2. Factoring advance posts a SECURED-BORROWING funding JE (NOT the sale-model customer_payment) ──
+// Mirrors scripts/verify-factoring-treatment.mjs so the two guards agree: the funding path must NOT emit a
+// customer_payment / route through postSourceTransaction, and MUST credit the factoring_advance_liability.
 try {
   const poster = read("apps/backend/src/accounting/factoring-posting/poster.service.ts");
   if (!/export async function postFactoringAdvanceEvent/.test(poster))
     failures.push("factoring-posting/poster.service must export postFactoringAdvanceEvent");
-  if (!/source_transaction_type:\s*"customer_payment"/.test(poster) || !/postSourceTransaction\(/.test(poster))
-    failures.push("factoring advance must post through customer_payment source via postSourceTransaction");
+  if (/["']customer_payment["']/.test(poster) || /postSourceTransaction\(/.test(poster))
+    failures.push("factoring advance must NOT post via customer_payment/postSourceTransaction (sale model) — it is a secured borrowing (Cr factoring_advance_liability)");
+  if (!/factoring_advance_liability/.test(poster))
+    failures.push("factoring advance must record a factoring_advance_liability credit (the borrowing) — not reduce A/R");
+  if (!/createJournalEntry\(/.test(poster))
+    failures.push("factoring advance must post a balanced JE via createJournalEntry");
 } catch (e) { failures.push(e.message); }
 
-// ── 3. Factoring fee posts as an Expense journal entry (separate line, not netted) ──
+// ── 3. Factoring fee is an Interest & Financing expense line booked AT FUNDING (not netted against A/R) ──
+// The fee moved into the funding entry (Dr Factoring Fees / Cr Factoring Advance liability) in the poster;
+// the old release-time fee poster is a documented no-op. Assert the funding poster resolves factor_fee_expense
+// and posts it as an expense debit line.
 try {
-  const fees = read("apps/backend/src/accounting/factoring-fees-posting/poster.service.ts");
-  if (!/export async function postFactoringFeeExpenseEvent/.test(fees))
-    failures.push("factoring-fees-posting/poster.service must export postFactoringFeeExpenseEvent");
-  if (!/resolveAccountForCategory\([^)]*"factoring_fee"/.test(fees))
-    failures.push("factoring fee poster must resolve factoring_fee expense category (VQ6 — never netted against revenue)");
-  if (!/createJournalEntry\(/.test(fees))
-    failures.push("factoring fee poster must create a journal entry (DR expense)");
+  const poster = read("apps/backend/src/accounting/factoring-posting/poster.service.ts");
+  if (!/factor_fee_expense/.test(poster))
+    failures.push("factoring fee must resolve the factor_fee_expense role (Interest & Financing) at funding — never netted against revenue/A/R");
+  if (!/factoring fee/i.test(poster))
+    failures.push("factoring fee must be posted as a distinct Factoring Fees expense line in the funding JE");
 } catch (e) { failures.push(e.message); }
 
 // ── 4. Settlement payout posts via Bill + BillPayment (bill_payment hits AP → operating) ──
@@ -103,7 +115,7 @@ if (failures.length > 0) {
 }
 
 console.log("verify:cashflow-includes-dispatch-events — OK");
-console.log("  factoring_advance  → customer_payment posting → Asset:AccountsReceivable → operating ✓");
-console.log("  factoring_fee      → JE Expense line (VQ6 separate) → Expense → operating ✓");
+console.log("  factoring_advance  → secured-borrowing funding JE (Cr factoring_advance_liability; A/R untouched) ✓");
+console.log("  factoring_fee      → Factoring Fees (Interest & Financing) expense line at funding → Expense → operating ✓");
 console.log("  settlement_payout  → Bill + BillPayment → Liability:AccountsPayable → operating ✓");
 console.log("  detention_revenue  → Invoice line_type=detention → Income → operating ✓");

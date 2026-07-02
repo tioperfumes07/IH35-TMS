@@ -46,7 +46,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     const f = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${f.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
       let where = `operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3`;
       const params: (string | number)[] = [f.operating_company_id, f.date_from, f.date_to];
@@ -86,7 +86,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     const f = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${f.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
       const sql = `
         SELECT 
@@ -129,7 +129,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     const f = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${f.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
       const sql = `
         SELECT 
@@ -168,7 +168,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     const f = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${f.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
       const sql = `
         SELECT 
@@ -208,7 +208,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     const f = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${f.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
       let where = `operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3`;
       const params: (string | number)[] = [f.operating_company_id, f.date_from, f.date_to];
@@ -260,7 +260,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     const { operating_company_id } = z.object({ operating_company_id: z.string().uuid() }).parse(request.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
 
       const sql = `
         SELECT 

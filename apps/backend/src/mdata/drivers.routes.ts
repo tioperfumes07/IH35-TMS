@@ -14,6 +14,7 @@ import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
 import { provisionDriverAdvanceSubAccount, provisionDriverEscrowSubAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { registerDriverPdfExportRoutes } from "./driver-pdf-export.routes.js";
 import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
+import { registerDriverW8benRoutes } from "./driver-w8ben.routes.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "./driver-pseudo-user.js";
 import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "./test-seed-archive.js";
 
@@ -927,6 +928,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   await registerDriverDefaultTruckRoutes(app);
   await registerDriverTrainingRoutes(app);
+  await registerDriverW8benRoutes(app);
   await registerDriverMessagesRoutes(app);
   await registerDriverPdfExportRoutes(app);
 

@@ -45,7 +45,7 @@ describeIntegration("FIN-22 lease ASC 842 GL posting (real Postgres)", () => {
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${trkId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [trkId]);
     try { await fn(); await db.query("COMMIT"); }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }
@@ -53,7 +53,7 @@ describeIntegration("FIN-22 lease ASC 842 GL posting (real Postgres)", () => {
   async function scopedRead<T = Record<string, unknown>>(sql: string, params: unknown[]): Promise<T[]> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${trkId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [trkId]);
     try { const r = await db.query(sql, params); await db.query("COMMIT"); return r.rows as T[]; }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }

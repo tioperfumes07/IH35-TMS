@@ -161,7 +161,11 @@ export function ItemsListPage() {
         }
       />
 
-      {groupByCategory ? (
+      {!companyId ? (
+        <div className="rounded border border-gray-200 bg-white px-3 py-6 text-sm text-slate-600">Select a company to view products &amp; services.</div>
+      ) : query.isError ? (
+        <div className="rounded border border-gray-200 bg-white px-3 py-6 text-sm text-red-600">Failed to load products &amp; services.</div>
+      ) : groupByCategory ? (
         <div className="space-y-3">
           <div>{filterBar}</div>
           {grouped.length === 0 && !query.isLoading ? (

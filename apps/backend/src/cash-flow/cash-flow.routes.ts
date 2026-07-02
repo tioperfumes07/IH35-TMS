@@ -45,7 +45,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
       return reply.status(400).send({ error: "validation_error", details: query.error.flatten() });
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${query.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [query.data.operating_company_id]);
       // BLOCK 2: re-bucket projected income by projected_cash_date only when the master flag is on
       // (OFF/unregistered → false → current behaviour).
       const cashFollowsEta = await isEnabled(client, "CASH_FOLLOWS_ETA_ENABLED", {
@@ -66,7 +66,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
       return reply.status(400).send({ error: "validation_error", details: query.error.flatten() });
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${query.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [query.data.operating_company_id]);
       const cashFollowsEta = await isEnabled(client, "CASH_FOLLOWS_ETA_ENABLED", {
         operating_company_id: query.data.operating_company_id,
         user_uuid: user.uuid,
@@ -85,7 +85,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
       return reply.status(400).send({ error: "validation_error", details: body.error.flatten() });
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${body.data.operating_company_id}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
       const row = await addAdjustment(client, {
         operating_company_id: body.data.operating_company_id,
         entry_date: body.data.entry_date,

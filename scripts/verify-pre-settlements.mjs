@@ -64,10 +64,11 @@ for (const ep of ["/api/v1/settlements\"", "/api/v1/settlements/:id\"", "/api/v1
   else pass(`endpoint present: ${ep}`);
 }
 
-// 8. RLS SET LOCAL in routes
-const rlsRouteCount = (routes.match(/SET LOCAL app\.operating_company_id/g) || []).length;
-if (rlsRouteCount < 2) fail(`routes missing SET LOCAL RLS (found ${rlsRouteCount})`);
-else pass(`SET LOCAL RLS applied in ${rlsRouteCount} handlers`);
+// 8. Tenant RLS scope in routes — legacy `SET LOCAL app.operating_company_id` OR the
+//    SQLi-hardened parameterized `set_config('app.operating_company_id', $1, true)` form.
+const rlsRouteCount = (routes.match(/(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/g) || []).length;
+if (rlsRouteCount < 2) fail(`routes missing tenant RLS scope (found ${rlsRouteCount})`);
+else pass(`tenant RLS scope applied in ${rlsRouteCount} handlers`);
 
 // 9. LIMIT/OFFSET pagination on list endpoint
 if (!routes.includes("LIMIT") || !routes.includes("OFFSET")) fail("routes missing LIMIT/OFFSET pagination");

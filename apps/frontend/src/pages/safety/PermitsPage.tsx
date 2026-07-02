@@ -9,11 +9,14 @@ import {
   updatePermitRenewalReminder,
   type SafetyPermitType,
 } from "../../api/safety";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
 };
+
+type PermitRow = Record<string, unknown>;
 
 const PERMIT_TYPE_LABELS: Record<SafetyPermitType, string> = {
   state_operating_authority: "State operating authority",
@@ -113,6 +116,44 @@ export function PermitsPage({ operatingCompanyId }: Props) {
     },
   });
 
+  // Migrated to the shared QBO-parity grid — columns, order, severity badge, and the per-row
+  // Archive/Restore action are preserved verbatim (§7 additive-only).
+  const permitColumns: Array<ParityColumn<PermitRow>> = [
+    {
+      key: "permit_type",
+      label: "Type",
+      sortable: true,
+      render: (row) => PERMIT_TYPE_LABELS[(row.permit_type as SafetyPermitType) ?? "other"] ?? String(row.permit_type ?? ""),
+    },
+    { key: "permit_number", label: "Number", sortable: true, render: (row) => String(row.permit_number || "—") },
+    { key: "issuing_state", label: "State", sortable: true, render: (row) => String(row.issuing_state || "—") },
+    { key: "holder_name", label: "Holder", sortable: true, render: (row) => String(row.holder_name || "—") },
+    { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => String(row.expiry_date ?? "—") },
+    {
+      key: "renewal_severity",
+      label: "Status",
+      render: (row) => (
+        <span className={`rounded px-1.5 py-0.5 font-semibold ${severityClass(String(row.renewal_severity ?? ""))}`}>
+          {row.archived_at ? "Archived" : String(row.renewal_severity ?? "—")}
+        </span>
+      ),
+    },
+    {
+      key: "action",
+      label: "Action",
+      render: (row) =>
+        row.archived_at ? (
+          <button type="button" className="text-slate-700 underline" onClick={() => restoreMutation.mutate(String(row.id))}>
+            Restore
+          </button>
+        ) : (
+          <button type="button" className="text-red-700 underline" onClick={() => archiveMutation.mutate(String(row.id))}>
+            Archive
+          </button>
+        ),
+    },
+  ];
+
   return (
     <div className="space-y-3" data-testid="permits-page">
       <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-600">
@@ -185,65 +226,16 @@ export function PermitsPage({ operatingCompanyId }: Props) {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-[980px] w-full text-left text-xs" data-testid="permits-table">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-1">Type</th>
-              <th className="px-2 py-1">Number</th>
-              <th className="px-2 py-1">State</th>
-              <th className="px-2 py-1">Holder</th>
-              <th className="px-2 py-1">Expiry</th>
-              <th className="px-2 py-1">Status</th>
-              <th className="px-2 py-1">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activePermits.map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">
-                  {PERMIT_TYPE_LABELS[(row.permit_type as SafetyPermitType) ?? "other"] ?? row.permit_type}
-                </td>
-                <td className="px-2 py-1">{String(row.permit_number || "—")}</td>
-                <td className="px-2 py-1">{String(row.issuing_state || "—")}</td>
-                <td className="px-2 py-1">{String(row.holder_name || "—")}</td>
-                <td className="px-2 py-1">{String(row.expiry_date ?? "—")}</td>
-                <td className="px-2 py-1">
-                  <span className={`rounded px-1.5 py-0.5 font-semibold ${severityClass(String(row.renewal_severity ?? ""))}`}>
-                    {row.archived_at ? "Archived" : String(row.renewal_severity ?? "—")}
-                  </span>
-                </td>
-                <td className="px-2 py-1">
-                  {row.archived_at ? (
-                    <button
-                      type="button"
-                      className="text-slate-700 underline"
-                      onClick={() => restoreMutation.mutate(String(row.id))}
-                    >
-                      Restore
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="text-red-700 underline"
-                      onClick={() => archiveMutation.mutate(String(row.id))}
-                    >
-                      Archive
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {activePermits.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-2 py-3 text-center text-gray-500">
-                  No permits tracked yet. Use + Create permit to book operating authority and compliance documents.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<PermitRow>
+        columns={permitColumns}
+        rows={activePermits}
+        rowKey={(row) => String(row.id)}
+        loading={permitsQuery.isLoading}
+        emptyText="No permits tracked yet. Use + Create permit to book operating authority and compliance documents."
+        storageKey="safety-permits"
+        exportFilename="permits"
+        tableTestId="permits-table"
+      />
 
       {createOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" data-testid="permits-create-modal">

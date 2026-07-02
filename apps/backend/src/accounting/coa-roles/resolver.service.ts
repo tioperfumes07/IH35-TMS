@@ -16,6 +16,16 @@ export const COA_ROLE_VALUES = [
   "lease_receivable",
   "interest_income",
   "gain_loss_on_disposal",
+  // CODER-34 factoring secured-borrowing roles (per-opco TRANSP) — migration
+  // 202607013000_factoring_secured_borrowing_coa_roles.sql. factor_reserve_held is the canonical reserve
+  // role (an ASSET; supersedes the code's old factor_reserve_default, which the shape-fallback mis-typed
+  // as a Liability). factor_fee_expense/default_interest_expense are sub-accounts of Interest & Financing.
+  "factoring_advance_liability",
+  "ar_assigned_to_factor",
+  "factoring_recoursed_ar",
+  "default_interest_expense",
+  "factor_reserve_held",
+  "factor_fee_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
@@ -95,6 +105,15 @@ export class ControlAccountDesignationError extends Error {
   }
 }
 
+// USMCA cross-entity-leak fix (5th leak): this role→account mapping runs on the is_lucia_bypass() poster
+// path, where the entity-scoped catalogs.accounts RLS is DEFEATED. Scoping the mapping row by
+// car.operating_company_id alone is NOT enough — a role row in THIS entity whose account_id points at
+// ANOTHER entity's account would still resolve and post a journal line cross-entity. So we pin BOTH sides:
+// the role mapping must be this entity's (car.operating_company_id = $1) AND the resolved account must
+// itself belong to this entity (a.operating_company_id = $1), symmetric with the legacy-binding
+// (resolveLegacyRoleBinding) and shape-fallback (resolveFallbackByAccountShape) paths, which already pin
+// the account's own entity. A foreign-entity account now falls through / returns null (fail-closed) exactly
+// as an unmapped role would, so the poster fails CLOSED (CoaRoleResolutionError) rather than mis-posting.
 async function resolveMappedRoleAccount(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string | null> {
   const mapped = await client.query<{ account_id: string }>(
     `
@@ -102,6 +121,7 @@ async function resolveMappedRoleAccount(client: DbClient, operatingCompanyId: st
       FROM accounting.chart_of_accounts_roles car
       JOIN catalogs.accounts a ON a.id = car.account_id
       WHERE car.operating_company_id = $1::uuid
+        AND a.operating_company_id = $1::uuid
         AND car.role = $2
         AND car.is_active = true
         AND a.deactivated_at IS NULL
@@ -190,12 +210,16 @@ async function resolveFallbackByAccountShape(client: DbClient, operatingCompanyI
 // (no ORDER BY / LIMIT), so control-role resolution can detect ambiguity (>1) and fail closed instead of
 // silently picking the most-recently-updated mapping.
 async function listMappedRoleAccountIds(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string[]> {
+  // Same 5th cross-entity-leak fix as resolveMappedRoleAccount: pin the account's OWN entity
+  // (a.operating_company_id = $1) in addition to the mapping row's, so a control-role mapping that points
+  // at a foreign-entity account can never be counted/returned on the RLS-defeated bypass poster path.
   const mapped = await client.query<{ account_id: string }>(
     `
       SELECT DISTINCT car.account_id::text AS account_id
       FROM accounting.chart_of_accounts_roles car
       JOIN catalogs.accounts a ON a.id = car.account_id
       WHERE car.operating_company_id = $1::uuid
+        AND a.operating_company_id = $1::uuid
         AND car.role = $2
         AND car.is_active = true
         AND a.deactivated_at IS NULL

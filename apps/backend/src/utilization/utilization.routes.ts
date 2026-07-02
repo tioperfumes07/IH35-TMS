@@ -26,7 +26,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
     const input = periodQuery.parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT id, driver_id, period_start, period_end,
                 minutes_driving, minutes_on_duty, minutes_loading, minutes_detention,
@@ -55,7 +55,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
     const input = periodQuery.parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT id, unit_id, period_start, period_end,
                 minutes_in_use, minutes_idle, minutes_oos, minutes_unaccounted, minutes_total,
@@ -82,7 +82,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
     const input = periodQuery.parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT id, driver_id, period_start, period_end,
                 minutes_driving, minutes_on_duty, minutes_loading, minutes_detention,
@@ -113,7 +113,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
     const input = periodQuery.parse(req.query);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await (client as Queryable).query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+      await (client as Queryable).query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
       const result = await (client as Queryable).query(
         `SELECT id, unit_id, period_start, period_end,
                 minutes_in_use, minutes_idle, minutes_oos, minutes_unaccounted, minutes_total,

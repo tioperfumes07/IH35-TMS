@@ -315,7 +315,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                 placeholder={creatingCategory ? "Creating…" : "Uncategorized"}
                 loading={categoriesQuery.isLoading || creatingCategory}
                 allowClear
-                allowAddNew={{ label: "+ New category", onAdd: (query) => void handleAddCategory(query) }}
+                allowAddNew={{ label: "+ Add new category", onAdd: (query) => void handleAddCategory(query) }}
               />
             </div>
           </label>

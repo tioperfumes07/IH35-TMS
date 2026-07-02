@@ -44,7 +44,7 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
   async function bypass<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${scopeCompanyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [scopeCompanyId]);
     try {
       const result = await fn();
       await db.query("COMMIT");

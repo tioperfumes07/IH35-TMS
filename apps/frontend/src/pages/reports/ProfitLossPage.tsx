@@ -60,7 +60,7 @@ export function ProfitLossPage() {
       <ReportsSubNav />
       <PageHeader
         title="Profit & loss"
-        subtitle={`Revenue, COGS, expenses, and net income · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
+        subtitle={`Revenue, COGS, expenses, and net income — ${basis === "cash" ? "Cash" : "Accrual"} basis`}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

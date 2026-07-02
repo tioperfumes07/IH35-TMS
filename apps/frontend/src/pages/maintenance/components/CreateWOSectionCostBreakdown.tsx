@@ -28,11 +28,11 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
   );
 
   return (
-    <section className="rounded border border-yellow-200 bg-yellow-50 p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-yellow-800">C. Cost Breakdown</h3>
+    <section className="rounded border border-slate-200 bg-slate-50 p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">C. Cost Breakdown</h3>
       <div className="space-y-2">
         {fields.map((field, idx) => (
-          <div key={field.id} className="grid grid-cols-1 gap-2 rounded border border-yellow-100 bg-white p-2 md:grid-cols-7">
+          <div key={field.id} className="grid grid-cols-1 gap-2 rounded border border-slate-200 bg-white p-2 md:grid-cols-7">
             <SelectCombobox {...register(`line_items.${idx}.line_type`)} className="h-8 rounded border border-gray-300 px-2 text-sm">
               <option value="parts">Parts</option>
               <option value="labor">Labor</option>

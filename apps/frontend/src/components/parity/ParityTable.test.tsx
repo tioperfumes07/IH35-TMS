@@ -105,6 +105,21 @@ describe("ParityTable (A1 grammar)", () => {
     window.localStorage.clear();
   });
 
+  it("tableTestId + rowTestId: migrated pages keep their container and per-row test hooks", () => {
+    render(
+      <ParityTable<Row>
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        tableTestId="my-table"
+        rowTestId={(r) => `my-row-${r.id}`}
+      />,
+    );
+    expect(screen.getByTestId("my-table")).toBeInTheDocument();
+    expect(screen.getByTestId("my-row-1")).toBeInTheDocument();
+    expect(screen.getByTestId("my-row-2")).toBeInTheDocument();
+  });
+
   it("renderExpanded: no expander column by default; toggle reveals/hides the detail row", () => {
     const { rerender } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
     // Additive: existing consumers (no renderExpanded) get no expander toggle.

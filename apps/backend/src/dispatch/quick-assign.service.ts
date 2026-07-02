@@ -22,7 +22,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
   } = { v: null };
 
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     await client.query("BEGIN");
     try {
       const loadRes = await client.query(
@@ -222,7 +222,7 @@ export async function completeQuicksaveDraft(
   input: { operating_company_id: string; load_id: string; fields: Record<string, unknown> }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const patch = input.fields ?? {};
     const unitId = typeof patch.assigned_unit_id === "string" ? patch.assigned_unit_id : null;
     const trailerId = typeof patch.assigned_secondary_driver_id === "string" ? patch.assigned_secondary_driver_id : null;
@@ -258,7 +258,7 @@ export async function completeQuicksaveDraft(
 
 export async function listQuicksaveDrafts(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     const rows = await client.query(
       `
         SELECT id, load_number, assigned_primary_driver_id, assigned_unit_id, quicksave_pending_fields, updated_at
@@ -276,7 +276,7 @@ export async function listQuicksaveDrafts(userId: string, operatingCompanyId: st
 
 export async function getAssignmentHistory(userId: string, operatingCompanyId: string, loadId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     const rows = await client.query(
       `
         SELECT *

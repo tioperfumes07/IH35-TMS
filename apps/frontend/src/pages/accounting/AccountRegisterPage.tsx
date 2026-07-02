@@ -302,9 +302,11 @@ export function AccountRegisterPage() {
               key={c.key}
               type="button"
               onClick={c.clear}
-              className="rounded-full border border-gray-300 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-700 hover:bg-gray-100"
+              aria-label={`Clear ${c.label} filter`}
+              className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-700 hover:bg-gray-100"
             >
-              {c.label} ✕
+              {c.label}
+              <svg aria-hidden="true" viewBox="0 0 12 12" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3l6 6M9 3l-6 6" strokeLinecap="round" /></svg>
             </button>
           ))}
         </div>

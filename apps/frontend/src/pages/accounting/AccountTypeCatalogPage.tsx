@@ -6,8 +6,8 @@ import { getAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../api/a
 
 const STATEMENT_COLOR: Record<string, string> = {
   "Balance Sheet": "bg-slate-100 text-slate-700",
-  "Profit and Loss": "bg-emerald-100 text-emerald-800",
-  "Profit & Loss": "bg-emerald-100 text-emerald-800",
+  "Profit and Loss": "bg-slate-200 text-slate-800",
+  "Profit & Loss": "bg-slate-200 text-slate-800",
 };
 
 function groupBy(entries: AccountTypeCatalogEntry[]): [string, AccountTypeCatalogEntry[]][] {
@@ -61,7 +61,7 @@ export function AccountTypeCatalogPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search type or detail type…"
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
         />
         {!isLoading && !isError && (
           <span className="text-xs text-gray-500">

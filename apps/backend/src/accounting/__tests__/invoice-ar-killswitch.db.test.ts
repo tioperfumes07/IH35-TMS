@@ -41,7 +41,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     try { await fn(); await db.query("COMMIT"); }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }
@@ -49,7 +49,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
   async function scopedRead<T = Record<string, unknown>>(sql: string, params: unknown[]): Promise<T[]> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     try { const r = await db.query(sql, params); await db.query("COMMIT"); return r.rows as T[]; }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }

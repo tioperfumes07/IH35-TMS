@@ -121,7 +121,11 @@ export async function createDraftBatch(
       FROM accounting.invoices i
       WHERE i.operating_company_id = $1::uuid
         AND i.id = ANY($2::uuid[])
-        AND i.status = 'paid'
+        -- CODER-34 eligibility fix: factor DELIVERED, OPEN, UNFACTORED invoices — NOT 'paid'. A 'paid'
+        -- invoice is already collected and has no receivable to pledge. accounting.invoices.status ∈
+        -- ('draft','sent','partial','paid','void','factored'); 'sent' = issued & open (its load is
+        -- delivered → the invoice exists). Not-already-factored + not-in-an-active-batch are enforced below.
+        AND i.status = 'sent'
         AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
         AND NOT EXISTS (
           SELECT 1
@@ -357,7 +361,9 @@ export async function listCandidateInvoices(
       FROM accounting.invoices i
       LEFT JOIN mdata.customers c ON c.id = i.customer_id
       WHERE i.operating_company_id = $1::uuid
-        AND i.status = 'paid'
+        -- CODER-34 eligibility fix (see createDraftBatch): factor OPEN, UNFACTORED invoices ('sent'),
+        -- never already-collected ('paid'). Not-in-an-active-batch is enforced by the NOT EXISTS below.
+        AND i.status = 'sent'
         AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
         AND NOT EXISTS (
           SELECT 1

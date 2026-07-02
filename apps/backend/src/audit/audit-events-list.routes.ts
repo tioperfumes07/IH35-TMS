@@ -151,7 +151,7 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
 
 export async function listAuditEvents(userId: string, input: ListAuditEventsInput) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const query = buildAuditEventsListQuery(input);
     const res = await (client as Queryable).query<AuditEventListRow>(query.sql, query.values);
     const events = res.rows.map((row) => ({
