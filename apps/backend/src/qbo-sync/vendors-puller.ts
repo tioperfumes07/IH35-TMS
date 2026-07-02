@@ -102,11 +102,15 @@ async function upsertLocalVendor(client: PoolClient, operatingCompanyId: string,
         deactivated_at,
         qbo_synced_at,
         qbo_sync_status,
-        qbo_sync_error
+        qbo_sync_error,
+        source_system,
+        source
       )
-      VALUES ($1,$2,'Other',$3,$4,$5,$6,$7,now(),'synced',NULL)
+      VALUES ($1,$2,'Other',$3,$4,$5,$6,$7,now(),'synced',NULL,'qbo','qbo_clone')
       ON CONFLICT (operating_company_id, qbo_vendor_id)
       DO UPDATE SET
+        source_system = 'qbo',
+        source = 'qbo_clone',
         vendor_name = EXCLUDED.vendor_name,
         phone = EXCLUDED.phone,
         email = EXCLUDED.email,
@@ -134,15 +138,37 @@ export async function pullVendorsFromQbo(operatingCompanyId: string): Promise<Ve
   let rowsPulled = 0;
   let rowsUpserted = 0;
 
+  const pulledQboIds: string[] = [];
+
   await withLuciaBypass(async (client) => {
     const ctx = await qboCompanyContext(operatingCompanyId);
     for await (const page of qboPaginateEntity<Record<string, unknown>>(ctx, "Vendor", "", { pageSize: 1000 })) {
       for (const row of page) {
         rowsPulled += 1;
+        const qboId = String(row.Id ?? "");
+        if (qboId) pulledQboIds.push(qboId);
         await upsertMirror(client, operatingCompanyId, row);
         await upsertLocalVendor(client, operatingCompanyId, row);
         rowsUpserted += 1;
       }
+    }
+
+    // MD-2 void-gone-from-QBO (mirror of MD-1): a cloned vendor absent from the FULL pull was deleted in
+    // QBO → deactivate (never delete). Guarded on a non-empty pull; only touches origin='qbo_clone' rows.
+    if (pulledQboIds.length > 0) {
+      await client.query(
+        `
+          UPDATE mdata.vendors
+          SET deactivated_at = COALESCE(deactivated_at, now()),
+              updated_at = now()
+          WHERE operating_company_id = $1
+            AND source = 'qbo_clone'
+            AND deactivated_at IS NULL
+            AND qbo_vendor_id IS NOT NULL
+            AND NOT (qbo_vendor_id = ANY($2::text[]))
+        `,
+        [operatingCompanyId, pulledQboIds]
+      );
     }
   });
 
