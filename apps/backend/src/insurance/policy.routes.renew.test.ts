@@ -11,6 +11,8 @@ const NEW_POLICY_ID = "33333333-3333-4333-8333-333333333333";
 const createPolicyBillScheduleMock = vi.fn(async () => ({ scheduleIds: [], billUuids: [], skipped: false }));
 
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
+  // Cross-tenant membership guard: the acting user is a member of OP_CO.
+  if (sql.includes("org.user_company_access")) return { rows: [{ "?column?": 1 }], rowCount: 1 };
   if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
 
   if (sql.includes("INSERT INTO insurance.policy ") && sql.includes("RETURNING")) {

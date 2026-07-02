@@ -41,6 +41,10 @@ describe("road service tickets routes (CLOSURE-7)", () => {
     mocked.withCurrentUserMock.mockImplementation(async (_userId: string, fn: (client: unknown) => Promise<unknown>) =>
       fn({
         query: vi.fn().mockImplementation(async (sql: string) => {
+          // Cross-tenant membership guard: the acting user is a member of the company.
+          if (sql.includes("org.user_company_access")) {
+            return { rows: [{ "?column?": 1 }], rowCount: 1 };
+          }
           if (sql.includes("INSERT INTO maintenance.road_service_tickets")) {
             return { rows: [{ id: ticketId, status: "open", ticket_number: "RS-1001" }] };
           }

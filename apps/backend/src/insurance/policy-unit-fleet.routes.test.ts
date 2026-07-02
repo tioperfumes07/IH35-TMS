@@ -40,6 +40,8 @@ function unitRow() {
 }
 
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
+  // Cross-tenant membership guard: USER is a member of COMPANY.
+  if (sql.includes("org.user_company_access")) return { rows: [{ "?column?": 1 }], rowCount: 1 };
   if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
   if (sql.includes("audit.append_event")) return { rows: [] };
 

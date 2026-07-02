@@ -11,24 +11,30 @@ import {
 } from "../driver-metrics.service.js";
 import { registerDriverMetricsRoutes } from "../driver-metrics.routes.js";
 
-const queryMock = vi.fn(async () => ({
-  rows: [
-    {
-      driver_id: "11111111-1111-4111-8111-111111111111",
-      driver_name: "Test Driver",
-      fuel_spend: 500,
-      gallons: 100,
-      odometer_delta: 1000,
-      wo_count: 2,
-      accident_count: 0,
-      tire_lines: 1,
-      battery_lines: 0,
-      airbag_lines: 0,
-      brake_lines: 0,
-      avg_repair_cost: 250,
-    },
-  ],
-}));
+const queryMock = vi.fn(async (sql?: string) => {
+  // Cross-tenant membership guard: the acting user is a member of the requested company.
+  if (typeof sql === "string" && sql.includes("org.user_company_access")) {
+    return { rows: [{ "?column?": 1 }], rowCount: 1 };
+  }
+  return {
+    rows: [
+      {
+        driver_id: "11111111-1111-4111-8111-111111111111",
+        driver_name: "Test Driver",
+        fuel_spend: 500,
+        gallons: 100,
+        odometer_delta: 1000,
+        wo_count: 2,
+        accident_count: 0,
+        tire_lines: 1,
+        battery_lines: 0,
+        airbag_lines: 0,
+        brake_lines: 0,
+        avg_repair_cost: 250,
+      },
+    ],
+  };
+});
 
 vi.mock("../../auth/session-middleware.js", () => ({
   requireAuth: () => true,
