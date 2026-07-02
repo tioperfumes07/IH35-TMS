@@ -78,7 +78,14 @@ export function DispatchChatPage() {
                     onClick={() => setActiveThreadId(t.id)}
                     className={`border-b border-slate-100 px-3 py-2 text-left text-sm ${active ? "bg-slate-100 text-[#1f2a44]" : "text-slate-700 hover:bg-slate-50"}`}
                   >
-                    <div className="font-semibold">{threadLabel(t)}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{threadLabel(t)}</span>
+                      {t.has_unacknowledged_confirmation ? (
+                        <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">
+                          Unacknowledged
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="text-xs text-slate-500">{fmtTime(t.updated_at)}{t.status === "archived" ? " · archived" : ""}</div>
                   </button>
                 );

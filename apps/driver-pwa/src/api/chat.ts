@@ -11,6 +11,9 @@ export type DriverChatThread = {
   status: "open" | "archived";
   last_seq: number;
   updated_at: string;
+  // NOTIF-A read-only derivations (server-computed in listThreads):
+  has_pending_confirmation?: boolean; // any unacked confirmation_request → drives the loud foreground alert
+  has_unacknowledged_confirmation?: boolean; // unacked past the escalation window → office UNACKNOWLEDGED badge
 };
 
 export type DriverChatMessage = {

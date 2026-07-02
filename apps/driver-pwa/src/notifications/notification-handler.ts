@@ -36,6 +36,7 @@ export function resolvePushDeepLink(data?: Record<string, string>): string {
   const loadId = String(data?.load_id ?? "").trim();
   const settlementId = String(data?.settlement_id ?? "").trim();
   const disputeId = String(data?.dispute_id ?? "").trim();
+  const threadId = String(data?.thread_id ?? "").trim();
 
   if (kind === "load_assigned" || kind === "load_reassigned_away") {
     return loadId ? `/loads/${loadId}` : "/today";
@@ -47,6 +48,10 @@ export function resolvePushDeepLink(data?: Record<string, string>): string {
     return disputeId ? `/my-disputes?highlight=${disputeId}` : "/my-disputes";
   }
   if (kind === "hos_warning") return "/hos";
+  // NOTIF-A: keep in sync with the service worker — chat pushes deep-link into the thread.
+  if (kind === "chat_confirmation" || kind === "chat_message" || kind === "cash_advance_decision") {
+    return threadId ? `/chat?threadId=${threadId}` : "/chat";
+  }
   if (kind === "dispatch_message") return "/messages";
   return "/today";
 }
