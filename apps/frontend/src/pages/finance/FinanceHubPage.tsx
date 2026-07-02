@@ -9,9 +9,10 @@ import { FINANCE_HUB_UI_FLAG, getFinanceHubOverview, type FinanceHubKpi } from "
 // AF-6 — Finance Hub landing dashboard.
 // READ-ONLY: a single GET aggregates headline KPIs from the existing read-only finance/accounting
 // surfaces; every card drills through to the real screen that owns that data. Nothing here posts,
-// writes, or moves money. Gated behind flag FINANCE_HUB_UI_ENABLED — default_enabled=true in
-// lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no
-// money posting.
+// writes, or moves money. Gated behind flag FINANCE_HUB_UI_ENABLED — DEFAULT OFF: this page checks the
+// lib.feature_flags flag of that name, and the backend /finance/hub/overview route independently gates on
+// process.env.FINANCE_HUB_UI_ENABLED (404 unless exactly "true"). BOTH must be enabled for live data; with
+// neither set the Hub renders its disabled banner. Read-only, no money posting.
 
 const fmtCents = (c: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((c || 0) / 100);
 
