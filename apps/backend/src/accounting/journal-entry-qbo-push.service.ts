@@ -2,18 +2,17 @@ import { pool, withLuciaBypass } from "../auth/db.js";
 import { qboApiBase } from "../integrations/qbo/qbo-client.js";
 import { getValidAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
 import { loadJournalEntryForSync, mapJournalEntryToQboPayload } from "../integrations/qbo/journal-entry-qbo-mapping.js";
-import { isEnabled } from "../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { evaluateJeQboPushGate, JE_QBO_PUSH_FLAG, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "./qbo-je-push-gate.js";
 
-// IMPORT-P0 — JE→QBO push kill-switch. QBO is the system of record through 12/31/2025; the TMS must not
-// write journal entries into QuickBooks unless the owner explicitly enables it per entity. Three
-// independent layers guard this file (see below): (1) a default-OFF per-entity flag, (2) a structural
-// refusal of any QBO-originated / imported JE that can never be flipped away, and (3) — in the masterdata
-// accounts pusher — the pre-existing "only push TMS-originated rows" rule (proven by test, not duplicated).
-export const JE_QBO_PUSH_FLAG = "QBO_JE_PUSH_ENABLED";
-// Thrown when a QBO-originated / imported JE reaches the push path. Never replayable — an imported mirror
-// entry round-tripping back into QuickBooks would corrupt the system of record.
-export const QBO_PUSH_REFUSED_IMPORT_SOURCE = "qbo_push_refused_import_source";
+// IMPORT-P0 — JE→QBO push kill-switch (immediate best-effort path). QBO is the system of record through
+// 12/31/2025; the TMS must not write journal entries into QuickBooks unless the owner enables it per
+// entity. The push decision is made by the SHARED gate (qbo-je-push-gate.ts), which is ALSO consulted by
+// the queue-drain path (sync-outbound-accounting.ts) so both live paths enforce the same two layers:
+// (1) default-OFF per-entity flag, (2) structural refusal of any non-'tms' (QBO-origin) source that can
+// never be flipped away. LAYER 3 (masterdata echo guard) lives in the accounts pusher (proven by test).
+// Re-exported for the proof harness + callers.
+export { JE_QBO_PUSH_FLAG, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "./qbo-je-push-gate.js";
 const P0_SYSTEM_ACTOR = "00000000-0000-4000-8000-000000000001";
 
 function preview(text: string) {
@@ -186,25 +185,22 @@ export async function pushJournalEntryToQuickBooksFromQueue(job: { operating_com
   });
   const probe = headerProbe.rows[0];
 
-  // ── LAYER 2 — structural refusal (independent of the flag; can never be flipped away) ──────────────
-  // A QBO-originated / imported journal entry must NEVER round-trip back into QuickBooks (the system of
-  // record). source_system defaults 'tms'; anything else ('qbo' today, a future 'qbo_import') is
-  // QBO-origin. Refuse loudly with ZERO HTTP even when the flag is ON, and record a NON-replayable alert.
-  if (probe && probe.source_system !== null && probe.source_system !== "tms") {
-    await persistImportRefusalAlert(oc, job.entity_id, probe.source_system);
+  // ── LAYER 1 + LAYER 2 via the SHARED gate — evaluated BEFORE getValidAccessToken so a disabled/refused
+  // entity fetches no token and makes ZERO HTTP. source_system comes from the probe (no extra query). ────
+  const gate = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+    return evaluateJeQboPushGate(client, oc, job.entity_id, { sourceSystem: probe?.source_system ?? "tms" });
+  });
+  // LAYER 2 — structural refusal (independent of the flag): a QBO-origin / imported JE must NEVER
+  // round-trip. Record a NON-replayable alert and throw.
+  if (gate.decision === "import_source") {
+    await persistImportRefusalAlert(oc, job.entity_id, gate.sourceSystem);
     const err = new Error(QBO_PUSH_REFUSED_IMPORT_SOURCE);
     (err as { code?: string }).code = QBO_PUSH_REFUSED_IMPORT_SOURCE;
     throw err;
   }
-
-  // ── LAYER 1 — flag gate (default OFF, per-entity only) ─────────────────────────────────────────────
-  // When QBO_JE_PUSH_ENABLED is OFF for this entity, do not push. This is BEFORE getValidAccessToken so a
-  // disabled entity fetches no token and makes no HTTP call. One audit breadcrumb per skip.
-  const pushEnabled = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
-    return isEnabled(client, JE_QBO_PUSH_FLAG, { operating_company_id: oc });
-  });
-  if (!pushEnabled) {
+  // LAYER 1 — flag OFF for this entity: skip with one audit breadcrumb, zero HTTP.
+  if (gate.decision === "flag_off") {
     await writePushSkippedBreadcrumb(oc, job.entity_id);
     return { qboId: null as string | null, skipped: "qbo_je_push_disabled" as const };
   }

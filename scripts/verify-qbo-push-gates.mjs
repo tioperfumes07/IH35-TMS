@@ -15,7 +15,9 @@ import path from "node:path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
+const GATE = path.join(ROOT, "apps/backend/src/accounting/qbo-je-push-gate.ts");
 const PUSH = path.join(ROOT, "apps/backend/src/accounting/journal-entry-qbo-push.service.ts");
+const OUTBOUND = path.join(ROOT, "apps/backend/src/integrations/qbo/sync-outbound-accounting.ts");
 const JE_SVC = path.join(ROOT, "apps/backend/src/accounting/journal-entries.service.ts");
 const MARKER = "[IMPORT-P0 qbo-import-exclusion]";
 
@@ -30,23 +32,34 @@ function read(p) {
   }
 }
 
+// 0. The shared gate module must exist and enforce BOTH layers.
+const gate = read(GATE);
+if (gate) {
+  if (!gate.includes("QBO_JE_PUSH_ENABLED") || !/isEnabled\s*\(/.test(gate)) {
+    failures.push("gate module lost the LAYER-1 flag resolution (isEnabled + QBO_JE_PUSH_ENABLED)");
+  }
+  if (!/source_system\s*!==\s*["']tms["']/.test(gate) || !gate.includes("import_source")) {
+    failures.push("gate module lost the LAYER-2 structural refusal (source_system !== 'tms' → import_source)");
+  }
+}
+
+// 1. BOTH live push paths must consult the shared gate. This is the fix for the bypass where the
+//    queue-drain path (sync-outbound-accounting.ts) pushed JEs to QBO with no gate.
 const push = read(PUSH);
-if (push) {
-  // 1. flag resolution present
-  if (!/isEnabled\s*\(/.test(push) || !push.includes("QBO_JE_PUSH_ENABLED")) {
-    failures.push("push service lost the LAYER-1 flag resolution (isEnabled + QBO_JE_PUSH_ENABLED)");
+if (push && !push.includes("evaluateJeQboPushGate")) {
+  failures.push("immediate push service must consult the shared gate (evaluateJeQboPushGate)");
+}
+
+const outbound = read(OUTBOUND);
+if (outbound) {
+  if (!outbound.includes("evaluateJeQboPushGate")) {
+    failures.push("queue-drain path (sync-outbound-accounting.ts) must consult the shared gate for journal_entry (evaluateJeQboPushGate)");
   }
-  // 2. structural refusal present
-  if (!push.includes("qbo_push_refused_import_source") || !/source_system\s*!==\s*["']tms["']/.test(push)) {
-    failures.push("push service lost the LAYER-2 structural refusal (source_system !== 'tms' → qbo_push_refused_import_source)");
-  }
-  // 3. flag/refusal must be resolved BEFORE the token fetch (no HTTP for a disabled/refused entity)
-  const flagIdx = push.indexOf("QBO_JE_PUSH_ENABLED");
-  const refuseIdx = push.indexOf("qbo_push_refused_import_source");
-  const tokenIdx = push.indexOf("getValidAccessToken(oc)");
-  if (tokenIdx >= 0) {
-    if (flagIdx < 0 || flagIdx > tokenIdx) failures.push("flag gate must be resolved BEFORE getValidAccessToken(oc)");
-    if (refuseIdx < 0 || refuseIdx > tokenIdx) failures.push("structural refusal must run BEFORE getValidAccessToken(oc)");
+  // The gate must run BEFORE the token fetch so a disabled/refused JE makes zero QBO calls.
+  const gateIdx = outbound.indexOf("evaluateJeQboPushGate");
+  const tokenIdx = outbound.indexOf("getValidAccessToken(opts.operating_company_id)");
+  if (gateIdx >= 0 && tokenIdx >= 0 && gateIdx > tokenIdx) {
+    failures.push("sync-outbound-accounting: the JE gate must be evaluated BEFORE getValidAccessToken");
   }
 }
 
