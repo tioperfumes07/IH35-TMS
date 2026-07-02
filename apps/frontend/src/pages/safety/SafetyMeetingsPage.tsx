@@ -10,6 +10,7 @@ import {
 import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
 
 type Props = {
@@ -81,6 +82,37 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
     );
   };
 
+  // Migrated to the shared QBO-parity grid (resize / sticky-header / density / export). Columns,
+  // order, and the per-row "Track attendance" action are preserved verbatim (§7 additive-only).
+  const meetingColumns: Array<ParityColumn<SafetyMeetingRow>> = [
+    { key: "occurred_at", label: "Date", sortable: true, render: (m) => String(m.occurred_at ?? "").slice(0, 10) },
+    { key: "title", label: "Topic", sortable: true },
+    { key: "required", label: "Required", render: (m) => (m.required_attendees ?? []).length },
+    {
+      key: "present",
+      label: "Present",
+      render: (m) => {
+        const required = m.required_attendees ?? [];
+        const attendance = m.attendance ?? {};
+        return required.filter((driverId) => attendance[driverId]).length;
+      },
+    },
+    {
+      key: "action",
+      label: "Action",
+      render: (m) => (
+        <button
+          type="button"
+          className="text-slate-700 underline"
+          data-testid={`safety-meeting-attendance-btn-${m.id}`}
+          onClick={() => setExpandedMeetingId(expandedMeetingId === m.id ? null : m.id)}
+        >
+          Track attendance
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-3" data-testid="safety-meetings-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
@@ -93,51 +125,17 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-full text-xs" data-testid="safety-meetings-table">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Date</th>
-              <th className="px-2 py-1 text-left">Topic</th>
-              <th className="px-2 py-1 text-left">Required</th>
-              <th className="px-2 py-1 text-left">Present</th>
-              <th className="px-2 py-1 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {meetings.map((meeting) => {
-              const required = meeting.required_attendees ?? [];
-              const attendance = meeting.attendance ?? {};
-              const presentCount = required.filter((driverId) => attendance[driverId]).length;
-              return (
-                <tr key={meeting.id} className="border-t border-gray-100" data-testid={`safety-meeting-row-${meeting.id}`}>
-                  <td className="px-2 py-1">{String(meeting.occurred_at ?? "").slice(0, 10)}</td>
-                  <td className="px-2 py-1">{meeting.title}</td>
-                  <td className="px-2 py-1">{required.length}</td>
-                  <td className="px-2 py-1">{presentCount}</td>
-                  <td className="px-2 py-1">
-                    <button
-                      type="button"
-                      className="text-slate-700 underline"
-                      data-testid={`safety-meeting-attendance-btn-${meeting.id}`}
-                      onClick={() => setExpandedMeetingId(expandedMeetingId === meeting.id ? null : meeting.id)}
-                    >
-                      Track attendance
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {meetings.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-2 py-3 text-center text-slate-500">
-                  No safety meetings found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<SafetyMeetingRow>
+        columns={meetingColumns}
+        rows={meetings}
+        rowKey={(m) => m.id}
+        loading={meetingsQuery.isLoading}
+        emptyText="No safety meetings found."
+        storageKey="safety-meetings"
+        exportFilename="safety-meetings"
+        tableTestId="safety-meetings-table"
+        rowTestId={(m) => `safety-meeting-row-${m.id}`}
+      />
 
       {expandedMeetingId ? (
         <div className="rounded border border-gray-200 bg-white px-3 py-2" data-testid="safety-meeting-attendance-panel">

@@ -181,6 +181,9 @@ jobs:
       - name: Verify §7 palette (no non-§7 accent hex in maintenance views)
         run: npm run verify:section7-palette-maintenance
 
+      - name: Verify §7 palette ratchet (no NET-NEW off-palette status class in non-financial UI)
+        run: npm run verify:section7-palette-nonfinancial
+
       - name: Verify maintenance ParityTable record cells are anchors (no dead record cells)
         run: npm run verify:maintenance-record-cells-link
 
@@ -218,6 +221,9 @@ jobs:
 
       - name: Verify no cross-carrier data leak guard
         run: npm run verify:no-cross-carrier-data-leak
+
+      - name: Verify no interpolated GUC (SQLi→RLS-bypass) guard
+        run: npm run verify:no-interpolated-guc
 
       - name: Verify catalog factory coverage guard
         run: npm run verify:catalog-factory-coverage

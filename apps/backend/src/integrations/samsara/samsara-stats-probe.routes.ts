@@ -45,7 +45,7 @@ export async function registerSamsaraStatsProbeRoutes(app: FastifyInstance) {
     const oc = parsed.data.operating_company_id;
 
     const { cfg, localDb } = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
       const cfgRow = await getSamsaraConfigForCompany(client, oc);
       const local = await localPairingDiagnostics(client.query.bind(client), oc);
       return { cfg: cfgRow, localDb: local };

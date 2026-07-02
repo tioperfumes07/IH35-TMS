@@ -339,7 +339,7 @@ export function EquipmentTypesPage() {
                               <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{item.code}</span>
                               <span className="text-[13px] text-gray-900">{item.name}</span>
                               {item.is_required ? (
-                                <span className="rounded bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">Required</span>
+                                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Required</span>
                               ) : null}
                             </div>
                             <div className="mt-0.5 text-[11px] text-gray-500">

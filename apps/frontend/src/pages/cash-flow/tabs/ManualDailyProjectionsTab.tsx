@@ -242,7 +242,7 @@ function ProjectionPanel({
             <button type="button" className="h-7 rounded border border-gray-300 bg-white px-2 hover:bg-gray-50" onClick={() => { setForm(emptyRow()); setShowMore(false); }}>Cancel</button>
           ) : null}
           <button type="button" className="h-7 rounded bg-slate-700 px-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
-            {form.id ? "Save" : `+ Add ${direction}`}
+            {form.id ? "Save" : `+ Add new ${direction}`}
           </button>
         </div>
       </div>

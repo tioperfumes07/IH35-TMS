@@ -35,7 +35,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
         <div className="mt-2 rounded border border-gray-200 p-2">
           <div className="font-semibold">Acknowledgment / Forfeiture</div>
           <div>Status: {Boolean(liability.requires_acknowledgment) && !liability.acknowledgment_uuid ? "Pending Ack" : "Acknowledged/Not required"}</div>
-          <div>Forfeiture clause: {Boolean(liability.forfeiture_clause_active) ? "Active ✓" : "Not active"}</div>
+          <div>Forfeiture clause: {Boolean(liability.forfeiture_clause_active) ? "Active" : "Not active"}</div>
           <div>Signed at: {String(liability.forfeiture_clause_signed_at ?? "n/a")}</div>
         </div>
         <div className="mt-2 rounded border border-gray-200 p-2">

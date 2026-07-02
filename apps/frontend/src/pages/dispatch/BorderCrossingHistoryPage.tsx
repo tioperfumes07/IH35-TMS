@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 type CrossingRow = {
@@ -43,6 +44,16 @@ export function BorderCrossingHistoryPage() {
       ? `/api/v1/border-crossing/${selected.id}/emanifest.pdf?operating_company_id=${encodeURIComponent(selectedCompanyId)}`
       : null;
 
+  // Migrated to the shared QBO-parity grid — columns and order preserved; row click still opens the
+  // detail aside (§7 additive-only).
+  const columns: Array<ParityColumn<CrossingRow>> = [
+    { key: "crossing_date", label: "Date", sortable: true, render: (row) => row.planned_crossing_date ?? row.crossing_date },
+    { key: "direction", label: "Direction", sortable: true, className: "capitalize", cellClass: "capitalize" },
+    { key: "port_of_entry", label: "Port", sortable: true },
+    { key: "unit_number", label: "Unit", sortable: true, render: (row) => row.unit_number ?? "—" },
+    { key: "emanifest_reference", label: "eManifest", render: (row) => row.emanifest_reference ?? "—" },
+  ];
+
   return (
     <div data-testid="border-crossing-history-page" className="mx-auto max-w-5xl space-y-4">
       <PageHeader
@@ -56,48 +67,16 @@ export function BorderCrossingHistoryPage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <section className="overflow-x-auto rounded border bg-white">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left">
-              <tr>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Direction</th>
-                <th className="px-3 py-2">Port</th>
-                <th className="px-3 py-2">Unit</th>
-                <th className="px-3 py-2">eManifest</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-3 py-4 text-gray-500">
-                    Loading…
-                  </td>
-                </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-3 py-4 text-gray-500">
-                    No completed crossings yet.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className={`cursor-pointer border-t hover:bg-gray-50 ${selected?.id === row.id ? "bg-slate-100" : ""}`}
-                    onClick={() => setSelected(row)}
-                  >
-                    <td className="px-3 py-2">{row.planned_crossing_date ?? row.crossing_date}</td>
-                    <td className="px-3 py-2 capitalize">{row.direction}</td>
-                    <td className="px-3 py-2">{row.port_of_entry}</td>
-                    <td className="px-3 py-2">{row.unit_number ?? "—"}</td>
-                    <td className="px-3 py-2">{row.emanifest_reference ?? "—"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </section>
+        <ParityTable<CrossingRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={loading}
+          emptyText="No completed crossings yet."
+          onRowClick={(row) => setSelected(row)}
+          storageKey="dispatch-border-crossing-history"
+          exportFilename="border-crossing-history"
+        />
 
         <aside className="rounded border bg-white p-4 text-sm">
           {!selected ? (

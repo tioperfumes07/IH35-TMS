@@ -61,7 +61,7 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
             <button
               type="button"
               onClick={() => setCreateMenuOpen((open) => !open)}
-              className="rounded border border-emerald-700 bg-emerald-700 px-3 py-1 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="rounded border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-sm font-semibold text-white hover:bg-[#0f1729]"
             >
               + Create ▾
             </button>

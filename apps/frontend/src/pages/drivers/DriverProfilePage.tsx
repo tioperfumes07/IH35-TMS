@@ -16,7 +16,9 @@ import { MedicalCardSection } from "../../components/driver-profile/MedicalCardS
 import { PerformanceScorecardSection } from "../../components/driver-profile/PerformanceScorecardSection";
 import { SettlementsSection } from "../../components/driver-profile/SettlementsSection";
 import { TrainingRecordsSection } from "../../components/driver-profile/TrainingRecordsSection";
+import { W8BenSection } from "../../components/driver-profile/W8BenSection";
 import { AddTrainingModal } from "../../components/drivers/AddTrainingModal";
+import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -105,6 +107,7 @@ export type DriverProfileAggregate = {
   settlements?: Record<string, unknown>;
   training_records?: Array<Record<string, unknown>>;
   border_credentials?: Record<string, unknown>;
+  w8ben?: Record<string, unknown>;
   documents?: Array<Record<string, unknown>>;
 };
 
@@ -126,6 +129,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [addTrainingOpen, setAddTrainingOpen] = useState(false);
+  const [w8benOpen, setW8benOpen] = useState(false);
   const [autoPaySaving, setAutoPaySaving] = useState(false);
 
   const refreshDriver = () => {
@@ -310,6 +314,17 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       <div data-testid="dp-section-10-border">
         <BorderCredentialsSection border={aggregate.border_credentials ?? {}} />
       </div>
+      <div data-testid="dp-section-w8ben">
+        <W8BenSection w8ben={aggregate.w8ben ?? { status: "missing", on_file: false }} onCapture={() => setW8benOpen(true)} />
+      </div>
+      <W8BenModal
+        open={w8benOpen}
+        driverId={id}
+        companyId={companyId}
+        driverName={displayName}
+        onClose={() => setW8benOpen(false)}
+        onCreated={refreshDriver}
+      />
       <div data-testid="dp-section-11-documents">
         {/* Inline the full Documents module (upload + R2 + versions + download) on the driver profile —
             same component DriverDetail uses. Replaces the read-only stub that only linked out to /docs, so

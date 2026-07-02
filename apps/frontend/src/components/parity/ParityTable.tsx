@@ -79,6 +79,16 @@ export type ParityTableProps<T> = {
    * consumers that omit it are unchanged.
    */
   renderExpanded?: (row: T) => ReactNode;
+  /**
+   * Optional data-testid for the outer table container. Lets a migrated page keep the test/e2e hook
+   * that its former hand-rolled `<table>` carried. Additive — omitting it renders no testid.
+   */
+  tableTestId?: string;
+  /**
+   * Optional per-row data-testid on the rendered `<tr>`. Lets a migrated page preserve existing
+   * row-level test/e2e selectors. Additive — omitting it renders no per-row testid.
+   */
+  rowTestId?: (row: T) => string;
 };
 
 const DENSITY: Record<ParityDensity, { rowH: number; padY: number; font: number }> = {
@@ -134,6 +144,8 @@ export function ParityTable<T>({
   stickyHeader = true,
   enableColumnResize = true,
   renderExpanded,
+  tableTestId,
+  rowTestId,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
@@ -356,7 +368,7 @@ export function ParityTable<T>({
     visibleColumns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0) + (renderExpanded ? 1 : 0);
 
   return (
-    <div className="overflow-visible rounded-md border border-gray-200 bg-white">
+    <div className="overflow-visible rounded-md border border-gray-200 bg-white" data-testid={tableTestId}>
       {/* Toolbar: optional slot + gear */}
       <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         <div className="flex items-center gap-2 text-[11px] text-gray-600">
@@ -534,6 +546,7 @@ export function ParityTable<T>({
               return (
                 <Fragment key={id}>
                 <tr
+                  data-testid={rowTestId ? rowTestId(row) : undefined}
                   className={`border-t border-gray-100 ${
                     onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
                   }`}

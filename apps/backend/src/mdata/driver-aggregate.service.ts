@@ -460,6 +460,57 @@ export async function buildDriverAggregate(
     { rows: [] as Array<Record<string, unknown>> }
   );
 
+  // W-8BEN — IRS foreign-status certificate (B-1 drivers). At-hire capture + yearly renewal
+  // (IH35 policy) surfaced against the latest active certificate. Degrades gracefully if the
+  // table is absent (pre-migration branch copy).
+  const w8benRes = await withSavepoint(
+    client,
+    "driver_agg_w8ben",
+    () =>
+      client.query(
+        `
+          SELECT
+            id::text,
+            full_legal_name,
+            country_of_citizenship,
+            foreign_tin,
+            us_tin,
+            date_of_birth::text,
+            certification_name,
+            signed_date::text,
+            irs_expiration_date::text
+          FROM safety.driver_w8ben
+          WHERE driver_id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND voided_at IS NULL
+          ORDER BY signed_date DESC, created_at DESC
+          LIMIT 1
+        `,
+        [driverId, operatingCompanyId]
+      ),
+    { rows: [] as Array<Record<string, unknown>> }
+  );
+  const w8benRow = w8benRes.rows[0] ?? null;
+  let w8ben: Record<string, unknown>;
+  if (w8benRow) {
+    const signed = String(w8benRow.signed_date);
+    // IH35 policy = renew yearly → renewal is due 1 year after signing.
+    const renewalDue = signed ? `${Number(signed.slice(0, 4)) + 1}${signed.slice(4)}` : null;
+    const renewalDays = daysUntil(renewalDue);
+    // "expiring" once inside the 60-day pre-renewal window (or already past due).
+    const status = renewalDays !== null && renewalDays <= 60 ? "expiring" : "on_file";
+    w8ben = {
+      status,
+      on_file: true,
+      ...w8benRow,
+      renewal_due_date: renewalDue,
+      renewal_days_until: renewalDays,
+      color_status: complianceColor(renewalDays),
+    };
+  } else {
+    w8ben = { status: "missing", on_file: false, color_status: "red" };
+  }
+
   return {
     driver,
     license,
@@ -477,6 +528,7 @@ export async function buildDriverAggregate(
     settlements,
     training_records,
     border_credentials,
+    w8ben,
     documents: documentsRes.rows,
   };
 }

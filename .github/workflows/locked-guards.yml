@@ -265,6 +265,9 @@ jobs:
       - name: verify:multi-entity-separation
         run: npm run verify:multi-entity-separation
 
+      - name: verify:coa-resolver-entity-scope
+        run: npm run verify:coa-resolver-entity-scope
+
       - name: verify:deactivation-trap-fix
         run: npm run verify:deactivation-trap-fix
 

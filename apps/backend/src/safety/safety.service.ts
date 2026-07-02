@@ -14,7 +14,7 @@ export async function listSafetyEvents(
   }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const values: unknown[] = [input.operating_company_id];
     const filters = ["operating_company_id = $1"];
     if (input.event_type) {

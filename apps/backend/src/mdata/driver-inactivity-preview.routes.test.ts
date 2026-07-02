@@ -15,11 +15,12 @@ vi.mock("../auth/session-middleware.js", () => ({
   },
 }));
 
-// Run the body directly with a fake client that records the SQL it is asked to run.
+// Run the body directly with a fake client that records the SQL (and bound values) it is asked to run.
 let recordedSql: string[] = [];
+let recordedCalls: Array<{ sql: string; values?: unknown[] }> = [];
 vi.mock("../auth/db.js", () => ({
   withCurrentUser: async (_uuid: string, fn: (c: unknown) => Promise<unknown>) =>
-    fn({ query: async (sql: string) => { recordedSql.push(sql); return { rows: [] }; } }),
+    fn({ query: async (sql: string, values?: unknown[]) => { recordedSql.push(sql); recordedCalls.push({ sql, values }); return { rows: [] }; } }),
 }));
 
 const INACTIVITY_PAYLOAD = { mode: "login", drivers: [], generated_at: "2026-06-18T00:00:00.000Z" };
@@ -54,7 +55,7 @@ const LOGIN_PATH = "/api/v1/mdata/drivers/inactivity-preview";
 const DRIVING_PATH = "/api/v1/mdata/drivers/driving-inactivity-preview";
 
 describe("driver inactivity preview routes (read-only smoke)", () => {
-  beforeEach(() => { requireAuthResult = true; recordedSql = []; });
+  beforeEach(() => { requireAuthResult = true; recordedSql = []; recordedCalls = []; });
 
   it("registers both read endpoints", () => {
     const handlers = captureRoutes();
@@ -86,12 +87,16 @@ describe("driver inactivity preview routes (read-only smoke)", () => {
     expect(out.body).toMatchObject({ error: "validation_error" });
   });
 
-  it("scopes the company (SET LOCAL) and returns the login-inactivity payload", async () => {
+  it("scopes the company (parameterized set_config) and returns the login-inactivity payload", async () => {
     const handler = captureRoutes()[LOGIN_PATH];
     const { reply, out } = makeReply();
     await handler({ user: OWNER, query: { operating_company_id: OCI } }, reply);
     expect(out.body).toEqual(INACTIVITY_PAYLOAD);
-    expect(recordedSql.some((s) => s.includes("SET LOCAL app.operating_company_id") && s.includes(OCI))).toBe(true);
+    // SQLi→RLS-bypass hardening: company scoping is now a PARAMETERIZED set_config with the
+    // company id as a BOUND value ($1), never interpolated into the SQL text.
+    const scopeCall = recordedCalls.find((c) => c.sql.includes("set_config('app.operating_company_id'"));
+    expect(scopeCall).toBeDefined();
+    expect(scopeCall?.values).toEqual([OCI]);
   });
 
   it("returns the driving-inactivity payload on the driving endpoint", async () => {

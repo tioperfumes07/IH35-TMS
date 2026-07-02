@@ -228,7 +228,7 @@ export function PrepaidExpensesPage() {
         <div className="ml-auto">
           <button onClick={() => setShowCreate(true)}
             className="rounded bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800">
-            + New Prepaid
+            + Create Prepaid
           </button>
         </div>
       </div>

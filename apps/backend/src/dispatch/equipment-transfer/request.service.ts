@@ -24,7 +24,7 @@ export type TransferRequestRow = {
 const BLOCK_ID = "GAP-37-EQUIPMENT-DUAL-CONFIRM";
 
 export async function setTransferCompanyScope(client: Queryable, operatingCompanyId: string) {
-  await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
+  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
 }
 
 export async function initiateTransfer(

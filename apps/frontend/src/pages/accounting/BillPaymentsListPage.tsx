@@ -21,7 +21,7 @@ function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
   if (isReconciled) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-800">
-        <span aria-hidden="true">✓</span> Matched
+        <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.5 6.5l2.5 2.5 4.5-5" strokeLinecap="round" strokeLinejoin="round" /></svg> Matched
       </span>
     );
   }
