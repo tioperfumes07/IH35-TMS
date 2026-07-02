@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -51,6 +52,7 @@ async function withCompanyScope<T>(
   operatingCompanyId: string,
   fn: (client: Queryable) => Promise<T>
 ) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client as Queryable);

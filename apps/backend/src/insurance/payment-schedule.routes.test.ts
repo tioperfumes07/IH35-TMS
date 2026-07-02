@@ -84,6 +84,13 @@ vi.mock("../auth/db.js", () => ({
     fn({ query: queryMock }),
 }));
 
+// Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
+// no-op here so these unit tests exercise route logic with pre-change behavior.
+vi.mock("../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
+
 describe("insurance payment schedule routes", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
 

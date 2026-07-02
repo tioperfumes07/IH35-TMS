@@ -4,6 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 export const APPLICANT_STATUSES = ["new", "screening", "interview", "offer", "hired", "declined", "withdrawn"] as const;
 export type ApplicantStatus = (typeof APPLICANT_STATUSES)[number];
@@ -40,6 +41,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: Queryable) => Promise<T>) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     return fn(client as Queryable);

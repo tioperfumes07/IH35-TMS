@@ -9,6 +9,7 @@ import {
   upcomingForm2290Deadline,
   type Form2290VehicleInput,
 } from "./form-2290-generator.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuery = z.object({ operating_company_id: z.string().uuid() });
 const idParams = z.object({ id: z.string().uuid() });
@@ -29,6 +30,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 async function withCompanyScope<T>(userId: string, companyId: string, fn: (client: Queryable) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     return fn(client as Queryable);

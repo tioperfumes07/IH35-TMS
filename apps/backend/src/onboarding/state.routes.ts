@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { seedSampleData } from "./seed-sample-data.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const onboardingStepSchema = z.enum(["company", "qbo", "samsara", "plaid", "team", "samples", "complete"]);
 
@@ -47,6 +48,7 @@ async function withCompanyScope<T>(
   operatingCompanyId: string,
   fn: (client: Queryable) => Promise<T>
 ): Promise<T> {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     return fn(client as Queryable);

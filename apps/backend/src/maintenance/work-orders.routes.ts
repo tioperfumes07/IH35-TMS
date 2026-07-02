@@ -14,6 +14,7 @@ import {
 import { assertRoadsideFields, listWorkOrdersByBucket } from "./work-orders.service.js";
 import { emitMaintenanceSpineEvent } from "./maintenance-spine-emit.js";
 import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "./wo-cost-validation.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
@@ -267,6 +268,7 @@ async function hasLoadRequiredExpenseCategories(
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     return fn(client);

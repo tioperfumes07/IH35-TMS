@@ -10,6 +10,7 @@ import {
   updateCoiRequestBodySchema,
 } from "./coi.shared.js";
 import { createCoiRequest, listCoiRequests, updateCoiRequest } from "./coi.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(
@@ -32,6 +33,7 @@ async function withCompanyScope<T>(
   operatingCompanyId: string,
   fn: (client: Queryable) => Promise<T>
 ) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client as Queryable);

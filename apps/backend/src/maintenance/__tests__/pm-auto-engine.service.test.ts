@@ -29,6 +29,13 @@ vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: mockAppendCrudAudit,
 }));
 
+// Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
+// no-op here so these unit tests exercise route logic with pre-change behavior.
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
+
 describe("pm auto-engine service (B28)", () => {
   describe("evaluatePmAutoEngineStatus", () => {
     it("returns due when odometer meets next due", () => {

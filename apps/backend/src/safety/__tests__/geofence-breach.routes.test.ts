@@ -14,6 +14,12 @@ vi.mock("../../auth/db.js", () => ({
   withCurrentUser: mockWithCurrentUser,
 }));
 
+// Cross-tenant guard: exercised in dedicated membership tests; here it is a no-op so route logic (not membership) is under test.
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
+
 vi.mock("../../auth/session-middleware.js", () => ({
   requireAuth: () => true,
 }));

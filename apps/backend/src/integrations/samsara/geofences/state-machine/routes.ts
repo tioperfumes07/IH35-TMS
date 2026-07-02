@@ -5,6 +5,7 @@ import { requireAuth } from "../../../../auth/session-middleware.js";
 import { assertTenantContext } from "../../../../cron/_helpers/tenant-context-guard.js";
 import { getGeofenceState, listTransitions, manualTransition } from "./transitions.service.js";
 import { GEOFENCE_STATES } from "./states.js";
+import { assertCompanyMembership } from "../../../../_helpers/company-membership-guard.js";
 
 const stateParamsSchema = z.object({ uuid: z.string().uuid() });
 const stateQuerySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -41,6 +42,7 @@ async function withCompanyScope<T>(
   source: string,
   fn: (client: QueryClient) => Promise<T>
 ) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     assertTenantContext(operatingCompanyId, source);
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);

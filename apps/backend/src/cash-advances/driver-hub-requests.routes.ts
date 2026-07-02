@@ -9,6 +9,7 @@ import {
   hubDenyBodySchema,
   listPendingHubCashAdvanceRequests,
 } from "./driver-hub-requests.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -33,6 +34,7 @@ function canReviewDriverHubRequest(role: string): boolean {
 }
 
 async function withCompany<T>(userUuid: string, companyId: string, fn: (client: Parameters<Parameters<typeof withCurrentUser>[1]>[0]) => Promise<T>) {
+  await assertCompanyMembership(userUuid, companyId);
   return withCurrentUser(userUuid, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client);

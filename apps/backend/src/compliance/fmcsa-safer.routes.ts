@@ -9,6 +9,7 @@ import {
   verifySaferEntity,
   type SaferEntityType,
 } from "./fmcsa-safer-verifier.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -43,6 +44,7 @@ function canMutate(role: string) {
 }
 
 async function withCompanyScope<T>(userId: string, role: string, companyId: string, fn: (client: DbClient) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     await client.query(`SELECT set_config('app.user_role', $1, true)`, [role]);

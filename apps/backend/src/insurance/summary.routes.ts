@@ -8,6 +8,7 @@ import {
   classifyCoverageGapUnits,
   type CoverageGapUnitRow,
 } from "./coverage-gap-units.shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 // Insurance dashboard aggregate — the 6 KPI counts for /safety/insurance computed
 // server-side in ONE call (replacing the old 6-query / per-unit-coverage fan-out that
@@ -26,6 +27,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: Queryable) => Promise<T>) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     // operatingCompanyId is a validated uuid (zod) — safe to interpolate, matching the
     // existing insurance routes' RLS scoping.

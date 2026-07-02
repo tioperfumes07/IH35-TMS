@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { createWorkOrderFromRoadServiceTicket } from "./wo-integration.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 export type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -59,6 +60,7 @@ function auth(req: FastifyRequest, reply: FastifyReply) {
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: DbClient) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client);
