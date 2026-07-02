@@ -103,8 +103,11 @@ async function alreadySentToday(reportId: ScheduledReportId, operatingCompanyId:
   });
 }
 
-async function executeReport(reportId: ScheduledReportId, operatingCompanyId: string) {
-  const common = { operatingCompanyId };
+async function executeReport(reportId: ScheduledReportId, operatingCompanyId: string, actorUserId?: string | null) {
+  // actorUserId is forwarded into the report query context so the withLuciaBypass path
+  // (RLS OFF) asserts membership when this runs on behalf of an authenticated request
+  // (manual test-send). Scheduled/cron runs pass no actorUserId (system-derived opco).
+  const common = { operatingCompanyId, actorUserId: actorUserId ?? null };
   if (reportId === "dispatch-board") {
     const payload = await dispatchBoardDailyQuery(common);
     return {
@@ -219,7 +222,7 @@ export async function runScheduledReport(ctx: RunnerContext): Promise<RunnerResu
       };
     }
 
-    const reportOutput = await executeReport(ctx.reportId, ctx.operatingCompanyId);
+    const reportOutput = await executeReport(ctx.reportId, ctx.operatingCompanyId, ctx.actorUserId);
     if (!hasMeaningfulData(reportOutput.envelope)) {
       await appendAuditEvent(
         "reports.scheduled.skipped",

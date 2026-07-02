@@ -27,6 +27,10 @@ vi.mock("../../auth/db.js", () => ({
   withCurrentUser: async (_uuid: string, fn: (c: unknown) => Promise<unknown>) =>
     fn({
       query: async (sql: string, values?: unknown[]) => {
+        // Cross-tenant guard: assertCompanyMembership() SELECTs org.user_company_access. Simulate a
+        // seeded membership row (rowCount 1) so the legitimate same-company call passes; not recorded
+        // so the business-query assertions below are unaffected.
+        if (sql.includes("user_company_access")) return { rows: [{ ok: 1 }], rowCount: 1 };
         recorded.push({ sql, values });
         return { rows: nextRows };
       },
