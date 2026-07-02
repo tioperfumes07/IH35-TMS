@@ -2,6 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 
 const deliverMock = vi.fn(async () => ({ message: "ok" }));
 
+vi.mock("../../../qbo/qbo-entity-push-gate.js", async (importOriginal) => {
+  // IMPORT-P0b: unit tests of the handler downstream mirror/push/shape logic — make the entity-push
+  // kill-switch transparent so that logic runs. The gate own flag_off/import_source refusal is covered by
+  // tms-*-push.killswitch.test.ts + push-service.killswitch.test.ts + verify-qbo-entity-push-gates.mjs.
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    evaluateEntityPushGate: vi.fn(async () => ({ decision: "allow", origin: "tms" })),
+  };
+});
+
 vi.mock("../../../qbo/push.service.js", () => ({
   deliverQboMasterEntityPush: deliverMock,
 }));
