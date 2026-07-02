@@ -199,19 +199,48 @@ function readRequired(path: string): string {
   return fs.readFileSync(path, "utf8");
 }
 
+function isValidGuardSpec(value: unknown): value is ExtraGuardSpec {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { script?: unknown }).script === "string" &&
+    typeof (value as { label?: unknown }).label === "string"
+  );
+}
+
 async function loadExtraGuards(): Promise<ExtraGuardSpec[]> {
   const guardFiles = fs
     .readdirSync(EXTRA_GUARDS_DIR)
     .filter((file) => file.endsWith(".mjs") && !file.startsWith("_"))
     .sort();
 
-  const guardModules = await Promise.all(
-    guardFiles.map(async (file) => {
-      const modulePath = pathToFileURL(path.resolve(EXTRA_GUARDS_DIR, file)).href;
-      const loaded = (await import(modulePath)).default as ExtraGuardSpec;
-      return loaded;
-    })
-  );
+  // Defense in depth: import each guard file individually and FAIL LOUD if any
+  // import throws or does not yield a valid ExtraGuardSpec. A guard file must be
+  // a side-effect-free spec (see 139-verify-kpi-sources-of-truth-exists.mjs for
+  // why: a top-level process.exit() there once terminated this runner at import
+  // time and silently skipped every guard sorted after it — a fake-green hole).
+  // NOTE: try/catch cannot intercept a top-level process.exit() in an imported
+  // module; that class of bug is prevented at the source (guards must not run/
+  // exit at import). See _meta / PR notes for the recommended spawn-isolation.
+  const guardModules: ExtraGuardSpec[] = [];
+  for (const file of guardFiles) {
+    const modulePath = pathToFileURL(path.resolve(EXTRA_GUARDS_DIR, file)).href;
+    let mod: unknown;
+    try {
+      mod = (await import(modulePath)).default;
+    } catch (error) {
+      console.error(`✘ Failed to import extra guard '${file}': ${(error as Error)?.message ?? error}`);
+      process.exit(1);
+    }
+    if (!isValidGuardSpec(mod)) {
+      console.error(
+        `✘ Extra guard '${file}' did not export a valid default ExtraGuardSpec { script, label }. ` +
+          `Guard files must be side-effect-free specs (no top-level execution/exit).`
+      );
+      process.exit(1);
+    }
+    guardModules.push(mod);
+  }
 
   return guardModules;
 }

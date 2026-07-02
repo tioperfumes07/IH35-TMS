@@ -78,8 +78,20 @@ jobs:
       - name: verify:enum-literals
         run: npm run verify:enum-literals
 
-      - name: verify:arch-design
-        run: npm run verify:arch-design
+      # NOTE: `npm run verify:arch-design` is intentionally NOT run here.
+      # It is the authoritative full 213-guard suite and is run by the REQUIRED
+      # check `ci / build-typecheck` (via `verify:pre-commit` → step 05
+      # `verify-arch-design`), which first builds `dist/` (step 03
+      # `build-backend-emit`) and provides a Postgres service +
+      # DATABASE_URL/DATABASE_DIRECT_URL. This `locked-guards` job is a
+      # build-free / DB-free static-guard job (`npm ci` only), so it cannot
+      # satisfy the ~5 build/DB-dependent guards in that suite (#096/#097 need
+      # dist/, #121/#146/#1000 need DATABASE_URL). Running it here was only ever
+      # "green" because a top-level `process.exit` in a guard used to abort the
+      # runner before any guard ran (the fake-green poison-pill fixed in this
+      # PR). Coverage is not reduced — the same suite runs for real in
+      # build-typecheck on every PR to main. Do NOT re-add without also adding
+      # the dist build + Postgres env this file deliberately omits.
 
       - name: verify:canonical-audit-table-name
         run: npm run verify:canonical-audit-table-name
