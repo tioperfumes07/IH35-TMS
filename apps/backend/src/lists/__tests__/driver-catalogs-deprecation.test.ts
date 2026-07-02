@@ -20,6 +20,9 @@ const sampleRow = {
 
 const queryMock = vi.fn(async (sql: string) => {
   if (sql.includes("SET LOCAL")) return { rows: [] };
+  // Cross-tenant guard: assertCompanyMembership() SELECTs org.user_company_access — simulate a
+  // seeded membership row so the legitimate same-company call passes.
+  if (sql.includes("user_company_access")) return { rows: [{ ok: 1 }], rowCount: 1 };
   if (sql.includes("count(*)")) return { rows: [{ total: "1" }] };
   if (sql.includes("INSERT INTO catalogs.")) return { rows: [sampleRow] };
   return { rows: [sampleRow] };

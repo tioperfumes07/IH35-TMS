@@ -3,8 +3,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { LISTS_MODULE_KEYS } from "./lists-module-count-spec.js";
 import { countModuleRecords, registerListsCountsRoutes } from "./lists-counts.routes.js";
 
+// Cross-tenant guard: withCompanyScope now calls assertCompanyMembership(), which SELECTs from
+// org.user_company_access. Simulate a seeded membership row (rowCount 1) for the authed test user;
+// flip to false to exercise the cross-company rejection (403).
+let isCompanyMember = true;
 const queryMock = vi.fn(async (sql: string) => {
   if (sql.includes("SET LOCAL")) return { rows: [] };
+  if (sql.includes("user_company_access")) {
+    return isCompanyMember ? { rows: [{ ok: 1 }], rowCount: 1 } : { rows: [], rowCount: 0 };
+  }
   return { rows: [{ count: 12 }] };
 });
 
@@ -24,6 +31,7 @@ describe("lists-counts routes", () => {
   afterEach(async () => {
     await Promise.all(apps.splice(0).map((app) => app.close()));
     queryMock.mockClear();
+    isCompanyMember = true;
   });
 
   async function buildApp() {
@@ -52,6 +60,26 @@ describe("lists-counts routes", () => {
       expect(response.json()).toEqual({ count: expectedBase });
     });
   }
+
+  it("cross-tenant authz: same-company caller (seeded membership) is allowed (200)", async () => {
+    isCompanyMember = true;
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/lists/dispatch/count?operating_company_id=${companyId}`,
+    });
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("cross-tenant authz: cross-company caller (no membership) is rejected (403)", async () => {
+    isCompanyMember = false;
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/lists/dispatch/count?operating_company_id=${companyId}`,
+    });
+    expect(response.statusCode).toBe(403);
+  });
 
   it("countModuleRecords returns 0 for names_master with no tables", async () => {
     queryMock.mockImplementationOnce(async () => ({ rows: [{ count: 0 }] }));
