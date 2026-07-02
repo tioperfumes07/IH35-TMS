@@ -9,6 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
 import { notifySettlementAvailable } from "../services/push-notification.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const settlementStatusSchema = z.enum([
   "draft",
@@ -69,6 +70,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     return fn(client);

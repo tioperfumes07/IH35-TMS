@@ -13,6 +13,7 @@ import {
   lookupDriverForVehicleAtTime,
   type DbClient,
 } from "./pairing.service.js";
+import { assertCompanyMembership } from "../../../_helpers/company-membership-guard.js";
 
 const atEventQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -60,6 +61,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: DbClient) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client);

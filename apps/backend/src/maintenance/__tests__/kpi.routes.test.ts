@@ -22,6 +22,13 @@ const { mockQuery, mockWithCurrentUser } = vi.hoisted(() => {
 vi.mock("../../auth/session-middleware.js", () => ({ requireAuth: () => true }));
 vi.mock("../../auth/db.js", () => ({ withCurrentUser: mockWithCurrentUser }));
 
+// Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
+// no-op here so these unit tests exercise route logic with pre-change behavior.
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
+
 describe("maintenance KPI helpers (B35)", () => {
   it("validates KPI period ordering", () => {
     expect(assertKpiPeriod("2026-05-01", "2026-05-31")).toBe(true);

@@ -23,6 +23,7 @@ import {
   matterUpdateSchema,
   updateMatter,
 } from "./matters.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const operatingCompanyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -59,6 +60,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: PoolClient) => Promise<T>) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     return fn(client);

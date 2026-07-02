@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 
@@ -15,6 +16,7 @@ type Queryable = {
 };
 
 async function withCompanyScope<T>(userId: string, companyId: string, fn: (client: Queryable) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     return fn(client as Queryable);

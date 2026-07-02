@@ -34,6 +34,13 @@ vi.mock("../../audit/crud-audit.js", () => ({
   buildPatchChanges: () => ({ status: "completed" }),
 }));
 
+// Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
+// no-op here so these unit tests exercise route logic with pre-change behavior.
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
+
 function sampleRow(overrides: Record<string, unknown> = {}) {
   return {
     id: INSPECTION_ID,
