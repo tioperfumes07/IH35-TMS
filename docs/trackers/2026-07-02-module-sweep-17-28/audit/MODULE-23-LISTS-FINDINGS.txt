@@ -1,0 +1,18 @@
+MODULE 23 — LISTS & CATALOGS (/lists) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep. Console: zero errors.
+
+STATE (verified)
+Hub renders with API-driven inventory (ListsHubPage inventoryQuery — counts are live data, not static): SAFETY 30 · MAINTENANCE 0 · DISPATCH 6 · FUEL 15 · DRIVERS 48 · FLEET 20 · ACCOUNTING 507 · NAMES MASTER 0, plus the full Accounting domain map (Account Role Bindings, Account Type, COA, COA Seeds, Classes, Currency Codes, Detail Type, Expense Categories, Items, JE Types, Payment Methods, Payment Terms, …). Sub-nav: Names Master, Catalog domains, Safety catalogs.
+
+DEFECTS (live-reproduced)
+
+LISTS-1 · MED · /lists/chart-of-accounts is STILL the "Module In active development" stub while the canonical COA page exists
+- Live proof: navigated /lists/chart-of-accounts → renders "Module In active development / ROADMAP NOTE… Expected window: In active development." Meanwhile the canonical Chart of Accounts page is live and was just wired into the Accounting menu (#1793 merged 2026-07-02) and Banking (Step-1 Block C).
+- This is the same June-05 finding, still unfixed on this route, now worse because a canonical page exists — a duplicate dead route confusing operators. Root fix (Block C precedent): route /lists/chart-of-accounts to the one canonical COA page (additive redirect; do not delete the path). Also the stub's copy "Expected window: In active development" is circular filler text — the redirect removes it.
+
+OBSERVATIONS (not defects)
+- MAINTENANCE 0 and NAMES MASTER 0 are live API counts — genuinely unseeded catalogs. Maintenance Services catalog is a known P3 roadmap item (Samsara ETAs, 12k mi/mo default); not re-logged.
+- ACCOUNTING 507 catalogs — the accounting catalog spine is heavily seeded (matches the 15-type/144-detail-type catalog + COA + bindings work).
+
+POSITIVES
+- Live inventory counts (no static fake numbers); QBO bidirectional sync health framing; clean domain map with per-catalog descriptions; read-only labels on role bindings/account-type where appropriate.

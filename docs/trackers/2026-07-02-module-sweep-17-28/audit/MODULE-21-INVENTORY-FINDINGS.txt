@@ -1,0 +1,15 @@
+MODULE 21 — INVENTORY (/inventory) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep. Console: zero errors.
+
+SCOPE SWEPT
+/inventory (Parts & Stock), Assignments tab, Purchase History tab (routes to /inventory/purchases).
+
+STATE (verified)
+Clean, honest, empty-by-usage module. Parts & Stock table (Part name / SKU / On-hand qty / Unit cost / Location-bin / Status) with correct pagination (0 of 0), "Create part" action, honest empty state. Assignments: "Assign parts to trucks or drivers. Operational tracking (no GL posting)" — the correct posture and matches the owner's anti-theft light-parts-inventory rule. Purchase History: honest placeholder for vendor purchase tracking.
+
+DEFECTS
+None live-reproduced. The module is built to its light-inventory spec and waiting on usage. (Purchase History content is thin — a description line only — but it is honest, no fake data; buildout is roadmap, not a defect.)
+
+POSITIVES
+- "No GL posting" explicitly labeled on assignments — correct while posting flags are OFF.
+- Pagination controls correct even at zero rows (contrast: CUST-1/VEND-1 lists should adopt this table's pager pattern — this looks like the universal-table standard, evidence the TBL-STANDARD sweep target works).

@@ -1,0 +1,6 @@
+Block — PHASE PARITY / TASK USERS-PAR-1 — Permission-Matrix DESIGN DOC (no build) — Tier 3
+Branch: docs/users-permission-matrix → PR to main (docs only)
+STANDING ORDERS header applies. DELIVERABLE: docs/specs/USER-PERMISSION-MATRIX.md — design only, Jorge approves before any build block is cut.
+PARITY BASIS (researched 2026-07-02, cite in doc): QBO Advanced custom roles (action-level: view/create/edit/delete/approve per area; data restrictions), QB Enterprise (115 granular permissions, 14 predefined roles), single primary-admin rule.
+CONTENT: (1) permission matrix — IH35 areas (dispatch, accounting, banking, factoring, settlements, safety, users, reports…) × actions (view/create/edit/void/approve) × current roles; (2) financial maker≠checker expressed as in-app approve rights (who may approve GL-affecting actions once posting flags turn on); (3) entity-scoping of user grants (a user's role per operating company — USMCA readiness); (4) single-Owner-holder rule + transfer flow; (5) Invited vs Active status semantics (aligns w/ SWEEP-FIX item 9); (6) migration path from the current fixed catalog — ADDITIVE (existing roles keep working; matrix layers on top); (7) open questions for Jorge listed explicitly.
+FORBIDDEN: any code, any schema, any behavior change.

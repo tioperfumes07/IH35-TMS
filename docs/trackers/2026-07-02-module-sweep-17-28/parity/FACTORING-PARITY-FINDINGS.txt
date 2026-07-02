@@ -1,0 +1,25 @@
+MODULE 17 FACTORING — STANDARDS-PARITY AUDIT (Layer 2)
+Date: 2026-07-02 · GUARD · Fresh research: Alvys factoring help-center docs (RTS/Triumph/TAFS/WinFactor/Compass integrations, Invoicing Settings, Billing Status Definitions), McLeod Accounting & Finance product docs, FreightWaves/DAT/England Logistics factoring practice (NOA per UCC 9-406, reserves, recourse 60-90d, chargebacks, LOR). Compared against the live IH35 module (defect layer swept earlier today) and pending coder blocks (FACT-FIX-1, merged #1770/#1782) — NO overlap with the gaps below.
+
+THE INDUSTRY BAR (researched, not memory):
+- Alvys: per-customer invoice delivery method "Factoring Company"; required-documents gating per load action (no invoicing without POD/rate-con/BOL); Factoring Upload page — select queued loads → Submit Batch to factor via FTP/API per subsidiary; NOA stamp configured per subsidiary and printed on invoices ("THIS INVOICE HAS BEEN ASSIGNED TO AND MUST BE PAID [factor remit-to]"); factor purchase/payment report uploaded back → per-load billing status "Financed"; TAFS variant does daily automatic purchase/payment status sync.
+- McLeod: GL/AR/AP/factoring unified; factoring clerk workqueue showing paid/pending/in-progress loads w/ linehaul, advances, net pay; rendition billing holds invoices until customer-specific required docs are present.
+- Factoring practice: NOA legally directs debtor payment (UCC 9-406); misdirected payments = chargebacks; reserves held per invoice, released on debtor payment; recourse period 60-90d then chargeback against reserve/future advances; letter of release on factor termination.
+
+VERDICTS:
+
+MEETS OR SURPASSES BAR:
+1. Reserve management — Reserve Tracker + reserve_movement ledger + release schedule: MEETS (structure equals the bar; reconciliation loop closes via PAR-1 below).
+2. Recourse Pipeline (aging toward recourse deadline) — SURPASSES: neither Alvys nor McLeod exposes a recourse-countdown pipeline view; this is ahead of the bar.
+3. Chargebacks & Fees tab — MEETS (chargeback-confirmation workflow decision already pending with owner — tracked, not a new gap).
+4. GL treatment: secured-borrowing poster behind OFF flag w/ per-factor sale/borrowing config (ASC 860) — SURPASSES: McLeod/Alvys/QBO do not apply control-test-based treatment config.
+5. Inbound factor report import (Faro CSV Daily Imports) — MEETS the Alvys "upload purchase report" file-drop bar.
+6. Multi-entity: per-entity factor config + single-factor invariant + owner-gated deactivation — MEETS Alvys per-subsidiary standard and exceeds on governance.
+7. Fuel advances — MEETS via advance rails w/ load_id (Block B), correctly placed outside the factoring module.
+
+GAPS → BUILD BLOCKS:
+G1 (FACT-PAR-1) OUTBOUND SUBMISSION WORKFLOW — the daily money loop. No "select invoices → Submit Batch to FARO with documents attached" flow exists; batches exist internally but submission to the factor is manual/outside the TMS, and the FARO channel (email vs portal/FTP) is an open owner decision. This is the single biggest distance from the Alvys/McLeod bar — it is the workflow an AR clerk runs every day. Includes: required-docs gating before a load is submittable (Alvys/McLeod rendition-billing standard), per-invoice "Financed" status round-trip closure from the Faro report import, and a factoring workqueue (McLeod clerk view).
+G2 (FACT-PAR-2) NOA + REMIT-TO ENFORCEMENT — customer_factor_assignment exists, but invoices for factor-assigned customers do not carry the NOA remit-to stamp, nothing blocks sending an invoice with the carrier's own remit-to while an assignment is active (misdirected-payment → chargeback risk, UCC 9-406), and there is no letter-of-release lifecycle on factor deactivation.
+G3 (note only, owner decision, not deferral of a defect): debtor credit-check surface via factor data — enhancement candidate after G1/G2; FARO daily report fields may already carry what's needed.
+
+DECISION NEEDED FROM OWNER (blocks G1 build start): FARO submission channel — email with attached document package vs portal/FTP file-drop. Both are industry-standard (Alvys supports both); the block is written channel-agnostic with the channel as a config.

@@ -1,0 +1,50 @@
+Block — PHASE MODULE-SWEEP / TASK SWEEP-FIX-17-27 — Consolidated fixes for the modules 17-27 sweep defects
+Two PRs: (A) fix/sweep-17-27-code-fixes (Tier 3, merge on green) · (B) owner-gated data actions built into admin-jobs, never auto-run.
+NOTE: FACT-FIX-1 (delivered earlier today in the Module-17 zip) stands as its own block — do NOT duplicate its scope here.
+
+STANDING ORDERS: foreground only; no retries — STOP and paste exact error; 5-min live updates CST; confirm worktree; `git diff --staged --stat` before commit; SO#16 v2 gates (frontend tsc -b + backend EMIT + vitest for touched runtime).
+
+Every defect below was live-reproduced and root-caused by GUARD on 2026-07-02 (findings zips are the evidence record). Fix root causes; every fix ships its regression guard.
+
+PR A — CODE FIXES (Tier 3):
+
+1. CUST-1 / VEND-1 (HIGH) — list pagination ignores API `total` (1,159 of 1,209 customers and 440 of 490 vendors unreachable).
+   Root: the Customers/Vendors list UI paginates on returned-page length; API returns {total}. Fix ONCE in the shared list pattern both pages use (locate it — they render identically; name the component in your first status update). Wire total into count text, page count, Next/Last enablement; pass page/limit on the query. Tests: pager math from mocked total>pageSize for both modules. Regression guard: unit test asserting the component derives pages from `total`, never rows.length.
+
+2. CUST-2 / VEND-5 (MED) — missing-data quality badge defaults to worst/arbitrary rating (red "Late-pay" on all 50 customers; amber "Medium" on all vendors) with zero payment history.
+   Root: fallback branches in FOUR files (CustomersListView.tsx, Customers.tsx, CustomerListSidebar.tsx, CustomerDetail.tsx) + vendor equivalents. Fix: ONE shared qualityBadge util — null/absent score → neutral gray "No history"; ratings only from real data. Replace all copies (kills the 4-copy drift). Boundary tests: null / 0 / 69 / 70 / 90. The detail-page "Unknown" pattern is the in-house precedent — match it.
+
+3. RPT-1 (MED-HIGH, compliance) — IFTA due KPI computes the wrong quarter.
+   Root: apps/backend/src/reports/shared.ts getCurrentQuarterInfo() returns the CURRENT quarter's future deadline; during a filing month it skips the just-ended quarter entirely (live: shows Q3/2026-10-31/122d while Q2 is due 2026-07-31/29d). Fix next-due logic: if today ≤ last-day-of-month-following-previous-quarter-end → previous quarter + that deadline; else current quarter + its deadline. Handles January (prior-year Q4 due Jan 31). Boundary unit tests: Jul 1, Jul 31, Aug 1, Oct 31, Nov 1, Jan 1, Jan 31, Feb 1. Keep the Texas Comptroller citation.
+
+4. RPT-2 (LOW-MED) — ReportsHome loading fallback fabricates "Q2 · 0d · TBD" (reads as due-today). Fix: loading state renders "—"/skeleton; never default a compliance countdown to 0.
+
+5. FIN-1 (LOW-MED) — Finance Hub fabricates "Current accounting period: Jul 2026 · Status: open" while accounting.periods=0 rows.
+   Root: hub overview route synthesizes current month + 'open' when no period row exists. Fix: no covering period row → KPI value "No periods initialized", drill to the periods screen. (After #1795 seeds periods this shows real rows — the fabrication path must still die so a future gap can never render as 'open'.) Test both branches.
+
+6. LISTS-1 (MED) — /lists/chart-of-accounts still renders the "Module In active development" stub while the canonical COA page is live (#1793).
+   Fix: route /lists/chart-of-accounts to the canonical COA page (additive redirect, Block-C precedent; do not delete the path). Guard: route test asserting the path lands on the canonical page.
+
+7. VEND-2 (LOW-MED) — Vendors sync banner parks permanently on "Unable to load sync status" after a transient failure (endpoint verified 200 on replay).
+   Fix: react-query retry w/ backoff on the status query + a Retry affordance in the banner. Applies to the Customers banner too (same component if shared).
+
+8. FIN-2 (LOW, needs Jorge's word before building — include as a PR-description question, not code, unless he approves): /finance sidebar entry lands on the stub "Finance Overview" while the real overview is /finance/hub; two inconsistent subnavs (4-tab vs 5-tab w/ Calculator). Proposed: land /finance on Hub, unify one subnav incl. Hub/Statements/Calculator, keep Overview reachable. ADDITIVE ONLY; awaits owner approval per design-change rule.
+
+9. USERS status semantics (LOW): invited-never-logged-in users show "Active" ("Invite pending" auth) — add distinct "Invited" status so Active = has credentials. Additive status derivation, no schema change; if a schema change would be required, STOP and report instead.
+
+PR B — OWNER-GATED DATA ACTIONS + PROD GUARDS (build only; owner triggers; GUARD verifies after):
+
+10. USERS-1 (HIGH, access control) — deactivate the four prod test accounts: m2-stop-d8e4945e@example.com, m2-probe-trk-bee368ac@example.com, m2-probe-transp-bee368ac@example.com (ALL role=Owner, Active, never logged in), tioperfumes07+verifyfix@gmail.com (Dispatcher).
+    Build admin-jobs operation 'users.deactivate_probe_accounts' — deactivates exactly these accounts by email (deactivate never delete; audit row each; returns affected ids). ROOT CAUSE REQUIRED: locate the creation path (m2-probe/m2-stop naming = a probe/migration harness) and make it impossible in prod — user-create/seed path rejects @example.com and known probe patterns when NODE_ENV=production (422 + clear message), plus CI guard scanning migrations/seeds for fixture-pattern emails. Paste the located creation source in the PR.
+11. Extend scripts/verify-no-test-fixture-names.mjs (from FACT-FIX-1) to cover user fixtures (@example.com, m2-probe, m2-stop patterns) in non-test src.
+
+DECISIONS FOR JORGE (carried in PR descriptions, not blocking PR A):
+- FIN-2 landing/subnav approval (item 8).
+- CUST-3/VEND-4 dual QBO-sync bookkeeping: one source of truth for customer/vendor sync state — backfill the qbo-sync bookkeeping from the archive projection (link qbo ids, stamp provenance) vs retire the parallel counter. Until decided, the banner copy must state the true state: "Imported from QBO archive 2026-05; live sync not yet enabled." (Interim copy change IS in scope for PR A — truth now, mechanism decision after.)
+- DOCS: which document types are REQUIRED per entity type (drivers/units/customers/vendors) so "Missing required" means something — owner list requested.
+- FACT-3 canonical Faro vendor row (already queued in FACT-FIX-1's PR description).
+
+EVIDENCE REQUIRED: per-fix before/after (screenshots for UI, unit output for logic), all located roots pasted, `git diff --stat` per PR.
+
+allowed_files: the shared list component + 4 badge files + shared util (new), reports/shared.ts + ReportsHome.tsx, finance hub overview route file, lists route registration (additive redirect), sync-status banner component, users status derivation, admin-jobs.service.ts (additive), user-create/seed guard files (name once located; STOP if lane-locked), tests, scripts/verify-no-test-fixture-names.mjs, .block-ready/SWEEP-FIX-17-27.json.
+FORBIDDEN: migrations, posting code, deleting any row/route/page, FACT-FIX-1's files (separate block), design changes beyond item 8 without owner approval.

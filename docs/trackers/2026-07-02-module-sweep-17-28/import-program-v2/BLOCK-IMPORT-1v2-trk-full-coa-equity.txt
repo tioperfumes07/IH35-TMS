@@ -1,0 +1,39 @@
+Block 2 of 5 — PHASE QBO-IMPORT-V2 / TASK IMPORT-1v2 — TRK Full COA Sync (917 accounts incl. 7-account EQUITY section + inactive) — BUILD-AND-HOLD
+Branch target: feat/trk-full-coa-sync  →  open PR to main
+PREREQUISITE: IMPORT-P0 merged (masterdata echo guard proven) BEFORE the sync RUN executes. Build may proceed in parallel; the run may not.
+
+STANDING ORDERS: foreground only; no retries — STOP and paste exact error; 5-min live updates CST; confirm worktree; `git diff --staged --stat` before commit; SO#16 v2 gates.
+
+TIER: 2 (additive entity-scoped data sync, no schema migration, no posting). Build-and-hold; owner approves merge and triggers the run; GUARD verifies after.
+
+CONTEXT (GUARD live-verified 2026-07-02 on prod — supersedes the earlier v1 block; do not re-litigate):
+- TRK's OWN QBO realm 1432746210 (live unrevoked connection, refresh valid to 2026-10-08) holds **917 accounts** — Asset 619 · Expense 166 · Liability 115 · Revenue 10 · **Equity 7**. Verified from qbo_archive.entities_snapshot latest snapshots.
+- TRK's equity section (verified by name — ACCEPTANCE LIST, all 7 must exist in catalogs.accounts after the run):
+  1. Member Contributions (OwnersEquity, balance -1,590,728.60)
+  2. Member- Asset Investment (OwnersEquity, -157,420.00)
+  3. Opening Balance Equity (OpeningBalanceEquity, 8,964.73)
+  4. Partner Contribution/Jorge Muñoz (OwnersEquity)
+  5. Retained Earnings (RetainedEarnings)
+  6. Withdrawal Capital-Ana Munoz Loans (PartnerDistributions)
+  7. Withdrawal Capital-Owner-Jorge Munoz (PartnerDistributions)
+- catalogs.accounts for TRK opco b49a737b-… currently holds only 32 rows, ZERO equity — the previous projection dropped ~885 accounts. That projection gap is the root defect this block fixes.
+- The revoked TRK→TRANSP-realm connection row (revoked 2026-05-12) must never be used: assert on the UNREVOKED connection realm 1432746210 only; refuse if >1 unrevoked connection exists for the opco.
+
+BUILD:
+1. Locate the canonical accounts sync/projection path (populated TRANSP's 378). Read it fully; identify WHY the TRK projection stopped at 32 (likely: page limit, active-only filter, or parent-resolution drop). Paste the root cause with code lines in your status update BEFORE writing the fix — the fix must address that cause, not add a parallel sync.
+2. Full-COA semantics:
+   - Pull ALL accounts from the QBO API (qboPaginateEntity 'Account', no Active filter — QBO query needs "WHERE Active IN (true,false)" or equivalent; verify the exact API syntax against the Account entity reference and paste it) — INACTIVE ACCOUNTS INCLUDED. Rationale (owner-locked): the 12/31/2023 opening balance sheet and 2024–2025 GL lines may reference accounts retired since; the ledger mapping must resolve them. Inactive → deactivated_at set, is_postable=false; never deleted.
+   - Upsert keyed (operating_company_id, qbo_account_id); update name/type/subtype/parent/active; NEVER touch opening_balance_cents/opening_balance_as_of/is_locked; preserve system_purpose.
+   - Two-pass parent resolution (parents can appear after children in the page stream): pass 1 upsert all rows with parent deferred; pass 2 resolve parent_account_id; any unresolvable parent = loud error listing the orphans, run marked failed (no silent drops — the 32-row silent drop is exactly the defect class being fixed).
+   - Currency: record currency_code from the QBO account CurrencyRef; if ANY account's currency differs from the entity home currency, surface it in the run result (does not abort the sync; it BLOCKS the later opening-balance run until the owner decides FX handling — see IMPORT-3v2).
+3. Realm↔opco hard assert from unrevoked integrations.qbo_connections; per-opco advisory lock; owner-triggered admin-jobs operation 'qbo.accounts.full_sync' (no cron).
+4. Entity-isolation test: TRK-context run mocked with TRANSP-realm data throws before any write; TRANSP rows untouched by a TRK run (updated_at stable).
+5. CI guard scripts/verify-qbo-sync-entity-scope.mjs (static: every write in the sync carries operating_company_id in its conflict/where clause).
+
+RUN CEREMONY (after merge + IMPORT-P0 merged, owner's word):
+Owner triggers TRK full sync. GUARD verifies: TRK catalogs.accounts count = 917 (or exact live QBO count at run time — record both), all 7 equity acceptance-list accounts present with correct subtype, inactive accounts present with deactivated_at, zero NULL operating_company_id, TRANSP's 378 untouched, zero TMS→QBO account POSTs during the run (echo-guard proof).
+
+EVIDENCE IN PR: located root cause of the 32-row drop, the Active-included query syntax with doc reference, test output, `git diff --stat`.
+
+allowed_files: the located canonical sync file(s) (name in .block-ready.json; STOP if lane-locked), admin-jobs.service.ts (additive entry), tests, scripts/verify-qbo-sync-entity-scope.mjs, .block-ready/IMPORT-1v2.json.
+FORBIDDEN: migrations, catalogs.accounts DDL, any TMS→QBO account write, posting code, touching TRANSP data.

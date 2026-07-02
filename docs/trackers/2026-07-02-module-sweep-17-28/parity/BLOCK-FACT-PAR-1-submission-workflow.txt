@@ -1,0 +1,20 @@
+Block — PHASE FACTORING-PARITY / TASK FACT-PAR-1 — Outbound Factor Submission Workflow + Financed-Status Round-Trip — BUILD-AND-HOLD
+Branch: feat/factoring-submission-workflow → PR to main
+PREREQ: FACT-FIX-1 merged first (active-factor resolution must be honest before submission UI reads it). Channel config decision (email vs portal/FTP) needed from Jorge before the RUN, not before the build — build channel-agnostic.
+
+STANDING ORDERS: foreground only; no retries — STOP paste exact error; 5-min updates CST; confirm worktree; diff --staged --stat before commit; SO#16 v2.
+
+TIER: 2 (no GL posting — submission + status tracking only; GL stays behind existing OFF flag). Owner merges.
+
+PARITY BASIS (researched 2026-07-02, cite in PR): Alvys Factoring Upload (queued loads → Submit Batch per subsidiary; purchase report round-trip → per-load "Financed" status; TAFS daily auto status sync), McLeod factoring clerk workqueue (paid/pending/in-progress w/ linehaul, advances, net pay) + rendition billing (invoice held until required docs present).
+
+BUILD:
+1. SUBMISSION QUEUE — new "Submit to Factor" tab in /factoring: lists invoices for factor-assigned customers (customer_factor_assignment) in states eligible for submission. Eligibility = invoice finalized + REQUIRED DOCS PRESENT (POD + rate confirmation minimum; doc-type list per entity config, default POD+ratecon). An invoice missing docs shows exactly which — never submittable (Alvys/McLeod rendition-billing standard; no silent pass).
+2. BATCH SUBMIT — select → create factoring.batch (existing table) with line-level invoice refs; assemble document package per invoice (merge to one PDF per invoice — Alvys AutoMerge standard); submit via channel adapter interface: (a) email adapter — sends package to factor submission address from factor config; (b) file-drop adapter — writes the factor-format CSV+docs bundle for portal upload/FTP (FARO format from the existing Faro import spec, reversed). Channel = per-factor config field; both adapters built; which one runs is config, defaulting to "manual-download bundle" until Jorge picks. NO invented FARO API.
+3. STATUS ROUND-TRIP CLOSURE — extend the existing Faro CSV Daily Import: purchased/funded rows must set per-invoice factoring status → 'financed' (new status value on the invoice factoring-state, additive), link back to the batch line, and drive reserve_movement rows (held amount) — the loop Alvys closes with its purchase-report upload. Unmatched report rows: loud exception list (no silent skips).
+4. WORKQUEUE VIEW — McLeod-parity clerk board on the tab: columns per invoice — submitted / funded (advance amt) / reserve held / paid-by-debtor / chargeback-risk (recourse days remaining, reuse Recourse Pipeline data), linehaul + advances + net context.
+5. AUDIT — every submission writes an audit row (who, when, batch id, channel, doc manifest hash). Batches immutable after submit; corrections = new batch + void-never-delete.
+6. Entity-scoped everything; RLS-covered tables only; tests: docs-gating blocks submission, batch immutability, report-import sets financed + creates reserve movement, unmatched-row exception path, cross-entity isolation.
+
+EVIDENCE IN PR: parity citations, screenshots of queue/workqueue, test output, diff --stat.
+allowed_files: apps/frontend factoring pages (new tab additive), apps/backend factoring routes/services (additive), Faro import service (extend), tests, .block-ready json. FORBIDDEN: GL poster, posting flags, migrations beyond additive status value if a CHECK exists (if ALTER needed → STOP, report — PROTECTED).

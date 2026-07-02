@@ -1,0 +1,11 @@
+MODULE 25 — DOCS (/docs) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep. Console: zero errors.
+
+STATE (verified)
+Documents hub renders: entity-organized (All/Drivers/Customers/Vendors/Units/Equipment), expiration tracking KPIs (Total / Expiring 30 days / Missing required / Recent uploads — all 0, honest), type filter, expiration-before filter, correct pagination at zero rows ("Page 1 of 1 · 0 total").
+
+DEFECTS
+None live-reproduced. Module is built and honestly empty — document volume arrives with operations. "Missing required" KPI at 0 with 92 drivers loaded is worth a one-line follow-up: confirm the required-docs ruleset is configured (if no rules are defined, 0 is vacuously true — an owner decision on which docs are required per entity type, not a code defect).
+
+POSITIVES
+- Expiration-first design matches compliance needs (CDL/medical/COI tracking pattern); honest zeros; correct pager at empty.

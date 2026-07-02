@@ -1,0 +1,23 @@
+MODULE 20 — VENDORS (/vendors) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep. Console: no errors. APIs entity-scoped, 200.
+
+STATE (verified)
+Real QBO-projected vendor master data renders (Laredo-real names: Arguindegui Oil, Arnold Oil, Conlan Tire, City of Laredo Tax Dept…). API /mdata/vendors: total=490 (TRANSP), 50 returned per page.
+
+DEFECTS (live-reproduced)
+
+VEND-1 · HIGH · Same pagination bug as CUST-1 — 440 of 490 vendors unreachable
+- Live proof: API total=490; UI shows "1-50 of 50 · Page 1 of 1". Same root class (pager uses returned length, not total). Fix ONCE in the shared list component/pattern and cover Customers + Vendors with the same test — one fix, both modules (they visibly share the list UI).
+
+VEND-2 · LOW-MED · Sync banner stuck on "Unable to load sync status" while the endpoint works
+- Live proof: page rendered "Unable to load sync status"; my direct replay of /qbo-sync/vendors/status returned 200 {"total_local":490,"synced":0,...} seconds later. Transient failure surfaced permanently with no retry/backoff. Fix: react-query retry + a Retry affordance on the banner; never park a permanent error on a transient fault (silent-failure class).
+
+VEND-3 · (= FACT-2, reference) · 4 TEST-VENDOR rows user-visible on the live vendor list
+- Live proof: "TEST-VENDOR" appears 4x in the rendered list. Cleanup mechanism already specified in BLOCK-FACT-FIX-1 (owner-gated archive + prod create-guard). Do not build twice.
+
+VEND-4 · (= CUST-3, reference) · Dual QBO-sync bookkeeping: banner reports "0 synced / never" on QBO-sourced data (490 local, all projected from qbo_archive). Same single-source-of-truth decision as customers — apply once for both.
+
+VEND-5 · LOW · Missing-data quality badge defaults to "Medium" (amber) for every vendor with no history — same missing-data-default class as CUST-2 (less severe than red). Fold into the shared qualityBadge util fix: null → neutral "No history".
+
+POSITIVES
+- Real master data; honest $0 open balances; entity-scoped; Active/Inactive/All filters; List + Master-detail views present.

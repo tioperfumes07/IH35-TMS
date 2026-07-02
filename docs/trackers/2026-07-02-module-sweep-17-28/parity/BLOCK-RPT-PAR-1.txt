@@ -1,0 +1,14 @@
+Block — PHASE PARITY / TASK RPT-PAR-1 — Management Report Packages + Report Drilldowns — BUILD-AND-HOLD
+Branch: feat/reports-parity-1 → PR to main
+STANDING ORDERS: foreground only; no retries — STOP paste exact error; 5-min updates CST; confirm worktree; diff --staged --stat; SO#16 v2.
+TIER: 3 (read-only reporting; no GL writes). Merge on green per authority rules.
+
+PARITY BASIS (researched 2026-07-02, cite in PR): QBO Management reports — branded compilations w/ cover page + TOC (Company Overview = P&L+Balance Sheet; Sales Performance = P&L+A/R Aging Detail+Sales by Customer Summary; Expenses Performance = P&L+A/P Aging Detail+Expenses by Vendor Summary); QBO modern-view drilldowns (report numbers → transaction detail; per-account Run report).
+
+1. MANAGEMENT PACKAGES — new "Management reports" section on /reports: the three QBO-standard compilations assembled from EXISTING report engines (no new math): entity-scoped, cover page (entity name/logo/period/prepared-by/date), table of contents, per-report sections, single print-to-PDF flow (reuse the 425C Merge&Export print pattern). Period selector. Honest zeros pre-import.
+2. DRILLDOWNS — TB/P&L/BS account rows link → account register (CA-05 page) filtered to (account, period, basis); A/R and A/P aging rows link → the underlying invoices/bills lists filtered to customer/vendor+bucket. No dead links: rows without a target render unlinked.
+3. CUSTOM-REPORT VERIFY — exercise "+ Custom report"; report its true state in the PR (functional / partial / stub). If stub: leave honestly labeled, attach a one-page design doc for the builder (fields, filters, save/share/schedule per QBO custom-report standard) — design only, no fake UI.
+4. Tests: package assembles all sections for an entity with data mocks; drill links carry correct filters; cross-entity isolation; empty-state honesty.
+POST-IMPORT VERIFICATION (attach to import program checklist): packages + drilldowns re-verified against real TRANSP data vs QBO's own reports for the same period.
+
+allowed_files: reports frontend pages (additive section), reports backend routes (additive compose endpoints reusing existing engines), tests, .block-ready json. FORBIDDEN: report math changes, GL, migrations, shared registries.

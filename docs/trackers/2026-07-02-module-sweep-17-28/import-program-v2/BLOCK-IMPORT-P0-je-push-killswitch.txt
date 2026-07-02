@@ -1,0 +1,37 @@
+Block 1 of 5 — PHASE QBO-IMPORT-V2 / TASK IMPORT-P0 — JE→QBO Push Kill-Switch + Masterdata Echo Guard — [HOLD-FOR-JORGE]
+Branch target: fix/qbo-je-push-killswitch  →  open PR to main titled with [HOLD-FOR-JORGE]
+HARD PREREQUISITE: no import run (opening balance or GL detail) may execute on any branch or prod until this block is merged and its zero-call proof is green.
+
+STANDING ORDERS: foreground only; no retries — STOP and paste exact error; 5-min live updates CST; confirm worktree; `git diff --staged --stat` before commit; SO#16 v2 gates + full backend vitest.
+
+TIER: 1 (gates financial sync integrity). BUILD-SOLO-AND-HOLD.
+
+CONTEXT (GUARD live-verified 2026-07-02 in code and prod DB — do not re-litigate):
+- apps/backend/src/accounting/journal-entry-qbo-push.service.ts contains pushJournalEntryToQuickBooksFromQueue + pushJournalEntryToQuickBooksImmediateBestEffort. There is NO feature-flag check anywhere in the file. The immediate-best-effort push is invoked from journal-entries.service.ts (canonical JE create path).
+- The header probe skips ONLY when qbo_journal_entry_id IS NOT NULL AND qbo_sync_pending=false. An imported JE (qbo_journal_entry_id=NULL, qbo_sync_pending=false) is NOT skipped — it proceeds to POST /journalentry to QBO. qbo_sync_pending=false is NOT a shield.
+- lib.feature_flags has NO QBO JE-push flag (verified: only QBO_RECONCILE_UI_ENABLED, TMS_QBO_RECON_UI_ENABLED, VOID_QBO_MIRROR_ENABLED exist in the qbo/sync/push namespace).
+- A masterdata accounts push scheduler exists (initializeQboAccountsPushScheduler in index.ts). IMPORT-1 will inbound-sync 917 TRK accounts into catalogs.accounts; any TMS→QBO accounts push that treats them as local changes would echo them back into TRK's QuickBooks.
+- QBO is the SYSTEM OF RECORD through 12/31/2025. During this window the TMS must not write JEs into QBO at all unless the owner explicitly enables it.
+
+BUILD — defense in depth, three independent layers:
+
+LAYER 1 — Flag gate (default OFF):
+1. Register flag QBO_JE_PUSH_ENABLED default_enabled=false, rollout_pct=0 via the same idempotent seed mechanism existing flags use (locate the flag seed migration/registry pattern; follow it exactly; paste the located pattern in your first status update). Resolver: same per-entity resolution the other flags use.
+2. At the TOP of BOTH pushJournalEntryToQuickBooksFromQueue and pushJournalEntryToQuickBooksImmediateBestEffort: resolve the flag for the operating company; when OFF → return { skipped: "qbo_je_push_disabled" } (queue variant) / no-op (best-effort variant), write ONE audit breadcrumb row (audit append, event accounting.journal_entry_push_skipped_flag_off, entity id + opco) — zero HTTP, zero token fetch (the getValidAccessToken call must be AFTER the gate).
+
+LAYER 2 — Structural refusal (independent of flag, can never be flipped away):
+3. Before any HTTP in pushJournalEntryToQuickBooksFromQueue: load/inspect header source_system. If source_system='qbo_import' → throw qbo_push_refused_import_source (typed error), persist a sync alert with severity 'error' and replay_hint NULL (never replayable), zero HTTP. This refusal executes even when the flag is ON — imported mirror entries must NEVER round-trip, ever.
+4. Every enqueue point for journal_entry sync jobs (grep enqueueSyncJob callers with entity_type journal_entry across apps/backend/src; list every call site in the PR description) adds the same exclusion: never enqueue when source_system='qbo_import'.
+5. The sync-alert replay path (admin replay of replay_hint='qbo_journal_entry') passes back through pushJournalEntryToQuickBooksFromQueue and therefore inherits both gates — add an explicit test for the replay entry point anyway.
+
+LAYER 3 — Masterdata echo guard:
+6. Locate the accounts push scheduler + its push worker. Verify what gates it today (env QBO_MASTERDATA_SYNC_ENABLED per prior session claim — CONFIRM in code, paste the gating lines). Add: the accounts push must EXCLUDE rows whose current state originates from inbound sync — concretely, skip rows where qbo_sync_status='synced' AND qbo_synced_at >= updated_at (no local edit since last inbound sync), and skip any row whose qbo_account_id was written by the inbound accounts sync in the same state (define precisely from the actual columns after reading the worker — do not guess; if the existing worker already has an equivalent no-op-when-unchanged rule, prove it with the code lines and a test instead of adding a duplicate).
+
+PROOF HARNESS (the merge gate):
+7. Vitest suite with a global fetch spy asserting ZERO network calls for: (a) queue push on an import-source JE with flag ON, (b) queue push on a normal JE with flag OFF, (c) immediate-best-effort on both, (d) replay path on an import-source alert, (e) accounts push worker over a batch of inbound-synced rows. Any recorded fetch = test failure.
+8. Static CI guard scripts/verify-qbo-push-gates.mjs: fails the build if journal-entry-qbo-push.service.ts loses either the flag resolution call or the source_system refusal string (simple presence assertions), or if any new enqueueSyncJob('journal_entry'…) call site lacks the exclusion comment marker.
+
+EVIDENCE REQUIRED IN PR: located flag-seed pattern, all journal_entry enqueue call sites, the masterdata scheduler gating lines as found, full vitest output showing the zero-call assertions, `git diff --stat`.
+
+allowed_files: apps/backend/src/accounting/journal-entry-qbo-push.service.ts, apps/backend/src/accounting/journal-entries.service.ts (gate-aware call only), the flag seed file per located pattern, the accounts push worker file(s) (name in .block-ready.json once located; STOP if lane-locked), the journal_entry enqueue call-site files (additive exclusion only), tests, scripts/verify-qbo-push-gates.mjs, .block-ready/IMPORT-P0.json.
+FORBIDDEN: enabling any flag, deleting the push path, touching import engine code (not built yet), migrations beyond the idempotent flag seed if the located pattern requires one.
