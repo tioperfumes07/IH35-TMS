@@ -81,14 +81,22 @@ function daysSince(iso: string): number {
   return (Date.now() - t) / (1000 * 60 * 60 * 24);
 }
 
+// USERS: an invited user has no credentials yet — auth_method 'Invite pending'. "Active" must mean the
+// account can actually sign in, so an invited-never-accepted user is "Invited", not "Active".
+function isInvitePending(user: IdentityUser): boolean {
+  return user.auth_method === "Invite pending";
+}
+
 function userRowCategory(user: IdentityUser): "active" | "pending" | "deactivated" {
   if (user.deactivated_at) return "deactivated";
-  if (daysSince(user.created_at) < PENDING_INVITE_DAYS) return "pending";
+  if (isInvitePending(user) || daysSince(user.created_at) < PENDING_INVITE_DAYS) return "pending";
   return "active";
 }
 
-function userStatus(user: IdentityUser): "Active" | "Inactive" {
-  return user.deactivated_at ? "Inactive" : "Active";
+function userStatus(user: IdentityUser): "Active" | "Invited" | "Inactive" {
+  if (user.deactivated_at) return "Inactive";
+  if (isInvitePending(user)) return "Invited"; // invited, no credentials → cannot sign in yet
+  return "Active";
 }
 
 const PASSWORD_CHECKLIST = [
