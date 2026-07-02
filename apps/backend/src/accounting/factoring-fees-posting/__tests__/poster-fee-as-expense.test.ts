@@ -1,93 +1,32 @@
 import { describe, expect, it, vi } from "vitest";
 import { postFactoringFeeExpenseEvent } from "../poster.service.js";
 
-const {
-  mockQuery,
-  mockWithLuciaBypass,
-  mockCreateJournalEntry,
-  mockResolveRoleAccount,
-  mockResolveAccountForCategory,
-} = vi.hoisted(() => {
-  const query = vi.fn();
-  const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof query }) => unknown) => fn({ query }));
-  return {
-    mockQuery: query,
-    mockWithLuciaBypass: withLuciaBypass,
-    mockCreateJournalEntry: vi.fn(),
-    mockResolveRoleAccount: vi.fn(),
-    mockResolveAccountForCategory: vi.fn(),
-  };
-});
-
-vi.mock("../../../auth/db.js", () => ({
-  withLuciaBypass: mockWithLuciaBypass,
+// CODER-34 — the factoring fee is now booked at FUNDING (Dr Factoring Fees / Cr Factoring Advance liability)
+// in factoring-posting/poster.service.ts. This standalone release-time poster is a documented no-op: it must
+// NOT post any JE and must NEVER credit A/R (the old sale-model behavior this rebuild removes).
+const { mockWithLuciaBypass, mockCreateJournalEntry } = vi.hoisted(() => ({
+  mockWithLuciaBypass: vi.fn(),
+  mockCreateJournalEntry: vi.fn(),
 }));
 
-vi.mock("../../journal-entries.service.js", () => ({
-  createJournalEntry: mockCreateJournalEntry,
-}));
+vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry }));
 
-vi.mock("../../coa-roles/resolver.service.js", () => ({
-  resolveRoleAccount: mockResolveRoleAccount,
-}));
-
-vi.mock("../../expense-category-map/resolver.service.js", () => ({
-  resolveAccountForCategory: mockResolveAccountForCategory,
-}));
-
-describe("factoring fee posting VQ6", () => {
-  it("posts fee as separate expense line and never nets against revenue", async () => {
-    mockQuery.mockReset();
+describe("factoring fee posting (deprecated — fee booked at funding)", () => {
+  it("is a no-op: posts no JE and never touches A/R", async () => {
+    mockWithLuciaBypass.mockReset();
     mockCreateJournalEntry.mockReset();
-    mockResolveRoleAccount.mockReset();
-    mockResolveAccountForCategory.mockReset();
 
-    mockResolveRoleAccount.mockResolvedValue("ar-account-id");
-    mockResolveAccountForCategory.mockResolvedValue({
-      account_id: "fee-account-id",
-      posting_side: "debit",
-    });
-    mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
-      if (sql.includes("FROM accounting.factoring_advances")) return { rows: [{ display_id: "FAC-1001" }] };
-      if (sql.includes("FROM accounting.journal_entries")) return { rows: [] };
-      return { rows: [] };
-    });
-
-    await postFactoringFeeExpenseEvent({
+    const result = await postFactoringFeeExpenseEvent({
       operating_company_id: "11111111-1111-4111-8111-111111111111",
       factoring_advance_id: "22222222-2222-4222-8222-222222222222",
       factor_fee_cents: 20000,
       released_at_iso: "2026-02-20T00:00:00.000Z",
-      actor: {
-        user_id: "33333333-3333-4333-8333-333333333333",
-        role: "Administrator",
-      },
+      actor: { user_id: "33333333-3333-4333-8333-333333333333", role: "Administrator" },
     });
 
-    expect(mockResolveAccountForCategory).toHaveBeenCalledWith(
-      "11111111-1111-4111-8111-111111111111",
-      "factoring_fee",
-      "default"
-    );
-    expect(mockCreateJournalEntry).toHaveBeenCalledWith(
-      expect.objectContaining({
-        operating_company_id: "11111111-1111-4111-8111-111111111111",
-        source: "auto",
-        postings: [
-          expect.objectContaining({
-            account_id: "fee-account-id",
-            debit_or_credit: "debit",
-            amount_cents: 20000,
-          }),
-          expect.objectContaining({
-            account_id: "ar-account-id",
-            debit_or_credit: "credit",
-            amount_cents: 20000,
-          }),
-        ],
-      }),
-      expect.any(Object)
-    );
+    expect(result).toEqual({ posted: false, reason: "fee_booked_at_funding" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
+    expect(mockWithLuciaBypass).not.toHaveBeenCalled();
   });
 });
