@@ -1,0 +1,41 @@
+{
+  "block_id": "IMPORT-P0",
+  "status": "hold-for-jorge",
+  "classification": "Tier-1 financial (feature-flag seed migration + gates the JE→QBO sync integrity). BUILD-SOLO-AND-HOLD — never self-merge; owner labels + merges after zero-call proof reviewed.",
+  "phase": "QBO-IMPORT-V2",
+  "task": "IMPORT-P0 JE→QBO push kill-switch + masterdata echo guard. HARD PREREQUISITE: no import run (opening balance or GL detail) may execute until this is merged and its zero-call proof is green. Three defense-in-depth layers stop TMS from writing/echoing journal entries into QuickBooks (the system of record through 12/31/2025).",
+  "branch": "fix/qbo-je-push-killswitch",
+  "lane": "coder",
+  "details": [
+    "LAYER 1 (flag, default OFF, per-entity-only): new flag QBO_JE_PUSH_ENABLED seeded via idempotent migration 202607021200_qbo_je_push_flag.sql; enrolled in POSTING_FLAG_KEYS so a global default/rollout can NEVER enable it for all entities (reuses the #1791 per-entity mechanism). Resolved at the TOP of pushJournalEntryToQuickBooksFromQueue via isEnabled(...) BEFORE getValidAccessToken → OFF = zero token, zero HTTP, one audit breadcrumb (accounting.journal_entry_push_skipped_flag_off).",
+    "LAYER 2 (structural refusal, independent of flag): the push service refuses any JE whose source_system !== 'tms' (QBO-origin: 'qbo' today, a future 'qbo_import') with typed error qbo_push_refused_import_source + a NON-replayable sync alert (replay_hint NULL, severity error). Runs even when the flag is ON — imported mirror entries can never round-trip. best-effort variant no longer writes a replayable failure alert for this refusal.",
+    "LAYER 3 (masterdata echo guard): PROVEN, not duplicated — apps/backend/src/sync/qbo-accounts-push.ts already claims only qbo_id IS NULL AND sync_status IN ('unsynced','failed') rows, so inbound-synced (QBO-origin) accounts never echo back. Asserted by a source-level test; the accounts worker is NOT modified.",
+    "CROSS-BLOCK FINDING (flag to IMPORT-2v2/3v2/4v2): accounting.journal_entries.source_system has CHECK (source_system IN ('tms','qbo')) — 'qbo_import' is NOT currently permitted. The import engines must either use source_system='qbo' + a distinguishing source, OR IMPORT-2v2 must ALTER the CHECK to add 'qbo_import' (a Jorge-gated migration — the v1/v2 IMPORT-2 says STOP-and-report on any ALTER). P0's refusal keys off !='tms', so it is correct either way.",
+    "BEHAVIOR CHANGE (surface to owner): with the flag default OFF, TMS→QBO JE push stops for ALL entities until an explicit per-entity override is set. This is the intended kill-switch and matches the CPA-locked 'double books, no sync-back' architecture — the prior unconditional push was the latent unwanted-sync.",
+    "Proof harness (merge gate): journal-entry-qbo-push.killswitch.test.ts — global fetch spy asserts ZERO network calls for import-source-flag-ON (refused), normal-flag-OFF (skipped), best-effort both, and the accounts-push echo guard; plus a positive test that a normal TMS JE with the flag ON still pushes exactly once (gate does not over-block). Static guard scripts/verify-qbo-push-gates.mjs asserts the flag call + refusal string survive and resolve before the token fetch.",
+    "Verification: 7/7 proof tests green; backend tsc 0 errors; verify:qbo-push-gates + verify:qbo-money-parse OK; feature-flag suite green; migration idempotent locally (2x apply = 1 row, default OFF)."
+  ],
+  "allowed_files": [
+    ".block-ready/IMPORT-P0.json",
+    "apps/backend/src/accounting/journal-entry-qbo-push.service.ts",
+    "apps/backend/src/accounting/journal-entries.service.ts",
+    "apps/backend/src/lib/feature-flags/service.ts",
+    "db/migrations/202607021200_qbo_je_push_flag.sql",
+    "apps/backend/src/accounting/journal-entry-qbo-push.killswitch.test.ts",
+    "scripts/verify-qbo-push-gates.mjs",
+    "package.json"
+  ],
+  "extends_existing": [
+    "apps/backend/src/accounting/journal-entry-qbo-push.service.ts",
+    "apps/backend/src/accounting/journal-entries.service.ts",
+    "apps/backend/src/lib/feature-flags/service.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["hold-merge-gate (JORGE-APPROVED required)"],
+  "flag": "QBO_JE_PUSH_ENABLED",
+  "flag_default": "OFF",
+  "depends_on": [],
+  "registered_on": "2026-07-02"
+}

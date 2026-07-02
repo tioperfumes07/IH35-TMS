@@ -192,6 +192,10 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
     return header;
   });
 
+  // [IMPORT-P0 qbo-import-exclusion] This create path only produces TMS-origin JEs (source_system='tms').
+  // Imported / QBO-origin entries never traverse this path; and even if enqueued, both the queue drain and
+  // the immediate push below refuse any non-'tms' source_system and are gated by QBO_JE_PUSH_ENABLED
+  // (default OFF). The push service is the single enforcement choke point.
   await enqueueSyncJob(
     input.operating_company_id,
     "journal_entry",
@@ -314,6 +318,8 @@ export async function voidJournalEntry(
     return { ok: true };
   });
 
+  // [IMPORT-P0 qbo-import-exclusion] Void of a TMS-origin JE. The push service refuses any non-'tms'
+  // source_system and is gated by QBO_JE_PUSH_ENABLED (default OFF); imported entries never reach here.
   await enqueueSyncJob(
     operatingCompanyId,
     "journal_entry",
