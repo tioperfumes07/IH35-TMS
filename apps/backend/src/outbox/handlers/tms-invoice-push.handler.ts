@@ -1,6 +1,7 @@
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./registry.js";
 import { buildQboInvoicePayload } from "../../integrations/qbo/translators/invoice.js";
 import { deliverQboInvoicePush } from "../../qbo/push.service.js";
+import { evaluateEntityPushGate, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "../../qbo/qbo-entity-push-gate.js";
 import type { QboInvoicePushPayload } from "../../qbo/push.service.js";
 
 function requireUuid(value: unknown, field: string): string {
@@ -268,7 +269,10 @@ export class TmsInvoicePushHandler implements OutboxEventHandler {
   eventType = "tms.invoice.push_requested" as const;
 
   canHandle() {
-    return (process.env.TMS_INVOICE_PUSH_HANDLER_ENABLED ?? "true").trim() !== "false";
+    // IMPORT-P0b: registration predicate only. The money gate is the shared entity-push gate in deliver()
+    // (flag QBO_ENTITY_PUSH_ENABLED default OFF + clone-origin refusal). The old default-ON env var
+    // TMS_INVOICE_PUSH_HANDLER_ENABLED is retired — do NOT reintroduce it as the money gate.
+    return true;
   }
 
   async deliver(payload: OutboxPayload, ctx: OutboxHandlerContext) {
@@ -278,6 +282,17 @@ export class TmsInvoicePushHandler implements OutboxEventHandler {
 
     await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     await ctx.client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+
+    // IMPORT-P0b — entity-push kill-switch. Consult the shared gate BEFORE any load / QBO token fetch:
+    // outbound is OFF under the parallel-books architecture, and a QBO-origin/cloned row is refused even
+    // when the flag is ON. Terminal skip (no retry, ZERO HTTP) = return a policy-note message.
+    const p0bGate = await evaluateEntityPushGate(ctx.client, {
+      operatingCompanyId: operating_company_id,
+      entityKind: "invoice",
+      entityId: invoice_id,
+    });
+    if (p0bGate.decision === "import_source") return { message: `${QBO_PUSH_REFUSED_IMPORT_SOURCE}:${p0bGate.origin}` };
+    if (p0bGate.decision === "flag_off") return { message: "qbo_entity_push_disabled_skip" };
 
     const { invoice, lines } = await loadInvoice({ operating_company_id, invoice_id }, ctx);
     const mirror = await upsertInvoiceMirror(

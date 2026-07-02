@@ -1,5 +1,6 @@
 import { buildQboBillPayload } from "../../integrations/qbo/translators/bill.js";
 import { deliverQboBillPush } from "../../qbo/push.service.js";
+import { evaluateEntityPushGate, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "../../qbo/qbo-entity-push-gate.js";
 import type { QboBillPushPayload } from "../../qbo/push.service.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./registry.js";
 
@@ -146,7 +147,8 @@ export class TmsBillPushHandler implements OutboxEventHandler {
   eventType = "tms.bill.push_requested" as const;
 
   canHandle() {
-    return (process.env.TMS_BILL_PUSH_HANDLER_ENABLED ?? "true").trim() !== "false";
+    // IMPORT-P0b: registration predicate only. Money gate = shared entity-push gate in deliver().
+    return true;
   }
 
   async deliver(payload: OutboxPayload, ctx: OutboxHandlerContext) {
@@ -156,6 +158,15 @@ export class TmsBillPushHandler implements OutboxEventHandler {
 
     await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     await ctx.client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+
+    // IMPORT-P0b — entity-push kill-switch (see invoice handler): gate BEFORE any load / QBO token fetch.
+    const p0bGate = await evaluateEntityPushGate(ctx.client, {
+      operatingCompanyId: operating_company_id,
+      entityKind: "bill",
+      entityId: bill_id,
+    });
+    if (p0bGate.decision === "import_source") return { message: `${QBO_PUSH_REFUSED_IMPORT_SOURCE}:${p0bGate.origin}` };
+    if (p0bGate.decision === "flag_off") return { message: "qbo_entity_push_disabled_skip" };
 
     const billRes = await ctx.client.query<BillHeaderRow>(
       `

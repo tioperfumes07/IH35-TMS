@@ -50,6 +50,9 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // a global flip would start echoing every entity's JEs into QBO. Enable is an explicit per-entity
   // override, owner-controlled.
   "QBO_JE_PUSH_ENABLED",
+  // IMPORT-P0b: same, for the six entity write-back handlers (invoice/bill/customer/vendor/account/item).
+  // Per-entity-only; default OFF; a global flip would start echoing every entity's masterdata + AR/AP into QBO.
+  "QBO_ENTITY_PUSH_ENABLED",
 ]);
 
 export function isPostingFlag(flagKey: string): boolean {

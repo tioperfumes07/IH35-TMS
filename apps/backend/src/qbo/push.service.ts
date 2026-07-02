@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
 import type { OutboxHandlerContext } from "../outbox/handlers/registry.js";
 import { qboPostMasterJson, unwrapIntuitEntity } from "../integrations/qbo/qbo-entity-write.js";
+import { isEntityPushEnabled } from "./qbo-entity-push-gate.js";
 
 export type QboMasterPushPayload = {
   operating_company_id: string;
@@ -79,6 +80,16 @@ function vendorPushExtras(row: Record<string, unknown>): Record<string, unknown>
 
 export async function deliverQboMasterEntityPush(payload: QboMasterPushPayload, ctx: OutboxHandlerContext) {
   await applyBypass(ctx.client, payload.operating_company_id);
+
+  // IMPORT-P0b — kill-switch CHOKE POINT. This is the single QBO-write funnel for masterdata and is called
+  // not only by the six gated outbox handlers but ALSO by the default-ON schedulers
+  // (sync/qbo-{customers,vendors,accounts}-push.ts) and the qbo.master_entity outbox handler — none of
+  // which pass through the per-handler gate. Enforce LAYER-1 here so ALL of them respect the flag: under
+  // the parallel-books architecture (docs/specs/ACCOUNTING-ARCHITECTURE.md) it is default OFF → zero QBO
+  // calls. Enabling is an explicit per-entity owner override.
+  if (!(await isEntityPushEnabled(ctx.client, payload.operating_company_id))) {
+    return { message: "qbo_entity_push_disabled_skip" };
+  }
 
   if (payload.entity === "vendor") return deliverVendor(payload, ctx.client);
   if (payload.entity === "customer") return deliverCustomer(payload, ctx.client);

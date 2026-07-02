@@ -1,5 +1,6 @@
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./registry.js";
 import { deliverQboMasterEntityPush } from "../../qbo/push.service.js";
+import { evaluateEntityPushGate, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "../../qbo/qbo-entity-push-gate.js";
 import type { QboMasterPushPayload } from "../../qbo/push.service.js";
 
 function requireUuid(value: unknown, field: string): string {
@@ -236,7 +237,8 @@ export class TmsCustomerPushHandler implements OutboxEventHandler {
   eventType = "tms.customer.push_requested" as const;
 
   canHandle() {
-    return (process.env.TMS_CUSTOMER_PUSH_HANDLER_ENABLED ?? "true").trim() !== "false";
+    // IMPORT-P0b: registration predicate only. Money gate = shared entity-push gate in deliver().
+    return true;
   }
 
   async deliver(payload: OutboxPayload, ctx: OutboxHandlerContext) {
@@ -246,6 +248,15 @@ export class TmsCustomerPushHandler implements OutboxEventHandler {
 
     await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     await ctx.client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+
+    // IMPORT-P0b — entity-push kill-switch (see invoice handler): gate BEFORE mirror write / QBO token fetch.
+    const p0bGate = await evaluateEntityPushGate(ctx.client, {
+      operatingCompanyId: operating_company_id,
+      entityKind: "customer",
+      entityId: customer_id,
+    });
+    if (p0bGate.decision === "import_source") return { message: `${QBO_PUSH_REFUSED_IMPORT_SOURCE}:${p0bGate.origin}` };
+    if (p0bGate.decision === "flag_off") return { message: "qbo_entity_push_disabled_skip" };
 
     const mirror = await upsertMirrorFromCustomer({ operating_company_id, customer_id }, ctx);
 

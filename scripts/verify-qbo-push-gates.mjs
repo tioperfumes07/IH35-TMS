@@ -61,6 +61,11 @@ if (outbound) {
   if (gateIdx >= 0 && tokenIdx >= 0 && gateIdx > tokenIdx) {
     failures.push("sync-outbound-accounting: the JE gate must be evaluated BEFORE getValidAccessToken");
   }
+  // factoring_advance composes a QBO JournalEntry — it too must be gated (owner-locked #1: close the last
+  // ungated outbound JE). CI fails if a factoring_advance push appears without the JE-flag gate.
+  if (!/entityType === "factoring_advance"/.test(outbound) || !outbound.includes("JE_QBO_PUSH_FLAG")) {
+    failures.push("sync-outbound-accounting: factoring_advance must be gated on the JE kill-switch (JE_QBO_PUSH_FLAG)");
+  }
 }
 
 const jeSvc = read(JE_SVC);

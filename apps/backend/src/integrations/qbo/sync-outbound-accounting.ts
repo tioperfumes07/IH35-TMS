@@ -8,7 +8,9 @@ import {
   loadEntityVersionSnapshot,
 } from "./sync-outbound-accounting.entities.js";
 import type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboResult } from "./sync-outbound-accounting.types.js";
-import { evaluateJeQboPushGate, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "../../accounting/qbo-je-push-gate.js";
+import { evaluateJeQboPushGate, JE_QBO_PUSH_FLAG, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "../../accounting/qbo-je-push-gate.js";
+import { evaluateEntityPushGate } from "../../qbo/qbo-entity-push-gate.js";
+import { isEnabled } from "../../lib/feature-flags/service.js";
 
 export type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboResult } from "./sync-outbound-accounting.types.js";
 
@@ -257,10 +259,9 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
   const entityType = opts.entity_type as AccountingOutboundEntityType;
   const triplet = { queue_row_id: opts.queue_row_id, entity_type: opts.entity_type, entity_id: opts.entity_id };
 
-  // ── IMPORT-P0 — the JE→QBO push kill-switch guards THIS queue-drain path too (the primary async push,
+  // ── IMPORT-P0 — the JE→QBO push kill-switch guards THIS queue-drain path (the primary async push,
   // drained by a cron every minute). Consult the SHARED gate BEFORE fetching a token or building/POSTing
-  // anything, so a disabled/refused entity makes ZERO QuickBooks calls. Only journal entries are gated
-  // here; other accounting entities (invoice/bill/…) are governed by their own sync policies. ──────────
+  // anything, so a disabled/refused entity makes ZERO QuickBooks calls. ──────────
   if (entityType === "journal_entry") {
     const gate = await withLuciaBypass(async (c) => {
       await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
@@ -271,6 +272,43 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
       return { outcome: "failed_dead_letter" };
     }
     if (gate.decision === "flag_off") {
+      await finalizeJeGateFlagOff(opts);
+      return { outcome: "synced" };
+    }
+  }
+
+  // ── IMPORT-P0b — the ENTITY push kill-switch guards this same queue-drain path for invoice + bill (this
+  // is a SEPARATE QBO POST from push.service.ts's deliverQbo*Push, so it needs its own gate). Same
+  // terminal semantics as the JE gate. ──────────
+  if (entityType === "invoice" || entityType === "bill") {
+    const gate = await withLuciaBypass(async (c) => {
+      await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+      return evaluateEntityPushGate(c, {
+        operatingCompanyId: opts.operating_company_id,
+        entityKind: entityType,
+        entityId: opts.entity_id,
+      });
+    });
+    if (gate.decision === "import_source") {
+      await finalizeJeGateRefusal(opts, gate.origin);
+      return { outcome: "failed_dead_letter" };
+    }
+    if (gate.decision === "flag_off") {
+      await finalizeJeGateFlagOff(opts);
+      return { outcome: "synced" };
+    }
+  }
+
+  // ── IMPORT-P0b (owner-locked #1) — factoring_advance composes a QBO JournalEntry from
+  // accounting.factoring_advances, so it is a JE push governed by the JE kill-switch (QBO_JE_PUSH_ENABLED,
+  // default OFF). Under reconcile-only the Faro advance is booked in QBO via the bank feed and reconciled;
+  // TMS does not push it. This closes the last known ungated outbound JE path. ──────────
+  if (entityType === "factoring_advance") {
+    const enabled = await withLuciaBypass(async (c) => {
+      await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+      return isEnabled(c, JE_QBO_PUSH_FLAG, { operating_company_id: opts.operating_company_id });
+    });
+    if (!enabled) {
       await finalizeJeGateFlagOff(opts);
       return { outcome: "synced" };
     }
