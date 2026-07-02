@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import type { VendorOption } from "../../api/mdata";
+import { vendorQualityKind, vendorQualityClass } from "../../lib/quality-badge";
 import { CardLink } from "../../components/shared/CardLink";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { parseVendorNotes } from "../../lib/vendorProfileMeta";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -12,10 +12,10 @@ function fmtMoney(cents: number) {
 }
 
 function vendorQualityLabel(notes: string | null | undefined) {
-  const rating = parseVendorNotes(notes).meta.qualityRating;
-  if (rating === "good") return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
-  if (rating === "bad") return { label: "Bad", className: "bg-red-100 text-red-800" };
-  return { label: "Medium", className: "bg-amber-100 text-amber-800" };
+  // VEND-5: rate only from real data; no vendor-profile block → neutral "No history" (was defaulting to amber "Medium").
+  const kind = vendorQualityKind(notes);
+  const label = kind === "good" ? "Good" : kind === "medium" ? "Medium" : kind === "bad" ? "Bad" : "No history";
+  return { label, className: vendorQualityClass(kind) };
 }
 
 type Props = {

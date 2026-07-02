@@ -1,0 +1,19 @@
+MODULE 22 — 425C MONTHLY OPERATING REPORT (/425c) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep. Console: zero errors across all 5 tabs. (Do-not-touch module — audit is read-only observation.)
+
+SCOPE SWEPT
+Profiles & Defaults, QB Import, Form 425C, Merge & Export, History.
+
+STATE (verified)
+Complete, serious filing system, per-entity (TRK + TRANSP profile cards; case #, district, judge, EIN, bank accounts, default questionnaire answers per entity):
+- Profiles & Defaults: both entities' court metadata + default answers for the 18-line questionnaire.
+- QB Import: parse income deposits → apply to Line 20; explicitly labeled "Session-scoped preview only. Authoritative Form lines 19-23 remain backend Banking import values (DIP real accounts only; virtual factoring/escrow excluded)" — correct source-of-truth discipline and correct account-class exclusion.
+- Form 425C: Create/Load Draft, Import from Banking, unsaved-changes indicator, full Part 1 questionnaire rendering.
+- Merge & Export: builds the complete filing package → filing HTML → print-to-PDF, with correct suggested filename ("IH 35 TRUCKING LLC – July 2026 – Monthly Operating Report.pdf").
+- History: honest "No reports found."
+
+DEFECTS
+None live-reproduced this pass. One observation, not a defect: TRK profile shows "Case #—" on the Form tab (petition metadata note says it's managed by report creation) — confirm the case number populates from the entity profile when a draft is created; if a filing can be generated with "Case #—", that's a validation gap worth a guard (filing must refuse to export without case number). Flagged for a one-line coder check, not logged as a reproduced defect since no draft was created during a read-only audit.
+
+POSITIVES
+- Strong separation: preview vs authoritative values; per-entity profiles; DIP-real-accounts-only rule enforced in copy; honest empty history.

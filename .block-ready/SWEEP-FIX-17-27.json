@@ -1,0 +1,40 @@
+{
+  "block_id": "SWEEP-FIX-17-27",
+  "status": "in-progress",
+  "classification": "PR A — Tier-3 code fixes (no migration, no posting, no schema, no row/route/page deletion) → self-mergeable on green. PR B (owner-gated data actions) is a separate follow-up.",
+  "phase": "MODULE-SWEEP",
+  "task": "Consolidated fixes for the modules 17-27 sweep defects. PR A ships the code fixes with regression tests; PR B (owner-gated test-account deactivation + fixture-name guard) is built separately.",
+  "branch": "fix/sweep-17-27-code-fixes",
+  "lane": "coder",
+  "details": [
+    "DONE + verified this session (PR A): RPT-1 (IFTA next-due quarter — was skipping the just-ended quarter during its filing month; 6 boundary tests) · LISTS-1 (bare /lists/chart-of-accounts additive redirect to the canonical CoA page) · CUST-2/VEND-5 (quality badge: shared lib/quality-badge.ts, missing data → neutral 'No history' instead of red/amber default; killed 4-copy customer + 3-copy vendor drift; boundary tests) · RPT-2 (ReportsHome loading no longer fabricates 'Q2·0d·TBD' — renders '—' until loaded).",
+    "FIN-1: verified the canonical finance-hub.service.ts already returns honest 'Not set up' / 'No accounting periods defined' for a null period — no fabrication path present (likely already fixed). No change needed there.",
+    "REMAINING (not in this session's commits): CUST-1/VEND-1 list pagination (HIGH — the page uses /api/v1/mdata/customers whose client drops total_count and the parent passes no limit → only 50 of the roster load; needs the mdata endpoint's total/limit contract traced and the client-side table-controller data-load fixed, not a guess) · VEND-2 sync-banner retry · USERS invited-vs-active status · FIN-2 /finance landing+subnav unification (needs owner approval — PR-description question only).",
+    "All 11 module-sweep findings + the fix block preserved to docs/trackers/module-sweep-17-27/ so the audit record survives sessions (repo = canonical).",
+    "Every fix ships its regression guard/test; frontend tsc + backend vitest green for touched files."
+  ],
+  "allowed_files": [
+    ".block-ready/SWEEP-FIX-17-27.json",
+    "apps/backend/src/reports/shared.ts",
+    "apps/backend/src/reports/get-current-quarter-info.test.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/lib/quality-badge.ts",
+    "apps/frontend/src/lib/quality-badge.test.ts",
+    "apps/frontend/src/pages/customers/CustomersListView.tsx",
+    "apps/frontend/src/pages/customers/CustomerListSidebar.tsx",
+    "apps/frontend/src/pages/Customers.tsx",
+    "apps/frontend/src/pages/CustomerDetail.tsx",
+    "apps/frontend/src/pages/vendors/VendorsListView.tsx",
+    "apps/frontend/src/pages/vendors/VendorListSidebar.tsx",
+    "apps/frontend/src/pages/Vendors.tsx",
+    "apps/frontend/src/pages/reports/ReportsHome.tsx",
+    "docs/trackers/module-sweep-17-27/"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "flag": null,
+  "flag_default": null,
+  "depends_on": [],
+  "registered_on": "2026-07-02"
+}

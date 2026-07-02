@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
 import { listVendors, type VendorOption } from "../api/mdata";
+import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ActionButton } from "../components/shared/ActionButton";
@@ -67,10 +68,10 @@ function buildAchDisplay(vendor: VendorOption) {
 }
 
 function vendorQualityLabel(notes: string | null | undefined) {
-  const rating = parseVendorNotes(notes).meta.qualityRating;
-  if (rating === "good") return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
-  if (rating === "bad") return { label: "Bad", className: "bg-red-100 text-red-800" };
-  return { label: "Medium", className: "bg-amber-100 text-amber-800" };
+  // VEND-5: rate only from real data; no vendor-profile block → neutral "No history" (was defaulting to amber "Medium").
+  const kind = vendorQualityKind(notes);
+  const label = kind === "good" ? "Good" : kind === "medium" ? "Medium" : kind === "bad" ? "Bad" : "No history";
+  return { label, className: vendorQualityClass(kind) };
 }
 
 export function VendorsPage() {
@@ -101,7 +102,9 @@ export function VendorsPage() {
 
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "page", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId }).then((result) => result.vendors),
+    // VEND-1: load the FULL vendor roster (the client-side table paginates/searches over it); without an
+    // explicit limit the endpoint returns only the default 50.
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000 }).then((result) => result.vendors),
     enabled: Boolean(companyId),
   });
   const balancesQuery = useQuery({

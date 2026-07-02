@@ -2448,6 +2448,11 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* LISTS-1: the bare /lists/chart-of-accounts path fell through the dynamic /lists/:domain route
+            to the "Module in active development" stub. Redirect it (additive, Block-C precedent — the
+            path is kept, never deleted) to the canonical Chart of Accounts page shipped in #1793. This
+            explicit route is declared BEFORE /lists/:domain so it wins the match. */}
+        <Route path="/lists/chart-of-accounts" element={<Navigate replace to="/lists/accounting/chart-of-accounts" />} />
         <Route
           path="/lists/:domain"
           element={

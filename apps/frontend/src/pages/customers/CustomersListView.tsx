@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
+import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
 import { BulkActionBar } from "../../components/bulk/BulkActionBar";
 import { TableSelection, TableSelectionHeader } from "../../components/bulk/TableSelection";
@@ -16,15 +17,10 @@ function fmtMoney(cents: number) {
 }
 
 function qualityBadge(customer: Customer) {
-  const score = Number(customer.quality_payment_score ?? "");
-  if (Number.isFinite(score)) {
-    if (score >= 90) return { label: "Active", className: "bg-emerald-100 text-emerald-800" };
-    if (score >= 70) return { label: "Medium", className: "bg-amber-100 text-amber-800" };
-    return { label: "Late-pay", className: "bg-red-100 text-red-800" };
-  }
-  if (customer.quality_overall_flag === "preferred") return { label: "Active", className: "bg-emerald-100 text-emerald-800" };
-  if (customer.quality_overall_flag === "avoid") return { label: "Late-pay", className: "bg-red-100 text-red-800" };
-  return { label: "Medium", className: "bg-amber-100 text-amber-800" };
+  // CUST-2: rate only from real data; no score/flag → neutral "No history" (was defaulting to amber).
+  const kind = customerQualityKind(customer.quality_payment_score, customer.quality_overall_flag);
+  const label = kind === "good" ? "Active" : kind === "watch" ? "Medium" : kind === "late" ? "Late-pay" : "No history";
+  return { label, className: customerQualityClass(kind) };
 }
 
 function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null | undefined) {

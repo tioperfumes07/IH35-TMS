@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
+import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -182,16 +183,11 @@ function qualityFlagVariant(flag: Customer["quality_overall_flag"]): "positive" 
   return "neutral";
 }
 
-function qualityRatingFromScores(customer: Customer): "Good" | "Watch" | "Late-pay" {
-  const numeric = Number(customer.quality_payment_score ?? "");
-  if (Number.isFinite(numeric)) {
-    if (numeric >= 90) return "Good";
-    if (numeric >= 70) return "Watch";
-    return "Late-pay";
-  }
-  if (customer.quality_overall_flag === "preferred") return "Good";
-  if (customer.quality_overall_flag === "avoid") return "Late-pay";
-  return "Watch";
+function qualityRatingFromScores(customer: Customer): { label: string; className: string } {
+  // CUST-2: rate only from real data; no score/flag → neutral "No history" (was defaulting to amber "Watch").
+  const kind = customerQualityKind(customer.quality_payment_score, customer.quality_overall_flag);
+  const label = kind === "good" ? "Good" : kind === "watch" ? "Watch" : kind === "late" ? "Late-pay" : "No history";
+  return { label, className: customerQualityClass(kind) };
 }
 
 function CustomerFinancialOverviewSection(props: {
@@ -1344,15 +1340,9 @@ export function CustomerDetailPage() {
                   {(hydratedForm.quality_overall_flag || customer.quality_overall_flag).toUpperCase()}
                 </StatusBadge>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                    qualityRatingFromScores(customer) === "Good"
-                      ? "bg-emerald-100 text-emerald-800"
-                      : qualityRatingFromScores(customer) === "Late-pay"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-amber-100 text-amber-800"
-                  }`}
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${qualityRatingFromScores(customer).className}`}
                 >
-                  {qualityRatingFromScores(customer)}
+                  {qualityRatingFromScores(customer).label}
                 </span>
               </div>
               {canWriteQuality && editMode ? (

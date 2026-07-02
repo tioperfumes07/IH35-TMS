@@ -59,7 +59,10 @@ export function CustomersSyncPanel({ operatingCompanyId }: Props) {
     queryFn: () => fetchCustomersStatus(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
     refetchInterval: 30_000,
-    retry: 1,
+    // VEND-2/CUST: a transient status failure must not park the banner until a manual retry — retry with
+    // exponential backoff so it self-recovers (the manual Retry affordance below remains as a fallback).
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
   });
 
   const pullMutation = useMutation({

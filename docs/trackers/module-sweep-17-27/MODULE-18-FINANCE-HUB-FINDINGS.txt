@@ -1,0 +1,30 @@
+MODULE 18 — FINANCE HUB (/finance) — LIVE AUDIT
+Date: 2026-07-02 (CST/Laredo) · GUARD live sweep · Sources: live app (Chrome render + API replay), prod Neon (read-only), origin/main. Console: zero errors across all 6 finance pages.
+
+SCOPE SWEPT
+/finance (Overview), /finance/hub, /finance/statements, /finance/projections, /finance/scenarios, /finance/loan-wizard. API: /api/v1/finance/hub/overview 200, entity-scoped, read_only:true.
+
+STATE (verified)
+- Finance Hub renders (the 06-30 "orphaned" defect is FIXED live via #1785 — reachable, KPI grid works). read-only banner honest: "nothing is posted here."
+- Financial Statements page: P&L / Balance Sheet / Trial Balance with a working Accrual/Cash BASIS selector, From/To, Export CSV, Print. All figures $0 / "No rows" — HONEST, matches the empty ledger (journal_entries=2 test rows). This is exactly the surface the QBO historical-import program lights up.
+- Loan Wizard: full form, "One form → preview every entry… Nothing posts — preview only." Correct posture while GL flags are OFF.
+- QBO sync health KPI shows real signal: "5 entities drifting · 0 items pending sync" with drill to /accounting/qbo-reconcile.
+
+DEFECTS (live-reproduced)
+
+FIN-1 · LOW-MED · Hub fabricates a period status that does not exist in the DB
+- Live proof: hub KPI returns {"key":"accounting_period","value":"Jul 2026","secondary":"Status: open"} while accounting.periods = 0 rows for every entity (re-verified this session). The route synthesizes the current month and labels it "open" as if a period record exists — a silent fabrication of accounting state ("no hidden assumptions" rule).
+- Fix: when no period row covers today for the selected entity, the KPI must say "No periods initialized" (drill to the periods screen). After #1795 (Block A) merges and seeds 2024–2027, the KPI will read real rows — but the fabrication path must still be fixed so a future gap can never display as "open."
+
+FIN-2 · LOW · /finance lands on a stub while the real overview lives at /finance/hub
+- Live proof: /finance renders "Finance Overview — Financial projections overview. Future module…" (placeholder), with subnav Overview/Projections/Scenarios/Loan Wizard (no Calculator, no Hub, no Statements). /finance/hub and /finance/statements have a 5-tab subnav including Calculator. Two inconsistent subnavs inside one module; the sidebar entry drops the user on the stub.
+- Recommendation (additive, needs Jorge's word since it changes the landing default): make /finance land on the Hub, keep the stub Overview reachable as a tab, and unify the subnav (one tab set incl. Hub, Statements, Calculator) so nothing is reachable only by deep link.
+
+NOT RE-LOGGED (known/tracked elsewhere)
+- Projections + Scenarios are placeholder stubs — part of the known "ComingSoon routes" P3 backlog item; honest placeholder text, no fake data.
+- Statements show zeros because the ledger is empty — that is the QBO-IMPORT program's job (blocks delivered 2026-07-02), not a statements defect.
+- FINANCE_HUB_UI flag-comment drift was reconciled in #1785.
+
+POSITIVES
+- Dual-basis (Accrual/Cash) selector already live on statements — aligns with the owner's locked cash+accrual requirement.
+- Read-only posture consistently labeled; no posting surface exposed; no console errors; entity-scoped API.

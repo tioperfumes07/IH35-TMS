@@ -82,14 +82,16 @@ export function ReportsHomePage() {
     return [...apiRows, ...extra];
   }, [frequentQuery.data]);
 
-  const quarter = kpiQuery.data?.ifta_status.quarter ?? "Q2";
-  const dueAt = kpiQuery.data?.ifta_status.dueAt ?? "TBD";
-  const dueDays = kpiQuery.data?.ifta_status.daysUntilDue ?? 0;
+  // RPT-2: never fabricate a compliance countdown while loading. Until the KPI resolves, the IFTA card
+  // renders "—" (no quarter, no 0d, no "TBD" that reads as due-today); real values appear once loaded.
+  const ifta = kpiQuery.data?.ifta_status;
   const reportsKpis: ReportsKpi[] = [
     { label: "Available reports", value: String(kpiQuery.data?.available_reports ?? 8), meta: "8 categories" },
     { label: "Scheduled", value: String(kpiQuery.data?.scheduled ?? 0), meta: "auto-emailed" },
     { label: "Run last 7 days", value: String(kpiQuery.data?.run_last_7d ?? 0), meta: "across all users" },
-    { label: `IFTA ${quarter} due`, value: `${dueDays}d`, meta: `${dueAt} — file before`, warn: true },
+    ifta
+      ? { label: `IFTA ${ifta.quarter} due`, value: `${ifta.daysUntilDue}d`, meta: `${ifta.dueAt} — file before`, warn: true }
+      : { label: "IFTA due", value: "—", meta: "Loading…", warn: false },
   ];
 
   function handleRunReport(row: FrequentlyRunReport) {

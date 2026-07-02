@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ListErrorState } from "../components/ListErrorState";
+import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listInvoices } from "../api/accounting";
@@ -85,16 +86,10 @@ function fmtMoney(cents: number | null | undefined) {
 }
 
 function customerQualityRating(paymentScore: string | null | undefined, overallFlag: "preferred" | "standard" | "caution" | "avoid") {
-  const numeric = Number(paymentScore ?? "");
-  if (Number.isFinite(numeric)) {
-    if (numeric >= 90) return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
-    if (numeric >= 70) return { label: "Watch", className: "bg-amber-100 text-amber-800" };
-    return { label: "Late-pay", className: "bg-red-100 text-red-800" };
-  }
-  if (overallFlag === "preferred") return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
-  if (overallFlag === "caution") return { label: "Watch", className: "bg-amber-100 text-amber-800" };
-  if (overallFlag === "avoid") return { label: "Late-pay", className: "bg-red-100 text-red-800" };
-  return { label: "Watch", className: "bg-amber-100 text-amber-800" };
+  // CUST-2: rate only from real data; no score/flag → neutral "No history" (was defaulting to amber "Watch").
+  const kind = customerQualityKind(paymentScore, overallFlag);
+  const label = kind === "good" ? "Good" : kind === "watch" ? "Watch" : kind === "late" ? "Late-pay" : "No history";
+  return { label, className: customerQualityClass(kind) };
 }
 
 export function CustomersPage() {
@@ -179,7 +174,9 @@ export function CustomersPage() {
 
   const customersQuery = useQuery({
     queryKey: ["customers", "page", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId }).then((result) => result.customers),
+    // CUST-1: load the FULL customer roster (the client-side table below paginates/searches over it).
+    // Without an explicit limit the endpoint returns only the default 50, hiding the rest of the roster.
+    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((result) => result.customers),
     enabled: Boolean(companyId),
   });
   const allInvoicesQuery = useQuery({

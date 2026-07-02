@@ -10,7 +10,7 @@ const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance
 const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
 
 const listQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).default(50),
+  limit: z.coerce.number().int().min(1).max(5000).default(50), // VEND-1: allow loading the full roster (was capped at 200, hiding ~440 of 490)
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),

@@ -12,7 +12,7 @@ import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.j
 import { EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL } from "./test-seed-archive.js";
 
 const listQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).default(50),
+  limit: z.coerce.number().int().min(1).max(5000).default(50), // CUST-1: allow loading the full roster (was capped at 200, hiding ~1,159 of 1,209)
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
