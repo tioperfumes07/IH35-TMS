@@ -7,6 +7,7 @@ import {
   evaluateIntegrityRulesForTenant,
   listIntegrityAlertRules,
 } from "./integrity-alert-engine.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -79,6 +80,7 @@ async function withCompanyScope<T>(
     query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
   }) => Promise<T>
 ) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client);

@@ -12,6 +12,7 @@ import {
   resolvePmLookaheadMiles,
   shouldTriggerPmAlert,
 } from "../telematics/maintenance-predictor.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -55,6 +56,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: DbClient) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client as DbClient);

@@ -14,6 +14,7 @@ import {
   uploadTripPhotoEvidence,
   type DiffStatus,
 } from "./session.service.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 const BLOCK_ID = "GAP-50-AI-PHOTO-COMPARISON";
 
@@ -74,6 +75,7 @@ async function withCompanyScope<T>(
   operatingCompanyId: string,
   fn: (client: Parameters<typeof startPreTripSession>[0]) => Promise<T>
 ) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client);

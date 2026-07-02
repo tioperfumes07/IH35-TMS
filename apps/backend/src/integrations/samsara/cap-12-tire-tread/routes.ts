@@ -19,6 +19,7 @@ import {
   listProjectionsForUnit,
   projectReplacementDate,
 } from "./projection.service.js";
+import { assertCompanyMembership } from "../../../_helpers/company-membership-guard.js";
 
 const companyQuery = z.object({
   operating_company_id: z.string().uuid(),
@@ -49,6 +50,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: PoolClient) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client);

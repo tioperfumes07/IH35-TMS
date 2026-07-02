@@ -7,6 +7,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../../../auth/db.js";
 import { requireAuth } from "../../../auth/session-middleware.js";
 import { listCargoSensorTimelineForLoad, listOutOfRangeCargoReadings, type DbClient } from "./ingester.service.js";
+import { assertCompanyMembership } from "../../../_helpers/company-membership-guard.js";
 
 const timelineParamsSchema = z.object({
   load_uuid: z.string().uuid(),
@@ -34,6 +35,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: DbClient) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client);

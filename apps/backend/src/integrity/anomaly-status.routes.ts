@@ -8,6 +8,7 @@ import {
   ANOMALY_SUBJECT_TYPES,
   AnomalySchema,
 } from "./anomaly.shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -55,6 +56,7 @@ async function withTenantScope<T>(
   operatingCompanyId: string,
   fn: (client: Queryable) => Promise<T>
 ): Promise<T> {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     return fn(client as Queryable);

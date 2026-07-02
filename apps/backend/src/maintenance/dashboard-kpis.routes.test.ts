@@ -16,6 +16,13 @@ vi.mock("../auth/session-middleware.js", () => ({
   requireAuth: (...args: unknown[]) => mockRequireAuth(...args),
 }));
 
+// Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
+// no-op here so these unit tests exercise route logic with pre-change behavior.
+vi.mock("../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
+
 describe("maintenance dashboard kpis routes (AUDIT-FIX-9)", () => {
   let app: FastifyInstance;
 
