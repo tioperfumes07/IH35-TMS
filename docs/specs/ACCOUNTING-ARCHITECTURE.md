@@ -1,0 +1,123 @@
+# IH35-TMS — Accounting Architecture (CANONICAL, locked 2026-07-02)
+
+> **Single source of truth for how accounting works. If any older doc (esp. the master blueprint
+> §3.12 "QBO AUTO-SYNC + REPLAY") disagrees, THIS wins.** Aligned with
+> `docs/lockdown/00_LOCKED_DECISIONS.md` §8. Purpose: stop agents from rebuilding a two-way QBO sync.
+
+## The one-paragraph version
+TMS and QuickBooks Online run as **two independent systems in parallel (double books)**. **QBO is the
+system of record through 12/31/2025; TMS runs in parallel and is reconciled against it — TMS is NOT a
+mirror of QBO.** We **clone QBO once** — all master data, AR, AP, and GL — into the TMS database, and after
+that the QBO connection exists **only to reconcile and compare** (twice daily — the two Jorge-locked
+scheduled passes in `TMS-QBO-RECONCILIATION.md` §2): flag anything added, voided, or changed in either
+system. **There is NO write-back from TMS to QBO and NO two-way sync.** TMS becomes authoritative at the
+**cutover ceremony** (final clone + to-the-cent tieout + book-lock) — an event, not a date; 12/31/2025 was
+the target and has passed, so we remain parallel until the ceremony (see Cutover below).
+
+## Why (the decision)
+Owner + CPA locked this to avoid the fragility and double-entry risk of a bidirectional sync. The deeper
+purpose: **run TMS in parallel to QuickBooks as a live validation harness.** Both books register the same
+bank feeds, expenses, bills, and payments independently; the daily reconcile proves TMS booked every event
+the same way QBO did. QuickBooks stays the CPA's system of record while TMS earns trust, and the cutover
+(TMS becomes authoritative) is a deliberate event only after the reconcile shows the two books agree — not
+a silent drift.
+
+## The rules (enforcement status noted per rule — do not assume "enforced" without the citation)
+
+1. **Clone-once, then reconcile-only.**
+   - One-time full backfill: QBO **customers, vendors, invoices, payments, bills, bill-payments, and the
+     GL** → TMS tables (store-once, exact integer cents, upsert-by-QBO-id, void-never-delete).
+   - Ongoing (this is the point): after the backfill, **both systems keep running in parallel and each
+     INDEPENDENTLY registers the same day-to-day activity** — the same **bank transactions** are downloaded
+     into both (Plaid → TMS, bank feed → QBO), the same **expenses and bills** are created in both, the
+     same **payments are applied** in both. The **twice-daily reconciliation is a CORRECTNESS TEST**: it
+     confirms that the same records exist, with the same amounts/dates/application, in **both** books — and
+     flags anything that is in one but not the other, or that differs. Its purpose is to **prove TMS is
+     registering every financial event correctly** (a live QA harness against QBO as the trusted
+     reference) during the parallel run, before cutover. It is NOT a sync — nothing is copied either way at
+     this stage; each side is entered independently and only compared.
+   - Specs: `QBO-CLONE-PROGRAM.md` (master data + AR/AP, blocks MD-1…MD-RECON),
+     `TMS-QBO-RECONCILIATION.md`, and the QBO-IMPORT GL program (IMPORT-0…4v2).
+
+2. **No write-back to QBO** (the target state; enforcement is partial today — stated honestly below).
+   - **JE path — ENFORCED (merged).** `QBO_JE_PUSH_ENABLED` (default OFF, **per-entity-only**) + a
+     structural refusal of any journal entry whose `source_system != 'tms'`, on **both** push paths
+     (immediate best-effort AND the every-minute queue-drain cron) via one shared gate
+     (`apps/backend/src/accounting/qbo-je-push-gate.ts`; CI guard `verify-qbo-push-gates.mjs`). — IMPORT-P0
+     (PR #1797, merged).
+   - **Entity paths — NOT YET IN FORCE.** The six `T11.20.6.2` write-back handlers (customer / vendor /
+     account / invoice / bill / item `tms.*.push_requested` → `push.service.ts`) are **default-ON via env
+     var with NO origin guard today** (latent, not live — zero `tms.*.push_requested` rows exist yet).
+     **IMPORT-P0b** closes this: flag `QBO_ENTITY_PUSH_ENABLED` (default OFF, per-entity-only) +
+     clone-origin refusal on all six, mirroring IMPORT-P0. **Until IMPORT-P0b merges, this bullet is the
+     intended state, not the current state** — do not cite it as enforced.
+   - All **money-posting flags default OFF and are per-entity-only** (`POSTING_FLAG_KEYS`).
+
+3. **Both accounting bases.**
+   - Canonical imported ledger = **accrual** detail.
+   - **Cash-basis is copied verbatim from QBO's own cash reports** — QBO computes it, TMS never re-derives
+     cash during the QBO-SoR window. A native cash-conversion engine is a **post-cutover** block.
+
+4. **Conversion + entities.**
+   - Convert **01/01/2024** for **TRANSP** + **TRK**; opening position = **Balance Sheet as of
+     12/31/2023 → Opening Balance Equity** (OBE is a temporary clearing account, expected ≈ 0; a
+     permanent OBE balance is a defect → plan OBE→Retained-Earnings reclass).
+   - **USMCA has no QuickBooks** → **TMS-authoritative from day one** (2026); never cloned/reconciled.
+   - QBO realms: TRANSP `123145885549599`, TRK `1432746210`. Assert realm↔operating-company on the
+     **unrevoked** connection only; never cross realms; per-entity RLS on every table.
+
+5. **Factoring = secured borrowing (recourse), not a sale.** Faro today → RTS planned. Driver damage-claim
+   escrow is a **liability** (held-in-trust). See `cpa-locked-decisions-2026-07-01`.
+
+6. **Integrity invariants (every engine).** Exact cents (BigInt, never `parseFloat`); void-not-delete +
+   audit; idempotent upsert by QBO id; unmatched account = abort (no guessed mapping); unbalanced = abort;
+   tie out to the cent or fail loud; everything behind `QBO_HISTORICAL_IMPORT_ENABLED` (OFF),
+   owner-triggered, build-and-hold, prove on a Neon branch with real pulls before any merge.
+
+## What is RETIRED
+The master blueprint §3.12 "QBO AUTO-SYNC + OFFLINE QUEUE / REPLAY" (WF-031 auto-sync on writes,
+local-write-first-then-push, lockstep, replay-on-reconnect) is **superseded** and kept only for history.
+Do not rebuild a two-way sync.
+
+## Cutover — EVENT-gated, not date-gated
+Authority flips to TMS at the **cutover ceremony**, not on a calendar date: the ceremony = a final clone +
+a **to-the-cent tieout** proving both books agree + a **book-lock**. **12/31/2025 was the target date and
+has already passed — we remain in the parallel window until the ceremony completes.** No agent may treat
+the date as permission to flip a flag. At cutover: TMS becomes authoritative; period-lock + a final
+court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation window.
+
+## Locked owner decisions (2026-07-02 — resolved; reconciled with GUARD)
+1. **`factoring_advance` JE push — GATED OFF.** It composes a QBO JournalEntry from
+   `accounting.factoring_advances`; folded into the JE kill-switch (`QBO_JE_PUSH_ENABLED`, default OFF) in
+   `syncEntityToQbo`, with a static guard. The Faro advance is booked in QBO via the bank feed and
+   reconciled — never pushed. (IMPORT-P0b / PR #1802.)
+2. **Per-entity override policy — OFF for ALL entities, EVENT-gated.** Every entity's outbound push
+   (`QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`, per-entity-only in `POSTING_FLAG_KEYS`) stays OFF
+   until the **cutover ceremony** completes — NOT until a calendar date. Flipping one entity mid-window
+   silently corrupts the reconciliation baseline.
+3. **Driver→QBO vendor — no synchronous cross-system create.** `qbo_vendor_id` is nullable; hire completes
+   instantly (best-effort fix shipped); the driver's vendor is created in QBO independently and the daily
+   reconcile match links it (MD-2); settlement/1099 paths assert linkage at the moment they need it.
+4. **FIN-2 finance landing — approved** (land on Hub, unify subnav, keep Overview; additive; the FIN-1
+   status-honesty fix ships first/same PR).
+5. **Sync bookkeeping — retire the parallel counter;** the archive projection + reconciliation exceptions
+   are the only truth.
+6. **Required document types — seed FMCSA/IRS regulatory defaults, warn-first,** per-type promote-to-hard-
+   block, configurable per carrier (drivers: CDL / §391.41 medical / MVR / Clearinghouse / §391.21 app /
+   W-9; units: reg / §396.17 inspection / IFTA / Form 2290 / insurance; customers: credit-app / W-9 / MSA /
+   NOA-if-factored; vendors: W-9 / COI / agreement).
+7. **Canonical Faro vendor** = QBO-linked row `3585f27e`; merge terms from `6dd1f7f5`, repoint every FK,
+   VOID (never delete) the duplicate.
+8. **Opening semantics — BS-only + a mandatory RE-roll boundary test in IMPORT-4v2** (pull TB 12/31/2024 &
+   01/01/2025 on a Neon branch; assert the engine reproduces QBO's Retained-Earnings roll to the cent).
+
+### Reconciliation correctness (locked — RECON-01 must implement)
+- **CRITICAL:** the AM bank pass reads QBO's **real bank register** (`TransactionList`/`GeneralLedger` per
+  account), NOT the sync queue (`listQboSyncConflicts`) — reading the queue compares TMS to itself.
+- Bank match is **row-level** (date+amount+reference), not just count+sum — a missing + a wrong txn of the
+  same amount must not net to invisible.
+
+---
+*Cross-refs: `docs/lockdown/00_LOCKED_DECISIONS.md` §8 · `docs/specs/TMS-QBO-RECONCILIATION.md` ·
+`docs/specs/QBO-CLONE-PROGRAM.md` · QBO-IMPORT program blocks · auto-memory
+`qbo-import-design-corrections`, `cpa-locked-decisions-2026-07-01`, `driver-escrow-is-liability`.*

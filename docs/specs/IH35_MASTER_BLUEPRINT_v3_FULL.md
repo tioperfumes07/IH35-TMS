@@ -770,6 +770,14 @@ No other changes to original Batch A. All other sections, WF mappings, posting r
 
 ## 3.12 — QBO AUTO-SYNC + OFFLINE QUEUE / REPLAY
 
+> ⚠️ **SUPERSEDED (2026-07-02) — DO NOT REBUILD THIS.** The two-way "QBO auto-sync + push-on-write +
+> replay-on-reconnect + lockstep" model described in this §3.12 is **retired**. The current, locked
+> architecture is **parallel double-books with NO write-back to QBO**: clone QBO once into the TMS DB,
+> then the QBO connection exists **only to reconcile/compare** (twice daily). See
+> **`docs/lockdown/00_LOCKED_DECISIONS.md` §8** (single source of truth) +
+> `docs/specs/TMS-QBO-RECONCILIATION.md` + `docs/specs/QBO-CLONE-PROGRAM.md`. TMS→QBO JE push is
+> kill-switched OFF (IMPORT-P0). This section is kept for historical reference only (append-not-erase).
+
 **Maps to:** WF-031 (QBO Auto Sync on Accounting Writes), WF-032 (Offline Accounting Continuity), WF-022 (Integration Outage Handling), WF-033 (Driver Vendor and Unit Class Mapping Enforcement), WF-045 (Bill Payment Detail Visibility), WF-046 (Transfer and Credit Card Payment Support)
 
 **Source basis:** Q1.1 (sync rules), Q18 (outage handling), Q1.7 (driver vendor mapping), §1.9 (banking), §1.12 (catalog mirroring), latest user requirements (auto-sync + offline continuity)

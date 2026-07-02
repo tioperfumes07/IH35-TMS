@@ -1,5 +1,8 @@
 # QBO-Parity Spec Index
 
+> **TMS↔QBO data-flow is governed by `docs/specs/ACCOUNTING-ARCHITECTURE.md`** (+ `docs/lockdown/00_LOCKED_DECISIONS.md` §8):
+> parallel double-books, clone-once, reconcile-only, NO write-back. That doc wins on any sync/mirror question.
+
 Design law: **[QBO_PARITY_UI_SYSTEM.md](./QBO_PARITY_UI_SYSTEM.md)** (PART A shared UI system + PART B captured screens).
 
 ## The 9 captured screens

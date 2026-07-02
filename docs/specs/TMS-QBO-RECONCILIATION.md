@@ -1,5 +1,8 @@
 # TMS ↔ QBO Reconciliation Module — Architecture Spec (RECON-00)
 
+> **Governed by `docs/specs/ACCOUNTING-ARCHITECTURE.md`** (and `docs/lockdown/00_LOCKED_DECISIONS.md` §8).
+> For any TMS↔QBO data-flow question (parallel books, no write-back, reconcile-only), that doc wins.
+
 **Status:** DESIGN LOCK (docs-only). No application code, no migration, no flag change ships in RECON-00.
 **Block family:** RECON-00 (this doc, done) → RECON-01 (schema + jobs + engine, Tier-2 gated) → RECON-02 (UI, Tier-3).
 **Book of record:** QuickBooks Online (QBO) for **TRANSP** (`operating_company_id 91e0bf0a-133f-4ce8-a734-2586cfa66d96`).
@@ -39,6 +42,20 @@ current behavior* (behavior-neutral merge), and Jorge flips it OFF when RECON go
 RECON's PM categorization-diff must read QBO's **actual** GL/bank transactions via the FIN-23 read service
 (`integrations/qbo/qbo-reconcile-read.service.ts`), **never** "what TMS pushed" (the `qbo.sync_*` queue) —
 the queue is TMS's own record and would mask exactly the divergences RECON exists to catch.
+
+### RECON-01 BUILD CORRECTIONS (locked 2026-07-02 — MUST be in the build)
+The daily reconcile is a **correctness test that both books independently registered the same events**
+(bank feeds, expenses, bills, payments). Two corrections to the AM bank pass below are mandatory:
+
+- **R2 (CRITICAL) — read QBO's REAL bank register.** The AM pass must compare against QBO's actual account
+  register (`TransactionList` / `GeneralLedger` report **per bank account**), **NOT** `listQboReconAlerts`
+  / `listQboSyncConflicts` (sync-era leftovers). Reading the sync queue compares TMS to itself and defeats
+  the entire purpose.
+- **R1 — bank match must be ROW-LEVEL, not count+sum.** Add a per-transaction match sub-pass (match by
+  **date + amount + reference**); every unmatched row on either side is its own exception. Count+sum alone
+  is blind to a missing $500 debit paired with a different wrong $500 debit (same count, same sum).
+- Sequencing: the document-level "same bills/payments created in both" test is **MD-RECON** (last clone
+  block) — it switches on after MD-1…5; until then the daily reconcile covers bank + categorization only.
 
 ---
 
