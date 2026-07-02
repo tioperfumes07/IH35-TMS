@@ -14,19 +14,27 @@ system. **There is NO write-back from TMS to QBO and NO two-way sync.** After th
 becomes authoritative.
 
 ## Why (the decision)
-Owner + CPA locked this to avoid the fragility and double-entry risk of a bidirectional sync. Running the
-two books in parallel and reconciling is how a clean QBO→new-system conversion is actually done. It also
-lets QuickBooks stay the CPA's system of record while the reconciliation is being proven, and it makes the
-cutover a deliberate event, not a silent drift.
+Owner + CPA locked this to avoid the fragility and double-entry risk of a bidirectional sync. The deeper
+purpose: **run TMS in parallel to QuickBooks as a live validation harness.** Both books register the same
+bank feeds, expenses, bills, and payments independently; the daily reconcile proves TMS booked every event
+the same way QBO did. QuickBooks stays the CPA's system of record while TMS earns trust, and the cutover
+(TMS becomes authoritative) is a deliberate event only after the reconcile shows the two books agree — not
+a silent drift.
 
 ## The rules (enforcement status noted per rule — do not assume "enforced" without the citation)
 
 1. **Clone-once, then reconcile-only.**
    - One-time full backfill: QBO **customers, vendors, invoices, payments, bills, bill-payments, and the
      GL** → TMS tables (store-once, exact integer cents, upsert-by-QBO-id, void-never-delete).
-   - Ongoing: a **twice-daily reconciliation** compares cloned vs live QBO and flags divergences
-     (present-in-one-only = added/deleted; field diffs = amount/date/status). That is the ONLY thing the
-     live connection does after backfill.
+   - Ongoing (this is the point): after the backfill, **both systems keep running in parallel and each
+     INDEPENDENTLY registers the same day-to-day activity** — the same **bank transactions** are downloaded
+     into both (Plaid → TMS, bank feed → QBO), the same **expenses and bills** are created in both, the
+     same **payments are applied** in both. The **twice-daily reconciliation is a CORRECTNESS TEST**: it
+     confirms that the same records exist, with the same amounts/dates/application, in **both** books — and
+     flags anything that is in one but not the other, or that differs. Its purpose is to **prove TMS is
+     registering every financial event correctly** (a live QA harness against QBO as the trusted
+     reference) during the parallel run, before cutover. It is NOT a sync — nothing is copied either way at
+     this stage; each side is entered independently and only compared.
    - Specs: `QBO-CLONE-PROGRAM.md` (master data + AR/AP, blocks MD-1…MD-RECON),
      `TMS-QBO-RECONCILIATION.md`, and the QBO-IMPORT GL program (IMPORT-0…4v2).
 
