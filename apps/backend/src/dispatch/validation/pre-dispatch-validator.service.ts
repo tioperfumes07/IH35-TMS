@@ -73,10 +73,12 @@ async function checkDriverCdl(
   const items: ValidationItem[] = [];
 
   if (row.cdl_expires_at === null) {
+    // Safety hard-stop: a CDL is a DOT requirement to operate a CMV. No expiry on
+    // file = unverifiable qualification → BLOCK (was previously only a warning).
     items.push({
       rule_id: "WF-CDL-MISSING",
-      severity: "warn",
-      message: `${driverName}: No CDL expiry date on file.`,
+      severity: "block",
+      message: `${driverName}: No CDL expiry date on file — CDL is a DOT requirement for dispatch.`,
       evidence: { driver_id: driverUuid },
     });
     return items;
@@ -140,9 +142,24 @@ async function checkDriverMedicalCard(
   );
 
   const row = res.rows[0];
-  if (!row || row.expiry_date === null) return [];
+  if (!row) return [];
 
   const driverName = row.full_name ?? [row.first_name, row.last_name].filter(Boolean).join(" ") ?? "Driver";
+
+  if (row.expiry_date === null) {
+    // Safety hard-stop: no DOT medical card on file (neither a safety.medical_cards
+    // row nor mdata.drivers.dot_medical_expires_at) = unverifiable medical
+    // qualification → BLOCK (was previously silently dropped as []).
+    return [
+      {
+        rule_id: "WF-MED-CARD-MISSING",
+        severity: "block",
+        message: `${driverName}: No DOT medical card on file — required for dispatch.`,
+        evidence: { driver_id: driverUuid },
+      },
+    ];
+  }
+
   const days = Number(row.days_until_expiry ?? 0);
   const items: ValidationItem[] = [];
 
@@ -179,7 +196,7 @@ async function checkDriverActive(
     `
       SELECT
         deactivated_at::text,
-        full_name,
+        CONCAT_WS(' ', first_name, last_name) AS full_name,
         first_name,
         last_name
       FROM mdata.drivers
@@ -371,7 +388,7 @@ async function checkFmcsaCache(
         mc_number,
         dot_number,
         safer_verified_at::text,
-        display_name AS customer_name
+        customer_name
       FROM mdata.customers
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -427,6 +444,42 @@ async function checkFmcsaCache(
   return [];
 }
 
+type NamedCheck = {
+  name: string;
+  run: (client: DbClient) => Promise<ValidationItem[]>;
+};
+
+/**
+ * Run ONE check on its OWN pooled connection + transaction. Previously all checks
+ * shared a single client/transaction: a single query failure (e.g. a phantom column,
+ * an RLS 42501, or a 25P02 abort) could poison the whole transaction, and because the
+ * caller only read `status === "fulfilled"` results, a thrown check was silently
+ * dropped and the gate reported `can_dispatch: true`. Isolating each check on its own
+ * connection means one query's failure can never abort a sibling's transaction, and a
+ * rejection is surfaced (fail-closed) by the caller rather than swallowed.
+ */
+async function runIsolatedCheck(
+  requestingUserUuid: string,
+  fn: (client: DbClient) => Promise<ValidationItem[]>
+): Promise<ValidationItem[]> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `SELECT set_config('app.current_user_id', $1::text, true)`,
+      [requestingUserUuid]
+    );
+    const items = await fn(client);
+    await client.query("COMMIT");
+    return items;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function validatePreDispatch(
   input: PreDispatchValidationInput
 ): Promise<PreDispatchValidationResult> {
@@ -434,54 +487,49 @@ export async function validatePreDispatch(
   const warnings: ValidationItem[] = [];
   const info: ValidationItem[] = [];
 
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    await client.query(
-      `SELECT set_config('app.current_user_id', $1::text, true)`,
-      [input.requesting_user_uuid]
-    );
+  const checks: NamedCheck[] = [];
+  if (input.driver_uuid) {
+    const driverUuid = input.driver_uuid;
+    checks.push({ name: "driver_active", run: (c) => checkDriverActive(c, driverUuid, input.operating_company_id) });
+    checks.push({ name: "driver_cdl", run: (c) => checkDriverCdl(c, driverUuid, input.operating_company_id) });
+    checks.push({ name: "driver_medical_card", run: (c) => checkDriverMedicalCard(c, driverUuid, input.operating_company_id) });
+    checks.push({ name: "driver_debt", run: (c) => checkDriverDebt(c, driverUuid, input.operating_company_id) });
+    checks.push({ name: "driver_hos", run: (c) => checkDriverHos(c, driverUuid, input.operating_company_id) });
+  }
+  if (input.unit_uuid) {
+    const unitUuid = input.unit_uuid;
+    checks.push({ name: "unit_oos", run: (c) => checkUnitOos(c, unitUuid, input.operating_company_id) });
+  }
+  if (input.customer_id) {
+    const customerId = input.customer_id;
+    checks.push({ name: "fmcsa_cache", run: (c) => checkFmcsaCache(c, customerId, input.operating_company_id) });
+  }
 
-    const checkResults = await Promise.allSettled([
-      input.driver_uuid
-        ? checkDriverActive(client, input.driver_uuid, input.operating_company_id)
-        : Promise.resolve([]),
-      input.driver_uuid
-        ? checkDriverCdl(client, input.driver_uuid, input.operating_company_id)
-        : Promise.resolve([]),
-      input.driver_uuid
-        ? checkDriverMedicalCard(client, input.driver_uuid, input.operating_company_id)
-        : Promise.resolve([]),
-      input.driver_uuid
-        ? checkDriverDebt(client, input.driver_uuid, input.operating_company_id)
-        : Promise.resolve([]),
-      input.driver_uuid
-        ? checkDriverHos(client, input.driver_uuid, input.operating_company_id)
-        : Promise.resolve([]),
-      input.unit_uuid
-        ? checkUnitOos(client, input.unit_uuid, input.operating_company_id)
-        : Promise.resolve([]),
-      input.customer_id
-        ? checkFmcsaCache(client, input.customer_id, input.operating_company_id)
-        : Promise.resolve([]),
-    ]);
+  const results = await Promise.allSettled(
+    checks.map((chk) => runIsolatedCheck(input.requesting_user_uuid, chk.run))
+  );
 
-    await client.query("COMMIT");
-
-    for (const result of checkResults) {
-      if (result.status === "fulfilled") {
-        for (const item of result.value) {
-          if (item.severity === "block") blockers.push(item);
-          else if (item.severity === "warn") warnings.push(item);
-          else info.push(item);
-        }
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const chk = checks[i];
+    if (result.status === "fulfilled") {
+      for (const item of result.value) {
+        if (item.severity === "block") blockers.push(item);
+        else if (item.severity === "warn") warnings.push(item);
+        else info.push(item);
       }
+    } else {
+      // FAIL-CLOSED: a check that THREW must NEVER be silently dropped. An
+      // unverifiable safety check becomes a synthetic hard blocker so the gate
+      // errs toward NOT dispatching instead of reporting can_dispatch: true.
+      const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
+      blockers.push({
+        rule_id: "WF-PREDISPATCH-CHECK-FAILED",
+        severity: "block",
+        message: `Pre-dispatch safety check "${chk.name}" could not be verified: ${reason}. Dispatch blocked (fail-closed).`,
+        evidence: { check: chk.name, error: reason },
+      });
     }
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-    throw err;
-  } finally {
-    client.release();
   }
 
   return {

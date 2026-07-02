@@ -339,6 +339,9 @@ jobs:
       - name: verify:book-load-accessorial
         run: npm run verify:book-load-accessorial
 
+      - name: verify:book-load-driver-qualification-gate
+        run: npm run verify:book-load-driver-qualification-gate
+
       - name: verify:multi-stop-extra-rates
         run: npm run verify:multi-stop-extra-rates
 
