@@ -370,6 +370,7 @@
     "verify:maintenance-routes-bootstrapped": "node scripts/verify-maintenance-routes-bootstrapped.mjs",
     "verify:maintenance-tab-coverage": "node scripts/verify-maintenance-tab-coverage.mjs",
     "verify:section7-palette-maintenance": "node scripts/verify-section7-palette-maintenance.mjs",
+    "verify:section7-palette-nonfinancial": "node scripts/verify-section7-palette-nonfinancial.mjs",
     "verify:load-advance-persistence": "node scripts/verify-load-advance-persistence.mjs",
     "verify:maintenance-record-cells-link": "node scripts/verify-maintenance-record-cells-link.mjs",
     "verify:maint-jump-to-tab-removed": "node scripts/verify-maint-jump-to-tab-removed.mjs",
