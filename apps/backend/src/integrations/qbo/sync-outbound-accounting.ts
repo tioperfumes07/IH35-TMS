@@ -9,6 +9,7 @@ import {
 } from "./sync-outbound-accounting.entities.js";
 import type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboResult } from "./sync-outbound-accounting.types.js";
 import { evaluateJeQboPushGate, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "../../accounting/qbo-je-push-gate.js";
+import { evaluateEntityPushGate } from "../../qbo/qbo-entity-push-gate.js";
 
 export type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboResult } from "./sync-outbound-accounting.types.js";
 
@@ -257,10 +258,9 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
   const entityType = opts.entity_type as AccountingOutboundEntityType;
   const triplet = { queue_row_id: opts.queue_row_id, entity_type: opts.entity_type, entity_id: opts.entity_id };
 
-  // ── IMPORT-P0 — the JE→QBO push kill-switch guards THIS queue-drain path too (the primary async push,
+  // ── IMPORT-P0 — the JE→QBO push kill-switch guards THIS queue-drain path (the primary async push,
   // drained by a cron every minute). Consult the SHARED gate BEFORE fetching a token or building/POSTing
-  // anything, so a disabled/refused entity makes ZERO QuickBooks calls. Only journal entries are gated
-  // here; other accounting entities (invoice/bill/…) are governed by their own sync policies. ──────────
+  // anything, so a disabled/refused entity makes ZERO QuickBooks calls. ──────────
   if (entityType === "journal_entry") {
     const gate = await withLuciaBypass(async (c) => {
       await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
@@ -268,6 +268,28 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
     });
     if (gate.decision === "import_source") {
       await finalizeJeGateRefusal(opts, gate.sourceSystem);
+      return { outcome: "failed_dead_letter" };
+    }
+    if (gate.decision === "flag_off") {
+      await finalizeJeGateFlagOff(opts);
+      return { outcome: "synced" };
+    }
+  }
+
+  // ── IMPORT-P0b — the ENTITY push kill-switch guards this same queue-drain path for invoice + bill (this
+  // is a SEPARATE QBO POST from push.service.ts's deliverQbo*Push, so it needs its own gate). Same
+  // terminal semantics as the JE gate. ──────────
+  if (entityType === "invoice" || entityType === "bill") {
+    const gate = await withLuciaBypass(async (c) => {
+      await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+      return evaluateEntityPushGate(c, {
+        operatingCompanyId: opts.operating_company_id,
+        entityKind: entityType,
+        entityId: opts.entity_id,
+      });
+    });
+    if (gate.decision === "import_source") {
+      await finalizeJeGateRefusal(opts, gate.origin);
       return { outcome: "failed_dead_letter" };
     }
     if (gate.decision === "flag_off") {
