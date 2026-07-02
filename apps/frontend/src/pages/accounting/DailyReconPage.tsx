@@ -20,14 +20,14 @@ const ENTITY_TYPE_OPTIONS = [
 
 const MATCH_STATUS_OPTIONS: Array<{ value: DailyReconMatchStatus | "all"; label: string }> = [
   { value: "all", label: "All statuses" },
-  { value: "matched", label: "Matched ✓" },
+  { value: "matched", label: "Matched" },
   { value: "missing_in_qbo", label: "Missing in QBO" },
   { value: "amount_mismatch", label: "Amount Mismatch" },
   { value: "missing_in_tms", label: "Missing in TMS" },
 ];
 
 const STATUS_BADGES: Record<DailyReconMatchStatus, { label: string; cls: string }> = {
-  matched:         { label: "Matched ✓",         cls: "bg-emerald-100 text-emerald-800" },
+  matched:         { label: "Matched",           cls: "bg-emerald-100 text-emerald-800" },
   missing_in_qbo:  { label: "Missing in QBO",    cls: "bg-amber-100 text-amber-800" },
   amount_mismatch: { label: "Amount Mismatch",   cls: "bg-red-100 text-red-800" },
   missing_in_tms:  { label: "Missing in TMS",    cls: "bg-orange-100 text-orange-800" },
@@ -216,7 +216,7 @@ export function DailyReconPage() {
                   }`}>
                     <span className="font-semibold text-sm text-gray-900">{day.date}</span>
                     {day.all_reconciled ? (
-                      <span className="text-xs font-semibold text-emerald-700">All reconciled ✓</span>
+                      <span className="text-xs font-semibold text-emerald-700">All reconciled</span>
                     ) : (
                       <span className="text-xs text-amber-700">
                         {day.rows.filter((r) => r.match_status !== "matched").length} item(s) need attention

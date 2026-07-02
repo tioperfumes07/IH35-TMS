@@ -128,7 +128,7 @@ export function DetailTypesListPage() {
                 </td>
                 <td className="px-3 py-2 text-slate-700">{row.sort_order}</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${row.is_active ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
+                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${row.is_active ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-600"}`}>
                     {row.is_active ? "Active" : "Inactive"}
                   </span>
                 </td>
@@ -136,7 +136,15 @@ export function DetailTypesListPage() {
             ))}
           </tbody>
         </table>
-        {listQuery.isLoading ? <div className="px-3 py-6 text-sm text-gray-500">Loading detail types…</div> : rows.length === 0 ? <div className="px-3 py-6 text-sm text-gray-500">No detail types found.</div> : null}
+        {!companyId ? (
+          <div className="px-3 py-6 text-sm text-slate-600">Select a company to view detail types.</div>
+        ) : listQuery.isLoading ? (
+          <div className="px-3 py-6 text-sm text-gray-500">Loading detail types…</div>
+        ) : listQuery.isError ? (
+          <div className="px-3 py-6 text-sm text-red-600">Failed to load detail types.</div>
+        ) : rows.length === 0 ? (
+          <div className="px-3 py-6 text-sm text-gray-500">No detail types found.</div>
+        ) : null}
       </div>
 
       <DetailTypeModal

@@ -140,7 +140,7 @@ export function QBOBulkLinkPage() {
                 <table className="min-w-full text-left text-xs">
                   <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                     <tr>
-                      <th className="px-2 py-2">✓</th>
+                      <th className="px-2 py-2"><span className="sr-only">Select</span></th>
                       <th className="px-2 py-2">Entity</th>
                       <th className="px-2 py-2">Kind</th>
                       <th className="px-2 py-2">QBO vendor</th>
