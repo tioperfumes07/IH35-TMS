@@ -90,8 +90,8 @@ for (const [panelPath, label] of [
   if (!src.includes("statusQuery.isError") || !src.includes("statusQuery.refetch()")) {
     fail(`${label} must surface fetch errors with a Retry action`);
   }
-  if (!src.includes("No sync yet")) {
-    fail(`${label} must handle empty sync state with a helpful message`);
+  if (!src.includes("Not cloned yet")) {
+    fail(`${label} must handle the empty (not-yet-cloned) state with a helpful message`);
   }
 }
 
