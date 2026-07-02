@@ -58,7 +58,10 @@ function canManage(role: string) {
 
 export async function registerRequiredDocumentTypesRoutes(app: FastifyInstance) {
   // List the active required-document types for a company (optionally filtered by entity kind).
-  app.get("/api/v1/compliance/required-document-types", async (req, reply) => {
+  app.get(
+    "/api/v1/compliance/required-document-types",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = companyQuery.safeParse(req.query ?? {});
@@ -84,7 +87,10 @@ export async function registerRequiredDocumentTypesRoutes(app: FastifyInstance) 
   });
 
   // Add a carrier-specific required-document type (is_seed=false).
-  app.post("/api/v1/compliance/required-document-types", async (req, reply) => {
+  app.post(
+    "/api/v1/compliance/required-document-types",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user || !canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = createSchema.safeParse(req.body ?? {});
@@ -129,7 +135,10 @@ export async function registerRequiredDocumentTypesRoutes(app: FastifyInstance) 
 
   // Update a required-document type: enforcement (warn⇄hard_block), label/authority/expiry/order, or
   // deactivate (is_active=false — void-not-delete). entity_kind/code are immutable (the natural key).
-  app.patch("/api/v1/compliance/required-document-types/:id", async (req, reply) => {
+  app.patch(
+    "/api/v1/compliance/required-document-types/:id",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user || !canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
     const params = idParams.safeParse(req.params ?? {});
