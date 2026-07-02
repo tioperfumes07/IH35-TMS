@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
 import {
   EXCLUDE_ARCHIVED_DRIVERS_SQL,
@@ -22,6 +23,7 @@ type Queryable = {
 };
 
 async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: Queryable) => Promise<T>) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client as Queryable);

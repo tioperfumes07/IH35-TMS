@@ -7,6 +7,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 type Queryable = {
@@ -45,6 +46,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const f = parsed.data;
 
+    await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
@@ -85,6 +87,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const f = parsed.data;
 
+    await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
@@ -128,6 +131,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const f = parsed.data;
 
+    await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
@@ -167,6 +171,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const f = parsed.data;
 
+    await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
@@ -207,6 +212,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const f = parsed.data;
 
+    await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
 
@@ -259,6 +265,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const { operating_company_id } = z.object({ operating_company_id: z.string().uuid() }).parse(request.query);
 
+    await assertCompanyMembership(user.uuid, operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
 

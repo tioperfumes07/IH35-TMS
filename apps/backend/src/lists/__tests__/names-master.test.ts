@@ -6,6 +6,9 @@ const companyId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 const queryMock = vi.fn(async (sql: string) => {
   if (sql.includes("SET LOCAL")) return { rows: [] };
+  // Cross-tenant guard: assertCompanyMembership() SELECTs org.user_company_access — simulate a
+  // seeded membership row so the legitimate same-company call passes.
+  if (sql.includes("user_company_access")) return { rows: [{ ok: 1 }], rowCount: 1 };
   if (sql.includes("count(*)")) {
     if (sql.includes("customer_contacts")) return { rows: [{ count: "2" }] };
     if (sql.includes("mdata.qbo_customers")) return { rows: [{ count: "0" }] };

@@ -999,6 +999,9 @@ jobs:
       - name: verify:posting-column-contract (journal_entry_postings write contract)
         run: npm run verify:posting-column-contract
 
+      - name: verify:company-membership-assert (cross-tenant authz — tenant-scope wrappers must assert membership)
+        run: npm run verify:company-membership-assert
+
       - name: verify:users-add-user-submits
         run: npm run verify:users-add-user-submits
 

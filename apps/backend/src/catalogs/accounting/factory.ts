@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { isCatalogWriteRole } from "../../auth/role-helpers.js";
 import { companyQuerySchema, currentAuthUser, idParamSchema, listQuerySchema, validationError } from "./shared.js";
 
@@ -80,6 +81,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
     const payload = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && q.operating_company_id) {
+        await assertCompanyMembership(authUser.uuid, q.operating_company_id);
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.operating_company_id]);
       }
       const values: unknown[] = [q.is_active];
@@ -143,6 +145,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && oc) {
+        await assertCompanyMembership(authUser.uuid, oc);
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
       }
       const values: unknown[] = [parsedParams.data.id];
@@ -209,6 +212,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && oc) {
+        await assertCompanyMembership(authUser.uuid, oc);
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
       }
       if (config.validate && oc) {
@@ -278,6 +282,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && oc) {
+        await assertCompanyMembership(authUser.uuid, oc);
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
       }
       if (config.validate && oc && Object.keys(mappedExtra).length > 0) {
@@ -315,6 +320,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && oc) {
+        await assertCompanyMembership(authUser.uuid, oc);
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
       }
       const values: unknown[] = [parsedParams.data.id];

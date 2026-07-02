@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { buildIftaCsvContent, buildIftaCsvObjectKey } from "./ifta-csv-generator.js";
 import { aggregateStateGallons } from "./ifta-state-gallons-aggregator.js";
 import { aggregateStateMiles, quarterWindow } from "./ifta-state-miles-aggregator.js";
@@ -23,6 +24,7 @@ const idParamsSchema = z.object({
 });
 
 async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: any) => Promise<T>) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client);
