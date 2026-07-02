@@ -894,7 +894,11 @@ export function listCustomers(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
-  return apiRequest<{ customers: Customer[] }>(`/api/v1/mdata/customers${qs ? `?${qs}` : ""}`);
+  // CUST-1: expose the server's `total` (real count for the same filters) so the UI can page the FULL
+  // roster, not just the first default-50 page. `total` falls back to the returned page length.
+  return apiRequest<{ customers: Customer[]; total?: number }>(`/api/v1/mdata/customers${qs ? `?${qs}` : ""}`).then(
+    (payload) => ({ customers: payload.customers, total: payload.total ?? payload.customers.length })
+  );
 }
 
 export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId?: string | null) {
@@ -1158,7 +1162,10 @@ export function listVendors(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
-  return apiRequest<{ vendors: VendorOption[] }>(`/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`);
+  // VEND-1: expose the server's `total` so the UI can page the FULL roster, not just the first 50.
+  return apiRequest<{ vendors: VendorOption[]; total?: number }>(`/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`).then(
+    (payload) => ({ vendors: payload.vendors, total: payload.total ?? payload.vendors.length })
+  );
 }
 
 export function getVendor(id: string, operatingCompanyId?: string | null) {

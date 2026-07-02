@@ -174,7 +174,9 @@ export function CustomersPage() {
 
   const customersQuery = useQuery({
     queryKey: ["customers", "page", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId }).then((result) => result.customers),
+    // CUST-1: load the FULL customer roster (the client-side table below paginates/searches over it).
+    // Without an explicit limit the endpoint returns only the default 50, hiding the rest of the roster.
+    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((result) => result.customers),
     enabled: Boolean(companyId),
   });
   const allInvoicesQuery = useQuery({
