@@ -4,6 +4,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import {
   FACTORING_GL_POSTING_FLAG,
   postFactoringAdvanceEvent,
+  postFactoringChargebackEvent,
 } from "../accounting/factoring-posting/poster.service.js";
 
 export const FARO_CSV_REQUIRED_HEADERS = [
@@ -74,12 +75,33 @@ function parseCsvRow(line: string): string[] {
   return cells;
 }
 
-function parseMoneyToCents(raw: string): number {
-  const cleaned = raw.replace(/[$,\s]/g, "");
-  if (!cleaned) return 0;
+// Parse a FARO money cell to integer cents.
+//   Behavior (documented — a money importer must not silently corrupt stored reserve/gross):
+//   * Empty / whitespace-only cell           => 0        (an absent value is legitimately zero).
+//   * Accounting-format negative "(3,000.00)" => -300000  (parenthesis wrapper = negative; chargebacks
+//                                                          and reversals arrive this way).
+//   * Leading-minus negative "-50.00"         => -5000.
+//   * Normal positive "$1,234.56"             => 123456.
+//   * Non-empty but UNPARSEABLE ("abc", "1.2.3", "()", "$") => THROW FaroCsvImportError (fail-loud).
+//     We deliberately do NOT fall back to 0 here: a garbage money cell silently becoming $0 is exactly
+//     the corruption this importer must prevent — the whole import must reject instead.
+export function parseMoneyToCents(raw: string): number {
+  const trimmed = raw.trim();
+  if (!trimmed) return 0;
+  // Accounting-format negative: a single (...) wrapper around the number.
+  const parenMatch = /^\((.*)\)$/.exec(trimmed);
+  const isNegativeParen = parenMatch !== null;
+  const body = isNegativeParen ? (parenMatch[1] ?? "") : trimmed;
+  const cleaned = body.replace(/[$,\s]/g, "");
+  if (!cleaned) {
+    throw new FaroCsvImportError("invalid_csv", `Unparseable money value: "${raw}"`);
+  }
   const value = Number(cleaned);
-  if (!Number.isFinite(value)) return 0;
-  return Math.round(value * 100);
+  if (!Number.isFinite(value)) {
+    throw new FaroCsvImportError("invalid_csv", `Unparseable money value: "${raw}"`);
+  }
+  const cents = Math.round(value * 100);
+  return isNegativeParen ? -cents : cents;
 }
 
 function parseDueDate(raw: string | undefined): string | undefined {
@@ -228,6 +250,16 @@ export type FaroFundingVariance = {
   actual_reserve_cents: number;
   expected_fee_cents: number;
   actual_fee_cents: number;
+  // Chargebacks have no "expected" counterpart on the advance row — any recourse chargeback present in the
+  // funding report is itself a reconciliation signal, surfaced here and routed to the chargeback poster.
+  actual_chargeback_cents: number;
+  // Completeness: an advance (batch) can span multiple invoices that arrive across multiple funding files.
+  // The advance row's expected_* are BATCH totals, so comparing them to a partial set of present CSV lines
+  // fabricates a phantom variance and would fund the wrong (too-small) liability. We only compare
+  // expected-vs-actual (and only auto-post funding) once every invoice in the batch is present.
+  matched_invoice_count: number;
+  total_invoice_count: number;
+  is_complete: boolean;
   has_variance: boolean;
 };
 
@@ -240,6 +272,10 @@ type AdvanceActuals = {
   actual_gross_cents: number;
   actual_reserve_cents: number;
   actual_fee_cents: number;
+  actual_chargeback_cents: number;
+  total_invoice_count: number;
+  // Distinct invoice numbers from the CSV that resolved to this advance (drives completeness).
+  matched_invoice_numbers: Set<string>;
 };
 
 async function aggregateFaroActualsByAdvance(
@@ -255,6 +291,7 @@ async function aggregateFaroActualsByAdvance(
       invoice_total_cents: number | null;
       reserve_amount_cents: number | null;
       factor_fee_cents: number | null;
+      total_invoice_count: number | null;
     }>(
       `
         SELECT
@@ -262,7 +299,14 @@ async function aggregateFaroActualsByAdvance(
           fa.display_id          AS display_id,
           fa.invoice_total_cents::int AS invoice_total_cents,
           fa.reserve_amount_cents::int AS reserve_amount_cents,
-          fa.factor_fee_cents::int     AS factor_fee_cents
+          fa.factor_fee_cents::int     AS factor_fee_cents,
+          (
+            SELECT COUNT(*)::int
+            FROM accounting.invoices ii
+            WHERE ii.factoring_advance_id = fa.id
+              AND ii.operating_company_id = $1::uuid
+              AND ii.voided_at IS NULL
+          ) AS total_invoice_count
         FROM accounting.invoices i
         JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
         WHERE i.operating_company_id = $1::uuid
@@ -283,20 +327,37 @@ async function aggregateFaroActualsByAdvance(
       actual_gross_cents: 0,
       actual_reserve_cents: 0,
       actual_fee_cents: 0,
+      actual_chargeback_cents: 0,
+      total_invoice_count: Number(row.total_invoice_count ?? 0),
+      matched_invoice_numbers: new Set<string>(),
     };
     entry.actual_gross_cents += Number(line.gross_amount_cents ?? 0);
     entry.actual_reserve_cents += Number(line.reserve_amount_cents ?? 0);
     entry.actual_fee_cents += Number(line.fee_amount_cents ?? 0);
+    entry.actual_chargeback_cents += Number(line.chargeback_amount_cents ?? 0);
+    entry.matched_invoice_numbers.add(line.invoice_number);
     byAdvance.set(key, entry);
   }
   return Array.from(byAdvance.values());
 }
 
+// Completeness: every non-voided invoice in the advance (batch) must be present among the CSV lines that
+// resolved to it. `>=` is defensive against a duplicate/voided edge — never blocks a genuinely-complete batch.
+function isAdvanceComplete(a: AdvanceActuals): boolean {
+  return a.total_invoice_count > 0 && a.matched_invoice_numbers.size >= a.total_invoice_count;
+}
+
 function toVariance(a: AdvanceActuals): FaroFundingVariance {
-  const has_variance =
-    a.actual_gross_cents !== a.expected_invoice_total_cents ||
-    a.actual_reserve_cents !== a.expected_reserve_cents ||
-    a.actual_fee_cents !== a.expected_fee_cents;
+  const matched_invoice_count = a.matched_invoice_numbers.size;
+  const is_complete = isAdvanceComplete(a);
+  // Only compare batch expected vs summed actual once the whole batch is present — otherwise a partial
+  // arrival always mismatches the batch total (phantom variance). Chargebacks are ALWAYS surfaced: any
+  // recourse chargeback in the funding report is a discrepancy regardless of completeness.
+  const amountsMatch =
+    a.actual_gross_cents === a.expected_invoice_total_cents &&
+    a.actual_reserve_cents === a.expected_reserve_cents &&
+    a.actual_fee_cents === a.expected_fee_cents;
+  const has_variance = a.actual_chargeback_cents !== 0 || (is_complete && !amountsMatch);
   return {
     factoring_advance_id: a.factoring_advance_id,
     display_id: a.display_id,
@@ -306,6 +367,10 @@ function toVariance(a: AdvanceActuals): FaroFundingVariance {
     actual_reserve_cents: a.actual_reserve_cents,
     expected_fee_cents: a.expected_fee_cents,
     actual_fee_cents: a.actual_fee_cents,
+    actual_chargeback_cents: a.actual_chargeback_cents,
+    matched_invoice_count,
+    total_invoice_count: a.total_invoice_count,
+    is_complete,
     has_variance,
   };
 }
@@ -345,29 +410,57 @@ export async function commitFaroCsvImport(input: {
 
   const variances = advanceActuals.map(toVariance);
 
-  // FUNDING post trigger — only when the per-entity flag is ON (default OFF => inert). The poster itself
-  // re-checks the flag and is idempotent, so this is safe even if the flag flips between the read and the call.
+  // FUNDING + CHARGEBACK post triggers — only when the per-entity flag is ON (default OFF => inert). The
+  // poster itself re-checks the flag and is idempotent, so this is safe even if the flag flips between the
+  // read and the call. The DATA aggregation/variance above runs regardless of the flag (correct either way).
   const funding_posts: Array<{ factoring_advance_id: string; posted: boolean; reason?: string; journal_entry_id?: string }> = [];
+  const chargeback_posts: Array<{ factoring_advance_id: string; posted: boolean; reason?: string; journal_entry_id?: string; chargeback_amount_cents: number }> = [];
   if (postingEnabled) {
     for (const a of advanceActuals) {
-      const result = await postFactoringAdvanceEvent({
-        operating_company_id: input.operatingCompanyId,
-        factoring_advance_id: a.factoring_advance_id,
-        actor_user_id: input.userId,
-        advanced_at_iso: statementDate,
-        funding_figures: {
-          invoice_total_cents: a.actual_gross_cents,
-          reserve_cents: a.actual_reserve_cents,
-          fee_cents: a.actual_fee_cents,
-          ach_cents: 0, // FARO CSV carries no ACH/transaction-fee column; supply via funding_figures when available.
-        },
-      });
-      funding_posts.push({
-        factoring_advance_id: a.factoring_advance_id,
-        posted: result.posted,
-        reason: result.reason,
-        journal_entry_id: result.journal_entry_id,
-      });
+      // FUNDING: gate on completeness. Posting funding for a partial batch would credit a too-small
+      // liability (the poster's liability leg is the FULL net invoice). Wait until every invoice arrives.
+      if (!isAdvanceComplete(a)) {
+        funding_posts.push({ factoring_advance_id: a.factoring_advance_id, posted: false, reason: "incomplete_advance" });
+      } else {
+        const result = await postFactoringAdvanceEvent({
+          operating_company_id: input.operatingCompanyId,
+          factoring_advance_id: a.factoring_advance_id,
+          actor_user_id: input.userId,
+          advanced_at_iso: statementDate,
+          funding_figures: {
+            invoice_total_cents: a.actual_gross_cents,
+            reserve_cents: a.actual_reserve_cents,
+            fee_cents: a.actual_fee_cents,
+            ach_cents: 0, // FARO CSV carries no ACH/transaction-fee column; supply via funding_figures when available.
+          },
+        });
+        funding_posts.push({
+          factoring_advance_id: a.factoring_advance_id,
+          posted: result.posted,
+          reason: result.reason,
+          journal_entry_id: result.journal_entry_id,
+        });
+      }
+
+      // CHARGEBACK: a recourse chargeback is an independent event on an already-funded advance, so it is
+      // NOT gated on batch completeness (funding may have posted from an earlier file). Route it to the
+      // secured-borrowing recoursed-invoice treatment instead of dropping it. Idempotent (memo-keyed).
+      if (a.actual_chargeback_cents > 0) {
+        const cb = await postFactoringChargebackEvent({
+          operating_company_id: input.operatingCompanyId,
+          factoring_advance_id: a.factoring_advance_id,
+          actor_user_id: input.userId,
+          charged_back_at_iso: statementDate,
+          chargeback_amount_cents: a.actual_chargeback_cents,
+        });
+        chargeback_posts.push({
+          factoring_advance_id: a.factoring_advance_id,
+          posted: cb.posted,
+          reason: cb.reason,
+          journal_entry_id: cb.journal_entry_id,
+          chargeback_amount_cents: a.actual_chargeback_cents,
+        });
+      }
     }
   }
 
@@ -378,6 +471,9 @@ export async function commitFaroCsvImport(input: {
     factoring_gl_posting_enabled: postingEnabled,
     variances,
     variance_count: variances.filter((v) => v.has_variance).length,
+    incomplete_advance_count: variances.filter((v) => !v.is_complete).length,
+    chargeback_total_cents: advanceActuals.reduce((sum, a) => sum + a.actual_chargeback_cents, 0),
     funding_posts,
+    chargeback_posts,
   };
 }
