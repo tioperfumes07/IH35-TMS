@@ -8,6 +8,7 @@ import {
   loadEntityVersionSnapshot,
 } from "./sync-outbound-accounting.entities.js";
 import type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboResult } from "./sync-outbound-accounting.types.js";
+import { evaluateJeQboPushGate, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "../../accounting/qbo-je-push-gate.js";
 
 export type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboResult } from "./sync-outbound-accounting.types.js";
 
@@ -180,9 +181,100 @@ export type SyncEntityToQboOpts = {
   triggered_by: string;
 };
 
+/** IMPORT-P0 — flag OFF: terminally finalize the queue row without any QBO call. Marked 'synced' (the job
+ *  is done — we deliberately did not push), with a policy note; no retry, no conflict, no alert noise. */
+async function finalizeJeGateFlagOff(opts: SyncEntityToQboOpts): Promise<void> {
+  const client = opts.db ?? (await pool.connect());
+  const release = !opts.db;
+  try {
+    await client.query("BEGIN");
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+    await client.query(
+      `
+        UPDATE integrations.qbo_sync_queue
+        SET sync_status = 'synced',
+            error_message = 'qbo_je_push_disabled_skip',
+            error_details = NULL,
+            updated_at = now()
+        WHERE id = $1::uuid
+      `,
+      [opts.queue_row_id]
+    );
+    await client.query("COMMIT");
+  } catch {
+    await client.query("ROLLBACK").catch(() => {});
+  } finally {
+    if (release) client.release();
+  }
+  await auditOutbound(
+    { queue_row_id: opts.queue_row_id, entity_type: opts.entity_type, entity_id: opts.entity_id, phase: "je_push_disabled_skip" },
+    "info"
+  );
+}
+
+/** IMPORT-P0 — structural refusal: a QBO-origin / imported JE reached the queue. Dead-letter it (never
+ *  retry), record a conflict row for visibility. Zero QBO call. */
+async function finalizeJeGateRefusal(opts: SyncEntityToQboOpts, sourceSystem: string): Promise<void> {
+  const client = opts.db ?? (await pool.connect());
+  const release = !opts.db;
+  try {
+    await client.query("BEGIN");
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+    await client.query(
+      `
+        UPDATE integrations.qbo_sync_queue
+        SET sync_status = 'dead_letter',
+            error_message = $2,
+            error_details = $3::jsonb,
+            updated_at = now()
+        WHERE id = $1::uuid
+      `,
+      [opts.queue_row_id, QBO_PUSH_REFUSED_IMPORT_SOURCE, JSON.stringify({ source_system: sourceSystem, never_replayable: true })]
+    );
+    await insertConflictRow(client, {
+      operating_company_id: opts.operating_company_id,
+      entity_type: opts.entity_type,
+      entity_id: opts.entity_id,
+      qbo_id: null,
+      tms_snapshot: { phase: "je_push_refused_import_source", source_system: sourceSystem },
+      qbo_snapshot: { never_replayable: true },
+      conflict_fields: ["source_system"],
+      severity: "high",
+    });
+    await client.query("COMMIT");
+  } catch {
+    await client.query("ROLLBACK").catch(() => {});
+  } finally {
+    if (release) client.release();
+  }
+  await auditOutbound(
+    { queue_row_id: opts.queue_row_id, entity_type: opts.entity_type, entity_id: opts.entity_id, phase: "je_push_refused_import_source" },
+    "warning"
+  );
+}
+
 export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEntityToQboResult> {
   const entityType = opts.entity_type as AccountingOutboundEntityType;
   const triplet = { queue_row_id: opts.queue_row_id, entity_type: opts.entity_type, entity_id: opts.entity_id };
+
+  // ── IMPORT-P0 — the JE→QBO push kill-switch guards THIS queue-drain path too (the primary async push,
+  // drained by a cron every minute). Consult the SHARED gate BEFORE fetching a token or building/POSTing
+  // anything, so a disabled/refused entity makes ZERO QuickBooks calls. Only journal entries are gated
+  // here; other accounting entities (invoice/bill/…) are governed by their own sync policies. ──────────
+  if (entityType === "journal_entry") {
+    const gate = await withLuciaBypass(async (c) => {
+      await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+      return evaluateJeQboPushGate(c, opts.operating_company_id, opts.entity_id);
+    });
+    if (gate.decision === "import_source") {
+      await finalizeJeGateRefusal(opts, gate.sourceSystem);
+      return { outcome: "failed_dead_letter" };
+    }
+    if (gate.decision === "flag_off") {
+      await finalizeJeGateFlagOff(opts);
+      return { outcome: "synced" };
+    }
+  }
 
   let tokenBundle: Awaited<ReturnType<typeof getValidAccessToken>>;
   try {

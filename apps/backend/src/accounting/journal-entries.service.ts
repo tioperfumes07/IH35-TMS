@@ -192,6 +192,10 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
     return header;
   });
 
+  // [IMPORT-P0 qbo-import-exclusion] This create path only produces TMS-origin JEs (source_system='tms').
+  // BOTH downstream push paths — the queue drain (sync-outbound-accounting.ts, drained by cron) and the
+  // immediate best-effort push below — consult the shared gate (qbo-je-push-gate.ts): they refuse any
+  // non-'tms' source_system (structural) and require QBO_JE_PUSH_ENABLED ON per entity (default OFF).
   await enqueueSyncJob(
     input.operating_company_id,
     "journal_entry",
@@ -314,6 +318,9 @@ export async function voidJournalEntry(
     return { ok: true };
   });
 
+  // [IMPORT-P0 qbo-import-exclusion] Void of a TMS-origin JE. Both push paths (queue drain + immediate)
+  // consult the shared gate: they refuse any non-'tms' source_system and require QBO_JE_PUSH_ENABLED ON
+  // per entity (default OFF). Imported entries never reach here anyway.
   await enqueueSyncJob(
     operatingCompanyId,
     "journal_entry",
