@@ -101,6 +101,7 @@ export const ACCOUNTING_CLEAN_TABS = [
 
 /** Back-office / operator items — shown in a "More ▾" submenu, not top-level tabs. */
 export const ACCOUNTING_MORE_TABS = [
+  { label: "Chart of Accounts", to: "/lists/accounting/chart-of-accounts" },
   { label: "Month Close",       to: "/accounting/month-close" },
   { label: "Multi-entity",      to: "/accounting/multi-entity" },
   { label: "Audit Trail",       to: "/accounting/audit-trail" },
