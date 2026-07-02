@@ -736,6 +736,7 @@
     "verify:qbo-push-gates": "node scripts/verify-qbo-push-gates.mjs",
     "verify:qbo-entity-push-gates": "node scripts/verify-qbo-entity-push-gates.mjs",
     "verify:event-log-worm": "node scripts/verify-event-log-worm.mjs",
+    "verify:md-clone-origin": "node scripts/verify-md-clone-origin.mjs",
     "verify:safety-settings-trigger-secdef": "node scripts/verify-safety-settings-trigger-secdef.mjs",
     "verify:required-document-types-entity-scope": "node scripts/verify-required-document-types-entity-scope.mjs",
     "reconcile:drift": "node scripts/reconcile-drift.mjs",

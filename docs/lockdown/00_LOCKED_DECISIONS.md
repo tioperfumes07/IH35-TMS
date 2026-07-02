@@ -44,7 +44,11 @@ RULES:
 - FOLLOW-UP: extract createBill core into client-accepting helper (tracked, not blocking).
 
 ## 4. INSURANCE ↔ SAFETY connection
-- insurance.policy_unit_coverages holds coverage_type/limit/deductible/insured_value.
+- Coverage data lives on **`insurance.policy`** (`coverage_type`, `coverage_type_id`, `total_premium_cents`)
+  + **`insurance.policy_unit`** (`insured_value_cents`). *(Correction 2026-07-02: the once-planned
+  `insurance.policy_unit_coverages` table was never built — no migration creates it and no code references
+  it; the coverage model was folded onto policy/policy_unit during build. This was a STALE DOC reference,
+  NOT prod migration-drift — GUARD verified prod has policy/policy_unit/coi_request, no coverages table.)*
 - Insurance OWNS; Safety READS + flags, never writes.
 - Active unit + no active coverage = ALERT. OOS/in-shop/sold = EXPECTED.
 
