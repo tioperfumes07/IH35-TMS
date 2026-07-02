@@ -28,10 +28,10 @@ function defaultRange() {
   return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
-const FLAG_META: Record<FuelReconciliationFlag, { emoji: string; label: string }> = {
-  over_reported: { emoji: "🚩", label: "over_reported" },
-  under_reported: { emoji: "⚠️", label: "under_reported" },
-  unmatched: { emoji: "❌", label: "unmatched" },
+const FLAG_META: Record<FuelReconciliationFlag, { label: string }> = {
+  over_reported: { label: "over_reported" },
+  under_reported: { label: "under_reported" },
+  unmatched: { label: "unmatched" },
 };
 
 type SortKey = keyof FuelReconciliationTruckRow;
@@ -192,8 +192,8 @@ export function FuelReconciliationPage() {
                       <td className="px-2 py-2">
                         <div className="flex flex-wrap gap-1">
                           {(r.flags ?? []).map((f) => (
-                            <span key={f} className="rounded border border-gray-200 px-1 py-0.5 text-[10px] font-semibold" title={FLAG_META[f].label}>
-                              {FLAG_META[f].emoji} {FLAG_META[f].label}
+                            <span key={f} className="rounded border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
+                              {FLAG_META[f].label}
                             </span>
                           ))}
                         </div>

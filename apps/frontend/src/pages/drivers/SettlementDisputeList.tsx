@@ -46,7 +46,7 @@ export function SettlementDisputeList() {
           ))}
         </div>
         <Button type="button" onClick={() => setCreateOpen(true)}>
-          + New dispute
+          + Create dispute
         </Button>
       </div>
 
