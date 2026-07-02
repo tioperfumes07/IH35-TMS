@@ -1,0 +1,26 @@
+{
+  "block_id": "RECON-00",
+  "status": "done",
+  "classification": "ADDITIVE (docs-only design lock)",
+  "phase": "TMS-QBO-Reconciliation",
+  "task": "RECON-00 Design lock: commit the TMS↔QBO Reconciliation Module architecture spec (double-books/no-sync, twice-daily passes, exception classes, data model, hard read-only/no-autofix control, UI, rollout+tiering, future hooks). Docs-only — no app code, no schema, no flag. Establishes design law for RECON-01/02.",
+  "branch": "docs/recon-module-design",
+  "lane": "coder",
+  "details": [
+    "Docs-only design lock. Status auto-derived by reconciler from branch → merged-PR (docs blocks never promote via signature-file presence — all doc files are dropped by dropBoiler).",
+    "Architecture LOCKED: TMS and QBO are double books with NO SYNC; a twice-daily reconciliation module flags every txn whose categorization/COA mapping differs; QBO is TRANSP book of record; module NEVER auto-fixes and is read-only against QBO forever.",
+    "Benchmark ADOPT/SURPASS table vs QBO / NetSuite NSAR / McLeod LoadMaster / Alvys / Numeric-BlackLine.",
+    "Data model (built later in RECON-01): accounting.recon_runs + accounting.recon_exceptions.",
+    "Hard control invariant RECON_READ_ONLY_NO_AUTOFIX + required CI guard verify:recon-read-only extending FIN-23 test."
+  ],
+  "allowed_files": [
+    ".block-ready/RECON-00.json",
+    "docs/specs/TMS-QBO-RECONCILIATION.md",
+    "docs/trackers/block-reconciliation-data.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "registered_on": "2026-07-02"
+}
