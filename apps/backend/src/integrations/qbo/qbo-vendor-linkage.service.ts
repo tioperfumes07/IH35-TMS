@@ -596,19 +596,28 @@ export async function createDriverWithQboVendor(userId: string, input: DriverCre
     const driverId = String(driverRes.rows[0]?.id ?? "");
     if (!driverId) throw new Error("driver_create_failed");
 
+    // Parallel-books / IMPORT-P0b #3: driver onboarding must NOT depend on a TMS→QBO vendor write. Under
+    // reconcile-only the driver's vendor is created in QBO independently and the daily reconcile match
+    // populates qbo_vendor_id; TMS creating it is a courtesy, not a requirement. So this is BEST-EFFORT —
+    // a failed or missing QBO vendor is LOGGED and we CONTINUE (driver still created, vendor left to be
+    // linked by reconcile). This also removes a real fragility: driver-create used to hard-fail whenever
+    // QuickBooks was unavailable.
     const vendorResult = await createQboVendor(input.operatingCompanyId, input.qboVendorName);
-    if (!vendorResult.ok) {
+    const qboVendorId = vendorResult.ok
+      ? String(((vendorResult.value?.Vendor as { Id?: string } | undefined)?.Id ?? ""))
+      : "";
+    if (!qboVendorId) {
       await appendLinkageEvent(client, input.operatingCompanyId, {
         entityType: "driver",
         entityId: driverId,
         action: "auto_suggested",
-        reason: `outbox_retry_required:${vendorResult.error}`,
+        reason: vendorResult.ok
+          ? "qbo_vendor_missing_id_deferred_to_reconcile"
+          : `qbo_vendor_deferred_to_reconcile:${vendorResult.error}`,
         userId,
       });
-      throw new Error(vendorResult.error);
+      return { driver_id: driverId, qbo_vendor_id: null as string | null };
     }
-    const qboVendorId = String(((vendorResult.value?.Vendor as { Id?: string } | undefined)?.Id ?? ""));
-    if (!qboVendorId) throw new Error("qbo_vendor_create_missing_id");
 
     await client.query(
       `
