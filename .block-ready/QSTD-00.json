@@ -10,6 +10,7 @@
     ".block-ready/QSTD-00.json",
     "docs/specs/QUALITY-STANDARD-LOCKED.md",
     "docs/specs/CURSOR-PERMANENT-RULES.md",
+    "AGENTS.md",
     "scripts/verify-quality-standard-present.mjs",
     "package.json"
   ],
