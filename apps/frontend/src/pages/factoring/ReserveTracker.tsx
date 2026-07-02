@@ -227,7 +227,7 @@ export function ReserveTracker() {
         <KpiCard
           label="Chargebacks Pending"
           value={fmtM(chargebacksPending)}
-          sub={chargebacksPending > 0 ? "⚠ review needed" : "none"}
+          sub={chargebacksPending > 0 ? "review needed" : "none"}
         />
         <KpiCard
           label="Active Factor"

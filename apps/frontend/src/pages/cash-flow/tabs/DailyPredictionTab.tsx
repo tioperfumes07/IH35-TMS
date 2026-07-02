@@ -276,10 +276,10 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                 </div>
               )}
 
-              {/* + Add bill or expense inline input */}
+              {/* + Add new bill or expense inline input */}
               <div className="border-t border-dashed border-gray-200 px-4 py-3">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  + Add bill or expense
+                  + Add new bill or expense
                 </p>
                 <div className="flex gap-2">
                   <input
