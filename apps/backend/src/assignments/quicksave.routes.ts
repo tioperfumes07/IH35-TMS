@@ -73,7 +73,7 @@ async function assertTrailerScope(
       SELECT id::text
       FROM mdata.equipment
       WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
         AND deactivated_at IS NULL
       LIMIT 1
     `,

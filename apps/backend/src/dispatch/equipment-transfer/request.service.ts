@@ -56,7 +56,8 @@ export async function initiateTransfer(
     `
       SELECT id::text
       FROM mdata.equipment
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      WHERE id = $1::uuid
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
       LIMIT 1
     `,
     [input.equipment_uuid, input.operating_company_id]
