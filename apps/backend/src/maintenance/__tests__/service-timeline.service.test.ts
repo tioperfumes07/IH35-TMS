@@ -29,6 +29,13 @@ vi.mock("../../auth/session-middleware.js", () => ({
   requireAuth: () => true,
 }));
 
+// Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
+// no-op here so these unit tests exercise route logic with pre-change behavior.
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
+
 describe("service timeline helpers (B31)", () => {
   it("parseServiceTimelineEventTypes defaults to all types", () => {
     expect(parseServiceTimelineEventTypes(undefined)).toEqual([

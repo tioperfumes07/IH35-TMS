@@ -8,6 +8,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 import { aggregateSettlementTotals } from "./settlements-load-bookended.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const driverIdParamsSchema = z.object({ driverId: z.string().uuid() });
@@ -29,6 +30,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     return fn(client);

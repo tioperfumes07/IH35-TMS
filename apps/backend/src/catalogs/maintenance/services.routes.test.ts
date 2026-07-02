@@ -21,6 +21,13 @@ vi.mock("../../auth/db.js", () => ({
 }));
 vi.mock("./eta-calculator.js", () => ({ calculateServiceEta: () => ({}) }));
 
+// Cross-tenant guard: assertCompanyMembership() is covered by a dedicated membership test;
+// no-op here so these unit tests exercise route logic with pre-change behavior.
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
+
 const { registerMaintenanceServicesCatalogRoutes } = await import("./services.routes.js");
 
 function captureRoutes() {

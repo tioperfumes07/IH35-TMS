@@ -17,6 +17,7 @@ import {
   type BrakeMeasurementSource,
 } from "./service.js";
 import type { DbClient } from "./service.js";
+import { assertCompanyMembership } from "../../../_helpers/company-membership-guard.js";
 
 const companyQuery = z.object({
   operating_company_id: z.string().uuid(),
@@ -52,6 +53,7 @@ async function withCompany<T>(
   companyId: string,
   fn: (client: DbClient) => Promise<T>
 ) {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client);

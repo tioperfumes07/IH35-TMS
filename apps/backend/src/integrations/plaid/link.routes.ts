@@ -5,6 +5,7 @@ import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { createLinkToken, createUpdateModeLinkToken, exchangePublicToken } from "./plaid.service.js";
 import { getPlaidClient } from "./plaid-client.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 const ownerAdminRoles = new Set(["Owner", "Administrator"]);
 const ownerOnlyRoles = new Set(["Owner"]);
@@ -80,6 +81,7 @@ function ensureRole(reply: FastifyReply, role: string, allowedRoles: Set<string>
 }
 
 async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: { query: <R>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }> }) => Promise<T>) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     return fn(client);

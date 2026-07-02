@@ -22,6 +22,7 @@ import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countActiveDispatchLoads, countInTransitDispatchLoads } from "./active-loads-count.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -319,6 +320,7 @@ async function withCompanyScope<T>(
     query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
   }) => Promise<T>
 ) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     return fn(client);

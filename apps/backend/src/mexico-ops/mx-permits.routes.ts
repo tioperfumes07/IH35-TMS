@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuery = z.object({ operating_company_id: z.string().uuid() });
 const idParams = z.object({ id: z.string().uuid() });
@@ -33,6 +34,7 @@ async function withCompany<T>(
   companyId: string,
   fn: (client: any) => Promise<T>
 ): Promise<T> {
+  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     return fn(client);
