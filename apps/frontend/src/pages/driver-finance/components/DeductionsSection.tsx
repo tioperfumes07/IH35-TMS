@@ -18,8 +18,8 @@ type Props = {
 export function DeductionsSection({ rows, onHold }: Props) {
   const subtotal = rows.reduce((sum, row) => sum + Number(row.pending_ack ? 0 : row.this_period_amount || 0), 0);
   return (
-    <section className="rounded border border-yellow-200 bg-yellow-50 p-2">
-      <h3 className="mb-1 text-xs font-semibold uppercase text-yellow-800">D. Deductions</h3>
+    <section className="rounded border border-slate-200 bg-slate-50 p-2">
+      <h3 className="mb-1 text-xs font-semibold uppercase text-slate-700">D. Deductions</h3>
       <div className="space-y-1">
         {rows.map((row) => (
           <div
@@ -29,7 +29,7 @@ export function DeductionsSection({ rows, onHold }: Props) {
                 ? "border-amber-300 bg-amber-100"
                 : row.pending_ack
                 ? "border-amber-200 bg-amber-50"
-                : "border-yellow-100 bg-white"
+                : "border-slate-200 bg-white"
             }`}
           >
             <div>
