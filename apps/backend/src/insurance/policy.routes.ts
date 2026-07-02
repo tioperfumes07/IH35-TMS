@@ -170,6 +170,11 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       if (parsed.data.status) {
         values.push(parsed.data.status);
         filters.push(`status = $${values.length}`);
+      } else {
+        // Default view hides soft-cancelled (archived) policies — an explicit ?status=cancelled still
+        // surfaces them for audit/evidence review. Keeps the DELETE→soft-cancel change invisible to
+        // the active-policy list while preserving the row and its linked claims/lawsuits.
+        filters.push(`status <> 'cancelled'`);
       }
       const result = await client.query(
         `
@@ -382,17 +387,24 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
+    // ARCHIVE, never DELETE (§2 void-not-delete). A hard DELETE FROM insurance.policy CASCADE-destroys
+    // every linked claim, lawsuit, COI, and payment-schedule row (ON DELETE CASCADE in migrations
+    // 0274/0283/0284/0285) — i.e. it wipes legal/insurance evidence for a Ch.11 carrier with active
+    // lawsuits. Instead soft-cancel: set status='cancelled' (a valid CHECK value from 0274) so the
+    // policy and all its evidence are retained; the default list (above) hides 'cancelled', so the
+    // caller still sees the policy disappear from the active view. Idempotent.
     const deleted = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const result = await client.query(
         `
-          DELETE FROM insurance.policy
+          UPDATE insurance.policy
+          SET status = 'cancelled', updated_at = now()
           WHERE tenant_id = $1::uuid AND id = $2::uuid
           RETURNING id::text
         `,
         [query.data.operating_company_id, params.data.id]
       );
       if (!result.rows[0]) return false;
-      await appendCrudAudit(client, user.uuid, "insurance.policy.deleted", {
+      await appendCrudAudit(client, user.uuid, "insurance.policy.cancelled", {
         resource_id: params.data.id,
         operating_company_id: query.data.operating_company_id,
       });
