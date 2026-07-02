@@ -89,7 +89,7 @@ export function QBOSyncDriftDashboard() {
   const data = dashboardQuery.data;
 
   return (
-    <AccountingSubNavWrapper title="QBO Sync Drift" subtitle="Ongoing two-way sync health across master data entities">
+    <AccountingSubNavWrapper title="QBO Sync Drift" subtitle="Daily reconciliation health across master data entities (clone-and-reconcile, not two-way sync)">
 
       {!companyId ? (
         <p className="text-muted-foreground">Select an operating company to view sync drift.</p>
