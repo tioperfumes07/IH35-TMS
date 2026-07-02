@@ -13,11 +13,14 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { dispatchDriverWebPush } from "../notifications/web-push-dispatcher.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import {
   CHAT_ESCALATION_CONFIG,
   selectEscalations,
   type EscalationCandidate,
 } from "../chat/escalation-config.js";
+
+const CRON_NAME = "chat.confirmation_escalation";
 
 let initialized = false;
 
@@ -106,6 +109,10 @@ async function escalateOne(row: PendingRow, attemptNumber: number): Promise<void
   // Wrapped defensively: a permission gap on schema events must not kill the loud-alert escalation.
   const subjectType: "load" | "driver" = row.load_id ? "load" : "driver";
   const subjectId = row.load_id ?? row.driver_id;
+  // Validate the per-row tenant id before we set it as DB context + write the spine event. The
+  // cross-tenant sweep runs under lucia-bypass, so each row carries its own operating_company_id;
+  // a null/malformed value would corrupt the event's tenant scope. Fail loud (guard = B-017).
+  assertTenantContext(row.operating_company_id, CRON_NAME);
   try {
     await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
