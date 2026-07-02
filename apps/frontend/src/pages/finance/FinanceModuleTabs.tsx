@@ -5,10 +5,18 @@ import { FINANCE_HUB_LOAN_WIZARD_FLAG } from "../../api/financeLoanWizard";
 import { FINANCE_HUB_CALCULATOR_FLAG } from "../../api/financeCalculator";
 import { FINANCE_HUB_AMORTIZATION_FLAG } from "../../api/financeAmortization";
 
+// FIN-2 unified subnav: one tab set across the whole Finance module. Hub is the real read-only dashboard
+// (the sidebar "FINANCE HUB" entry lands here); Statements + AR/AP Aging were previously reachable only from
+// the sidebar flyout — surfaced here so every finance page shares the same navigation. Existing tabs are kept
+// in place (additive-only, no reorder); the new tabs are appended. Each destination page self-gates behind
+// its own feature flag and shows an honest disabled state when off.
 const baseTabs = [
   { id: "overview", label: "Overview", to: "/finance" },
   { id: "projections", label: "Projections", to: "/finance/projections" },
   { id: "scenarios", label: "Scenarios", to: "/finance/scenarios" },
+  { id: "hub", label: "Hub", to: "/finance/hub" },
+  { id: "statements", label: "Statements", to: "/finance/statements" },
+  { id: "ar-ap-aging", label: "AR/AP Aging", to: "/finance/ar-ap-aging" },
 ];
 
 export function FinanceModuleTabs() {
