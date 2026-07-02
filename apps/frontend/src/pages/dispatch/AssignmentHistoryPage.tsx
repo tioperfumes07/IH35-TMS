@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 export function AssignmentHistoryPage() {
@@ -32,6 +33,30 @@ export function AssignmentHistoryPage() {
   }
 
   const rows = historyQ.data?.rows ?? [];
+  type AssignmentHistoryRow = (typeof rows)[number];
+
+  // Migrated to the shared QBO-parity grid — columns, order, and the load deep-link are preserved
+  // verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<AssignmentHistoryRow>> = [
+    { key: "assigned_at", label: "Assigned at", sortable: true, render: (row) => new Date(row.assigned_at).toLocaleString() },
+    {
+      key: "load_number",
+      label: "Load",
+      sortable: true,
+      render: (row) =>
+        row.load_id ? (
+          <Link to={`/dispatch?load_id=${encodeURIComponent(row.load_id)}`} className="text-slate-700 hover:underline">
+            {row.load_number ?? row.load_id}
+          </Link>
+        ) : (
+          row.load_number ?? "—"
+        ),
+    },
+    { key: "assignment_method", label: "Method", sortable: true },
+    { key: "previous_driver_name", label: "Previous driver", render: (row) => row.previous_driver_name ?? "—" },
+    { key: "new_driver_name", label: "New driver", render: (row) => row.new_driver_name ?? "—" },
+    { key: "reason_code", label: "Reason", render: (row) => row.reason_code ?? row.notes ?? "—" },
+  ];
 
   return (
     <div data-testid="dispatch-assignment-history-page" className="mx-auto max-w-6xl space-y-4">
@@ -73,54 +98,15 @@ export function AssignmentHistoryPage() {
         </div>
       </section>
 
-      <section className="overflow-x-auto rounded border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-3 py-2">Assigned at</th>
-              <th className="px-3 py-2">Load</th>
-              <th className="px-3 py-2">Method</th>
-              <th className="px-3 py-2">Previous driver</th>
-              <th className="px-3 py-2">New driver</th>
-              <th className="px-3 py-2">Reason</th>
-            </tr>
-          </thead>
-          <tbody>
-            {historyQ.isLoading ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
-                  Loading assignment history…
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
-                  No assignment history for current filters.
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => (
-                <tr key={row.id} className="border-b last:border-b-0">
-                  <td className="px-3 py-2">{new Date(row.assigned_at).toLocaleString()}</td>
-                  <td className="px-3 py-2">
-                    {row.load_id ? (
-                      <Link to={`/dispatch?load_id=${encodeURIComponent(row.load_id)}`} className="text-slate-700 hover:underline">
-                        {row.load_number ?? row.load_id}
-                      </Link>
-                    ) : (
-                      row.load_number ?? "—"
-                    )}
-                  </td>
-                  <td className="px-3 py-2">{row.assignment_method}</td>
-                  <td className="px-3 py-2">{row.previous_driver_name ?? "—"}</td>
-                  <td className="px-3 py-2">{row.new_driver_name ?? "—"}</td>
-                  <td className="px-3 py-2">{row.reason_code ?? row.notes ?? "—"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+      <ParityTable<AssignmentHistoryRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={historyQ.isLoading}
+        emptyText="No assignment history for current filters."
+        storageKey="dispatch-assignment-history"
+        exportFilename="assignment-history"
+      />
 
       <div className="flex justify-end">
         <Button size="sm" variant="secondary" onClick={() => historyQ.refetch()}>
