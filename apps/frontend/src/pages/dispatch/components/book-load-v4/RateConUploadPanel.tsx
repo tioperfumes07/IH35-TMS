@@ -1,19 +1,13 @@
-import { useState } from "react";
-import { requestUploadUrl, confirmUpload } from "../../../../api/docs";
-import { extractRateCon, type RateConExtractResponse } from "../../../../api/ratecon";
-import { rateConExtractionToPrefill, type RateConPrefill } from "./rateConPrefill";
+import { useRateConExtraction } from "./useRateConExtraction";
+import type { RateConExtractResponse } from "../../../../api/ratecon";
+import type { RateConPrefill } from "./rateConPrefill";
 
-// RATECON-1 (5b) — "Upload Rate Con" panel for the Book Load flow. Uploads the PDF via the existing docs
-// pipeline, calls the AI extraction endpoint, and hands the parent a wizard prefill (EDITABLE draft — the
-// dispatcher confirms every field; nothing auto-books). Surfaces duplicate-use, a total/parts mismatch, and
-// low-confidence fields. Palette-safe: amber for warnings, never the locked delete/accident red.
-
-type Phase = "idle" | "uploading" | "extracting" | "done" | "error";
-
-async function sha256Hex(file: File): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+// RATECON-1/2 — "Upload Rate Con" button variant of the rate-con intake. Shares the ONE extraction code
+// path (useRateConExtraction) with the drag-drop zone, so there is zero duplicated upload/extract logic.
+// Uploads the PDF via the docs pipeline, calls the AI extraction endpoint, and hands the parent a wizard
+// prefill (EDITABLE draft — the dispatcher confirms every field; nothing auto-books). Surfaces
+// duplicate-use, a total/parts mismatch, and low-confidence fields. Palette-safe: amber for warnings,
+// never the locked delete/accident red.
 
 export function RateConUploadPanel({
   operatingCompanyId,
@@ -23,45 +17,8 @@ export function RateConUploadPanel({
   /** Called when extraction succeeds — parent opens the Book Load wizard with prefill.json as templatePrefillJson. */
   onPrefill: (prefill: RateConPrefill, response: RateConExtractResponse) => void;
 }) {
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<RateConExtractResponse | null>(null);
+  const { phase, error, result, busy, handleFile } = useRateConExtraction({ operatingCompanyId, onPrefill });
 
-  async function handleFile(file: File) {
-    setError(null);
-    setResult(null);
-    try {
-      setPhase("uploading");
-      const sha = await sha256Hex(file);
-      const up = await requestUploadUrl({
-        original_filename: file.name,
-        mime_type: file.type || "application/pdf",
-        size_bytes: file.size,
-        sha256_hash: sha,
-      });
-      const put = await fetch(up.presigned_url, { method: "PUT", body: file, headers: { "content-type": file.type || "application/pdf" } });
-      if (!put.ok) throw new Error(`upload_failed_${put.status}`);
-      await confirmUpload(up.file_id);
-
-      setPhase("extracting");
-      const res = await extractRateCon(operatingCompanyId, up.file_id);
-      setResult(res);
-      setPhase("done");
-      onPrefill(rateConExtractionToPrefill(res.extraction), res);
-    } catch (e) {
-      const code = String((e as Error)?.message ?? "");
-      setError(
-        code.includes("409") || code.includes("ratecon_extract_disabled") ? "Rate-con extraction is turned off for this company."
-          : code.includes("413") || code.includes("too_large") ? "That file is too large (max 10 MB / 15 pages)."
-          : code.includes("503") || code.includes("ai_not_configured") ? "AI extraction isn't configured on the server."
-          : code.includes("502") || code.includes("extraction_failed") ? "AI extraction failed — try again; if it persists tell the administrator."
-          : "Couldn't extract this rate confirmation. You can still book the load manually.",
-      );
-      setPhase("error");
-    }
-  }
-
-  const busy = phase === "uploading" || phase === "extracting";
   return (
     <div className="rounded border border-slate-200 p-3 text-sm">
       <div className="flex items-center gap-2">

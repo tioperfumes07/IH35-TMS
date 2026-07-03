@@ -63,6 +63,44 @@ export function isPostingFlag(flagKey: string): boolean {
   );
 }
 
+// ── Per-entity-only flags (non-posting) ────────────────────────────────────────────────────────────
+// FLAG-HARDEN-1: some non-posting features are gated PER OPERATING COMPANY, not per user or globally.
+// The rollout_pct instrument is a *user-hash* percentage — it only evaluates when a user_uuid is in
+// context, and when it does it enables the flag for a hashed slice of users ACROSS every entity. For a
+// feature the owner enables one entity at a time (e.g. RATECON_EXTRACT_ENABLED — the rate-con AI
+// extractor, live-enabled for TRANSP only), that is the wrong instrument twice over:
+//   1. the extract endpoint calls isEnabled with only operating_company_id (no user_uuid), so a
+//      rollout_pct change silently NO-OPs — an owner control that accepts input and does nothing (a
+//      trust defect); and
+//   2. where a user_uuid IS present, rollout would flip the feature on for that user across ALL
+//      entities, breaking per-entity isolation.
+// So per-entity-only flags are resolved EXACTLY like posting flags: only an explicit per-entity
+// (operating_company_id) or per-user override can enable them; global default_enabled/rollout_pct are
+// ignored (treated OFF). Known keys are enumerated; the pattern fallback auto-covers any future flag
+// named with the `_PER_ENTITY_ONLY` convention suffix.
+export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
+  // RATECON-1: AI rate-con extractor. The extract endpoint passes operating_company_id only (no
+  // user_uuid) → rollout_pct silently no-ops. Live-enabled for TRANSP via a tenant override.
+  "RATECON_EXTRACT_ENABLED",
+  // Task #24: mirror a TMS financial void to QuickBooks — migration seeds it "Resolved per-entity via
+  // overrides. Default OFF." A global default/rollout enable would echo voids for EVERY entity into QBO.
+  "VOID_QBO_MIRROR_ENABLED",
+  // RECON-01: read-only twice-daily QBO↔TMS reconciliation passes — migration seeds it "per-entity
+  // owner-gated". Enabling it per operating company (not globally) is the documented intent.
+  "TMS_QBO_RECON_ENABLED",
+]);
+
+export function isPerEntityOnlyFlag(flagKey: string): boolean {
+  return PER_ENTITY_ONLY_FLAG_KEYS.has(flagKey) || /_PER_ENTITY_ONLY$/.test(flagKey);
+}
+
+// A flag is "per-entity gated" (no global default/rollout enable) if it is either a money-posting flag
+// or a per-entity-only flag. Both the resolver and the PATCH route consult this to refuse a global
+// enable and honor only an explicit per-entity/per-user override.
+export function isPerEntityGatedFlag(flagKey: string): boolean {
+  return isPostingFlag(flagKey) || isPerEntityOnlyFlag(flagKey);
+}
+
 export function rolloutBucket(flagKey: string, userUuid: string): number {
   const digest = createHash("sha256").update(`${flagKey}:${userUuid}`).digest();
   return digest.readUInt32BE(0) % 10000;
@@ -95,10 +133,12 @@ export function resolveFlagEnabled(
     if (tenantOverride) return tenantOverride.enabled;
   }
 
-  // Posting flags stop here: with no explicit per-entity/user override above, a money-posting flag is
-  // OFF. Global rollout_pct / default_enabled can never turn it on (would enable posting for all
-  // entities). This is the enforcement half of the per-entity kill-switch.
-  if (isPostingFlag(flag.flag_key)) {
+  // Per-entity-gated flags stop here: with no explicit per-entity/user override above, a money-posting
+  // OR per-entity-only flag is OFF. Global rollout_pct / default_enabled can never turn it on (posting
+  // flags would enable posting for all entities; per-entity-only flags would either silently no-op or
+  // leak across entities via the user-hash rollout). This is the enforcement half of the per-entity
+  // kill-switch — enable is ONLY via an explicit tenant/user override.
+  if (isPerEntityGatedFlag(flag.flag_key)) {
     return false;
   }
 
@@ -159,7 +199,13 @@ export async function listFlags(client: Queryable) {
       ORDER BY f.flag_key
     `
   );
-  return res.rows;
+  // Backend is the single source of truth for flag classification. Tag each flag so the admin UI can
+  // render a "per-entity only" notice instead of an editable global default/rollout control that the
+  // resolver would ignore (a silent no-op). Covers both posting and per-entity-only (non-posting) keys.
+  return res.rows.map((row) => ({
+    ...row,
+    per_entity_only: isPerEntityGatedFlag(row.flag_key),
+  }));
 }
 
 export async function listOverrides(client: Queryable, flagKey?: string) {
