@@ -1,0 +1,53 @@
+{
+  "note": "HELD MIGRATIONS \u2014 each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker \u2014 so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
+  "held": [
+    {
+      "file": "202606272100_af1_catalogs_accounts_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-1 \u2014 catalogs.accounts per-entity (entity-COA) migration"
+    },
+    {
+      "file": "202606272300_deduction_line_load_id_direct.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Load\u2194Advance: carry load_id DIRECTLY on the settlement deduction line"
+    },
+    {
+      "file": "202606300050_drivers_hire_date_source.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 PROTECTED] mdata.drivers.hire_date_source \u2014 provenance for hire dates"
+    },
+    {
+      "file": "202606300060_usmca_coa_seed.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] B1 \u2014 seed USMCA's chart of accounts (Path B Stage 5)"
+    },
+    {
+      "file": "202606300070_bank_coa_bridge_backfill.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] B2 (backfill) \u2014 link connected bank accounts to a Bank-type COA account"
+    },
+    {
+      "file": "202606300080_af2_catalogs_items_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2 \u2014 catalogs.items per-entity (entity item master)"
+    },
+    {
+      "file": "202606300090_af3_catalogs_classes_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-3 \u2014 catalogs.classes per-entity. POSTS NOTHING."
+    },
+    {
+      "file": "202606300100_af2c_items_category_id.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2c \u2014 catalogs.items.category_id (item \u2192 per-entity Category link)."
+    },
+    {
+      "file": "202606300110_af2c2_items_purchasing.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2c.2 \u2014 full QBO two-sided item: Purchasing info + Preferred vendor."
+    },
+    {
+      "file": "202606300160_af2b_item_account_mapping_backfill.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2b \u2014 item -> income/expense account mapping backfill (TEMPLATE)"
+    },
+    {
+      "file": "202607010010_bank_transactions_categorization_driver_id.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-6 \u2014 Driver dimension on bank categorize + loan-to-driver posting."
+    },
+    {
+      "file": "202607010700_account_role_bindings_per_entity.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] account_role_bindings per-entity \u2014 last deferred cross-entity leak (USMCA "
+    }
+  ]
+}
