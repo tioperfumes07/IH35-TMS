@@ -27,6 +27,15 @@ for (const marker of [/journal_entry_postings/i, /INSERT\s+INTO\s+accounting\.jo
   if (marker.test(src)) errs.push(`GL-posting marker present (${marker}) — the recon engine must never post to the ledger`);
 }
 
+// The route surface must be GET-only (surfacing findings; resolution is a separate action, not a bulk route).
+let routes = "";
+try { routes = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/recon/recon.routes.ts"), "utf8"); } catch { /* optional until 3/n */ }
+if (routes) {
+  const writeRoute = routes.match(/app\.(post|put|delete|patch)\s*\(/i);
+  if (writeRoute) errs.push(`recon.routes.ts declares a write route (${writeRoute[1]}) — the read surface must be GET-only`);
+  if (!/process\.env\.TMS_QBO_RECON_ENABLED/.test(routes)) errs.push("recon.routes.ts must gate on TMS_QBO_RECON_ENABLED (404 when OFF)");
+}
+
 if (errs.length) {
   console.error("verify:recon-read-only — FAILED");
   for (const e of errs) console.error(`  ✗ ${e}`);
