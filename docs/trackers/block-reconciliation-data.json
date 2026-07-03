@@ -1,17 +1,17 @@
 {
  "date": "2026-07-03",
- "generated_at_iso": "2026-07-03T20:07:46.765Z",
+ "generated_at_iso": "2026-07-03T20:31:19.235Z",
  "counts": {
-  "PENDING": 3,
-  "PENDING (GATED)": 24,
-  "NEEDS-VERIFY": 22,
-  "DONE": 427
+  "PENDING": 4,
+  "PENDING (GATED)": 33,
+  "NEEDS-VERIFY": 3,
+  "DONE": 436
  },
  "universe": {
   "total_blocks_after_dedup": 476,
   "by_source_after_dedup": {
-   ".block-ready": 303,
    "program": 61,
+   ".block-ready": 303,
    "enterprise-29": 29,
    "accounting": 26,
    "gap-spec": 57
@@ -151,6 +151,16 @@
  ],
  "blocks": [
   {
+   "id": "AF-8-payroll-bridge",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING",
+   "evidence": "[verified 2026-07-03] TMS->QBO payroll write-bridge unbuilt (deferred)",
+   "name": "STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST",
+   "pr": null
+  },
+  {
    "id": "CASH-FLOW-MODULE",
    "source": ".block-ready",
    "fin": false,
@@ -180,6 +190,56 @@
    "status": "PENDING",
    "evidence": "forward spec — 0 named artifacts on main",
    "name": "TABLE/UX / TASK Standard — Universal table sweep (bespoke → shared DataTable)",
+   "pr": null
+  },
+  {
+   "id": "AF-1-entity-coa-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] held Tier-1 DO-NOT-RUN migration; prod still global — not applied",
+   "name": "STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)",
+   "pr": null
+  },
+  {
+   "id": "AF-2-qbo-drift",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] drift-resolution write feature not built",
+   "name": "STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)",
+   "pr": null
+  },
+  {
+   "id": "AF-4-ap-bills-migration",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] ~$1.18M A/P migration not executed (Tier-1 held)",
+   "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)",
+   "pr": null
+  },
+  {
+   "id": "AF-5-stub-catalogs",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] partial — catalog buildout ongoing, not confirmably complete",
+   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)",
+   "pr": null
+  },
+  {
+   "id": "AF-7-money-controls",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] partial built-gated; money flags OFF",
+   "name": "STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS",
    "pr": null
   },
   {
@@ -250,6 +310,46 @@
    "status": "PENDING (GATED)",
    "evidence": "deep-verified 2026-06-24 (feature grep)",
    "name": "BLOCK-25-of-29-TIER3.5-CONSOLIDATION",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-04-bill-payment-tieout",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] HOLD design doc only, no feature code",
+   "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-05-bank-feed-live-proof",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] HOLD design doc only, no feature code",
+   "name": "ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-06-invoice-ar-chain-proof",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] HOLD design doc only, no feature code",
+   "name": "ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-07-settlements-500-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] HOLD design doc only, no 500 fix shipped",
+   "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out",
    "pr": null
   },
   {
@@ -423,116 +523,6 @@
    "pr": null
   },
   {
-   "id": "AF-0-rebaseline",
-   "source": "program",
-   "fin": true,
-   "tier": "3",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1264 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)",
-   "pr": 1264
-  },
-  {
-   "id": "AF-1-entity-coa-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1717 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)",
-   "pr": 1717
-  },
-  {
-   "id": "AF-2-qbo-drift",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1717 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)",
-   "pr": 1717
-  },
-  {
-   "id": "AF-3-account-registers",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1715 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)",
-   "pr": 1715
-  },
-  {
-   "id": "AF-4-ap-bills-migration",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #536 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)",
-   "pr": 536
-  },
-  {
-   "id": "AF-5-stub-catalogs",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #538 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)",
-   "pr": 538
-  },
-  {
-   "id": "AF-6-finance-hub",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1656 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)",
-   "pr": 1656
-  },
-  {
-   "id": "AF-7-money-controls",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #542 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS",
-   "pr": 542
-  },
-  {
-   "id": "AF-8-payroll-bridge",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #544 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST",
-   "pr": 544
-  },
-  {
-   "id": "block-37-qbo-sync-repair-pipeline",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #226 title-match only, unverified",
-   "name": "block-37-qbo-sync-repair-pipeline",
-   "pr": 226
-  },
-  {
-   "id": "block-40-accounting-audit-trail",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #227 title-match only, unverified",
-   "name": "block-40-accounting-audit-trail",
-   "pr": 227
-  },
-  {
    "id": "C7-ACCT-SUBNAV-CHROME",
    "source": ".block-ready",
    "fin": true,
@@ -542,76 +532,6 @@
    "name": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r",
    "registered_on": null,
    "pr": null
-  },
-  {
-   "id": "CHAIN-01-vendor-picker-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1262 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty",
-   "pr": 1262
-  },
-  {
-   "id": "CHAIN-02-account-register-params",
-   "source": "program",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1263 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)",
-   "pr": 1263
-  },
-  {
-   "id": "CHAIN-03-create-bill-gl-autopost",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1300 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)",
-   "pr": 1300
-  },
-  {
-   "id": "CHAIN-04-bill-payment-tieout",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1745 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)",
-   "pr": 1745
-  },
-  {
-   "id": "CHAIN-05-bank-feed-live-proof",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1756 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE",
-   "pr": 1756
-  },
-  {
-   "id": "CHAIN-06-invoice-ar-chain-proof",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1743 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof",
-   "pr": 1743
-  },
-  {
-   "id": "CHAIN-07-settlements-500-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1655 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out",
-   "pr": 1655
   },
   {
    "id": "RECON-01",
@@ -634,16 +554,6 @@
    "name": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma",
    "registered_on": "2026-07-02",
    "pr": 1838
-  },
-  {
-   "id": "STMT-1-balance-sheet-cash-flow",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1265 title-match only, unverified",
-   "name": "STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements",
-   "pr": 1265
   },
   {
    "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
@@ -842,6 +752,36 @@
    "name": "CA-04: New/Edit Account drawer with is_locked flag, opening_balance_as_of, nullable account_number. Migration 2026060802",
    "registered_on": null,
    "pr": 815
+  },
+  {
+   "id": "AF-0-rebaseline",
+   "source": "program",
+   "fin": true,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] doc block; PR #1264 doc on main",
+   "name": "STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)",
+   "pr": 1264
+  },
+  {
+   "id": "AF-3-account-registers",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] account-register routes/service + page live on main",
+   "name": "STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)",
+   "pr": null
+  },
+  {
+   "id": "AF-6-finance-hub",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] finance-hub routes/service + page on main (flag-gated OFF by design)",
+   "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)",
+   "pr": null
   },
   {
    "id": "BK7-INLINE-CREATE-DRAWERS",
@@ -1341,6 +1281,26 @@
    "pr": null
   },
   {
+   "id": "block-37-qbo-sync-repair-pipeline",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] sync-state-machine + dashboard live",
+   "name": "block-37-qbo-sync-repair-pipeline",
+   "pr": null
+  },
+  {
+   "id": "block-40-accounting-audit-trail",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] audit-trail routes + page live",
+   "name": "block-40-accounting-audit-trail",
+   "pr": null
+  },
+  {
    "id": "block-41-posting-lineage-ui",
    "source": "accounting",
    "fin": true,
@@ -1645,6 +1605,36 @@
    "status": "DONE",
    "evidence": "all 2 named artifact(s) on main",
    "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-01-vendor-picker-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] VendorBillForm states live on main",
+   "name": "ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-02-account-register-params",
+   "source": "program",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] AccountRegisterPage error-surface live",
+   "name": "ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-03-create-bill-gl-autopost",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] bill-gl-draft routes/service on main; posting flag OFF by design",
+   "name": "ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)",
    "pr": null
   },
   {
@@ -4867,6 +4857,16 @@
    "pr": 860
   },
   {
+   "id": "STMT-1-balance-sheet-cash-flow",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] balance-sheet + cash-flow routes live read-only",
+   "name": "STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements",
+   "pr": null
+  },
+  {
    "id": "STRUCTURAL-MANIFEST-SPLIT",
    "source": ".block-ready",
    "fin": false,
@@ -5216,6 +5216,12 @@
  ],
  "merged_prs": [
   {
+   "number": 1895,
+   "title": "feat(program-board): honest two-timestamp live board + merged-PR/HOLD/locked-decisions tabs (v2)",
+   "mergedAt": "2026-07-03T20:21:15Z",
+   "branch": "feat/program-board-v2-live"
+  },
+  {
    "number": 1894,
    "title": "chore(program-board): seed 11 numbered agent decisions into Questions tab",
    "mergedAt": "2026-07-03T20:03:02Z",
@@ -5256,6 +5262,12 @@
    "title": "fix(safety): FD3 Complaints creator — driver picker + catalog type + missing-field helper",
    "mergedAt": "2026-07-03T18:33:47Z",
    "branch": "feat/fd3-complaints-creator"
+  },
+  {
+   "number": 1884,
+   "title": "[HOLD-FOR-JORGE] feat(safety): SC1 accident wizard — wire catalogs + office creator persistence",
+   "mergedAt": "2026-07-03T20:16:14Z",
+   "branch": "feat/sc1-accident-wizard-catalogs"
   },
   {
    "number": 1883,
@@ -8802,22 +8814,16 @@
    "title": "feat(drivers): per-driver Hide/Show visibility toggle (reversible, no deactivation/delete)",
    "mergedAt": "2026-06-20T16:25:41Z",
    "branch": "feat/driver-hide-show-visibility"
-  },
-  {
-   "number": 1244,
-   "title": "feat(drivers): inactivity sweep by DRIVING (not login) + coverage guard — READ-ONLY",
-   "mergedAt": "2026-06-20T15:42:24Z",
-   "branch": "feat/driver-driving-inactivity-preview"
-  },
-  {
-   "number": 1243,
-   "title": "feat(drivers): 21-day inactivity sweep — READ-ONLY preview (deactivation Jorge-gated)",
-   "mergedAt": "2026-06-20T07:34:34Z",
-   "branch": "feat/driver-inactivity-preview"
   }
  ],
- "merged_pr_total": 1784,
+ "merged_pr_total": 1786,
  "hold_for_jorge": [
+  {
+   "number": 1895,
+   "title": "feat(program-board): honest two-timestamp live board + merged-PR/HOLD/locked-decisions tabs (v2)",
+   "mergedAt": "2026-07-03T20:21:15Z",
+   "category": "HOLD"
+  },
   {
    "number": 1888,
    "title": "feat(safety): SC4 cargo claim intake — load/claimant/reason/amount per 49 CFR 1005.2 [HOLD-FOR-JORGE]",
@@ -8828,6 +8834,12 @@
    "number": 1887,
    "title": "[HOLD-FOR-JORGE] fix(safety): FD1 internal fines creator — wire driver/reason catalogs + approval control",
    "mergedAt": "2026-07-03T19:43:24Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1884,
+   "title": "[HOLD-FOR-JORGE] feat(safety): SC1 accident wizard — wire catalogs + office creator persistence",
+   "mergedAt": "2026-07-03T20:16:14Z",
    "category": "HOLD"
   },
   {

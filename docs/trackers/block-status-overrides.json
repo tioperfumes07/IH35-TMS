@@ -1,0 +1,119 @@
+{
+ "note": "Human-verified verdicts (independent read-only sweep vs origin/main, 2026-07-03). These take precedence over the reconciler's weak auto-detection (e.g. hollow PR-title matches). Add an entry only from a real verification.",
+ "overrides": [
+  {
+   "id": "AF-0-rebaseline",
+   "status": "DONE",
+   "evidence": "doc block; PR #1264 doc on main",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "AF-3-account-registers",
+   "status": "DONE",
+   "evidence": "account-register routes/service + page live on main",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "AF-6-finance-hub",
+   "status": "DONE",
+   "evidence": "finance-hub routes/service + page on main (flag-gated OFF by design)",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "CHAIN-01-vendor-picker-fix",
+   "status": "DONE",
+   "evidence": "VendorBillForm states live on main",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "CHAIN-02-account-register-params",
+   "status": "DONE",
+   "evidence": "AccountRegisterPage error-surface live",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "CHAIN-03-create-bill-gl-autopost",
+   "status": "DONE",
+   "evidence": "bill-gl-draft routes/service on main; posting flag OFF by design",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "STMT-1-balance-sheet-cash-flow",
+   "status": "DONE",
+   "evidence": "balance-sheet + cash-flow routes live read-only",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "block-37-qbo-sync-repair-pipeline",
+   "status": "DONE",
+   "evidence": "sync-state-machine + dashboard live",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "block-40-accounting-audit-trail",
+   "status": "DONE",
+   "evidence": "audit-trail routes + page live",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "AF-5-stub-catalogs",
+   "status": "PENDING (GATED)",
+   "evidence": "partial \u2014 catalog buildout ongoing, not confirmably complete",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "AF-7-money-controls",
+   "status": "PENDING (GATED)",
+   "evidence": "partial built-gated; money flags OFF",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "AF-1-entity-coa-fix",
+   "status": "PENDING (GATED)",
+   "evidence": "held Tier-1 DO-NOT-RUN migration; prod still global \u2014 not applied",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "AF-2-qbo-drift",
+   "status": "PENDING (GATED)",
+   "evidence": "drift-resolution write feature not built",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "AF-4-ap-bills-migration",
+   "status": "PENDING (GATED)",
+   "evidence": "~$1.18M A/P migration not executed (Tier-1 held)",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "CHAIN-04-bill-payment-tieout",
+   "status": "PENDING (GATED)",
+   "evidence": "HOLD design doc only, no feature code",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "CHAIN-05-bank-feed-live-proof",
+   "status": "PENDING (GATED)",
+   "evidence": "HOLD design doc only, no feature code",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "CHAIN-06-invoice-ar-chain-proof",
+   "status": "PENDING (GATED)",
+   "evidence": "HOLD design doc only, no feature code",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "CHAIN-07-settlements-500-fix",
+   "status": "PENDING (GATED)",
+   "evidence": "HOLD design doc only, no 500 fix shipped",
+   "verified_on": "2026-07-03"
+  },
+  {
+   "id": "AF-8-payroll-bridge",
+   "status": "PENDING",
+   "evidence": "TMS->QBO payroll write-bridge unbuilt (deferred)",
+   "verified_on": "2026-07-03"
+  }
+ ]
+}
