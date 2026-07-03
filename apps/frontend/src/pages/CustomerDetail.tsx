@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDateUS } from "../lib/formatDate";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
@@ -303,9 +304,7 @@ function formatCurrencyCents(cents: number | null | undefined) {
 
 function formatDateShort(value: string | null | undefined) {
   if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-US");
+  return formatDateUS(value) || "—";
 }
 
 type SaferEntityStatus = {

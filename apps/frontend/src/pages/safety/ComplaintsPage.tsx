@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createComplaint, getComplaints } from "../../api/safety";
@@ -80,7 +81,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           <tbody>
             {(query.data?.complaints ?? []).map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.complaint_date ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.complaint_date)}</td>
                 <td className="px-2 py-1">{String(row.complainant_type ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.respondent_type ?? "—")} · {String(row.respondent_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.type_code ?? "—")}</td>

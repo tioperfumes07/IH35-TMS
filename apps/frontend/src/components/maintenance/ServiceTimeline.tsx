@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -123,7 +124,7 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
                     <span className="text-[10px] uppercase tracking-wide text-gray-500">{event.event_type.replace(/_/g, " ")}</span>
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-gray-600">
-                    <span>{event.occurred_at.slice(0, 10)}</span>
+                    <span>{formatDateUS(event.occurred_at)}</span>
                     {event.status ? <span>{event.status}</span> : null}
                     {event.subtitle ? <span className="truncate">{event.subtitle}</span> : null}
                   </div>

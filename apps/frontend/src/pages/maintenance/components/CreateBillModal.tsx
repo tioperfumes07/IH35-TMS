@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers, listUnits, listVendors } from "../../../api/mdata";
 import { Modal } from "../../../components/Modal";
+import { companyToday } from "../../../lib/businessDate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
@@ -22,7 +23,7 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, o
   const [taxRate, setTaxRate] = useState(8.25);
   const [billType, setBillType] = useState("repair");
   const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
-  const [billDate, setBillDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [billDate, setBillDate] = useState(() => companyToday());
   const [dueDate, setDueDate] = useState("");
   const [billNumber, setBillNumber] = useState("");
   const [terms, setTerms] = useState("net_30");

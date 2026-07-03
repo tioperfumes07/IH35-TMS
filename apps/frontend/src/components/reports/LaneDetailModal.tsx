@@ -1,4 +1,5 @@
 import type { LaneProfitabilityLane, LaneProfitabilityLoadDetail } from "../../api/reports";
+import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../Modal";
 
 function money(cents: number) {
@@ -47,7 +48,7 @@ export function LaneDetailModal({ open, lane, loads, loading, onClose }: Props) 
             {loads.map((load) => (
               <tr key={load.load_id} className="border-t border-gray-100">
                 <td className="px-3 py-2 font-medium">{load.load_number ?? load.load_id.slice(0, 8)}</td>
-                <td className="px-3 py-2">{load.created_at.slice(0, 10)}</td>
+                <td className="px-3 py-2">{formatDateUS(load.created_at)}</td>
                 <td className="px-3 py-2">{money(load.revenue_cents)}</td>
                 <td className="px-3 py-2">{money(load.driver_pay_cents)}</td>
                 <td className="px-3 py-2">{money(load.fuel_cost_cents)}</td>

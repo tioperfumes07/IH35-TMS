@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listFactoringAdvances, type FactoringAdvance } from "../../api/accounting";
@@ -146,7 +147,7 @@ export function FactoringListPage() {
             {pagedRows.map((row) => (
               <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/factoring/${row.id}`)}>
                 <td className="px-3 py-2 font-semibold text-gray-900">{row.display_id}</td>
-                <td className="px-3 py-2 text-gray-700">{new Date(row.submitted_at).toLocaleDateString("en-US")}</td>
+                <td className="px-3 py-2 text-gray-700">{formatDateUS(row.submitted_at)}</td>
                 <td className="px-3 py-2 text-gray-700">{row.factoring_company_name}</td>
                 <td className="px-3 py-2 text-gray-700">{row.invoice_count}</td>
                 <td className="px-3 py-2 text-gray-700">{money(row.invoice_total_cents)}</td>
