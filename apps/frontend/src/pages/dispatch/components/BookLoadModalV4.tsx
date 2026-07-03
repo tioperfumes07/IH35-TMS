@@ -30,7 +30,9 @@ import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 // density only — the submit payload is byte-identical.
 export const LOAD_WIZARD_V5_FLAG = "LOAD_WIZARD_V5";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
-import { RateConUploadPanel } from "./book-load-v4/RateConUploadPanel";
+// RATECON-2: rate-con intake is now the single OcrDropZone block in §E (Documents). RateConUploadPanel
+// (button variant) still shares the useRateConExtraction hook and is retained for reuse, but is no longer
+// rendered here — one intake surface, no duplicate affordance.
 import { AccessorialEditor } from "../../../components/dispatch/AccessorialEditor";
 import { sumStopExtraRatesCents, stopExtraRateChargeLines } from "../../../components/dispatch/book-load-extra-rates";
 import {
@@ -870,23 +872,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     }}
                   />
 
-                  {!editLoadId ? (
-                    <RateConUploadPanel
-                      operatingCompanyId={operatingCompanyId}
-                      onPrefill={(prefill) => {
-                        applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, prefill.json);
-                        if (typeof prefill.json.accessorial_cents === "number" && prefill.json.accessorial_cents > 0) {
-                          form.setValue("accessorial_rows", rowFromLegacyAccessorialCents(prefill.json.accessorial_cents as number), { shouldDirty: true });
-                        }
-                        pushToast(
-                          prefill.lowConfidenceFields.length
-                            ? "Rate con read — review the prefill (low-confidence fields flagged)"
-                            : "Rate con read — review the prefill",
-                          "success",
-                        );
-                      }}
-                    />
-                  ) : null}
+                  {/* RATECON-2: the rate-con intake (drop OR click → real extraction) is the single OcrDropZone
+                      block in §E (Documents). The duplicate button-panel affordance was removed here. */}
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
@@ -1194,7 +1181,25 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
               </div>
               <div className="space-y-2 p-3">
                 <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation &amp; documents</label>
-                <OcrDropZone operatingCompanyId={operatingCompanyId} onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })} />
+                {!editLoadId ? (
+                  <OcrDropZone
+                    operatingCompanyId={operatingCompanyId}
+                    onPrefill={(prefill) => {
+                      applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, prefill.json);
+                      if (typeof prefill.json.accessorial_cents === "number" && prefill.json.accessorial_cents > 0) {
+                        form.setValue("accessorial_rows", rowFromLegacyAccessorialCents(prefill.json.accessorial_cents as number), { shouldDirty: true });
+                      }
+                      pushToast(
+                        prefill.lowConfidenceFields.length
+                          ? "Rate con read — review the prefill (low-confidence fields flagged)"
+                          : "Rate con read — review the prefill",
+                        "success",
+                      );
+                    }}
+                  />
+                ) : (
+                  <p className="text-[11px] text-gray-500">Rate-con extraction fills a new load — open Book Load to read a rate con into a fresh draft.</p>
+                )}
               </div>
             </section>
           </div>

@@ -61,7 +61,23 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
             {rows.map((row) => (
               <tr key={row.driverId} className="border-t border-gray-100">
                 <td className="px-3 py-2">{ctx.renderRowCheckbox(row.driverId)}</td>
-                <td className="px-3 py-2 font-medium text-slate-900">{row.name}</td>
+                <td className="px-3 py-2 font-medium text-slate-900">
+                  {/* D1: the driver name itself opens the profile (entity-name click → its profile),
+                      not only the trailing "Open profile" action. Same target as that action. */}
+                  {onOpenProfile ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenProfile(row.driverId)}
+                      className="text-left font-medium text-slate-900 hover:text-slate-700 hover:underline"
+                    >
+                      {row.name}
+                    </button>
+                  ) : (
+                    <Link to={`/drivers/${row.driverId}/profile`} className="font-medium text-slate-900 hover:text-slate-700 hover:underline">
+                      {row.name}
+                    </Link>
+                  )}
+                </td>
                 <td className="px-3 py-2">
                   <StatusBadge status={row.status} />
                 </td>

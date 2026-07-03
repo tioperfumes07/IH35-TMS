@@ -5,6 +5,7 @@ import { requireAuth } from "../../auth/session-middleware.js";
 import {
   createFlag,
   isEnabled,
+  isPerEntityOnlyFlag,
   isPostingFlag,
   listFlags,
   listOverrides,
@@ -111,13 +112,28 @@ export async function registerFeatureFlagRoutes(app: FastifyInstance) {
     const flagKey = String(req.params.flag_key ?? "").trim();
     if (!flagKey) return reply.code(400).send({ error: "validation_error" });
 
+    const wantsGlobalEnable = parsed.data.default_enabled === true || Number(parsed.data.rollout_pct) > 0;
+
     // Defense-in-depth: money-posting flags are per-entity-only (resolveFlagEnabled ignores global
     // rollout/default for them). Reject a global enable attempt outright so an admin can't believe they
     // turned posting on globally — posting is enabled ONLY via a per-entity override.
-    if (isPostingFlag(flagKey) && (parsed.data.default_enabled === true || Number(parsed.data.rollout_pct) > 0)) {
+    if (isPostingFlag(flagKey) && wantsGlobalEnable) {
       return reply.code(400).send({
         error: "posting_flag_global_enable_forbidden",
         detail: "Posting flags are per-entity only. Enable via a per-entity override, not default_enabled/rollout_pct.",
+      });
+    }
+
+    // FLAG-HARDEN-1: per-entity-only (non-posting) flags have the SAME restriction. rollout_pct is a
+    // user-hash percentage that (a) silently no-ops for endpoints that pass no user_uuid (e.g. the
+    // rate-con extractor) and (b) would leak the feature across entities where a user_uuid is present.
+    // The resolver ignores global default/rollout for these keys, so an accepted global-enable PATCH
+    // would be a silent no-op control — refuse it explicitly and name the correct instrument.
+    if (isPerEntityOnlyFlag(flagKey) && wantsGlobalEnable) {
+      return reply.code(400).send({
+        error: "per_entity_flag_global_enable_forbidden",
+        detail:
+          "This flag is per-entity only. Enable it for one operating company via a per-entity (tenant) override, not default_enabled/rollout_pct.",
       });
     }
 
