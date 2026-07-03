@@ -68,5 +68,9 @@
     { "block_id": "SC3", "kind": "question", "author": "agent", "status": "open", "created_at": "2026-07-03T10:07:00-05:00", "body": "Trailer Interchange: do you want the tracking page under Safety or a new Dispatch surface? And should the driver-app photo upload block dispatch when damage is auto-detected, or just flag it?" },
     { "block_id": "V1", "kind": "question", "author": "agent", "status": "open", "created_at": "2026-07-03T10:08:00-05:00", "body": "Vendor/customer categorization: is the default expense category a hard default applied on every new bill/txn, or only a recommendation surfaced in the match panel that the user can override?" },
     { "block_id": null, "kind": "question", "author": "agent", "status": "open", "created_at": "2026-07-03T10:10:00-05:00", "body": "General: for the whole Owner-Batch, do you want each surface's live-audit screenshots posted here in the board before I write its block, or is the tracker row enough?" }
+  ],
+  "locked_decisions": [
+    { "id": "VENDOR/CUSTOMER CATEGORIZATION", "date_ct": "07/03/2026 CT", "decision": "Owner-Batch V1/V2: the default expense category is a RECOMMENDATION that pre-fills the match/categorization panel and can be overridden — NEVER a silent hard auto-post. Everything with money lands on the ledger (double-entry), categorization human-confirmed. (Jorge 2026-07-03)" },
+    { "id": "AUDIT EVIDENCE", "date_ct": "07/03/2026 CT", "decision": "The tracker row is enough to authorize standard-pattern fixes; a before→after preview is required only for judgment-heavy surfaces; no per-row broken-state screenshots required. (Jorge 2026-07-03)" }
   ]
 }
