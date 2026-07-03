@@ -4,8 +4,18 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import * as mdataApi from "../../api/mdata";
 import * as dispatchApi from "../../api/dispatch";
+import * as safetyApi from "../../api/safety";
 import { ToastProvider } from "../Toast";
 import { AccidentReportDrawer } from "./AccidentReportDrawer";
+
+vi.mock("../../api/safety", () => ({
+  createSafetyAccident: vi.fn().mockResolvedValue({ id: "accident-1" }),
+  patchSafetyAccident: vi.fn().mockResolvedValue({ id: "accident-1" }),
+  addAccidentPhoto: vi.fn().mockResolvedValue({}),
+  setSafetyAccidentStatus: vi.fn().mockResolvedValue({}),
+  spawnSafetyLiability: vi.fn().mockResolvedValue({}),
+  spawnSafetyWo: vi.fn().mockResolvedValue({}),
+}));
 
 // SC1: the four catalogs source from the real company-scoped list functions.
 vi.mock("../../api/mdata", () => ({
@@ -80,6 +90,35 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
     await user.selectOptions(select, "driver-uuid-1");
     expect(select.value).toBe("driver-uuid-1");
     expect(select.value).not.toBe("Cazares, Alfredo");
+  });
+
+  it("persists the four catalog links (uuids) when the office creator saves", async () => {
+    const user = userEvent.setup();
+    render(wrap(<AccidentReportDrawer open operatingCompanyId="co-1" accident={draft} createMode onClose={() => {}} onUpdated={() => {}} />));
+
+    const pick = async (testid: string, value: string, label: RegExp) => {
+      const wrapEl = await screen.findByTestId(testid);
+      const select = within(wrapEl).getByRole("combobox") as HTMLSelectElement;
+      await waitFor(() => expect(within(wrapEl).getByRole("option", { name: label })).toBeInTheDocument());
+      await user.selectOptions(select, value);
+      expect(select.value).toBe(value);
+    };
+    await pick("accident-driver-picker", "driver-uuid-1", /Cazares, Alfredo/);
+    await pick("accident-unit-picker", "unit-uuid-1", /T-101/);
+    await pick("accident-vendor-picker", "vendor-uuid-1", /Laredo Diesel/);
+    await pick("accident-load-picker", "load-uuid-1", /LD-9001/);
+
+    await user.click(screen.getByTestId("accident-save-btn"));
+    await waitFor(() => expect(vi.mocked(safetyApi.createSafetyAccident)).toHaveBeenCalled());
+    expect(vi.mocked(safetyApi.createSafetyAccident).mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        operating_company_id: "co-1",
+        driver_id: "driver-uuid-1",
+        unit_id: "unit-uuid-1",
+        vendor_id: "vendor-uuid-1",
+        load_id: "load-uuid-1",
+      })
+    );
   });
 
   it("never renders Add Photo as a silent dead control (tooltip + gate note before save)", async () => {

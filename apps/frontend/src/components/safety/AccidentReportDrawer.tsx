@@ -1,7 +1,14 @@
 import type { JSX } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { addAccidentPhoto, setSafetyAccidentStatus, spawnSafetyLiability, spawnSafetyWo } from "../../api/safety";
+import {
+  addAccidentPhoto,
+  createSafetyAccident,
+  patchSafetyAccident,
+  setSafetyAccidentStatus,
+  spawnSafetyLiability,
+  spawnSafetyWo,
+} from "../../api/safety";
 import { listDrivers, listUnits, listVendors } from "../../api/mdata";
 import { listDispatchLoads } from "../../api/dispatch";
 import { Button } from "../Button";
@@ -37,13 +44,16 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
   // Linked entity ids captured from the four wired catalogs. SC1: these replaced the four dead
   // free-text <input> comboboxes (no data source, zero API calls). We hold the real uuid in state —
-  // never the display name — so the accident can key to driver + unit + vendor + load. NOTE (see PR):
-  // `safety.accident_reports` (db/migrations/0049) only persists driver_id today; unit/vendor/load
-  // columns + a create/patch endpoint do not yet exist, so selection is UI-state until that lands.
+  // never the display name — and on create/save PERSIST them to safety.accident_reports
+  // (driver_id/unit_id/vendor_id/load_id) via the office creator endpoint, so the accident keys to
+  // real driver + unit + vendor + load records.
   const [driverId, setDriverId] = useState<string>("");
   const [unitId, setUnitId] = useState<string>("");
   const [vendorId, setVendorId] = useState<string>("");
   const [loadId, setLoadId] = useState<string>("");
+  const [incidentDate, setIncidentDate] = useState<string>("");
+  const [memo, setMemo] = useState<string>("");
+  const [saving, setSaving] = useState(false);
 
   const accidentId = accident ? String(accident.id ?? "") : "";
 
@@ -52,6 +62,8 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     setUnitId(accident ? String(accident.unit_id ?? "") : "");
     setVendorId(accident ? String(accident.vendor_id ?? "") : "");
     setLoadId(accident ? String(accident.load_id ?? "") : "");
+    setIncidentDate(accident ? String(accident.accident_at ?? "").slice(0, 10) : "");
+    setMemo(accident ? String(accident.notes ?? accident.description ?? "") : "");
   }, [accidentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scopeReady = open && Boolean(operatingCompanyId);
@@ -132,6 +144,30 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
       .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"));
   };
 
+  const linkPayload = {
+    driver_id: driverId || null,
+    unit_id: unitId || null,
+    vendor_id: vendorId || null,
+    load_id: loadId || null,
+    accident_at: incidentDate || null,
+    description: memo || null,
+  };
+
+  const saveAccident = () => {
+    setSaving(true);
+    const request = createMode
+      ? createSafetyAccident({ operating_company_id: operatingCompanyId, ...linkPayload })
+      : patchSafetyAccident(id, operatingCompanyId, linkPayload);
+    void request
+      .then(() => {
+        pushToast(createMode ? "Accident report created" : "Accident report saved", "success");
+        onUpdated();
+        onClose();
+      })
+      .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+      .finally(() => setSaving(false));
+  };
+
   const photoGateTooltip = canMutate ? undefined : "Save the report first to attach photos";
 
   return (
@@ -176,7 +212,13 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             </Field>
 
             <Field label="Incident Date *">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.accident_at ?? "").slice(0, 10)} />
+              <input
+                type="date"
+                className="h-8 w-full rounded-sm border border-gray-300 px-2"
+                data-testid="accident-incident-date"
+                value={incidentDate}
+                onChange={(event) => setIncidentDate(event.target.value)}
+              />
             </Field>
             <Field label="Report Date">
               <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={companyToday()} />
@@ -265,9 +307,20 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
               <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
             <Field label="Memo" className="col-span-2">
-              <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1" rows={2} defaultValue={String(accident.notes ?? accident.description ?? "")} />
+              <textarea
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                rows={2}
+                data-testid="accident-memo"
+                value={memo}
+                onChange={(event) => setMemo(event.target.value)}
+              />
             </Field>
           </div>
+        </div>
+        <div className="mt-3 flex justify-end">
+          <Button size="sm" disabled={saving} data-testid="accident-save-btn" onClick={saveAccident}>
+            {saving ? "Saving…" : createMode ? "+ Create Accident Report" : "Save Changes"}
+          </Button>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button size="sm" variant="secondary" disabled={!canMutate} onClick={() => setStatus("under-investigation")}>
