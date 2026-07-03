@@ -199,6 +199,20 @@ const SRC_RANK = { "program": 4, ".block-ready": 3, "enterprise-29": 2, "account
 const byId = new Map();
 for (const b of all) { const k = b.id.toUpperCase(); const cur = byId.get(k); if (!cur || (SRC_RANK[b.source] || 0) > (SRC_RANK[cur.source] || 0)) byId.set(k, b); }
 const blocks = [...byId.values()];
+
+// VERIFIED OVERRIDES — human-verified verdicts (independent read-only sweep vs origin/main) take
+// precedence over the reconciler's weak auto-detection. This is what stops a hollow PR-title match
+// (e.g. AF-* matching unrelated AUDIT-FIX UI PRs #530-544) from ever re-flagging a verified block on
+// regen. Durable: docs/trackers/block-status-overrides.json. Add entries ONLY from a real verification.
+try {
+  const ovRaw = fs.readFileSync(path.join(process.cwd(), "docs/trackers/block-status-overrides.json"), "utf8");
+  const ovMap = new Map((JSON.parse(ovRaw).overrides || []).map((o) => [String(o.id).toUpperCase(), o]));
+  for (const b of blocks) {
+    const o = ovMap.get(b.id.toUpperCase());
+    if (o) { b.status = o.status; b.evidence = `[verified ${o.verified_on}] ${o.evidence}`.slice(0, 120); }
+  }
+} catch { /* no overrides file — auto-detection only */ }
+
 const ORDER = { "PENDING": 0, "PENDING (GATED)": 1, "NEEDS-VERIFY": 2, "DONE": 3 };
 blocks.sort((a, b) => (ORDER[a.status] - ORDER[b.status]) || a.id.localeCompare(b.id));
 
@@ -231,7 +245,51 @@ const universe = {
 const blocksOut = blocks.map((b) => ({ ...b, pr: prOf(b) }));
 console.log(`[reconcile:blocks] delta (blocks added since ${DELTA_SINCE}): ${delta.length} → ${delta.map((d) => d.id).join(", ") || "none"}`);
 
-fs.writeFileSync(path.join(ROOT, "docs/trackers/block-reconciliation-data.json"), JSON.stringify({ date, counts, universe, delta, blocks: blocksOut }, null, 1));
+// ── MERGED-PR SPINE + HOLD-FOR-JORGE INVENTORY (mirrors master-tracker tabs "01 Merged PRs" + "11
+// HOLD-FOR-JORGE inventory") — emitted into the shared JSON so the Program Board can render them.
+// These are AS-OF this reconcile run (the JSON's `date`/`generated_at_iso`), NOT a live feed: the backend
+// runtime has no git/gh, so it reads THIS committed snapshot. Re-run `npm run reconcile:blocks` to refresh.
+const mergedPrsAll = [...mergedPRs]
+  .filter((p) => p && p.number)
+  .map((p) => ({ number: p.number, title: String(p.title || "").slice(0, 160), mergedAt: p.mergedAt || null, branch: p.headRefName || null }))
+  .sort((a, b) => b.number - a.number);
+// The board serves only the most-recent slice, so the committed spine is capped to keep this file lean
+// (merged_pr_total below still carries the TRUE full count). HOLD inventory is small and kept in full.
+const MERGED_SPINE_CAP = 600;
+const mergedPrsOut = mergedPrsAll.slice(0, MERGED_SPINE_CAP);
+// HOLD-FOR-JORGE category derived from the PR title/branch (same keywords the tracker's tab 11 used).
+function holdCategory(p) {
+  const title = String(p.title || "");
+  const both = `${title} ${p.branch || ""}`;
+  if (/HOLD-FOR-JORGE\s*[—:-]\s*TIER\s*1/i.test(title) || /\bTIER[-\s]?1\b/i.test(title)) return "TIER-1 financial";
+  if (/\bHOLD-FOR-JORGE\b/i.test(title)) return "HOLD";
+  if (/\bhold\b/i.test(both)) return "HOLD";
+  return null;
+}
+const holdForJorgeOut = mergedPrsAll
+  .map((p) => ({ ...p, category: holdCategory(p) }))
+  .filter((p) => p.category)
+  .map((p) => ({ number: p.number, title: p.title, mergedAt: p.mergedAt, category: p.category }));
+console.log(`[reconcile:blocks] merged-PR spine: ${mergedPrsAll.length} total (committed slice ${mergedPrsOut.length}) · HOLD-FOR-JORGE inventory: ${holdForJorgeOut.length}`);
+
+fs.writeFileSync(
+  path.join(ROOT, "docs/trackers/block-reconciliation-data.json"),
+  JSON.stringify(
+    {
+      date, // the day this snapshot's universe is valid FOR (true age of the block/task data)
+      generated_at_iso: new Date().toISOString(), // precise moment reconcile produced this snapshot
+      counts,
+      universe,
+      delta,
+      blocks: blocksOut,
+      merged_prs: mergedPrsOut, // most-recent slice of the merged-PR spine (mirrors tracker tab "01 Merged PRs")
+      merged_pr_total: mergedPrsAll.length, // TRUE full merged-PR count (slice above is capped for file size)
+      hold_for_jorge: holdForJorgeOut, // gated/held merged PRs awaiting Jorge (mirrors tracker tab "11")
+    },
+    null,
+    1
+  )
+);
 
 const legend = [
   `**DONE** = verified on main (branch merged or all signature files present).`,

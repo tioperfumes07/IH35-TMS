@@ -32,6 +32,23 @@ else {
     errs.push("expected getDriver(id, <companyId>) scoped call in DriverDetailPage");
 }
 
+// Backend source-level guard: the non-aggregate by-id GET must scope by home company OR an active
+// driver_company_authorizations fallback (mirrors buildDriverAggregate). Without the fallback a
+// driver the caller is authorized to see 404s even when the frontend does not pass the param.
+const backendFile = "apps/backend/src/mdata/drivers.routes.ts";
+const backendSrc = (() => {
+  try { return fs.readFileSync(path.join(ROOT, backendFile), "utf8"); } catch { return ""; }
+})();
+if (!backendSrc) errs.push(`${backendFile} not found`);
+else {
+  const getIdx = backendSrc.indexOf('app.get("/api/v1/mdata/drivers/:id"');
+  const nextRouteIdx = backendSrc.indexOf('app.post("/api/v1/mdata/drivers/:id/resend-invite"');
+  const handler = getIdx >= 0 && nextRouteIdx > getIdx ? backendSrc.slice(getIdx, nextRouteIdx) : "";
+  if (!handler) errs.push(`could not locate GET /api/v1/mdata/drivers/:id handler in ${backendFile}`);
+  else if (!/driver_company_authorizations/.test(handler))
+    errs.push("GET /api/v1/mdata/drivers/:id non-aggregate scope dropped the driver_company_authorizations fallback — an authorized driver will false-404 (regression of the backend #1899 fix)");
+}
+
 if (errs.length) {
   console.error(`[${LABEL}] FAILED`);
   for (const e of errs) console.error(`  ✗ ${e}`);

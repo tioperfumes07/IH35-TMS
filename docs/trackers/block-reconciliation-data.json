@@ -1,22 +1,23 @@
 {
- "date": "2026-06-27",
+ "date": "2026-07-03",
+ "generated_at_iso": "2026-07-03T22:43:28.109Z",
  "counts": {
   "PENDING": 4,
-  "PENDING (GATED)": 24,
-  "NEEDS-VERIFY": 19,
-  "DONE": 420
+  "PENDING (GATED)": 33,
+  "NEEDS-VERIFY": 3,
+  "DONE": 436
  },
  "universe": {
-  "total_blocks_after_dedup": 467,
+  "total_blocks_after_dedup": 476,
   "by_source_after_dedup": {
-   ".block-ready": 294,
    "program": 61,
+   ".block-ready": 303,
    "enterprise-29": 29,
    "accounting": 26,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 305
+   ".block-ready (*.json files)": 314
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count."
  },
@@ -78,11 +79,60 @@
    "title": "50-cap class — unit/vendor/customer client pickers load full active set (limit forwarded in mdata.ts)."
   },
   {
+   "id": "IMPORT-0",
+   "status": "DONE",
+   "pr": 1796,
+   "registered_on": "2026-07-02",
+   "title": "IMPORT-0 QBO Reports API client (TrialBalance + GeneralLedger, v2 response shape) + exact-cents parsers + monthly date c"
+  },
+  {
+   "id": "IMPORT-P0",
+   "status": "DONE",
+   "pr": 1797,
+   "registered_on": "2026-07-02",
+   "title": "IMPORT-P0 JE→QBO push kill-switch + masterdata echo guard. HARD PREREQUISITE: no import run (opening balance or GL detai"
+  },
+  {
+   "id": "IMPORT-P0b",
+   "status": "DONE",
+   "pr": 1802,
+   "registered_on": "2026-07-02",
+   "title": "IMPORT-P0b — entity-push kill-switch: gate every TMS→QBO write of invoice/bill/customer/vendor/account/item so nothing r"
+  },
+  {
    "id": "QBO-SYNC-DRIFT-401-FIX",
-   "status": "PENDING",
-   "pr": null,
+   "status": "DONE",
+   "pr": 1535,
    "registered_on": "2026-06-27",
    "title": "QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch)."
+  },
+  {
+   "id": "RECON-00",
+   "status": "PENDING",
+   "pr": null,
+   "registered_on": "2026-07-02",
+   "title": "RECON-00 Design lock: commit the TMS↔QBO Reconciliation Module architecture spec (double-books/no-sync, twice-daily pass"
+  },
+  {
+   "id": "RECON-01",
+   "status": "NEEDS-VERIFY",
+   "pr": 1831,
+   "registered_on": "2026-07-02",
+   "title": "RECON-01 Schema + scheduled jobs + exception engine: additive CREATE TABLE accounting.recon_runs + accounting.recon_exce"
+  },
+  {
+   "id": "RECON-02",
+   "status": "NEEDS-VERIFY",
+   "pr": 1838,
+   "registered_on": "2026-07-02",
+   "title": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma"
+  },
+  {
+   "id": "SWEEP-FIX-17-27",
+   "status": "DONE",
+   "pr": 1798,
+   "registered_on": "2026-07-02",
+   "title": "Consolidated fixes for the modules 17-27 sweep defects. PR A ships the code fixes with regression tests; PR B (owner-gat"
   },
   {
    "id": "TBL-STANDARD-INSURANCE-POLICIES",
@@ -93,13 +143,23 @@
   },
   {
    "id": "UNIFIED-TXN-REGISTER",
-   "status": "PENDING",
-   "pr": null,
+   "status": "DONE",
+   "pr": 1536,
    "registered_on": "2026-06-27",
    "title": "Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register."
   }
  ],
  "blocks": [
+  {
+   "id": "AF-8-payroll-bridge",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING",
+   "evidence": "[verified 2026-07-03] TMS->QBO payroll write-bridge unbuilt (deferred)",
+   "name": "STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST",
+   "pr": null
+  },
   {
    "id": "CASH-FLOW-MODULE",
    "source": ".block-ready",
@@ -112,14 +172,14 @@
    "pr": null
   },
   {
-   "id": "QBO-SYNC-DRIFT-401-FIX",
+   "id": "RECON-00",
    "source": ".block-ready",
    "fin": false,
    "tier": "",
    "status": "PENDING",
    "evidence": "no merged PR / no files on main",
-   "name": "QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch).",
-   "registered_on": "2026-06-27",
+   "name": "RECON-00 Design lock: commit the TMS↔QBO Reconciliation Module architecture spec (double-books/no-sync, twice-daily pass",
+   "registered_on": "2026-07-02",
    "pr": null
   },
   {
@@ -133,14 +193,53 @@
    "pr": null
   },
   {
-   "id": "UNIFIED-TXN-REGISTER",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "0/2 signature file(s) on main",
-   "name": "Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register.",
-   "registered_on": "2026-06-27",
+   "id": "AF-1-entity-coa-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] held Tier-1 DO-NOT-RUN migration; prod still global — not applied",
+   "name": "STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)",
+   "pr": null
+  },
+  {
+   "id": "AF-2-qbo-drift",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] drift-resolution write feature not built",
+   "name": "STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)",
+   "pr": null
+  },
+  {
+   "id": "AF-4-ap-bills-migration",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] ~$1.18M A/P migration not executed (Tier-1 held)",
+   "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)",
+   "pr": null
+  },
+  {
+   "id": "AF-5-stub-catalogs",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] partial — catalog buildout ongoing, not confirmably complete",
+   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)",
+   "pr": null
+  },
+  {
+   "id": "AF-7-money-controls",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] partial built-gated; money flags OFF",
+   "name": "STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS",
    "pr": null
   },
   {
@@ -211,6 +310,46 @@
    "status": "PENDING (GATED)",
    "evidence": "deep-verified 2026-06-24 (feature grep)",
    "name": "BLOCK-25-of-29-TIER3.5-CONSOLIDATION",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-04-bill-payment-tieout",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] HOLD design doc only, no feature code",
+   "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-05-bank-feed-live-proof",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] HOLD design doc only, no feature code",
+   "name": "ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-06-invoice-ar-chain-proof",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] HOLD design doc only, no feature code",
+   "name": "ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-07-settlements-500-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-03] HOLD design doc only, no 500 fix shipped",
+   "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out",
    "pr": null
   },
   {
@@ -384,194 +523,37 @@
    "pr": null
   },
   {
-   "id": "AF-0-rebaseline",
-   "source": "program",
-   "fin": true,
-   "tier": "3",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1264 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)",
-   "pr": 1264
-  },
-  {
-   "id": "AF-1-entity-coa-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #530 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)",
-   "pr": 530
-  },
-  {
-   "id": "AF-2-qbo-drift",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #532 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)",
-   "pr": 532
-  },
-  {
-   "id": "AF-3-account-registers",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #534 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)",
-   "pr": 534
-  },
-  {
-   "id": "AF-4-ap-bills-migration",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #536 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)",
-   "pr": 536
-  },
-  {
-   "id": "AF-5-stub-catalogs",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #538 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)",
-   "pr": 538
-  },
-  {
-   "id": "AF-6-finance-hub",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #540 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)",
-   "pr": 540
-  },
-  {
-   "id": "AF-7-money-controls",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #542 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS",
-   "pr": 542
-  },
-  {
-   "id": "AF-8-payroll-bridge",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #544 title-match only, unverified",
-   "name": "STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST",
-   "pr": 544
-  },
-  {
-   "id": "block-37-qbo-sync-repair-pipeline",
-   "source": "accounting",
+   "id": "C7-ACCT-SUBNAV-CHROME",
+   "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #226 title-match only, unverified",
-   "name": "block-37-qbo-sync-repair-pipeline",
-   "pr": 226
+   "evidence": "9/10 signature file(s) on main — partial, unverified",
+   "name": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r",
+   "registered_on": null,
+   "pr": null
   },
   {
-   "id": "block-40-accounting-audit-trail",
-   "source": "accounting",
+   "id": "RECON-01",
+   "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #227 title-match only, unverified",
-   "name": "block-40-accounting-audit-trail",
-   "pr": 227
+   "evidence": "PR #1831 title-match only, unverified",
+   "name": "RECON-01 Schema + scheduled jobs + exception engine: additive CREATE TABLE accounting.recon_runs + accounting.recon_exce",
+   "registered_on": "2026-07-02",
+   "pr": 1831
   },
   {
-   "id": "CHAIN-01-vendor-picker-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1262 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty",
-   "pr": 1262
-  },
-  {
-   "id": "CHAIN-02-account-register-params",
-   "source": "program",
-   "fin": true,
+   "id": "RECON-02",
+   "source": ".block-ready",
+   "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #1263 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)",
-   "pr": 1263
-  },
-  {
-   "id": "CHAIN-03-create-bill-gl-autopost",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1300 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)",
-   "pr": 1300
-  },
-  {
-   "id": "CHAIN-04-bill-payment-tieout",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1267 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)",
-   "pr": 1267
-  },
-  {
-   "id": "CHAIN-05-bank-feed-live-proof",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1268 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE",
-   "pr": 1268
-  },
-  {
-   "id": "CHAIN-06-invoice-ar-chain-proof",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1269 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof",
-   "pr": 1269
-  },
-  {
-   "id": "CHAIN-07-settlements-500-fix",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1270 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out",
-   "pr": 1270
-  },
-  {
-   "id": "STMT-1-balance-sheet-cash-flow",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1265 title-match only, unverified",
-   "name": "STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements",
-   "pr": 1265
+   "evidence": "PR #1838 title-match only, unverified",
+   "name": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma",
+   "registered_on": "2026-07-02",
+   "pr": 1838
   },
   {
    "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
@@ -770,6 +752,36 @@
    "name": "CA-04: New/Edit Account drawer with is_locked flag, opening_balance_as_of, nullable account_number. Migration 2026060802",
    "registered_on": null,
    "pr": 815
+  },
+  {
+   "id": "AF-0-rebaseline",
+   "source": "program",
+   "fin": true,
+   "tier": "3",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] doc block; PR #1264 doc on main",
+   "name": "STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)",
+   "pr": 1264
+  },
+  {
+   "id": "AF-3-account-registers",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] account-register routes/service + page live on main",
+   "name": "STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)",
+   "pr": null
+  },
+  {
+   "id": "AF-6-finance-hub",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] finance-hub routes/service + page on main (flag-gated OFF by design)",
+   "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)",
+   "pr": null
   },
   {
    "id": "BK7-INLINE-CREATE-DRAWERS",
@@ -1269,6 +1281,26 @@
    "pr": null
   },
   {
+   "id": "block-37-qbo-sync-repair-pipeline",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] sync-state-machine + dashboard live",
+   "name": "block-37-qbo-sync-repair-pipeline",
+   "pr": null
+  },
+  {
+   "id": "block-40-accounting-audit-trail",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] audit-trail routes + page live",
+   "name": "block-40-accounting-audit-trail",
+   "pr": null
+  },
+  {
    "id": "block-41-posting-lineage-ui",
    "source": "accounting",
    "fin": true,
@@ -1506,17 +1538,6 @@
    "pr": null
   },
   {
-   "id": "C7-ACCT-SUBNAV-CHROME",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 10 file(s) on main",
-   "name": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "CAP-AUTOSTATUS",
    "source": "program",
    "fin": false,
@@ -1584,6 +1605,36 @@
    "status": "DONE",
    "evidence": "all 2 named artifact(s) on main",
    "name": "SAMSARA CAP (GAP-55..64) / TASK — Driver scoring",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-01-vendor-picker-fix",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] VendorBillForm states live on main",
+   "name": "ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-02-account-register-params",
+   "source": "program",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] AccountRegisterPage error-surface live",
+   "name": "ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)",
+   "pr": null
+  },
+  {
+   "id": "CHAIN-03-create-bill-gl-autopost",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] bill-gl-draft routes/service on main; posting flag OFF by design",
+   "name": "ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)",
    "pr": null
   },
   {
@@ -4495,6 +4546,39 @@
    "pr": 643
   },
   {
+   "id": "IMPORT-0",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1796 merged 2026-07-02",
+   "name": "IMPORT-0 QBO Reports API client (TrialBalance + GeneralLedger, v2 response shape) + exact-cents parsers + monthly date c",
+   "registered_on": "2026-07-02",
+   "pr": 1796
+  },
+  {
+   "id": "IMPORT-P0",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1797 merged 2026-07-02",
+   "name": "IMPORT-P0 JE→QBO push kill-switch + masterdata echo guard. HARD PREREQUISITE: no import run (opening balance or GL detai",
+   "registered_on": "2026-07-02",
+   "pr": 1797
+  },
+  {
+   "id": "IMPORT-P0b",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1802 merged 2026-07-02",
+   "name": "IMPORT-P0b — entity-push kill-switch: gate every TMS→QBO write of invoice/bill/customer/vendor/account/item so nothing r",
+   "registered_on": "2026-07-02",
+   "pr": 1802
+  },
+  {
    "id": "INS-MODULE",
    "source": "program",
    "fin": false,
@@ -4580,6 +4664,17 @@
    "pr": null
   },
   {
+   "id": "NOTIF-A",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1794 merged 2026-07-02",
+   "name": "Loud foreground alerts + escalation-until-ack + enhanced web push for per-load dispatch chat. Non-financial, Tier-3. No ",
+   "registered_on": null,
+   "pr": 1794
+  },
+  {
    "id": "OB1-NAV-HEADER-UNIFY",
    "source": ".block-ready",
    "fin": false,
@@ -4643,6 +4738,28 @@
    "evidence": "all 1 named artifact(s) on main",
    "name": "FOUNDATIONS / TASK Q9 — Timezone library (lat/lng→IANA primary + override)",
    "pr": null
+  },
+  {
+   "id": "QBO-SYNC-DRIFT-401-FIX",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1535 merged 2026-06-27",
+   "name": "QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch).",
+   "registered_on": "2026-06-27",
+   "pr": 1535
+  },
+  {
+   "id": "QSTD-00",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1780 merged 2026-07-02",
+   "name": "Make Jorge's quality standard the first standing law (Rule #0). Adds docs/specs/QUALITY-STANDARD-LOCKED.md (verbatim), w",
+   "registered_on": null,
+   "pr": 1780
   },
   {
    "id": "RPT-MODULE",
@@ -4740,6 +4857,16 @@
    "pr": 860
   },
   {
+   "id": "STMT-1-balance-sheet-cash-flow",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-03] balance-sheet + cash-flow routes live read-only",
+   "name": "STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements",
+   "pr": null
+  },
+  {
    "id": "STRUCTURAL-MANIFEST-SPLIT",
    "source": ".block-ready",
    "fin": false,
@@ -4760,6 +4887,17 @@
    "name": "New migrations use timestamp format (20260607_120000_name.sql) to eliminate parallel-lane sequence collisions",
    "registered_on": null,
    "pr": 648
+  },
+  {
+   "id": "SWEEP-FIX-17-27",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1798 merged 2026-07-02",
+   "name": "Consolidated fixes for the modules 17-27 sweep defects. PR A ships the code fixes with regression tests; PR B (owner-gat",
+   "registered_on": "2026-07-02",
+   "pr": 1798
   },
   {
    "id": "TASKS-PLANNER-REDESIGN-V3",
@@ -4892,6 +5030,17 @@
    "name": "Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories",
    "registered_on": null,
    "pr": 813
+  },
+  {
+   "id": "UNIFIED-TXN-REGISTER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1536 merged 2026-06-27",
+   "name": "Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register.",
+   "registered_on": "2026-06-27",
+   "pr": 1536
   },
   {
    "id": "UX-A-table-alignment-DONE",
@@ -5063,6 +5212,4583 @@
    "name": "Per-driver + per-truck minute ledger. READ-ONLY reporting (no financial writes). Surfaces UNACCOUNTED time. $/productive",
    "registered_on": null,
    "pr": 883
+  }
+ ],
+ "merged_prs": [
+  {
+   "number": 1906,
+   "title": "docs(trackers): design-vs-implementation gap audit (planner/scheduler/fuel/tasks)",
+   "mergedAt": "2026-07-03T22:26:28Z",
+   "branch": "docs/design-gap-audit"
+  },
+  {
+   "number": 1905,
+   "title": "docs(trackers): lost-work audit (773 blocks since May5, 14 truly-lost)",
+   "mergedAt": "2026-07-03T22:20:12Z",
+   "branch": "docs/lost-work-audit"
+  },
+  {
+   "number": 1903,
+   "title": "feat(security): USERS-1 — block fixture/probe emails from creating ACTIVE prod users",
+   "mergedAt": "2026-07-03T22:31:35Z",
+   "branch": "feat/users1-prod-fixture-guard"
+  },
+  {
+   "number": 1901,
+   "title": "chore(tracker): refresh Program Board — live reconcile (DONE=436)",
+   "mergedAt": "2026-07-03T21:38:16Z",
+   "branch": "chore/refresh-board-b86788957"
+  },
+  {
+   "number": 1899,
+   "title": "fix(drivers): by-id GET honors driver_company_authorizations fallback (source-level /drivers/:id 404 fix)",
+   "mergedAt": "2026-07-03T21:30:11Z",
+   "branch": "fix/driver-detail-get-company-scope-backend"
+  },
+  {
+   "number": 1898,
+   "title": "fix(tracker): verified-override mechanism — durable true counts",
+   "mergedAt": "2026-07-03T20:42:32Z",
+   "branch": "fix/reconcile-verified-overrides"
+  },
+  {
+   "number": 1897,
+   "title": "feat(ci): HOLD-migration ledger guard — held migrations can't silently fire on prod",
+   "mergedAt": "2026-07-03T21:25:16Z",
+   "branch": "feat/hold-migration-ledger-guard"
+  },
+  {
+   "number": 1895,
+   "title": "feat(program-board): honest two-timestamp live board + merged-PR/HOLD/locked-decisions tabs (v2)",
+   "mergedAt": "2026-07-03T20:21:15Z",
+   "branch": "feat/program-board-v2-live"
+  },
+  {
+   "number": 1894,
+   "title": "chore(program-board): seed 11 numbered agent decisions into Questions tab",
+   "mergedAt": "2026-07-03T20:03:02Z",
+   "branch": "chore/board-seed-agent-questions"
+  },
+  {
+   "number": 1893,
+   "title": "fix(safety): SM1 — surface the existing driver creator on the DQF/driver-files surface",
+   "mergedAt": "2026-07-03T19:55:07Z",
+   "branch": "feat/sm1-safety-driver-creator"
+  },
+  {
+   "number": 1892,
+   "title": "fix(safety): incidents cluster — typed creators for damage/interchange/cargo on the shared surface",
+   "mergedAt": "2026-07-03T21:42:23Z",
+   "branch": "feat/sc-cluster-typed-creators"
+  },
+  {
+   "number": 1890,
+   "title": "fix(drivers): DriverDetailPage /drivers/:id 404 — scope getDriver to selected company",
+   "mergedAt": "2026-07-03T19:13:36Z",
+   "branch": "fix/driver-detail-404-company-scope"
+  },
+  {
+   "number": 1889,
+   "title": "feat(program-board): Pending tab — all not-concluded items + live progress summary",
+   "mergedAt": "2026-07-03T19:09:33Z",
+   "branch": "feat/program-board-pending-tab"
+  },
+  {
+   "number": 1888,
+   "title": "feat(safety): SC4 cargo claim intake — load/claimant/reason/amount per 49 CFR 1005.2 [HOLD-FOR-JORGE]",
+   "mergedAt": "2026-07-03T19:31:37Z",
+   "branch": "feat/sc4-cargo-claim-intake"
+  },
+  {
+   "number": 1887,
+   "title": "[HOLD-FOR-JORGE] fix(safety): FD1 internal fines creator — wire driver/reason catalogs + approval control",
+   "mergedAt": "2026-07-03T19:43:24Z",
+   "branch": "feat/fd1-internal-fines-creator"
+  },
+  {
+   "number": 1886,
+   "title": "fix(safety): FD3 Complaints creator — driver picker + catalog type + missing-field helper",
+   "mergedAt": "2026-07-03T18:33:47Z",
+   "branch": "feat/fd3-complaints-creator"
+  },
+  {
+   "number": 1884,
+   "title": "[HOLD-FOR-JORGE] feat(safety): SC1 accident wizard — wire catalogs + office creator persistence",
+   "mergedAt": "2026-07-03T20:16:14Z",
+   "branch": "feat/sc1-accident-wizard-catalogs"
+  },
+  {
+   "number": 1883,
+   "title": "feat(customers): full QBO-style customer profile creator/editor (V4/V5/V6 + Q1 tabs)",
+   "mergedAt": "2026-07-03T18:37:50Z",
+   "branch": "feat/customer-profile-creator"
+  },
+  {
+   "number": 1882,
+   "title": "fix(drivers): driver-profile navigation D1/D2/D3 — name-click + scoped profile + module-header back",
+   "mergedAt": "2026-07-03T18:14:52Z",
+   "branch": "fix/driver-profile-navigation"
+  },
+  {
+   "number": 1881,
+   "title": "feat(vendors): V3–V6 \"+ Create\" vendor + full QBO-parity profile creator/editor",
+   "mergedAt": "2026-07-03T19:04:24Z",
+   "branch": "feat/vendor-profile-creator"
+  },
+  {
+   "number": 1880,
+   "title": "[SYS-04] Restore 11 broken routes: accounting, settlements, finance-hub, safety sub-routes",
+   "mergedAt": "2026-07-03T18:14:55Z",
+   "branch": "fix/dispatch-wave2-broken-routes"
+  },
+  {
+   "number": 1879,
+   "title": "test(banking): durable isolation fix for flaky bank-feed/driver-advance .db.test family",
+   "mergedAt": "2026-07-03T17:42:57Z",
+   "branch": "fix/flaky-bankfeed-db-test-isolation"
+  },
+  {
+   "number": 1878,
+   "title": "RATECON-2: unify rate-con entry — OcrDropZone → real extraction, remove cycle-4 stub",
+   "mergedAt": "2026-07-03T18:15:26Z",
+   "branch": "fix/ratecon-2-dropzone-unify"
+  },
+  {
+   "number": 1877,
+   "title": "feat(finance): F1 Break-Even Analysis — read-only cost-per-mile analytics (flag OFF)",
+   "mergedAt": "2026-07-03T19:05:29Z",
+   "branch": "feat/f1-break-even-analysis"
+  },
+  {
+   "number": 1876,
+   "title": "FLAG-HARDEN-1: per-entity-only flag class — no silent rollout no-ops, no global enables",
+   "mergedAt": "2026-07-03T18:15:47Z",
+   "branch": "fix/flag-harden-1-per-entity-only"
+  },
+  {
+   "number": 1875,
+   "title": "fix(lists): empty-state only on settled queries — shared list-state primitive + CI guard (vendors false-empty)",
+   "mergedAt": "2026-07-03T17:31:30Z",
+   "branch": "fix/list-empty-1-false-empty-guard"
+  },
+  {
+   "number": 1874,
+   "title": "[SYS-DATE] Root date format fix: YYYY-MM-DD → MM/DD/YYYY all user-facing fields",
+   "mergedAt": "2026-07-03T17:03:28Z",
+   "branch": "fix/dispatch-wave1a-date-format"
+  },
+  {
+   "number": 1873,
+   "title": "fix(qbo-sync): route-family auth — vendors/status 401 on valid session + route-auth CI guard",
+   "mergedAt": "2026-07-03T17:05:40Z",
+   "branch": "fix/vendor-401-qbo-sync-auth"
+  },
+  {
+   "number": 1872,
+   "title": "[SYS-MONEY] Root money input format fix: remove space, enforce 2 decimal places",
+   "mergedAt": "2026-07-03T17:07:49Z",
+   "branch": "fix/dispatch-wave1b-money-input"
+  },
+  {
+   "number": 1871,
+   "title": "[HOLD-FOR-JORGE] feat(program): live Program Board — tabbed block/task tracker + two-way notes",
+   "mergedAt": "2026-07-03T18:07:16Z",
+   "branch": "feat/program-board"
+  },
+  {
+   "number": 1870,
+   "title": "chore(perf): realign driver-pwa bundle budget to React-19 baseline",
+   "mergedAt": "2026-07-03T16:52:09Z",
+   "branch": "chore/perf-budget-realign-react19"
+  },
+  {
+   "number": 1867,
+   "title": "RATECON-3: migrate retired Anthropic model → claude-sonnet-4-6 (ratecon + photo-comparison), model-lifecycle monitor, 502+Sentry error path",
+   "mergedAt": "2026-07-03T15:48:36Z",
+   "branch": "fix/anthropic-model-retirement"
+  },
+  {
+   "number": 1866,
+   "title": "feat(deps): Tailwind CSS 3→4 (off main, preview-ready)",
+   "mergedAt": "2026-07-03T15:16:18Z",
+   "branch": "feat/tailwind-4-clean"
+  },
+  {
+   "number": 1865,
+   "title": "feat(deps): react-router-dom 6→7 (off main)",
+   "mergedAt": "2026-07-03T15:48:04Z",
+   "branch": "feat/router-7-clean"
+  },
+  {
+   "number": 1864,
+   "title": "[HOLD-FOR-JORGE] feat(factoring): doc-code reconciliation + poster CI guard (verify-only, flag OFF)",
+   "mergedAt": "2026-07-03T18:45:54Z",
+   "branch": "feat/factoring-doc-code-reconcile"
+  },
+  {
+   "number": 1863,
+   "title": "chore(deps): CVE security patches (clean, off current main)",
+   "mergedAt": "2026-07-03T15:47:37Z",
+   "branch": "feat/security-dep-fix"
+  },
+  {
+   "number": 1862,
+   "title": "feat(deps): vitest 3→4 migration (clean, off current main)",
+   "mergedAt": "2026-07-03T15:47:03Z",
+   "branch": "feat/vitest-4-migration"
+  },
+  {
+   "number": 1858,
+   "title": "chore(deps): bump the production-dependencies group across 1 directory with 2 updates",
+   "mergedAt": "2026-07-03T14:47:24Z",
+   "branch": "dependabot/npm_and_yarn/production-dependencies-9706dfef25"
+  },
+  {
+   "number": 1857,
+   "title": "feat(deps): React 18→19 migration (+ peer-coupled react-joyride 3 / react-markdown 10)",
+   "mergedAt": "2026-07-03T14:47:40Z",
+   "branch": "feat/react-19-migration"
+  },
+  {
+   "number": 1855,
+   "title": "chore(deps): bump opossum from 9.0.0 to 10.0.0",
+   "mergedAt": "2026-07-03T14:47:31Z",
+   "branch": "dependabot/npm_and_yarn/opossum-10.0.0"
+  },
+  {
+   "number": 1853,
+   "title": "chore(deps): bump @fastify/rate-limit from 10.3.0 to 11.1.0",
+   "mergedAt": "2026-07-03T14:47:28Z",
+   "branch": "dependabot/npm_and_yarn/fastify/rate-limit-11.1.0"
+  },
+  {
+   "number": 1851,
+   "title": "chore(deps): bump arctic from 2.3.4 to 3.7.0",
+   "mergedAt": "2026-07-03T14:47:19Z",
+   "branch": "dependabot/npm_and_yarn/arctic-3.7.0"
+  },
+  {
+   "number": 1845,
+   "title": "chore(ci): bump actions/upload-artifact from 4 to 7",
+   "mergedAt": "2026-07-03T06:30:55Z",
+   "branch": "dependabot/github_actions/actions/upload-artifact-7"
+  },
+  {
+   "number": 1844,
+   "title": "chore(ci): bump github/codeql-action from 3 to 4",
+   "mergedAt": "2026-07-03T06:31:02Z",
+   "branch": "dependabot/github_actions/github/codeql-action-4"
+  },
+  {
+   "number": 1843,
+   "title": "chore(ci): bump actions/checkout from 4 to 7",
+   "mergedAt": "2026-07-03T06:30:49Z",
+   "branch": "dependabot/github_actions/actions/checkout-7"
+  },
+  {
+   "number": 1842,
+   "title": "chore(ci): bump SonarSource/sonarqube-scan-action from 6 to 8",
+   "mergedAt": "2026-07-03T06:31:08Z",
+   "branch": "dependabot/github_actions/SonarSource/sonarqube-scan-action-8"
+  },
+  {
+   "number": 1841,
+   "title": "chore(deps): safe minor/patch dependency refresh (no majors)",
+   "mergedAt": "2026-07-03T05:18:48Z",
+   "branch": "chore/safe-dep-bumps"
+  },
+  {
+   "number": 1840,
+   "title": "chore(ci): dependabot — stop grouping MAJOR updates (root-cause fix)",
+   "mergedAt": "2026-07-03T05:12:51Z",
+   "branch": "chore/dependabot-no-group-majors"
+  },
+  {
+   "number": 1839,
+   "title": "docs(accounting): Factoring GL Poster design (R1–R4, secured-borrowing)",
+   "mergedAt": "2026-07-03T04:44:33Z",
+   "branch": "docs/factoring-poster-design"
+  },
+  {
+   "number": 1838,
+   "title": "feat(accounting): RECON-02 — read-only Recon Runs + Exceptions tabs",
+   "mergedAt": "2026-07-03T04:38:20Z",
+   "branch": "feat/recon-02-ui"
+  },
+  {
+   "number": 1837,
+   "title": "fix(banking): resolve bank-driver-advance CI flake (force cash_advance mapping)",
+   "mergedAt": "2026-07-03T04:00:26Z",
+   "branch": "fix/flaky-driver-advance-diagnostic"
+  },
+  {
+   "number": 1836,
+   "title": "chore(skills): ih35-entity-facts (secrets-split entity reference)",
+   "mergedAt": "2026-07-03T03:31:12Z",
+   "branch": "chore/skill-entity-facts"
+  },
+  {
+   "number": 1835,
+   "title": "chore(skills): ih35-parity-audit (verdict template)",
+   "mergedAt": "2026-07-03T03:29:56Z",
+   "branch": "chore/skill-parity-audit"
+  },
+  {
+   "number": 1834,
+   "title": "chore(skills): ih35-guard-verification (verification checklist)",
+   "mergedAt": "2026-07-03T03:28:39Z",
+   "branch": "chore/skill-guard-verification"
+  },
+  {
+   "number": 1833,
+   "title": "[HOLD-FOR-JORGE] RATECON-1: rate-con upload → AI extraction → Book Load prefill (backend)",
+   "mergedAt": "2026-07-03T06:47:16Z",
+   "branch": "feat/ratecon-extract"
+  },
+  {
+   "number": 1832,
+   "title": "chore(skills): ih35-cpa-accounting-decisions (bundled decision card)",
+   "mergedAt": "2026-07-03T03:03:07Z",
+   "branch": "chore/skill-cpa-accounting-decisions"
+  },
+  {
+   "number": 1831,
+   "title": "Feat/recon 01 engine",
+   "mergedAt": "2026-07-03T06:11:54Z",
+   "branch": "feat/recon-01-engine"
+  },
+  {
+   "number": 1830,
+   "title": "docs(trackers): Financial/Accounting Owner Unblock Packet",
+   "mergedAt": "2026-07-03T02:05:17Z",
+   "branch": "docs/financial-owner-unblock-packet"
+  },
+  {
+   "number": 1829,
+   "title": "chore(skills): ih35-fmcsa-compliance (bundled required-docs matrix)",
+   "mergedAt": "2026-07-03T01:16:23Z",
+   "branch": "chore/skill-fmcsa-compliance"
+  },
+  {
+   "number": 1828,
+   "title": "chore(skills): ih35-financial-migrations (bundled resources)",
+   "mergedAt": "2026-07-03T01:06:41Z",
+   "branch": "chore/skill-financial-migrations"
+  },
+  {
+   "number": 1826,
+   "title": "feat(compliance): DOC-REQ-2c missing-required chip on 4 profiles",
+   "mergedAt": "2026-07-03T00:55:24Z",
+   "branch": "feat/doc-req-2c-missing-chip"
+  },
+  {
+   "number": 1825,
+   "title": "chore(skills): commit ih35-tms-standards as a repo-tracked skill",
+   "mergedAt": "2026-07-03T00:43:08Z",
+   "branch": "chore/skill-ih35-tms-standards"
+  },
+  {
+   "number": 1824,
+   "title": "[HOLD-FOR-JORGE — TIER 1] B19-V2: audit hash-chain tamper-verifier + record table",
+   "mergedAt": "2026-07-03T06:28:04Z",
+   "branch": "feat/b19-v2-verify-service"
+  },
+  {
+   "number": 1823,
+   "title": "feat(compliance): DOC-REQ-2b resolver — Missing-required documents engine (decision #6)",
+   "mergedAt": "2026-07-03T00:20:19Z",
+   "branch": "feat/doc-req-2b-resolver"
+  },
+  {
+   "number": 1822,
+   "title": "[HOLD-FOR-JORGE — TIER 1] MD-3: AR/AP clone-schema delta (source + bills.voided_at)",
+   "mergedAt": "2026-07-03T00:21:09Z",
+   "branch": "feat/md3-arap-clone-schema"
+  },
+  {
+   "number": 1821,
+   "title": "[HOLD-FOR-JORGE — TIER 1] B19-V1: genesis-anchored chain_seq on events.event_log",
+   "mergedAt": "2026-07-02T23:59:22Z",
+   "branch": "feat/b19-v1-chain-seq-genesis-anchor"
+  },
+  {
+   "number": 1820,
+   "title": "docs(lockdown): fix stale insurance.policy_unit_coverages reference (§4 drift)",
+   "mergedAt": "2026-07-02T23:45:17Z",
+   "branch": "docs/fix-policy-unit-coverages-drift"
+  },
+  {
+   "number": 1819,
+   "title": "[HOLD-FOR-JORGE — TIER 1] MD-1/MD-2: clone-origin markers + void-gone-from-QBO (decision #7)",
+   "mergedAt": "2026-07-02T23:44:58Z",
+   "branch": "feat/md1-md2-clone-origin-void-gone"
+  },
+  {
+   "number": 1818,
+   "title": "docs(audit): Block-19 spec → genesis-anchor (no historical backfill) per owner ruling",
+   "mergedAt": "2026-07-02T23:07:25Z",
+   "branch": "fix/block19-spec-genesis-anchor"
+  },
+  {
+   "number": 1817,
+   "title": "docs(compliance): DOC-REQ-2b presence-mapping DRAFT for GUARD prod-verify (Q2)",
+   "mergedAt": "2026-07-02T23:05:48Z",
+   "branch": "docs/doc-req-2b-presence-mapping"
+  },
+  {
+   "number": 1816,
+   "title": "feat(compliance): DOC-REQ-2 config UI — Required Documents tab (decision #6)",
+   "mergedAt": "2026-07-02T22:59:30Z",
+   "branch": "feat/doc-req-2-config-ui"
+  },
+  {
+   "number": 1815,
+   "title": "feat(compliance): DOC-REQ-2 required-document-types read + per-carrier config API (decision #6)",
+   "mergedAt": "2026-07-02T20:51:52Z",
+   "branch": "feat/doc-req-2-required-documents-config"
+  },
+  {
+   "number": 1814,
+   "title": "docs(audit): Block-19 audit hash-chain verification layer spec",
+   "mergedAt": "2026-07-02T20:09:49Z",
+   "branch": "docs/block19-audit-chain-verify-spec"
+  },
+  {
+   "number": 1812,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(safety): safety_settings provisioning trigger → SECURITY DEFINER (USMCA-launch blocker)",
+   "mergedAt": "2026-07-02T19:58:24Z",
+   "branch": "fix/safety-settings-trigger-security-definer"
+  },
+  {
+   "number": 1811,
+   "title": "fix(qbo): reconcile-only copy for the Chart-of-Accounts sync panel (decision #5 follow-up)",
+   "mergedAt": "2026-07-02T19:49:17Z",
+   "branch": "fix/coa-sync-panel-reconcile-only"
+  },
+  {
+   "number": 1810,
+   "title": "[HOLD-FOR-JORGE — TIER 1] DOC-REQ-1: required-document-types catalog + FMCSA/IRS seed (decision #6)",
+   "mergedAt": "2026-07-02T20:15:59Z",
+   "branch": "fix/doc-req-1-required-document-types"
+  },
+  {
+   "number": 1809,
+   "title": "fix(qbo): retire two-way-sync counter → honest reconcile-only panels (decision #5)",
+   "mergedAt": "2026-07-02T19:46:06Z",
+   "branch": "fix/retire-sync-counter-reconcile-only-panels"
+  },
+  {
+   "number": 1808,
+   "title": "docs(trackers): mark 8 owner decisions LOCKED + register DOC-REQ / retire-counter / Faro-dedupe builds",
+   "mergedAt": "2026-07-02T19:26:44Z",
+   "branch": "docs/deferred-items-2026-07-02-additions"
+  },
+  {
+   "number": 1807,
+   "title": "chore(factoring): Faro vendor dedupe read-only diagnostic + owner plan (decision #7)",
+   "mergedAt": "2026-07-02T19:23:28Z",
+   "branch": "chore/faro-vendor-dedupe-diagnostic"
+  },
+  {
+   "number": 1806,
+   "title": "docs(compliance): required-document-types regulatory-defaults spec (decision #6)",
+   "mergedAt": "2026-07-02T19:29:58Z",
+   "branch": "docs/required-document-types-spec"
+  },
+  {
+   "number": 1805,
+   "title": "fix(finance): FIN-2 unify subnav + land on Hub; FIN-1 honest current-period KPI (decision #4)",
+   "mergedAt": "2026-07-02T19:16:45Z",
+   "branch": "fix/fin2-land-on-hub-fin1-period-honesty"
+  },
+  {
+   "number": 1804,
+   "title": "fix(drivers): driver-create QBO vendor is best-effort, never blocks o…",
+   "mergedAt": "2026-07-02T18:38:32Z",
+   "branch": "fix/driver-create-qbo-vendor-optional"
+  },
+  {
+   "number": 1803,
+   "title": "docs: Deferred Items Register (Tier 3)",
+   "mergedAt": "2026-07-02T18:15:36Z",
+   "branch": "docs/deferred-items-register"
+  },
+  {
+   "number": 1802,
+   "title": "[HOLD-FOR-JORGE — TIER 1] IMPORT-P0b: entity-push kill-switch (all six write-back paths)",
+   "mergedAt": "2026-07-02T18:56:09Z",
+   "branch": "fix/qbo-entity-push-killswitch"
+  },
+  {
+   "number": 1801,
+   "title": "docs: lock accounting architecture (parallel double-books, clone-once, reconcile-only)",
+   "mergedAt": "2026-07-02T18:38:08Z",
+   "branch": "docs/lock-accounting-architecture"
+  },
+  {
+   "number": 1800,
+   "title": "docs: 2026-07-02 sweep+parity record (Tier 3)",
+   "mergedAt": "2026-07-02T16:48:51Z",
+   "branch": "docs/2026-07-02-module-sweep-17-28"
+  },
+  {
+   "number": 1799,
+   "title": "docs(qbo-clone): full customer/vendor + AR/AP clone program spec (clone-once, reconcile-only)",
+   "mergedAt": "2026-07-02T16:38:31Z",
+   "branch": "feat/qbo-clone-program-spec"
+  },
+  {
+   "number": 1798,
+   "title": "fix(sweep-17-27): PR A — modules 17-27 sweep code fixes (RPT-1/LISTS-1/CUST-2·VEND-5/RPT-2)",
+   "mergedAt": "2026-07-02T16:36:23Z",
+   "branch": "fix/sweep-17-27-code-fixes"
+  },
+  {
+   "number": 1797,
+   "title": "[HOLD-FOR-JORGE — TIER 1] IMPORT-P0: JE→QBO push kill-switch + masterdata echo guard",
+   "mergedAt": "2026-07-02T15:34:40Z",
+   "branch": "fix/qbo-je-push-killswitch"
+  },
+  {
+   "number": 1796,
+   "title": "feat(qbo-import): IMPORT-0 QBO Reports client + exact-cents parsers",
+   "mergedAt": "2026-07-02T14:32:07Z",
+   "branch": "feat/qbo-reports-client"
+  },
+  {
+   "number": 1795,
+   "title": "[HOLD-FOR-JORGE — TIER 1] accounting.periods init — seed calendar periods for all entities (STEP-1 BLOCK A)",
+   "mergedAt": "2026-07-02T13:33:09Z",
+   "branch": "feat/accounting-periods-init-HOLD"
+  },
+  {
+   "number": 1794,
+   "title": "feat(notif): NOTIF-A loud foreground alerts + escalation-until-ack + enhanced web push (Tier 3)",
+   "mergedAt": "2026-07-02T13:42:45Z",
+   "branch": "feat/notif-a-loud-alerts-escalation"
+  },
+  {
+   "number": 1793,
+   "title": "feat(accounting): add Chart of Accounts to the Accounting More ▾ menu",
+   "mergedAt": "2026-07-02T12:39:09Z",
+   "branch": "feat/accounting-coa-nav"
+  },
+  {
+   "number": 1792,
+   "title": "fix(compliance): refuse to overwrite already-filed Form-2290 / IFTA evidence",
+   "mergedAt": "2026-07-02T06:36:04Z",
+   "branch": "fix/compliance-no-overwrite-filed-evidence"
+  },
+  {
+   "number": 1791,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(feature-flags): posting flags are per-entity-only (no global enable)",
+   "mergedAt": "2026-07-02T12:49:50Z",
+   "branch": "fix/posting-flags-per-entity-only"
+  },
+  {
+   "number": 1790,
+   "title": "docs(recon): TMS↔QBO reconciliation module design + RECON block registration (Tier 3)",
+   "mergedAt": "2026-07-02T06:18:59Z",
+   "branch": "docs/recon-00-module-design"
+  },
+  {
+   "number": 1789,
+   "title": "fix(insurance): soft-cancel policy instead of hard-DELETE (stop destroying claims/lawsuit evidence)",
+   "mergedAt": "2026-07-02T06:42:35Z",
+   "branch": "fix/insurance-policy-soft-cancel"
+  },
+  {
+   "number": 1788,
+   "title": "chore(ci): entity-scope regression guard for catalogs.items + catalogs.classes",
+   "mergedAt": "2026-07-02T06:23:42Z",
+   "branch": "chore/verify-catalogs-items-classes-entity-scope"
+  },
+  {
+   "number": 1787,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(security): cross-tenant membership sweep pass 2 — remaining request-reachable GUC setters (USMCA blocker)",
+   "mergedAt": "2026-07-02T12:57:49Z",
+   "branch": "fix/cross-tenant-membership-sweep-2"
+  },
+  {
+   "number": 1786,
+   "title": "fix(dispatch): mdata.equipment phantom-col 500s + equipment-log entity scope (rebased #1769)",
+   "mergedAt": "2026-07-02T06:09:23Z",
+   "branch": "fix/mdata-phantom-cols-redo"
+  },
+  {
+   "number": 1785,
+   "title": "fix(finance-ui): surface Finance Hub + Statements in the Finance flyout (were orphaned) + reconcile stale flag comments",
+   "mergedAt": "2026-07-02T05:48:56Z",
+   "branch": "fix/finance-hub-statements-flyout-links"
+  },
+  {
+   "number": 1784,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(security): restore assertCompanyMembership on ~13 forked tenant-scope wrappers + CI guard (cross-tenant authz, USMCA blocker)",
+   "mergedAt": "2026-07-02T12:26:35Z",
+   "branch": "fix/cross-tenant-membership-assert"
+  },
+  {
+   "number": 1783,
+   "title": "fix(dispatch): hard-gate expired-CDL/medical/deactivated drivers in book-load + fail-closed pre-dispatch validator (safety)",
+   "mergedAt": "2026-07-02T05:16:54Z",
+   "branch": "fix/dispatch-safety-hard-gate"
+  },
+  {
+   "number": 1782,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(factoring): FARO import — parse (negatives), aggregate chargebacks, per-invoice variance (data-corruption fix)",
+   "mergedAt": "2026-07-02T05:16:37Z",
+   "branch": "fix/faro-csv-import-correctness"
+  },
+  {
+   "number": 1781,
+   "title": "fix(ci): #139 guard no longer process.exit()s at import — restore ~46 silently-skipped arch-design guards (fake-green fix)",
+   "mergedAt": "2026-07-02T05:13:55Z",
+   "branch": "fix/arch-design-guard-loader-fake-green"
+  },
+  {
+   "number": 1780,
+   "title": "docs(governance): QSTD-00 quality standard as locked Rule #0 + CI guard (Tier 3)",
+   "mergedAt": "2026-07-02T04:35:04Z",
+   "branch": "docs/quality-standard-locked"
+  },
+  {
+   "number": 1779,
+   "title": "fix(security): parameterize all GUC SET statements — close authenticated SQLi→RLS-bypass (+ UUID validation + CI guard)",
+   "mergedAt": "2026-07-02T04:38:48Z",
+   "branch": "fix/sqli-guc-rls-bypass-hardening"
+  },
+  {
+   "number": 1776,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): GL role-resolver primary path re-asserts account entity (5th cross-entity leak, USMCA blocker)",
+   "mergedAt": "2026-07-02T04:38:51Z",
+   "branch": "fix/coa-resolver-entity-scope-5th-leak"
+  },
+  {
+   "number": 1775,
+   "title": "chore(frontend): ParityTable migration batch 1 — 8 non-financial tabl…",
+   "mergedAt": "2026-07-02T04:27:52Z",
+   "branch": "chore/paritytable-migration-batch-1"
+  },
+  {
+   "number": 1774,
+   "title": "[HOLD-FOR-JORGE] chore(palette): financial-module recolor",
+   "mergedAt": "2026-07-02T04:57:50Z",
+   "branch": "chore/palette-sweep-financial-HOLD"
+  },
+  {
+   "number": 1773,
+   "title": "chore(palette): §7 non-financial recolor + NET-NEW ratchet guard",
+   "mergedAt": "2026-07-02T04:29:43Z",
+   "branch": "chore/palette-sweep-nonfinancial"
+  },
+  {
+   "number": 1772,
+   "title": "fix(ui): §7 polish batch — report-table emojis, glyphs, +Create vocab, H1 middle-dots",
+   "mergedAt": "2026-07-02T03:43:30Z",
+   "branch": "fix/ui-section7-polish-batch"
+  },
+  {
+   "number": 1771,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): 4 confirmed cross-entity financial leaks (USMCA blockers) + CI guard",
+   "mergedAt": "2026-07-02T04:56:36Z",
+   "branch": "fix/usmca-cross-entity-financial-leaks"
+  },
+  {
+   "number": 1770,
+   "title": "[HOLD-FOR-JORGE — TIER 1] CODER-34: factoring GL poster SALE→SECURED-BORROWING (flag OFF)",
+   "mergedAt": "2026-07-02T02:31:26Z",
+   "branch": "feat/factoring-secured-borrowing-poster"
+  },
+  {
+   "number": 1768,
+   "title": "fix(accounting-ui): USMCA detail-type blank tri-state + §7 palette/vocab/glyph cleanup",
+   "mergedAt": "2026-07-02T02:12:17Z",
+   "branch": "fix/accounting-ui-detailtype-blank-palette"
+  },
+  {
+   "number": 1767,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(drivers): W-8BEN foreign-status capture + yearly renewal on driver profile",
+   "mergedAt": "2026-07-02T02:10:05Z",
+   "branch": "worktree-agent-a453827a94e24844a"
+  },
+  {
+   "number": 1766,
+   "title": "fix(accounting): CoA register deep-link route + Account Type Catalog back-arrow",
+   "mergedAt": "2026-07-02T00:32:31Z",
+   "branch": "fix/usmca-accounting-nav"
+  },
+  {
+   "number": 1765,
+   "title": "feat(chat): CHAT-7 driver PWA offline outbox (never lose a message on bad signal)",
+   "mergedAt": "2026-07-01T23:59:06Z",
+   "branch": "feat/dispatch-chat-offline-outbox"
+  },
+  {
+   "number": 1764,
+   "title": "feat(chat): CHAT-6 archive thread on load close (read-only derivation)",
+   "mergedAt": "2026-07-01T23:46:12Z",
+   "branch": "feat/dispatch-chat-archive-on-close"
+  },
+  {
+   "number": 1763,
+   "title": "feat(chat): CHAT-5 in-thread confirmations + cash-advance cards (read-only, no GL)",
+   "mergedAt": "2026-07-01T23:32:03Z",
+   "branch": "feat/dispatch-chat-cash-advance-confirm"
+  },
+  {
+   "number": 1762,
+   "title": "feat(chat): CHAT-4 driver PWA per-load dispatch chat (ES/EN, polling)",
+   "mergedAt": "2026-07-01T23:07:23Z",
+   "branch": "feat/dispatch-chat-driver-pwa"
+  },
+  {
+   "number": 1761,
+   "title": "feat(chat): CHAT-3 office Dispatch Chat UI — per-load threads + composer (polling)",
+   "mergedAt": "2026-07-01T22:57:25Z",
+   "branch": "feat/dispatch-chat-office-ui"
+  },
+  {
+   "number": 1760,
+   "title": "feat(chat): CHAT-2 dispatch-chat backend — threads/messages/receipts/presign (office + driver)",
+   "mergedAt": "2026-07-01T23:03:41Z",
+   "branch": "feat/dispatch-chat-backend"
+  },
+  {
+   "number": 1759,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(chat): CHAT-1 per-load dispatch-chat schema (evidence-grade, no money path)",
+   "mergedAt": "2026-07-01T22:15:52Z",
+   "branch": "feat/dispatch-chat-schema-hold"
+  },
+  {
+   "number": 1758,
+   "title": "docs(chat): per-load dispatch chat design + CHAT-1 schema draft [FOR JORGE REVIEW]",
+   "mergedAt": "2026-07-01T21:53:21Z",
+   "branch": "docs/per-load-dispatch-chat-design"
+  },
+  {
+   "number": 1757,
+   "title": "feat(accounting): Expenses list (read-only browse) — GET /api/v1/expenses + ParityTable page",
+   "mergedAt": "2026-07-01T21:51:15Z",
+   "branch": "feat/expenses-list-readonly"
+  },
+  {
+   "number": 1756,
+   "title": "chore(ci): wire orphan CHAIN-05 bank-feed GL posting guard into CI",
+   "mergedAt": "2026-07-01T21:37:52Z",
+   "branch": "chore/wire-chain05-bank-feed-gl-guard"
+  },
+  {
+   "number": 1755,
+   "title": "BANKREC-LISTSTATUS-01: Match/Unmatched status on Bills + Bill-Payments lists",
+   "mergedAt": "2026-07-01T21:06:53Z",
+   "branch": "feat/accounting-lists-match-status"
+  },
+  {
+   "number": 1754,
+   "title": "[HOLD-FOR-JORGE — TIER 2] feat(banking): BANKREC-CONFIRM-01 enable Confirm-match (exact matches only)",
+   "mergedAt": "2026-07-01T20:51:06Z",
+   "branch": "feat/bankrec-confirm-match-exact-only"
+  },
+  {
+   "number": 1753,
+   "title": "feat(accounting): Block 5 — CoA creator statement-grouped Account Type + cascade lock guard",
+   "mergedAt": "2026-07-01T20:36:10Z",
+   "branch": "feat/coa-grouped-account-detail-type"
+  },
+  {
+   "number": 1752,
+   "title": "feat(ui): Block 6 — global column resize keyboard+touch a11y + framework contract guard",
+   "mergedAt": "2026-07-01T20:27:36Z",
+   "branch": "feat/global-column-resize-sort-framework"
+  },
+  {
+   "number": 1751,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): COA-DETAILTYPE-01 — per-entity Detail Type catalog + creator",
+   "mergedAt": "2026-07-01T20:15:12Z",
+   "branch": "feat/coa-detail-type-catalog-creator"
+  },
+  {
+   "number": 1750,
+   "title": "feat(accounting-lists): CAT-PSCAT-01 — rename QBO Categories → Product & Service Categories",
+   "mergedAt": "2026-07-01T19:31:09Z",
+   "branch": "feat/product-service-categories-creator"
+  },
+  {
+   "number": 1749,
+   "title": "feat(accounting-lists): CAT-CREATOR-01 core — shared catalog creator upgrades + expense map link",
+   "mergedAt": "2026-07-01T19:00:32Z",
+   "branch": "feat/accounting-catalog-shared-creator-profile"
+  },
+  {
+   "number": 1748,
+   "title": "feat(lists): LISTS-REORG-01 — domain ordering + per-domain hubs + scroll-restore",
+   "mergedAt": "2026-07-01T18:42:06Z",
+   "branch": "feat/lists-reorg-domain-hubs-scroll"
+  },
+  {
+   "number": 1747,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(bank-recon): BLOCK-01 Part 2a expense-link accept",
+   "mergedAt": "2026-07-01T17:30:40Z",
+   "branch": "feat/bank-recon-expense-match-part2a"
+  },
+  {
+   "number": 1746,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(bank-recon): variance poster reads ledger_account_id, not phantom coa_account_id (BLOCK-01)",
+   "mergedAt": "2026-07-01T16:44:41Z",
+   "branch": "fix/bank-recon-poster-ledger-account-id-hold"
+  },
+  {
+   "number": 1745,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-04 bill-payment → GL gap-closure (flag OFF + bank-leg fix + bill-first)",
+   "mergedAt": "2026-07-01T16:06:32Z",
+   "branch": "feat/chain-04-bill-payment-gapclosure-hold"
+  },
+  {
+   "number": 1744,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-05 bank-feed categorize → GL (BANK_FEED_GL_POSTING_ENABLED, OFF)",
+   "mergedAt": "2026-07-01T16:06:17Z",
+   "branch": "feat/chain-05-bank-feed-gapclosure-hold"
+  },
+  {
+   "number": 1743,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-06 invoice→A/R kill-switch (INVOICE_AR_GL_POSTING_ENABLED, OFF)",
+   "mergedAt": "2026-07-01T15:39:37Z",
+   "branch": "feat/chain-06-invoice-ar-killswitch-hold"
+  },
+  {
+   "number": 1742,
+   "title": "feat: BLOCK-05 minor non-financial (SAFETY-1 HOS date, FUEL-2 GL-coverage, DRIVERPROFILE-1)",
+   "mergedAt": "2026-07-01T15:24:31Z",
+   "branch": "feat/block-05-minor-nonfinancial"
+  },
+  {
+   "number": 1741,
+   "title": "[HOLD-FOR-JORGE — TIER 1] BLOCK-00: TRANSP CoA role-map seed (ap_control→QBO-47, ar_control→QBO-45)",
+   "mergedAt": "2026-07-01T15:13:31Z",
+   "branch": "block-00-transp-role-map-seed-hold"
+  },
+  {
+   "number": 1737,
+   "title": "feat(banking): Match drawer + bill/expense candidates — Part 1 (read-only, direction-aware)",
+   "mergedAt": "2026-07-01T15:17:09Z",
+   "branch": "feat/banking-match-drawer-part1"
+  },
+  {
+   "number": 1736,
+   "title": "docs(qbo-parity): CHAIN-04/05/06 posting-engine design docs (design-only, HOLD context)",
+   "mergedAt": "2026-07-01T14:52:23Z",
+   "branch": "docs/chain-04-05-06-posting-designs"
+  },
+  {
+   "number": 1735,
+   "title": "test(qbo-sync): A/P bill projection → FIN-20 aging regression test",
+   "mergedAt": "2026-07-01T12:14:51Z",
+   "branch": "feat/qbo-ap-bill-inbound-sync-hold"
+  },
+  {
+   "number": 1734,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(catalogs): account_role_bindings per-entity (close last USMCA cross-entity leak, non-breaking)",
+   "mergedAt": "2026-07-01T12:12:38Z",
+   "branch": "fix/account-role-bindings-per-entity-hold"
+  },
+  {
+   "number": 1733,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): entity-scope fuel-posting GL resolvers — cross-entity money leak",
+   "mergedAt": "2026-07-01T10:54:37Z",
+   "branch": "fix/entity-scope-leaks-fuelposting-hold"
+  },
+  {
+   "number": 1732,
+   "title": "fix(integrations): entity-scope driver-vendor-mapping monitor — cross-entity leak (audit batch 2)",
+   "mergedAt": "2026-07-01T07:12:39Z",
+   "branch": "fix/entity-scope-leaks-nonfinancial-batch2"
+  },
+  {
+   "number": 1731,
+   "title": "fix(safety): entity-scope DVIR unit/trailer lookup — cross-entity leak (audit batch 1)",
+   "mergedAt": "2026-07-01T06:59:38Z",
+   "branch": "fix/entity-scope-leaks-nonfinancial-batch1"
+  },
+  {
+   "number": 1730,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(governance): Task #24 void/cancel wiring — reason catalog CRUD + Lists + register + void-surface wiring (flags OFF)",
+   "mergedAt": "2026-07-01T11:29:58Z",
+   "branch": "feat/void-cancel-wiring-task24-hold"
+  },
+  {
+   "number": 1729,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(banking): BLOCK-6 driver dimension + loan-to-driver posting (flag OFF)",
+   "mergedAt": "2026-07-01T06:27:32Z",
+   "branch": "feat/block6-driver-advance-posting-hold"
+  },
+  {
+   "number": 1728,
+   "title": "[HOLD-FOR-JORGE — TIER 1] chore(dispatch): CODER-10 load_cancellations → per-entity reason FK (foundation)",
+   "mergedAt": "2026-07-01T06:12:51Z",
+   "branch": "chore/coder-10-11-cleanup-hold"
+  },
+  {
+   "number": 1727,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2b item→account mapping backfill (loader + no-op migration template)",
+   "mergedAt": "2026-07-01T05:54:25Z",
+   "branch": "feat/af2b-item-account-backfill-hold"
+  },
+  {
+   "number": 1726,
+   "title": "[HOLD-FOR-JORGE] feat(tasks): task-scoped Team Chat — comments + @mention + activity feed (TASK-3 option a)",
+   "mergedAt": "2026-07-01T05:54:17Z",
+   "branch": "feat/tasks-team-chat-hold"
+  },
+  {
+   "number": 1725,
+   "title": "feat(accounting-ui): New Account dialog — Make-subaccount + Preview pane + Balance-As-Of box fix (BLOCK-3)",
+   "mergedAt": "2026-07-01T04:57:56Z",
+   "branch": "feat/block3-account-subaccount-preview"
+  },
+  {
+   "number": 1724,
+   "title": "fix(banking): reconcile uncategorized KPI with review queue (BANKING-1)",
+   "mergedAt": "2026-07-01T04:42:11Z",
+   "branch": "fix/cashflow-settlements-banking"
+  },
+  {
+   "number": 1723,
+   "title": "fix(safety): SAFETY-1 missed UTC date-default + guard, SAFETY-2 Cert Expiry own-route (Module 07)",
+   "mergedAt": "2026-07-01T04:59:01Z",
+   "branch": "fix/module07-safety-blocks"
+  },
+  {
+   "number": 1722,
+   "title": "fix(qbo): sync-health surfaces CDC master-data runs (HOME-7 part B)",
+   "mergedAt": "2026-07-01T04:35:46Z",
+   "branch": "fix/home6-home7-fuel2"
+  },
+  {
+   "number": 1721,
+   "title": "fix(fleet): exclude demo/sample rows from live boards (DISPATCH-4/DRIVERHUB-2/MAINT-1)",
+   "mergedAt": "2026-07-01T04:34:10Z",
+   "branch": "fix/demo-data-exclusions"
+  },
+  {
+   "number": 1720,
+   "title": "fix(compliance): segregate stale/offline units on live fleet board (COMPLIANCE-1)",
+   "mergedAt": "2026-07-01T04:33:35Z",
+   "branch": "fix/modules-08-09-10-blocks"
+  },
+  {
+   "number": 1719,
+   "title": "docs(tracker): 2026-06-30 Downloads blocks reconciliation (24 pending countdown)",
+   "mergedAt": "2026-07-01T04:26:59Z",
+   "branch": "chore/downloads-blocks-tracker"
+  },
+  {
+   "number": 1718,
+   "title": "chore(security): tighten mdata-entity-scope baseline (drop 10 remediated cross-entity leaks)",
+   "mergedAt": "2026-07-01T03:57:47Z",
+   "branch": "chore/tighten-mdata-entity-scope-baseline"
+  },
+  {
+   "number": 1717,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo-sync): entity-scope items + accounts pullers/reconciler (AF-1/AF-2 live break)",
+   "mergedAt": "2026-07-01T03:50:00Z",
+   "branch": "fix/qbo-sync-items-accounts-entity-scope-hold"
+  },
+  {
+   "number": 1716,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2c(+2) items editor — full QBO/NetSuite parity (accounts · category · two-sided purchasing · preferred vendor) + en",
+   "mergedAt": "2026-07-01T03:36:53Z",
+   "branch": "feat/af2c-items-editor-coa-category-hold"
+  },
+  {
+   "number": 1715,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-3 catalogs.classes per-entity",
+   "mergedAt": "2026-07-01T02:57:01Z",
+   "branch": "feat/af3-catalogs-classes-per-entity-hold"
+  },
+  {
+   "number": 1714,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2 catalogs.items per-entity",
+   "mergedAt": "2026-07-01T02:41:51Z",
+   "branch": "feat/af2-catalogs-items-per-entity-hold"
+  },
+  {
+   "number": 1713,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(banking): B2 bank↔COA bridge backfill",
+   "mergedAt": "2026-07-01T02:19:56Z",
+   "branch": "feat/bank-coa-bridge-backfill-hold"
+  },
+  {
+   "number": 1712,
+   "title": "feat(samsara): apply hire-date gap-fill from Samsara createdAtTime (owner-triggered)",
+   "mergedAt": "2026-07-01T01:21:19Z",
+   "branch": "feat/samsara-hire-date-apply"
+  },
+  {
+   "number": 1711,
+   "title": "test(catalogs): regression guard for accounts write-path entity-scoping (#1708)",
+   "mergedAt": "2026-07-01T01:02:36Z",
+   "branch": "test/accounts-write-path-scope-guard"
+  },
+  {
+   "number": 1710,
+   "title": "feat(drivers): stamp hire_date_source='file_import' on CSV import",
+   "mergedAt": "2026-07-01T01:02:30Z",
+   "branch": "feat/importer-hire-date-source-file-import"
+  },
+  {
+   "number": 1709,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(coa): seed USMCA chart of accounts (B1 / Path B Stage 5)",
+   "mergedAt": "2026-07-01T01:20:48Z",
+   "branch": "feat/usmca-coa-seed-hold"
+  },
+  {
+   "number": 1708,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(catalogs): entity-scope the accounts WRITE path for af1 (create/update/deactivate)",
+   "mergedAt": "2026-07-01T00:50:18Z",
+   "branch": "fix/catalogs-accounts-write-path-scope-hold"
+  },
+  {
+   "number": 1707,
+   "title": "fix(accounting): New Account save validation_error (null vs undefined on optional fields)",
+   "mergedAt": "2026-07-01T00:45:09Z",
+   "branch": "fix/account-create-validation-null"
+  },
+  {
+   "number": 1706,
+   "title": "fix(drivers): harden CSV importer — reject impossible dates + per-row SAVEPOINT isolation",
+   "mergedAt": "2026-07-01T00:15:37Z",
+   "branch": "fix/drivers-import-date-and-row-isolation"
+  },
+  {
+   "number": 1705,
+   "title": "Docs/banking coa phase b design",
+   "mergedAt": "2026-07-01T00:25:13Z",
+   "branch": "docs/banking-coa-phase-b-design"
+  },
+  {
+   "number": 1704,
+   "title": "feat(banking): sortable transaction headers + grey Balance off date-sort (Block 5)",
+   "mergedAt": "2026-06-30T23:59:45Z",
+   "branch": "feat/banking-grid-sortable-headers"
+  },
+  {
+   "number": 1703,
+   "title": "feat(banking): Chart of Accounts link in Banking action row (Block 4 part B)",
+   "mergedAt": "2026-06-30T23:57:45Z",
+   "branch": "feat/banking-coa-link"
+  },
+  {
+   "number": 1702,
+   "title": "[HOLD-FOR-JORGE — PROTECTED] feat(drivers): hire_date_source provenance column",
+   "mergedAt": "2026-07-01T00:19:53Z",
+   "branch": "feat/drivers-hire-date-source-hold"
+  },
+  {
+   "number": 1701,
+   "title": "fix(accounting): populate New Account Detail Type dropdown (CA-01)",
+   "mergedAt": "2026-06-30T23:44:37Z",
+   "branch": "fix/new-account-detail-types-populate"
+  },
+  {
+   "number": 1700,
+   "title": "feat(samsara): read-only hire-date proposal from first Samsara login",
+   "mergedAt": "2026-06-30T23:44:40Z",
+   "branch": "feat/samsara-hire-date-preview"
+  },
+  {
+   "number": 1699,
+   "title": "feat(drivers): Driver Master Contacts List CSV importer (rehire database)",
+   "mergedAt": "2026-06-30T23:44:42Z",
+   "branch": "feat/drivers-master-csv-import"
+  },
+  {
+   "number": 1698,
+   "title": "feat(drivers): real Export profiles (CSV) on Drivers list",
+   "mergedAt": "2026-06-30T23:09:30Z",
+   "branch": "feat/drivers-export-csv"
+  },
+  {
+   "number": 1697,
+   "title": "[HOLD — GUARD isolation-verify] fix(catalogs): scope accounts read endpoints to active entity (CALLOUT-6 / Block 1)",
+   "mergedAt": "2026-07-01T00:19:45Z",
+   "branch": "fix/catalogs-accounts-company-scope"
+  },
+  {
+   "number": 1696,
+   "title": "[HOLD-FOR-JORGE — TIER 1] docs(banking): Phase B design — Banking↔COA↔Categorize USMCA parity",
+   "mergedAt": "2026-06-30T21:55:45Z",
+   "branch": "docs/banking-coa-phase-b-design"
+  },
+  {
+   "number": 1695,
+   "title": "fix(banking): box-in-box on categorize Transaction type / Account controls",
+   "mergedAt": "2026-06-30T21:04:01Z",
+   "branch": "fix/banking-categorize-box-in-box"
+  },
+  {
+   "number": 1694,
+   "title": "feat(banking): running Balance column on transactions table",
+   "mergedAt": "2026-06-30T20:42:55Z",
+   "branch": "feat/banking-running-balance-column"
+  },
+  {
+   "number": 1693,
+   "title": "fix(banking): Plaid sync 500 — handle dedup unique index on insert (USMCA transactions)",
+   "mergedAt": "2026-06-30T19:51:51Z",
+   "branch": "fix/plaid-sync-dedup-conflict"
+  },
+  {
+   "number": 1692,
+   "title": "feat(banking): configurable Plaid transaction history window (default 24 months)",
+   "mergedAt": "2026-06-30T19:25:04Z",
+   "branch": "feat/plaid-transactions-days-requested"
+  },
+  {
+   "number": 1691,
+   "title": "feat(banking): audit the real exception on manual Plaid sync 500 (diagnostic)",
+   "mergedAt": "2026-06-30T19:19:53Z",
+   "branch": "fix/plaid-sync-failure-audit"
+  },
+  {
+   "number": 1690,
+   "title": "Feat/per entity posting flag fix hold",
+   "mergedAt": "2026-06-30T19:34:05Z",
+   "branch": "feat/per-entity-posting-flag-fix-hold"
+  },
+  {
+   "number": 1689,
+   "title": "fix(banking): accept Plaid 'error: null' in webhook schema — unblocks transaction sync",
+   "mergedAt": "2026-06-30T18:24:34Z",
+   "branch": "fix/plaid-webhook-error-null-schema"
+  },
+  {
+   "number": 1688,
+   "title": "fix(banking): set opco scope on Plaid exchange INSERT — unblocks USMCA + all bank connects (RLS reject)",
+   "mergedAt": "2026-06-30T18:19:33Z",
+   "branch": "fix/plaid-exchange-opco-scope-hold"
+  },
+  {
+   "number": 1687,
+   "title": "[HOLD-FOR-JORGE] feat(governance): Task #24 void/cancel — per-entity reason catalog (foundation, dispatch v2)",
+   "mergedAt": "2026-06-30T16:49:29Z",
+   "branch": "feat/void-cancel-policy-wiring-task24-hold"
+  },
+  {
+   "number": 1686,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): designate QBO-47 as A/P control, retire native 2000 (ACCOUNTING-2)",
+   "mergedAt": "2026-06-30T17:01:24Z",
+   "branch": "fix/ap-control-qbo47-designation-hold"
+  },
+  {
+   "number": 1685,
+   "title": "chore(deps): bump SonarSource/sonarqube-scan-action from 4 to 6 in /.github/workflows in the github_actions group across 1 directory",
+   "mergedAt": "2026-06-30T17:13:39Z",
+   "branch": "dependabot/github_actions/dot-github/workflows/github_actions-3e76b0ee14"
+  },
+  {
+   "number": 1684,
+   "title": "chore(security): add external code auditors — CodeQL + Semgrep + CodeRabbit",
+   "mergedAt": "2026-06-30T06:30:17Z",
+   "branch": "chore/external-code-auditors"
+  },
+  {
+   "number": 1681,
+   "title": "Fix/qbo transp recurring schedule hold",
+   "mergedAt": "2026-06-30T17:19:56Z",
+   "branch": "fix/qbo-transp-recurring-schedule-hold"
+  },
+  {
+   "number": 1680,
+   "title": "Fix/accounting1 revenue and 1100 hold",
+   "mergedAt": "2026-06-30T06:04:45Z",
+   "branch": "fix/accounting1-revenue-and-1100-hold"
+  },
+  {
+   "number": 1679,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(governance): app-wide void/cancel governance — Owner/Admin/Accountant + request-approve + register (supersedes #1677)",
+   "mergedAt": "2026-06-30T05:30:59Z",
+   "branch": "feat/void-cancel-governance-hold"
+  },
+  {
+   "number": 1678,
+   "title": "fix(settlements): point Pay/Deduction catalog tabs at the real screens (SETTLEMENTS-1)",
+   "mergedAt": "2026-06-30T04:16:00Z",
+   "branch": "fix/settlements-catalog-tab-links"
+  },
+  {
+   "number": 1676,
+   "title": "fix(cash-flow): default \"today\" to company tz so cash position shows the real day (CASHFLOW-1)",
+   "mergedAt": "2026-06-30T03:19:13Z",
+   "branch": "fix/cash-flow-today-company-tz"
+  },
+  {
+   "number": 1675,
+   "title": "fix(insurance): reconcile coverage-gap KPI with detail tab (INSURANCE-1)",
+   "mergedAt": "2026-06-30T03:03:49Z",
+   "branch": "fix/insurance-coverage-gap-reconcile"
+  },
+  {
+   "number": 1674,
+   "title": "fix(safety): default create-form dates/datetimes to company tz, not UTC (SAFETY-1)",
+   "mergedAt": "2026-06-30T02:49:30Z",
+   "branch": "fix/safety-form-datetime-tz"
+  },
+  {
+   "number": 1673,
+   "title": "fix(fleet): AVG AGE KPI from model year, exclude null-year units (FLEET-1)",
+   "mergedAt": "2026-06-30T02:49:28Z",
+   "branch": "fix/fleet-avg-age-kpi"
+  },
+  {
+   "number": 1672,
+   "title": "fix(drivers): scope Driver roster to company + make listDrivers opco-required (DRIVERPROFILE-1)",
+   "mergedAt": "2026-06-30T02:49:24Z",
+   "branch": "fix/driver-profile-roster-opco-scope"
+  },
+  {
+   "number": 1671,
+   "title": "feat(tasks): build Calendar / My Tasks / Admin Report tabs (TASK-1/2/4)",
+   "mergedAt": "2026-06-30T02:25:02Z",
+   "branch": "feat/tasks-module-tabs"
+  },
+  {
+   "number": 1670,
+   "title": "feat(fuel): editable Planner settings (FUEL-3)",
+   "mergedAt": "2026-06-30T02:05:38Z",
+   "branch": "feat/fuel-planner-settings-edit"
+  },
+  {
+   "number": 1669,
+   "title": "fix(maintenance,fuel): WO unit name (MAINT-3) + fuel route-diagram empty-state (FUEL-1)",
+   "mergedAt": "2026-06-30T02:05:50Z",
+   "branch": "fix/maintenance-wo-unit-and-kpi"
+  },
+  {
+   "number": 1668,
+   "title": "fix(home): align Home dashboard FE↔BE response contract + empty-states (HOME-2..7)",
+   "mergedAt": "2026-06-30T01:55:48Z",
+   "branch": "fix/home-dashboard-contract-drift"
+  },
+  {
+   "number": 1667,
+   "title": "fix(dispatch): Load Number + date defaults use company business date, not UTC (DISPATCH-1/HOME-1/TASK-5/DRIVERHUB-1)",
+   "mergedAt": "2026-06-30T01:44:06Z",
+   "branch": "fix/business-date-utc-load-number"
+  },
+  {
+   "number": 1666,
+   "title": "fix(rls): scope ~12 mdata/dispatch endpoints to operating company (USMCA cross-entity leaks)",
+   "mergedAt": "2026-06-30T01:04:53Z",
+   "branch": "fix/entity-scope-leaks-nonfinancial"
+  },
+  {
+   "number": 1665,
+   "title": "[HOLD-FOR-JORGE] fix(rls): scope QBO chart-of-accounts reconciler + classes read + load money by-id to operating company",
+   "mergedAt": "2026-06-30T00:54:00Z",
+   "branch": "fix/entity-scope-leaks-financial-hold"
+  },
+  {
+   "number": 1664,
+   "title": "[HOLD-FOR-JORGE] fix(banking): split transaction silently mis-categorizes (implement real split OR disable)",
+   "mergedAt": "2026-06-30T00:49:34Z",
+   "branch": "fix/banking-split-honest-hold"
+  },
+  {
+   "number": 1663,
+   "title": "fix(ui): make incomplete Fuel/Maintenance actions honest + dead-link cleanup (QA-sweep)",
+   "mergedAt": "2026-06-30T00:48:51Z",
+   "branch": "fix/incomplete-features-nonfinancial"
+  },
+  {
+   "number": 1662,
+   "title": "fix: QA-sweep non-financial route 404s (WO posting-preview path, load-cancellation analytics, pre-flight DVIR, banking helpers)",
+   "mergedAt": "2026-06-30T00:31:16Z",
+   "branch": "fix/qa-sweep-nonfinancial-404s"
+  },
+  {
+   "number": 1661,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): wire recurring-bill-templates route + customer payment unapply (QA-sweep)",
+   "mergedAt": "2026-06-30T01:05:57Z",
+   "branch": "fix/qa-sweep-recurring-bills-and-payment-unapply-hold"
+  },
+  {
+   "number": 1660,
+   "title": "feat(tables): TBL-STANDARD migrate 3 list surfaces to shared DataTable (batch 2)",
+   "mergedAt": "2026-06-30T00:17:24Z",
+   "branch": "feat/tbl-standard-sweep-batch2"
+  },
+  {
+   "number": 1659,
+   "title": "feat(tables): TBL-STANDARD migrate 3 list surfaces to shared DataTable (batch 1)",
+   "mergedAt": "2026-06-29T23:52:09Z",
+   "branch": "feat/tbl-standard-sweep-batch1"
+  },
+  {
+   "number": 1658,
+   "title": "fix(accounting): retire dead QBO subnav export — C7-ACCT-SUBNAV (verdict B, superseded)",
+   "mergedAt": "2026-06-29T23:44:13Z",
+   "branch": "fix/c7-acct-subnav-chrome"
+  },
+  {
+   "number": 1657,
+   "title": "test(accounting): reconciliation workspace already wired via autoload — pin it (P5-T2)",
+   "mergedAt": "2026-06-30T01:06:58Z",
+   "branch": "fix/recon-workspace-p5t2-route-wiring"
+  },
+  {
+   "number": 1656,
+   "title": "feat(finance-hub): AF-6 read-only Finance Hub landing dashboard (flag OFF)",
+   "mergedAt": "2026-06-29T23:29:31Z",
+   "branch": "feat/finance-hub-dashboard-af6"
+  },
+  {
+   "number": 1655,
+   "title": "fix(settlements): surface pg error code on settlement-payment 500 (CHAIN-07)",
+   "mergedAt": "2026-06-29T23:33:09Z",
+   "branch": "fix/settlements-500-observability-chain07"
+  },
+  {
+   "number": 1654,
+   "title": "feat(legal): in-app draft contract PDF view/download",
+   "mergedAt": "2026-06-29T22:31:42Z",
+   "branch": "feat/legal-contract-draft-pdf-view"
+  },
+  {
+   "number": 1653,
+   "title": "[HOLD-FOR-JORGE] fix(legal): close e-sign verification bypass + harden PDF render (verified_at gate)",
+   "mergedAt": "2026-06-29T21:25:57Z",
+   "branch": "fix/legal-esign-verified-at-and-pdf-hardening"
+  },
+  {
+   "number": 1652,
+   "title": "fix(legal): auto-provision per-entity template library + create-modal empty-state (LEGAL-SEED-01)",
+   "mergedAt": "2026-06-29T21:15:52Z",
+   "branch": "fix/legal-template-library-autoseed-and-emptystate"
+  },
+  {
+   "number": 1651,
+   "title": "fix(legal): remove double-box on unified contract creator dropdowns",
+   "mergedAt": "2026-06-29T20:44:51Z",
+   "branch": "fix/legal-creator-double-box-combobox"
+  },
+  {
+   "number": 1650,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): lease ASC 842 subledger + posting, default operating (flag OFF)",
+   "mergedAt": "2026-06-29T21:40:22Z",
+   "branch": "feat/fin22-lease-asc842-hold"
+  },
+  {
+   "number": 1649,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): prepaid amortization + depreciation + unit allocation posting (flag OFF)",
+   "mergedAt": "2026-06-29T20:22:32Z",
+   "branch": "feat/fin21-amortization-unit-allocation-hold"
+  },
+  {
+   "number": 1648,
+   "title": "[HOLD-FOR-JORGE — TIER 2] feat(fin20): true historical as-of AR/AP aging",
+   "mergedAt": "2026-06-29T20:20:09Z",
+   "branch": "feat/fin20-true-historical-asof"
+  },
+  {
+   "number": 1646,
+   "title": "fix(qbo-reconcile): explicit per-entity opco predicates (FIN-23 hardening)",
+   "mergedAt": "2026-06-29T20:00:12Z",
+   "branch": "fix/fin23-qbo-reconcile-opco-predicates"
+  },
+  {
+   "number": 1645,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo-sync): per-entity isolation of outbox.queue + qbo_sync_health",
+   "mergedAt": "2026-06-29T20:15:54Z",
+   "branch": "feat/qbo-sync-entity-isolation"
+  },
+  {
+   "number": 1644,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): settlement + deduction GL posting engine (flag OFF)",
+   "mergedAt": "2026-06-29T19:51:17Z",
+   "branch": "feat/fin18-settlement-deduction-posting-hold"
+  },
+  {
+   "number": 1643,
+   "title": "feat(finance-hub): FIN-20 AR/AP aging (read-only, flag OFF)",
+   "mergedAt": "2026-06-29T19:27:32Z",
+   "branch": "feat/fin20-ar-ap-aging"
+  },
+  {
+   "number": 1642,
+   "title": "feat(finance-hub): CASCADE-14 TMS<->QBO daily reconciliation (read-only, flag OFF)",
+   "mergedAt": "2026-06-29T19:15:46Z",
+   "branch": "feat/cascade14-tms-qbo-recon"
+  },
+  {
+   "number": 1641,
+   "title": "feat(finance-hub): FIN-23 QBO reconcile captures (read-only, flag OFF)",
+   "mergedAt": "2026-06-29T18:59:30Z",
+   "branch": "feat/fin23-qbo-reconcile-captures"
+  },
+  {
+   "number": 1640,
+   "title": "feat(finance-hub): FIN-19 financial statements (P&L/BS/TB, read-only, flag OFF)",
+   "mergedAt": "2026-06-29T18:38:32Z",
+   "branch": "feat/fin19-financial-statements-parity"
+  },
+  {
+   "number": 1639,
+   "title": "[HOLD-FOR-JORGE] Legal full build — library + lifecycle + creator + e-sign + safety/finance wiring",
+   "mergedAt": "2026-06-29T19:11:25Z",
+   "branch": "feat/legal-full-build-library-creator-connections-hold"
+  },
+  {
+   "number": 1638,
+   "title": "fix(jobs): version-agnostic node-cron task type (unblocks dep-bump build-typecheck)",
+   "mergedAt": "2026-06-29T16:01:27Z",
+   "branch": "fix/cron-scheduledtask-type-compat"
+  },
+  {
+   "number": 1637,
+   "title": "feat(maintenance): Owner/Admin Cancel + Void on work orders (reason required, soft, audited)",
+   "mergedAt": "2026-06-29T16:24:26Z",
+   "branch": "feat/wo-cancel-void-owner-admin"
+  },
+  {
+   "number": 1636,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(rls): FORCE RLS on the scoped tenant-ta…",
+   "mergedAt": "2026-06-29T15:37:27Z",
+   "branch": "fix/rls-force-tail"
+  },
+  {
+   "number": 1633,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): wire audit spine into 5 GL posters + link idempotency (CODER-12)",
+   "mergedAt": "2026-06-29T15:37:10Z",
+   "branch": "feat/coder-12-audit-spine"
+  },
+  {
+   "number": 1632,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(rls): scope 4 open-qual policies + load_stops tenant gap (RLS Block A)",
+   "mergedAt": "2026-06-29T13:31:48Z",
+   "branch": "fix/rls-open-qual-isolation"
+  },
+  {
+   "number": 1631,
+   "title": "docs(design): CODER-12 audit-spine wiring design (BLOCK 3, pre-build)",
+   "mergedAt": "2026-06-29T11:42:43Z",
+   "branch": "docs/coder-12-audit-spine-design"
+  },
+  {
+   "number": 1630,
+   "title": "docs(audit): RLS unforced-tail audit — ownership-dependent risk + prod drift flag",
+   "mergedAt": "2026-06-29T11:32:15Z",
+   "branch": "docs/rls-unforced-tail-audit"
+  },
+  {
+   "number": 1629,
+   "title": "fix(accounting): deterministic idempotency keys on the 4 key-less GL posters (BLOCK 2)",
+   "mergedAt": "2026-06-29T11:26:10Z",
+   "branch": "fix/block2-jep-keyless-posters-hold"
+  },
+  {
+   "number": 1628,
+   "title": "chore(guard): phantom-unmask the remaining 6 now-canonical relations (BLOCK 1)",
+   "mergedAt": "2026-06-29T11:18:07Z",
+   "branch": "chore/phantom-unmask-remaining-6"
+  },
+  {
+   "number": 1627,
+   "title": "fix(guard): regenerate canonical snapshot from prod + unmask FA tables",
+   "mergedAt": "2026-06-29T10:24:32Z",
+   "branch": "fix/unmask-fa-canonical-regen"
+  },
+  {
+   "number": 1626,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(rls): FORCE RLS on 4 relocated orphaned tables (CODER-29)",
+   "mergedAt": "2026-06-29T10:26:16Z",
+   "branch": "fix/force-rls-orphaned-tables-hold"
+  },
+  {
+   "number": 1625,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): GL idempotency uniqueness on journal_entry_postings (CODER-28B)",
+   "mergedAt": "2026-06-29T10:25:37Z",
+   "branch": "fix/jep-idempotency-unique-index-hold"
+  },
+  {
+   "number": 1624,
+   "title": "feat(finance-hub): My-Accountant UI-1 module (read-only workspace)",
+   "mergedAt": "2026-06-29T03:30:47Z",
+   "branch": "feat/my-accountant-ui"
+  },
+  {
+   "number": 1623,
+   "title": "docs(audit): schema-canonicalization verdicts + financial-queue handoff (GUARD-verified)",
+   "mergedAt": "2026-06-29T03:30:12Z",
+   "branch": "docs/schema-canonicalization-verdicts"
+  },
+  {
+   "number": 1622,
+   "title": "chore(integrity): self-cleaning known-debt ratchet + remove 20 resolved entries (CODER-28A)",
+   "mergedAt": "2026-06-29T03:21:07Z",
+   "branch": "chore/known-debt-stale-flag"
+  },
+  {
+   "number": 1621,
+   "title": "test(accounting): lock daily-recon flag gate to lib.feature_flags (CODER-27)",
+   "mergedAt": "2026-06-29T02:51:44Z",
+   "branch": "fix/daily-recon-flag-reader"
+  },
+  {
+   "number": 1620,
+   "title": "fix(audit): ban writes to non-existent audit.audit_log (CODER-12 audit-spine)",
+   "mergedAt": "2026-06-29T02:43:39Z",
+   "branch": "fix/coder12-ban-audit-log-writes"
+  },
+  {
+   "number": 1619,
+   "title": "chore(multi-entity): USMCA pre-activation readiness audit + hidden-entity guard (CODER-16)",
+   "mergedAt": "2026-06-29T02:38:20Z",
+   "branch": "chore/usmca-preactivation-readiness"
+  },
+  {
+   "number": 1618,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(rls): ENABLE+FORCE RLS on dispatch.intransit_issues",
+   "mergedAt": "2026-06-29T02:32:23Z",
+   "branch": "fix/rls-enable-intransit-issues-hold"
+  },
+  {
+   "number": 1617,
+   "title": "fix(reports): dispatch-margin 500 — guard phantom settlement_lines.lo…",
+   "mergedAt": "2026-06-29T02:29:20Z",
+   "branch": "fix/coder14-dispatch-margin-500"
+  },
+  {
+   "number": 1616,
+   "title": "fix(mdata): units list degrades unknown status filter to active-default, not 400 (CODER-17)",
+   "mergedAt": "2026-06-29T02:18:56Z",
+   "branch": "fix/coder17-units-status-tolerant"
+  },
+  {
+   "number": 1615,
+   "title": "fix(mdata): loads list degrades unknown sort to default instead of 400 (CODER-17)",
+   "mergedAt": "2026-06-29T02:16:14Z",
+   "branch": "fix/coder17-loads-sort-tolerant-hold"
+  },
+  {
+   "number": 1614,
+   "title": "[HOLD-FOR-JORGE] feat(dispatch): DB-7 Phase 2 — planner idle + Book prefills the truck",
+   "mergedAt": "2026-06-29T02:20:44Z",
+   "branch": "feat/db7-p2-planner-unit-prefill-hold"
+  },
+  {
+   "number": 1613,
+   "title": "chore(audit): migration-drift forensic scanner (read-only) + fresh-DB findings",
+   "mergedAt": "2026-06-29T01:54:12Z",
+   "branch": "chore/migration-drift-forensic-scan"
+  },
+  {
+   "number": 1612,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): reconcile prod-missing fk_invoices_factoring_advance",
+   "mergedAt": "2026-06-29T01:32:09Z",
+   "branch": "fix/factoring-fk-reconcile-hold"
+  },
+  {
+   "number": 1611,
+   "title": "[HOLD-FOR-JORGE] fix(ci): consistency guard must not auto-connect to prod (CODER-21 §1.5)",
+   "mergedAt": "2026-06-29T02:20:34Z",
+   "branch": "fix/coder21-consistency-guard-no-prod-fallback"
+  },
+  {
+   "number": 1610,
+   "title": "docs(audit): CODER-23 — record GUARD prod ground-truth + canonical ma…",
+   "mergedAt": "2026-06-29T00:58:36Z",
+   "branch": "docs/coder23-prod-ground-truth"
+  },
+  {
+   "number": 1609,
+   "title": "docs(audit): schema-parity table-count reconcile [verification]",
+   "mergedAt": "2026-06-29T00:11:27Z",
+   "branch": "docs/schema-parity-count-reconcile"
+  },
+  {
+   "number": 1608,
+   "title": "feat(finance-hub): Revenue Recognition UI-1 module (read/compute, pos…",
+   "mergedAt": "2026-06-29T01:40:53Z",
+   "branch": "feat/revenue-recognition-ui"
+  },
+  {
+   "number": 1607,
+   "title": "[HOLD-FOR-JORGE] perf(dispatch): DB-7 Phase 1 — kill planner N+1 (identical output)",
+   "mergedAt": "2026-06-29T00:43:36Z",
+   "branch": "feat/db7-phase1-planner-nplus1"
+  },
+  {
+   "number": 1606,
+   "title": "feat(finance-hub): Fixed Assets UI-1 module (read/compute, posting GATED)",
+   "mergedAt": "2026-06-29T00:58:00Z",
+   "branch": "feat/fixed-assets-ui"
+  },
+  {
+   "number": 1605,
+   "title": "docs(perf): DB-7 planners profile — measured N+1 (~8.7s/call), profile-first",
+   "mergedAt": "2026-06-28T23:59:05Z",
+   "branch": "docs/db7-planners-perf-profile"
+  },
+  {
+   "number": 1604,
+   "title": "[HOLD-FOR-JORGE] test(maintenance): lock dev-fixtures prod gate (CODER-10 prod-stub)",
+   "mergedAt": "2026-06-28T23:53:37Z",
+   "branch": "fix/dev-fixtures-prod-gate-guard"
+  },
+  {
+   "number": 1603,
+   "title": "feat(finance-hub): account type / detail-type catalog (read-only)",
+   "mergedAt": "2026-06-29T00:43:26Z",
+   "branch": "feat/account-type-catalog-fe"
+  },
+  {
+   "number": 1602,
+   "title": "[HOLD-FOR-JORGE] fix(ci): repo-wide no-conflict-markers guard (CODER-10)",
+   "mergedAt": "2026-06-28T23:52:24Z",
+   "branch": "fix/no-conflict-markers-guard"
+  },
+  {
+   "number": 1601,
+   "title": "[HOLD-FOR-JORGE] fix(dispatch): DB-4 honest List/Table count (scope to loads + truck roster total)",
+   "mergedAt": "2026-06-28T23:52:15Z",
+   "branch": "feat/dispatch-db4-pagination-honest-count"
+  },
+  {
+   "number": 1600,
+   "title": "docs(qbo-parity): B8 transaction editors capture [non-posting]",
+   "mergedAt": "2026-06-28T23:36:27Z",
+   "branch": "docs/qbo-parity-b8-editors"
+  },
+  {
+   "number": 1599,
+   "title": "Docs/cas 03 operational verification",
+   "mergedAt": "2026-06-28T23:41:43Z",
+   "branch": "docs/cas-03-operational-verification"
+  },
+  {
+   "number": 1598,
+   "title": "Docs/qbo parity a2 b4 captures",
+   "mergedAt": "2026-06-28T23:39:05Z",
+   "branch": "docs/qbo-parity-a2-b4-captures"
+  },
+  {
+   "number": 1597,
+   "title": "docs(parity/visuals): Bank Register inline-edit + Cash Flow page design (B9/V1)",
+   "mergedAt": "2026-06-28T23:28:38Z",
+   "branch": "docs/bank-register-cashflow-design"
+  },
+  {
+   "number": 1596,
+   "title": "docs(qbo-parity): VOID-EVERYWHERE design PR-1/2/3 (gated, posting OFF)",
+   "mergedAt": "2026-06-28T23:28:25Z",
+   "branch": "docs/void-everywhere-prs"
+  },
+  {
+   "number": 1595,
+   "title": "Docs/revenue recognition data model",
+   "mergedAt": "2026-06-28T23:23:07Z",
+   "branch": "docs/revenue-recognition-data-model"
+  },
+  {
+   "number": 1594,
+   "title": "Docs/fh3 fh7 fh8 asc842 specs",
+   "mergedAt": "2026-06-28T23:23:26Z",
+   "branch": "docs/fh3-fh7-fh8-asc842-specs"
+  },
+  {
+   "number": 1593,
+   "title": "Docs/fixed assets data model",
+   "mergedAt": "2026-06-28T23:20:53Z",
+   "branch": "docs/fixed-assets-data-model"
+  },
+  {
+   "number": 1592,
+   "title": "feat(dispatch): Load # column after Trailer in shared column model (DB-6)",
+   "mergedAt": "2026-06-28T23:28:14Z",
+   "branch": "feat/dispatch-db6-load-after-trailer"
+  },
+  {
+   "number": 1591,
+   "title": "feat(dispatch): Kanban lane headers clickable → filtered List (DB-2)",
+   "mergedAt": "2026-06-28T23:05:44Z",
+   "branch": "feat/dispatch-db2-kanban-header-link"
+  },
+  {
+   "number": 1590,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(migrations): Revenue Recognition data model — ASC 606 (RR-MIG)",
+   "mergedAt": "2026-06-28T23:12:04Z",
+   "branch": "feat/revenue-recognition-migration"
+  },
+  {
+   "number": 1589,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(migrations): Fixed Assets data model — ASC 360 (FA-MIG)",
+   "mergedAt": "2026-06-28T23:01:29Z",
+   "branch": "feat/fixed-assets-migration"
+  },
+  {
+   "number": 1588,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(security): FORCE RLS on 8 financial tables (CC-06)",
+   "mergedAt": "2026-06-28T22:42:42Z",
+   "branch": "feat/force-rls-financial-tables"
+  },
+  {
+   "number": 1587,
+   "title": "fix(correctness): audit_log->audit_events + Daily Recon lib.feature_flags (CC-07)",
+   "mergedAt": "2026-06-28T22:41:08Z",
+   "branch": "fix/auditlog-repoint-and-daily-recon-gate"
+  },
+  {
+   "number": 1586,
+   "title": "docs(qbo-parity): A2 inline +Add + B4 Reclassify More-filters captures [non-posting]",
+   "mergedAt": "2026-06-28T22:18:32Z",
+   "branch": "docs/qbo-parity-a2-b4-captures"
+  },
+  {
+   "number": 1585,
+   "title": "docs(cas-03): Gate Verification — read/write phantom gates PASS on fresh-migrated DB",
+   "mergedAt": "2026-06-28T22:18:39Z",
+   "branch": "docs/cas-03-operational-verification"
+  },
+  {
+   "number": 1584,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(migrations): copy-apply 5 missing-table migrations (CC-05)",
+   "mergedAt": "2026-06-28T22:27:39Z",
+   "branch": "feat/relocate-missing-table-migrations"
+  },
+  {
+   "number": 1583,
+   "title": "docs(spec): FH-3/FH-7 reconcile + FH-8 ASC 842 lease layer [HOLD]",
+   "mergedAt": "2026-06-28T22:10:17Z",
+   "branch": "docs/fh3-fh7-fh8-asc842-specs"
+  },
+  {
+   "number": 1582,
+   "title": "docs(spec): Revenue Recognition Data-Model (ASC 606) — migration-ready, gated OFF [HOLD]",
+   "mergedAt": "2026-06-28T22:10:10Z",
+   "branch": "docs/revenue-recognition-data-model"
+  },
+  {
+   "number": 1581,
+   "title": "docs(spec): Fixed Assets data-model (ASC 360) — migration-ready, post…",
+   "mergedAt": "2026-06-28T22:07:32Z",
+   "branch": "docs/fixed-assets-data-model"
+  },
+  {
+   "number": 1580,
+   "title": "fix(prod-500): home /role-home + compliance dashboard 500s (PROD-500-SWEEP #2,#3)",
+   "mergedAt": "2026-06-28T21:58:42Z",
+   "branch": "fix/role-home-compliance-settlements-reads"
+  },
+  {
+   "number": 1579,
+   "title": "Docs/claude master tracker",
+   "mergedAt": "2026-06-28T22:03:49Z",
+   "branch": "docs/claude-master-tracker"
+  },
+  {
+   "number": 1578,
+   "title": "docs(schema): SCHEMA_VERIFICATION_STANDARD.md (CC-03)",
+   "mergedAt": "2026-06-28T21:53:43Z",
+   "branch": "docs/schema-verification-standard"
+  },
+  {
+   "number": 1577,
+   "title": "feat(integrity): structural CI guards — migration-dir + deprecated-schema (CC-02)",
+   "mergedAt": "2026-06-28T22:07:22Z",
+   "branch": "feat/migration-dir-and-schema-guards"
+  },
+  {
+   "number": 1576,
+   "title": "docs(cas-02): migration mapping cross-check — 5 files, 6 tables+1 sch…",
+   "mergedAt": "2026-06-28T21:50:17Z",
+   "branch": "docs/cas-02-migration-mapping-crosscheck"
+  },
+  {
+   "number": 1575,
+   "title": "feat(integrity): read-query phantom-column gate (CC-01)",
+   "mergedAt": "2026-06-28T21:46:47Z",
+   "branch": "feat/verify-sql-read-targets-gate"
+  },
+  {
+   "number": 1574,
+   "title": "fix(db-migrate): PROD-MIGRATE safety guard [HOLD-FOR-JORGE / Phase-0]",
+   "mergedAt": "2026-06-28T21:23:33Z",
+   "branch": "feat/db-migrate-prod-guard"
+  },
+  {
+   "number": 1573,
+   "title": "docs(tracker): Claude Master Tracker 2026-06-28 3:20PM",
+   "mergedAt": "2026-06-28T20:43:08Z",
+   "branch": "docs/claude-master-tracker"
+  },
+  {
+   "number": 1572,
+   "title": "feat(integrity): column integrity hardening — 3 guards + startup prob…",
+   "mergedAt": "2026-06-28T17:14:05Z",
+   "branch": "feat/column-integrity-hardening"
+  },
+  {
+   "number": 1571,
+   "title": "feat(integrity): schema write-target audit + permanent ratchet gate (recurring wrong-table/column fix)",
+   "mergedAt": "2026-06-28T16:32:58Z",
+   "branch": "feat/schema-write-integrity-gate"
+  },
+  {
+   "number": 1570,
+   "title": "Feat/bank account cash gl setup hold",
+   "mergedAt": "2026-06-28T16:38:02Z",
+   "branch": "feat/bank-account-cash-gl-setup-hold"
+  },
+  {
+   "number": 1569,
+   "title": "feat(bank-feed): TRANSP-only banking.transaction_categories seed + CI…",
+   "mergedAt": "2026-06-28T16:37:50Z",
+   "branch": "feat/bank-feed-transp-category-seed"
+  },
+  {
+   "number": 1568,
+   "title": "docs(block-b): booked cash-advance approval-gate design (design-first, HOLD)",
+   "mergedAt": "2026-06-28T15:17:21Z",
+   "branch": "docs/block-b-approval-gate-design"
+  },
+  {
+   "number": 1567,
+   "title": "test(dispatch): load-detail + optimal-drivers 200/no-500 CI guard (trailer_id/type lock)",
+   "mergedAt": "2026-06-28T15:02:32Z",
+   "branch": "test/dispatch-load-detail-optimal-drivers-200-guard"
+  },
+  {
+   "number": 1566,
+   "title": "fix(dispatch): Book Load V4 sends strict boolean stop fields (booking 400 fix)",
+   "mergedAt": "2026-06-28T14:50:11Z",
+   "branch": "fix/bookload-stop-boolean-coercion"
+  },
+  {
+   "number": 1565,
+   "title": "Docs/factoring packet ampm design",
+   "mergedAt": "2026-06-28T14:50:05Z",
+   "branch": "docs/factoring-packet-ampm-design"
+  },
+  {
+   "number": 1564,
+   "title": "feat(schema): Block 03 — schema-parity guard + odometer_mi migration …",
+   "mergedAt": "2026-06-28T15:15:33Z",
+   "branch": "block03-schema-drift-reconciliation"
+  },
+  {
+   "number": 1563,
+   "title": "docs(factoring): Factoring Packet + AM/PM design (DESIGN-ONLY, Tier-1 — PAUSE for Jorge)",
+   "mergedAt": "2026-06-28T00:03:26Z",
+   "branch": "docs/factoring-packet-ampm-design"
+  },
+  {
+   "number": 1562,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(driver-finance): load_id DIRECT on set…",
+   "mergedAt": "2026-06-28T16:25:36Z",
+   "branch": "feat/load-advance-deduction-loadid-direct-hold"
+  },
+  {
+   "number": 1561,
+   "title": "chore(tbl-standard): Internal Fine Reasons list → shared DataTable",
+   "mergedAt": "2026-06-27T22:15:14Z",
+   "branch": "chore/tbl-standard-internal-fine-reasons"
+  },
+  {
+   "number": 1560,
+   "title": "chore(tbl-standard): DOT Violation Types list → shared DataTable",
+   "mergedAt": "2026-06-27T22:15:04Z",
+   "branch": "chore/tbl-standard-dot-violation-types"
+  },
+  {
+   "number": 1559,
+   "title": "chore(tbl-standard): Complaint Types list → shared DataTable",
+   "mergedAt": "2026-06-27T22:14:57Z",
+   "branch": "chore/tbl-standard-complaint-types"
+  },
+  {
+   "number": 1558,
+   "title": "chore(tbl-standard): Company Violation Types list → shared DataTable",
+   "mergedAt": "2026-06-27T21:55:36Z",
+   "branch": "chore/tbl-standard-company-violation-types"
+  },
+  {
+   "number": 1557,
+   "title": "chore(tbl-standard): Civil Fine Types list → shared DataTable",
+   "mergedAt": "2026-06-27T21:54:54Z",
+   "branch": "chore/tbl-standard-civil-fine-types"
+  },
+  {
+   "number": 1556,
+   "title": "docs: [HOLD-FOR-JORGE] Bank-Feed Categorize→GL Posting Engine — Option B Design Proposal",
+   "mergedAt": "2026-06-28T15:18:23Z",
+   "branch": "docs/bank-feed-posting-design"
+  },
+  {
+   "number": 1555,
+   "title": "feat(truck-lease): [Tier-1] Commercial Truck Lease Agreement — template, attorney-review gate, Texas governing-law, guard 44/44",
+   "mergedAt": "2026-06-27T22:07:05Z",
+   "branch": "pr/truck-lease"
+  },
+  {
+   "number": 1554,
+   "title": "chore(tbl-standard): Cargo Claim Reasons list → shared DataTable",
+   "mergedAt": "2026-06-27T21:42:40Z",
+   "branch": "chore/tbl-standard-cargo-claim-reasons"
+  },
+  {
+   "number": 1553,
+   "title": "feat(recon): daily TMS↔QBO reconciliation screen — route, backend han…",
+   "mergedAt": "2026-06-27T22:14:31Z",
+   "branch": "pr/daily-recon"
+  },
+  {
+   "number": 1552,
+   "title": "Pr/nav unification",
+   "mergedAt": "2026-06-27T21:55:51Z",
+   "branch": "pr/nav-unification"
+  },
+  {
+   "number": 1550,
+   "title": "fix(guard): content-drift verifier matches timestamp migrations (\\d{4,})",
+   "mergedAt": "2026-06-27T20:23:35Z",
+   "branch": "fix/content-drift-verifier-timestamp-blindspot"
+  },
+  {
+   "number": 1549,
+   "title": "feat(CA-05): account register — extend Payee (settlement/payment) + honest C/R banner",
+   "mergedAt": "2026-06-27T20:40:01Z",
+   "branch": "feat/account-register-payee-cr-banner"
+  },
+  {
+   "number": 1548,
+   "title": "fix(guard): migration-application-consistency — read timestamp migrations + search_path-aware schema",
+   "mergedAt": "2026-06-27T19:34:42Z",
+   "branch": "fix/migration-consistency-guard-timestamp-blindspot"
+  },
+  {
+   "number": 1547,
+   "title": "feat(ui1): Integration Transactions + Receipts + Prepaid Expenses — C…",
+   "mergedAt": "2026-06-28T17:16:35Z",
+   "branch": "feat/ui1-integration-transactions-receipts-prepaid"
+  },
+  {
+   "number": 1546,
+   "title": "docs(audit): DOC-1/2/3 residuals — hazmat GATED annotation + sidebar count resolved",
+   "mergedAt": "2026-06-27T21:39:08Z",
+   "branch": "docs/audit-doc-residuals-2026-06-27"
+  },
+  {
+   "number": 1545,
+   "title": "feat(CA-05): Account Register QBO-parity enhancement — Payee/Split/Class + drill-through (read-only, enhance in place)",
+   "mergedAt": "2026-06-27T17:17:21Z",
+   "branch": "feat/account-register-qbo-parity-ca05"
+  },
+  {
+   "number": 1544,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(remediation): P0/P1/P2/P3 audit dispatch — settlement grants, soft-delete invariants, RLS, guards, docs",
+   "mergedAt": "2026-06-27T16:53:08Z",
+   "branch": "fix/remediation-dispatch-p0-p1-p2-p3-2026-06-27"
+  },
+  {
+   "number": 1543,
+   "title": "docs(qbo-parity): Account Register verify-first gap analysis (already built; gates to resolve)",
+   "mergedAt": "2026-06-27T16:50:08Z",
+   "branch": "docs/account-register-gap-analysis"
+  },
+  {
+   "number": 1542,
+   "title": "[HOLD-FOR-JORGE — TIER 1] Capture 21 prod-only columns — clean migrate == prod (AF-1 gate)",
+   "mergedAt": "2026-06-27T16:05:54Z",
+   "branch": "fix/capture-prod-column-drift"
+  },
+  {
+   "number": 1541,
+   "title": "docs(constitution): move sidebar/module-count rule to tracked AGENTS.md (28, config source of truth)",
+   "mergedAt": "2026-06-27T15:40:35Z",
+   "branch": "docs/agents-md-sidebar-rule"
+  },
+  {
+   "number": 1540,
+   "title": "docs(drift): DISPATCH-2 prod↔migration drift ledger (investigation)",
+   "mergedAt": "2026-06-27T15:40:26Z",
+   "branch": "docs/prod-migration-drift-ledger"
+  },
+  {
+   "number": 1539,
+   "title": "[HOLD-FOR-JORGE — TIER 1] F3+F1 live-defect fixes — view security_invoker + ih35_app grants",
+   "mergedAt": "2026-06-27T15:24:29Z",
+   "branch": "fix/f3-f1-live-defects-grants-security-invoker"
+  },
+  {
+   "number": 1538,
+   "title": "docs: live verified Architecture & Blueprint (truth-up 2026-06-27)",
+   "mergedAt": "2026-06-27T15:40:17Z",
+   "branch": "docs/architecture-blueprint-truth-up"
+  },
+  {
+   "number": 1537,
+   "title": "chore(trackers): truth-up — add missing .block-ready files for today's blocks + per-block reconcile output",
+   "mergedAt": "2026-06-27T13:15:34Z",
+   "branch": "chore/tracker-truth-up-block-count"
+  },
+  {
+   "number": 1536,
+   "title": "Build: Unified Transaction Register — bank + fuel + AR + AP + settlements, one reviewable screen",
+   "mergedAt": "2026-06-27T13:17:39Z",
+   "branch": "feat/unified-transaction-register"
+  },
+  {
+   "number": 1535,
+   "title": "Fix: QBO Sync Drift dashboard 401 — align data calls to authed apiRequest (send session cookie)",
+   "mergedAt": "2026-06-27T13:16:48Z",
+   "branch": "fix/qbo-sync-drift-401-credentials"
+  },
+  {
+   "number": 1534,
+   "title": "fix(sweep): mdata.drivers.full_name phantom — 5 endpoints 500'd (42703)",
+   "mergedAt": "2026-06-27T03:23:25Z",
+   "branch": "fix/drivers-full-name-phantom"
+  },
+  {
+   "number": 1533,
+   "title": "fix(pickers): 50-cap class — unit/vendor/customer pickers load full set (sweep finding #2)",
+   "mergedAt": "2026-06-27T03:05:59Z",
+   "branch": "fix/picker-50-cap-units-vendors"
+  },
+  {
+   "number": 1532,
+   "title": "fix(maintenance): services/eta 500 — phantom mdata.units columns (sweep finding #1)",
+   "mergedAt": "2026-06-27T03:23:22Z",
+   "branch": "fix/maintenance-services-eta-phantom-cols"
+  },
+  {
+   "number": 1531,
+   "title": "feat(tbl-standard): migrate Insurance Policies list to shared DataTable (surface 1)",
+   "mergedAt": "2026-06-27T02:23:55Z",
+   "branch": "feat/tbl-standard-insurance-policies"
+  },
+  {
+   "number": 1530,
+   "title": "fix(dispatch): Book Load driver picker — the ACTUAL wizard picker was uncapped (Mecor + all 91 active)",
+   "mergedAt": "2026-06-27T00:28:52Z",
+   "branch": "fix/book-load-driver-picker-cap"
+  },
+  {
+   "number": 1529,
+   "title": "fix(dispatch): driver picker 50-cap — load full active set (Mecor + all active drivers selectable)",
+   "mergedAt": "2026-06-27T00:08:43Z",
+   "branch": "fix/dispatch-driver-picker-50-cap"
+  },
+  {
+   "number": 1528,
+   "title": "[HOLD-FOR-JORGE — TIER 1] AF-1 catalogs.accounts per-entity entity-COA migration",
+   "mergedAt": "2026-06-27T21:42:22Z",
+   "branch": "chore/af1-entity-coa-migration-hold"
+  },
+  {
+   "number": 1527,
+   "title": "docs(tbl-standard): Step-0 inventory — shared vs bespoke list surfaces (sweep targets)",
+   "mergedAt": "2026-06-26T23:26:14Z",
+   "branch": "chore/tbl-standard-inventory"
+  },
+  {
+   "number": 1526,
+   "title": "chore(trackers): NV-29-CLOSE — non-financial board closed (7 already-built promoted)",
+   "mergedAt": "2026-06-26T23:13:43Z",
+   "branch": "chore/nv-29-close"
+  },
+  {
+   "number": 1525,
+   "title": "chore(trackers): residual confirm-absent — all 7 already built, residual EMPTY",
+   "mergedAt": "2026-06-26T23:02:36Z",
+   "branch": "chore/residual-already-built"
+  },
+  {
+   "number": 1524,
+   "title": "chore(trackers): deep-verify ambiguous set — promote 16 more built blocks; de-stale CURATED",
+   "mergedAt": "2026-06-26T22:50:41Z",
+   "branch": "chore/deep-verify-ambiguous"
+  },
+  {
+   "number": 1523,
+   "title": "chore(trackers): full-tracker verify-first reconciliation — 31 false-NEEDS-VERIFY → DONE + residual list",
+   "mergedAt": "2026-06-26T22:22:45Z",
+   "branch": "chore/full-tracker-reconciliation"
+  },
+  {
+   "number": 1522,
+   "title": "chore(trackers): resolve 17-module queue as already-built + kill false-PENDING class (CI guard)",
+   "mergedAt": "2026-06-26T21:51:17Z",
+   "branch": "chore/block-stubs-artifact-evidence"
+  },
+  {
+   "number": 1521,
+   "title": "chore(trackers): make NEEDS-VERIFY an honest live metric — evidence sweep + fix 2 classifier pins",
+   "mergedAt": "2026-06-26T20:36:01Z",
+   "branch": "chore/needs-verify-sweep"
+  },
+  {
+   "number": 1520,
+   "title": "fix(legal): lease-to-own fleet picker — phantom u.unit_type → real vehicle_type (42703) + real db-guard",
+   "mergedAt": "2026-06-26T19:19:11Z",
+   "branch": "fix/legal-fleet-vehicle-type-phantom"
+  },
+  {
+   "number": 1519,
+   "title": "docs(catalogs): catalogs.classes per-entity FK inventory — confirmed same global leak",
+   "mergedAt": "2026-06-26T19:12:23Z",
+   "branch": "docs/catalogs-classes-fk-inventory"
+  },
+  {
+   "number": 1518,
+   "title": "docs(catalogs): authoritative FK inventory for catalogs.accounts per-entity re-key",
+   "mergedAt": "2026-06-26T18:50:08Z",
+   "branch": "docs/catalogs-accounts-fk-inventory"
+  },
+  {
+   "number": 1517,
+   "title": "fix(reports): per-truck-cpm permits CTE repoint to real unit_permits columns (42703) + real db-guard",
+   "mergedAt": "2026-06-26T18:25:47Z",
+   "branch": "fix/per-truck-cpm-permits-cte-repoint"
+  },
+  {
+   "number": 1516,
+   "title": "docs(specs): catalogs.accounts per-entity Tier-1 DESIGN (blast radius ~25 FK cols, not 6)",
+   "mergedAt": "2026-06-26T18:41:53Z",
+   "branch": "docs/catalogs-accounts-per-entity-design"
+  },
+  {
+   "number": 1515,
+   "title": "fix(reports): per-truck-cpm 500 — degrade insurance CTE to 0 (phantom table) + 200 smoke guard",
+   "mergedAt": "2026-06-26T17:37:55Z",
+   "branch": "fix/per-truck-cpm-500"
+  },
+  {
+   "number": 1514,
+   "title": "[HOLD-FOR-JORGE] fix(feature-flags): admin flag writes under withLuciaBypass (RLS Option A) + proof test",
+   "mergedAt": "2026-06-26T17:55:00Z",
+   "branch": "fix/feature-flags-rls-write-context-HOLD"
+  },
+  {
+   "number": 1513,
+   "title": "docs(audit): GL-COA-ENDPOINT-AUDIT — GL endpoint unimplemented; CoA served at catalogs/accounts",
+   "mergedAt": "2026-06-26T17:06:28Z",
+   "branch": "docs/gl-coa-endpoint-audit"
+  },
+  {
+   "number": 1512,
+   "title": "[HOLD-FOR-JORGE] fix(feature-flags): grant ih35_app write on lib.feature_flags(+overrides)",
+   "mergedAt": "2026-06-26T16:07:48Z",
+   "branch": "fix/feature-flags-write-grant-HOLD"
+  },
+  {
+   "number": 1511,
+   "title": "[DRAFT] feat(legal): LEGAL-CONTRACT-CREATOR-01 — Lease-to-Own contract creator (behind LEGAL_CONTRACTS_ENABLED)",
+   "mergedAt": "2026-06-26T15:32:03Z",
+   "branch": "feat/legal-lease-to-own-creator"
+  },
+  {
+   "number": 1509,
+   "title": "feat(reliability): BLOCK-RELIABILITY-08 shared 3-channel alarm spine (on-screen+email+SMS)",
+   "mergedAt": "2026-06-26T10:34:50Z",
+   "branch": "feat/reliability-08-alarm-spine"
+  },
+  {
+   "number": 1508,
+   "title": "[DRAFT][SKELETON] feat(reliability): BLOCK-RELIABILITY-03 reconciliation drift report",
+   "mergedAt": "2026-06-27T23:02:22Z",
+   "branch": "feat/reliability-03-recon-drift"
+  },
+  {
+   "number": 1507,
+   "title": "docs(trackers): 2026-06-26 — sweep verdicts resolved + reliability lane status",
+   "mergedAt": "2026-06-26T04:59:44Z",
+   "branch": "docs/tracker-update-2026-06-26"
+  },
+  {
+   "number": 1506,
+   "title": "feat(reliability): BLOCK-RELIABILITY-04 schema-doc reconcile + posting-idempotency guard",
+   "mergedAt": "2026-06-26T10:28:50Z",
+   "branch": "feat/reliability-04-schema-doc-idempotency"
+  },
+  {
+   "number": 1505,
+   "title": "[DRAFT] feat(reliability): BLOCK-RELIABILITY-01 balanced-ledger guard (advisory, degrade-safe)",
+   "mergedAt": "2026-06-27T23:24:39Z",
+   "branch": "feat/reliability-01-balanced-ledger-guard"
+  },
+  {
+   "number": 1504,
+   "title": "[DRAFT] feat(reliability): BLOCK-RELIABILITY-07 migration anti-RAISE lint (advisory)",
+   "mergedAt": "2026-06-26T04:59:48Z",
+   "branch": "feat/reliability-07-anti-raise-lint"
+  },
+  {
+   "number": 1503,
+   "title": "[DRAFT][SKELETON] feat(reliability): BLOCK-RELIABILITY-05 event-spine heartbeat",
+   "mergedAt": "2026-06-27T23:02:32Z",
+   "branch": "feat/reliability-05-event-spine-heartbeat"
+  },
+  {
+   "number": 1502,
+   "title": "docs(trackers): 2026-06-25 master tracker + financial NEEDS-VERIFY sweep + reconciliation",
+   "mergedAt": "2026-06-26T03:51:22Z",
+   "branch": "docs/trackers-2026-06-25"
+  },
+  {
+   "number": 1501,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(events): grant ih35_app SELECT on events.event_log (BLOCK-SPINE-00)",
+   "mergedAt": "2026-06-26T03:39:57Z",
+   "branch": "fix/spine-00-event-log-read-grant-HOLD"
+  },
+  {
+   "number": 1500,
+   "title": "[HOLD-FOR-JORGE] chore(factoring): wire factoring-packet ops surface (edits 1-4)",
+   "mergedAt": "2026-06-27T22:23:41Z",
+   "branch": "chore/factoring-packet-wiring-HOLD"
+  },
+  {
+   "number": 1499,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 7 — auto-invoice the billable lumper line",
+   "mergedAt": "2026-06-26T04:48:45Z",
+   "branch": "feat/lumper-lifecycle-step7-auto-invoice-HOLD"
+  },
+  {
+   "number": 1498,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 5 — bank-match invariant ($400 → $250 + $150)",
+   "mergedAt": "2026-06-26T04:44:44Z",
+   "branch": "feat/lumper-lifecycle-step5-bank-match-HOLD"
+  },
+  {
+   "number": 1497,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 4 — posting contract + balanced-JE tests",
+   "mergedAt": "2026-06-26T04:42:28Z",
+   "branch": "feat/lumper-lifecycle-step4-posting-rules-HOLD"
+  },
+  {
+   "number": 1496,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 3b — cash-advance disburse split engine",
+   "mergedAt": "2026-06-26T00:45:44Z",
+   "branch": "feat/lumper-lifecycle-step3b-split-engine-HOLD"
+  },
+  {
+   "number": 1495,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 3a — 'lumper' expense category + GL account map",
+   "mergedAt": "2026-06-26T00:45:29Z",
+   "branch": "feat/lumper-lifecycle-step3a-category-map-HOLD"
+  },
+  {
+   "number": 1494,
+   "title": "[HOLD-FOR-JORGE] feat(lumper): STEP 6 core — 3-scenario money model (pure + worked examples)",
+   "mergedAt": "2026-06-26T00:41:13Z",
+   "branch": "feat/lumper-lifecycle-step6-scenario-HOLD"
+  },
+  {
+   "number": 1493,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 2 — per-customer + per-stop lumper billing rule",
+   "mergedAt": "2026-06-25T23:38:19Z",
+   "branch": "feat/lumper-lifecycle-step2-billing-config-HOLD"
+  },
+  {
+   "number": 1492,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 1 — expense_lines.billable_customer_uuid",
+   "mergedAt": "2026-06-25T23:38:11Z",
+   "branch": "feat/lumper-lifecycle-step1-billable-customer-HOLD"
+  },
+  {
+   "number": 1491,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(events): grant USAGE + fix 13-arg log_event spine emit",
+   "mergedAt": "2026-06-25T23:22:54Z",
+   "branch": "fix/events-schema-usage-grant-HOLD"
+  },
+  {
+   "number": 1490,
+   "title": "fix(maintenance): parts-master route degrades gracefully (phantom mdata.maintenance_parts)",
+   "mergedAt": "2026-06-25T20:02:33Z",
+   "branch": "fix/parts-master-phantom-guard"
+  },
+  {
+   "number": 1489,
+   "title": "chore(ci): ratchet — lock out 3 now-merged phantom names",
+   "mergedAt": "2026-06-25T16:32:17Z",
+   "branch": "chore/phantom-debt-ratchet-cleanup"
+  },
+  {
+   "number": 1488,
+   "title": "chore(ci): lock canonical-relations generator to matview-inclusive pg_class enumeration",
+   "mergedAt": "2026-06-25T16:20:19Z",
+   "branch": "chore/lock-canonical-gen-matview-enumeration"
+  },
+  {
+   "number": 1487,
+   "title": "[HOLD-FOR-JORGE] fix(detention): phantom mdata.detention_requests → dispatch.detention_requests",
+   "mergedAt": "2026-06-25T16:05:33Z",
+   "branch": "fix/detention-requests-phantom-HOLD"
+  },
+  {
+   "number": 1486,
+   "title": "chore(ci): comprehensive phantom-relation guard + fix catalogs.items_services",
+   "mergedAt": "2026-06-25T15:51:51Z",
+   "branch": "chore/phantom-relation-ci-guard"
+  },
+  {
+   "number": 1485,
+   "title": "fix(maintenance): inspection_pass_fail_rate degrade-safe (was 42P01 o…",
+   "mergedAt": "2026-06-25T15:34:13Z",
+   "branch": "fix/inspection-pass-fail-degrade-safe"
+  },
+  {
+   "number": 1484,
+   "title": "fix(safety): DOT-Inspections KPI silently 0 — phantom maintenance.dot_inspection_events",
+   "mergedAt": "2026-06-25T15:16:02Z",
+   "branch": "fix/dot-inspection-events-phantom-kpi"
+  },
+  {
+   "number": 1483,
+   "title": "[HOLD-FOR-JORGE] phantom relations in factoring / profitability / cash-AR",
+   "mergedAt": "2026-06-25T16:05:54Z",
+   "branch": "chore/dispatch-loads-phantom-financial-HOLD"
+  },
+  {
+   "number": 1482,
+   "title": "fix(backend): dispatch.loads phantom in search-indexer + smoke-probe (3 non-financial)",
+   "mergedAt": "2026-06-25T14:55:47Z",
+   "branch": "fix/dispatch-loads-phantom-nonfinancial"
+  },
+  {
+   "number": 1481,
+   "title": "fix(safety): repair anomaly detector phantom relations (+ flag systemic dispatch.loads)",
+   "mergedAt": "2026-06-25T14:48:46Z",
+   "branch": "fix/anomaly-detector-phantom-relations"
+  },
+  {
+   "number": 1480,
+   "title": "[HOLD-FOR-JORGE] audit.row_changes INSERT RLS policy (unblocks QBO push)",
+   "mergedAt": "2026-06-25T14:22:44Z",
+   "branch": "chore/audit-rowchanges-insert-policy"
+  },
+  {
+   "number": 1479,
+   "title": "fix(safety): BLOCK-1 stop anomaly-detector 42P01 (fuel.transactions phantom) + guard",
+   "mergedAt": "2026-06-25T14:08:34Z",
+   "branch": "fix/block1-fuel-transactions-detector"
+  },
+  {
+   "number": 1478,
+   "title": "[HOLD-FOR-JORGE / Tier-2] W7 per-stop extra rates sum into invoice + payload",
+   "mergedAt": "2026-06-26T00:41:51Z",
+   "branch": "feat/w7-per-stop-extra-rates-sum"
+  },
+  {
+   "number": 1476,
+   "title": "fix(dispatch): W8 stop geocode autofills Zip (zip→postal_code)",
+   "mergedAt": "2026-06-25T04:49:40Z",
+   "branch": "fix/w8-stop-geocode-zip-autofill"
+  },
+  {
+   "number": 1475,
+   "title": "fix(dispatch): W2 charge editor — AMOUNT ($) header + catalog-fetch guard",
+   "mergedAt": "2026-06-25T04:49:35Z",
+   "branch": "fix/w2-charge-catalog-wiring"
+  },
+  {
+   "number": 1474,
+   "title": "[HOLD-FOR-JORGE] Create 19 missing factory catalog tables (lists full counts)",
+   "mergedAt": "2026-06-25T11:54:48Z",
+   "branch": "chore/create-missing-factory-catalog-tables"
+  },
+  {
+   "number": 1473,
+   "title": "fix(lists): fleet count spec is global (fixes residual fleet 500 after #1471)",
+   "mergedAt": "2026-06-25T03:11:57Z",
+   "branch": "fix/lists-fleet-spec-global-scoping"
+  },
+  {
+   "number": 1472,
+   "title": "[HOLD-FOR-JORGE] chore(catalogs): seed lumper_providers — generic sta…",
+   "mergedAt": "2026-06-25T19:33:03Z",
+   "branch": "chore/seed-lumper-providers"
+  },
+  {
+   "number": 1471,
+   "title": "fix(lists): #P3 count endpoint resilience (no 42P01) + ribbon/map parity",
+   "mergedAt": "2026-06-25T02:01:40Z",
+   "branch": "fix/lists-count-resilience-and-parity"
+  },
+  {
+   "number": 1470,
+   "title": "[HOLD-FOR-JORGE] chore(catalogs): seed civil_fine_types — 19 FMCSA ci…",
+   "mergedAt": "2026-06-25T11:55:33Z",
+   "branch": "chore/seed-civil-fine-types"
+  },
+  {
+   "number": 1468,
+   "title": "test(catalogs): route-exists guard for load-cancellation-reasons (404 was stale)",
+   "mergedAt": "2026-06-25T01:36:38Z",
+   "branch": "fix/load-cancellation-reasons-route"
+  },
+  {
+   "number": 1467,
+   "title": "fix(accounting): #3a Hub summary-card subtitle reactive per tab",
+   "mergedAt": "2026-06-25T01:18:57Z",
+   "branch": "fix/accounting-home-subtitle-reactive"
+  },
+  {
+   "number": 1466,
+   "title": "fix(banking): #3b transactions table scrolls horizontally (overflow-x)",
+   "mergedAt": "2026-06-25T01:15:44Z",
+   "branch": "fix/banking-tx-table-overflow-x"
+  },
+  {
+   "number": 1465,
+   "title": "Chore/lane b enumerate complete set",
+   "mergedAt": "2026-06-25T01:18:50Z",
+   "branch": "chore/lane-b-enumerate-complete-set"
+  },
+  {
+   "number": 1464,
+   "title": "[HOLD-FOR-JORGE] Seed dot_violation_types — 71 FMCSA driver codes",
+   "mergedAt": "2026-06-25T11:55:22Z",
+   "branch": "chore/seed-dot-violation-types"
+  },
+  {
+   "number": 1463,
+   "title": "[HOLD-FOR-JORGE] Reconcile prod catalog-schema drift (24 catalogs + 2 cols)",
+   "mergedAt": "2026-06-25T02:00:26Z",
+   "branch": "chore/reconcile-prod-catalog-schema-drift"
+  },
+  {
+   "number": 1462,
+   "title": "chore(safety): pre-write Neon branch-assertion guard + 2026-06-24 prod-write incident",
+   "mergedAt": "2026-06-25T00:56:48Z",
+   "branch": "chore/neon-branch-write-guard-and-incident"
+  },
+  {
+   "number": 1461,
+   "title": "chore(scripts): prod migration-drift audit (read-only) — applied-vs-repo + table spot-check",
+   "mergedAt": "2026-06-25T00:11:13Z",
+   "branch": "chore/audit-prod-migration-drift"
+  },
+  {
+   "number": 1459,
+   "title": "fix(catalogs): surface dispatch-catalog query errors (W-2 500 diagnosability + graceful)",
+   "mergedAt": "2026-06-24T23:36:50Z",
+   "branch": "fix/dispatch-catalog-500-error-surface"
+  },
+  {
+   "number": 1458,
+   "title": "fix(fuel): fraud-alerts 404 — mount routes + standardize to /api/v1/fuel/ prefix",
+   "mergedAt": "2026-06-24T23:36:43Z",
+   "branch": "fix/fuel-fraud-alerts-404-mount-v1"
+  },
+  {
+   "number": 1456,
+   "title": "chore(scripts): lane-b enumerate complete-set (work orders + VIN/substring markers + review flags)",
+   "mergedAt": "2026-06-24T23:36:56Z",
+   "branch": "chore/lane-b-enumerate-complete-set"
+  },
+  {
+   "number": 1455,
+   "title": "fix(dispatch): Book Load 409 E_RESERVATION_NOT_AVAILABLE — transparent re-reserve (FIX-NEW-409)",
+   "mergedAt": "2026-06-24T21:46:10Z",
+   "branch": "fix/book-load-reservation-409"
+  },
+  {
+   "number": 1454,
+   "title": "fix(forms): MoneyInput 10× money bug — clear zero field on focus (W-3, the REAL fix)",
+   "mergedAt": "2026-06-24T23:36:17Z",
+   "branch": "fix/book-load-linehaul-10x"
+  },
+  {
+   "number": 1453,
+   "title": "fix(dispatch): mount orphaned dispatch catalog routes — additional-charges 404 (FIX-3)",
+   "mergedAt": "2026-06-24T21:18:19Z",
+   "branch": "fix/mount-dispatch-catalog-routes"
+  },
+  {
+   "number": 1452,
+   "title": "fix(dispatch): optimal-drivers 500 — l.hazmat/l.trailer_type 42703 (FIX-7, twin of #1444/#1448)",
+   "mergedAt": "2026-06-24T23:36:27Z",
+   "branch": "fix/optimal-drivers-500-hazmat-jsonb"
+  },
+  {
+   "number": 1451,
+   "title": "fix(dispatch): Book Load stop address not serializing (FIX-2) — typed address → address_line1",
+   "mergedAt": "2026-06-24T20:35:17Z",
+   "branch": "fix/book-load-address-binding"
+  },
+  {
+   "number": 1450,
+   "title": "docs(dispatch): Book Load wizard issues — verification pass vs current main",
+   "mergedAt": "2026-06-24T20:11:01Z",
+   "branch": "docs/book-load-wizard-verified-status"
+  },
+  {
+   "number": 1449,
+   "title": "fix(dispatch): Book Load is_tarp_stop \"\" → 400 booking blocker (W-1)",
+   "mergedAt": "2026-06-24T19:59:43Z",
+   "branch": "fix/book-load-is-tarp-stop-400"
+  },
+  {
+   "number": 1448,
+   "title": "fix(dispatch): Book Load INSERT wrote non-existent mdata.loads.trailer_id (42703) — write-side twin of #1444",
+   "mergedAt": "2026-06-24T19:28:08Z",
+   "branch": "fix/book-load-trailer-id-write-500"
+  },
+  {
+   "number": 1447,
+   "title": "chore(scripts): Lane B test/demo data enumeration — gate-neutral .mjs (supersedes #1445)",
+   "mergedAt": "2026-06-24T19:28:01Z",
+   "branch": "chore/lane-b-test-data-enumerate-mjs"
+  },
+  {
+   "number": 1446,
+   "title": "chore(trackers): npm run reconcile:blocks — hard built/pending truth for every block",
+   "mergedAt": "2026-06-24T20:36:41Z",
+   "branch": "chore/block-reconciliation-tool"
+  },
+  {
+   "number": 1444,
+   "title": "fix(dispatch): Block 1 — load-detail 500 on non-existent l.trailer_id (42703)",
+   "mergedAt": "2026-06-24T18:40:56Z",
+   "branch": "fix/dispatch-load-detail-trailer-id-500"
+  },
+  {
+   "number": 1443,
+   "title": "[HOLD-FOR-JORGE — TIER 1] H-1 Option A — archive dead banking manual-JE route + recurrence guard",
+   "mergedAt": "2026-06-24T16:06:19Z",
+   "branch": "chore/archive-dead-banking-manual-je-TIER1"
+  },
+  {
+   "number": 1441,
+   "title": "[HOLD-FOR-JORGE — TIER 1] Manual-JE posting-path divergence — design proposal",
+   "mergedAt": "2026-06-24T16:28:02Z",
+   "branch": "docs/manual-je-posting-divergence-TIER1"
+  },
+  {
+   "number": 1440,
+   "title": "[HOLD-FOR-JORGE — TIER 1] Book Load cash advance → driver advance rails (load_id link)",
+   "mergedAt": "2026-06-26T00:49:43Z",
+   "branch": "feat/load-cash-advance-link-TIER1"
+  },
+  {
+   "number": 1439,
+   "title": "docs(recon): master recon index + ALL Pass 1-7 deliverables (incl. Pass 5 money + Pass 6 entity)",
+   "mergedAt": "2026-06-24T14:00:59Z",
+   "branch": "docs/master-recon-index"
+  },
+  {
+   "number": 1437,
+   "title": "chore(design-parity): Load Wizard guard — re-map off dead file + drop 3 stale reefer tokens",
+   "mergedAt": "2026-06-24T13:37:08Z",
+   "branch": "chore/loadwizard-guard-remap-reefer"
+  },
+  {
+   "number": 1436,
+   "title": "fix(maint): Road Service ETA/Response column + de-vacuum R&M Status Board guard",
+   "mergedAt": "2026-06-24T13:21:28Z",
+   "branch": "fix/maint-road-service-eta"
+  },
+  {
+   "number": 1435,
+   "title": "feat(maint): Damage Reports → formal register (safety.incidents, read…",
+   "mergedAt": "2026-06-24T08:05:32Z",
+   "branch": "feat/maint-damage-register-build"
+  },
+  {
+   "number": 1434,
+   "title": "chore(design-parity): align Create-WO contract to live UI + promote to ENFORCED",
+   "mergedAt": "2026-06-24T07:44:04Z",
+   "branch": "chore/design-parity-enforce-create-wo"
+  },
+  {
+   "number": 1433,
+   "title": "fix(maint): RE-LAND Create-WO modal width (672→1140px) — lost in #1426 squash",
+   "mergedAt": "2026-06-24T07:40:34Z",
+   "branch": "fix/create-wo-modal-width-relanding"
+  },
+  {
+   "number": 1432,
+   "title": "feat(maint): R&M Status Board part 2 — board + 168px sidebar reflow (PM Countdown/Alerts/DTC/Road-Service-Active)",
+   "mergedAt": "2026-06-24T07:55:39Z",
+   "branch": "feat/maint-rm-sidebar-part2"
+  },
+  {
+   "number": 1431,
+   "title": "test(maint): Create-WO render-v5 DOM render-test + verify:design-parity wiring",
+   "mergedAt": "2026-06-24T07:17:59Z",
+   "branch": "test/create-wo-render-v5-dom"
+  },
+  {
+   "number": 1430,
+   "title": "feat(maint): R&M Status Board — 2nd stat strip + 5 real KPI counts (part 1)",
+   "mergedAt": "2026-06-24T07:18:51Z",
+   "branch": "feat/maint-rm-status-board-parity"
+  },
+  {
+   "number": 1428,
+   "title": "feat(maint): tab parity batch 1 — Arriving Soon (Open Issue/Severity)…",
+   "mergedAt": "2026-06-24T07:07:27Z",
+   "branch": "feat/maint-tab-parity-batch1"
+  },
+  {
+   "number": 1427,
+   "title": "docs(tracker): verified Master Tracker 2026-06-24 (no-guessing reconciliation)",
+   "mergedAt": "2026-06-24T06:22:52Z",
+   "branch": "docs/master-tracker-2026-06-24-verified"
+  },
+  {
+   "number": 1426,
+   "title": "feat(maint): Create WO modal → render-v5 A–E card layout (match approved render)",
+   "mergedAt": "2026-06-24T06:19:36Z",
+   "branch": "feat/create-wo-render-v5-AE-rebuild"
+  },
+  {
+   "number": 1424,
+   "title": "docs(guard): EscrowForfeit allowlist note → accurate finding (forfeit route missing)",
+   "mergedAt": "2026-06-24T05:43:57Z",
+   "branch": "chore/escrowforfeit-finding-allowlist-note"
+  },
+  {
+   "number": 1422,
+   "title": "fix(reports,banking,maint): M-1 cluster-4 filters + WO cost → MoneyInput; WIRE guard into CI",
+   "mergedAt": "2026-06-24T04:44:41Z",
+   "branch": "fix/m1-cluster4-filters-and-guard-ci"
+  },
+  {
+   "number": 1421,
+   "title": "fix(dispatch,customers,safety): M-1 cluster-3 money inputs → MoneyInput + guard rate-exclusion",
+   "mergedAt": "2026-06-24T03:34:13Z",
+   "branch": "fix/m1-cluster3-cancel-customer-violations-extrarate"
+  },
+  {
+   "number": 1420,
+   "title": "fix(fleet,maint): M-1 cluster-2 sold-price + warranty-claim → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T03:33:52Z",
+   "branch": "fix/m1-cluster2-soldprice-warranty"
+  },
+  {
+   "number": 1419,
+   "title": "fix(safety): M-1 Internal Fines inline amount → MoneyInput + guard inline blind-spot fix",
+   "mergedAt": "2026-06-24T02:12:07Z",
+   "branch": "fix/m1-internal-fines-inline-and-guard-inline"
+  },
+  {
+   "number": 1418,
+   "title": "chore(dev): GUARD crawl test-record seed script (build-only; execution gated)",
+   "mergedAt": "2026-06-24T02:02:52Z",
+   "branch": "chore/guard-crawl-seed-fixtures"
+  },
+  {
+   "number": 1417,
+   "title": "fix(drivers,ap): M-1 auto-deduction + CC bill-payment money inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T01:54:30Z",
+   "branch": "fix/m1-autodeduction-ccpayment-money-inputs"
+  },
+  {
+   "number": 1416,
+   "title": "[HOLD-FOR-JORGE] fix(driver-finance): M-1 dispute resolution amount → MoneyInput",
+   "mergedAt": "2026-06-24T03:33:38Z",
+   "branch": "fix/m1-settlement-dispute-resolution-HOLD"
+  },
+  {
+   "number": 1415,
+   "title": "fix(factoring,driver-finance,maint): M-1 cluster-1 money inputs → Mon…",
+   "mergedAt": "2026-06-24T01:48:53Z",
+   "branch": "fix/m1-cluster1-factoring-settlement-severe"
+  },
+  {
+   "number": 1414,
+   "title": "fix(factoring): M-1 FAIL#3 inline loan principal → cents-mode MoneyInput + recurrence guard (worklist)",
+   "mergedAt": "2026-06-24T01:37:26Z",
+   "branch": "fix/m1-factoring-principal-and-guard"
+  },
+  {
+   "number": 1413,
+   "title": "[HOLD-FOR-JORGE] fix(accounting,banking): M-1 Manual JE debit/credit → MoneyInput",
+   "mergedAt": "2026-06-24T02:51:40Z",
+   "branch": "fix/m1-manualje-money-inputs-HOLD"
+  },
+  {
+   "number": 1412,
+   "title": "fix(users,dispatch): M-1 cost + lumper money inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T01:23:03Z",
+   "branch": "fix/m1-userdetail-lumper-money-inputs"
+  },
+  {
+   "number": 1411,
+   "title": "fix(border,vendors,bills): M-1 money inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T01:18:40Z",
+   "branch": "fix/m1-wizard-vendor-recurring-money-inputs"
+  },
+  {
+   "number": 1410,
+   "title": "fix(advances,customers,banking): M-1 money inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T01:17:57Z",
+   "branch": "fix/m1-advance-detention-split-money-inputs"
+  },
+  {
+   "number": 1409,
+   "title": "fix(lists,banking): M-1 item/account/recon money inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T01:09:42Z",
+   "branch": "fix/m1-lists-banking-money-inputs"
+  },
+  {
+   "number": 1408,
+   "title": "fix(safety,drivers): M-1 fine/dispute amount inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T01:05:31Z",
+   "branch": "fix/m1-fines-dispute-money-inputs"
+  },
+  {
+   "number": 1407,
+   "title": "fix(insurance): M-1 claim/lawsuit/policy money inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T01:02:16Z",
+   "branch": "fix/m1-insurance-money-inputs"
+  },
+  {
+   "number": 1406,
+   "title": "fix(parts,items): M-1 cost inputs → MoneyInput (byte-for-byte; traced cents-vs-dollars)",
+   "mergedAt": "2026-06-24T00:56:55Z",
+   "branch": "fix/m1-parts-item-money-inputs"
+  },
+  {
+   "number": 1405,
+   "title": "fix(customers): M-1 customer payment + lane-rate money inputs → MoneyInput",
+   "mergedAt": "2026-06-24T00:38:12Z",
+   "branch": "fix/m1-customer-detail-money-inputs"
+  },
+  {
+   "number": 1404,
+   "title": "fix(fuel,legal): M-1 amount inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T00:36:22Z",
+   "branch": "fix/m1-fuel-legal-money-inputs"
+  },
+  {
+   "number": 1403,
+   "title": "fix(expenses): M-1 Record Expense amount → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T00:36:13Z",
+   "branch": "fix/m1-expense-amount-money-input"
+  },
+  {
+   "number": 1402,
+   "title": "fix(ap): M-1 bill-payment + multi-bill amount inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T00:32:10Z",
+   "branch": "fix/m1-ap-bills-money-inputs"
+  },
+  {
+   "number": 1401,
+   "title": "fix(accounting): M-1 cash-forecast weekly estimates → cents-mode MoneyInput",
+   "mergedAt": "2026-06-24T00:28:11Z",
+   "branch": "fix/m1-cash-forecast-money-inputs"
+  },
+  {
+   "number": 1400,
+   "title": "fix(accounting): M-1 payment-apply money inputs → MoneyInput (byte-for-byte)",
+   "mergedAt": "2026-06-24T00:24:15Z",
+   "branch": "fix/m1-accounting-payment-money-inputs"
+  },
+  {
+   "number": 1399,
+   "title": "fix(factoring): M-1 equipment-loan attribution/payment → modal + cents-mode MoneyInput",
+   "mergedAt": "2026-06-24T00:19:22Z",
+   "branch": "fix/m1-factoring-loan-money-modal"
+  },
+  {
+   "number": 1398,
+   "title": "fix(banking): M-1 money inputs → QBO MoneyInput dollars-mode (byte-for-byte)",
+   "mergedAt": "2026-06-24T00:16:48Z",
+   "branch": "feat/m1-banking-money-inputs-dollars-mode"
+  },
+  {
+   "number": 1397,
+   "title": "feat(dispatch): §B reefer \"Temperature type\" Frozen/Fresh segmented field (W-FIX-1)",
+   "mergedAt": "2026-06-24T00:03:16Z",
+   "branch": "feat/reefer-temperature-type-frozen-fresh-w-fix-1"
+  },
+  {
+   "number": 1396,
+   "title": "feat(banking): transfer amount → QBO MoneyInput dollars-mode (M-1)",
+   "mergedAt": "2026-06-23T23:40:49Z",
+   "branch": "feat/money-input-banking-transfer-m1"
+  },
+  {
+   "number": 1395,
+   "title": "feat(driver-finance): escrow override amount → QBO MoneyInput dollars-mode (M-1)",
+   "mergedAt": "2026-06-23T23:36:32Z",
+   "branch": "feat/money-input-settlement-escrow-m1"
+  },
+  {
+   "number": 1394,
+   "title": "feat(maint): Create WO §A Close date/time → closed_at (W-FIX-8, ship-on-green)",
+   "mergedAt": "2026-06-23T23:33:36Z",
+   "branch": "feat/wo-close-datetime-w-fix-8"
+  },
+  {
+   "number": 1393,
+   "title": "[HOLD-FOR-JORGE] chore(mdata): loads.temperature_type (Frozen/Fresh) — W-FIX-1 migration",
+   "mergedAt": "2026-06-23T23:32:11Z",
+   "branch": "chore/loads-temperature-type-w-fix-1"
+  },
+  {
+   "number": 1392,
+   "title": "feat(mdata): vendor quick-create render-v5 §D fields end-to-end (W-FIX-7b)",
+   "mergedAt": "2026-06-23T23:36:20Z",
+   "branch": "feat/vendor-renderv5-d-fields-wiring-w-fix-7b"
+  },
+  {
+   "number": 1391,
+   "title": "feat(dispatch): Book Load Trip Type full-width banner (A3)",
+   "mergedAt": "2026-06-23T23:25:29Z",
+   "branch": "feat/book-load-trip-type-banner-a3"
+  },
+  {
+   "number": 1390,
+   "title": "feat(dispatch): Book Load persists selected trailer → mdata.loads.trailer_id (W-FIX-3b)",
+   "mergedAt": "2026-06-23T23:08:03Z",
+   "branch": "feat/book-load-persist-trailer-id-w-fix-3b"
+  },
+  {
+   "number": 1389,
+   "title": "feat(dispatch): side-panel §B Equipment enrichment via read-only joins (W-FIX-3a)",
+   "mergedAt": "2026-06-23T22:52:21Z",
+   "branch": "feat/load-detail-equipment-enrichment-w-fix-3a"
+  },
+  {
+   "number": 1388,
+   "title": "feat(accounting): invoice line money entry → inline QBO MoneyInput (M-1, replaces window.prompt)",
+   "mergedAt": "2026-06-23T22:36:21Z",
+   "branch": "feat/money-input-invoice-lines-m1"
+  },
+  {
+   "number": 1387,
+   "title": "feat(forms): MoneyInput DOLLARS mode + Create WO/bills/expenses Cost fields → QBO format (M-1, display-only)",
+   "mergedAt": "2026-06-23T22:25:59Z",
+   "branch": "feat/money-input-dollars-mode-costbreakdown-m1"
+  },
+  {
+   "number": 1386,
+   "title": "[HOLD-FOR-JORGE] chore(mdata): qbo_vendors render-v5 §D columns (FIX-7b migration)",
+   "mergedAt": "2026-06-23T22:18:45Z",
+   "branch": "chore/qbo-vendors-renderv5-d-columns-fix7b"
+  },
+  {
+   "number": 1385,
+   "title": "feat(maint): vendor quick-create — split Display name + Company/Vendor name (FIX-7a)",
+   "mergedAt": "2026-06-23T21:51:50Z",
+   "branch": "feat/vendor-quickcreate-company-name-fix7a"
+  },
+  {
+   "number": 1384,
+   "title": "fix(dispatch): Book Load §A money fields → shared MoneyInput (M-1, fixes 350→$3.50 100x bug)",
+   "mergedAt": "2026-06-23T21:45:55Z",
+   "branch": "fix/money-input-book-load-m1"
+  },
+  {
+   "number": 1383,
+   "title": "fix(maint): WO footer = Cancel | Create work order | Save WO & Create Bill (FIX-6 option-a re-apply)",
+   "mergedAt": "2026-06-23T21:37:29Z",
+   "branch": "fix/create-wo-footer-option-a-fix6b"
+  },
+  {
+   "number": 1382,
+   "title": "feat(maint): Create WO §C Cost Breakdown columns → render-v5 labels (WO mode only) (FIX-4)",
+   "mergedAt": "2026-06-23T21:31:37Z",
+   "branch": "feat/wo-cost-columns-render-v5-fix4"
+  },
+  {
+   "number": 1381,
+   "title": "feat(maint): Create WO §A Priority field (routine/urgent/immediate) — render-v5 (FIX-5)",
+   "mergedAt": "2026-06-23T21:26:23Z",
+   "branch": "feat/wo-priority-field-fix5"
+  },
+  {
+   "number": 1380,
+   "title": "fix(maint): Create WO footer render-v5 labels — Save draft + Create work order (FIX-6, safe relabel)",
+   "mergedAt": "2026-06-23T21:00:03Z",
+   "branch": "fix/create-wo-footer-labels-fix6"
+  },
+  {
+   "number": 1379,
+   "title": "fix(dispatch): load side panel subtitle = real origin→destination from stops (FIX-2)",
+   "mergedAt": "2026-06-23T20:31:16Z",
+   "branch": "fix/side-panel-route-subtitle-fix2"
+  },
+  {
+   "number": 1378,
+   "title": "feat(dispatch): board — move Location column after HOS clocks, before Load # (C2)",
+   "mergedAt": "2026-06-23T21:07:28Z",
+   "branch": "feat/dispatch-board-location-column-c2"
+  },
+  {
+   "number": 1377,
+   "title": "feat(dispatch): Trip Pairing board — live unit location on the payload (C1b)",
+   "mergedAt": "2026-06-23T20:25:11Z",
+   "branch": "feat/trip-pairing-location-c1b"
+  },
+  {
+   "number": 1376,
+   "title": "feat(maint): R&M Status Board → 5-column status kanban + R&M default tab + subnav reorder (D1)",
+   "mergedAt": "2026-06-23T20:16:27Z",
+   "branch": "feat/maintenance-rm-kanban-d1"
+  },
+  {
+   "number": 1375,
+   "title": "feat(dispatch): Trip Pairing board rebuild — Triangulation column + bespoke toolbar + +Book NB pool + §7 (C1a)",
+   "mergedAt": "2026-06-23T20:03:55Z",
+   "branch": "feat/trip-pairing-board-c1a"
+  },
+  {
+   "number": 1374,
+   "title": "feat(dispatch): load side panel Overview = 3 wizard-parity sections + per-section Edit ▸ (B1a)",
+   "mergedAt": "2026-06-23T19:51:07Z",
+   "branch": "feat/load-side-panel-overview-wizard-parity-b1a"
+  },
+  {
+   "number": 1373,
+   "title": "feat(dispatch): Book Load §B RENDER-A-v2 reorder (A1a) — HOS last, combined equip+instructions expander",
+   "mergedAt": "2026-06-23T19:41:30Z",
+   "branch": "feat/bookload-sectionB-render-a-v2-reorder"
+  },
+  {
+   "number": 1372,
+   "title": "fix(dispatch): load side panel Overview hang (BUG 1) + friendly title (BUG 2)",
+   "mergedAt": "2026-06-23T18:29:29Z",
+   "branch": "feat/load-panel-overview-fix"
+  },
+  {
+   "number": 1371,
+   "title": "feat(dispatch): §B reefer panel → RENDER-A-v2 (temp=setpoint, drop mode/pre-cool) + Lowboy + §7",
+   "mergedAt": "2026-06-23T17:57:06Z",
+   "branch": "feat/sectionB-render-a-v2"
+  },
+  {
+   "number": 1370,
+   "title": "feat(dispatch): §B audit — Reefer setpoint top-level + reefer/flatbed amber panels (render-v6)",
+   "mergedAt": "2026-06-23T17:15:08Z",
+   "branch": "feat/sectionB-audit"
+  },
+  {
+   "number": 1369,
+   "title": "feat(dispatch): §A lumper responsibility (paid-by + required) — relocated from §C, per-stop",
+   "mergedAt": "2026-06-23T17:04:32Z",
+   "branch": "feat/lumper-responsibility-sectionA"
+  },
+  {
+   "number": 1368,
+   "title": "feat(dispatch): relocate GAP-31 per-stop extra-rate editor §C → §A (GUARD decision)",
+   "mergedAt": "2026-06-23T16:44:41Z",
+   "branch": "feat/extra-rates-to-sectionA"
+  },
+  {
+   "number": 1367,
+   "title": "feat(guard): verify:wizard-section-equality — EXACT field-set per section (fail-on-extra)",
+   "mergedAt": "2026-06-23T09:44:39Z",
+   "branch": "feat/parity-exact-equality"
+  },
+  {
+   "number": 1366,
+   "title": "feat(dispatch): Book Load §C empty-diff — stop card = exactly the 11 render-v6 fields",
+   "mergedAt": "2026-06-23T09:41:18Z",
+   "branch": "feat/load-stops-empty-diff"
+  },
+  {
+   "number": 1364,
+   "title": "feat(guard): verify:design-parity structural gate — render-tests required for complex screens",
+   "mergedAt": "2026-06-23T08:08:04Z",
+   "branch": "feat/parity-guard-structural"
+  },
+  {
+   "number": 1363,
+   "title": "feat(dispatch): Book Load §B HOS collapsible + §E document move (render-v6)",
+   "mergedAt": "2026-06-23T08:04:52Z",
+   "branch": "feat/load-hos-collapsible-docs"
+  },
+  {
+   "number": 1362,
+   "title": "feat(dispatch): Book Load §C two-row stop rebuild (render-v6) + render-test",
+   "mergedAt": "2026-06-23T08:07:58Z",
+   "branch": "feat/load-stops-tworow"
+  },
+  {
+   "number": 1361,
+   "title": "feat(dispatch): Book Load §B reefer/flatbed conditional panels (render-v6) [HOLD-FOR-JORGE]",
+   "mergedAt": "2026-06-23T07:44:06Z",
+   "branch": "feat/load-reefer-tarp"
+  },
+  {
+   "number": 1360,
+   "title": "feat(dispatch): load-stop Zip Code (render-v6 §C) — postal_code [HOLD-FOR-JORGE]",
+   "mergedAt": "2026-06-23T07:44:04Z",
+   "branch": "feat/load-stops-zip"
+  },
+  {
+   "number": 1359,
+   "title": "feat(maint): WO wizard render-v5 header fields (live #1353 columns) + render-test",
+   "mergedAt": "2026-06-23T07:12:20Z",
+   "branch": "feat/wo-renderv5-header"
+  },
+  {
+   "number": 1358,
+   "title": "fix(dispatch): #1355 false-DONE — HOS block + stop cards actually render live",
+   "mergedAt": "2026-06-23T06:19:45Z",
+   "branch": "fix/1355-hos-stops-render"
+  },
+  {
+   "number": 1357,
+   "title": "feat(maint): Severe Repairs parity columns + Arriving Soon guard-map fix",
+   "mergedAt": "2026-06-23T05:44:03Z",
+   "branch": "feat/maint-parity-columns"
+  },
+  {
+   "number": 1356,
+   "title": "feat(guard): verify:design-parity — design-file enforcement contract …",
+   "mergedAt": "2026-06-23T05:29:43Z",
+   "branch": "feat/design-parity-guard"
+  },
+  {
+   "number": 1355,
+   "title": "feat(dispatch): load wizard render-v6 — Driver HOS block (§B) + stop cards (§C)",
+   "mergedAt": "2026-06-23T05:19:16Z",
+   "branch": "feat/load-wizard-v6-hos"
+  },
+  {
+   "number": 1354,
+   "title": "feat(maint): Block 8 — VMRS repair-detail + asset-location (serialized parts) on Create WO",
+   "mergedAt": "2026-06-23T05:04:17Z",
+   "branch": "feat/block8-vmrs-wiring"
+  },
+  {
+   "number": 1353,
+   "title": "feat(maint): WO enhancements migration — render-v5 header gaps + Cancel + Void columns (RUN #1352)",
+   "mergedAt": "2026-06-23T05:02:58Z",
+   "branch": "feat/wo-enhancements-cancel-migration"
+  },
+  {
+   "number": 1352,
+   "title": "docs(maint): WO enhancements migration SQL — render-v5 header gaps + Cancel/Void (for review)",
+   "mergedAt": "2026-06-23T04:11:15Z",
+   "branch": "docs/wo-enhancements-cancel-migration"
+  },
+  {
+   "number": 1351,
+   "title": "feat(maint): Block 8 migration — VMRS cols + wo_serialized_parts (RUN #1348 + 2 hardening)",
+   "mergedAt": "2026-06-23T04:22:42Z",
+   "branch": "feat/block8-vmrs-serialized-parts-migration"
+  },
+  {
+   "number": 1350,
+   "title": "feat(dispatch): Block 7 piece_count + customer_po_number — migration + create→detail→patch round-trip",
+   "mergedAt": "2026-06-23T04:22:35Z",
+   "branch": "feat/block7-piece-po-migration-and-wiring"
+  },
+  {
+   "number": 1349,
+   "title": "fix(dispatch): planner-week 500 — mdata.units has no operating_company_id (§4) + class fix + guard",
+   "mergedAt": "2026-06-23T00:31:13Z",
+   "branch": "fix/planner-units-operating-company-id-500"
+  },
+  {
+   "number": 1348,
+   "title": "docs(maint): Block 8 gaps 2+3 migration SQL (VMRS + asset-location) — for review",
+   "mergedAt": "2026-06-23T00:22:52Z",
+   "branch": "docs/block8-vmrs-assetloc-migrations"
+  },
+  {
+   "number": 1347,
+   "title": "feat(maint): Block 8 gap 1 — two-sided vendor-invoice reconcile HARD-GATE on Create WO",
+   "mergedAt": "2026-06-23T00:17:24Z",
+   "branch": "feat/block8-wo-vendor-invoice-reconcile"
+  },
+  {
+   "number": 1346,
+   "title": "feat(dispatch): load wizard §B — conditional reefer/flatbed equipment detail",
+   "mergedAt": "2026-06-23T00:05:40Z",
+   "branch": "feat/wizard-reefer-flatbed-conditional"
+  },
+  {
+   "number": 1345,
+   "title": "feat(dispatch): Planners Phase 1 — unified Timeline board (fixes the empty Driver grid)",
+   "mergedAt": "2026-06-22T23:50:44Z",
+   "branch": "feat/planners-unified-timeline"
+  },
+  {
+   "number": 1344,
+   "title": "docs(dispatch): planners unified layout proposal (for sign-off before build)",
+   "mergedAt": "2026-06-22T23:54:53Z",
+   "branch": "docs/dispatch-planners-layout"
+  },
+  {
+   "number": 1343,
+   "title": "fix(infra): frontend HTML no edge-cache — strip s-maxage so deploys are instantly visible",
+   "mergedAt": "2026-06-22T20:46:19Z",
+   "branch": "fix/frontend-html-no-edge-cache"
+  },
+  {
+   "number": 1342,
+   "title": "feat(dispatch): Block 7 — commodity/weight/reefer-setpoint/trip_type round-trip in Edit wizard",
+   "mergedAt": "2026-06-22T20:33:39Z",
+   "branch": "feat/block7-loads-field-roundtrip"
+  },
+  {
+   "number": 1341,
+   "title": "docs(dispatch): Block 7 piece_count + customer_po_number migration SQL (FOR REVIEW)",
+   "mergedAt": "2026-06-22T20:28:13Z",
+   "branch": "docs/block7-piece-po-migration-sql"
+  },
+  {
+   "number": 1340,
+   "title": "fix(dispatch): Awaiting-truck card — explicit \"+ Book load\" button",
+   "mergedAt": "2026-06-22T20:21:15Z",
+   "branch": "fix/awaiting-truck-explicit-book-button"
+  },
+  {
+   "number": 1339,
+   "title": "feat(dispatch): loads list Customer cell → customer detail link (record-cell link expansion)",
+   "mergedAt": "2026-06-22T20:02:25Z",
+   "branch": "feat/dispatch-loads-customer-link"
+  },
+  {
+   "number": 1338,
+   "title": "docs(dispatch): planners rebuild plan + Phase-0 empty-grid diagnosis",
+   "mergedAt": "2026-06-22T19:53:53Z",
+   "branch": "docs/dispatch-planners-plan"
+  },
+  {
+   "number": 1337,
+   "title": "fix(dispatch): Awaiting-assignment truck card — clickable + Book load (drag was eating the click)",
+   "mergedAt": "2026-06-22T19:42:18Z",
+   "branch": "fix/dispatch-awaiting-truck-book-button"
+  },
+  {
+   "number": 1336,
+   "title": "test(dispatch): E2E lock — ?view=kanban renders the REAL Kanban board, not the List (GUARD #1332)",
+   "mergedAt": "2026-06-22T19:33:00Z",
+   "branch": "test/dispatch-kanban-real-board-e2e"
+  },
+  {
+   "number": 1335,
+   "title": "fix(dispatch): Cancel Load — preValidation enum rejected every real catalog reason code",
+   "mergedAt": "2026-06-22T19:18:41Z",
+   "branch": "fix/cancel-load-enum-vs-catalog"
+  },
+  {
+   "number": 1334,
+   "title": "test(dispatch): lock the #1332 Kanban dead-view fix (?view=kanban must mount Kanban)",
+   "mergedAt": "2026-06-22T19:13:38Z",
+   "branch": "test/dispatch-kanban-view-lock"
+  },
+  {
+   "number": 1333,
+   "title": "feat(dispatch): Awaiting-assignment truck card → + Book load (truck pre-filled)",
+   "mergedAt": "2026-06-22T19:04:40Z",
+   "branch": "feat/dispatch-book-load-per-truck"
+  },
+  {
+   "number": 1332,
+   "title": "fix(dispatch): dead Kanban view — board ignored the Kanban tab on /dispatch/loads",
+   "mergedAt": "2026-06-22T18:57:19Z",
+   "branch": "fix/dispatch-kanban-dead-view"
+  },
+  {
+   "number": 1331,
+   "title": "fix(users): \"+ Add User\" → \"+ Create User\" (§7 +Create vocab lock)",
+   "mergedAt": "2026-06-22T18:52:06Z",
+   "branch": "fix/users-create-vocab"
+  },
+  {
+   "number": 1330,
+   "title": "perf(dispatch): parallelize Loads Planner week fetches (was sequential → hung on load)",
+   "mergedAt": "2026-06-22T18:50:05Z",
+   "branch": "fix/loads-planner-parallel-fetch"
+  },
+  {
+   "number": 1329,
+   "title": "fix(dispatch): Load Cancel was 100% broken — wrong payload field names + swallowed 400",
+   "mergedAt": "2026-06-22T18:37:23Z",
+   "branch": "fix/load-cancel-contract-and-error-surface"
+  },
+  {
+   "number": 1328,
+   "title": "chore(guard): add §7 create-vocab scanner (report-only) — flags \"+ Ad…",
+   "mergedAt": "2026-06-22T18:15:26Z",
+   "branch": "feat/create-vocab-guard"
+  },
+  {
+   "number": 1327,
+   "title": "docs(maint): Block 4 parts + services catalog design (doc-only, gated on Jorge's part data)",
+   "mergedAt": "2026-06-22T18:10:40Z",
+   "branch": "docs/block4-parts-services-catalog"
+  },
+  {
+   "number": 1326,
+   "title": "chore(guard): §7 create-vocab scanner (report-only) — flags '+ Add/New <Entity>' CTAs",
+   "mergedAt": "2026-06-22T18:01:50Z",
+   "branch": "feat/create-vocab-guard"
+  },
+  {
+   "number": 1325,
+   "title": "chore(guard): lock drivers/customers/vendors list record-cell links against regression",
+   "mergedAt": "2026-06-22T18:01:08Z",
+   "branch": "feat/lock-list-record-cell-links"
+  },
+  {
+   "number": 1324,
+   "title": "feat(dispatch): Block 7 — Edit Load opens the FULL wizard pre-filled (replaces rate+notes stub)",
+   "mergedAt": "2026-06-22T17:42:23Z",
+   "branch": "feat/dispatch-load-edit-full-wizard"
+  },
+  {
+   "number": 1323,
+   "title": "feat(ui): §7 finish — portal + vendor-category chips + guard covers whole rendered-UI (portal/layouts/lib)",
+   "mergedAt": "2026-06-22T16:46:49Z",
+   "branch": "feat/frontend-section7-finish"
+  },
+  {
+   "number": 1322,
+   "title": "feat(ui): §7 blue eradication across ALL pages + §7 guard scans whole frontend (app-wide closure)",
+   "mergedAt": "2026-06-22T16:35:31Z",
+   "branch": "feat/pages-section7-cleanup"
+  },
+  {
+   "number": 1320,
+   "title": "feat(ui): §7 blue eradication across ALL shared components + §7 guard shared-component root-gap fix",
+   "mergedAt": "2026-06-22T16:24:05Z",
+   "branch": "feat/shared-components-section7-cleanup"
+  },
+  {
+   "number": 1319,
+   "title": "feat(dispatch): §7 blue eradication across dispatch module + §7 guard coverage-gap extension [HOLD-FOR-JORGE — keystone]",
+   "mergedAt": "2026-06-22T16:03:11Z",
+   "branch": "feat/dispatch-section7-palette-cleanup"
+  },
+  {
+   "number": 1318,
+   "title": "feat(fleet): trailer profile to spec — truck/load + per-WO record links + ToastProvider test fix [HOLD-FOR-JORGE — keystone]",
+   "mergedAt": "2026-06-22T15:46:11Z",
+   "branch": "feat/fleet-trailer-profile-to-spec"
+  },
+  {
+   "number": 1317,
+   "title": "feat(fleet): vehicle/trailer profile §7 blue eradication + driver/per-WO links + §7 guard coverage-gap fix [HOLD-FOR-JORGE — keystone]",
+   "mergedAt": "2026-06-22T15:06:30Z",
+   "branch": "feat/fleet-vehicle-profile-record-links"
+  },
+  {
+   "number": 1316,
+   "title": "feat(maint): Arriving Soon hybrid table+expand · In-Transit flat table (queue G) [HOLD-FOR-JORGE — keystone]",
+   "mergedAt": "2026-06-22T14:07:36Z",
+   "branch": "feat/maint-arriving-soon-universal-list"
+  },
+  {
+   "number": 1315,
+   "title": "feat(maint): Fleet table keystone — ODOMETER · NEXT PM · OPEN WO + Unit links + CSV export [HOLD-FOR-JORGE — awaits GUARD]",
+   "mergedAt": "2026-06-22T13:23:27Z",
+   "branch": "feat/maint-fleet-table-keystone"
+  },
+  {
+   "number": 1314,
+   "title": "feat(maint): Master Data (4 pages) → universal-list ParityTable + record-cell links (PR-E·MD)",
+   "mergedAt": "2026-06-22T12:34:23Z",
+   "branch": "feat/maint-master-data-universal-list"
+  },
+  {
+   "number": 1311,
+   "title": "chore(ci): Bump actions/checkout from 6 to 7",
+   "mergedAt": "2026-06-25T21:22:53Z",
+   "branch": "dependabot/github_actions/actions/checkout-7"
+  },
+  {
+   "number": 1310,
+   "title": "feat(maint): Parts Inventory → universal-list ParityTable (PR-E)",
+   "mergedAt": "2026-06-22T05:34:09Z",
+   "branch": "feat/maint-parts-inventory-universal-list"
+  },
+  {
+   "number": 1309,
+   "title": "feat(maint): Damage/Driver-Reports tab → universal-list ParityTable + Driver link (PR-D)",
+   "mergedAt": "2026-06-22T05:23:15Z",
+   "branch": "feat/maint-damage-reports-universal-list"
+  },
+  {
+   "number": 1308,
+   "title": "feat(maint): Service/Location tab + WO-list ?location/?bucket filter — real drill-through (PR-C)",
+   "mergedAt": "2026-06-22T05:18:42Z",
+   "branch": "feat/maint-wo-list-location-bucket-filter"
+  },
+  {
+   "number": 1307,
+   "title": "feat(guard): assert maintenance ParityTable record cells are anchors (Task A — link no-regression lock)",
+   "mergedAt": "2026-06-22T05:06:53Z",
+   "branch": "feat/maint-record-cell-link-guard"
+  },
+  {
+   "number": 1306,
+   "title": "feat(maint): Active WOs tab → universal-list ParityTable, one selection model, clickable links (PR-6)",
+   "mergedAt": "2026-06-22T05:07:31Z",
+   "branch": "feat/maint-active-wos-universal-list"
+  },
+  {
+   "number": 1305,
+   "title": "feat(maint): Severe Repairs tab → universal-list ParityTable + clickable links (PR-5)",
+   "mergedAt": "2026-06-22T03:44:27Z",
+   "branch": "feat/maint-severe-repairs-universal-list"
+  },
+  {
+   "number": 1304,
+   "title": "feat(maint): Road Service tab → universal-list ParityTable + clickable links (PR-4)",
+   "mergedAt": "2026-06-22T03:38:28Z",
+   "branch": "feat/maint-service-location-universal-list"
+  },
+  {
+   "number": 1303,
+   "title": "feat(maint): ParityTable → universal-list contract + §7 active colors (PR-3, KEYSTONE — do not auto-merge)",
+   "mergedAt": "2026-06-22T03:16:07Z",
+   "branch": "feat/maint-paritytable-universal-list"
+  },
+  {
+   "number": 1302,
+   "title": "feat(maint): §7 palette — recolor accent classes to slate + guard classes (PR-2)",
+   "mergedAt": "2026-06-22T02:39:48Z",
+   "branch": "feat/maint-section7-recolor-classes"
+  },
+  {
+   "number": 1301,
+   "title": "feat(maint): §7 palette tokens + accent-hex guard (foundation; supersede package #185fa5)",
+   "mergedAt": "2026-06-22T02:26:16Z",
+   "branch": "feat/maint-section7-palette-tokens"
+  },
+  {
+   "number": 1300,
+   "title": "Feat/chain 03 bill gl step2",
+   "mergedAt": "2026-06-22T02:22:37Z",
+   "branch": "feat/chain-03-bill-gl-step2"
+  },
+  {
+   "number": 1299,
+   "title": "[HOLD-FOR-JORGE] CHAIN-03 STEP-2: one canonical bill resolver + flag-gated Bill→GL post (TRANSP only)",
+   "mergedAt": "2026-06-22T02:10:47Z",
+   "branch": "feat/chain-03-bill-gl-step2"
+  },
+  {
+   "number": 1298,
+   "title": "[HOLD-FOR-JORGE] CHAIN-03 STEP-1: Create Bill → GL DRAFT-JE proof (TRANSP only, writes nothing)",
+   "mergedAt": "2026-06-22T02:21:58Z",
+   "branch": "feat/chain-03-bill-gl-draft-step1"
+  },
+  {
+   "number": 1296,
+   "title": "docs(maintenance): PM-SCHEDULE-TABLE-CONSOLIDATION design-first finding (#37)",
+   "mergedAt": "2026-06-21T21:08:31Z",
+   "branch": "docs/pm-schedule-table-consolidation-design"
+  },
+  {
+   "number": 1295,
+   "title": "fix(maintenance): PM auto-engine reads live odometer too (#37 part 2a)",
+   "mergedAt": "2026-06-21T20:52:01Z",
+   "branch": "fix/pm-auto-engine-live-odometer"
+  },
+  {
+   "number": 1294,
+   "title": "fix(maintenance): PM countdown reads live odometer, not empty webhook payload (#37)",
+   "mergedAt": "2026-06-21T20:32:51Z",
+   "branch": "fix/pm-countdown-live-odometer"
+  },
+  {
+   "number": 1293,
+   "title": "fix(dispatch): wire real per-load profitability card into LoadDetailDrawer (DISP-PROFIT #3)",
+   "mergedAt": "2026-06-21T19:39:11Z",
+   "branch": "fix/disp-profit-card-wired"
+  },
+  {
+   "number": 1292,
+   "title": "chore(samsara): probe A-vs-B engineStates regression check (#7 disambiguation)",
+   "mergedAt": "2026-06-21T19:31:06Z",
+   "branch": "chore/samsara-odometer-probe-avsb"
+  },
+  {
+   "number": 1291,
+   "title": "fix(insurance): coverage-gap counts UNITS not assets (GUARD #40 / INS-COVERAGE)",
+   "mergedAt": "2026-06-21T19:26:16Z",
+   "branch": "fix/ins-coverage-gap-counts-units"
+  },
+  {
+   "number": 1290,
+   "title": "chore(samsara): probe obdOdometerMeters stats types (FINISH-OPS #7 proof, diagnostic-only)",
+   "mergedAt": "2026-06-21T19:08:01Z",
+   "branch": "chore/samsara-odometer-probe"
+  },
+  {
+   "number": 1289,
+   "title": "[HOLD-FOR-JORGE] telematics: Samsara odometer ingest (Block E #13 / FINISH-OPS #7)",
+   "mergedAt": "2026-06-21T20:17:09Z",
+   "branch": "feat/samsara-odometer-ingest"
+  },
+  {
+   "number": 1288,
+   "title": "docs(insurance): INS-COVERAGE assets-vs-units coverage-gap diagnosis (#22)",
+   "mergedAt": "2026-06-21T18:36:55Z",
+   "branch": "docs/ins-coverage-assets-units-diagnosis"
+  },
+  {
+   "number": 1287,
+   "title": "[HOLD-FOR-JORGE] catalogs: Cargo Claim Reasons (#8) — new table + CRUD + page (FINAL)",
+   "mergedAt": "2026-06-21T17:48:38Z",
+   "branch": "feat/catalog-cargo-claim-reasons"
+  },
+  {
+   "number": 1286,
+   "title": "[HOLD-FOR-JORGE] catalogs: DOT Violation Types (#7) — new table + CRUD + page",
+   "mergedAt": "2026-06-21T17:30:56Z",
+   "branch": "feat/catalog-dot-violation-types"
+  },
+  {
+   "number": 1285,
+   "title": "feat(catalogs): Brokers directory (#3) — filtered view over customer_type='broker'",
+   "mergedAt": "2026-06-21T17:11:20Z",
+   "branch": "feat/catalog-brokers"
+  },
+  {
+   "number": 1284,
+   "title": "feat(catalogs): Termination Reasons catalog (#10) — Owner-gated CRUD + page",
+   "mergedAt": "2026-06-21T16:50:08Z",
+   "branch": "feat/catalog-termination-reasons"
+  },
+  {
+   "number": 1283,
+   "title": "feat(catalogs): Complaint Types catalog (#6) — safety CRUD endpoint + page",
+   "mergedAt": "2026-06-21T16:31:19Z",
+   "branch": "feat/catalog-complaint-types"
+  },
+  {
+   "number": 1282,
+   "title": "feat(catalogs): Load Cancellation Reasons catalog page (#9) — frontend wire-up of existing endpoint",
+   "mergedAt": "2026-06-21T16:11:00Z",
+   "branch": "feat/catalog-load-cancellation-reasons"
+  },
+  {
+   "number": 1281,
+   "title": "[HOLD-FOR-JORGE] gate v2: target-aware ALTER own-new-table neutral",
+   "mergedAt": "2026-06-21T04:31:00Z",
+   "branch": "chore/gate-alter-own-new-table"
+  },
+  {
+   "number": 1280,
+   "title": "fix(catalogs): create mdata.maintenance_services table (services-cata…",
+   "mergedAt": "2026-06-21T04:41:07Z",
+   "branch": "fix/maintenance-services-table"
+  },
+  {
+   "number": 1278,
+   "title": "[HOLD-FOR-JORGE] gate: CREATE-TABLE-only neutral (allow purely-additive new-table migrations)",
+   "mergedAt": "2026-06-21T03:58:16Z",
+   "branch": "chore/gate-create-table-neutral"
+  },
+  {
+   "number": 1277,
+   "title": "docs(catalogs): A1b CATALOG-AUDIT-RUN — lock live classification + finalize A2.. build order",
+   "mergedAt": "2026-06-21T03:31:11Z",
+   "branch": "docs/catalog-audit-run"
+  },
+  {
+   "number": 1276,
+   "title": "docs(catalogs): A1 CATALOG-AUDIT-LIVE — catalog inventory + STUB build-order + read-only auditor",
+   "mergedAt": "2026-06-21T02:52:15Z",
+   "branch": "chore/catalog-audit-live"
+  },
+  {
+   "number": 1275,
+   "title": "fix(drivers): AUTO-01-FOLLOWUP — case-insensitive ?status= on /mdata/drivers",
+   "mergedAt": "2026-06-21T02:28:54Z",
+   "branch": "fix/drivers-status-case-insensitive"
+  },
+  {
+   "number": 1271,
+   "title": "fix(ci): HOLD-MERGE-GATE — block title-blind merge of HOLD/financial PRs",
+   "mergedAt": "2026-06-20T22:33:21Z",
+   "branch": "fix/hold-merge-gate"
+  },
+  {
+   "number": 1270,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-05 (CHAIN-07) — settlements 500 diagnosis + GL tie-out design",
+   "mergedAt": "2026-06-20T21:13:38Z",
+   "branch": "hold/hold-05-chain-07-settlements-tieout"
+  },
+  {
+   "number": 1269,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-04 (CHAIN-06) — Invoice→AR→Receive chain design",
+   "mergedAt": "2026-06-20T21:13:25Z",
+   "branch": "hold/hold-04-chain-06-invoice-ar-receive"
+  },
+  {
+   "number": 1268,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-03 (CHAIN-05) — bank feed categorize→match→post chain design",
+   "mergedAt": "2026-06-20T21:13:10Z",
+   "branch": "hold/hold-03-chain-05-bank-feed-post"
+  },
+  {
+   "number": 1267,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-02 (CHAIN-04) — Bill Payment tie-out design + draft JE",
+   "mergedAt": "2026-06-20T21:13:02Z",
+   "branch": "hold/hold-02-chain-04-bill-payment-tieout"
+  },
+  {
+   "number": 1266,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-01 (CHAIN-03) — Create Bill → GL design + draft JE proof",
+   "mergedAt": "2026-06-20T21:12:51Z",
+   "branch": "hold/hold-01-chain-03-create-bill-gl-design"
+  },
+  {
+   "number": 1265,
+   "title": "docs(accounting): AUTO-20 (STMT-1) — verdict: Balance Sheet + Cash Flow already render real numbers read-only",
+   "mergedAt": "2026-06-20T20:38:26Z",
+   "branch": "feat/auto-20-stmt-display"
+  },
+  {
+   "number": 1264,
+   "title": "docs(accounting): AUTO-19 (AF-0) — accounting re-baseline truth snapshot (read-only)",
+   "mergedAt": "2026-06-20T20:38:29Z",
+   "branch": "docs/auto-19-af0-truth-doc"
+  },
+  {
+   "number": 1263,
+   "title": "fix(accounting): AUTO-18 (CHAIN-02) — account register surfaces request errors (params verified passed)",
+   "mergedAt": "2026-06-20T20:34:23Z",
+   "branch": "fix/auto-18-register-params-400"
+  },
+  {
+   "number": 1262,
+   "title": "fix(accounting): AUTO-17 (CHAIN-01) — Create-Bill vendor picker surfaces empty/loading/error honestly",
+   "mergedAt": "2026-06-20T20:31:40Z",
+   "branch": "feat/auto-17-vendor-picker-wiring"
+  },
+  {
+   "number": 1261,
+   "title": "docs(help): AUTO-16 — backfill real content for 8 stubbed Help module guides",
+   "mergedAt": "2026-06-20T20:26:31Z",
+   "branch": "feat/auto-16-help-articles"
+  },
+  {
+   "number": 1260,
+   "title": "chore(ux): AUTO-15 — Drug/Alcohol + Training safety tables → shared DataTable",
+   "mergedAt": "2026-06-20T20:22:09Z",
+   "branch": "chore/auto-15-table-sweep"
+  },
+  {
+   "number": 1259,
+   "title": "test(backend): AUTO-14 — read-endpoint smoke tests (driver-inactivity + hos-driver-map previews)",
+   "mergedAt": "2026-06-20T20:22:14Z",
+   "branch": "test/auto-14-backend-test-scaffolding"
+  },
+  {
+   "number": 1258,
+   "title": "feat(ux): AUTO-13 — Vendors/Customers lists show error state on 500 (not blank)",
+   "mergedAt": "2026-06-20T20:22:18Z",
+   "branch": "feat/auto-13-list-error-states"
+  },
+  {
+   "number": 1257,
+   "title": "fix(ux): AUTO-12 — .code-cell never breaks/hyphenates codes (CSS) + guard",
+   "mergedAt": "2026-06-20T20:18:36Z",
+   "branch": "fix/auto-12-code-cell-hyphen"
+  },
+  {
+   "number": 1256,
+   "title": "docs(auto-11): VERIFY — Factoring/Faro shipped; reserve-tracker dashboard the only gap",
+   "mergedAt": "2026-06-20T20:18:50Z",
+   "branch": "docs/auto-11-factoring-faro-verify"
+  },
+  {
+   "number": 1255,
+   "title": "docs(auto-10): VERIFY — Reports module present-vs-missing enumeration",
+   "mergedAt": "2026-06-20T20:18:31Z",
+   "branch": "docs/auto-10-reports-missing"
+  },
+  {
+   "number": 1254,
+   "title": "docs(auto-09): VERIFY — Safety waves W3/W4/W5 shipped + LOCKED-complete",
+   "mergedAt": "2026-06-20T20:18:45Z",
+   "branch": "docs/auto-09-safety-waves-verify"
+  },
+  {
+   "number": 1253,
+   "title": "docs(auto-08): VERIFY — per-load profitability already built (DONE-verify)",
+   "mergedAt": "2026-06-20T20:18:41Z",
+   "branch": "docs/auto-08-per-load-profit-verify"
+  }
+ ],
+ "merged_pr_total": 1794,
+ "hold_for_jorge": [
+  {
+   "number": 1897,
+   "title": "feat(ci): HOLD-migration ledger guard — held migrations can't silently fire on prod",
+   "mergedAt": "2026-07-03T21:25:16Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1895,
+   "title": "feat(program-board): honest two-timestamp live board + merged-PR/HOLD/locked-decisions tabs (v2)",
+   "mergedAt": "2026-07-03T20:21:15Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1888,
+   "title": "feat(safety): SC4 cargo claim intake — load/claimant/reason/amount per 49 CFR 1005.2 [HOLD-FOR-JORGE]",
+   "mergedAt": "2026-07-03T19:31:37Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1887,
+   "title": "[HOLD-FOR-JORGE] fix(safety): FD1 internal fines creator — wire driver/reason catalogs + approval control",
+   "mergedAt": "2026-07-03T19:43:24Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1884,
+   "title": "[HOLD-FOR-JORGE] feat(safety): SC1 accident wizard — wire catalogs + office creator persistence",
+   "mergedAt": "2026-07-03T20:16:14Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1871,
+   "title": "[HOLD-FOR-JORGE] feat(program): live Program Board — tabbed block/task tracker + two-way notes",
+   "mergedAt": "2026-07-03T18:07:16Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1864,
+   "title": "[HOLD-FOR-JORGE] feat(factoring): doc-code reconciliation + poster CI guard (verify-only, flag OFF)",
+   "mergedAt": "2026-07-03T18:45:54Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1833,
+   "title": "[HOLD-FOR-JORGE] RATECON-1: rate-con upload → AI extraction → Book Load prefill (backend)",
+   "mergedAt": "2026-07-03T06:47:16Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1824,
+   "title": "[HOLD-FOR-JORGE — TIER 1] B19-V2: audit hash-chain tamper-verifier + record table",
+   "mergedAt": "2026-07-03T06:28:04Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1822,
+   "title": "[HOLD-FOR-JORGE — TIER 1] MD-3: AR/AP clone-schema delta (source + bills.voided_at)",
+   "mergedAt": "2026-07-03T00:21:09Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1821,
+   "title": "[HOLD-FOR-JORGE — TIER 1] B19-V1: genesis-anchored chain_seq on events.event_log",
+   "mergedAt": "2026-07-02T23:59:22Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1819,
+   "title": "[HOLD-FOR-JORGE — TIER 1] MD-1/MD-2: clone-origin markers + void-gone-from-QBO (decision #7)",
+   "mergedAt": "2026-07-02T23:44:58Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1812,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(safety): safety_settings provisioning trigger → SECURITY DEFINER (USMCA-launch blocker)",
+   "mergedAt": "2026-07-02T19:58:24Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1810,
+   "title": "[HOLD-FOR-JORGE — TIER 1] DOC-REQ-1: required-document-types catalog + FMCSA/IRS seed (decision #6)",
+   "mergedAt": "2026-07-02T20:15:59Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1802,
+   "title": "[HOLD-FOR-JORGE — TIER 1] IMPORT-P0b: entity-push kill-switch (all six write-back paths)",
+   "mergedAt": "2026-07-02T18:56:09Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1797,
+   "title": "[HOLD-FOR-JORGE — TIER 1] IMPORT-P0: JE→QBO push kill-switch + masterdata echo guard",
+   "mergedAt": "2026-07-02T15:34:40Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1795,
+   "title": "[HOLD-FOR-JORGE — TIER 1] accounting.periods init — seed calendar periods for all entities (STEP-1 BLOCK A)",
+   "mergedAt": "2026-07-02T13:33:09Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1791,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(feature-flags): posting flags are per-entity-only (no global enable)",
+   "mergedAt": "2026-07-02T12:49:50Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1787,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(security): cross-tenant membership sweep pass 2 — remaining request-reachable GUC setters (USMCA blocker)",
+   "mergedAt": "2026-07-02T12:57:49Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1784,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(security): restore assertCompanyMembership on ~13 forked tenant-scope wrappers + CI guard (cross-tenant authz, USMCA blocker)",
+   "mergedAt": "2026-07-02T12:26:35Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1782,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(factoring): FARO import — parse (negatives), aggregate chargebacks, per-invoice variance (data-corruption fix)",
+   "mergedAt": "2026-07-02T05:16:37Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1776,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): GL role-resolver primary path re-asserts account entity (5th cross-entity leak, USMCA blocker)",
+   "mergedAt": "2026-07-02T04:38:51Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1774,
+   "title": "[HOLD-FOR-JORGE] chore(palette): financial-module recolor",
+   "mergedAt": "2026-07-02T04:57:50Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1771,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): 4 confirmed cross-entity financial leaks (USMCA blockers) + CI guard",
+   "mergedAt": "2026-07-02T04:56:36Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1770,
+   "title": "[HOLD-FOR-JORGE — TIER 1] CODER-34: factoring GL poster SALE→SECURED-BORROWING (flag OFF)",
+   "mergedAt": "2026-07-02T02:31:26Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1767,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(drivers): W-8BEN foreign-status capture + yearly renewal on driver profile",
+   "mergedAt": "2026-07-02T02:10:05Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1759,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(chat): CHAT-1 per-load dispatch-chat schema (evidence-grade, no money path)",
+   "mergedAt": "2026-07-01T22:15:52Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1754,
+   "title": "[HOLD-FOR-JORGE — TIER 2] feat(banking): BANKREC-CONFIRM-01 enable Confirm-match (exact matches only)",
+   "mergedAt": "2026-07-01T20:51:06Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1751,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): COA-DETAILTYPE-01 — per-entity Detail Type catalog + creator",
+   "mergedAt": "2026-07-01T20:15:12Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1747,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(bank-recon): BLOCK-01 Part 2a expense-link accept",
+   "mergedAt": "2026-07-01T17:30:40Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1746,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(bank-recon): variance poster reads ledger_account_id, not phantom coa_account_id (BLOCK-01)",
+   "mergedAt": "2026-07-01T16:44:41Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1745,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-04 bill-payment → GL gap-closure (flag OFF + bank-leg fix + bill-first)",
+   "mergedAt": "2026-07-01T16:06:32Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1744,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-05 bank-feed categorize → GL (BANK_FEED_GL_POSTING_ENABLED, OFF)",
+   "mergedAt": "2026-07-01T16:06:17Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1743,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-06 invoice→A/R kill-switch (INVOICE_AR_GL_POSTING_ENABLED, OFF)",
+   "mergedAt": "2026-07-01T15:39:37Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1741,
+   "title": "[HOLD-FOR-JORGE — TIER 1] BLOCK-00: TRANSP CoA role-map seed (ap_control→QBO-47, ar_control→QBO-45)",
+   "mergedAt": "2026-07-01T15:13:31Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1736,
+   "title": "docs(qbo-parity): CHAIN-04/05/06 posting-engine design docs (design-only, HOLD context)",
+   "mergedAt": "2026-07-01T14:52:23Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1735,
+   "title": "test(qbo-sync): A/P bill projection → FIN-20 aging regression test",
+   "mergedAt": "2026-07-01T12:14:51Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1734,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(catalogs): account_role_bindings per-entity (close last USMCA cross-entity leak, non-breaking)",
+   "mergedAt": "2026-07-01T12:12:38Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1733,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): entity-scope fuel-posting GL resolvers — cross-entity money leak",
+   "mergedAt": "2026-07-01T10:54:37Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1730,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(governance): Task #24 void/cancel wiring — reason catalog CRUD + Lists + register + void-surface wiring (flags OFF)",
+   "mergedAt": "2026-07-01T11:29:58Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1729,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(banking): BLOCK-6 driver dimension + loan-to-driver posting (flag OFF)",
+   "mergedAt": "2026-07-01T06:27:32Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1728,
+   "title": "[HOLD-FOR-JORGE — TIER 1] chore(dispatch): CODER-10 load_cancellations → per-entity reason FK (foundation)",
+   "mergedAt": "2026-07-01T06:12:51Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1727,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2b item→account mapping backfill (loader + no-op migration template)",
+   "mergedAt": "2026-07-01T05:54:25Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1726,
+   "title": "[HOLD-FOR-JORGE] feat(tasks): task-scoped Team Chat — comments + @mention + activity feed (TASK-3 option a)",
+   "mergedAt": "2026-07-01T05:54:17Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1717,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo-sync): entity-scope items + accounts pullers/reconciler (AF-1/AF-2 live break)",
+   "mergedAt": "2026-07-01T03:50:00Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1716,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2c(+2) items editor — full QBO/NetSuite parity (accounts · category · two-sided purchasing · preferred vendor) + en",
+   "mergedAt": "2026-07-01T03:36:53Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1715,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-3 catalogs.classes per-entity",
+   "mergedAt": "2026-07-01T02:57:01Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1714,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2 catalogs.items per-entity",
+   "mergedAt": "2026-07-01T02:41:51Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1713,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(banking): B2 bank↔COA bridge backfill",
+   "mergedAt": "2026-07-01T02:19:56Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1709,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(coa): seed USMCA chart of accounts (B1 / Path B Stage 5)",
+   "mergedAt": "2026-07-01T01:20:48Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1708,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(catalogs): entity-scope the accounts WRITE path for af1 (create/update/deactivate)",
+   "mergedAt": "2026-07-01T00:50:18Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1702,
+   "title": "[HOLD-FOR-JORGE — PROTECTED] feat(drivers): hire_date_source provenance column",
+   "mergedAt": "2026-07-01T00:19:53Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1697,
+   "title": "[HOLD — GUARD isolation-verify] fix(catalogs): scope accounts read endpoints to active entity (CALLOUT-6 / Block 1)",
+   "mergedAt": "2026-07-01T00:19:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1696,
+   "title": "[HOLD-FOR-JORGE — TIER 1] docs(banking): Phase B design — Banking↔COA↔Categorize USMCA parity",
+   "mergedAt": "2026-06-30T21:55:45Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1690,
+   "title": "Feat/per entity posting flag fix hold",
+   "mergedAt": "2026-06-30T19:34:05Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1688,
+   "title": "fix(banking): set opco scope on Plaid exchange INSERT — unblocks USMCA + all bank connects (RLS reject)",
+   "mergedAt": "2026-06-30T18:19:33Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1687,
+   "title": "[HOLD-FOR-JORGE] feat(governance): Task #24 void/cancel — per-entity reason catalog (foundation, dispatch v2)",
+   "mergedAt": "2026-06-30T16:49:29Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1686,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): designate QBO-47 as A/P control, retire native 2000 (ACCOUNTING-2)",
+   "mergedAt": "2026-06-30T17:01:24Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1681,
+   "title": "Fix/qbo transp recurring schedule hold",
+   "mergedAt": "2026-06-30T17:19:56Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1680,
+   "title": "Fix/accounting1 revenue and 1100 hold",
+   "mergedAt": "2026-06-30T06:04:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1679,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(governance): app-wide void/cancel governance — Owner/Admin/Accountant + request-approve + register (supersedes #1677)",
+   "mergedAt": "2026-06-30T05:30:59Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1665,
+   "title": "[HOLD-FOR-JORGE] fix(rls): scope QBO chart-of-accounts reconciler + classes read + load money by-id to operating company",
+   "mergedAt": "2026-06-30T00:54:00Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1664,
+   "title": "[HOLD-FOR-JORGE] fix(banking): split transaction silently mis-categorizes (implement real split OR disable)",
+   "mergedAt": "2026-06-30T00:49:34Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1661,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): wire recurring-bill-templates route + customer payment unapply (QA-sweep)",
+   "mergedAt": "2026-06-30T01:05:57Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1653,
+   "title": "[HOLD-FOR-JORGE] fix(legal): close e-sign verification bypass + harden PDF render (verified_at gate)",
+   "mergedAt": "2026-06-29T21:25:57Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1650,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): lease ASC 842 subledger + posting, default operating (flag OFF)",
+   "mergedAt": "2026-06-29T21:40:22Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1649,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): prepaid amortization + depreciation + unit allocation posting (flag OFF)",
+   "mergedAt": "2026-06-29T20:22:32Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1648,
+   "title": "[HOLD-FOR-JORGE — TIER 2] feat(fin20): true historical as-of AR/AP aging",
+   "mergedAt": "2026-06-29T20:20:09Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1645,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo-sync): per-entity isolation of outbox.queue + qbo_sync_health",
+   "mergedAt": "2026-06-29T20:15:54Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1644,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): settlement + deduction GL posting engine (flag OFF)",
+   "mergedAt": "2026-06-29T19:51:17Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1639,
+   "title": "[HOLD-FOR-JORGE] Legal full build — library + lifecycle + creator + e-sign + safety/finance wiring",
+   "mergedAt": "2026-06-29T19:11:25Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1636,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(rls): FORCE RLS on the scoped tenant-ta…",
+   "mergedAt": "2026-06-29T15:37:27Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1633,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): wire audit spine into 5 GL posters + link idempotency (CODER-12)",
+   "mergedAt": "2026-06-29T15:37:10Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1632,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(rls): scope 4 open-qual policies + load_stops tenant gap (RLS Block A)",
+   "mergedAt": "2026-06-29T13:31:48Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1629,
+   "title": "fix(accounting): deterministic idempotency keys on the 4 key-less GL posters (BLOCK 2)",
+   "mergedAt": "2026-06-29T11:26:10Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1626,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(rls): FORCE RLS on 4 relocated orphaned tables (CODER-29)",
+   "mergedAt": "2026-06-29T10:26:16Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1625,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): GL idempotency uniqueness on journal_entry_postings (CODER-28B)",
+   "mergedAt": "2026-06-29T10:25:37Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1618,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(rls): ENABLE+FORCE RLS on dispatch.intransit_issues",
+   "mergedAt": "2026-06-29T02:32:23Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1615,
+   "title": "fix(mdata): loads list degrades unknown sort to default instead of 400 (CODER-17)",
+   "mergedAt": "2026-06-29T02:16:14Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1614,
+   "title": "[HOLD-FOR-JORGE] feat(dispatch): DB-7 Phase 2 — planner idle + Book prefills the truck",
+   "mergedAt": "2026-06-29T02:20:44Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1612,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): reconcile prod-missing fk_invoices_factoring_advance",
+   "mergedAt": "2026-06-29T01:32:09Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1611,
+   "title": "[HOLD-FOR-JORGE] fix(ci): consistency guard must not auto-connect to prod (CODER-21 §1.5)",
+   "mergedAt": "2026-06-29T02:20:34Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1607,
+   "title": "[HOLD-FOR-JORGE] perf(dispatch): DB-7 Phase 1 — kill planner N+1 (identical output)",
+   "mergedAt": "2026-06-29T00:43:36Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1604,
+   "title": "[HOLD-FOR-JORGE] test(maintenance): lock dev-fixtures prod gate (CODER-10 prod-stub)",
+   "mergedAt": "2026-06-28T23:53:37Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1602,
+   "title": "[HOLD-FOR-JORGE] fix(ci): repo-wide no-conflict-markers guard (CODER-10)",
+   "mergedAt": "2026-06-28T23:52:24Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1601,
+   "title": "[HOLD-FOR-JORGE] fix(dispatch): DB-4 honest List/Table count (scope to loads + truck roster total)",
+   "mergedAt": "2026-06-28T23:52:15Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1590,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(migrations): Revenue Recognition data model — ASC 606 (RR-MIG)",
+   "mergedAt": "2026-06-28T23:12:04Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1589,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(migrations): Fixed Assets data model — ASC 360 (FA-MIG)",
+   "mergedAt": "2026-06-28T23:01:29Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1588,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(security): FORCE RLS on 8 financial tables (CC-06)",
+   "mergedAt": "2026-06-28T22:42:42Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1584,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(migrations): copy-apply 5 missing-table migrations (CC-05)",
+   "mergedAt": "2026-06-28T22:27:39Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1583,
+   "title": "docs(spec): FH-3/FH-7 reconcile + FH-8 ASC 842 lease layer [HOLD]",
+   "mergedAt": "2026-06-28T22:10:17Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1582,
+   "title": "docs(spec): Revenue Recognition Data-Model (ASC 606) — migration-ready, gated OFF [HOLD]",
+   "mergedAt": "2026-06-28T22:10:10Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1574,
+   "title": "fix(db-migrate): PROD-MIGRATE safety guard [HOLD-FOR-JORGE / Phase-0]",
+   "mergedAt": "2026-06-28T21:23:33Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1570,
+   "title": "Feat/bank account cash gl setup hold",
+   "mergedAt": "2026-06-28T16:38:02Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1568,
+   "title": "docs(block-b): booked cash-advance approval-gate design (design-first, HOLD)",
+   "mergedAt": "2026-06-28T15:17:21Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1563,
+   "title": "docs(factoring): Factoring Packet + AM/PM design (DESIGN-ONLY, Tier-1 — PAUSE for Jorge)",
+   "mergedAt": "2026-06-28T00:03:26Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1562,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(driver-finance): load_id DIRECT on set…",
+   "mergedAt": "2026-06-28T16:25:36Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1556,
+   "title": "docs: [HOLD-FOR-JORGE] Bank-Feed Categorize→GL Posting Engine — Option B Design Proposal",
+   "mergedAt": "2026-06-28T15:18:23Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1555,
+   "title": "feat(truck-lease): [Tier-1] Commercial Truck Lease Agreement — template, attorney-review gate, Texas governing-law, guard 44/44",
+   "mergedAt": "2026-06-27T22:07:05Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1544,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(remediation): P0/P1/P2/P3 audit dispatch — settlement grants, soft-delete invariants, RLS, guards, docs",
+   "mergedAt": "2026-06-27T16:53:08Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1542,
+   "title": "[HOLD-FOR-JORGE — TIER 1] Capture 21 prod-only columns — clean migrate == prod (AF-1 gate)",
+   "mergedAt": "2026-06-27T16:05:54Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1539,
+   "title": "[HOLD-FOR-JORGE — TIER 1] F3+F1 live-defect fixes — view security_invoker + ih35_app grants",
+   "mergedAt": "2026-06-27T15:24:29Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1528,
+   "title": "[HOLD-FOR-JORGE — TIER 1] AF-1 catalogs.accounts per-entity entity-COA migration",
+   "mergedAt": "2026-06-27T21:42:22Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1516,
+   "title": "docs(specs): catalogs.accounts per-entity Tier-1 DESIGN (blast radius ~25 FK cols, not 6)",
+   "mergedAt": "2026-06-26T18:41:53Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1514,
+   "title": "[HOLD-FOR-JORGE] fix(feature-flags): admin flag writes under withLuciaBypass (RLS Option A) + proof test",
+   "mergedAt": "2026-06-26T17:55:00Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1512,
+   "title": "[HOLD-FOR-JORGE] fix(feature-flags): grant ih35_app write on lib.feature_flags(+overrides)",
+   "mergedAt": "2026-06-26T16:07:48Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1501,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(events): grant ih35_app SELECT on events.event_log (BLOCK-SPINE-00)",
+   "mergedAt": "2026-06-26T03:39:57Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1500,
+   "title": "[HOLD-FOR-JORGE] chore(factoring): wire factoring-packet ops surface (edits 1-4)",
+   "mergedAt": "2026-06-27T22:23:41Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1499,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 7 — auto-invoice the billable lumper line",
+   "mergedAt": "2026-06-26T04:48:45Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1498,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 5 — bank-match invariant ($400 → $250 + $150)",
+   "mergedAt": "2026-06-26T04:44:44Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1497,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 4 — posting contract + balanced-JE tests",
+   "mergedAt": "2026-06-26T04:42:28Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1496,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 3b — cash-advance disburse split engine",
+   "mergedAt": "2026-06-26T00:45:44Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1495,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 3a — 'lumper' expense category + GL account map",
+   "mergedAt": "2026-06-26T00:45:29Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1494,
+   "title": "[HOLD-FOR-JORGE] feat(lumper): STEP 6 core — 3-scenario money model (pure + worked examples)",
+   "mergedAt": "2026-06-26T00:41:13Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1493,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 2 — per-customer + per-stop lumper billing rule",
+   "mergedAt": "2026-06-25T23:38:19Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1492,
+   "title": "[HOLD-FOR-JORGE — TIER 1] feat(lumper): STEP 1 — expense_lines.billable_customer_uuid",
+   "mergedAt": "2026-06-25T23:38:11Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1491,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(events): grant USAGE + fix 13-arg log_event spine emit",
+   "mergedAt": "2026-06-25T23:22:54Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1487,
+   "title": "[HOLD-FOR-JORGE] fix(detention): phantom mdata.detention_requests → dispatch.detention_requests",
+   "mergedAt": "2026-06-25T16:05:33Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1483,
+   "title": "[HOLD-FOR-JORGE] phantom relations in factoring / profitability / cash-AR",
+   "mergedAt": "2026-06-25T16:05:54Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1480,
+   "title": "[HOLD-FOR-JORGE] audit.row_changes INSERT RLS policy (unblocks QBO push)",
+   "mergedAt": "2026-06-25T14:22:44Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1478,
+   "title": "[HOLD-FOR-JORGE / Tier-2] W7 per-stop extra rates sum into invoice + payload",
+   "mergedAt": "2026-06-26T00:41:51Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1474,
+   "title": "[HOLD-FOR-JORGE] Create 19 missing factory catalog tables (lists full counts)",
+   "mergedAt": "2026-06-25T11:54:48Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1472,
+   "title": "[HOLD-FOR-JORGE] chore(catalogs): seed lumper_providers — generic sta…",
+   "mergedAt": "2026-06-25T19:33:03Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1470,
+   "title": "[HOLD-FOR-JORGE] chore(catalogs): seed civil_fine_types — 19 FMCSA ci…",
+   "mergedAt": "2026-06-25T11:55:33Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1464,
+   "title": "[HOLD-FOR-JORGE] Seed dot_violation_types — 71 FMCSA driver codes",
+   "mergedAt": "2026-06-25T11:55:22Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1463,
+   "title": "[HOLD-FOR-JORGE] Reconcile prod catalog-schema drift (24 catalogs + 2 cols)",
+   "mergedAt": "2026-06-25T02:00:26Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1443,
+   "title": "[HOLD-FOR-JORGE — TIER 1] H-1 Option A — archive dead banking manual-JE route + recurrence guard",
+   "mergedAt": "2026-06-24T16:06:19Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1441,
+   "title": "[HOLD-FOR-JORGE — TIER 1] Manual-JE posting-path divergence — design proposal",
+   "mergedAt": "2026-06-24T16:28:02Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1440,
+   "title": "[HOLD-FOR-JORGE — TIER 1] Book Load cash advance → driver advance rails (load_id link)",
+   "mergedAt": "2026-06-26T00:49:43Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1416,
+   "title": "[HOLD-FOR-JORGE] fix(driver-finance): M-1 dispute resolution amount → MoneyInput",
+   "mergedAt": "2026-06-24T03:33:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1413,
+   "title": "[HOLD-FOR-JORGE] fix(accounting,banking): M-1 Manual JE debit/credit → MoneyInput",
+   "mergedAt": "2026-06-24T02:51:40Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1393,
+   "title": "[HOLD-FOR-JORGE] chore(mdata): loads.temperature_type (Frozen/Fresh) — W-FIX-1 migration",
+   "mergedAt": "2026-06-23T23:32:11Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1386,
+   "title": "[HOLD-FOR-JORGE] chore(mdata): qbo_vendors render-v5 §D columns (FIX-7b migration)",
+   "mergedAt": "2026-06-23T22:18:45Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1361,
+   "title": "feat(dispatch): Book Load §B reefer/flatbed conditional panels (render-v6) [HOLD-FOR-JORGE]",
+   "mergedAt": "2026-06-23T07:44:06Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1360,
+   "title": "feat(dispatch): load-stop Zip Code (render-v6 §C) — postal_code [HOLD-FOR-JORGE]",
+   "mergedAt": "2026-06-23T07:44:04Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1319,
+   "title": "feat(dispatch): §7 blue eradication across dispatch module + §7 guard coverage-gap extension [HOLD-FOR-JORGE — keystone]",
+   "mergedAt": "2026-06-22T16:03:11Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1318,
+   "title": "feat(fleet): trailer profile to spec — truck/load + per-WO record links + ToastProvider test fix [HOLD-FOR-JORGE — keystone]",
+   "mergedAt": "2026-06-22T15:46:11Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1317,
+   "title": "feat(fleet): vehicle/trailer profile §7 blue eradication + driver/per-WO links + §7 guard coverage-gap fix [HOLD-FOR-JORGE — keystone]",
+   "mergedAt": "2026-06-22T15:06:30Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1316,
+   "title": "feat(maint): Arriving Soon hybrid table+expand · In-Transit flat table (queue G) [HOLD-FOR-JORGE — keystone]",
+   "mergedAt": "2026-06-22T14:07:36Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1315,
+   "title": "feat(maint): Fleet table keystone — ODOMETER · NEXT PM · OPEN WO + Unit links + CSV export [HOLD-FOR-JORGE — awaits GUARD]",
+   "mergedAt": "2026-06-22T13:23:27Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1299,
+   "title": "[HOLD-FOR-JORGE] CHAIN-03 STEP-2: one canonical bill resolver + flag-gated Bill→GL post (TRANSP only)",
+   "mergedAt": "2026-06-22T02:10:47Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1298,
+   "title": "[HOLD-FOR-JORGE] CHAIN-03 STEP-1: Create Bill → GL DRAFT-JE proof (TRANSP only, writes nothing)",
+   "mergedAt": "2026-06-22T02:21:58Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1289,
+   "title": "[HOLD-FOR-JORGE] telematics: Samsara odometer ingest (Block E #13 / FINISH-OPS #7)",
+   "mergedAt": "2026-06-21T20:17:09Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1287,
+   "title": "[HOLD-FOR-JORGE] catalogs: Cargo Claim Reasons (#8) — new table + CRUD + page (FINAL)",
+   "mergedAt": "2026-06-21T17:48:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1286,
+   "title": "[HOLD-FOR-JORGE] catalogs: DOT Violation Types (#7) — new table + CRUD + page",
+   "mergedAt": "2026-06-21T17:30:56Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1281,
+   "title": "[HOLD-FOR-JORGE] gate v2: target-aware ALTER own-new-table neutral",
+   "mergedAt": "2026-06-21T04:31:00Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1278,
+   "title": "[HOLD-FOR-JORGE] gate: CREATE-TABLE-only neutral (allow purely-additive new-table migrations)",
+   "mergedAt": "2026-06-21T03:58:16Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1271,
+   "title": "fix(ci): HOLD-MERGE-GATE — block title-blind merge of HOLD/financial PRs",
+   "mergedAt": "2026-06-20T22:33:21Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1270,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-05 (CHAIN-07) — settlements 500 diagnosis + GL tie-out design",
+   "mergedAt": "2026-06-20T21:13:38Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1269,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-04 (CHAIN-06) — Invoice→AR→Receive chain design",
+   "mergedAt": "2026-06-20T21:13:25Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1268,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-03 (CHAIN-05) — bank feed categorize→match→post chain design",
+   "mergedAt": "2026-06-20T21:13:10Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1267,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-02 (CHAIN-04) — Bill Payment tie-out design + draft JE",
+   "mergedAt": "2026-06-20T21:13:02Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1266,
+   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-01 (CHAIN-03) — Create Bill → GL design + draft JE proof",
+   "mergedAt": "2026-06-20T21:12:51Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1141,
+   "title": "fix(rls): equipment/units soft-delete deactivation trap (TIER-1) [NEEDS JORGE OK — no self-merge]",
+   "mergedAt": "2026-06-17T22:02:58Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1138,
+   "title": "fix(rls): identity.is_lucia_bypass() strict boolean (never NULL) — TIER-1, root cause of deactivate 42501 [NEEDS JORGE OK]",
+   "mergedAt": "2026-06-17T21:05:21Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 1045,
+   "title": "docs(go-live): Block 6 demo-purge plan (show-first/gated) + park 2H/2J post-go-live",
+   "mergedAt": "2026-06-16T14:10:39Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1021,
+   "title": "fix(accounting): Step 3 posting — unmask markBatchFailed + prove balanced JE [TIER 1 · STOP before merge]",
+   "mergedAt": "2026-06-15T23:45:30Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 788,
+   "title": "chore(closure): CLOSURE-17 ON-HOLD triage decision docs",
+   "mergedAt": "2026-06-08T14:19:54Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 708,
+   "title": "feat(trust-t5): TIER1 Block 5 — Double-entry DB enforcement guard + integration test + docs",
+   "mergedAt": "2026-06-07T23:54:53Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 612,
+   "title": "docs(dispatch): S5-A seam note + T7 HOLD dependency per dedupe audit",
+   "mergedAt": "2026-06-06T23:50:51Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 605,
+   "title": "TIER 1 TRUST: 13-block dispatch spec",
+   "mergedAt": "2026-06-06T22:33:43Z",
+   "category": "TIER-1 financial"
+  },
+  {
+   "number": 572,
+   "title": "chore(closure): dispatch CLOSURE-17 ON-HOLD triage (wave C-8 lane A)",
+   "mergedAt": "2026-06-05T16:24:30Z",
+   "category": "HOLD"
   }
  ]
 }
