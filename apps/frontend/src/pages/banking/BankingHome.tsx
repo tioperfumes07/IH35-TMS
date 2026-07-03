@@ -348,7 +348,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   key={session.id}
                   type="button"
                   className="w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                  onClick={() => navigate(`/banking/reconciliation?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
+                  onClick={() => navigate(`/banking/reconciliation-workspace?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
                 >
                   Open: {session.period_start} to {session.period_end} ({Number(session.variance_cents ?? 0) / 100})
                 </button>
@@ -365,7 +365,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     key={session.id}
                     type="button"
                     className="w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                    onClick={() => navigate(`/banking/reconciliation?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
+                    onClick={() => navigate(`/banking/reconciliation-workspace?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
                   >
                     {session.period_start} to {session.period_end} - variance {Number(session.variance_cents ?? 0) / 100}
                   </button>
@@ -482,7 +482,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     .then((res) => {
                       setStartReconOpen(false);
                       void queryClient.invalidateQueries({ queryKey: ["banking", "reconciliation-sessions", companyId] });
-                      navigate(`/banking/reconciliation?session_id=${res.session_id}&bank_account_hint=${reconAccountId}`);
+                      navigate(`/banking/reconciliation-workspace?session_id=${res.session_id}&bank_account_hint=${reconAccountId}`);
                     })
                     .catch((error) => pushToast(String((error as Error).message || "Failed to start reconciliation"), "error"))
                     .finally(() => setStartingRecon(false));
