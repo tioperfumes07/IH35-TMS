@@ -75,6 +75,7 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "documents.evidence_records", why: "forward-ref — legacy docs schema; canonical=docs.*" },
   { rel: "accounting.factoring_companies", why: "forward-ref — canonical=catalogs/mdata factoring refs" },
   { rel: "ops.program_board_notes", why: "[HOLD-FOR-JORGE] forward-ref — Program Board two-way notes table ships in gated migration 202607031200 (not yet applied to prod); read path is try/catch degrade-safe. Remove from debt when that migration merges." },
+  { rel: "tasks.task_link", why: "[HOLD-FOR-JORGE] forward-ref — Tasks Planner v2 polymorphic task<->record link table ships in gated migration 202607031700_tasks_connectivity.sql (not yet applied to prod); task link/completion routes are build-and-hold and only exercised after the migration lands. Remove from debt when that migration merges." },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 

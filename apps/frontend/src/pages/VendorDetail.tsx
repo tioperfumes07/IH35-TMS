@@ -11,6 +11,7 @@ import { getVendorIntegrityHistory } from "../api/maintenance";
 import { patchVendorAccountingCategory } from "../api/vendorCategory";
 import { useAuth } from "../auth/useAuth";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
+import { TasksTab } from "../components/tasks/TasksTab";
 import { Button } from "../components/Button";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -36,7 +37,7 @@ type SaferEntityStatus = {
   safer_oos_status: string | null;
 };
 
-const tabs = ["Profile", "A/P", "Documents", "Audit History"] as const;
+const tabs = ["Profile", "A/P", "Documents", "Audit History", "Tasks"] as const;
 type VendorTab = (typeof tabs)[number];
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -978,6 +979,12 @@ export function VendorDetailPage() {
         <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
           Audit history viewer placeholder. Full drill-down ships in a later phase.
         </div>
+      ) : null}
+
+      {activeTab === "Tasks" ? (
+        <DataPanel title="Tasks">
+          <TasksTab operatingCompanyId={companyId} targetType="vendor" targetId={vendor.id} targetLabel={vendor.name} />
+        </DataPanel>
       ) : null}
     </div>
   );

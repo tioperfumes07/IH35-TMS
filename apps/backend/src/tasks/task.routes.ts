@@ -21,6 +21,13 @@ type Queryable = {
 const SET_TASK_SCOPE_SQL =
   `SELECT set_config('app.operating_company_id', $1, true), set_config('app.current_operating_company_id', $1, true)`;
 
+// TASKS-PLANNER-V2-CONNECTIVITY — polymorphic record link kinds (mirror tasks.task_link CHECK).
+const TARGET_TYPES = [
+  "vendor", "customer", "unit", "driver", "expense", "bill", "bill_payment",
+  "purchase", "work_order", "policy", "load", "settlement", "document",
+] as const;
+const TargetTypeEnum = z.enum(TARGET_TYPES);
+
 const ListTasksQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   assigned_to: z.string().uuid().optional(),
@@ -28,6 +35,9 @@ const ListTasksQuerySchema = z.object({
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   category: z.enum(["load", "maintenance", "safety", "dispatch", "admin"]).optional(),
   status: z.enum(["pending", "in_progress", "blocked", "review", "completed", "cancelled"]).optional(),
+  // Reverse lookup (per-entity Tasks tab): tasks linked to a given record via tasks.task_link.
+  target_type: TargetTypeEnum.optional(),
+  target_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -58,11 +68,39 @@ const CreateTaskBodySchema = z.object({
   checkin_cadence_minutes: z.coerce.number().int().min(1).optional(),
   escalate_to_user_id: z.string().uuid().optional(),
   notes: z.string().max(5000).optional(),
+  // TASKS-PLANNER-V2-CONNECTIVITY
+  alarm_at: z.string().datetime({ offset: true }).optional(),
+  anticipated_category: z.string().max(200).optional(),
+  links: z
+    .array(
+      z.object({
+        role: z.enum(["about", "result"]).default("about"),
+        target_type: TargetTypeEnum,
+        target_id: z.string().uuid(),
+        note: z.string().max(500).optional(),
+      })
+    )
+    .max(20)
+    .optional(),
 });
 
+// TASKS-PLANNER-V2-CONNECTIVITY — task_type is now a PROFILE (category/description/alarm-lead/default kinds).
 const CreateTaskTypeSchema = z.object({
   operating_company_id: z.string().uuid(),
   name: z.string().min(1).max(100),
+  category: z.string().max(100).optional(),
+  description: z.string().max(2000).optional(),
+  default_link_kinds: z.array(TargetTypeEnum).max(13).optional(),
+  alarm_lead_days: z.coerce.number().int().min(0).max(3650).optional(),
+});
+
+// POST /tasks/:id/links body — link a record to a task. role='result' also CLOSES the task
+// (transaction-side completion: the new expense/bill/policy that fulfils the request).
+const CreateTaskLinkSchema = z.object({
+  role: z.enum(["about", "result"]).default("result"),
+  target_type: TargetTypeEnum,
+  target_id: z.string().uuid(),
+  note: z.string().max(500).optional(),
 });
 
 const UpdateProgressSchema = z.object({
@@ -104,9 +142,12 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       let sql = `
         SELECT t.task_id, t.category, t.status, t.title, t.description,
           t.priority, t.scheduled_date, t.due_date, t.assigned_to_user_id,
+          coalesce(u.first_name || ' ' || u.last_name, u.email) as assigned_to_name,
           t.subject_type, t.subject_id, t.estimated_minutes, t.actual_minutes,
-          t.started_at, t.completed_at, t.created_at, t.updated_at
+          t.started_at, t.completed_at, t.created_at, t.updated_at,
+          t.alarm_at, t.anticipated_category, t.task_type_id
         FROM tasks.task t
+        LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
         WHERE t.operating_company_id = $1 AND t.is_active = true
       `;
       const params: (string | number)[] = [input.operating_company_id];
@@ -117,6 +158,15 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       if (input.status) { sql += ` AND t.status = $${paramIdx++}`; params.push(input.status); }
       if (input.date_from) { sql += ` AND t.scheduled_date >= $${paramIdx++}`; params.push(input.date_from); }
       if (input.date_to) { sql += ` AND t.scheduled_date <= $${paramIdx++}`; params.push(input.date_to); }
+      // Reverse lookup for the per-entity Tasks tab: tasks that link to a given record.
+      if (input.target_type && input.target_id) {
+        sql += ` AND EXISTS (
+          SELECT 1 FROM tasks.task_link tl
+          WHERE tl.task_id = t.task_id AND tl.is_active = true
+            AND tl.target_type = $${paramIdx++} AND tl.target_id = $${paramIdx++}
+        )`;
+        params.push(input.target_type, input.target_id);
+      }
 
       const countSql = `SELECT COUNT(*) FROM (${sql}) AS filtered`;
       const countResult = await (client as Queryable).query(countSql, params);
@@ -192,20 +242,41 @@ export default async function taskRoutes(fastify: FastifyInstance) {
           assigned_to_user_id, assigned_by_user_id, scheduled_date, due_date, priority,
           subject_type, subject_id, estimated_minutes,
           progress_pct, task_type_id, start_time, location,
-          checkin_cadence_minutes, escalate_to_user_id, notes)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+          checkin_cadence_minutes, escalate_to_user_id, notes,
+          alarm_at, anticipated_category)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
         RETURNING *
       `;
-      const result = await (client as Queryable).query(sql, [
+      const result = await (client as Queryable).query<{ task_id: string }>(sql, [
         input.operating_company_id, input.category, input.title, input.description ?? null,
         input.assigned_to_user_id, user.uuid, input.scheduled_date, input.due_date ?? null,
         input.priority, input.subject_type ?? null, input.subject_id ?? null, input.estimated_minutes ?? null,
         input.progress_pct, input.task_type_id ?? null, input.start_time ?? null, input.location ?? null,
         input.checkin_cadence_minutes ?? null, input.escalate_to_user_id ?? null, input.notes ?? null,
+        input.alarm_at ?? null, input.anticipated_category ?? null,
       ]);
+      const created = result.rows[0];
+
+      // Insert optional record links (polymorphic pointers — NO accounting write).
+      if (created && input.links && input.links.length > 0) {
+        for (const link of input.links) {
+          await (client as Queryable).query(
+            `INSERT INTO tasks.task_link
+               (task_id, operating_company_id, role, target_type, target_id, note, created_by_user_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+            [created.task_id, input.operating_company_id, link.role, link.target_type, link.target_id, link.note ?? null, user.uuid]
+          );
+          // Per-task activity trail (also carries the mutation's audit trail alongside the DB spine triggers).
+          await (client as Queryable).query(
+            `INSERT INTO tasks.task_activity (operating_company_id, task_id, actor_user_id, event_type, payload)
+             VALUES ($1,$2,$3,'link_added',$4::jsonb)`,
+            [input.operating_company_id, created.task_id, user.uuid, JSON.stringify({ role: link.role, target_type: link.target_type, target_id: link.target_id })]
+          );
+        }
+      }
 
       reply.status(201);
-      return { task: result.rows[0] };
+      return { task: created };
     });
   });
 
@@ -278,14 +349,15 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(SET_TASK_SCOPE_SQL, [parsed.data.operating_company_id]);
       const res = await (client as Queryable).query(
-        `SELECT id, name, is_active FROM tasks.task_type WHERE operating_company_id = $1 AND is_active = true ORDER BY name`,
+        `SELECT id, name, is_active, category, description, default_link_kinds, alarm_lead_days
+         FROM tasks.task_type WHERE operating_company_id = $1 AND is_active = true ORDER BY name`,
         [parsed.data.operating_company_id]
       );
       return { types: res.rows };
     });
   });
 
-  // POST /tasks/types — create task type
+  // POST /tasks/types — create task PROFILE (name + category/description/default kinds/alarm lead)
   fastify.post("/types", async (request, reply) => {
     const user = authUser(request, reply);
     if (!user) return;
@@ -295,11 +367,95 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(SET_TASK_SCOPE_SQL, [input.operating_company_id]);
       const res = await (client as Queryable).query(
-        `INSERT INTO tasks.task_type (operating_company_id, name) VALUES ($1, $2) ON CONFLICT (operating_company_id, name) DO UPDATE SET is_active = true RETURNING id, name, is_active`,
-        [input.operating_company_id, input.name]
+        `INSERT INTO tasks.task_type (operating_company_id, name, category, description, default_link_kinds, alarm_lead_days)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+         ON CONFLICT (operating_company_id, name) DO UPDATE SET
+           is_active = true,
+           category = COALESCE(EXCLUDED.category, tasks.task_type.category),
+           description = COALESCE(EXCLUDED.description, tasks.task_type.description),
+           default_link_kinds = EXCLUDED.default_link_kinds,
+           alarm_lead_days = COALESCE(EXCLUDED.alarm_lead_days, tasks.task_type.alarm_lead_days)
+         RETURNING id, name, is_active, category, description, default_link_kinds, alarm_lead_days`,
+        [
+          input.operating_company_id, input.name, input.category ?? null, input.description ?? null,
+          JSON.stringify(input.default_link_kinds ?? []), input.alarm_lead_days ?? null,
+        ]
       );
       reply.status(201);
       return { type: res.rows[0] };
+    });
+  });
+
+  // ── TASKS-PLANNER-V2-CONNECTIVITY: record links + transaction-side completion ──────────────────
+  // GET /tasks/:id/links — active links for a task (about + result), record-side pointers.
+  fastify.get("/:id/links", async (request, reply) => {
+    const user = authUser(request, reply);
+    if (!user) return;
+    const { id } = IdParamSchema.parse(request.params);
+    return withCurrentUser(user.uuid, async (client) => {
+      const ocRes = await (client as Queryable).query(`SELECT operating_company_id FROM tasks.task WHERE task_id = $1`, [id]);
+      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
+      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      const res = await (client as Queryable).query(
+        `SELECT id, task_id, role, target_type, target_id, note, created_at, created_by_user_id
+         FROM tasks.task_link WHERE task_id = $1 AND is_active = true ORDER BY created_at ASC`,
+        [id]
+      );
+      return { links: res.rows };
+    });
+  });
+
+  // POST /tasks/:id/links — link a record to a task. role='result' also CLOSES the task
+  // (the David example: creating the Expense/Bill/Policy that fulfils the request completes it).
+  // Pure pointer — NEVER an accounting write.
+  fastify.post("/:id/links", async (request, reply) => {
+    const user = authUser(request, reply);
+    if (!user) return;
+    const { id } = IdParamSchema.parse(request.params);
+    const parsed = CreateTaskLinkSchema.safeParse(request.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const input = parsed.data;
+
+    return withCurrentUser(user.uuid, async (client) => {
+      const ocRes = await (client as Queryable).query(`SELECT operating_company_id, status FROM tasks.task WHERE task_id = $1 AND is_active = true`, [id]);
+      if (ocRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
+      const ocId = String((ocRes.rows[0] as { operating_company_id: string }).operating_company_id);
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+
+      const linkRes = await (client as Queryable).query(
+        `INSERT INTO tasks.task_link
+           (task_id, operating_company_id, role, target_type, target_id, note, created_by_user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
+         RETURNING id, task_id, role, target_type, target_id, note, created_at`,
+        [id, ocId, input.role, input.target_type, input.target_id, input.note ?? null, user.uuid]
+      );
+
+      await (client as Queryable).query(
+        `INSERT INTO tasks.task_activity (operating_company_id, task_id, actor_user_id, event_type, payload)
+         VALUES ($1,$2,$3,'link_added',$4::jsonb)`,
+        [ocId, id, user.uuid, JSON.stringify({ role: input.role, target_type: input.target_type, target_id: input.target_id })]
+      );
+
+      // Completion: a 'result' link closes the task (status → completed). The DB status trigger
+      // logs the change to the event spine; completion_confirmed_by records who closed it.
+      let task: unknown = null;
+      if (input.role === "result") {
+        const upd = await (client as Queryable).query(
+          `UPDATE tasks.task
+             SET status = 'completed',
+                 completed_at = COALESCE(completed_at, NOW()),
+                 completion_confirmed_by = $2,
+                 progress_pct = 100
+           WHERE task_id = $1 AND status <> 'completed'
+           RETURNING *`,
+          [id, user.uuid]
+        );
+        task = upd.rows[0] ?? null;
+      }
+
+      reply.status(201);
+      return { link: linkRes.rows[0], task };
     });
   });
 

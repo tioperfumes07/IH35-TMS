@@ -3,6 +3,36 @@ import { apiRequest } from "./client";
 export type TaskStatus = "pending" | "in_progress" | "blocked" | "review" | "completed" | "cancelled";
 export type TaskCategory = "load" | "maintenance" | "safety" | "dispatch" | "admin";
 
+// TASKS-PLANNER-V2-CONNECTIVITY — polymorphic record-link kinds (mirror tasks.task_link CHECK).
+export type TaskTargetType =
+  | "vendor" | "customer" | "unit" | "driver" | "expense" | "bill" | "bill_payment"
+  | "purchase" | "work_order" | "policy" | "load" | "settlement" | "document";
+
+export const TASK_TARGET_TYPES: TaskTargetType[] = [
+  "vendor", "customer", "unit", "driver", "expense", "bill", "bill_payment",
+  "purchase", "work_order", "policy", "load", "settlement", "document",
+];
+
+export type TaskLinkRole = "about" | "result";
+
+export type TaskLink = {
+  id: string;
+  task_id: string;
+  role: TaskLinkRole;
+  target_type: TaskTargetType;
+  target_id: string;
+  note: string | null;
+  created_at: string;
+  created_by_user_id: string | null;
+};
+
+export type TaskLinkInput = {
+  role?: TaskLinkRole;
+  target_type: TaskTargetType;
+  target_id: string;
+  note?: string;
+};
+
 export type Task = {
   task_id: string;
   category: TaskCategory;
@@ -23,11 +53,22 @@ export type Task = {
   start_time: string | null;
   location: string | null;
   notes: string | null;
+  alarm_at: string | null;
+  anticipated_category: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type TaskType = { id: string; name: string; is_active: boolean };
+// TASKS-PLANNER-V2-CONNECTIVITY — task_type is now a PROFILE.
+export type TaskType = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  category?: string | null;
+  description?: string | null;
+  default_link_kinds?: TaskTargetType[] | null;
+  alarm_lead_days?: number | null;
+};
 
 export type PlannerData = {
   date_from: string;
@@ -53,6 +94,10 @@ export type CreateTaskInput = {
   checkin_cadence_minutes?: number;
   escalate_to_user_id?: string;
   notes?: string;
+  // TASKS-PLANNER-V2-CONNECTIVITY
+  alarm_at?: string; // ISO datetime with offset
+  anticipated_category?: string;
+  links?: TaskLinkInput[];
 };
 
 export async function fetchPlannerTasks(params: {
@@ -66,13 +111,34 @@ export async function fetchPlannerTasks(params: {
   return apiRequest<PlannerData>(`/api/v1/tasks/planner?${q}`);
 }
 
+/** Generic task list (no date range required) — used by the completion picker to show OPEN tasks. */
+export async function fetchTasks(params: {
+  operating_company_id: string;
+  status?: TaskStatus;
+  category?: TaskCategory;
+  limit?: number;
+}) {
+  const q = new URLSearchParams({ operating_company_id: params.operating_company_id });
+  if (params.status) q.set("status", params.status);
+  if (params.category) q.set("category", params.category);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  return apiRequest<{ tasks: Task[]; total_count: number }>(`/api/v1/tasks?${q}`);
+}
+
 export async function fetchTaskTypes(operating_company_id: string) {
   return apiRequest<{ types: TaskType[] }>(`/api/v1/tasks/types?operating_company_id=${encodeURIComponent(operating_company_id)}`);
 }
 
-export async function createTaskType(operating_company_id: string, name: string) {
+export async function createTaskType(
+  operating_company_id: string,
+  name: string,
+  profile?: { category?: string; description?: string; default_link_kinds?: TaskTargetType[]; alarm_lead_days?: number }
+) {
   // Pass the raw object; apiRequest does the single JSON.stringify. (Double-stringify => 400 "expected object, received string".)
-  return apiRequest<{ type: TaskType }>("/api/v1/tasks/types", { method: "POST", body: { operating_company_id, name } });
+  return apiRequest<{ type: TaskType }>("/api/v1/tasks/types", {
+    method: "POST",
+    body: { operating_company_id, name, ...(profile ?? {}) },
+  });
 }
 
 export async function createTask(input: CreateTaskInput) {
@@ -84,6 +150,40 @@ export async function updateTaskProgress(task_id: string, progress_pct: number) 
   return apiRequest<{ task: { task_id: string; progress_pct: number } }>(`/api/v1/tasks/${task_id}/progress`, {
     method: "PATCH",
     body: { progress_pct },
+  });
+}
+
+// ── TASKS-PLANNER-V2-CONNECTIVITY: record links + transaction-side completion ────────────────────
+
+/** Tasks linked to a given record (powers the per-entity "Tasks" tab). */
+export async function fetchTasksByTarget(params: {
+  operating_company_id: string;
+  target_type: TaskTargetType;
+  target_id: string;
+  status?: TaskStatus;
+}) {
+  const q = new URLSearchParams({
+    operating_company_id: params.operating_company_id,
+    target_type: params.target_type,
+    target_id: params.target_id,
+  });
+  if (params.status) q.set("status", params.status);
+  return apiRequest<{ tasks: Task[]; total_count: number }>(`/api/v1/tasks?${q}`);
+}
+
+export async function fetchTaskLinks(task_id: string) {
+  return apiRequest<{ links: TaskLink[] }>(`/api/v1/tasks/${task_id}/links`);
+}
+
+/**
+ * Link a record to a task. role='result' (default) CLOSES the task — the transaction-side
+ * completion path (the new expense/bill/policy that fulfils the request marks it done).
+ * Pure pointer: never an accounting write.
+ */
+export async function createTaskLink(task_id: string, input: TaskLinkInput) {
+  return apiRequest<{ link: TaskLink; task: Task | null }>(`/api/v1/tasks/${task_id}/links`, {
+    method: "POST",
+    body: input,
   });
 }
 

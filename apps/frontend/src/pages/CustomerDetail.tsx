@@ -52,6 +52,7 @@ import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificatio
 import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetentionEditor";
 import { CustomerRelationshipScore } from "../components/customers/CustomerRelationshipScore";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
+import { TasksTab } from "../components/tasks/TasksTab";
 import { CustomerContractsTab } from "../components/customers/CustomerContractsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
@@ -71,7 +72,7 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { scrubQboArchiveProjectionNotes } from "../lib/qboArchiveNotes";
 import { useCompanyContext } from "../contexts/CompanyContext";
 
-const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users"] as const;
+const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks"] as const;
 type CustomerTab = (typeof tabs)[number];
 
 function formatBillingSummaryError(error: unknown): string {
@@ -1495,6 +1496,12 @@ export function CustomerDetailPage() {
 
       {activeTab === "Portal Users" ? (
         <PortalUsersTab customerId={customer.id} operatingCompanyId={operatingCompanyId ?? undefined} />
+      ) : null}
+
+      {activeTab === "Tasks" ? (
+        <DataPanel title="Tasks">
+          <TasksTab operatingCompanyId={operatingCompanyId ?? ""} targetType="customer" targetId={customer.id} targetLabel={customer.name} />
+        </DataPanel>
       ) : null}
 
       {activeTab === "Contacts" ? (
