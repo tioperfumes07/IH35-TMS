@@ -1,0 +1,59 @@
+-- TEMPLATE — copy to db/migrations/<YYYYMMDDHHMM>_<snake_description>.sql and fill in.
+-- Idempotent, CREATE-only, entity-scoped FORCED RLS, self-contained grants. Money-free unless it seeds a
+-- default-OFF flag. A migration is a financial-cluster change — NEVER self-merge (constitution §1.4):
+-- validate locally, show the owner the full SQL, wait for explicit "OK to merge".
+--
+-- Replace: <schema>, <table>, <SchemaCreatePrereq>. Delete the columns/index/seed you don't need.
+-- Assumes the target schema already exists + is grant-covered (0065). If it is a NEW schema, uncomment the
+-- CREATE SCHEMA + GRANT USAGE lines.
+
+-- CREATE SCHEMA IF NOT EXISTS <schema>;
+-- GRANT USAGE ON SCHEMA <schema> TO ih35_app;
+
+CREATE TABLE IF NOT EXISTS <schema>.<table> (
+  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),   -- UUIDv7 server-generated PK
+  operating_company_id  uuid NOT NULL,                                -- RLS scope key (see note for mdata.units)
+  -- ... domain columns ...
+  is_active             boolean NOT NULL DEFAULT true,                -- void-not-delete: flip to false, never DELETE
+  voided_at             timestamptz,                                 -- (or archived_at / deactivated_at)
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  updated_at            timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS <table>_opco_idx
+  ON <schema>.<table> (operating_company_id)
+  WHERE is_active;
+
+-- ── Entity-scoped FORCED RLS (canonical predicate) ─────────────────────────────────────────────────
+ALTER TABLE <schema>.<table> ENABLE ROW LEVEL SECURITY;
+ALTER TABLE <schema>.<table> FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS <table>_entity_select ON <schema>.<table>;
+DROP POLICY IF EXISTS <table>_entity_write  ON <schema>.<table>;
+CREATE POLICY <table>_entity_select ON <schema>.<table> FOR SELECT
+  USING (identity.is_lucia_bypass()
+         OR operating_company_id::text = current_setting('app.operating_company_id', true));
+CREATE POLICY <table>_entity_write ON <schema>.<table> FOR ALL
+  USING (identity.is_lucia_bypass()
+         OR (operating_company_id::text = current_setting('app.operating_company_id', true)
+             AND identity.current_user_role() = ANY (ARRAY['Owner'::identity.role_enum,'Administrator'::identity.role_enum])))
+  WITH CHECK (identity.is_lucia_bypass()
+         OR (operating_company_id::text = current_setting('app.operating_company_id', true)
+             AND identity.current_user_role() = ANY (ARRAY['Owner'::identity.role_enum,'Administrator'::identity.role_enum])));
+
+-- ── Grants to the runtime role. NO DELETE (soft-delete via is_active/voided_at). ────────────────────
+-- For an APPEND-ONLY audit/evidence table, use:  GRANT SELECT, INSERT ON <schema>.<table> TO ih35_app;
+GRANT SELECT, INSERT, UPDATE ON <schema>.<table> TO ih35_app;
+
+-- ── Optional: seed under a lucia bypass so FORCE RLS permits the migration-role INSERT ──────────────
+-- DO $seed$
+-- BEGIN
+--   PERFORM set_config('app.bypass_rls', 'lucia', true);
+--   INSERT INTO <schema>.<table> (operating_company_id, ...)
+--   SELECT c.id, ... FROM org.companies c CROSS JOIN (VALUES (...)) v(...)
+--   ON CONFLICT (...) DO NOTHING;
+-- END $seed$;
+
+-- ── Optional: default-OFF feature flag gating any behavior/money logic ──────────────────────────────
+-- INSERT INTO lib.feature_flags (flag_key, description, default_enabled, rollout_pct)
+-- VALUES ('<FEATURE>_ENABLED', '... DEFAULT OFF — owner-gated.', false, 0)
+-- ON CONFLICT (flag_key) DO NOTHING;
