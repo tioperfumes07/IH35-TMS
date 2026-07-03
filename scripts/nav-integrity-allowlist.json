@@ -487,6 +487,10 @@
     {
       "path": "/finance/hub",
       "reason": "AF-6 read-only Finance Hub landing dashboard, behind OFF flag FINANCE_HUB_UI_ENABLED; subnav wiring deferred until flag ON"
+    },
+    {
+      "path": "/finance/break-even",
+      "reason": "F1 read-only Break-Even analytics page, behind OFF flag FINANCE_BREAK_EVEN_UI_FLAG; Finance tab appears only when flag ON (FinanceModuleTabs), subnav wiring deferred until then"
     }
   ]
 }
