@@ -144,11 +144,18 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
       await mk(acct.bank, "DBNK", "Asset");
 
       // The authoritative driver-advance receivable mapping the posting path resolves + debits.
+      // FLAKE FIX (task #14): companyId is the SHARED TRANSP company (ensureIntegrationPrerequisites), and
+      // migration 202606130146 SEEDS an active cash_advance mapping for it. With ON CONFLICT DO NOTHING this
+      // insert no-op'd, leaving the active mapping pointed at the SEEDED account instead of this test's
+      // acct.driverAdvance — so the posting path resolved the wrong/absent account and returned posted:false
+      // intermittently. DO UPDATE forces the (single active per opco+kind+code) mapping to THIS test's account.
+      // Only this test uses the cash_advance mapping, so repointing it for the test's duration affects nothing else.
       await db.query(
         `INSERT INTO accounting.expense_category_account_map
            (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
          VALUES ($1::uuid,'cash_advance','cash_advance',$2::uuid,'debit',true)
-         ON CONFLICT DO NOTHING`,
+         ON CONFLICT (operating_company_id, category_kind, category_code, is_active) WHERE is_active = true
+         DO UPDATE SET account_id = EXCLUDED.account_id, posting_side = EXCLUDED.posting_side`,
         [companyId, acct.driverAdvance]
       );
 
