@@ -143,33 +143,42 @@ export function FeatureFlagsManager() {
             <tbody>
               {(query.data?.flags ?? []).map((flag) => {
                 const overrides = overridesByFlag.get(flag.flag_key) ?? [];
+                const perEntityOnly = Boolean(flag.per_entity_only);
                 return (
                   <tr key={flag.flag_key} className="border-b align-top">
                     <td className="px-2 py-2">
                       <div className="font-medium text-gray-900">{flag.flag_key}</div>
                       <div className="text-xs text-gray-500">{flag.description ?? "—"}</div>
                     </td>
-                    <td className="px-2 py-2">
-                      <input
-                        type="checkbox"
-                        checked={flag.default_enabled}
-                        onChange={(e) =>
-                          updateMutation.mutate({ flagKey: flag.flag_key, default_enabled: e.target.checked })
-                        }
-                      />
-                    </td>
-                    <td className="px-2 py-2">
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={Number(flag.rollout_pct ?? 0)}
-                        onChange={(e) =>
-                          updateMutation.mutate({ flagKey: flag.flag_key, rollout_pct: Number(e.target.value) })
-                        }
-                      />
-                      <div className="text-xs text-gray-600">{Number(flag.rollout_pct ?? 0).toFixed(0)}%</div>
-                    </td>
+                    {perEntityOnly ? (
+                      <td className="px-2 py-2 text-xs text-gray-600" colSpan={2} data-testid="per-entity-only-notice">
+                        Per-entity only — enable via a tenant override. Global default / rollout do not apply.
+                      </td>
+                    ) : (
+                      <>
+                        <td className="px-2 py-2">
+                          <input
+                            type="checkbox"
+                            checked={flag.default_enabled}
+                            onChange={(e) =>
+                              updateMutation.mutate({ flagKey: flag.flag_key, default_enabled: e.target.checked })
+                            }
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={Number(flag.rollout_pct ?? 0)}
+                            onChange={(e) =>
+                              updateMutation.mutate({ flagKey: flag.flag_key, rollout_pct: Number(e.target.value) })
+                            }
+                          />
+                          <div className="text-xs text-gray-600">{Number(flag.rollout_pct ?? 0).toFixed(0)}%</div>
+                        </td>
+                      </>
+                    )}
                     <td className="px-2 py-2">
                       <ul className="space-y-1 text-xs">
                         {overrides.map((row) => (
