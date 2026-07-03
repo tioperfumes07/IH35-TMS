@@ -1,6 +1,16 @@
 import type { JSX } from "react";
-import { useState } from "react";
-import { addAccidentPhoto, setSafetyAccidentStatus, spawnSafetyLiability, spawnSafetyWo } from "../../api/safety";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  addAccidentPhoto,
+  createSafetyAccident,
+  patchSafetyAccident,
+  setSafetyAccidentStatus,
+  spawnSafetyLiability,
+  spawnSafetyWo,
+} from "../../api/safety";
+import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { listDispatchLoads } from "../../api/dispatch";
 import { Button } from "../Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
@@ -17,14 +27,103 @@ type Props = {
   onUpdated: () => void;
 };
 
+function textField(source: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
 export function AccidentReportDrawer({ open, operatingCompanyId, accident, createMode = false, onClose, onUpdated }: Props) {
   const { pushToast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [spawnedWoDisplayId, setSpawnedWoDisplayId] = useState<string | null>(null);
   const [costLines, setCostLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
+
+  // Linked entity ids captured from the four wired catalogs. SC1: these replaced the four dead
+  // free-text <input> comboboxes (no data source, zero API calls). We hold the real uuid in state —
+  // never the display name — and on create/save PERSIST them to safety.accident_reports
+  // (driver_id/unit_id/vendor_id/load_id) via the office creator endpoint, so the accident keys to
+  // real driver + unit + vendor + load records.
+  const [driverId, setDriverId] = useState<string>("");
+  const [unitId, setUnitId] = useState<string>("");
+  const [vendorId, setVendorId] = useState<string>("");
+  const [loadId, setLoadId] = useState<string>("");
+  const [incidentDate, setIncidentDate] = useState<string>("");
+  const [memo, setMemo] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+
+  const accidentId = accident ? String(accident.id ?? "") : "";
+
+  useEffect(() => {
+    setDriverId(accident ? String(accident.driver_id ?? "") : "");
+    setUnitId(accident ? String(accident.unit_id ?? "") : "");
+    setVendorId(accident ? String(accident.vendor_id ?? "") : "");
+    setLoadId(accident ? String(accident.load_id ?? "") : "");
+    setIncidentDate(accident ? String(accident.accident_at ?? "").slice(0, 10) : "");
+    setMemo(accident ? String(accident.notes ?? accident.description ?? "") : "");
+  }, [accidentId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const scopeReady = open && Boolean(operatingCompanyId);
+
+  // Full active roster (limit 200) — client-side filter in the Combobox. The endpoint defaults to 50
+  // (ORDER BY created_at DESC); an active driver past the newest 50 would silently vanish otherwise
+  // (Driver Picker 50-Cap landmine). Fires listDrivers with operating_company_id on drawer open.
+  const driversQuery = useQuery({
+    queryKey: ["accident", "drivers", operatingCompanyId],
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
+    enabled: scopeReady,
+  });
+  const unitsQuery = useQuery({
+    queryKey: ["accident", "units", operatingCompanyId],
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200 }),
+    enabled: scopeReady,
+  });
+  const vendorsQuery = useQuery({
+    queryKey: ["accident", "vendors", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
+    enabled: scopeReady,
+  });
+  const loadsQuery = useQuery({
+    queryKey: ["accident", "loads", operatingCompanyId],
+    queryFn: () => listDispatchLoads({ operating_company_id: operatingCompanyId, view: "loads", status: [], limit: 200, offset: 0 }),
+    enabled: scopeReady,
+  });
+
+  const driverOptions = useMemo(
+    () =>
+      (driversQuery.data?.drivers ?? []).map((row) => {
+        const last = textField(row as unknown as Record<string, unknown>, ["last_name"]);
+        const first = textField(row as unknown as Record<string, unknown>, ["first_name"]);
+        // DOT accident register (49 CFR 390.15) keys to a real driver — display "LAST, First".
+        const label = [last, first].filter(Boolean).join(", ") || String(row.id).slice(0, 8);
+        return { value: String(row.id), label };
+      }),
+    [driversQuery.data?.drivers]
+  );
+  const unitOptions = useMemo(
+    () =>
+      (unitsQuery.data?.units ?? []).map((row, index) => {
+        const rec = (row ?? {}) as Record<string, unknown>;
+        const id = typeof rec.id === "string" ? rec.id : `unit-${index}`;
+        const label = textField(rec, ["unit_number", "truck_number", "number"]) || id.slice(0, 8);
+        return { value: id, label };
+      }),
+    [unitsQuery.data?.units]
+  );
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map((row) => ({ value: String(row.id), label: row.name || String(row.id).slice(0, 8) })),
+    [vendorsQuery.data?.vendors]
+  );
+  const loadOptions = useMemo(
+    () => (loadsQuery.data?.loads ?? []).map((row) => ({ value: String(row.id), label: row.load_number || String(row.id).slice(0, 8) })),
+    [loadsQuery.data?.loads]
+  );
+
   if (!open || !accident) return null;
-  const id = String(accident.id ?? "");
+  const id = accidentId;
   const canMutate = Boolean(id) && !createMode;
   const subtotal = costLines.reduce((sum, line) => {
     if (line.section === "A") return sum + Number(line.amount || 0);
@@ -45,10 +144,36 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
       .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"));
   };
 
+  const linkPayload = {
+    driver_id: driverId || null,
+    unit_id: unitId || null,
+    vendor_id: vendorId || null,
+    load_id: loadId || null,
+    accident_at: incidentDate || null,
+    description: memo || null,
+  };
+
+  const saveAccident = () => {
+    setSaving(true);
+    const request = createMode
+      ? createSafetyAccident({ operating_company_id: operatingCompanyId, ...linkPayload })
+      : patchSafetyAccident(id, operatingCompanyId, linkPayload);
+    void request
+      .then(() => {
+        pushToast(createMode ? "Accident report created" : "Accident report saved", "success");
+        onUpdated();
+        onClose();
+      })
+      .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+      .finally(() => setSaving(false));
+  };
+
+  const photoGateTooltip = canMutate ? undefined : "Save the report first to attach photos";
+
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} data-testid="accident-drawer-backdrop" />
-      <aside className="fixed right-0 top-0 z-50 h-full w-[480px] overflow-y-auto border-l border-gray-200 bg-white p-4 text-xs" data-testid="accident-report-drawer">
+      <aside className="fixed right-0 top-0 z-50 h-full w-[480px] max-w-[95vw] overflow-y-auto border-l border-gray-200 bg-white p-4 text-xs" data-testid="accident-report-drawer">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold">{createMode ? "Create Accident Report" : "Accident Damage Details"}</h3>
           <button type="button" className="text-gray-500 underline" onClick={onClose}>
@@ -62,8 +187,8 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         ) : null}
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-2">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Accident Damage Details</div>
-          <div className="grid grid-cols-6 gap-2">
-            <Field label="Record Type *" className="col-span-1">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+            <Field label="Record Type *">
               <Combobox
                 options={[
                   { value: "accident", label: "Accident" },
@@ -74,7 +199,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 onChange={() => {}}
               />
             </Field>
-            <Field label="Service Type" className="col-span-1">
+            <Field label="Service Type">
               <Combobox
                 options={[
                   { value: "repair", label: "Repair" },
@@ -85,40 +210,63 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 onChange={() => {}}
               />
             </Field>
-            <div className="col-span-1" />
-            <Field label="Incident Date *" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.accident_at ?? "").slice(0, 10)} />
+
+            <Field label="Incident Date *">
+              <input
+                type="date"
+                className="h-8 w-full rounded-sm border border-gray-300 px-2"
+                data-testid="accident-incident-date"
+                value={incidentDate}
+                onChange={(event) => setIncidentDate(event.target.value)}
+              />
             </Field>
-            <Field label="Report Date" className="col-span-1">
+            <Field label="Report Date">
               <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={companyToday()} />
             </Field>
-            <Field label="Bill or Expense Number (if applicable)" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+
+            <Field label="Driver">
+              <div data-testid="accident-driver-picker">
+                <Combobox
+                  options={driverOptions}
+                  value={driverId || null}
+                  placeholder="Search driver…"
+                  onChange={(next) => setDriverId(next ?? "")}
+                />
+              </div>
+            </Field>
+            <Field label="Unit">
+              <div data-testid="accident-unit-picker">
+                <Combobox
+                  options={unitOptions}
+                  value={unitId || null}
+                  placeholder="Search unit…"
+                  onChange={(next) => setUnitId(next ?? "")}
+                />
+              </div>
             </Field>
 
-            <div className="col-span-6 h-2" />
-            <Field label="Repair Vendor" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+            <Field label="Repair Vendor">
+              <div data-testid="accident-vendor-picker">
+                <Combobox
+                  options={vendorOptions}
+                  value={vendorId || null}
+                  placeholder="Search vendor…"
+                  onChange={(next) => setVendorId(next ?? "")}
+                />
+              </div>
             </Field>
-            <div className="col-span-4" />
-            <Field label="Load" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+            <Field label="Load">
+              <div data-testid="accident-load-picker">
+                <Combobox
+                  options={loadOptions}
+                  value={loadId || null}
+                  placeholder="Search load…"
+                  onChange={(next) => setLoadId(next ?? "")}
+                />
+              </div>
             </Field>
 
-            <div className="col-span-6 h-2" />
-            <Field label="Driver" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.driver_id ?? "")} />
-            </Field>
-            <Field label="Unit" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.unit_id ?? "")} />
-            </Field>
-            <div className="col-span-3" />
-            <Field label="Class" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2" readOnly value="Auto class" />
-            </Field>
-
-            <div className="col-span-6 h-2" />
-            <Field label="At Fault" className="col-span-1">
+            <Field label="At Fault">
               <Combobox
                 options={[
                   { value: "no", label: "No" },
@@ -129,32 +277,50 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 onChange={() => {}}
               />
             </Field>
-            <Field label="Police Report Number" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+            <Field label="Class">
+              <input className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2" readOnly value="Auto class" />
             </Field>
-            <Field label="Insurance Claim Number" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
-            </Field>
-            <div className="col-span-3" />
 
-            <Field label="Location" className="col-span-6">
+            <Field label="Police Report Number">
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+            </Field>
+            <Field label="Insurance Claim Number">
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+            </Field>
+
+            <Field label="Bill or Expense Number (if applicable)">
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+            </Field>
+            <Field label="3rd Party Name">
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+            </Field>
+
+            <Field label="3rd Party Plate">
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
+            </Field>
+            <div />
+
+            <Field label="Location" className="col-span-2">
               <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.location ?? "")} />
             </Field>
-            <Field label="3rd Party Name" className="col-span-1">
+            <Field label="Vendor Invoice" className="col-span-2">
               <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
-            <Field label="3rd Party Plate" className="col-span-1">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
-            </Field>
-            <div className="col-span-4" />
-            <div className="col-span-6 h-2" />
-            <Field label="Vendor Invoice" className="col-span-6">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
-            </Field>
-            <Field label="Memo" className="col-span-6">
-              <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1" rows={2} defaultValue={String(accident.notes ?? accident.description ?? "")} />
+            <Field label="Memo" className="col-span-2">
+              <textarea
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                rows={2}
+                data-testid="accident-memo"
+                value={memo}
+                onChange={(event) => setMemo(event.target.value)}
+              />
             </Field>
           </div>
+        </div>
+        <div className="mt-3 flex justify-end">
+          <Button size="sm" disabled={saving} data-testid="accident-save-btn" onClick={saveAccident}>
+            {saving ? "Saving…" : createMode ? "+ Create Accident Report" : "Save Changes"}
+          </Button>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button size="sm" variant="secondary" disabled={!canMutate} onClick={() => setStatus("under-investigation")}>
@@ -198,7 +364,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           >
             Spawn WO
           </Button>
-          <label className={`rounded-sm border border-gray-300 px-2 py-1 text-center ${canMutate ? "" : "opacity-50"}`}>
+          <label
+            className={`rounded-sm border border-gray-300 px-2 py-1 text-center ${canMutate ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}
+            title={photoGateTooltip}
+            data-testid="accident-photo-label"
+          >
             <input
               type="file"
               className="hidden"
@@ -220,6 +390,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             {uploading ? "Uploading..." : "Add Photo"}
           </label>
         </div>
+        {!canMutate ? (
+          <div className="mt-1 text-[10px] text-slate-500" data-testid="accident-photo-gate-note">
+            Save the report first to attach photos.
+          </div>
+        ) : null}
         {spawnedWoDisplayId ? (
           <div className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700">
             New WO (source type AC): {spawnedWoDisplayId}
