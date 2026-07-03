@@ -18,10 +18,20 @@ updates:
       - "dependencies"
       - "npm"
     groups:
+      # Group ONLY minor + patch updates. Major (breaking) updates are excluded from the groups so
+      # dependabot raises each major as its OWN PR — a live financial system must never receive React 19 /
+      # react-router 7 / Tailwind 4 style breaking migrations bundled with patches (they need scoped,
+      # tested migration projects, not a grouped auto-merge). See tasks: React 19, router 7, Tailwind 4.
       development-dependencies:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
       production-dependencies:
         dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
