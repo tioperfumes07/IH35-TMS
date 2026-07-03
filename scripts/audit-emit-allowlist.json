@@ -2,6 +2,10 @@
   "_comment": "Explicit allowlist of routes files that contain mutations but do NOT require a spine event emit. Each entry must have a reviewed reason. Add new entries only after explicit review — do not add to suppress a guard failure without fixing the root cause.",
   "allowlist": [
     {
+      "file": "apps/backend/src/program/program-board.service.ts",
+      "reason": "Program Board two-way notes — NON-FINANCIAL internal staff tooling. The INSERT into ops.program_board_notes IS the append-only note record itself (void-not-delete, created_by captured); it is not a spine-auditable business/financial event. Same disposition as audit-chain-verify.service.ts and the identity/driver preference routes."
+    },
+    {
       "file": "apps/backend/src/dispatch/ratecon-extract.routes.ts",
       "reason": "Rate-con AI extraction record — the INSERT into dispatch.ratecon_extractions is an append-only OCR/extraction artifact ('exactly what the AI read', keyed to the file), not a financial commit. The spine-auditable business event is the downstream Book Load creation that consumes the extracted prefill."
     },
