@@ -123,6 +123,47 @@ Trigger: the customer fails to pay; the factor claws back the advance (recourse 
 - Sign-off gates: CPA approves R1–R4 → build poster (build-and-hold) → Neon $5k unwind verify → flip
   `FACTORING_GL_POSTING_ENABLED` for TRANSP only.
 
+### 6.1 — Chargeback-path open items surfaced by doc↔code reconciliation (2026-07-03)
+These are genuine, code-confirmed open questions. Each is encoded so the flag cannot flip while unresolved
+(the CI guard `verify-factoring-poster-secured-borrowing.mjs` fails on a config flip while these markers
+remain). **The poster CODE is not to be changed to "resolve" these until CPA/owner rules — the code documents
+current behavior; these mark where a ruling is owed.**
+
+- **PENDING_OWNER_CONFIRMATION — chargeback liability extinguishment.** Funding credits
+  `factoring_advance_liability` at the **full invoice face** (`poster.service.ts:205`), but chargeback debits
+  it at the caller-supplied `chargeback_amount_cents` (`poster.service.ts:387`) with no assertion that the
+  liability fully clears. If a partial chargeback (`chargeback < face`) is ever posted, a residual liability
+  persists silently. CPA must confirm chargebacks are always full-face, or a residual-handling leg is owed.
+  (A `@cpa-open-item` unit test documents the residual scenario — it asserts current behavior, it does not fix it.)
+- **PENDING_OWNER_CONFIRMATION — recoursed-AR default amount.** `recoursed_ar_cents` defaults to
+  `chargeback_amount_cents` (the advance repaid) at `poster.service.ts:366`, but on default the receivable
+  returned to IH35 is the invoice **face**, which can differ from the advance. CPA must confirm the intended
+  recoursed amount (advance vs. face). Do not change the default without a ruling.
+- **PENDING_OWNER_CONFIRMATION — chargeback recovery source.** The code implements **cash-repay only**
+  (`CR cash_clearing`, `poster.service.ts:391`). If FARO applies the **held reserve** first, a
+  `factor_reserve_held` application leg is required. Contract-dependent (FARO terms).
+- **PENDING_OWNER_CONFIRMATION — ACH/bank-fee account split.** Funding books the bank/ACH fee to
+  `factor_fee_expense` (`poster.service.ts:201-204`), not a distinct `bank_charges` role (out of CODER-34
+  scope). Confirm whether ACH gets its own account.
+
+## 7 — Doc ↔ code reconciliation (2026-07-03, verify-only)
+Cross-checked against `poster.service.ts` (main) and this doc. **Neither source is edited to match the other by
+the coder** — the divergences below go to Jorge/CPA; after their written decision the losing source is corrected
+in a follow-up commit. Poster Dr/Cr directions, amounts, and roles are all **verified correct and unchanged**.
+
+| # | Item | This DOC (§2–3) | CODE (`poster.service.ts`) | Resolution owner / recommendation |
+|---|------|-----------------|-----------------------------|-----------------------------------|
+| 1 | Funding A/R reclass | R1a: `DR ar_assigned_to_factor / CR ar_clearing` | Intentionally **absent** — A/R untouched at funding (header comment `:28`; satisfies `verify-factoring-treatment`) | Jorge/CPA — **recommend keep code's no-reclass model** (A/R stays whole under borrowing); update doc R1a to a note if agreed |
+| 2 | Settlement A/R credit | R2 credits `ar_assigned_to_factor` | Credits `ar_control` (the "only place A/R goes down", `:264`) | Follows #1 — **recommend doc → `ar_control`** |
+| 3 | Chargeback A/R credit | R4a credits `ar_assigned_to_factor` | Credits `ar_control` (`:397`) | Follows #1 — **recommend doc → `ar_control`** |
+| 4 | Cash role | `cash_dip` (WF 6103) | `cash_clearing` in all three cash legs (`:190/:315/:382`) | Jorge/CPA — confirm `cash_clearing` binding routes to the DIP account via bank-match; else correct the role. **Recommend confirm-binding, keep code** |
+| 5 | `ar_clearing` usage | Used in R1a | Never referenced | Follows #1 — drop from doc if #1 keeps the no-reclass model |
+
+Note: the code uses **7 roles** — the 5 secured-borrowing roles that the poster actually resolves
+(`factor_reserve_held`, `factor_fee_expense`, `factoring_advance_liability`, `factoring_recoursed_ar`,
+`default_interest_expense`) plus `cash_clearing` and `ar_control`. `ar_assigned_to_factor` (the 6th CODER-34
+role) is **bound but not referenced** by the poster — it exists for the optional presentation reclass in #1.
+
 ---
 **Reminder:** this is design. The poster is §1.4 financial — never self-merged, CPA-gated, flag-OFF. See
 `ih35-cpa-accounting-decisions` (factoring = secured borrowing) and `ih35-financial-migrations` (build rules).
