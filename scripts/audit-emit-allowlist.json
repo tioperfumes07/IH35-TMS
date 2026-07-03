@@ -6,6 +6,10 @@
       "reason": "Rate-con AI extraction record — the INSERT into dispatch.ratecon_extractions is an append-only OCR/extraction artifact ('exactly what the AI read', keyed to the file), not a financial commit. The spine-auditable business event is the downstream Book Load creation that consumes the extracted prefill."
     },
     {
+      "file": "apps/backend/src/audit/audit-chain-verify.service.ts",
+      "reason": "Audit infrastructure itself (B19-V2) — the INSERT into ops.audit_chain_verifications IS the append-only tamper-verification record; it must NOT recursively emit a spine event (that would create an audit-of-the-audit loop). Read-only vs events.event_log."
+    },
+    {
       "file": "apps/backend/src/identity/company-context.routes.ts",
       "reason": "Session/context switch — not a data mutation, no business event"
     },
