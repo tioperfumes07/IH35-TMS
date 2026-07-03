@@ -31,10 +31,26 @@ vi.mock("../../api/mdata", () => ({
       },
     ],
   }),
+  // SM1: DriversListPage now composes the shared CreateDriverModal, which imports these from api/mdata.
+  createDriver: vi.fn(),
+  checkReturningDriver: vi.fn().mockResolvedValue({ returning_driver: false }),
 }));
 
 vi.mock("../../api/safety", () => ({
   listDriverQualificationItems: vi.fn().mockResolvedValue({ items: [] }),
+  // The shared Modal (pulled in via CreateDriverModal) reads/writes size prefs through api/safety.
+  getUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
+  patchUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
+}));
+
+// CreateDriverModal loads reference data on mount; keep these off the network in tests.
+vi.mock("../../api/org", () => ({
+  listMyCompanies: vi.fn().mockResolvedValue({ companies: [] }),
+}));
+
+vi.mock("../../api/catalogs", () => ({
+  listUsStates: vi.fn().mockResolvedValue({ states: [] }),
+  listMexicoStates: vi.fn().mockResolvedValue({ states: [] }),
 }));
 
 describe("DriversListPage", () => {
