@@ -80,7 +80,7 @@ export function InlineCreateDrawer({ open, kind, operatingCompanyId, onClose, on
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           >
             <X className="h-4 w-4" />
           </button>

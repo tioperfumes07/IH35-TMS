@@ -64,17 +64,17 @@ export function NamesMasterHub() {
         subtitle="Cross-module search across customers, vendors, drivers, and contacts (read-only navigator)"
       />
 
-      <form onSubmit={submitSearch} className="flex flex-wrap items-end gap-2 rounded border border-slate-200 bg-white p-3">
+      <form onSubmit={submitSearch} className="flex flex-wrap items-end gap-2 rounded-sm border border-slate-200 bg-white p-3">
         <label className="flex min-w-[240px] flex-1 flex-col gap-1 text-xs font-medium text-slate-600">
           Search
           <input
-            className="rounded border border-slate-300 px-2 py-1.5 text-sm"
+            className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Name, email, phone, CDL…"
           />
         </label>
-        <button type="submit" className="rounded bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44]">
+        <button type="submit" className="rounded-sm bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44]">
           Search
         </button>
       </form>
@@ -99,15 +99,15 @@ export function NamesMasterHub() {
 
       {counts ? (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-          <div className="rounded border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Customers</div><div className="text-xl font-semibold">{counts.customers}</div></div>
-          <div className="rounded border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Vendors</div><div className="text-xl font-semibold">{counts.vendors}</div></div>
-          <div className="rounded border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Drivers</div><div className="text-xl font-semibold">{counts.drivers}</div></div>
-          <div className="rounded border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Contacts</div><div className="text-xl font-semibold">{counts.contacts}</div></div>
-          <div className="rounded border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Total</div><div className="text-xl font-semibold">{counts.total}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Customers</div><div className="text-xl font-semibold">{counts.customers}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Vendors</div><div className="text-xl font-semibold">{counts.vendors}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Drivers</div><div className="text-xl font-semibold">{counts.drivers}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Contacts</div><div className="text-xl font-semibold">{counts.contacts}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Total</div><div className="text-xl font-semibold">{counts.total}</div></div>
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
@@ -136,7 +136,7 @@ export function NamesMasterHub() {
                 <td className="px-3 py-2">
                   <button
                     type="button"
-                    className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50"
+                    className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50"
                     onClick={() => navigate(row.link_to_module_page)}
                   >
                     Open
@@ -153,12 +153,12 @@ export function NamesMasterHub() {
           Page {page + 1} of {pageCount} · {total} result{total === 1 ? "" : "s"}
         </span>
         <div className="flex gap-2">
-          <button type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
+          <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-40" disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
             Previous
           </button>
           <button
             type="button"
-            className="rounded border px-2 py-1 disabled:opacity-40"
+            className="rounded-sm border px-2 py-1 disabled:opacity-40"
             disabled={(page + 1) * pageSize >= total}
             onClick={() => setPage((p) => p + 1)}
           >

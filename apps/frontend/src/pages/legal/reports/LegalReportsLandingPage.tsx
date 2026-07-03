@@ -6,7 +6,7 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 
 function Card({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-gray-200 bg-white px-3 py-2">
+    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
       <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="mt-1 text-lg font-semibold text-gray-900">{value}</div>
     </div>

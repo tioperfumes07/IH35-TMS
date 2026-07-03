@@ -57,10 +57,10 @@ export function SoftDeleteModal({ file, onClose, onDeleteSuccess }: SoftDeleteMo
             onChange={(event) => setReason(event.target.value)}
             rows={4}
             minLength={10}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
           />
         </div>
-        {errorMessage ? <div className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{errorMessage}</div> : null}
+        {errorMessage ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{errorMessage}</div> : null}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel

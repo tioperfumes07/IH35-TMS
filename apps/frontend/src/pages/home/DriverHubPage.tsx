@@ -36,7 +36,7 @@ export function DriverHubPage() {
           canReview ? (
             <Link
               to="/driver-hub/reporting"
-              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
             >
               Reporting
             </Link>

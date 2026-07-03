@@ -4,7 +4,7 @@ type Props = {
 
 export function AvoidStatesBanner({ states }: Props) {
   return (
-    <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs">
+    <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs">
       <div className="font-semibold text-red-700">Recommended states to avoid</div>
       <div className="mt-1 flex flex-wrap gap-1">
         {states.map((state) => (

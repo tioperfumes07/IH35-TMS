@@ -9,7 +9,7 @@ export function MilesStrip({ practical = 0, shortest = 0, deadhead = 0, ratePerM
   const fmt = (n: number) => (Number.isFinite(n) ? n.toLocaleString() : "—");
   const cell = "flex flex-1 flex-col items-center justify-center border-r border-gray-200 px-2 py-2 text-center last:border-r-0";
   return (
-    <div className="rounded border border-green-200 bg-white">
+    <div className="rounded-sm border border-green-200 bg-white">
       <div className="flex text-[10px] font-semibold uppercase tracking-wide text-green-900">
         <div className={cell}>
           <div className="text-gray-500">Practical</div>

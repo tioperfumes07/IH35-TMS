@@ -17,7 +17,7 @@ import { fetchReconRuns, fetchReconExceptions, type ReconRun, type ReconExceptio
 import { ApiError } from "../../api/client";
 
 const FLAG = "QBO_RECONCILE_UI_ENABLED";
-const SELECT_CLASS = "h-9 rounded border border-gray-300 px-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-slate-400";
+const SELECT_CLASS = "h-9 rounded-sm border border-gray-300 px-2 text-[13px] focus:outline-hidden focus:ring-1 focus:ring-slate-400";
 
 const fmtDt = (s: string | null) => (s ? new Date(s).toLocaleString("en-US") : "—");
 const titleize = (s: string | null) => (s ? s.replace(/_/g, " ") : "—");
@@ -41,7 +41,7 @@ const SEVERITY_PILL: Record<string, string> = {
 
 function Pill({ map, value }: { map: Record<string, string>; value: string }) {
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${map[value] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${map[value] ?? "bg-gray-100 text-gray-600"}`}>
       {titleize(value)}
     </span>
   );
@@ -63,22 +63,22 @@ function OverviewTab({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs text-gray-500">Connection</div>
           <div className="text-sm font-semibold text-slate-700">{c.connected ? "Connected" : "Not connected"}</div>
           <div className="mt-0.5 text-xs text-gray-400">Realm {c.realm_id ?? "—"}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs text-gray-500">Last QBO poll</div>
           <div className="text-sm font-semibold text-slate-700">{fmtDt(data.last_polled_at)}</div>
           <div className="mt-0.5 text-xs text-gray-400">Last used {fmtDt(c.last_used_at)}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs text-gray-500">Queue depth</div>
           <div className="text-sm font-semibold text-slate-700">{data.queue_depth.toLocaleString()}</div>
           <div className="mt-0.5 text-xs text-gray-400">Pending outbound</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs text-gray-500">Entities drifting</div>
           <div className={`text-sm font-semibold ${data.drift_count > 0 ? "text-red-700" : "text-slate-700"}`}>
             {data.drift_count}
@@ -87,7 +87,7 @@ function OverviewTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200">
+      <div className="overflow-x-auto rounded-sm border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -153,7 +153,7 @@ function CapturesTab({ companyId }: { companyId: string }) {
       ) : items.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-400">No QBO modify captures recorded.</p>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -190,9 +190,9 @@ function CapturesTab({ companyId }: { companyId: string }) {
 
       {total > limit && (
         <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
-          <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0} className="rounded border border-gray-300 px-3 py-1 hover:bg-gray-50 disabled:opacity-40">← Prev</button>
+          <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0} className="rounded-sm border border-gray-300 px-3 py-1 hover:bg-gray-50 disabled:opacity-40">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
-          <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total} className="rounded border border-gray-300 px-3 py-1 hover:bg-gray-50 disabled:opacity-40">Next →</button>
+          <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total} className="rounded-sm border border-gray-300 px-3 py-1 hover:bg-gray-50 disabled:opacity-40">Next →</button>
         </div>
       )}
     </div>
@@ -236,11 +236,11 @@ function ConflictsTab({ companyId }: { companyId: string }) {
       <section>
         <h3 className="mb-2 text-sm font-semibold text-slate-700">Sync Conflicts ({data.conflicts_total})</h3>
         {data.conflicts.length === 0 ? (
-          <p className="rounded border border-gray-200 bg-white py-8 text-center text-sm text-gray-400">No conflicts.</p>
+          <p className="rounded-sm border border-gray-200 bg-white py-8 text-center text-sm text-gray-400">No conflicts.</p>
         ) : (
           <div className="space-y-3">
             {data.conflicts.map((conflict) => (
-              <div key={conflict.id} className="rounded border border-gray-200 bg-white">
+              <div key={conflict.id} className="rounded-sm border border-gray-200 bg-white">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2">
                   <div className="text-sm font-medium text-gray-800">
                     <span className="capitalize">{titleize(conflict.entity_type)}</span>
@@ -278,9 +278,9 @@ function ConflictsTab({ companyId }: { companyId: string }) {
       <section>
         <h3 className="mb-2 text-sm font-semibold text-slate-700">Reconciliation Alerts ({data.alerts.length})</h3>
         {data.alerts.length === 0 ? (
-          <p className="rounded border border-gray-200 bg-white py-8 text-center text-sm text-gray-400">No reconciliation alerts.</p>
+          <p className="rounded-sm border border-gray-200 bg-white py-8 text-center text-sm text-gray-400">No reconciliation alerts.</p>
         ) : (
-          <div className="overflow-x-auto rounded border border-gray-200">
+          <div className="overflow-x-auto rounded-sm border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
@@ -313,7 +313,7 @@ function ConflictsTab({ companyId }: { companyId: string }) {
 // module (TMS_QBO_RECON_ENABLED) is OFF; we show a hint rather than an error. No resolve/apply here.
 function ReconDisabledHint() {
   return (
-    <div className="rounded border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500">
+    <div className="rounded-sm border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500">
       The QBO↔TMS reconciliation module is not enabled for this account.
       <p className="mt-1 text-xs text-gray-400">Enable the TMS_QBO_RECON_ENABLED feature flag to run and view reconciliation passes.</p>
     </div>
@@ -336,9 +336,9 @@ function ReconRunsTab({ companyId }: { companyId: string }) {
   if (error instanceof ApiError && error.status === 404) return <ReconDisabledHint />;
   if (error) return <p className="py-8 text-center text-sm text-gray-500">Couldn’t load reconciliation runs.</p>;
   const runs: ReconRun[] = data?.runs ?? [];
-  if (runs.length === 0) return <p className="rounded border border-gray-200 bg-white py-10 text-center text-sm text-gray-400">No reconciliation runs yet.</p>;
+  if (runs.length === 0) return <p className="rounded-sm border border-gray-200 bg-white py-10 text-center text-sm text-gray-400">No reconciliation runs yet.</p>;
   return (
-    <div className="overflow-x-auto rounded border border-gray-200">
+    <div className="overflow-x-auto rounded-sm border border-gray-200">
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>{["Started", "Type", "Window", "Status", "Exceptions"].map((h) => (
@@ -386,9 +386,9 @@ function ReconExceptionsTab({ companyId }: { companyId: string }) {
       ) : error ? (
         <p className="py-8 text-center text-sm text-gray-500">Couldn’t load exceptions.</p>
       ) : rows.length === 0 ? (
-        <p className="rounded border border-gray-200 bg-white py-10 text-center text-sm text-gray-400">No reconciliation exceptions.</p>
+        <p className="rounded-sm border border-gray-200 bg-white py-10 text-center text-sm text-gray-400">No reconciliation exceptions.</p>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>{["Class", "Field", "TMS", "QBO", "Severity", "Status"].map((h) => (
@@ -423,7 +423,7 @@ export function QboReconcileCapturesPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="QBO Reconcile" subtitle="QuickBooks sync health, modify captures, and conflicts">
-        <div className="rounded border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           QBO reconcile captures are not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">Enable the {FLAG} feature flag to use this read-only module.</p>
         </div>

@@ -90,23 +90,23 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded border border-gray-200 bg-gray-50 p-3">
+      <div className="flex flex-wrap gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500">From</label>
           <DatePicker value={from} onChange={(next) => { setFrom(next); setOffset(0); }}
-            className="rounded border border-gray-300 px-2 py-1 text-sm" />
+            className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500">To</label>
           <DatePicker value={to} onChange={(next) => { setTo(next); setOffset(0); }}
-            className="rounded border border-gray-300 px-2 py-1 text-sm" />
+            className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
         </div>
         {showModuleFilter && (
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500">Module</label>
             <input type="text" value={moduleFilter} placeholder="e.g. dispatch"
               onChange={(e) => { setModuleFilter(e.target.value); setOffset(0); }}
-              className="rounded border border-gray-300 px-2 py-1 text-sm" />
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
           </div>
         )}
         {showDriverFilter && (
@@ -114,7 +114,7 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
             <label className="text-xs text-gray-500">Driver ID</label>
             <input type="text" value={driverFilter} placeholder="UUID"
               onChange={(e) => { setDriverFilter(e.target.value); setOffset(0); }}
-              className="rounded border border-gray-300 px-2 py-1 text-sm" />
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
           </div>
         )}
       </div>
@@ -125,7 +125,7 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
       {!query.isLoading && !query.isError && (
         <>
           <div className="text-xs text-gray-400">{totalCount} record{totalCount !== 1 ? "s" : ""}</div>
-          <div className="overflow-x-auto rounded border border-gray-200">
+          <div className="overflow-x-auto rounded-sm border border-gray-200">
             <table className="min-w-full text-xs">
               <thead className="bg-gray-50 text-left">
                 <tr>

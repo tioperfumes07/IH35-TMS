@@ -92,11 +92,11 @@ export function DeadheadReportPage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-4">
         <label className="text-xs text-gray-600">
           Period
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={period}
             onChange={(e) => {
               setSelectedUnitId(null);
@@ -116,20 +116,20 @@ export function DeadheadReportPage() {
       {reportQuery.data ? (
         <>
           <div className="grid gap-3 md:grid-cols-4">
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Fleet avg deadhead</div>
               <div className="text-2xl font-semibold">{pct(reportQuery.data.fleet.avg_deadhead_pct)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Total deadhead miles</div>
               <div className="text-2xl font-semibold">{reportQuery.data.fleet.total_deadhead_miles.toLocaleString()}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Est. deadhead cost</div>
               <div className="text-2xl font-semibold">{money(reportQuery.data.fleet.estimated_deadhead_cost_cents)}</div>
               <div className="text-[11px] text-gray-500">Fuel CPM × 1.4 driver-pay adj</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Trucks tracked</div>
               <div className="text-2xl font-semibold">{reportQuery.data.fleet.truck_count}</div>
             </div>
@@ -137,16 +137,16 @@ export function DeadheadReportPage() {
 
           {best && worst && best.unit_id !== worst.unit_id ? (
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm">
+              <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3 text-sm">
                 Best performer: <strong>{best.unit_number}</strong> at {pct(best.deadhead_pct)} deadhead
               </div>
-              <div className="rounded border border-rose-200 bg-rose-50 p-3 text-sm">
+              <div className="rounded-sm border border-rose-200 bg-rose-50 p-3 text-sm">
                 Needs attention: <strong>{worst.unit_number}</strong> at {pct(worst.deadhead_pct)} deadhead
               </div>
             </div>
           ) : null}
 
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
                 <tr>
@@ -180,7 +180,7 @@ export function DeadheadReportPage() {
           </div>
 
           {selectedUnitId && trend.length > 0 ? (
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <h3 className="mb-2 text-sm font-semibold text-gray-800">Weekly deadhead trend</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">

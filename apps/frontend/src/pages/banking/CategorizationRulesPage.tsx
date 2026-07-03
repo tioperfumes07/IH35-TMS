@@ -72,7 +72,7 @@ export function CategorizationRulesPage() {
 
   if (!canAccess(auth.user?.role)) {
     return (
-      <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+      <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
         Auto-categorization rules are available to Owner/Admin/Accountant roles.
       </div>
     );
@@ -178,7 +178,7 @@ export function CategorizationRulesPage() {
       {rulesQuery.isError || previewQuery.isError || accountsQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Rules</p>
             <ActionButton disabled={saving} onClick={() => setSelectedRuleId(null)}>
@@ -214,7 +214,7 @@ export function CategorizationRulesPage() {
           </div>
         </div>
 
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Rule Editor</p>
           <div className="space-y-2">
             <input
@@ -224,19 +224,19 @@ export function CategorizationRulesPage() {
                 setPattern(event.target.value);
               }}
               placeholder="Pattern (e.g. FOOD_* or TRANSPORTATION.GAS)"
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
             <input
               value={priority}
               onChange={(event) => setPriority(event.target.value)}
               type="number"
               min={1}
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
             <SelectCombobox
               value={coaAccountId}
               onChange={(event) => setCoaAccountId(event.target.value)}
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             >
               <option value="">Select target COA account</option>
               {(accountsQuery.data?.accounts ?? []).map((account) => (
@@ -261,11 +261,11 @@ export function CategorizationRulesPage() {
           </div>
         </div>
 
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Preview (Last 50 Transactions)</p>
           <div className="space-y-2">
             {(previewQuery.data?.transactions ?? []).map((tx) => (
-              <div key={tx.id} className="rounded border border-gray-100 px-2 py-1 text-xs">
+              <div key={tx.id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs">
                 <p className="font-medium text-gray-900">{tx.description || "(No description)"}</p>
                 <p className="text-gray-600">{(tx.plaid_category ?? []).join(" / ") || "No Plaid category"}</p>
                 <p className={tx.coa_account_id ? "text-green-700" : "text-amber-700"}>

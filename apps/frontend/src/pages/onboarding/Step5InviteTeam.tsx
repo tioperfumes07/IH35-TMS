@@ -46,7 +46,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
           <span className="font-medium text-gray-700">Email</span>
           <input
             type="email"
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={email}
             disabled={disabled}
             onChange={(e) => setEmail(e.target.value)}
@@ -55,7 +55,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
         <label className="block text-sm">
           <span className="font-medium text-gray-700">Role</span>
           <select
-            className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={role}
             disabled={disabled}
             onChange={(e) => setRole(e.target.value as TeamInvite["role"])}
@@ -71,7 +71,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
           type="button"
           disabled={disabled}
           onClick={addInvite}
-          className="rounded border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
+          className="rounded-sm border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
         >
           Add
         </button>
@@ -79,7 +79,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
 
       <ul className="space-y-1">
         {invites.map((invite) => (
-          <li key={invite.email} className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 text-sm">
+          <li key={invite.email} className="flex items-center justify-between rounded-sm border border-gray-200 px-2 py-1 text-sm">
             <span>
               {invite.email} <span className="ml-2 text-xs text-gray-500">{invite.role}</span>
             </span>

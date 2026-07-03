@@ -153,7 +153,7 @@ export function DriversMasterDataPage() {
       label: "Source",
       sortable: true,
       render: (row) => (
-        <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{row.source}</span>
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{row.source}</span>
       ),
     },
   ];
@@ -180,18 +180,18 @@ export function DriversMasterDataPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-white p-3">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div>
           <h1 className="text-base font-semibold text-gray-900">Maintenance Drivers</h1>
           <p className="text-xs text-gray-600">Manage projected drivers with manual create/edit/void controls.</p>
         </div>
         <div className="flex items-center gap-2">
-          <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search drivers" />
+          <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search drivers" />
           <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>+ Create</Button>
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
           <input type="file" accept=".csv,text/csv" disabled={!csvEnabled} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
           <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => importMutation.mutate()}>
@@ -214,18 +214,18 @@ export function DriversMasterDataPage() {
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Driver">
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="First name" value={draft.first_name} onChange={(e) => setDraft((p) => ({ ...p, first_name: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Last name" value={draft.last_name} onChange={(e) => setDraft((p) => ({ ...p, last_name: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="First name" value={draft.first_name} onChange={(e) => setDraft((p) => ({ ...p, first_name: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Last name" value={draft.last_name} onChange={(e) => setDraft((p) => ({ ...p, last_name: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Phone" value={draft.phone} onChange={(e) => setDraft((p) => ({ ...p, phone: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Email" value={draft.email} onChange={(e) => setDraft((p) => ({ ...p, email: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Phone" value={draft.phone} onChange={(e) => setDraft((p) => ({ ...p, phone: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Email" value={draft.email} onChange={(e) => setDraft((p) => ({ ...p, email: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="CDL number" value={draft.cdl_number} onChange={(e) => setDraft((p) => ({ ...p, cdl_number: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="CDL state" value={draft.cdl_state} onChange={(e) => setDraft((p) => ({ ...p, cdl_state: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="CDL number" value={draft.cdl_number} onChange={(e) => setDraft((p) => ({ ...p, cdl_number: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="CDL state" value={draft.cdl_state} onChange={(e) => setDraft((p) => ({ ...p, cdl_state: e.target.value }))} />
           </div>
-          <textarea className="w-full rounded border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
+          <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
           <Button disabled={!draft.first_name || !draft.last_name || !draft.phone || createMutation.isPending} onClick={() => createMutation.mutate()}>
             Save
           </Button>
@@ -236,14 +236,14 @@ export function DriversMasterDataPage() {
         {editing ? (
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.first_name} onChange={(e) => setEditing((p) => (p ? { ...p, first_name: e.target.value } : p))} />
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.last_name} onChange={(e) => setEditing((p) => (p ? { ...p, last_name: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.first_name} onChange={(e) => setEditing((p) => (p ? { ...p, first_name: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.last_name} onChange={(e) => setEditing((p) => (p ? { ...p, last_name: e.target.value } : p))} />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.phone ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, phone: e.target.value } : p))} />
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.email ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, email: e.target.value || null } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.phone ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, phone: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.email ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, email: e.target.value || null } : p))} />
             </div>
-            <textarea className="w-full rounded border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
+            <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
             <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>Save Changes</Button>
           </div>
         ) : null}

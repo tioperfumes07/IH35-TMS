@@ -103,10 +103,10 @@ export function PaymentsListPage() {
     >
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Status
-          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="voided">Voided</option>
@@ -115,7 +115,7 @@ export function PaymentsListPage() {
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Method
-          <SelectCombobox value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
             {METHOD_OPTIONS.map((option) => (
               <option key={option.label} value={option.value}>
                 {option.label}
@@ -126,17 +126,17 @@ export function PaymentsListPage() {
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
           Search by payment # or customer
-          <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
         </label>
 
         <div className="grid grid-cols-2 gap-2">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             From
-            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             To
-            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
         </div>
       </div>
@@ -147,7 +147,7 @@ export function PaymentsListPage() {
         <span>Unapplied: {money(totals.unapplied)}</span>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50">
             <tr className="text-gray-600">

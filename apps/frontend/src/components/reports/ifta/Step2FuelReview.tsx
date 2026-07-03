@@ -43,13 +43,13 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
   const total = states.reduce((sum, state) => sum + Number(draftOverrides[state] ?? 0), 0);
 
   return (
-    <section className="rounded border border-amber-200 bg-white" data-ifta-step="2">
+    <section className="rounded-sm border border-amber-200 bg-white" data-ifta-step="2">
       <div className="border-b border-amber-200 bg-amber-50 px-3 py-2">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-900">Step 2 · Fuel review</h3>
         <p className="text-xs text-amber-800">Per-jurisdiction fuel purchased from fuel card transactions.</p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
-        <div className="overflow-x-auto rounded border border-slate-200">
+        <div className="overflow-x-auto rounded-sm border border-slate-200">
           <table className="min-w-full text-left">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
@@ -75,7 +75,7 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
                       type="number"
                       min={0}
                       step="0.1"
-                      className="w-28 rounded border border-slate-300 px-2 py-1"
+                      className="w-28 rounded-sm border border-slate-300 px-2 py-1"
                       value={draftOverrides[state] ?? ""}
                       onChange={(event) =>
                         setDraftOverrides((prev) => ({ ...prev, [state]: event.target.value }))
@@ -100,7 +100,7 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
         </div>
         <button
           type="button"
-          className="rounded border border-amber-400 bg-amber-100 px-3 py-1.5 font-semibold text-amber-900 disabled:opacity-50"
+          className="rounded-sm border border-amber-400 bg-amber-100 px-3 py-1.5 font-semibold text-amber-900 disabled:opacity-50"
           disabled={saving}
           onClick={() => void save()}
         >

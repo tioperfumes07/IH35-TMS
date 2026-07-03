@@ -78,11 +78,11 @@ export function LateArrivalReport() {
         subtitle="Completed stop late rates by driver, customer, and lane (30-minute grace)."
       />
 
-      <div className="flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white p-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
         <label className="text-xs text-slate-600">
           From
           <DatePicker
-            className="mt-1 block rounded border border-slate-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
             value={from}
             onChange={(next) => setFrom(next)}
           />
@@ -90,7 +90,7 @@ export function LateArrivalReport() {
         <label className="text-xs text-slate-600">
           To
           <DatePicker
-            className="mt-1 block rounded border border-slate-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
             value={to}
             onChange={(next) => setTo(next)}
           />
@@ -123,7 +123,7 @@ export function LateArrivalReport() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>

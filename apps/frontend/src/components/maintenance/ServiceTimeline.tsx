@@ -64,14 +64,14 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
   };
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4" data-testid="service-timeline">
+    <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="service-timeline">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-800">Service history</h2>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <label className="text-gray-600">
             From
             <DatePicker
-              className="ml-1 rounded border border-gray-300 px-1 py-0.5"
+              className="ml-1 rounded-sm border border-gray-300 px-1 py-0.5"
               value={fromDate}
               onChange={(next) => setFromDate(next)}
               data-testid="service-timeline-from-date"
@@ -80,7 +80,7 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
           <label className="text-gray-600">
             To
             <DatePicker
-              className="ml-1 rounded border border-gray-300 px-1 py-0.5"
+              className="ml-1 rounded-sm border border-gray-300 px-1 py-0.5"
               value={toDate}
               onChange={(next) => setToDate(next)}
               data-testid="service-timeline-to-date"

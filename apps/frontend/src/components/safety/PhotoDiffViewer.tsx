@@ -14,7 +14,7 @@ export function PhotoDiffViewer({ pre, post, angleLabel }: Props) {
   return (
     <div className="grid gap-3 md:grid-cols-2" data-testid="photo-diff-viewer">
       {[pre, post].map((side) => (
-        <div key={side.label} className="rounded border border-slate-200 bg-slate-50 p-2">
+        <div key={side.label} className="rounded-sm border border-slate-200 bg-slate-50 p-2">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
             {side.label}
             {angleLabel ? ` · ${angleLabel}` : ""}
@@ -22,7 +22,7 @@ export function PhotoDiffViewer({ pre, post, angleLabel }: Props) {
           {side.imageUrl ? (
             <img src={side.imageUrl} alt={side.label} className="max-h-64 w-full object-contain" />
           ) : (
-            <div className="flex h-48 items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-500">
+            <div className="flex h-48 items-center justify-center rounded-sm border border-dashed border-slate-300 text-xs text-slate-500">
               No image
             </div>
           )}

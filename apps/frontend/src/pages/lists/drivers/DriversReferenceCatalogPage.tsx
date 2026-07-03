@@ -18,8 +18,8 @@ type ArchiveFilter = "active" | "archived" | "all";
 
 function archivedPillClass(archived: boolean) {
   return archived
-    ? "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
-    : "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
+    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+    : "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
 }
 
 export function DriversReferenceCatalogPage({ client, displayName, catalogKey }: Props) {
@@ -76,17 +76,17 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
       />
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by code or label"
-          className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
         />
         <SelectCombobox
           value={archiveFilter}
           onChange={(event) => setArchiveFilter(event.target.value as ArchiveFilter)}
-          className="h-9 rounded border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
         >
           <option value="active">Active</option>
           <option value="archived">Archived</option>
@@ -94,7 +94,7 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
         </SelectCombobox>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>

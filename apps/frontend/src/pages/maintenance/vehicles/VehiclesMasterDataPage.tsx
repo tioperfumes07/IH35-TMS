@@ -151,7 +151,7 @@ export function VehiclesMasterDataPage() {
       label: "Source",
       sortable: true,
       render: (row) => (
-        <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{row.source}</span>
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{row.source}</span>
       ),
     },
   ];
@@ -178,14 +178,14 @@ export function VehiclesMasterDataPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-white p-3">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div>
           <h1 className="text-base font-semibold text-gray-900">Maintenance Vehicles</h1>
           <p className="text-xs text-gray-600">Create, edit, void, and review projected source status.</p>
         </div>
         <div className="flex items-center gap-2">
           <input
-            className="h-8 rounded border border-gray-300 px-2 text-xs"
+            className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search vehicles"
@@ -196,7 +196,7 @@ export function VehiclesMasterDataPage() {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
           <input
             type="file"
@@ -225,22 +225,22 @@ export function VehiclesMasterDataPage() {
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vehicle">
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Unit Display ID" value={draft.unit_display_id} onChange={(e) => setDraft((p) => ({ ...p, unit_display_id: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Vehicle Type" value={draft.vehicle_type} onChange={(e) => setDraft((p) => ({ ...p, vehicle_type: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Unit Display ID" value={draft.unit_display_id} onChange={(e) => setDraft((p) => ({ ...p, unit_display_id: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Vehicle Type" value={draft.vehicle_type} onChange={(e) => setDraft((p) => ({ ...p, vehicle_type: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Make" value={draft.make} onChange={(e) => setDraft((p) => ({ ...p, make: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Model" value={draft.model} onChange={(e) => setDraft((p) => ({ ...p, model: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Make" value={draft.make} onChange={(e) => setDraft((p) => ({ ...p, make: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Model" value={draft.model} onChange={(e) => setDraft((p) => ({ ...p, model: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Year" type="number" value={draft.year} onChange={(e) => setDraft((p) => ({ ...p, year: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Mileage" type="number" value={draft.mileage} onChange={(e) => setDraft((p) => ({ ...p, mileage: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Year" type="number" value={draft.year} onChange={(e) => setDraft((p) => ({ ...p, year: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Mileage" type="number" value={draft.mileage} onChange={(e) => setDraft((p) => ({ ...p, mileage: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="VIN" value={draft.vin} onChange={(e) => setDraft((p) => ({ ...p, vin: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Plate" value={draft.plate} onChange={(e) => setDraft((p) => ({ ...p, plate: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="VIN" value={draft.vin} onChange={(e) => setDraft((p) => ({ ...p, vin: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Plate" value={draft.plate} onChange={(e) => setDraft((p) => ({ ...p, plate: e.target.value }))} />
           </div>
-          <textarea className="w-full rounded border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
+          <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
           <Button disabled={!draft.unit_display_id || !draft.vin || createMutation.isPending} onClick={() => createMutation.mutate()}>
             Save
           </Button>
@@ -251,18 +251,18 @@ export function VehiclesMasterDataPage() {
         {editing ? (
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.vehicle_type ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, vehicle_type: e.target.value } : p))} />
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.make ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, make: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.vehicle_type ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, vehicle_type: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.make ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, make: e.target.value } : p))} />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.model ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, model: e.target.value } : p))} />
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" type="number" value={editing.year ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, year: e.target.value ? Number(e.target.value) : null } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.model ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, model: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" type="number" value={editing.year ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, year: e.target.value ? Number(e.target.value) : null } : p))} />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.vin} onChange={(e) => setEditing((p) => (p ? { ...p, vin: e.target.value } : p))} />
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.plate ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, plate: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.vin} onChange={(e) => setEditing((p) => (p ? { ...p, vin: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.plate ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, plate: e.target.value } : p))} />
             </div>
-            <textarea className="w-full rounded border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
+            <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
             <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>Save Changes</Button>
           </div>
         ) : null}

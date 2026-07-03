@@ -34,7 +34,7 @@ const COMPLIANCE_TABS: { id: ComplianceTab; label: string }[] = [
 
 function ComplianceEmptyState({ title, message }: { title: string; message: string }) {
   return (
-    <div className="rounded border border-slate-200 bg-white px-4 py-12 text-center">
+    <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
       <div className="text-sm font-semibold text-slate-700">{title}</div>
       <div className="mt-1 text-xs text-slate-500">{message}</div>
     </div>
@@ -117,7 +117,7 @@ export function ComplianceDashboardPage() {
   }, [dashboardQ.data?.credentials, typeFilter, ownerTypeFilter]);
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
   }
 
   return (

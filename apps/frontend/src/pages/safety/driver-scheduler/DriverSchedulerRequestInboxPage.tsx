@@ -27,7 +27,7 @@ export function DriverSchedulerRequestInboxPage() {
       {query.isLoading ? <div className="text-sm text-gray-500">Loading…</div> : null}
       {query.isError ? <div className="text-sm text-red-700">Could not load pending requests.</div> : null}
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-gray-600">
             <tr>

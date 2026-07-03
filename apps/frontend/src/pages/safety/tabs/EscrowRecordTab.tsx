@@ -48,18 +48,18 @@ export function EscrowRecordTab() {
 
   return (
     <div className="space-y-3" data-testid="escrow-record-tab">
-      <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
         Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
       </div>
 
       {escrowQuery.isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading escrow records…</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading escrow records…</div>
       ) : null}
       {escrowQuery.isError ? (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-xs text-red-700">Unable to load escrow records.</div>
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">Unable to load escrow records.</div>
       ) : null}
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs" data-testid="escrow-record-table">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>
@@ -108,7 +108,7 @@ export function EscrowRecordTab() {
         </table>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3" data-testid="escrow-forfeit-audit">
+      <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="escrow-forfeit-audit">
         <h4 className="text-xs font-semibold text-slate-700">Forfeiture Audit</h4>
         <p className="mt-1 text-[11px] text-slate-500">Successful forfeitures: {totalForfeits}</p>
         <div className="mt-2 space-y-1 text-[11px]">

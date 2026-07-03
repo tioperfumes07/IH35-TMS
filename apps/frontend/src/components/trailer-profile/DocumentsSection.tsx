@@ -8,7 +8,7 @@ export function DocumentsSection({
   documents: Array<Record<string, unknown>>;
 }) {
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-800">Documents</h2>
         <a

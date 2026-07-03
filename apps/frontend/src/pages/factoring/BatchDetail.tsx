@@ -46,7 +46,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
 
   return (
     <div className="space-y-3">
-      <div className="rounded border border-gray-200 p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 p-3 text-sm">
         <div className="font-semibold text-gray-900">{detail.batch.batch_number}</div>
         <div className="text-gray-700">
           Status: {detail.batch.status} · Face: {asMoney(detail.batch.total_face_cents)} · Advance: {asMoney(detail.batch.expected_advance_cents)} · Fee:{" "}
@@ -55,7 +55,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
         <div className="mt-2 text-xs text-gray-600">Included invoices: {detail.invoices.length}</div>
       </div>
 
-      <div className="rounded border border-gray-200 p-3">
+      <div className="rounded-sm border border-gray-200 p-3">
         <div className="mb-2 text-sm font-medium text-gray-900">Reserve Movements</div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 text-xs">

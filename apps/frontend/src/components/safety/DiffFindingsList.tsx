@@ -20,7 +20,7 @@ export function DiffFindingsList({ findings, onAccept, onReject, readOnly = fals
   return (
     <ul className="space-y-2" data-testid="diff-findings-list">
       {findings.map((finding, index) => (
-        <li key={`${finding.location}-${index}`} className="rounded border border-slate-200 bg-white p-3 text-xs">
+        <li key={`${finding.location}-${index}`} className="rounded-sm border border-slate-200 bg-white p-3 text-xs">
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="font-semibold text-slate-900">{finding.location}</p>
@@ -33,14 +33,14 @@ export function DiffFindingsList({ findings, onAccept, onReject, readOnly = fals
               <div className="flex shrink-0 gap-1">
                 <button
                   type="button"
-                  className="rounded border border-emerald-300 px-2 py-1 text-emerald-800 hover:bg-emerald-50"
+                  className="rounded-sm border border-emerald-300 px-2 py-1 text-emerald-800 hover:bg-emerald-50"
                   onClick={() => onAccept?.(index)}
                 >
                   Accept
                 </button>
                 <button
                   type="button"
-                  className="rounded border border-rose-300 px-2 py-1 text-rose-800 hover:bg-rose-50"
+                  className="rounded-sm border border-rose-300 px-2 py-1 text-rose-800 hover:bg-rose-50"
                   onClick={() => onReject?.(index)}
                 >
                   Reject

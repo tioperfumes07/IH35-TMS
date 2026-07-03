@@ -58,7 +58,7 @@ export function DocUploadDrawer({ open, onClose, onUploaded, docType }: DocUploa
         <div className="text-sm font-semibold">{t("dispatch.upload_title", { docType: docTypeLabel })}</div>
         <div className="mt-1 text-xs text-pwa-text-secondary">{t("dispatch.upload_hint")}</div>
         {previewUrl ? (
-          <img src={previewUrl} alt={t("doc.damage_photo", { defaultValue: "Document preview" })} className="mt-3 max-h-40 w-full rounded object-cover" />
+          <img src={previewUrl} alt={t("doc.damage_photo", { defaultValue: "Document preview" })} className="mt-3 max-h-40 w-full rounded-sm object-cover" />
         ) : null}
         <input
           ref={inputRef}

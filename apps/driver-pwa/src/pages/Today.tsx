@@ -64,7 +64,7 @@ export function TodayPage() {
                     <div className="text-sm font-semibold">{load.display_id}</div>
                     <div className="text-xs text-pwa-text-secondary">{load.customer_name}</div>
                   </div>
-                  {!load.accepted_at ? <span className="rounded border border-[#dc2626] px-1.5 py-0.5 text-[10px] font-semibold text-[#fca5a5]">{t("load.accept_required")}</span> : null}
+                  {!load.accepted_at ? <span className="rounded-sm border border-[#dc2626] px-1.5 py-0.5 text-[10px] font-semibold text-[#fca5a5]">{t("load.accept_required")}</span> : null}
                 </div>
                 <div className="mt-2 text-xs text-pwa-text-secondary">
                   {load.pickup_location} → {load.delivery_location}

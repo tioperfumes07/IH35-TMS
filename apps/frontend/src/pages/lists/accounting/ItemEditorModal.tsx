@@ -273,7 +273,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Name *</span>
             <input
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
               value={form.displayName}
               onChange={(e) => set("displayName", e.target.value)}
               autoFocus
@@ -283,7 +283,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">SKU / Code *</span>
             <input
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
               value={form.code}
               onChange={(e) => set("code", e.target.value.toUpperCase())}
             />
@@ -295,7 +295,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Item type</span>
             <select
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
               value={form.itemType}
               onChange={(e) => set("itemType", e.target.value)}
             >
@@ -322,13 +322,13 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
         </div>
 
         {/* SELL SIDE */}
-        <div className="rounded border border-gray-200 p-3">
+        <div className="rounded-sm border border-gray-200 p-3">
           <label className="flex items-center gap-2 font-medium text-gray-700">
             <input
               type="checkbox"
               checked={form.sellEnabled}
               onChange={(e) => set("sellEnabled", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded-sm border-gray-300"
             />
             I sell this product/service to my customers
           </label>
@@ -337,7 +337,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               <label className="block md:col-span-2">
                 <span className="text-xs font-semibold text-gray-600">Description</span>
                 <textarea
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                   rows={2}
                   value={form.description}
                   onChange={(e) => set("description", e.target.value)}
@@ -374,13 +374,13 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
         </div>
 
         {/* BUY SIDE */}
-        <div className="rounded border border-gray-200 p-3">
+        <div className="rounded-sm border border-gray-200 p-3">
           <label className="flex items-center gap-2 font-medium text-gray-700">
             <input
               type="checkbox"
               checked={form.buyEnabled}
               onChange={(e) => set("buyEnabled", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded-sm border-gray-300"
             />
             I purchase this product/service from a vendor
           </label>
@@ -390,7 +390,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                 <span className="text-xs font-semibold text-gray-600">Purchase description</span>
                 <span className="ml-1 font-normal text-gray-400">(shows on POs / bills / checks)</span>
                 <textarea
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                   rows={2}
                   value={form.purchaseDescription}
                   onChange={(e) => set("purchaseDescription", e.target.value)}
@@ -456,7 +456,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                 type="checkbox"
                 checked={form.taxable}
                 onChange={(e) => set("taxable", e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded-sm border-gray-300"
               />
               Taxable
             </label>
@@ -465,7 +465,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                 type="checkbox"
                 checked={form.isActive}
                 onChange={(e) => set("isActive", e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded-sm border-gray-300"
               />
               Active
             </label>
@@ -473,7 +473,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
         </div>
 
         {submitError ? (
-          <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div>
+          <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div>
         ) : null}
 
         <div className="flex items-center justify-between">

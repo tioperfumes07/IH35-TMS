@@ -100,7 +100,7 @@ export function BulkDemoPage() {
       </header>
 
       {capMessage ? (
-        <div className="rounded border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900" role="alert">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900" role="alert">
           {capMessage}
           <button type="button" className="ml-2 underline" onClick={() => setCapMessage(null)}>
             Dismiss
@@ -129,7 +129,7 @@ export function BulkDemoPage() {
         onCapExceeded={setCapMessage}
       >
         {(selectCtx) => (
-          <div className="overflow-hidden rounded border border-gray-200 bg-white">
+          <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase text-gray-600">
                 <tr>
@@ -169,7 +169,7 @@ export function BulkDemoPage() {
       <div className="flex items-center gap-2 text-sm">
         <button
           type="button"
-          className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+          className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
         >
@@ -180,7 +180,7 @@ export function BulkDemoPage() {
         </span>
         <button
           type="button"
-          className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+          className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
           disabled={(page + 1) * PAGE_SIZE >= TOTAL_ROWS}
           onClick={() => setPage((p) => p + 1)}
         >

@@ -49,20 +49,20 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
-        <DatePicker value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <input value={form.inspector_name} placeholder="Inspector name" onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <input value={form.inspection_level} type="number" min={1} max={6} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <SelectCombobox value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
+        <DatePicker value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.inspector_name} placeholder="Inspector name" onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.inspection_level} type="number" min={1} max={6} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <SelectCombobox value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
           <option value="PASS">PASS</option>
           <option value="WARNING">WARNING</option>
           <option value="OOS">OOS</option>
         </SelectCombobox>
-        <button type="button" onClick={() => createMutation.mutate()} disabled={!form.inspector_name.trim() || createMutation.isPending} className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white">
+        <button type="button" onClick={() => createMutation.mutate()} disabled={!form.inspector_name.trim() || createMutation.isPending} className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white">
           + Create DOT Inspection
         </button>
       </div>
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>
@@ -86,19 +86,19 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
           </tbody>
         </table>
       </div>
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-xs font-semibold text-gray-800">Open DOT Station Dwell Events (last captured)</h3>
         {(openEventsQuery.data?.events ?? []).length === 0 ? (
           <p className="text-xs text-gray-500">No open DOT dwell follow-ups.</p>
         ) : (
           <div className="space-y-2">
             {(openEventsQuery.data?.events ?? []).slice(0, 20).map((row) => (
-              <div key={String(row.id)} className="rounded border border-gray-200 p-2 text-xs">
+              <div key={String(row.id)} className="rounded-sm border border-gray-200 p-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-gray-800">
                     {String(row.station_label ?? "DOT station")} · Unit {String(row.unit_number ?? "—")}
                   </span>
-                  <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">{String(row.dwell_minutes ?? 0)} min</span>
+                  <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">{String(row.dwell_minutes ?? 0)} min</span>
                 </div>
                 <p className="mt-1 text-gray-600">
                   Driver: {String(row.driver_name ?? "Unknown")} · Departed: {String(row.departed_at ?? "n/a")}
@@ -106,21 +106,21 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
                 <div className="mt-2 flex items-center gap-2">
                   <button
                     type="button"
-                    className="rounded bg-[#1F2A44] px-2 py-1 text-[11px] font-semibold text-white"
+                    className="rounded-sm bg-[#1F2A44] px-2 py-1 text-[11px] font-semibold text-white"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "reviewed" })}
                   >
                     Mark Reviewed
                   </button>
                   <button
                     type="button"
-                    className="rounded bg-red-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    className="rounded-sm bg-red-700 px-2 py-1 text-[11px] font-semibold text-white"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "citation" })}
                   >
                     Mark Citation
                   </button>
                   <button
                     type="button"
-                    className="rounded bg-emerald-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    className="rounded-sm bg-emerald-700 px-2 py-1 text-[11px] font-semibold text-white"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "clean" })}
                   >
                     Mark Clean

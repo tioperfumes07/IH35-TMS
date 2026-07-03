@@ -110,7 +110,7 @@ export function ExpenseCategoryMapPage() {
       actions={<Button onClick={() => setShowAddModal(true)} disabled={!companyId}>+ Create Mapping</Button>}
     >
 
-      <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         <label className="inline-flex items-center gap-2">
           <input
             type="checkbox"
@@ -121,7 +121,7 @@ export function ExpenseCategoryMapPage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
@@ -191,13 +191,13 @@ export function ExpenseCategoryMapPage() {
 
       {showAddModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-xl rounded border border-gray-200 bg-white p-4 shadow-lg">
+          <div className="w-full max-w-xl rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
             <h2 className="text-base font-semibold text-gray-900">Add Expense Category Mapping</h2>
             <div className="mt-3 grid gap-3">
               <label className="text-xs font-semibold text-gray-600">
                 Category kind
                 <select
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
                   value={form.category_kind}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, category_kind: event.target.value as ExpenseCategoryMapKind }))
@@ -214,7 +214,7 @@ export function ExpenseCategoryMapPage() {
               <label className="text-xs font-semibold text-gray-600">
                 Category code
                 <input
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
                   value={form.category_code}
                   onChange={(event) => setForm((prev) => ({ ...prev, category_code: event.target.value }))}
                   placeholder="ex: DIESEL"
@@ -225,7 +225,7 @@ export function ExpenseCategoryMapPage() {
                 Account (autocomplete)
                 <input
                   list="expense-category-account-options"
-                  className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
                   value={form.account_id}
                   onChange={(event) => setForm((prev) => ({ ...prev, account_id: event.target.value }))}
                   placeholder="Select account id"

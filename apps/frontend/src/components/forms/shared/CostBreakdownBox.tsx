@@ -111,7 +111,7 @@ export function CostBreakdownBox({
   }, 0);
 
   return (
-    <div className="cost-box overflow-hidden rounded border border-gray-300 bg-white">
+    <div className="cost-box overflow-hidden rounded-sm border border-gray-300 bg-white">
       <div className="cost-box-header bg-[#1b2333] px-4 py-[9px] text-[11px] font-bold uppercase tracking-wide text-white">Cost Breakdown</div>
       <div className="cost-box-body">
         <div className="cost-sub border-b border-gray-200">
@@ -119,7 +119,7 @@ export function CostBreakdownBox({
             Section A - Category lines
           </div>
           <div className="p-2">
-            <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
               <table className="min-w-full text-xs">
                 <thead className="bg-gray-50">
                   <tr>
@@ -146,7 +146,7 @@ export function CostBreakdownBox({
                                 )
                               )
                             }
-                            className="w-full rounded border border-gray-300 px-2 py-1"
+                            className="w-full rounded-sm border border-gray-300 px-2 py-1"
                           >
                             <option value="">Select category...</option>
                             {expenseCategoryOptions.map((option) => (
@@ -159,7 +159,7 @@ export function CostBreakdownBox({
                             type="button"
                             disabled={readOnly}
                             onClick={() => onQuickCreateCategory?.(line.id)}
-                            className="rounded border border-gray-300 px-2 py-1 text-[11px]"
+                            className="rounded-sm border border-gray-300 px-2 py-1 text-[11px]"
                             aria-label="Quick create category"
                           >
                             + Create
@@ -173,7 +173,7 @@ export function CostBreakdownBox({
                           onChange={(event) =>
                             onSectionAChange(sectionA.lines.map((entry) => (entry.id === line.id ? { ...entry, description: event.target.value } : entry)))
                           }
-                          className="w-full rounded border border-gray-300 px-2 py-1"
+                          className="w-full rounded-sm border border-gray-300 px-2 py-1"
                         />
                       </td>
                       <td className="px-2 py-1">
@@ -191,7 +191,7 @@ export function CostBreakdownBox({
                               })
                             )
                           }
-                          className="w-20 rounded border border-gray-300 px-2 py-1"
+                          className="w-20 rounded-sm border border-gray-300 px-2 py-1"
                         />
                       </td>
                       <td className="px-2 py-1">
@@ -240,7 +240,7 @@ export function CostBreakdownBox({
                 disabled={readOnly}
                 type="button"
                 onClick={() => onSectionAChange([...sectionA.lines, emptyCategoryLine()])}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
               >
                 + Create category line
               </button>
@@ -255,7 +255,7 @@ export function CostBreakdownBox({
           </div>
           <div className="space-y-2 p-2">
             {sectionB.lines.map((line) => (
-              <div key={line.id} className="rounded border border-gray-200 bg-white p-2">
+              <div key={line.id} className="rounded-sm border border-gray-200 bg-white p-2">
                 <div className="grid gap-2 md:grid-cols-[1fr_1.2fr_1fr_110px_90px_95px_40px]">
                   <div className="flex items-center gap-1">
                     <SelectCombobox
@@ -264,7 +264,7 @@ export function CostBreakdownBox({
                       onChange={(event) =>
                         onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, service_item_uuid: event.target.value } : entry)))
                       }
-                      className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                      className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                     >
                       <option value="">Select product/service...</option>
                       {itemOptions.map((option) => (
@@ -277,7 +277,7 @@ export function CostBreakdownBox({
                       type="button"
                       disabled={readOnly}
                       onClick={() => onQuickCreateItem?.(line.id)}
-                      className="rounded border border-gray-300 px-2 py-1 text-[11px]"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-[11px]"
                       aria-label="Quick create item"
                     >
                       + Create
@@ -287,7 +287,7 @@ export function CostBreakdownBox({
                     disabled={readOnly}
                     value={line.description}
                     onChange={(event) => onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, description: event.target.value } : entry)))}
-                    className="rounded border border-gray-300 px-2 py-1 text-xs"
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                     placeholder="Description"
                   />
                   <SelectCombobox
@@ -296,7 +296,7 @@ export function CostBreakdownBox({
                     onChange={(event) =>
                       onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, location_label: event.target.value } : entry)))
                     }
-                    className="rounded border border-gray-300 px-2 py-1 text-xs"
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                   >
                     <option value="">Select location...</option>
                     {locationOptions.map((option) => (
@@ -319,7 +319,7 @@ export function CostBreakdownBox({
                         })
                       )
                     }
-                    className="rounded border border-gray-300 px-2 py-1 text-xs"
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                     placeholder="Qty"
                   />
                   {/* M-1 dollars-mode: QBO display ($ + .00), unit_cost stays a DOLLAR number — payload byte-for-byte unchanged. */}
@@ -338,7 +338,7 @@ export function CostBreakdownBox({
                     className="text-xs"
                     ariaLabel={`${col.cost} (item)`}
                   />
-                  <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold">${Number(line.amount || 0).toFixed(2)}</div>
+                  <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold">${Number(line.amount || 0).toFixed(2)}</div>
                   <button
                     disabled={readOnly}
                     type="button"
@@ -350,11 +350,11 @@ export function CostBreakdownBox({
                 </div>
 
                 {partsLaborMode !== "none" ? (
-                  <div className="mt-2 rounded border border-gray-100 bg-gray-50 p-2">
+                  <div className="mt-2 rounded-sm border border-gray-100 bg-gray-50 p-2">
                     <div className="mb-1 text-[11px] font-semibold text-gray-600">Parts & Labor</div>
                     {(line.sub_rows ?? []).map((row) => (
                       <div key={row.id} className="mb-1 grid gap-1 md:grid-cols-[80px_1fr_160px_80px_100px_100px_30px]">
-                        <div className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] uppercase">{row.line_type}</div>
+                        <div className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-[11px] uppercase">{row.line_type}</div>
                         {row.line_type === "parts" ? (
                           <div className="space-y-1">
                             <div className="flex items-center gap-1">
@@ -383,7 +383,7 @@ export function CostBreakdownBox({
                                     )
                                   )
                                 }
-                                className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                               >
                                 <option value="">Select part...</option>
                                 {partOptions.map((option) => (
@@ -396,7 +396,7 @@ export function CostBreakdownBox({
                                 disabled={readOnly}
                                 type="button"
                                 onClick={() => onQuickCreatePart?.(line.id, row.id)}
-                                className="rounded border border-gray-300 px-2 py-1 text-[11px]"
+                                className="rounded-sm border border-gray-300 px-2 py-1 text-[11px]"
                                 aria-label="Quick create part"
                               >
                                 + Create
@@ -419,7 +419,7 @@ export function CostBreakdownBox({
                                   )
                                 )
                               }
-                              className="rounded border border-gray-300 px-2 py-1 text-xs"
+                              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                               placeholder="Part description"
                             />
                           </div>
@@ -441,7 +441,7 @@ export function CostBreakdownBox({
                                 )
                               )
                             }
-                            className="rounded border border-gray-300 px-2 py-1 text-xs"
+                            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                             placeholder="Labor description"
                           />
                         )}
@@ -451,12 +451,12 @@ export function CostBreakdownBox({
                             type="button"
                             data-open-map
                             onClick={() => onOpenLocationMap?.(line.id, row.id)}
-                            className="rounded border border-gray-300 bg-white px-2 py-1 text-left text-xs"
+                            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-left text-xs"
                           >
                             {row.part_location_codes?.join(", ") || "Select location(s)"}
                           </button>
                         ) : (
-                          <div className="rounded border border-gray-200 bg-gray-100 px-2 py-1 text-xs text-gray-500">No location</div>
+                          <div className="rounded-sm border border-gray-200 bg-gray-100 px-2 py-1 text-xs text-gray-500">No location</div>
                         )}
                         <input
                           disabled={readOnly}
@@ -479,7 +479,7 @@ export function CostBreakdownBox({
                               )
                             )
                           }
-                          className="rounded border border-gray-300 px-2 py-1 text-xs"
+                          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         />
                         {/* M-1 dollars-mode (sub-row): QBO display, unit_cost stays a DOLLAR number — payload unchanged. */}
                         <MoneyInput
@@ -504,7 +504,7 @@ export function CostBreakdownBox({
                           className="text-xs"
                           ariaLabel="Sub-row cost"
                         />
-                        <div className="rounded border border-gray-200 bg-white px-2 py-1 text-xs">${Number(row.amount || 0).toFixed(2)}</div>
+                        <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">${Number(row.amount || 0).toFixed(2)}</div>
                         <button
                           disabled={readOnly}
                           type="button"
@@ -550,7 +550,7 @@ export function CostBreakdownBox({
                             )
                           )
                         }
-                        className="rounded border border-gray-300 px-2 py-1 text-xs"
+                        className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       >
                         + Create part
                       </button>
@@ -573,7 +573,7 @@ export function CostBreakdownBox({
                               )
                             )
                           }
-                          className="rounded border border-gray-300 px-2 py-1 text-xs"
+                          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         >
                           + Create labor
                         </button>
@@ -584,14 +584,14 @@ export function CostBreakdownBox({
               </div>
             ))}
 
-            {sectionB.lines.length === 0 ? <div className="rounded border border-dashed border-gray-300 bg-white px-2 py-3 text-center text-xs text-gray-500">No Section B lines</div> : null}
+            {sectionB.lines.length === 0 ? <div className="rounded-sm border border-dashed border-gray-300 bg-white px-2 py-3 text-center text-xs text-gray-500">No Section B lines</div> : null}
 
             <div className="flex items-center justify-between">
               <button
                 disabled={readOnly}
                 type="button"
                 onClick={() => onSectionBChange([...sectionB.lines, emptyItemLine()])}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
               >
                 + Create item line
               </button>

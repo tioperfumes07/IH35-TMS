@@ -28,12 +28,12 @@ export function LegalAttorneyReviewPage() {
       <PageHeader title="Attorney Review" subtitle="Templates pending legal approval" />
       <LegalModuleTabs activeTabId="attorney-review" />
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Review Queue</div>
         {rows.length === 0 ? <div className="text-sm text-gray-500">No templates currently pending attorney review.</div> : null}
         <div className="space-y-2">
           {rows.map((row) => (
-            <div key={row.id} className="flex items-center justify-between rounded border border-gray-200 px-3 py-2">
+            <div key={row.id} className="flex items-center justify-between rounded-sm border border-gray-200 px-3 py-2">
               <div>
                 <div className="text-sm font-medium text-gray-900">{row.display_name_en}</div>
                 <div className="text-xs text-gray-500">

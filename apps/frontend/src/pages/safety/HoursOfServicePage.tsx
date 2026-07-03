@@ -110,7 +110,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="safety-hos-dashboard-page">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-sm font-semibold text-slate-800">Hours of Service — Compliance</div>
           <div className="text-[11px] text-slate-500">
@@ -120,7 +120,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         </div>
         <Link
           to="/safety/hos-violations"
-          className="rounded bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white"
+          className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white"
           data-testid="safety-hos-create-violation-link"
         >
           + Create violation
@@ -128,19 +128,19 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
       </div>
 
       <div className="grid gap-2 md:grid-cols-3" data-testid="safety-hos-kpi-tiles">
-        <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2">
+        <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-3 py-2">
           <div className="text-[10px] uppercase text-emerald-800">Drivers on duty</div>
           <div className="text-xl font-semibold text-emerald-900" data-testid="safety-hos-kpi-on-duty">
             {metrics.onDuty}
           </div>
         </div>
-        <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
           <div className="text-[10px] uppercase text-slate-700">Drivers off duty</div>
           <div className="text-xl font-semibold text-slate-900" data-testid="safety-hos-kpi-off-duty">
             {metrics.offDuty}
           </div>
         </div>
-        <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2">
           <div className="text-[10px] uppercase text-amber-800">Approaching 11h drive cap</div>
           <div className="text-xl font-semibold text-amber-900" data-testid="safety-hos-kpi-approaching-cap">
             {metrics.approachingCap}
@@ -150,7 +150,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
       </div>
 
       {metrics.nearViolations.length > 0 ? (
-        <section className="rounded border border-amber-300 bg-amber-50 p-3" data-testid="safety-hos-near-violations">
+        <section className="rounded-sm border border-amber-300 bg-amber-50 p-3" data-testid="safety-hos-near-violations">
           <h2 className="text-xs font-semibold uppercase text-amber-900">Near-violation alerts</h2>
           <ul className="mt-2 space-y-1 text-xs text-amber-950">
             {metrics.nearViolations.map((row) => (
@@ -173,7 +173,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <section className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-slate-800">Fleet duty status</div>
           <table className="min-w-full text-xs" data-testid="safety-hos-fleet-table">
             <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
@@ -210,7 +210,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
           </table>
         </section>
 
-        <section className="rounded border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">
+        <section className="rounded-sm border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">
           <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
             <div className="text-xs font-semibold text-slate-800">HOS violations (read-only)</div>
             <Link to="/safety/hos-violations" className="text-[11px] font-semibold text-slate-700 hover:underline">
@@ -223,7 +223,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             ) : (
               <ul className="space-y-2 text-xs">
                 {violations.slice(0, 12).map((row) => (
-                  <li key={String(row.id)} className="rounded border border-gray-100 bg-gray-50 px-2 py-1">
+                  <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
                     <div className="font-semibold">{String(row.violation_code ?? "Violation")}</div>
                     <div className="text-slate-600">
                       Driver {String(row.driver_id ?? "—")} · {String(row.occurred_at ?? "—")}

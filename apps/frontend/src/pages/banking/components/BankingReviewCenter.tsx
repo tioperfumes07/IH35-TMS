@@ -122,7 +122,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
     }`;
 
   return (
-    <div className="rounded border border-gray-200 bg-white">
+    <div className="rounded-sm border border-gray-200 bg-white">
       <div className="flex flex-wrap gap-1 border-b border-gray-200 bg-gray-50 px-2 pt-2">
         <button type="button" className={tabClass("review")} onClick={() => setTab("review")}>
           For review
@@ -157,7 +157,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                 const expanded = expandedId === id;
                 const amountCents = txAmountCents(tx);
                 return (
-                  <div key={id} className="rounded border border-gray-100 bg-gray-50/80">
+                  <div key={id} className="rounded-sm border border-gray-100 bg-gray-50/80">
                     <div className="flex flex-col gap-2 px-3 py-2 md:flex-row md:flex-wrap md:items-center md:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap gap-x-3 text-xs text-gray-900">
@@ -177,7 +177,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                           <span className="text-gray-400">PFC: {plaidPfc(tx)}</span>
                         </div>
                       </div>
-                      <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
+                      <div className="flex shrink-0 flex-wrap items-center gap-2">
                         <ActionButton
                           type="button"
                           className="border border-emerald-300 bg-emerald-50 text-emerald-900"
@@ -197,14 +197,14 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                         <button
                           type="button"
                           data-testid="banking-match-open"
-                          className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                          className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
                           onClick={() => setMatchTxnId(id)}
                         >
                           Match
                         </button>
                         <button
                           type="button"
-                          className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] text-gray-500"
+                          className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-[11px] text-gray-500"
                           disabled
                           title="Split ships with Wave 2"
                         >
@@ -212,7 +212,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                         </button>
                         <button
                           type="button"
-                          className="rounded border border-gray-200 bg-gray-100 px-2 py-1 text-[11px] text-gray-400"
+                          className="rounded-sm border border-gray-200 bg-gray-100 px-2 py-1 text-[11px] text-gray-400"
                           disabled
                           title="Available after Wave 2 backend deploy"
                         >
@@ -232,7 +232,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                         <label className="block text-[11px] font-medium text-gray-600">
                           Category kind
                           <input
-                            className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                            className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                             value={draft.category_kind}
                             onChange={(e) => setDrafts((d) => ({ ...d, [id]: { ...draft, category_kind: e.target.value } }))}
                           />
@@ -240,7 +240,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                         <label className="block text-[11px] font-medium text-gray-600">
                           GL account
                           <SelectCombobox
-                            className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                            className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                             value={draft.gl_account_id}
                             onChange={(e) => setDrafts((d) => ({ ...d, [id]: { ...draft, gl_account_id: e.target.value } }))}
                           >
@@ -284,7 +284,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                         <label className="block text-[11px] font-medium text-gray-600">
                           Memo
                           <input
-                            className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                            className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                             value={draft.memo}
                             onChange={(e) => setDrafts((d) => ({ ...d, [id]: { ...draft, memo: e.target.value } }))}
                           />
@@ -311,7 +311,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
         {tab === "categorized" ? <div>{categorizedSection}</div> : null}
 
         {tab === "excluded" ? (
-          <div className="rounded border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+          <div className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
             Excluded / skipped banking transactions will list here after Wave 2 aggregates them via{" "}
             <span className="font-mono">/banking/transactions/review</span> (or a dedicated excluded feed).
           </div>

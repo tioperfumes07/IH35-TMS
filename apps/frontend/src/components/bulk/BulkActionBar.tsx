@@ -61,7 +61,7 @@ export function BulkActionBar({
 
   return (
     <div
-      className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-100 p-2 text-xs"
+      className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-xs"
       role="toolbar"
       aria-label="Bulk actions"
     >
@@ -77,8 +77,8 @@ export function BulkActionBar({
             type="button"
             className={
               isDanger
-                ? "rounded border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-50"
-                : "rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+                ? "rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-50"
+                : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
             }
             disabled={applying || action.disabled}
             onClick={action.onClick}

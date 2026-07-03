@@ -8,9 +8,9 @@ function tone(type: DriverIncidentType, active: boolean) {
     return "border-[#dc2626] bg-[#2a0f15] text-[#fecaca]";
   }
   if (type === "cargo" || type === "damage") {
-    return "border-[#f59e0b] bg-[#251a09] text-[#fde68a]";
+    return "border-hos-onduty_waiting bg-[#251a09] text-[#fde68a]";
   }
-  return "border-[#3b82f6] bg-[#0b1a2d] text-[#bfdbfe]";
+  return "border-hos-offduty_reset bg-[#0b1a2d] text-[#bfdbfe]";
 }
 
 export function IncidentTypePicker({

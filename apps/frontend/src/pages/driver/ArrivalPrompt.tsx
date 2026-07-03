@@ -33,7 +33,7 @@ export function ArrivalPrompt() {
   if (!activePrompt) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/35 p-3">
+    <div className="fixed inset-0 z-60 flex items-end justify-center bg-black/35 p-3">
       <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
         <p className="text-sm font-semibold text-slate-900">Arrival check</p>
         <p className="mt-1 text-sm text-slate-700">
@@ -45,7 +45,7 @@ export function ArrivalPrompt() {
         <div className="mt-3 flex items-center justify-end gap-2">
           <button
             type="button"
-            className="rounded border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             onClick={() => {
               void dismissMutation.mutateAsync(activePrompt.id);
               setSnoozedUntilByPrompt((current) => ({ ...current, [activePrompt.id]: Date.now() + REPROMPT_AFTER_MS }));
@@ -56,7 +56,7 @@ export function ArrivalPrompt() {
           </button>
           <button
             type="button"
-            className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+            className="rounded-sm bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
             onClick={() => void confirmMutation.mutateAsync(activePrompt.id)}
             disabled={dismissMutation.isPending || confirmMutation.isPending}
           >

@@ -48,7 +48,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
 
   if (query.isLoading) {
     return (
-      <div className="rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 animate-pulse">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 animate-pulse">
         Computing profitability…
       </div>
     );
@@ -56,7 +56,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
 
   if (query.error) {
     return (
-      <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+      <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
         Profitability data unavailable.
       </div>
     );
@@ -86,11 +86,11 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
   return (
     <div className="space-y-3">
       {/* Net profit summary */}
-      <div className={`rounded border p-3 ${variantBg[variant]}`}>
+      <div className={`rounded-sm border p-3 ${variantBg[variant]}`}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Net Profit</span>
           {d.data_completeness === "partial" && (
-            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700" title={`Estimate — missing: ${d.missing_sources.join(", ")}`}>
+            <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700" title={`Estimate — missing: ${d.missing_sources.join(", ")}`}>
               Estimate
             </span>
           )}
@@ -105,7 +105,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
       </div>
 
       {/* Cost breakdown */}
-      <div className="rounded border border-gray-200 bg-white p-3 space-y-1.5">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-1.5">
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Breakdown</div>
         <Row label="Revenue" cents={d.revenue_cents} currency={currencyCode} />
         <div className="border-t border-gray-100 my-1" />

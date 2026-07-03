@@ -60,7 +60,7 @@ export function BrakeWearDashboard() {
             CAP-13 lining projections · DOT minimums 6.4 mm steer · 3.2 mm drive (§393.47)
           </p>
         </div>
-        <div className="flex flex-wrap gap-1 rounded border border-gray-200 bg-white p-1">
+        <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
           {(["all", "steer", "drive"] as const).map((group) => (
             <button
               key={group}
@@ -78,7 +78,7 @@ export function BrakeWearDashboard() {
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <section className="rounded border border-gray-200 bg-white">
+      <section className="rounded-sm border border-gray-200 bg-white">
         <div className="border-b border-gray-100 px-3 py-2">
           <h2 className="text-sm font-semibold text-gray-900">At-risk units (&lt;{withinDays} days)</h2>
           <p className="text-xs text-gray-500">{rows.length} brake positions projected for service</p>

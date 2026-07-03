@@ -30,13 +30,13 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
         await ccPayment.mutateAsync({ bill_id: bill.id, cc_account_id: ccAccountId, payment_amount_cents: Math.round(Number(amountDollars) * 100), payment_date: paymentDate });
         onSaved(); onClose();
       }}>
-        <SelectCombobox value={ccAccountId} onChange={(e) => setCcAccountId(e.target.value)} className="h-9 w-full rounded border px-2 text-[13px]">
+        <SelectCombobox value={ccAccountId} onChange={(e) => setCcAccountId(e.target.value)} className="h-9 w-full rounded-sm border px-2 text-[13px]">
           <option value="">CC account</option>
           {ccAccounts.map((a) => <option key={String(a.id)} value={String(a.id)}>{String(a.display_name ?? a.id)}</option>)}
         </SelectCombobox>
         {/* M-1: dollars-mode; Math.round(amountDollars*100)=payment_amount_cents byte-for-byte. */}
         <MoneyInput valueDollars={amountDollars ? Number(amountDollars) : null} onChangeDollars={(d) => setAmountDollars(d == null ? "" : String(d))} ariaLabel="Payment amount (USD)" className="w-full" />
-        <input type="date" className="h-9 w-full rounded border px-2 text-[13px]" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+        <input type="date" className="h-9 w-full rounded-sm border px-2 text-[13px]" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
         <Button type="submit">Pay with CC</Button>
       </form>
     </Modal>

@@ -124,7 +124,7 @@ export function InvoicesListPage() {
           <SelectCombobox
             value={createType}
             onChange={(event) => setCreateType(event.target.value as typeof createType)}
-            className="h-8 rounded border border-gray-300 bg-white px-2 text-[12px]"
+            className="h-8 rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
           >
             <option value="from_load">From load</option>
             <option value="driver_damage">Driver damage</option>
@@ -148,7 +148,7 @@ export function InvoicesListPage() {
         <div className="grid gap-2 md:grid-cols-5">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
-            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "" | InvoiceStatus)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "" | InvoiceStatus)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.label} value={option.value}>
                   {option.label}
@@ -158,15 +158,15 @@ export function InvoicesListPage() {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
             Search
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="INV-2026-00001 or customer" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="INV-2026-00001 or customer" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             From issue date
-            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             To issue date
-            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
         </div>
         <div className="mt-2 flex items-center gap-3 text-xs text-gray-600">
@@ -194,7 +194,7 @@ export function InvoicesListPage() {
         onCapExceeded={(message) => pushToast(message, "error")}
       >
         {(selectCtx) => (
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50">
             <tr className="text-gray-600">
@@ -274,7 +274,7 @@ export function InvoicesListPage() {
                 <td className="px-3 py-2 text-gray-700">{invoice.status}</td>
                 <td className="px-3 py-2 text-gray-700">
                   {invoice.source_load_chargeback_requested ? (
-                    <span className="rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                    <span className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
                       flagged
                     </span>
                   ) : (
@@ -313,7 +313,7 @@ export function InvoicesListPage() {
           <label className="block text-sm text-gray-700">
             Factoring batch ID
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={batchId}
               onChange={(event) => setBatchId(event.target.value)}
               placeholder="UUID of factoring advance batch"

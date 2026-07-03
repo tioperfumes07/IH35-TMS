@@ -342,19 +342,19 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               {mode === "create" ? "New Account" : "Edit Account"}
             </h2>
             {isLocked ? (
-              <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+              <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
                 LOCKED
               </span>
             ) : null}
             {isArchived ? (
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                 ARCHIVED
               </span>
             ) : null}
           </div>
           <button
             type="button"
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             aria-label="Close"
             onClick={onClose}
           >
@@ -367,7 +367,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {isLocked ? (
-            <div className="mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
               This account is locked. It cannot be edited or archived. To unlock, contact an administrator.
             </div>
           ) : null}
@@ -381,7 +381,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 disabled={readOnly}
                 onChange={(e) => setField("account_name", e.target.value)}
                 placeholder="e.g. Fuel & Tolls"
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
               <FieldError msg={errors.account_name} />
             </FieldLabel>
@@ -395,7 +395,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 disabled={readOnly}
                 onChange={(e) => setField("account_number", e.target.value)}
                 placeholder="e.g. 6000"
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
               <FieldError msg={errors.account_number} />
             </FieldLabel>
@@ -411,7 +411,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                   // A parent must share the new account_type, so clear any stale same-type selection.
                   setField("parent_account_id", "");
                 }}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               >
                 <option value="">Select type…</option>
                 {ACCOUNT_TYPE_GROUPS.map((group) => (
@@ -433,7 +433,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 value={form.account_subtype}
                 disabled={readOnly || detailTypesForType.length === 0}
                 onChange={(e) => setField("account_subtype", e.target.value)}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               >
                 <option value="">
                   {detailTypesForType.length === 0 ? "No detail types available" : "Select detail type…"}
@@ -447,7 +447,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
             </FieldLabel>
 
             {/* Make this a subaccount (§ additive) — reveals a same-type, per-entity parent picker. */}
-            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-3" data-testid="subaccount-section">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-3" data-testid="subaccount-section">
               <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
@@ -459,7 +459,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                     setField("is_subaccount", checked);
                     if (!checked) setField("parent_account_id", "");
                   }}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-slate-400 disabled:cursor-not-allowed"
+                  className="mt-0.5 h-4 w-4 rounded-sm border-gray-300 accent-slate-400 disabled:cursor-not-allowed"
                 />
                 <div>
                   <div className="text-xs font-semibold text-gray-800">Make this a subaccount</div>
@@ -495,7 +495,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
             {/* Live preview — sourced from catalogs.account_types (Block 2), never hardcoded. */}
             {previewEntry ? (
               <div
-                className="rounded border border-slate-200 bg-slate-50 px-3 py-3"
+                className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3"
                 data-testid="account-preview-pane"
               >
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -547,7 +547,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                 onChange={(e) => setField("notes", e.target.value)}
                 placeholder="Optional notes about this account…"
                 rows={3}
-                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-sm focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-2 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
             </FieldLabel>
 
@@ -581,14 +581,14 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
             </div>
 
             {/* Is Locked toggle */}
-            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-3">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-3">
               <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
                   checked={form.is_locked}
                   disabled={readOnly}
                   onChange={(e) => setField("is_locked", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-slate-400 disabled:cursor-not-allowed"
+                  className="mt-0.5 h-4 w-4 rounded-sm border-gray-300 accent-slate-400 disabled:cursor-not-allowed"
                 />
                 <div>
                   <div className="text-xs font-semibold text-gray-800">Lock Account</div>
@@ -604,7 +604,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         {/* Footer */}
         <div className="border-t border-gray-200 px-5 py-4">
           {submitError ? (
-            <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+            <div className="mb-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
               {submitError}
             </div>
           ) : null}

@@ -45,20 +45,20 @@ export function QuickAssignModal({ open, loadNumber, hardWarnings, onClose, onSu
         <input
           value={driverId}
           onChange={(event) => setDriverId(event.target.value)}
-          className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           placeholder="Driver ID (required)"
           required
         />
         <input
           value={unitId}
           onChange={(event) => setUnitId(event.target.value)}
-          className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           placeholder="Unit ID (optional)"
         />
         <input
           value={trailerId}
           onChange={(event) => setTrailerId(event.target.value)}
-          className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           placeholder="Trailer ID (optional)"
         />
         {hardWarnings.length > 0 ? (

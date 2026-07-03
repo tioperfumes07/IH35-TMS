@@ -216,7 +216,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <Field
           label="Assignment mode"
           input={
-            <div className="inline-flex h-7 overflow-hidden rounded border border-gray-300 bg-white text-[11px]">
+            <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
               <label className={`flex cursor-pointer items-center px-3 ${assignmentMode === "solo" ? "bg-[#16203a] text-white" : "text-gray-700"}`}>
                 <input type="radio" value="solo" className="hidden" {...register("assignment_mode")} />
                 Solo
@@ -247,18 +247,18 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <Field
           label="Driver pay rate / mi"
-          input={<input type="number" step="0.01" min="0" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
+          input={<input type="number" step="0.01" min="0" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />}
         />
       </div>
       {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Temperature type"
           (Frozen/Fresh) is asked FIRST, THEN "Reefer temperature (°F)" (the single setpoint reefer_temp_f).
           temperature_type persists via migration 202606231600 (W-FIX-1). Reefer mode + Pre-cool removed. */}
       {isReefer ? (
-        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-2">
+        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded-sm border border-amber-200 bg-amber-50 p-2 md:grid-cols-2">
           <Field
             label="Temperature type"
             input={
-              <div data-testid="temperature-type-segmented" className="flex h-7 overflow-hidden rounded border border-gray-300 text-xs">
+              <div data-testid="temperature-type-segmented" className="flex h-7 overflow-hidden rounded-sm border border-gray-300 text-xs">
                 {/* register keeps the value in form state; the buttons drive it via setValue (segmented control,
                     RENDER-A-v2). Asked FIRST, before "Reefer temperature (°F)". */}
                 <input type="hidden" {...register("temperature_type")} />
@@ -283,14 +283,14 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           />
           <Field
             label="Reefer temperature (°F)"
-            input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />}
+            input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />}
           />
         </div>
       ) : null}
       {/* Render-v6 §B conditional detail: revealed by trailer type. Reefer setpoint above (reefer only);
           flatbed reveals the tarp-type detail (the "Tarps" required toggle stays in the Equipment chips). */}
       {isFlatbed ? (
-        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded border border-amber-200 bg-amber-50 p-2 md:grid-cols-3">
+        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded-sm border border-amber-200 bg-amber-50 p-2 md:grid-cols-3">
           {/* RENDER-A-v2 §B flatbed = Tarp required? · Tarp qty · Tarp size. The old "Tarp type" material
               dropdown is a separate extra beyond the size dropdown → kept hidden for round-trip. */}
           <input type="hidden" {...register("tarp_type")} />
@@ -304,7 +304,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           />
           <Field
             label="Tarp qty"
-            input={<input data-testid="tarp-qty-field" type="number" min={0} step={1} disabled={!tarpRequired} {...register("tarp_qty", { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs disabled:bg-gray-100" />}
+            input={<input data-testid="tarp-qty-field" type="number" min={0} step={1} disabled={!tarpRequired} {...register("tarp_qty", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-gray-100" />}
           />
           <Field
             label="Tarp size"
@@ -323,7 +323,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       ) : null}
       {/* RENDER-A-v2 §B: "Equipment & driver instructions" expander — equipment requirement chips + the
           driver-visible instructions, combined into one expander after the trailer panels. */}
-      <details open data-testid="equipment-driver-instructions" className="rounded border border-gray-200">
+      <details open data-testid="equipment-driver-instructions" className="rounded-sm border border-gray-200">
         <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
           Equipment &amp; driver instructions <span className="font-normal text-gray-400">requirements · visible to driver</span>
         </summary>
@@ -347,7 +347,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {/* RENDER-A-v2 §B: "Expected adjustments" (HOS · detention · late risk) is the LAST §B block. Holds the
           Driver HOS clock set (always shown; "No HOS data" until a driver + Samsara HOS) + the chargeback /
           detention / late-risk callout. */}
-      <details open data-testid="expected-adjustments" className="rounded border border-gray-200">
+      <details open data-testid="expected-adjustments" className="rounded-sm border border-gray-200">
         <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
           Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
         </summary>

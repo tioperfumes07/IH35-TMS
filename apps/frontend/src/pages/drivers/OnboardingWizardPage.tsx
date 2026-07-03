@@ -176,16 +176,16 @@ export function OnboardingWizardPage() {
   };
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
   }
   if (!sessionId) {
-    return <div className="rounded border bg-white p-4 text-sm">Missing onboarding session.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Missing onboarding session.</div>;
   }
   if (sessionQ.isLoading) {
-    return <div className="rounded border bg-white p-4 text-sm">Loading onboarding session…</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Loading onboarding session…</div>;
   }
   if (sessionQ.isError || !session) {
-    return <div className="rounded border bg-white p-4 text-sm text-red-700">Onboarding session not found.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-red-700">Onboarding session not found.</div>;
   }
 
   const completed = session.status === "completed";
@@ -197,7 +197,7 @@ export function OnboardingWizardPage() {
         subtitle={`Session ${session.id.slice(0, 8)}… · save + resume · docs module uploads`}
         actions={
           driverId ? (
-            <Link to={`/drivers/${driverId}`} className="rounded border px-3 py-1.5 text-sm">
+            <Link to={`/drivers/${driverId}`} className="rounded-sm border px-3 py-1.5 text-sm">
               Driver profile
             </Link>
           ) : null
@@ -205,20 +205,20 @@ export function OnboardingWizardPage() {
       />
 
       {completed ? (
-        <div className="rounded border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+        <div className="rounded-sm border border-green-200 bg-green-50 p-4 text-sm text-green-800">
           Onboarding {session.admin_override ? "completed with admin override" : "completed"}.
           {session.admin_override_reason ? ` Reason: ${session.admin_override_reason}` : null}
         </div>
       ) : null}
 
-      <div className="rounded border border-gray-200 bg-white p-4">
+      <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="mb-4 flex flex-wrap gap-2">
           {ONBOARDING_STEP_LABELS.map((label, idx) => (
             <button
               key={label}
               type="button"
               disabled={completed}
-              className={`rounded px-2 py-1 text-xs ${idx === activeStep ? "bg-[#1F2A44] text-white" : "bg-gray-100"}`}
+              className={`rounded-sm px-2 py-1 text-xs ${idx === activeStep ? "bg-[#1F2A44] text-white" : "bg-gray-100"}`}
               onClick={() => setStepIndex(idx)}
             >
               {idx + 1}. {label}
@@ -308,7 +308,7 @@ export function OnboardingWizardPage() {
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
               disabled={!canAdvance || saveMut.isPending}
               onClick={() => void saveAndAdvance()}
             >
@@ -317,7 +317,7 @@ export function OnboardingWizardPage() {
             {activeStep === 6 ? (
               <button
                 type="button"
-                className="rounded border border-green-600 px-3 py-1.5 text-sm font-semibold text-green-700 disabled:opacity-50"
+                className="rounded-sm border border-green-600 px-3 py-1.5 text-sm font-semibold text-green-700 disabled:opacity-50"
                 disabled={completeMut.isPending}
                 onClick={() => void completeMut.mutateAsync()}
               >
@@ -326,7 +326,7 @@ export function OnboardingWizardPage() {
             ) : null}
             <button
               type="button"
-              className="rounded border px-3 py-1.5 text-sm text-amber-700"
+              className="rounded-sm border px-3 py-1.5 text-sm text-amber-700"
               onClick={() => setShowOverride((v) => !v)}
             >
               Admin override
@@ -335,11 +335,11 @@ export function OnboardingWizardPage() {
         ) : null}
 
         {showOverride && !completed ? (
-          <div className="mt-4 space-y-2 rounded border border-amber-200 bg-amber-50 p-3">
+          <div className="mt-4 space-y-2 rounded-sm border border-amber-200 bg-amber-50 p-3">
             <label className="block text-sm">
               <span className="font-medium">Override reason (required)</span>
               <textarea
-                className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border px-2 py-1 text-sm"
                 rows={3}
                 value={overrideReason}
                 onChange={(e) => setOverrideReason(e.target.value)}
@@ -347,7 +347,7 @@ export function OnboardingWizardPage() {
             </label>
             <button
               type="button"
-              className="rounded bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+              className="rounded-sm bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
               disabled={overrideReason.trim().length < 10 || overrideMut.isPending}
               onClick={() => void overrideMut.mutateAsync()}
             >

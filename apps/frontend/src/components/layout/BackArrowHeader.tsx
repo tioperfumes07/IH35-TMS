@@ -12,8 +12,8 @@ type BackArrowHeaderProps = {
 
 export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions }: BackArrowHeaderProps) {
   return (
-    <div className="border-b border-[var(--border-default)] px-6 pb-2 pt-3.5">
-      <div className="mb-1 text-[10px] tracking-[0.2px] text-[var(--text-muted)]">
+    <div className="border-b border-(--border-default) px-6 pb-2 pt-3.5">
+      <div className="mb-1 text-[10px] tracking-[0.2px] text-(--text-muted)">
         {breadcrumb.map((item, index) => (
           <Fragment key={`${item}-${index}`}>
             <span>{item}</span>
@@ -25,12 +25,12 @@ export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions
         <Link
           to={backTo}
           aria-label="Back"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-sm text-lg text-[var(--text-secondary)] no-underline hover:bg-[var(--bg-surface-alt)] hover:text-[var(--text-primary)]"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-xs text-lg text-(--text-secondary) no-underline hover:bg-(--bg-surface-alt) hover:text-(--text-primary)"
         >
           ←
         </Link>
         <h1 className="m-0 text-base font-semibold">{title}</h1>
-        {countBadge !== undefined ? <span className="ml-1 text-[11px] text-[var(--text-secondary)]">{countBadge}</span> : null}
+        {countBadge !== undefined ? <span className="ml-1 text-[11px] text-(--text-secondary)">{countBadge}</span> : null}
         <div className="ml-auto flex gap-2">{actions}</div>
       </div>
     </div>

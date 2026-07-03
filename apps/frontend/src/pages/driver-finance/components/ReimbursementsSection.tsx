@@ -11,7 +11,7 @@ type Props = { lines: Line[] };
 export function ReimbursementsSection({ lines }: Props) {
   const subtotal = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   return (
-    <section className="rounded border border-slate-300 bg-slate-100 p-2">
+    <section className="rounded-sm border border-slate-300 bg-slate-100 p-2">
       <h3 className="mb-1 text-xs font-semibold uppercase text-slate-700">C. Reimbursements</h3>
       <table className="w-full text-left text-xs">
         <thead className="text-[10px] uppercase text-gray-600">

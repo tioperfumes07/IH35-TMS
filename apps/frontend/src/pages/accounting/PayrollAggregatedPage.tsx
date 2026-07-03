@@ -38,7 +38,7 @@ export function PayrollAggregatedPage() {
   return (
     <AccountingSubNavWrapper title="Payroll (aggregated)" subtitle="Option B — driver settlements in TMS + W-2 runs mirrored from QBO Payroll">
       {aggregatedQuery.isError ? <ListErrorBanner message="Failed to load aggregated payroll view." /> : null}
-      <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <span>
           Sync state: <strong>{data?.sync_state ?? "—"}</strong>
         </span>
@@ -51,7 +51,7 @@ export function PayrollAggregatedPage() {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <section className="rounded border border-gray-200 bg-white p-3">
+        <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h2 className="mb-2 text-sm font-semibold text-gray-900">Driver settlements (TMS)</h2>
           {aggregatedQuery.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
           <div className="overflow-x-auto">
@@ -81,7 +81,7 @@ export function PayrollAggregatedPage() {
           </div>
         </section>
 
-        <section className="rounded border border-gray-200 bg-white p-3">
+        <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h2 className="mb-2 text-sm font-semibold text-gray-900">QBO Payroll W-2 runs</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-xs">

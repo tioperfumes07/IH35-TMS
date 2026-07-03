@@ -40,7 +40,7 @@ function PodRow({
           <div className="flex gap-2">
             <button
               type="button"
-              className="rounded border px-2 py-1 text-xs"
+              className="rounded-sm border px-2 py-1 text-xs"
               data-testid={`pod-approve-${doc.id}`}
               disabled={reviewMutation.isPending}
               onClick={() => reviewMutation.mutate("approved")}
@@ -49,7 +49,7 @@ function PodRow({
             </button>
             <button
               type="button"
-              className="rounded border px-2 py-1 text-xs"
+              className="rounded-sm border px-2 py-1 text-xs"
               data-testid={`pod-reject-${doc.id}`}
               disabled={reviewMutation.isPending}
               onClick={() => reviewMutation.mutate("rejected")}
@@ -84,12 +84,12 @@ function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId: string
   const pods = summaryQuery.data?.pods ?? [];
 
   return (
-    <div className="rounded border p-4" data-testid="load-pod-bol-panel">
+    <div className="rounded-sm border p-4" data-testid="load-pod-bol-panel">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold">Load POD + BOL</h3>
         <div className="flex gap-2">
           <a
-            className="rounded border px-3 py-1 text-sm"
+            className="rounded-sm border px-3 py-1 text-sm"
             href={`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`}
             data-testid="bol-download-link"
           >
@@ -97,7 +97,7 @@ function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId: string
           </a>
           <button
             type="button"
-            className="rounded bg-slate-900 px-3 py-1 text-sm text-white"
+            className="rounded-sm bg-slate-900 px-3 py-1 text-sm text-white"
             data-testid="bol-generate-button"
             disabled={generateMutation.isPending}
             onClick={() => generateMutation.mutate()}
@@ -173,7 +173,7 @@ export function PodReviewPage() {
           <select
             value={loadId}
             onChange={(event) => setLoadId(event.target.value)}
-            className="mt-1 h-10 w-full rounded border px-2"
+            className="mt-1 h-10 w-full rounded-sm border px-2"
             data-testid="pod-load-filter"
           >
             <option value="">All loads</option>
@@ -189,7 +189,7 @@ export function PodReviewPage() {
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-            className="mt-1 h-10 w-full rounded border px-2"
+            className="mt-1 h-10 w-full rounded-sm border px-2"
             data-testid="pod-status-filter"
           >
             <option value="pending_review">Pending review</option>
@@ -202,7 +202,7 @@ export function PodReviewPage() {
 
       {loadId ? <LoadBolPanel loadId={loadId} companyId={companyId} /> : null}
 
-      <div className="mt-4 overflow-x-auto rounded border" data-testid="pod-review-panel">
+      <div className="mt-4 overflow-x-auto rounded-sm border" data-testid="pod-review-panel">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left">
             <tr>

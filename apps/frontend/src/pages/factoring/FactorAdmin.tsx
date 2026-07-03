@@ -130,7 +130,7 @@ export function FactorAdmin() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full divide-y divide-gray-200 text-xs">
           <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
             <tr>
@@ -171,19 +171,19 @@ export function FactorAdmin() {
       </div>
 
       {selectedFactor ? (
-        <div className="space-y-2 rounded border border-gray-200 bg-white p-3">
+        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-sm font-semibold text-gray-900">{selectedFactor.name} details</div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <input
               value={customerSearch}
               onChange={(event) => setCustomerSearch(event.target.value)}
               placeholder="Search customer"
-              className="w-56 rounded border border-gray-300 px-2 py-1"
+              className="w-56 rounded-sm border border-gray-300 px-2 py-1"
             />
             <select
               value={detailCustomerId}
               onChange={(event) => setDetailCustomerId(event.target.value)}
-              className="w-80 rounded border border-gray-300 px-2 py-1"
+              className="w-80 rounded-sm border border-gray-300 px-2 py-1"
             >
               <option value="">Select customer for detail view</option>
               {(customersQuery.data ?? []).map((customer) => (
@@ -196,7 +196,7 @@ export function FactorAdmin() {
 
           {detailCustomerId ? (
             <div className="grid gap-3 lg:grid-cols-2">
-              <div className="rounded border border-gray-200 p-3">
+              <div className="rounded-sm border border-gray-200 p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                   Assignment History {selectedCustomer ? `- ${selectedCustomer.name}` : ""}
                 </div>
@@ -232,7 +232,7 @@ export function FactorAdmin() {
                 </div>
               </div>
 
-              <div className="rounded border border-gray-200 p-3">
+              <div className="rounded-sm border border-gray-200 p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Batch History</div>
                 <div className="max-h-72 overflow-auto">
                   <table className="min-w-full divide-y divide-gray-200 text-xs">
@@ -271,7 +271,7 @@ export function FactorAdmin() {
 
       {showAddFactorModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-          <div className="w-full max-w-md rounded border border-gray-200 bg-white p-4 shadow-xl">
+          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
             <div className="mb-3 text-sm font-semibold text-gray-900">Add Factor</div>
             <div className="space-y-2 text-xs">
               <label className="block">
@@ -279,7 +279,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.name}
                   onChange={(event) => setAddForm((current) => ({ ...current, name: event.target.value }))}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               <label className="block">
@@ -287,7 +287,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.advance_rate}
                   onChange={(event) => setAddForm((current) => ({ ...current, advance_rate: event.target.value }))}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               <label className="block">
@@ -295,7 +295,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.fee_rate}
                   onChange={(event) => setAddForm((current) => ({ ...current, fee_rate: event.target.value }))}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               <label className="block">
@@ -303,7 +303,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.reserve_rate}
                   onChange={(event) => setAddForm((current) => ({ ...current, reserve_rate: event.target.value }))}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               <label className="block">
@@ -311,7 +311,7 @@ export function FactorAdmin() {
                 <input
                   value={addForm.recourse_days}
                   onChange={(event) => setAddForm((current) => ({ ...current, recourse_days: event.target.value }))}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
             </div>
@@ -339,7 +339,7 @@ export function FactorAdmin() {
 
       {showAssignCustomerModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-          <div className="w-full max-w-md rounded border border-gray-200 bg-white p-4 shadow-xl">
+          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
             <div className="mb-3 text-sm font-semibold text-gray-900">Assign Customer to Factor</div>
             <div className="space-y-2 text-xs">
               <label className="block">
@@ -348,7 +348,7 @@ export function FactorAdmin() {
                   value={customerSearch}
                   onChange={(event) => setCustomerSearch(event.target.value)}
                   placeholder="Type customer name"
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               <label className="block">
@@ -356,7 +356,7 @@ export function FactorAdmin() {
                 <select
                   value={assignCustomerId}
                   onChange={(event) => setAssignCustomerId(event.target.value)}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 >
                   <option value="">Select customer</option>
                   {(customersQuery.data ?? []).map((customer) => (
@@ -371,7 +371,7 @@ export function FactorAdmin() {
                 <select
                   value={assignFactorId}
                   onChange={(event) => setAssignFactorId(event.target.value)}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 >
                   <option value="">Select factor</option>
                   {(factorsQuery.data ?? [])
@@ -389,7 +389,7 @@ export function FactorAdmin() {
                   type="date"
                   value={assignEffectiveFrom}
                   onChange={(event) => setAssignEffectiveFrom(event.target.value)}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
             </div>

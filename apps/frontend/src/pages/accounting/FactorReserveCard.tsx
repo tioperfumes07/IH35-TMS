@@ -61,7 +61,7 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
         <div className="space-y-2">
           {events.length === 0 ? <div className="text-xs text-gray-500">No reserve events yet.</div> : null}
           {events.map((event) => (
-            <div key={`${event.factoring_advance_id}-${event.occurred_at}`} className="rounded border border-gray-200 p-2 text-xs">
+            <div key={`${event.factoring_advance_id}-${event.occurred_at}`} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-gray-900">
                   {event.display_id} - {event.customer_name}

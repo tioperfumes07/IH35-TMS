@@ -61,7 +61,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
         <ModalSection>
           <div>Display ID: {displayId}</div>
           <div>
-            Source Type: <span className="rounded bg-gray-200 px-1 py-0.5">{sourceType}</span>
+            Source Type: <span className="rounded-sm bg-gray-200 px-1 py-0.5">{sourceType}</span>
           </div>
           <div>Status: {status}</div>
           <div>Opened: {formatDateTime(workOrder.opened_at)}</div>

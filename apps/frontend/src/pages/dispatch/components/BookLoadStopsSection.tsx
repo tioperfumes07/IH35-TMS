@@ -11,7 +11,7 @@ type Props = {
   setValue?: UseFormSetValue<any>;
 };
 
-const CELL = "h-7 w-full rounded border border-gray-300 px-2 text-xs";
+const CELL = "h-7 w-full rounded-sm border border-gray-300 px-2 text-xs";
 
 // render-v6 §C — each stop is a card with TWO rows (NOT a vertical stack):
 //   Row 1 (.locrow): Address | City | St | Zip Code | Date | Time
@@ -59,10 +59,10 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
         {fields.map((field, index) => {
           const isPickup = String(currentStops[index]?.stop_type ?? (index % 2 === 0 ? "pickup" : "delivery")) === "pickup";
           return (
-            <div key={field.id} data-testid={`stop-card-${index}`} className="overflow-hidden rounded border border-gray-200 bg-white">
+            <div key={field.id} data-testid={`stop-card-${index}`} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
               {/* render-v6 .stop header bar + tag. §7 recolors v6 blue/green → navy/slate. */}
               <div className={`flex items-center gap-2 px-2 py-1 text-[10.5px] font-bold tracking-[0.03em] ${isPickup ? "bg-[#1F2A44] text-white" : "bg-slate-200 text-slate-800"}`}>
-                <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-slate-600 text-white"}`}>
+                <span className={`rounded-sm px-1.5 py-0.5 text-[9px] font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-slate-600 text-white"}`}>
                   {isPickup ? "PICKUP" : "DELIVERY"}
                 </span>
                 <span>Stop {index + 1}</span>

@@ -80,7 +80,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             type="button"
             onClick={runPreview}
             disabled={!file || busy || !companyId}
-            className="min-h-11 rounded border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+            className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
           >
             {busy && !preview ? "Previewing…" : "Preview"}
           </button>
@@ -97,7 +97,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
                 ["New w/o phone", s.will_create_no_phone, "text-amber-700"],
                 ["Total rows", s.total, "text-slate-900"],
               ] as const).map(([label, n, cls]) => (
-                <div key={label} className="rounded border border-gray-200 p-2">
+                <div key={label} className="rounded-sm border border-gray-200 p-2">
                   <div className={`text-lg font-semibold ${cls}`}>{n}</div>
                   <div className="text-[11px] text-slate-500">{label}</div>
                 </div>
@@ -105,7 +105,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             </div>
 
             {preview?.sample && preview.sample.length > 0 ? (
-              <div className="max-h-56 overflow-x-auto overflow-y-auto rounded border border-gray-200">
+              <div className="max-h-56 overflow-x-auto overflow-y-auto rounded-sm border border-gray-200">
                 <table className="w-full text-left text-[11px]">
                   <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
                     <tr>
@@ -132,14 +132,14 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             ) : null}
 
             <div className="flex items-center justify-end gap-2">
-              <button type="button" onClick={onClose} className="min-h-11 rounded border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50">
+              <button type="button" onClick={onClose} className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50">
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={runCommit}
                 disabled={busy || s.will_create === 0}
-                className="min-h-11 rounded bg-[#1f2a44] px-3 text-xs font-medium text-white hover:bg-[#0f1729] disabled:opacity-40"
+                className="min-h-11 rounded-sm bg-[#1f2a44] px-3 text-xs font-medium text-white hover:bg-[#0f1729] disabled:opacity-40"
               >
                 {busy ? "Importing…" : `Import ${s.will_create} new driver${s.will_create === 1 ? "" : "s"}`}
               </button>

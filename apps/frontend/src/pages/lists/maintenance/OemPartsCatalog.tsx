@@ -66,7 +66,7 @@ function OemPartsCreateModal({
           <input
             value={form.brand}
             onChange={(event) => setForm((prev) => ({ ...prev, brand: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           />
         </label>
         <label className="block text-sm">
@@ -74,7 +74,7 @@ function OemPartsCreateModal({
           <input
             value={form.oem_part_number ?? ""}
             onChange={(event) => setForm((prev) => ({ ...prev, oem_part_number: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           />
         </label>
         <label className="block text-sm">
@@ -82,7 +82,7 @@ function OemPartsCreateModal({
           <input
             value={form.part_name}
             onChange={(event) => setForm((prev) => ({ ...prev, part_name: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           />
         </label>
         <label className="block text-sm">
@@ -90,7 +90,7 @@ function OemPartsCreateModal({
           <SelectCombobox
             value={form.category}
             onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           >
             {OEM_PART_CATEGORIES.map((category) => (
               <option key={category} value={category}>
@@ -104,7 +104,7 @@ function OemPartsCreateModal({
           <input
             value={form.default_supplier ?? ""}
             onChange={(event) => setForm((prev) => ({ ...prev, default_supplier: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           />
         </label>
         {error ? <div className="text-sm text-red-600">{error}</div> : null}
@@ -171,7 +171,7 @@ export function OemPartsCatalog() {
         actions={<Button onClick={() => setModalOpen(true)}>+ Create</Button>}
       />
 
-      <div className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
+      <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
         {total} OEM part templates · {brandCount} brands · {fleetCount} in your fleet
       </div>
 
@@ -181,17 +181,17 @@ export function OemPartsCatalog() {
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-4">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search name or part #"
-          className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
         />
         <SelectCombobox
           value={brandFilter}
           onChange={(event) => setBrandFilter(event.target.value)}
-          className="h-9 rounded border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
         >
           <option value="">All brands</option>
           {brandOptions.map((brand) => (
@@ -203,7 +203,7 @@ export function OemPartsCatalog() {
         <SelectCombobox
           value={categoryFilter}
           onChange={(event) => setCategoryFilter(event.target.value)}
-          className="h-9 rounded border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
         >
           <option value="">All categories</option>
           {OEM_PART_CATEGORIES.map((category) => (
@@ -219,7 +219,7 @@ export function OemPartsCatalog() {
         Fleet brands only (from trucks, trailers, and reefers in your fleet)
       </label>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>

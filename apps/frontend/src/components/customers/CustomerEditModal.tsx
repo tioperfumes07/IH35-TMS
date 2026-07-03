@@ -61,7 +61,7 @@ function NamedField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         required={required}
-        className="h-9 w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
       />
     </label>
   );
@@ -129,7 +129,7 @@ export function CustomerEditModal({ open, customer, saving = false, onClose, onS
             name="status"
             value={values.status}
             onChange={(event) => setValues((current) => ({ ...current, status: event.target.value as Customer["status"] }))}
-            className="h-9 w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>

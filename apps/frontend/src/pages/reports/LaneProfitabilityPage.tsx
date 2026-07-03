@@ -177,11 +177,11 @@ export function LaneProfitabilityPage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-4">
         <label className="text-xs text-gray-600">
           Period
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={period}
             onChange={(e) => setPeriod(e.target.value as LaneProfitabilityPeriod)}
           >
@@ -196,7 +196,7 @@ export function LaneProfitabilityPage() {
             <label className="text-xs text-gray-600">
               Start
               <DatePicker
-                className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+                className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 value={customStart}
                 onChange={(next) => setCustomStart(next)}
               />
@@ -204,7 +204,7 @@ export function LaneProfitabilityPage() {
             <label className="text-xs text-gray-600">
               End
               <DatePicker
-                className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+                className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 value={customEnd}
                 onChange={(next) => setCustomEnd(next)}
               />
@@ -224,11 +224,11 @@ export function LaneProfitabilityPage() {
       {query.data ? (
         <>
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs uppercase text-gray-500">Total loads</div>
               <div className="text-2xl font-semibold">{query.data.totals.load_count}</div>
             </div>
-            <div className="rounded border border-emerald-100 bg-emerald-50 p-4">
+            <div className="rounded-sm border border-emerald-100 bg-emerald-50 p-4">
               <div className="text-xs uppercase text-emerald-800">Most profitable lane</div>
               <div className="text-sm font-semibold text-emerald-900">
                 {query.data.most_profitable_lane
@@ -239,7 +239,7 @@ export function LaneProfitabilityPage() {
                 {query.data.most_profitable_lane ? money(query.data.most_profitable_lane.gross_profit_cents) : ""}
               </div>
             </div>
-            <div className="rounded border border-rose-100 bg-rose-50 p-4">
+            <div className="rounded-sm border border-rose-100 bg-rose-50 p-4">
               <div className="text-xs uppercase text-rose-800">Least profitable lane</div>
               <div className="text-sm font-semibold text-rose-900">
                 {query.data.least_profitable_lane
@@ -252,7 +252,7 @@ export function LaneProfitabilityPage() {
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="rounded-sm border border-gray-200 bg-white p-4">
             <h2 className="mb-3 text-sm font-semibold text-gray-800">Profit per mile by lane (top 8)</h2>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -274,7 +274,7 @@ export function LaneProfitabilityPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs uppercase text-gray-600">
                 <tr>

@@ -107,7 +107,7 @@ export function LocationMapModal({
   return (
     <Modal open={open} onClose={onClose} title="Location map">
       <div className="space-y-3 text-xs">
-        <svg viewBox="0 0 380 140" className="h-[220px] w-full rounded border border-gray-200 bg-white">
+        <svg viewBox="0 0 380 140" className="h-[220px] w-full rounded-sm border border-gray-200 bg-white">
           <rect x="12" y="50" width="150" height="56" rx="8" fill="#f8fafc" stroke="#94a3b8" />
           <rect x="210" y="50" width="158" height="56" rx="8" fill="#f8fafc" stroke="#94a3b8" />
 
@@ -170,7 +170,7 @@ export function LocationMapModal({
         </svg>
 
         <div
-          className="map-info-panel rounded px-3 py-2 text-[11px] text-slate-700"
+          className="map-info-panel rounded-sm px-3 py-2 text-[11px] text-slate-700"
           style={{ backgroundColor: "white", border: "1px solid #d1d5db", borderLeft: "3px solid #1f2a44" }}
         >
           <div className="font-semibold text-slate-900">{infoCode}</div>
@@ -181,7 +181,7 @@ export function LocationMapModal({
 
         <div className="flex flex-wrap gap-1">
           {draft.map((code) => (
-            <span key={code} className="rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+            <span key={code} className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
               {code}
             </span>
           ))}
@@ -190,10 +190,10 @@ export function LocationMapModal({
         {nodes.length === 0 ? <div className="text-[11px] text-amber-700">No catalog positions available for this company.</div> : null}
 
         <div className="flex items-center justify-between">
-          <button type="button" onClick={onClose} className="rounded border border-gray-300 px-2 py-1 text-xs">
+          <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
             Cancel
           </button>
-          <button type="button" onClick={() => onApply(draft)} className="rounded bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white">
+          <button type="button" onClick={() => onApply(draft)} className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white">
             Apply selection ({draft.length})
           </button>
         </div>

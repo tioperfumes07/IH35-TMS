@@ -149,12 +149,12 @@ export function TrialBalancePage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <BasisSelector value={basis} onChange={setBasis} />
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.start}
             onChange={(next) => setPeriod((previous) => ({ ...previous, start: next }))}
           />
@@ -162,7 +162,7 @@ export function TrialBalancePage() {
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.end}
             onChange={(next) => setPeriod((previous) => ({ ...previous, end: next }))}
           />
@@ -174,15 +174,15 @@ export function TrialBalancePage() {
 
       {summary ? (
         <div className="grid gap-2 md:grid-cols-3">
-          <div className="rounded border border-gray-200 bg-white px-3 py-2">
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Grand total debits</div>
             <div className="text-lg font-semibold">{money(summary.grand_total_debits)}</div>
           </div>
-          <div className="rounded border border-gray-200 bg-white px-3 py-2">
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Grand total credits</div>
             <div className="text-lg font-semibold">{money(summary.grand_total_credits)}</div>
           </div>
-          <div className={`rounded border bg-white px-3 py-2 ${summary.balanced ? "border-emerald-200" : "border-rose-300"}`}>
+          <div className={`rounded-sm border bg-white px-3 py-2 ${summary.balanced ? "border-emerald-200" : "border-rose-300"}`}>
             <div className="text-[11px] font-semibold uppercase text-gray-500">Balance check</div>
             <div className={`text-lg font-semibold ${summary.balanced ? "text-emerald-700" : "text-rose-700"}`}>
               {summary.balanced ? "Balanced" : "Out of balance"}
@@ -191,7 +191,7 @@ export function TrialBalancePage() {
         </div>
       ) : null}
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>

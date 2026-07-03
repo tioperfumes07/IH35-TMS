@@ -65,10 +65,10 @@ export function NotificationCenterPage() {
         subtitle="In-app alerts from compliance, maintenance, loads, and system events"
         actions={
           <div className="flex gap-2">
-            <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={() => void refresh()}>
+            <button type="button" className="rounded-sm border px-3 py-1.5 text-sm" onClick={() => void refresh()}>
               Refresh
             </button>
-            <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={() => void markAllRead()}>
+            <button type="button" className="rounded-sm border px-3 py-1.5 text-sm" onClick={() => void markAllRead()}>
               Mark all read
             </button>
           </div>
@@ -76,9 +76,9 @@ export function NotificationCenterPage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <section className="rounded border border-gray-200 bg-white p-4">
+        <section className="rounded-sm border border-gray-200 bg-white p-4">
           <div className="mb-3 flex flex-wrap gap-2">
-            <select className="rounded border px-2 py-1 text-sm" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            <select className="rounded-sm border px-2 py-1 text-sm" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
               <option value="">All types</option>
               {TYPE_OPTIONS.map((t) => (
                 <option key={t} value={t}>
@@ -87,7 +87,7 @@ export function NotificationCenterPage() {
               ))}
             </select>
             <select
-              className="rounded border px-2 py-1 text-sm"
+              className="rounded-sm border px-2 py-1 text-sm"
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
             >
@@ -99,7 +99,7 @@ export function NotificationCenterPage() {
               ))}
             </select>
             <select
-              className="rounded border px-2 py-1 text-sm"
+              className="rounded-sm border px-2 py-1 text-sm"
               value={readFilter}
               onChange={(e) => setReadFilter(e.target.value as "all" | "unread" | "read")}
             >
@@ -138,7 +138,7 @@ export function NotificationCenterPage() {
           </ul>
         </section>
 
-        <aside className="rounded border border-gray-200 bg-white p-4" data-testid="notification-preferences-panel">
+        <aside className="rounded-sm border border-gray-200 bg-white p-4" data-testid="notification-preferences-panel">
           <h2 className="text-sm font-semibold text-gray-900">Preferences</h2>
           {prefs ? (
             <div className="mt-3 space-y-3 text-sm">
@@ -153,7 +153,7 @@ export function NotificationCenterPage() {
               <label className="block">
                 <span className="text-xs text-gray-600">Quiet hours start</span>
                 <input
-                  className="mt-1 w-full rounded border px-2 py-1"
+                  className="mt-1 w-full rounded-sm border px-2 py-1"
                   value={prefs.quiet_hours_start ?? ""}
                   onChange={(e) => setPrefs({ ...prefs, quiet_hours_start: e.target.value || null })}
                   placeholder="22:00"
@@ -162,7 +162,7 @@ export function NotificationCenterPage() {
               <label className="block">
                 <span className="text-xs text-gray-600">Quiet hours end</span>
                 <input
-                  className="mt-1 w-full rounded border px-2 py-1"
+                  className="mt-1 w-full rounded-sm border px-2 py-1"
                   value={prefs.quiet_hours_end ?? ""}
                   onChange={(e) => setPrefs({ ...prefs, quiet_hours_end: e.target.value || null })}
                   placeholder="06:00"
@@ -170,7 +170,7 @@ export function NotificationCenterPage() {
               </label>
               <button
                 type="button"
-                className="rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                 disabled={prefsSaving}
                 onClick={() => void savePrefs()}
               >

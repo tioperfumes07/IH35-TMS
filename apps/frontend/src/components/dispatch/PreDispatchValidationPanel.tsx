@@ -114,7 +114,7 @@ export function PreDispatchValidationPanel({
   return (
     <div className="space-y-2">
       {error ? (
-        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           Pre-dispatch check unavailable: {error}
         </div>
       ) : (
@@ -127,14 +127,14 @@ export function PreDispatchValidationPanel({
       )}
 
       {hasBlockers && !loading && (
-        <div className="rounded border border-red-200 bg-red-50 p-2.5 text-xs">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2.5 text-xs">
           <div className="mb-1.5 font-semibold text-red-800">
             Override required to dispatch with active blocker(s).
           </div>
           <textarea
             value={overrideReason ?? ""}
             onChange={(e) => onOverrideReasonChange?.(e.target.value)}
-            className="w-full rounded border border-red-300 px-2 py-1 text-xs"
+            className="w-full rounded-sm border border-red-300 px-2 py-1 text-xs"
             rows={2}
             placeholder="Override reason (min 10 chars) — this creates an audit log entry"
           />

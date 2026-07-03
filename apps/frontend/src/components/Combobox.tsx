@@ -230,7 +230,7 @@ export function Combobox({
           aria-controls={listboxId}
           aria-autocomplete="list"
           aria-invalid={Boolean(error)}
-          className="w-full bg-transparent text-[13px] outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-transparent text-[13px] outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed"
         />
         {allowClear && value ? (
           <button
@@ -238,7 +238,7 @@ export function Combobox({
             onClick={() => commitSelection(null)}
             disabled={disabled}
             aria-label="Clear selection"
-            className="rounded px-1 text-gray-500 hover:bg-gray-100 disabled:hover:bg-transparent"
+            className="rounded-sm px-1 text-gray-500 hover:bg-gray-100 disabled:hover:bg-transparent"
           >
             ×
           </button>
@@ -246,7 +246,7 @@ export function Combobox({
       </div>
       {error ? <p className="mt-1 text-[11px] text-red-600">{error}</p> : null}
       {open ? (
-        <div id={listboxId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded border border-gray-200 bg-white shadow-md">
+        <div id={listboxId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-sm border border-gray-200 bg-white shadow-md">
           {loading ? (
             <div className="flex items-center gap-2 px-2 py-2 text-[13px] text-gray-600">
               <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />

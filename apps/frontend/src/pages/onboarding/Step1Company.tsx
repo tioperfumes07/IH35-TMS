@@ -42,7 +42,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
       <label className="block text-sm">
         <span className="font-medium text-gray-700">Company name</span>
         <input
-          className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           value={value.company_name ?? ""}
           disabled={disabled}
           onChange={(e) => onChange({ ...value, company_name: e.target.value })}
@@ -53,7 +53,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
         <label className="block text-sm">
           <span className="font-medium text-gray-700">EIN</span>
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={value.ein ?? ""}
             disabled={disabled}
             placeholder="12-3456789"
@@ -63,7 +63,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
         <label className="block text-sm">
           <span className="font-medium text-gray-700">NAICS code</span>
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={value.naics_code ?? ""}
             disabled={disabled}
             placeholder="484121 (General Freight Trucking, Long-Distance)"
@@ -75,7 +75,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
       <label className="block text-sm">
         <span className="font-medium text-gray-700">Address</span>
         <input
-          className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           value={value.address ?? ""}
           disabled={disabled}
           onChange={(e) => onChange({ ...value, address: e.target.value })}
@@ -86,7 +86,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
         <label className="block text-sm">
           <span className="font-medium text-gray-700">MC #</span>
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={value.mc_number ?? ""}
             disabled={disabled}
             onChange={(e) => onChange({ ...value, mc_number: e.target.value })}
@@ -95,7 +95,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
         <label className="block text-sm">
           <span className="font-medium text-gray-700">DOT #</span>
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={value.dot_number ?? ""}
             disabled={disabled}
             onChange={(e) => onChange({ ...value, dot_number: e.target.value })}

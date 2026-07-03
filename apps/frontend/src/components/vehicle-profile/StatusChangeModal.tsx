@@ -99,11 +99,11 @@ export function StatusChangeModal({
           <>
             <label className="block">
               Sold date *
-              <DatePicker className="mt-1 w-full rounded border px-2 py-1" value={soldDate} onChange={(next) => setSoldDate(next)} />
+              <DatePicker className="mt-1 w-full rounded-sm border px-2 py-1" value={soldDate} onChange={(next) => setSoldDate(next)} />
             </label>
             <label className="block">
               Sold to
-              <input className="mt-1 w-full rounded border px-2 py-1" value={soldTo} onChange={(e) => setSoldTo(e.target.value)} />
+              <input className="mt-1 w-full rounded-sm border px-2 py-1" value={soldTo} onChange={(e) => setSoldTo(e.target.value)} />
             </label>
             <label className="block">
               Sold price

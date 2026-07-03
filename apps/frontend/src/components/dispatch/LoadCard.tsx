@@ -41,7 +41,7 @@ export function LoadCard({ load, hasActiveGeofenceBreach = false, onClick }: Pro
       {...attributes}
       {...listeners}
       onClick={() => onClick(load.id)}
-      className={`relative cursor-pointer rounded border border-gray-200 bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow ${
+      className={`relative cursor-pointer rounded border border-gray-200 bg-white p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-sm ${
         isDragging ? "opacity-60" : ""
       } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
     >
@@ -55,7 +55,7 @@ export function LoadCard({ load, hasActiveGeofenceBreach = false, onClick }: Pro
         <span>{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</span>
         <div className="flex items-center gap-1">
           {hasActiveGeofenceBreach ? (
-            <span className="rounded bg-red-100 px-1 py-0.5 text-[10px] font-semibold text-red-700" title="Active geofence breach alert">
+            <span className="rounded-sm bg-red-100 px-1 py-0.5 text-[10px] font-semibold text-red-700" title="Active geofence breach alert">
               GEOFENCE ALERT
             </span>
           ) : null}
@@ -66,7 +66,7 @@ export function LoadCard({ load, hasActiveGeofenceBreach = false, onClick }: Pro
               event.stopPropagation();
               onClick(load.id);
             }}
-            className={`rounded px-1 py-0.5 ${load.geofence_ready ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-600"}`}
+            className={`rounded-sm px-1 py-0.5 ${load.geofence_ready ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-600"}`}
           >
             🗺️
           </button>
@@ -77,7 +77,7 @@ export function LoadCard({ load, hasActiveGeofenceBreach = false, onClick }: Pro
         <span>{new Date(load.created_at).toLocaleDateString()}</span>
       </div>
       <div className="mt-1 flex items-center justify-between text-xs">
-        <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-700">{STATUS_LABEL[load.status]}</span>
+        <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-gray-700">{STATUS_LABEL[load.status]}</span>
         <span className="font-semibold text-gray-800">{formatMoneyCents(load.rate_total_cents, load.currency_code)}</span>
       </div>
       <div className="mt-1">

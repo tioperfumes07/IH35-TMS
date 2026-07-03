@@ -36,14 +36,14 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
   // FUEL-1: with no stops the bare baseline reads as a broken chart. Show an explicit empty-state.
   if (stopPoints.length === 0) {
     return (
-      <div className="flex min-h-[120px] items-center justify-center rounded border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+      <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
         No recommended fuel stops yet — the route diagram is generated from an active dispatch load.
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded border border-gray-200 bg-white p-2">
+    <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2">
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full">
         <line x1={LEFT} y1={LINE_Y} x2={WIDTH - RIGHT} y2={LINE_Y} stroke="#1f2a44" strokeWidth={3} />
 
@@ -99,7 +99,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
       </svg>
 
       {hoveredId ? (
-        <div className="mt-2 rounded border border-gray-200 bg-gray-50 p-2 text-xs">
+        <div className="mt-2 rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
           {String(
             stopPoints.find((stop) => stop.pointId === hoveredId)?.reasoning_json?.reason ??
               stopPoints.find((stop) => stop.pointId === hoveredId)?.reasoning_json?.why_this_stop ??

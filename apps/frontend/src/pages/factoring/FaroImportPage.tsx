@@ -81,12 +81,12 @@ export function FaroImportPage() {
     <div className="space-y-4">
       <PageHeader title="Faro CSV Import" subtitle="Upload Faro factoring statement CSV → invoice updates + reserve movements" />
 
-      <div className="rounded border border-[#2A3150] bg-[#12182B] p-4 space-y-3">
+      <div className="rounded-sm border border-[#2A3150] bg-[#12182B] p-4 space-y-3">
         <label className="block text-xs text-slate-300">
           Statement date
           <input
             type="date"
-            className="mt-1 block w-full max-w-xs rounded border border-[#2A3150] bg-[#0B1020] px-2 py-1 text-sm text-white"
+            className="mt-1 block w-full max-w-xs rounded-sm border border-[#2A3150] bg-[#0B1020] px-2 py-1 text-sm text-white"
             value={statementDate}
             onChange={(e) => setStatementDate(e.target.value)}
           />
@@ -128,7 +128,7 @@ export function FaroImportPage() {
       </div>
 
       {preview ? (
-        <div className="rounded border border-slate-300/40 bg-[#12182B] p-4">
+        <div className="rounded-sm border border-slate-300/40 bg-[#12182B] p-4">
           <h3 className="mb-2 text-sm font-semibold text-white">
             Preview — {preview.line_count} line{preview.line_count === 1 ? "" : "s"}
           </h3>

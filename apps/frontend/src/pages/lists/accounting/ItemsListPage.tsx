@@ -84,8 +84,8 @@ export function ItemsListPage() {
       sortable: true,
       render: (r) => (
         <span className={r.is_active
-          ? "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
-          : "rounded bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500"}>
+          ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+          : "rounded-sm bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500"}>
           {r.is_active ? "Active" : "Inactive"}
         </span>
       ),
@@ -129,7 +129,7 @@ export function ItemsListPage() {
   const filterBar = (
     <div className="flex flex-wrap items-center gap-3">
       <input
-        className="h-9 rounded border border-gray-300 px-2 text-sm"
+        className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
         placeholder="Search items…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -140,7 +140,7 @@ export function ItemsListPage() {
           type="checkbox"
           checked={groupByCategory}
           onChange={(e) => setGroupByCategory(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300"
+          className="h-4 w-4 rounded-sm border-gray-300"
         />
         Group by category
       </label>
@@ -162,19 +162,19 @@ export function ItemsListPage() {
       />
 
       {!companyId ? (
-        <div className="rounded border border-gray-200 bg-white px-3 py-6 text-sm text-slate-600">Select a company to view products &amp; services.</div>
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-sm text-slate-600">Select a company to view products &amp; services.</div>
       ) : query.isError ? (
-        <div className="rounded border border-gray-200 bg-white px-3 py-6 text-sm text-red-600">Failed to load products &amp; services.</div>
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-sm text-red-600">Failed to load products &amp; services.</div>
       ) : groupByCategory ? (
         <div className="space-y-3">
           <div>{filterBar}</div>
           {grouped.length === 0 && !query.isLoading ? (
-            <div className="rounded border border-gray-200 bg-white px-3 py-6 text-center text-xs text-gray-400">No items found.</div>
+            <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-center text-xs text-gray-400">No items found.</div>
           ) : (
             grouped.map(([name, groupRows]) => {
               const isCollapsed = collapsed[name] ?? false;
               return (
-                <div key={name} className="rounded border border-gray-200 bg-white">
+                <div key={name} className="rounded-sm border border-gray-200 bg-white">
                   <button
                     type="button"
                     className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-gray-50"

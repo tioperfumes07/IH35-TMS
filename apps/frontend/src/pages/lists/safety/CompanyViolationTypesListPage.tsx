@@ -11,9 +11,9 @@ import { STATUS_OPTIONS, statusPillClass, type StatusFilter } from "./shared";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 function severityBadgeClass(severity: number) {
-  if (severity <= 3) return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  if (severity <= 6) return "rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
-  return "rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
+  if (severity <= 3) return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+  if (severity <= 6) return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+  return "rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
 }
 
 export function CompanyViolationTypesListPage() {
@@ -62,9 +62,9 @@ export function CompanyViolationTypesListPage() {
         }
       />
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by type code or type name" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
-        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-sm">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by type code or type name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
           {STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

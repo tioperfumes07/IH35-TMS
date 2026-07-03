@@ -163,19 +163,19 @@ export function LoadCancellationReasonsListPage() {
         }
       />
 
-      <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-600">
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">
         Cancellation root-cause reporting taxonomy. Codes here classify why a load was cancelled for
         dispatch reporting and analytics.
       </div>
 
-      <div className="grid gap-2 rounded border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
+      <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search code or display name"
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
           />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -183,7 +183,7 @@ export function LoadCancellationReasonsListPage() {
           <SelectCombobox
             value={status}
             onChange={(event) => setStatus(event.target.value as StatusFilter)}
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -339,7 +339,7 @@ function LoadCancellationReasonModal({
               onChange={(event) =>
                 setForm((current) => ({ ...current, reason_code: event.target.value.toUpperCase() }))
               }
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
               placeholder="EXAMPLE_CODE"
             />
             {fieldErrors.reason_code ? <span className="text-xs text-red-600">{fieldErrors.reason_code}</span> : null}
@@ -351,7 +351,7 @@ function LoadCancellationReasonModal({
             <input
               value={form.display_name}
               onChange={(event) => setForm((current) => ({ ...current, display_name: event.target.value }))}
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
               placeholder="Display name"
             />
             {fieldErrors.display_name ? <span className="text-xs text-red-600">{fieldErrors.display_name}</span> : null}
@@ -364,7 +364,7 @@ function LoadCancellationReasonModal({
               onChange={(event) =>
                 setForm((current) => ({ ...current, category: event.target.value as LoadCancellationReasonCategory }))
               }
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             >
               {CATEGORY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -380,7 +380,7 @@ function LoadCancellationReasonModal({
               value={form.description}
               onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
               rows={3}
-              className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               placeholder="Optional description"
             />
           </label>
@@ -391,7 +391,7 @@ function LoadCancellationReasonModal({
               type="number"
               value={form.sort_order}
               onChange={(event) => setForm((current) => ({ ...current, sort_order: event.target.value }))}
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             />
             {fieldErrors.sort_order ? <span className="text-xs text-red-600">{fieldErrors.sort_order}</span> : null}
           </label>

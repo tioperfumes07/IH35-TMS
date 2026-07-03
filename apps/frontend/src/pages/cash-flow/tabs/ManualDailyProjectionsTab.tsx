@@ -194,7 +194,7 @@ function ProjectionPanel({
       {/* Single horizontal add / edit row: the named columns, then optional "+ more". */}
       <div className="space-y-1.5 border-t border-gray-100 bg-gray-50 px-3 py-2 text-xs">
         {form.id ? (
-          <div className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800" data-mdp-editing={direction}>
+          <div className="rounded-sm bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800" data-mdp-editing={direction}>
             Editing existing {direction} line — change fields then press Save.
           </div>
         ) : null}
@@ -204,7 +204,7 @@ function ProjectionPanel({
               key={c.key}
               placeholder={c.label}
               aria-label={c.label}
-              className={`h-7 ${c.w} shrink-0 rounded border border-gray-300 px-2`}
+              className={`h-7 ${c.w} shrink-0 rounded-sm border border-gray-300 px-2`}
               value={form[c.key]}
               onChange={(ev) => setForm((f) => ({ ...f, [c.key]: ev.target.value }))}
             />
@@ -222,26 +222,26 @@ function ProjectionPanel({
           // expense = optional Link (kind + label); plus Memo for both.
           <div className="grid grid-cols-2 gap-1.5 border-t border-gray-100 pt-1.5">
             {direction === "income" ? (
-              <input placeholder="Category" className="h-7 rounded border border-gray-300 px-2" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+              <input placeholder="Category" className="h-7 rounded-sm border border-gray-300 px-2" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
             ) : (
               <>
-                <select className="h-7 rounded border border-gray-300 px-2" value={form.ref_kind} onChange={(e) => setForm({ ...form, ref_kind: e.target.value as RowForm["ref_kind"] })}>
+                <select className="h-7 rounded-sm border border-gray-300 px-2" value={form.ref_kind} onChange={(e) => setForm({ ...form, ref_kind: e.target.value as RowForm["ref_kind"] })}>
                   <option value="">Link (none)</option>
                   {REF_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
                 </select>
-                <input placeholder="Link label" className="h-7 rounded border border-gray-300 px-2" value={form.ref_label} onChange={(e) => setForm({ ...form, ref_label: e.target.value })} />
+                <input placeholder="Link label" className="h-7 rounded-sm border border-gray-300 px-2" value={form.ref_label} onChange={(e) => setForm({ ...form, ref_label: e.target.value })} />
               </>
             )}
-            <input placeholder="Memo" className="col-span-2 h-7 rounded border border-gray-300 px-2" value={form.memo} onChange={(e) => setForm({ ...form, memo: e.target.value })} />
+            <input placeholder="Memo" className="col-span-2 h-7 rounded-sm border border-gray-300 px-2" value={form.memo} onChange={(e) => setForm({ ...form, memo: e.target.value })} />
           </div>
         ) : null}
 
         {error ? <p className="text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
           {form.id ? (
-            <button type="button" className="h-7 rounded border border-gray-300 bg-white px-2 hover:bg-gray-50" onClick={() => { setForm(emptyRow()); setShowMore(false); }}>Cancel</button>
+            <button type="button" className="h-7 rounded-sm border border-gray-300 bg-white px-2 hover:bg-gray-50" onClick={() => { setForm(emptyRow()); setShowMore(false); }}>Cancel</button>
           ) : null}
-          <button type="button" className="h-7 rounded bg-slate-700 px-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+          <button type="button" className="h-7 rounded-sm bg-slate-700 px-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
             {form.id ? "Save" : `+ Add new ${direction}`}
           </button>
         </div>
@@ -314,7 +314,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </span>
         <span className="ml-auto inline-flex items-center gap-1">
           <MoneyInput valueCents={openingDraft} onChangeCents={setOpeningDraft} placeholder="Set opening" ariaLabel="Opening cash" className="w-32" />
-          <button type="button" className="h-7 rounded border border-gray-300 bg-white px-2 font-semibold hover:bg-gray-50" disabled={openingMutation.isPending || openingDraft === null} onClick={() => openingMutation.mutate()}>Save</button>
+          <button type="button" className="h-7 rounded-sm border border-gray-300 bg-white px-2 font-semibold hover:bg-gray-50" disabled={openingMutation.isPending || openingDraft === null} onClick={() => openingMutation.mutate()}>Save</button>
         </span>
       </div>
 

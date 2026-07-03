@@ -51,21 +51,21 @@ export function EmailQueuePage() {
     <div className="space-y-3">
       <PageHeader title="Email Queue" subtitle="Retry failed deliveries without SQL" />
       {queueQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
-      <div className="rounded border border-gray-200 bg-white p-3 text-xs text-gray-700">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-700">
         <p>
           Queue listings load from <span className="font-mono text-[11px]">GET /api/v1/email/queue</span> (pass{" "}
           <span className="font-mono text-[11px]">operating_company_id</span>). Failed sends can be re-queued via{" "}
           <span className="font-mono text-[11px]">POST /api/v1/admin/email-queue/:id/retry</span>.
         </p>
       </div>
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Recent jobs</div>
           <ActionButton onClick={() => void refresh()}>Refresh</ActionButton>
         </div>
         <div className="space-y-2">
           {(queueQuery.data?.items ?? []).map((item) => (
-            <div key={item.id} className="rounded border border-gray-100 p-2 text-xs">
+            <div key={item.id} className="rounded-sm border border-gray-100 p-2 text-xs">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="space-y-1">
                   <p className="font-semibold text-gray-900">{item.subject}</p>

@@ -107,7 +107,7 @@ export function DriverReportsQueuePage() {
     <div className="w-56 space-y-1">
       <textarea
         rows={2}
-        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
         placeholder="Resolution notes..."
         value={resolutionDraft[row.id] ?? ""}
         onChange={(event) => setResolutionDraft((current) => ({ ...current, [row.id]: event.target.value }))}
@@ -144,7 +144,7 @@ export function DriverReportsQueuePage() {
         filterBar={
           <div className="flex flex-wrap items-center gap-2">
             <SelectCombobox
-              className="min-h-12 rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+              className="min-h-12 rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as "" | DriverReportRow["status"])}
             >
@@ -155,7 +155,7 @@ export function DriverReportsQueuePage() {
               <option value="dismissed">dismissed</option>
             </SelectCombobox>
             <input
-              className="min-h-12 w-full max-w-xs rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+              className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
               placeholder="Search type / driver / load / description…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

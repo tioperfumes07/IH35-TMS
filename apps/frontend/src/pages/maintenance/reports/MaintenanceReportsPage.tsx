@@ -35,7 +35,7 @@ export function MaintenanceReportsPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-gray-900">Maintenance Reports</h2>
         <a
-          className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700"
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700"
           href={getMaintenanceReportXlsxUrl(report, companyId)}
           target="_blank"
           rel="noreferrer"
@@ -43,11 +43,11 @@ export function MaintenanceReportsPage() {
           Export XLSX
         </a>
       </div>
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <label className="mb-2 block text-xs text-gray-600">
           Report
           <select
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={report}
             onChange={(event) => setReport(event.target.value as (typeof REPORTS)[number]["id"])}
           >

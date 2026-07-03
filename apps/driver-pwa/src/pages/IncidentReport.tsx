@@ -158,11 +158,11 @@ export function IncidentReportPage() {
             type="text"
             value={incidentSubtype}
             onChange={(event) => setIncidentSubtype(event.target.value)}
-            className="h-10 w-full rounded border border-pwa-border bg-[#101522] px-2 text-sm"
+            className="h-10 w-full rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm"
             placeholder={t("incident.subtype_placeholder")}
           />
           <textarea
-            className="h-28 w-full rounded border border-pwa-border bg-[#101522] p-2 text-sm"
+            className="h-28 w-full rounded-sm border border-pwa-border bg-[#101522] p-2 text-sm"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             placeholder={t("incident.description_min")}
@@ -171,7 +171,7 @@ export function IncidentReportPage() {
             {t("incident.occurred_at")}
             <input
               type="datetime-local"
-              className="mt-1 h-10 w-full rounded border border-pwa-border bg-[#101522] px-2 text-sm text-pwa-text-primary"
+              className="mt-1 h-10 w-full rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm text-pwa-text-primary"
               value={occurredAt}
               onChange={(event) => setOccurredAt(event.target.value)}
             />
@@ -180,7 +180,7 @@ export function IncidentReportPage() {
             type="text"
             value={locationLabel}
             onChange={(event) => setLocationLabel(event.target.value)}
-            className="h-10 w-full rounded border border-pwa-border bg-[#101522] px-2 text-sm"
+            className="h-10 w-full rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm"
             placeholder={t("incident.location_label")}
           />
           <div className="flex gap-2">

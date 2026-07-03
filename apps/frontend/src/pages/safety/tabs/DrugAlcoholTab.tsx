@@ -153,7 +153,7 @@ export function DrugAlcoholTab() {
   }, [testsQ.data, driverId]);
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   const rtdCase = rtdCaseQ.data as RtdCase | null;
@@ -165,12 +165,12 @@ export function DrugAlcoholTab() {
       <RandomTestingPool />
       <ReturnToDuty />
 
-      <div className="rounded border border-gray-200 bg-white p-4">
+      <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex flex-wrap items-end gap-3">
           <label className="block text-xs text-slate-600">
             Driver
             <select
-              className="mt-1 block min-w-[240px] rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 block min-w-[240px] rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={driverId}
               onChange={(event) => setDriverId(event.target.value)}
             >
@@ -194,20 +194,20 @@ export function DrugAlcoholTab() {
 
         {driverId ? (
           <div className="mt-3 grid gap-3 md:grid-cols-3">
-            <div className="rounded border border-gray-100 p-3 text-xs">
+            <div className="rounded-sm border border-gray-100 p-3 text-xs">
               <div className="font-medium text-slate-800">Drug status</div>
               <div className="mt-1">
                 {drugStatusQ.data?.is_blocked ? (
-                  <span className="rounded bg-red-50 px-2 py-0.5 text-red-800">Blocked ({drugStatusQ.data.block_reason})</span>
+                  <span className="rounded-sm bg-red-50 px-2 py-0.5 text-red-800">Blocked ({drugStatusQ.data.block_reason})</span>
                 ) : (
-                  <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-800">Clear</span>
+                  <span className="rounded-sm bg-emerald-50 px-2 py-0.5 text-emerald-800">Clear</span>
                 )}
               </div>
             </div>
-            <div className="rounded border border-gray-100 p-3 text-xs">
+            <div className="rounded-sm border border-gray-100 p-3 text-xs">
               <div className="font-medium text-slate-800">Dispatch eligibility</div>
               <div className="mt-1">
-                <span className={`rounded px-2 py-0.5 ${eligibilityBadgeClass(Boolean(eligibilityQ.data?.eligible))}`}>
+                <span className={`rounded-sm px-2 py-0.5 ${eligibilityBadgeClass(Boolean(eligibilityQ.data?.eligible))}`}>
                   {eligibilityQ.data?.eligible ? "Eligible" : "Ineligible"}
                 </span>
                 {!eligibilityQ.data?.eligible ? (
@@ -215,7 +215,7 @@ export function DrugAlcoholTab() {
                 ) : null}
               </div>
             </div>
-            <div className="rounded border border-gray-100 p-3 text-xs">
+            <div className="rounded-sm border border-gray-100 p-3 text-xs">
               <div className="font-medium text-slate-800">RTD case</div>
               <div className="mt-1">{rtdCase ? stageLabel(rtdCase.stage) : "None open"}</div>
             </div>
@@ -224,12 +224,12 @@ export function DrugAlcoholTab() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-900">Record drug / alcohol test</h2>
           <div className="grid gap-2 md:grid-cols-2">
             <label className="text-xs text-slate-600">
               Type
-              <select className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm" value={testType} onChange={(e) => setTestType(e.target.value as (typeof TEST_TYPES)[number])}>
+              <select className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={testType} onChange={(e) => setTestType(e.target.value as (typeof TEST_TYPES)[number])}>
                 {TEST_TYPES.map((type) => (
                   <option key={type} value={type}>
                     {stageLabel(type)}
@@ -239,7 +239,7 @@ export function DrugAlcoholTab() {
             </label>
             <label className="text-xs text-slate-600">
               Result
-              <select className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm" value={testResult} onChange={(e) => setTestResult(e.target.value as (typeof TEST_RESULTS)[number])}>
+              <select className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={testResult} onChange={(e) => setTestResult(e.target.value as (typeof TEST_RESULTS)[number])}>
                 {TEST_RESULTS.map((result) => (
                   <option key={result} value={result}>
                     {result}
@@ -249,26 +249,26 @@ export function DrugAlcoholTab() {
             </label>
             <label className="text-xs text-slate-600">
               Test date
-              <DatePicker className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm" value={testDate} onChange={(next) => setTestDate(next)} />
+              <DatePicker className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={testDate} onChange={(next) => setTestDate(next)} />
             </label>
           </div>
           <button
             type="button"
             disabled={!driverId || createTestMutation.isPending}
-            className="rounded bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+            className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             onClick={() => createTestMutation.mutate()}
           >
             Save test
           </button>
         </div>
 
-        <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-900">Return-to-duty workflow</h2>
           {!rtdCase ? (
             <button
               type="button"
               disabled={!driverId || openRtdMutation.isPending}
-              className="rounded border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 disabled:opacity-50"
+              className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 disabled:opacity-50"
               onClick={() => openRtdMutation.mutate()}
             >
               Open RTD case
@@ -295,7 +295,7 @@ export function DrugAlcoholTab() {
                 <button
                   type="button"
                   disabled={advanceRtdMutation.isPending}
-                  className="rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                   onClick={() => advanceRtdMutation.mutate(nextStage as (typeof RTD_STAGES)[number])}
                 >
                   Advance to {stageLabel(nextStage)}
@@ -317,7 +317,7 @@ export function DrugAlcoholTab() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded border border-gray-200 bg-white p-4 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <h3 className="text-sm font-semibold text-slate-900">Random pool roster</h3>
           <ul className="mt-2 space-y-1">
             {(poolQ.data ?? []).slice(0, 8).map((entry) => (
@@ -329,7 +329,7 @@ export function DrugAlcoholTab() {
             {(poolQ.data ?? []).length === 0 ? <li className="text-slate-500">No pool entries.</li> : null}
           </ul>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-4 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <h3 className="text-sm font-semibold text-slate-900">Clearinghouse queries</h3>
           <ul className="mt-2 space-y-1">
             {(clearinghouseQ.data ?? []).slice(0, 8).map((entry) => (

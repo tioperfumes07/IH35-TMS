@@ -118,7 +118,7 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
             rows={3}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
             placeholder="Required notes (min 20 chars)"
           />
         </div>
@@ -136,11 +136,11 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
         />
         {needsApproval ? (
           ownerInlineApprove ? (
-            <div className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+            <div className="rounded-sm border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
               As Owner, confirming will approve &amp; cancel this load immediately.
             </div>
           ) : (
-            <div className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+            <div className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
               This will be submitted for Owner approval; the load isn&apos;t cancelled until an Owner approves.
             </div>
           )
@@ -153,7 +153,7 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
           </p>
         ) : null}
         {submitError ? (
-          <div className="rounded border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
+          <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
             {submitError}
           </div>
         ) : null}

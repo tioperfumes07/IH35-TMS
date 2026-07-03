@@ -10,7 +10,7 @@ import { LegalModuleTabs } from "./LegalModuleTabs";
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded border border-gray-200 bg-white px-3 py-2">
+    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
       <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="mt-1 text-xl font-semibold text-gray-900">{value}</div>
     </div>
@@ -84,7 +84,7 @@ export function LegalLandingPage() {
         <StatCard label="Expiring Contracts (60d)" value={metrics.expiringContracts} />
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-700">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-700">
         <div className="mb-2 font-semibold text-gray-900">Quick Actions</div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="secondary" onClick={() => navigate("/legal/contracts?openSend=1")}>

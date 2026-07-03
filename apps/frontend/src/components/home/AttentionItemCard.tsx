@@ -76,7 +76,7 @@ export function AttentionItemCard({ item, rank, onAction, onDismiss, dismissing 
 
   return (
     <div
-      className={`relative flex gap-3 rounded border ${cfg.border} ${cfg.bg} px-3 py-3 transition-opacity ${dismissing ? "opacity-50" : "opacity-100"}`}
+      className={`relative flex gap-3 rounded-sm border ${cfg.border} ${cfg.bg} px-3 py-3 transition-opacity ${dismissing ? "opacity-50" : "opacity-100"}`}
       aria-label={`Attention item ${rank}: ${item.title}`}
     >
       {/* Rank badge */}
@@ -107,14 +107,14 @@ export function AttentionItemCard({ item, rank, onAction, onDismiss, dismissing 
         <div className="mt-2 flex items-center gap-2">
           <button
             type="button"
-            className="rounded bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500"
+            className="rounded-sm bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-500"
             onClick={() => onAction(item.action_url)}
           >
             {item.action_label}
           </button>
           <button
             type="button"
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 focus:outline-hidden"
             onClick={() => onDismiss(item.item_id)}
             disabled={dismissing}
             aria-label={`Dismiss: ${item.title}`}

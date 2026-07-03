@@ -57,7 +57,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
           <div className="grid gap-2">
             <button
               type="button"
-              className="rounded border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
+              className="rounded-sm border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
               onClick={() => setStep("from_load")}
             >
               <div className="text-sm font-semibold text-gray-900">From an existing load</div>
@@ -65,7 +65,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
             </button>
             <button
               type="button"
-              className="rounded border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
+              className="rounded-sm border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
               onClick={() => setStep("blank")}
             >
               <div className="text-sm font-semibold text-gray-900">Blank invoice (no load)</div>
@@ -90,7 +90,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                   setLoadPage(1);
                 }}
                 placeholder="Search load # or customer"
-                className="h-9 min-w-[200px] flex-1 rounded border border-gray-300 px-2 text-sm"
+                className="h-9 min-w-[200px] flex-1 rounded-sm border border-gray-300 px-2 text-sm"
               />
               <select
                 value={statusFilter}
@@ -98,14 +98,14 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                   setStatusFilter(event.target.value as LoadStatusFilter);
                   setLoadPage(1);
                 }}
-                className="h-9 rounded border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 <option value="all">All statuses</option>
                 <option value="delivered">Delivered</option>
                 <option value="in_transit">In transit</option>
               </select>
             </div>
-            <div className="max-h-[360px] overflow-y-auto rounded border border-gray-200">
+            <div className="max-h-[360px] overflow-y-auto rounded-sm border border-gray-200">
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 text-xs uppercase text-gray-600">
                   <tr>

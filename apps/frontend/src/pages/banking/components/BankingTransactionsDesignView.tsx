@@ -490,7 +490,7 @@ export function BankingTransactionsDesignView({
 
   return (
     <div className="space-y-3">
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-start gap-2">
           {accounts.map((account) => (
             <button
@@ -512,13 +512,13 @@ export function BankingTransactionsDesignView({
           <div className="relative ml-auto">
             <button
               type="button"
-              className="rounded border border-gray-300 px-2 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
               onClick={() => setLinkMenuOpen((v) => !v)}
             >
               Link account ▾
             </button>
             {linkMenuOpen ? (
-              <div className="absolute right-0 z-20 mt-1 min-w-[220px] rounded border border-gray-200 bg-white shadow-md">
+              <div className="absolute right-0 z-20 mt-1 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
                 <button
                   type="button"
                   className="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50"
@@ -568,7 +568,7 @@ export function BankingTransactionsDesignView({
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-gray-100 pb-2">
           {BANKING_REVIEW_TABS.map((tab) => {
             const count = reviewTabBuckets[tab.id as ReviewTabId]?.length ?? 0;
@@ -592,9 +592,9 @@ export function BankingTransactionsDesignView({
             value={descriptionFilter}
             onChange={(event) => setDescriptionFilter(event.target.value)}
             placeholder="Filter by description"
-            className="h-8 min-w-[260px] rounded border border-gray-300 px-2 text-sm"
+            className="h-8 min-w-[260px] rounded-sm border border-gray-300 px-2 text-sm"
           />
-          <div className="inline-flex overflow-hidden rounded border border-gray-300 bg-white text-xs">
+          <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
             {(["all", "spent", "received"] as const).map((option) => (
               <button
                 key={option}
@@ -611,24 +611,24 @@ export function BankingTransactionsDesignView({
           <div className="relative">
             <button
               type="button"
-              className="h-8 rounded border border-gray-300 px-2 text-xs text-gray-700"
+              className="h-8 rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
               onClick={() => setShowDateFilterMenu((open) => !open)}
             >
               All dates
             </button>
             {showDateFilterMenu ? (
-              <div className="absolute left-0 z-20 mt-1 w-64 rounded border border-gray-200 bg-white p-2 shadow">
+              <div className="absolute left-0 z-20 mt-1 w-64 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
                 <label className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                   From
-                  <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-xs" />
+                  <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                 </label>
                 <label className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                   To
-                  <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-xs" />
+                  <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                 </label>
                 <button
                   type="button"
-                  className="mt-2 rounded border border-gray-300 px-2 py-1 text-xs"
+                  className="mt-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
                   onClick={() => {
                     setDateFrom("");
                     setDateTo("");
@@ -641,7 +641,7 @@ export function BankingTransactionsDesignView({
           </div>
           <button
             type="button"
-            className="h-8 rounded border border-gray-300 px-2 text-xs text-gray-700"
+            className="h-8 rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
             onClick={() => {
               const next = !collapsedAllGroupings;
               setCollapsedAllGroupings(next);
@@ -669,7 +669,7 @@ export function BankingTransactionsDesignView({
           </SelectCombobox>
           <div className="ml-auto flex items-center gap-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Categorize by</span>
-            <div className="inline-flex overflow-hidden rounded border border-gray-300 bg-white text-xs">
+            <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
               {(["category", "item"] as const).map((option) => (
                 <button
                   key={option}
@@ -686,10 +686,10 @@ export function BankingTransactionsDesignView({
             <span className="text-xs text-gray-500">
               {pageRangeStart > 0 ? `${pageRangeStart}-${pageRangeEnd} of ${tableRows.length}` : `0 of ${tableRows.length}`}
             </span>
-            <div className="inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-700">
+            <div className="inline-flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-700">
               <button
                 type="button"
-                className="rounded px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                className="rounded-sm px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
                 disabled={safeCurrentPage <= 1}
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               >
@@ -698,7 +698,7 @@ export function BankingTransactionsDesignView({
               <span className="px-1 text-gray-500">{`Page ${safeCurrentPage} of ${totalPages}`}</span>
               <button
                 type="button"
-                className="rounded px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                className="rounded-sm px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
                 disabled={safeCurrentPage >= totalPages}
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               >
@@ -709,13 +709,13 @@ export function BankingTransactionsDesignView({
               <button
                 type="button"
                 aria-label="View settings"
-                className="h-8 rounded border border-gray-300 px-2 text-gray-700"
+                className="h-8 rounded-sm border border-gray-300 px-2 text-gray-700"
                 onClick={() => setViewSettingsOpen((open) => !open)}
               >
                 <Settings className="h-4 w-4" />
               </button>
               {viewSettingsOpen ? (
-                <div className="absolute right-0 z-20 mt-1 w-[360px] rounded border border-gray-200 bg-white p-3 shadow">
+                <div className="absolute right-0 z-20 mt-1 w-[360px] rounded-sm border border-gray-200 bg-white p-3 shadow-sm">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Columns</p>
                   <div className="mt-1 grid grid-cols-2 gap-1 text-xs">
                     <ToggleLine label="Check No." checked={viewSettings.showCheckNo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showCheckNo: checked }))} />
@@ -742,7 +742,7 @@ export function BankingTransactionsDesignView({
                       <button
                         key={size}
                         type="button"
-                        className={`rounded border px-2 py-1 text-xs ${viewSettings.pageSize === size ? "border-[#1A1F36] bg-[#1A1F36] text-white" : "border-gray-300 text-gray-700"}`}
+                        className={`rounded-sm border px-2 py-1 text-xs ${viewSettings.pageSize === size ? "border-[#1A1F36] bg-[#1A1F36] text-white" : "border-gray-300 text-gray-700"}`}
                         onClick={() => setViewSettings((prev) => ({ ...prev, pageSize: size }))}
                       >
                         {size}
@@ -755,16 +755,16 @@ export function BankingTransactionsDesignView({
             <div className="relative">
               <button
                 type="button"
-                className="h-8 rounded border border-gray-300 px-2 text-gray-700"
+                className="h-8 rounded-sm border border-gray-300 px-2 text-gray-700"
                 onClick={() => setPrintExportMenuOpen((open) => !open)}
               >
                 <Download className="h-4 w-4" />
               </button>
               {printExportMenuOpen ? (
-                <div className="absolute right-0 z-20 mt-1 w-44 rounded border border-gray-200 bg-white p-1 shadow">
+                <div className="absolute right-0 z-20 mt-1 w-44 rounded-sm border border-gray-200 bg-white p-1 shadow-sm">
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-gray-50"
+                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-gray-50"
                     onClick={() => {
                       setPrintExportMenuOpen(false);
                       window.print();
@@ -775,7 +775,7 @@ export function BankingTransactionsDesignView({
                   </button>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-gray-50"
+                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-gray-50"
                     onClick={() => {
                       setPrintExportMenuOpen(false);
                       const header = ["Date", "Description", "Spent", "Received", "Balance", "From/To", "Customer", "Product/Service"];
@@ -822,7 +822,7 @@ export function BankingTransactionsDesignView({
         ])}
       />
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-[1150px] w-full table-fixed text-left text-[12px]">
           <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
@@ -910,7 +910,7 @@ export function BankingTransactionsDesignView({
                       {viewSettings.editableDateField && expanded ? (
                         <input
                           type="date"
-                          className="h-7 rounded border border-gray-300 px-2 text-xs"
+                          className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
                           value={tx.transaction_date.slice(0, 10)}
                           onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
                           readOnly
@@ -954,7 +954,7 @@ export function BankingTransactionsDesignView({
                     {viewSettings.showClass ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.className || "—"}</td> : null}
                     {viewSettings.showLocation ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.location || "—"}</td> : null}
                     <td className="px-1 py-2 align-top">
-                      <span className="rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
+                      <span className="rounded-sm bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
                         {draft.mode === "match" ? "Match" : "Categorize"}
                       </span>
                     </td>
@@ -965,13 +965,13 @@ export function BankingTransactionsDesignView({
                         </ActionButton>
                         <button
                           type="button"
-                          className="rounded border border-gray-300 px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                          className="rounded-sm border border-gray-300 px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
                           onClick={() => setActionMenuTxId((cur) => (cur === tx.id ? null : tx.id))}
                         >
                           ▾
                         </button>
                         {menuOpen ? (
-                          <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded border border-gray-200 bg-white shadow-md">
+                          <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
                             {/* Split is intentionally disabled (QA-sweep): a real multi-line split needs a
                             persisted split-lines model that does not exist yet. The old handler silently
                             mis-categorized the txn as a single full-amount 'split_transaction' line and
@@ -1023,7 +1023,7 @@ export function BankingTransactionsDesignView({
                     <tr key={`${tx.id}-expanded`} className="border-t border-gray-100 bg-gray-50">
                       <td className="px-3 py-3" colSpan={16}>
                         <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                          <div className="rounded border border-gray-200 bg-white p-2">
+                          <div className="rounded-sm border border-gray-200 bg-white p-2">
                             <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
                             {viewSettings.showBankDetails ? (
                               <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-gray-600 md:grid-cols-2">
@@ -1036,14 +1036,14 @@ export function BankingTransactionsDesignView({
                             <div className="mb-2 flex items-center gap-2">
                               <button
                                 type="button"
-                                className={`rounded px-2 py-1 text-xs ${draft.mode === "match" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
+                                className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "match" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
                                   onClick={() => setDraft(tx, { mode: "match" })}
                               >
                                 Match
                               </button>
                               <button
                                 type="button"
-                                className={`rounded px-2 py-1 text-xs ${draft.mode === "categorize" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
+                                className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "categorize" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
                                   onClick={() => setDraft(tx, { mode: "categorize" })}
                               >
                                 Categorize
@@ -1062,7 +1062,7 @@ export function BankingTransactionsDesignView({
                               <label className="text-xs text-gray-600">
                                 Payee
                                 <input
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                   value={draft.payee}
                                   onChange={(event) => setDraft(tx, { payee: event.target.value })}
                                 />
@@ -1070,7 +1070,7 @@ export function BankingTransactionsDesignView({
                               <label className="text-xs text-gray-600">
                                 Check No.
                                 <input
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                   value={draft.checkNo}
                                   onChange={(event) => setDraft(tx, { checkNo: event.target.value })}
                                 />
@@ -1078,7 +1078,7 @@ export function BankingTransactionsDesignView({
                               <label className="text-xs text-gray-600">
                                 From/To
                                 <input
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                   value={draft.fromTo}
                                   onChange={(event) => setDraft(tx, { fromTo: event.target.value })}
                                 />
@@ -1102,7 +1102,7 @@ export function BankingTransactionsDesignView({
                               <label className="text-xs text-gray-600">
                                 Class
                                 <input
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                   value={draft.className}
                                   onChange={(event) => setDraft(tx, { className: event.target.value })}
                                 />
@@ -1110,7 +1110,7 @@ export function BankingTransactionsDesignView({
                               <label className="text-xs text-gray-600">
                                 Location
                                 <input
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                   value={draft.location}
                                   onChange={(event) => setDraft(tx, { location: event.target.value })}
                                 />
@@ -1118,7 +1118,7 @@ export function BankingTransactionsDesignView({
                               <label className="text-xs text-gray-600">
                                 Product/Service
                                 <input
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                   value={draft.productService}
                                   onChange={(event) => setDraft(tx, { productService: event.target.value })}
                                 />
@@ -1126,7 +1126,7 @@ export function BankingTransactionsDesignView({
                               <label className="text-xs text-gray-600">
                                 Customer/project
                                 <input
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                   value={draft.customerProject}
                                   onChange={(event) => setDraft(tx, { customerProject: event.target.value })}
                                 />
@@ -1143,7 +1143,7 @@ export function BankingTransactionsDesignView({
                             <label className="mt-2 block text-xs text-gray-600">
                               Memo
                               <textarea
-                                className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                 rows={3}
                                 value={draft.memo}
                                 onChange={(event) => setDraft(tx, { memo: event.target.value })}
@@ -1153,13 +1153,13 @@ export function BankingTransactionsDesignView({
                               <label className="mt-2 block text-xs text-gray-600">
                                 Tags
                                 <input
-                                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                                   value={draft.tags}
                                   onChange={(event) => setDraft(tx, { tags: event.target.value })}
                                 />
                               </label>
                             ) : null}
-                            <div className="mt-2 rounded border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-xs text-gray-500">
+                            <div className="mt-2 rounded-sm border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-xs text-gray-500">
                               Files drag/drop area
                             </div>
                             <div className="mt-2 flex justify-end gap-2">
@@ -1172,7 +1172,7 @@ export function BankingTransactionsDesignView({
                             </div>
                           </div>
 
-                          <div className="rounded border border-gray-200 bg-white p-2">
+                          <div className="rounded-sm border border-gray-200 bg-white p-2">
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Match candidates</p>
                             {!viewSettings.enableSuggestedCategorization ? (
                               <p className="mt-2 text-sm text-gray-500">Suggested categorization disabled in view settings.</p>
@@ -1186,7 +1186,7 @@ export function BankingTransactionsDesignView({
                                 <button
                                   key={`${tx.id}-s-${index}`}
                                   type="button"
-                                  className="block w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                                  className="block w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
                                   onClick={() => {
                                     void categorizeTransaction(tx.id, companyId, {
                                       action_type: "match",

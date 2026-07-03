@@ -77,7 +77,7 @@ export function BatchWizard() {
   };
 
   return (
-    <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
+    <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {[
           { id: 1, label: "Select invoices" },
@@ -87,7 +87,7 @@ export function BatchWizard() {
         ].map((item) => (
           <span
             key={item.id}
-            className={`rounded px-2 py-1 ${step === item.id ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
+            className={`rounded-sm px-2 py-1 ${step === item.id ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
           >
             {item.id}. {item.label}
           </span>
@@ -97,10 +97,10 @@ export function BatchWizard() {
       {step === 1 ? (
         <div className="space-y-3">
           <div className="text-sm text-gray-700">Step 1: select paid + ready invoices that are not already in a factoring batch.</div>
-          <div className="rounded border border-gray-200 p-3 text-xs text-gray-700">
+          <div className="rounded-sm border border-gray-200 p-3 text-xs text-gray-700">
             Selected: <strong>{selectedCount}</strong> invoices · Face total: <strong>{asMoney(selectedTotalCents)}</strong>
           </div>
-          <div className="max-h-72 overflow-auto rounded border border-gray-200">
+          <div className="max-h-72 overflow-auto rounded-sm border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
                 <tr>
@@ -151,27 +151,27 @@ export function BatchWizard() {
         <div className="space-y-3">
           <div className="text-sm text-gray-700">Step 2: review computed totals and generated batch number.</div>
           <div className="grid gap-2 md:grid-cols-2">
-            <div className="rounded border border-gray-200 p-3 text-sm">
+            <div className="rounded-sm border border-gray-200 p-3 text-sm">
               <div className="text-xs uppercase tracking-wide text-gray-500">Batch Number</div>
               <div className="font-semibold text-gray-900">{draftBatch.batch_number}</div>
             </div>
-            <div className="rounded border border-gray-200 p-3 text-sm">
+            <div className="rounded-sm border border-gray-200 p-3 text-sm">
               <div className="text-xs uppercase tracking-wide text-gray-500">Invoices</div>
               <div className="font-semibold text-gray-900">{draftBatch.invoice_ids.length}</div>
             </div>
-            <div className="rounded border border-gray-200 p-3 text-sm">
+            <div className="rounded-sm border border-gray-200 p-3 text-sm">
               <div className="text-xs uppercase tracking-wide text-gray-500">Total Face</div>
               <div className="font-semibold text-gray-900">{asMoney(draftBatch.total_face_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 p-3 text-sm">
+            <div className="rounded-sm border border-gray-200 p-3 text-sm">
               <div className="text-xs uppercase tracking-wide text-gray-500">Expected Advance</div>
               <div className="font-semibold text-gray-900">{asMoney(draftBatch.expected_advance_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 p-3 text-sm">
+            <div className="rounded-sm border border-gray-200 p-3 text-sm">
               <div className="text-xs uppercase tracking-wide text-gray-500">Expected Fee</div>
               <div className="font-semibold text-gray-900">{asMoney(draftBatch.expected_fee_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 p-3 text-sm">
+            <div className="rounded-sm border border-gray-200 p-3 text-sm">
               <div className="text-xs uppercase tracking-wide text-gray-500">Rates</div>
               <div className="font-semibold text-gray-900">
                 Advance {(draftBatch.advance_rate * 100).toFixed(2)}% · Fee {(draftBatch.fee_rate * 100).toFixed(2)}%
@@ -189,7 +189,7 @@ export function BatchWizard() {
       {step === 3 && draftBatch ? (
         <div className="space-y-3">
           <div className="text-sm text-gray-700">Step 3: confirm and submit the factoring batch.</div>
-          <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
             Submitting this batch moves status from <code>draft</code> to <code>submitted</code>.
           </div>
           <div className="flex justify-end gap-2">
@@ -205,7 +205,7 @@ export function BatchWizard() {
 
       {step === 4 ? (
         <div className="space-y-3">
-          <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+          <div className="rounded-sm border border-green-200 bg-green-50 p-3 text-sm text-green-800">
             Step 4 complete. Batch submitted successfully.
           </div>
           {submittedBatchId && companyId ? <BatchDetail batchId={submittedBatchId} companyId={companyId} /> : null}

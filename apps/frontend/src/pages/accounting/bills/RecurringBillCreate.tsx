@@ -94,21 +94,21 @@ export function RecurringBillCreate() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <h1 className="text-lg font-semibold text-gray-900">Create Recurring Bill Template</h1>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-xs">
         <div className="space-y-5">
           {/* Template name */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Template Name *</label>
             <input
               type="text"
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-none"
+              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
               placeholder="e.g. Monthly Office Rent"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
@@ -119,7 +119,7 @@ export function RecurringBillCreate() {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Vendor *</label>
             <select
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-none"
+              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
               value={vendorUuid}
               onChange={(e) => setVendorUuid(e.target.value)}
             >
@@ -149,7 +149,7 @@ export function RecurringBillCreate() {
             <label className="mb-1 block text-sm font-medium text-gray-700">Memo</label>
             <input
               type="text"
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-none"
+              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
               placeholder="Optional memo on generated bill"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
@@ -161,7 +161,7 @@ export function RecurringBillCreate() {
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Frequency *</label>
               <select
-                className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-none"
+                className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
                 value={frequency}
                 onChange={(e) => setFrequency(e.target.value as RecurringBillFrequency)}
               >
@@ -176,7 +176,7 @@ export function RecurringBillCreate() {
               <label className="mb-1 block text-sm font-medium text-gray-700">First Generation Date *</label>
               <input
                 type="date"
-                className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-none"
+                className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
                 value={nextGenerationDate}
                 min={today()}
                 onChange={(e) => setNextGenerationDate(e.target.value)}
@@ -189,7 +189,7 @@ export function RecurringBillCreate() {
             <label className="mb-1 block text-sm font-medium text-gray-700">End Date (optional)</label>
             <input
               type="date"
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-none"
+              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
               value={endDate}
               min={nextGenerationDate}
               onChange={(e) => setEndDate(e.target.value)}
@@ -201,7 +201,7 @@ export function RecurringBillCreate() {
             <input
               id="auto-post"
               type="checkbox"
-              className="h-4 w-4 rounded"
+              className="h-4 w-4 rounded-sm"
               checked={autoPost}
               onChange={(e) => setAutoPost(e.target.checked)}
             />
@@ -230,7 +230,7 @@ export function RecurringBillCreate() {
               <div key={idx} className="mb-2 flex items-center gap-2">
                 <input
                   type="text"
-                  className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+                  className="flex-1 rounded-sm border border-gray-300 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
                   placeholder="Description"
                   value={item.description}
                   onChange={(e) => updateLineItem(idx, "description", e.target.value)}
@@ -247,7 +247,7 @@ export function RecurringBillCreate() {
                 <button
                   type="button"
                   onClick={() => removeLineItem(idx)}
-                  className="rounded p-1 text-gray-400 hover:text-red-500"
+                  className="rounded-sm p-1 text-gray-400 hover:text-red-500"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -260,14 +260,14 @@ export function RecurringBillCreate() {
       <div className="flex items-center justify-end gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           Cancel
         </button>
         <button
           disabled={!isValid || createMutation.isPending}
           onClick={() => createMutation.mutate()}
-          className="rounded bg-[#1F2A44] px-4 py-2 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
+          className="rounded-sm bg-[#1F2A44] px-4 py-2 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
         >
           {createMutation.isPending ? "Creating…" : "Create Template"}
         </button>

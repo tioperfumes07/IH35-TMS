@@ -24,7 +24,7 @@ export function RuleEditor({ operatingCompanyId, isOwner }: Props) {
         <h2 className="font-semibold">Detection Rules</h2>
         <Button type="button" onClick={() => seed.mutate()}>Seed defaults</Button>
       </div>
-      <ul className="divide-y rounded border">
+      <ul className="divide-y rounded-sm border">
         {(q.data?.rules ?? []).map((rule) => (
           <li key={String(rule.uuid)} className="p-2 text-sm">
             <span className="font-medium">{String(rule.rule_name)}</span>

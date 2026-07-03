@@ -61,7 +61,7 @@ export function AccountTypeCatalogPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search type or detail type…"
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-400"
         />
         {!isLoading && !isError && (
           <span className="text-xs text-gray-500">
@@ -84,7 +84,7 @@ export function AccountTypeCatalogPage() {
           {groups.map(([groupName, entries]) => (
             <section key={groupName}>
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">{groupName}</h2>
-              <div className="overflow-x-auto rounded border border-gray-200">
+              <div className="overflow-x-auto rounded-sm border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
@@ -105,7 +105,7 @@ export function AccountTypeCatalogPage() {
                               <span className="text-xs text-gray-400">—</span>
                             ) : (
                               e.detailTypes.map((d) => (
-                                <span key={d.id} className="inline-block rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+                                <span key={d.id} className="inline-block rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
                                   {d.name}
                                 </span>
                               ))
@@ -113,7 +113,7 @@ export function AccountTypeCatalogPage() {
                           </div>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">
-                          <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${STATEMENT_COLOR[e.statement] ?? "bg-gray-100 text-gray-600"}`}>
+                          <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATEMENT_COLOR[e.statement] ?? "bg-gray-100 text-gray-600"}`}>
                             {e.statement}
                           </span>
                         </td>

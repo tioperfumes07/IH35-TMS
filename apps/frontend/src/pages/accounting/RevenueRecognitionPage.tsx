@@ -22,7 +22,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 function ObligationBlock({ ob }: { ob: RevenueObligation }) {
   return (
-    <div className="rounded border border-gray-200">
+    <div className="rounded-sm border border-gray-200">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2">
         <div className="text-sm font-medium text-gray-800">
           #{ob.obligation_number} · {ob.description}
@@ -86,7 +86,7 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
           <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
         </div>
 
-        <div className="mb-3 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+        <div className="mb-3 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
           <p className="font-semibold mb-1">GL Posting (GATED — REVENUE_RECOGNITION_POST_ENABLED OFF)</p>
           <p>Deferral: Dr AR / Cr Deferred Revenue · Per-period: Dr Deferred Revenue / Cr Revenue</p>
         </div>
@@ -128,7 +128,7 @@ export function RevenueRecognitionPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="Revenue Recognition" subtitle="Deferred revenue schedules and recognition rules">
-        <div className="rounded border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           Revenue recognition schedules are not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">Enable the REVENUE_RECOGNITION_ENABLED feature flag to use this module.</p>
         </div>
@@ -144,7 +144,7 @@ export function RevenueRecognitionPage() {
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
           <option value="">All statuses</option>
           <option value="draft">Draft</option>
           <option value="active">Active</option>
@@ -164,7 +164,7 @@ export function RevenueRecognitionPage() {
           <p className="text-xs text-gray-400 mt-1">Contracts will appear here once revenue recognition is in use.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -187,7 +187,7 @@ export function RevenueRecognitionPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums font-semibold">{fmtCents(row.deferred_balance_cents)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-center text-gray-600">{row.obligation_count}</td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
+                    <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
                       {titleize(row.status)}
                     </span>
                   </td>
@@ -201,10 +201,10 @@ export function RevenueRecognitionPage() {
       {total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
           <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
         </div>
       )}
     </AccountingSubNavWrapper>

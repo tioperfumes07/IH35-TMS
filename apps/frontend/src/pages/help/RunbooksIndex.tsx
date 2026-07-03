@@ -88,15 +88,15 @@ export function RunbooksIndex() {
       <PageHeader title="Operator runbooks" subtitle="Step-by-step procedures for recurring office workflows" />
       <ul className="grid gap-3 md:grid-cols-2">
         {RUNBOOKS.map((rb) => (
-          <li key={rb.slug} className="rounded border border-gray-200 bg-white p-4">
+          <li key={rb.slug} className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-center justify-between gap-2">
               <a
                 href={`/${rb.docPath}`}
-                className="text-sm font-semibold text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                className="text-sm font-semibold text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
               >
                 {rb.title}
               </a>
-              <span className="shrink-0 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{rb.frequency}</span>
+              <span className="shrink-0 rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{rb.frequency}</span>
             </div>
             <p className="mt-1 text-sm text-gray-600">{rb.description}</p>
           </li>

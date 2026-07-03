@@ -24,7 +24,7 @@ export function DriverLeaveBalancesPage() {
       </div>
       {policyQuery.isLoading ? <div className="text-sm text-gray-500">Loading policy…</div> : null}
       {policyQuery.data ? (
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="grid gap-2 md:grid-cols-2">
             <div>
               <span className="font-semibold">Vacation days / year:</span>{" "}

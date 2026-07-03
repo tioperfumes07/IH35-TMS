@@ -354,7 +354,7 @@ export function VendorDetailPage() {
         subtitle={vendor.vendor_type}
         actions={
           <div className="flex items-center gap-2">
-            <span className={`rounded px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-emerald-100 text-emerald-700"}`}>
+            <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-emerald-100 text-emerald-700"}`}>
               {vendor.deactivated_at ? "Inactive" : "Active"}
             </span>
             {vendor.deactivated_at ? (
@@ -370,7 +370,7 @@ export function VendorDetailPage() {
         }
       />
       {reworkSignalCount > 0 ? (
-        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
           Warning: {reworkSignalCount} possible re-do signal(s) in last 30 days (same vendor/unit/failure pattern).
         </div>
       ) : null}
@@ -405,7 +405,7 @@ export function VendorDetailPage() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`rounded px-2.5 py-1.5 text-xs font-medium ${activeTab === tab ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
+                className={`rounded-sm px-2.5 py-1.5 text-xs font-medium ${activeTab === tab ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
               >
                 {tab}
               </button>
@@ -433,7 +433,7 @@ export function VendorDetailPage() {
               value={profileForm.name}
               onChange={(event) => setProfileForm((current) => ({ ...current, name: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -491,7 +491,7 @@ export function VendorDetailPage() {
               ) : (
                 <div className="flex flex-wrap items-center gap-2">
                   <SelectCombobox
-                    className="h-8 rounded border border-gray-300 px-2 text-xs"
+                    className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
                     value={categoryDraft}
                     onChange={(e) => setCategoryDraft(e.target.value as VendorCategoryValue)}
                   >
@@ -523,7 +523,7 @@ export function VendorDetailPage() {
               value={profileForm.telephone}
               onChange={(event) => setProfileForm((current) => ({ ...current, telephone: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -532,25 +532,25 @@ export function VendorDetailPage() {
               value={profileForm.address}
               onChange={(event) => setProfileForm((current) => ({ ...current, address: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-2xl rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-2xl rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Primary contact</span>
             <div className="grid w-full max-w-2xl grid-cols-1 gap-2 md:grid-cols-2">
-              <input value={profileForm.primaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.primaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.primaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.primaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
             </div>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Secondary contact</span>
             <div className="grid w-full max-w-2xl grid-cols-1 gap-2 md:grid-cols-2">
-              <input value={profileForm.secondaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.secondaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.secondaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.secondaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
             </div>
           </DataPanelRow>
           <DataPanelRow>
@@ -559,7 +559,7 @@ export function VendorDetailPage() {
               value={profileForm.generalEmail}
               onChange={(event) => setProfileForm((current) => ({ ...current, generalEmail: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -568,7 +568,7 @@ export function VendorDetailPage() {
               value={profileForm.accountingContact}
               onChange={(event) => setProfileForm((current) => ({ ...current, accountingContact: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -577,7 +577,7 @@ export function VendorDetailPage() {
               value={profileForm.disputesContact}
               onChange={(event) => setProfileForm((current) => ({ ...current, disputesContact: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -591,7 +591,7 @@ export function VendorDetailPage() {
                 }))
               }
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -605,7 +605,7 @@ export function VendorDetailPage() {
                 }))
               }
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -619,7 +619,7 @@ export function VendorDetailPage() {
                 }))
               }
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -633,7 +633,7 @@ export function VendorDetailPage() {
                 }))
               }
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -649,7 +649,7 @@ export function VendorDetailPage() {
                 }
                 disabled={!profileEditMode}
                 placeholder="Advance rate %"
-                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
               />
               <input
                 value={profileForm.factoring.advanceFee31To60Pct}
@@ -661,7 +661,7 @@ export function VendorDetailPage() {
                 }
                 disabled={!profileEditMode}
                 placeholder="Fee %"
-                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
               />
             </div>
           </DataPanelRow>
@@ -678,7 +678,7 @@ export function VendorDetailPage() {
                 }
                 disabled={!profileEditMode}
                 placeholder="Advance rate %"
-                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
               />
               <input
                 value={profileForm.factoring.advanceFee61To90Pct}
@@ -690,7 +690,7 @@ export function VendorDetailPage() {
                 }
                 disabled={!profileEditMode}
                 placeholder="Fee %"
-                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
               />
             </div>
           </DataPanelRow>
@@ -701,7 +701,7 @@ export function VendorDetailPage() {
               onChange={(event) => setProfileForm((current) => ({ ...current, notes: event.target.value }))}
               disabled={!profileEditMode}
               rows={3}
-              className="w-full max-w-2xl rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-2xl rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -729,7 +729,7 @@ export function VendorDetailPage() {
       {activeTab === "A/P" ? (
         <div className="space-y-2">
           {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
-          <div className="rounded border border-gray-200 bg-white">
+          <div className="rounded-sm border border-gray-200 bg-white">
             <button
               type="button"
               className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50"
@@ -741,7 +741,7 @@ export function VendorDetailPage() {
             {billPayOpen ? (
               <div className="space-y-3 border-t border-gray-100 p-3 text-xs">
                 {vendorPaymentBackendPending ? (
-                  <div className="rounded border border-amber-200 bg-amber-50 p-2 text-amber-950">
+                  <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-amber-950">
                     Backend pending — file <strong>P6-T11204</strong> for vendor bill payment APIs.{" "}
                     <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
                       Retry
@@ -751,7 +751,7 @@ export function VendorDetailPage() {
                 <div className="grid gap-2 md:grid-cols-2">
                   <label className="block">
                     Payment date
-                    <DatePicker className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={billPayDate} onChange={setBillPayDate} />
+                    <DatePicker className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={billPayDate} onChange={setBillPayDate} />
                   </label>
                   <label className="block">
                     Amount (USD)
@@ -760,7 +760,7 @@ export function VendorDetailPage() {
                   </label>
                   <label className="block">
                     Method
-                    <SelectCombobox className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={billPayMethod} onChange={(e) => setBillPayMethod(e.target.value)}>
+                    <SelectCombobox className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={billPayMethod} onChange={(e) => setBillPayMethod(e.target.value)}>
                       <option value="ach">ACH</option>
                       <option value="check">Check</option>
                       <option value="wire">Wire</option>
@@ -770,12 +770,12 @@ export function VendorDetailPage() {
                   </label>
                   <label className="block">
                     Reference
-                    <input className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={billPayRef} onChange={(e) => setBillPayRef(e.target.value)} />
+                    <input className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={billPayRef} onChange={(e) => setBillPayRef(e.target.value)} />
                   </label>
                 </div>
                 <label className="block">
                   Memo
-                  <textarea className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" rows={2} value={billPayMemo} onChange={(e) => setBillPayMemo(e.target.value)} />
+                  <textarea className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" rows={2} value={billPayMemo} onChange={(e) => setBillPayMemo(e.target.value)} />
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -805,7 +805,7 @@ export function VendorDetailPage() {
                   />
                   Auto-match oldest open bills first
                 </label>
-                <div className="rounded border border-gray-100 bg-gray-50 p-2">
+                <div className="rounded-sm border border-gray-100 bg-gray-50 p-2">
                   <div className="font-semibold text-gray-800">Apply to bills</div>
                   <p className="mt-1 text-gray-600">
                     Applying {money.format(vendorBillPayBreakdown.appliedSum / 100)} of {money.format(billPayCents / 100)} payment
@@ -860,7 +860,7 @@ export function VendorDetailPage() {
               </div>
             ) : null}
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Recent bill payments</div>
             {vendorPaymentBackendPending ? (
               <p className="text-sm text-amber-800">
@@ -907,7 +907,7 @@ export function VendorDetailPage() {
           {billsQuery.isLoading ? <p className="text-sm text-gray-500">Loading bills…</p> : null}
           {billsQuery.isError ? <p className="text-sm text-red-600">Could not load bills.</p> : null}
           {billsQuery.isSuccess ? (
-            <div className="overflow-auto rounded border border-gray-200 bg-white">
+            <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-100 bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                   <tr>
@@ -949,7 +949,7 @@ export function VendorDetailPage() {
       ) : null}
 
       {activeTab === "Audit History" ? (
-        <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
           Audit history viewer placeholder. Full drill-down ships in a later phase.
         </div>
       ) : null}

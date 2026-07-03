@@ -677,7 +677,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         style={{ width: "100%" }}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <header className="flex flex-shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#16203a" }}>
+        <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#16203a" }}>
           <div>
             <div className="text-[10px]" style={{ color: "#9aa6ba" }}>
               {isEditMode ? "Dispatch › Edit load" : "Dispatch › Book load"}
@@ -695,7 +695,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             <ModalCloseButton
               title={isEditMode ? "Edit load" : "Book load"}
               onClose={attemptBookLoadClose}
-              className="h-6 w-6 rounded text-sm text-gray-200 hover:bg-[#2e3c5a]"
+              className="h-6 w-6 rounded-sm text-sm text-gray-200 hover:bg-[#2e3c5a]"
             />
           </div>
         </header>
@@ -712,11 +712,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           })}
         >
           {submitErrorMessage ? (
-            <div className="mx-3 mt-2 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
+            <div className="mx-3 mt-2 rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
           ) : null}
 
           {isEditMode ? (
-            <div className="mx-3 mt-2 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
+            <div className="mx-3 mt-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
               Editing the persisted load details. <span className="font-semibold">Commodity, weight, trailer/trip
               type, hazmat and reefer settings</span> aren&apos;t stored for edit yet — they show blank here and
               will <span className="font-semibold">not</span> be changed by saving. Only fields you edit are saved.
@@ -746,7 +746,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                       form.setValue("trip_type", code, { shouldDirty: true });
                       form.clearErrors("trip_type");
                     }}
-                    className="flex h-[46px] flex-1 flex-col justify-center rounded border px-2.5 text-left transition-colors"
+                    className="flex h-[46px] flex-1 flex-col justify-center rounded-sm border px-2.5 text-left transition-colors"
                     style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#cbd5e1", color: "#1f2733" }}
                   >
                     <span className="text-[13.5px] font-bold leading-tight">{icon} {code} · {label}</span>
@@ -760,7 +760,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             ) : watchedTripType === "TR" || watchedTripType === "SB" ? (
               <p className="mt-1 text-[11px] text-gray-600">Part of this unit's tour — follows its most recent Northbound leg (joined automatically).</p>
             ) : null}
-            <p className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[10.5px] text-amber-800">
+            <p className="mt-1 rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-[10.5px] text-amber-800">
               Every load must be classified NB, TR, or SB. NB starts a tour; TR/SB join it; the settlement closes when the SB leg returns to Laredo.
             </p>
           </div>
@@ -786,7 +786,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <textarea
                     value={overrideReason}
                     onChange={(event) => setOverrideReason(event.target.value)}
-                    className="w-full rounded border border-gray-300 px-2 py-1"
+                    className="w-full rounded-sm border border-gray-300 px-2 py-1"
                     rows={3}
                     placeholder="Override reason (min 10 chars)"
                   />
@@ -919,18 +919,18 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Customer WO #
-                      <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                      <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pickup #
-                      <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                      <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Type
-                      <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded border border-gray-300 bg-white text-[11px]">
+                      <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
                         <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#16203a] text-white" : "text-gray-700"}`}>
                           <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
                           Broker
@@ -943,19 +943,19 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Commodity
-                      <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                      <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Weight (lbs)
-                      <input type="number" {...form.register("weight_lbs", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                      <input type="number" {...form.register("weight_lbs", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pieces
-                      <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                      <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
                   </div>
 
-                  <div className="overflow-hidden rounded border border-gray-200">
+                  <div className="overflow-hidden rounded-sm border border-gray-200">
                     <table className="w-full border-collapse text-xs">
                       <tbody>
                         <tr className="border-b border-gray-100">
@@ -1023,7 +1023,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <div data-testid="section-a-extra-rates" className="space-y-1">
                     <p className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
                     {((form.watch("stops") as Array<{ stop_type?: string }> | undefined) ?? []).map((stopRow, i) => (
-                      <div key={i} className="rounded border border-gray-200 p-1">
+                      <div key={i} className="rounded-sm border border-gray-200 p-1">
                         <div className="text-[10px] font-semibold text-gray-600">
                           Stop {i + 1} · {stopRow?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                         </div>
@@ -1043,7 +1043,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                       <div data-testid="section-a-lumper-responsibility" className="space-y-1">
                         <p className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
                         {withLumper.map(({ s, i }) => (
-                          <div key={i} className="grid grid-cols-1 items-end gap-2 rounded border border-gray-200 p-1 md:grid-cols-3">
+                          <div key={i} className="grid grid-cols-1 items-end gap-2 rounded-sm border border-gray-200 p-1 md:grid-cols-3">
                             <div className="text-[10px] font-semibold text-gray-600">
                               Stop {i + 1} · {s?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                             </div>
@@ -1105,7 +1105,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     </button>
                     {showSpecialNotes ? (
                       <div className="border-t border-gray-200 p-3">
-                        <textarea {...form.register("notes")} rows={2} className="w-full rounded border border-gray-300 px-2 py-1 text-xs" />
+                        <textarea {...form.register("notes")} rows={2} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" />
                       </div>
                     ) : null}
                   </div>
@@ -1199,7 +1199,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             </section>
           </div>
 
-          <div className="flex flex-shrink-0 items-center justify-between border-t border-gray-200 bg-white px-3 py-2">
+          <div className="flex shrink-0 items-center justify-between border-t border-gray-200 bg-white px-3 py-2">
             <div className="text-xs text-gray-600">
               Driver bill preview <span className="font-mono font-semibold text-gray-800">{billNumberPreview}</span>{" "}
               <span className="font-mono text-sm font-bold text-gray-900">{money.format((driverBillPreview || 0) / 100)}</span>
@@ -1225,9 +1225,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             </div>
           </div>
           <div className="border-t border-gray-100 px-3 py-1 text-right text-[9px] text-gray-500">
-            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">Esc</kbd> close &nbsp;
-            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">⌘S</kbd> save draft &nbsp;
-            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">⌘↵</kbd> book + dispatch
+            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">Esc</kbd> close &nbsp;
+            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">⌘S</kbd> save draft &nbsp;
+            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">⌘↵</kbd> book + dispatch
           </div>
         </form>
       </div>

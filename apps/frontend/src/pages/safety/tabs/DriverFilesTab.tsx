@@ -6,7 +6,7 @@ export function DriverFilesTab() {
   const [driverId, setDriverId] = useState<string | null>(null);
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-4">
+    <div className="rounded-sm border border-gray-200 bg-white p-4">
       {driverId ? (
         <DriverProfilePage driverId={driverId} onBack={() => setDriverId(null)} />
       ) : (

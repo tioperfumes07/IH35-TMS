@@ -105,16 +105,16 @@ export function FuelReceiptPage() {
   return (
     <div className="space-y-3 text-sm">
       <h1 className="text-base font-semibold">Fuel receipt</h1>
-      {message ? <p className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs">{message}</p> : null}
+      {message ? <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs">{message}</p> : null}
 
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="rounded border px-2 py-1" onClick={() => void startCamera()}>
+        <button type="button" className="rounded-sm border px-2 py-1" onClick={() => void startCamera()}>
           Use camera
         </button>
-        <button type="button" className="rounded border px-2 py-1" onClick={() => stopCamera()}>
+        <button type="button" className="rounded-sm border px-2 py-1" onClick={() => stopCamera()}>
           Stop camera
         </button>
-        <label className="rounded border px-2 py-1">
+        <label className="rounded-sm border px-2 py-1">
           Choose file
           <input
             type="file"
@@ -127,25 +127,25 @@ export function FuelReceiptPage() {
             }}
           />
         </label>
-        <button type="button" className="rounded border px-2 py-1" onClick={() => setRotation((r) => (r + 90) % 360)}>
+        <button type="button" className="rounded-sm border px-2 py-1" onClick={() => setRotation((r) => (r + 90) % 360)}>
           Rotate 90°
         </button>
-        <button type="button" className="rounded border px-2 py-1" onClick={captureToCanvas} disabled={!stream}>
+        <button type="button" className="rounded-sm border px-2 py-1" onClick={captureToCanvas} disabled={!stream}>
           Capture
         </button>
       </div>
 
-      <video ref={videoRef} className={`w-full rounded border ${stream ? "block" : "hidden"}`} playsInline muted />
+      <video ref={videoRef} className={`w-full rounded-sm border ${stream ? "block" : "hidden"}`} playsInline muted />
       <canvas ref={canvasRef} className="hidden" />
-      {previewUrl ? <img src={previewUrl} alt="Receipt preview" className="w-full rounded border" /> : null}
+      {previewUrl ? <img src={previewUrl} alt="Receipt preview" className="w-full rounded-sm border" /> : null}
 
       <label className="block text-xs font-medium text-slate-600">
         Truck (unit) ID
-        <input className="mt-1 w-full rounded border px-2 py-1" value={truckId} onChange={(e) => setTruckId(e.target.value)} />
+        <input className="mt-1 w-full rounded-sm border px-2 py-1" value={truckId} onChange={(e) => setTruckId(e.target.value)} />
       </label>
       <label className="block text-xs font-medium text-slate-600">
         Odometer
-        <input className="mt-1 w-full rounded border px-2 py-1" value={odometer} onChange={(e) => setOdometer(e.target.value)} inputMode="numeric" />
+        <input className="mt-1 w-full rounded-sm border px-2 py-1" value={odometer} onChange={(e) => setOdometer(e.target.value)} inputMode="numeric" />
       </label>
       <label className="block text-xs font-medium text-slate-600">
         Amount (USD)
@@ -154,12 +154,12 @@ export function FuelReceiptPage() {
       </label>
       <label className="block text-xs font-medium text-slate-600">
         Station name
-        <input className="mt-1 w-full rounded border px-2 py-1" value={station} onChange={(e) => setStation(e.target.value)} />
+        <input className="mt-1 w-full rounded-sm border px-2 py-1" value={station} onChange={(e) => setStation(e.target.value)} />
       </label>
 
       <button
         type="button"
-        className="w-full rounded bg-slate-900 py-2 text-white disabled:opacity-50"
+        className="w-full rounded-sm bg-slate-900 py-2 text-white disabled:opacity-50"
         disabled={busy}
         onClick={() => void submit()}
       >

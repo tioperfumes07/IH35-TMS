@@ -59,13 +59,13 @@ export function CatalogIndex() {
       />
 
       {!companyReady ? (
-        <div className="rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           Select an operating company to manage catalog rows.
         </div>
       ) : null}
 
       {groups.map((group) => (
-        <section key={group.domain} className="space-y-2 rounded border border-slate-200 bg-white p-4">
+        <section key={group.domain} className="space-y-2 rounded-sm border border-slate-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-800">{group.label}</h2>
           <ul className="divide-y divide-slate-100">
             {group.catalogs.map((catalog) => (
@@ -76,7 +76,7 @@ export function CatalogIndex() {
                 </div>
                 <Link
                   to={catalog.routePath}
-                  className="rounded border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                 >
                   Open {catalog.displayName}
                 </Link>
@@ -87,7 +87,7 @@ export function CatalogIndex() {
       ))}
 
       {groups.length === 0 ? (
-        <div className="rounded border border-slate-200 bg-white p-4 text-sm text-slate-500">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm text-slate-500">
           No factory catalogs registered yet.
         </div>
       ) : null}

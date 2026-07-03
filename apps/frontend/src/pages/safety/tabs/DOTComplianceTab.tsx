@@ -82,7 +82,7 @@ export function DOTComplianceTab() {
   });
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   const reminders = remindersQ.data ?? [];
@@ -108,19 +108,19 @@ export function DOTComplianceTab() {
     <div className="space-y-4">
       <ExpiryDashboard />
 
-      <div className="rounded border border-gray-200 bg-white p-4">
+      <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Compliance Reminders Panel</h2>
             <p className="mt-1 text-xs text-slate-600">Open reminders generated from DQF, medical cards, and related compliance records.</p>
           </div>
-          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {orderedReminders.length}</span>
+          <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {orderedReminders.length}</span>
         </div>
         {remindersQ.isLoading ? (
           <p className="mt-3 text-xs text-slate-500">Loading reminders...</p>
         ) : null}
         {remindersQ.error ? (
-          <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">Could not load reminders. Try again.</p>
+          <p className="mt-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">Could not load reminders. Try again.</p>
         ) : null}
         <div className="mt-3 overflow-x-auto">
           <table className="min-w-[860px] w-full text-left text-xs">
@@ -143,13 +143,13 @@ export function DOTComplianceTab() {
                   <td className="px-2 py-1">{row.due_date}</td>
                   <td className="px-2 py-1">{row.days_to_expiry}</td>
                   <td className="px-2 py-1">
-                    <span className={`rounded px-2 py-0.5 ${tierClass(row.severity)}`}>{row.severity}</span>
+                    <span className={`rounded-sm px-2 py-0.5 ${tierClass(row.severity)}`}>{row.severity}</span>
                   </td>
                   <td className="px-2 py-1">{sourceLabel(row.source_type)}</td>
                   <td className="px-2 py-1">
                     <button
                       type="button"
-                      className="rounded border border-slate-300 px-2 py-0.5 text-[11px] disabled:opacity-50"
+                      className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] disabled:opacity-50"
                       disabled={acknowledgeMutation.isPending || remindersQ.isLoading}
                       onClick={() => acknowledgeMutation.mutate(row.id)}
                     >
@@ -172,10 +172,10 @@ export function DOTComplianceTab() {
 
       <div className="grid gap-3 md:grid-cols-2">
         {DOT_REFERENCE_CARDS.map((card) => (
-          <article key={card.cfr} className="rounded border border-gray-200 bg-white p-4">
+          <article key={card.cfr} className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-start justify-between gap-2">
               <h3 className="text-sm font-semibold text-slate-900">{card.title}</h3>
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">{card.cfr}</span>
+              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">{card.cfr}</span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-700">{card.summary}</p>
             <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">

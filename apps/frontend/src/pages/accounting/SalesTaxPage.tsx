@@ -89,34 +89,34 @@ export function SalesTaxPage() {
     <AccountingSubNavWrapper title="Sales tax handling" subtitle="Manage sales tax agencies, prepare returns, and track filed/paid states.">
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs text-gray-500">Taxable sales</div>
           <div className="mt-1 text-lg font-semibold text-gray-900">{money(totals.taxable)}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs text-gray-500">Tax collected</div>
           <div className="mt-1 text-lg font-semibold text-gray-900">{money(totals.collected)}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs text-gray-500">Tax owed</div>
           <div className="mt-1 text-lg font-semibold text-gray-900">{money(totals.owed)}</div>
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Create agency</div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <input
             value={agencyName}
             onChange={(event) => setAgencyName(event.target.value)}
             placeholder="Agency name"
-            className="rounded border border-gray-300 px-2 py-1 text-sm"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
           />
           <input
             value={jurisdiction}
             onChange={(event) => setJurisdiction(event.target.value)}
             placeholder="Jurisdiction (optional)"
-            className="rounded border border-gray-300 px-2 py-1 text-sm"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
           />
           <div className="text-xs text-gray-500 md:col-span-1 md:flex md:items-center">Agency links to vendor optional (API supports it).</div>
           <Button
@@ -129,11 +129,11 @@ export function SalesTaxPage() {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Prepare return</div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <select
-            className="rounded border border-gray-300 px-2 py-1 text-sm"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={selectedAgencyId}
             onChange={(event) => setSelectedAgencyId(event.target.value)}
           >
@@ -144,8 +144,8 @@ export function SalesTaxPage() {
               </option>
             ))}
           </select>
-          <DatePicker value={periodStart} onChange={(next) => setPeriodStart(next)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
-          <DatePicker value={periodEnd} onChange={(next) => setPeriodEnd(next)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
+          <DatePicker value={periodStart} onChange={(next) => setPeriodStart(next)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+          <DatePicker value={periodEnd} onChange={(next) => setPeriodEnd(next)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
           <Button
             disabled={!companyId || !selectedAgencyId || !periodStart || !periodEnd}
             loading={prepareReturnMutation.isPending}
@@ -156,7 +156,7 @@ export function SalesTaxPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-gray-600">
             <tr>

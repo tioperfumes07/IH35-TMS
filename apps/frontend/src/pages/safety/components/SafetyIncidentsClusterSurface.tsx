@@ -102,7 +102,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
   return (
     <div className="space-y-3" data-testid={config.pageTestId}>
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-sm font-semibold text-slate-800">{config.title}</div>
           <div className="text-[11px] text-slate-500">{config.subtitle}</div>
@@ -119,7 +119,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs" data-testid={`${config.pageTestId}-table`}>
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>
@@ -154,7 +154,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       </div>
 
       {drawerOpen ? (
-        <div className="rounded border border-gray-200 bg-white p-3" data-testid={`${config.pageTestId}-drawer`}>
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${config.pageTestId}-drawer`}>
           <div className="mb-2 flex items-center justify-between">
             <div className="text-sm font-semibold text-slate-800">{createMode ? config.createLabel : config.detailLabel}</div>
             <button type="button" className="text-xs text-slate-500 underline" onClick={closeDrawer}>
@@ -165,7 +165,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             <label className="block">
               <span className="text-slate-600">Location</span>
               <input
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1"
                 value={String(detail?.location ?? "")}
                 disabled={!createMode}
                 onChange={(e) => setSelected((prev) => ({ ...(prev ?? {}), location: e.target.value }))}
@@ -174,7 +174,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             <label className="block">
               <span className="text-slate-600">Description</span>
               <textarea
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1"
                 rows={3}
                 value={String(detail?.description ?? "")}
                 disabled={!createMode}

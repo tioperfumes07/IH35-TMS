@@ -82,17 +82,17 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-7 w-full items-center justify-between gap-1 rounded border border-gray-300 px-2 text-left text-xs"
+        className="flex h-7 w-full items-center justify-between gap-1 rounded-sm border border-gray-300 px-2 text-left text-xs"
       >
         <span className={value ? "" : "text-gray-400"}>{value || placeholder || "Select date"}</span>
         <Calendar className="h-3.5 w-3.5 text-gray-400" />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-56 rounded border border-gray-300 bg-white p-2 shadow-lg">
+        <div className="absolute z-50 mt-1 w-56 rounded-sm border border-gray-300 bg-white p-2 shadow-lg">
           <div className="mb-1 flex items-center justify-between">
-            <button type="button" className="rounded px-2 hover:bg-gray-100" onClick={prevMonth} aria-label="Previous month">‹</button>
+            <button type="button" className="rounded-sm px-2 hover:bg-gray-100" onClick={prevMonth} aria-label="Previous month">‹</button>
             <span className="text-xs font-semibold">{monthLabel}</span>
-            <button type="button" className="rounded px-2 hover:bg-gray-100" onClick={nextMonth} aria-label="Next month">›</button>
+            <button type="button" className="rounded-sm px-2 hover:bg-gray-100" onClick={nextMonth} aria-label="Next month">›</button>
           </div>
           <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] text-gray-400">
             {DOW.map((d, i) => (

@@ -127,8 +127,8 @@ export function QboStyleHomePage({ auth }: Props) {
           <p className="mt-0.5 text-sm text-gray-500">Here's what's happening with your business today.</p>
         </div>
         <div className="flex gap-2 text-xs text-gray-400">
-          <button type="button" className="rounded px-2 py-1 hover:bg-gray-100">Customize</button>
-          <button type="button" className="rounded px-2 py-1 hover:bg-gray-100">Privacy</button>
+          <button type="button" className="rounded-sm px-2 py-1 hover:bg-gray-100">Customize</button>
+          <button type="button" className="rounded-sm px-2 py-1 hover:bg-gray-100">Privacy</button>
         </div>
       </div>
 
@@ -138,10 +138,10 @@ export function QboStyleHomePage({ auth }: Props) {
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Business feed</h2>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {visibleFeed.map((card) => (
-              <div key={card.id} className="relative rounded border border-gray-200 bg-white p-4 shadow-sm">
+              <div key={card.id} className="relative rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
                 <button
                   type="button"
-                  className="absolute right-2 top-2 rounded p-0.5 text-gray-300 hover:bg-gray-100 hover:text-gray-500"
+                  className="absolute right-2 top-2 rounded-sm p-0.5 text-gray-300 hover:bg-gray-100 hover:text-gray-500"
                   aria-label="Dismiss"
                   onClick={() => setDismissedCards((prev) => new Set([...prev, card.id]))}
                 >
@@ -167,7 +167,7 @@ export function QboStyleHomePage({ auth }: Props) {
               key={a.to}
               type="button"
               onClick={() => navigate(a.to)}
-              className="rounded border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300"
+              className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-xs hover:bg-gray-50 hover:border-gray-300"
             >
               {a.label}
             </button>
@@ -181,13 +181,13 @@ export function QboStyleHomePage({ auth }: Props) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
 
           {/* Bank Accounts */}
-          <div className="rounded border border-gray-200 bg-white p-4 shadow-sm md:col-span-2 xl:col-span-1">
+          <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs md:col-span-2 xl:col-span-1">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bank accounts</p>
               <Link to="/banking" className="text-xs text-slate-700 hover:underline">Go to registers</Link>
             </div>
             {bankTilesQuery.isLoading ? (
-              <div className="h-20 animate-pulse rounded bg-gray-100" />
+              <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(totalBankBalance * 100)}</p>
@@ -199,11 +199,11 @@ export function QboStyleHomePage({ auth }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900">{fmt$(tile.current_balance * 100)}</span>
                         {tile.uncategorized_count > 0 ? (
-                          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                          <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
                             {tile.uncategorized_count} to review
                           </span>
                         ) : (
-                          <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">Reviewed</span>
+                          <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">Reviewed</span>
                         )}
                       </div>
                     </div>
@@ -219,13 +219,13 @@ export function QboStyleHomePage({ auth }: Props) {
           </div>
 
           {/* Profit & Loss */}
-          <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Profit &amp; Loss</p>
               <Link to="/reports" className="text-xs text-slate-700 hover:underline">Analyze →</Link>
             </div>
             {revenueQuery.isLoading ? (
-              <div className="h-20 animate-pulse rounded bg-gray-100" />
+              <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
             ) : (
               <>
                 <div className="flex items-end gap-2">
@@ -253,13 +253,13 @@ export function QboStyleHomePage({ auth }: Props) {
           </div>
 
           {/* Expenses */}
-          <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Expenses</p>
               <Link to="/accounting/expenses" className="text-xs text-slate-700 hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
-              <div className="h-20 animate-pulse rounded bg-gray-100" />
+              <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(apTotal)}</p>
@@ -290,13 +290,13 @@ export function QboStyleHomePage({ auth }: Props) {
           </div>
 
           {/* Invoices / A/R */}
-          <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Invoices</p>
               <Link to="/accounting/invoices" className="text-xs text-slate-700 hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
-              <div className="h-20 animate-pulse rounded bg-gray-100" />
+              <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(arTotal)}</p>
@@ -321,7 +321,7 @@ export function QboStyleHomePage({ auth }: Props) {
           </div>
 
           {/* My Integrations */}
-          <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">My integrations</p>
               <Link to="/accounting/qbo-sync" className="text-xs text-slate-700 hover:underline">View issues →</Link>

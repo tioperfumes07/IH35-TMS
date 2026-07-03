@@ -55,7 +55,7 @@ export function TrailerReeferSection({
 
   if (snapshotQ.isLoading) {
     return (
-      <section className="rounded border border-gray-200 bg-white p-4" data-testid="tp-reefer-a19-slot">
+      <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="tp-reefer-a19-slot">
         <p className="text-xs text-gray-500">Loading reefer hours…</p>
       </section>
     );
@@ -74,15 +74,15 @@ export function TrailerReeferSection({
   };
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4" data-testid="tp-reefer-a19-slot">
+    <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="tp-reefer-a19-slot">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-800">Reefer hours tracking</h2>
         {specs?.pm_status === "due" ? (
-          <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800" data-testid="reefer-pm-due">
+          <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800" data-testid="reefer-pm-due">
             PM due
           </span>
         ) : specs?.pm_status === "near_due" ? (
-          <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">PM near due</span>
+          <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">PM near due</span>
         ) : null}
       </div>
 
@@ -99,7 +99,7 @@ export function TrailerReeferSection({
         />
       </div>
 
-      <div className="mt-4 rounded border border-gray-100 bg-gray-50 p-3">
+      <div className="mt-4 rounded-sm border border-gray-100 bg-gray-50 p-3">
         <h3 className="text-xs font-semibold text-gray-700">Record hours (manual fallback)</h3>
         <div className="mt-2 flex flex-wrap items-end gap-2">
           <label className="text-xs text-gray-600">
@@ -108,7 +108,7 @@ export function TrailerReeferSection({
               type="number"
               min={0}
               step="0.1"
-              className="mt-1 block w-28 rounded border px-2 py-1 text-sm"
+              className="mt-1 block w-28 rounded-sm border px-2 py-1 text-sm"
               value={hoursInput}
               onChange={(e) => setHoursInput(e.target.value)}
               data-testid="reefer-hours-input"
@@ -118,14 +118,14 @@ export function TrailerReeferSection({
             Notes
             <input
               type="text"
-              className="mt-1 block w-48 rounded border px-2 py-1 text-sm"
+              className="mt-1 block w-48 rounded-sm border px-2 py-1 text-sm"
               value={notesInput}
               onChange={(e) => setNotesInput(e.target.value)}
             />
           </label>
           <button
             type="button"
-            className="rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             disabled={!hoursInput || manualMut.isPending}
             onClick={() => manualMut.mutate()}
             data-testid="reefer-hours-record-btn"
@@ -134,7 +134,7 @@ export function TrailerReeferSection({
           </button>
           <button
             type="button"
-            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-800 disabled:opacity-50"
+            className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-800 disabled:opacity-50"
             disabled={specs?.current_hours == null || serviceMut.isPending}
             onClick={markService}
             data-testid="reefer-mark-service-btn"
@@ -177,7 +177,7 @@ export function TrailerReeferSection({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-gray-100 p-2">
+    <div className="rounded-sm border border-gray-100 p-2">
       <div className="text-xs text-gray-500">{label}</div>
       <div className="text-sm font-medium text-gray-900">{value}</div>
     </div>

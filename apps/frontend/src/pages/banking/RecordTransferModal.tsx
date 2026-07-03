@@ -153,7 +153,7 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
       <div className="space-y-3 text-sm">
         <fieldset className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {transferTypeOptions.map((option) => (
-            <label key={option.value} className="flex items-center gap-2 rounded border border-gray-200 px-2 py-1">
+            <label key={option.value} className="flex items-center gap-2 rounded-sm border border-gray-200 px-2 py-1">
               <input
                 type="radio"
                 checked={transferType === option.value}
@@ -169,7 +169,7 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
         </fieldset>
         <label className="block">
           From Account
-          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)}>
             <option value="">Select account</option>
             {fromOptions.map((option) => (
               <option key={`${option.kind}-${option.id}`} value={option.id}>
@@ -180,7 +180,7 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
         </label>
         <label className="block">
           To Account
-          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={toAccountId} onChange={(e) => setToAccountId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={toAccountId} onChange={(e) => setToAccountId(e.target.value)}>
             <option value="">Select account</option>
             {toOptions.map((option) => (
               <option key={`${option.kind}-${option.id}`} value={option.id}>
@@ -197,16 +197,16 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
           </label>
           <label className="block">
             Date
-            <input type="date" className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={transferDate} onChange={(e) => setTransferDate(e.target.value)} />
+            <input type="date" className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={transferDate} onChange={(e) => setTransferDate(e.target.value)} />
           </label>
         </div>
         <label className="block">
           Memo
-          <textarea className="mt-1 min-h-20 w-full rounded border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
+          <textarea className="mt-1 min-h-20 w-full rounded-sm border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
         </label>
         <label className="block">
           Reference Number
-          <input className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
+          <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
         </label>
         {!valid ? <p className="text-xs text-amber-700">Select both accounts, use different accounts, and enter an amount greater than zero.</p> : null}
         <div className="flex justify-end gap-2">

@@ -12,7 +12,7 @@ export function NotificationBell() {
     <div className="relative" data-testid="notification-bell">
       <button
         type="button"
-        className="relative flex h-7 w-7 items-center justify-center rounded border hover:bg-white/10"
+        className="relative flex h-7 w-7 items-center justify-center rounded-sm border hover:bg-white/10"
         style={{ borderColor: colors.sidebarBorder, color: colors.sidebarTextActive }}
         aria-label="Notifications"
         onClick={() => setOpen((current) => !current)}

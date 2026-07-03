@@ -18,9 +18,9 @@ export function TotalOwnershipCostMeter({ ownership }: { ownership: Ownership })
   const pct = total > 0 ? Math.min(100, Math.round((purchase / total) * 100)) : 0;
 
   return (
-    <div className="mb-3 rounded border border-slate-200 bg-slate-50 p-3" data-testid="vp-ownership-meter">
+    <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3" data-testid="vp-ownership-meter">
       <div className="text-xs font-semibold text-slate-700">Total ownership cost</div>
-      <div className="mt-2 flex h-3 overflow-hidden rounded">
+      <div className="mt-2 flex h-3 overflow-hidden rounded-sm">
         <div className="bg-[#1F2A44]" style={{ width: `${pct}%` }} title="Purchase" />
         <div className="bg-amber-400" style={{ width: `${100 - pct}%` }} title="Lifetime ops" />
       </div>

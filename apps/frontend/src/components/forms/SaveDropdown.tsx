@@ -135,7 +135,7 @@ export function SaveDropdown({
   const primaryText = primaryDef?.label ?? primaryLabel;
 
   return (
-    <div ref={wrapRef} className="relative inline-flex rounded border border-[#16A34A]">
+    <div ref={wrapRef} className="relative inline-flex rounded-sm border border-[#16A34A]">
       <Button
         type="button"
         className="rounded-r-none border-r border-green-700"
@@ -160,7 +160,7 @@ export function SaveDropdown({
         <ul
           id={menuId}
           role="menu"
-          className="absolute right-0 top-full z-50 mt-1 min-w-[220px] rounded border border-gray-200 bg-white py-1 text-left text-[13px] shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[220px] rounded-sm border border-gray-200 bg-white py-1 text-left text-[13px] shadow-lg"
         >
           {actionList.map((item) => (
             <li key={item.key} role="none">

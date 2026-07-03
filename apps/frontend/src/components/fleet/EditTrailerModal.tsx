@@ -27,7 +27,7 @@ function str(v: unknown) {
   return v == null ? "" : String(v);
 }
 
-const inputClass = "h-8 w-full rounded border border-gray-300 px-2 text-xs";
+const inputClass = "h-8 w-full rounded-sm border border-gray-300 px-2 text-xs";
 
 export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose, onSaved }: Props) {
   const queryClient = useQueryClient();
@@ -187,7 +187,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
           </FormField>
         </FieldSet>
         <FormField label="Notes" name="notes">
-          <textarea id="notes" className={`${inputClass} min-h-[4rem] py-1`} value={draft.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
+          <textarea id="notes" className={`${inputClass} min-h-16 py-1`} value={draft.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
         </FormField>
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="secondary" onClick={onClose}>

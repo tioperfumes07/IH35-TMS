@@ -74,7 +74,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           <input
             value={form.template_code}
             onChange={(event) => setForm((prev) => ({ ...prev, template_code: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             placeholder="employee_nda"
           />
         </label>
@@ -84,7 +84,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           <input
             value={form.display_name_en}
             onChange={(event) => setForm((prev) => ({ ...prev, display_name_en: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </label>
 
@@ -93,7 +93,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           <input
             value={form.display_name_es}
             onChange={(event) => setForm((prev) => ({ ...prev, display_name_es: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </label>
 
@@ -102,7 +102,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           <input
             value={form.category}
             onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </label>
 
@@ -121,7 +121,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
             value={form.content_html_en}
             onChange={(event) => setForm((prev) => ({ ...prev, content_html_en: event.target.value }))}
             rows={5}
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           />
         </label>
 
@@ -131,7 +131,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
             value={form.content_html_es}
             onChange={(event) => setForm((prev) => ({ ...prev, content_html_es: event.target.value }))}
             rows={5}
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           />
         </label>
 
@@ -141,11 +141,11 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
             value={form.variable_schema_json}
             onChange={(event) => setForm((prev) => ({ ...prev, variable_schema_json: event.target.value }))}
             rows={8}
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 font-mono text-xs"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
           />
         </label>
 
-        {submitError ? <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
+        {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>

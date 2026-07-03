@@ -13,11 +13,11 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retired"] as const;
 
 function statusPillClass(status: string) {
-  if (status === "active") return "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
-  if (status === "approved") return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  if (status === "pending_review") return "rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
-  if (status === "retired") return "rounded bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+  if (status === "active") return "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
+  if (status === "approved") return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+  if (status === "pending_review") return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+  if (status === "retired") return "rounded-sm bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+  return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 export function LegalTemplatesListPage() {
@@ -78,23 +78,23 @@ export function LegalTemplatesListPage() {
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
       <LegalModuleTabs activeTabId="templates" />
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-4">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search code or display name"
-          className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
         />
         <input
           value={category}
           onChange={(event) => setCategory(event.target.value)}
           placeholder="Category"
-          className="h-9 rounded border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
         />
         <SelectCombobox
           value={status}
           onChange={(event) => setStatus(event.target.value as (typeof STATUS_OPTIONS)[number] | "all")}
-          className="h-9 rounded border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
         >
           <option value="all">All statuses</option>
           {STATUS_OPTIONS.map((item) => (
@@ -105,7 +105,7 @@ export function LegalTemplatesListPage() {
         </SelectCombobox>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>

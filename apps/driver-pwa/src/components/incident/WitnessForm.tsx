@@ -54,20 +54,20 @@ export function WitnessForm({
             type="text"
             value={entry.name}
             onChange={(event) => updateWitness(entry.id, { name: event.target.value })}
-            className="h-10 w-full rounded border border-pwa-border bg-[#0d1320] px-2 text-sm text-pwa-text-primary"
+            className="h-10 w-full rounded-sm border border-pwa-border bg-[#0d1320] px-2 text-sm text-pwa-text-primary"
             placeholder={labels.name}
           />
           <input
             type="tel"
             value={entry.phone}
             onChange={(event) => updateWitness(entry.id, { phone: event.target.value })}
-            className="h-10 w-full rounded border border-pwa-border bg-[#0d1320] px-2 text-sm text-pwa-text-primary"
+            className="h-10 w-full rounded-sm border border-pwa-border bg-[#0d1320] px-2 text-sm text-pwa-text-primary"
             placeholder={labels.phone}
           />
           <textarea
             value={entry.statement}
             onChange={(event) => updateWitness(entry.id, { statement: event.target.value })}
-            className="min-h-20 w-full rounded border border-pwa-border bg-[#0d1320] p-2 text-sm text-pwa-text-primary"
+            className="min-h-20 w-full rounded-sm border border-pwa-border bg-[#0d1320] p-2 text-sm text-pwa-text-primary"
             placeholder={labels.statement}
           />
           <button type="button" className="text-xs text-[#fca5a5]" onClick={() => removeWitness(entry.id)}>

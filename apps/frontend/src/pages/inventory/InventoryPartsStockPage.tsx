@@ -83,7 +83,7 @@ export function InventoryPartsStockPage() {
         }
       />
       <InventoryModuleTabs />
-      <div className="rounded border border-gray-200 bg-white">
+      <div className="rounded-sm border border-gray-200 bg-white">
         <ParityTable
           columns={columns}
           rows={rows}

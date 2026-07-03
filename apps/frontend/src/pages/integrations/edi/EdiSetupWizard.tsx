@@ -98,14 +98,14 @@ export function EdiSetupWizard() {
           <div className="space-y-3">
             <label className="block text-sm font-medium">Partner name</label>
             <input
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-sm border px-3 py-2"
               value={partnerName}
               onChange={(e) => setPartnerName(e.target.value)}
               placeholder="CH Robinson, JB Hunt, TQL…"
             />
             <button
               type="button"
-              className="rounded bg-[#1F2A44] px-4 py-2 text-white disabled:opacity-50"
+              className="rounded-sm bg-[#1F2A44] px-4 py-2 text-white disabled:opacity-50"
               disabled={!partnerName.trim()}
               onClick={() => setStep(2)}
             >
@@ -117,11 +117,11 @@ export function EdiSetupWizard() {
         {step === 2 && (
           <div className="space-y-3">
             <label className="block text-sm font-medium">ISA / GS IDs</label>
-            <input className="w-full rounded border px-3 py-2" value={isaId} onChange={(e) => setIsaId(e.target.value)} placeholder="ISA ID" />
-            <input className="w-full rounded border px-3 py-2" value={gsId} onChange={(e) => setGsId(e.target.value)} placeholder="GS ID" />
+            <input className="w-full rounded-sm border px-3 py-2" value={isaId} onChange={(e) => setIsaId(e.target.value)} placeholder="ISA ID" />
+            <input className="w-full rounded-sm border px-3 py-2" value={gsId} onChange={(e) => setGsId(e.target.value)} placeholder="GS ID" />
             <label className="block text-sm font-medium">Connection type</label>
             <select
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-sm border px-3 py-2"
               value={connectionType}
               onChange={(e) => setConnectionType(e.target.value as typeof connectionType)}
             >
@@ -131,18 +131,18 @@ export function EdiSetupWizard() {
               <option value="sftp">SFTP</option>
             </select>
             <input
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-sm border px-3 py-2"
               value={endpoint}
               onChange={(e) => setEndpoint(e.target.value)}
               placeholder={connectionType === "api" ? "API endpoint URL" : "Host"}
             />
             <div className="flex gap-2">
-              <button type="button" className="rounded border px-4 py-2" onClick={() => setStep(1)}>
+              <button type="button" className="rounded-sm border px-4 py-2" onClick={() => setStep(1)}>
                 Back
               </button>
               <button
                 type="button"
-                className="rounded bg-[#1F2A44] px-4 py-2 text-white disabled:opacity-50"
+                className="rounded-sm bg-[#1F2A44] px-4 py-2 text-white disabled:opacity-50"
                 disabled={!isaId.trim() || !gsId.trim() || !endpoint.trim() || saveMutation.isPending}
                 onClick={() => saveMutation.mutate()}
               >
@@ -155,7 +155,7 @@ export function EdiSetupWizard() {
         {step === 3 && (
           <div className="space-y-3">
             <p className="text-sm text-green-700">Partner configured. Test connectivity or add another broker.</p>
-            <ul className="divide-y rounded border">
+            <ul className="divide-y rounded-sm border">
               {(partnersQuery.data ?? []).map((p) => (
                 <li key={p.uuid} className="flex items-center justify-between px-3 py-2 text-sm">
                   <span>
@@ -171,7 +171,7 @@ export function EdiSetupWizard() {
                 </li>
               ))}
             </ul>
-            <button type="button" className="rounded border px-4 py-2" onClick={() => setStep(1)}>
+            <button type="button" className="rounded-sm border px-4 py-2" onClick={() => setStep(1)}>
               Add another partner
             </button>
           </div>

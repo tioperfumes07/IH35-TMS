@@ -36,21 +36,21 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
 
   return (
     <div className="space-y-2 text-xs">
-      <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
         Bill Payment Details
       </div>
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Payment Date">
           <input
             type="date"
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.payment_date ?? "")}
             onChange={(event) => onChange({ ...value, payment_date: event.target.value })}
           />
         </Field>
         <Field label="Payment Method">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.payment_method ?? "")}
             onChange={(event) => onChange({ ...value, payment_method: event.target.value })}
           >
@@ -64,7 +64,7 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
         </Field>
         <Field label="From Account">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.from_account_id ?? "")}
             onChange={(event) => onChange({ ...value, from_account_id: event.target.value })}
           >
@@ -78,33 +78,33 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
         </Field>
         <Field label="Reference">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.reference_number ?? "")}
             onChange={(event) => onChange({ ...value, reference_number: event.target.value })}
           />
         </Field>
         <Field label="Amount (USD)">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.amount_usd ?? "")}
             onChange={(event) => onChange({ ...value, amount_usd: event.target.value })}
           />
         </Field>
         <Field label="Memo">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.memo ?? "")}
             onChange={(event) => onChange({ ...value, memo: event.target.value })}
           />
         </Field>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-2">
+      <div className="rounded-sm border border-gray-200 bg-white p-2">
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-600">Bill selection / apply</div>
         <label className="block">
           <span className="text-[11px] font-semibold text-gray-600">Bill</span>
           <SelectCombobox
-            className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.bill_id ?? "")}
             onChange={(event) => onChange({ ...value, bill_id: event.target.value })}
           >
@@ -134,7 +134,7 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
                   <td className="px-2 py-1 text-red-700">${(openBalanceCents / 100).toFixed(2)}</td>
                   <td className="px-2 py-1">
                     <input
-                      className="h-8 w-24 rounded border border-gray-300 px-2 text-xs"
+                      className="h-8 w-24 rounded-sm border border-gray-300 px-2 text-xs"
                       value={String(value.apply_amount_usd ?? value.amount_usd ?? "")}
                       onChange={(event) => onChange({ ...value, apply_amount_usd: event.target.value })}
                     />

@@ -7,7 +7,7 @@ interface KpiStripProps {
 
 export function KpiStrip({ filters }: KpiStripProps) {
   return (
-    <div className="flex flex-wrap gap-4 rounded border border-gray-200 bg-white p-3 text-sm">
+    <div className="flex flex-wrap gap-4 rounded-sm border border-gray-200 bg-white p-3 text-sm">
       <div className="flex items-center gap-2">
         <span className="text-gray-500">Total Revenue:</span>
         <span className="font-semibold">-</span>

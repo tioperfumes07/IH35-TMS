@@ -75,7 +75,7 @@ export function VendorBalancesPage() {
       <div className="text-xs text-gray-600">Total outstanding: <span className="font-semibold text-red-700">{money(totalOutstanding)}</span></div>
 
       <div className="grid gap-3 lg:grid-cols-3">
-        <section className="rounded border border-gray-200 bg-white">
+        <section className="rounded-sm border border-gray-200 bg-white">
           <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Vendors by balance</div>
           <div className="max-h-[65vh] overflow-auto">
             {balancesQuery.isLoading ? <p className="px-3 py-3 text-sm text-gray-500">Loading vendor balances...</p> : null}
@@ -101,7 +101,7 @@ export function VendorBalancesPage() {
           </div>
         </section>
 
-        <section className="rounded border border-gray-200 bg-white">
+        <section className="rounded-sm border border-gray-200 bg-white">
           <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               {selectedVendor ? `Bills · ${selectedVendor.vendor_name}` : "Bills"}
@@ -151,7 +151,7 @@ export function VendorBalancesPage() {
           </div>
         </section>
 
-        <section className="rounded border border-gray-200 bg-white">
+        <section className="rounded-sm border border-gray-200 bg-white">
           <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment history</div>
           <div className="max-h-[65vh] overflow-auto">
             {!selectedBill ? <p className="px-3 py-3 text-sm text-gray-500">Select a bill to view payments.</p> : null}

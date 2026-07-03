@@ -65,12 +65,12 @@ export function LegalMatterNewPage() {
       {!companyId ? (
         <p className="text-sm text-gray-600">Select an operating company.</p>
       ) : (
-        <div className="mx-auto max-w-3xl space-y-3 rounded border border-gray-200 bg-white p-4">
+        <div className="mx-auto max-w-3xl space-y-3 rounded-sm border border-gray-200 bg-white p-4">
           <div className="grid gap-2 md:grid-cols-2">
             <label className="text-xs text-gray-600">
               Matter number
               <input
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.matter_number}
                 onChange={(e) => setForm((f) => ({ ...f, matter_number: e.target.value }))}
               />
@@ -78,7 +78,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Type
               <SelectCombobox
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
               >
@@ -92,7 +92,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Severity
               <SelectCombobox
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.severity}
                 onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))}
               >
@@ -106,7 +106,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Our role
               <SelectCombobox
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.our_role}
                 onChange={(e) => setForm((f) => ({ ...f, our_role: e.target.value }))}
               >
@@ -120,7 +120,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600 md:col-span-2">
               Opposing party
               <input
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.opposing_party}
                 onChange={(e) => setForm((f) => ({ ...f, opposing_party: e.target.value }))}
               />
@@ -128,7 +128,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Case number
               <input
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.case_number}
                 onChange={(e) => setForm((f) => ({ ...f, case_number: e.target.value }))}
               />
@@ -136,7 +136,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Court
               <input
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.court}
                 onChange={(e) => setForm((f) => ({ ...f, court: e.target.value }))}
               />
@@ -163,7 +163,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Next hearing (date)
               <DatePicker
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.next_hearing_date}
                 onChange={(next) => setForm((f) => ({ ...f, next_hearing_date: next }))}
               />
@@ -171,7 +171,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Statute of limitations (date)
               <DatePicker
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.statute_of_limitations_at}
                 onChange={(next) => setForm((f) => ({ ...f, statute_of_limitations_at: next }))}
               />
@@ -179,7 +179,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600 md:col-span-2">
               Description
               <textarea
-                className="mt-1 min-h-[80px] w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 min-h-[80px] w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               />
@@ -187,7 +187,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600 md:col-span-2">
               Internal notes
               <textarea
-                className="mt-1 min-h-[60px] w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 min-h-[60px] w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.internal_notes}
                 onChange={(e) => setForm((f) => ({ ...f, internal_notes: e.target.value }))}
               />
@@ -195,7 +195,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Attorney name
               <input
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.attorney_name}
                 onChange={(e) => setForm((f) => ({ ...f, attorney_name: e.target.value }))}
               />
@@ -203,7 +203,7 @@ export function LegalMatterNewPage() {
             <label className="text-xs text-gray-600">
               Attorney firm
               <input
-                className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                 value={form.attorney_firm}
                 onChange={(e) => setForm((f) => ({ ...f, attorney_firm: e.target.value }))}
               />

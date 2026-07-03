@@ -65,7 +65,7 @@ export function FactorReconciliationPage() {
         <div className="space-y-2">
           {(candidatesQuery.data ?? []).length === 0 ? <div className="text-xs text-gray-500">No pending statement imports.</div> : null}
           {(candidatesQuery.data ?? []).map((candidate) => (
-            <div key={candidate.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 p-2 text-xs">
+            <div key={candidate.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 p-2 text-xs">
               <div className="space-y-0.5">
                 <div className="font-semibold text-gray-900">
                   {candidate.statement_date} · {candidate.statement_reference}
@@ -127,7 +127,7 @@ export function FactorReconciliationPage() {
                 <span className="font-semibold">Run:</span> {selectedRun.statement_date} | <span className="font-semibold">Status:</span> {selectedRun.status} |{" "}
                 <span className="font-semibold">Mismatches:</span> {mismatchCount}
               </div>
-              <div className="max-h-[320px] overflow-auto rounded border border-gray-200">
+              <div className="max-h-[320px] overflow-auto rounded-sm border border-gray-200">
                 <table className="min-w-full text-left text-xs">
                   <thead className="bg-gray-50">
                     <tr className="text-gray-600">

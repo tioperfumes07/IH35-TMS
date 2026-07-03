@@ -80,7 +80,7 @@ function EventRow({
         {event.status === "accruing" ? (
           <button
             type="button"
-            className="rounded border px-2 py-1 text-xs"
+            className="rounded-sm border px-2 py-1 text-xs"
             disabled={closeM.isPending}
             onClick={() => closeM.mutate()}
           >
@@ -90,7 +90,7 @@ function EventRow({
         {event.status === "closed" ? (
           <button
             type="button"
-            className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700"
+            className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
             disabled={bridgeM.isPending}
             onClick={() => bridgeM.mutate()}
           >
@@ -100,7 +100,7 @@ function EventRow({
         {event.notify_due && !event.customer_notified_at ? (
           <button
             type="button"
-            className="rounded border px-2 py-1 text-xs"
+            className="rounded-sm border px-2 py-1 text-xs"
             disabled={notifyM.isPending}
             onClick={() => notifyM.mutate()}
           >
@@ -139,7 +139,7 @@ export function DetentionBoardPage() {
     queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", companyId] });
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   const events = boardQ.data?.events ?? [];
@@ -153,13 +153,13 @@ export function DetentionBoardPage() {
           <>
             <button
               type="button"
-              className="rounded border px-3 py-1.5 text-sm"
+              className="rounded-sm border px-3 py-1.5 text-sm"
               disabled={syncM.isPending}
               onClick={() => syncM.mutate()}
             >
               Sync from arrivals
             </button>
-            <Link to="/dispatch/alerts" className="rounded border px-3 py-1.5 text-sm">
+            <Link to="/dispatch/alerts" className="rounded-sm border px-3 py-1.5 text-sm">
               Dispatch alerts
             </Link>
           </>
@@ -171,7 +171,7 @@ export function DetentionBoardPage() {
         {boardQ.data?.notify_threshold_minutes ?? 60} billable minutes.
       </p>
 
-      <section className="overflow-x-auto rounded border bg-white">
+      <section className="overflow-x-auto rounded-sm border bg-white">
         <table className="min-w-full text-sm">
           <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>

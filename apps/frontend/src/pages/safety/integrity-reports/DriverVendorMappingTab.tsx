@@ -39,18 +39,18 @@ export function DriverVendorMappingTab() {
 
   return (
     <div className="space-y-3" data-testid="driver-vendor-mapping-tab">
-      <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+      <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
         Driver↔QBO vendor mapping drift detector (CAP-15). Review critical findings before settlement creation.
       </div>
       <button
         type="button"
-        className="rounded border px-3 py-1 text-xs font-semibold"
+        className="rounded-sm border px-3 py-1 text-xs font-semibold"
         disabled={!companyId || scanMutation.isPending}
         onClick={() => scanMutation.mutate()}
       >
         Run scan
       </button>
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <table className="min-w-full text-xs">
         <thead>
           <tr className="bg-gray-50 text-[10px] uppercase">

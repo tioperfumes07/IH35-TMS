@@ -28,7 +28,7 @@ export function Permits({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+      <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
         <div className="font-semibold">Form 2290 due {deadline}</div>
         <div className="mt-1">
           {typeof days === "number" ? `${days} days remaining` : "Annual HVUT filing"} · current status: {status}

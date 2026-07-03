@@ -47,7 +47,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
           data-testid="company-violation-create-btn"
         >
           + Create Company Violation

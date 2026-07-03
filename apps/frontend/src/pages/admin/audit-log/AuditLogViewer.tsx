@@ -124,12 +124,12 @@ export function AuditLogViewer() {
       />
 
       {/* Filters */}
-      <div className="rounded border border-gray-200 bg-white p-4">
+      <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity type
             <input
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
               value={entityType}
               onChange={(e) => setEntityType(e.target.value)}
               placeholder="e.g. driver"
@@ -138,7 +138,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity UUID
             <input
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
               value={entityUuid}
               onChange={(e) => setEntityUuid(e.target.value)}
               placeholder="uuid"
@@ -147,7 +147,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             User UUID
             <input
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
               value={userUuid}
               onChange={(e) => setUserUuid(e.target.value)}
               placeholder="uuid"
@@ -156,7 +156,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Action / event class
             <input
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
               value={action}
               onChange={(e) => setAction(e.target.value)}
               placeholder="e.g. invoice.created"
@@ -165,7 +165,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Severity
             <select
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
             >
@@ -179,7 +179,7 @@ export function AuditLogViewer() {
             From
             <input
               type="datetime-local"
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
               onChange={(e) => setFromDate(e.target.value ? new Date(e.target.value).toISOString() : "")}
             />
           </label>
@@ -187,14 +187,14 @@ export function AuditLogViewer() {
             To
             <input
               type="datetime-local"
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
               onChange={(e) => setToDate(e.target.value ? new Date(e.target.value).toISOString() : "")}
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Search
             <input
-              className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="event class or payload"
@@ -213,7 +213,7 @@ export function AuditLogViewer() {
       </div>
 
       {/* Results table */}
-      <div className="overflow-hidden rounded border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         {query.isLoading && <div className="p-4 text-sm text-gray-500">Loading…</div>}
         {query.isError && (
           <div className="p-4 text-sm text-red-600">Failed to load. Check filters and try again.</div>
@@ -242,7 +242,7 @@ export function AuditLogViewer() {
                   <td className="whitespace-nowrap px-3 py-2 text-gray-700">{fmtDate(row.created_at)}</td>
                   <td className="px-3 py-2 font-mono text-gray-900">{row.event_class}</td>
                   <td className="px-3 py-2">
-                    <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${SEVERITY_BADGE[row.severity] ?? "bg-gray-100 text-gray-700"}`}>
+                    <span className={`inline-block rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${SEVERITY_BADGE[row.severity] ?? "bg-gray-100 text-gray-700"}`}>
                       {row.severity}
                     </span>
                   </td>

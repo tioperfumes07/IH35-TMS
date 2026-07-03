@@ -151,7 +151,7 @@ export function SettlementDetailPage() {
     return (
       <div className="space-y-3">
         <PageHeader title="Settlement Detail" subtitle="Select a settlement from list view" />
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-600">No settlement selected.</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-600">No settlement selected.</div>
       </div>
     );
   }
@@ -201,13 +201,13 @@ export function SettlementDetailPage() {
         onRefresh={() => void debt.refresh()}
       />
       {canOpenDispute ? (
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs">
           <p className="mb-2 font-semibold text-amber-900">Open Dispute</p>
           <div className="grid gap-2 md:grid-cols-3">
             <SelectCombobox
               value={disputeCategory}
               onChange={(event) => setDisputeCategory(event.target.value)}
-              className="rounded border border-amber-300 bg-white px-2 py-1"
+              className="rounded-sm border border-amber-300 bg-white px-2 py-1"
             >
               <option value="missing_pay">missing_pay</option>
               <option value="wrong_deduction">wrong_deduction</option>
@@ -259,7 +259,7 @@ export function SettlementDetailPage() {
           <textarea
             value={disputeDescription}
             onChange={(event) => setDisputeDescription(event.target.value)}
-            className="mt-2 min-h-[80px] w-full rounded border border-amber-300 bg-white px-2 py-1"
+            className="mt-2 min-h-[80px] w-full rounded-sm border border-amber-300 bg-white px-2 py-1"
             placeholder="Describe the settlement issue (minimum 20 characters)."
           />
         </div>
@@ -276,11 +276,11 @@ export function SettlementDetailPage() {
       />
       <PendingAckNotice pendingAckCount={debt.debt?.pending_ack_count ?? 0} />
       {teamSplitQuery.data && Array.isArray((teamSplitQuery.data as Record<string, unknown>).splits) ? (
-        <div className="rounded border border-slate-300 bg-slate-100 p-3 text-xs">
+        <div className="rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs">
           <p className="mb-1 font-semibold text-slate-700">Team Split</p>
           <div className="space-y-1">
             {((teamSplitQuery.data as Record<string, unknown>).splits as Array<Record<string, unknown>>).map((split, index) => (
-              <div key={`${index}-${String(split.driver_id ?? "")}`} className="rounded border border-slate-300 bg-white px-2 py-1">
+              <div key={`${index}-${String(split.driver_id ?? "")}`} className="rounded-sm border border-slate-300 bg-white px-2 py-1">
                 Driver {String(split.driver_id ?? "—")} · Role {String(split.pay_role ?? "—")} ·
                 Share {Number(split.share_pct ?? 0)}% ·
                 Pay ${((Number(split.driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
@@ -337,10 +337,10 @@ export function SettlementDetailPage() {
             }}
           />
           {isFinalSettlement ? (
-            <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+            <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</p>
-                <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{paymentState}</span>
+                <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{paymentState}</span>
               </div>
               <div className="space-y-2">
                 {paymentState === "unpaid" ? (
@@ -350,19 +350,19 @@ export function SettlementDetailPage() {
                         value={manualPaymentMethod}
                         onChange={(event) => setManualPaymentMethod(event.target.value)}
                         placeholder="Payment method (e.g. check)"
-                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       />
                       <input
                         value={manualReference}
                         onChange={(event) => setManualReference(event.target.value)}
                         placeholder="Manual payment reference"
-                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="rounded bg-[#1F2A44] px-2 py-1 text-xs text-white"
+                      className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
                       onClick={() =>
                         void queueSettlementPayment(settlementId)
                           .then(() => {
@@ -376,7 +376,7 @@ export function SettlementDetailPage() {
                     </button>
                     <button
                       type="button"
-                      className="rounded border border-gray-300 px-2 py-1 text-xs"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       onClick={() =>
                         void markSettlementPaidManually(settlementId, {
                           payment_method: manualPaymentMethod,
@@ -401,11 +401,11 @@ export function SettlementDetailPage() {
                       value={bankReference}
                       onChange={(event) => setBankReference(event.target.value)}
                       placeholder="Bank reference"
-                      className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                      className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                     />
                     <button
                       type="button"
-                      className="rounded bg-[#1F2A44] px-2 py-1 text-xs text-white"
+                      className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
                       onClick={() =>
                         void markSettlementSent(settlementId, bankReference || "manual-bank-reference")
                           .then(() => {
@@ -425,7 +425,7 @@ export function SettlementDetailPage() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        className="rounded bg-green-600 px-2 py-1 text-xs text-white"
+                        className="rounded-sm bg-green-600 px-2 py-1 text-xs text-white"
                         onClick={() =>
                           void markSettlementCleared(settlementId)
                             .then(() => {
@@ -442,11 +442,11 @@ export function SettlementDetailPage() {
                       value={bounceReason}
                       onChange={(event) => setBounceReason(event.target.value)}
                       placeholder="Bounce reason"
-                      className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                      className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                     />
                     <button
                       type="button"
-                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-700"
+                      className="rounded-sm border border-red-300 px-2 py-1 text-xs text-red-700"
                       onClick={() =>
                         void markSettlementBounced(settlementId, bounceReason || "Bank return")
                           .then(() => {
@@ -468,19 +468,19 @@ export function SettlementDetailPage() {
                         value={manualPaymentMethod}
                         onChange={(event) => setManualPaymentMethod(event.target.value)}
                         placeholder="Payment method (e.g. check)"
-                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       />
                       <input
                         value={manualReference}
                         onChange={(event) => setManualReference(event.target.value)}
                         placeholder="Manual payment reference"
-                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="rounded bg-[#1F2A44] px-2 py-1 text-xs text-white"
+                      className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
                       onClick={() =>
                         void queueSettlementPayment(settlementId)
                           .then(() => {
@@ -494,7 +494,7 @@ export function SettlementDetailPage() {
                     </button>
                     <button
                       type="button"
-                      className="rounded border border-gray-300 px-2 py-1 text-xs"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       onClick={() =>
                         void markSettlementPaidManually(settlementId, {
                           payment_method: manualPaymentMethod,
@@ -516,7 +516,7 @@ export function SettlementDetailPage() {
                 <div className="space-y-1 border-t border-gray-100 pt-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Events</p>
                   {(paymentEventsQuery.data?.events ?? []).map((event) => (
-                    <div key={event.id} className="rounded border border-gray-100 px-2 py-1 text-xs">
+                    <div key={event.id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs">
                       <p className="font-semibold text-gray-800">{event.event_type}</p>
                       <p className="text-gray-500">{new Date(event.created_at).toLocaleString()}</p>
                     </div>

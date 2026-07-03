@@ -49,7 +49,7 @@ export function DriverHosClocksBlock({
   const dot = hosStatusDot(q.data?.status ?? null);
 
   return (
-    <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5" data-hos-block="book-load">
+    <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5" data-hos-block="book-load">
       <div className="mb-1 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
         <span className={`inline-block h-2 w-2 rounded-full ${dot.cls}`} title={dot.label} />
         {heading}

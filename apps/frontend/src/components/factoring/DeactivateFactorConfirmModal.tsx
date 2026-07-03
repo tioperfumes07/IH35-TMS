@@ -46,7 +46,7 @@ export function DeactivateFactorConfirmModal({ open, onClose, onConfirm, loading
         </ul>
         <label className="block text-xs font-semibold text-gray-700">
           Type DEACTIVATE to confirm
-          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" value={typed} onChange={(event) => setTyped(event.target.value)} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" value={typed} onChange={(event) => setTyped(event.target.value)} />
         </label>
         <div>
           <Button

@@ -15,7 +15,7 @@ export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4"
+      className="fixed inset-0 z-60 flex items-center justify-center bg-black/45 p-4"
       onMouseDown={onCancel}
       role="presentation"
     >

@@ -63,7 +63,7 @@ export function ListViewHeader<T>({
             checked={allPageSelected}
             onChange={onTogglePage}
             aria-label="Select all on this page"
-            className="rounded border-gray-300"
+            className="rounded-sm border-gray-300"
           />
         </th>
         {ordered.map((colId) => {

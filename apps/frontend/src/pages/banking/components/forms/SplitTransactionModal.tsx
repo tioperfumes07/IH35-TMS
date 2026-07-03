@@ -24,7 +24,7 @@ export function SplitTransactionModal({ open, amount, onClose, onSave }: Props) 
         {lines.map((line, idx) => (
           <div key={idx} className="grid grid-cols-[1fr_140px] gap-2">
             <input
-              className="h-8 rounded border border-gray-300 px-2"
+              className="h-8 rounded-sm border border-gray-300 px-2"
               placeholder="Category"
               value={line.category}
               onChange={(event) => {

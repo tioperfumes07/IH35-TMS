@@ -13,7 +13,7 @@ export function PageHelpLink({ className }: Props) {
 
   const label = "Help for this page";
   const baseClass =
-    "inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-slate-600/80 text-slate-200 hover:bg-white/10";
+    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-slate-600/80 text-slate-200 hover:bg-white/10";
   const merged = className ? `${baseClass} ${className}` : baseClass;
 
   return (

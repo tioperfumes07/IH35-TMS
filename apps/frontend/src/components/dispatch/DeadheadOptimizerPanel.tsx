@@ -53,7 +53,7 @@ export function DeadheadOptimizerPanel({
   const suggestions = (suggestionsOverride ?? q.data?.suggestions ?? []).slice(0, 5);
 
   return (
-    <div className="space-y-2 rounded border border-emerald-200 bg-emerald-50/60 p-3" data-testid="deadhead-optimizer-panel">
+    <div className="space-y-2 rounded-sm border border-emerald-200 bg-emerald-50/60 p-3" data-testid="deadhead-optimizer-panel">
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-emerald-900">Next-load deadhead suggestions</p>
         <p className="text-[11px] text-emerald-800/80">Top 5 pending loads ranked by (revenue − deadhead cost) / total miles</p>
@@ -69,7 +69,7 @@ export function DeadheadOptimizerPanel({
         {suggestions.map((row, index) => (
           <li
             key={row.load_uuid}
-            className="rounded border border-emerald-100 bg-white px-2 py-1.5 text-xs text-slate-800"
+            className="rounded-sm border border-emerald-100 bg-white px-2 py-1.5 text-xs text-slate-800"
             data-testid={`deadhead-suggestion-row-${index + 1}`}
           >
             <div className="flex items-center justify-between gap-2 font-semibold">
