@@ -10,6 +10,7 @@ import { listCargoClaimReasons } from "../../../api/catalogs-safety";
 import { listCustomers, listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
 import { Button } from "../../../components/Button";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
 
@@ -31,14 +32,6 @@ function todayISODate(): string {
   return String(companyNow()).slice(0, 10);
 }
 
-function dollarsToCents(input: string): number | null {
-  const trimmed = input.trim();
-  if (trimmed === "") return null;
-  const normalized = trimmed.replace(/[$,\s]/g, "");
-  if (!/^\d+(\.\d{0,2})?$/.test(normalized)) return null;
-  return Math.round(Number(normalized) * 100);
-}
-
 function formatCents(cents: unknown): string {
   const n = typeof cents === "number" ? cents : Number(cents ?? 0);
   if (!Number.isFinite(n)) return "$0.00";
@@ -50,7 +43,7 @@ const emptyForm = {
   loadId: "",
   claimantCustomerId: "",
   claimReasonCode: "",
-  amountDollars: "",
+  amountCents: null as number | null,
   amountUndetermined: false,
   claimFiledAt: "",
   driverId: "",
@@ -154,14 +147,9 @@ export function CargoClaimIntakeSurface({
       setError("Description is required.");
       return;
     }
-    const cents = dollarsToCents(form.amountDollars);
-    if (!form.amountUndetermined) {
-      if (cents === null) {
-        setError('Enter a claimed amount, or check "Amount undetermined" (49 CFR 1005.2 allows a determinable amount).');
-        return;
-      }
-    } else if (form.amountDollars.trim() !== "" && cents === null) {
-      setError("Claimed amount is not a valid dollar figure.");
+    const cents = form.amountCents;
+    if (!form.amountUndetermined && (cents === null || cents <= 0)) {
+      setError('Enter a claimed amount, or check "Amount undetermined" (49 CFR 1005.2 allows a determinable amount).');
       return;
     }
     // 49 CFR 1005.2 requires the claim to identify the shipment. Strongly prompt when no load is linked.
@@ -185,7 +173,7 @@ export function CargoClaimIntakeSurface({
         claimant_customer_id: form.claimantCustomerId || null,
         claim_reason_code: form.claimReasonCode || null,
         claim_filed_at: form.claimFiledAt || null,
-        damage_amount_cents: form.amountUndetermined ? 0 : cents ?? 0,
+        damage_amount_cents: form.amountUndetermined ? 0 : cents ?? 0, // dollars→cents via MoneyInput
         driver_id: form.driverId || null,
         unit_id: form.unitId || null,
         trailer_id: form.trailerId || null,
@@ -308,16 +296,14 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Claimed amount</span>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="$0.00"
-                className={inputClass}
-                data-testid={`${pageTestId}-amount`}
-                value={form.amountDollars}
-                disabled={form.amountUndetermined}
-                onChange={(e) => set({ amountDollars: e.target.value })}
-              />
+              <div className="mt-1" data-testid={`${pageTestId}-amount`}>
+                <MoneyInput
+                  ariaLabel="Claimed amount"
+                  valueCents={form.amountCents}
+                  onChangeCents={(c) => set({ amountCents: c })}
+                  disabled={form.amountUndetermined}
+                />
+              </div>
               <label className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
                 <input
                   type="checkbox"
