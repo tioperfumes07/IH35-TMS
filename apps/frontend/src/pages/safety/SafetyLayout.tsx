@@ -20,6 +20,10 @@ type SafetyUiContextValue = {
   shownDrivers: number;
   totalDrivers: number;
   setDriverCounts: (shown: number, total: number) => void;
+  // SM3: whether the active tab has actually reported counts. The counter line renders only when true,
+  // so tabs that do not feed the bar no longer show a permanent (lying) "0 active · 0 resolved · 0 total".
+  countsReported: boolean;
+  clearDriverCounts: () => void;
 };
 
 const SafetyUiContext = createContext<SafetyUiContextValue | null>(null);
@@ -39,6 +43,7 @@ export function SafetyLayout() {
   const [activityWindow, setActivityWindow] = useState<SafetyActivityWindow>("7d");
   const [shownDrivers, setShownDrivers] = useState(0);
   const [totalDrivers, setTotalDrivers] = useState(0);
+  const [countsReported, setCountsReported] = useState(false);
   const prefsQuery = useQuery({
     queryKey: ["user", "preferences"],
     queryFn: getUserPreferences,
@@ -94,9 +99,16 @@ export function SafetyLayout() {
       setDriverCounts: (shown, total) => {
         setShownDrivers(shown);
         setTotalDrivers(total);
+        setCountsReported(true);
+      },
+      countsReported,
+      clearDriverCounts: () => {
+        setCountsReported(false);
+        setShownDrivers(0);
+        setTotalDrivers(0);
       },
     }),
-    [filter, activityWindow, shownDrivers, totalDrivers]
+    [filter, activityWindow, shownDrivers, totalDrivers, countsReported]
   );
 
   return (
@@ -133,6 +145,7 @@ export function SafetyLayout() {
           onActivityWindowChange={contextValue.setActivityWindow}
           shown={shownDrivers}
           total={totalDrivers}
+          countsReported={contextValue.countsReported}
         />
         <SafetyGroupNav
           groups={SAFETY_GROUPS}

@@ -426,6 +426,23 @@ export function listClearinghouseQueries(companyId: string) {
   ).then((payload) => ({ queries: payload.clearinghouse_queries ?? [] }));
 }
 
+// SM3 — Drug & Alcohol consortium enrollment (GAP-81 safety.da_program_enrollments). Backs the
+// per-driver "D&A pool status" field on the Safety Home driver cards. active_only defaults true on the
+// server, so this returns the currently-enrolled roster; a driver absent from it is not in the pool.
+export type DaEnrollment = {
+  uuid: string;
+  operating_company_id: string;
+  driver_uuid: string;
+  consortium_name: string;
+  enrolled_at: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export function listDaEnrollments(companyId: string) {
+  return apiRequest<{ enrollments: DaEnrollment[] }>(`/api/safety/drug-alcohol/enrollments?${q(companyId)}`);
+}
+
 export function getDriverDrugProgramStatus(driverId: string, companyId: string) {
   return apiRequest<{ driver_id: string; is_blocked: boolean; block_reason: string | null; latest_test: Record<string, unknown> | null }>(
     `/api/v1/safety/drug-program/drivers/${encodeURIComponent(driverId)}/drug-status?${q(companyId)}`
