@@ -431,6 +431,11 @@
     "upload_failed": "Upload failed",
     "sick_doc_required": "Sick leave in this range requires documentation",
     "notice_blocked": "This request does not meet advance notice rules. Adjust your dates.",
+    "balance_title": "Your balance",
+    "balance_year": "Plan year {{year}} — days remaining",
+    "balance_error": "Could not load balance",
+    "balance_none": "No balance on file yet.",
+    "balance_of_total": "{{used}} of {{allocated}} used",
     "leave_type": {
       "vacation": "Vacation",
       "sick": "Sick",

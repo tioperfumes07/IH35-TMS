@@ -431,6 +431,11 @@
     "upload_failed": "Falló la subida",
     "sick_doc_required": "Esta ausencia por enfermedad requiere documentación",
     "notice_blocked": "No cumple el aviso previo del reglamento. Ajuste las fechas.",
+    "balance_title": "Tu saldo",
+    "balance_year": "Año {{year}} — días disponibles",
+    "balance_error": "No se pudo cargar el saldo",
+    "balance_none": "Aún no hay saldo registrado.",
+    "balance_of_total": "{{used}} de {{allocated}} usados",
     "leave_type": {
       "vacation": "Vacaciones",
       "sick": "Enfermedad",
