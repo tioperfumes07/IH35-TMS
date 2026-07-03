@@ -785,9 +785,9 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
-    "@axe-core/cli": "^4.10.2",
+    "@axe-core/cli": "^4.12.1",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/luxon": "^3.7.1",
+    "@types/luxon": "^3.7.2",
     "@types/node": "^22.0.0",
     "@types/opossum": "^8.1.9",
     "@types/pg": "^8.20.0",
@@ -798,7 +798,7 @@
     "exceljs": "4.4.0",
     "husky": "^9.1.7",
     "supertest": "^7.2.2",
-    "tsx": "^4.0.0",
+    "tsx": "^4.22.5",
     "typescript": "^5.0.0",
     "vitest": "^3.0.5"
   }
