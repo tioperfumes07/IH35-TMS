@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { isOpenStatus, summarizePending } from "./ProgramBoardPage";
+import { isOpenStatus, reviewTag, summarizePending } from "./ProgramBoardPage";
+
+// Owner-Batch review tag defaulting (Jorge 2026-07-03): any row without an explicit tag is proceed-on-row;
+// only an explicit "needs-your-preview" opts into the preview-first path.
+describe("reviewTag", () => {
+  it("defaults absent/blank/unknown to proceed-on-row", () => {
+    for (const v of [undefined, "", "  ", "whatever", "PROCEED-ON-ROW"]) {
+      expect(reviewTag(v)).toBe("proceed-on-row");
+    }
+  });
+  it("honors an explicit needs-your-preview (case/space-insensitive)", () => {
+    expect(reviewTag("needs-your-preview")).toBe("needs-your-preview");
+    expect(reviewTag("  Needs-Your-Preview ")).toBe("needs-your-preview");
+  });
+});
 
 // Real reconcile-JSON status vocabulary: PENDING / PENDING (GATED) / NEEDS-VERIFY / OPEN / DONE.
 describe("isOpenStatus", () => {

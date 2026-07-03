@@ -94,9 +94,11 @@ describe("Incidents cluster typed creators (SC-CLUSTER: damage + interchange)", 
     });
     fireEvent.change(screen.getByTestId("damage-reports-page-field-driver_id"), { target: { value: driverId } });
     fireEvent.change(screen.getByTestId("damage-reports-page-field-unit_id"), { target: { value: unitId } });
-    fireEvent.change(screen.getByTestId("damage-reports-page-field-damage_amount_cents"), {
-      target: { value: "1.00" },
-    });
+    // Damage amount is the shared MoneyInput (cents mode) — enter dollars, it parses to integer cents.
+    const amountInput = screen
+      .getByTestId("damage-reports-page-field-damage_amount_cents")
+      .querySelector("input") as HTMLInputElement;
+    fireEvent.change(amountInput, { target: { value: "1.00" } });
 
     const saveBtn = screen.getByTestId("damage-reports-page-save-btn") as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));

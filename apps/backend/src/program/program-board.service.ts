@@ -41,9 +41,36 @@ export type ExtraItem = {
   registered_on: string | null;
   notes?: string;
   track?: "owner-batch" | "dispatch-kit";
+  // Owner-Batch review tag (owner-populated). "proceed-on-row" | "needs-your-preview"; absent → proceed-on-row.
+  review?: string;
 };
 
+// Owner-locked decision surfaced on the board so it isn't buried in a thread.
+export type LockedDecision = { id: string; date_ct: string; decision: string };
+
 export type SequenceStep = { step: number; label: string };
+
+// Merged-PR spine + HOLD-FOR-JORGE inventory — mirror of the master-tracker tabs "01 Merged PRs" and
+// "11 HOLD-FOR-JORGE inventory". These come from the committed reconcile snapshot (AS-OF its run date),
+// NOT a live GitHub feed — the backend runtime has no git/gh access (see LiveMetrics.is_live_pr_feed).
+export type MergedPr = { number: number; title: string; mergedAt: string | null; branch: string | null };
+export type HoldItem = { number: number; title: string; mergedAt: string | null; category: string };
+
+// LiveMetrics = the section the backend TRUTHFULLY recomputes at request time from the snapshot it can
+// read. counts here are re-derived from the blocks array (so they always match the rendered rows) — an
+// honest live derivation, distinct from the snapshot's own cached counts. is_live_pr_feed is FALSE: PR
+// figures reflect the last `reconcile:blocks` run, not the instant. snapshot_age_days makes staleness plain.
+export type LiveMetrics = {
+  computed_at_ct: string;
+  block_total: number;
+  counts: Record<string, number>;
+  financial_count: number;
+  merged_pr_total: number;
+  hold_count: number;
+  snapshot_age_days: number | null;
+  is_live_pr_feed: false;
+  note: string;
+};
 
 export type BoardNote = {
   id: string;
@@ -57,16 +84,30 @@ export type BoardNote = {
 };
 
 export type BoardResponse = {
-  generated_at_ct: string;
+  // HONEST TIMESTAMPS — two distinct fields, never conflated:
+  //   data_as_of_ct  = when the block/task/PR SNAPSHOT was produced (its true age). Snapshot data.
+  //   refreshed_at_ct = live server time when THIS response's live metrics were computed. Live.
+  data_as_of_ct: string | null;
+  refreshed_at_ct: string;
+  generated_at_ct: string; // back-compat alias of refreshed_at_ct (kept so existing callers don't break)
   source_generated_on: string | null;
   counts: Record<string, number>;
+  live: LiveMetrics;
   universe: unknown;
   blocks: ReconBlock[];
   extra: ExtraItem[];
   sequence: SequenceStep[];
   notes: BoardNote[];
+  merged_prs: MergedPr[]; // most-recent slice of the merged-PR spine (see merged_pr_total for the full count)
+  merged_pr_total: number;
+  hold_for_jorge: HoldItem[];
+  locked_decisions: LockedDecision[];
   warnings: string[];
 };
+
+// The API returns only the most-recent slice of the merged-PR spine (the full spine lives in the committed
+// snapshot) so the 60s auto-refresh payload stays small. merged_pr_total carries the true total.
+const MERGED_PR_SLICE = 400;
 
 // ── CT formatting ───────────────────────────────────────────────────────────────────────────────────
 export function formatCt(input: Date | string | null | undefined): string {
@@ -86,6 +127,15 @@ export function formatCt(input: Date | string | null | undefined): string {
   const dayPart = `${get("month")}/${get("day")}/${get("year")}`;
   const timePart = `${get("hour")}:${get("minute")} ${get("dayPeriod")}`;
   return `${dayPart} ${timePart} CT`;
+}
+
+// Whole-days elapsed between an ISO/date string and now (UTC-day granularity) — drives the honest
+// "snapshot is N days old" staleness badge. Returns null if the input is unparseable.
+function daysSince(input: string | null | undefined): number | null {
+  if (!input) return null;
+  const d = new Date(input.length <= 10 ? `${input}T00:00:00Z` : input);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000));
 }
 
 function readRepoJson<T>(rel: string, warnings: string[], label: string): T | null {
@@ -140,9 +190,13 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
 
   const recon = readRepoJson<{
     date?: string;
+    generated_at_iso?: string;
     counts?: Record<string, number>;
     universe?: unknown;
     blocks?: ReconBlock[];
+    merged_prs?: MergedPr[];
+    merged_pr_total?: number;
+    hold_for_jorge?: HoldItem[];
   }>(RECON_REL, warnings, "block reconciliation data");
 
   const extra = readRepoJson<{
@@ -150,6 +204,7 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
     dispatch_kit?: ExtraItem[];
     sequence?: SequenceStep[];
     questions?: Array<Partial<BoardNote> & { created_at?: string }>;
+    locked_decisions?: LockedDecision[];
   }>(EXTRA_REL, warnings, "program board extra");
 
   const dbNotes = await readNotes(client, warnings);
@@ -172,15 +227,57 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
     ...(extra?.dispatch_kit ?? []).map((it) => ({ ...it, track: "dispatch-kit" as const })),
   ];
 
+  // ── HONEST TIMESTAMPS ───────────────────────────────────────────────────────────────────────────
+  // data_as_of_ct  = when the snapshot itself was produced (its precise reconcile-run stamp if present,
+  //                  else its day). This is the TRUE age of the block/task/PR universe below.
+  // refreshed_at_ct = right now, when the backend computed the live section. NEVER present snapshot data
+  //                  as if it were live: these two are rendered with separate labels on the board.
+  const refreshedAt = new Date();
+  const refreshed_at_ct = formatCt(refreshedAt);
+  const snapshotStamp = recon?.generated_at_iso ?? recon?.date ?? null;
+  const data_as_of_ct = snapshotStamp ? formatCt(snapshotStamp) : null;
+
+  // ── LIVE METRICS — recomputed at request time from what the backend can actually read ─────────────
+  const blocks = recon?.blocks ?? [];
+  const liveCounts: Record<string, number> = {};
+  for (const b of blocks) liveCounts[b.status] = (liveCounts[b.status] ?? 0) + 1;
+  const financial_count = blocks.filter((b) => b.fin).length;
+  const mergedAll = recon?.merged_prs ?? [];
+  const holdAll = recon?.hold_for_jorge ?? [];
+  const merged_pr_total = recon?.merged_pr_total ?? mergedAll.length;
+  const snapshot_age_days = daysSince(snapshotStamp);
+
+  const live: LiveMetrics = {
+    computed_at_ct: refreshed_at_ct,
+    block_total: blocks.length,
+    counts: liveCounts,
+    financial_count,
+    merged_pr_total,
+    hold_count: holdAll.length,
+    snapshot_age_days,
+    is_live_pr_feed: false,
+    note:
+      "Counts recomputed live from the snapshot at request time. PR/HOLD figures reflect the last " +
+      "`reconcile:blocks` run (see 'Blocks data as of'), not a live GitHub feed — the backend runtime has " +
+      "no git/gh. Re-run reconcile (or schedule it) to advance the snapshot.",
+  };
+
   return {
-    generated_at_ct: formatCt(new Date()),
+    data_as_of_ct,
+    refreshed_at_ct,
+    generated_at_ct: refreshed_at_ct, // back-compat alias
     source_generated_on: recon?.date ?? null,
     counts: recon?.counts ?? {},
+    live,
     universe: recon?.universe ?? null,
-    blocks: recon?.blocks ?? [],
+    blocks,
     extra: extraItems,
     sequence: extra?.sequence ?? [],
     notes: [...seededQuestions, ...dbNotes],
+    merged_prs: mergedAll.slice(0, MERGED_PR_SLICE),
+    merged_pr_total,
+    hold_for_jorge: holdAll,
+    locked_decisions: extra?.locked_decisions ?? [],
     warnings,
   };
 }

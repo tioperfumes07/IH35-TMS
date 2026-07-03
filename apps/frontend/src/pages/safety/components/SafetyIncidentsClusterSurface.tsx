@@ -12,6 +12,7 @@ import { listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
 import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyToday } from "../../../lib/businessDate";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
@@ -74,7 +75,7 @@ function createDraftIncident(config: IncidentsClusterConfig): DraftState {
     unit_id: "",
     trailer_id: "",
     load_id: "",
-    damage_amount_dollars: "",
+    damage_amount_cents: null,
     interchange_party: "",
   };
 }
@@ -83,12 +84,6 @@ function toIsoAtNoon(dateStr: string): string | undefined {
   if (!dateStr) return undefined;
   const d = new Date(`${dateStr}T12:00:00`);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
-}
-
-function dollarsToCents(dollars: string): number {
-  const n = Number.parseFloat(dollars);
-  if (!Number.isFinite(n) || n < 0) return 0;
-  return Math.round(n * 100);
 }
 
 function formatUsdCents(cents: number): string {
@@ -217,7 +212,10 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       load_id: str(selected.load_id) || null,
     };
     if (has("interchange_party")) payload.interchange_party = str(selected.interchange_party).slice(0, 200) || null;
-    if (has("damage_amount_cents")) payload.damage_amount_cents = dollarsToCents(str(selected.damage_amount_dollars));
+    if (has("damage_amount_cents")) {
+      const cents = selected.damage_amount_cents;
+      payload.damage_amount_cents = typeof cents === "number" && Number.isFinite(cents) && cents > 0 ? cents : 0;
+    }
 
     setSaving(true);
     try {
@@ -483,20 +481,12 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
               <label className="block">
                 <span className="text-slate-600">Estimated damage amount</span>
                 {createMode ? (
-                  <div className="mt-1 flex items-center gap-1">
-                    <span className="text-slate-500">$</span>
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      value={str(selected?.damage_amount_dollars)}
-                      data-testid={`${config.pageTestId}-field-damage_amount_cents`}
-                      onChange={(e) => setField("damage_amount_dollars", e.target.value)}
+                  <div className="mt-1" data-testid={`${config.pageTestId}-field-damage_amount_cents`}>
+                    <MoneyInput
+                      ariaLabel="Estimated damage amount"
+                      valueCents={(selected?.damage_amount_cents as number | null | undefined) ?? null}
+                      onChangeCents={(c) => setField("damage_amount_cents", c)}
                     />
-                    <span className="text-[11px] text-slate-400">
-                      {formatUsdCents(dollarsToCents(str(selected?.damage_amount_dollars)))}
-                    </span>
                   </div>
                 ) : (
                   <div className="mt-1 text-slate-800">

@@ -23,9 +23,31 @@ export type ExtraItem = {
   registered_on: string | null;
   notes?: string;
   track?: "owner-batch" | "dispatch-kit";
+  // Owner-Batch review tag (data-driven; owner-populated). "proceed-on-row" = standard-pattern defect I can
+  // build straight from the row; "needs-your-preview" = judgment-heavy, post a before→after preview first.
+  // Absent → treated as "proceed-on-row".
+  review?: string;
 };
 
 export type SequenceStep = { step: number; label: string };
+
+// Owner-locked decision surfaced so it isn't buried in a thread. Owner-populated in program-board-extra.json.
+export type LockedDecision = { id: string; date_ct: string; decision: string };
+
+export type MergedPr = { number: number; title: string; mergedAt: string | null; branch: string | null };
+export type HoldItem = { number: number; title: string; mergedAt: string | null; category: string };
+
+export type LiveMetrics = {
+  computed_at_ct: string;
+  block_total: number;
+  counts: Record<string, number>;
+  financial_count: number;
+  merged_pr_total: number;
+  hold_count: number;
+  snapshot_age_days: number | null;
+  is_live_pr_feed: false;
+  note: string;
+};
 
 export type BoardNote = {
   id: string;
@@ -39,14 +61,21 @@ export type BoardNote = {
 };
 
 export type ProgramBoard = {
+  data_as_of_ct: string | null;
+  refreshed_at_ct: string;
   generated_at_ct: string;
   source_generated_on: string | null;
   counts: Record<string, number>;
+  live: LiveMetrics;
   universe: unknown;
   blocks: ReconBlock[];
   extra: ExtraItem[];
   sequence: SequenceStep[];
   notes: BoardNote[];
+  merged_prs: MergedPr[];
+  merged_pr_total: number;
+  hold_for_jorge: HoldItem[];
+  locked_decisions: LockedDecision[];
   warnings: string[];
 };
 
