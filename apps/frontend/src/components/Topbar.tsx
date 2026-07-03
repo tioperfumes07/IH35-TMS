@@ -1,4 +1,4 @@
-import { ChevronDown, Menu, Plus, ClipboardList } from "lucide-react";
+import { ChevronDown, Menu, Plus, ClipboardList, LayoutGrid } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -257,6 +257,18 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           >
             <ClipboardList className="h-3 w-3" />
             {t("topbar.tasks", "Tasks")}
+          </button>
+        ) : null}
+        {office ? (
+          <button
+            type="button"
+            aria-label={t("topbar.program", "Program Board")}
+            className="flex h-7 items-center gap-1 rounded-sm border px-2 hover:bg-white/10"
+            style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.75)", fontSize: 12 }}
+            onClick={() => navigate("/program")}
+          >
+            <LayoutGrid className="h-3 w-3" />
+            {t("topbar.program", "Program")}
           </button>
         ) : null}
         {office ? <LocaleSwitcher /> : null}
