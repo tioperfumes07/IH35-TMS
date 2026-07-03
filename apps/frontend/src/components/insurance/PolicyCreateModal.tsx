@@ -12,7 +12,7 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (policyId?: string) => void;
 };
 
 type FormState = {
@@ -184,9 +184,9 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
       }
       return created;
     },
-    onSuccess: () => {
+    onSuccess: (created) => {
       pushToast("Policy created successfully.", "success");
-      onCreated();
+      onCreated(created?.id);
     },
     onError: (error) => {
       if (!(error instanceof ApiError)) {

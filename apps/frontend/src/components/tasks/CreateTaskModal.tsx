@@ -13,7 +13,7 @@ import {
   type TaskType,
 } from "../../api/tasks";
 import { listUsers } from "../../api/identity";
-import { listVendors, listCustomers, listDrivers } from "../../api/mdata";
+import { listVendors, listCustomers, listDrivers, listUnits } from "../../api/mdata";
 import type { IdentityUser } from "../../types/api";
 import { companyToday } from "../../lib/businessDate";
 
@@ -47,6 +47,7 @@ const ENTITY_KINDS: { value: TaskTargetType; label: string }[] = [
   { value: "vendor", label: "Vendor" },
   { value: "customer", label: "Customer" },
   { value: "driver", label: "Driver" },
+  { value: "unit", label: "Unit" },
 ];
 
 function userLabel(u: IdentityUser): string {
@@ -119,6 +120,11 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
     queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
     enabled: open && entityKind === "driver" && Boolean(operatingCompanyId),
   });
+  const unitsQuery = useQuery({
+    queryKey: ["task-entity", "unit", operatingCompanyId],
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200 }),
+    enabled: open && entityKind === "unit" && Boolean(operatingCompanyId),
+  });
 
   const entityOptions = useMemo<{ id: string; label: string }[]>(() => {
     if (entityKind === "vendor") return (vendorsQuery.data?.vendors ?? []).map((v) => ({ id: v.id, label: v.name }));
@@ -128,8 +134,12 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
         id: d.id,
         label: [d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id,
       }));
+    if (entityKind === "unit")
+      return ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>)
+        .filter((u) => Boolean(u.id))
+        .map((u) => ({ id: String(u.id), label: String(u.unit_number ?? u.id) }));
     return [];
-  }, [entityKind, vendorsQuery.data, customersQuery.data, driversQuery.data]);
+  }, [entityKind, vendorsQuery.data, customersQuery.data, driversQuery.data, unitsQuery.data]);
 
   // When a profile is chosen, adopt its category and suggest an alarm from its lead days + due date.
   const applyProfile = (p: TaskType | undefined) => {

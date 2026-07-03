@@ -18,6 +18,7 @@ import {
 } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
+import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
@@ -312,7 +313,9 @@ export function BillsPage() {
             ) : null}
             {rows.map((bill) => {
               const bal = bill.balance_cents ?? Math.max(0, bill.amount_cents - bill.paid_cents);
-              const expand = bill.status === "partial";
+              // Every bill row is expandable (record-level detail incl. its Tasks history); the payment
+              // sub-table only appears for partially-paid bills.
+              const hasPayments = bill.status === "partial";
               const open = expandedId === bill.id;
               return (
                 <Fragment key={bill.id}>
@@ -326,11 +329,9 @@ export function BillsPage() {
                       />
                     </td>
                     <td className="px-3 py-2">
-                      {expand ? (
-                        <button type="button" className="text-gray-700" onClick={() => toggleExpand(bill)} aria-label={open ? "Collapse payments" : "Expand payments"}>
-                          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                        </button>
-                      ) : null}
+                      <button type="button" className="text-gray-700" onClick={() => toggleExpand(bill)} aria-label={open ? "Collapse details" : "Expand details"}>
+                        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </button>
                     </td>
                     <td className="px-3 py-2 font-medium text-gray-900">{bill.vendor_name || bill.vendor_id || "—"}</td>
                     <td className="px-3 py-2">{bill.bill_number || bill.id.slice(0, 8)}</td>
@@ -362,33 +363,36 @@ export function BillsPage() {
                       )}
                     </td>
                   </tr>
-                  {expand && open ? (
+                  {open ? (
                     <tr key={`${bill.id}-sub`} className="bg-gray-50">
-                      <td colSpan={11} className="px-3 py-2">
-                        {paymentsQuery.isLoading && expandedBill?.id === bill.id ? (
-                          <div className="text-xs text-gray-500">Loading payments…</div>
-                        ) : (
-                          <table className="w-full text-[11px]">
-                            <thead>
-                              <tr className="text-left text-gray-600">
-                                <th className="py-1 pr-2">Payment date</th>
-                                <th className="py-1 pr-2 text-right">Amount</th>
-                                <th className="py-1 pr-2">Bank account</th>
-                                <th className="py-1 pr-2">Memo</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(paymentsQuery.data?.payments ?? []).map((p) => (
-                                <tr key={p.id}>
-                                  <td className="py-1 pr-2">{p.payment_date}</td>
-                                  <td className="py-1 pr-2 text-right">{money(p.amount_cents)}</td>
-                                  <td className="py-1 pr-2 font-mono text-[10px]">{p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : "—"}</td>
-                                  <td className="py-1 pr-2 text-gray-700">{p.memo || p.reference_number || "—"}</td>
+                      <td colSpan={11} className="space-y-3 px-3 py-2">
+                        {hasPayments ? (
+                          paymentsQuery.isLoading && expandedBill?.id === bill.id ? (
+                            <div className="text-xs text-gray-500">Loading payments…</div>
+                          ) : (
+                            <table className="w-full text-[11px]">
+                              <thead>
+                                <tr className="text-left text-gray-600">
+                                  <th className="py-1 pr-2">Payment date</th>
+                                  <th className="py-1 pr-2 text-right">Amount</th>
+                                  <th className="py-1 pr-2">Bank account</th>
+                                  <th className="py-1 pr-2">Memo</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )}
+                              </thead>
+                              <tbody>
+                                {(paymentsQuery.data?.payments ?? []).map((p) => (
+                                  <tr key={p.id}>
+                                    <td className="py-1 pr-2">{p.payment_date}</td>
+                                    <td className="py-1 pr-2 text-right">{money(p.amount_cents)}</td>
+                                    <td className="py-1 pr-2 font-mono text-[10px]">{p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : "—"}</td>
+                                    <td className="py-1 pr-2 text-gray-700">{p.memo || p.reference_number || "—"}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )
+                        ) : null}
+                        <TasksTab operatingCompanyId={companyId} targetType="bill" targetId={bill.id} targetLabel={bill.bill_number || bill.id.slice(0, 8)} />
                       </td>
                     </tr>
                   ) : null}

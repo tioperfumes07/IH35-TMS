@@ -12,6 +12,7 @@ import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { UploadZone } from "../../../components/UploadZone";
+import { TaskLinkPicker } from "../../../components/tasks/TaskLinkPicker";
 import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
 import { CreateWOSectionRenderV5Header } from "./CreateWOSectionRenderV5Header";
 import { CreateWOSectionPaymentTiming } from "./CreateWOSectionPaymentTiming";
@@ -215,6 +216,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const { pushToast } = useToast();
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
+  // Transaction-side task completion (TASKS-PLANNER-V2). Set after a WO is created so we can offer a
+  // "Tasks" completion button that links the new WO (role='result') to an open task.
+  const [createdWO, setCreatedWO] = useState<{ uuid: string; display_id?: string } | null>(null);
   // Block 8 gap 1 — vendor-invoice reconcile (the invoice SIDE; the WO side is computed from the lines below).
   // Block 8 — asset-location map: serialized parts placed on the unit during this WO.
   const [serializedParts, setSerializedParts] = useState<
@@ -294,7 +298,17 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     setInvoiceLaborInput("");
     setSuggestionPinned(false);
     setBackendLoadError(null);
+    setCreatedWO(null);
   }, [form, initialType, initialValues, open]);
+
+  // When the modal is closed after a create, propagate onCreated so the parent list refetches.
+  const handleModalClose = () => {
+    if (createdWO) {
+      setCreatedWO(null);
+      onCreated();
+    }
+    onClose();
+  };
 
   const selectedType = form.watch("wo_type");
   const sourceType = form.watch("source_type");
@@ -502,8 +516,15 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       } else {
         pushToast("Work order created", "success");
       }
-      onCreated();
-      onClose();
+      // Offer transaction-side task completion before closing. If we can't resolve the new WO id
+      // (legacy response shape), fall back to the original close-immediately behaviour.
+      const woResult = (response as { wo?: { uuid?: string; display_id?: string } }).wo;
+      if (woResult?.uuid) {
+        setCreatedWO({ uuid: woResult.uuid, display_id: woResult.display_id ?? undefined });
+      } else {
+        onCreated();
+        onClose();
+      }
     } catch (error) {
       if (error instanceof ApiError) {
         const payload = error.data as { error?: string; message?: string } | undefined;
@@ -534,8 +555,31 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
   const classHint = form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`;
 
+  if (createdWO) {
+    return (
+      <Modal open={open} onClose={handleModalClose} title="Work order created" sizePreset="md">
+        <div className="space-y-3 text-[12.5px] text-sidebar-bg">
+          <p className="text-sm text-gray-700">
+            Work order <span className="font-semibold">{createdWO.display_id ?? createdWO.uuid.slice(0, 8)}</span> created.
+          </p>
+          <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
+            <span className="text-xs text-gray-600">Close an open task this work order fulfils:</span>
+            <TaskLinkPicker
+              operatingCompanyId={operatingCompanyId}
+              targetType="work_order"
+              targetId={createdWO.uuid}
+            />
+          </div>
+          <div className="flex items-center justify-end pt-1">
+            <Button type="button" onClick={handleModalClose}>Done</Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title="Create / Edit Work Order" sizePreset="lg" wide>
+    <Modal open={open} onClose={handleModalClose} title="Create / Edit Work Order" sizePreset="lg" wide>
       <div data-testid="create-wo-render-v5" className="space-y-2.5 text-[12.5px] text-sidebar-bg">
         {/* Subbar — WO # · status · opened timestamp (render: .subbar) */}
         <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
