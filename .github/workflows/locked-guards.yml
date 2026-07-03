@@ -342,3 +342,6 @@ jobs:
 
       - name: verify:form-input-density
         run: npm run verify:form-input-density
+
+      - name: verify:money-input-format
+        run: npm run verify:money-input-format

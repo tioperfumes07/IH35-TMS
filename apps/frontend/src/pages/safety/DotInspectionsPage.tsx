@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDotInspection, followUpDotInspectionEvent, getDotInspections, listDotInspectionEvents } from "../../api/safety";
@@ -76,7 +77,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
           <tbody>
             {(query.data?.inspections ?? []).map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.inspection_date ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.inspection_date)}</td>
                 <td className="px-2 py-1">{String(row.inspector_name ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.inspection_level ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.outcome ?? "—")}</td>

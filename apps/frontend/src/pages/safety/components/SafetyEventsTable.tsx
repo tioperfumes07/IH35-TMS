@@ -1,4 +1,5 @@
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
+import { formatDateUS } from "../../../lib/formatDate";
 import { TableSelection, TableSelectionHeader } from "../../../components/bulk/TableSelection";
 import { useToast } from "../../../components/Toast";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
@@ -74,7 +75,7 @@ export function SafetyEventsTable({ rows, onOpenAccident }: Props) {
                 <td className="px-2 py-1">
                   <input type="checkbox" checked={isSelected(String(row.id))} onChange={() => toggle(String(row.id))} aria-label="Select event" />
                 </td>
-                <td className="px-2 py-1">{String(row.event_at ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.event_at)}</td>
                 <td className="px-2 py-1">{String(row.driver_full_name ?? "")}</td>
                 <td className="px-2 py-1">{String(row.unit_display_id ?? "—")}</td>
                 <td className="px-2 py-1"><span className={`rounded-full px-2 py-0.5 ${typePill(type.toLowerCase())}`}>{type || "event"}</span></td>

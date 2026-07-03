@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -113,8 +114,8 @@ export function CSAScoreTab() {
           <tbody>
             {(historyQuery.data?.csa_scores ?? []).map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.period_start ?? "").slice(0, 10)}</td>
-                <td className="px-2 py-1">{String(row.period_end ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.period_start)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.period_end)}</td>
                 <td className="px-2 py-1">{String(row.total_violations ?? "0")}</td>
                 <td className="px-2 py-1">{String(row.total_oos ?? "0")}</td>
                 <td className="px-2 py-1">{String(row.computed_by ?? "-")}</td>

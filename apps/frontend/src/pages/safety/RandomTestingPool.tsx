@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 async function apiGet(path: string) {
@@ -35,7 +36,7 @@ export function RandomTestingPool() {
           {members.map((member) => (
             <li key={String(member.driver_id)} className="flex justify-between border-b border-gray-100 py-1">
               <span>{String(member.driver_id).slice(0, 8)}…</span>
-              <span>{String(member.added_at ?? "").slice(0, 10)}</span>
+              <span>{formatDateUS(member.added_at)}</span>
             </li>
           ))}
           {members.length === 0 ? <li className="text-slate-500">No active CDL drivers in pool.</li> : null}

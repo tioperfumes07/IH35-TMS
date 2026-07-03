@@ -20,7 +20,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
+import { CASH_ADVANCE_MAP_TEST_LOCK_KEY, TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import {
   BANK_FEED_GL_POSTING_FLAG_KEY,
   maybePostBankCategorizationToGl,
@@ -155,6 +155,11 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
+    // FLAKE FIX: this file and its sibling bank-driver-advance.db.test.ts run in PARALLEL forks against
+    // the SAME shared TRANSP company and both mutate the singleton active `cash_advance` mapping. Hold a
+    // session-level advisory lock for this file's whole lifespan (released on db.end() in afterAll) so the
+    // two files' setup/teardown of that shared row can never overlap. Serialization only — no GL behavior.
+    await db.query("SELECT pg_advisory_lock($1::bigint)", [CASH_ADVANCE_MAP_TEST_LOCK_KEY]);
     await bypass(async () => {
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
@@ -173,11 +178,18 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
       await mk(acct.driverAdvance, "CDADV", "Asset");
 
       // Driver-advance receivable mapping (the cede target — BLOCK-6's authoritative account).
+      // FLAKE FIX: companyId is the SHARED TRANSP company and migration 202606130146 may seed an active
+      // cash_advance mapping for it. With ON CONFLICT DO NOTHING this insert no-op'd, leaving the active
+      // mapping pointed at the seeded (or sibling test's) account instead of THIS test's acct.driverAdvance,
+      // so test (5)'s cede resolution (categorizedAccountId === driverAdvanceAccountId) intermittently
+      // missed. DO UPDATE forces the single-active mapping to THIS test's account (matches the sibling
+      // bank-driver-advance.db.test.ts fix). Only these two tests use the cash_advance mapping.
       await db.query(
         `INSERT INTO accounting.expense_category_account_map
            (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
          VALUES ($1::uuid,'cash_advance','cash_advance',$2::uuid,'debit',true)
-         ON CONFLICT DO NOTHING`,
+         ON CONFLICT (operating_company_id, category_kind, category_code, is_active) WHERE is_active = true
+         DO UPDATE SET account_id = EXCLUDED.account_id, posting_side = EXCLUDED.posting_side`,
         [companyId, acct.driverAdvance]
       );
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { formatDateUS } from "../../../lib/formatDate";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { FineConvertConfirmModal } from "./FineConvertConfirmModal";
@@ -80,7 +81,7 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
           <div><strong>Subject:</strong> {String(fine.subject_type ?? "—")}</div>
           <div><strong>Violation:</strong> {String(fine.violation_description ?? "—")}</div>
           <div><strong>Authority:</strong> {String(fine.issued_by_authority ?? "—")}</div>
-          <div><strong>Issued date:</strong> {String(fine.issued_date ?? "").slice(0, 10)}</div>
+          <div><strong>Issued date:</strong> {formatDateUS(fine.issued_date)}</div>
           <div><strong>Amount:</strong> ${(Number(fine.amount_cents ?? 0) / 100).toFixed(2)}</div>
           <div><strong>Converted liability:</strong> {String(fine.converted_to_liability_id ?? "No")}</div>
         </div>
