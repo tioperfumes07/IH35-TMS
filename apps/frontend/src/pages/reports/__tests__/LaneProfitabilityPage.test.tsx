@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ToastProvider } from "../../../components/Toast";
 import { MemoryRouter } from "react-router-dom";
 import { LaneProfitabilityPage } from "../LaneProfitabilityPage";
 
@@ -60,9 +61,11 @@ describe("LaneProfitabilityPage", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <MemoryRouter>
-          <LaneProfitabilityPage />
-        </MemoryRouter>
+        <ToastProvider>
+          <MemoryRouter>
+            <LaneProfitabilityPage />
+          </MemoryRouter>
+        </ToastProvider>
       </QueryClientProvider>
     );
 
