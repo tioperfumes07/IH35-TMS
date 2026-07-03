@@ -15,6 +15,7 @@ expect.extend(jestDomMatchers);
 const createUserMock = vi.fn();
 const listUsersMock = vi.fn();
 const checkReturningDispatcherMock = vi.fn();
+const deactivateUserMock = vi.fn();
 
 vi.mock("../auth/useAuth", () => ({
   useAuth: () => ({
@@ -33,7 +34,7 @@ vi.mock("../api/identity", async () => {
     listUsers: (...args: unknown[]) => listUsersMock(...args),
     checkReturningDispatcher: (...args: unknown[]) => checkReturningDispatcherMock(...args),
     createUser: (...args: unknown[]) => createUserMock(...args),
-    deactivateUser: vi.fn(),
+    deactivateUser: (...args: unknown[]) => deactivateUserMock(...args),
     createIdentityWorkflow: vi.fn(),
   };
 });
@@ -219,5 +220,86 @@ describe("UsersPage — Add User submit", () => {
         expect.anything()
       );
     });
+  });
+});
+
+const activeUser = {
+  id: "u1",
+  name: "Alice Active",
+  email: "alice@example.com",
+  role: "Manager",
+  deactivated_at: null,
+  auth_method: "Password",
+  created_at: "2024-01-01T00:00:00Z",
+  last_login_at: null,
+};
+const activeUser2 = {
+  id: "u2",
+  name: "Carol Active",
+  email: "carol@example.com",
+  role: "Dispatcher",
+  deactivated_at: null,
+  auth_method: "Password",
+  created_at: "2024-01-01T00:00:00Z",
+  last_login_at: null,
+};
+const deactivatedUser = {
+  id: "u3",
+  name: "Bob Gone",
+  email: "bob@example.com",
+  role: "Dispatcher",
+  deactivated_at: "2025-01-01T00:00:00Z",
+  auth_method: "Password",
+  created_at: "2024-01-01T00:00:00Z",
+  last_login_at: null,
+};
+
+describe("UsersPage — Deactivate control", () => {
+  beforeEach(() => {
+    deactivateUserMock.mockReset();
+    checkReturningDispatcherMock.mockResolvedValue({ returning_dispatcher: false });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  it("(g) row Deactivate button fires the endpoint and shows a toast — not a silent no-op", async () => {
+    listUsersMock.mockResolvedValue({ users: [activeUser] });
+    deactivateUserMock.mockResolvedValue({ id: "u1", deactivated_at: "2026-07-03T00:00:00Z", was_already_deactivated: false });
+    const user = userEvent.setup();
+    render(wrap(<UsersPage />));
+    const btn = await screen.findByRole("button", { name: /^Deactivate Alice Active$/ });
+    await user.click(btn);
+    await waitFor(() => expect(deactivateUserMock).toHaveBeenCalledWith("u1", expect.anything()));
+    await waitFor(() => expect(toastMessages().some((m) => /deactivated/i.test(m))).toBe(true));
+  });
+
+  it("(h) deactivate failure surfaces the server reason — never swallowed", async () => {
+    listUsersMock.mockResolvedValue({ users: [activeUser] });
+    deactivateUserMock.mockRejectedValue(new ApiError(400, { error: "cannot_deactivate_last_owner" }));
+    const user = userEvent.setup();
+    render(wrap(<UsersPage />));
+    const btn = await screen.findByRole("button", { name: /^Deactivate Alice Active$/ });
+    await user.click(btn);
+    await waitFor(() => expect(toastMessages().some((m) => /last active owner/i.test(m))).toBe(true));
+  });
+
+  it("(i) already-deactivated user renders a disabled control (no silent action)", async () => {
+    listUsersMock.mockResolvedValue({ users: [deactivatedUser] });
+    render(wrap(<UsersPage />));
+    const btn = await screen.findByRole("button", { name: /^Deactivate Bob Gone$/ });
+    expect(btn).toBeDisabled();
+  });
+
+  it("(j) bulk Deactivate is honestly disabled (no bulk endpoint) — not a silent/fake control", async () => {
+    listUsersMock.mockResolvedValue({ users: [activeUser, activeUser2] });
+    const user = userEvent.setup();
+    render(wrap(<UsersPage />));
+    const checkboxes = await screen.findAllByRole("checkbox", { name: /select user/i });
+    await user.click(checkboxes[0]!);
+    await user.click(checkboxes[1]!);
+    const bulkBtn = await screen.findByRole("button", { name: /^Deactivate$/ });
+    expect(bulkBtn).toBeDisabled();
+    // Disabled dead-control must never fire the per-user endpoint or a fake success toast.
+    expect(deactivateUserMock).not.toHaveBeenCalled();
   });
 });
