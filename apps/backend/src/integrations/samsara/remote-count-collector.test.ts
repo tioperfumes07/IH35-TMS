@@ -35,10 +35,14 @@ vi.mock("./samsara-client.js", () => ({
       this.retryable = retryable;
     }
   },
-  SamsaraClient: vi.fn().mockImplementation(() => ({
-    countDrivers: countDriversMock,
-    countVehicles: countVehiclesMock,
-  })),
+  // vitest 4: `new SamsaraClient()` requires a constructable mock impl
+  // (`function`/`class`), not an arrow function.
+  SamsaraClient: vi.fn().mockImplementation(function () {
+    return {
+      countDrivers: countDriversMock,
+      countVehicles: countVehiclesMock,
+    };
+  }),
 }));
 
 describe("samsara remote-count collector", () => {

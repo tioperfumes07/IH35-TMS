@@ -10,9 +10,13 @@ vi.mock("./samsara-client.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./samsara-client.js")>();
   return {
     ...actual,
-    SamsaraClient: vi.fn().mockImplementation(() => ({
-      listVehicleLocations: listVehicleLocationsMock,
-    })),
+    // vitest 4: `new SamsaraClient()` requires a constructable mock impl
+    // (`function`/`class`), not an arrow function.
+    SamsaraClient: vi.fn().mockImplementation(function () {
+      return {
+        listVehicleLocations: listVehicleLocationsMock,
+      };
+    }),
   };
 });
 
