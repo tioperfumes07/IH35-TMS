@@ -40,13 +40,17 @@ for (const section of ["Name and contact", "Address", "Classification", "Notes"]
   if (modal && !modal.includes(section)) failures.push(`modal_missing_section_${section.replace(/\s+/g, "_")}`);
 }
 
-// V6 — profile edit covers 100% of persisted fields (tax_id + vendor_code were previously not editable) and
-// no read-only FlatFieldGrid summary duplicating the editable rows (box-within-box removed).
+// V6 — profile edit covers 100% of persisted fields (tax_id + vendor_code were previously not editable).
 if (detail && !detail.includes("vendorCode")) failures.push("detail_missing_vendor_code_edit");
 if (detail && !detail.includes("taxId")) failures.push("detail_missing_tax_id_edit");
 if (detail && !detail.includes("vendor_code:")) failures.push("detail_missing_vendor_code_persist");
 if (detail && !detail.includes("tax_id:")) failures.push("detail_missing_tax_id_persist");
-if (detail && detail.includes("FlatFieldGrid")) failures.push("detail_box_within_box_summary_present");
+// V6 — flat presentation: the mandated FlatFieldGrid flat pattern is present (see verify-no-nested-box-pattern),
+// and no nested inner bordered card (box-within-box) is introduced in the profile or the creator modal.
+if (detail && !detail.includes("FlatFieldGrid")) failures.push("detail_missing_flat_field_grid");
+const NESTED_INNER_BOX = /rounded border border-gray-200 bg-gray-50 px-2 py-1\.5/;
+if (detail && NESTED_INNER_BOX.test(detail)) failures.push("detail_nested_inner_box_present");
+if (modal && NESTED_INNER_BOX.test(modal)) failures.push("modal_nested_inner_box_present");
 
 if (failures.length > 0) {
   console.error("verify:vendor-create-profile FAILED");

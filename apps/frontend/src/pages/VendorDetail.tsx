@@ -14,6 +14,7 @@ import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { Button } from "../components/Button";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
+import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
@@ -422,6 +423,18 @@ export function VendorDetailPage() {
 
       {activeTab === "Profile" ? (
         <DataPanel title="Vendor Profile">
+          <FlatFieldGrid
+            columns={3}
+            className="mb-3"
+            fields={[
+              { label: "Telephone", value: profileForm.telephone || vendor.phone || "—" },
+              { label: "Email", value: profileForm.generalEmail || vendor.email || "—" },
+              { label: "Address", value: profileForm.address || vendor.address || "—" },
+              { label: "Primary contact", value: profileForm.primaryContactName || "—" },
+              { label: "Tax ID", value: profileForm.taxId || vendor.tax_id || "—" },
+              { label: "Vendor code", value: profileForm.vendorCode || vendor.vendor_code || "—" },
+            ]}
+          />
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor Name</span>
             <input
