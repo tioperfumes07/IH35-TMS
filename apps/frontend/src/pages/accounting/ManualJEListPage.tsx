@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listJournalEntries, voidJournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
@@ -96,7 +97,7 @@ export function ManualJEListPage() {
           <tbody>
             {(entriesQuery.data?.journal_entries ?? []).map((entry) => (
               <tr key={entry.id} className="border-t border-gray-100">
-                <td className="px-3 py-2">{entry.entry_date?.slice(0, 10)}</td>
+                <td className="px-3 py-2">{formatDateUS(entry.entry_date)}</td>
                 <td className="px-3 py-2">{humanMemo(entry.memo)}</td>
                 <td className="px-3 py-2">{entry.source}</td>
                 <td className="px-3 py-2">{entry.status}</td>

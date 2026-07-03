@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { createWorkOrder, suggestExpenseLoad, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
 import { ApiError } from "../../../api/client";
+import { companyToday } from "../../../lib/businessDate";
 import { Button } from "../../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
@@ -226,7 +227,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       wo_type: initialType,
       source_type: DEFAULT_SOURCE_BY_TYPE[initialType],
       bucket: "in_house",
-      service_date: new Date().toISOString().slice(0, 10),
+      service_date: companyToday(),
       unit_id: "",
       driver_id: "",
       class_hint: "",
@@ -249,7 +250,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       description: "",
       payment_timing: "vendor_invoice",
       bill_terms: "net_30",
-      bill_date: new Date().toISOString().slice(0, 10),
+      bill_date: companyToday(),
       due_date: "",
       roadside_callout_at: "",
       roadside_arrived_at: "",
@@ -264,7 +265,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       repair_cause: "",
       repair_correction: "",
       status: "open",
-      open_date: new Date().toISOString().slice(0, 10),
+      open_date: companyToday(),
       open_time: "",
       close_date: "",
       close_time: "",

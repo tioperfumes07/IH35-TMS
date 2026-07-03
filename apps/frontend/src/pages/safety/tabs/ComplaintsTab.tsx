@@ -1,4 +1,5 @@
 import { Lock } from "lucide-react";
+import { formatDateUS } from "../../../lib/formatDate";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
@@ -115,7 +116,7 @@ export function ComplaintsTab() {
           <tbody>
             {(complaintsQuery.data?.complaints ?? []).map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.filed_at ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.filed_at)}</td>
                 <td className="px-2 py-1">{String(row.complainant_external_name ?? row.complainant_type ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.respondent_driver_id ?? row.respondent_user_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.complaint_type ?? "—")}</td>

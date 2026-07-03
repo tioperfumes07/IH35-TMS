@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createIntegrityAlertRule,
@@ -166,7 +167,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
               <tbody>
                 {rows.map((row) => (
                   <tr key={String(row.id)} className="border-t border-gray-100">
-                    <td className="px-2 py-1">{String(row.created_at ?? "").slice(0, 10)}</td>
+                    <td className="px-2 py-1">{formatDateUS(row.created_at)}</td>
                     <td className="px-2 py-1">{String(row.alert_category ?? "—")}</td>
                     <td className="px-2 py-1">{String(row.severity ?? "—")}</td>
                     <td className="px-2 py-1">{String(row.subject_type ?? "—")}</td>

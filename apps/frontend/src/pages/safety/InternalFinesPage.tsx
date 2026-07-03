@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -69,7 +70,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           <tbody>
             {(query.data?.fines ?? []).map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.imposed_date ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.imposed_date)}</td>
                 <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.reason_code ?? row.reason_name ?? "—")}</td>
                 <td className="px-2 py-1">${Number(row.amount ?? 0).toFixed(2)}</td>
