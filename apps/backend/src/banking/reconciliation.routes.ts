@@ -805,7 +805,12 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           posted_date: rawDate,
           amount_cents: Math.abs(cents),
           description: rawDesc,
-          is_credit: cents < 0,
+          // Direction convention (see bank-feed-gl-posting.service.ts): is_credit=true = money IN,
+          // is_credit=false = money OUT. Single-"amount"-column bank CSVs (Wells Fargo — every DIP
+          // account here) export withdrawals/debits as NEGATIVE and deposits/credits as POSITIVE.
+          // So money-in is cents > 0. The old `cents < 0` inverted it, recording every withdrawal
+          // as an inbound credit (a $500 fuel debit showed as $500 received) and corrupting recon.
+          is_credit: cents > 0,
           notes: "source:manual_upload",
         });
         const insRow = inserted.rows?.[0] as { id?: string } | undefined;
