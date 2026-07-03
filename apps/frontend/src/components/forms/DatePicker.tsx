@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Calendar } from "lucide-react";
+import { formatDateUS, DATE_PLACEHOLDER_US } from "../../lib/formatDate";
 
 // Shared QuickBooks-style date field — click to open a month calendar and pick a day,
 // instead of typing per sub-field (Block P). Value is "YYYY-MM-DD".
@@ -84,7 +85,7 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
         onClick={() => setOpen((o) => !o)}
         className="flex h-7 w-full items-center justify-between gap-1 rounded-sm border border-gray-300 px-2 text-left text-xs"
       >
-        <span className={value ? "" : "text-gray-400"}>{value || placeholder || "Select date"}</span>
+        <span className={value ? "" : "text-gray-400"}>{value ? formatDateUS(value) : placeholder || DATE_PLACEHOLDER_US}</span>
         <Calendar className="h-3.5 w-3.5 text-gray-400" />
       </button>
       {open && (

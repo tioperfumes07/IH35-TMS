@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -216,7 +217,7 @@ export function PolicyDetail() {
                     </Link>
                   </td>
                   <td className="px-2 py-1.5 text-slate-700">{formatMoney(unit.insured_value_cents)}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{unit.created_at.slice(0, 10)}</td>
+                  <td className="px-2 py-1.5 text-slate-700">{formatDateUS(unit.created_at)}</td>
                 </tr>
               ))}
               {policy.units.length === 0 ? (
@@ -276,7 +277,7 @@ export function PolicyDetail() {
             <tbody>
               {coiRows.map((row) => (
                 <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 text-slate-700">{row.requested_at.slice(0, 10)}</td>
+                  <td className="px-2 py-1.5 text-slate-700">{formatDateUS(row.requested_at)}</td>
                   <td className="px-2 py-1.5 text-slate-700">{row.status}</td>
                   <td className="px-2 py-1.5 text-slate-700">{row.document_url ? <a href={row.document_url} className="text-slate-700 underline">View</a> : "-"}</td>
                 </tr>

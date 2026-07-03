@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDateUS } from "../../lib/formatDate";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -11,7 +12,7 @@ import {
   type AccountingPeriod,
 } from "../../api/my-accountant";
 
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString("en-US") : "—");
+const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const titleize = (s: string) => s.replace(/_/g, " ");
 
 const STATUS_COLOR: Record<string, string> = {

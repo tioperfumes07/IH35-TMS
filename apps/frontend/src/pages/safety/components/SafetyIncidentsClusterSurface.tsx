@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSafetyIncident,
@@ -132,7 +133,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <tbody>
             {rows.map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100" data-testid={`${config.pageTestId}-row-${String(row.id)}`}>
-                <td className="px-2 py-1">{String(row.incident_at ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.incident_at)}</td>
                 <td className="px-2 py-1">{String(row.location ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.status ?? "open")}</td>
                 <td className="px-2 py-1">

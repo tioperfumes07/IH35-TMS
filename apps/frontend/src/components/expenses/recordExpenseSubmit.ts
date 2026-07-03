@@ -1,4 +1,5 @@
 import { createExpense } from "../../api/accounting";
+import { companyToday } from "../../lib/businessDate";
 
 export type RecordExpensePaymentMethod = "ach" | "card" | "check" | "wire" | "cash";
 
@@ -81,7 +82,7 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     unitLabel: "",
     paymentAccountId: "",
     paymentAccountLabel: "",
-    billDate: new Date().toISOString().slice(0, 10),
+    billDate: companyToday(),
     amount: null,
     description: "",
     paymentMethod: "",

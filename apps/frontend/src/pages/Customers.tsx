@@ -184,6 +184,13 @@ export function CustomersPage() {
     queryFn: () => listInvoices(companyId),
     enabled: Boolean(companyId),
   });
+  // LIST-EMPTY-1: shared list-state status — children render "No customers found."
+  // only once this settles, never during the roster fetch.
+  const customersStatus = {
+    isPending: customersQuery.isPending,
+    isError: customersQuery.isError,
+    isFetching: customersQuery.isFetching,
+  };
 
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
@@ -326,6 +333,7 @@ export function CustomersPage() {
         <CustomersListView
           companyId={companyId}
           customers={customersSorted}
+          status={customersStatus}
           openByCustomerId={openByCustomerId}
           onSelectCustomer={(customerId) => {
             setSelectedCustomerId(customerId);
@@ -336,6 +344,7 @@ export function CustomersPage() {
       <div className="flex gap-3">
         <CustomerListSidebar
           customers={visibleCustomers}
+          status={customersStatus}
           totalCount={customersSorted.length}
           page={sidebarPage}
           pageSize={sidebarPageSize}

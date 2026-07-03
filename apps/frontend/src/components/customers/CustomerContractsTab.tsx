@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -29,7 +30,7 @@ const CONTRACT_TYPE_LABELS: Record<CustomerContract["contract_type"], string> = 
 
 function formatDate(value: string | null) {
   if (!value) return "—";
-  return new Date(value + "T00:00:00").toLocaleDateString("en-US");
+  return formatDateUS(value);
 }
 
 function formatBytes(bytes: number | null) {
