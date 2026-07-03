@@ -1,6 +1,6 @@
 {
  "date": "2026-07-03",
- "generated_at_iso": "2026-07-03T20:31:19.235Z",
+ "generated_at_iso": "2026-07-03T22:43:28.109Z",
  "counts": {
   "PENDING": 4,
   "PENDING (GATED)": 33,
@@ -5216,6 +5216,48 @@
  ],
  "merged_prs": [
   {
+   "number": 1906,
+   "title": "docs(trackers): design-vs-implementation gap audit (planner/scheduler/fuel/tasks)",
+   "mergedAt": "2026-07-03T22:26:28Z",
+   "branch": "docs/design-gap-audit"
+  },
+  {
+   "number": 1905,
+   "title": "docs(trackers): lost-work audit (773 blocks since May5, 14 truly-lost)",
+   "mergedAt": "2026-07-03T22:20:12Z",
+   "branch": "docs/lost-work-audit"
+  },
+  {
+   "number": 1903,
+   "title": "feat(security): USERS-1 — block fixture/probe emails from creating ACTIVE prod users",
+   "mergedAt": "2026-07-03T22:31:35Z",
+   "branch": "feat/users1-prod-fixture-guard"
+  },
+  {
+   "number": 1901,
+   "title": "chore(tracker): refresh Program Board — live reconcile (DONE=436)",
+   "mergedAt": "2026-07-03T21:38:16Z",
+   "branch": "chore/refresh-board-b86788957"
+  },
+  {
+   "number": 1899,
+   "title": "fix(drivers): by-id GET honors driver_company_authorizations fallback (source-level /drivers/:id 404 fix)",
+   "mergedAt": "2026-07-03T21:30:11Z",
+   "branch": "fix/driver-detail-get-company-scope-backend"
+  },
+  {
+   "number": 1898,
+   "title": "fix(tracker): verified-override mechanism — durable true counts",
+   "mergedAt": "2026-07-03T20:42:32Z",
+   "branch": "fix/reconcile-verified-overrides"
+  },
+  {
+   "number": 1897,
+   "title": "feat(ci): HOLD-migration ledger guard — held migrations can't silently fire on prod",
+   "mergedAt": "2026-07-03T21:25:16Z",
+   "branch": "feat/hold-migration-ledger-guard"
+  },
+  {
    "number": 1895,
    "title": "feat(program-board): honest two-timestamp live board + merged-PR/HOLD/locked-decisions tabs (v2)",
    "mergedAt": "2026-07-03T20:21:15Z",
@@ -5232,6 +5274,12 @@
    "title": "fix(safety): SM1 — surface the existing driver creator on the DQF/driver-files surface",
    "mergedAt": "2026-07-03T19:55:07Z",
    "branch": "feat/sm1-safety-driver-creator"
+  },
+  {
+   "number": 1892,
+   "title": "fix(safety): incidents cluster — typed creators for damage/interchange/cargo on the shared surface",
+   "mergedAt": "2026-07-03T21:42:23Z",
+   "branch": "feat/sc-cluster-typed-creators"
   },
   {
    "number": 1890,
@@ -8766,58 +8814,16 @@
    "title": "docs(auto-08): VERIFY — per-load profitability already built (DONE-verify)",
    "mergedAt": "2026-06-20T20:18:41Z",
    "branch": "docs/auto-08-per-load-profit-verify"
-  },
-  {
-   "number": 1252,
-   "title": "feat(compliance): AUTO-07 — Live Fleet/HOS board rows clickable + Location (already present)",
-   "mergedAt": "2026-06-20T20:22:22Z",
-   "branch": "feat/auto-07-compliance-location-clickable"
-  },
-  {
-   "number": 1251,
-   "title": "feat(compliance): AUTO-06 — HOS Tracker per-driver cycle drawer (verbatim)",
-   "mergedAt": "2026-06-20T20:22:26Z",
-   "branch": "feat/auto-06-hos-cycle-drawer"
-  },
-  {
-   "number": 1250,
-   "title": "feat(fleet): AUTO-05 — Location column on the Fleet roster (live city/state)",
-   "mergedAt": "2026-06-20T20:05:18Z",
-   "branch": "feat/auto-05-fleet-location-column"
-  },
-  {
-   "number": 1249,
-   "title": "fix(dispatch): AUTO-04 — Location column (Jorge-approved locked 15→16, after live_gps)",
-   "mergedAt": "2026-06-20T21:28:07Z",
-   "branch": "feat/auto-04-dispatch-location-column"
-  },
-  {
-   "number": 1248,
-   "title": "docs(auto-03): VERIFY — Create Work Order modal already built (no build needed)",
-   "mergedAt": "2026-06-20T19:56:36Z",
-   "branch": "docs/auto-03-wo-modal-verify"
-  },
-  {
-   "number": 1247,
-   "title": "fix(telematics): AUTO-02 — drop invalid driverAssignments stats type (deployed_with_driver 400) + guard",
-   "mergedAt": "2026-06-20T19:48:06Z",
-   "branch": "fix/auto-02-samsara-stats-driverassignments-400"
-  },
-  {
-   "number": 1246,
-   "title": "feat(drivers): AUTO-01 — roster defaults to Active-only + Active/Inactive/All toggle",
-   "mergedAt": "2026-06-20T19:24:33Z",
-   "branch": "feat/auto-01-roster-active-default"
-  },
-  {
-   "number": 1245,
-   "title": "feat(drivers): per-driver Hide/Show visibility toggle (reversible, no deactivation/delete)",
-   "mergedAt": "2026-06-20T16:25:41Z",
-   "branch": "feat/driver-hide-show-visibility"
   }
  ],
- "merged_pr_total": 1786,
+ "merged_pr_total": 1794,
  "hold_for_jorge": [
+  {
+   "number": 1897,
+   "title": "feat(ci): HOLD-migration ledger guard — held migrations can't silently fire on prod",
+   "mergedAt": "2026-07-03T21:25:16Z",
+   "category": "HOLD"
+  },
   {
    "number": 1895,
    "title": "feat(program-board): honest two-timestamp live board + merged-PR/HOLD/locked-decisions tabs (v2)",

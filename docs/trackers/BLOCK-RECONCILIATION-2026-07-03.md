@@ -2,19 +2,19 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (7680 files) + 1784 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (7694 files) + 1794 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
-- **PENDING**: 3
-- **PENDING (GATED)**: 24
-- **NEEDS-VERIFY**: 22
-- **DONE**: 427
+- **PENDING**: 4
+- **PENDING (GATED)**: 33
+- **NEEDS-VERIFY**: 3
+- **DONE**: 436
 
 ## Universe — why 476 blocks (the "456 vs 294 .block-ready" gap, explained)
 The reconciler spans **5 sources**, de-duped by id — the block count is the union, **not** the `.block-ready` file count.
 - Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count.
 - **`.block-ready/*.json` files on disk:** 314
-- **By source (after de-dup):** .block-ready: 303 · program: 61 · enterprise-29: 29 · accounting: 26 · gap-spec: 57
+- **By source (after de-dup):** program: 61 · .block-ready: 303 · enterprise-29: 29 · accounting: 26 · gap-spec: 57
 
 ## Delta — blocks added since 2026-06-16 (today's work, now counted)
 Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no new blocks were registered.
@@ -42,9 +42,15 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 ## Every block
 | Block | Status | Fin | Tier | PR | Source | Evidence |
 |-------|--------|-----|------|----|--------|----------|
+| AF-8-payroll-bridge | PENDING | 💰 | T1 |  | program | [verified 2026-07-03] TMS->QBO payroll write-bridge unbuilt (deferred) |
 | CASH-FLOW-MODULE | PENDING |  |  |  | .block-ready | no merged PR / no files on main |
 | RECON-00 | PENDING |  |  |  | .block-ready | no merged PR / no files on main |
 | TBL-STANDARD-universal-table-sweep | PENDING |  | T2 |  | program | forward spec — 0 named artifacts on main |
+| AF-1-entity-coa-fix | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] held Tier-1 DO-NOT-RUN migration; prod still global — not applied |
+| AF-2-qbo-drift | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] drift-resolution write feature not built |
+| AF-4-ap-bills-migration | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] ~$1.18M A/P migration not executed (Tier-1 held) |
+| AF-5-stub-catalogs | PENDING (GATED) | 💰 | T2 |  | program | [verified 2026-07-03] partial — catalog buildout ongoing, not confirmably complete |
+| AF-7-money-controls | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] partial built-gated; money flags OFF |
 | BLOCK-01-of-29-TIER1.5-DEPRECIATION | PENDING (GATED) |  | T1.5 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW | PENDING (GATED) |  | T1.5 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-03-of-29-TIER1.5-IFTA | PENDING (GATED) |  | T1.5 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
@@ -52,6 +58,10 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | BLOCK-19-of-29-TIER3-AUDIT-HASH | PENDING (GATED) |  | T3 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-24-of-29-TIER3.5-1099-ANNUAL | PENDING (GATED) |  | T3.5 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-25-of-29-TIER3.5-CONSOLIDATION | PENDING (GATED) |  | T3.5 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
+| CHAIN-04-bill-payment-tieout | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] HOLD design doc only, no feature code |
+| CHAIN-05-bank-feed-live-proof | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] HOLD design doc only, no feature code |
+| CHAIN-06-invoice-ar-chain-proof | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] HOLD design doc only, no feature code |
+| CHAIN-07-settlements-500-fix | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] HOLD design doc only, no 500 fix shipped |
 | CHAIN-08-transp-demo-data-purge | PENDING (GATED) | 💰 | T1 |  | program | forward spec — 0 named artifacts on main |
 | CONN-1-plaid-reconcile-commit | PENDING (GATED) | 💰 | T1 |  | program | forward spec — 0 named artifacts on main |
 | CONN-2-factoring-faro | PENDING (GATED) | 💰 |  |  | program | forward spec — 0 named artifacts on main |
@@ -69,28 +79,9 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | STMT-3-1099-425c-consolidation | PENDING (GATED) | 💰 | T2 |  | program | forward spec — 0 named artifacts on main |
 | USMCA-LAUNCH-carrier | PENDING (GATED) |  | T1 |  | program | GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge. |
 | VOID-VERIFY-void-everywhere | PENDING (GATED) | 💰 | T1 |  | program | forward spec — 0 named artifacts on main |
-| AF-0-rebaseline | NEEDS-VERIFY | 💰 | T3 | #1264 | program | PR #1264 title-match only, unverified |
-| AF-1-entity-coa-fix | NEEDS-VERIFY | 💰 | T1 | #1717 | program | PR #1717 title-match only, unverified |
-| AF-2-qbo-drift | NEEDS-VERIFY | 💰 | T1 | #1717 | program | PR #1717 title-match only, unverified |
-| AF-3-account-registers | NEEDS-VERIFY | 💰 | T2 | #1715 | program | PR #1715 title-match only, unverified |
-| AF-4-ap-bills-migration | NEEDS-VERIFY | 💰 | T1 | #536 | program | PR #536 title-match only, unverified |
-| AF-5-stub-catalogs | NEEDS-VERIFY | 💰 | T2 | #538 | program | PR #538 title-match only, unverified |
-| AF-6-finance-hub | NEEDS-VERIFY | 💰 | T2 | #1656 | program | PR #1656 title-match only, unverified |
-| AF-7-money-controls | NEEDS-VERIFY | 💰 | T1 | #542 | program | PR #542 title-match only, unverified |
-| AF-8-payroll-bridge | NEEDS-VERIFY | 💰 | T1 | #544 | program | PR #544 title-match only, unverified |
-| block-37-qbo-sync-repair-pipeline | NEEDS-VERIFY | 💰 |  | #226 | accounting | PR #226 title-match only, unverified |
-| block-40-accounting-audit-trail | NEEDS-VERIFY | 💰 |  | #227 | accounting | PR #227 title-match only, unverified |
 | C7-ACCT-SUBNAV-CHROME | NEEDS-VERIFY | 💰 |  |  | .block-ready | 9/10 signature file(s) on main — partial, unverified |
-| CHAIN-01-vendor-picker-fix | NEEDS-VERIFY | 💰 | T2 | #1262 | program | PR #1262 title-match only, unverified |
-| CHAIN-02-account-register-params | NEEDS-VERIFY | 💰 |  | #1263 | program | PR #1263 title-match only, unverified |
-| CHAIN-03-create-bill-gl-autopost | NEEDS-VERIFY | 💰 | T1 | #1300 | program | PR #1300 title-match only, unverified |
-| CHAIN-04-bill-payment-tieout | NEEDS-VERIFY | 💰 | T1 | #1745 | program | PR #1745 title-match only, unverified |
-| CHAIN-05-bank-feed-live-proof | NEEDS-VERIFY | 💰 | T1 | #1756 | program | PR #1756 title-match only, unverified |
-| CHAIN-06-invoice-ar-chain-proof | NEEDS-VERIFY | 💰 | T1 | #1743 | program | PR #1743 title-match only, unverified |
-| CHAIN-07-settlements-500-fix | NEEDS-VERIFY | 💰 | T1 | #1655 | program | PR #1655 title-match only, unverified |
 | RECON-01 | NEEDS-VERIFY | 💰 |  | #1831 | .block-ready | PR #1831 title-match only, unverified |
 | RECON-02 | NEEDS-VERIFY |  |  | #1838 | .block-ready | PR #1838 title-match only, unverified |
-| STMT-1-balance-sheet-cash-flow | NEEDS-VERIFY | 💰 | T2 | #1265 | program | PR #1265 title-match only, unverified |
 | A1-AUDIT-SPINE-LINK-COLUMNS | DONE | 💰 |  | #884 | .block-ready | PR #884 merged 2026-06-11 |
 | A2-AUDIT-EMIT-DISPATCH | DONE |  |  | #886 | .block-ready | PR #886 merged 2026-06-12 |
 | A3-AUDIT-EMIT-MAINTENANCE | DONE |  |  | #888 | .block-ready | PR #888 merged 2026-06-12 |
@@ -109,6 +100,9 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | ACCT-QBOPAR-02 | DONE |  |  | #710 | .block-ready | PR #710 merged 2026-06-07 |
 | ACCT-QBOPAR-03 | DONE |  |  | #740 | .block-ready | PR #740 merged 2026-06-08 |
 | ACCT-QBOPAR-04 | DONE |  |  | #815 | .block-ready | PR #815 merged 2026-06-08 |
+| AF-0-rebaseline | DONE | 💰 | T3 | #1264 | program | [verified 2026-07-03] doc block; PR #1264 doc on main |
+| AF-3-account-registers | DONE | 💰 | T2 |  | program | [verified 2026-07-03] account-register routes/service + page live on main |
+| AF-6-finance-hub | DONE | 💰 | T2 |  | program | [verified 2026-07-03] finance-hub routes/service + page on main (flag-gated OFF by design) |
 | BK7-INLINE-CREATE-DRAWERS | DONE |  |  | #866 | .block-ready | all 3 file(s) on main |
 | BLOCK-04-of-29-TIER2-RATE-LIMIT | DONE |  | T2 |  | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | DONE |  | T2 |  | enterprise-29 | all 1 named artifact(s) on main |
@@ -158,6 +152,8 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | block-34-payment-application | DONE | 💰 |  |  | accounting | all 7 named artifact(s) on main |
 | block-35-chart-of-accounts-roles | DONE | 💰 |  |  | accounting | all 6 named artifact(s) on main |
 | block-36-multi-entity-accounting | DONE | 💰 |  |  | accounting | all 9 named artifact(s) on main |
+| block-37-qbo-sync-repair-pipeline | DONE | 💰 |  |  | accounting | [verified 2026-07-03] sync-state-machine + dashboard live |
+| block-40-accounting-audit-trail | DONE | 💰 |  |  | accounting | [verified 2026-07-03] audit-trail routes + page live |
 | block-41-posting-lineage-ui | DONE | 💰 |  |  | accounting | all 5 named artifact(s) on main |
 | block-43-live-db-schema-verification | DONE | 💰 |  |  | accounting | all 2 named artifact(s) on main |
 | BLOCK-C-DEDUCTION-CAP | DONE |  |  | #692 | .block-ready | PR #692 merged 2026-06-07 |
@@ -187,6 +183,9 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | CAP-GPS | DONE |  |  |  | program | all 3 named artifact(s) on main |
 | CAP-PREDICTIVE | DONE |  |  |  | program | all 2 named artifact(s) on main |
 | CAP-SCORING | DONE |  |  |  | program | all 2 named artifact(s) on main |
+| CHAIN-01-vendor-picker-fix | DONE | 💰 | T2 |  | program | [verified 2026-07-03] VendorBillForm states live on main |
+| CHAIN-02-account-register-params | DONE | 💰 |  |  | program | [verified 2026-07-03] AccountRegisterPage error-surface live |
+| CHAIN-03-create-bill-gl-autopost | DONE | 💰 | T1 |  | program | [verified 2026-07-03] bill-gl-draft routes/service on main; posting flag OFF by design |
 | CHORE-MASTER-TRACKER-MD | DONE | 💰 |  | #924 | .block-ready | PR #924 merged 2026-06-13 |
 | CHORE-UNVERIFIED-ROWS-RECONCILE | DONE | 💰 |  | #928 | .block-ready | PR #928 merged 2026-06-13 |
 | CLOSURE-10-MAINT-PARTS-CATALOG | DONE |  |  | #798 | .block-ready | PR #798 merged 2026-06-09 |
@@ -486,6 +485,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | SIDEBAR-DRIVER-HUB | DONE |  |  | #680 | .block-ready | PR #680 merged 2026-06-07 |
 | SIDEBAR-INSURANCE | DONE |  |  | #717 | .block-ready | PR #717 merged 2026-06-08 |
 | SMOKE-TOKEN-AUTH | DONE |  |  | #860 | .block-ready | PR #860 merged 2026-06-10 |
+| STMT-1-balance-sheet-cash-flow | DONE | 💰 | T2 |  | program | [verified 2026-07-03] balance-sheet + cash-flow routes live read-only |
 | STRUCTURAL-MANIFEST-SPLIT | DONE |  |  | #650 | .block-ready | PR #650 merged 2026-06-07 |
 | STRUCTURAL-MIGRATION-TIMESTAMPS | DONE |  |  | #648 | .block-ready | PR #648 merged 2026-06-07 |
 | SWEEP-FIX-17-27 | DONE |  |  | #1798 | .block-ready | PR #1798 merged 2026-07-02 |
