@@ -185,11 +185,10 @@ describe("safety incidents routes (A23-7)", () => {
   });
 
   it("POST rejects claimant from a different company (claimant_company_mismatch)", async () => {
+    // The query pins operating_company_id, so a cross-entity claimant returns NO row → mismatch.
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
-      if (sql.includes("FROM mdata.customers")) {
-        return { rows: [{ operating_company_id: "99999999-9999-4999-8999-999999999999" }], rowCount: 1 };
-      }
+      if (sql.includes("FROM mdata.customers")) return { rows: [], rowCount: 0 };
       return { rows: [], rowCount: 0 };
     });
     const res = await app.inject({

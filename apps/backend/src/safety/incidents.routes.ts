@@ -147,14 +147,14 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
 
     const created = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
       // Entity-independence hard rule: the claimant must belong to the SAME operating company as the
-      // incident row. Never rely on the FK for tenant isolation — check operating_company_id explicitly.
+      // incident row. Never rely on the FK for tenant isolation — pin the entity predicate
+      // (operating_company_id) IN the query, so a cross-entity customer is simply not found → mismatch.
       if (claimantCustomerId !== null) {
-        const custRes = await client.query<{ operating_company_id: string }>(
-          `SELECT operating_company_id FROM mdata.customers WHERE id = $1 LIMIT 1`,
-          [claimantCustomerId]
+        const custRes = await client.query<{ id: string }>(
+          `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [claimantCustomerId, body.data.operating_company_id]
         );
-        const cust = custRes.rows[0];
-        if (!cust || cust.operating_company_id !== body.data.operating_company_id) {
+        if (custRes.rows.length === 0) {
           return { error: "claimant_company_mismatch" as const };
         }
       }
