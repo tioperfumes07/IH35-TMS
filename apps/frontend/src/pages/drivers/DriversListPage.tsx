@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { DriverImportModal } from "./DriverImportModal";
 import { listDriverQualificationItems, type DriverQualificationFileItem } from "../../api/safety";
+import { Button } from "../../components/Button";
+import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -29,6 +31,9 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [showImport, setShowImport] = useState(false);
+  // SM1: single-driver create action on the shared DQF surface (Drivers "Profiles" + Safety "Driver
+  // Files") — reuses the SAME canonical CreateDriverModal as the Drivers module, never a second creator.
+  const [showCreate, setShowCreate] = useState(false);
   const pageSize = 25;
 
   // Server-side pagination (GO-LIVE Block 1A): fetch only the current page + a real total, so the FULL
@@ -155,6 +160,9 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
             >
               Import drivers (CSV)
             </button>
+            <Button type="button" size="sm" onClick={() => setShowCreate(true)} disabled={!companyId}>
+              + Create driver
+            </Button>
           </div>
         }
       />
@@ -166,6 +174,13 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
           onImported={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}
         />
       ) : null}
+
+      <CreateDriverModal
+        open={showCreate}
+        companyId={companyId}
+        onClose={() => setShowCreate(false)}
+        onCreated={onOpenProfile}
+      />
 
       <KpiStrip>
         <KpiCard label="Drivers" number={String(totals.total)} accent={colors.info.strong} />
