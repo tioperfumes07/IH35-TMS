@@ -188,7 +188,7 @@ export function BreakEvenPage() {
       {data && model ? (
         <>
           {model.miles <= 0 ? (
-            <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-slate-700">
+            <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
               No miles recorded for this period ({data.miles.load_count} load{data.miles.load_count === 1 ? "" : "s"}). Per-mile
               figures require miles — enter a miles estimate above to model the break-even rate.
             </div>
