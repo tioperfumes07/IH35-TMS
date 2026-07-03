@@ -2342,27 +2342,19 @@ export function CustomerDetailPage() {
       <CustomerEditModal
         open={editModalOpen}
         customer={customer}
+        operatingCompanyId={selectedCompanyId ?? operatingCompanyId ?? undefined}
         saving={updateCustomerMutation.isPending}
         onClose={() => setEditModalOpen(false)}
-        onSave={async (values: CustomerEditFormValues) => {
-          const parsed = customerSchema.safeParse({ ...hydratedForm, ...values });
-          if (!parsed.success) {
-            pushToast(parsed.error.issues[0]?.message ?? "Please correct the form", "error");
+        onSave={async (payload: CustomerEditFormValues) => {
+          // V6: the modal now emits the FULL profile payload (100% of fields).
+          if (!String(payload.name ?? "").trim()) {
+            pushToast("Customer name is required", "error");
             return;
           }
-          setForm((current) => ({ ...current, ...values }));
           try {
             await updateCustomer(id, {
+              ...payload,
               operating_company_id: selectedCompanyId ?? operatingCompanyId ?? undefined,
-              name: values.name,
-              customer_code: values.customer_code || null,
-              email: values.email || null,
-              phone: values.phone || null,
-              dot_number: values.dot_number || null,
-              mc_number: values.mc_number || null,
-              tax_id: values.tax_id || null,
-              billing_state: values.billing_state || null,
-              status: values.status,
             });
             pushToast("Customer updated", "success");
             setEditModalOpen(false);
