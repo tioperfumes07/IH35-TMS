@@ -165,4 +165,109 @@ describe("safety incidents routes (A23-7)", () => {
     });
     expect(res.statusCode).toBe(400);
   });
+
+  // SC4 — Carmack/49 CFR 1005.2 cargo-claim intake validations.
+  const CUSTOMER_ID = "33333333-3333-4333-8333-333333333333";
+
+  it("POST rejects claim_* fields on a non-cargo_claim incident (400)", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/incidents",
+      payload: {
+        operating_company_id: COMPANY,
+        incident_type: "damage_report",
+        description: "Dent",
+        claim_reason_code: "theft",
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("validation_error");
+  });
+
+  it("POST rejects claimant from a different company (claimant_company_mismatch)", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.customers")) {
+        return { rows: [{ operating_company_id: "99999999-9999-4999-8999-999999999999" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/incidents",
+      payload: {
+        operating_company_id: COMPANY,
+        incident_type: "cargo_claim",
+        description: "Shortage",
+        claimant_customer_id: CUSTOMER_ID,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("claimant_company_mismatch");
+  });
+
+  it("POST rejects an inactive/unknown claim reason (invalid_claim_reason)", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("catalogs.cargo_claim_reasons")) return { rows: [], rowCount: 0 };
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/incidents",
+      payload: {
+        operating_company_id: COMPANY,
+        incident_type: "cargo_claim",
+        description: "Loss",
+        claim_reason_code: "not_a_real_code",
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("invalid_claim_reason");
+  });
+
+  it("POST creates a cargo_claim with claimant + reason + filed date (201)", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.customers")) {
+        return { rows: [{ operating_company_id: COMPANY }], rowCount: 1 };
+      }
+      if (sql.includes("catalogs.cargo_claim_reasons")) {
+        return { rows: [{ "?column?": 1 }], rowCount: 1 };
+      }
+      if (sql.includes("INSERT INTO safety.incidents")) {
+        return {
+          rows: [
+            {
+              id: INCIDENT_ID,
+              incident_type: "cargo_claim",
+              claim_reason_code: "theft",
+              claimant_customer_id: CUSTOMER_ID,
+              claim_filed_at: "2026-06-01",
+            },
+          ],
+          rowCount: 1,
+        };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/incidents",
+      payload: {
+        operating_company_id: COMPANY,
+        incident_type: "cargo_claim",
+        description: "Theft in transit",
+        damage_amount_cents: 125000,
+        claimant_customer_id: CUSTOMER_ID,
+        claim_reason_code: "theft",
+        claim_filed_at: "2026-06-01",
+      },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toMatchObject({
+      incident: { id: INCIDENT_ID, incident_type: "cargo_claim", claim_reason_code: "theft" },
+    });
+    expect(mockAppendCrudAudit).toHaveBeenCalled();
+  });
 });
