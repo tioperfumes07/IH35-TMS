@@ -290,9 +290,9 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
         })}
       >
         {submitErrorMessage ? (
-          <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
+          <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
         ) : null}
-        <div className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
           Live load number: <span className="font-semibold">{form.watch("reserved_load_number") || "Reserving..."}</span>
         </div>
         {gateBanner ? (
@@ -316,7 +316,7 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
                 <textarea
                   value={overrideReason}
                   onChange={(event) => setOverrideReason(event.target.value)}
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                   rows={3}
                   placeholder="Override reason (min 10 chars)"
                 />
@@ -378,7 +378,7 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
           </div>
         ) : null}
 
-        <div className="flex gap-2 rounded border border-gray-200 bg-gray-50 p-1 text-xs">
+        <div className="flex gap-2 rounded-sm border border-gray-200 bg-gray-50 p-1 text-xs">
           {[
             { id: "customer", label: "Customer" },
             { id: "equipment", label: "Equipment" },
@@ -389,7 +389,7 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`rounded px-2 py-1 ${activeTab === tab.id ? "bg-white font-semibold text-gray-900" : "text-gray-600"}`}
+              className={`rounded-sm px-2 py-1 ${activeTab === tab.id ? "bg-white font-semibold text-gray-900" : "text-gray-600"}`}
             >
               {tab.label}
             </button>
@@ -409,7 +409,7 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
         {activeTab === "equipment" ? <BookLoadEquipmentSection register={form.register} /> : null}
         {activeTab === "stops" ? <BookLoadStopsSection control={form.control as never} register={form.register as never} /> : null}
         {activeTab === "v3" ? <BookLoadV3OptionsSection register={form.register as never} /> : null}
-        <div className="rounded border border-gray-200 bg-gray-50 p-2">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
           <label
             className="flex cursor-not-allowed items-center gap-2 text-xs font-semibold text-gray-600"
             title="Pending: presettlement linkage will activate when the lookup service ships in a follow-up block. Load will book normally without auto-linking."
@@ -444,7 +444,7 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
           }}
         />
 
-        <div className="flex items-center justify-between rounded border border-gray-200 bg-white px-3 py-2">
+        <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-xs text-gray-600">
             Driver bill preview: <span className="font-semibold">{money.format((driverBillPreview || 0) / 100)}</span>
           </div>

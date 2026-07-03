@@ -46,7 +46,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
 
   return (
     <div data-testid={testId} className="space-y-2">
-        <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-max border-collapse text-[10px]">
           <thead>
             <tr>
@@ -85,7 +85,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
       </div>
 
       {query.data.pending_requests?.length ? (
-        <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
           <div className="font-semibold">Pending in this window</div>
           <ul className="list-inside list-disc">
             {query.data.pending_requests.map((p) => (

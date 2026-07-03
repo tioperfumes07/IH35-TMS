@@ -110,7 +110,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
   return (
     <section data-testid="compliance-section-hos-viewer">
       {/* Picker + date controls */}
-      <div className="flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white px-3 py-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white px-3 py-3">
         <div className="min-w-[260px] flex-1">
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
           <Combobox
@@ -130,7 +130,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             value={selectedDate}
             max={today}
             onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-            className="h-[34px] rounded border border-slate-300 px-2 text-[12px] text-slate-800"
+            className="h-[34px] rounded-sm border border-slate-300 px-2 text-[12px] text-slate-800"
           />
         </div>
         <div className="flex flex-wrap gap-1">
@@ -139,7 +139,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
               key={d.date}
               type="button"
               onClick={() => setSelectedDate(d.date)}
-              className={`rounded border px-2 py-1 text-center text-[10px] leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
+              className={`rounded-sm border px-2 py-1 text-center text-[10px] leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
             >
               {d.mon} {d.day}
               <span className="block text-[8px] text-slate-400">{d.weekday}</span>
@@ -151,16 +151,16 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
       {/* Body */}
       <div className="mt-3">
         {!driverId ? (
-          <div className="rounded border border-slate-200 bg-white px-4 py-12 text-center">
+          <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
             <div className="text-sm font-semibold text-slate-700">HOS Viewer</div>
             <div className="mt-1 text-xs text-slate-500">Pick a driver above to open their daily ELD log.</div>
           </div>
         ) : dailyQ.isLoading ? (
-          <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded bg-slate-100" />)}</div>
+          <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded-sm bg-slate-100" />)}</div>
         ) : dailyQ.isError ? (
-          <div className="rounded border border-slate-200 bg-white px-4 py-10 text-center text-sm text-red-600">Failed to load the ELD log for {selectedName}.</div>
+          <div className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-sm text-red-600">Failed to load the ELD log for {selectedName}.</div>
         ) : !daily || daily.available === false || (daily.segments?.length ?? 0) === 0 ? (
-          <div className="rounded border border-slate-200 bg-white px-4 py-12 text-center">
+          <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
             <div className="text-sm font-semibold text-slate-700">No ELD data</div>
             <div className="mt-1 text-xs text-slate-500">No HOS / ELD records for {selectedName} on {selectedDate}.</div>
           </div>
@@ -174,20 +174,20 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
                 { label: "Break left", v: daily.clocks?.break_remaining_min },
                 { label: "Cycle (70h) left", v: daily.clocks?.cycle_remaining_min },
               ].map((k) => (
-                <div key={k.label} className="flex h-[34px] min-w-[130px] flex-1 items-center justify-between rounded border border-slate-200 bg-white px-2.5">
-                  <span className="text-[9px] uppercase tracking-[0.05em] text-slate-500">{k.label}</span>
+                <div key={k.label} className="flex h-[34px] min-w-[130px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
+                  <span className="text-[9px] uppercase tracking-wider text-slate-500">{k.label}</span>
                   <span className="text-[15px] font-semibold tabular-nums text-slate-900">{hmm(k.v)}</span>
                 </div>
               ))}
               {verdict ? (
-                <div className="flex h-[34px] min-w-[110px] items-center justify-center rounded border border-slate-200 bg-white px-3">
+                <div className="flex h-[34px] min-w-[110px] items-center justify-center rounded-sm border border-slate-200 bg-white px-3">
                   <span className={`text-[13px] font-bold ${verdict.cls}`}>{verdict.label}</span>
                 </div>
               ) : null}
             </div>
 
             {/* Duty-segment ELD log (the day's timeline) */}
-            <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+            <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
               <table className="w-full text-left text-[11px]">
                 <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
                   <tr>
@@ -217,8 +217,8 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             {/* Per-status daily totals */}
             <div className="flex flex-wrap gap-2">
               {TOTAL_ORDER.map((st) => (
-                <div key={st} className="flex h-[28px] min-w-[120px] flex-1 items-center justify-between rounded border border-slate-200 bg-white px-2.5">
-                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.05em] text-slate-500">
+                <div key={st} className="flex h-[28px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
+                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider text-slate-500">
                     <span className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: DUTY_COLOR[st] }} />
                     {DUTY_LABEL[st]}
                   </span>

@@ -42,7 +42,7 @@ const fmtDt = (v: string | null | undefined) => {
 
 function KpiCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+    <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</div>
       <div className="mt-1 text-lg font-bold text-gray-900">{value}</div>
       {sub ? <div className="mt-0.5 text-[11px] text-gray-500">{sub}</div> : null}
@@ -198,7 +198,7 @@ export function ReserveTracker() {
 
   if (!companyId) {
     return (
-      <div className="rounded border bg-white p-4 text-sm text-gray-500">
+      <div className="rounded-sm border bg-white p-4 text-sm text-gray-500">
         Select an operating company to view the reserve tracker.
       </div>
     );
@@ -237,11 +237,11 @@ export function ReserveTracker() {
       </div>
 
       {/* Release forecast */}
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="text-sm font-semibold text-gray-800">Estimated Reserve Release Schedule</div>
           <select
-            className="rounded border border-gray-300 px-2 py-1 text-sm"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={selectedFactorId}
             onChange={(e) => setSelectedFactorId(e.target.value)}
           >
@@ -257,7 +257,7 @@ export function ReserveTracker() {
         {/* Forecast windows */}
         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {([7, 14, 30, 60] as const).map((days) => (
-            <div key={days} className="rounded border border-gray-200 bg-gray-50 p-2 text-center">
+            <div key={days} className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-center">
               <div className="text-[11px] uppercase tracking-wide text-gray-500">Next {days}d</div>
               <div className="mt-1 text-base font-bold text-gray-900">
                 {fmtM(forecastByWindow[days])}
@@ -267,7 +267,7 @@ export function ReserveTracker() {
         </div>
 
         {/* Forecast schedule table */}
-        <div className="max-h-56 overflow-x-auto rounded border border-gray-200">
+        <div className="max-h-56 overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-xs">
             <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
               <tr>
@@ -328,11 +328,11 @@ export function ReserveTracker() {
 
       {/* Reserve balance history table */}
       {selectedFactorId ? (
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 text-sm font-semibold text-gray-800">
             Reserve Movement History — {factorNameById.get(selectedFactorId) ?? selectedFactorId.slice(0, 8)}
           </div>
-          <div className="max-h-64 overflow-x-auto rounded border border-gray-200">
+          <div className="max-h-64 overflow-x-auto rounded-sm border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
                 <tr>
@@ -374,7 +374,7 @@ export function ReserveTracker() {
             <div className="flex gap-2">
               <button
                 type="button"
-                className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+                className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
                 onClick={() => setHistPage((p) => Math.max(0, p - 1))}
                 disabled={histPage <= 0}
               >
@@ -382,7 +382,7 @@ export function ReserveTracker() {
               </button>
               <button
                 type="button"
-                className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+                className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
                 onClick={() => setHistPage((p) => Math.min(totalHistPages - 1, p + 1))}
                 disabled={histPage >= totalHistPages - 1}
               >
@@ -395,9 +395,9 @@ export function ReserveTracker() {
 
       {/* Chargebacks pending detail */}
       {(chargebacksQ.data?.history ?? []).length > 0 ? (
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 text-sm font-semibold text-gray-800">Chargeback + Fee History</div>
-          <div className="max-h-48 overflow-x-auto rounded border border-gray-200">
+          <div className="max-h-48 overflow-x-auto rounded-sm border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
                 <tr>

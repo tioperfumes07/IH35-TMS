@@ -1,6 +1,6 @@
 import type { DriverIncidentType, IncidentSeverity } from "../api/incidents";
 
-const WARNING_BORDER = "border-[#f59e0b] text-[#fcd34d]";
+const WARNING_BORDER = "border-hos-onduty_waiting text-[#fcd34d]";
 const CRITICAL_BORDER = "border-[#dc2626] text-[#fca5a5]";
 const CARGO_BORDER = "border-[#ca8a04] text-[#fde047]";
 const OTHER_BORDER = "border-[#64748b] text-[#cbd5e1]";

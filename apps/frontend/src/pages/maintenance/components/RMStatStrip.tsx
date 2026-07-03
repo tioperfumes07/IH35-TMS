@@ -10,7 +10,7 @@ type Props = {
 function Tile({ label, value, tone }: { label: string; value: string | number; tone?: "red" | "amber" }) {
   const valueClass = tone === "red" && value ? "text-[#A32D2D]" : tone === "amber" && value ? "text-[#854F0B]" : "";
   return (
-    <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+    <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
       <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className={`font-semibold ${valueClass}`}>{value}</div>
     </div>

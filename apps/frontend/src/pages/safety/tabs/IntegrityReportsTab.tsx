@@ -87,7 +87,7 @@ export function IntegrityReportsTab() {
             <button
               key={tab.id}
               type="button"
-              className="rounded border px-3 py-1 text-xs font-semibold"
+              className="rounded-sm border px-3 py-1 text-xs font-semibold"
               style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
               onClick={() => setSubTab(tab.id as SubTab)}
             >
@@ -102,7 +102,7 @@ export function IntegrityReportsTab() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700">
         Foundation outlier views (Phase 3). Active alerts tab runs the A23-12 rule engine inbox.
       </div>
 
@@ -118,7 +118,7 @@ export function IntegrityReportsTab() {
           <button
             key={tab.id}
             type="button"
-            className="rounded border px-3 py-1 text-xs font-semibold"
+            className="rounded-sm border px-3 py-1 text-xs font-semibold"
             style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
             onClick={() => setSubTab(tab.id as SubTab)}
           >
@@ -127,7 +127,7 @@ export function IntegrityReportsTab() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>

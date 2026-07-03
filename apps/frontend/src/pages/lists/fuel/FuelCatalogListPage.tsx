@@ -23,7 +23,7 @@ type Props = {
 };
 
 function statusPillClass(isActive: boolean) {
-  return isActive ? "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700" : "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+  return isActive ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700" : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 export function FuelCatalogListPage({ client, displayName, breadcrumbPath }: Props) {
@@ -72,9 +72,9 @@ export function FuelCatalogListPage({ client, displayName, breadcrumbPath }: Pro
           </Button>
         }
       />
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or display name" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
-        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded border border-gray-300 px-2 text-sm">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
           <option value="true">Active</option>
           <option value="false">Inactive</option>
           <option value="all">All</option>

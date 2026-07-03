@@ -111,20 +111,20 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             }
           }}
         >
-          {error ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
+          {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
 
-          <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
             Bill Payment Details
           </div>
 
-          <div className="grid grid-cols-1 gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
+          <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Vendor
-              <input value={vendorName} readOnly className="h-9 rounded border border-gray-300 bg-gray-100 px-2 text-[13px]" />
+              <input value={vendorName} readOnly className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]" />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Bill #
-              <input value={bill.bill_number || bill.id.slice(0, 8)} readOnly className="h-9 rounded border border-gray-300 bg-gray-100 px-2 text-[13px]" />
+              <input value={bill.bill_number || bill.id.slice(0, 8)} readOnly className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]" />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment date
@@ -132,7 +132,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment method
-              <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as BillPaymentMethod)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+              <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as BillPaymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
                 {METHOD_OPTIONS.map((method) => (
                   <option key={method.value} value={method.value}>
                     {method.label}
@@ -146,12 +146,12 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Remaining
-              <input value={money(remainingCents)} readOnly className="h-9 rounded border border-gray-300 bg-gray-100 px-2 text-[13px]" />
+              <input value={money(remainingCents)} readOnly className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]" />
             </label>
             {needsBankAccount ? (
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 From bank account
-                <SelectCombobox value={fromBankAccountId} onChange={(event) => setFromBankAccountId(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+                <SelectCombobox value={fromBankAccountId} onChange={(event) => setFromBankAccountId(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
                   <option value="">Select account</option>
                   {(accountsQuery.data?.accounts ?? []).map((account: Record<string, unknown>) => (
                     <option key={String(account.id ?? "")} value={String(account.id ?? "")}>
@@ -164,20 +164,20 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             {paymentMethod === "check" ? (
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Check number
-                <input value={checkNumber} onChange={(event) => setCheckNumber(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+                <input value={checkNumber} onChange={(event) => setCheckNumber(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
               </label>
             ) : null}
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Reference number
-              <input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+              <input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-6">
               Memo
-              <textarea rows={3} value={memo} onChange={(event) => setMemo(event.target.value)} className="rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
+              <textarea rows={3} value={memo} onChange={(event) => setMemo(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
             </label>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Apply to bill</div>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-xs">

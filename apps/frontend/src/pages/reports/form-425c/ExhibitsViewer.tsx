@@ -77,12 +77,12 @@ export function ExhibitsViewer() {
         </Link>
       </div>
 
-      <section className="rounded border border-slate-200 bg-white p-3">
+      <section className="rounded-sm border border-slate-200 bg-white p-3">
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-xs font-semibold text-slate-600">
             Period start
             <DatePicker
-              className="mt-1 block rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
               value={period.period_start}
               onChange={(next) => setPeriod((p) => ({ ...p, period_start: next }))}
             />
@@ -90,7 +90,7 @@ export function ExhibitsViewer() {
           <label className="text-xs font-semibold text-slate-600">
             Period end
             <DatePicker
-              className="mt-1 block rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
               value={period.period_end}
               onChange={(next) => setPeriod((p) => ({ ...p, period_end: next }))}
             />
@@ -99,7 +99,7 @@ export function ExhibitsViewer() {
             type="button"
             disabled={!companyId || buildMut.isPending}
             onClick={() => buildMut.mutate()}
-            className="rounded bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {buildMut.isPending ? "Building…" : "Build all exhibits"}
           </button>
@@ -119,7 +119,7 @@ export function ExhibitsViewer() {
         ))}
       </div>
 
-      <section className="rounded border border-slate-200 bg-white p-3">
+      <section className="rounded-sm border border-slate-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900">Exhibit {activeLetter.toUpperCase()} preview</h2>
           {built ? (
@@ -143,7 +143,7 @@ export function ExhibitsViewer() {
         {!built ? (
           <p className="text-sm text-slate-500">Build exhibits to preview tab content.</p>
         ) : (
-          <pre className="max-h-[420px] overflow-auto rounded bg-slate-50 p-3 text-xs text-slate-800">
+          <pre className="max-h-[420px] overflow-auto rounded-sm bg-slate-50 p-3 text-xs text-slate-800">
             {JSON.stringify(activeExhibit, null, 2)}
           </pre>
         )}

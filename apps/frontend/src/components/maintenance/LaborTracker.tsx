@@ -187,7 +187,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
   };
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-3 text-sm" data-testid="maint-labor-tracker">
+    <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm" data-testid="maint-labor-tracker">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Mechanic labor</div>
       <p className="mt-1 text-xs text-slate-600">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
 
@@ -195,7 +195,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         <label className="text-xs text-slate-600">
           Actor kind
           <SelectCombobox
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
             value={actorKind}
             onChange={(e) => setActorKind(e.target.value as (typeof ACTORS)[number])}
           >
@@ -209,7 +209,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         <label className="text-xs text-slate-600">
           Labor code
           <SelectCombobox
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
             value={laborCodeId}
             onChange={(e) => setLaborCodeId(e.target.value)}
             data-testid="maint-labor-code-select"
@@ -225,7 +225,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         <label className="text-xs text-slate-600">
           Labor rate (¢/hr)
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
             value={laborRate}
             onChange={(e) => setLaborRate(e.target.value.replace(/[^\d]/g, ""))}
             placeholder="optional"
@@ -233,7 +233,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         </label>
         <label className="text-xs text-slate-600">
           Notes
-          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
       </div>
 
@@ -249,11 +249,11 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         <div className="mt-2 grid gap-2 md:grid-cols-2">
           <label className="text-xs text-slate-600">
             Started (ISO)
-            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]" value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]" value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
           </label>
           <label className="text-xs text-slate-600">
             Ended (ISO)
-            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
           </label>
         </div>
         <div className="mt-2">
@@ -264,7 +264,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
       </div>
 
       <div
-        className={`mt-3 rounded border px-3 py-2 text-sm ${openEntry ? "border-amber-200 bg-amber-50 text-amber-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}
+        className={`mt-3 rounded-sm border px-3 py-2 text-sm ${openEntry ? "border-amber-200 bg-amber-50 text-amber-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}
         data-testid="maint-labor-running-timer"
       >
         {runningLabel}

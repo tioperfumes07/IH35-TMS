@@ -221,25 +221,25 @@ export function LegalSignPage() {
 
   return (
     <div className="mx-auto max-w-4xl p-4 md:p-6">
-      <div className="rounded border border-gray-200 bg-white p-4 md:p-6">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 md:p-6">
         <h1 className="text-2xl font-semibold text-gray-900">{details.display_name_en}</h1>
         <p className="mt-1 text-sm text-gray-600">Signer: {details.signer_name}</p>
         <p className="text-xs text-gray-500">Template {details.template_code} v{details.template_version}</p>
       </div>
 
-      <div className="mt-4 rounded border border-gray-200 bg-white p-4 md:p-6">
+      <div className="mt-4 rounded-sm border border-gray-200 bg-white p-4 md:p-6">
         <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderedHtml }} />
       </div>
 
       {!verificationPassed && (
-        <div className="mt-4 rounded border border-amber-200 bg-amber-50 p-4">
+        <div className="mt-4 rounded-sm border border-amber-200 bg-amber-50 p-4">
           <h2 className="text-lg font-semibold text-amber-900">Identity Verification</h2>
           <p className="mt-1 text-sm text-amber-800">
             A verification code is required before signing.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
-              className="rounded bg-amber-600 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-amber-300"
+              className="rounded-sm bg-amber-600 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-amber-300"
               type="button"
               disabled={isStartingVerify}
               onClick={startVerification}
@@ -247,13 +247,13 @@ export function LegalSignPage() {
               {isStartingVerify ? "Sending..." : "Send Code"}
             </button>
             <input
-              className="rounded border border-gray-300 px-3 py-2 text-sm"
+              className="rounded-sm border border-gray-300 px-3 py-2 text-sm"
               value={code}
               onChange={(event) => setCode(event.target.value)}
               placeholder="Enter 6-digit code"
             />
             <button
-              className="rounded bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="rounded-sm bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400"
               type="button"
               disabled={isConfirmingVerify || code.trim().length !== 6}
               onClick={confirmVerification}
@@ -264,13 +264,13 @@ export function LegalSignPage() {
         </div>
       )}
 
-      <div className="mt-4 rounded border border-gray-200 bg-white p-4 md:p-6">
+      <div className="mt-4 rounded-sm border border-gray-200 bg-white p-4 md:p-6">
         <h2 className="text-lg font-semibold text-gray-900">Sign electronically</h2>
         <div className="mt-3 grid gap-3">
           <label className="text-sm text-gray-700">
             Legal name
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={signedByName}
               onChange={(event) => setSignedByName(event.target.value)}
               disabled={!verificationPassed}
@@ -279,7 +279,7 @@ export function LegalSignPage() {
           <label className="text-sm text-gray-700">
             Type your signature
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={typedSignature}
               onChange={(event) => setTypedSignature(event.target.value)}
               disabled={!verificationPassed}
@@ -291,13 +291,13 @@ export function LegalSignPage() {
               ref={canvasRef}
               width={680}
               height={180}
-              className="mt-1 w-full rounded border border-dashed border-gray-400 bg-white touch-none"
+              className="mt-1 w-full rounded-sm border border-dashed border-gray-400 bg-white touch-none"
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={stopDrawing}
               onPointerLeave={stopDrawing}
             />
-            <button className="mt-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-700" type="button" onClick={clearSignature} disabled={!verificationPassed}>
+            <button className="mt-2 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700" type="button" onClick={clearSignature} disabled={!verificationPassed}>
               Clear signature
             </button>
           </div>
@@ -316,7 +316,7 @@ export function LegalSignPage() {
 
         <button
           type="button"
-          className="mt-4 rounded bg-green-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-green-300"
+          className="mt-4 rounded-sm bg-green-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-green-300"
           disabled={!verificationPassed || isSubmitting}
           onClick={submitSignature}
         >

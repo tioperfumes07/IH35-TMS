@@ -43,7 +43,7 @@ export function LoadDetailPage() {
             <button
               type="button"
               data-testid="dvir-pre-trip-card"
-              className="min-h-11 rounded border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
+              className="min-h-11 rounded-sm border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
               onClick={() => navigate(`/dvir/pre/${load.id}`)}
             >
               {t("dvir.title_pre")}
@@ -51,7 +51,7 @@ export function LoadDetailPage() {
             <button
               type="button"
               data-testid="dvir-post-trip-card"
-              className="min-h-11 rounded border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
+              className="min-h-11 rounded-sm border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
               onClick={() => navigate(`/dvir/post/${load.id}`)}
             >
               {t("dvir.title_post")}
@@ -78,7 +78,7 @@ export function LoadDetailPage() {
 
         {tab === "overview" ? (
           <PwaCard>
-            <div className="mb-2 rounded border border-pwa-border px-2 py-1 text-[11px] text-pwa-text-secondary">
+            <div className="mb-2 rounded-sm border border-pwa-border px-2 py-1 text-[11px] text-pwa-text-secondary">
               <div>{t("load.legal_notice_en")}</div>
               <div className="opacity-80">{t("load.legal_notice_es")}</div>
             </div>

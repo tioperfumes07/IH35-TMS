@@ -25,14 +25,14 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <label className="text-xs font-semibold uppercase text-slate-600">
           Company
-          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
             <option value="trucking">{profiles.trucking.name}</option>
             <option value="transportation">{profiles.transportation.name}</option>
           </SelectCombobox>
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Month
-          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
             {MONTHS.map((m, i) => (
               <option key={m} value={i}>
                 {m}
@@ -42,7 +42,7 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Year
-          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
             {YEARS.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -54,23 +54,23 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
       </div>
 
       <textarea
-        className="h-56 w-full rounded border bg-white p-3 font-mono text-xs"
+        className="h-56 w-full rounded-sm border bg-white p-3 font-mono text-xs"
         placeholder={`Date\tType\tDescription\tAccount\tAmount\n01/05/${year}\tDeposit\tCustomer Payment\t${profile.bankAccounts[0]?.id ?? "WF-3500"}\t12500.00`}
         value={raw}
         onChange={(e) => setRaw(e.target.value)}
       />
 
       <div className="flex gap-2">
-        <button type="button" className="rounded bg-slate-800 px-3 py-2 text-sm font-semibold text-white" onClick={() => setParsed(parseQBText(raw, profile.bankAccounts))}>
+        <button type="button" className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white" onClick={() => setParsed(parseQBText(raw, profile.bankAccounts))}>
           Parse Income Deposits
         </button>
-        <button type="button" className="rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white" onClick={() => onApplyTotal(includedTotal)} disabled={!parsed.length}>
+        <button type="button" className="rounded-sm bg-emerald-600 px-3 py-2 text-sm font-semibold text-white" onClick={() => onApplyTotal(includedTotal)} disabled={!parsed.length}>
           Apply ${includedTotal.toFixed(2)} to Line 20
         </button>
       </div>
 
       {parsed.length ? (
-        <div className="overflow-x-auto rounded border bg-white">
+        <div className="overflow-x-auto rounded-sm border bg-white">
           <table className="min-w-full text-xs">
             <thead className="bg-slate-800 text-white">
               <tr>

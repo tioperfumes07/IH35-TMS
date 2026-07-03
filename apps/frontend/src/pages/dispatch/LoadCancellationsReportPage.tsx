@@ -80,11 +80,11 @@ export function LoadCancellationsReportPage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-4">
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={range.from}
             onChange={(next) => setRange((prev) => ({ ...prev, from: next }))}
           />
@@ -92,7 +92,7 @@ export function LoadCancellationsReportPage() {
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={range.to}
             onChange={(next) => setRange((prev) => ({ ...prev, to: next }))}
           />
@@ -100,7 +100,7 @@ export function LoadCancellationsReportPage() {
         <label className="text-xs text-gray-600">
           Group by
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={groupBy}
             onChange={(event) => setGroupBy(event.target.value as GroupBy)}
           >
@@ -129,21 +129,21 @@ export function LoadCancellationsReportPage() {
       {query.data ? (
         <>
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Cancellations</div>
               <div className="text-2xl font-semibold">{totals.count}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Cancelled rate total</div>
               <div className="text-2xl font-semibold">{money(totals.rate)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Charge total</div>
               <div className="text-2xl font-semibold">{money(totals.charge)}</div>
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase text-gray-600">
                 <tr>

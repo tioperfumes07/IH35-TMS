@@ -76,7 +76,7 @@ export function CustomerListSidebar({
   );
 
   return (
-    <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2" data-customer-list-sidebar="true">
+    <aside className="w-[216px] shrink-0 rounded-sm border border-gray-200 bg-white p-2" data-customer-list-sidebar="true">
       <SidebarPagination
         page={safePage}
         pageSize={pageSize}
@@ -88,12 +88,12 @@ export function CustomerListSidebar({
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         placeholder="Search by name or details"
-        className="mb-2 mt-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+        className="mb-2 mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
       />
       <SelectCombobox
         value={sortByName}
         onChange={(event) => onSortChange(event.target.value as "name_asc" | "name_desc")}
-        className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+        className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
       >
         <option value="name_asc">Sort by name</option>
         <option value="name_desc">Sort by name (Z-A)</option>

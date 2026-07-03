@@ -106,13 +106,13 @@ export function MonthClosePage() {
     <AccountingSubNavWrapper title="Month close wizard" subtitle="Review month-end checklist and lock the period only when all required checks are green.">
 
       {!companyId ? (
-        <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before running month close.</p>
+        <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before running month close.</p>
       ) : null}
 
-      <div className="grid gap-3 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
+      <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <label className="text-xs text-gray-600">
           Period
-          <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
         <label className="text-xs text-gray-600 md:col-span-2">
           Closing notes (optional)
@@ -120,12 +120,12 @@ export function MonthClosePage() {
             value={closingNotes}
             onChange={(event) => setClosingNotes(event.target.value)}
             placeholder="e.g. month-end review complete, CFO sign-off"
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
@@ -154,7 +154,7 @@ export function MonthClosePage() {
               <tr key={row.id} className="border-t border-gray-100">
                 <td className="px-3 py-2 font-medium text-gray-900">{row.label}</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-xs font-semibold ${row.complete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                  <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${row.complete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
                     {row.complete ? "Complete" : "Pending"}
                   </span>
                 </td>
@@ -170,7 +170,7 @@ export function MonthClosePage() {
         </table>
       </div>
 
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-white px-3 py-3">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-3">
         <div className="text-sm text-gray-700">
           {statusQuery.data?.period_status
             ? `Period status: ${statusQuery.data.period_status}`

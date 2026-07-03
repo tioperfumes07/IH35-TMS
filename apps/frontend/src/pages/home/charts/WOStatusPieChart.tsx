@@ -45,7 +45,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
   }
 
   if (query.isLoading) {
-    return <div className="h-[260px] animate-pulse rounded bg-slate-100" />;
+    return <div className="h-[260px] animate-pulse rounded-sm bg-slate-100" />;
   }
 
   if (query.isError) {
@@ -60,7 +60,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
     return (
       <div className="home-recharts-print w-full">
         <h3 className="mb-2 text-sm font-semibold text-slate-900">Work orders by status</h3>
-        <div className="flex h-[260px] items-center justify-center rounded border border-dashed border-slate-200 text-sm text-slate-500">
+        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-sm text-slate-500">
           No open work orders.
         </div>
       </div>

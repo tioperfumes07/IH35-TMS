@@ -71,7 +71,7 @@ function QueueRow({
         {canConvert ? (
           <button
             type="button"
-            className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700"
+            className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
             disabled={convertM.isPending}
             onClick={() => convertM.mutate()}
             data-testid={`ocr-convert-${item.id}`}
@@ -99,7 +99,7 @@ export function OcrQueuePage() {
   });
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   const items = queueQ.data?.items ?? [];
@@ -110,7 +110,7 @@ export function OcrQueuePage() {
         title="OCR queue"
         subtitle="Email-forwarded rate cons · async OCR · review · convert to Book Load"
         actions={
-          <Link to="/dispatch" className="rounded border px-3 py-1.5 text-sm">
+          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
             Dispatch home
           </Link>
         }
@@ -122,7 +122,7 @@ export function OcrQueuePage() {
         remains for ad-hoc uploads — this page is the dedicated inbox (B21-D7).
       </p>
 
-      <section className="overflow-x-auto rounded border bg-white">
+      <section className="overflow-x-auto rounded-sm border bg-white">
         <table className="min-w-full text-sm">
           <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>

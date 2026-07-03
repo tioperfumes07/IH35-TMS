@@ -305,11 +305,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "in_transit_issues"
         ? triageQuery.isError
           ? (
-            <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">
               <div className="font-semibold">Failed to load in-transit issues</div>
               <button
                 type="button"
-                className="mt-2 rounded border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700"
+                className="mt-2 rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700"
                 onClick={() => {
                   void triageQuery.refetch();
                   pushToast("Retrying in-transit issue load", "info");
@@ -337,15 +337,15 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "parts_inventory" ? (
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">Total Parts</div>
               <div className="font-semibold">{partsInventoryKpisQuery.data?.total_parts ?? 0}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">Low Stock</div>
               <div className="font-semibold">{partsInventoryKpisQuery.data?.low_stock_count ?? 0}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">Total Inventory Value</div>
               <div className="font-semibold">
                 ${Number(partsInventoryKpisQuery.data?.total_inventory_value ?? 0).toLocaleString()}
@@ -353,14 +353,14 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             </div>
           </div>
           <PartsInventoryTable companyId={companyId} rows={partsInventoryRowsQuery.data ?? []} />
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Parts Inventory Reorder Flags</h3>
               <div className="text-xs text-gray-500">Canonical: maintenance.parts_inventory</div>
             </div>
             {partsReorderQuery.isLoading ? <div className="text-xs text-gray-500">Loading reorder list...</div> : null}
             {partsReorderQuery.isError ? (
-              <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                 Reorder list endpoint unavailable in this environment.
               </div>
             ) : null}
@@ -387,9 +387,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                         <td className="px-2 py-1">{part.reorder_threshold}</td>
                         <td className="px-2 py-1">
                           {needsReorder ? (
-                            <span className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
+                            <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
                           ) : (
-                            <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">OK</span>
+                            <span className="rounded-sm bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">OK</span>
                           )}
                         </td>
                       </tr>

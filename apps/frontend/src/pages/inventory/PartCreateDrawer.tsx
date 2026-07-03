@@ -70,7 +70,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
       <div className="relative flex h-full w-full max-w-lg flex-col bg-white shadow-xl overflow-y-auto">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
           <h2 className="text-lg font-semibold">+ Create part</h2>
-          <button onClick={onClose} className="rounded p-1 hover:bg-gray-100">
+          <button onClick={onClose} className="rounded-sm p-1 hover:bg-gray-100">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -86,7 +86,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
               <label className="block text-sm font-medium">Name *</label>
               <input
                 required
-                className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -94,7 +94,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
             <div>
               <label className="block text-sm font-medium">SKU</label>
               <input
-                className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
               />
@@ -103,7 +103,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
           <div>
             <label className="block text-sm font-medium">Category</label>
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               placeholder="Select or add category"
@@ -114,7 +114,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
               <label className="block text-sm font-medium">On-hand qty</label>
               <input
                 type="number"
-                className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
                 value={formData.on_hand_qty}
                 onChange={(e) => setFormData({ ...formData, on_hand_qty: e.target.value })}
               />
@@ -123,7 +123,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
               <label className="block text-sm font-medium">Reorder point</label>
               <input
                 type="number"
-                className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
                 value={formData.reorder_point}
                 onChange={(e) => setFormData({ ...formData, reorder_point: e.target.value })}
               />
@@ -143,7 +143,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
           <div>
             <label className="block text-sm font-medium">Location/Bin</label>
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             />
@@ -152,7 +152,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
             <label className="block text-sm font-medium">Notes</label>
             <textarea
               rows={3}
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             />

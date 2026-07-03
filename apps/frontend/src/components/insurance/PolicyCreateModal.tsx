@@ -287,12 +287,12 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
         }}
       >
         {serverError ? (
-          <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+          <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
             {serverError}
           </div>
         ) : null}
         {formError ? (
-          <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="alert">
+          <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="alert">
             {formError}
           </div>
         ) : null}
@@ -301,7 +301,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Insurer Name *</span>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.insurer_name}
               onChange={(event) => updateField("insurer_name", event.target.value)}
             />
@@ -311,7 +311,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Policy Number *</span>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.policy_number}
               onChange={(event) => updateField("policy_number", event.target.value)}
             />
@@ -321,7 +321,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Type *</span>
             <select
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.coverage_type}
               onChange={(event) => updateField("coverage_type", event.target.value)}
             >
@@ -338,7 +338,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Status</span>
             <select
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.status}
               onChange={(event) => updateField("status", event.target.value as InsurancePolicyStatus)}
             >
@@ -352,7 +352,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Effective Date *</span>
             <DatePicker
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.effective_date}
               onChange={(next) => updateField("effective_date", next)}
             />
@@ -362,7 +362,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Expiry Date *</span>
             <DatePicker
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.expiry_date}
               onChange={(next) => updateField("expiry_date", next)}
             />
@@ -395,7 +395,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
             <input
               type="number"
               min="0"
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.installment_count}
               onChange={(event) => updateField("installment_count", event.target.value)}
             />
@@ -408,7 +408,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
               type="number"
               min="1"
               max="31"
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.due_day}
               onChange={(event) => updateField("due_day", event.target.value)}
             />
@@ -421,7 +421,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
               type="number"
               min="1"
               max="31"
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.pay_day}
               onChange={(event) => updateField("pay_day", event.target.value)}
             />
@@ -435,7 +435,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
               min="0"
               max="999.99"
               step="0.01"
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.late_fee_pct}
               onChange={(event) => updateField("late_fee_pct", event.target.value)}
             />
@@ -446,7 +446,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
             <span className="text-xs font-semibold text-slate-700">Insurer Email</span>
             <input
               type="email"
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.insurer_email}
               onChange={(event) => updateField("insurer_email", event.target.value)}
             />
@@ -457,7 +457,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
         <label className="space-y-1">
           <span className="text-xs font-semibold text-slate-700">Agent Contact</span>
           <input
-            className="w-full rounded border border-gray-300 px-2 py-1"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.agent_contact}
             onChange={(event) => updateField("agent_contact", event.target.value)}
           />
@@ -468,7 +468,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
             <span className="text-xs font-semibold text-slate-700">Covered Units *</span>
             <span className="text-xs text-slate-500">{selectedUnitIds.length} selected</span>
           </div>
-          <div className="max-h-40 overflow-y-auto rounded border border-gray-200 p-2">
+          <div className="max-h-40 overflow-y-auto rounded-sm border border-gray-200 p-2">
             {unitsQuery.isLoading ? <p className="text-xs text-slate-500">Loading units...</p> : null}
             {units.map((unit) => (
               <label key={unit.id} className="flex cursor-pointer items-center gap-2 py-1 text-xs text-slate-700">
@@ -490,12 +490,12 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
         </div>
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
-          <button type="button" className="rounded border border-gray-300 px-3 py-1.5 text-xs" onClick={onClose}>
+          <button type="button" className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs" onClick={onClose}>
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded border border-[#16A34A] bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+            className="rounded-sm border border-[#16A34A] bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
             disabled={createMutation.isPending}
           >
             {createMutation.isPending ? "Creating..." : "+ Policy"}

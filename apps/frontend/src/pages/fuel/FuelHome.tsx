@@ -29,7 +29,7 @@ export function FuelFraudAlertsKpiCard() {
   return (
     <Link
       to="/fuel/fraud-alerts"
-      className={`block rounded border px-3 py-2 text-[11px] transition hover:shadow-sm ${tone}`}
+      className={`block rounded-sm border px-3 py-2 text-[11px] transition hover:shadow-xs ${tone}`}
     >
       <div className="text-[10px] uppercase text-gray-500">Open Fraud Alerts</div>
       <div className={`text-lg font-semibold ${openCritical > 0 ? "text-red-700" : "text-gray-900"}`}>

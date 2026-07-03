@@ -16,7 +16,7 @@ export function WizardStep5({ driverId, fastCardVerified, fastCardWarning, check
       ) : (
         <div
           data-testid="fast-card-status"
-          className={`rounded border p-3 text-sm ${fastCardVerified ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"}`}
+          className={`rounded-sm border p-3 text-sm ${fastCardVerified ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"}`}
         >
           {fastCardVerified ? (
             <p>FAST card verified — expiration is current.</p>

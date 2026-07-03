@@ -162,13 +162,13 @@ export function LegalTemplateDetailPage() {
   });
 
   if (query.isLoading) {
-    return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading template...</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading template...</div>;
   }
   if (query.isError || !template) {
     return (
       <div className="space-y-3">
         <BackArrowHeader backTo="/legal/templates" breadcrumb={["Legal", "Templates"]} title="Template Detail" />
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">Failed to load template detail.</div>
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">Failed to load template detail.</div>
       </div>
     );
   }
@@ -205,7 +205,7 @@ export function LegalTemplateDetailPage() {
       <LegalModuleTabs activeTabId="templates" />
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <div className="space-y-3 rounded border border-gray-200 bg-white p-3">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs font-semibold uppercase text-gray-500">Template metadata</div>
           <div className="grid gap-2 md:grid-cols-2">
             <label className="text-xs font-semibold text-gray-600">
@@ -214,7 +214,7 @@ export function LegalTemplateDetailPage() {
                 value={editable.display_name_en}
                 onChange={(event) => setEditable((prev) => ({ ...prev, display_name_en: event.target.value }))}
                 disabled={!isDraft}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
               />
             </label>
             <label className="text-xs font-semibold text-gray-600">
@@ -223,7 +223,7 @@ export function LegalTemplateDetailPage() {
                 value={editable.display_name_es}
                 onChange={(event) => setEditable((prev) => ({ ...prev, display_name_es: event.target.value }))}
                 disabled={!isDraft}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
               />
             </label>
             <label className="text-xs font-semibold text-gray-600">
@@ -232,7 +232,7 @@ export function LegalTemplateDetailPage() {
                 value={editable.category}
                 onChange={(event) => setEditable((prev) => ({ ...prev, category: event.target.value }))}
                 disabled={!isDraft}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
               />
             </label>
             <label className="flex items-center gap-2 text-xs text-gray-700">
@@ -246,20 +246,20 @@ export function LegalTemplateDetailPage() {
             </label>
           </div>
 
-          <div className="rounded border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+          <div className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
             <div><span className="font-semibold">Status:</span> {template.status}</div>
             <div><span className="font-semibold">Attorney approval:</span> {template.attorney_approved_by ?? "pending"}</div>
             <div><span className="font-semibold">Approved at:</span> {template.attorney_approved_at ?? "pending"}</div>
           </div>
 
           {template.status === "pending_review" ? (
-            <div className="space-y-2 rounded border border-slate-300 bg-slate-100/80 p-2">
+            <div className="space-y-2 rounded-sm border border-slate-300 bg-slate-100/80 p-2">
               <div className="text-xs font-semibold text-slate-700">Attorney review link</div>
               <p className="text-xs text-slate-700">
                 Share this URL with outside counsel. It is single-use and expires in 30 days. Regenerate invalidates prior links.
               </p>
               {attorneyReviewUrl ? (
-                <div className="break-all rounded border border-slate-300 bg-white px-2 py-1 font-mono text-[11px] text-gray-800">
+                <div className="break-all rounded-sm border border-slate-300 bg-white px-2 py-1 font-mono text-[11px] text-gray-800">
                   {attorneyReviewUrl}
                 </div>
               ) : (
@@ -286,14 +286,14 @@ export function LegalTemplateDetailPage() {
             </div>
           ) : null}
 
-          <div className="space-y-2 rounded border border-gray-200 p-2">
+          <div className="space-y-2 rounded-sm border border-gray-200 p-2">
             <div className="text-xs font-semibold uppercase text-gray-500">Attorney approval input</div>
             <label className="block text-xs font-semibold text-gray-600">
               Attorney Name
               <input
                 value={attorneyName}
                 onChange={(event) => setAttorneyName(event.target.value)}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
               />
             </label>
             <label className="block text-xs font-semibold text-gray-600">
@@ -301,7 +301,7 @@ export function LegalTemplateDetailPage() {
               <input
                 value={attorneyBarNumber}
                 onChange={(event) => setAttorneyBarNumber(event.target.value)}
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
               />
             </label>
             <label className="block text-xs font-semibold text-gray-600">
@@ -310,7 +310,7 @@ export function LegalTemplateDetailPage() {
                 value={attorneyNotes}
                 onChange={(event) => setAttorneyNotes(event.target.value)}
                 rows={3}
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               />
             </label>
             <Button
@@ -323,9 +323,9 @@ export function LegalTemplateDetailPage() {
           </div>
         </div>
 
-        <div className="space-y-3 rounded border border-gray-200 bg-white p-3">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs font-semibold uppercase text-gray-500">Version history</div>
-          <div className="max-h-44 overflow-auto rounded border border-gray-200">
+          <div className="max-h-44 overflow-auto rounded-sm border border-gray-200">
             <table className="min-w-full text-xs">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
@@ -353,38 +353,38 @@ export function LegalTemplateDetailPage() {
               value={editable.variable_schema_json}
               disabled={!isDraft}
               onChange={(event) => setEditable((prev) => ({ ...prev, variable_schema_json: event.target.value }))}
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 font-mono text-xs"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
             />
           </label>
         </div>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <label className="block rounded border border-gray-200 bg-white p-3 text-xs font-semibold text-gray-600">
+        <label className="block rounded-sm border border-gray-200 bg-white p-3 text-xs font-semibold text-gray-600">
           English HTML
           <textarea
             rows={12}
             value={editable.content_html_en}
             disabled={!isDraft}
             onChange={(event) => setEditable((prev) => ({ ...prev, content_html_en: event.target.value }))}
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 font-mono text-xs"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
           />
         </label>
-        <label className="block rounded border border-gray-200 bg-white p-3 text-xs font-semibold text-gray-600">
+        <label className="block rounded-sm border border-gray-200 bg-white p-3 text-xs font-semibold text-gray-600">
           Spanish HTML
           <textarea
             rows={12}
             value={editable.content_html_es}
             disabled={!isDraft}
             onChange={(event) => setEditable((prev) => ({ ...prev, content_html_es: event.target.value }))}
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 font-mono text-xs"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
           />
         </label>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs font-semibold uppercase text-gray-500">Audit log</div>
-        <div className="max-h-56 overflow-auto rounded border border-gray-200">
+        <div className="max-h-56 overflow-auto rounded-sm border border-gray-200">
           <table className="min-w-full text-xs">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
@@ -406,7 +406,7 @@ export function LegalTemplateDetailPage() {
         </div>
       </div>
 
-      {submitError ? <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
+      {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
     </div>
   );
 }

@@ -30,7 +30,7 @@ function ApplicantCard({
 }) {
   return (
     <article
-      className="space-y-2 rounded border border-gray-200 bg-white p-3 shadow-sm"
+      className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 shadow-xs"
       data-testid={`applicant-card-${row.id}`}
     >
       <div className="font-semibold text-gray-900">{applicantName(row)}</div>
@@ -41,7 +41,7 @@ function ApplicantCard({
           <button
             key={col.key}
             type="button"
-            className="rounded border px-2 py-0.5 text-[10px] hover:bg-gray-50"
+            className="rounded-sm border px-2 py-0.5 text-[10px] hover:bg-gray-50"
             disabled={busy}
             onClick={() => onMove(col.key)}
           >
@@ -125,7 +125,7 @@ export function ApplicantsPipelinePage() {
           <p className="text-sm text-gray-600">Pre-hire applications → review → convert to driver onboarding.</p>
         </div>
         {applyPath ? (
-          <div className="rounded border bg-gray-50 px-3 py-2 text-xs text-gray-700" data-testid="applicant-public-link">
+          <div className="rounded-sm border bg-gray-50 px-3 py-2 text-xs text-gray-700" data-testid="applicant-public-link">
             Public apply link: <span className="font-mono">{applyPath}</span>
           </div>
         ) : null}
@@ -135,7 +135,7 @@ export function ApplicantsPipelinePage() {
 
       <div className="grid gap-3 lg:grid-cols-5">
         {APPLICANT_PIPELINE_COLUMNS.map((col) => (
-          <section key={col.key} className="rounded border border-gray-200 bg-gray-50 p-2" data-testid={`pipeline-column-${col.key}`}>
+          <section key={col.key} className="rounded-sm border border-gray-200 bg-gray-50 p-2" data-testid={`pipeline-column-${col.key}`}>
             <h2 className="mb-2 text-sm font-semibold text-gray-800">
               {col.label} ({grouped[col.key]?.length ?? 0})
             </h2>

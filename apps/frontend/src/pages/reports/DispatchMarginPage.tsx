@@ -79,18 +79,18 @@ export function DispatchMarginPage() {
         }
       />
 
-      <section className="flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white p-3">
+      <section className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
         <label className="text-sm">
           From
-          <DatePicker className="ml-2 rounded border px-2 py-1" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
+          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
         </label>
         <label className="text-sm">
           To
-          <DatePicker className="ml-2 rounded border px-2 py-1" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
+          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
         </label>
         <label className="text-sm">
           Basis
-          <select className="ml-2 rounded border px-2 py-1" value={basis} onChange={(e) => setBasis(e.target.value as "accrual" | "cash")}>
+          <select className="ml-2 rounded-sm border px-2 py-1" value={basis} onChange={(e) => setBasis(e.target.value as "accrual" | "cash")}>
             <option value="accrual">Accrual</option>
             <option value="cash">Cash</option>
           </select>
@@ -98,9 +98,9 @@ export function DispatchMarginPage() {
         <Button onClick={() => setApplied(period)}>Apply</Button>
       </section>
 
-      {query.isLoading ? <div className="rounded border bg-white p-4 text-sm text-slate-500">Loading…</div> : null}
+      {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">Loading…</div> : null}
       {query.isError ? (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           Failed to load dispatch margin. <button type="button" className="underline" onClick={() => query.refetch()}>Retry</button>
         </div>
       ) : null}
@@ -108,28 +108,28 @@ export function DispatchMarginPage() {
       {query.data ? (
         <>
           <div className="grid gap-3 md:grid-cols-4">
-            <div className="rounded border bg-white p-3">
+            <div className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">Revenue</div>
               <div className="text-lg font-semibold">{money(query.data.totals.revenue_cents)}</div>
             </div>
-            <div className="rounded border bg-white p-3">
+            <div className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">Direct cost</div>
               <div className="text-lg font-semibold">{money(query.data.totals.direct_cost_cents)}</div>
             </div>
-            <div className="rounded border bg-white p-3">
+            <div className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">Margin</div>
               <div className="text-lg font-semibold">{money(query.data.totals.margin_cents)}</div>
             </div>
-            <div className="rounded border bg-white p-3">
+            <div className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">Loads</div>
               <div className="text-lg font-semibold">{query.data.totals.load_count}</div>
             </div>
           </div>
 
           {sorted.length === 0 ? (
-            <div className="rounded border bg-white p-4 text-sm text-slate-500">No loads in this period.</div>
+            <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">No loads in this period.</div>
           ) : (
-            <div className="overflow-x-auto rounded border bg-white">
+            <div className="overflow-x-auto rounded-sm border bg-white">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-left">
                   <tr>

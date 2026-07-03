@@ -22,7 +22,7 @@ export function LoudAlertOverlay({ visible, title, body, acknowledging, onAcknow
       aria-modal="true"
       aria-label={title}
       data-testid="loud-alert-overlay"
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 overflow-y-auto bg-[#1f2a44] px-6 py-8 text-center"
+      className="fixed inset-0 z-9999 flex flex-col items-center justify-center gap-6 overflow-y-auto bg-[#1f2a44] px-6 py-8 text-center"
     >
       <div className="text-xs font-semibold uppercase tracking-widest text-slate-300">
         {t("loud_alert.tag", "Action required")}
@@ -34,7 +34,7 @@ export function LoudAlertOverlay({ visible, title, body, acknowledging, onAcknow
         data-testid="loud-alert-acknowledge"
         disabled={acknowledging}
         onClick={onAcknowledge}
-        className="mt-4 w-full max-w-xs rounded bg-white px-6 py-4 text-lg font-bold text-[#1f2a44] disabled:opacity-60"
+        className="mt-4 w-full max-w-xs rounded-sm bg-white px-6 py-4 text-lg font-bold text-[#1f2a44] disabled:opacity-60"
       >
         {acknowledging ? t("loud_alert.acknowledging", "Acknowledging…") : t("loud_alert.acknowledge", "Acknowledge")}
       </button>

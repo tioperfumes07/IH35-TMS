@@ -19,7 +19,7 @@ export function ModalCloseButton({ title, onClose, className, stopPropagation = 
       aria-label={modalCloseAriaLabel(title)}
       className={
         className ??
-        "flex h-6 w-6 shrink-0 items-center justify-center rounded text-lg leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+        "flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-lg leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-700"
       }
       onClick={(event: MouseEvent<HTMLButtonElement>) => {
         if (stopPropagation) {

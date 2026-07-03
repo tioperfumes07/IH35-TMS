@@ -392,12 +392,12 @@ export function FleetTable({
         pageSize={table.pageSize}
         onPageSizeChange={table.setPageSize}
       >
-        <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-[11px]" data-list-status-filter="fleet">
+        <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-[11px]" data-list-status-filter="fleet">
           {(["active", "inactive", "all"] as const).map((value) => (
             <button
               key={value}
               type="button"
-              className={`rounded px-2 py-1 font-medium capitalize ${softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+              className={`rounded-sm px-2 py-1 font-medium capitalize ${softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
               onClick={() => onSoftDeleteFilterChange(value)}
             >
               {value}
@@ -406,7 +406,7 @@ export function FleetTable({
         </div>
         <select
           aria-label="Filter by status"
-          className="h-8 rounded border border-gray-300 px-2 text-[12px]"
+          className="h-8 rounded-sm border border-gray-300 px-2 text-[12px]"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -417,7 +417,7 @@ export function FleetTable({
         </select>
         <select
           aria-label="Filter by type"
-          className="h-8 rounded border border-gray-300 px-2 text-[12px]"
+          className="h-8 rounded-sm border border-gray-300 px-2 text-[12px]"
           value={typeListFilter}
           onChange={(e) => setTypeListFilter(e.target.value)}
         >
@@ -430,7 +430,7 @@ export function FleetTable({
           <button
             type="button"
             aria-label="Export CSV"
-            className="h-8 rounded border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
+            className="h-8 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
             onClick={exportCsv}
           >
             ⤓ Export
@@ -453,7 +453,7 @@ export function FleetTable({
         />
         <button
           type="button"
-          className="rounded border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+          className="rounded-sm border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
           disabled={bulkApplying || selection.count === 0}
           onClick={onInactivateSelected}
         >
@@ -462,7 +462,7 @@ export function FleetTable({
         {softDeleteFilter !== "active" ? (
           <button
             type="button"
-            className="rounded border border-emerald-300 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+            className="rounded-sm border border-emerald-300 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
             disabled={bulkApplying || selection.count === 0}
             onClick={onReactivateSelected}
           >
@@ -481,7 +481,7 @@ export function FleetTable({
         onCapExceeded={(message) => pushToast(message, "error")}
       >
         {(selectCtx) => (
-          <div className="overflow-hidden rounded border border-gray-200 bg-white">
+          <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
             <table className="w-full table-fixed text-left text-xs">
               <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
                 <tr>
@@ -559,7 +559,7 @@ export function FleetTable({
                     <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <button
                         type="button"
-                        className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
+                        className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
                         aria-label={`Edit unit ${row.unit_number ?? row.id}`}
                         onClick={() => {
                           setEditingUnitId(row.id);

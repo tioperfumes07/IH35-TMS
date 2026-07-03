@@ -92,7 +92,7 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
 
   if (!enabled) {
     return (
-      <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
         Select an operating company to view earnings and debt.
       </div>
     );
@@ -100,7 +100,7 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="driver-earnings-debt-tab">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Live debt summary</h2>
           <div className="text-xs text-gray-500">
@@ -119,26 +119,26 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
       </div>
 
       <div className="grid gap-2 md:grid-cols-4">
-        <div className="rounded border border-red-200 bg-red-50 p-3">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3">
           <div className="text-[11px] uppercase text-red-700">Total active debt</div>
           <div className="text-lg font-semibold text-red-800" data-testid="driver-earnings-total-debt">
             {money(Number(debt?.total_active_debt ?? 0))}
           </div>
         </div>
-        <div className="rounded border border-amber-200 bg-amber-50 p-3">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
           <div className="text-[11px] uppercase text-amber-700">Outstanding liabilities</div>
           <div className="text-lg font-semibold text-amber-900" data-testid="driver-earnings-liabilities-total">
             {money(totalOutstandingLiabilities)}
           </div>
         </div>
-        <div className="rounded border border-slate-300 bg-slate-100 p-3">
+        <div className="rounded-sm border border-slate-300 bg-slate-100 p-3">
           <div className="text-[11px] uppercase text-slate-700">Cash advances unpaid</div>
           <div className="text-lg font-semibold text-slate-700" data-testid="driver-earnings-cash-advances-unpaid">
             {money(cashAdvancesUnpaid)}
           </div>
           <div className="text-[10px] text-slate-700">{approvedAdvancesForDriver.length} approved advance(s)</div>
         </div>
-        <div className="rounded border border-emerald-200 bg-emerald-50 p-3">
+        <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3">
           <div className="text-[11px] uppercase text-emerald-700">Pending ack liabilities</div>
           <div className="text-lg font-semibold text-emerald-900">
             {money(Number(debt?.pending_ack_total ?? 0))}
@@ -148,25 +148,25 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
       </div>
 
       <div className="grid gap-2 md:grid-cols-3">
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-[11px] uppercase text-gray-500">YTD earnings</div>
           <div className="text-lg font-semibold text-gray-900" data-testid="driver-earnings-ytd">
             {money(ytdEarnings)}
           </div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-[11px] uppercase text-gray-500">Average per week</div>
           <div className="text-lg font-semibold text-gray-900" data-testid="driver-earnings-avg-week">
             {money(averagePerWeek)}
           </div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-[11px] uppercase text-gray-500">Settlements YTD</div>
           <div className="text-lg font-semibold text-gray-900">{ytdSettlements.length}</div>
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-gray-900">Last 4 settlements</h3>
           <Link
@@ -212,7 +212,7 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-sm font-semibold text-gray-900">Active liabilities</h3>
         <div className="overflow-x-auto">
           <table className="min-w-[900px] w-full text-left text-xs">

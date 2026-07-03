@@ -46,10 +46,10 @@ export function MyDisputesPage() {
           ) : null}
           <div className="space-y-2">
             {disputes.map((dispute) => (
-              <div key={dispute.id} className="rounded border border-pwa-border bg-[#101522] p-2">
+              <div key={dispute.id} className="rounded-sm border border-pwa-border bg-[#101522] p-2">
                 <div className="mb-1 flex items-center justify-between">
                   <p className="text-sm font-semibold">{dispute.settlement_display_id ?? dispute.settlement_id}</p>
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${statusClass(dispute.status)}`}>
+                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${statusClass(dispute.status)}`}>
                     {t(`disputes.status.${dispute.status}`, { defaultValue: dispute.status })}
                   </span>
                 </div>
@@ -63,7 +63,7 @@ export function MyDisputesPage() {
                 {dispute.status === "open" ? (
                   <button
                     type="button"
-                    className="mt-2 min-h-11 rounded border border-red-400 px-3 py-1 text-xs font-semibold text-red-300"
+                    className="mt-2 min-h-11 rounded-sm border border-red-400 px-3 py-1 text-xs font-semibold text-red-300"
                     disabled={withdrawMutation.isPending}
                     onClick={() => withdrawMutation.mutate({ id: dispute.id, companyId: dispute.operating_company_id })}
                   >

@@ -73,7 +73,7 @@ export default function PositionHistoryPage() {
             value={unitFilter}
             onChange={(e) => setUnitFilter(e.target.value)}
             placeholder="Filter by unit"
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
           />
         </div>
 
@@ -82,7 +82,7 @@ export default function PositionHistoryPage() {
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value as "" | "installed" | "removed" | "replaced")}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
           >
             <option value="">All</option>
             <option value="installed">Installed</option>
@@ -97,7 +97,7 @@ export default function PositionHistoryPage() {
             setActionFilter("");
             setOffset(0);
           }}
-          className="rounded bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
+          className="rounded-sm bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
         >
           Clear Filters
         </button>
@@ -171,7 +171,7 @@ export default function PositionHistoryPage() {
             <p className="text-center text-gray-500">No position history records found</p>
           ) : (
             records.map((record) => (
-              <article key={record.id} className="rounded border border-gray-200 bg-white p-3 shadow-sm">
+              <article key={record.id} className="rounded-sm border border-gray-200 bg-white p-3 shadow-xs">
                 <div className="mb-2 flex items-center justify-between">
                   <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${actionBadgeClass(record.action)}`}>{record.action}</span>
                   <span className="text-xs text-gray-500">{formatDateTime(record.action_at)}</span>
@@ -212,7 +212,7 @@ export default function PositionHistoryPage() {
           <button
             onClick={() => setOffset((o) => Math.max(0, o - limit))}
             disabled={offset === 0}
-            className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-sm bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
           >
             Previous
           </button>
@@ -222,7 +222,7 @@ export default function PositionHistoryPage() {
           <button
             onClick={() => setOffset((o) => Math.min(total - limit, o + limit))}
             disabled={offset + limit >= total}
-            className="rounded bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-sm bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
           >
             Next
           </button>

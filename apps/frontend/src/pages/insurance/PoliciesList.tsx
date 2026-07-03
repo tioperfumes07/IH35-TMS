@@ -81,17 +81,17 @@ export function PoliciesList() {
     { key: "effective_date", label: "Effective Date", sortable: true, align: "right" as const },
     { key: "expiry_date", label: "Expiry Date", sortable: true, align: "right" as const },
     { key: "status", label: "Status", sortable: true, render: (p: InsurancePolicy) => (
-      <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${statusBadge(p.status)}`}>{p.status}</span>
+      <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${statusBadge(p.status)}`}>{p.status}</span>
     ) },
   ];
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view policies.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view policies.</div>;
   }
 
   return (
     <div className="space-y-4">
-      <header className="rounded border border-gray-200 bg-white p-4">
+      <header className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Policies</h2>
@@ -105,12 +105,12 @@ export function PoliciesList() {
         </div>
       </header>
 
-      <section className="rounded border border-gray-200 bg-white p-3">
+      <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="grid gap-3 md:grid-cols-4">
           <label className="text-xs font-semibold text-slate-600">
             Type
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={typeFilter}
               onChange={(event) => setTypeFilter(event.target.value)}
             >
@@ -126,7 +126,7 @@ export function PoliciesList() {
           <label className="text-xs font-semibold text-slate-600">
             Status
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={statusFilter}
               onChange={(event) => setStatusFilter((event.target.value || "") as "" | InsurancePolicyStatus)}
             >
@@ -143,7 +143,7 @@ export function PoliciesList() {
               type="checkbox"
               checked={expiringSoonOnly}
               onChange={(event) => setExpiringSoonOnly(event.target.checked)}
-              className="h-4 w-4 rounded border border-gray-300"
+              className="h-4 w-4 rounded-sm border border-gray-300"
             />
             Expiring soon (next 30 days)
           </label>

@@ -84,7 +84,7 @@ function billKpiCard(label: string, value: string, sublabel: string, tone: "neut
   const toneClass =
     tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-amber-500" : "border-l-4 border-l-slate-300";
   return (
-    <div className={`rounded border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
+    <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className="text-lg font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
@@ -247,7 +247,7 @@ export function BillsPage() {
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-gray-600">Status:</span>
-        <SelectCombobox className="rounded border border-gray-300 px-2 py-1" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
           <option value="">All open items</option>
           <option value="unpaid">Unpaid</option>
           <option value="partial">Partial</option>
@@ -271,7 +271,7 @@ export function BillsPage() {
         onCapExceeded={(message) => pushToast(message, "error")}
       >
         {(selectCtx) => (
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
@@ -410,7 +410,7 @@ export function BillsPage() {
           <label className="block text-sm text-gray-700">
             Scheduled date
             <DatePicker
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={scheduledDate}
               onChange={(next) => setScheduledDate(next)}
             />

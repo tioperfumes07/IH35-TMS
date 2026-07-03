@@ -58,16 +58,16 @@ export function TasksCalendarPage() {
       <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
       <TasksModuleTabs />
 
-      <div className="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-2">
-        <button type="button" onClick={() => shiftMonth(-1)} className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700">
+      <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2">
+        <button type="button" onClick={() => shiftMonth(-1)} className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700">
           ← Prev
         </button>
         <div className="text-sm font-semibold text-slate-900">{monthLabel(bounds.start)}</div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setAnchor(today)} className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700">
+          <button type="button" onClick={() => setAnchor(today)} className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700">
             Today
           </button>
-          <button type="button" onClick={() => shiftMonth(1)} className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700">
+          <button type="button" onClick={() => shiftMonth(1)} className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700">
             Next →
           </button>
         </div>
@@ -75,7 +75,7 @@ export function TasksCalendarPage() {
 
       {query.isError ? <div className="text-xs text-red-700">Couldn't load the calendar.</div> : null}
 
-      <div className="rounded border border-slate-200 bg-white p-2">
+      <div className="rounded-sm border border-slate-200 bg-white p-2">
         <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-500">
           {WEEKDAYS.map((d) => (
             <div key={d} className="py-1">{d}</div>
@@ -83,19 +83,19 @@ export function TasksCalendarPage() {
         </div>
         <div className="grid grid-cols-7 gap-1">
           {cells.map((day, idx) => {
-            if (!day) return <div key={`blank-${idx}`} className="min-h-[84px] rounded bg-slate-50" />;
+            if (!day) return <div key={`blank-${idx}`} className="min-h-[84px] rounded-sm bg-slate-50" />;
             const dayTasks = tasksByDay.get(day) ?? [];
             const isToday = day === today;
             return (
               <div
                 key={day}
-                className={`min-h-[84px] rounded border p-1 ${isToday ? "border-slate-800 bg-slate-50" : "border-slate-100"}`}
+                className={`min-h-[84px] rounded-sm border p-1 ${isToday ? "border-slate-800 bg-slate-50" : "border-slate-100"}`}
               >
                 <div className={`text-[10px] ${isToday ? "font-bold text-slate-900" : "text-slate-500"}`}>{Number(day.slice(8, 10))}</div>
                 <div className="mt-0.5 space-y-0.5">
                   {dayTasks.slice(0, 3).map((t) => (
                     <div key={t.task_id} className="flex items-center gap-1 truncate text-[9px] text-slate-700" title={t.title}>
-                      <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${PRIORITY_DOT[Math.min(2, Math.max(0, t.priority))]}`} />
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${PRIORITY_DOT[Math.min(2, Math.max(0, t.priority))]}`} />
                       <span className={`truncate ${t.status === "completed" ? "text-slate-400 line-through" : ""}`}>{t.title}</span>
                     </div>
                   ))}

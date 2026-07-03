@@ -59,28 +59,28 @@ export function ManualJEListPage() {
       subtitle="Filter, review, and void posted entries"
       actions={<Button onClick={() => setCreateOpen(true)} disabled={!companyId}>+ Create</Button>}
     >
-      <div className="grid grid-cols-5 gap-2 rounded border border-gray-200 bg-white p-2 text-xs">
-        <SelectCombobox className="h-8 rounded border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
+      <div className="grid grid-cols-5 gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs">
+        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
           <option value="all">All sources</option>
           <option value="manual">Manual</option>
           <option value="auto">Auto</option>
         </SelectCombobox>
-        <SelectCombobox className="h-8 rounded border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
+        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
           <option value="all">All statuses</option>
           <option value="posted">Posted</option>
           <option value="voided">Voided</option>
         </SelectCombobox>
-        <DatePicker className="h-8 rounded border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
-        <DatePicker className="h-8 rounded border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
+        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
+        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
         <input
-          className="h-8 rounded border border-gray-300 px-2"
+          className="h-8 rounded-sm border border-gray-300 px-2"
           placeholder="Account ID (optional)"
           value={accountId}
           onChange={(e) => setAccountId(e.target.value)}
         />
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-gray-600">
             <tr>

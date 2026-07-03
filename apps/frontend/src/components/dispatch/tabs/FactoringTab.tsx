@@ -299,7 +299,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
     return <div className="p-4 text-sm text-gray-500">Loading factoring data…</div>;
   }
   if (!load) {
-    return <div className="rounded border border-gray-200 p-4 text-sm text-gray-500">Load not found.</div>;
+    return <div className="rounded-sm border border-gray-200 p-4 text-sm text-gray-500">Load not found.</div>;
   }
 
   // ── render ─────────────────────────────────────────────────────────────────
@@ -307,10 +307,10 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   return (
     <div className="space-y-4 text-sm">
       {/* Status badge + stepper */}
-      <div className="rounded border border-gray-200 bg-gray-50 p-3">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3">
         <div className="mb-2 flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Factoring Status</span>
-          <span className={`rounded border px-2 py-0.5 text-xs font-semibold ${STAGE_COLORS[stage]}`}>
+          <span className={`rounded-sm border px-2 py-0.5 text-xs font-semibold ${STAGE_COLORS[stage]}`}>
             {STAGE_LABELS[stage]}
           </span>
         </div>
@@ -341,7 +341,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
       </div>
 
       {/* Document checklist */}
-      <div className="rounded border border-gray-200 p-3">
+      <div className="rounded-sm border border-gray-200 p-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Packet Checklist</div>
         <div className="space-y-1.5">
           <CheckItem
@@ -381,7 +381,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
       {/* Timestamps */}
       {(meta.generated_at || meta.approved_at || meta.emailed_at || meta.uploaded_at) ? (
-        <div className="rounded border border-gray-200 p-3 text-xs text-gray-600">
+        <div className="rounded-sm border border-gray-200 p-3 text-xs text-gray-600">
           {meta.generated_at ? (
             <div>Assembled: {new Date(meta.generated_at).toLocaleString()}</div>
           ) : null}
@@ -402,7 +402,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
         <div className="space-y-2">
           {/* Stage: NOT_FACTORED → mark packet ready */}
           {stage === "NOT_FACTORED" && isDeliverable && (
-            <div className="rounded border border-slate-300 bg-slate-100 p-3">
+            <div className="rounded-sm border border-slate-300 bg-slate-100 p-3">
               <p className="mb-2 text-xs text-slate-700">
                 {packetComplete
                   ? "All documents present. Mark packet ready for dispatcher approval."
@@ -420,7 +420,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
           {/* Stage: PACKET_READY → dispatcher approves */}
           {stage === "PACKET_READY" && !meta.approved_at && (
-            <div className="rounded border border-amber-200 bg-amber-50 p-3">
+            <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
               <p className="mb-2 text-xs font-medium text-amber-900">
                 Dispatcher approval required before submitting to FARO.
               </p>
@@ -436,7 +436,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
           {/* Stage: PACKET_READY + approved → submit to FARO */}
           {stage === "PACKET_READY" && meta.approved_at && !submitOpen && (
-            <div className="rounded border border-emerald-200 bg-emerald-50 p-3">
+            <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3">
               <p className="mb-2 text-xs text-emerald-800">
                 Packet approved on {new Date(meta.approved_at).toLocaleString()}. Ready to submit to FARO.
               </p>
@@ -455,10 +455,10 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
           {/* Submit form */}
           {submitOpen && (
-            <div className="rounded border border-gray-200 p-3">
+            <div className="rounded-sm border border-gray-200 p-3">
               <div className="mb-2 text-xs font-semibold text-gray-700">Select FARO factor account</div>
               <select
-                className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 value={selectedFactorId}
                 onChange={(e) => setSelectedFactorId(e.target.value)}
               >
@@ -489,7 +489,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
       {/* Already submitted / beyond → informational */}
       {["SUBMITTED", "ADVANCE_RECEIVED", "RESERVE_RELEASED", "CHARGED_BACK"].includes(stage) ? (
-        <div className="rounded border border-gray-200 p-3 text-xs text-gray-600">
+        <div className="rounded-sm border border-gray-200 p-3 text-xs text-gray-600">
           {stage === "SUBMITTED"
             ? "Invoice submitted to FARO factoring batch. Track progress in Accounting → Factoring."
             : stage === "ADVANCE_RECEIVED"

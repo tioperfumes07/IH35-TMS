@@ -13,7 +13,7 @@ function dutyPillClass(status: string) {
     case "sleeper_berth":
       return "bg-[#581c87] text-[#c4b5fd]";
     default:
-      return "bg-[#404756] text-[#94a3b8]";
+      return "bg-[#404756] text-pwa-text-secondary";
   }
 }
 
@@ -38,7 +38,7 @@ export function HosPage() {
               {t(`hos.duty_status.${data.duty_status}`)}
             </span>
           </div>
-          {isStale ? <div className="rounded border border-[#92400e] bg-[#2a2415] p-2 text-xs text-[#fcd34d]">{t("hos.stale_data")}</div> : null}
+          {isStale ? <div className="rounded-sm border border-[#92400e] bg-[#2a2415] p-2 text-xs text-[#fcd34d]">{t("hos.stale_data")}</div> : null}
         </PwaCard>
         <div className="grid gap-2">
           {data.clocks.map((clock) => (

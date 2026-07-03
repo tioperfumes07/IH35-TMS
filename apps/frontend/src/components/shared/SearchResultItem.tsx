@@ -38,7 +38,7 @@ export function SearchResultItem({ result, active, onSelect }: Props) {
         onSelect(result);
       }}
     >
-      <span className={`mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${badgeClass}`}>
+      <span className={`mt-0.5 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase ${badgeClass}`}>
         {result.entity_type}
       </span>
       <span className="min-w-0 flex-1">

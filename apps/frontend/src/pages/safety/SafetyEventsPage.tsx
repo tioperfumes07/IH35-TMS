@@ -125,12 +125,12 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         <KpiCard label="Commendations" value={Number(kpiQuery.data?.commendations_count ?? 0)} />
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white p-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-2">
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as "" | "open" | "acknowledged" | "closed")}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="">All statuses</option>
             <option value="open">Open</option>
@@ -140,7 +140,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           <select
             value={severityFilter}
             onChange={(event) => setSeverityFilter(event.target.value as "" | "low" | "medium" | "high" | "critical")}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="">All severity</option>
             <option value="low">Low</option>
@@ -152,20 +152,20 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search title or description"
-            className="w-56 rounded border border-gray-300 px-2 py-1 text-xs"
+            className="w-56 rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
         </div>
 
         <button
           type="button"
           onClick={() => setLogModalOpen(true)}
-          className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
         >
           + Log Event
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-[980px] w-full text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>
@@ -227,7 +227,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <h4 className="text-xs font-semibold uppercase text-gray-500">Event log notes</h4>
             <div className="mt-2 space-y-2">
               {(notesQuery.data ?? []).map((note) => (
-                <div key={note.id} className="rounded border border-gray-200 bg-gray-50 p-2 text-xs">
+                <div key={note.id} className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
                   <div className="text-gray-700">{note.note}</div>
                   <div className="mt-1 text-[10px] text-gray-500">
                     {String(note.created_at ?? "").slice(0, 19).replace("T", " ")} · {note.created_by_name ?? note.created_by}
@@ -252,18 +252,18 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             value={draft.title}
             onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
             placeholder="Title"
-            className="rounded border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
           />
           <input
             value={draft.event_type}
             onChange={(event) => setDraft((prev) => ({ ...prev, event_type: event.target.value }))}
             placeholder="Event type"
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
           <select
             value={draft.kpi_bucket}
             onChange={(event) => setDraft((prev) => ({ ...prev, kpi_bucket: event.target.value as EventDraft["kpi_bucket"] }))}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="incidents">Incidents</option>
             <option value="violations">Violations</option>
@@ -273,7 +273,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           <select
             value={draft.severity}
             onChange={(event) => setDraft((prev) => ({ ...prev, severity: event.target.value as EventDraft["severity"] }))}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -283,7 +283,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           <select
             value={draft.status}
             onChange={(event) => setDraft((prev) => ({ ...prev, status: event.target.value as EventDraft["status"] }))}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="open">Open</option>
             <option value="acknowledged">Acknowledged</option>
@@ -292,7 +292,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           <select
             value={draft.subject_type}
             onChange={(event) => setDraft((prev) => ({ ...prev, subject_type: event.target.value as EventDraft["subject_type"] }))}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="company">Company</option>
             <option value="driver">Driver</option>
@@ -302,19 +302,19 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             value={draft.subject_driver_id}
             onChange={(event) => setDraft((prev) => ({ ...prev, subject_driver_id: event.target.value }))}
             placeholder="Subject driver UUID (optional)"
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
           <input
             value={draft.subject_unit_id}
             onChange={(event) => setDraft((prev) => ({ ...prev, subject_unit_id: event.target.value }))}
             placeholder="Subject unit UUID (optional)"
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
           <textarea
             value={draft.description}
             onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
             placeholder="Description"
-            className="rounded border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
             rows={4}
           />
         </div>
@@ -324,7 +324,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             type="button"
             onClick={() => createMutation.mutate()}
             disabled={createMutation.isPending || !draft.title.trim() || !draft.event_type.trim()}
-            className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
           >
             {createMutation.isPending ? "Saving..." : "Save event"}
           </button>
@@ -336,7 +336,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
 
 function KpiCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded border border-gray-200 bg-white px-3 py-2">
+    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
       <div className="text-[11px] uppercase text-gray-500">{label}</div>
       <div className="text-lg font-semibold text-gray-900">{value}</div>
     </div>

@@ -44,7 +44,7 @@ export function DomainRibbon({ inventory, onCatalogClick }: Props) {
   }, []);
 
   return (
-    <div ref={rootRef} className="relative rounded border border-slate-200 bg-white px-2 pt-1 shadow-sm">
+    <div ref={rootRef} className="relative rounded-sm border border-slate-200 bg-white px-2 pt-1 shadow-xs">
       <div className="flex flex-wrap gap-1">
         {DOMAIN_ORDER.map((domain) => {
           const rows = byDomain[domain] ?? [];

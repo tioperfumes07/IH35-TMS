@@ -53,7 +53,7 @@ export function InTransitIssuesPage() {
   });
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   const issues = issuesQ.data?.issues ?? [];
@@ -68,14 +68,14 @@ export function InTransitIssuesPage() {
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               + Create Issue
             </Button>
-            <Link to="/dispatch" className="rounded border px-3 py-1.5 text-sm">
+            <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
               Dispatch Home
             </Link>
           </div>
         }
       />
 
-      <section className="overflow-x-auto rounded border bg-white">
+      <section className="overflow-x-auto rounded-sm border bg-white">
         <table className="min-w-full text-sm">
           <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
@@ -159,7 +159,7 @@ export function InTransitIssuesPage() {
             <input
               value={loadId}
               onChange={(event) => setLoadId(event.target.value)}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               placeholder="UUID of load"
             />
           </div>
@@ -168,7 +168,7 @@ export function InTransitIssuesPage() {
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="mechanical">Mechanical</option>
               <option value="safety">Safety</option>
@@ -181,7 +181,7 @@ export function InTransitIssuesPage() {
             <select
               value={severity}
               onChange={(event) => setSeverity(event.target.value as typeof severity)}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="info">Info</option>
               <option value="warning">Warning</option>
@@ -193,7 +193,7 @@ export function InTransitIssuesPage() {
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               rows={4}
             />
           </div>

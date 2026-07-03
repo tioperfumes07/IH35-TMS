@@ -55,15 +55,15 @@ export function WorkOrdersConsoleListPage() {
     <div className="flex flex-col gap-3 px-3 py-3">
       <PageHeader title="Work orders" subtitle="Operational console for vendor-ready work order PDFs" />
 
-      {!companyId ? <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select a company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select a company.</div> : null}
 
       <SecondaryNavTabs activeId={segment} onChange={(id) => setSegment(id as SegmentId)} tabs={tabs} />
 
-      <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2">
         <SelectCombobox
           value={billing}
           onChange={(event) => setBilling(event.target.value as typeof billing)}
-          className="h-8 rounded border border-gray-300 px-2 text-xs"
+          className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
         >
           <option value="all">Billing: All</option>
           <option value="internal">Internal</option>
@@ -72,7 +72,7 @@ export function WorkOrdersConsoleListPage() {
         <SelectCombobox
           value={svc}
           onChange={(event) => setSvc(event.target.value as typeof svc)}
-          className="h-8 rounded border border-gray-300 px-2 text-xs"
+          className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
         >
           <option value="all">Service class: All</option>
           <option value="pm">PM</option>
@@ -86,7 +86,7 @@ export function WorkOrdersConsoleListPage() {
         <SelectCombobox
           value={sort}
           onChange={(event) => setSort(event.target.value as typeof sort)}
-          className="h-8 rounded border border-gray-300 px-2 text-xs"
+          className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
         >
           <option value="created_desc">Sort: Newest</option>
           <option value="cost_desc">Sort: Cost</option>
@@ -97,11 +97,11 @@ export function WorkOrdersConsoleListPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search WO #, unit, vendor, driver…"
-          className="h-8 min-w-[240px] flex-1 rounded border border-gray-300 px-2 text-[13px]"
+          className="h-8 min-w-[240px] flex-1 rounded-sm border border-gray-300 px-2 text-[13px]"
         />
       </div>
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full border-collapse text-left text-[13px]">
           <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600">
             <tr>

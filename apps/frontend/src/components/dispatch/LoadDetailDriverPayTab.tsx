@@ -64,20 +64,20 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
     const err = billsQuery.error as { status?: number };
     if (err?.status === 501) {
       return (
-        <div className="rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           Driver finance module is not yet configured for this company.
         </div>
       );
     }
     if (err?.status === 403) {
       return (
-        <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           You do not have permission to view driver pay for this load.
         </div>
       );
     }
     return (
-      <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         Failed to load driver pay data.
       </div>
     );
@@ -88,7 +88,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
   if (bills.length === 0) {
     return (
       <div className="space-y-3">
-        <div className="rounded border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
           No pay lines recorded yet for this load.
           <div className="mt-1 text-xs text-gray-400">
             Pay lines populate once a settlement is composed for the assigned driver.
@@ -116,7 +116,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
   return (
     <div className="space-y-4">
       {/* Summary card */}
-      <div className="grid grid-cols-2 gap-2 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
+      <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
         <div>
           <div className="text-xs text-gray-500">Gross earnings</div>
           <div className="font-semibold text-gray-900">{formatMoneyCents(grossCents, currencyCode)}</div>
@@ -154,9 +154,9 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
           const cents = getAmountCents(bill);
           const isNegative = DEDUCTION_TYPES.has(bill.line_type) || ADVANCE_TYPES.has(bill.line_type);
           return (
-            <div key={bill.id} className="flex items-center justify-between rounded border border-gray-100 p-2 text-sm">
+            <div key={bill.id} className="flex items-center justify-between rounded-sm border border-gray-100 p-2 text-sm">
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className={`self-start rounded px-1.5 py-0.5 text-[10px] font-semibold ${lineTypeBadge(bill.line_type)}`}>
+                <span className={`self-start rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${lineTypeBadge(bill.line_type)}`}>
                   {lineTypeLabel(bill.line_type)}
                 </span>
                 <span className="truncate text-xs text-gray-600">{bill.description || "—"}</span>

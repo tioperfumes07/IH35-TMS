@@ -28,12 +28,12 @@ export function HelpArticlePage() {
       <article className="prose prose-sm max-w-none text-gray-900">
         <ReactMarkdown>{article.body}</ReactMarkdown>
       </article>
-      <section aria-label="Feedback" className="rounded border border-gray-200 bg-white p-4">
+      <section aria-label="Feedback" className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-gray-900">Was this helpful?</h2>
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded border border-gray-300 px-3 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-sm border border-gray-300 px-3 py-1 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             onClick={() => setFeedback("up")}
             aria-pressed={feedback === "up"}
           >
@@ -41,7 +41,7 @@ export function HelpArticlePage() {
           </button>
           <button
             type="button"
-            className="rounded border border-gray-300 px-3 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-sm border border-gray-300 px-3 py-1 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             onClick={() => setFeedback("down")}
             aria-pressed={feedback === "down"}
           >
@@ -54,7 +54,7 @@ export function HelpArticlePage() {
           </p>
         ) : null}
         <p className="mt-3 text-sm">
-          <Link to="/help" className="text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
+          <Link to="/help" className="text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400">
             ← All articles
           </Link>
         </p>

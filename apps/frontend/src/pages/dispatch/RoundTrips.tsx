@@ -51,14 +51,14 @@ function TripCard({
     <button
       type="button"
       onClick={() => onClick(load.id)}
-      className="w-full rounded border border-gray-200 bg-white p-2.5 text-left shadow-sm transition hover:border-slate-300 hover:shadow"
+      className="w-full rounded-sm border border-gray-200 bg-white p-2.5 text-left shadow-xs transition hover:border-slate-300 hover:shadow-sm"
       data-testid={`round-trip-load-${load.load_number}`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-semibold text-gray-900">{load.load_number}</span>
         <div className="flex items-center gap-1">
           {tag ? (
-            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">{tag}</span>
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">{tag}</span>
           ) : null}
           <span className="text-sm">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</span>
         </div>
@@ -67,7 +67,7 @@ function TripCard({
       <div className="mt-1 text-[11px] text-gray-500">{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-600">
         <span>{load.assigned_primary_driver_name ?? "Unassigned"}</span>
-        <span className="rounded bg-gray-100 px-1.5 py-0.5">{STATUS_LABEL[load.status]}</span>
+        <span className="rounded-sm bg-gray-100 px-1.5 py-0.5">{STATUS_LABEL[load.status]}</span>
       </div>
       <div className="mt-1 text-[10px] font-semibold text-gray-800">
         {formatMoneyCents(load.rate_total_cents, load.currency_code)}
@@ -79,7 +79,7 @@ function TripCard({
 function NeedsReturnCard({ onBookReturn }: { onBookReturn: () => void }) {
   return (
     <div
-      className="flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded border border-dashed border-amber-400 bg-amber-50/40 p-3 text-center"
+      className="flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-amber-400 bg-amber-50/40 p-3 text-center"
       data-testid="round-trip-needs-return"
     >
       <span className="text-xs font-semibold text-amber-900">Needs return</span>
@@ -213,7 +213,7 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
   }
 
   if (!enabled) {
-    return <div className="rounded border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   const isLoading = loading || preSettlementsQuery.isLoading || idleUnitsQuery.isLoading;
@@ -225,9 +225,9 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
       </div>
 
       {isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading round trips…</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading round trips…</div>
       ) : pairs.length === 0 ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">
           No active unit round trips. Book loads to see outbound + return pairing.
         </div>
       ) : (
@@ -235,7 +235,7 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
           {pairs.map((pair) => (
             <div
               key={pair.unitId}
-              className="grid grid-cols-1 gap-2 rounded border border-gray-200 bg-gray-50/80 p-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+              className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-gray-50/80 p-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
               data-testid={`round-trip-row-${pair.unitNumber}`}
             >
               <div className="flex min-w-0 flex-col gap-1">
@@ -246,7 +246,7 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
                 {pair.outbound ? (
                   <TripCard load={pair.outbound} onClick={onLoadClick} />
                 ) : (
-                  <div className="rounded border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
+                  <div className="rounded-sm border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
                     No active outbound load
                   </div>
                 )}
@@ -259,7 +259,7 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
                 ) : pair.needsReturn ? (
                   <NeedsReturnCard onBookReturn={onBookReturn} />
                 ) : (
-                  <div className="rounded border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
+                  <div className="rounded-sm border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
                     Return not required yet
                   </div>
                 )}
@@ -267,11 +267,11 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
 
               <div className="hidden items-center justify-center md:flex">
                 {pair.needsReturn && !pair.returnLoad ? (
-                  <span className="rounded bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-900">Needs return</span>
+                  <span className="rounded-sm bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-900">Needs return</span>
                 ) : pair.returnLoad ? (
-                  <span className="rounded bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-800">Paired</span>
+                  <span className="rounded-sm bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-800">Paired</span>
                 ) : (
-                  <span className="rounded bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-700">Open</span>
+                  <span className="rounded-sm bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-700">Open</span>
                 )}
               </div>
             </div>

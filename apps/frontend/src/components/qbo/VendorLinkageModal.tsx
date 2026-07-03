@@ -83,7 +83,7 @@ export function VendorLinkageModal({
     <Modal open={open} onClose={onClose} title="QBO Vendor Linkage">
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-2">
-          <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs">
             <div className="font-semibold text-gray-900">{entityName}</div>
             <div className="text-gray-600">Current: {currentQboVendorId ?? "Unlinked"}</div>
           </div>
@@ -92,7 +92,7 @@ export function VendorLinkageModal({
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-[13px]"
+              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
               placeholder="Search display/company name"
             />
           </label>
@@ -102,7 +102,7 @@ export function VendorLinkageModal({
           <div className="max-h-52 space-y-1 overflow-auto">{(vendorsQuery.data?.rows ?? []).map(renderVendor)}</div>
         </div>
         <div className="space-y-2">
-          <div className="rounded border border-gray-200 p-2 text-xs">
+          <div className="rounded-sm border border-gray-200 p-2 text-xs">
             <div className="font-semibold text-gray-900">Selected vendor</div>
             {selectedVendor ? (
               <>
@@ -119,10 +119,10 @@ export function VendorLinkageModal({
               rows={4}
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
             />
           </label>
-          {error ? <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</div> : null}
+          {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</div> : null}
           <div className="flex flex-wrap justify-end gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel

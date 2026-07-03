@@ -82,11 +82,11 @@ export function AccountingAuditTrailPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {eventQuery.isError ? <ReportBlockVPendingBanner error={eventQuery.error} onRetry={() => void eventQuery.refetch()} /> : null}
 
-      <div className="grid gap-3 rounded border border-slate-200 bg-white p-3 md:grid-cols-4">
+      <div className="grid gap-3 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-4">
         <label className="text-xs text-slate-600">
           Source type
           <input
-            className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             placeholder="invoice | bill | payment"
@@ -95,7 +95,7 @@ export function AccountingAuditTrailPage() {
         <label className="text-xs text-slate-600">
           Source id
           <input
-            className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
             placeholder="uuid or display id"
@@ -104,7 +104,7 @@ export function AccountingAuditTrailPage() {
         <label className="text-xs text-slate-600">
           Account
           <select
-            className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
           >
@@ -131,7 +131,7 @@ export function AccountingAuditTrailPage() {
         </div>
       </div>
 
-      <div className="rounded border border-slate-200 bg-white">
+      <div className="rounded-sm border border-slate-200 bg-white">
         {eventQuery.isLoading ? <div className="p-3 text-sm text-slate-500">Loading audit trail…</div> : null}
         {!eventQuery.isLoading && events.length === 0 ? <div className="p-3 text-sm text-slate-500">No audit events found.</div> : null}
         {events.length > 0 ? (
@@ -200,13 +200,13 @@ export function AccountingAuditTrailPage() {
                         <div className="grid gap-2 md:grid-cols-2">
                           <div>
                             <div className="mb-1 text-[11px] font-semibold uppercase text-slate-600">Before state</div>
-                            <pre className="max-h-48 overflow-auto rounded border border-slate-200 bg-white p-2 text-[11px]">
+                            <pre className="max-h-48 overflow-auto rounded-sm border border-slate-200 bg-white p-2 text-[11px]">
                               {JSON.stringify(row.before_state_json ?? {}, null, 2)}
                             </pre>
                           </div>
                           <div>
                             <div className="mb-1 text-[11px] font-semibold uppercase text-slate-600">After state</div>
-                            <pre className="max-h-48 overflow-auto rounded border border-slate-200 bg-white p-2 text-[11px]">
+                            <pre className="max-h-48 overflow-auto rounded-sm border border-slate-200 bg-white p-2 text-[11px]">
                               {JSON.stringify(row.after_state_json ?? {}, null, 2)}
                             </pre>
                           </div>
@@ -229,7 +229,7 @@ export function AccountingAuditTrailPage() {
       </div>
 
       {lineageKey ? (
-        <div className="rounded border border-slate-200 bg-white p-3">
+        <div className="rounded-sm border border-slate-200 bg-white p-3">
           <div className="mb-2 text-sm font-semibold">
             Source lineage: {lineageKey.source_transaction_type} / {lineageKey.source_transaction_id}
           </div>

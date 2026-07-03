@@ -66,7 +66,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
           <button
             type="button"
             onClick={() => setShowCreate((s) => !s)}
-            className="rounded border border-[#1f2a44] px-3 py-1 text-[12px] font-semibold text-[#1f2a44] hover:bg-slate-50"
+            className="rounded-sm border border-[#1f2a44] px-3 py-1 text-[12px] font-semibold text-[#1f2a44] hover:bg-slate-50"
           >
             {showCreate ? "Cancel" : "+ Create required type"}
           </button>
@@ -107,7 +107,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
       ) : rows.length === 0 ? (
         <p className="text-[12px] text-slate-500">No required document types for this record type.</p>
       ) : (
-        <div className="overflow-x-auto rounded border border-slate-200">
+        <div className="overflow-x-auto rounded-sm border border-slate-200">
           <table className="min-w-full text-[12px]">
             <thead className="bg-slate-50 text-left text-slate-600">
               <tr>
@@ -186,7 +186,7 @@ function RowView({
               type="button"
               disabled={pending}
               onClick={onToggleEnforcement}
-              className="rounded border border-slate-300 px-2 py-0.5 text-[11px] hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] hover:bg-slate-50 disabled:opacity-50"
             >
               {row.enforcement === "warn" ? "Make hard block" : "Make warn"}
             </button>
@@ -194,7 +194,7 @@ function RowView({
               type="button"
               disabled={pending}
               onClick={onDeactivate}
-              className="rounded border border-slate-300 px-2 py-0.5 text-[11px] text-red-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] text-red-600 hover:bg-slate-50 disabled:opacity-50"
             >
               Deactivate
             </button>
@@ -223,7 +223,7 @@ function CreateRow({
   const valid = /^[a-z0-9_]+$/.test(code) && label.trim().length > 0;
 
   return (
-    <div className="mb-3 rounded border border-slate-200 bg-slate-50 p-3">
+    <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3">
       <div className="mb-2 text-[11px] font-semibold text-slate-600">New required document for {entityKind}s</div>
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col text-[11px] text-slate-500">
@@ -232,7 +232,7 @@ function CreateRow({
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="e.g. hazmat_cert"
-            className="mt-0.5 rounded border border-slate-300 px-2 py-1 text-[12px]"
+            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-[12px]"
           />
         </label>
         <label className="flex flex-col text-[11px] text-slate-500">
@@ -241,7 +241,7 @@ function CreateRow({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="e.g. Hazmat Certificate"
-            className="mt-0.5 rounded border border-slate-300 px-2 py-1 text-[12px]"
+            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-[12px]"
           />
         </label>
         <label className="flex flex-col text-[11px] text-slate-500">
@@ -249,7 +249,7 @@ function CreateRow({
           <select
             value={enforcement}
             onChange={(e) => setEnforcement(e.target.value as RequiredDocEnforcement)}
-            className="mt-0.5 rounded border border-slate-300 px-2 py-1 text-[12px]"
+            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-[12px]"
           >
             <option value="warn">Warn</option>
             <option value="hard_block">Hard block</option>
@@ -263,7 +263,7 @@ function CreateRow({
           type="button"
           disabled={!valid || pending}
           onClick={() => onSubmit({ code, label, enforcement, has_expiry: hasExpiry })}
-          className="rounded bg-[#1f2a44] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+          className="rounded-sm bg-[#1f2a44] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
         >
           {pending ? "Creating…" : "+ Create"}
         </button>

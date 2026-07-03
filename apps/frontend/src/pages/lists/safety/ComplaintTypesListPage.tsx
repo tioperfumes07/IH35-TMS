@@ -20,13 +20,13 @@ const SEVERITY_LABELS: Record<ComplaintSeverity, string> = {
 function severityBadgeClass(severity: ComplaintSeverity | null) {
   switch (severity) {
     case "critical":
-      return "rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
+      return "rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
     case "high":
-      return "rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+      return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
     case "medium":
-      return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+      return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
     default:
-      return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500";
+      return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500";
   }
 }
 
@@ -75,9 +75,9 @@ export function ComplaintTypesListPage() {
         }
       />
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by type code or type name" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
-        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-sm">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by type code or type name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
           {STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

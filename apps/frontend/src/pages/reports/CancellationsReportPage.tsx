@@ -15,7 +15,7 @@ function money(cents: number) {
 // date with billable-charge totals, scoped to the selected operating company (per-entity).
 function BucketTable({ title, rows }: { title: string; rows: CancellationBucket[] }) {
   return (
-    <div className="rounded border border-gray-200 bg-white">
+    <div className="rounded-sm border border-gray-200 bg-white">
       <div className="border-b border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
         {title}
       </div>
@@ -71,7 +71,7 @@ export function CancellationsReportPage() {
       <PageHeader title="Cancellations" subtitle="Reports" />
       <ReportsSubNav />
 
-      <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+      <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
         <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
           From
           <DatePicker value={from} onChange={setFrom} />
@@ -86,7 +86,7 @@ export function CancellationsReportPage() {
         {(applied.from || applied.to) && (
           <button
             type="button"
-            className="rounded border border-gray-300 bg-white px-2 py-1 font-semibold text-gray-700 hover:bg-gray-50"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 font-semibold text-gray-700 hover:bg-gray-50"
             onClick={() => { setFrom(""); setTo(""); setApplied({}); }}
           >
             Clear
@@ -95,21 +95,21 @@ export function CancellationsReportPage() {
       </div>
 
       {query.isLoading ? (
-        <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">Loading cancellations…</div>
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">Loading cancellations…</div>
       ) : query.isError ? (
-        <div className="rounded border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">Couldn't load the cancellations report.</div>
+        <div className="rounded-sm border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">Couldn't load the cancellations report.</div>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-            <div className="rounded border border-gray-200 bg-white px-3 py-2">
+            <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">Cancellations</div>
               <div className="text-lg font-semibold">{total.count}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white px-3 py-2">
+            <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">Billable to customer</div>
               <div className="text-lg font-semibold">{total.billable_count}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white px-3 py-2">
+            <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">Total charges</div>
               <div className="text-lg font-semibold">{money(total.total_charge_cents)}</div>
             </div>

@@ -185,7 +185,7 @@ export function UploadModal({
             const file = event.dataTransfer.files[0];
             if (file) setSelectedFile(file);
           }}
-          className={`rounded border border-dashed p-4 text-center text-sm ${dragOver ? "border-slate-300 bg-slate-100" : "border-gray-300 bg-gray-50"}`}
+          className={`rounded-sm border border-dashed p-4 text-center text-sm ${dragOver ? "border-slate-300 bg-slate-100" : "border-gray-300 bg-gray-50"}`}
         >
           <p className="font-medium text-gray-700">Drag and drop file here</p>
           <p className="text-xs text-gray-500">or click to browse</p>
@@ -231,7 +231,7 @@ export function UploadModal({
             <DatePicker
               value={documentDate}
               onChange={(next) => setDocumentDate(next)}
-              className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>
           <div className="space-y-1">
@@ -243,7 +243,7 @@ export function UploadModal({
               value={expirationDate}
               onChange={(event) => setExpirationDate(event.target.value)}
               required={expirationRequired}
-              className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>
         </div>
@@ -254,7 +254,7 @@ export function UploadModal({
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             rows={3}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
           />
         </div>
 
@@ -264,13 +264,13 @@ export function UploadModal({
               <span>Uploading...</span>
               <span>{progress}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded bg-gray-200">
+            <div className="h-2 overflow-hidden rounded-sm bg-gray-200">
               <div className="h-full bg-slate-1000 transition-all" style={{ width: `${progress}%` }} />
             </div>
           </div>
         ) : null}
 
-        {errorMessage ? <div className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{errorMessage}</div> : null}
+        {errorMessage ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{errorMessage}</div> : null}
 
         <div className="flex justify-end gap-2">
           <Button

@@ -18,7 +18,7 @@ export function TableSearch({ value, onChange, placeholder = "Search…", classN
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="h-8 w-full rounded border border-gray-300 pl-7 pr-2 text-[13px]"
+        className="h-8 w-full rounded-sm border border-gray-300 pl-7 pr-2 text-[13px]"
       />
     </div>
   );

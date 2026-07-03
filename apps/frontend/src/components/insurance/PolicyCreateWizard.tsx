@@ -263,7 +263,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         <StepIndicator current={step} total={4} />
 
         {serverError ? (
-          <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+          <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
             {serverError}
           </div>
         ) : null}
@@ -272,21 +272,21 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="Insurer Name *" error={step1Errors.insurer_name}>
               <input
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.insurer_name}
                 onChange={(e) => setStep1((s) => ({ ...s, insurer_name: e.target.value }))}
               />
             </Field>
             <Field label="Policy Number *" error={step1Errors.policy_number}>
               <input
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.policy_number}
                 onChange={(e) => setStep1((s) => ({ ...s, policy_number: e.target.value }))}
               />
             </Field>
             <Field label="Coverage Type *" error={step1Errors.coverage_type}>
               <select
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.coverage_type}
                 onChange={(e) => setStep1((s) => ({ ...s, coverage_type: e.target.value }))}
               >
@@ -300,7 +300,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             </Field>
             <Field label="Status">
               <select
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.status}
                 onChange={(e) => setStep1((s) => ({ ...s, status: e.target.value }))}
               >
@@ -310,14 +310,14 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             </Field>
             <Field label="Effective Date *" error={step1Errors.effective_date}>
               <DatePicker
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.effective_date}
                 onChange={(next) => setStep1((s) => ({ ...s, effective_date: next }))}
               />
             </Field>
             <Field label="Expiry Date *" error={step1Errors.expiry_date}>
               <DatePicker
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.expiry_date}
                 onChange={(next) => setStep1((s) => ({ ...s, expiry_date: next }))}
               />
@@ -325,14 +325,14 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <Field label="Insurer Email" error={step1Errors.insurer_email}>
               <input
                 type="email"
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.insurer_email}
                 onChange={(e) => setStep1((s) => ({ ...s, insurer_email: e.target.value }))}
               />
             </Field>
             <Field label="Agent Contact">
               <input
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.agent_contact}
                 onChange={(e) => setStep1((s) => ({ ...s, agent_contact: e.target.value }))}
               />
@@ -349,7 +349,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               </span>
             </div>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-xs"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               placeholder="Search by unit / VIN..."
               value={unitSearchQuery}
               onChange={(e) => setUnitSearchQuery(e.target.value)}
@@ -373,7 +373,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             {selectedUnitIds.length === 0 && (
               <p className="text-xs text-amber-700">Select at least one vehicle to continue.</p>
             )}
-            <div className="max-h-52 overflow-y-auto rounded border border-gray-200 p-2">
+            <div className="max-h-52 overflow-y-auto rounded-sm border border-gray-200 p-2">
               {unitsQuery.isLoading ? (
                 <p className="text-xs text-slate-500">Loading units...</p>
               ) : filteredUnits.length === 0 ? (
@@ -424,7 +424,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
                   type="number"
                   min="1"
                   max="120"
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                   value={step3.term_months}
                   onChange={(e) => setStep3((s) => ({ ...s, term_months: e.target.value }))}
                 />
@@ -447,7 +447,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               </div>
             </Field>
             {premiumCents > 0 && termMonths > 0 && selectedUnitIds.length > 0 ? (
-              <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <p className="text-xs font-semibold text-emerald-800">Cost per vehicle insured per month</p>
                 <p className="mt-0.5 text-lg font-bold text-emerald-700">{costInfo.costPerVehicleDisplay}</p>
                 <p className="mt-0.5 text-xs text-emerald-600">
@@ -463,7 +463,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
 
         {step === 4 && (
           <div className="space-y-3">
-            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs space-y-1">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs space-y-1">
               <div className="flex justify-between">
                 <span className="font-semibold text-slate-700">Carrier</span>
                 <span className="text-slate-700">{step1.insurer_name}</span>
@@ -492,7 +492,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <p className="text-xs font-semibold text-slate-700">
               Bill schedule — {billPreview.length} monthly bills
             </p>
-            <div className="max-h-48 overflow-x-auto overflow-y-auto rounded border border-gray-200 bg-white">
+            <div className="max-h-48 overflow-x-auto overflow-y-auto rounded-sm border border-gray-200 bg-white">
               <table className="min-w-full text-left text-xs">
                 <thead className="bg-gray-50 text-slate-500">
                   <tr>
@@ -522,7 +522,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         <div className="flex items-center justify-between border-t border-gray-100 pt-3">
           <button
             type="button"
-            className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
             onClick={step === 1 ? onClose : () => setStep((s) => s - 1)}
           >
             {step === 1 ? "Cancel" : "Back"}
@@ -532,7 +532,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               <button
                 type="button"
                 disabled={step === 2 && selectedUnitIds.length === 0}
-                className="rounded border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="rounded-sm border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                 onClick={() => {
                   if (step === 1 && !validateStep1()) return;
                   if (step === 3 && !validateStep3()) return;
@@ -546,7 +546,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               <button
                 type="button"
                 disabled={createMutation.isPending}
-                className="rounded border border-emerald-600 bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="rounded-sm border border-emerald-600 bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                 onClick={() => createMutation.mutate()}
               >
                 {createMutation.isPending

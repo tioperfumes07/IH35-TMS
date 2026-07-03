@@ -91,7 +91,7 @@ export function MessagesPage() {
               value={reply}
               onChange={(event) => setReply(event.target.value)}
               rows={3}
-              className="w-full rounded border border-pwa-border bg-[#0d111c] px-2 py-2 text-sm text-white"
+              className="w-full rounded-sm border border-pwa-border bg-[#0d111c] px-2 py-2 text-sm text-white"
               placeholder={t("messages.reply_placeholder")}
             />
             <PwaButton

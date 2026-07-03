@@ -24,12 +24,12 @@ export function QuickActionsBar({ onCreate }: Props) {
         + Create Work Order
       </ActionButton>
       {menuOpen ? (
-        <div className="absolute right-0 top-full z-20 mt-1 min-w-[170px] rounded border border-gray-200 bg-white p-1 shadow-md">
+        <div className="absolute right-0 top-full z-20 mt-1 min-w-[170px] rounded-sm border border-gray-200 bg-white p-1 shadow-md">
           {types.map((type) => (
             <button
               key={type.id}
               type="button"
-              className="block w-full rounded px-2 py-1 text-left text-xs text-slate-700 hover:bg-slate-100"
+              className="block w-full rounded-sm px-2 py-1 text-left text-xs text-slate-700 hover:bg-slate-100"
               onClick={() => {
                 onCreate(type.id);
                 setMenuOpen(false);

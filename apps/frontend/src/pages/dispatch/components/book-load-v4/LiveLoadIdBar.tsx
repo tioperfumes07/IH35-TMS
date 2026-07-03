@@ -66,7 +66,7 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
       style={{ background: "#0F1320" }}
     >
       <span style={{ color: "#A8B0C7" }}>Load #</span>
-      <span className="rounded border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-xs normal-case tracking-normal">
+      <span className="rounded-sm border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-xs normal-case tracking-normal">
         {display?.load_number ?? "…"}
       </span>
       <span style={{ color: "#6EE7B7" }}>● Reserved</span>

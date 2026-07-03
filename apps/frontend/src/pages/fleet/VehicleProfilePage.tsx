@@ -268,7 +268,7 @@ export function VehicleProfilePage() {
         </>
       ) : null}
 
-      <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded border border-gray-200 bg-white p-4">
+      <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded-sm border border-gray-200 bg-white p-4">
         <div className="text-xs font-semibold text-gray-600">QBO mapping</div>
         <label className="block text-xs text-gray-600">
           QBO vendor (ownership / lease entity)
@@ -287,7 +287,7 @@ export function VehicleProfilePage() {
         </label>
         <label className="block text-xs text-gray-600">
           Class (TMS catalog)
-          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" value={qboClassTmsId} onChange={(e) => setQboClassTmsId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value={qboClassTmsId} onChange={(e) => setQboClassTmsId(e.target.value)}>
             <option value="">None</option>
             {(classesQuery.data?.classes ?? []).map((c) => (
               <option key={c.id} value={c.id}>

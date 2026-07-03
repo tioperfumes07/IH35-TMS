@@ -151,7 +151,7 @@ export function ForensicReviewPage() {
   }, [batchesQuery.data?.batches, queryClient]);
 
   if (auth.user?.role !== "Owner") {
-    return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">Owner role required.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">Owner role required.</div>;
   }
 
   return (
@@ -194,17 +194,17 @@ export function ForensicReviewPage() {
         />
       ) : null}
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <p className="text-sm font-semibold text-gray-900">Runner Status</p>
         {runnerStatusQuery.data ? (
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            <span className={`rounded px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.forensic_runner.initialized, runnerStatusQuery.data.forensic_runner.error, runnerStatusQuery.data.forensic_runner.last_tick_at)}`}>
+            <span className={`rounded-sm px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.forensic_runner.initialized, runnerStatusQuery.data.forensic_runner.error, runnerStatusQuery.data.forensic_runner.last_tick_at)}`}>
               Forensic runner
             </span>
-            <span className={`rounded px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.sync_queue_runner.initialized, runnerStatusQuery.data.sync_queue_runner.error, runnerStatusQuery.data.sync_queue_runner.last_tick_at)}`}>
+            <span className={`rounded-sm px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.sync_queue_runner.initialized, runnerStatusQuery.data.sync_queue_runner.error, runnerStatusQuery.data.sync_queue_runner.last_tick_at)}`}>
               Sync queue
             </span>
-            <span className={`rounded px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.token_refresh_cron.initialized, runnerStatusQuery.data.token_refresh_cron.error, runnerStatusQuery.data.token_refresh_cron.last_tick_at)}`}>
+            <span className={`rounded-sm px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.token_refresh_cron.initialized, runnerStatusQuery.data.token_refresh_cron.error, runnerStatusQuery.data.token_refresh_cron.last_tick_at)}`}>
               Token refresh
             </span>
             <span className="text-gray-500">Uptime: {runnerStatusQuery.data.server_uptime_seconds}s</span>
@@ -214,7 +214,7 @@ export function ForensicReviewPage() {
         )}
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <p className="text-sm font-semibold text-gray-900">QBO Authorization</p>
         <div className="mt-2 space-y-2">
           {forensicCompanies.map((company) => {
@@ -223,7 +223,7 @@ export function ForensicReviewPage() {
             const expiresAt = status?.refresh_token_expires_at ? new Date(status.refresh_token_expires_at) : null;
             const expiresInDays = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
             return (
-              <div key={company.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-100 p-2 text-xs">
+              <div key={company.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-100 p-2 text-xs">
                 <div>
                   <p className="font-semibold text-gray-900">{company.short_name ?? company.legal_name}</p>
                   <p className={connected ? "text-green-700" : "text-red-700"}>{connected ? "Connected" : "Not Connected"}</p>
@@ -268,11 +268,11 @@ export function ForensicReviewPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <p className="text-sm font-semibold text-gray-900">Import batches</p>
           <div className="mt-2 space-y-2">
             {(batchesQuery.data?.batches ?? []).map((batch) => (
-              <div key={batch.id} className="rounded border border-gray-100 p-2 text-xs">
+              <div key={batch.id} className="rounded-sm border border-gray-100 p-2 text-xs">
                 {(() => {
                   const live = liveByBatch[batch.id];
                   const entities = live?.entities_imported ?? batch.entities_imported;
@@ -286,7 +286,7 @@ export function ForensicReviewPage() {
                     <>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-gray-900">{batch.id}</span>
-                  <span className={`rounded px-2 py-0.5 ${batch.status === "completed" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
+                  <span className={`rounded-sm px-2 py-0.5 ${batch.status === "completed" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
                     {batch.status}
                   </span>
                 </div>
@@ -295,7 +295,7 @@ export function ForensicReviewPage() {
                 </div>
                 {batch.status === "in_progress" ? (
                   <div className="mt-1 flex items-center gap-2">
-                    <span className={`rounded px-2 py-0.5 ${heartbeatClass(live?.heartbeat_age_seconds ?? null)}`}>
+                    <span className={`rounded-sm px-2 py-0.5 ${heartbeatClass(live?.heartbeat_age_seconds ?? null)}`}>
                       Heartbeat:{" "}
                       {live?.heartbeat_age_seconds === null || live?.heartbeat_age_seconds === undefined
                         ? "n/a"
@@ -308,11 +308,11 @@ export function ForensicReviewPage() {
                     </span>
                   </div>
                 ) : null}
-                <div className="mt-1 h-2 overflow-hidden rounded bg-gray-100">
+                <div className="mt-1 h-2 overflow-hidden rounded-sm bg-gray-100">
                   <div className="h-full bg-slate-1000" style={{ width: batch.status === "in_progress" ? `${pct}%` : batch.status === "completed" ? "100%" : "20%" }} />
                 </div>
                 {batch.status === "in_progress" && live?.recent_errors?.length ? (
-                  <details className="mt-2 rounded border border-red-100 bg-red-50 p-2">
+                  <details className="mt-2 rounded-sm border border-red-100 bg-red-50 p-2">
                     <summary className="cursor-pointer text-[11px] font-semibold text-red-700">Recent errors ({live.recent_errors.length})</summary>
                     <div className="mt-1 space-y-1">
                       {live.recent_errors.map((item) => (
@@ -345,7 +345,7 @@ export function ForensicReviewPage() {
                   </ActionButton>
                 </div>
                 {expandedAuditBatchId === batch.id ? (
-                  <div className="mt-2 max-h-40 overflow-auto rounded border border-gray-100 bg-gray-50 p-2">
+                  <div className="mt-2 max-h-40 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2">
                     {(auditLogQuery.data?.rows ?? []).length === 0 ? (
                       <p className="text-[11px] text-gray-500">No audit rows yet.</p>
                     ) : (
@@ -369,7 +369,7 @@ export function ForensicReviewPage() {
           <div className="mt-2 text-xs text-gray-500">Active in-progress batches: {activeBatches.length}</div>
         </div>
 
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <p className="text-sm font-semibold text-gray-900">Anomaly review queue</p>
           <div className="mt-2 max-h-[520px] space-y-2 overflow-auto">
             {(anomaliesQuery.data?.anomalies ?? []).map((anomaly) => (
@@ -387,7 +387,7 @@ export function ForensicReviewPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-gray-900">{anomaly.anomaly_type}</span>
-                  <span className={`rounded px-2 py-0.5 text-[10px] ${severityClass(anomaly.severity)}`}>{anomaly.severity}</span>
+                  <span className={`rounded-sm px-2 py-0.5 text-[10px] ${severityClass(anomaly.severity)}`}>{anomaly.severity}</span>
                 </div>
                 <div className="mt-1 text-xs text-gray-600">{anomaly.qbo_txn_type ?? "txn"} | {(Number(anomaly.total_cents ?? 0) / 100).toFixed(2)} USD</div>
                 <div className="text-xs text-gray-500">Status: {anomaly.review_status ?? "pending"}</div>
@@ -395,12 +395,12 @@ export function ForensicReviewPage() {
             ))}
           </div>
           {selectedAnomalyId ? (
-            <div className="mt-3 rounded border border-gray-100 p-2">
+            <div className="mt-3 rounded-sm border border-gray-100 p-2">
               <p className="text-xs font-semibold text-gray-700">Review anomaly {selectedAnomalyId}</p>
               <SelectCombobox
                 value={reviewStatus}
                 onChange={(event) => setReviewStatus(event.target.value as typeof reviewStatus)}
-                className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                className="mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               >
                 <option value="pending">Pending</option>
                 <option value="cleared">Cleared</option>
@@ -411,7 +411,7 @@ export function ForensicReviewPage() {
                 value={reviewNotes}
                 onChange={(event) => setReviewNotes(event.target.value)}
                 rows={3}
-                className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                className="mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 placeholder="Review notes"
               />
               <ActionButton

@@ -118,14 +118,14 @@ export function FuelReconciliationPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockVPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           From
-          <DatePicker className="mt-1 block h-9 rounded border px-2" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
+          <DatePicker className="mt-1 block h-9 rounded-sm border px-2" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <DatePicker className="mt-1 block h-9 rounded border px-2" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
+          <DatePicker className="mt-1 block h-9 rounded-sm border px-2" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
         </label>
         <Button size="sm" onClick={() => setApplied({ ...period })}>
           Apply
@@ -146,14 +146,14 @@ export function FuelReconciliationPage() {
                 ["Unmatched", String(query.data.totals.unmatched_count ?? 0)],
               ] as const
             ).map(([k, v]) => (
-              <div key={k} className="rounded border border-gray-200 bg-white p-3">
+              <div key={k} className="rounded-sm border border-gray-200 bg-white p-3">
                 <div className="text-[11px] font-semibold uppercase text-gray-500">{k}</div>
                 <div className="text-lg font-semibold">{v}</div>
               </div>
             ))}
           </div>
 
-          <div className="overflow-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-xs">
               <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                 <tr>
@@ -192,7 +192,7 @@ export function FuelReconciliationPage() {
                       <td className="px-2 py-2">
                         <div className="flex flex-wrap gap-1">
                           {(r.flags ?? []).map((f) => (
-                            <span key={f} className="rounded border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
+                            <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
                               {FLAG_META[f].label}
                             </span>
                           ))}
@@ -205,7 +205,7 @@ export function FuelReconciliationPage() {
             </table>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="no-print mb-2 flex gap-2 border-b border-gray-100 pb-2">
               <button type="button" className={`text-sm font-semibold ${tab === "card" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("card")}>
                 Unmatched Card Transactions
@@ -233,13 +233,13 @@ export function FuelReconciliationPage() {
                         <div>{row.merchant_name ?? row.description ?? "—"}</div>
                         <div className="mt-0.5 text-[10px]">
                           {row.gps_match_confidence === "high" ? (
-                            <span className="rounded bg-emerald-100 px-1 text-emerald-700">GPS match: high</span>
+                            <span className="rounded-sm bg-emerald-100 px-1 text-emerald-700">GPS match: high</span>
                           ) : row.gps_match_confidence === "medium" ? (
-                            <span className="rounded bg-amber-100 px-1 text-amber-700">GPS match: medium</span>
+                            <span className="rounded-sm bg-amber-100 px-1 text-amber-700">GPS match: medium</span>
                           ) : row.gps_match_confidence === "no_match" ? (
-                            <span className="rounded bg-red-100 px-1 text-red-700">GPS match: no match</span>
+                            <span className="rounded-sm bg-red-100 px-1 text-red-700">GPS match: no match</span>
                           ) : (
-                            <span className="rounded bg-gray-100 px-1 text-gray-600">GPS match: pending</span>
+                            <span className="rounded-sm bg-gray-100 px-1 text-gray-600">GPS match: pending</span>
                           )}
                         </div>
                       </td>
@@ -303,7 +303,7 @@ export function FuelReconciliationPage() {
         <p className="text-sm text-gray-600">Pair a card line to a WO entry. Full matcher UI ships with Block V data services.</p>
         <label className="mt-2 block text-xs text-gray-600">
           Notes
-          <textarea className="mt-1 w-full rounded border border-gray-300 p-2 text-sm" rows={3} value={matchNote} onChange={(e) => setMatchNote(e.target.value)} />
+          <textarea className="mt-1 w-full rounded-sm border border-gray-300 p-2 text-sm" rows={3} value={matchNote} onChange={(e) => setMatchNote(e.target.value)} />
         </label>
         <div className="mt-3 flex justify-end gap-2">
           <Button variant="secondary" onClick={() => setMatchOpen(false)}>

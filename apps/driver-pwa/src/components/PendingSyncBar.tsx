@@ -65,7 +65,7 @@ export function PendingSyncBar() {
     mode === "syncing"
       ? "bg-[#1e40af] text-white"
       : mode === "offline"
-        ? "bg-[#f59e0b] text-[#1f2a44]"
+        ? "bg-hos-onduty_waiting text-[#1f2a44]"
         : "bg-[#dc2626] text-white";
 
   return (

@@ -139,20 +139,20 @@ export function ReconciliationWorkspacePage() {
       />
 
       {!sessionId ? (
-        <div className="rounded border border-gray-200 bg-white p-4">
+        <div className="rounded-sm border border-gray-200 bg-white p-4">
           <p className="mb-2 text-sm font-semibold text-gray-900">Start reconciliation</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
             <input
               type="date"
               value={periodStart}
               onChange={(event) => setPeriodStart(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-1 text-sm"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
             <input
               type="date"
               value={periodEnd}
               onChange={(event) => setPeriodEnd(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-1 text-sm"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
             {/* M-1: dollars-mode QBO money entry; balance stays a DOLLAR number → *_cents byte-for-byte. */}
             <MoneyInput
@@ -192,13 +192,13 @@ export function ReconciliationWorkspacePage() {
 
       {sessionId && workspaceQuery.data ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-10">
-          <div className="rounded border border-gray-200 bg-white p-3 lg:col-span-4">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-900">Bank transactions</p>
               <SelectCombobox
                 value={filterMode}
                 onChange={(event) => setFilterMode(event.target.value as "all" | "matched" | "unmatched")}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
               >
                 <option value="all">All</option>
                 <option value="matched">Matched</option>
@@ -229,13 +229,13 @@ export function ReconciliationWorkspacePage() {
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3 lg:col-span-4">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-900">TMS candidate events</p>
               <SelectCombobox
                 value={eventFilter}
                 onChange={(event) => setEventFilter(event.target.value as "all" | "load" | "bill" | "settlement")}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
               >
                 <option value="all">All</option>
                 <option value="load">Loads</option>
@@ -314,7 +314,7 @@ export function ReconciliationWorkspacePage() {
           </div>
 
           <div className="space-y-3 lg:col-span-2">
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <p className="text-sm font-semibold text-gray-900">Variance summary</p>
               <div className="mt-2 space-y-1 text-sm">
                 <div className="flex justify-between"><span>Statement</span><span>{money(Number(workspaceQuery.data.summary.statement_balance_cents))}</span></div>
@@ -330,7 +330,7 @@ export function ReconciliationWorkspacePage() {
                   value={forceReason}
                   onChange={(event) => setForceReason(event.target.value)}
                   placeholder="Force-complete reason (Owner only)"
-                  className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                  className="mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                   rows={3}
                 />
               ) : null}

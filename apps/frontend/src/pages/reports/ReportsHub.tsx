@@ -48,7 +48,7 @@ export function ReportsHubPage() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search reports…"
-        className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
+        className="w-full rounded-sm border border-slate-200 px-3 py-2 text-sm"
         data-testid="reports-hub-search"
       />
       {filtered.map((category) => (

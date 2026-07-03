@@ -86,7 +86,7 @@ export function EditMetadataModal({ file, entityType, onClose, onSaveSuccess }: 
             <DatePicker
               value={documentDate}
               onChange={(next) => setDocumentDate(next)}
-              className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>
           <div className="space-y-1">
@@ -98,7 +98,7 @@ export function EditMetadataModal({ file, entityType, onClose, onSaveSuccess }: 
               value={expirationDate}
               required={selectedCategory?.requires_expiration_date}
               onChange={(event) => setExpirationDate(event.target.value)}
-              className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>
         </div>
@@ -109,11 +109,11 @@ export function EditMetadataModal({ file, entityType, onClose, onSaveSuccess }: 
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             rows={3}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
           />
         </div>
 
-        {errorMessage ? <div className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{errorMessage}</div> : null}
+        {errorMessage ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{errorMessage}</div> : null}
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

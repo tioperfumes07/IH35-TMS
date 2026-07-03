@@ -45,7 +45,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         <label className="block">
           <span className="text-gray-600">Fault code</span>
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.fault_code}
             onChange={(e) => setForm((f) => ({ ...f, fault_code: e.target.value }))}
           />
@@ -53,7 +53,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         <label className="block">
           <span className="text-gray-600">Source</span>
           <select
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.source}
             onChange={(e) => setForm((f) => ({ ...f, source: e.target.value as FaultRuleFormValues["source"] }))}
           >
@@ -65,7 +65,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         <label className="block">
           <span className="text-gray-600">Description</span>
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.description ?? ""}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
@@ -73,7 +73,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         <label className="block">
           <span className="text-gray-600">Severity</span>
           <select
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.severity}
             onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value as FaultRuleFormValues["severity"] }))}
           >
@@ -94,7 +94,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         <label className="block">
           <span className="text-gray-600">Suggested priority</span>
           <select
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.suggested_priority ?? ""}
             onChange={(e) =>
               setForm((f) => ({
@@ -115,7 +115,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
             type="number"
             min={0}
             step={0.5}
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.estimated_repair_hours ?? ""}
             onChange={(e) =>
               setForm((f) => ({

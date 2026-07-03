@@ -8,7 +8,7 @@ type Props = {
 
 function KpiTile({ label, value, subtext }: { label: string; value: string; subtext?: string }) {
   return (
-    <div className="rounded border border-slate-200 bg-white px-3 py-2 shadow-sm">
+    <div className="rounded-sm border border-slate-200 bg-white px-3 py-2 shadow-xs">
       <div className="text-[10px] font-semibold uppercase tracking-[0.04em] text-slate-500">{label}</div>
       <div className="mt-1 text-lg font-semibold text-slate-900">{value}</div>
       {subtext ? <div className="mt-0.5 text-[11px] text-slate-500">{subtext}</div> : null}
@@ -21,7 +21,7 @@ export function AccountingKpiBar({ data, isLoading }: Props) {
     return (
       <section className="grid grid-cols-1 gap-2 md:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-[72px] animate-pulse rounded border border-slate-200 bg-slate-50" />
+          <div key={i} className="h-[72px] animate-pulse rounded-sm border border-slate-200 bg-slate-50" />
         ))}
       </section>
     );

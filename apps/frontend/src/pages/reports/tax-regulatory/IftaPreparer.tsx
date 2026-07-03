@@ -91,14 +91,14 @@ export function IftaPreparer() {
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
-      <p className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
         Tax filing prep only — no ledger posting. Rates sourced from the IFTA tax matrix catalog (annual updates).
       </p>
 
       {!filingUuid ? (
         <button
           type="button"
-          className="rounded border border-amber-400 bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-900 disabled:opacity-50"
+          className="rounded-sm border border-amber-400 bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-900 disabled:opacity-50"
           disabled={!companyId || prepareMutation.isPending}
           onClick={() => void prepareMutation.mutateAsync()}
           data-testid="ifta-prepare-quarter"
@@ -108,7 +108,7 @@ export function IftaPreparer() {
       ) : null}
 
       {historyQuery.data?.filings?.length ? (
-        <div className="rounded border border-slate-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs">
           <p className="mb-1 font-semibold text-slate-700">Filing history</p>
           <ul className="space-y-1">
             {historyQuery.data.filings.map((row) => (

@@ -135,7 +135,7 @@ export function BankAccountDetailPage() {
         />
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 rounded border border-gray-200 bg-white p-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white p-4 md:grid-cols-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Current balance</p>
           <p className="text-xl font-semibold text-gray-900">{money(Number(account?.current_balance_cents ?? 0))}</p>
@@ -155,7 +155,7 @@ export function BankAccountDetailPage() {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-4">
+      <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="mb-3 flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">Start date</label>
@@ -165,7 +165,7 @@ export function BankAccountDetailPage() {
                 setOffset(0);
                 setStartDate(next);
               }}
-              className="rounded border border-gray-300 px-2 py-1 text-sm"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -176,7 +176,7 @@ export function BankAccountDetailPage() {
                 setOffset(0);
                 setEndDate(next);
               }}
-              className="rounded border border-gray-300 px-2 py-1 text-sm"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
           </div>
           <ActionButton

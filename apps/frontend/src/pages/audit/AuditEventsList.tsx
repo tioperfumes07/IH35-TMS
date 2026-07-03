@@ -56,12 +56,12 @@ export function AuditEventsList() {
     <div className="space-y-4">
       <PageHeader title="Audit events" subtitle="Filter by bulk call ID to review one bulk submission" />
 
-      <div className="rounded border border-gray-200 bg-white p-4">
+      <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Bulk call ID
             <input
-              className="min-w-[16rem] rounded border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="min-w-[16rem] rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
               value={bulkCallId}
               onChange={(e) => setBulkCallId(e.target.value)}
               placeholder="Paste bulk_call_id from BulkProgressDialog"
@@ -69,7 +69,7 @@ export function AuditEventsList() {
           </label>
           <button
             type="button"
-            className="rounded border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
+            className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
             onClick={() => setAppliedBulkCallId(bulkCallId.trim())}
           >
             Apply filter
@@ -89,7 +89,7 @@ export function AuditEventsList() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <table className="w-full text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>

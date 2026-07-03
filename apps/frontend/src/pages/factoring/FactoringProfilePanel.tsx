@@ -12,7 +12,7 @@ export function FactoringProfilePanel({ meta, saving, onSave }: Props) {
   const { factoring } = meta;
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-3 text-sm" data-factoring-profile-panel>
+    <section className="rounded-sm border border-gray-200 bg-white p-3 text-sm" data-factoring-profile-panel>
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="font-medium text-gray-900">Active factoring company profile</h3>
         <Button size="sm" variant="secondary" onClick={onSave} loading={saving}>

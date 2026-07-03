@@ -65,14 +65,14 @@ export function Form2290Filings() {
   });
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   const filings = (filingsQ.data?.filings ?? []) as Filing[];
   const deadline = deadlineQ.data as { deadline?: string; days_remaining?: number; current_draft?: Filing | null } | undefined;
 
   return (
-    <div className="space-y-4 rounded border border-gray-200 bg-white p-4">
+    <div className="space-y-4 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-slate-900">Form 2290 filings</h2>
@@ -82,7 +82,7 @@ export function Form2290Filings() {
         </div>
         <button
           type="button"
-          className="rounded bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+          className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
           disabled={generateMutation.isPending}
           onClick={() => generateMutation.mutate()}
         >

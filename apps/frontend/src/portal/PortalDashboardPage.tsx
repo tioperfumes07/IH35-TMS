@@ -31,7 +31,7 @@ export function PortalDashboardPage() {
       {loadsQuery.isLoading ? <p className="text-sm text-slate-600">Loading loads…</p> : null}
       {loadsQuery.error ? <p className="text-sm text-red-600">Could not load shipments.</p> : null}
 
-      <div className="overflow-hidden rounded border border-slate-200 bg-white">
+      <div className="overflow-hidden rounded-sm border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-600">
             <tr>

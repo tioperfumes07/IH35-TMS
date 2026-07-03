@@ -144,19 +144,19 @@ export function VoidCancelReasonsListPage() {
         }
       />
 
-      <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-600">
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">
         Controlled reasons for FINANCIAL void/cancel actions (invoices, bills, payments, journal entries,
         settlements, work-order voids). Per entity. A reason marked "Note Required" forces a note when chosen.
       </div>
 
-      <div className="grid gap-2 rounded border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
+      <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search code or label"
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
           />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -164,7 +164,7 @@ export function VoidCancelReasonsListPage() {
           <SelectCombobox
             value={status}
             onChange={(event) => setStatus(event.target.value as StatusFilter)}
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -315,7 +315,7 @@ function VoidCancelReasonModal({
               onChange={(event) =>
                 setForm((current) => ({ ...current, reason_code: event.target.value.toLowerCase() }))
               }
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
               placeholder="example_code"
             />
             {fieldErrors.reason_code ? <span className="text-xs text-red-600">{fieldErrors.reason_code}</span> : null}
@@ -327,7 +327,7 @@ function VoidCancelReasonModal({
             <input
               value={form.reason_label}
               onChange={(event) => setForm((current) => ({ ...current, reason_label: event.target.value }))}
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
               placeholder="Display label"
             />
             {fieldErrors.reason_label ? <span className="text-xs text-red-600">{fieldErrors.reason_label}</span> : null}
@@ -338,7 +338,7 @@ function VoidCancelReasonModal({
               type="checkbox"
               checked={form.requires_note}
               onChange={(event) => setForm((current) => ({ ...current, requires_note: event.target.checked }))}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded-sm border-gray-300"
             />
             Require a note when this reason is chosen
           </label>
@@ -349,7 +349,7 @@ function VoidCancelReasonModal({
               type="number"
               value={form.sort_order}
               onChange={(event) => setForm((current) => ({ ...current, sort_order: event.target.value }))}
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             />
             {fieldErrors.sort_order ? <span className="text-xs text-red-600">{fieldErrors.sort_order}</span> : null}
           </label>

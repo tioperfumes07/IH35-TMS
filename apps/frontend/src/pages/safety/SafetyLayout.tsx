@@ -108,7 +108,7 @@ export function SafetyLayout() {
               <button
                 type="button"
                 onClick={() => navigate("/home")}
-                className="inline-flex items-center gap-1 rounded px-1 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 <span>Back</span>

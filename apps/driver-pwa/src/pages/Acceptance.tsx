@@ -52,14 +52,14 @@ export function AcceptancePage() {
           dangerouslySetInnerHTML={{ __html: load.rate_confirmation_html }}
         />
 
-        <div className="rounded border border-pwa-border bg-pwa-card p-3">
+        <div className="rounded-sm border border-pwa-border bg-pwa-card p-3">
           <div className="mb-2 text-xs font-semibold text-pwa-text-secondary">{t("acceptance.scroll_progress")}</div>
-          <div className="mb-3 h-1 w-full rounded bg-[#202737]">
-            <div className="h-1 rounded bg-[#93c5fd]" style={{ width: `${Math.round(scrollProgress * 100)}%` }} />
+          <div className="mb-3 h-1 w-full rounded-sm bg-[#202737]">
+            <div className="h-1 rounded-sm bg-[#93c5fd]" style={{ width: `${Math.round(scrollProgress * 100)}%` }} />
           </div>
 
           {!scrolledToBottom ? <div className="mb-2 text-xs text-[#fcd34d]">{t("acceptance.scroll_to_bottom")}</div> : null}
-          {geofence.status === "ok" && !geofence.inside ? <div className="mb-2 rounded border border-[#dc2626] bg-[#2a1417] p-2 text-xs text-[#fca5a5]">{t("acceptance.must_be_at_pickup")} ({geofence.distance_miles.toFixed(2)} mi)</div> : null}
+          {geofence.status === "ok" && !geofence.inside ? <div className="mb-2 rounded-sm border border-[#dc2626] bg-[#2a1417] p-2 text-xs text-[#fca5a5]">{t("acceptance.must_be_at_pickup")} ({geofence.distance_miles.toFixed(2)} mi)</div> : null}
           {signatureDataUrl ? null : <div className="mb-2 text-xs text-pwa-text-secondary">{t("acceptance.signature_required")}</div>}
           <SignaturePad onChange={setSignatureDataUrl} disabled={!scrolledToBottom} />
         </div>

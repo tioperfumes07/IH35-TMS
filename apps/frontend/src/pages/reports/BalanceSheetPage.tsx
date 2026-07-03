@@ -110,11 +110,11 @@ export function BalanceSheetPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <BasisSelector value={basis} onChange={setBasis} />
         <label className="text-xs text-gray-600">
           As-of date
-          <DatePicker className="mt-1 block h-9 rounded border border-gray-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
+          <DatePicker className="mt-1 block h-9 rounded-sm border border-gray-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <Button size="sm" onClick={() => setAppliedAsOf(asOf)}>
           Apply
@@ -123,15 +123,15 @@ export function BalanceSheetPage() {
 
       {query.data ? (
         <div className="grid gap-2 md:grid-cols-3">
-          <div className="rounded border border-gray-200 bg-white px-3 py-2">
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Assets</div>
             <div className="text-lg font-semibold">{money(query.data.assets.total)}</div>
           </div>
-          <div className="rounded border border-gray-200 bg-white px-3 py-2">
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Liabilities + equity</div>
             <div className="text-lg font-semibold">{money(query.data.total_liabilities_and_equity)}</div>
           </div>
-          <div className={`rounded border bg-white px-3 py-2 ${query.data.balanced ? "border-emerald-200" : "border-rose-300"}`}>
+          <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.balanced ? "border-emerald-200" : "border-rose-300"}`}>
             <div className="text-[11px] font-semibold uppercase text-gray-500">Balance check</div>
             <div className={`text-lg font-semibold ${query.data.balanced ? "text-emerald-700" : "text-rose-700"}`}>
               {query.data.balanced ? "Balanced" : "Out of balance"}
@@ -144,7 +144,7 @@ export function BalanceSheetPage() {
 
       {query.data ? (
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="overflow-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
             <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">Assets</div>
             <table className="min-w-full text-left text-xs">
               <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
@@ -181,7 +181,7 @@ export function BalanceSheetPage() {
           </div>
 
           <div className="space-y-3">
-            <div className="overflow-auto rounded border border-gray-200 bg-white">
+            <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">Liabilities</div>
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
@@ -217,7 +217,7 @@ export function BalanceSheetPage() {
               </table>
             </div>
 
-            <div className="overflow-auto rounded border border-gray-200 bg-white">
+            <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">Equity</div>
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">

@@ -36,18 +36,18 @@ const SEVERITY_LABELS: Record<DriverTerminationSeverity, string> = {
 function severityBadgeClass(severity: DriverTerminationSeverity) {
   switch (severity) {
     case "severe":
-      return "rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
+      return "rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
     case "warning":
-      return "rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+      return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
     default:
-      return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+      return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   }
 }
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
-    : "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
+    : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 type FormState = {
@@ -150,14 +150,14 @@ export function TerminationReasonsListPage() {
         }
       />
 
-      <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-600">
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">
         Termination / separation reason taxonomy used on driver safety events. Severity influences how
         returning-driver detection surfaces the warning. Editable by Owners.
       </div>
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or label" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
-        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-sm">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="all">All</option>
@@ -283,7 +283,7 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
           <input
             value={form.code}
             onChange={(event) => setForm((v) => ({ ...v, code: event.target.value.toLowerCase() }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             placeholder="fired_aggressive"
           />
           {fieldErrors.code ? <div className="mt-1 text-[11px] text-red-700">{fieldErrors.code}</div> : null}
@@ -295,14 +295,14 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
           <input
             value={form.label}
             onChange={(event) => setForm((v) => ({ ...v, label: event.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
           {fieldErrors.label ? <div className="mt-1 text-[11px] text-red-700">{fieldErrors.label}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Severity
-          <SelectCombobox value={form.severity} onChange={(event) => setForm((v) => ({ ...v, severity: event.target.value as DriverTerminationSeverity }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={form.severity} onChange={(event) => setForm((v) => ({ ...v, severity: event.target.value as DriverTerminationSeverity }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm">
             {SEVERITY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -317,7 +317,7 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
             value={form.description}
             onChange={(event) => setForm((v) => ({ ...v, description: event.target.value }))}
             rows={3}
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
             placeholder="Optional description"
           />
         </label>

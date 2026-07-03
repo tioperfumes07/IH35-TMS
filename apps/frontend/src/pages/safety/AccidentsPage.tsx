@@ -47,7 +47,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="accidents-page">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-sm font-semibold text-slate-800">Accidents & Incidents</div>
           <div className="text-[11px] text-slate-500">Live accident reports with damage details, photos, and maintenance WO spawn.</div>
@@ -64,7 +64,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs" data-testid="accidents-table">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>

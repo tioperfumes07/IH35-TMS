@@ -103,20 +103,20 @@ export function BorderCrossingWizardPage() {
         title="Border Crossing Wizard"
         subtitle="Northbound/southbound crossing prep · eManifest V1 · CBP wait times"
         actions={
-          <Link to="/dispatch/border-crossing/history" className="rounded border px-3 py-1.5 text-sm">
+          <Link to="/dispatch/border-crossing/history" className="rounded-sm border px-3 py-1.5 text-sm">
             History
           </Link>
         }
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-        <div className="rounded border border-gray-200 bg-white p-4">
+        <div className="rounded-sm border border-gray-200 bg-white p-4">
           <div className="mb-4 flex flex-wrap gap-2">
             {STEPS.map((label, idx) => (
               <button
                 key={label}
                 type="button"
-                className={`rounded px-2 py-1 text-xs ${idx === step ? "bg-[#1F2A44] text-white" : "bg-gray-100"}`}
+                className={`rounded-sm px-2 py-1 text-xs ${idx === step ? "bg-[#1F2A44] text-white" : "bg-gray-100"}`}
                 onClick={() => setStep(idx)}
               >
                 {idx + 1}. {label}
@@ -142,14 +142,14 @@ export function BorderCrossingWizardPage() {
 
           <div className="mt-4 flex flex-wrap gap-2">
             {step > 0 ? (
-              <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={() => setStep(step - 1)}>
+              <button type="button" className="rounded-sm border px-3 py-1.5 text-sm" onClick={() => setStep(step - 1)}>
                 Back
               </button>
             ) : null}
             {step < 4 ? (
               <button
                 type="button"
-                className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
                 disabled={!canNext}
                 onClick={() => setStep(step + 1)}
               >
@@ -159,7 +159,7 @@ export function BorderCrossingWizardPage() {
             {step === 4 ? (
               <button
                 type="button"
-                className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
                 disabled={submitting || !canNext}
                 onClick={() => void submitWizard()}
               >
@@ -167,7 +167,7 @@ export function BorderCrossingWizardPage() {
               </button>
             ) : null}
             {step === 5 && pdfUrl ? (
-              <a href={pdfUrl} className="rounded border px-3 py-1.5 text-sm" target="_blank" rel="noreferrer">
+              <a href={pdfUrl} className="rounded-sm border px-3 py-1.5 text-sm" target="_blank" rel="noreferrer">
                 Print eManifest PDF
               </a>
             ) : null}

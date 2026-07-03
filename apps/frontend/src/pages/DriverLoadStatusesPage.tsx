@@ -126,7 +126,7 @@ export function DriverLoadStatusesPage() {
         actions={
           <div className="flex items-center gap-2">
             {canManage ? (
-              <label className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">
+              <label className="flex items-center gap-2 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
                 <input type="checkbox" checked={includeInactive} onChange={(event) => setIncludeInactive(event.target.checked)} />
                 Show inactive
               </label>
@@ -137,7 +137,7 @@ export function DriverLoadStatusesPage() {
       />
 
       {statusesQuery.isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading statuses...</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading statuses...</div>
       ) : (
         <div className="space-y-2">
           {statuses.map((status) => (
@@ -151,9 +151,9 @@ export function DriverLoadStatusesPage() {
               <div className="flex min-h-8 items-start justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{status.code}</span>
+                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{status.code}</span>
                     <span className="text-[13px] font-semibold text-gray-900">{status.name}</span>
-                    <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{phaseLabel[status.phase]}</span>
+                    <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{phaseLabel[status.phase]}</span>
                     <span
                       className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
                         status.is_active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
@@ -188,7 +188,7 @@ export function DriverLoadStatusesPage() {
               </div>
             </div>
           ))}
-          {statuses.length === 0 ? <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No statuses found.</div> : null}
+          {statuses.length === 0 ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No statuses found.</div> : null}
         </div>
       )}
 
@@ -297,7 +297,7 @@ function StatusForm({
             value={form.code}
             disabled={disableCode}
             onChange={(event) => setForm((current) => ({ ...current, code: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "") }))}
-            className="rounded border border-gray-300 h-9 px-2 text-[13px] disabled:bg-gray-100"
+            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px] disabled:bg-gray-100"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -305,7 +305,7 @@ function StatusForm({
           <input
             value={form.name}
             onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -324,7 +324,7 @@ function StatusForm({
             min={0}
             value={form.sort_order}
             onChange={(event) => setForm((current) => ({ ...current, sort_order: event.target.value }))}
-            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
         <div className="md:col-span-2 flex flex-col gap-1">
@@ -333,7 +333,7 @@ function StatusForm({
             value={form.description}
             onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
             rows={2}
-            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
           />
         </div>
         {disableCode ? (

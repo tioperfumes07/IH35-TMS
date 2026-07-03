@@ -12,7 +12,7 @@ export function TaskBoardPage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="flex-shrink-0 space-y-0">
+      <div className="shrink-0 space-y-0">
         <PageHeader
           title="Task Board"
           actions={
@@ -20,7 +20,7 @@ export function TaskBoardPage() {
               type="button"
               disabled={!companyId}
               onClick={() => setCreateOpen(true)}
-              className="rounded bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-sm bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50"
             >
               + Create Task
             </button>

@@ -166,11 +166,11 @@ export function ListView<T>({
           <div className="relative group">
             <button
               type="button"
-              className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 text-gray-600"
+              className="px-2 py-1 text-xs border border-gray-300 rounded-sm hover:bg-gray-50 text-gray-600"
             >
               Export ▾
             </button>
-            <div className="absolute right-0 top-7 z-20 hidden group-hover:flex flex-col bg-white border border-gray-200 rounded shadow-lg min-w-[100px]">
+            <div className="absolute right-0 top-7 z-20 hidden group-hover:flex flex-col bg-white border border-gray-200 rounded-sm shadow-lg min-w-[100px]">
               <button
                 type="button"
                 onClick={() => handleExport("csv")}

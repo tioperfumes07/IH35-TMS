@@ -82,8 +82,8 @@ async function fetchAllCatalogRows(operatingCompanyId: string, includeInactive: 
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
-    : "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
+    : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 function syncBadgeClasses(badge: CoaListRow["syncBadge"]) {
@@ -369,7 +369,7 @@ export function ChartOfAccountsListPage() {
 
       {isError ? <ListErrorBanner onRetry={() => refetchAll()} /> : null}
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-gray-200 bg-white">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm border border-gray-200 bg-white">
         {isLoading ? (
           <div className="px-4 py-8 text-sm text-gray-500">Loading chart of accounts…</div>
         ) : (
@@ -388,16 +388,16 @@ export function ChartOfAccountsListPage() {
             density="cozy"
             badgeSlot={(row) => (
               <>
-                <span className="ml-1 rounded bg-slate-100 px-1 py-0.5 text-[9px] font-semibold text-slate-700">
+                <span className="ml-1 rounded-sm bg-slate-100 px-1 py-0.5 text-[9px] font-semibold text-slate-700">
                   {statementTag(row.statement as "BS" | "P&L")}
                 </span>
-                <span className={`ml-1 rounded px-1 py-0.5 text-[9px] font-semibold ${syncBadgeClasses(row.syncBadge)}`}>
+                <span className={`ml-1 rounded-sm px-1 py-0.5 text-[9px] font-semibold ${syncBadgeClasses(row.syncBadge)}`}>
                   {row.syncBadge}
                 </span>
               </>
             )}
             filterBarSlot={
-              <div className="flex items-center gap-1 rounded border border-gray-300 p-0.5 text-xs">
+              <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs">
                 {(["all", "active", "inactive"] as const).map((value) => (
                   <button
                     key={value}

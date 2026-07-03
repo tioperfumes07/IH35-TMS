@@ -32,7 +32,7 @@ export function SidebarFlyoutMenu({ open, title, items, onOpen, onClose }: Props
     <div
       role="menu"
       tabIndex={-1}
-      className="absolute left-full top-0 z-50 ml-1 min-w-[200px] rounded border border-slate-200 bg-white p-2 shadow-xl"
+      className="absolute left-full top-0 z-50 ml-1 min-w-[200px] rounded-sm border border-slate-200 bg-white p-2 shadow-xl"
       onMouseEnter={onOpen}
       onMouseLeave={onClose}
       onFocus={onOpen}
@@ -45,7 +45,7 @@ export function SidebarFlyoutMenu({ open, title, items, onOpen, onClose }: Props
             key={item.to}
             to={item.to}
             role="menuitem"
-            className="flex items-center justify-between gap-2 rounded px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+            className="flex items-center justify-between gap-2 rounded-sm px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
           >
             <span>{item.label}</span>
             {item.badgeCount != null && item.badgeCount > 0 ? (

@@ -59,7 +59,7 @@ const TRIP_TYPE_LABEL: Record<string, string> = {
 
 function OverviewWizardSection({ title, canEdit, onEdit, children }: { title: string; canEdit: boolean; onEdit: () => void; children: ReactNode }) {
   return (
-    <section className="rounded border border-gray-200">
+    <section className="rounded-sm border border-gray-200">
       <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-1.5">
         <span className="text-[11px] font-semibold text-gray-700">{title}</span>
         {canEdit ? (
@@ -317,7 +317,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 <OverviewWizardSection title="Stops · PC*MILER Routing" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
                   <div className="space-y-2">
                     {(load.stops ?? []).map((stop) => (
-                      <div key={stop.id} className="rounded border border-gray-100 p-2">
+                      <div key={stop.id} className="rounded-sm border border-gray-100 p-2">
                         <div className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">{stop.stop_type}</div>
                         <FlatFieldGrid
                           columns={2}
@@ -378,7 +378,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 ) : null}
 
                 {(
-                  <div className="space-y-2 rounded border border-gray-200 p-3">
+                  <div className="space-y-2 rounded-sm border border-gray-200 p-3">
                     <div>
                       <div className="text-xs text-gray-600">Notes</div>
                       <div className="mt-1 text-sm text-gray-800">{packageState.visibleNotes || "-"}</div>
@@ -434,7 +434,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               ) : (
                 <div className="space-y-2">
                   {load?.stops?.map((stop) => (
-                    <div key={stop.id} className="rounded border border-gray-200 p-3 text-sm">
+                    <div key={stop.id} className="rounded-sm border border-gray-200 p-3 text-sm">
                       <div className="font-semibold text-gray-800">
                         #{stop.sequence_number} · {stop.stop_type}
                       </div>
@@ -492,7 +492,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           {activeTab === "Documents" ? (
             load ? (
               <div className="space-y-2">
-                <div className="rounded border border-emerald-200 bg-emerald-50 p-2">
+                <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="text-xs text-emerald-900">
                       Factoring package (rate confirmation + POD/BOL + invoice)
@@ -536,7 +536,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   </div>
                   {!isPackageEligible ? <div className="mt-1 text-[11px] text-emerald-800">Package auto-generates once load is delivered/closed.</div> : null}
                 </div>
-                <div className="rounded border border-slate-300 bg-slate-100 p-2">
+                <div className="rounded-sm border border-slate-300 bg-slate-100 p-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-xs text-slate-700">Driver Instructions PDF + Portal/SMS/WhatsApp distribution</div>
                     <div className="flex gap-2">
@@ -593,10 +593,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
             <div className="space-y-2">
               {auditQuery.isLoading ? <div className="text-sm text-gray-500">Loading audit history...</div> : null}
               {(auditQuery.data ?? []).map((event) => (
-                <div key={event.uuid} className="rounded border border-gray-200 p-3 text-sm">
+                <div key={event.uuid} className="rounded-sm border border-gray-200 p-3 text-sm">
                   <div className="font-semibold text-gray-800">{event.event_class}</div>
                   <div className="text-xs text-gray-500">{new Date(event.created_at).toLocaleString()}</div>
-                  <pre className="mt-2 overflow-x-auto rounded bg-gray-50 p-2 text-xs text-gray-700">
+                  <pre className="mt-2 overflow-x-auto rounded-sm bg-gray-50 p-2 text-xs text-gray-700">
                     {JSON.stringify(event.payload, null, 2)}
                   </pre>
                 </div>
@@ -618,7 +618,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 const next = r.new_driver_id != null ? String(r.new_driver_id).slice(0, 8) : "—";
                 return (
                   <div key={id || at + method} className="relative border-l-2 border-slate-300 pl-3">
-                    <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
+                    <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
                     <div className="text-xs text-gray-500">{at}</div>
                     <div className="text-sm font-semibold text-gray-800">{method.replace(/_/g, " ")}</div>
                     <div className="text-xs text-gray-600">

@@ -30,7 +30,7 @@ export function EarningsPage() {
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-24">
         <PwaCard title={t("earnings.title")} subtitle={t("earnings.cycle_label")}>
-          <div className="mb-2 rounded border border-pwa-border px-2 py-1 text-[11px] text-pwa-text-secondary">
+          <div className="mb-2 rounded-sm border border-pwa-border px-2 py-1 text-[11px] text-pwa-text-secondary">
             <div>{cycle.settlement_terms.language_disclaimer?.primary}</div>
             <div className="opacity-80">{cycle.settlement_terms.language_disclaimer?.secondary}</div>
           </div>
@@ -50,7 +50,7 @@ export function EarningsPage() {
           {cycle.loads.length === 0 ? <div className="text-sm text-pwa-text-secondary">{t("earnings.no_loads_in_cycle")}</div> : null}
           <div className="space-y-2">
             {cycle.loads.map((load) => (
-              <div key={load.id} className="rounded border border-pwa-border bg-[#101522] p-2">
+              <div key={load.id} className="rounded-sm border border-pwa-border bg-[#101522] p-2">
                 <div className="mb-1 text-sm font-semibold">{load.load_display_id}</div>
                 <div className="mb-1 text-xs text-pwa-text-secondary">{load.miles} mi · {money(load.gross_cents)}</div>
                 <TrueStatusChips
@@ -70,7 +70,7 @@ export function EarningsPage() {
         <PwaCard title={t("earnings.past_cycles")}>
           <div className="space-y-1">
             {pastCycles.slice(0, 4).map((entry) => (
-              <div key={entry.cycle_id} className="rounded border border-pwa-border px-2 py-1 text-xs">
+              <div key={entry.cycle_id} className="rounded-sm border border-pwa-border px-2 py-1 text-xs">
                 {new Date(entry.period_start).toLocaleDateString()} - {new Date(entry.period_end).toLocaleDateString()} · {money(entry.net_preview_cents)}
               </div>
             ))}

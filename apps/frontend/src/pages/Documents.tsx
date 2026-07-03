@@ -100,7 +100,7 @@ export function DocumentsPage() {
   }, [filesQuery.data, categoryFilter, entityTypeFilter, uploaderFilter, search, dateFrom, dateTo, expiringDays]);
 
   if (!isOwnerOrAdmin) {
-    return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Only Owner/Administrator can access company-wide documents.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Only Owner/Administrator can access company-wide documents.</div>;
   }
 
   return (
@@ -112,7 +112,7 @@ export function DocumentsPage() {
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="rounded bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d]"
+            className="rounded-sm bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d]"
           >
             Upload document
           </button>
@@ -128,7 +128,7 @@ export function DocumentsPage() {
         />
       ) : null}
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-4">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Category</label>
           <Combobox
@@ -180,7 +180,7 @@ export function DocumentsPage() {
             type="date"
             value={dateFrom}
             onChange={(event) => setDateFrom(event.target.value)}
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
         <div className="space-y-1">
@@ -189,7 +189,7 @@ export function DocumentsPage() {
             type="date"
             value={dateTo}
             onChange={(event) => setDateTo(event.target.value)}
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
         <div className="space-y-1 md:col-span-2">
@@ -199,7 +199,7 @@ export function DocumentsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search filename"
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
         {isOwner ? (

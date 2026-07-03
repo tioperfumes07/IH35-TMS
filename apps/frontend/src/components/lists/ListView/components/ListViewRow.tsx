@@ -50,7 +50,7 @@ export function ListViewRow<T>({
           checked={isSelected}
           onChange={onToggleSelect}
           aria-label={`Select row ${rowKey}`}
-          className="rounded border-gray-300"
+          className="rounded-sm border-gray-300"
         />
       </td>
       {ordered.map((colId) => {

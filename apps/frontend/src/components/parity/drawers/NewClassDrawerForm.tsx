@@ -43,7 +43,7 @@ export function NewClassDrawerForm({ operatingCompanyId, onCreated, onClose }: P
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Class name *</span>
         <input
-          className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Owner-Operator"
@@ -51,8 +51,8 @@ export function NewClassDrawerForm({ operatingCompanyId, onCreated, onClose }: P
         />
       </label>
       <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
-        <button type="button" onClick={onClose} className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
-        <button type="submit" disabled={saving} className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-emerald-700">
+        <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button type="submit" disabled={saving} className="rounded-sm bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-emerald-700">
           {saving ? "Saving…" : "Save"}
         </button>
       </div>

@@ -83,12 +83,12 @@ export function LaunchTogglesPage() {
         subtitle="Go-live workflow for hidden operating carriers (USMCA July 2026 cutover)."
       />
 
-      {error ? <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">{error}</div> : null}
+      {error ? <div className="rounded-sm border border-red-300 bg-red-50 p-3 text-sm text-red-800">{error}</div> : null}
 
       <label className="block max-w-xl text-sm">
         <span className="font-medium text-gray-700">Launch notes (optional)</span>
         <textarea
-          className="mt-1 w-full rounded border border-gray-300 p-2 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 p-2 text-sm"
           rows={2}
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
@@ -96,7 +96,7 @@ export function LaunchTogglesPage() {
         />
       </label>
 
-      <div className="overflow-x-auto rounded border border-gray-200">
+      <div className="overflow-x-auto rounded-sm border border-gray-200">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
             <tr>
@@ -115,9 +115,9 @@ export function LaunchTogglesPage() {
                 </td>
                 <td className="px-3 py-3">
                   {toggle.is_active ? (
-                    <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800">Launched</span>
+                    <span className="rounded-sm bg-green-100 px-2 py-0.5 text-xs text-green-800">Launched</span>
                   ) : (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Hidden</span>
+                    <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Hidden</span>
                   )}
                 </td>
                 <td className="px-3 py-3 text-xs text-gray-600">

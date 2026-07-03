@@ -13,7 +13,7 @@ export function WizardStep4({ form, brokers, onChange }: Props) {
       <label className="block text-sm">
         Customs broker
         <select
-          className="mt-1 w-full rounded border px-2 py-1.5"
+          className="mt-1 w-full rounded-sm border px-2 py-1.5"
           value={form.customsBrokerId}
           onChange={(e) => onChange({ customsBrokerId: e.target.value })}
         >
@@ -28,7 +28,7 @@ export function WizardStep4({ form, brokers, onChange }: Props) {
       <label className="block text-sm">
         Bond number
         <input
-          className="mt-1 w-full rounded border px-2 py-1.5"
+          className="mt-1 w-full rounded-sm border px-2 py-1.5"
           value={form.bondNumber}
           onChange={(e) => onChange({ bondNumber: e.target.value })}
         />

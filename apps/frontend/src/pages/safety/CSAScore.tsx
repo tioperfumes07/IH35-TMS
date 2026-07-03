@@ -145,7 +145,7 @@ export function CSAScorePage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white p-3 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="space-y-1">
           <div className="text-sm font-semibold text-slate-800">CSA BASIC Score</div>
           <div className="text-slate-600">
@@ -158,7 +158,7 @@ export function CSAScorePage() {
         </div>
         <button
           type="button"
-          className="rounded border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
+          className="rounded-sm border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
           onClick={() => pullMutation.mutate()}
           disabled={!companyId || pullMutation.isPending || !canPull}
         >
@@ -173,7 +173,7 @@ export function CSAScorePage() {
             .map((point) => (point.score == null ? null : Number(point.score)))
             .filter((value): value is number => Number.isFinite(value));
           return (
-            <div key={tile.basic_category} className="rounded border border-gray-200 bg-white p-3">
+            <div key={tile.basic_category} className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="flex items-center justify-between text-xs">
                 <div className="font-semibold text-slate-700">{tile.label}</div>
                 <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>{tile.risk_band.toUpperCase()}</div>
@@ -199,7 +199,7 @@ export function CSAScorePage() {
               <div className="mt-2 text-[10px] text-slate-500">
                 Alert status: {tile.latest_alert_status} · Trending toward alert: {tile.trending_toward_alert ? "yes" : "no"}
               </div>
-              <div className="mt-2 rounded bg-slate-50 p-1 text-slate-600">
+              <div className="mt-2 rounded-sm bg-slate-50 p-1 text-slate-600">
                 <Sparkline points={sparklinePoints} />
               </div>
             </div>

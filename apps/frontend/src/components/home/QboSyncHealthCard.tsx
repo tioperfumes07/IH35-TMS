@@ -47,12 +47,12 @@ function formatRelative(iso: string | null | undefined): string {
 export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, accountsPushStatus, isLoading, isError, onRetry }: Props) {
   if (isLoading) {
     return (
-      <section className="rounded border border-slate-200 bg-white">
+      <section className="rounded-sm border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">QBO Sync Health</div>
         <div className="space-y-2 p-3">
-          <div className="h-6 animate-pulse rounded bg-slate-100" />
-          <div className="h-6 animate-pulse rounded bg-slate-100" />
-          <div className="h-6 animate-pulse rounded bg-slate-100" />
+          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
         </div>
       </section>
     );
@@ -60,7 +60,7 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
 
   if (isError) {
     return (
-      <section className="rounded border border-red-200 bg-red-50">
+      <section className="rounded-sm border border-red-200 bg-red-50">
         <div className="border-b border-red-200 px-3 py-2 text-sm font-semibold text-red-900">QBO Sync Health</div>
         <div className="flex items-center justify-between px-3 py-3 text-sm text-red-800">
           <span>Failed to load QBO sync health.</span>
@@ -75,31 +75,31 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
   const pill = statusPill(data);
   const latestRunTime = data?.latest_run?.completed_at ?? data?.latest_run?.started_at ?? null;
   return (
-    <section className="rounded border border-slate-200 bg-white">
+    <section className="rounded-sm border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
         <div className="text-sm font-semibold text-slate-900">QBO Sync Health</div>
-        <span className={`inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold ${pillClass(pill.tone)}`}>{pill.label}</span>
+        <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${pillClass(pill.tone)}`}>{pill.label}</span>
       </div>
       <div className="space-y-1 px-3 py-2">
-        <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Last run</span>
           <span className="font-semibold text-slate-800">{formatRelative(latestRunTime)}</span>
         </div>
-        <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Open alerts</span>
           <span className="font-semibold text-slate-800">{data?.open_alerts_count ?? 0}</span>
         </div>
-        <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Failed events</span>
           <span className="font-semibold text-slate-800">{data?.failed_outbox_count ?? 0}</span>
         </div>
         {pushStatus ? (
           <>
-            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+            <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
               <span className="text-slate-600">Local customers pending</span>
               <span className="font-semibold text-slate-800">{pushStatus.unsynced + pushStatus.failed}</span>
             </div>
-            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+            <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
               <span className="text-slate-600">Customers synced to QBO</span>
               <span className="font-semibold text-slate-800">{pushStatus.synced}</span>
             </div>
@@ -107,11 +107,11 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
         ) : null}
         {vendorsPushStatus ? (
           <>
-            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+            <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
               <span className="text-slate-600">Local vendors pending</span>
               <span className="font-semibold text-slate-800">{vendorsPushStatus.unsynced + vendorsPushStatus.failed}</span>
             </div>
-            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+            <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
               <span className="text-slate-600">Vendors synced to QBO</span>
               <span className="font-semibold text-slate-800">{vendorsPushStatus.synced}</span>
             </div>
@@ -119,16 +119,16 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
         ) : null}
         {accountsPushStatus ? (
           <>
-            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+            <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
               <span className="text-slate-600">Local accounts pending</span>
               <span className="font-semibold text-slate-800">{accountsPushStatus.unsynced + accountsPushStatus.failed}</span>
             </div>
-            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+            <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
               <span className="text-slate-600">Accounts synced to QBO</span>
               <span className="font-semibold text-slate-800">{accountsPushStatus.synced}</span>
             </div>
             {accountsPushStatus.blocked_by_parent > 0 ? (
-              <div className="flex items-center justify-between rounded bg-amber-50 px-2 py-1.5 text-xs">
+              <div className="flex items-center justify-between rounded-sm bg-amber-50 px-2 py-1.5 text-xs">
                 <span className="text-amber-700">Blocked by parent</span>
                 <span className="font-semibold text-amber-800">{accountsPushStatus.blocked_by_parent}</span>
               </div>

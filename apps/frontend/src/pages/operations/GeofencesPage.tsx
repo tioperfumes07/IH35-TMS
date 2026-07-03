@@ -112,14 +112,14 @@ export function GeofencesPage() {
   return (
     <div className="space-y-4">
       <PageHeader title="Geofences" subtitle="Polygon geofences for customer sites, yards, and vendor locations." />
-      <section className="rounded border border-slate-200 bg-white p-3">
+      <section className="rounded-sm border border-slate-200 bg-white p-3">
         <h3 className="text-sm font-semibold text-slate-900">Create geofence</h3>
         <p className="mt-1 text-xs text-slate-600">Polygon editor: one `lng,lat` pair per line. Minimum 3 points.</p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <label className="text-xs text-slate-700">
             Label
             <input
-              className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
               value={label}
               onChange={(event) => setLabel(event.target.value)}
             />
@@ -127,7 +127,7 @@ export function GeofencesPage() {
           <label className="text-xs text-slate-700">
             Location kind
             <select
-              className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
               value={locationKind}
               onChange={(event) => setLocationKind(event.target.value as GeofenceLocationKind)}
             >
@@ -141,7 +141,7 @@ export function GeofencesPage() {
           <label className="text-xs text-slate-700 md:col-span-2">
             Link to existing location (optional)
             <select
-              className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
               value={locationRefId}
               onChange={(event) => setLocationRefId(event.target.value)}
             >
@@ -156,7 +156,7 @@ export function GeofencesPage() {
           <label className="text-xs text-slate-700 md:col-span-2">
             Polygon points (`lng,lat`)
             <textarea
-              className="mt-1 block h-36 w-full rounded border border-slate-300 px-2 py-2 font-mono text-xs"
+              className="mt-1 block h-36 w-full rounded-sm border border-slate-300 px-2 py-2 font-mono text-xs"
               value={polygonText}
               onChange={(event) => setPolygonText(event.target.value)}
             />
@@ -172,7 +172,7 @@ export function GeofencesPage() {
         </div>
       </section>
 
-      <section className="rounded border border-slate-200 bg-white p-3">
+      <section className="rounded-sm border border-slate-200 bg-white p-3">
         <h3 className="text-sm font-semibold text-slate-900">Active geofences</h3>
         {geofencesQuery.isLoading ? <p className="mt-2 text-sm text-slate-500">Loading...</p> : null}
         <div className="mt-2 overflow-auto">
@@ -198,7 +198,7 @@ export function GeofencesPage() {
                   <td className="px-2 py-2">
                     <button
                       type="button"
-                      className="rounded border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                      className="rounded-sm border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
                       onClick={() => void toggleActive(item.id, item.is_active)}
                     >
                       {item.is_active ? "Deactivate" : "Activate"}

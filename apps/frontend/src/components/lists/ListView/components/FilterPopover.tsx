@@ -64,29 +64,29 @@ export function FilterPopover({ filter, activeValues, onChange, rows }: Props) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search…"
-                className="w-full text-xs border border-gray-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-slate-400"
+                className="w-full text-xs border border-gray-300 rounded-sm px-2 py-1 outline-hidden focus:ring-1 focus:ring-slate-400"
               />
             )}
             <div className="max-h-52 overflow-y-auto space-y-0.5">
-              <label className="flex items-center gap-2 text-xs text-gray-700 py-0.5 cursor-pointer hover:bg-gray-50 px-1 rounded">
+              <label className="flex items-center gap-2 text-xs text-gray-700 py-0.5 cursor-pointer hover:bg-gray-50 px-1 rounded-sm">
                 <input
                   type="checkbox"
                   checked={count === 0}
                   onChange={() => onChange([])}
-                  className="rounded border-gray-300"
+                  className="rounded-sm border-gray-300"
                 />
                 <span className="font-medium">All</span>
               </label>
               {filtered.map((opt) => (
                 <label
                   key={opt.value}
-                  className="flex items-center gap-2 text-xs text-gray-700 py-0.5 cursor-pointer hover:bg-gray-50 px-1 rounded"
+                  className="flex items-center gap-2 text-xs text-gray-700 py-0.5 cursor-pointer hover:bg-gray-50 px-1 rounded-sm"
                 >
                   <input
                     type="checkbox"
                     checked={activeValues.includes(opt.value)}
                     onChange={() => toggleValue(opt.value)}
-                    className="rounded border-gray-300"
+                    className="rounded-sm border-gray-300"
                   />
                   {opt.label}
                 </label>

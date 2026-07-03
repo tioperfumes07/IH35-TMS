@@ -131,7 +131,7 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
           Pay from bank account
           <SelectCombobox
             aria-label="Pay from bank account"
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
             value={fromBankId}
             onChange={(e) => setFromBankId(e.target.value)}
           >
@@ -146,7 +146,7 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             Payment date
-            <input type="date" className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+            <input type="date" className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
           </label>
           <label className="block">
             Amount (USD)
@@ -156,11 +156,11 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
         </div>
         <label className="block">
           Statement period (optional)
-          <input className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={statementPeriod} onChange={(e) => setStatementPeriod(e.target.value)} placeholder="e.g. 2026-04" />
+          <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={statementPeriod} onChange={(e) => setStatementPeriod(e.target.value)} placeholder="e.g. 2026-04" />
         </label>
         <label className="block">
           Memo (optional)
-          <textarea className="mt-1 min-h-16 w-full rounded border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
+          <textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
         </label>
         {!valid ? <p className="text-xs text-amber-700">Select vendor, liability COA, bank account, and enter an amount greater than zero.</p> : null}
         <div className="flex justify-end gap-2">

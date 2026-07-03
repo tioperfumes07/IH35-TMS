@@ -39,7 +39,7 @@ export function DispatcherKpiBar({ activeLoads, lateLoads, todayPickups, todayDe
           key={card.label}
           to={card.to}
           aria-label={`${card.label} — view loads`}
-          className={`block rounded border px-3 py-2 transition hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 ${cardClasses(card.accent)}`}
+          className={`block rounded-sm border px-3 py-2 transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400 ${cardClasses(card.accent)}`}
         >
           <div className="text-[11px] font-semibold uppercase tracking-wide">{card.label}</div>
           <div className="mt-1 text-2xl font-semibold">{card.value}</div>

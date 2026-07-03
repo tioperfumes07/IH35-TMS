@@ -75,7 +75,7 @@ function PositiveRow({ test }: { test: TestRecord }) {
       <td className="py-1.5 pr-3 capitalize">{test.test_type.replace(/_/g, " ")}</td>
       <td className="py-1.5 pr-3 capitalize">{test.test_kind}</td>
       <td className="py-1.5">
-        <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+        <span className="rounded-sm bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
           positive
         </span>
       </td>
@@ -107,7 +107,7 @@ export function DrugAlcoholProgramTab() {
 
   if (!companyId) {
     return (
-      <div className="rounded border border-gray-200 bg-white p-4 text-xs text-slate-500">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-500">
         Select an operating company to view the Drug & Alcohol Program.
       </div>
     );
@@ -120,7 +120,7 @@ export function DrugAlcoholProgramTab() {
         <h2 className="mb-3 text-sm font-semibold text-slate-900">
           Consortium Enrollments
           {enrollmentRows.length > 0 ? (
-            <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-normal text-slate-600">
+            <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-normal text-slate-600">
               {enrollmentRows.length} active
             </span>
           ) : null}
@@ -157,7 +157,7 @@ export function DrugAlcoholProgramTab() {
         <h2 className="mb-3 text-sm font-semibold text-red-900">
           Positive Results — SAP Referral Queue
           {positiveRows.length > 0 ? (
-            <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-normal text-red-800">
+            <span className="ml-2 rounded-sm bg-red-100 px-1.5 py-0.5 text-[11px] font-normal text-red-800">
               {positiveRows.length} pending
             </span>
           ) : null}

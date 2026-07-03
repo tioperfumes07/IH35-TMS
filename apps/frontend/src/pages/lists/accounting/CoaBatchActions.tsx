@@ -116,7 +116,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
           <label className="block space-y-1">
             <span className="text-xs font-medium text-slate-700">Surviving account</span>
             <select
-              className="h-9 w-full rounded border border-gray-300 px-2"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2"
               value={mergeTargetId}
               onChange={(event) => setMergeTargetId(event.target.value)}
               disabled={busy}

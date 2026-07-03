@@ -47,14 +47,14 @@ function ClassesBulkBar({
         type="button"
         disabled={busy}
         onClick={() => run("deactivate")}
-        className="rounded border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+        className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
       >
         Deactivate selected
       </button>
       <select
         value={parentId}
         onChange={(e) => setParentId(e.target.value)}
-        className="min-h-9 rounded border border-gray-300 px-2 text-xs"
+        className="min-h-9 rounded-sm border border-gray-300 px-2 text-xs"
         aria-label="Re-parent target class"
       >
         <option value="">Re-parent to…</option>
@@ -68,7 +68,7 @@ function ClassesBulkBar({
         type="button"
         disabled={busy || !parentId}
         onClick={() => run("reparent")}
-        className="rounded bg-[#16A34A] px-2 py-1 text-xs font-semibold text-white hover:bg-[#15803d] disabled:opacity-50"
+        className="rounded-sm bg-[#16A34A] px-2 py-1 text-xs font-semibold text-white hover:bg-[#15803d] disabled:opacity-50"
       >
         Re-parent
       </button>

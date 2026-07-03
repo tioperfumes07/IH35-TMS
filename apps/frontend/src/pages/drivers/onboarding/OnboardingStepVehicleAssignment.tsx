@@ -12,7 +12,7 @@ export function OnboardingStepVehicleAssignment({ unitId, unitOptions, onChange,
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-slate-700">Unit</span>
         <select
-          className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm"
           value={unitId}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}

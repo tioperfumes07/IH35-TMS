@@ -120,7 +120,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   }
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   return (
@@ -131,7 +131,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         actions={
           <div className="flex items-center gap-2">
             <input
-              className="h-8 w-[220px] rounded border border-gray-300 px-2 text-xs"
+              className="h-8 w-[220px] rounded-sm border border-gray-300 px-2 text-xs"
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -143,7 +143,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
               type="button"
               onClick={handleExportCsv}
               disabled={exporting || !companyId}
-              className="h-8 rounded border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+              className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
             >
               {exporting ? "Exporting…" : "Export profiles (CSV)"}
             </button>
@@ -151,7 +151,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
               type="button"
               onClick={() => setShowImport(true)}
               disabled={!companyId}
-              className="h-8 rounded border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+              className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
             >
               Import drivers (CSV)
             </button>
@@ -175,7 +175,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         <KpiCard label="No DQF items" number={String(totals.empty)} accent={colors.drivers.strong} />
       </KpiStrip>
 
-      <section className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         {driversQ.isLoading ? (
           <div className="px-3 py-6 text-center text-slate-500 text-xs">Loading drivers...</div>
         ) : (
@@ -188,7 +188,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
               type="button"
               disabled={!canPrev}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
-              className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+              className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
             >
               Prev
             </button>
@@ -196,7 +196,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
               type="button"
               disabled={!canNext}
               onClick={() => setPage((p) => p + 1)}
-              className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+              className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
             >
               Next
             </button>

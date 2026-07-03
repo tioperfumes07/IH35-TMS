@@ -10,7 +10,7 @@ type Props = {
 export function CreateWOSectionPaymentTiming({ register, watch }: Props) {
   const paymentTiming = watch("payment_timing");
   return (
-    <section className="rounded border border-gray-200 bg-white p-3">
+    <section className="rounded-sm border border-gray-200 bg-white p-3">
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Where &amp; How - drives the accounting auto-post</h3>
       <div className="space-y-2 text-sm">
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
@@ -28,11 +28,11 @@ export function CreateWOSectionPaymentTiming({ register, watch }: Props) {
           </div>
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-gray-600">Bill Date</label>
-            <input type="date" {...register("bill_date")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input type="date" {...register("bill_date")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </div>
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-gray-600">Due Date (auto)</label>
-            <input type="date" {...register("due_date")} className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-sm" readOnly />
+            <input type="date" {...register("due_date")} className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-sm" readOnly />
           </div>
         </div>
         <div className="text-[11px] font-semibold text-gray-600">Payment Timing</div>

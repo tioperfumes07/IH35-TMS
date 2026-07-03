@@ -3,13 +3,13 @@ export function ComplianceSection({ compliance }: { compliance: Record<string, u
   const mx = (compliance.mx_insurance as Record<string, unknown>) ?? {};
   const plates = (compliance.registration_plates as Array<Record<string, unknown>>) ?? [];
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-gray-800">Compliance</h3>
       <div className="mt-2 grid gap-2 text-xs md:grid-cols-2">
-        <div className={`rounded p-2 ${colorClass(us.color as string)}`}>
+        <div className={`rounded-sm p-2 ${colorClass(us.color as string)}`}>
           US insurance · exp {String(us.expiration ?? "—")} ({String(us.days_until_expiration ?? "—")}d)
         </div>
-        <div className={`rounded p-2 ${colorClass(mx.color as string)}`}>
+        <div className={`rounded-sm p-2 ${colorClass(mx.color as string)}`}>
           MX insurance · exp {String(mx.expiration ?? "—")} ({String(mx.days_until_expiration ?? "—")}d)
         </div>
         <div>DOT inspection: {String((compliance.dot_inspection as Record<string, unknown>)?.next_due ?? "—")}</div>

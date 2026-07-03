@@ -47,7 +47,7 @@ export function MobileOptimizedTable<T>({ rows, columns, rowKey, emptyMessage = 
       </div>
       <div className="space-y-3 sm:hidden">
         {rows.map((row) => (
-          <article key={rowKey(row)} className="rounded border border-gray-200 bg-white p-3 shadow-sm">
+          <article key={rowKey(row)} className="rounded-sm border border-gray-200 bg-white p-3 shadow-xs">
             {columns.map((col) => (
               <div key={col.key} className="mb-2 last:mb-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">

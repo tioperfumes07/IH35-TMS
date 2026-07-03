@@ -73,7 +73,7 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
     const deducted = Number(row.deducted_so_far_cents ?? 0);
     const pct = owed > 0 ? Math.min(100, Math.round((deducted / owed) * 100)) : 0;
     return (
-      <div key={row.id} className="rounded border border-gray-200 bg-white p-3">
+      <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-sm font-semibold text-gray-900">{driverNameById.get(row.driver_id) || row.driver_id}</div>
@@ -81,8 +81,8 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
           </div>
           <StatusBadge status={row.status} />
         </div>
-        <div className="mt-2 h-2 rounded bg-gray-100">
-          <div className="h-2 rounded bg-[#1F2A44]" style={{ width: `${pct}%` }} />
+        <div className="mt-2 h-2 rounded-sm bg-gray-100">
+          <div className="h-2 rounded-sm bg-[#1F2A44]" style={{ width: `${pct}%` }} />
         </div>
         {row.memo ? <p className="mt-2 text-xs text-gray-600">{row.memo}</p> : null}
         <div className="mt-2 flex flex-wrap gap-2">
@@ -160,10 +160,10 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
             }
           }}
         >
-          {error ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
+          {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Driver
-            <SelectCombobox className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+            <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={driverId} onChange={(e) => setDriverId(e.target.value)}>
               <option value="">Select driver…</option>
               {(driversQuery.data ?? []).map((driver) => (
                 <option key={driver.id} value={driver.id}>
@@ -174,7 +174,7 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Type
-            <SelectCombobox className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={deductionType} onChange={(e) => setDeductionType(e.target.value as typeof deductionType)}>
+            <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={deductionType} onChange={(e) => setDeductionType(e.target.value as typeof deductionType)}>
               {DEDUCTION_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
@@ -195,7 +195,7 @@ export function AutoDeductionPolicies({ operatingCompanyId }: Props) {
           </div>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Memo
-            <textarea rows={2} className="rounded border border-gray-300 px-2 py-1.5 text-[13px]" value={memo} onChange={(e) => setMemo(e.target.value)} />
+            <textarea rows={2} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" value={memo} onChange={(e) => setMemo(e.target.value)} />
           </label>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>

@@ -12,7 +12,7 @@ export function WizardStep1({ form, onChange }: Props) {
       <label className="block text-sm">
         Load ID
         <input
-          className="mt-1 w-full rounded border px-2 py-1.5"
+          className="mt-1 w-full rounded-sm border px-2 py-1.5"
           value={form.loadId}
           onChange={(e) => onChange({ loadId: e.target.value })}
           placeholder="Optional load UUID"
@@ -21,7 +21,7 @@ export function WizardStep1({ form, onChange }: Props) {
       <label className="block text-sm">
         Unit ID *
         <input
-          className="mt-1 w-full rounded border px-2 py-1.5"
+          className="mt-1 w-full rounded-sm border px-2 py-1.5"
           value={form.unitId}
           onChange={(e) => onChange({ unitId: e.target.value })}
           placeholder="Unit UUID"
@@ -31,7 +31,7 @@ export function WizardStep1({ form, onChange }: Props) {
       <label className="block text-sm">
         Driver ID
         <input
-          className="mt-1 w-full rounded border px-2 py-1.5"
+          className="mt-1 w-full rounded-sm border px-2 py-1.5"
           value={form.driverId}
           onChange={(e) => onChange({ driverId: e.target.value })}
           placeholder="Driver UUID (FAST card check)"
@@ -40,7 +40,7 @@ export function WizardStep1({ form, onChange }: Props) {
       <label className="block text-sm">
         Direction *
         <select
-          className="mt-1 w-full rounded border px-2 py-1.5"
+          className="mt-1 w-full rounded-sm border px-2 py-1.5"
           value={form.direction}
           onChange={(e) => onChange({ direction: e.target.value as WizardFormState["direction"] })}
         >

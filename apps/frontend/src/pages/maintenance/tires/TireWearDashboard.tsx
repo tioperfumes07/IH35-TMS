@@ -61,7 +61,7 @@ export function TireWearDashboard() {
             CAP-12 tread projections · DOT minimums 4/32&quot; steer · 2/32&quot; drive
           </p>
         </div>
-        <div className="flex flex-wrap gap-1 rounded border border-gray-200 bg-white p-1">
+        <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
           {(["all", "steer", "drive", "trailer"] as const).map((group) => (
             <button
               key={group}
@@ -79,7 +79,7 @@ export function TireWearDashboard() {
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <section className="rounded border border-gray-200 bg-white">
+      <section className="rounded-sm border border-gray-200 bg-white">
         <div className="border-b border-gray-100 px-3 py-2">
           <h2 className="text-sm font-semibold text-gray-900">At-risk units (&lt;{withinDays} days)</h2>
           <p className="text-xs text-gray-500">{rows.length} tire positions projected for replacement</p>

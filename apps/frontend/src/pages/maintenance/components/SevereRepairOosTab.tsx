@@ -202,7 +202,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "Severity",
       sortable: true,
       render: (row) => (
-        <span className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${severityBadgeClass(row.damage_severity)}`}>
+        <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${severityBadgeClass(row.damage_severity)}`}>
           {row.damage_severity}
         </span>
       ),
@@ -276,15 +276,15 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3">
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">Total to bring fleet back online</div>
             <div className="text-lg font-semibold">{money(rollup.total_cents)}</div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">OOS units</div>
             <div className="text-lg font-semibold">{rollup.open_count}</div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">Average days OOS</div>
             <div className="text-lg font-semibold">{asDays(rollup.avg_days_oos)}</div>
           </div>
@@ -307,7 +307,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         rowActions={rowActions}
         filterBar={
           <input
-            className="min-h-12 w-full max-w-xs rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+            className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
             placeholder="Search unit / issue / location / severity…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -320,7 +320,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Unit</label>
             <SelectCombobox
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={selectedUnitId}
               onChange={(event) => setSelectedUnitId(event.target.value)}
             >
@@ -338,7 +338,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Reason</label>
             <textarea
-              className="min-h-20 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="min-h-20 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={oosReason}
               onChange={(event) => setOosReason(event.target.value)}
             />
@@ -346,7 +346,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Location (optional)</label>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={oosLocation}
               onChange={(event) => setOosLocation(event.target.value)}
             />
@@ -375,7 +375,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Review Notes</label>
             <textarea
-              className="min-h-24 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={returnNotes}
               onChange={(event) => setReturnNotes(event.target.value)}
             />

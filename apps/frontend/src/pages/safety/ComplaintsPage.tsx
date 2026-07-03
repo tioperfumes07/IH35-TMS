@@ -38,34 +38,34 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   });
 
   if (!canView) {
-    return <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">Complaints tab is restricted to Owner/Admin/Safety.</div>;
+    return <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">Complaints tab is restricted to Owner/Admin/Safety.</div>;
   }
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-7">
-        <DatePicker value={form.complaint_date} onChange={(next) => setForm((v) => ({ ...v, complaint_date: next }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <SelectCombobox value={form.complainant_type} onChange={(e) => setForm((v) => ({ ...v, complainant_type: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-7">
+        <DatePicker value={form.complaint_date} onChange={(next) => setForm((v) => ({ ...v, complaint_date: next }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <SelectCombobox value={form.complainant_type} onChange={(e) => setForm((v) => ({ ...v, complainant_type: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
           <option value="driver">driver</option>
           <option value="customer">customer</option>
           <option value="employee">employee</option>
           <option value="external">external</option>
           <option value="anonymous">anonymous</option>
         </SelectCombobox>
-        <input value={form.respondent_uuid} placeholder="respondent_uuid" onChange={(e) => setForm((v) => ({ ...v, respondent_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <input value={form.complaint_type_uuid} placeholder="complaint_type_uuid" onChange={(e) => setForm((v) => ({ ...v, complaint_type_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <input value={form.summary} placeholder="Summary" onChange={(e) => setForm((v) => ({ ...v, summary: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <SelectCombobox value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
+        <input value={form.respondent_uuid} placeholder="respondent_uuid" onChange={(e) => setForm((v) => ({ ...v, respondent_uuid: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.complaint_type_uuid} placeholder="complaint_type_uuid" onChange={(e) => setForm((v) => ({ ...v, complaint_type_uuid: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.summary} placeholder="Summary" onChange={(e) => setForm((v) => ({ ...v, summary: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <SelectCombobox value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
           <option value="low">low</option>
           <option value="medium">medium</option>
           <option value="high">high</option>
           <option value="critical">critical</option>
         </SelectCombobox>
-        <button type="button" className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!form.respondent_uuid || !form.complaint_type_uuid || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
+        <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!form.respondent_uuid || !form.complaint_type_uuid || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Complaint
         </button>
       </div>
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>

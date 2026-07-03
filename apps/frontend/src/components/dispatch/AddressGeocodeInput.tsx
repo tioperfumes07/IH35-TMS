@@ -79,7 +79,7 @@ export function AddressGeocodeInput({
       />
       {enabled && open && results.length > 0 ? (
         <ul
-          className="absolute z-20 mt-0.5 max-h-48 w-full overflow-auto rounded border border-gray-300 bg-white text-xs shadow-lg"
+          className="absolute z-20 mt-0.5 max-h-48 w-full overflow-auto rounded-sm border border-gray-300 bg-white text-xs shadow-lg"
           data-pcmiler-suggestions="true"
         >
           {results.map((r, i) => (

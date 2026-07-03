@@ -161,7 +161,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
         exportFilename="road-service-tickets"
         filterBar={
           <input
-            className="min-h-12 w-full max-w-xs rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+            className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
             placeholder="Search ticket / unit / vendor / driver / location…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}

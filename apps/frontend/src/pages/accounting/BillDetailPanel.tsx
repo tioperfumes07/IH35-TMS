@@ -24,7 +24,7 @@ export function BillDetailPanel({ bill }: Props) {
   const balance = Number(bill.balance_cents ?? bill.amount_cents ?? 0) / 100;
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-3" data-bill-detail-panel>
+    <section className="rounded-sm border border-gray-200 bg-white p-3" data-bill-detail-panel>
       <h3 className="mb-3 text-sm font-semibold text-gray-900">Bill details</h3>
       <FlatFieldGrid
         columns={3}

@@ -94,7 +94,7 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
       )}
       <button
         type="button"
-        className="rounded bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50"
+        className="rounded-sm bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50"
         disabled={busy}
         onClick={() => pullMutation.mutate()}
       >
@@ -102,7 +102,7 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
       </button>
       <button
         type="button"
-        className="rounded border border-border px-3 py-1 disabled:opacity-50"
+        className="rounded-sm border border-border px-3 py-1 disabled:opacity-50"
         disabled={busy}
         onClick={() => reconcileMutation.mutate()}
       >

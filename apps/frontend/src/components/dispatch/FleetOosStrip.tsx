@@ -104,7 +104,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
 
   return (
     <div
-      className="sticky bottom-0 z-20 mt-3 rounded border border-amber-300 bg-amber-50/95 shadow-sm backdrop-blur-sm"
+      className="sticky bottom-0 z-20 mt-3 rounded-sm border border-amber-300 bg-amber-50/95 shadow-xs backdrop-blur-xs"
       data-testid="dispatch-fleet-oos-strip"
     >
       <div className="flex items-center justify-between gap-2 border-b border-amber-200 px-3 py-1.5">
@@ -122,12 +122,12 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
           {rows.map((row) => (
             <div
               key={row.unitId}
-              className="min-w-[200px] shrink-0 rounded border border-amber-200 bg-white px-2.5 py-2 text-[11px]"
+              className="min-w-[200px] shrink-0 rounded-sm border border-amber-200 bg-white px-2.5 py-2 text-[11px]"
               data-testid={`fleet-oos-unit-${row.unitNumber}`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-gray-900">{row.unitNumber}</span>
-                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">
+                <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">
                   {row.statusLabel}
                 </span>
               </div>

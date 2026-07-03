@@ -53,20 +53,20 @@ function KanbanCard({
   const age = ageDays(row.opened_at);
   const meta = [row.unit_number ?? row.unit_id, row.driver_id ? "driver" : null, row.description ?? row.wo_type].filter(Boolean).join(" · ");
   return (
-    <div className="rounded border border-gray-200 bg-white" style={{ borderLeft: `3px solid ${accent}` }}>
+    <div className="rounded-sm border border-gray-200 bg-white" style={{ borderLeft: `3px solid ${accent}` }}>
       <button type="button" onClick={() => onOpen(row.id)} className="block w-full px-2 py-1.5 text-left hover:bg-gray-50">
         <div className="flex items-center justify-between gap-1">
           <span className="text-[11px] font-semibold text-gray-800">{row.display_id ?? row.id.slice(0, 8)}</span>
-          {row.source_type ? <span className="rounded bg-gray-100 px-1 text-[9px] font-bold tracking-wide text-gray-600">{row.source_type}</span> : null}
+          {row.source_type ? <span className="rounded-sm bg-gray-100 px-1 text-[9px] font-bold tracking-wide text-gray-600">{row.source_type}</span> : null}
         </div>
         <div className="truncate text-[10px] text-gray-500">{meta}</div>
         {age ? <div className="text-[9px] text-gray-400">{age}</div> : null}
       </button>
       {onAdvanceStatus && row.status !== "complete" ? (
         <div className="flex gap-1 border-t border-gray-100 px-2 py-1">
-          <button type="button" className="rounded border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "in_progress")}>In-Progress</button>
-          <button type="button" className="rounded border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "waiting_parts")}>Waiting</button>
-          <button type="button" className="rounded border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "complete")}>Resolved</button>
+          <button type="button" className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "in_progress")}>In-Progress</button>
+          <button type="button" className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "waiting_parts")}>Waiting</button>
+          <button type="button" className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "complete")}>Resolved</button>
         </div>
       ) : null}
     </div>
@@ -88,7 +88,7 @@ export function RMBucketsGrid({ inHouse, external, roadside, onOpen, onAdvanceSt
           <button
             type="button"
             onClick={onCreateRoadside}
-            className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-900"
+            className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-900"
           >
             + Roadside WO
           </button>
@@ -96,12 +96,12 @@ export function RMBucketsGrid({ inHouse, external, roadside, onOpen, onAdvanceSt
       ) : null}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-5">
         {columns.map((col) => (
-          <div key={col.key} className="rounded border border-gray-200 bg-gray-50">
+          <div key={col.key} className="rounded-sm border border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between border-b border-gray-200 px-2 py-1" style={{ borderTop: `2px solid ${col.accent}` }}>
               <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-700">{col.title}</span>
-              <span className="rounded bg-white px-1.5 text-[10px] font-bold text-gray-600">{col.rows.length}</span>
+              <span className="rounded-sm bg-white px-1.5 text-[10px] font-bold text-gray-600">{col.rows.length}</span>
             </div>
-            <div className="max-h-[28rem] space-y-1 overflow-y-auto p-1.5">
+            <div className="max-h-112 space-y-1 overflow-y-auto p-1.5">
               {col.rows.map((row) => (
                 <KanbanCard key={row.id} row={row} accent={col.accent} onOpen={onOpen} onAdvanceStatus={onAdvanceStatus} />
               ))}

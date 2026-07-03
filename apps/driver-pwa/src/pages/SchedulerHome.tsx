@@ -103,7 +103,7 @@ export function SchedulerHomePage() {
                 const leaveType = st?.leave_type;
                 const cls = cellClass(leaveType, st?.pending ?? false);
                 return (
-                  <div key={iso} className={`flex w-10 shrink-0 flex-col items-center gap-1 rounded px-0.5 py-2 text-[10px] ${cls}`}>
+                  <div key={iso} className={`flex w-10 shrink-0 flex-col items-center gap-1 rounded-sm px-0.5 py-2 text-[10px] ${cls}`}>
                     <span className="text-pwa-text-secondary">{dayLabel(iso, i18n.language)}</span>
                     <span className="font-mono text-[9px] text-pwa-text-primary">{iso.slice(5)}</span>
                   </div>

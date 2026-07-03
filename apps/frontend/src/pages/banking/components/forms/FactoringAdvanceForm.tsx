@@ -8,7 +8,7 @@ export function FactoringAdvanceForm({ value, onChange }: Props) {
     <label className="block text-xs">
       Factoring Advance ID
       <input
-        className="mt-1 h-8 w-full rounded border border-gray-300 px-2"
+        className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
         value={String(value.factoring_advance_id ?? "")}
         onChange={(event) => onChange({ ...value, factoring_advance_id: event.target.value })}
       />

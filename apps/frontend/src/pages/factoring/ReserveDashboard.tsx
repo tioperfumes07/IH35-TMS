@@ -107,12 +107,12 @@ export function ReserveDashboard() {
   };
 
   return (
-    <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
+    <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <div className="text-xs uppercase tracking-wide text-gray-500">Factor Filter</div>
           <select
-            className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={selectedFactorId}
             onChange={(event) => setSelectedFactorId(event.target.value)}
           >
@@ -128,7 +128,7 @@ export function ReserveDashboard() {
 
       <div className="grid gap-2 md:grid-cols-3">
         {(balancesQuery.data ?? []).map((balance) => (
-          <div key={balance.factor_id} className="rounded border border-gray-200 p-3 text-sm">
+          <div key={balance.factor_id} className="rounded-sm border border-gray-200 p-3 text-sm">
             <div className="text-xs uppercase tracking-wide text-gray-500">{factorNameById.get(balance.factor_id) ?? balance.factor_id}</div>
             <div className="mt-1 text-lg font-semibold text-gray-900">{asMoney(balance.balance_cents)}</div>
             <div className="mt-1 text-xs text-gray-600">Last movement: {asDateTime(balance.last_movement_at)}</div>
@@ -136,14 +136,14 @@ export function ReserveDashboard() {
           </div>
         ))}
         {(balancesQuery.data ?? []).length === 0 ? (
-          <div className="rounded border border-dashed border-gray-300 p-3 text-sm text-gray-500">No reserve balances found.</div>
+          <div className="rounded-sm border border-dashed border-gray-300 p-3 text-sm text-gray-500">No reserve balances found.</div>
         ) : null}
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded border border-gray-200 p-3">
+        <div className="rounded-sm border border-gray-200 p-3">
           <div className="mb-2 text-sm font-medium text-gray-900">Reserve Balance Over Time</div>
-          <div className="max-h-72 overflow-auto rounded border border-gray-200">
+          <div className="max-h-72 overflow-auto rounded-sm border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
                 <tr>
@@ -179,7 +179,7 @@ export function ReserveDashboard() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+                className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
                 onClick={() => setPage((current) => Math.max(0, current - 1))}
                 disabled={page <= 0}
               >
@@ -187,7 +187,7 @@ export function ReserveDashboard() {
               </button>
               <button
                 type="button"
-                className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+                className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
                 onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
                 disabled={page >= totalPages - 1}
               >
@@ -197,18 +197,18 @@ export function ReserveDashboard() {
           </div>
         </div>
 
-        <div className="rounded border border-gray-200 p-3">
+        <div className="rounded-sm border border-gray-200 p-3">
           <div className="mb-2 text-sm font-medium text-gray-900">Forecast Releases (7/14/30/60)</div>
           <div className="grid gap-2 grid-cols-2">
             {LOOKAHEAD_WINDOWS.map((days) => (
-              <div key={days} className="rounded border border-gray-200 p-2 text-sm">
+              <div key={days} className="rounded-sm border border-gray-200 p-2 text-sm">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Next {days} days</div>
                 <div className="mt-1 font-semibold text-gray-900">{asMoney(forecastByWindow[days])}</div>
               </div>
             ))}
           </div>
 
-          <div className="mt-3 max-h-48 overflow-auto rounded border border-gray-200">
+          <div className="mt-3 max-h-48 overflow-auto rounded-sm border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
                 <tr>
@@ -238,9 +238,9 @@ export function ReserveDashboard() {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 p-3">
+      <div className="rounded-sm border border-gray-200 p-3">
         <div className="mb-2 text-sm font-medium text-gray-900">Recent Movements</div>
-        <div className="max-h-64 overflow-auto rounded border border-gray-200">
+        <div className="max-h-64 overflow-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-xs">
             <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
               <tr>

@@ -254,7 +254,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs">
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs">
         <label className="flex items-center gap-1 font-semibold text-gray-700">
           <input type="checkbox" checked={activeOnly} onChange={(e) => setStatus(e.target.checked ? "InService" : "all")} />
           Active only
@@ -265,7 +265,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         <select
           id="fleet-type-filter"
           aria-label="Filter fleet by type"
-          className="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+          className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs"
           value={typeFilter}
           onChange={(event) => setTypeFilter(event.target.value)}
         >
@@ -280,7 +280,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         </span>
         <button
           type="button"
-          className="ml-auto rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          className="ml-auto rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           title="Current location + assigned driver + Hours of Service for all reporting vehicles (Samsara)"
           onClick={() => {
             void downloadFleetLocationHosXlsx(operatingCompanyId).catch(() => undefined);
@@ -291,7 +291,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         {hasActiveFilter ? (
           <button
             type="button"
-            className="rounded border border-gray-300 bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
             onClick={clearFilters}
           >
             Clear filters
@@ -300,7 +300,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           <div className="font-semibold">{hasActiveFilter ? "No fleet rows match this filter" : "No fleet rows yet"}</div>
           <div className="mt-1 text-xs">
             {kindFilter === "company"

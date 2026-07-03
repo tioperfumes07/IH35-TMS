@@ -36,7 +36,7 @@ export function UserProfileSettingsPage() {
         <p className="text-sm text-slate-600">Account preferences for {u.email ?? "your account"}.</p>
       </div>
 
-      <section className="rounded border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
         <h2 className="text-sm font-semibold text-slate-800">Guided tour</h2>
         <p className="mt-1 text-xs text-slate-600">
           The product tour runs automatically once. Use restart to see it again after refreshing the page.
@@ -48,7 +48,7 @@ export function UserProfileSettingsPage() {
         </div>
       </section>
 
-      <section className="rounded border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
         <h2 className="text-sm font-semibold text-slate-800">Notifications</h2>
         <p className="mt-1 text-xs text-slate-600">Control email, SMS, WhatsApp, in-app, and quiet hours.</p>
         <div className="mt-3">

@@ -17,7 +17,7 @@ export function WizardStep2({ form, ports, onChange }: Props) {
         <label className="block text-sm">
           Port of entry *
           <select
-            className="mt-1 w-full rounded border px-2 py-1.5"
+            className="mt-1 w-full rounded-sm border px-2 py-1.5"
             value={form.portOfEntryId}
             onChange={(e) => onChange({ portOfEntryId: e.target.value })}
           >
@@ -33,7 +33,7 @@ export function WizardStep2({ form, ports, onChange }: Props) {
           Planned crossing date *
           <input
             type="datetime-local"
-            className="mt-1 w-full rounded border px-2 py-1.5"
+            className="mt-1 w-full rounded-sm border px-2 py-1.5"
             value={form.plannedDate}
             onChange={(e) => onChange({ plannedDate: e.target.value })}
           />

@@ -18,7 +18,7 @@ export function AnomalyAlertBadge({ operatingCompanyId }: Props) {
   });
   const count = q.data ?? 0;
   return (
-    <a href="/safety/anomaly" className="relative inline-flex items-center rounded p-1 text-slate-600 hover:bg-gray-100" title="Anomaly alerts">
+    <a href="/safety/anomaly" className="relative inline-flex items-center rounded-sm p-1 text-slate-600 hover:bg-gray-100" title="Anomaly alerts">
       <Bell size={18} />
       {count > 0 ? (
         <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{count}</span>

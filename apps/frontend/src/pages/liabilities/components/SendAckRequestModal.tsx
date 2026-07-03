@@ -40,7 +40,7 @@ export function SendAckRequestModal({ open, operatingCompanyId, liabilityId, onC
         <label className="block">
           Channel
           <SelectCombobox
-            className="mt-1 h-8 w-full rounded border border-gray-300 px-2"
+            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
             value={channel}
             onChange={(event) => setChannel(event.target.value as "whatsapp" | "sms" | "email")}
           >
@@ -53,7 +53,7 @@ export function SendAckRequestModal({ open, operatingCompanyId, liabilityId, onC
           Message
           <textarea
             rows={4}
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={message}
             onChange={(event) => setMessage(event.target.value)}
           />

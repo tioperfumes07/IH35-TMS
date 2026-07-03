@@ -66,7 +66,7 @@ export function PmAutoEnginePage() {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="mb-2 text-xs text-gray-600">
           Status: {isPaused ? "Paused" : "Active"} · Lookahead {dashboardQ.data?.lookahead_miles ?? "—"} mi
         </div>
@@ -102,7 +102,7 @@ export function PmAutoEnginePage() {
         </table>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Action log</h3>
         <ul className="space-y-1 text-xs">
           {(dashboardQ.data?.recent_log ?? []).map((entry) => (

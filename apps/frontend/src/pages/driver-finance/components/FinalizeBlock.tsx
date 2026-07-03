@@ -20,8 +20,8 @@ export function FinalizeBlock({ checked, pendingAcks, staleDebt, onCheckedChange
     : "Ready to finalize";
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-3 text-xs">
-      <label className="flex items-start gap-2 rounded border border-amber-200 bg-amber-50 px-2 py-2">
+    <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
+      <label className="flex items-start gap-2 rounded-sm border border-amber-200 bg-amber-50 px-2 py-2">
         <input type="checkbox" checked={checked} onChange={(event) => onCheckedChange(event.target.checked)} />
         <span>
           I have reviewed active debt, pending acknowledgments, and deductions applied this period.

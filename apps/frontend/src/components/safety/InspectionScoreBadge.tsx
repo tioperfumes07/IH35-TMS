@@ -43,7 +43,7 @@ export function InspectionScoreBadge({ companyId, driverId }: Props) {
 
   return (
     <span
-      className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-semibold ${classNameForRate(rate)}`}
+      className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${classNameForRate(rate)}`}
       title={`DOT clean inspection rate over trailing ${query.data?.trailing_months ?? 12} months`}
     >
       DOT: {label}
