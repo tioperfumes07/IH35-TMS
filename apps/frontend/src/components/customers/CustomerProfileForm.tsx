@@ -265,7 +265,7 @@ function TextField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        required={required}
+        aria-required={required || undefined}
         className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
       />
     </label>
