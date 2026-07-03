@@ -16,6 +16,7 @@ import { parseVendorNotes } from "../lib/vendorProfileMeta";
 import { VendorsListView } from "./vendors/VendorsListView";
 import { VendorListSidebar } from "./vendors/VendorListSidebar";
 import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
+import { VendorCreateModal } from "../components/vendors/VendorCreateModal";
 import { useViewModePref } from "../hooks/useViewModePref";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
@@ -94,6 +95,7 @@ export function VendorsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
+  const [createOpen, setCreateOpen] = useState(false);
   const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(
     () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
   );
@@ -256,6 +258,9 @@ export function VendorsPage() {
                 </button>
               ))}
             </div>
+            <ActionButton onClick={() => setCreateOpen(true)}>
+              + Create Vendor
+            </ActionButton>
           </div>
         }
       />
@@ -456,6 +461,7 @@ export function VendorsPage() {
         </main>
       </div>
       )}
+      <VendorCreateModal open={createOpen} onClose={() => setCreateOpen(false)} operatingCompanyId={companyId} />
     </div>
   );
 }

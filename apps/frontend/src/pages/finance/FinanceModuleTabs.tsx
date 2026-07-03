@@ -4,6 +4,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_LOAN_WIZARD_FLAG } from "../../api/financeLoanWizard";
 import { FINANCE_HUB_CALCULATOR_FLAG } from "../../api/financeCalculator";
 import { FINANCE_HUB_AMORTIZATION_FLAG } from "../../api/financeAmortization";
+import { FINANCE_BREAK_EVEN_UI_FLAG } from "../../api/financeBreakEven";
 
 // FIN-2 unified subnav: one tab set across the whole Finance module. Hub is the real read-only dashboard
 // (the sidebar "FINANCE HUB" entry lands here); Statements + AR/AP Aging were previously reachable only from
@@ -28,8 +29,11 @@ export function FinanceModuleTabs() {
   const { enabled: loanWizardEnabled } = useFeatureFlag(FINANCE_HUB_LOAN_WIZARD_FLAG, selectedCompanyId ?? undefined);
   const { enabled: calculatorEnabled } = useFeatureFlag(FINANCE_HUB_CALCULATOR_FLAG, selectedCompanyId ?? undefined);
   const { enabled: amortizationEnabled } = useFeatureFlag(FINANCE_HUB_AMORTIZATION_FLAG, selectedCompanyId ?? undefined);
+  // F1 Break-Even Analysis tab only appears once its OFF-by-default flag is enabled (owner sign-off gate).
+  const { enabled: breakEvenEnabled } = useFeatureFlag(FINANCE_BREAK_EVEN_UI_FLAG, selectedCompanyId ?? undefined);
   const tabs = [
     ...baseTabs,
+    ...(breakEvenEnabled ? [{ id: "break-even", label: "Break-Even", to: "/finance/break-even" }] : []),
     ...(loanWizardEnabled ? [{ id: "loan-wizard", label: "Loan Wizard", to: "/finance/loan-wizard" }] : []),
     ...(calculatorEnabled ? [{ id: "calculator", label: "Calculator", to: "/finance/calculator" }] : []),
     ...(amortizationEnabled ? [{ id: "amortization", label: "Amortization", to: "/finance/amortization" }] : []),

@@ -389,6 +389,7 @@ import { FinanceScenariosPage } from "../pages/finance/FinanceScenariosPage";
 import { ArApAgingPage } from "../pages/finance/ArApAgingPage"; // FIN-20 (read-only, flag-gated)
 import { FinancialStatementsPage } from "../pages/finance/FinancialStatementsPage";
 import { FinanceHubPage } from "../pages/finance/FinanceHubPage"; // AF-6 (read-only, flag-gated)
+import { BreakEvenPage } from "../pages/finance/BreakEvenPage"; // F1 (read-only analytics, flag-gated)
 
 // Inventory module (SIDEBAR-V2-REORG-25)
 import { InventoryPartsStockPage } from "../pages/inventory/InventoryPartsStockPage";
@@ -3597,6 +3598,8 @@ export const ROUTES = React.Children.toArray(
         <Route path="/finance/statements" element={<ProtectedRoute><FinancialStatementsPage /></ProtectedRoute>} />
         {/* AF-6 — Finance Hub landing dashboard. flag FINANCE_HUB_UI_ENABLED — default_enabled=true in lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no money posting. */}
         <Route path="/finance/hub" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />
+        {/* F1 — Break-Even Analysis. flag FINANCE_BREAK_EVEN_UI_ENABLED (OFF by default — owner sign-off gate); read-only analytics/estimate, no money posting. */}
+        <Route path="/finance/break-even" element={<ProtectedRoute><BreakEvenPage /></ProtectedRoute>} />
         {/* Inventory module (SIDEBAR-V2-REORG-25) */}
         <Route path="/inventory" element={<ProtectedRoute><InventoryPartsStockPage /></ProtectedRoute>} />
         <Route path="/inventory/assignments" element={<ProtectedRoute><InventoryAssignmentsPage /></ProtectedRoute>} />

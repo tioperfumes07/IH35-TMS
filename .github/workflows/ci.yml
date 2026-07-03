@@ -321,6 +321,9 @@ jobs:
       - name: verify:drivers-create-vocab
         run: npm run verify:drivers-create-vocab
 
+      - name: verify:vendor-create-profile
+        run: npm run verify:vendor-create-profile
+
       - name: verify:drivers-earnings-debt-tab
         run: npm run verify:drivers-earnings-debt-tab
 
