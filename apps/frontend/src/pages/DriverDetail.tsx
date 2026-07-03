@@ -5,6 +5,7 @@ import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
+import { useCompanyContext } from "../contexts/CompanyContext";
 import { AuditHistoryTab } from "../components/drivers/AuditHistoryTab";
 import { LoadHistoryTab } from "../components/drivers/LoadHistoryTab";
 import { EarningsTab } from "../components/drivers/EarningsTab";
@@ -152,6 +153,8 @@ function formatReasonLabel(reason: string) {
 export function DriverDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
   const { pushToast } = useToast();
   const { user } = useAuth();
@@ -211,9 +214,12 @@ export function DriverDetailPage() {
   const [qboVendorPickLabel, setQboVendorPickLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
 
+  // Scope the driver lookup to the SELECTED company (+ its authorizations),
+  // mirroring the DQF list and DriverProfilePage (#1882). Without this, opening
+  // a driver under a non-default company 404s as "Driver not found."
   const driverQuery = useQuery({
-    queryKey: ["driver", id],
-    queryFn: () => getDriver(id),
+    queryKey: ["driver", id, companyId],
+    queryFn: () => getDriver(id, companyId || undefined),
     enabled: Boolean(id),
   });
 
