@@ -43,6 +43,7 @@ import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { Modal } from "../components/Modal";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
+import { MissingRequiredChip } from "../components/compliance/MissingRequiredChip";
 import { useToast } from "../components/Toast";
 import { QboCombobox } from "../components/forms/QboCombobox";
 import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
@@ -656,6 +657,7 @@ export function DriverDetailPage() {
               Retention risk
             </span>
             <StatusBadge status={driver.status} />
+            <MissingRequiredChip operatingCompanyId={driver.operating_company_id} entityKind="driver" entityId={driver.id} />
             <Link to={`/drivers/${driver.id}/hos`} className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
               HOS Detail
             </Link>

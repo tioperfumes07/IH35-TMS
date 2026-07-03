@@ -18,6 +18,7 @@ import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
+import { MissingRequiredChip } from "../components/compliance/MissingRequiredChip";
 import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
@@ -375,6 +376,7 @@ export function VendorDetailPage() {
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
+        <MissingRequiredChip operatingCompanyId={companyId} entityKind="vendor" entityId={vendor.id} />
         {saferEntity?.safer_verified_at ? (
           <StatusBadge variant="positive">
             {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}

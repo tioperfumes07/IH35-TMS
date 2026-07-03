@@ -34,6 +34,41 @@ export function fetchComplianceSummary(operatingCompanyId: string) {
   );
 }
 
+// DOC-REQ-2c — per-entity "missing required documents" summary (drives the profile compliance chip).
+export type MissingRequiredEnforcement = "warn" | "hard_block";
+
+export type MissingRequiredItem = {
+  code: string;
+  label: string;
+  enforcement: MissingRequiredEnforcement;
+  authority: string | null;
+  satisfied: boolean;
+  needs_manual: boolean;
+};
+
+export type MissingRequiredSummary = {
+  entity_kind: string;
+  entity_id: string;
+  required: MissingRequiredItem[];
+  missing_count: number;
+  worst_enforcement: "none" | "warn" | "hard_block";
+};
+
+export type MissingRequiredEntityKind = "driver" | "unit" | "customer" | "vendor";
+
+export function fetchMissingRequired(
+  operatingCompanyId: string,
+  entityKind: MissingRequiredEntityKind,
+  entityId: string
+) {
+  const params = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    entity_kind: entityKind,
+    entity_id: entityId,
+  });
+  return apiRequest<MissingRequiredSummary>(`/api/v1/compliance/missing-required?${params}`);
+}
+
 export function fetchComplianceRules(operatingCompanyId: string) {
   return apiRequest<{ rules: Array<Record<string, unknown>> }>(
     `/api/v1/compliance/notification-rules?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
