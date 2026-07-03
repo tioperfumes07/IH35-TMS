@@ -6,6 +6,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 const RECON_ENABLED = process.env.TMS_QBO_RECON_ENABLED === "true";
 
@@ -38,7 +39,7 @@ const exceptionsQuery = companyQuerySchema.extend({
 
 export async function registerReconRoutes(app: FastifyInstance) {
   // List reconciliation runs (newest first).
-  app.get("/api/v1/accounting/recon/runs", async (req, reply) => {
+  app.get("/api/v1/accounting/recon/runs", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!flagGate(reply)) return;
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -46,6 +47,8 @@ export async function registerReconRoutes(app: FastifyInstance) {
     const q = runsQuery.safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
 
+    try { await assertCompanyMembership(user.uuid, q.data.operating_company_id); }
+    catch { return reply.code(403).send({ error: "forbidden_company_membership" }); }
     const rows = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       const res = await client.query(
         `SELECT id::text, run_type, window_start::text, window_end::text, started_at::text, finished_at::text,
@@ -62,7 +65,7 @@ export async function registerReconRoutes(app: FastifyInstance) {
   });
 
   // List exceptions (optionally filtered to a run / status / class).
-  app.get("/api/v1/accounting/recon/exceptions", async (req, reply) => {
+  app.get("/api/v1/accounting/recon/exceptions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!flagGate(reply)) return;
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -70,6 +73,8 @@ export async function registerReconRoutes(app: FastifyInstance) {
     const q = exceptionsQuery.safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
 
+    try { await assertCompanyMembership(user.uuid, q.data.operating_company_id); }
+    catch { return reply.code(403).send({ error: "forbidden_company_membership" }); }
     const rows = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       const res = await client.query(
         `SELECT id::text, run_id::text, exception_class, source_ref, qbo_ref, field, tms_value, qbo_value,
