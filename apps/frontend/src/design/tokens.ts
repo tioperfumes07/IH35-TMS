@@ -8,8 +8,8 @@ export const colors = {
   slate: "#334155",
   slateLt: "#64748B",
   accentTint: "#EAECF1", // §7 active-state light tint (selected row / active fill) — replaces light-blue
-  topbarBg: "#0F1219",
-  sidebarBg: "#1B2333",
+  topbarBg: "#1F2A44",
+  sidebarBg: "#1F2A44",
   sidebarBorder: "#2A3242",
   sidebarTextMuted: "#9CA3AF",
   sidebarTextActive: "#FFFFFF",
