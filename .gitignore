@@ -32,3 +32,8 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 # Working copies of the generated tracker xlsx (e.g. "... v27 jorge.xlsx" / "... copy.xlsx").
 # The canonical generated file has no space; working copies do. Never commit working copies.
 docs/trackers/exports/* *
+
+# Claude Code local state — ignore everything under .claude EXCEPT committed skills.
+# .claude/worktrees/ (agent worktrees) and settings.local.json must never be committed.
+.claude/*
+!.claude/skills/
