@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ListErrorState } from "../components/ListErrorState";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
@@ -6,7 +6,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listInvoices } from "../api/accounting";
 import { ApiError } from "../api/client";
-import { createCustomer, getCustomerBillingSummary, listCustomers } from "../api/mdata";
+import { createCustomer, getCustomerBillingSummary, listCustomers, listPaymentTermOptions, type Customer, type CustomerBillingSummary } from "../api/mdata";
+import {
+  CustomerProfileForm,
+  emptyCustomerProfileValues,
+  profileValuesToCreatePayload,
+  type CustomerProfileFormValues,
+} from "../components/customers/CustomerProfileForm";
 import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
@@ -92,6 +98,90 @@ function customerQualityRating(paymentScore: string | null | undefined, overallF
   return { label, className: customerQualityClass(kind) };
 }
 
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-gray-100 py-1.5 text-sm last:border-b-0">
+      <span className="shrink-0 text-xs font-semibold text-gray-500">{label}</span>
+      <span className="min-w-0 break-words text-right text-gray-800">{value ?? "—"}</span>
+    </div>
+  );
+}
+
+// Q1 (V7): QBO-style "Customer Details" tab — fully wired from real mdata.customers fields.
+function CustomerDetailsTab({
+  customer,
+  summary,
+  onEdit,
+}: {
+  customer: Customer;
+  summary: CustomerBillingSummary | undefined;
+  onEdit: () => void;
+}) {
+  const dash = (v: string | number | null | undefined) => (v == null || v === "" ? "—" : String(v));
+  const factoring = customer.factoring_eligible ? "Eligible" : "Not eligible";
+  return (
+    <div className="rounded-sm border border-gray-200 bg-white p-3">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-900">Customer details</h3>
+        <ActionButton onClick={onEdit}>Edit</ActionButton>
+      </div>
+      <div className="grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">
+        <div>
+          <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Contact info</h4>
+          <DetailRow label="Customer" value={dash(customer.name)} />
+          <DetailRow label="Type" value={dash(customer.customer_type)} />
+          <DetailRow label="Email" value={dash(customer.email)} />
+          <DetailRow label="Phone" value={dash(customer.phone)} />
+          <DetailRow label="Mobile" value={dash(customer.main_contact_mobile)} />
+          <DetailRow label="Fax" value={dash(customer.fax_phone)} />
+          <DetailRow label="Website" value={dash(customer.website)} />
+          <DetailRow label="Main contact" value={dash(customer.main_contact_name)} />
+          <DetailRow label="A/R email" value={dash(customer.ar_email)} />
+          <DetailRow label="A/P email" value={dash(customer.ap_email)} />
+          <DetailRow label="Notes" value={dash(displayEntityNotes(customer.notes))} />
+        </div>
+        <div>
+          <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Additional info</h4>
+          <DetailRow label="Billing address" value={dash(customer.billing_address)} />
+          <DetailRow label="Billing state" value={dash(customer.billing_state)} />
+          <DetailRow label="Credit limit" value={customer.credit_limit ? fmtMoney(Math.round(Number(customer.credit_limit) * 100)) : "—"} />
+          <DetailRow label="Credit source" value={dash(customer.credit_limit_source)} />
+          <DetailRow label="MC number" value={dash(customer.mc_number)} />
+          <DetailRow label="DOT number" value={dash(customer.dot_number)} />
+          <DetailRow label="Tax ID (EIN)" value={dash(customer.tax_id)} />
+          <DetailRow label="Factoring" value={factoring} />
+          <DetailRow label="Recourse type" value={dash(customer.factoring_recourse_type)} />
+          <DetailRow label="Status" value={dash(customer.status)} />
+          <DetailRow label="Open balance" value={fmtMoney(summary?.aging_buckets?.total_open ?? 0)} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
+  activity_feed: "Activity Feed shows create/edit/payment events for this customer. It needs a customer-scoped activity endpoint (events.event_log by entity) — flagged as a follow-up.",
+  statements: "Statements will render billing statements for a date range. Needs a customer statement generator endpoint — flagged as a follow-up.",
+  recurring_transactions: "Recurring Transactions lists recurring invoice/charge templates for this customer. Needs a recurring-templates data source — flagged as a follow-up.",
+  projects: "Projects groups loads/invoices under a customer project. Needs a projects data source — flagged as a follow-up.",
+  late_fees: "Late Fees will show configured late-fee rules and applied fees. Needs a late-fee config/data source — flagged as a follow-up.",
+  notes: "Notes will hold free-form customer notes and history. Needs a notes thread endpoint — flagged as a follow-up.",
+  tasks: "Tasks will list follow-up tasks tied to this customer. Needs a customer-linked tasks source — flagged as a follow-up.",
+  opportunities: "Opportunities tracks sales pipeline for this customer. Needs a CRM opportunities source — flagged as a follow-up.",
+  conversations: "Conversations threads customer communications. Needs a conversations/messaging source — flagged as a follow-up.",
+};
+
+function CustomerTabComingState({ tab, label }: { tab: CustomerTabId; label: string }) {
+  return (
+    <div className="rounded-sm border border-dashed border-gray-300 bg-white p-6 text-center">
+      <p className="text-sm font-semibold text-gray-700">{label}</p>
+      <p className="mx-auto mt-1 max-w-md text-xs text-gray-500">
+        {COMING_STATE_COPY[tab] ?? "No data source wired yet — flagged as a follow-up."}
+      </p>
+    </div>
+  );
+}
+
 export function CustomersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -118,9 +208,7 @@ export function CustomersPage() {
     () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
   );
   const [createOpen, setCreateOpen] = useState(false);
-  const [createLegalName, setCreateLegalName] = useState("");
-  const [createEmail, setCreateEmail] = useState("");
-  const [createPhone, setCreatePhone] = useState("");
+  const [createValues, setCreateValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
   const [createFormError, setCreateFormError] = useState("");
   const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string }>({});
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
@@ -128,26 +216,18 @@ export function CustomersPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const legalName = createLegalName.trim();
+      const legalName = createValues.name.trim();
       if (!legalName) {
         const error = new Error("Customer legal name is required.");
         (error as Error & { code?: string }).code = "legal_name_required";
         throw error;
       }
-      return createCustomer({
-        name: legalName,
-        legal_name: legalName,
-        email: createEmail.trim() || undefined,
-        phone: createPhone.trim() || undefined,
-        operating_company_id: companyId,
-      });
+      return createCustomer(profileValuesToCreatePayload(createValues, companyId));
     },
     onSuccess: async (customer) => {
       await queryClient.invalidateQueries({ queryKey: ["customers", "page", companyId] });
       setCreateOpen(false);
-      setCreateLegalName("");
-      setCreateEmail("");
-      setCreatePhone("");
+      setCreateValues(emptyCustomerProfileValues());
       setCreateFormError("");
       setCreateFieldErrors({});
       pushToast("Customer created.", "success");
@@ -183,6 +263,11 @@ export function CustomersPage() {
     queryKey: ["accounting", "invoices", "all", companyId],
     queryFn: () => listInvoices(companyId),
     enabled: Boolean(companyId),
+  });
+  const paymentTermsQuery = useQuery({
+    queryKey: ["payment-term-options"],
+    queryFn: () => listPaymentTermOptions().then((r) => r.payment_terms),
+    enabled: createOpen,
   });
   // LIST-EMPTY-1: shared list-state status — children render "No customers found."
   // only once this settles, never during the roster fetch.
@@ -530,8 +615,17 @@ export function CustomersPage() {
                   customerName={selectedCustomer.name}
                   operatingCompanyId={companyId || undefined}
                 />
+              ) : activeTab === "customer_details" ? (
+                <CustomerDetailsTab
+                  customer={selectedCustomer}
+                  summary={summaryQuery.data}
+                  onEdit={() => navigate(`/customers/${selectedCustomer.id}`)}
+                />
               ) : (
-                <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">No rows for this tab yet.</div>
+                <CustomerTabComingState
+                  tab={activeTab}
+                  label={CUSTOMER_TABS.find((t) => t.id === activeTab)?.label ?? "Coming soon"}
+                />
               )}
             </>
           ) : (
@@ -540,7 +634,7 @@ export function CustomersPage() {
         </main>
       </div>
       )}
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Customer">
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Customer" modalKind="customer-create" sizePreset="xl">
         <form
           className="space-y-3"
           onSubmit={(event) => {
@@ -555,39 +649,25 @@ export function CustomersPage() {
               {createFormError}
             </div>
           ) : null}
-          <label className="block text-sm">
-            <span className="mb-1 block text-xs font-semibold text-gray-600">Legal name *</span>
-            <input
-              data-field="legal_name"
-              value={createLegalName}
-              onChange={(event) => setCreateLegalName(event.target.value)}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5"
-            />
-            {createFieldErrors.legal_name ? (
-              <span id="legal_name-error" className="mt-1 block text-xs text-red-700">
-                {createFieldErrors.legal_name}
-              </span>
-            ) : null}
-          </label>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <label className="block text-sm">
-              <span className="mb-1 block text-xs font-semibold text-gray-600">Email</span>
-              <input
-                value={createEmail}
-                onChange={(event) => setCreateEmail(event.target.value)}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block text-xs font-semibold text-gray-600">Phone</span>
-              <input
-                value={createPhone}
-                onChange={(event) => setCreatePhone(event.target.value)}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5"
-              />
-            </label>
-          </div>
-          <div className="flex justify-end gap-2">
+          {createFieldErrors.legal_name ? (
+            <span id="legal_name-error" className="block text-xs text-red-700">
+              {createFieldErrors.legal_name}
+            </span>
+          ) : null}
+          <CustomerProfileForm
+            values={createValues}
+            onPatch={(patch) => setCreateValues((current) => ({ ...current, ...patch }))}
+            operatingCompanyId={companyId}
+            mode="create"
+            paymentTermOptions={paymentTermsQuery.data ?? []}
+            onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
+          />
+          {createFieldErrors.mc_number ? (
+            <span id="mc_number-error" className="block text-xs text-red-700">
+              {createFieldErrors.mc_number}
+            </span>
+          ) : null}
+          <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
             <ActionButton type="button" onClick={() => setCreateOpen(false)}>
               Cancel
             </ActionButton>
@@ -595,11 +675,6 @@ export function CustomersPage() {
               {createMutation.isPending ? "Saving..." : "Save"}
             </ActionButton>
           </div>
-          {createFieldErrors.mc_number ? (
-            <span id="mc_number-error" className="block text-xs text-red-700">
-              {createFieldErrors.mc_number}
-            </span>
-          ) : null}
         </form>
       </Modal>
     </div>

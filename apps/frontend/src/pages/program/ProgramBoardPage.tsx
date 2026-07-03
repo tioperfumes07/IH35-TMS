@@ -27,18 +27,56 @@ type Row = {
   track: "block" | "owner-batch" | "dispatch-kit";
 };
 
-type TabId = "focus" | "all" | "owner" | "dispatch" | "questions" | "ideas";
+type TabId = "focus" | "all" | "pending" | "owner" | "dispatch" | "questions" | "ideas";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "focus", label: "Focus" },
   { id: "all", label: "All blocks" },
+  { id: "pending", label: "Pending" },
   { id: "owner", label: "Owner-Batch" },
   { id: "dispatch", label: "Dispatch-Kit" },
   { id: "questions", label: "Questions" },
   { id: "ideas", label: "Ideas" },
 ];
 
-const FOCUS_STATUSES = new Set(["PENDING", "NEEDS-VERIFY", "OPEN", "PENDING (GATED)"]);
+// The only concluded status is DONE — everything else (PENDING, PENDING (GATED), NEEDS-VERIFY, OPEN,
+// or any future not-done state) is "open". Shared by the Focus and Pending tabs so their filters can
+// never drift apart. See the reconcile JSON status vocabulary: PENDING / PENDING (GATED) /
+// NEEDS-VERIFY / OPEN / DONE.
+export function isOpenStatus(status: string): boolean {
+  return (status || "").toUpperCase() !== "DONE";
+}
+
+export type PendingSummary = {
+  pending: number;
+  gated: number;
+  needsVerify: number;
+  done: number;
+  open: number;
+  total: number;
+  pct: number;
+};
+
+// Pure roll-up of the Pending tab's live progress metric. Buckets every item's status and derives the
+// done-vs-total completion percentage. Any not-done state that isn't gated/needs-verify falls into
+// `pending` so the open count always equals total − done.
+export function summarizePending(statuses: string[]): PendingSummary {
+  let pending = 0;
+  let gated = 0;
+  let needsVerify = 0;
+  let done = 0;
+  for (const raw of statuses) {
+    const s = (raw || "").toUpperCase();
+    if (s === "DONE") done += 1;
+    else if (s.includes("GATED")) gated += 1;
+    else if (s === "NEEDS-VERIFY") needsVerify += 1;
+    else pending += 1; // PENDING, OPEN, or any other not-done state
+  }
+  const total = statuses.length;
+  const open = total - done;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return { pending, gated, needsVerify, done, open, total, pct };
+}
 
 // ── status chip styling — SEMANTIC (not the §7 accent). navy/slate family for pending; never blue/purple ──
 function statusChip(status: string): { bg: string; fg: string } {
@@ -132,6 +170,14 @@ export function ProgramBoardPage() {
     [data]
   );
 
+  // Every item across blocks + both owner tracks — the full universe the All and Pending tabs both draw
+  // from (All shows all of it; Pending shows the not-done slice).
+  const allRows = useMemo<Row[]>(() => [...blockRows, ...ownerRows, ...dispatchRows], [blockRows, ownerRows, dispatchRows]);
+
+  // Live progress summary for the Pending tab. Recomputed on every board load, so as gated/pending items
+  // get concluded the open count falls and the done-vs-total completion metric rises.
+  const pendingSummary = useMemo(() => summarizePending(allRows.map((r) => r.status)), [allRows]);
+
   const notes = data?.notes ?? [];
   const questions = useMemo(() => notes.filter((n) => n.kind === "question"), [notes]);
   const ideas = useMemo(() => notes.filter((n) => n.kind === "idea"), [notes]);
@@ -158,11 +204,10 @@ export function ProgramBoardPage() {
 
   const activeRows = useMemo<Row[]>(() => {
     let rows: Row[];
-    if (tab === "all") rows = [...blockRows, ...ownerRows, ...dispatchRows];
+    if (tab === "all") rows = allRows;
     else if (tab === "owner") rows = ownerRows;
     else if (tab === "dispatch") rows = dispatchRows;
-    else if (tab === "focus")
-      rows = [...blockRows, ...ownerRows, ...dispatchRows].filter((r) => FOCUS_STATUSES.has((r.status || "").toUpperCase()));
+    else if (tab === "focus" || tab === "pending") rows = allRows.filter((r) => isOpenStatus(r.status));
     else rows = [];
 
     const f = filter.trim().toLowerCase();
@@ -177,7 +222,7 @@ export function ProgramBoardPage() {
       const bv = String(b[sort.key] ?? "");
       return av.localeCompare(bv) * dir;
     });
-  }, [tab, blockRows, ownerRows, dispatchRows, filter, sort]);
+  }, [tab, allRows, ownerRows, dispatchRows, filter, sort]);
 
   function toggleSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
@@ -247,8 +292,42 @@ export function ProgramBoardPage() {
       ) : null}
 
       {/* TABLE tabs */}
-      {!isLoading && !isError && (tab === "focus" || tab === "all" || tab === "owner" || tab === "dispatch") ? (
+      {!isLoading && !isError && (tab === "focus" || tab === "all" || tab === "pending" || tab === "owner" || tab === "dispatch") ? (
         <div className="space-y-2">
+          {tab === "pending" ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                {(
+                  [
+                    { label: `${pendingSummary.open} open`, key: "PENDING" },
+                    { label: `${pendingSummary.pending} pending`, key: "PENDING" },
+                    { label: `${pendingSummary.gated} gated`, key: "PENDING (GATED)" },
+                    { label: `${pendingSummary.needsVerify} needs-verify`, key: "NEEDS-VERIFY" },
+                    { label: `${pendingSummary.done} done / ${pendingSummary.total} total`, key: "DONE" },
+                  ] as const
+                ).map((chip, i) => {
+                  const c = statusChip(chip.key);
+                  return (
+                    <span
+                      key={`${chip.label}-${i}`}
+                      className="rounded px-2 py-1 font-semibold tabular-nums"
+                      style={{ background: c.bg, color: c.fg }}
+                    >
+                      {chip.label}
+                    </span>
+                  );
+                })}
+                <span className="font-semibold tabular-nums text-slate-600">{pendingSummary.pct}% complete</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded bg-slate-200" role="progressbar" aria-valuenow={pendingSummary.pct} aria-valuemin={0} aria-valuemax={100}>
+                <div className="h-full rounded" style={{ width: `${pendingSummary.pct}%`, background: "#1F2A44" }} />
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Everything not yet concluded — pending, gated, and needs-verify. Live on every load; as items are
+                finished they leave this list and the completion metric above rises.
+              </p>
+            </div>
+          ) : null}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <input
               value={filter}

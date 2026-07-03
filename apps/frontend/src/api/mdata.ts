@@ -155,8 +155,16 @@ export function previewTeamSettlementSplit(loadId: string, operatingCompanyId: s
   );
 }
 
-export function getDriver(id: string) {
-  return apiRequest<Driver>(`/api/v1/mdata/drivers/${id}`);
+export function getDriver(id: string, operatingCompanyId?: string) {
+  // Passing operating_company_id scopes the lookup to the SELECTED company +
+  // its driver_company_authorizations (matching the DQF list + aggregate fetch).
+  // Omitting it falls back to the server-resolved default company. Without the
+  // param, opening a driver under a non-default selected company 404s even though
+  // the driver is reachable — the DriverDetailPage "Driver not found" bug.
+  const qs = operatingCompanyId
+    ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    : "";
+  return apiRequest<Driver>(`/api/v1/mdata/drivers/${id}${qs}`);
 }
 
 export function createDriver(body: CreateDriverInput) {
@@ -1156,6 +1164,12 @@ export function deactivateCustomerLane(customerId: string, laneId: string, opera
 
 export function listPaymentTermOptions() {
   return apiRequest<{ payment_terms: PaymentTermOption[] }>("/api/v1/catalogs/payment-terms?status=active&limit=200");
+}
+
+// Inline "+ Add new payment term" support (reference-dropdown keystone). Non-financial
+// catalog create — the same catalog the customer.payment_terms_id FK references.
+export function createPaymentTermOption(body: { terms_name: string; days_until_due: number; notes?: string | null }) {
+  return apiRequest<PaymentTermOption>("/api/v1/catalogs/payment-terms", { method: "POST", body });
 }
 
 export function listVendors(params: CompanyScopedListParams = {}) {
