@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDrivers, listUnits, listVendors } from "../../../api/mdata";
 import { getAllAccounts } from "../../../api/banking";
 import { Modal } from "../../../components/Modal";
+import { companyToday } from "../../../lib/businessDate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { EXPENSE_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
@@ -21,7 +22,7 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
   const [taxRate, setTaxRate] = useState(8.25);
   const [expenseType, setExpenseType] = useState("fuel");
   const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
-  const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [expenseDate, setExpenseDate] = useState(() => companyToday());
   const [expenseNumber, setExpenseNumber] = useState("");
   const [payFromAccountId, setPayFromAccountId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("fuel_card");

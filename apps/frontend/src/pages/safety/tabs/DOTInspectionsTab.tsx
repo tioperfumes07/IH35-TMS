@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../../lib/formatDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -103,7 +104,7 @@ export function DOTInspectionsTab() {
           <tbody>
             {(query.data?.dot_inspections ?? []).map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.inspection_date ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.inspection_date)}</td>
                 <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.unit_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.fmcsa_level ?? "—")}</td>
