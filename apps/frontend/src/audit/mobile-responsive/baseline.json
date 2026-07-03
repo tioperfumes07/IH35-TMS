@@ -3,6 +3,30 @@
   "note": "GAP-91 initial baseline (189 known issues — fix blocks per module)",
   "issues": [
     {
+      "id": "button-under-44px:apps/frontend/src/pages/program/ProgramBoardPage.tsx",
+      "rule": "button-under-44px",
+      "file": "apps/frontend/src/pages/program/ProgramBoardPage.tsx",
+      "message": "Interactive control uses h-7 (<44px touch target)",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "Use TouchOptimizedButton or min-h-11",
+      "owner_module": "office-tms"
+    },
+    {
+      "id": "input-under-44px:apps/frontend/src/pages/program/ProgramBoardPage.tsx",
+      "rule": "input-under-44px",
+      "file": "apps/frontend/src/pages/program/ProgramBoardPage.tsx",
+      "message": "Text input height may be below 48px on mobile",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "suggested_fix": "See gap-91 spec",
+      "owner_module": "office-tms"
+    },
+    {
       "id": "button-under-44px:apps/frontend/src/components/CompanySwitcher.tsx",
       "rule": "button-under-44px",
       "file": "apps/frontend/src/components/CompanySwitcher.tsx",
