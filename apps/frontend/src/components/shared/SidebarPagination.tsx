@@ -5,6 +5,8 @@ type Props = {
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
   pageSizeOptions?: number[];
+  /** When the roster query is still loading, suppress the "0-0 of 0" count so it never asserts an empty roster mid-fetch. */
+  loading?: boolean;
 };
 
 export function SidebarPagination({
@@ -14,6 +16,7 @@ export function SidebarPagination({
   onPageChange,
   onPageSizeChange,
   pageSizeOptions = [25, 50, 100, 250],
+  loading = false,
 }: Props) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);
@@ -24,7 +27,7 @@ export function SidebarPagination({
     <div className="space-y-2 text-xs text-gray-600" data-sidebar-pagination="true">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span>
-          {rangeStart}-{rangeEnd} of {totalCount.toLocaleString()}
+          {loading ? "Loading…" : `${rangeStart}-${rangeEnd} of ${totalCount.toLocaleString()}`}
         </span>
         <label className="inline-flex items-center gap-1">
           <span>Page size</span>
