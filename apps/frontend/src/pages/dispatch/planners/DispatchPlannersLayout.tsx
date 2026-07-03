@@ -30,7 +30,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
             <NavLink
               key={tab.to}
               to={tab.to}
-              className={({ isActive }) =>
+              className={({ isActive }: { isActive: boolean }) =>
                 `rounded px-3 py-1.5 font-medium ${isActive ? "bg-slate-800 text-white" : "text-gray-700 hover:bg-gray-100"}`
               }
             >

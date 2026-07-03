@@ -34,7 +34,7 @@ function Row({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between">
       <span>{label}</span>
-      <span>${value.toFixed(2)}</span>
+      <span>${Number(value).toFixed(2)}</span>
     </div>
   );
 }

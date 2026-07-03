@@ -56,7 +56,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
   }
 
   return (
-    <div className="relative z-20 min-w-[180px]" onClick={(event) => event.stopPropagation()}>
+    <div className="relative z-20 min-w-[180px]" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
       <Combobox
         options={options}
         value={trailerId}

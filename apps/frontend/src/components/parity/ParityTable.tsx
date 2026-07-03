@@ -516,7 +516,7 @@ export function ParityTable<T>({
                       onMouseDown={(e) => startResize(key, e)}
                       onTouchStart={(e) => startResizeTouch(key, e)}
                       onKeyDown={(e) => onResizeKey(key, e)}
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
                       className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none select-none hover:bg-gray-300 focus:bg-gray-400 focus:outline-none"
                     />
                   ) : null}
@@ -554,7 +554,7 @@ export function ParityTable<T>({
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                 >
                   {renderExpanded ? (
-                    <td className="px-2 align-top" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <button
                         type="button"
                         aria-label={isExpanded ? "Collapse row" : "Expand row"}
@@ -567,7 +567,7 @@ export function ParityTable<T>({
                     </td>
                   ) : null}
                   {selectable ? (
-                    <td className="px-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label="Select row"
@@ -590,7 +590,7 @@ export function ParityTable<T>({
                     </td>
                   ))}
                   {rowActions ? (
-                    <td className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 text-right" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       {rowActions(row)}
                     </td>
                   ) : null}

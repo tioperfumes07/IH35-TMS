@@ -99,7 +99,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number) => {
+            formatter={(value) => {
               const count = Number(value);
               const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
               return [`${count} (${pct}%)`, "Count"];
@@ -109,7 +109,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
               return formatWoStatusLabel(st?.status);
             }}
           />
-          <Legend verticalAlign="middle" align="right" layout="vertical" formatter={(value) => formatWoStatusLabel(value)} />
+          <Legend verticalAlign="middle" align="right" layout="vertical" formatter={(value: string) => formatWoStatusLabel(value)} />
         </PieChart>
       </ResponsiveContainer>
     </div>

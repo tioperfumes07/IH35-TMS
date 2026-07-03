@@ -217,15 +217,15 @@ export function CashFlowOverviewPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
                   <Tooltip
-                    formatter={(value: number, name: string) => [money(value), name]}
+                    formatter={(value, name) => [money(Number(value)), name]}
                     labelFormatter={(l) => String(l)}
-                    content={({ active, payload, label }) =>
+                    content={({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey?: unknown; name?: unknown; value?: unknown; payload?: unknown }>; label?: string | number }) =>
                       active && payload?.length ? (
                         <div className="rounded border border-gray-200 bg-white p-2 text-xs shadow">
                           <div className="font-semibold">{label}</div>
                           {payload.map((p) => (
                             <div key={String(p.dataKey)}>
-                              {p.name}: {money(Number(p.value))}
+                              {String(p.name)}: {money(Number(p.value))}
                             </div>
                           ))}
                           <div className="mt-1 border-t border-gray-100 pt-1 text-gray-600">
@@ -254,7 +254,7 @@ export function CashFlowOverviewPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={(v) => money(Number(v))} width={68} tick={{ fontSize: 10 }} />
-                    <Tooltip formatter={(v: number) => money(Number(v))} />
+                    <Tooltip formatter={(v) => money(Number(v))} />
                     <Bar dataKey="v" fill="#0d9488" name="Amount" />
                   </BarChart>
                 </ResponsiveContainer>

@@ -132,7 +132,7 @@ export function CashForecastPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="week_start" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(value) => money(Number(value))} width={88} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value: number) => money(value)} />
+                <Tooltip formatter={(value) => money(Number(value))} />
                 <Line type="monotone" dataKey="projected_balance" stroke="#1F2A44" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>

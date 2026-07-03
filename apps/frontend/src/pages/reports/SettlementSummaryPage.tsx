@@ -271,7 +271,7 @@ export function SettlementSummaryPage() {
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: number) => money(v)} />
+                    <Tooltip formatter={(v) => money(Number(v))} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>

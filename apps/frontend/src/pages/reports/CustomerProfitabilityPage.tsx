@@ -301,8 +301,8 @@ export function CustomerProfitabilityPage() {
                   <YAxis yAxisId="left" tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
                   <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `${v}%`} width={40} tick={{ fontSize: 10 }} />
                   <Tooltip
-                    formatter={(value: number, name: string) =>
-                      name === "marginPct" ? [`${value.toFixed(1)}%`, "Margin %"] : [money(Number(value)), "Revenue"]
+                    formatter={(value, name) =>
+                      name === "marginPct" ? [`${Number(value).toFixed(1)}%`, "Margin %"] : [money(Number(value)), "Revenue"]
                     }
                   />
                   <Legend />

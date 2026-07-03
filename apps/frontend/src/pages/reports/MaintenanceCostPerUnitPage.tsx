@@ -233,8 +233,8 @@ export function MaintenanceCostPerUnitPage() {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => money(value)} />
-                  <Legend formatter={(value, _entry, i) => `${formatChartLegendLabel(value)} · ${money(pieData[i]?.value ?? 0)}`} />
+                  <Tooltip formatter={(value) => money(Number(value))} />
+                  <Legend formatter={(value: string, _entry: unknown, i: number) => `${formatChartLegendLabel(value)} · ${money(pieData[i]?.value ?? 0)}`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

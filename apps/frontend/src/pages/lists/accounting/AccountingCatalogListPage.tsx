@@ -172,7 +172,7 @@ export function AccountingCatalogListPage({
                 }}
               >
                 {bulkEnabled ? (
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-3 py-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                     <input type="checkbox" aria-label={`Select ${row.display_name}`} checked={selectedIds.has(row.id)} onChange={() => toggleId(row.id)} />
                   </td>
                 ) : null}

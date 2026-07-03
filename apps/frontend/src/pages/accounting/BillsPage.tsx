@@ -317,7 +317,7 @@ export function BillsPage() {
               return (
                 <Fragment key={bill.id}>
                   <tr className="border-b border-gray-100">
-                    <td className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
+                    <td className="px-3 py-2" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label={`Select bill ${bill.bill_number || bill.id}`}

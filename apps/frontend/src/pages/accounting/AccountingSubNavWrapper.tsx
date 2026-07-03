@@ -116,7 +116,7 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
                     key={item.label}
                     to={item.to}
                     onClick={() => setMoreMenuOpen(false)}
-                    className={({ isActive }) =>
+                    className={({ isActive }: { isActive: boolean }) =>
                       `block border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 ${
                         isActive ? "bg-gray-100 font-semibold text-gray-900" : "text-gray-800 hover:bg-gray-50"
                       }`

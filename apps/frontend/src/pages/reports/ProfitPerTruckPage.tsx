@@ -374,7 +374,7 @@ export function ProfitPerTruckPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(v: number) => money(Number(v))} />
+                  <Tooltip formatter={(v) => money(Number(v))} />
                   <Legend />
                   <Bar dataKey="revenuePerMile" name="Revenue / mi" fill="#334155" />
                   <Bar dataKey="costPerMile" name="Cost / mi" fill="#f59e0b" />

@@ -21,7 +21,7 @@ export function FactoringIndexPage() {
             <NavLink
               key={item.id}
               to={item.href}
-              className={({ isActive }) => (isActive || tab === item.id ? "border-b border-white pb-0.5 font-semibold" : "")}
+              className={({ isActive }: { isActive: boolean }) => (isActive || tab === item.id ? "border-b border-white pb-0.5 font-semibold" : "")}
               onClick={() => setTab(item.id)}
             >
               {item.label}

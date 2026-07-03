@@ -517,7 +517,7 @@ export function FleetTable({
                     className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
                     onClick={() => navigate(fleetProfilePath(row))}
                   >
-                    <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label={`Select unit ${row.unit_number ?? row.id}`}
@@ -526,7 +526,7 @@ export function FleetTable({
                       />
                     </td>
                     {showMaintenanceColumns ? (
-                      <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                         <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
                           {String(row.unit_number ?? row.id ?? "—")}
                         </Link>
@@ -556,7 +556,7 @@ export function FleetTable({
                     {isVisible("dot_oo") ? (
                       <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
                     ) : null}
-                    <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <button
                         type="button"
                         className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"

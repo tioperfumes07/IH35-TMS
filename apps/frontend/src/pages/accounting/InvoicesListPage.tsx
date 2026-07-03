@@ -245,7 +245,7 @@ export function InvoicesListPage() {
             {!query.isError
               ? invoices.map((invoice) => (
               <tr key={invoice.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
-                <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+                <td className="px-2 py-2" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                   <input
                     type="checkbox"
                     aria-label={`Select invoice ${invoice.display_id}`}
