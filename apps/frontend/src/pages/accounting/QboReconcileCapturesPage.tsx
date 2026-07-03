@@ -13,6 +13,8 @@ import {
   type QboModifyCapture,
   type QboSyncConflict,
 } from "../../api/qbo-reconcile";
+import { fetchReconRuns, fetchReconExceptions, type ReconRun, type ReconExceptionRow } from "../../api/recon";
+import { ApiError } from "../../api/client";
 
 const FLAG = "QBO_RECONCILE_UI_ENABLED";
 const SELECT_CLASS = "h-9 rounded border border-gray-300 px-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-slate-400";
@@ -45,7 +47,7 @@ function Pill({ map, value }: { map: Record<string, string>; value: string }) {
   );
 }
 
-type Tab = "overview" | "captures" | "conflicts";
+type Tab = "overview" | "captures" | "conflicts" | "runs" | "exceptions";
 
 function OverviewTab({ companyId }: { companyId: string }) {
   const { data, isLoading, isError } = useQuery({
@@ -307,6 +309,111 @@ function ConflictsTab({ companyId }: { companyId: string }) {
   );
 }
 
+// RECON-02 — read-only surfacing of RECON-01 reconciliation runs + exceptions. The routes 404 when the recon
+// module (TMS_QBO_RECON_ENABLED) is OFF; we show a hint rather than an error. No resolve/apply here.
+function ReconDisabledHint() {
+  return (
+    <div className="rounded border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500">
+      The QBO↔TMS reconciliation module is not enabled for this account.
+      <p className="mt-1 text-xs text-gray-400">Enable the TMS_QBO_RECON_ENABLED feature flag to run and view reconciliation passes.</p>
+    </div>
+  );
+}
+
+function exceptionCount(run: ReconRun): string {
+  const t = run.totals as { exceptions?: unknown } | null;
+  return typeof t?.exceptions === "number" ? String(t.exceptions) : "—";
+}
+
+function ReconRunsTab({ companyId }: { companyId: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["recon-runs", companyId],
+    queryFn: () => fetchReconRuns(companyId, { limit: 50 }),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  if (isLoading) return <p className="py-8 text-center text-sm text-gray-500">Loading…</p>;
+  if (error instanceof ApiError && error.status === 404) return <ReconDisabledHint />;
+  if (error) return <p className="py-8 text-center text-sm text-gray-500">Couldn’t load reconciliation runs.</p>;
+  const runs: ReconRun[] = data?.runs ?? [];
+  if (runs.length === 0) return <p className="rounded border border-gray-200 bg-white py-10 text-center text-sm text-gray-400">No reconciliation runs yet.</p>;
+  return (
+    <div className="overflow-x-auto rounded border border-gray-200">
+      <table className="min-w-full divide-y divide-gray-200 text-sm">
+        <thead className="bg-gray-50">
+          <tr>{["Started", "Type", "Window", "Status", "Exceptions"].map((h) => (
+            <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 whitespace-nowrap">{h}</th>
+          ))}</tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100 bg-white">
+          {runs.map((r) => (
+            <tr key={r.id} className="hover:bg-gray-50">
+              <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDt(r.started_at)}</td>
+              <td className="px-3 py-2 whitespace-nowrap capitalize">{titleize(r.run_type)}</td>
+              <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{fmtDt(r.window_start)} → {fmtDt(r.window_end)}</td>
+              <td className="px-3 py-2"><Pill map={STATUS_PILL} value={r.status} /></td>
+              <td className="px-3 py-2 text-right tabular-nums">{exceptionCount(r)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ReconExceptionsTab({ companyId }: { companyId: string }) {
+  const [status, setStatus] = useState("");
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["recon-exceptions", companyId, status],
+    queryFn: () => fetchReconExceptions(companyId, { status: status || undefined, limit: 100 }),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  if (error instanceof ApiError && error.status === 404) return <ReconDisabledHint />;
+  const rows: ReconExceptionRow[] = data?.exceptions ?? [];
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className={SELECT_CLASS}>
+          <option value="">All statuses</option>
+          <option value="open">Open</option>
+          <option value="explained">Explained</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      {isLoading ? (
+        <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
+      ) : error ? (
+        <p className="py-8 text-center text-sm text-gray-500">Couldn’t load exceptions.</p>
+      ) : rows.length === 0 ? (
+        <p className="rounded border border-gray-200 bg-white py-10 text-center text-sm text-gray-400">No reconciliation exceptions.</p>
+      ) : (
+        <div className="overflow-x-auto rounded border border-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-gray-50">
+              <tr>{["Class", "Field", "TMS", "QBO", "Severity", "Status"].map((h) => (
+                <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 whitespace-nowrap">{h}</th>
+              ))}</tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {rows.map((x) => (
+                <tr key={x.id} className="hover:bg-gray-50">
+                  <td className="px-3 py-2 whitespace-nowrap font-medium capitalize">{titleize(x.exception_class)}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">{titleize(x.field)}</td>
+                  <td className="px-3 py-2 text-gray-600">{x.tms_value ?? "—"}</td>
+                  <td className="px-3 py-2 text-gray-600">{x.qbo_value ?? "—"}</td>
+                  <td className="px-3 py-2"><Pill map={SEVERITY_PILL} value={x.severity} /></td>
+                  <td className="px-3 py-2"><Pill map={STATUS_PILL} value={x.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function QboReconcileCapturesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -328,6 +435,8 @@ export function QboReconcileCapturesPage() {
     { id: "overview", label: "Sync Health" },
     { id: "captures", label: "Modify Captures" },
     { id: "conflicts", label: "Conflicts & Alerts" },
+    { id: "runs", label: "Recon Runs" },
+    { id: "exceptions", label: "Exceptions" },
   ];
 
   return (
@@ -352,8 +461,12 @@ export function QboReconcileCapturesPage() {
         <OverviewTab companyId={companyId} />
       ) : tab === "captures" ? (
         <CapturesTab companyId={companyId} />
-      ) : (
+      ) : tab === "conflicts" ? (
         <ConflictsTab companyId={companyId} />
+      ) : tab === "runs" ? (
+        <ReconRunsTab companyId={companyId} />
+      ) : (
+        <ReconExceptionsTab companyId={companyId} />
       )}
     </AccountingSubNavWrapper>
   );
