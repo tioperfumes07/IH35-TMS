@@ -199,6 +199,20 @@ const SRC_RANK = { "program": 4, ".block-ready": 3, "enterprise-29": 2, "account
 const byId = new Map();
 for (const b of all) { const k = b.id.toUpperCase(); const cur = byId.get(k); if (!cur || (SRC_RANK[b.source] || 0) > (SRC_RANK[cur.source] || 0)) byId.set(k, b); }
 const blocks = [...byId.values()];
+
+// VERIFIED OVERRIDES — human-verified verdicts (independent read-only sweep vs origin/main) take
+// precedence over the reconciler's weak auto-detection. This is what stops a hollow PR-title match
+// (e.g. AF-* matching unrelated AUDIT-FIX UI PRs #530-544) from ever re-flagging a verified block on
+// regen. Durable: docs/trackers/block-status-overrides.json. Add entries ONLY from a real verification.
+try {
+  const ovRaw = fs.readFileSync(path.join(process.cwd(), "docs/trackers/block-status-overrides.json"), "utf8");
+  const ovMap = new Map((JSON.parse(ovRaw).overrides || []).map((o) => [String(o.id).toUpperCase(), o]));
+  for (const b of blocks) {
+    const o = ovMap.get(b.id.toUpperCase());
+    if (o) { b.status = o.status; b.evidence = `[verified ${o.verified_on}] ${o.evidence}`.slice(0, 120); }
+  }
+} catch { /* no overrides file — auto-detection only */ }
+
 const ORDER = { "PENDING": 0, "PENDING (GATED)": 1, "NEEDS-VERIFY": 2, "DONE": 3 };
 blocks.sort((a, b) => (ORDER[a.status] - ORDER[b.status]) || a.id.localeCompare(b.id));
 
