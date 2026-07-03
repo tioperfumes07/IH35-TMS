@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { convertFineToLiability, getSafetyFines } from "../../api/safety";
 import { CompanyViolationsPage } from "./CompanyViolationsPage";
@@ -132,7 +133,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
           <tbody>
             {rows.map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.issued_date ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.issued_date)}</td>
                 <td className="px-2 py-1">{String(row.subject_type ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.issued_by_authority ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.violation_description ?? "—")}</td>

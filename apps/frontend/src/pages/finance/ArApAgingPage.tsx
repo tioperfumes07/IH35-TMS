@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -17,7 +18,7 @@ import {
 
 const fmtCents = (c: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((c || 0) / 100);
-const fmtDate = (s: string | null) => (s ? new Date(`${s}T00:00:00`).toLocaleDateString("en-US") : "—");
+const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
 type Mode = "ar" | "ap";

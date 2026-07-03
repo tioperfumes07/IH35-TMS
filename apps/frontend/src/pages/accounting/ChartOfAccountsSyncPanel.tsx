@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { resolveApiUrl } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import { useState } from "react";
 
 type CoaSyncStatus = {
@@ -12,21 +12,16 @@ type CoaSyncStatus = {
   last_reconcile_at: string | null;
 };
 
+// VENDOR-401: use apiRequest (not raw fetch) so the cross-origin ih35_session cookie is sent
+// (credentials: include) and the request targets the API host — a raw fetch omits credentials and
+// 401s on a valid session. Same defect class as the vendors/customers sync panels.
 async function fetchCoaStatus(operatingCompanyId: string): Promise<CoaSyncStatus> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  const res = await fetch(resolveApiUrl(`/api/v1/qbo-sync/chart-of-accounts/status?${params}`));
-  if (!res.ok) throw new Error("Failed to load CoA sync status");
-  return res.json() as Promise<CoaSyncStatus>;
+  return apiRequest<CoaSyncStatus>(`/api/v1/qbo-sync/chart-of-accounts/status?${params}`);
 }
 
 async function postCoaAction(path: string, operatingCompanyId: string) {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ operating_company_id: operatingCompanyId }),
-  });
-  if (!res.ok) throw new Error(`CoA sync action failed (${res.status})`);
-  return res.json();
+  return apiRequest(path, { method: "POST", body: { operating_company_id: operatingCompanyId } });
 }
 
 function formatRelative(iso: string | null) {
