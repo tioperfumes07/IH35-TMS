@@ -269,4 +269,79 @@ describe("safety incidents routes (A23-7)", () => {
     });
     expect(mockAppendCrudAudit).toHaveBeenCalled();
   });
+
+  // SC-TRAILER-FK — trailer_id now references mdata.equipment (trailers). Validate RLS-scoped
+  // existence: a real equipment trailer persists; a truck uuid or a cross-entity trailer → 400.
+  const TRAILER_EQUIPMENT_ID = "44444444-4444-4444-8444-444444444444";
+  const TRUCK_UNIT_ID = "55555555-5555-4555-8555-555555555555";
+
+  it("POST creates an incident with a valid equipment trailer (201)", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.equipment")) {
+        return { rows: [{ id: TRAILER_EQUIPMENT_ID }], rowCount: 1 };
+      }
+      if (sql.includes("INSERT INTO safety.incidents")) {
+        return {
+          rows: [{ id: INCIDENT_ID, incident_type: "trailer_interchange", trailer_id: TRAILER_EQUIPMENT_ID }],
+          rowCount: 1,
+        };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/incidents",
+      payload: {
+        operating_company_id: COMPANY,
+        incident_type: "trailer_interchange",
+        description: "Interchange at yard",
+        trailer_id: TRAILER_EQUIPMENT_ID,
+      },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toMatchObject({ incident: { id: INCIDENT_ID, trailer_id: TRAILER_EQUIPMENT_ID } });
+  });
+
+  it("POST rejects a truck uuid used as a trailer (invalid_trailer)", async () => {
+    // A truck id lives only in mdata.units → not found in mdata.equipment → 400.
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.equipment")) return { rows: [], rowCount: 0 };
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/incidents",
+      payload: {
+        operating_company_id: COMPANY,
+        incident_type: "trailer_interchange",
+        description: "Wrong id",
+        trailer_id: TRUCK_UNIT_ID,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("invalid_trailer");
+  });
+
+  it("POST rejects a cross-entity trailer not visible under scope (invalid_trailer)", async () => {
+    // RLS hides an equipment row owned by / leased to another entity → not found → 400.
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.equipment")) return { rows: [], rowCount: 0 };
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/incidents",
+      payload: {
+        operating_company_id: COMPANY,
+        incident_type: "damage_report",
+        description: "Foreign trailer",
+        trailer_id: TRAILER_EQUIPMENT_ID,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe("invalid_trailer");
+  });
 });

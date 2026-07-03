@@ -145,7 +145,24 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       });
     }
 
+    const trailerId = body.data.trailer_id ?? null;
+
     const created = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      // SC-TRAILER-FK: the trailer FK points at mdata.equipment (trailers live there; mdata.units is
+      // trucks only). Validate an RLS-SCOPED EXISTENCE against mdata.equipment — the row must be
+      // visible under this request's withCompanyScope (RLS does the entity gate: TRK-owned trailers
+      // operated by TRANSP are visible via owner_company_id OR currently_leased_to_company_id, so this
+      // is NOT an owner==operating compare). A truck uuid (mdata.units only) or a cross-entity trailer
+      // is simply not found here → 400 invalid_trailer, never a raw FK-violation 500.
+      if (trailerId !== null) {
+        const trailerRes = await client.query<{ id: string }>(
+          `SELECT id FROM mdata.equipment WHERE id = $1 LIMIT 1`,
+          [trailerId]
+        );
+        if (trailerRes.rows.length === 0) {
+          return { error: "invalid_trailer" as const };
+        }
+      }
       // Entity-independence hard rule: the claimant must belong to the SAME operating company as the
       // incident row. Never rely on the FK for tenant isolation — pin the entity predicate
       // (operating_company_id) IN the query, so a cross-entity customer is simply not found → mismatch.
