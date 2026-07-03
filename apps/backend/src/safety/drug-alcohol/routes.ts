@@ -20,7 +20,7 @@ import {
   type TestResult,
   type TestType,
 } from "./program.service.js";
-import { drawRandomPool, listDrawHistory } from "./random-pool.service.js";
+import { bulkEnrollActiveDrivers, drawRandomPool, listDrawHistory } from "./random-pool.service.js";
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -34,6 +34,11 @@ const enrollSchema = z.object({
   driver_uuid: z.string().uuid(),
   consortium_name: z.string().min(1).max(200),
   enrolled_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const bulkEnrollSchema = z.object({
+  operating_company_id: z.string().uuid(),
+  consortium_name: z.string().min(1).max(200),
 });
 
 const scheduleTestSchema = z.object({
@@ -118,6 +123,37 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
       return row;
     });
     return reply.code(201).send(enrollment);
+  });
+
+  // Bulk-enroll every active human driver into the consortium random pool.
+  // Root-cause fix for the empty-pool defect: populates safety.da_program_enrollments,
+  // which listActiveEnrolledDrivers (the pool query) reads. Idempotent.
+  app.post("/api/safety/drug-alcohol/enrollments/bulk-active", async (req, reply) => {
+    const user = getAuth(req, reply);
+    if (!user) return;
+    if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsed = bulkEnrollSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+
+    const result = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
+      const bulk = await bulkEnrollActiveDrivers(
+        client,
+        parsed.data.operating_company_id,
+        parsed.data.consortium_name
+      );
+      await appendCrudAudit(client, user.uuid, "safety.drug_alcohol.bulk_enrolled", {
+        resource_type: "safety.da_program_enrollments",
+        resource_id: parsed.data.operating_company_id,
+        enrolled_count: bulk.enrolledCount,
+        consortium_name: parsed.data.consortium_name,
+      });
+      return bulk;
+    });
+    return reply.code(201).send({
+      enrolled_count: result.enrolledCount,
+      enrolled_driver_uuids: result.enrolledDriverUuids,
+    });
   });
 
   app.delete("/api/safety/drug-alcohol/enrollments/:uuid", async (req, reply) => {
