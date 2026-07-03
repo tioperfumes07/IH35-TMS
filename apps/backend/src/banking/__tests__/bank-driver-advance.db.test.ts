@@ -144,11 +144,18 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
       await mk(acct.bank, "DBNK", "Asset");
 
       // The authoritative driver-advance receivable mapping the posting path resolves + debits.
+      // FLAKE FIX (task #14): companyId is the SHARED TRANSP company (ensureIntegrationPrerequisites), and
+      // migration 202606130146 SEEDS an active cash_advance mapping for it. With ON CONFLICT DO NOTHING this
+      // insert no-op'd, leaving the active mapping pointed at the SEEDED account instead of this test's
+      // acct.driverAdvance — so the posting path resolved the wrong/absent account and returned posted:false
+      // intermittently. DO UPDATE forces the (single active per opco+kind+code) mapping to THIS test's account.
+      // Only this test uses the cash_advance mapping, so repointing it for the test's duration affects nothing else.
       await db.query(
         `INSERT INTO accounting.expense_category_account_map
            (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
          VALUES ($1::uuid,'cash_advance','cash_advance',$2::uuid,'debit',true)
-         ON CONFLICT DO NOTHING`,
+         ON CONFLICT (operating_company_id, category_kind, category_code, is_active) WHERE is_active = true
+         DO UPDATE SET account_id = EXCLUDED.account_id, posting_side = EXCLUDED.posting_side`,
         [companyId, acct.driverAdvance]
       );
 
@@ -259,8 +266,11 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
       memo: "Speeding fine paid on driver's behalf",
     });
 
+    // Surface the failure reason in the assertion message — this test flakes intermittently in CI (parallel-DB
+    // isolation, tracked); without the reason in the message the log only shows "expected false to be true",
+    // which is undiagnosable. The reason now appears in the CI output on the next flake so it can be fixed.
+    if (!res.posted) throw new Error(`expected posted; got reason='${res.reason}' message='${res.message ?? ""}'`);
     expect(res.posted).toBe(true);
-    if (!res.posted) throw new Error(`expected posted; got ${res.reason} ${res.message ?? ""}`);
     advanceIds.push(res.advance_id);
 
     expect(res.driver_advance_account_id).toBe(acct.driverAdvance);
