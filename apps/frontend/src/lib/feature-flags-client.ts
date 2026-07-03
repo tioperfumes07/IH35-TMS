@@ -8,6 +8,10 @@ type FlagRecord = {
   default_enabled: boolean;
   rollout_pct: number;
   override_count?: number;
+  // Backend-computed: posting OR per-entity-only flag. When true the resolver ignores global
+  // default_enabled/rollout_pct, so the admin UI must NOT offer those controls (they would be a
+  // silent no-op) — enable is via a per-entity (tenant) override only.
+  per_entity_only?: boolean;
 };
 
 type OverrideRecord = {
