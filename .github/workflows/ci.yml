@@ -864,6 +864,9 @@ jobs:
       - name: verify:no-silent-redirects
         run: npm run verify:no-silent-redirects
 
+      - name: verify:broken-routes-restored
+        run: npm run verify:broken-routes-restored
+
       - name: verify:route-manifest-completeness
         run: npm run verify:route-manifest-completeness
 

@@ -1301,6 +1301,16 @@ export const ROUTES = React.Children.toArray(
           <Route path="leave-balances" element={<DriverLeaveBalancesPage />} />
           <Route path="settings" element={<SettingsTab />} />
           <Route path="vehicle-inspections" element={<Navigate to="/safety/idvr" replace />} />
+          {/* SYS-04 (Wave 2) — restore 5 Safety sub-routes that previously fell through to the
+              catch-all and silently redirected to Home. Registered as children of /safety so the
+              SAFETY sidebar item stays active and the Safety subnav renders. Two map to existing
+              real tabs; three have no page yet and render an in-context placeholder (NOT a Home
+              redirect). Additive only — no existing route touched. */}
+          <Route path="/safety/hours-of-service" element={<Navigate to="/safety/hos" replace />} />
+          <Route path="/safety/inspections" element={<Navigate to="/safety/dot-inspections" replace />} />
+          <Route path="/safety/fines-and-discipline" element={<ComingSoonPage feature="Fines & Discipline" />} />
+          <Route path="/safety/driver-financial-safety" element={<ComingSoonPage feature="Driver Financial Safety" />} />
+          <Route path="/safety/workforce-planning" element={<ComingSoonPage feature="Workforce Planning" />} />
         </Route>
         <Route
           path="/liabilities"
@@ -3582,6 +3592,16 @@ export const ROUTES = React.Children.toArray(
         <Route path="/inventory" element={<ProtectedRoute><InventoryPartsStockPage /></ProtectedRoute>} />
         <Route path="/inventory/assignments" element={<ProtectedRoute><InventoryAssignmentsPage /></ProtectedRoute>} />
         <Route path="/inventory/purchases" element={<ProtectedRoute><InventoryPurchasesPage /></ProtectedRoute>} />
+        {/* SYS-04 (Wave 2) — restore broken routes that silently redirected to Home via the
+            catch-all below. Each maps a legacy/alternate URL to its already-registered canonical
+            page instead of falling through to `Navigate to="/"`. Additive redirect aliases only —
+            no existing route touched. Guarded by scripts/verify-broken-routes-restored.mjs. */}
+        <Route path="/accounting/ap-aging" element={<ProtectedRoute><Navigate to="/accounting/accounts-payable" replace /></ProtectedRoute>} />
+        <Route path="/accounting/all-transactions" element={<ProtectedRoute><Navigate to="/accounting/transactions" replace /></ProtectedRoute>} />
+        <Route path="/accounting/receive-payment" element={<ProtectedRoute><Navigate to="/accounting/payments" replace /></ProtectedRoute>} />
+        <Route path="/accounting/bill-payment" element={<ProtectedRoute><Navigate to="/accounting/bill-payments" replace /></ProtectedRoute>} />
+        <Route path="/settlements" element={<ProtectedRoute><Navigate to="/driver-finance/settlements" replace /></ProtectedRoute>} />
+        <Route path="/finance-hub" element={<ProtectedRoute><Navigate to="/finance/hub" replace /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />
   </>

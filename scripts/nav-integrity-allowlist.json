@@ -421,6 +421,14 @@
     {
       "path": "/driver-hub/reporting",
       "reason": "B7 driver-inbox reporting; deep-link from Driver Hub header (reviewers only), not a subnav tab"
+    },
+    {
+      "path": "/settlements",
+      "reason": "SYS-04 Wave 2 — legacy alias redirect → /driver-finance/settlements (was silently redirecting to Home); sidebar SETTLEMENTS already points to canonical path"
+    },
+    {
+      "path": "/finance-hub",
+      "reason": "SYS-04 Wave 2 — legacy alias redirect → /finance/hub (was silently redirecting to Home); sidebar FINANCE HUB already points to canonical path"
     }
   ],
   "URL_SYNC_DEFERRED": [
