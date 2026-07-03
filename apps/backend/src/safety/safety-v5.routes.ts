@@ -202,6 +202,14 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const body = internalFineSchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // FD1 approval control: approving a fine instantly creates a recoverable driver liability (money
+    // deducted from a real driver's settlement). QBO/NetSuite-grade control — any record that creates a
+    // financial obligation must identify its approver in the audit trail. This validates the who-approved
+    // side; the existing insert already sets requires_acknowledgment = true. Behavior is unchanged unless
+    // status === "approved" with no approver.
+    if (body.data.status === "approved" && !body.data.approved_by_user_uuid) {
+      return reply.code(400).send({ error: "approver_required" });
+    }
 
     const created = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       await client.query("BEGIN");
