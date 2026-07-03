@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/Button";
+import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyNow } from "../../../lib/businessDate";
@@ -180,9 +181,7 @@ export function DamageReportCreatorModal({ operatingCompanyId, onClose, onCreate
           <div className="text-sm font-semibold text-slate-800">
             {step === "form" ? "+ Create damage report" : "Report saved — add photos"}
           </div>
-          <button type="button" className="text-xs text-slate-500 underline" onClick={onClose}>
-            Close
-          </button>
+          <ModalCloseButton title="damage report" onClose={onClose} />
         </div>
 
         {step === "form" ? (
