@@ -201,6 +201,38 @@ export function getSafetyAccidentDetail(id: string, companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/accidents/${id}?${q(companyId)}`);
 }
 
+// SC1: office creator — the safety officer / office creates an accident report from the computer and
+// links it to the real Driver / Unit / Repair Vendor / Load records (persists the four catalog ids).
+export type CreateAccidentInput = {
+  operating_company_id: string;
+  driver_id?: string | null;
+  unit_id?: string | null;
+  vendor_id?: string | null;
+  load_id?: string | null;
+  accident_at?: string | null;
+  description?: string | null;
+};
+
+export function createSafetyAccident(body: CreateAccidentInput) {
+  return apiRequest<Record<string, unknown>>("/api/v1/safety/accidents", { method: "POST", body });
+}
+
+export type PatchAccidentInput = {
+  driver_id?: string | null;
+  unit_id?: string | null;
+  vendor_id?: string | null;
+  load_id?: string | null;
+  accident_at?: string | null;
+  description?: string | null;
+};
+
+export function patchSafetyAccident(id: string, companyId: string, body: PatchAccidentInput) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/accidents/${id}?${q(companyId)}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
 export function setSafetyAccidentStatus(id: string, companyId: string, status: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/accidents/${id}/status?${q(companyId)}`, {
     method: "PATCH",

@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { appendCrudAudit } from "../audit/crud-audit.js";
+import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { listSafetyEvents } from "./safety.service.js";
@@ -26,6 +26,27 @@ const idParamsSchema = z.object({
 
 const statusBodySchema = z.object({
   status: z.enum(["open", "under-investigation", "closed-no-fault", "closed-driver-at-fault"]),
+});
+
+// SC1: office-created accident reports. The safety officer / office CAN create a report from the
+// computer (not view-only) and link it to the real Driver + Unit + Repair Vendor + Load records.
+const nullableUuid = z.string().uuid().nullish();
+const createAccidentBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  driver_id: nullableUuid,
+  unit_id: nullableUuid,
+  vendor_id: nullableUuid,
+  load_id: nullableUuid,
+  accident_at: z.string().min(1).nullish(),
+  description: z.string().nullish(),
+});
+const patchAccidentBodySchema = z.object({
+  driver_id: nullableUuid,
+  unit_id: nullableUuid,
+  vendor_id: nullableUuid,
+  load_id: nullableUuid,
+  accident_at: z.string().min(1).nullish(),
+  description: z.string().nullish(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -258,6 +279,150 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     });
     if (!row) return reply.code(404).send({ error: "accident_not_found" });
     return row;
+  });
+
+  // SC1 office creator: create an accident report from the computer (safety officer / office).
+  // Additive to the driver-PWA / WO-conversion origination paths — those remain intact. Persists the
+  // four catalog links (driver_id / unit_id / vendor_id / load_id) captured by the office wizard.
+  app.post("/api/v1/safety/accidents", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const body = createAccidentBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const companyId = body.data.operating_company_id;
+
+    const created = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const res = await client.query(
+        `
+          INSERT INTO safety.accident_reports (
+            operating_company_id,
+            driver_id,
+            unit_id,
+            vendor_id,
+            load_id,
+            accident_at,
+            description
+          )
+          VALUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            COALESCE($6::timestamptz, now()),
+            $7
+          )
+          RETURNING *
+        `,
+        [
+          companyId,
+          body.data.driver_id ?? null,
+          body.data.unit_id ?? null,
+          body.data.vendor_id ?? null,
+          body.data.load_id ?? null,
+          body.data.accident_at ?? null,
+          body.data.description ?? null,
+        ]
+      );
+      const inserted = res.rows[0];
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.accident.created",
+        {
+          resource_type: "safety.accident_reports",
+          resource_id: inserted?.id,
+          driver_id: body.data.driver_id ?? null,
+          unit_id: body.data.unit_id ?? null,
+          vendor_id: body.data.vendor_id ?? null,
+          load_id: body.data.load_id ?? null,
+          origin: "office_creator",
+          operating_company_id: companyId,
+        },
+        "info",
+        "SC1-ACCIDENT-OFFICE-CREATOR"
+      );
+      return inserted ?? null;
+    });
+    if (!created) return reply.code(500).send({ error: "accident_create_failed" });
+    return reply.code(201).send(created);
+  });
+
+  // SC1: patch an existing accident report's linked entities / core fields (company-scoped).
+  app.patch("/api/v1/safety/accidents/:id", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = patchAccidentBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const companyId = query.data.operating_company_id;
+
+    // Lockstep dynamic SET over a fixed column whitelist — only the provided (non-undefined) fields
+    // are updated, each bound as a parameter (no interpolation of values).
+    const patchable: Array<{ key: keyof typeof body.data; column: string; cast?: string }> = [
+      { key: "driver_id", column: "driver_id" },
+      { key: "unit_id", column: "unit_id" },
+      { key: "vendor_id", column: "vendor_id" },
+      { key: "load_id", column: "load_id" },
+      { key: "accident_at", column: "accident_at", cast: "::timestamptz" },
+      { key: "description", column: "description" },
+    ];
+    const setClauses: string[] = [];
+    const values: unknown[] = [];
+    for (const field of patchable) {
+      const value = body.data[field.key];
+      if (value === undefined) continue;
+      values.push(value === null ? null : value);
+      setClauses.push(`${field.column} = $${values.length}${field.cast ?? ""}`);
+    }
+    if (setClauses.length === 0) return reply.code(400).send({ error: "no_fields_to_update" });
+
+    const updated = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const beforeRes = await client
+        .query(`SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+          params.data.id,
+          companyId,
+        ])
+        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+      const before = beforeRes.rows[0];
+      if (!before) return null;
+
+      const idParamIndex = values.length + 1;
+      const companyParamIndex = values.length + 2;
+      const res = await client.query(
+        `
+          UPDATE safety.accident_reports
+          SET ${setClauses.join(", ")}, updated_at = now()
+          WHERE id = $${idParamIndex}
+            AND operating_company_id = $${companyParamIndex}
+          RETURNING *
+        `,
+        [...values, params.data.id, companyId]
+      );
+      const after = res.rows[0];
+      if (!after) return null;
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.accident.updated",
+        {
+          resource_type: "safety.accident_reports",
+          resource_id: params.data.id,
+          changes: buildPatchChanges(body.data as Record<string, unknown>, before, after),
+          operating_company_id: companyId,
+        },
+        "info",
+        "SC1-ACCIDENT-OFFICE-CREATOR"
+      );
+      return after;
+    });
+    if (!updated) return reply.code(404).send({ error: "accident_not_found" });
+    return updated;
   });
 
   app.patch("/api/v1/safety/accidents/:id/status", async (req, reply) => {
