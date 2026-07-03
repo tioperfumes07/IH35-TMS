@@ -76,13 +76,16 @@ export function MoneyInput({
 
   return (
     <div className={`relative ${className}`}>
+      {/* SYS-MONEY root: the $ sits immediately before the value (pl-4 clears the glyph, text-left keeps
+          the number hugging it) so every money INPUT renders "$0.00" — no gap — matching the QBO/McLeod
+          display token. Previously text-right + pl-5 floated the value to the far edge, reading "$   0.00". */}
       <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">$</span>
       <input
         id={id}
         aria-label={ariaLabel}
         inputMode="decimal"
         disabled={disabled}
-        className="h-7 w-full rounded-sm border border-gray-300 pl-5 pr-2 text-right text-xs"
+        className="h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"
         placeholder={placeholder ?? "0.00"}
         value={text}
         onFocus={() => {

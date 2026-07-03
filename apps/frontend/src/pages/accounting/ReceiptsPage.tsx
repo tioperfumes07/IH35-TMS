@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -7,7 +8,7 @@ import { getReceipts, getReceiptDetail, type ReceiptItem } from "../../api/recei
 
 const fmtCents = (c: number | null) =>
   c == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString("en-US") : "—");
+const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const fmtBytes = (n: number) =>
   n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`;
 
