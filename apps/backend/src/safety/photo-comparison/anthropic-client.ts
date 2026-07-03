@@ -1,4 +1,13 @@
 import { CircuitBreakerOpenError, withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
+import {
+  AnthropicRateLimitError,
+  AnthropicTimeoutError,
+  callAnthropicMessages,
+  extractText,
+} from "../../ai/anthropic-messages.js";
+
+// Re-export the shared error types so existing importers of this module keep compiling unchanged.
+export { AnthropicRateLimitError, AnthropicTimeoutError };
 
 export type DamageFinding = {
   location: string;
@@ -48,20 +57,6 @@ function parseCompareResponse(text: string): CompareImagesResult {
   };
 }
 
-export class AnthropicRateLimitError extends Error {
-  constructor(message = "anthropic_rate_limit") {
-    super(message);
-    this.name = "AnthropicRateLimitError";
-  }
-}
-
-export class AnthropicTimeoutError extends Error {
-  constructor(message = "anthropic_timeout") {
-    super(message);
-    this.name = "AnthropicTimeoutError";
-  }
-}
-
 export function createAnthropicClient(options?: {
   apiKey?: string;
   fetchImpl?: typeof fetch;
@@ -96,65 +91,26 @@ async function compareImagesInner(
   angleLabel: string,
   options?: { apiKey?: string; fetchImpl?: typeof fetch; timeoutMs?: number }
 ): Promise<CompareImagesResult> {
-  const fetchImpl = options?.fetchImpl ?? fetch;
-  const timeoutMs = options?.timeoutMs ?? 30_000;
-  const apiKey = options?.apiKey ?? process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("anthropic_not_configured");
-  }
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetchImpl("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          signal: controller.signal,
-          headers: {
-            "content-type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
-          },
-          body: JSON.stringify({
-            model: VISION_MODEL,
-            max_tokens: 1024,
-            messages: [
-              {
-                role: "user",
-                content: [
-                  { type: "text", text: buildPrompt(angleLabel) },
-                  { type: "image", source: { type: "url", url: preImageUrl } },
-                  { type: "image", source: { type: "url", url: postImageUrl } },
-                ],
-              },
-            ],
-          }),
-        });
-
-        if (response.status === 429) {
-          throw new AnthropicRateLimitError();
-        }
-        if (!response.ok) {
-          const detail = await response.text();
-          throw new Error(`anthropic_http_${response.status}:${detail.slice(0, 200)}`);
-        }
-
-        const payload = (await response.json()) as {
-          content?: Array<{ type: string; text?: string }>;
-        };
-        const textBlock = payload.content?.find((c) => c.type === "text");
-        if (!textBlock?.text) {
-          throw new Error("anthropic_parse_error: empty_content");
-        }
-        return parseCompareResponse(textBlock.text);
-  } catch (err) {
-    if (err instanceof Error && err.name === "AbortError") {
-      throw new AnthropicTimeoutError();
-    }
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
+  // Single shared key/HTTP path — no second Anthropic client. The compare-specific error mapping
+  // (rate-limit / timeout / not-configured) is owned by callAnthropicMessages and re-exported above.
+  const payload = await callAnthropicMessages(
+    {
+      model: VISION_MODEL,
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: buildPrompt(angleLabel) },
+            { type: "image", source: { type: "url", url: preImageUrl } },
+            { type: "image", source: { type: "url", url: postImageUrl } },
+          ],
+        },
+      ],
+    },
+    { apiKey: options?.apiKey, fetchImpl: options?.fetchImpl, timeoutMs: options?.timeoutMs },
+  );
+  return parseCompareResponse(extractText(payload));
 }
 
 export { buildPrompt, parseCompareResponse, VISION_MODEL };
