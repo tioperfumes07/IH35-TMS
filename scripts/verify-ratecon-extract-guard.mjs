@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+// verify-ratecon-extract-guard.mjs — RATECON-1 safety guard. Enforces three invariants:
+//  1. Kill-switch: the extraction endpoint consults RATECON_EXTRACT_ENABLED and 409s BEFORE any AI call
+//     (no Anthropic spend, no behavior, while the flag is OFF).
+//  2. Single key path: ANTHROPIC_API_KEY appears ONLY in the shared ai/anthropic-messages client (+ its test).
+//  3. Untrusted-document safety: the rate-con extraction never enables tools on the model call (the PDF is
+//     third-party content treated as data; tools would let an injected instruction act).
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const read = (p) => { try { return fs.readFileSync(path.join(ROOT, p), "utf8"); } catch { return ""; } };
+const errs = [];
+
+// (1) flag-before-AI in the endpoint
+const routes = read("apps/backend/src/dispatch/ratecon-extract.routes.ts");
+if (!routes) errs.push("missing ratecon-extract.routes.ts");
+else {
+  if (!/RATECON_EXTRACT_ENABLED|RATECON_EXTRACT_FLAG_KEY/.test(routes)) errs.push("endpoint must consult the RATECON_EXTRACT_ENABLED flag");
+  if (!/code\(409\)/.test(routes)) errs.push("endpoint must 409 when the flag is OFF");
+  const flagIdx = routes.search(/isEnabled\s*\(/);
+  const callIdx = routes.search(/extractRateConPdf\s*\(/);
+  const readIdx = routes.search(/getObjectBytes\s*\(/);
+  if (flagIdx === -1 || callIdx === -1) errs.push("endpoint must both flag-gate (isEnabled) and call extractRateConPdf");
+  else if (flagIdx > callIdx || (readIdx !== -1 && flagIdx > readIdx)) errs.push("the flag check must precede reading the PDF and calling the extractor");
+}
+
+// (2) single ANTHROPIC_API_KEY path
+const SRC = path.join(ROOT, "apps/backend/src");
+const offenders = [];
+const walk = (dir) => {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fp = path.join(dir, e.name);
+    if (e.isDirectory()) walk(fp);
+    else if (/\.(ts|mjs|js)$/.test(e.name)) {
+      const rel = path.relative(ROOT, fp).replace(/\\/g, "/");
+      if (rel === "apps/backend/src/ai/anthropic-messages.ts") continue;
+      // Test files legitimately set/unset ANTHROPIC_API_KEY to exercise the not-configured path — not a key handler.
+      if (/(\.test\.|\.spec\.)|(^|\/)__tests__\//.test(rel)) continue;
+      if (fs.readFileSync(fp, "utf8").includes("ANTHROPIC_API_KEY")) offenders.push(rel);
+    }
+  }
+};
+if (fs.existsSync(SRC)) walk(SRC);
+if (offenders.length) errs.push(`ANTHROPIC_API_KEY referenced outside the shared client: ${offenders.join(", ")}`);
+
+// (3) no tools on the untrusted-document call
+const svc = read("apps/backend/src/dispatch/ratecon-extract.service.ts");
+if (svc && /\btools\s*:/.test(svc)) errs.push("ratecon-extract.service must NOT enable tools on the model call (untrusted document)");
+
+if (errs.length) {
+  console.error("verify:ratecon-extract-guard — FAILED");
+  for (const e of errs) console.error(`  ✗ ${e}`);
+  process.exit(1);
+}
+console.log("[ratecon-extract-guard] OK — flag-before-AI, single key path, no tools on untrusted document.");
