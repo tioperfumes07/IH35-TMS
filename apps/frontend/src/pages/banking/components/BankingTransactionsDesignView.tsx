@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, Download, MessageSquare, Paperclip, Printer, Settings } from "lucide-react";
 import {
-  categorizeTransaction,
+  categorizeBankTransaction,
   getBankingSuggestions,
   getCoaAccounts,
   getPlaidCompanyTransactions,
@@ -444,27 +444,26 @@ export function BankingTransactionsDesignView({
 
   async function postTransaction(tx: PlaidBankTransaction) {
     const draft = getDraft(tx);
+    // Contract fix (C1): the backend /categorize route requires `category_kind` + reads
+    // `gl_account_id`. It never accepted the old `{action_type, payload:{account_id}}` shape,
+    // so every Post 400'd and none of the pending-categorization transactions could be cleared.
+    // Categorizing = choosing the COA account the transaction belongs to; that account IS the
+    // category. Posting to the GL stays behind the OFF-by-default flag on the backend.
+    if (!draft.accountId) {
+      pushToast("Choose an account to categorize this transaction.", "error");
+      return;
+    }
+    const account = (coaQuery.data?.accounts ?? []).find((a) => a.id === draft.accountId);
+    const categoryKind =
+      account?.account_name ||
+      (account?.account_number ? String(account.account_number) : "") ||
+      "Uncategorized";
     setPostingTxId(tx.id);
     try {
-      await categorizeTransaction(tx.id, companyId, {
-        action_type: "create_expense",
-        payload: {
-          memo: draft.memo || undefined,
-          account_id: draft.accountId || undefined,
-          class_name: draft.className || undefined,
-          location: draft.location || undefined,
-          product_service: draft.productService || undefined,
-          customer_project: draft.customerProject || undefined,
-          billable: draft.billable,
-          mode: draft.mode,
-          categorize_by: categorizeBy,
-          from_to: draft.fromTo || undefined,
-          transaction_type: draft.transactionType || undefined,
-          payee: draft.payee || undefined,
-          check_no: draft.checkNo || undefined,
-          tags: draft.tags || undefined,
-          add_new_vendors: viewSettings.addNewVendors,
-        },
+      await categorizeBankTransaction(tx.id, companyId, {
+        category_kind: categoryKind,
+        gl_account_id: draft.accountId,
+        memo: draft.memo || undefined,
       });
       pushToast("Transaction posted", "success");
       onDataChanged();
@@ -1188,10 +1187,21 @@ export function BankingTransactionsDesignView({
                                   type="button"
                                   className="block w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
                                   onClick={() => {
-                                    void categorizeTransaction(tx.id, companyId, {
-                                      action_type: "match",
-                                      linked_entity_id: String(suggestion.id ?? ""),
-                                      payload: { source: "suggestion" },
+                                    // Contract fix (C1): apply the suggested category through the
+                                    // real /categorize contract (category_kind + gl_account_id) —
+                                    // the old {action_type:"match"} body 400'd. The suggestion
+                                    // carries its prior category + account; reuse them.
+                                    const suggestedKind = String(suggestion.category ?? suggestion.kind ?? "").trim();
+                                    const suggestedAccountId = String(
+                                      suggestion.gl_account_id ?? suggestion.coa_account_id ?? suggestion.account_id ?? ""
+                                    );
+                                    if (!suggestedKind && !suggestedAccountId) {
+                                      pushToast("This suggestion has no category to apply.", "error");
+                                      return;
+                                    }
+                                    void categorizeBankTransaction(tx.id, companyId, {
+                                      category_kind: suggestedKind || "Matched",
+                                      gl_account_id: suggestedAccountId || undefined,
                                     })
                                       .then(() => {
                                         pushToast("Transaction matched", "success");
