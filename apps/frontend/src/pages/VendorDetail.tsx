@@ -14,7 +14,6 @@ import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { Button } from "../components/Button";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
-import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
@@ -49,6 +48,8 @@ function billOpenBalanceCents(b: { balance_cents?: number; amount_cents: number;
 type VendorProfileForm = VendorProfileMeta & {
   name: string;
   vendorType: string;
+  taxId: string;
+  vendorCode: string;
   notes: string;
 };
 
@@ -78,6 +79,8 @@ export function VendorDetailPage() {
   const [profileForm, setProfileForm] = useState<VendorProfileForm>({
     name: "",
     vendorType: "",
+    taxId: "",
+    vendorCode: "",
     notes: "",
     ...emptyVendorProfileMeta(),
   });
@@ -255,6 +258,8 @@ export function VendorDetailPage() {
         phone: profileForm.telephone.trim() || null,
         address: profileForm.address.trim() || null,
         email: profileForm.generalEmail.trim() || null,
+        tax_id: profileForm.taxId.trim() || null,
+        vendor_code: profileForm.vendorCode.trim() || null,
         operating_company_id: companyId || undefined,
         notes: serializeVendorNotes(meta, profileForm.notes),
       });
@@ -303,6 +308,8 @@ export function VendorDetailPage() {
     setProfileForm({
       name: v.name ?? "",
       vendorType: v.vendor_type ?? "Other",
+      taxId: v.tax_id ?? "",
+      vendorCode: v.vendor_code ?? "",
       notes: parsed.publicNotes,
       ...parsed.meta,
       telephone: parsed.meta.telephone || v.phone || "",
@@ -415,18 +422,6 @@ export function VendorDetailPage() {
 
       {activeTab === "Profile" ? (
         <DataPanel title="Vendor Profile">
-          <FlatFieldGrid
-            columns={3}
-            className="mb-3"
-            fields={[
-              { label: "Telephone", value: profileForm.telephone || vendor.phone || "—" },
-              { label: "Email", value: profileForm.generalEmail || vendor.email || "—" },
-              { label: "Address", value: profileForm.address || vendor.address || "—" },
-              { label: "Primary contact", value: profileForm.primaryContactName || "—" },
-              { label: "Accounting contact", value: profileForm.accountingContact || "—" },
-              { label: "Quality rating", value: profileForm.qualityRating || "—" },
-            ]}
-          />
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor Name</span>
             <input
@@ -450,6 +445,24 @@ export function VendorDetailPage() {
                 </option>
               ))}
             </SelectCombobox>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Vendor Code</span>
+            <input
+              value={profileForm.vendorCode}
+              onChange={(event) => setProfileForm((current) => ({ ...current, vendorCode: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Tax ID</span>
+            <input
+              value={profileForm.taxId}
+              onChange={(event) => setProfileForm((current) => ({ ...current, taxId: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Quality rating</span>

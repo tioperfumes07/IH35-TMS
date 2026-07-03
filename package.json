@@ -516,6 +516,7 @@
     "verify:maint-pm": "node scripts/verify-maint-pm.mjs",
     "verify:insurance-schema": "node scripts/verify-insurance-schema.mjs",
     "verify:insurance-policy-create-button": "node scripts/verify-insurance-policy-create-button.mjs",
+    "verify:vendor-create-profile": "node scripts/verify-vendor-create-profile.mjs",
     "verify:insurance-creator": "node scripts/verify-insurance-creator.mjs",
     "verify:dispatch-insurance-coverage-gate": "node scripts/verify-dispatch-insurance-coverage-gate.mjs",
     "verify:dispatch-coming-soon-triage": "node scripts/verify-dispatch-coming-soon-triage.mjs",

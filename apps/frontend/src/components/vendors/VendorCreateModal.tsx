@@ -1,0 +1,289 @@
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { ApiError } from "../../api/client";
+import { createVendor, type CreateVendorInput } from "../../api/mdata";
+import { Modal } from "../Modal";
+import { ActionButton } from "../shared/ActionButton";
+import { SelectCombobox } from "../shared/SelectCombobox";
+import { useToast } from "../Toast";
+import { emptyVendorProfileMeta, serializeVendorNotes, type VendorProfileMeta } from "../../lib/vendorProfileMeta";
+
+// V4/V5 — full QuickBooks-style vendor creator (QBO parity spec §1B: Name and contact / Address / Notes),
+// extended with the trucking classification fields (vendor type / tax ID / vendor code) the profile edits.
+// The lean structured-contact + address fields serialize into the same `notes` meta blob the Vendor
+// profile reads, so anything captured here round-trips to the profile (VendorDetail) with no migration.
+// NOTE (V1 follow-up): vendor_type is a fixed enum today — a catalog-backed vendor-type list with an
+// inline "+ Add new type" mini-create needs catalogs.vendor_types (gated migration), tracked separately.
+
+const VENDOR_TYPES: CreateVendorInput["vendor_type"][] = [
+  "Fuel",
+  "Repair",
+  "Tires",
+  "Towing",
+  "Insurance",
+  "Permit",
+  "Toll",
+  "Other",
+];
+
+type SectionProps = { title: string; children: React.ReactNode };
+
+function Section({ title, children }: SectionProps) {
+  // Flat section: a single label + a field grid. No nested bordered card (no box-within-box).
+  return (
+    <section className="space-y-2">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+type FieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  dataField?: string;
+  errorId?: string;
+  error?: string;
+};
+
+function Field({ label, value, onChange, placeholder, required, dataField, errorId, error }: FieldProps) {
+  return (
+    <label className="block text-sm">
+      <span className="mb-1 block text-xs font-semibold text-gray-600">
+        {label}
+        {required ? " *" : ""}
+      </span>
+      <input
+        data-field={dataField}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-sm border border-gray-300 px-2 py-1.5"
+      />
+      {error ? (
+        <span id={errorId} className="mt-1 block text-xs text-red-700">
+          {error}
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  operatingCompanyId: string;
+};
+
+export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { pushToast } = useToast();
+
+  // Name and contact
+  const [name, setName] = useState("");
+  const [vendorType, setVendorType] = useState<CreateVendorInput["vendor_type"]>("Other");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactTitle, setContactTitle] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  // Address (structured → single address string, matching the profile's one-line address column)
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zip, setZip] = useState("");
+  // Classification
+  const [taxId, setTaxId] = useState("");
+  const [vendorCode, setVendorCode] = useState("");
+  // Notes
+  const [notes, setNotes] = useState("");
+
+  const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; vendor_code?: string }>({});
+
+  function reset() {
+    setName("");
+    setVendorType("Other");
+    setEmail("");
+    setPhone("");
+    setContactName("");
+    setContactTitle("");
+    setContactPhone("");
+    setContactEmail("");
+    setStreet("");
+    setCity("");
+    setState("");
+    setZip("");
+    setTaxId("");
+    setVendorCode("");
+    setNotes("");
+    setFormError("");
+    setFieldErrors({});
+  }
+
+  function composeAddress() {
+    const cityState = [city.trim(), state.trim()].filter(Boolean).join(", ");
+    return [street.trim(), cityState, zip.trim()].filter(Boolean).join(", ");
+  }
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const displayName = name.trim();
+      if (!displayName) {
+        const error = new Error("Vendor name is required.");
+        (error as Error & { code?: string }).code = "name_required";
+        throw error;
+      }
+      const address = composeAddress();
+      const meta: VendorProfileMeta = {
+        ...emptyVendorProfileMeta(),
+        telephone: phone.trim(),
+        address,
+        generalEmail: email.trim(),
+        primaryContactName: contactName.trim(),
+        primaryContactTitle: contactTitle.trim(),
+        primaryContactPhone: contactPhone.trim(),
+        primaryContactEmail: contactEmail.trim(),
+      };
+      return createVendor({
+        name: displayName,
+        vendor_type: vendorType,
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        address: address || undefined,
+        tax_id: taxId.trim() || undefined,
+        vendor_code: vendorCode.trim() || undefined,
+        operating_company_id: operatingCompanyId,
+        notes: serializeVendorNotes(meta, notes.trim()),
+      });
+    },
+    onSuccess: async (vendor) => {
+      await queryClient.invalidateQueries({ queryKey: ["vendors"] });
+      pushToast("Vendor created.", "success");
+      reset();
+      onClose();
+      if (vendor?.id) navigate(`/vendors/${vendor.id}`);
+    },
+    onError: (error) => {
+      setFormError("");
+      setFieldErrors({});
+      if ((error as Error & { code?: string }).code === "name_required") {
+        setFieldErrors({ name: "Vendor name is required" });
+        return;
+      }
+      if (error instanceof ApiError && error.status === 409) {
+        setFormError("Could not save vendor.");
+        setFieldErrors({ vendor_code: "Already in use" });
+        pushToast("Could not save vendor: duplicate vendor record.", "error");
+        return;
+      }
+      setFormError("Could not save vendor.");
+      pushToast(String((error as Error)?.message || "Could not save vendor."), "error");
+    },
+  });
+
+  return (
+    <Modal open={open} onClose={onClose} title="Create Vendor" wide>
+      <form
+        className="space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setFormError("");
+          setFieldErrors({});
+          createMutation.mutate();
+        }}
+      >
+        {formError ? (
+          <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+            {formError}
+          </div>
+        ) : null}
+
+        <Section title="Name and contact">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <Field
+              label="Vendor display name"
+              value={name}
+              onChange={setName}
+              required
+              dataField="name"
+              errorId="vendor_name-error"
+              error={fieldErrors.name}
+            />
+            <label className="block text-sm">
+              <span className="mb-1 block text-xs font-semibold text-gray-600">Vendor type</span>
+              <SelectCombobox
+                value={vendorType}
+                onChange={(event) => setVendorType(event.target.value as CreateVendorInput["vendor_type"])}
+                className="h-9 w-full text-sm"
+              >
+                {VENDOR_TYPES.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </SelectCombobox>
+            </label>
+            <Field label="Email" value={email} onChange={setEmail} />
+            <Field label="Phone" value={phone} onChange={setPhone} />
+            <Field label="Contact name" value={contactName} onChange={setContactName} />
+            <Field label="Contact title" value={contactTitle} onChange={setContactTitle} />
+            <Field label="Contact phone" value={contactPhone} onChange={setContactPhone} />
+            <Field label="Contact email" value={contactEmail} onChange={setContactEmail} />
+          </div>
+        </Section>
+
+        <Section title="Address">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <Field label="Street" value={street} onChange={setStreet} />
+            </div>
+            <Field label="City" value={city} onChange={setCity} />
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="State" value={state} onChange={setState} />
+              <Field label="ZIP" value={zip} onChange={setZip} />
+            </div>
+          </div>
+        </Section>
+
+        <Section title="Classification">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <Field label="Tax ID" value={taxId} onChange={setTaxId} />
+            <Field
+              label="Vendor code"
+              value={vendorCode}
+              onChange={setVendorCode}
+              dataField="vendor_code"
+              errorId="vendor_code-error"
+              error={fieldErrors.vendor_code}
+            />
+          </div>
+        </Section>
+
+        <Section title="Notes">
+          <textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            rows={3}
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+          />
+        </Section>
+
+        <div className="flex justify-end gap-2">
+          <ActionButton type="button" onClick={onClose}>
+            Cancel
+          </ActionButton>
+          <ActionButton type="submit" disabled={createMutation.isPending || !operatingCompanyId}>
+            {createMutation.isPending ? "Saving..." : "Save"}
+          </ActionButton>
+        </div>
+      </form>
+    </Modal>
+  );
+}
