@@ -42,6 +42,8 @@ CREATE POLICY <table>_entity_write ON <schema>.<table> FOR ALL
 
 -- ── Grants to the runtime role. NO DELETE (soft-delete via is_active/voided_at). ────────────────────
 -- For an APPEND-ONLY audit/evidence table, use:  GRANT SELECT, INSERT ON <schema>.<table> TO ih35_app;
+--   …and if <schema> has ALTER DEFAULT PRIVILEGES granting all (e.g. `dispatch`), a narrow grant is NOT
+--   enough — also: REVOKE UPDATE, DELETE ON <schema>.<table> FROM ih35_app;  -- verify via role_table_grants.
 GRANT SELECT, INSERT, UPDATE ON <schema>.<table> TO ih35_app;
 
 -- ── Optional: seed under a lucia bypass so FORCE RLS permits the migration-role INSERT ──────────────

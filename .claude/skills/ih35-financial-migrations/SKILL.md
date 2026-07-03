@@ -50,6 +50,13 @@ Every statement must be safe to run twice:
 - Audit/evidence tables (anything recording "what happened") are **append-only**: grant `SELECT, INSERT`
   only (no UPDATE, no DELETE). Never `UPDATE`/`DELETE` `audit.row_changes` / `audit_events` /
   `events.event_log`.
+- **A narrow `GRANT` is NOT always enough — `ALTER DEFAULT PRIVILEGES` can silently widen it.** Some schemas
+  (e.g. `dispatch`) carry default privileges (from 0065) that auto-grant `INSERT, SELECT, UPDATE, DELETE` to
+  `ih35_app` on **every new table**, so `GRANT SELECT, INSERT` leaves UPDATE/DELETE in place. To truly enforce
+  append-only on such a schema you must **explicitly `REVOKE UPDATE, DELETE ... FROM ih35_app`** after the
+  grant. (Schemas without a default grant — e.g. `ops` — stay append-only from the narrow grant alone.)
+  **Always verify with `information_schema.role_table_grants`, not by reading the migration** — the effective
+  grant is what matters. A `REVOKE` trips the hold-merge-gate (→ PROTECTED), which is correct for a HOLD migration.
 - For a hash-chained audit table, use a **genesis-anchor** (a sequence + trigger assigning `chain_seq`
   on INSERT), **never a backfill UPDATE** — a backfill would violate the write-once property the chain exists
   to prove. (See B19-V1/V2 for the reference implementation.)
