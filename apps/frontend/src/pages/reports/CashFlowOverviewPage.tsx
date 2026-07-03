@@ -217,9 +217,7 @@ export function CashFlowOverviewPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
                   <Tooltip
-                    formatter={(value, name) => [money(Number(value)), name]}
-                    labelFormatter={(l) => String(l)}
-                    content={({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey?: unknown; name?: unknown; value?: unknown; payload?: unknown }>; label?: string | number }) =>
+                    content={({ active, payload, label }) =>
                       active && payload?.length ? (
                         <div className="rounded border border-gray-200 bg-white p-2 text-xs shadow">
                           <div className="font-semibold">{label}</div>
