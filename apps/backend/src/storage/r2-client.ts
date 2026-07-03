@@ -142,6 +142,18 @@ export async function getObjectMetadata(r2Key: string): Promise<ObjectMetadata |
   }
 }
 
+/** Read an object's full bytes into a Buffer (used to feed an uploaded PDF to the AI extractor so the
+ *  backend can enforce page/size caps and keep extraction deterministic — never a presigned URL). */
+export async function getObjectBytes(r2Key: string): Promise<Buffer> {
+  const { client, bucket } = ensureConfigured();
+  const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: r2Key }));
+  const body = result.Body as AsyncIterable<Uint8Array> | undefined;
+  if (!body) throw new Error("r2_object_empty");
+  const chunks: Buffer[] = [];
+  for await (const chunk of body) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
+
 export async function putObjectBytes(r2Key: string, body: Buffer, contentType: string) {
   const { client, bucket } = ensureConfigured();
   await client.send(
