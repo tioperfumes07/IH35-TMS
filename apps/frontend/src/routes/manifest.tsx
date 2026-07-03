@@ -8,6 +8,7 @@ import { Shell } from "../components/Shell";
 import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
 import { ListsHubPage } from "../pages/lists/ListsHubPage";
+import { ProgramBoardPage } from "../pages/program/ProgramBoardPage";
 import { DomainCatalogHubPage } from "../pages/lists/DomainCatalogHubPage";
 import { DetailTypesListPage } from "../pages/lists/accounting/DetailTypesListPage";
 import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
@@ -608,6 +609,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <HomeRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/program"
+          element={
+            <ProtectedRoute>
+              <ProgramBoardPage />
             </ProtectedRoute>
           }
         />

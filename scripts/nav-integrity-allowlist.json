@@ -1,6 +1,10 @@
 {
   "ADMIN_ONLY": [
     {
+      "path": "/program",
+      "reason": "Program Board internal block/task tracker; Topbar entry point (non-sidebar by design — sidebar locked at 28), not a module subnav"
+    },
+    {
       "path": "/admin/data-import",
       "reason": "Owner data migration tool; not in module subnav"
     },
