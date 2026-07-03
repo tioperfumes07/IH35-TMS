@@ -33,6 +33,14 @@ const createBodySchema = z.object({
   load_id: z.string().uuid().nullable().optional(),
   interchange_party: z.string().max(200).nullable().optional(),
   damage_amount_cents: z.coerce.number().int().min(0).default(0),
+  // SC4 — Carmack/49 CFR 1005.2 cargo-claim fields (cargo_claim rows only; enforced below).
+  claim_reason_code: z.string().trim().max(80).nullable().optional(),
+  claimant_customer_id: z.string().uuid().nullable().optional(),
+  claim_filed_at: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -121,7 +129,54 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     const body = createBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
+    // SC4 — cargo-claim fields belong ONLY to cargo_claim rows. Reject non-null claim_* on
+    // damage_report / trailer_interchange so those clusters stay clean. Trust the incident_type,
+    // never the client.
+    const claimReasonCode = body.data.claim_reason_code ?? null;
+    const claimantCustomerId = body.data.claimant_customer_id ?? null;
+    const claimFiledAt = body.data.claim_filed_at ?? null;
+    if (
+      body.data.incident_type !== "cargo_claim" &&
+      (claimReasonCode !== null || claimantCustomerId !== null || claimFiledAt !== null)
+    ) {
+      return reply.code(400).send({
+        error: "validation_error",
+        details: "claim_reason_code / claimant_customer_id / claim_filed_at are only valid for incident_type=cargo_claim",
+      });
+    }
+
     const created = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      // Entity-independence hard rule: the claimant must belong to the SAME operating company as the
+      // incident row. Never rely on the FK for tenant isolation — pin the entity predicate
+      // (operating_company_id) IN the query, so a cross-entity customer is simply not found → mismatch.
+      if (claimantCustomerId !== null) {
+        const custRes = await client.query<{ id: string }>(
+          `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [claimantCustomerId, body.data.operating_company_id]
+        );
+        if (custRes.rows.length === 0) {
+          return { error: "claimant_company_mismatch" as const };
+        }
+      }
+      // Validate reason against the SAME source the catalog route reads (catalogs.cargo_claim_reasons),
+      // active codes only, scoped to this company.
+      if (claimReasonCode !== null) {
+        const reasonRes = await client.query(
+          `
+            SELECT 1
+            FROM catalogs.cargo_claim_reasons
+            WHERE operating_company_id = $1
+              AND reason_code = $2
+              AND is_active = true
+            LIMIT 1
+          `,
+          [body.data.operating_company_id, claimReasonCode]
+        );
+        if (reasonRes.rows.length === 0) {
+          return { error: "invalid_claim_reason" as const };
+        }
+      }
+
       const res = await client.query(
         `
           INSERT INTO safety.incidents (
@@ -135,12 +190,15 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
             trailer_id,
             load_id,
             interchange_party,
-            damage_amount_cents
+            damage_amount_cents,
+            claim_reason_code,
+            claimant_customer_id,
+            claim_filed_at
           )
           VALUES (
             $1, $2,
             COALESCE($3::timestamptz, now()),
-            $4, $5, $6, $7, $8, $9, $10, $11
+            $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::date
           )
           RETURNING *
         `,
@@ -156,10 +214,13 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           body.data.load_id ?? null,
           body.data.interchange_party ?? null,
           body.data.damage_amount_cents,
+          claimReasonCode,
+          claimantCustomerId,
+          claimFiledAt,
         ]
       );
       const row = res.rows[0];
-      if (!row) return null;
+      if (!row) return { error: "create_failed" as const };
       await appendCrudAudit(
         client,
         user.uuid,
@@ -173,11 +234,14 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         "info",
         "A23-7-INCIDENTS-CLUSTER"
       );
-      return row;
+      return { row };
     });
 
-    if (!created) return reply.code(500).send({ error: "create_failed" });
-    return reply.code(201).send({ incident: created });
+    if ("error" in created) {
+      if (created.error === "create_failed") return reply.code(500).send({ error: "create_failed" });
+      return reply.code(400).send({ error: created.error });
+    }
+    return reply.code(201).send({ incident: created.row });
   });
 
   app.post("/api/v1/safety/incidents/:id/photos", async (req, reply) => {

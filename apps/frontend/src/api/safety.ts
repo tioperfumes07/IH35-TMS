@@ -860,12 +860,10 @@ export function createSafetyIncident(body: {
   load_id?: string | null;
   interchange_party?: string | null;
   damage_amount_cents?: number;
-  // SC4 cargo-claim fields — FEATURE-DETECTED by the surface: sent optimistically and only
-  // persisted once the SC4 backend (migration + validation) is live. When it is not, the
-  // backend Zod schema strips them (or 400s validation_error) and the caller degrades gracefully.
-  claim_reason_code?: string;
-  claimant_customer_id?: string;
-  claim_filed_at?: string;
+  // SC4 — Carmack/49 CFR 1005.2 cargo-claim fields (cargo_claim rows only).
+  claim_reason_code?: string | null;
+  claimant_customer_id?: string | null;
+  claim_filed_at?: string | null;
 }) {
   return apiRequest<{ incident: Record<string, unknown> }>("/api/v1/safety/incidents", {
     method: "POST",

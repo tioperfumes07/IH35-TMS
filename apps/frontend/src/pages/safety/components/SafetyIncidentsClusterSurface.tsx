@@ -8,16 +8,16 @@ import {
   uploadSafetyIncidentPhoto,
   type SafetyIncidentType,
 } from "../../../api/safety";
-import { listDrivers, listUnits, listCustomers } from "../../../api/mdata";
+import { listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
-import { listCargoClaimReasons } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { companyToday } from "../../../lib/businessDate";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
-// three configs — see BLOCK_SC-CLUSTER-TYPED-CREATORS).
+// two typed creators — DAMAGE + TRAILER-INTERCHANGE). Cargo claims have their own
+// dedicated Carmack intake surface (SC4 CargoClaimIntakeSurface) and do NOT use this surface.
 export type IncidentFieldKey =
   | "incident_date"
   | "driver_id"
@@ -27,12 +27,9 @@ export type IncidentFieldKey =
   | "location"
   | "description"
   | "damage_amount_cents"
-  | "interchange_party"
-  | "claimant_customer_id"
-  | "claim_reason_code"
-  | "claim_filed_at";
+  | "interchange_party";
 
-// Fields shown for ALL three incident types.
+// Fields shown for every incident type routed through this shared surface.
 const COMMON_FIELDS: IncidentFieldKey[] = [
   "incident_date",
   "driver_id",
@@ -50,13 +47,10 @@ export type IncidentsClusterConfig = {
   pageTestId: string;
   createLabel: string;
   detailLabel: string;
-  // Type-specific fields beyond COMMON_FIELDS (damage amount / interchange party / cargo claim inputs).
+  // Type-specific fields beyond COMMON_FIELDS (damage amount / interchange party).
   typedFields: IncidentFieldKey[];
   // Extra required fields beyond the always-required date + location + description.
   requiredExtraFields: IncidentFieldKey[];
-  // Cargo-claim (SC4) fields that must be FEATURE-DETECTED: only persisted once the SC4
-  // backend is live; the create still succeeds (fields stripped) when it is not.
-  sc4GatedFields?: IncidentFieldKey[];
   // Prompt to confirm saving with no condition photos (trailer interchange / TIR pattern).
   confirmWithoutPhotos?: boolean;
 };
@@ -82,9 +76,6 @@ function createDraftIncident(config: IncidentsClusterConfig): DraftState {
     load_id: "",
     damage_amount_dollars: "",
     interchange_party: "",
-    claimant_customer_id: "",
-    claim_reason_code: "",
-    claim_filed_date: "",
   };
 }
 
@@ -115,7 +106,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedHint, setSavedHint] = useState(false);
-  const [sc4Degraded, setSc4Degraded] = useState(false);
 
   const typedFields = config.typedFields;
   const has = (key: IncidentFieldKey) => COMMON_FIELDS.includes(key) || typedFields.includes(key);
@@ -152,24 +142,12 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: 200 }),
     enabled: createMode && Boolean(operatingCompanyId),
   });
-  const customersQuery = useQuery({
-    queryKey: ["safety", "incidents-customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 200 }),
-    enabled: createMode && has("claimant_customer_id") && Boolean(operatingCompanyId),
-  });
-  const reasonsQuery = useQuery({
-    queryKey: ["safety", "incidents-cargo-reasons", operatingCompanyId],
-    queryFn: () => listCargoClaimReasons(operatingCompanyId, { is_active: "true", limit: 200 }),
-    enabled: createMode && has("claim_reason_code") && Boolean(operatingCompanyId),
-  });
 
   const drivers = driversQuery.data?.drivers ?? [];
   const fleetRows = (fleetQuery.data?.units ?? []) as Array<Record<string, unknown>>;
   const unitOptions = fleetRows.filter((r) => str(r.kind) !== "trailer");
   const trailerOptions = fleetRows.filter((r) => str(r.kind) === "trailer");
   const loadOptions = loadsQuery.data?.loads ?? [];
-  const customerOptions = customersQuery.data?.customers ?? [];
-  const reasonOptions = reasonsQuery.data?.rows ?? [];
 
   const driverNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -189,14 +167,12 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     setSelected(row);
     setDrawerOpen(true);
     setSavedHint(false);
-    setSc4Degraded(false);
   };
 
   const closeDrawer = () => {
     setDrawerOpen(false);
     setSelected(null);
     setSavedHint(false);
-    setSc4Degraded(false);
   };
 
   const refresh = () => {
@@ -229,7 +205,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       if (!ok) return;
     }
 
-    const sentSc4 = Boolean(config.sc4GatedFields && config.sc4GatedFields.length > 0);
     const payload: Parameters<typeof createSafetyIncident>[0] = {
       operating_company_id: operatingCompanyId,
       incident_type: config.incidentType,
@@ -243,49 +218,17 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     };
     if (has("interchange_party")) payload.interchange_party = str(selected.interchange_party).slice(0, 200) || null;
     if (has("damage_amount_cents")) payload.damage_amount_cents = dollarsToCents(str(selected.damage_amount_dollars));
-    if (sentSc4) {
-      // FEATURE-DETECT: send SC4 cargo fields only optimistically. If the backend is not live
-      // it either strips them (Zod default) or 400s validation_error — both handled gracefully.
-      if (has("claim_reason_code") && str(selected.claim_reason_code))
-        payload.claim_reason_code = str(selected.claim_reason_code);
-      if (has("claimant_customer_id") && str(selected.claimant_customer_id))
-        payload.claimant_customer_id = str(selected.claimant_customer_id);
-      if (has("claim_filed_at") && str(selected.claim_filed_date))
-        payload.claim_filed_at = toIsoAtNoon(str(selected.claim_filed_date));
-    }
 
     setSaving(true);
     try {
-      let created: Record<string, unknown> | undefined;
-      let sc4Persisted = sentSc4;
-      try {
-        const res = await createSafetyIncident(payload);
-        created = res.incident;
-        // If we sent SC4 fields but the row does not echo them, the columns do not exist yet.
-        if (sentSc4 && created && !("claim_reason_code" in created)) sc4Persisted = false;
-      } catch (err) {
-        const message = String((err as Error)?.message ?? "");
-        if (sentSc4 && /validation_error/i.test(message)) {
-          // SC4 backend rejects the extra fields — retry stripped so the record still saves.
-          const { claim_reason_code, claimant_customer_id, claim_filed_at, ...stripped } = payload;
-          void claim_reason_code;
-          void claimant_customer_id;
-          void claim_filed_at;
-          const res = await createSafetyIncident(stripped);
-          created = res.incident;
-          sc4Persisted = false;
-        } else {
-          throw err;
-        }
-      }
-
+      const res = await createSafetyIncident(payload);
+      const created = res.incident;
       refresh();
       if (created?.id) {
         // Post-save photo step: keep the drawer open on the new record in detail mode so the
         // user can add condition/damage photos immediately (the surface supports detail-mode upload).
         setSelected(created as DraftState);
         setSavedHint(true);
-        setSc4Degraded(sentSc4 && !sc4Persisted);
       } else {
         closeDrawer();
       }
@@ -327,7 +270,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             setSelected(createDraftIncident(config));
             setDrawerOpen(true);
             setSavedHint(false);
-            setSc4Degraded(false);
           }}
         >
           {config.createLabel}
@@ -398,12 +340,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
               data-testid={`${config.pageTestId}-saved-hint`}
             >
               Report saved — add photos now.
-            </div>
-          ) : null}
-          {sc4Degraded ? (
-            <div className="mb-2 text-[11px] text-slate-500" data-testid={`${config.pageTestId}-sc4-pending`}>
-              Claim reason, claimant, and filed date will be captured once the cargo-claims backend
-              upgrade is live.
             </div>
           ) : null}
 
@@ -543,73 +479,9 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
               </label>
             ) : null}
 
-            {has("claimant_customer_id") ? (
-              <label className="block">
-                <span className="text-slate-600">Claimant customer</span>
-                {createMode ? (
-                  <select
-                    className={inputCls}
-                    value={str(selected?.claimant_customer_id)}
-                    data-testid={`${config.pageTestId}-field-claimant_customer_id`}
-                    onChange={(e) => setField("claimant_customer_id", e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {customerOptions.map((c) => (
-                      <option key={String(c.id)} value={String(c.id)}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="mt-1 text-slate-800">{str(detail?.claimant_customer_id) || "—"}</div>
-                )}
-              </label>
-            ) : null}
-
-            {has("claim_reason_code") ? (
-              <label className="block">
-                <span className="text-slate-600">Claim reason</span>
-                {createMode ? (
-                  <select
-                    className={inputCls}
-                    value={str(selected?.claim_reason_code)}
-                    data-testid={`${config.pageTestId}-field-claim_reason_code`}
-                    onChange={(e) => setField("claim_reason_code", e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {reasonOptions.map((r) => (
-                      <option key={r.id} value={r.reason_code}>
-                        {r.display_name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="mt-1 text-slate-800">{str(detail?.claim_reason_code) || "—"}</div>
-                )}
-              </label>
-            ) : null}
-
-            {has("claim_filed_at") ? (
-              <label className="block">
-                <span className="text-slate-600">Claim filed date</span>
-                {createMode ? (
-                  <DatePicker
-                    value={str(selected?.claim_filed_date)}
-                    onChange={(v) => setField("claim_filed_date", v)}
-                    data-testid={`${config.pageTestId}-field-claim_filed_at`}
-                    max={companyToday()}
-                  />
-                ) : (
-                  <div className="mt-1 text-slate-800">{formatDateUS(detail?.claim_filed_at)}</div>
-                )}
-              </label>
-            ) : null}
-
             {has("damage_amount_cents") ? (
               <label className="block">
-                <span className="text-slate-600">
-                  {config.incidentType === "cargo_claim" ? "Claimed amount" : "Estimated damage amount"}
-                </span>
+                <span className="text-slate-600">Estimated damage amount</span>
                 {createMode ? (
                   <div className="mt-1 flex items-center gap-1">
                     <span className="text-slate-500">$</span>

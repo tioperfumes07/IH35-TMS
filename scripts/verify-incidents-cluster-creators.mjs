@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 /**
- * SC-CLUSTER regression guard — the safety incidents cluster (Damage Reports, Trailer
- * Interchanges, Cargo Claims) is ONE shared surface (SafetyIncidentsClusterSurface.tsx) driven
- * by a per-incident-type field config. Before this block its saveCreate() sent only
- * location + description; this guard fails on any regression to that stub and asserts each of
- * the three configs declares its type-specific fields.
+ * SC-CLUSTER regression guard — the safety incidents cluster surface (SafetyIncidentsClusterSurface.tsx)
+ * is ONE shared component driven by a per-incident-type field config. It serves the DAMAGE REPORT and
+ * TRAILER INTERCHANGE typed creators. (Cargo claims have their own dedicated Carmack intake surface —
+ * SC4 CargoClaimIntakeSurface — guarded separately by verify-cargo-claim-intake.)
  *
- * Replaces the separate per-tab guards specified in BLOCK_SC2 / SC4 Part C (one guard for the
- * one shared root). Intentionally static (grep-style) and negative-testable: it FAILS on the
- * pre-fix code (no listDrivers/listUnits, no typed fields) and PASSES on the fixed code.
- * Wired into `verify:arch-design`.
+ * Before this block the shared surface's saveCreate() sent only location + description. This guard
+ * fails on any regression to that stub and asserts each config declares its type-specific fields.
+ * Intentionally static (grep-style) and negative-testable: it FAILS on the pre-fix code and PASSES on
+ * the fixed code. Wired into `verify:arch-design`.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -29,11 +28,6 @@ const CONFIGS = [
     type: "trailer_interchange",
     fields: ["interchange_party"],
     required: "trailer_id",
-  },
-  {
-    file: "apps/frontend/src/pages/safety/CargoClaimsPage.tsx",
-    type: "cargo_claim",
-    fields: ["claimant_customer_id", "claim_reason_code", "claim_filed_at"],
   },
 ];
 
@@ -64,6 +58,7 @@ for (const key of ["incident_at", "driver_id", "unit_id", "trailer_id"]) {
   }
 }
 if (!/damage_amount_cents/.test(src)) failures.push("surface must handle damage_amount_cents (dollars→cents).");
+if (!/interchange_party/.test(src)) failures.push("surface must handle interchange_party (interchange typed field).");
 
 // (3) Disabled Save must state which required fields are missing (no silent dead control).
 if (!/missingFields/.test(src)) {
@@ -77,7 +72,7 @@ if (!/disabled=\{missingFields\.length/.test(src)) {
   failures.push("Save button disabled state must be bound to missingFields.length.");
 }
 
-// (4) Each of the three configs declares its type-specific fields (typedFields).
+// (4) Each config declares its type-specific fields (typedFields).
 for (const cfg of CONFIGS) {
   const cfgSrc = read(cfg.file);
   if (!new RegExp(`incidentType:\\s*"${cfg.type}"`).test(cfgSrc)) {
@@ -96,15 +91,6 @@ for (const cfg of CONFIGS) {
   }
 }
 
-// (5) Cargo claim SC4 fields are feature-detected, not hard-sent.
-const cargoSrc = read(CONFIGS[2].file);
-if (!/sc4GatedFields:\s*\[/.test(cargoSrc)) {
-  failures.push("CargoClaimsPage must declare sc4GatedFields (feature-detected SC4 fields).");
-}
-if (!/sc4GatedFields/.test(src)) {
-  failures.push("surface must honor sc4GatedFields (feature-detect the SC4 cargo fields).");
-}
-
 if (failures.length > 0) {
   console.error("[verify-incidents-cluster-creators] FAILED — incidents cluster creator regressed:");
   for (const f of failures) console.error(`  - ${f}`);
@@ -112,5 +98,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "[verify-incidents-cluster-creators] OK — shared surface pickers + typed saveCreate + per-type field configs + missing-field helper present."
+  "[verify-incidents-cluster-creators] OK — shared surface pickers + typed saveCreate + damage/interchange field configs + missing-field helper present."
 );
