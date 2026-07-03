@@ -59,6 +59,12 @@ const createUserBodySchema = z.object({
   send_password_setup_invite: z.boolean().optional().default(false),
 });
 
+// USERS-1 fixture-user guard (see the create handler). @example.* is an RFC-2606 reserved test domain
+// (never a real user); m2-probe/m2-stop/verifyfix are the migration/CI probe-harness naming patterns that
+// created the offending ACTIVE Owner accounts on prod. Enforced only in production so CI/test fixtures work.
+const FIXTURE_USER_EMAIL_RE = /@example\.(com|org|net)$|(^|[.+_-])(m2-probe|m2-stop|verifyfix)\b/i;
+const IS_PROD_ENV = process.env.NODE_ENV === "production";
+
 type IdentityUserRow = {
   id: string;
   email: string | null;
@@ -480,6 +486,12 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     const parsedBody = createUserBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) {
       return sendValidationError(reply, parsedBody.error);
+    }
+    // USERS-1 (2026-07-03): probe/CI harness artifacts (m2-probe*/m2-stop*/*+verifyfix@…/*@example.com)
+    // once landed as ACTIVE Owner accounts on PROD — standing privileged access with no human behind them.
+    // Reject fixture-pattern emails on the create path in production so a harness can never do it again.
+    if (IS_PROD_ENV && FIXTURE_USER_EMAIL_RE.test(parsedBody.data.email)) {
+      return reply.code(400).send({ error: "fixture_email_forbidden_in_prod" });
     }
     if (parsedBody.data.initial_password) {
       const passwordParsed = officePasswordSchema.safeParse(parsedBody.data.initial_password);
