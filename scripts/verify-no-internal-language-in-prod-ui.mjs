@@ -31,6 +31,14 @@ const forbiddenTerms = [
   "(admin)",
 ];
 
+// RATECON-2: internal build-cycle language must never reach prod UI copy (e.g. the retired
+// "Uploaded — OCR parsing in cycle 4" rate-con stub). Regex-matched so any "cycle <n>" /
+// "coming in cycle" phrasing fails, not just one literal string.
+const forbiddenPatterns = [
+  { re: /cycle\s+\d/i, label: "cycle <n>" },
+  { re: /coming in cycle/i, label: "coming in cycle" },
+];
+
 function isExcluded(filePath) {
   const normalized = filePath.replace(/\\/g, "/");
   if (normalized === selfPath.replace(/\\/g, "/")) return true;
@@ -77,6 +85,16 @@ for (const file of files) {
           file: path.relative(repoRoot, file),
           line: i + 1,
           term,
+          text: line.trim(),
+        });
+      }
+    }
+    for (const { re, label } of forbiddenPatterns) {
+      if (re.test(line)) {
+        violations.push({
+          file: path.relative(repoRoot, file),
+          line: i + 1,
+          term: label,
           text: line.trim(),
         });
       }

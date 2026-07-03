@@ -55,6 +55,26 @@ if (offenders.length) errs.push(`ANTHROPIC_API_KEY referenced outside the shared
 const svc = read("apps/backend/src/dispatch/ratecon-extract.service.ts");
 if (svc && /\btools\s*:/.test(svc)) errs.push("ratecon-extract.service must NOT enable tools on the model call (untrusted document)");
 
+// (5) RATECON-2 — single rate-con intake flow. The drag-drop zone must ride the ONE shared extraction
+//     hook (no dead upload stub, no fake "done" progress state). The shared hook is the only place the
+//     upload→extract→prefill logic lives.
+const HOOK = "apps/frontend/src/pages/dispatch/components/book-load-v4/useRateConExtraction.ts";
+const DROPZONE = "apps/frontend/src/pages/dispatch/components/book-load-v4/OcrDropZone.tsx";
+const hook = read(HOOK);
+const dz = read(DROPZONE);
+if (!hook) errs.push(`missing shared extraction hook ${HOOK}`);
+else if (!/extractRateCon\s*\(/.test(hook)) errs.push("useRateConExtraction must call the real extractRateCon endpoint");
+if (!dz) errs.push(`missing ${DROPZONE}`);
+else {
+  if (!/from\s+["']\.\/useRateConExtraction["']/.test(dz)) errs.push("OcrDropZone must import the shared useRateConExtraction hook (one intake code path)");
+  // A "done" phase must never render fake progress — it may only exist alongside the real hook (which
+  // owns the extractRateCon call). The dead pre-RATECON stub (cycle language + loads/ocr-upload) is banned.
+  if (/["']done["']/.test(dz) && !/from\s+["']\.\/useRateConExtraction["']/.test(dz))
+    errs.push("OcrDropZone references a 'done' phase without importing the extraction hook (fake progress state)");
+  if (/cycle\s+\d/i.test(dz) || /OCR parsing in cycle/i.test(dz)) errs.push("OcrDropZone must not contain the retired 'OCR parsing in cycle' stub copy");
+  if (/dispatch\/loads\/ocr-upload/.test(dz)) errs.push("OcrDropZone must not call the dead loads/ocr-upload stub endpoint — use the shared extraction hook");
+}
+
 if (errs.length) {
   console.error("verify:ratecon-extract-guard — FAILED");
   for (const e of errs) console.error(`  ✗ ${e}`);
