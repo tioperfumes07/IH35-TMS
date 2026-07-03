@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { getDriver, updateDriver, deactivateDriver, reactivateDriver } from "../../api/mdata";
+import { updateDriver, deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
@@ -151,12 +151,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     }
   };
 
-  const driverQ = useQuery({
-    queryKey: ["driver", id],
-    enabled: Boolean(id),
-    queryFn: () => getDriver(id),
-  });
-
   const profileQ = useQuery({
     queryKey: ["driver-profile", id, companyId],
     queryFn: () => fetchDriverProfile(id, companyId),
@@ -179,15 +173,28 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   });
 
   const summary = summarizeDriverDqf(itemsQ.data);
-  const driver = driverQ.data;
   const aggregate = profileQ.data;
+  // D2 fix: source the driver identity from the aggregate (scoped by the SELECTED company + its
+  // driver_company_authorizations — the same scope the DQF list uses), NOT a second `getDriver` call
+  // that scoped to the user's server-resolved DEFAULT company. When the selected company differed from
+  // that default (or the driver was reachable only via a company authorization), the standalone read
+  // 404'd and the profile fell through to "Driver not found" even though the aggregate loaded fine.
+  const driverRecord = aggregate?.driver;
+  const driver = driverRecord
+    ? {
+        id: String(driverRecord.id ?? id),
+        first_name: (driverRecord.first_name as string | null | undefined) ?? null,
+        last_name: (driverRecord.last_name as string | null | undefined) ?? null,
+        status: String(driverRecord.status ?? ""),
+      }
+    : undefined;
   const hos = hosQ.data?.hos ?? aggregate?.hos ?? null;
 
   if (!companyId) {
     return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Select an operating company.</div>;
   }
 
-  if (driverQ.isLoading || profileQ.isLoading) {
+  if (profileQ.isLoading) {
     return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading driver profile…</div>;
   }
 
@@ -197,11 +204,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <p>Driver not found.</p>
         {onBack ? (
           <button type="button" onClick={onBack} className="text-xs font-semibold text-slate-700 hover:underline">
-            Back to driver list
+            ← Back to driver list
           </button>
         ) : (
           <Link to="/drivers?subtab=profiles" className="text-xs font-semibold text-slate-700 hover:underline">
-            Back to DQF profiles
+            ← Back to DQF profiles
           </Link>
         )}
       </div>
@@ -216,6 +223,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       <PageHeader
         title={displayName}
         subtitle="Driver profile · qualification file (DQF)"
+        breadcrumb={["Drivers", "Qualification profiles", displayName]}
+        onBack={onBack}
+        backHref="/drivers?subtab=profiles"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <DriverDqfComplianceChip summary={summary} />

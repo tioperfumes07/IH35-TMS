@@ -489,6 +489,7 @@
     "verify:no-raw-frontend-api-fetch": "node scripts/verify-no-raw-frontend-api-fetch.mjs",
     "verify:mdata-list-pagination": "node scripts/verify-mdata-list-pagination.mjs",
     "verify:driver-entity-default": "node scripts/verify-driver-entity-default.mjs",
+    "verify:driver-profile-navigation": "node scripts/verify-driver-profile-navigation.mjs",
     "verify:feature-flags": "node scripts/verify-feature-flags.mjs",
     "verify:dispatcher-home": "node scripts/verify-dispatcher-home.mjs",
     "verify:cap-14-cargo-sensors": "node scripts/verify-cap-14-cargo-sensors.mjs",
