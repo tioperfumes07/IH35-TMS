@@ -112,6 +112,13 @@ export function VendorsPage() {
     queryFn: () => listVendorBalances(companyId, { all: true }),
     enabled: Boolean(companyId),
   });
+  // LIST-EMPTY-1: shared list-state status — children render "No vendors found."
+  // only once this settles, never during the roster fetch.
+  const vendorsStatus = {
+    isPending: vendorsQuery.isPending,
+    isError: vendorsQuery.isError,
+    isFetching: vendorsQuery.isFetching,
+  };
 
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
@@ -257,6 +264,7 @@ export function VendorsPage() {
         <VendorsListView
           companyId={companyId}
           vendors={vendorsSorted}
+          status={vendorsStatus}
           openByVendorId={openByVendorId}
           onSelectVendor={(vendorId) => {
             setSelectedVendorId(vendorId);
@@ -267,6 +275,7 @@ export function VendorsPage() {
       <div className="flex gap-3">
         <VendorListSidebar
           vendors={visibleVendors}
+          status={vendorsStatus}
           totalCount={vendorsSorted.length}
           page={sidebarPage}
           pageSize={sidebarPageSize}
