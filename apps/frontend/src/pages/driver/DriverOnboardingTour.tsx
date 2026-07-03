@@ -1,28 +1,28 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
-import Joyride, { STATUS, type CallBackProps, type Step } from "react-joyride";
+import { Joyride, STATUS, type EventData, type Step } from "react-joyride";
 import { getDriverMe, patchDriverOnboarding } from "../../api/driver";
 
 const DRIVER_STEPS: Step[] = [
   {
     target: '[data-tour="driver-nav-loads"]',
     content: "Home — your loads inbox and quick access to active freight.",
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="driver-nav-loads"]',
     content: "Active load — open any row for details, documents, and stops.",
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="driver-nav-disputes"]',
     content: "Settlement disputes — escalate or review settlement questions.",
-    disableBeacon: true,
+    skipBeacon: true,
   },
   {
     target: '[data-tour="driver-nav-settings"]',
     content: "Profile — language, help links, and preferences.",
-    disableBeacon: true,
+    skipBeacon: true,
   },
 ];
 
@@ -43,7 +43,7 @@ export function DriverOnboardingTour() {
   }, [meQuery.isLoading, meQuery.data]);
 
   const onCallback = useCallback(
-    async (data: CallBackProps) => {
+    async (data: EventData) => {
       if (data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED) {
         setRun(false);
         try {
@@ -62,12 +62,9 @@ export function DriverOnboardingTour() {
       steps={DRIVER_STEPS}
       run={run}
       continuous
-      showProgress
-      showSkipButton
       scrollToFirstStep
-      disableScrolling={false}
-      styles={{ options: { zIndex: 60_000 } }}
-      callback={onCallback}
+      options={{ showProgress: true, zIndex: 60_000 }}
+      onEvent={onCallback}
     />
   );
 }

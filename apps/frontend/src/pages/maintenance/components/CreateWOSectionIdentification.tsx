@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";

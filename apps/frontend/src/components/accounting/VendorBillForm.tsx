@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";

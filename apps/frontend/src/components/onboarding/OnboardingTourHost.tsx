@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Joyride, { STATUS, type CallBackProps, type Step } from "react-joyride";
+import { Joyride, STATUS, type EventData, type Step } from "react-joyride";
 import { getIdentityProfile, patchIdentityOnboarding } from "../../api/identity";
 import type { UserRole } from "../../types/api";
 
@@ -13,27 +13,27 @@ function ownerSteps(): Step[] {
     {
       target: '[data-tour="tour-nav-home"]',
       content: "Home — shortcuts into the modules you use most.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="tour-nav-dispatch"]',
       content: "Dispatch — plan freight, capacity, and assignments.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="tour-nav-banking"]',
       content: "Banking — live balances, transfers, and reconciliation.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="tour-nav-drivers"]',
       content: "Drivers — open the flyout for settlements and driver finance tools.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="tour-nav-admin"]',
       content: "Users — invite teammates and control roles.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
   ];
 }
@@ -43,27 +43,27 @@ function dispatcherSteps(): Step[] {
     {
       target: '[data-tour="tour-nav-home"]',
       content: "Home — your launch point for the day.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="tour-nav-dispatch"]',
       content: "Dispatch — board, filters, and quick actions (use the flyout for Loads).",
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="tour-nav-dispatch"]',
       content: "Loads — keep this board tight; drill in when a load needs attention.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="tour-nav-drivers"]',
       content: "Drivers — roster, contacts, and assignments.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '[data-tour="tour-nav-customers"]',
       content: "Customers — lanes, billing contacts, and history.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
   ];
 }
@@ -75,7 +75,7 @@ function stepsForRole(role: UserRole): Step[] {
     {
       target: '[data-tour="tour-nav-home"]',
       content: "Welcome — use the sidebar to move between modules.",
-      disableBeacon: true,
+      skipBeacon: true,
     },
   ];
 }
@@ -98,7 +98,7 @@ export function OnboardingTourHost({ role }: Props) {
   }, [profileQuery.isLoading, profileQuery.data]);
 
   const handleJoyride = useCallback(
-    async (data: CallBackProps) => {
+    async (data: EventData) => {
       const { status } = data;
       if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
         setRun(false);
@@ -120,12 +120,9 @@ export function OnboardingTourHost({ role }: Props) {
       steps={steps}
       run={run}
       continuous
-      showProgress
-      showSkipButton
       scrollToFirstStep
-      disableScrolling={false}
-      styles={{ options: { zIndex: 60_000 } }}
-      callback={handleJoyride}
+      options={{ showProgress: true, zIndex: 60_000 }}
+      onEvent={handleJoyride}
     />
   );
 }

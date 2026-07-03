@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";

@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
 
