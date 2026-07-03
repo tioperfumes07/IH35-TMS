@@ -259,8 +259,11 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
       memo: "Speeding fine paid on driver's behalf",
     });
 
+    // Surface the failure reason in the assertion message — this test flakes intermittently in CI (parallel-DB
+    // isolation, tracked); without the reason in the message the log only shows "expected false to be true",
+    // which is undiagnosable. The reason now appears in the CI output on the next flake so it can be fixed.
+    if (!res.posted) throw new Error(`expected posted; got reason='${res.reason}' message='${res.message ?? ""}'`);
     expect(res.posted).toBe(true);
-    if (!res.posted) throw new Error(`expected posted; got ${res.reason} ${res.message ?? ""}`);
     advanceIds.push(res.advance_id);
 
     expect(res.driver_advance_account_id).toBe(acct.driverAdvance);
