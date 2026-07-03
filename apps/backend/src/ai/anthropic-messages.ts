@@ -49,7 +49,57 @@ export type AnthropicCallOptions = {
 };
 
 const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_MODELS_URL = "https://api.anthropic.com/v1/models";
 const ANTHROPIC_VERSION = "2023-06-01";
+
+export type AnthropicModel = { id: string; display_name?: string; created_at?: string; type?: string };
+export type AnthropicModelsResponse = { data?: AnthropicModel[]; has_more?: boolean };
+
+/** GET the list of models currently available on the account's Claude API (read-only). Same key/error
+ *  taxonomy as callAnthropicMessages. Used by the model-lifecycle monitor to detect a registered model that
+ *  has been retired or is missing BEFORE it causes an outage. Paginates defensively (Anthropic caps page size). */
+export async function listAnthropicModels(options?: AnthropicCallOptions): Promise<AnthropicModel[]> {
+  const fetchImpl = options?.fetchImpl ?? fetch;
+  const timeoutMs = options?.timeoutMs ?? 30_000;
+  const apiKey = options?.apiKey ?? process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new AnthropicNotConfiguredError();
+  }
+
+  const models: AnthropicModel[] = [];
+  let afterId: string | undefined;
+  for (let page = 0; page < 20; page++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const url = new URL(ANTHROPIC_MODELS_URL);
+      url.searchParams.set("limit", "100");
+      if (afterId) url.searchParams.set("after_id", afterId);
+      const response = await fetchImpl(url.toString(), {
+        method: "GET",
+        signal: controller.signal,
+        headers: { "x-api-key": apiKey, "anthropic-version": ANTHROPIC_VERSION },
+      });
+      if (response.status === 429) throw new AnthropicRateLimitError();
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(`anthropic_http_${response.status}:${detail.slice(0, 200)}`);
+      }
+      const body = (await response.json()) as AnthropicModelsResponse;
+      const rows = body.data ?? [];
+      models.push(...rows);
+      if (!body.has_more || rows.length === 0) break;
+      afterId = rows[rows.length - 1]?.id;
+      if (!afterId) break;
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") throw new AnthropicTimeoutError();
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return models;
+}
 
 /** POST a Messages request. Throws AnthropicNotConfiguredError / AnthropicRateLimitError / AnthropicTimeoutError
  *  or a generic anthropic_http_<code> Error. Returns the raw payload; callers extract their own content. */

@@ -54,6 +54,7 @@ export function RateConUploadPanel({
         code.includes("409") || code.includes("ratecon_extract_disabled") ? "Rate-con extraction is turned off for this company."
           : code.includes("413") || code.includes("too_large") ? "That file is too large (max 10 MB / 15 pages)."
           : code.includes("503") || code.includes("ai_not_configured") ? "AI extraction isn't configured on the server."
+          : code.includes("502") || code.includes("extraction_failed") ? "AI extraction failed — try again; if it persists tell the administrator."
           : "Couldn't extract this rate confirmation. You can still book the load manually.",
       );
       setPhase("error");
@@ -68,7 +69,7 @@ export function RateConUploadPanel({
           {busy ? (phase === "uploading" ? "Uploading…" : "Reading rate con…") : "Upload Rate Con"}
           <input
             type="file"
-            accept="application/pdf,image/*"
+            accept="application/pdf"
             className="hidden"
             disabled={busy}
             onChange={(e) => {

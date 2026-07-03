@@ -8,9 +8,12 @@ import {
   extractText,
   type AnthropicCallOptions,
 } from "../ai/anthropic-messages.js";
+import { RATECON_EXTRACTION_MODEL } from "../ai/models.js";
 
-// Model is a code constant (not env), per the block. Sonnet supports PDF document input.
-export const RATECON_MODEL = "claude-sonnet-4-20250514";
+// Model ID comes from the central registry (ai/models.ts) — the only place a model string may live.
+// Sonnet supports PDF document input. (Previously a hardcoded model string that Anthropic later retired;
+// the registry + lifecycle monitor exist so that can't cause a silent outage again.)
+export const RATECON_MODEL = RATECON_EXTRACTION_MODEL;
 export const RATECON_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 export const RATECON_MAX_PAGES = 15;
 

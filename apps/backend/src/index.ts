@@ -325,6 +325,7 @@ import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js"
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
 import { initializeChatConfirmationEscalationCron } from "./cron/chat-confirmation-escalation.cron.js";
 import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
+import { initializeModelLifecycleMonitorCron } from "./cron/model-lifecycle-monitor.cron.js";
 import { initializeSamsaraWebhookProjectionCron } from "./cron/samsara-webhook-projection.cron.js";
 import { initializeSamsaraRemoteCountCollectorCron } from "./cron/samsara-remote-count-collector.cron.js";
 import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron.js";
@@ -1042,6 +1043,13 @@ async function main() {
     app.log.info("[STARTUP] samsara-health-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-health-cron failed");
+  }
+
+  try {
+    initializeModelLifecycleMonitorCron(app);
+    app.log.info("[STARTUP] model-lifecycle-monitor-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] model-lifecycle-monitor-cron failed");
   }
 
   try {

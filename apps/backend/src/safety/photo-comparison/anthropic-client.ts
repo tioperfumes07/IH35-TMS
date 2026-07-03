@@ -5,6 +5,7 @@ import {
   callAnthropicMessages,
   extractText,
 } from "../../ai/anthropic-messages.js";
+import { SAFETY_VISION_MODEL } from "../../ai/models.js";
 
 // Re-export the shared error types so existing importers of this module keep compiling unchanged.
 export { AnthropicRateLimitError, AnthropicTimeoutError };
@@ -29,7 +30,9 @@ export type AnthropicCompareClient = {
   ) => Promise<CompareImagesResult>;
 };
 
-const VISION_MODEL = "claude-sonnet-4-20250514";
+// Model ID from the central registry (ai/models.ts). (Previously a hardcoded model string that Anthropic
+// later retired.) Sonnet supports image/vision input.
+const VISION_MODEL = SAFETY_VISION_MODEL;
 
 function buildPrompt(angleLabel: string): string {
   return `You are an insurance damage assessor. Compare these two photos of the same vehicle/trailer at angle '${angleLabel}'. Identify any NEW damage in the second photo not present in the first. Respond with JSON only:

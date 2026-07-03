@@ -5,6 +5,8 @@
 //  2. Single key path: ANTHROPIC_API_KEY appears ONLY in the shared ai/anthropic-messages client (+ its test).
 //  3. Untrusted-document safety: the rate-con extraction never enables tools on the model call (the PDF is
 //     third-party content treated as data; tools would let an injected instruction act).
+//  4. Error visibility (RATECON-3): the endpoint captures exceptions to Sentry on its error path, so an
+//     upstream AI failure (e.g. a retired model) can never again be a silent 500 with zero Sentry events.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,6 +26,10 @@ else {
   const readIdx = routes.search(/getObjectBytes\s*\(/);
   if (flagIdx === -1 || callIdx === -1) errs.push("endpoint must both flag-gate (isEnabled) and call extractRateConPdf");
   else if (flagIdx > callIdx || (readIdx !== -1 && flagIdx > readIdx)) errs.push("the flag check must precede reading the PDF and calling the extractor");
+
+  // (4) Sentry capture on the error path (RATECON-3 — no more silent 5xx)
+  if (!/from ["']@sentry\/node["']/.test(routes) || !/Sentry\.captureException\s*\(/.test(routes))
+    errs.push("endpoint must capture exceptions to Sentry on its error path (import * as Sentry from '@sentry/node' + Sentry.captureException)");
 }
 
 // (2) single ANTHROPIC_API_KEY path
