@@ -178,6 +178,6 @@ export function initializeEventSpineHeartbeatCron(app: FastifyInstance) {
 //   initializeEventSpineHeartbeatCron(app);
 // Inert until the env flag EVENT_SPINE_HEARTBEAT_ENABLED is flipped at go-live.
 //
-// COMPANION (separate PR, BLOCK-RELIABILITY-05 part 2): money/audit error-surfacing sweep —
-// grep posting/audit/settlement paths for empty catch blocks, make them fail-loud, and add
-// scripts/verify-no-swallow-on-money-paths.mjs to the CI chain so swallows can't return.
+// COMPANION (BLOCK-RELIABILITY-05 part 2, DONE 2026-07-03): scripts/verify-no-swallow-on-money-paths.mjs
+// is now wired into verify:arch-design — a silent (empty/comment-only) catch on any posting/settlement/
+// spine-emit path fails CI, so swallows can never return. Baseline was 0 offenders (clean ratchet).
