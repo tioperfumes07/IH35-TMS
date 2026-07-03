@@ -9,6 +9,7 @@ import { TableSelection, TableSelectionHeader } from "../../components/bulk/Tabl
 import { TableControls, Paginator, TableHeaderCell, useTableController, type TableColumn } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useBulkSelection } from "../../hooks/useBulkSelection";
+import { useListState, type ListQueryStatus } from "../../components/list-state";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -47,11 +48,13 @@ function isCarrier(v: VendorOption): boolean {
 type Props = {
   companyId: string;
   vendors: VendorOption[];
+  /** Roster query status so the empty state renders only once the fetch settles. */
+  status: ListQueryStatus;
   openByVendorId: Map<string, number>;
   onSelectVendor?: (vendorId: string) => void;
 };
 
-export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVendor }: Props) {
+export function VendorsListView({ companyId, vendors, status, openByVendorId, onSelectVendor }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const selection = useBulkSelection();
@@ -86,6 +89,9 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
 
   const pageRows = table.paged;
   const pageRowIds = pageRows.map((row) => row.id);
+
+  // LIST-EMPTY-1: the empty row renders only once the roster fetch settles.
+  const listState = useListState(status, table.filteredCount === 0);
 
   const bulkMutation = useMutation({
     mutationFn: async ({ ids, action, payload, reason }: { ids: string[]; action: string; payload?: Record<string, unknown>; reason?: string }) =>
@@ -225,9 +231,16 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
                     ))}
                   </tr>
                 ))}
-                {pageRows.length === 0 ? (
+                {listState.isLoading ? (
                   <tr>
-                    <td colSpan={table.visibleColumns.length + 1} className="px-3 py-6 text-center text-gray-500">
+                    <td colSpan={table.visibleColumns.length + 1} className="px-3 py-6 text-center text-slate-500">
+                      Loading vendors…
+                    </td>
+                  </tr>
+                ) : null}
+                {listState.isEmpty ? (
+                  <tr>
+                    <td colSpan={table.visibleColumns.length + 1} className="px-3 py-6 text-center text-slate-500">
                       No vendors found.
                     </td>
                   </tr>

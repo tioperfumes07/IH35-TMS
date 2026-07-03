@@ -96,6 +96,10 @@ are pointed to Section C.
    fix via new idempotent CREATE-IF-NOT-EXISTS migrations. · src: prod-migration-deployment-drift memory.
 8. **Post-merge forensics** for #1797 (deploy + flag-row), #1795, #1794 — confirm deploy-live + Neon flag
    rows. · src: prior-session handoff.
+9. **False-empty list sweep (TBL-STANDARD)** — LIST-EMPTY-1 fixed Vendors/Customers (shared list-state
+   primitive; empty only on a settled query) + a regression guard (`verify:list-empty-settled`). 65 other
+   paged-list surfaces still gate empty on bare `data.length===0` and are candidate false-empty flashes;
+   migrate in follow-on TBL-STANDARD blocks. Full file list: `docs/trackers/TBL-STANDARD-list-empty-offenders.md`. · src: BLOCK LIST-EMPTY-1.
 
 ## E. CROSS-DOC POINTERS
 - Accounting architecture (parallel books / no write-back): `docs/specs/ACCOUNTING-ARCHITECTURE.md` +
