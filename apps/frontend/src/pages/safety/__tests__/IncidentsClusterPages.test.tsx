@@ -57,11 +57,15 @@ describe("Incidents cluster pages (A23-7)", () => {
     expect(screen.getByText("+ Create interchange")).toBeTruthy();
   });
 
-  it("CargoClaimsPage renders dedicated cargo claim surface", async () => {
+  it("CargoClaimsPage renders dedicated Carmack cargo claim intake surface", async () => {
     render(wrap(<CargoClaimsPage operatingCompanyId={companyId} />));
     await waitFor(() => {
-      expect(screen.getByTestId("cargo-claims-page-row-cargo_claim-1")).toBeTruthy();
+      expect(screen.getByTestId("cargo-claims-page")).toBeTruthy();
     });
+    // SC4: dedicated intake surface (not the generic cluster skeleton) — has its own table + creator entry.
+    expect(screen.getByTestId("cargo-claims-page-table")).toBeTruthy();
+    expect(screen.getByTestId("cargo-claims-page-create-btn")).toBeTruthy();
+    expect(screen.getByText("+ Create cargo claim")).toBeTruthy();
     expect(screen.getByText("Cargo Claims")).toBeTruthy();
   });
 });
