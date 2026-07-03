@@ -3,6 +3,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as safetyApi from "../../../api/safety";
+import * as mdataApi from "../../../api/mdata";
+import * as loadsApi from "../../../api/loads";
+import * as catalogsSafetyApi from "../../../api/catalogs-safety";
 import { CargoClaimsPage } from "../CargoClaimsPage";
 import { DamageReportsPage } from "../DamageReportsPage";
 import { TrailerInterchangesPage } from "../TrailerInterchangesPage";
@@ -38,6 +41,12 @@ describe("Incidents cluster pages (A23-7)", () => {
       photo_key: "incidents/row-1/photo.jpg",
       photo_keys: ["incidents/row-1/photo.jpg"],
     });
+    // The shared surface now loads drivers + fleet for the pickers and list Driver/Unit columns.
+    vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({ drivers: [], total: 0 });
+    vi.spyOn(mdataApi, "listUnits").mockResolvedValue({ units: [], total: 0 });
+    vi.spyOn(mdataApi, "listCustomers").mockResolvedValue({ customers: [], total: 0 });
+    vi.spyOn(loadsApi, "listLoads").mockResolvedValue({ loads: [], total: 0 } as never);
+    vi.spyOn(catalogsSafetyApi, "listCargoClaimReasons").mockResolvedValue({ rows: [], total: 0 });
   });
 
   it("DamageReportsPage renders list surface", async () => {

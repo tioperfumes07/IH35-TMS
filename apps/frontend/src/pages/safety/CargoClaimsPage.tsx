@@ -19,6 +19,11 @@ export function CargoClaimsPage({ operatingCompanyId }: Props) {
         pageTestId: "cargo-claims-page",
         createLabel: "+ Create cargo claim",
         detailLabel: "Open claim",
+        // SC4 typed creator: claimed amount is live today; claimant / reason / filed-date are
+        // FEATURE-DETECTED against the SC4 backend (49 CFR 1005.2) and only persist once it is live.
+        typedFields: ["damage_amount_cents", "claimant_customer_id", "claim_reason_code", "claim_filed_at"],
+        requiredExtraFields: [],
+        sc4GatedFields: ["claimant_customer_id", "claim_reason_code", "claim_filed_at"],
       }}
     />
   );

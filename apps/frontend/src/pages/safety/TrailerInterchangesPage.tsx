@@ -15,6 +15,11 @@ export function TrailerInterchangesPage({ operatingCompanyId }: Props) {
         pageTestId: "trailer-interchanges-page",
         createLabel: "+ Create interchange",
         detailLabel: "Open interchange",
+        // SC3 typed creator: interchange party + trailer REQUIRED (an interchange without a
+        // trailer is meaningless). Condition-photo confirm follows the TIR pattern.
+        typedFields: ["interchange_party"],
+        requiredExtraFields: ["trailer_id"],
+        confirmWithoutPhotos: true,
       }}
     />
   );
