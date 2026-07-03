@@ -14,6 +14,7 @@ import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MaintenanceAlertsBanner } from "../../components/vehicle-profile/MaintenanceAlertsBanner";
 import { IdentityStatusHeader } from "../../components/vehicle-profile/IdentityStatusHeader";
+import { MissingRequiredChip } from "../../components/compliance/MissingRequiredChip";
 import { LiveTelemetrySection } from "../../components/vehicle-profile/LiveTelemetrySection";
 import { DriverAssignmentSection } from "../../components/vehicle-profile/DriverAssignmentSection";
 import { CurrentLoadSection } from "../../components/vehicle-profile/CurrentLoadSection";
@@ -154,7 +155,10 @@ export function VehicleProfilePage() {
 
   return (
     <div className="space-y-3 p-4 pb-24">
-      <PageHeader title={`Unit ${unitNumber}`} subtitle="Vehicle profile · fleet unit" />
+      <div className="flex items-center justify-between gap-2">
+        <PageHeader title={`Unit ${unitNumber}`} subtitle="Vehicle profile · fleet unit" />
+        <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} />
+      </div>
       {profileQuery.isError ? <ListErrorBanner onRetry={() => void profileQuery.refetch()} /> : null}
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
