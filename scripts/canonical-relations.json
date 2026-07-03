@@ -465,6 +465,7 @@
     "notifications.user_notification_preferences",
     "notifications.user_notifications",
     "onboarding.onboarding_state",
+    "ops.audit_chain_verifications",
     "ops.daily_task_alerts",
     "ops.daily_task_events",
     "ops.daily_tasks",
