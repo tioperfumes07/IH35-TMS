@@ -15,10 +15,10 @@ export function BankingKpiRow({ kpis }: Props) {
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
       {cards.map(([label, value], idx) => (
-        <div key={label} className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+        <div key={label} className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
           <div className="text-[10px] uppercase text-gray-500">{label}</div>
           <div className={`font-semibold ${idx === 5 ? "text-amber-700" : ""}`}>
-            {label === "Uncategorized" || label === "Pending Bills" ? value : `$${value.toFixed(2)}`}
+            {label === "Uncategorized" || label === "Pending Bills" ? value : `$${Number(value).toFixed(2)}`}
           </div>
         </div>
       ))}

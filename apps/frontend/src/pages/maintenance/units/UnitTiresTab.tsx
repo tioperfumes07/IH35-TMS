@@ -72,7 +72,7 @@ export function UnitTiresTab({ unitId, companyId }: UnitTiresTabProps) {
   );
 
   return (
-    <section className="space-y-3 rounded border border-gray-200 bg-white p-3" data-testid="unit-tires-tab">
+    <section className="space-y-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-tires-tab">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-900">Tire Tread Wear</h3>
         <span className="text-xs text-gray-500">CAP-12 projection · DOT thresholds</span>

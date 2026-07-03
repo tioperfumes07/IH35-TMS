@@ -34,8 +34,8 @@ type Props = {
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
-    : "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
+    : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 export function AccountingCatalogListPage({
@@ -108,22 +108,22 @@ export function AccountingCatalogListPage({
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       {helperLink ? (
-        <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
           {helperLink.note ? <span className="mr-1">{helperLink.note}</span> : null}
-          <Link to={helperLink.to} className="font-semibold text-slate-700 underline focus:outline-none focus:ring-2 focus:ring-slate-400">
+          <Link to={helperLink.to} className="font-semibold text-slate-700 underline focus:outline-hidden focus:ring-2 focus:ring-slate-400">
             {helperLink.label}
           </Link>
         </div>
       ) : null}
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by code or display name"
-          className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
         />
-        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded border border-gray-300 px-2 text-sm">
+        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
           <option value="true">Active</option>
           <option value="false">Inactive</option>
           <option value="all">All</option>
@@ -131,7 +131,7 @@ export function AccountingCatalogListPage({
       </div>
 
       {bulkEnabled && selectedIds.size > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-100 p-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-sm">
           <span className="font-semibold text-slate-700">{selectedIds.size} selected</span>
           {bulkBar!({ selectedIds: [...selectedIds], rows, clearSelection, refetch: () => void query.refetch() })}
           <button type="button" className="ml-auto text-xs font-semibold text-slate-700 underline" onClick={clearSelection}>
@@ -140,7 +140,7 @@ export function AccountingCatalogListPage({
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
@@ -172,7 +172,7 @@ export function AccountingCatalogListPage({
                 }}
               >
                 {bulkEnabled ? (
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-3 py-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                     <input type="checkbox" aria-label={`Select ${row.display_name}`} checked={selectedIds.has(row.id)} onChange={() => toggleId(row.id)} />
                   </td>
                 ) : null}

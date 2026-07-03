@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { resolveApiUrl } from "../../api/client";
+import { apiRequest } from "../../api/client";
 
 type VendorsSyncStatus = {
   total_local: number;
@@ -11,24 +11,17 @@ type VendorsSyncStatus = {
   last_reconcile_at: string | null;
 };
 
+// VENDOR-401: use apiRequest (not raw fetch): it targets the API host via VITE_API_BASE_URL, sends
+// auth cookies (credentials: include), and parses JSON. A raw fetch omits credentials, so the
+// cross-origin ih35_session cookie is never sent → backend requireAuth returns 401 on a valid
+// session → "Unable to load sync status". This mirrors the CustomersSyncPanel fix (#1535 route family).
 async function fetchVendorsStatus(operatingCompanyId: string): Promise<VendorsSyncStatus> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  const res = await fetch(resolveApiUrl(`/api/v1/qbo-sync/vendors/status?${params}`));
-  if (!res.ok) {
-    const detail = res.status === 401 ? "Sign in required" : `HTTP ${res.status}`;
-    throw new Error(`Failed to load vendors sync status (${detail})`);
-  }
-  return res.json() as Promise<VendorsSyncStatus>;
+  return apiRequest<VendorsSyncStatus>(`/api/v1/qbo-sync/vendors/status?${params}`);
 }
 
 async function postVendorsAction(path: string, operatingCompanyId: string) {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ operating_company_id: operatingCompanyId }),
-  });
-  if (!res.ok) throw new Error(`Vendors sync action failed (${res.status})`);
-  return res.json();
+  return apiRequest(path, { method: "POST", body: { operating_company_id: operatingCompanyId } });
 }
 
 function formatRelative(iso: string | null) {
@@ -102,7 +95,7 @@ export function VendorsSyncPanel({ operatingCompanyId }: Props) {
           </span>
           <button
             type="button"
-            className="rounded border border-border px-3 py-1"
+            className="rounded-sm border border-border px-3 py-1"
             onClick={() => statusQuery.refetch()}
           >
             Retry
@@ -115,7 +108,7 @@ export function VendorsSyncPanel({ operatingCompanyId }: Props) {
       )}
       <button
         type="button"
-        className="rounded bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50"
+        className="rounded-sm bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50"
         disabled={busy || !operatingCompanyId}
         onClick={() => pullMutation.mutate()}
       >
@@ -123,7 +116,7 @@ export function VendorsSyncPanel({ operatingCompanyId }: Props) {
       </button>
       <button
         type="button"
-        className="rounded border border-border px-3 py-1 disabled:opacity-50"
+        className="rounded-sm border border-border px-3 py-1 disabled:opacity-50"
         disabled={busy || !operatingCompanyId}
         onClick={() => reconcileMutation.mutate()}
       >

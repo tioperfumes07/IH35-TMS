@@ -131,9 +131,9 @@ export function VendorMappingResolutionPage() {
   return (
     <div className="space-y-4 p-4">
       <PageHeader title="Samsara Vendor Mapping Resolution" subtitle="Resolve unmapped, duplicate, and drifted driver-to-vendor mappings" />
-      {!companyId ? <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">Select an operating company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Select an operating company.</div> : null}
       {integrityQuery.isError ? (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           Failed to load vendor mapping integrity.
           <button className="ml-2 underline" type="button" onClick={() => void integrityQuery.refetch()}>
             Retry
@@ -141,9 +141,9 @@ export function VendorMappingResolutionPage() {
         </div>
       ) : null}
 
-      <div className="rounded border border-slate-200 bg-white p-3 text-xs text-slate-600">{totalsText(payload)}</div>
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">{totalsText(payload)}</div>
 
-      <section className="rounded border border-slate-200 bg-white">
+      <section className="rounded-sm border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Unmapped drivers</div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">
@@ -189,7 +189,7 @@ export function VendorMappingResolutionPage() {
         </div>
       </section>
 
-      <section className="rounded border border-slate-200 bg-white">
+      <section className="rounded-sm border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Duplicate mappings</div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">
@@ -236,7 +236,7 @@ export function VendorMappingResolutionPage() {
         </div>
       </section>
 
-      <section className="rounded border border-slate-200 bg-white">
+      <section className="rounded-sm border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Name mismatch</div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">
@@ -287,7 +287,7 @@ export function VendorMappingResolutionPage() {
 
       {draft ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded border border-slate-200 bg-white p-4 shadow-xl">
+          <div className="w-full max-w-2xl rounded-sm border border-slate-200 bg-white p-4 shadow-xl">
             <div className="mb-3 text-sm font-semibold text-slate-900">{draft.label}</div>
 
             {draft.type === "link" ? (
@@ -296,7 +296,7 @@ export function VendorMappingResolutionPage() {
                 <input
                   value={draft.qbo_vendor_id}
                   onChange={(e) => setDraft({ ...draft, qbo_vendor_id: e.target.value })}
-                  className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
                   placeholder="vendor UUID or qbo_id"
                 />
               </label>
@@ -309,7 +309,7 @@ export function VendorMappingResolutionPage() {
                   <input
                     value={draft.canonical_qbo_vendor_id}
                     onChange={(e) => setDraft({ ...draft, canonical_qbo_vendor_id: e.target.value })}
-                    className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                    className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
                     placeholder="vendor UUID or qbo_id"
                   />
                 </label>
@@ -318,7 +318,7 @@ export function VendorMappingResolutionPage() {
                   <input
                     value={draft.deprecated_qbo_vendor_ids_csv}
                     onChange={(e) => setDraft({ ...draft, deprecated_qbo_vendor_ids_csv: e.target.value })}
-                    className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                    className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
                     placeholder="id-1,id-2"
                   />
                 </label>
@@ -331,12 +331,12 @@ export function VendorMappingResolutionPage() {
                 <input
                   value={draft.qbo_vendor_id}
                   onChange={(e) => setDraft({ ...draft, qbo_vendor_id: e.target.value })}
-                  className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
                 />
               </label>
             ) : null}
 
-            <div className="mb-3 rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+            <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
               <div className="font-semibold text-slate-900">Before / after preview</div>
               <div className="mt-1">Before: {preview?.before}</div>
               <div className="mt-1">After: {preview?.after}</div>

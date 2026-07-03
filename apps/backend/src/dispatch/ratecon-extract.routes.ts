@@ -3,15 +3,51 @@
 // audit record, and return the extraction for the Book Load wizard to prefill (EDITABLE draft — never auto-books).
 // Flag OFF → 409 policy error (no silent behavior). sha256 duplicate guard surfaces prior use (dispatcher decides).
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import * as Sentry from "@sentry/node";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { getObjectBytes } from "../storage/r2-client.js";
 import { extractRateConPdf, RateConTooLargeError } from "./ratecon-extract.service.js";
-import { AnthropicNotConfiguredError } from "../ai/anthropic-messages.js";
+import {
+  AnthropicNotConfiguredError,
+  AnthropicRateLimitError,
+  AnthropicTimeoutError,
+} from "../ai/anthropic-messages.js";
 
 export const RATECON_EXTRACT_FLAG_KEY = "RATECON_EXTRACT_ENABLED";
+
+export type RateconErrorClassification = {
+  status: number;
+  body: Record<string, unknown>;
+  /** Whether to capture this to Sentry (true for every 5xx — the silent-500 gap that hid the model outage). */
+  capture: boolean;
+  phase: string;
+};
+
+/** Pure error classifier for the extraction endpoint — unit-testable without Fastify. An upstream AI failure
+ *  (bad response, timeout, rate limit, or an HTTP error incl. a retired-model 404) maps to 502 extraction_failed
+ *  and is captured; it must never fall through to a silent 500. */
+export function classifyRateconExtractError(err: unknown): RateconErrorClassification {
+  if (err instanceof RateConTooLargeError) {
+    return { status: 413, body: { error: "ratecon_too_large", reason: err.reason }, capture: false, phase: "too_large" };
+  }
+  const msg = String((err as Error)?.message ?? "");
+  if (err instanceof AnthropicNotConfiguredError) {
+    return { status: 503, body: { error: "ai_not_configured" }, capture: true, phase: "ai_not_configured" };
+  }
+  const isUpstreamAiFailure =
+    msg.startsWith("ratecon_parse_error") ||
+    msg.startsWith("anthropic_parse_error") ||
+    msg.startsWith("anthropic_http_") ||
+    err instanceof AnthropicTimeoutError ||
+    err instanceof AnthropicRateLimitError;
+  if (isUpstreamAiFailure) {
+    return { status: 502, body: { error: "extraction_failed", detail: msg.slice(0, 120) }, capture: true, phase: "extraction_failed" };
+  }
+  return { status: 500, body: { error: "internal_error" }, capture: true, phase: "internal_error" };
+}
 
 const extractBody = z.object({
   operating_company_id: z.string().uuid(),
@@ -90,13 +126,11 @@ export async function registerRateConExtractRoutes(app: FastifyInstance) {
           });
         });
       } catch (err) {
-        if (err instanceof RateConTooLargeError) return reply.code(413).send({ error: "ratecon_too_large", reason: err.reason });
-        if (err instanceof AnthropicNotConfiguredError) return reply.code(503).send({ error: "ai_not_configured" });
-        const msg = String((err as Error)?.message ?? "");
-        if (msg.startsWith("ratecon_parse_error") || msg.startsWith("anthropic_parse_error"))
-          return reply.code(502).send({ error: "extraction_failed", detail: msg.slice(0, 120) });
-        req.log?.error({ err }, "ratecon extract failed");
-        return reply.code(500).send({ error: "internal_error" });
+        const c = classifyRateconExtractError(err);
+        if (c.status >= 500) req.log?.error({ err }, `ratecon extract failed (${c.phase})`);
+        // Capture every 5xx to Sentry — the silent-500 gap is what hid the retired-model outage for 24h.
+        if (c.capture) Sentry.captureException(err, { tags: { subsystem: "ratecon-extract", phase: c.phase } });
+        return reply.code(c.status).send(c.body);
       }
     },
   );

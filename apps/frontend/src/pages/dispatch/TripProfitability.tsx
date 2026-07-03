@@ -94,11 +94,11 @@ export function TripProfitability() {
       <PageHeader title="Trip Profitability" subtitle="Company Settlement Report — NB + SB roll-up per trip" />
 
       {/* Filters */}
-      <section className="flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white p-3">
+      <section className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
         <label className="text-sm">
           From
           <DatePicker
-            className="ml-2 rounded border px-2 py-1"
+            className="ml-2 rounded-sm border px-2 py-1"
             value={period.start}
             onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           />
@@ -106,14 +106,14 @@ export function TripProfitability() {
         <label className="text-sm">
           To
           <DatePicker
-            className="ml-2 rounded border px-2 py-1"
+            className="ml-2 rounded-sm border px-2 py-1"
             value={period.end}
             onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />
         </label>
         <button
           type="button"
-          className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44]"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44]"
           onClick={() => setApplied(period)}
         >
           Apply
@@ -122,10 +122,10 @@ export function TripProfitability() {
 
       {/* State messages */}
       {query.isLoading && (
-        <div className="rounded border bg-white p-4 text-sm text-slate-500">Loading…</div>
+        <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">Loading…</div>
       )}
       {query.isError && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           Failed to load trip profitability.{" "}
           <button type="button" className="underline" onClick={() => query.refetch()}>
             Retry
@@ -147,7 +147,7 @@ export function TripProfitability() {
               highlight: t.net_profit_cents < 0 ? "text-red-600" : "text-green-700",
             },
           ].map(({ label, value, highlight }) => (
-            <div key={label} className="rounded border bg-white p-3">
+            <div key={label} className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">{label}</div>
               <div className={`text-lg font-semibold ${highlight ?? "text-slate-900"}`}>{value}</div>
             </div>
@@ -157,13 +157,13 @@ export function TripProfitability() {
 
       {/* Table */}
       {query.data && sorted.length === 0 && (
-        <div className="rounded border bg-white p-4 text-sm text-slate-500">
+        <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">
           No trips closed in this period.
         </div>
       )}
 
       {sorted.length > 0 && (
-        <div className="overflow-x-auto rounded border bg-white">
+        <div className="overflow-x-auto rounded-sm border bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold text-slate-600">
               <tr>

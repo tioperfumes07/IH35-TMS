@@ -109,12 +109,12 @@ export function EscrowDeductionsPendingTab() {
       <PageHeader title="Escrow Deductions Pending Review" subtitle="Auto-proposed abandonment deductions requiring Owner decision." />
 
       {!isOwner ? (
-        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Owner approval required.
         </div>
       ) : null}
 
-      <div className="rounded border border-gray-200 bg-white">
+      <div className="rounded-sm border border-gray-200 bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-600">
@@ -195,20 +195,20 @@ export function EscrowDeductionsPendingTab() {
       >
         {selected ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
+            <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
               <div><span className="font-semibold">Driver:</span> {selected.driver_name ?? "—"}</div>
               <div><span className="font-semibold">Load:</span> {selected.load_number ?? selected.load_id ?? "—"}</div>
               <div><span className="font-semibold">Proposed:</span> {formatMoney(selected.proposed_amount_cents)}</div>
               <div><span className="font-semibold">Reason:</span> {selected.proposed_reason}</div>
               <div className="space-y-1">
                 <div className="font-semibold">Breakdown JSON</div>
-                <pre className="max-h-56 overflow-auto rounded bg-slate-900 p-2 text-xs text-slate-100">
+                <pre className="max-h-56 overflow-auto rounded-sm bg-slate-900 p-2 text-xs text-slate-100">
                   {JSON.stringify(selected.proposed_breakdown_json ?? {}, null, 2)}
                 </pre>
               </div>
             </div>
 
-            <div className="space-y-3 rounded border border-gray-200 p-3">
+            <div className="space-y-3 rounded-sm border border-gray-200 p-3">
               <label className="block text-xs font-semibold uppercase text-gray-600">Override Amount (optional)</label>
               {/* M-1: dollars-mode QBO money entry ($ + .00). Value stays a DOLLAR number; the *100 → cents
                   conversion at submit is unchanged (byte-for-byte override_amount_cents). */}
@@ -221,13 +221,13 @@ export function EscrowDeductionsPendingTab() {
 
               <label className="block text-xs font-semibold uppercase text-gray-600">Review Notes</label>
               <textarea
-                className="min-h-28 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                className="min-h-28 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 value={reviewNotes}
                 onChange={(event) => setReviewNotes(event.target.value)}
                 placeholder="Explain decision..."
               />
 
-              {errorMessage ? <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700">{errorMessage}</div> : null}
+              {errorMessage ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700">{errorMessage}</div> : null}
 
               <div className="flex items-center justify-end gap-2">
                 <Button
@@ -241,7 +241,7 @@ export function EscrowDeductionsPendingTab() {
                 </Button>
                 <Button
                   size="sm"
-                  className="!border-amber-500 !bg-amber-500 hover:!bg-amber-600"
+                  className="border-amber-500! bg-amber-500! hover:bg-amber-600!"
                   disabled={!isOwner}
                   loading={approveMutation.isPending}
                   onClick={() => void approveMutation.mutateAsync()}

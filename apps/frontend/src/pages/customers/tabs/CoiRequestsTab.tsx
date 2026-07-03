@@ -69,7 +69,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
   const requests = useMemo(() => requestsQuery.data ?? [], [requestsQuery.data]);
 
   if (!operatingCompanyId) {
-    return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage COI requests.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage COI requests.</div>;
   }
 
   return (
@@ -82,7 +82,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
       </div>
 
       {requestsQuery.isLoading ? <div className="text-sm text-gray-500">Loading COI requests...</div> : null}
-      {requestsQuery.isError ? <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load COI requests.</div> : null}
+      {requestsQuery.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load COI requests.</div> : null}
 
       {!requestsQuery.isLoading && requests.length === 0 ? <div className="text-sm text-gray-600">No COI requests yet.</div> : null}
 
@@ -130,7 +130,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
         <div className="grid gap-2">
           <label className="text-xs font-semibold text-gray-600">
             Policy
-            <select className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" value={policyId} onChange={(event) => setPolicyId(event.target.value)}>
+            <select className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={policyId} onChange={(event) => setPolicyId(event.target.value)}>
               <option value="">No policy selected</option>
               {(policiesQuery.data ?? []).map((policy) => (
                 <option key={policy.id} value={policy.id}>
@@ -143,7 +143,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
             Insurer Email
             <input
               type="email"
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={insurerEmail}
               onChange={(event) => setInsurerEmail(event.target.value)}
               placeholder="insurer@example.com"
@@ -153,7 +153,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
             Additional Notes
             <textarea
               rows={3}
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               placeholder="Optional details for the request"

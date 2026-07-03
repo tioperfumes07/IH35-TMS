@@ -32,12 +32,12 @@ export function DriverSettingsPage() {
     <div className="space-y-3 text-sm">
       <h2 className="text-base font-semibold">{t("driver.settings_title")}</h2>
       <p className="text-xs text-slate-600">Use the header to switch {t("driver.language")} (EN/ES).</p>
-      <button type="button" className="rounded bg-slate-900 px-3 py-2 text-xs font-semibold text-white" onClick={() => void enablePush()}>
+      <button type="button" className="rounded-sm bg-slate-900 px-3 py-2 text-xs font-semibold text-white" onClick={() => void enablePush()}>
         {t("driver.push_enable")}
       </button>
       <button
         type="button"
-        className="rounded border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800"
+        className="rounded-sm border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800"
         onClick={() => void restartTour.mutate()}
       >
         Restart guided tour

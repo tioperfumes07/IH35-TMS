@@ -58,7 +58,7 @@ export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
   );
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-3" data-testid="unit-permits-tab">
+    <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-permits-tab">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-900">Unit Permits</h3>
         <span className="text-xs text-gray-500">Oversize · Overweight · Hazmat</span>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { convertFineToLiability, getSafetyFines } from "../../api/safety";
 import { CompanyViolationsPage } from "./CompanyViolationsPage";
@@ -59,7 +60,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
             <SelectCombobox
               value={recordTypeFilter}
               onChange={(event) => setRecordTypeFilter(event.target.value as RecordTypeFilter)}
-              className="rounded border border-gray-300 px-2 py-1 text-xs"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
             >
               <option value="driver-fine">Driver Fine</option>
               <option value="company-violation">Company Violation</option>
@@ -79,7 +80,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
             <SelectCombobox
               value={recordTypeFilter}
               onChange={(event) => setRecordTypeFilter(event.target.value as RecordTypeFilter)}
-              className="rounded border border-gray-300 px-2 py-1 text-xs"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
             >
               <option value="driver-fine">Driver Fine</option>
               <option value="company-violation">Company Violation</option>
@@ -88,7 +89,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
           <SelectCombobox
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="">All statuses</option>
             <option value="open">Open</option>
@@ -100,7 +101,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
           <SelectCombobox
             value={subjectTypeFilter}
             onChange={(event) => setSubjectTypeFilter(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="">All subjects</option>
             <option value="driver">Driver</option>
@@ -110,13 +111,13 @@ export function FinesPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
         >
           + Create Fine
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-[980px] w-full text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>
@@ -132,7 +133,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
           <tbody>
             {rows.map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.issued_date ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.issued_date)}</td>
                 <td className="px-2 py-1">{String(row.subject_type ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.issued_by_authority ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.violation_description ?? "—")}</td>

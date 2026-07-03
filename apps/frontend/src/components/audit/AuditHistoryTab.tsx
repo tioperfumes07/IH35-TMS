@@ -121,7 +121,7 @@ function EventRow({ event }: { event: AuditEvent }) {
         <td className="px-3 py-2">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 hover:bg-gray-200 rounded"
+            className="p-1 hover:bg-gray-200 rounded-sm"
             aria-label={expanded ? "Collapse" : "Expand"}
           >
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -208,11 +208,11 @@ export function AuditHistoryTab({ operatingCompanyId, entityType, entityId }: Au
   return (
     <div className="space-y-4">
       {/* QBO-style Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded border">
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-sm border">
         <select
           value={filters.eventType}
           onChange={(e) => setFilters((f) => ({ ...f, eventType: e.target.value }))}
-          className="text-xs px-2 py-1 border rounded bg-white"
+          className="text-xs px-2 py-1 border rounded-sm bg-white"
         >
           {EVENT_TYPE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -224,7 +224,7 @@ export function AuditHistoryTab({ operatingCompanyId, entityType, entityId }: Au
         <select
           value={filters.status}
           onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
-          className="text-xs px-2 py-1 border rounded bg-white"
+          className="text-xs px-2 py-1 border rounded-sm bg-white"
         >
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -238,13 +238,13 @@ export function AuditHistoryTab({ operatingCompanyId, entityType, entityId }: Au
           placeholder="Actor (email or ID)"
           value={filters.actor}
           onChange={(e) => setFilters((f) => ({ ...f, actor: e.target.value }))}
-          className="text-xs px-2 py-1 border rounded bg-white w-40"
+          className="text-xs px-2 py-1 border rounded-sm bg-white w-40"
         />
 
         <select
           value={filters.source}
           onChange={(e) => setFilters((f) => ({ ...f, source: e.target.value }))}
-          className="text-xs px-2 py-1 border rounded bg-white"
+          className="text-xs px-2 py-1 border rounded-sm bg-white"
         >
           {SOURCE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -256,13 +256,13 @@ export function AuditHistoryTab({ operatingCompanyId, entityType, entityId }: Au
         <DatePicker
           value={filters.from}
           onChange={(next) => setFilters((f) => ({ ...f, from: next }))}
-          className="text-xs px-2 py-1 border rounded bg-white"
+          className="text-xs px-2 py-1 border rounded-sm bg-white"
         />
 
         <DatePicker
           value={filters.to}
           onChange={(next) => setFilters((f) => ({ ...f, to: next }))}
-          className="text-xs px-2 py-1 border rounded bg-white"
+          className="text-xs px-2 py-1 border rounded-sm bg-white"
         />
 
         <button
@@ -280,7 +280,7 @@ export function AuditHistoryTab({ operatingCompanyId, entityType, entityId }: Au
         <button
           onClick={exportCSV}
           disabled={!data?.events?.length}
-          className="text-xs px-2 py-1 bg-white border rounded hover:bg-gray-100 flex items-center gap-1 disabled:opacity-50"
+          className="text-xs px-2 py-1 bg-white border rounded-sm hover:bg-gray-100 flex items-center gap-1 disabled:opacity-50"
         >
           <Download size={12} />
           Export CSV
@@ -295,7 +295,7 @@ export function AuditHistoryTab({ operatingCompanyId, entityType, entityId }: Au
       ) : !data?.events?.length ? (
         <div className="text-sm text-gray-500 p-4">No audit events found for this record.</div>
       ) : (
-        <div className="overflow-x-auto border rounded">
+        <div className="overflow-x-auto border rounded-sm">
           <table className="w-full text-left">
             <thead className="bg-gray-100 border-b">
               <tr>

@@ -88,7 +88,7 @@ export function LoanWizardPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           The Loan Wizard is not yet enabled for this company. (Feature flag{" "}
           <code>{FINANCE_HUB_LOAN_WIZARD_FLAG}</code> is off.)
         </div>
@@ -104,7 +104,7 @@ export function LoanWizardPage() {
         value={form[key]}
         onChange={set(key)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
       />
     </label>
   );
@@ -115,7 +115,7 @@ export function LoanWizardPage() {
       {header}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Inputs */}
-        <div className="rounded border border-slate-200 bg-white p-4">
+        <div className="rounded-sm border border-slate-200 bg-white p-4">
           <h2 className="mb-3 text-sm font-semibold text-slate-700">Loan & asset</h2>
           <div className="grid grid-cols-2 gap-3">
             {field("Asset name", "assetName", "text", "Peterbilt 579")}
@@ -133,7 +133,7 @@ export function LoanWizardPage() {
           <button
             onClick={onPreview}
             disabled={busy || !companyId}
-            className="mt-4 rounded bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="mt-4 rounded-sm bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
             {busy ? "Computing…" : "Preview"}
           </button>
@@ -141,14 +141,14 @@ export function LoanWizardPage() {
         </div>
 
         {/* Preview pane */}
-        <div className="rounded border border-slate-200 bg-white p-4">
+        <div className="rounded-sm border border-slate-200 bg-white p-4">
           <h2 className="mb-3 text-sm font-semibold text-slate-700">Will auto-create (preview)</h2>
           {!preview ? (
             <p className="text-sm text-slate-500">Enter loan details and Preview to see every generated entry.</p>
           ) : (
             <div className="space-y-4 text-sm">
               <div className="flex items-center gap-2">
-                <span className={preview.balanced ? "rounded bg-slate-100 px-2 py-0.5 text-slate-700" : "rounded bg-red-100 px-2 py-0.5 text-red-700"}>
+                <span className={preview.balanced ? "rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700" : "rounded-sm bg-red-100 px-2 py-0.5 text-red-700"}>
                   {preview.balanced ? "Opening JE balanced ✓" : "Opening JE does NOT balance"}
                 </span>
               </div>

@@ -68,7 +68,7 @@ export function ErrorMonitorPage() {
         <p className="text-sm text-red-700">Failed to load errors ({String((query.error as Error)?.message ?? query.error)}).</p>
       ) : null}
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs text-gray-800">
           <thead className="bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
@@ -109,7 +109,7 @@ export function ErrorMonitorPage() {
                         "—"
                       )}
                       {open && row.detail ? (
-                        <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded bg-gray-50 p-2 text-[11px] text-gray-800">
+                        <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-sm bg-gray-50 p-2 text-[11px] text-gray-800">
                           {JSON.stringify(row.detail, null, 2)}
                         </pre>
                       ) : null}

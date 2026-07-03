@@ -104,12 +104,12 @@ export function CollectionsPage() {
   return (
     <AccountingSubNavWrapper title="AR collections workflow" subtitle="Accrual-only overdue follow-up queue with contact history and next-action scheduling.">
 
-      {!companyId ? <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before managing collections.</p> : null}
+      {!companyId ? <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before managing collections.</p> : null}
 
-      <div className="grid gap-3 rounded border border-gray-200 bg-white p-3 lg:grid-cols-4">
+      <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-4">
         <label className="text-xs text-gray-600">
           Aging bucket
-          <select value={bucket} onChange={(event) => setBucket(event.target.value as CollectionAgingBucket | "all")} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm">
+          <select value={bucket} onChange={(event) => setBucket(event.target.value as CollectionAgingBucket | "all")} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm">
             <option value="all">All</option>
             <option value="1_30">1-30</option>
             <option value="31_60">31-60</option>
@@ -119,7 +119,7 @@ export function CollectionsPage() {
         </label>
         <label className="text-xs text-gray-600">
           Owner
-          <select value={owner} onChange={(event) => setOwner(event.target.value)} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm">
+          <select value={owner} onChange={(event) => setOwner(event.target.value)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm">
             <option value="all">All</option>
             <option value="unassigned">Unassigned</option>
           </select>
@@ -132,9 +132,9 @@ export function CollectionsPage() {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-5">
-        <section className="rounded border border-gray-200 bg-white lg:col-span-2">
+        <section className="rounded-sm border border-gray-200 bg-white lg:col-span-2">
           <header className="border-b border-gray-100 px-3 py-2 text-sm font-semibold">Queue</header>
-          <div className="max-h-[34rem] overflow-auto">
+          <div className="max-h-136 overflow-auto">
             {(tasksQuery.data?.tasks ?? []).map((task) => (
               <button
                 key={task.id}
@@ -156,7 +156,7 @@ export function CollectionsPage() {
           </div>
         </section>
 
-        <section className="rounded border border-gray-200 bg-white lg:col-span-3">
+        <section className="rounded-sm border border-gray-200 bg-white lg:col-span-3">
           <header className="border-b border-gray-100 px-3 py-2 text-sm font-semibold">Task detail</header>
           {!selectedTask ? (
             <p className="px-3 py-4 text-sm text-gray-500">Select a task from the queue.</p>
@@ -173,10 +173,10 @@ export function CollectionsPage() {
                 </div>
               </div>
 
-              <div className="grid gap-2 rounded border border-gray-200 p-3 md:grid-cols-3">
+              <div className="grid gap-2 rounded-sm border border-gray-200 p-3 md:grid-cols-3">
                 <label className="text-xs text-gray-600">
                   Contact type
-                  <select value={contactType} onChange={(event) => setContactType(event.target.value as CollectionContactType)} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm">
+                  <select value={contactType} onChange={(event) => setContactType(event.target.value as CollectionContactType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm">
                     <option value="call">Call</option>
                     <option value="email">Email</option>
                     <option value="letter">Letter</option>
@@ -185,7 +185,7 @@ export function CollectionsPage() {
                 </label>
                 <label className="text-xs text-gray-600">
                   Next action date
-                  <DatePicker value={nextActionDate} onChange={(next) => setNextActionDate(next)} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+                  <DatePicker value={nextActionDate} onChange={(next) => setNextActionDate(next)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
                 </label>
                 <div className="flex items-end justify-end">
                   <Button size="sm" onClick={() => logContactMutation.mutate()} disabled={!companyId || !selectedTask || !contactNotes.trim() || logContactMutation.isPending}>
@@ -194,14 +194,14 @@ export function CollectionsPage() {
                 </div>
                 <label className="md:col-span-3 text-xs text-gray-600">
                   Notes
-                  <textarea value={contactNotes} onChange={(event) => setContactNotes(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]" placeholder="Conversation summary, promises, dispute details..." />
+                  <textarea value={contactNotes} onChange={(event) => setContactNotes(event.target.value)} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" placeholder="Conversation summary, promises, dispute details..." />
                 </label>
               </div>
 
-              <div className="grid gap-2 rounded border border-gray-200 p-3 md:grid-cols-3">
+              <div className="grid gap-2 rounded-sm border border-gray-200 p-3 md:grid-cols-3">
                 <label className="text-xs text-gray-600 md:col-span-2">
                   Resolution
-                  <select value={resolution} onChange={(event) => setResolution(event.target.value as CollectionTaskResolution)} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm">
+                  <select value={resolution} onChange={(event) => setResolution(event.target.value as CollectionTaskResolution)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm">
                     <option value="paid">Paid</option>
                     <option value="disputed">Disputed</option>
                     <option value="written_off">Written off</option>
@@ -218,7 +218,7 @@ export function CollectionsPage() {
                 <h3 className="mb-2 text-sm font-semibold">Contact timeline</h3>
                 <div className="space-y-2">
                   {(detailQuery.data?.contacts ?? []).map((contact) => (
-                    <article key={contact.id} className="rounded border border-gray-200 p-2 text-sm">
+                    <article key={contact.id} className="rounded-sm border border-gray-200 p-2 text-sm">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
                         <span className="font-semibold uppercase">{contact.contact_type}</span>
                         <span>{new Date(contact.created_at).toLocaleString()}</span>

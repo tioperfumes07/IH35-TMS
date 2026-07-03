@@ -50,7 +50,7 @@ export function PostingLineagePage() {
       {lineageQuery.isError ? <ReportBlockVPendingBanner error={lineageQuery.error} onRetry={() => void lineageQuery.reset()} /> : null}
 
       <form
-        className="grid gap-3 rounded border border-slate-200 bg-white p-3 md:grid-cols-[220px_1fr_auto]"
+        className="grid gap-3 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[220px_1fr_auto]"
         onSubmit={(e) => {
           e.preventDefault();
           const next = {
@@ -65,7 +65,7 @@ export function PostingLineagePage() {
         <label className="text-xs text-slate-600">
           Source type
           <input
-            className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             placeholder="invoice | bill | payment"
@@ -74,7 +74,7 @@ export function PostingLineagePage() {
         <label className="text-xs text-slate-600">
           Source transaction id
           <input
-            className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
             placeholder="source_transaction_id"
@@ -100,7 +100,7 @@ export function PostingLineagePage() {
       </form>
 
       {submitted ? (
-        <div className="rounded border border-slate-200 bg-white p-3">
+        <div className="rounded-sm border border-slate-200 bg-white p-3">
           <div className="text-sm font-semibold text-slate-800">
             Source: {submitted.sourceType} / {submitted.sourceId}
           </div>
@@ -114,7 +114,7 @@ export function PostingLineagePage() {
       ) : null}
 
       {lineageQuery.data?.rows && lineageQuery.data.rows.length > 0 ? (
-        <div className="overflow-auto rounded border border-slate-200 bg-white">
+        <div className="overflow-auto rounded-sm border border-slate-200 bg-white">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
               <tr>
@@ -151,7 +151,7 @@ export function PostingLineagePage() {
       ) : null}
 
       {lineageQuery.data?.rows && lineageQuery.data.rows.length === 0 ? (
-        <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-500">
+        <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">
           No posting lineage rows found for this source transaction.
         </div>
       ) : null}

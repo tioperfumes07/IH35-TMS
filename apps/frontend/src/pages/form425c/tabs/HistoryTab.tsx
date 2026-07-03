@@ -16,7 +16,7 @@ function periodLabel(value: string) {
 export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
   return (
     <div className="space-y-3 p-4">
-      <div className="rounded border bg-white">
+      <div className="rounded-sm border bg-white">
         <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Filing History</div>
         {loading ? <div className="p-3 text-sm text-slate-500">Loading reports...</div> : null}
         {!loading && !reports.length ? <div className="p-3 text-sm text-slate-500">No reports found.</div> : null}
@@ -39,11 +39,11 @@ export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
                   <td className="px-3 py-2">{r.filed_at ? new Date(r.filed_at).toLocaleString() : "—"}</td>
                   <td className="px-3 py-2">{r.amended_from_uuid ? "Yes" : "No"}</td>
                   <td className="px-3 py-2 text-right">
-                    <button type="button" className="mr-2 rounded border px-2 py-1 text-xs" onClick={() => onOpen(r.id)}>
+                    <button type="button" className="mr-2 rounded-sm border px-2 py-1 text-xs" onClick={() => onOpen(r.id)}>
                       Open
                     </button>
                     {r.status === "filed" ? (
-                      <button type="button" className="rounded bg-slate-800 px-2 py-1 text-xs text-white" onClick={() => onAmend(r.id)}>
+                      <button type="button" className="rounded-sm bg-slate-800 px-2 py-1 text-xs text-white" onClick={() => onAmend(r.id)}>
                         Amend
                       </button>
                     ) : null}

@@ -20,12 +20,12 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
             key={k}
             type="button"
             onClick={() => setActiveCompany(k)}
-            className={`rounded px-3 py-2 text-sm font-semibold ${activeCompany === k ? "bg-slate-800 text-white" : "bg-white text-slate-700 border"}`}
+            className={`rounded-sm px-3 py-2 text-sm font-semibold ${activeCompany === k ? "bg-slate-800 text-white" : "bg-white text-slate-700 border"}`}
           >
             {profiles[k].name}
           </button>
         ))}
-        <button type="button" onClick={onSave} disabled={saving} className="ml-auto rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onSave} disabled={saving} className="ml-auto rounded-sm bg-emerald-600 px-3 py-2 text-sm font-semibold text-white">
           {saving ? "Saving..." : "Save Defaults"}
         </button>
       </div>
@@ -45,7 +45,7 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
           <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
             {label}
             <input
-              className="mt-1 w-full rounded border px-2 py-1.5 text-sm font-normal normal-case"
+              className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm font-normal normal-case"
               value={String((profile as Record<string, unknown>)[key] ?? "")}
               onChange={(e) => onChange(activeCompany, (draft) => ({ ...draft, [key]: e.target.value }))}
             />
@@ -53,13 +53,13 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
         ))}
       </div>
 
-      <div className="rounded border bg-white p-3">
+      <div className="rounded-sm border bg-white p-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Bank Accounts</div>
         <div className="space-y-2">
           {profile.bankAccounts.map((account, idx) => (
             <div key={`${account.id}-${idx}`} className="grid grid-cols-1 gap-2 md:grid-cols-4">
               <input
-                className="rounded border px-2 py-1.5 text-sm"
+                className="rounded-sm border px-2 py-1.5 text-sm"
                 value={account.id}
                 placeholder="Account code"
                 onChange={(e) =>
@@ -71,7 +71,7 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
                 }
               />
               <input
-                className="rounded border px-2 py-1.5 text-sm md:col-span-2"
+                className="rounded-sm border px-2 py-1.5 text-sm md:col-span-2"
                 value={account.label}
                 placeholder="Label"
                 onChange={(e) =>
@@ -83,7 +83,7 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
                 }
               />
               <input
-                className="rounded border px-2 py-1.5 text-sm"
+                className="rounded-sm border px-2 py-1.5 text-sm"
                 value={account.number}
                 placeholder="Last digits"
                 onChange={(e) =>
@@ -99,7 +99,7 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
         </div>
       </div>
 
-      <div className="rounded border bg-white">
+      <div className="rounded-sm border bg-white">
         <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Default Questionnaire Answers</div>
         {QUESTIONNAIRE.map((q) => {
           const answer = profile.defaultAnswers[q.num] ?? (q.expectYes ? "yes" : "no");

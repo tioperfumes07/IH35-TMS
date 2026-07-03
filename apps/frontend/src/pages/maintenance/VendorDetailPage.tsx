@@ -31,7 +31,7 @@ export function VendorDetailPage() {
 
       {vendor ? (
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded border border-gray-200 bg-white p-3 text-xs">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <h3 className="mb-2 text-sm font-semibold text-gray-900">Profile</h3>
             <dl className="space-y-1">
               <div><dt className="inline font-medium">Code:</dt> <dd className="inline">{vendor.code}</dd></div>
@@ -51,14 +51,14 @@ export function VendorDetailPage() {
             </p>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3 text-xs">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <h3 className="mb-2 text-sm font-semibold text-gray-900">Notes</h3>
             <p className="whitespace-pre-wrap text-gray-700">{vendor.notes ?? vendor.description ?? "No notes recorded."}</p>
           </div>
         </div>
       ) : null}
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-sm font-semibold text-gray-900">Work Order History</h3>
         <table className="w-full text-left text-xs">
           <thead className="text-[11px] uppercase text-gray-600">
@@ -91,7 +91,7 @@ export function VendorDetailPage() {
         </table>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-sm font-semibold text-gray-900">Invoice History</h3>
         <table className="w-full text-left text-xs">
           <thead className="text-[11px] uppercase text-gray-600">

@@ -215,7 +215,7 @@ export function DailyTasksPage() {
         }
       />
 
-      <div className="rounded border border-slate-200 bg-white px-3 py-2">
+      <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs text-slate-600">View</div>
           <div className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
@@ -244,10 +244,10 @@ export function DailyTasksPage() {
       </div>
 
       {!companyId ? (
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select an operating company first.</div>
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select an operating company first.</div>
       ) : null}
 
-      <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="border-b border-slate-200 bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600">
             <tr>
@@ -345,7 +345,7 @@ export function DailyTasksPage() {
             </label>
             <input
               id="daily-task-title"
-              className="w-full rounded border border-slate-300 px-2 py-1.5"
+              className="w-full rounded-sm border border-slate-300 px-2 py-1.5"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="Call 40 drivers today"
@@ -357,7 +357,7 @@ export function DailyTasksPage() {
             </label>
             <textarea
               id="daily-task-description"
-              className="min-h-[84px] w-full rounded border border-slate-300 px-2 py-1.5"
+              className="min-h-[84px] w-full rounded-sm border border-slate-300 px-2 py-1.5"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Include scope, dependencies, and expected output."
@@ -370,7 +370,7 @@ export function DailyTasksPage() {
               </label>
               <SelectCombobox
                 id="daily-task-assignee"
-                className="w-full rounded border border-slate-300 px-2 py-1.5"
+                className="w-full rounded-sm border border-slate-300 px-2 py-1.5"
                 value={assignedToUserId}
                 onChange={(event) => setAssignedToUserId(event.target.value)}
               >
@@ -388,7 +388,7 @@ export function DailyTasksPage() {
               </label>
               <SelectCombobox
                 id="daily-task-priority"
-                className="w-full rounded border border-slate-300 px-2 py-1.5"
+                className="w-full rounded-sm border border-slate-300 px-2 py-1.5"
                 value={priority}
                 onChange={(event) => setPriority(event.target.value as DailyTask["priority"])}
               >
@@ -407,7 +407,7 @@ export function DailyTasksPage() {
             <input
               id="daily-task-due"
               type="datetime-local"
-              className="w-full rounded border border-slate-300 px-2 py-1.5"
+              className="w-full rounded-sm border border-slate-300 px-2 py-1.5"
               value={dueLocal}
               onChange={(event) => setDueLocal(event.target.value)}
               min={toDateTimeLocalValue(new Date(Date.now() - 60_000))}
@@ -451,10 +451,10 @@ function TaskDetailDrawer({
           </Button>
         </div>
         {!task ? (
-          <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">Loading task details…</div>
+          <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">Loading task details…</div>
         ) : (
           <div className="space-y-3 text-xs">
-            <div className="rounded border border-slate-200 bg-slate-50 p-3">
+            <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
               <div className="text-sm font-semibold text-slate-900">{task.title}</div>
               {task.description ? <p className="mt-1 text-slate-700">{task.description}</p> : null}
               <div className="mt-2 grid grid-cols-1 gap-1 text-slate-700">
@@ -475,10 +475,10 @@ function TaskDetailDrawer({
               </div>
               <div className="space-y-2">
                 {events.length === 0 ? (
-                  <div className="rounded border border-slate-200 bg-white p-3 text-slate-500">No activity events yet.</div>
+                  <div className="rounded-sm border border-slate-200 bg-white p-3 text-slate-500">No activity events yet.</div>
                 ) : null}
                 {events.map((event) => (
-                  <div key={event.id} className="rounded border border-slate-200 bg-white p-3">
+                  <div key={event.id} className="rounded-sm border border-slate-200 bg-white p-3">
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
                         <CheckCircle2 className="h-3.5 w-3.5" />
@@ -488,7 +488,7 @@ function TaskDetailDrawer({
                     </div>
                     <div className="text-[11px] text-slate-700">Actor: {event.actor_user_id}</div>
                     {Object.keys(event.payload ?? {}).length > 0 ? (
-                      <pre className="mt-2 overflow-x-auto rounded bg-slate-50 p-2 text-[10px] text-slate-600">
+                      <pre className="mt-2 overflow-x-auto rounded-sm bg-slate-50 p-2 text-[10px] text-slate-600">
                         {JSON.stringify(event.payload, null, 2)}
                       </pre>
                     ) : null}

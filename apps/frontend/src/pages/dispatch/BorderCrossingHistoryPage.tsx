@@ -60,7 +60,7 @@ export function BorderCrossingHistoryPage() {
         title="Border Crossing History"
         subtitle="Past wizard completions with eManifest re-download"
         actions={
-          <Link to="/dispatch/border-crossing" className="rounded border px-3 py-1.5 text-sm">
+          <Link to="/dispatch/border-crossing" className="rounded-sm border px-3 py-1.5 text-sm">
             New crossing
           </Link>
         }
@@ -78,7 +78,7 @@ export function BorderCrossingHistoryPage() {
           exportFilename="border-crossing-history"
         />
 
-        <aside className="rounded border bg-white p-4 text-sm">
+        <aside className="rounded-sm border bg-white p-4 text-sm">
           {!selected ? (
             <p className="text-gray-500">Select a row for detail.</p>
           ) : (
@@ -97,7 +97,7 @@ export function BorderCrossingHistoryPage() {
                 <span className="text-gray-500">Broker status:</span> {selected.customs_broker_status ?? "—"}
               </p>
               {pdfUrl ? (
-                <a href={pdfUrl} className="inline-block rounded border px-3 py-1.5" target="_blank" rel="noreferrer">
+                <a href={pdfUrl} className="inline-block rounded-sm border px-3 py-1.5" target="_blank" rel="noreferrer">
                   Re-download eManifest PDF
                 </a>
               ) : null}

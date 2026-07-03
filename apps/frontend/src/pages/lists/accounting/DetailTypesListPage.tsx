@@ -73,16 +73,16 @@ export function DetailTypesListPage() {
         }
       />
 
-      <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
         Detail Types sub-classify each Account Type. The canonical set is system-locked and shared across
         entities; you can add your own custom detail types per entity. Account Type itself is a fixed
         reference taxonomy (read-only).
       </div>
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-2">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Account Type
-          <SelectCombobox value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
             <option value="">All account types</option>
             {(accountTypesQuery.data ?? []).map((t) => (
               <option key={t.id} value={t.id}>{t.group} · {t.accountType}</option>
@@ -91,7 +91,7 @@ export function DetailTypesListPage() {
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Status
-          <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
             <option value="true">Active</option>
             <option value="false">Inactive</option>
             <option value="all">All</option>
@@ -99,7 +99,7 @@ export function DetailTypesListPage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
@@ -122,13 +122,13 @@ export function DetailTypesListPage() {
                 <td className="px-3 py-2 font-medium text-slate-800">{row.name}</td>
                 <td className="px-3 py-2 text-xs text-slate-600">{row.code || "—"}</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${row.is_system ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-800"}`}>
+                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${row.is_system ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-800"}`}>
                     {row.is_system ? "System (locked)" : "Custom"}
                   </span>
                 </td>
                 <td className="px-3 py-2 text-slate-700">{row.sort_order}</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${row.is_active ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-600"}`}>
+                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${row.is_active ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-600"}`}>
                     {row.is_active ? "Active" : "Inactive"}
                   </span>
                 </td>
@@ -200,7 +200,7 @@ function DetailTypeModal({
             value={form.account_type_id}
             disabled={mode === "edit"}
             onChange={(e) => setForm((v) => ({ ...v, account_type_id: e.target.value }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
           >
             <option value="">Select an account type…</option>
             {accountTypes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
@@ -210,25 +210,25 @@ function DetailTypeModal({
 
         <label className="block text-xs font-semibold text-gray-600">
           Detail Type name
-          <input value={form.name} onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={form.name} onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Code (optional)
-          <input value={form.code} onChange={(e) => setForm((v) => ({ ...v, code: e.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={form.code} onChange={(e) => setForm((v) => ({ ...v, code: e.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Description
-          <textarea value={form.description} onChange={(e) => setForm((v) => ({ ...v, description: e.target.value }))} rows={2} className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+          <textarea value={form.description} onChange={(e) => setForm((v) => ({ ...v, description: e.target.value }))} rows={2} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Sort order
-          <input type="number" value={form.sort_order} onChange={(e) => setForm((v) => ({ ...v, sort_order: Number(e.target.value || 0) }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input type="number" value={form.sort_order} onChange={(e) => setForm((v) => ({ ...v, sort_order: Number(e.target.value || 0) }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
 
-        {submitError ? <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
+        {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
 
         <div className="flex items-center justify-between">
           <div>

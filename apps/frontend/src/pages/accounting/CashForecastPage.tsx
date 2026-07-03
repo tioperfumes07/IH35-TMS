@@ -68,7 +68,7 @@ export function CashForecastPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
       <div className="grid gap-3 lg:grid-cols-3">
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <h2 className="mb-2 text-sm font-semibold">Configuration</h2>
           <div className="space-y-2">
             {(
@@ -110,7 +110,7 @@ export function CashForecastPage() {
           </div>
         </div>
 
-        <div className="rounded border border-gray-200 bg-white p-3 lg:col-span-2">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 lg:col-span-2">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-sm font-semibold">Projected balance</h2>
             <label className="text-xs text-gray-600">
@@ -118,7 +118,7 @@ export function CashForecastPage() {
               <select
                 value={weeks}
                 onChange={(event) => setWeeks(Number(event.target.value))}
-                className="ml-2 h-8 rounded border border-gray-300 px-2 text-sm"
+                className="ml-2 h-8 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 <option value={13}>13</option>
                 <option value={8}>8</option>
@@ -132,7 +132,7 @@ export function CashForecastPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="week_start" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(value) => money(Number(value))} width={88} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value: number) => money(value)} />
+                <Tooltip formatter={(value) => money(Number(value))} />
                 <Line type="monotone" dataKey="projected_balance" stroke="#1F2A44" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -140,7 +140,7 @@ export function CashForecastPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>

@@ -16,7 +16,7 @@ export function CurrentAssignmentSection({
   const load = assignment.current_load as Record<string, unknown> | null;
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h2 className="mb-2 text-sm font-semibold text-slate-900">Current assignment</h2>
       <div className="grid gap-3 text-xs text-slate-700 md:grid-cols-3">
         <div>

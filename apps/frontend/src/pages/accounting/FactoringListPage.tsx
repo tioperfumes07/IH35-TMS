@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listFactoringAdvances, type FactoringAdvance } from "../../api/accounting";
@@ -26,7 +27,7 @@ function money(cents: number) {
 }
 
 function statusPill(status: FactoringAdvance["status"]) {
-  const base = "rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+  const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
   if (status === "reserve_held" || status === "collected") return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
   if (status === "released") return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
@@ -81,7 +82,7 @@ export function FactoringListPage() {
         <div className="grid gap-2 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
-            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -91,15 +92,15 @@ export function FactoringListPage() {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Search
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="FAC-2026-00012" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="FAC-2026-00012" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Date from
-            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Date to
-            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Page size
@@ -114,7 +115,7 @@ export function FactoringListPage() {
         </div>
       </DataPanel>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50">
             <tr className="text-gray-600">
@@ -146,7 +147,7 @@ export function FactoringListPage() {
             {pagedRows.map((row) => (
               <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/factoring/${row.id}`)}>
                 <td className="px-3 py-2 font-semibold text-gray-900">{row.display_id}</td>
-                <td className="px-3 py-2 text-gray-700">{new Date(row.submitted_at).toLocaleDateString("en-US")}</td>
+                <td className="px-3 py-2 text-gray-700">{formatDateUS(row.submitted_at)}</td>
                 <td className="px-3 py-2 text-gray-700">{row.factoring_company_name}</td>
                 <td className="px-3 py-2 text-gray-700">{row.invoice_count}</td>
                 <td className="px-3 py-2 text-gray-700">{money(row.invoice_total_cents)}</td>
@@ -160,12 +161,12 @@ export function FactoringListPage() {
           </tbody>
         </table>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         <span>{pageRangeStart}-{pageRangeEnd} of {totalRows}</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+            className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
             disabled={safeCurrentPage <= 1}
             onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
           >
@@ -174,7 +175,7 @@ export function FactoringListPage() {
           <span>Page {safeCurrentPage} of {totalPages}</span>
           <button
             type="button"
-            className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+            className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
           >

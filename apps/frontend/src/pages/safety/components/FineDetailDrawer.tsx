@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { formatDateUS } from "../../../lib/formatDate";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { FineConvertConfirmModal } from "./FineConvertConfirmModal";
@@ -80,7 +81,7 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
           <div><strong>Subject:</strong> {String(fine.subject_type ?? "—")}</div>
           <div><strong>Violation:</strong> {String(fine.violation_description ?? "—")}</div>
           <div><strong>Authority:</strong> {String(fine.issued_by_authority ?? "—")}</div>
-          <div><strong>Issued date:</strong> {String(fine.issued_date ?? "").slice(0, 10)}</div>
+          <div><strong>Issued date:</strong> {formatDateUS(fine.issued_date)}</div>
           <div><strong>Amount:</strong> ${(Number(fine.amount_cents ?? 0) / 100).toFixed(2)}</div>
           <div><strong>Converted liability:</strong> {String(fine.converted_to_liability_id ?? "No")}</div>
         </div>
@@ -94,11 +95,11 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
         </div>
 
         {canConvert ? (
-          <div className="mt-4 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <div className="mt-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
             <p>Converting this fine creates a driver liability and locks violation/amount fields.</p>
             <button
               type="button"
-              className="mt-2 rounded bg-amber-700 px-3 py-1 font-semibold text-white"
+              className="mt-2 rounded-sm bg-amber-700 px-3 py-1 font-semibold text-white"
               onClick={() => setConfirmOpen(true)}
             >
               Convert to Driver Liability

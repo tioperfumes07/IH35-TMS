@@ -5,7 +5,7 @@ export function MedicalCardSection({ medical }: { medical: Record<string, unknow
   const days = medical.days_until_expiration as number | null | undefined;
 
   return (
-    <section className={`rounded border p-4 ${colorClass}`}>
+    <section className={`rounded-sm border p-4 ${colorClass}`}>
       <h2 className="mb-2 text-sm font-semibold text-slate-900">Medical card (DOT)</h2>
       <p className="text-xs text-slate-700">
         Expires {String(medical.expiration ?? "—")}

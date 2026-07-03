@@ -4,6 +4,7 @@ import { customerQualityKind, customerQualityClass } from "../../lib/quality-bad
 import { CardLink } from "../../components/shared/CardLink";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useListState, type ListQueryStatus } from "../../components/list-state";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -20,6 +21,8 @@ function customerQualityRating(paymentScore: string | null | undefined, overallF
 
 type Props = {
   customers: Customer[];
+  /** Roster query status so the empty state renders only once the fetch settles. */
+  status: ListQueryStatus;
   totalCount: number;
   page: number;
   pageSize: number;
@@ -36,6 +39,7 @@ type Props = {
 
 export function CustomerListSidebar({
   customers,
+  status,
   totalCount: _totalCount,
   page,
   pageSize,
@@ -75,25 +79,29 @@ export function CustomerListSidebar({
     [pageStart, pageSize, sortedCustomers]
   );
 
+  // LIST-EMPTY-1: the empty message renders only after the roster settles.
+  const listState = useListState(status, pagedCustomers.length === 0);
+
   return (
-    <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2" data-customer-list-sidebar="true">
+    <aside className="w-[216px] shrink-0 rounded-sm border border-gray-200 bg-white p-2" data-customer-list-sidebar="true">
       <SidebarPagination
         page={safePage}
         pageSize={pageSize}
         totalCount={filteredCount}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
+        loading={listState.isLoading}
       />
       <input
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         placeholder="Search by name or details"
-        className="mb-2 mt-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+        className="mb-2 mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
       />
       <SelectCombobox
         value={sortByName}
         onChange={(event) => onSortChange(event.target.value as "name_asc" | "name_desc")}
-        className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+        className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
       >
         <option value="name_asc">Sort by name</option>
         <option value="name_desc">Sort by name (Z-A)</option>
@@ -119,7 +127,8 @@ export function CustomerListSidebar({
             </p>
           </CardLink>
         ))}
-        {pagedCustomers.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No customers found.</p> : null}
+        {listState.isLoading ? <p className="px-1 py-2 text-xs text-slate-500">Loading customers…</p> : null}
+        {listState.isEmpty ? <p className="px-1 py-2 text-xs text-slate-500">No customers found.</p> : null}
       </div>
       <div className="mt-2">
         <SidebarPagination
@@ -128,6 +137,7 @@ export function CustomerListSidebar({
           totalCount={filteredCount}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
+          loading={listState.isLoading}
         />
       </div>
     </aside>

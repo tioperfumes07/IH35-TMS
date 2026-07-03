@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,24 +38,24 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-6">
-        <input value={form.driver_uuid} placeholder="Search by driver" onChange={(e) => setForm((v) => ({ ...v, driver_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <input value={form.reason_uuid} placeholder="Filter by reason" onChange={(e) => setForm((v) => ({ ...v, reason_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-6">
+        <input value={form.driver_uuid} placeholder="Search by driver" onChange={(e) => setForm((v) => ({ ...v, driver_uuid: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.reason_uuid} placeholder="Filter by reason" onChange={(e) => setForm((v) => ({ ...v, reason_uuid: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
         {/* M-1 (GUARD inline FAIL): this is the inline-create fine AMOUNT (sent to createInternalFine as
             dollars; display is $row.amount.toFixed(2)). The old "Show 25" placeholder was misleading — it is
             money, not a row limit. dollars-mode MoneyInput; amount stays a DOLLAR number, byte-for-byte. */}
         <MoneyInput valueDollars={form.amount || null} onChangeDollars={(d) => setForm((v) => ({ ...v, amount: d ?? 0 }))} ariaLabel="Fine amount (USD)" placeholder="Amount (USD)" />
-        <DatePicker value={form.imposed_date} onChange={(next) => setForm((v) => ({ ...v, imposed_date: next }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <SelectCombobox value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
+        <DatePicker value={form.imposed_date} onChange={(next) => setForm((v) => ({ ...v, imposed_date: next }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <SelectCombobox value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="disputed">Disputed</option>
         </SelectCombobox>
-        <button type="button" className="rounded bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!form.driver_uuid || !form.reason_uuid || createMutation.isPending} onClick={() => createMutation.mutate()}>
+        <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!form.driver_uuid || !form.reason_uuid || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Internal Fine
         </button>
       </div>
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>
@@ -69,7 +70,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           <tbody>
             {(query.data?.fines ?? []).map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.imposed_date ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.imposed_date)}</td>
                 <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.reason_code ?? row.reason_name ?? "—")}</td>
                 <td className="px-2 py-1">${Number(row.amount ?? 0).toFixed(2)}</td>

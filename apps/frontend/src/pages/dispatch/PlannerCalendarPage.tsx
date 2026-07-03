@@ -51,7 +51,7 @@ function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {
       {...attributes}
       type="button"
       data-testid={`planner-load-${load.load_number}`}
-      className={`mb-1 block w-full rounded border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] text-slate-700 ${isDragging ? "opacity-60" : ""}`}
+      className={`mb-1 block w-full rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] text-slate-700 ${isDragging ? "opacity-60" : ""}`}
       title={`${load.customer_name ?? "Load"} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
       onClick={() => navigate(`/dispatch?load_id=${encodeURIComponent(load.id)}`)}
     >
@@ -93,7 +93,7 @@ function PlannerDayCell({
       {showHosOverlay && dayBlackouts.length > 0 ? (
         <div
           data-testid={`planner-hos-overlay-${driverId}-${day}`}
-          className="mb-1 rounded bg-slate-200/80 px-1 py-0.5 text-[10px] text-slate-600"
+          className="mb-1 rounded-sm bg-slate-200/80 px-1 py-0.5 text-[10px] text-slate-600"
           title={dayBlackouts.map((slot) => `${slot.reason} ${slot.start_at}`).join(" · ")}
         >
           HOS rest
@@ -162,7 +162,7 @@ export function PlannerCalendarPage() {
   };
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   const drivers = weekQ.data?.drivers ?? [];
@@ -176,19 +176,19 @@ export function PlannerCalendarPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded border px-3 py-1.5 text-sm"
+              className="rounded-sm border px-3 py-1.5 text-sm"
               onClick={() => setWeekStart(dayKey(addDays(parseWeekStart(weekStart), -7)))}
             >
               Previous week
             </button>
             <button
               type="button"
-              className="rounded border px-3 py-1.5 text-sm"
+              className="rounded-sm border px-3 py-1.5 text-sm"
               onClick={() => setWeekStart(dayKey(addDays(parseWeekStart(weekStart), 7)))}
             >
               Next week
             </button>
-            <label className="flex items-center gap-2 rounded border px-3 py-1.5 text-sm">
+            <label className="flex items-center gap-2 rounded-sm border px-3 py-1.5 text-sm">
               <input
                 type="checkbox"
                 checked={showHosOverlay}
@@ -196,14 +196,14 @@ export function PlannerCalendarPage() {
               />
               HOS overlay
             </label>
-            <Link to="/dispatch" className="rounded border px-3 py-1.5 text-sm">
+            <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
               Dispatch Home
             </Link>
           </div>
         }
       />
 
-      <section className="overflow-x-auto rounded border bg-white">
+      <section className="overflow-x-auto rounded-sm border bg-white">
         {weekQ.isLoading ? (
           <div className="p-6 text-center text-sm text-slate-500">Loading planner week…</div>
         ) : (

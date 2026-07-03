@@ -24,7 +24,7 @@ export function DomainCatalogHubPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Link to="/lists" className="inline-flex items-center gap-1 rounded px-1 py-0.5 font-semibold text-slate-600 hover:underline focus:outline-none focus:ring-2 focus:ring-slate-400">
+        <Link to="/lists" className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 font-semibold text-slate-600 hover:underline focus:outline-hidden focus:ring-2 focus:ring-slate-400">
           <span aria-hidden="true">←</span> Lists &amp; Catalogs
         </Link>
         <span aria-hidden="true">/</span>
@@ -33,7 +33,7 @@ export function DomainCatalogHubPage() {
 
       <PageHeader title={`${domain.label} catalogs`} subtitle="Catalogs in this domain" />
 
-      <div className="rounded border border-slate-200 bg-white p-3">
+      <div className="rounded-sm border border-slate-200 bg-white p-3">
         <div className="space-y-2">
           <DomainCatalogSection domain={domain} onCatalogClick={openCatalog} />
         </div>

@@ -52,7 +52,7 @@ export function FleetBulkControls({
       <label className="flex items-center gap-1">
         <span className="text-slate-700">Change Status</span>
         <select
-          className="h-7 rounded border border-gray-300 bg-white px-1 text-xs"
+          className="h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs"
           aria-label="Change Status"
           value={status}
           onChange={(e) => setStatus(e.target.value as FleetBulkStatus | "")}
@@ -68,7 +68,7 @@ export function FleetBulkControls({
       <label className="flex items-center gap-1">
         <span className="text-slate-700">Change Type</span>
         <select
-          className="h-7 rounded border border-gray-300 bg-white px-1 text-xs"
+          className="h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs"
           aria-label="Change Type"
           value={vehicleType}
           onChange={(e) => setVehicleType(e.target.value)}
@@ -85,7 +85,7 @@ export function FleetBulkControls({
         <label className="flex items-center gap-1">
           <span className="text-slate-700">Trailer TYPE</span>
           <select
-            className="h-7 rounded border border-gray-300 bg-white px-1 text-xs"
+            className="h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs"
             aria-label="Trailer TYPE"
             value={trailerType}
             onChange={(e) => setTrailerType(e.target.value as (typeof TRAILER_EQUIPMENT_TYPE_OPTIONS)[number] | "")}
@@ -101,7 +101,7 @@ export function FleetBulkControls({
       ) : null}
       <button
         type="button"
-        className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+        className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
         disabled={applying || (!status && !vehicleType && !trailerType)}
         onClick={() => {
           const payload: BulkApplyPayload = {};
@@ -132,7 +132,7 @@ export function BulkActionBar({ selectedCount, vehicleTypes, onApply, onClear, a
   }
 
   return (
-    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-100 p-2 text-xs">
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-xs">
       <span className="font-semibold text-slate-700">Selected: {selectedCount} units</span>
       <FleetBulkControls vehicleTypes={vehicleTypes} onApply={onApply} applying={applying} />
       <button type="button" className="text-slate-700 underline" onClick={onClear}>

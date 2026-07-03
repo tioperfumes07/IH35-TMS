@@ -145,13 +145,13 @@ export function QuickCreateEntityModal({
       <form className="space-y-3 text-sm" onSubmit={submit}>
         <label className="block">
           <span className="text-xs font-medium text-gray-600">{kind === "vendor" || kind === "customer" ? "Display name *" : "Name *"}</span>
-          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("name")} aria-label="Quick create name" />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("name")} aria-label="Quick create name" />
         </label>
 
         {kind === "vendor" || kind === "customer" ? (
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Company / {kind === "vendor" ? "Vendor" : "Customer"} name</span>
-            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("company")} aria-label="Quick create company name" placeholder="Defaults to display name" />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("company")} aria-label="Quick create company name" placeholder="Defaults to display name" />
           </label>
         ) : null}
 
@@ -159,35 +159,35 @@ export function QuickCreateEntityModal({
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label>
               <span className="text-xs font-medium text-gray-600">Email</span>
-              <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("email")} aria-label="Quick create email" />
+              <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("email")} aria-label="Quick create email" />
             </label>
             <label>
               <span className="text-xs font-medium text-gray-600">Phone</span>
-              <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("phone")} aria-label="Quick create phone" />
+              <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("phone")} aria-label="Quick create phone" />
             </label>
           </div>
         ) : null}
 
         {/* W-FIX-7b: render-v5 §D vendor fields (persist to mdata.qbo_vendors columns, mig 202606231500). */}
         {kind === "vendor" ? (
-          <div className="space-y-2 rounded border border-gray-100 bg-gray-50 p-2">
+          <div className="space-y-2 rounded-sm border border-gray-100 bg-gray-50 p-2">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Vendor details (optional)</div>
             <label className="block">
               <span className="text-xs font-medium text-gray-600">Street</span>
-              <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("street")} aria-label="Quick create street" />
+              <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("street")} aria-label="Quick create street" />
             </label>
             <div className="grid grid-cols-3 gap-2">
-              <label><span className="text-xs font-medium text-gray-600">City</span><input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("city")} aria-label="Quick create city" /></label>
-              <label><span className="text-xs font-medium text-gray-600">State</span><input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("state")} aria-label="Quick create state" /></label>
-              <label><span className="text-xs font-medium text-gray-600">Zip</span><input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("zip")} aria-label="Quick create zip" /></label>
+              <label><span className="text-xs font-medium text-gray-600">City</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("city")} aria-label="Quick create city" /></label>
+              <label><span className="text-xs font-medium text-gray-600">State</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("state")} aria-label="Quick create state" /></label>
+              <label><span className="text-xs font-medium text-gray-600">Zip</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("zip")} aria-label="Quick create zip" /></label>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <label><span className="text-xs font-medium text-gray-600">Account no.</span><input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("accountNumber")} aria-label="Quick create account number" /></label>
-              <label><span className="text-xs font-medium text-gray-600">Terms</span><input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("terms")} aria-label="Quick create terms" /></label>
+              <label><span className="text-xs font-medium text-gray-600">Account no.</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("accountNumber")} aria-label="Quick create account number" /></label>
+              <label><span className="text-xs font-medium text-gray-600">Terms</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("terms")} aria-label="Quick create terms" /></label>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <label><span className="text-xs font-medium text-gray-600">Tax ID (1099)</span><input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("taxId")} aria-label="Quick create tax id" /></label>
-              <label><span className="text-xs font-medium text-gray-600">Default expense account</span><input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("defaultExpenseAccount")} aria-label="Quick create default expense account" /></label>
+              <label><span className="text-xs font-medium text-gray-600">Tax ID (1099)</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("taxId")} aria-label="Quick create tax id" /></label>
+              <label><span className="text-xs font-medium text-gray-600">Default expense account</span><input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("defaultExpenseAccount")} aria-label="Quick create default expense account" /></label>
             </div>
             <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
               <input type="checkbox" {...form.register("track1099")} aria-label="Quick create track 1099" /> Track 1099?
@@ -199,11 +199,11 @@ export function QuickCreateEntityModal({
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label>
               <span className="text-xs font-medium text-gray-600">SKU</span>
-              <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("sku")} aria-label="Quick create SKU" />
+              <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("sku")} aria-label="Quick create SKU" />
             </label>
             <label>
               <span className="text-xs font-medium text-gray-600">Unit price (cents)</span>
-              <input type="number" className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("unitPrice")} aria-label="Quick create unit price cents" />
+              <input type="number" className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("unitPrice")} aria-label="Quick create unit price cents" />
             </label>
           </div>
         ) : null}
@@ -212,22 +212,22 @@ export function QuickCreateEntityModal({
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label>
               <span className="text-xs font-medium text-gray-600">Qty received *</span>
-              <input type="number" className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("qtyReceived")} aria-label="Quick create qty received" />
+              <input type="number" className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("qtyReceived")} aria-label="Quick create qty received" />
             </label>
             <label>
               <span className="text-xs font-medium text-gray-600">Location</span>
-              <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" {...form.register("location")} aria-label="Quick create part location" />
+              <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("location")} aria-label="Quick create part location" />
             </label>
           </div>
         ) : null}
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
-          <button type="button" className="rounded border border-gray-300 px-3 py-1.5" onClick={onClose} aria-label="Cancel quick create">
+          <button type="button" className="rounded-sm border border-gray-300 px-3 py-1.5" onClick={onClose} aria-label="Cancel quick create">
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded bg-emerald-600 px-3 py-1.5 font-medium text-white disabled:opacity-60"
+            className="rounded-sm bg-emerald-600 px-3 py-1.5 font-medium text-white disabled:opacity-60"
             disabled={saving}
             aria-label="Save quick create"
           >

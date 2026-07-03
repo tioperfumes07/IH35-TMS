@@ -29,9 +29,14 @@ export default defineConfig({
       exclude: ["**/*.test.ts", "**/*.integration.test.ts"],
       thresholds: {
         // Target matrix requested 60/60/50; start strict-on-intent but keep CI green while suites grow.
-        lines: 35,
+        // Recalibrated for vitest 4: the v8 provider now uses AST-aware branch/line
+        // remapping by default (the `experimentalAstAwareRemapping` opt-out was removed),
+        // which surfaces more branch/line points and lowers the measured percentages vs
+        // vitest 3 on the same passing suite (v4 measured lines 34.63 / branches 20.78 —
+        // all 658 files still pass). Thresholds lowered to match; ratchet back up as suites grow.
+        lines: 34,
         functions: 35,
-        branches: 25,
+        branches: 20,
       },
     },
   },

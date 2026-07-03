@@ -41,7 +41,7 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
   const selectedExif = useMemo(() => selected?.exif_metadata ?? {}, [selected]);
 
   return (
-    <section className="rounded border border-slate-200 bg-white p-3" data-testid="damage-report-detail">
+    <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="damage-report-detail">
       <h3 className="text-sm font-semibold text-slate-900">Photo evidence (EXIF chain-of-custody)</h3>
       <p className="mb-2 text-xs text-slate-500">Unaltered originals with custody audit trail</p>
 
@@ -50,7 +50,7 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
           <button
             key={photo.id}
             type="button"
-            className="rounded border border-slate-200 px-3 py-2 text-left text-xs hover:border-[#1f2a44]"
+            className="rounded-sm border border-slate-200 px-3 py-2 text-left text-xs hover:border-[#1f2a44]"
             onClick={() => {
               setSelected(photo);
               setViewerOpen(true);

@@ -27,7 +27,7 @@ function ChannelBadge({ channel }: { channel: string }) {
       ? "bg-slate-100 text-slate-700"
       : "bg-emerald-50 text-emerald-700";
   return (
-    <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${classes}`}>
+    <span className={`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${classes}`}>
       <ChannelIcon channel={channel} />
       {channel === "in_app" ? "In-App" : channel.toUpperCase()}
     </span>
@@ -111,7 +111,7 @@ export function DriverCommunicationsTab({
         <h2 className="text-sm font-semibold text-gray-900">Communications Timeline</h2>
         <div className="flex items-center gap-2">
           <select
-            className="rounded border border-gray-300 px-2 py-1.5 text-xs text-gray-700"
+            className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs text-gray-700"
             value={channel}
             onChange={(e) => handleChannelChange(e.target.value)}
           >
@@ -123,7 +123,7 @@ export function DriverCommunicationsTab({
           </select>
           <button
             type="button"
-            className="rounded border border-gray-300 p-1.5 text-gray-500 hover:bg-gray-50"
+            className="rounded-sm border border-gray-300 p-1.5 text-gray-500 hover:bg-gray-50"
             onClick={() => void query.refetch()}
             aria-label="Refresh"
           >
@@ -150,7 +150,7 @@ export function DriverCommunicationsTab({
                     : "border-gray-200 bg-white"
                 }`}
               >
-                <div className="mt-0.5 flex-shrink-0">
+                <div className="mt-0.5 shrink-0">
                   <ChannelIcon channel={entry.channel} />
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
@@ -158,13 +158,13 @@ export function DriverCommunicationsTab({
                     <ChannelBadge channel={entry.channel} />
                     <DirectionBadge direction={entry.direction} />
                     {entry.urgency ? (
-                      <span className="rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 uppercase">
+                      <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 uppercase">
                         {entry.urgency}
                       </span>
                     ) : null}
                     <DeliveryBadge status={entry.delivery_status} />
                   </div>
-                  <p className="break-words text-sm text-gray-900">{entry.message}</p>
+                  <p className="wrap-break-word text-sm text-gray-900">{entry.message}</p>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
                     <span>{formatTs(entry.created_at)}</span>
                     {entry.delivery_ref ? <span>ref: {entry.delivery_ref}</span> : null}
@@ -184,7 +184,7 @@ export function DriverCommunicationsTab({
                   type="button"
                   disabled={page === 0}
                   onClick={() => setPage((p) => p - 1)}
-                  className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+                  className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
                 >
                   Prev
                 </button>
@@ -192,7 +192,7 @@ export function DriverCommunicationsTab({
                   type="button"
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => p + 1)}
-                  className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+                  className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
                 >
                   Next
                 </button>

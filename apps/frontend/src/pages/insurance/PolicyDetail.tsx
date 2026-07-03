@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -95,11 +96,11 @@ export function PolicyDetail() {
   );
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view policy details.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view policy details.</div>;
   }
 
   if (!policyId) {
-    return <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">Missing policy ID.</div>;
+    return <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Missing policy ID.</div>;
   }
 
   if (policyQuery.isLoading) {
@@ -107,7 +108,7 @@ export function PolicyDetail() {
   }
 
   if (policyQuery.isError || !policyQuery.data) {
-    return <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load policy details.</div>;
+    return <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load policy details.</div>;
   }
 
   const policy = policyQuery.data;
@@ -128,7 +129,7 @@ export function PolicyDetail() {
 
   return (
     <div className="space-y-4">
-      <header className="rounded border border-gray-200 bg-white p-4">
+      <header className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <button type="button" className="text-xs text-slate-700 underline" onClick={() => navigate("/safety/insurance/policies")}>
@@ -150,11 +151,11 @@ export function PolicyDetail() {
         </div>
 
         {editing ? (
-          <div className="mt-3 grid gap-2 rounded border border-gray-200 bg-gray-50 p-3 md:grid-cols-4">
+          <div className="mt-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-4">
             <label className="text-xs font-semibold text-slate-600">
               Status
               <select
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={status}
                 onChange={(event) => setStatus(event.target.value as InsurancePolicyStatus)}
               >
@@ -167,7 +168,7 @@ export function PolicyDetail() {
             <label className="text-xs font-semibold text-slate-600">
               Effective date
               <DatePicker
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={effectiveDate}
                 onChange={(next) => setEffectiveDate(next)}
               />
@@ -175,7 +176,7 @@ export function PolicyDetail() {
             <label className="text-xs font-semibold text-slate-600">
               Expiry date
               <DatePicker
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={expiryDate}
                 onChange={(next) => setExpiryDate(next)}
               />
@@ -196,7 +197,7 @@ export function PolicyDetail() {
         ) : null}
       </header>
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">Units Assigned</h3>
         <div className="mt-2 overflow-x-auto">
           <table className="min-w-full text-left text-xs">
@@ -216,7 +217,7 @@ export function PolicyDetail() {
                     </Link>
                   </td>
                   <td className="px-2 py-1.5 text-slate-700">{formatMoney(unit.insured_value_cents)}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{unit.created_at.slice(0, 10)}</td>
+                  <td className="px-2 py-1.5 text-slate-700">{formatDateUS(unit.created_at)}</td>
                 </tr>
               ))}
               {policy.units.length === 0 ? (
@@ -231,7 +232,7 @@ export function PolicyDetail() {
         </div>
       </section>
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">Payment Schedule (INS-05)</h3>
         <div className="mt-2 overflow-x-auto">
           <table className="min-w-full text-left text-xs">
@@ -262,7 +263,7 @@ export function PolicyDetail() {
         </div>
       </section>
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">COI History (INS-04)</h3>
         <div className="mt-2 overflow-x-auto">
           <table className="min-w-full text-left text-xs">
@@ -276,7 +277,7 @@ export function PolicyDetail() {
             <tbody>
               {coiRows.map((row) => (
                 <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 text-slate-700">{row.requested_at.slice(0, 10)}</td>
+                  <td className="px-2 py-1.5 text-slate-700">{formatDateUS(row.requested_at)}</td>
                   <td className="px-2 py-1.5 text-slate-700">{row.status}</td>
                   <td className="px-2 py-1.5 text-slate-700">{row.document_url ? <a href={row.document_url} className="text-slate-700 underline">View</a> : "-"}</td>
                 </tr>
@@ -294,7 +295,7 @@ export function PolicyDetail() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
-        <div className="rounded border border-gray-200 bg-white p-4">
+        <div className="rounded-sm border border-gray-200 bg-white p-4">
           <h3 className="text-sm font-semibold text-slate-900">Claims (INS-06)</h3>
           <div className="mt-2 overflow-x-auto">
             <table className="min-w-full text-left text-xs">
@@ -325,7 +326,7 @@ export function PolicyDetail() {
           </div>
         </div>
 
-        <div className="rounded border border-gray-200 bg-white p-4">
+        <div className="rounded-sm border border-gray-200 bg-white p-4">
           <h3 className="text-sm font-semibold text-slate-900">Lawsuits (INS-06)</h3>
           <div className="mt-2 overflow-x-auto">
             <table className="min-w-full text-left text-xs">

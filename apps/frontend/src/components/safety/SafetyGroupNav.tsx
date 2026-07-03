@@ -60,11 +60,11 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
                   >
                     <span>{tab.label}</span>
                     {tab.badge === "new" ? (
-                      <span className="rounded px-1.5 py-0.5 text-[8px] font-bold" style={{ background: "#d1fae5", color: "#065f46" }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-[8px] font-bold" style={{ background: "#d1fae5", color: "#065f46" }}>
                         NEW
                       </span>
                     ) : tab.badge === "renamed" ? (
-                      <span className="rounded px-1.5 py-0.5 text-[8px] font-bold" style={{ background: "#fef3c7", color: "#d97706" }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-[8px] font-bold" style={{ background: "#fef3c7", color: "#d97706" }}>
                         RENAMED
                       </span>
                     ) : null}

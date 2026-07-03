@@ -79,7 +79,7 @@ export function QBOBulkLinkPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
       {step === 1 ? (
-        <div className="space-y-3 rounded border border-gray-200 bg-white p-4 text-sm">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-sm">
           <p className="text-gray-600">Link drivers and fleet assets to existing QuickBooks Online vendors and classes (snapshot archive).</p>
           <div className="space-y-2">
             <label className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export function QBOBulkLinkPage() {
                 </Button>
               </div>
               <p className="text-xs text-gray-600">Matches use Levenshtein-style confidence on entity names vs QBO archive labels.</p>
-              <div className="overflow-auto rounded border border-gray-200 bg-white">
+              <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
                 <table className="min-w-full text-left text-xs">
                   <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                     <tr>
@@ -208,7 +208,7 @@ export function QBOBulkLinkPage() {
                 </p>
               ) : null}
               {noMatches.length > 0 ? (
-                <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs">
+                <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs">
                   <div className="font-semibold text-amber-900">No automatic match</div>
                   <ul className="mt-1 max-h-40 list-inside list-disc overflow-auto text-amber-800">
                     {noMatches.map((r) => (
@@ -225,7 +225,7 @@ export function QBOBulkLinkPage() {
       ) : null}
 
       {step === 3 ? (
-        <div className="space-y-3 rounded border border-gray-200 bg-white p-4 text-sm">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-sm">
           <div>
             Summary: <strong>{rows.filter((r) => r.accept && r.entity_kind === "driver").length}</strong> drivers,{" "}
             <strong>{rows.filter((r) => r.accept && r.entity_kind !== "driver").length}</strong> fleet rows accepted for link.

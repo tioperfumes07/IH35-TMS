@@ -161,7 +161,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
     ? (card: ArrivingSoonCardType) => (
         <button
           type="button"
-          className="rounded border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
           onClick={() => setSelectedCard(card)}
         >
           Convert to WO
@@ -182,7 +182,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         <ul className="space-y-1">
           {card.issues.map((issue) => (
             <li key={issue.issue_id} className="flex flex-wrap items-center gap-2 text-xs">
-              <span className={`rounded border px-1.5 py-0.5 text-[10px] ${severityChip(issue.severity)}`}>
+              <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] ${severityChip(issue.severity)}`}>
                 {issue.severity}
               </span>
               <span className="font-medium text-gray-800">{issue.issue_type}</span>

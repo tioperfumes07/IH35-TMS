@@ -378,7 +378,7 @@ export function ParityTable<T>({
               {batchActions ? batchActions(selectedRows) : null}
               <button
                 type="button"
-                className="rounded border border-gray-300 px-1.5 py-0.5"
+                className="rounded-sm border border-gray-300 px-1.5 py-0.5"
                 onClick={() => setSelected(new Set())}
               >
                 Clear
@@ -394,7 +394,7 @@ export function ParityTable<T>({
             <button
               type="button"
               aria-label="Export CSV"
-              className="min-h-11 rounded border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
+              className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
               onClick={exportCsv}
             >
               ⤓ Export
@@ -404,7 +404,7 @@ export function ParityTable<T>({
             <button
               type="button"
               aria-label="Table settings"
-              className="min-h-11 rounded border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
+              className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
               onClick={() => setGearOpen((o) => !o)}
             >
               ⚙
@@ -452,7 +452,7 @@ export function ParityTable<T>({
                 </div>
                 <button
                   type="button"
-                  className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50"
+                  className="mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50"
                   onClick={() => {
                     persist({});
                     setGearOpen(false);
@@ -516,8 +516,8 @@ export function ParityTable<T>({
                       onMouseDown={(e) => startResize(key, e)}
                       onTouchStart={(e) => startResizeTouch(key, e)}
                       onKeyDown={(e) => onResizeKey(key, e)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none select-none hover:bg-gray-300 focus:bg-gray-400 focus:outline-none"
+                      onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none select-none hover:bg-gray-300 focus:bg-gray-400 focus:outline-hidden"
                     />
                   ) : null}
                 </th>
@@ -554,7 +554,7 @@ export function ParityTable<T>({
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                 >
                   {renderExpanded ? (
-                    <td className="px-2 align-top" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <button
                         type="button"
                         aria-label={isExpanded ? "Collapse row" : "Expand row"}
@@ -567,7 +567,7 @@ export function ParityTable<T>({
                     </td>
                   ) : null}
                   {selectable ? (
-                    <td className="px-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label="Select row"
@@ -579,7 +579,7 @@ export function ParityTable<T>({
                   {visibleColumns.map((column) => (
                     <td
                       key={String(column.key)}
-                      className={`overflow-hidden break-words px-2 align-top text-gray-800 ${
+                      className={`overflow-hidden wrap-break-word px-2 align-top text-gray-800 ${
                         column.cellClass ?? column.className ?? ""
                       }`}
                       style={{ paddingTop: d.padY, paddingBottom: d.padY }}
@@ -590,7 +590,7 @@ export function ParityTable<T>({
                     </td>
                   ))}
                   {rowActions ? (
-                    <td className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 text-right" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       {rowActions(row)}
                     </td>
                   ) : null}
@@ -620,7 +620,7 @@ export function ParityTable<T>({
           <label className="flex items-center gap-1">
             <span>Per page</span>
             <select
-              className="h-6 rounded border border-gray-300 px-1"
+              className="h-6 rounded-sm border border-gray-300 px-1"
               value={pageSize}
               onChange={(e) => {
                 const next = Number(e.target.value);
@@ -639,7 +639,7 @@ export function ParityTable<T>({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            className="h-6 rounded border border-gray-300 px-1.5 disabled:opacity-40"
+            className="h-6 rounded-sm border border-gray-300 px-1.5 disabled:opacity-40"
             onClick={() => setPage(1)}
             disabled={safePage <= 1}
           >
@@ -647,7 +647,7 @@ export function ParityTable<T>({
           </button>
           <button
             type="button"
-            className="h-6 rounded border border-gray-300 px-1.5 disabled:opacity-40"
+            className="h-6 rounded-sm border border-gray-300 px-1.5 disabled:opacity-40"
             onClick={() => setPage((c) => Math.max(1, c - 1))}
             disabled={safePage <= 1}
           >
@@ -668,7 +668,7 @@ export function ParityTable<T>({
           ))}
           <button
             type="button"
-            className="h-6 rounded border border-gray-300 px-1.5 disabled:opacity-40"
+            className="h-6 rounded-sm border border-gray-300 px-1.5 disabled:opacity-40"
             onClick={() => setPage((c) => Math.min(pageCount, c + 1))}
             disabled={safePage >= pageCount}
           >
@@ -676,7 +676,7 @@ export function ParityTable<T>({
           </button>
           <button
             type="button"
-            className="h-6 rounded border border-gray-300 px-1.5 disabled:opacity-40"
+            className="h-6 rounded-sm border border-gray-300 px-1.5 disabled:opacity-40"
             onClick={() => setPage(pageCount)}
             disabled={safePage >= pageCount}
           >
@@ -685,7 +685,7 @@ export function ParityTable<T>({
           <span className="ml-1 flex items-center gap-1">
             Page
             <input
-              className="h-6 w-12 rounded border border-gray-300 px-1 text-center"
+              className="h-6 w-12 rounded-sm border border-gray-300 px-1 text-center"
               value={pageInput}
               placeholder={String(safePage)}
               onChange={(e) => setPageInput(e.target.value.replace(/[^0-9]/g, ""))}

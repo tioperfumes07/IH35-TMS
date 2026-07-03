@@ -102,11 +102,11 @@ export function DispatchViewScreen() {
 
         <PwaCard title={view.load_number} subtitle={view.customer_name}>
           <div className="mt-2 flex items-center justify-between">
-            <span className="rounded border border-pwa-border px-2 py-0.5 text-xs capitalize">{view.status.replace(/_/g, " ")}</span>
+            <span className="rounded-sm border border-pwa-border px-2 py-0.5 text-xs capitalize">{view.status.replace(/_/g, " ")}</span>
             <LifecyclePill stage="en_route_pickup" />
           </div>
           {view.special_instructions ? (
-            <div className="mt-3 rounded bg-[#101522] p-2 text-xs text-pwa-text-secondary">{view.special_instructions}</div>
+            <div className="mt-3 rounded-sm bg-[#101522] p-2 text-xs text-pwa-text-secondary">{view.special_instructions}</div>
           ) : null}
         </PwaCard>
 

@@ -119,7 +119,7 @@ export function FreeTimeDetentionEditor(props: {
                 value={freeTimeMinutes}
                 onChange={(event) => setFreeTimeMinutes(event.target.value)}
                 disabled={!props.canEdit}
-                className="w-full rounded border border-gray-300 px-2 py-1 disabled:bg-gray-50"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1 disabled:bg-gray-50"
               />
             </label>
             <label className="block">
@@ -139,7 +139,7 @@ export function FreeTimeDetentionEditor(props: {
                 value={detentionCurrency}
                 onChange={(event) => setDetentionCurrency(event.target.value as "USD" | "MXN" | "CAD")}
                 disabled={!props.canEdit}
-                className="w-full rounded border border-gray-300 px-2 py-1 disabled:bg-gray-50"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1 disabled:bg-gray-50"
               >
                 <option value="USD">USD</option>
                 <option value="MXN">MXN</option>

@@ -464,7 +464,7 @@ export function DispatchPage({
         <DataPanel title="Book load">
           <DataPanelRow>
             <span className="text-sm text-gray-700">Use the Book Load flow to create a new dispatch load.</span>
-            <button className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700" onClick={() => setNewLoadOpen(true)} type="button">
+            <button className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700" onClick={() => setNewLoadOpen(true)} type="button">
               + Book Load
             </button>
           </DataPanelRow>

@@ -130,7 +130,7 @@ export function BankingObligationReconcilePage() {
         <label className="text-xs text-gray-600">
           Account{" "}
           <SelectCombobox
-            className="ml-1 rounded border border-gray-300"
+            className="ml-1 rounded-sm border border-gray-300"
             value={accountFilter}
             onChange={(e) => setAccountFilter(e.target.value)}
           >
@@ -144,7 +144,7 @@ export function BankingObligationReconcilePage() {
         </label>
       </div>
       {hasSelected ? (
-        <div className="flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-100 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2">
           <span className="text-xs font-semibold text-slate-700">{selectedList.length} selected</span>
           <ActionButton
             disabled={bulkMutation.isPending}
@@ -182,7 +182,7 @@ export function BankingObligationReconcilePage() {
           </ActionButton>
           <button
             type="button"
-            className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+            className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
             onClick={() => setSelectedTxnIds(new Set())}
           >
             Clear selection
@@ -191,7 +191,7 @@ export function BankingObligationReconcilePage() {
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <section className="rounded border border-slate-200 bg-white p-2">
+        <section className="rounded-sm border border-slate-200 bg-white p-2">
           <h2 className="mb-2 text-sm font-semibold">Unmatched bank transactions</h2>
           <div className="max-h-[480px] space-y-1 overflow-y-auto text-sm">
             {transactions.map((row: UnmatchedBankTxnRow) => (
@@ -200,7 +200,7 @@ export function BankingObligationReconcilePage() {
                 draggable
                 onDragStart={() => setDragTxnId(row.id)}
                 onDragEnd={() => setDragTxnId(null)}
-                className="flex cursor-grab gap-2 rounded border border-slate-100 px-2 py-1 hover:bg-slate-50"
+                className="flex cursor-grab gap-2 rounded-sm border border-slate-100 px-2 py-1 hover:bg-slate-50"
               >
                 <input type="checkbox" checked={selectedTxnIds.has(row.id)} onChange={() => toggleSelect(row.id)} />
                 <div className="flex-1">
@@ -230,7 +230,7 @@ export function BankingObligationReconcilePage() {
           </div>
         </section>
 
-        <section className="rounded border border-slate-200 bg-white p-2">
+        <section className="rounded-sm border border-slate-200 bg-white p-2">
           <h2 className="mb-2 text-sm font-semibold">Unmatched obligations</h2>
           <div className="max-h-[480px] space-y-1 overflow-y-auto text-sm">
             {obligations.map((o) => (

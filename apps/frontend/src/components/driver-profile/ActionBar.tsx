@@ -6,7 +6,7 @@ import { TerminateConfirmModal } from "../drivers/TerminateConfirmModal";
 import { Button } from "../Button";
 
 const linkClass =
-  "inline-flex h-8 items-center justify-center rounded border border-gray-300 bg-white px-3 text-[13px] font-medium text-gray-800";
+  "inline-flex h-8 items-center justify-center rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-medium text-gray-800";
 
 export function ActionBar({
   driverId,
@@ -32,7 +32,7 @@ export function ActionBar({
   return (
     <>
       <div
-        className="sticky bottom-0 z-10 flex flex-wrap gap-2 border-t border-gray-200 bg-white/95 p-3 backdrop-blur"
+        className="sticky bottom-0 z-10 flex flex-wrap gap-2 border-t border-gray-200 bg-white/95 p-3 backdrop-blur-sm"
         data-testid="dp-action-bar"
       >
         <Button size="sm" variant="secondary" onClick={() => navigate(`/drivers/${driverId}`)} data-testid="dp-action-edit">

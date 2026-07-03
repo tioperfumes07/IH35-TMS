@@ -14,7 +14,7 @@ function severityClass(card: ArrivingSoonCardType) {
 
 export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
   return (
-    <article className={`rounded border border-gray-200 bg-white p-3 text-xs ${severityClass(card)}`}>
+    <article className={`rounded-sm border border-gray-200 bg-white p-3 text-xs ${severityClass(card)}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="font-semibold">
           {card.unit_number} · {card.driver_name ?? "Unassigned"} · {card.load_display_id}
@@ -31,14 +31,14 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
         {card.final_dest_is_yard
           ? `ETA: ${card.predicted_yard_arrival_at ? new Date(card.predicted_yard_arrival_at).toLocaleString() : "unscheduled"}`
           : "DEADHEAD-BACK PENDING · ETA unscheduled — confirm with dispatch"}
-        {card.already_arrived ? <span className="ml-2 rounded bg-green-100 px-1 py-0.5 text-green-700">AT YARD</span> : null}
+        {card.already_arrived ? <span className="ml-2 rounded-sm bg-green-100 px-1 py-0.5 text-green-700">AT YARD</span> : null}
       </div>
 
       <div className="mt-2">
         <div className="mb-1 text-[11px] font-semibold text-gray-700">Open issues ({card.total_open_issues}):</div>
         <ul className="space-y-1">
           {card.issues.slice(0, 3).map((issue) => (
-            <li key={issue.issue_id} className="rounded border border-gray-100 bg-gray-50 px-2 py-1">
+            <li key={issue.issue_id} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
               {issue.description || issue.issue_type} — {issue.severity}
             </li>
           ))}
@@ -47,16 +47,16 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
 
       <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
         {canConvert ? (
-          <button type="button" className="rounded border border-slate-300 px-2 py-1 text-slate-700" onClick={() => onConvert(card)}>
+          <button type="button" className="rounded-sm border border-slate-300 px-2 py-1 text-slate-700" onClick={() => onConvert(card)}>
             Convert to WO
           </button>
         ) : (
-          <span className="rounded border border-gray-200 px-2 py-1 text-gray-500">Read-only</span>
+          <span className="rounded-sm border border-gray-200 px-2 py-1 text-gray-500">Read-only</span>
         )}
-        <a className="rounded border border-gray-300 px-2 py-1 text-gray-700" href={`/dispatch`}>
+        <a className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700" href={`/dispatch`}>
           View Load
         </a>
-        <button type="button" className="rounded border border-gray-300 px-2 py-1 text-gray-700">
+        <button type="button" className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700">
           Call Driver
         </button>
       </div>

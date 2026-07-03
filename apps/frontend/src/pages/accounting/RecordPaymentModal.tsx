@@ -185,7 +185,7 @@ export function RecordPaymentModal({
           }
         }}
       >
-        {errorMessage ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</div> : null}
+        {errorMessage ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</div> : null}
 
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-1">
@@ -201,12 +201,12 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment date
-            <input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment method
-            <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
               {PAYMENT_METHODS.map((method) => (
                 <option key={method.value} value={method.value}>
                   {method.label}
@@ -217,7 +217,7 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Reference
-            <input value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Check # / ACH ref" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <input value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Check # / ACH ref" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -228,16 +228,16 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Deposited to
-            <input value={depositedTo} onChange={(event) => setDepositedTo(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <input value={depositedTo} onChange={(event) => setDepositedTo(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
             Notes
-            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
+            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
           </label>
         </div>
 
-        <div className="rounded border border-gray-200 bg-gray-50 p-3">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-3">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-900">Apply to invoices</h3>
             <span className="text-xs text-gray-600">
@@ -256,7 +256,7 @@ export function RecordPaymentModal({
               const checked = applyByInvoice[invoice.id] !== undefined;
               const invoiceOpen = Number(invoice.amount_open_cents ?? 0);
               return (
-                <div key={invoice.id} className="rounded border border-gray-200 bg-white p-2">
+                <div key={invoice.id} className="rounded-sm border border-gray-200 bg-white p-2">
                   <div className="flex items-center justify-between gap-2">
                     <label className="flex items-center gap-2 text-sm text-gray-800">
                       <input

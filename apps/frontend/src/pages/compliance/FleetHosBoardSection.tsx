@@ -28,7 +28,7 @@ function hmm(min: number | null): string {
 export function num(n: number | string | null | undefined, digits = 0): string {
   if (n == null || n === "") return "—";
   const v = typeof n === "number" ? n : Number(n);
-  return Number.isFinite(v) ? v.toFixed(digits) : "—";
+  return Number.isFinite(v) ? Number(v).toFixed(digits) : "—";
 }
 
 const HOS_WARN_MIN = 60; // shift/drive remaining under this → amber
@@ -181,7 +181,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
       ) : query.isError ? (
         <div className="px-3 py-6 text-sm text-red-600">Failed to load fleet HOS.</div>
       ) : (
-        <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
           <table className="w-full table-fixed text-left text-xs">
             <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
               <tr>
@@ -270,7 +270,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           <button
             type="button"
             onClick={() => setShowOffline((v) => !v)}
-            className="flex w-full items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            className="flex w-full items-center gap-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
             aria-expanded={showOffline}
           >
             <span className="text-slate-400">{showOffline ? "▾" : "▸"}</span>
@@ -280,7 +280,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
             </span>
           </button>
           {showOffline ? (
-            <div className="mt-2 overflow-x-auto rounded border border-slate-200 bg-white">
+            <div className="mt-2 overflow-x-auto rounded-sm border border-slate-200 bg-white">
               <table className="w-full table-fixed text-left text-xs">
                 <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
                   <tr>

@@ -32,7 +32,7 @@ export function GeofenceBreachesTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-white p-3">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-slate-900">Geofence Alerts</h3>
           <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">{activeCount} active</span>
@@ -43,7 +43,7 @@ export function GeofenceBreachesTab() {
               key={item}
               type="button"
               onClick={() => setFilter(item)}
-              className={`rounded px-2 py-1 text-xs ${filter === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+              className={`rounded-sm px-2 py-1 text-xs ${filter === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
             >
               {item}
             </button>
@@ -53,10 +53,10 @@ export function GeofenceBreachesTab() {
 
       <div className="space-y-2">
         {(eventsQuery.data?.events ?? []).map((event) => (
-          <div key={event.id} className="rounded border border-gray-200 bg-white p-3">
+          <div key={event.id} className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className={`rounded px-2 py-0.5 text-xs font-semibold ${event.event_type === "entry" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${event.event_type === "entry" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
                   {event.event_type}
                 </span>
                 <span className="text-sm font-medium text-slate-900">Unit {event.unit_number ?? event.vehicle_id.slice(0, 8)}</span>
@@ -69,11 +69,11 @@ export function GeofenceBreachesTab() {
             </div>
             <div className="mt-2 flex items-center gap-2">
               {event.acknowledged_at ? (
-                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">Acknowledged</span>
+                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-600">Acknowledged</span>
               ) : (
                 <button
                   type="button"
-                  className="rounded bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                  className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
                   disabled={acknowledgeMutation.isPending}
                   onClick={() => acknowledgeMutation.mutate(event.id)}
                 >
@@ -83,9 +83,9 @@ export function GeofenceBreachesTab() {
             </div>
           </div>
         ))}
-        {eventsQuery.isLoading ? <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading geofence alerts...</div> : null}
+        {eventsQuery.isLoading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading geofence alerts...</div> : null}
         {!eventsQuery.isLoading && (eventsQuery.data?.events ?? []).length === 0 ? (
-          <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-500">No geofence alerts for selected filter.</div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">No geofence alerts for selected filter.</div>
         ) : null}
       </div>
     </div>

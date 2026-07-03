@@ -653,12 +653,12 @@ export function DriverDetailPage() {
             {certBadges.map((badge) => (
               <CertExpiryBadge key={badge.label} label={badge.label} expiresAt={badge.expiresAt} />
             ))}
-            <span data-testid="retention-risk-badge" className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700">
+            <span data-testid="retention-risk-badge" className="rounded-sm bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700">
               Retention risk
             </span>
             <StatusBadge status={driver.status} />
             <MissingRequiredChip operatingCompanyId={driver.operating_company_id} entityKind="driver" entityId={driver.id} />
-            <Link to={`/drivers/${driver.id}/hos`} className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
+            <Link to={`/drivers/${driver.id}/hos`} className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
               HOS Detail
             </Link>
             {!editMode ? (
@@ -717,7 +717,7 @@ export function DriverDetailPage() {
               {operatingCompanyId ? (
                 <ActiveOperationsView driverId={driver.id} operatingCompanyId={operatingCompanyId} />
               ) : (
-                <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
                   This driver has no operating company assigned.
                 </div>
               )}
@@ -740,8 +740,8 @@ export function DriverDetailPage() {
             />
           </div>
           {driver.is_rehire ? (
-            <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              <span className="rounded bg-amber-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>
+            <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <span className="rounded-sm bg-amber-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>
               {driver.prior_driver_id ? (
                 <Link to={`/drivers/${driver.prior_driver_id}`} className="text-xs font-semibold text-slate-700 hover:underline">
                   ← View prior driver record
@@ -822,7 +822,7 @@ export function DriverDetailPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Has phone login</label>
-            <div className="rounded border border-gray-300 px-2 text-sm py-2">{hasPhoneLogin ? "Yes" : "No"}</div>
+            <div className="rounded-sm border border-gray-300 px-2 text-sm py-2">{hasPhoneLogin ? "Yes" : "No"}</div>
           </div>
           <div className="flex items-end">
             {!hasPhoneLogin ? (
@@ -964,7 +964,7 @@ export function DriverDetailPage() {
       ) : null}
 
       {activeTab === "QBO Mapping" ? (
-        <div className="space-y-3 rounded border border-gray-200 bg-white p-3">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-gray-900">QBO Vendor Linkage</h2>
@@ -981,13 +981,13 @@ export function DriverDetailPage() {
               </Button>
             ) : null}
           </div>
-          <div className="rounded border border-gray-200 bg-gray-50 p-2 text-xs">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
             <div>Current Vendor ID: <span className="font-semibold text-gray-900">{driver.qbo_vendor_id ?? "-"}</span></div>
             <div>Linked At: <span className="font-semibold text-gray-900">{driver.qbo_vendor_linked_at ? new Date(driver.qbo_vendor_linked_at).toLocaleString() : "-"}</span></div>
           </div>
           <div>
             <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Linkage History</h3>
-            <div className="max-h-56 overflow-auto rounded border border-gray-200">
+            <div className="max-h-56 overflow-auto rounded-sm border border-gray-200">
               {(qboLinkageHistoryQuery.data?.rows ?? []).map((row, idx) => (
                 <div key={String(row.id ?? idx)} className="border-b border-gray-100 px-2 py-1.5 text-xs">
                   <div className="font-semibold text-gray-900">{String(row.action ?? "-")}</div>
@@ -1010,7 +1010,7 @@ export function DriverDetailPage() {
             {driver.prior_driver_id ? (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Prior driver record</label>
-                <div className="rounded border border-gray-300 bg-gray-50 px-2 text-sm py-2">
+                <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-sm py-2">
                   <Link to={`/drivers/${driver.prior_driver_id}`} className="text-slate-700 hover:underline">
                     {driver.prior_driver_id}
                   </Link>
@@ -1020,7 +1020,7 @@ export function DriverDetailPage() {
             {driver.rehire_count > 0 ? (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Rehire count</label>
-                <div className="rounded border border-gray-300 bg-gray-50 px-2 text-sm py-2">{driver.rehire_count}</div>
+                <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-sm py-2">{driver.rehire_count}</div>
               </div>
             ) : null}
             <div className="flex flex-col gap-1">
@@ -1086,7 +1086,7 @@ export function DriverDetailPage() {
             <h2 className="text-sm font-semibold text-gray-900">Qualifications</h2>
             <div className="flex items-center gap-2">
               {canManageRates ? (
-                <label className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">
+                <label className="flex items-center gap-2 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
                   <input
                     type="checkbox"
                     checked={showInactiveQualifications}
@@ -1112,7 +1112,7 @@ export function DriverDetailPage() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                    <span className="rounded-sm bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                       {qualification.equipment_type.name}
                     </span>
                     <span
@@ -1127,7 +1127,7 @@ export function DriverDetailPage() {
                 </div>
                 <div className="mt-1.5 space-y-1.5">
                   {qualification.current_rates.map((line) => (
-                    <div key={line.line_item_template_id} className="rounded border border-gray-100 bg-gray-50 p-1.5">
+                    <div key={line.line_item_template_id} className="rounded-sm border border-gray-100 bg-gray-50 p-1.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="text-[13px] font-medium text-gray-800">
                           {line.line_item_name} ({line.line_item_code})
@@ -1222,7 +1222,7 @@ export function DriverDetailPage() {
       {activeTab === "Safety File" ? (
         <div className="space-y-3">
           {!canViewSafetyFile ? (
-            <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
               You do not have permission to view Safety File records.
             </div>
           ) : (
@@ -1231,7 +1231,7 @@ export function DriverDetailPage() {
                 <h2 className="text-sm font-semibold text-gray-900">Safety File</h2>
                 <div className="flex items-center gap-2">
                   {isOwner ? (
-                    <label className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">
+                    <label className="flex items-center gap-2 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
                       <input
                         type="checkbox"
                         checked={showVoidedSafetyEvents}
@@ -1260,7 +1260,7 @@ export function DriverDetailPage() {
                       ? "bg-emerald-100 text-emerald-800"
                       : "bg-slate-100 text-slate-700";
                   return (
-                    <div key={event.id} className={`rounded border p-3 ${isVoided ? "border-gray-300 bg-gray-100" : "border-gray-200 bg-white"}`}>
+                    <div key={event.id} className={`rounded-sm border p-3 ${isVoided ? "border-gray-300 bg-gray-100" : "border-gray-200 bg-white"}`}>
                       <button
                         type="button"
                         onClick={() => setExpandedSafetyEventId((current) => (current === event.id ? null : event.id))}
@@ -1268,7 +1268,7 @@ export function DriverDetailPage() {
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs text-gray-600">{formatDate(event.event_date)}</span>
-                          <span className={`rounded px-2 py-0.5 text-xs font-semibold capitalize ${typePillClass}`}>{event.event_type}</span>
+                          <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold capitalize ${typePillClass}`}>{event.event_type}</span>
                           <StatusBadge status={event.severity} />
                         </div>
                         <div className={`text-sm font-medium ${isVoided ? "line-through text-gray-500" : "text-gray-800"}`}>{event.summary}</div>
@@ -1286,7 +1286,7 @@ export function DriverDetailPage() {
                             </Button>
                           ) : null}
                           {isVoided ? (
-                            <div className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-700">
+                            <div className="rounded-sm bg-gray-200 px-2 py-1 text-xs text-gray-700">
                               VOIDED on {new Date(event.voided_at || "").toLocaleString()} by {event.voided_by_user_email || event.voided_by_user_id}:{" "}
                               {event.void_reason}
                             </div>
@@ -1311,7 +1311,7 @@ export function DriverDetailPage() {
             <DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} />
           </ErrorBoundary>
         ) : (
-          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
             You do not have permission to view documents for this driver.
           </div>
         )
@@ -1325,7 +1325,7 @@ export function DriverDetailPage() {
           ) : (
             <ul className="space-y-2">
               {(legalMattersForDriverQuery.data?.matters ?? []).map((m: Record<string, unknown>) => (
-                <li key={String(m.id ?? "")} className="rounded border border-gray-200 bg-white px-3 py-2 text-sm">
+                <li key={String(m.id ?? "")} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
                   <Link className="font-semibold text-slate-700" to={`/legal/matters/${String(m.id ?? "")}`}>
                     {String(m.matter_number ?? "")}
                   </Link>
@@ -1361,10 +1361,10 @@ export function DriverDetailPage() {
             const existing = authorizations.find((authorization) => authorization.company_id === company.id);
             const rowNotes = authorizationNotesByCompany[company.id] ?? existing?.notes ?? "";
             return (
-              <div key={company.id} className="rounded border border-gray-200 p-3">
+              <div key={company.id} className="rounded-sm border border-gray-200 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-semibold text-gray-900">
-                    {company.legal_name} <span className="rounded bg-gray-100 px-2 py-1 text-xs">{company.code}</span>
+                    {company.legal_name} <span className="rounded-sm bg-gray-100 px-2 py-1 text-xs">{company.code}</span>
                   </div>
                   <div className="text-xs text-gray-600">
                     Authorized at: {existing?.authorized_at ? new Date(existing.authorized_at).toLocaleString() : "—"}
@@ -1428,7 +1428,7 @@ export function DriverDetailPage() {
         </div>
       ) : null}
 
-      <div className="rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
         Last updated by {driver.updated_by_user_id} on {new Date(driver.updated_at).toLocaleString()}
       </div>
 
@@ -1465,7 +1465,7 @@ export function DriverDetailPage() {
             <DatePicker
               value={newQualificationForm.qualified_at}
               onChange={(value) => setNewQualificationForm((current) => ({ ...current, qualified_at: value }))}
-              className="rounded border border-gray-300 px-2 text-sm py-2"
+              className="rounded-sm border border-gray-300 px-2 text-sm py-2"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1697,7 +1697,7 @@ export function DriverDetailPage() {
             <DatePicker
               value={rateChangeForm.effective_from}
               onChange={(value) => setRateChangeForm((current) => ({ ...current, effective_from: value }))}
-              className="rounded border border-gray-300 px-2 text-sm py-2"
+              className="rounded-sm border border-gray-300 px-2 text-sm py-2"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1755,7 +1755,7 @@ export function DriverDetailPage() {
                       <span className="capitalize">{formatReasonLabel(item.change_reason)}</span>
                       {item.was_corrected ? (
                         <span
-                          className="rounded bg-gray-300 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-700"
+                          className="rounded-sm bg-gray-300 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-700"
                           title="This rate was corrected on the same day before settlement could occur"
                         >
                           Corrected

@@ -55,16 +55,21 @@ export function CreateWOSectionReconcile({
       <td className="px-2 py-1 font-medium text-slate-700">{label}</td>
       <td className="px-2 py-1 text-right tabular-nums text-slate-900">{fmt(woC)}</td>
       <td className="px-2 py-1 text-right">
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          data-testid={testid}
-          value={input}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs tabular-nums"
-          placeholder="0.00"
-        />
+        {/* SYS-MONEY STEP 2: vendor-invoice total inputs carry a $ prefix like every other money field
+            (was bare "0.00"). $ overlay + pl-4; the numeric value/onChange contract is unchanged. */}
+        <div className="relative inline-block w-28 align-middle">
+          <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">$</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            data-testid={testid}
+            value={input}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-right text-xs tabular-nums"
+            placeholder="0.00"
+          />
+        </div>
       </td>
       <td className={`px-2 py-1 text-right tabular-nums font-semibold ${ok ? "text-slate-500" : "text-[#A32D2D]"}`}>
         {ok ? "tie" : fmt(variance)}
@@ -73,7 +78,7 @@ export function CreateWOSectionReconcile({
   );
 
   return (
-    <section data-testid="wo-vendor-invoice-reconcile" className="rounded border border-slate-300 bg-slate-50 p-2 text-xs">
+    <section data-testid="wo-vendor-invoice-reconcile" className="rounded-sm border border-slate-300 bg-slate-50 p-2 text-xs">
       <div className="mb-1 font-semibold text-[#1F2A44]">Vendor Invoice Reconcile</div>
       <div className="overflow-x-auto">
       <table className="w-full min-w-[360px] border-collapse">

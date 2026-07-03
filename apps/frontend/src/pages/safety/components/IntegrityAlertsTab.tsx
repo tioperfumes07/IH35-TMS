@@ -19,7 +19,7 @@ function RowTable({
   rows: Array<Record<string, unknown>>;
 }) {
   return (
-    <section className="rounded border border-gray-200 bg-white p-2">
+    <section className="rounded-sm border border-gray-200 bg-white p-2">
       <h3 className="mb-2 text-xs font-semibold uppercase text-gray-700">{title}</h3>
       <div className="overflow-x-auto">
         <table className="min-w-full text-xs">
@@ -52,7 +52,7 @@ function RowTable({
 export function IntegrityAlertsTab({ unitRows, driverRows, vendorRows, baselineRows }: Props) {
   return (
     <div className="space-y-2">
-      <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+      <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
         Real-time alert generation is being prepared. This view shows aggregate inputs the alert engine will use.
       </div>
       <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">

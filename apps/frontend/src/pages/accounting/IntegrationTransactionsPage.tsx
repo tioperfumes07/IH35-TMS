@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -7,7 +8,7 @@ import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/i
 
 const fmtCents = (c: number | null) =>
   c == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString("en-US") : "—");
+const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
 const STATUS_COLOR: Record<string, string> = {
   synced: "bg-emerald-100 text-emerald-800",
@@ -52,17 +53,17 @@ export function IntegrationTransactionsPage() {
         <input
           type="search" placeholder="Search description, QBO ID…" value={search}
           onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
         />
         <select value={syncStatus} onChange={(e) => { setSyncStatus(e.target.value); setOffset(0); }}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
           <option value="">All statuses</option>
           {(["pending","in_flight","synced","failed","blocked"] as const).map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
         <select value={entityType} onChange={(e) => { setEntityType(e.target.value); setOffset(0); }}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
           <option value="">All types</option>
           {Object.entries(ENTITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
@@ -76,7 +77,7 @@ export function IntegrationTransactionsPage() {
       ) : items.length === 0 ? (
         <p className="text-sm text-gray-500 py-8 text-center">No integration transactions found.</p>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -92,7 +93,7 @@ export function IntegrationTransactionsPage() {
                   <tr key={row.id} className="hover:bg-gray-50">
                     <td className="px-3 py-2 whitespace-nowrap text-gray-700">{fmtDate(bt?.txn_date ?? row.created_at)}</td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">
+                      <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">
                         {ENTITY_LABELS[row.entity_type] ?? row.entity_type}
                       </span>
                     </td>
@@ -107,7 +108,7 @@ export function IntegrationTransactionsPage() {
                       ) : "—"}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.sync_status] ?? "bg-gray-100 text-gray-700"}`}>
+                      <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.sync_status] ?? "bg-gray-100 text-gray-700"}`}>
                         {row.sync_status}
                       </span>
                       {row.error_message && (
@@ -135,10 +136,10 @@ export function IntegrationTransactionsPage() {
       {total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
           <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
         </div>
       )}
     </AccountingSubNavWrapper>

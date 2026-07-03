@@ -114,7 +114,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         <label className="block">
           New status *
           <select
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="mt-1 w-full rounded-sm border px-2 py-1"
             value={targetStatus}
             onChange={(e) => setTargetStatus(e.target.value as TrailerStatus)}
           >
@@ -127,16 +127,16 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         </label>
         <label className="block">
           Reason *
-          <textarea className="mt-1 w-full rounded border px-2 py-1" value={reason} onChange={(e) => setReason(e.target.value)} />
+          <textarea className="mt-1 w-full rounded-sm border px-2 py-1" value={reason} onChange={(e) => setReason(e.target.value)} />
         </label>
         <label className="block">
           Note
-          <textarea className="mt-1 w-full rounded border px-2 py-1" value={note} onChange={(e) => setNote(e.target.value)} />
+          <textarea className="mt-1 w-full rounded-sm border px-2 py-1" value={note} onChange={(e) => setNote(e.target.value)} />
         </label>
         <label className="block">
           Effective date
           <DatePicker
-            className="mt-1 w-full rounded border px-2 py-1"
+            className="mt-1 w-full rounded-sm border px-2 py-1"
             value={effectiveDate}
             onChange={(next) => setEffectiveDate(next)}
           />
@@ -145,11 +145,11 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           <>
             <label className="block">
               Sold date *
-              <DatePicker className="mt-1 w-full rounded border px-2 py-1" value={soldDate} onChange={(next) => setSoldDate(next)} />
+              <DatePicker className="mt-1 w-full rounded-sm border px-2 py-1" value={soldDate} onChange={(next) => setSoldDate(next)} />
             </label>
             <label className="block">
               Sold to
-              <input className="mt-1 w-full rounded border px-2 py-1" value={soldTo} onChange={(e) => setSoldTo(e.target.value)} />
+              <input className="mt-1 w-full rounded-sm border px-2 py-1" value={soldTo} onChange={(e) => setSoldTo(e.target.value)} />
             </label>
             <label className="block">
               Sold price

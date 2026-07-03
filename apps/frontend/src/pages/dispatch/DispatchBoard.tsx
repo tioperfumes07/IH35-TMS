@@ -10,7 +10,7 @@ function renderCustomerCell(load: DispatchLoadRow): ReactNode {
   return (
     <Link
       to={`/customers/${load.customer_id}`}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
       className="text-slate-700 hover:underline"
       data-testid="loads-customer-link"
     >
@@ -565,7 +565,7 @@ export function DispatchBoard({
         {STATUS_LABEL[load.status]}
       </span>
       {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
-        <span className="rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+        <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
       ) : null}
     </div>
   );
@@ -592,7 +592,7 @@ export function DispatchBoard({
             <span className="text-amber-600">· add this load to it?</span>
             <button
               type="button"
-              className="rounded bg-amber-300 px-2 py-0.5 text-xs font-semibold text-amber-900 hover:bg-amber-400"
+              className="rounded-sm bg-amber-300 px-2 py-0.5 text-xs font-semibold text-amber-900 hover:bg-amber-400"
               onClick={(event) => {
                 event.stopPropagation();
                 addLoadMutation.mutate({
@@ -624,7 +624,7 @@ export function DispatchBoard({
         <Fragment key={load.id}>
           <tr onClick={() => onRowClick(load.id)} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50">
             {showBulk ? (
-              <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
+              <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                 <input
                   type="checkbox"
                   aria-label={`Select load ${load.load_number}`}
@@ -727,7 +727,7 @@ export function DispatchBoard({
 
     if (!loading && sortedLoads.length === 0) {
       return (
-        <div className="rounded border border-gray-200 bg-white p-6 text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white p-6 text-sm text-gray-500">
           No loads match your filters.{" "}
           <button type="button" className="font-semibold text-slate-700 hover:underline" onClick={() => onPageChange(0)}>
             Go back to first page
@@ -754,7 +754,7 @@ export function DispatchBoard({
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <TableSelection
             rows={sortedLoads}
             getId={(load) => load.id}
@@ -820,7 +820,7 @@ export function DispatchBoard({
                                   onClick={() => { if (!String(load.id).startsWith("unit:")) onRowClick(load.id); }}
                                   className={`border-b border-gray-100 hover:bg-gray-50 ${String(load.id).startsWith("unit:") ? "" : "cursor-pointer"}`}
                                 >
-                                  <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
+                                  <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                                     <input
                                       type="checkbox"
                                       aria-label={`Select load ${load.load_number}`}
@@ -878,7 +878,7 @@ export function DispatchBoard({
     return (
       <div className="space-y-4" data-testid="dispatch-board-assignment-view">
         <AssignmentBand title="Unassigned Units" count={unassignedUnits.length}>
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-[11px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
                 <tr>
@@ -924,7 +924,7 @@ export function DispatchBoard({
         </AssignmentBand>
 
         <AssignmentBand title="Booked Loads" count={bookedLoads.length}>
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-[11px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
                 <tr>
@@ -980,7 +980,7 @@ export function DispatchBoard({
         </AssignmentBand>
 
         <AssignmentBand title="Assigned Units" count={assignedLoads.length}>
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-[11px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
                 <tr>
@@ -1042,7 +1042,7 @@ export function DispatchBoard({
 
   return (
     <div className="space-y-2" data-testid="dispatch-board">
-      <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Board view</span>
         {BOARD_MODES.map((mode) => (
           <Button
@@ -1086,7 +1086,7 @@ export function DispatchBoard({
           <label className="block text-sm text-gray-700">
             Transition
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={pendingTransition}
               onChange={(event) => setPendingTransition(event.target.value)}
             >

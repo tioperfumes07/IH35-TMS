@@ -102,7 +102,7 @@ export function LoadTable({
         onCapExceeded={(message) => pushToast(message, "error")}
       >
         {(selectCtx) => (
-          <div className="overflow-hidden rounded border border-gray-200 bg-white">
+          <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
             <table className="w-full table-fixed text-left text-[11px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
                 <tr>
@@ -132,7 +132,7 @@ export function LoadTable({
                     draggable
                     className={`cursor-pointer border-t border-gray-100 hover:bg-gray-50 ${selectedLoadId === row.id ? "bg-[#E6F1FB]" : ""}`}
                   >
-                    <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
+                    <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label={`Select load ${row.load_number}`}
@@ -183,7 +183,7 @@ export function LoadTable({
                     <td className="px-2 py-1">
                       <span className={statusPill(row.dispatch_status)}>{row.dispatch_status}</span>
                     </td>
-                    <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
+                    <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                       <DriverStatusCell
                         lifecycle={row.driver_lifecycle_stage}
                         etaConfidence={(row.latest_eta_prediction?.confidence_class as "on_time" | "tight" | "late_risk" | "late" | undefined) ?? null}

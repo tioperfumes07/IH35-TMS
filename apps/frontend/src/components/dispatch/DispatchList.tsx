@@ -140,7 +140,7 @@ export function DispatchList({
 
   if (!loading && loads.length === 0) {
     return (
-      <div className="rounded border border-gray-200 bg-white p-6 text-sm text-gray-500">
+      <div className="rounded-sm border border-gray-200 bg-white p-6 text-sm text-gray-500">
         No loads match your filters.{" "}
         <button type="button" className="font-semibold text-slate-700 hover:underline" onClick={() => onPageChange(0)}>
           Go back to first page
@@ -165,7 +165,7 @@ export function DispatchList({
         </div>
       </div>
 
-      <div className="hidden overflow-x-auto rounded border border-gray-200 bg-white md:block">
+      <div className="hidden overflow-x-auto rounded-sm border border-gray-200 bg-white md:block">
         <TableSelection
           rows={effectiveLoads}
           getId={(load) => load.id}
@@ -245,7 +245,7 @@ export function DispatchList({
                     className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
                   >
                     {bulkSelection ? (
-                      <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+                      <td className="px-2 py-2" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                         <input
                           type="checkbox"
                           aria-label={`Select load ${load.load_number}`}
@@ -326,7 +326,7 @@ export function DispatchList({
                           {STATUS_LABEL[load.status]}
                         </span>
                         {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
-                          <span className="rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+                          <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
                         ) : null}
                       </div>
                     </td>
@@ -365,7 +365,7 @@ export function DispatchList({
                           <span className="text-amber-600">· add this load to it?</span>
                           <button
                             type="button"
-                            className="rounded bg-amber-300 px-2 py-0.5 text-xs font-semibold text-amber-900 hover:bg-amber-400"
+                            className="rounded-sm bg-amber-300 px-2 py-0.5 text-xs font-semibold text-amber-900 hover:bg-amber-400"
                             onClick={(event) => {
                               event.stopPropagation();
                               onAddToPreSettlement?.(
@@ -392,14 +392,14 @@ export function DispatchList({
       </div>
 
       <div className="space-y-2 md:hidden">
-        {loading ? <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">Loading loads...</div> : null}
+        {loading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Loading loads...</div> : null}
         {!loading &&
           loads.map((load) => (
             <button
               key={load.id}
               type="button"
               onClick={() => onRowClick(load.id)}
-              className="w-full rounded border border-gray-200 bg-white p-3 text-left"
+              className="w-full rounded-sm border border-gray-200 bg-white p-3 text-left"
             >
               <div className="flex items-center justify-between">
                 <div className="code-cell font-semibold">{load.load_number}</div>
@@ -434,7 +434,7 @@ export function DispatchList({
                   {(load.progress_status ?? "unknown").replace("_", " ")}
                 </span>
                 {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
-                  <span className="ml-2 rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+                  <span className="ml-2 rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
                 ) : null}
               </div>
               {showEtaColumn && load.status === "in_transit" ? (

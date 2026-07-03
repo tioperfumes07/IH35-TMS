@@ -35,7 +35,7 @@ function formatCountdown(row: MaintPmDueRow | undefined) {
 export function MaintenancePmCountdownCards({ rows, loading = false, compact = false }: Props) {
   if (compact) {
     return (
-      <section className="overflow-hidden rounded border border-gray-200 bg-white">
+      <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <div className="bg-gray-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
           PM Countdown
         </div>
@@ -74,7 +74,7 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
   }
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-3">
+    <div className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold">PM Countdown</h3>
         <span className="text-xs text-gray-500">oil / tires / DOT / brake</span>
@@ -95,7 +95,7 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
               return aDays !== bDays ? aDays - bDays : aMiles - bMiles;
             })[0];
             return (
-              <div key={card.id} className="rounded border border-gray-200 bg-gray-50 px-3 py-2">
+              <div key={card.id} className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2">
                 <div className="text-[10px] uppercase tracking-wide text-gray-500">{card.label}</div>
                 <div className="mt-1 text-lg font-semibold text-gray-900">{dueCount}</div>
                 <div className="text-[11px] text-gray-600">{formatCountdown(nextRow)}</div>

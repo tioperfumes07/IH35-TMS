@@ -16,7 +16,7 @@ function tierClass(tier: string) {
 
 export function AtRiskDriverCard({ driverUuid, driverName, operatingCompanyId, riskScore, tier, topFactors }: Props) {
   return (
-    <article className="rounded border border-gray-200 bg-white p-3" data-testid={`at-risk-driver-card-${driverUuid}`}>
+    <article className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`at-risk-driver-card-${driverUuid}`}>
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-900">{driverName}</h3>
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${tierClass(tier)}`}>{tier}</span>

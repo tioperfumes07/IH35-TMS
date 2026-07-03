@@ -39,10 +39,10 @@ export function EscrowPage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
-      {accountsQuery.isLoading ? <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-500">Loading escrow accounts...</div> : null}
+      {accountsQuery.isLoading ? <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">Loading escrow accounts...</div> : null}
 
       {accountsQuery.data?.rows && accountsQuery.data.rows.length > 0 ? (
-        <div className="overflow-auto rounded border border-slate-200 bg-white">
+        <div className="overflow-auto rounded-sm border border-slate-200 bg-white">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
               <tr>
@@ -78,17 +78,17 @@ export function EscrowPage() {
       ) : null}
 
       {accountsQuery.data?.rows && accountsQuery.data.rows.length === 0 ? (
-        <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-500">No escrow accounts found.</div>
+        <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">No escrow accounts found.</div>
       ) : null}
 
       {selectedAccount ? (
-        <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-700">
+        <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-700">
           Selected account: <span className="font-mono">{selectedAccount.id}</span> · Balance {money(selectedAccount.balance_cents)}
         </div>
       ) : null}
 
       {postingsQuery.data?.rows && postingsQuery.data.rows.length > 0 ? (
-        <div className="overflow-auto rounded border border-slate-200 bg-white">
+        <div className="overflow-auto rounded-sm border border-slate-200 bg-white">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
               <tr>

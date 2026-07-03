@@ -53,7 +53,7 @@ export function ConflictsTab({ operatingCompanyId }: { operatingCompanyId: strin
 
   return (
     <div className="space-y-3">
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs font-semibold uppercase text-gray-500">Entity Type</div>
         <div className="flex flex-wrap gap-2">
           {ENTITY_OPTIONS.map((option) => (
@@ -75,7 +75,7 @@ export function ConflictsTab({ operatingCompanyId }: { operatingCompanyId: strin
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs font-semibold uppercase text-gray-500">Conflict Type</div>
         <div className="flex flex-wrap gap-2">
           {CONFLICT_OPTIONS.map((option) => (
@@ -103,7 +103,7 @@ export function ConflictsTab({ operatingCompanyId }: { operatingCompanyId: strin
 
       {query.isError ? <ReportBlockVPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         {query.isLoading ? <p className="p-3 text-sm text-gray-500">Loading conflict detections…</p> : null}
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
@@ -141,13 +141,13 @@ export function ConflictsTab({ operatingCompanyId }: { operatingCompanyId: strin
                     <tr className="bg-slate-50">
                       <td colSpan={5} className="p-2">
                         <div className="grid gap-2 md:grid-cols-2">
-                          <div className="rounded border border-gray-200 bg-white p-2">
+                          <div className="rounded-sm border border-gray-200 bg-white p-2">
                             <div className="mb-1 text-[11px] font-semibold uppercase text-gray-600">Mirror Snapshot</div>
                             <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all text-[11px]">
                               {JSON.stringify(row.mirror_snapshot, null, 2)}
                             </pre>
                           </div>
-                          <div className="rounded border border-gray-200 bg-white p-2">
+                          <div className="rounded-sm border border-gray-200 bg-white p-2">
                             <div className="mb-1 text-[11px] font-semibold uppercase text-gray-600">QBO Snapshot</div>
                             <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all text-[11px]">
                               {JSON.stringify(row.qbo_snapshot, null, 2)}
@@ -155,7 +155,7 @@ export function ConflictsTab({ operatingCompanyId }: { operatingCompanyId: strin
                           </div>
                         </div>
                         {row.diff.length > 0 ? (
-                          <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-[11px]">
+                          <div className="mt-2 rounded-sm border border-amber-200 bg-amber-50 p-2 text-[11px]">
                             <div className="mb-1 font-semibold uppercase text-amber-900">Diff</div>
                             <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all">
                               {JSON.stringify(row.diff, null, 2)}

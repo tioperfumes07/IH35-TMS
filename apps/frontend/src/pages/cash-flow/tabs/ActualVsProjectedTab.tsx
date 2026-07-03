@@ -17,7 +17,7 @@ function sevenDaysAgoIso(): string {
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
   const abs = Math.abs(cents);
-  const dollars = (abs / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const dollars = (abs / 100).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (opts?.sign && cents > 0) return `+${dollars}`;
   if (opts?.sign && cents < 0) return `−${dollars}`;
   return cents < 0 ? `−${dollars}` : dollars;
@@ -87,7 +87,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           <DatePicker
             value={from}
             onChange={(next) => setFrom(next)}
-            className="rounded border border-gray-200 px-2 py-1 text-sm focus:border-slate-300 focus:outline-none"
+            className="rounded-sm border border-gray-200 px-2 py-1 text-sm focus:border-slate-300 focus:outline-hidden"
           />
         </label>
         <label className="flex items-center gap-2 text-sm text-gray-600">
@@ -95,7 +95,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           <DatePicker
             value={to}
             onChange={(next) => setTo(next)}
-            className="rounded border border-gray-200 px-2 py-1 text-sm focus:border-slate-300 focus:outline-none"
+            className="rounded-sm border border-gray-200 px-2 py-1 text-sm focus:border-slate-300 focus:outline-hidden"
           />
         </label>
         {from > to && (
@@ -151,7 +151,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       )}
 
       {isError && (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           Failed to load data. Check your connection.
         </div>
       )}
@@ -177,7 +177,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                 <tr key={i}>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((j) => (
                     <td key={j} className="px-4 py-3">
-                      <div className="h-4 animate-pulse rounded bg-gray-100" />
+                      <div className="h-4 animate-pulse rounded-sm bg-gray-100" />
                     </td>
                   ))}
                 </tr>

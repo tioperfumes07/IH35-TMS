@@ -20,8 +20,8 @@ export function AccountTile({ tile, selected, onSelect }: Props) {
     <button
       type="button"
       onClick={onSelect}
-      className={`h-[104px] w-[200px] flex-shrink-0 rounded border px-3 py-2 text-left ${
-        selected ? "border-slate-300 bg-slate-100 shadow-sm" : "border-gray-200 bg-white"
+      className={`h-[104px] w-[200px] shrink-0 rounded border px-3 py-2 text-left ${
+        selected ? "border-slate-300 bg-slate-100 shadow-xs" : "border-gray-200 bg-white"
       }`}
     >
       <div className="mb-1 flex items-start justify-between">

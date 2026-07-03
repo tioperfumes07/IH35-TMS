@@ -20,7 +20,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
   const data = query.data?.data;
   if (query.isLoading) {
     return (
-      <section className="rounded border border-amber-200 bg-amber-50/60 px-3 py-3 text-sm text-amber-950" data-testid="home-fleet-restore-card">
+      <section className="rounded-sm border border-amber-200 bg-amber-50/60 px-3 py-3 text-sm text-amber-950" data-testid="home-fleet-restore-card">
         Loading fleet restore cost…
       </section>
     );
@@ -30,7 +30,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
 
   return (
     <section
-      className="rounded border border-amber-200 bg-amber-50/90 px-3 py-3 text-sm text-amber-950"
+      className="rounded-sm border border-amber-200 bg-amber-50/90 px-3 py-3 text-sm text-amber-950"
       data-testid="home-fleet-restore-card"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -46,7 +46,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
         </div>
         <Link
           to="/maintenance/severe-repair-oos"
-          className="shrink-0 rounded bg-amber-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-800"
+          className="shrink-0 rounded-sm bg-amber-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-800"
         >
           View OOS estimates
         </Link>

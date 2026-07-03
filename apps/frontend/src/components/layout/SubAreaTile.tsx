@@ -52,7 +52,7 @@ export function SubAreaTile({ name, count, description, urgency, domain, onClick
       <div className="flex items-start justify-between">
         <span style={{ fontSize: typography.bodyText, color: colors.bodyText, fontWeight: 500 }}>{name}</span>
         <span
-          className="inline-flex items-center rounded px-1.5 py-0.5 font-semibold"
+          className="inline-flex items-center rounded-sm px-1.5 py-0.5 font-semibold"
           style={{ fontSize: typography.statusBadge, backgroundColor: palette.soft, color: palette.strong }}
         >
           {count}

@@ -21,7 +21,7 @@ export function DebtBanner({
   if (!isRefreshing && (!Number.isFinite(numericDebt) || numericDebt <= 0)) return null;
 
   return (
-    <div className="rounded border border-red-300 bg-red-50 px-3 py-2">
+    <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2">
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-sm font-semibold text-red-700">

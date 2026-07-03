@@ -36,7 +36,7 @@ export function MapView() {
           <button
             key={p.load_uuid}
             type="button"
-            className="rounded border p-2 text-left text-xs"
+            className="rounded-sm border p-2 text-left text-xs"
             style={{ borderColor: pinColor(p.speed_mph, p.stale) }}
           >
             <div className="font-semibold">Load {p.load_uuid.slice(0, 8)}</div>

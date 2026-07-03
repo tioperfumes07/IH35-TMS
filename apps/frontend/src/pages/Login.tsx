@@ -68,14 +68,14 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
-      <div className="w-full max-w-md rounded border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
         <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
           IH 35 Office Login
         </h1>
         <p className="mt-2 text-sm text-gray-700">Use your Google account or email and password.</p>
 
         <div className="mt-5">
-          <a href={loginHref} className="block rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+          <a href={loginHref} className="block rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
             <Button className="w-full">Sign in with Google</Button>
           </a>
         </div>
@@ -103,7 +103,7 @@ export function LoginPage() {
               onChange={(ev) => setEmail(ev.target.value)}
               aria-invalid={emailInvalid}
               aria-describedby={emailInvalid ? "office-email-err" : undefined}
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             {emailInvalid ? (
               <p id="office-email-err" className="mt-1 text-xs text-red-700">
@@ -123,11 +123,11 @@ export function LoginPage() {
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
               aria-describedby="password-strength-help"
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             <div id="password-strength-help" className="mt-2" aria-live="polite">
               <div
-                className="flex h-2 overflow-hidden rounded bg-gray-100"
+                className="flex h-2 overflow-hidden rounded-sm bg-gray-100"
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={strength.max}
@@ -150,7 +150,7 @@ export function LoginPage() {
           <div className="flex justify-end">
             <Link
               to="/login/reset"
-              className="text-sm text-slate-700 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="text-sm text-slate-700 underline-offset-2 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             >
               Forgot password?
             </Link>

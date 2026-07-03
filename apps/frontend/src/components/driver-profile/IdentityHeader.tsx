@@ -6,7 +6,7 @@ export function IdentityHeader({ driver }: { driver: Record<string, unknown> }) 
   const employment = driver.employment_status ? String(driver.employment_status).toUpperCase() : driver.pay_basis ? String(driver.pay_basis) : "—";
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start gap-4">
         {photoUrl ? (
           <img src={photoUrl} alt="" className="h-16 w-16 rounded-full object-cover" />

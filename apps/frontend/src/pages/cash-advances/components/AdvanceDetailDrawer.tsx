@@ -29,7 +29,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           </button>
         </div>
 
-        <div className="space-y-1 rounded border border-gray-200 bg-gray-50 p-2">
+        <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
           <div>ID: {String(advance.display_id ?? "—")}</div>
           <div>Amount: ${Number(advance.amount ?? 0).toFixed(2)}</div>
           <div>Purpose: {String(advance.purpose ?? "—")}</div>
@@ -37,7 +37,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           <div>Status: {status}</div>
         </div>
 
-        <div className="mt-2 rounded border border-gray-200 p-2">
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="font-semibold">Driver + Recipient</div>
           <div>Driver: {String(advance.driver_full_name ?? "—")}</div>
           <div>Recipient: {String(advance.recipient_name ?? "Driver")}</div>
@@ -45,14 +45,14 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           <div>Liability ID: {String(advance.liability_id ?? "—")}</div>
         </div>
 
-        <div className="mt-2 rounded border border-slate-300 bg-slate-100 p-2">
+        <div className="mt-2 rounded-sm border border-slate-300 bg-slate-100 p-2">
           <div className="font-semibold">Disbursement Timeline</div>
           <div>Created: {String(advance.created_at ?? "—")}</div>
           <div>Approved: {String(advance.approved_at ?? "—")}</div>
           <div>Disbursed: {String(advance.disbursed_at ?? "—")}</div>
         </div>
 
-        <div className="mt-2 rounded border border-gray-200 p-2">
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="font-semibold">Linked Bill</div>
           {advance.linked_bill_id ? (
             <>
@@ -68,26 +68,26 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           )}
         </div>
 
-        <div className="mt-2 rounded border border-gray-200 p-2">
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="font-semibold">Linked Bank Transaction</div>
           <div>{String(advance.linked_bank_txn_id ?? "No bank transaction linked yet.")}</div>
         </div>
 
-        <div className="mt-2 rounded border border-gray-200 p-2">
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="mb-1 font-semibold">Deduction Schedule</div>
           {schedule.length === 0 ? <div className="text-gray-500">No schedule rows.</div> : null}
           {schedule.map((row) => (
-            <div key={String(row.id)} className="rounded border border-gray-100 px-2 py-1">
+            <div key={String(row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
               {String(row.cadence ?? "weekly")} · ${Number(row.amount_per_period ?? 0).toFixed(2)} · periods {Number(row.total_periods ?? 0)}
             </div>
           ))}
         </div>
 
-        <div className="mt-2 rounded border border-gray-200 p-2">
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="mb-1 font-semibold">Settlement Deductions Applied</div>
           {settlements.length === 0 ? <div className="text-gray-500">No settlement deductions yet.</div> : null}
           {settlements.map((row) => (
-            <div key={String(row.settlement_id ?? row.id)} className="rounded border border-gray-100 px-2 py-1">
+            <div key={String(row.settlement_id ?? row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
               Settlement {String(row.settlement_id ?? "—")} · ${Number(row.amount ?? 0).toFixed(2)}
             </div>
           ))}

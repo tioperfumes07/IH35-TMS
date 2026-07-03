@@ -33,20 +33,20 @@ export function IdvrPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="idvr-page">
-      <div className="rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div className="text-sm font-semibold text-slate-800">Vehicle Inspections (iDVIR / DVIR)</div>
         <div className="text-[11px] text-slate-500">
           Office queue of driver PWA submissions. Major defects block dispatch until follow-up work orders close.
         </div>
       </div>
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white px-3 py-2 md:grid-cols-4">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 md:grid-cols-4">
         <label className="text-[11px] text-slate-600">
           From
           <DatePicker
             value={fromDate}
             onChange={(next) => setFromDate(next)}
-            className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
             data-testid="idvr-filter-from"
           />
         </label>
@@ -55,7 +55,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
           <DatePicker
             value={toDate}
             onChange={(next) => setToDate(next)}
-            className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
             data-testid="idvr-filter-to"
           />
         </label>
@@ -64,7 +64,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
           <input
             value={driverFilter}
             onChange={(event) => setDriverFilter(event.target.value)}
-            className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
             placeholder="UUID"
             data-testid="idvr-filter-driver"
           />
@@ -74,14 +74,14 @@ export function IdvrPage({ operatingCompanyId }: Props) {
           <input
             value={unitFilter}
             onChange={(event) => setUnitFilter(event.target.value)}
-            className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
             placeholder="UUID"
             data-testid="idvr-filter-unit"
           />
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs" data-testid="idvr-table">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>

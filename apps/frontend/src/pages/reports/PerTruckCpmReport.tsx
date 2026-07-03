@@ -58,18 +58,18 @@ export function PerTruckCpmReport() {
     <div className="space-y-4 p-4">
       <PageHeader title="Per-truck CPM" subtitle="Cost per mile by unit (GAP-45)" />
       <ReportsSubNav />
-      <div className="flex flex-wrap items-end gap-3 rounded border bg-white p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4">
         <label className="text-sm">
           From
-          <DatePicker className="ml-2 rounded border px-2 py-1" value={period.from} onChange={(next) => setPeriod((p) => ({ ...p, from: next }))} />
+          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={period.from} onChange={(next) => setPeriod((p) => ({ ...p, from: next }))} />
         </label>
         <label className="text-sm">
           To
-          <DatePicker className="ml-2 rounded border px-2 py-1" value={period.to} onChange={(next) => setPeriod((p) => ({ ...p, to: next }))} />
+          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={period.to} onChange={(next) => setPeriod((p) => ({ ...p, to: next }))} />
         </label>
         <Button onClick={() => setApplied(period)}>Apply</Button>
       </div>
-      <div className="overflow-x-auto rounded border bg-white">
+      <div className="overflow-x-auto rounded-sm border bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left">
             <tr>

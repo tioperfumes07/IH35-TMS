@@ -87,7 +87,7 @@ export function SamsaraIntegrationPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+      <div className="rounded-sm border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         Select an operating company to configure Samsara.
       </div>
     );
@@ -97,7 +97,7 @@ export function SamsaraIntegrationPage() {
     <div className="mx-auto max-w-xl space-y-4">
       <PageHeader title="Samsara" subtitle="Telematics integration (MVP foundation — API wired post-MVP)" />
 
-      <div className="rounded border border-slate-200 bg-white p-4 text-sm text-slate-700">
+      <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm text-slate-700">
         <div className="mb-3 flex items-center gap-2">
           <span
             className={`inline-block h-2 w-2 shrink-0 rounded-full ${
@@ -134,7 +134,7 @@ export function SamsaraIntegrationPage() {
         </dl>
       </div>
 
-      <div className="rounded border border-slate-200 bg-white p-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-4">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">Configure Samsara</h2>
         <div className="space-y-3 text-sm">
           <label className="block">
@@ -142,7 +142,7 @@ export function SamsaraIntegrationPage() {
             <input
               type="password"
               autoComplete="off"
-              className="w-full rounded border border-slate-300 px-2 py-1"
+              className="w-full rounded-sm border border-slate-300 px-2 py-1"
               value={apiToken}
               onChange={(e) => setApiToken(e.target.value)}
             />
@@ -152,7 +152,7 @@ export function SamsaraIntegrationPage() {
             <input
               type="password"
               autoComplete="off"
-              className="w-full rounded border border-slate-300 px-2 py-1"
+              className="w-full rounded-sm border border-slate-300 px-2 py-1"
               value={webhookSecret}
               onChange={(e) => setWebhookSecret(e.target.value)}
             />
@@ -161,7 +161,7 @@ export function SamsaraIntegrationPage() {
             <span className="mb-1 block text-xs font-medium text-slate-600">Samsara org id</span>
             <input
               type="text"
-              className="w-full rounded border border-slate-300 px-2 py-1"
+              className="w-full rounded-sm border border-slate-300 px-2 py-1"
               value={orgId}
               onChange={(e) => setOrgId(e.target.value)}
               placeholder="Optional until live API"
@@ -171,7 +171,7 @@ export function SamsaraIntegrationPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded bg-slate-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-sm bg-slate-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
             disabled={saveMutation.isPending || !apiToken || !webhookSecret}
             onClick={() => saveMutation.mutate()}
           >
@@ -179,7 +179,7 @@ export function SamsaraIntegrationPage() {
           </button>
           <button
             type="button"
-            className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 disabled:opacity-50"
+            className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 disabled:opacity-50"
             disabled={testMutation.isPending || !apiToken || !webhookSecret}
             onClick={() => testMutation.mutate()}
           >
@@ -187,7 +187,7 @@ export function SamsaraIntegrationPage() {
           </button>
           <button
             type="button"
-            className="rounded border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-800 disabled:opacity-50"
+            className="rounded-sm border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-800 disabled:opacity-50"
             disabled={disableMutation.isPending || !configQuery.data?.is_configured}
             onClick={() => disableMutation.mutate()}
           >

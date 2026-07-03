@@ -131,11 +131,11 @@ export function BillPaymentsListPage() {
 
       {paymentsQuery.isError ? <ListErrorBanner onRetry={() => void paymentsQuery.refetch()} /> : null}
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
           Unpaid bill selector
           <SelectCombobox
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             value={selectedBillId}
             onChange={(event) => setSelectedBillId(event.target.value)}
           >
@@ -150,7 +150,7 @@ export function BillPaymentsListPage() {
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Vendor ID
           <input
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             value={vendorId}
             onChange={(event) => setVendorId(event.target.value)}
             placeholder="Optional vendor UUID"
@@ -159,7 +159,7 @@ export function BillPaymentsListPage() {
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           From
           <DatePicker
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             value={dateFrom}
             onChange={(next) => setDateFrom(next)}
           />
@@ -167,18 +167,18 @@ export function BillPaymentsListPage() {
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           To
           <DatePicker
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             value={dateTo}
             onChange={(next) => setDateTo(next)}
           />
         </label>
       </div>
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-2">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search payment rows
           <input
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="payment id, bill id, vendor id, method, reference, memo"
@@ -187,7 +187,7 @@ export function BillPaymentsListPage() {
         <div className="flex items-end text-xs text-gray-600">Total rows amount: <span className="ml-1 font-semibold text-gray-900">{money(totals)}</span></div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-gray-600">
             <tr>

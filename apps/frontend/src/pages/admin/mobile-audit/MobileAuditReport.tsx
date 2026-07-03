@@ -30,7 +30,7 @@ export function MobileAuditReport() {
         subtitle="375×667 viewport static scan — flags touch targets, tables, modals"
       />
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <dl className="grid gap-3 sm:grid-cols-4">
           <div>
             <dt className="text-xs uppercase text-gray-500">Viewport</dt>
@@ -53,7 +53,7 @@ export function MobileAuditReport() {
         </dl>
       </section>
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="mb-3 text-sm font-semibold text-gray-800">Flagged issues</h2>
         <MobileOptimizedTable
           rows={report.issues}

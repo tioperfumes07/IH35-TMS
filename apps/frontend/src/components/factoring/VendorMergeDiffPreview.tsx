@@ -18,7 +18,7 @@ export function VendorMergeDiffPreview({
   onMergeConfirmChange,
 }: Props) {
   return (
-    <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs" data-vendor-merge-diff-preview="true">
+    <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs" data-vendor-merge-diff-preview="true">
       <p className="font-semibold text-gray-900">Merge preview</p>
       <p className="mt-1">Driver: {driverName || "—"}</p>
       <p>From vendor: {fromVendorName || fromVendorId || "—"} ({fromVendorId || "—"})</p>
@@ -27,7 +27,7 @@ export function VendorMergeDiffPreview({
       <label className="mt-2 block">
         Type MERGE to confirm
         <input
-          className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
           value={mergeConfirm}
           onChange={(event) => onMergeConfirmChange(event.target.value)}
         />

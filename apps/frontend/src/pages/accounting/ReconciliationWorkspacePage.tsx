@@ -116,7 +116,7 @@ export function ReconciliationWorkspacePage() {
           <SelectCombobox
             value={effectiveAccountId}
             onChange={(event: ChangeEvent<HTMLSelectElement>) => setAccountId(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-1 text-xs"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             {(accountsQuery.data?.accounts ?? []).map((a) => (
               <option key={a.id} value={a.id}>

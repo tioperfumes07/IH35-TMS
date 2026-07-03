@@ -142,7 +142,7 @@ export function ReportsHomePage() {
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {reportsKpis.map((item) => (
-          <div key={item.label} className={`rounded border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-[#f59e0b]" : "border-slate-200"}`}>
+          <div key={item.label} className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-[#f59e0b]" : "border-slate-200"}`}>
             <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
             <div className={`text-lg font-semibold ${item.warn ? "text-[#92400e]" : "text-slate-900"}`}>{item.value}</div>
             <div className="text-xs text-slate-500">{item.meta}</div>
@@ -152,7 +152,7 @@ export function ReportsHomePage() {
 
       <div className="grid gap-3 lg:grid-cols-[1.8fr_1fr]">
         <div className="space-y-3">
-          <section className="rounded border border-slate-200 bg-white">
+          <section className="rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-semibold text-slate-900">Accounting + financial reports</h3>
@@ -180,7 +180,7 @@ export function ReportsHomePage() {
                 <button
                   key={id}
                   type="button"
-                  className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:border-[#1f2a44] hover:bg-white"
+                  className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:border-[#1f2a44] hover:bg-white"
                   onClick={() => navigate(PHASE_6_REPORT_HREFS[id])}
                 >
                   <span className="flex items-center justify-between gap-2">
@@ -203,7 +203,7 @@ export function ReportsHomePage() {
       {showCustomBuilder ? <CustomReportBuilder /> : null}
 
       {category === "saved" && !showCustomBuilder ? (
-        <section className="rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+        <section className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
           Open <strong>+ Custom report</strong> to build and save reports — saved definitions appear in the builder list.
         </section>
       ) : null}

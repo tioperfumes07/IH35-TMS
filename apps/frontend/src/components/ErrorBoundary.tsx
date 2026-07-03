@@ -45,7 +45,7 @@ function ErrorFallback({ error, onReload }: { error: Error; onReload: () => void
         </div>
         <details className="mt-6 rounded-md border border-white/10 bg-black/30 p-3 text-xs text-slate-200">
           <summary className="cursor-pointer select-none text-sm font-semibold text-white">Technical details</summary>
-          <pre className="mt-3 max-h-[320px] overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-200">
+          <pre className="mt-3 max-h-[320px] overflow-auto whitespace-pre-wrap wrap-break-word text-[11px] text-slate-200">
             {error.stack ?? error.message}
           </pre>
         </details>

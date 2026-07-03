@@ -68,16 +68,16 @@ export function StateSelect({ value, onChange, country = "US", className = "", d
         type="button"
         disabled={disabled}
         onClick={() => { setOpen((o) => !o); setQuery(""); }}
-        className="flex h-7 w-full items-center justify-between rounded border border-gray-300 px-2 text-left text-xs"
+        className="flex h-7 w-full items-center justify-between rounded-sm border border-gray-300 px-2 text-left text-xs"
       >
         <span className={value ? "" : "text-gray-400"}>{value || placeholder || "State"}</span>
         <span className="text-gray-400">▾</span>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 max-h-60 w-48 overflow-hidden rounded border border-gray-300 bg-white shadow-lg">
+        <div className="absolute z-50 mt-1 max-h-60 w-48 overflow-hidden rounded-sm border border-gray-300 bg-white shadow-lg">
           <input
             autoFocus
-            className="h-7 w-full border-b border-gray-200 px-2 text-xs outline-none"
+            className="h-7 w-full border-b border-gray-200 px-2 text-xs outline-hidden"
             placeholder="Search state…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

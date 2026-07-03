@@ -1,3 +1,5 @@
+import { formatDateUS } from "../../lib/formatDate";
+
 function statusClass(status: string | undefined) {
   if (status === "red") return "text-red-700";
   if (status === "yellow") return "text-yellow-700";
@@ -13,7 +15,7 @@ export function TrainingRecordsSection({
   onAddTraining?: () => void;
 }) {
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-800">Training records</h2>
         <button
@@ -46,7 +48,7 @@ export function TrainingRecordsSection({
             records.map((row, idx) => (
               <tr key={`${row.type}-${idx}`} className="border-t border-gray-100">
                 <td className="py-1">{String(row.type ?? "—")}</td>
-                <td>{String(row.completion_date ?? "—").slice(0, 10)}</td>
+                <td>{formatDateUS(row.completion_date) || "—"}</td>
                 <td className={statusClass(String(row.status))}>{String(row.expiration_date ?? "—")}</td>
                 <td>{row.certificate_url ? "On file" : "—"}</td>
               </tr>

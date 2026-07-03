@@ -14,7 +14,7 @@ export function StatementUpload({ bankAccountId, onUploaded }: Props) {
   const [uploading, setUploading] = useState(false);
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-3">
+    <div className="rounded-sm border border-gray-200 bg-white p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Statement upload (CSV)</p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <input

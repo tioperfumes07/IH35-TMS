@@ -30,7 +30,7 @@ export function DriverScoringTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-white p-3">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="text-sm font-semibold text-slate-900">Driver Scoring</h3>
         <div className="flex items-center gap-2 text-xs">
           <span className="text-slate-500">Period</span>
@@ -39,7 +39,7 @@ export function DriverScoringTab() {
               key={days}
               type="button"
               onClick={() => setPeriodDays(days)}
-              className={`rounded px-2 py-1 ${periodDays === days ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+              className={`rounded-sm px-2 py-1 ${periodDays === days ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
             >
               {days}d
             </button>
@@ -47,7 +47,7 @@ export function DriverScoringTab() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>
@@ -93,12 +93,12 @@ export function DriverScoringTab() {
       </div>
 
       {selectedDriver ? (
-        <div className="space-y-2 rounded border border-gray-200 bg-white p-3">
+        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <h4 className="text-sm font-semibold text-slate-900">{selectedDriver.driver_name} - Event Timeline</h4>
           <div className="text-xs text-slate-500">Map view uses event coordinates when available.</div>
           <div className="space-y-1 text-xs">
             {(eventsQuery.data?.events ?? []).slice(0, 50).map((event) => (
-              <div key={event.id} className="rounded border border-slate-100 px-2 py-1">
+              <div key={event.id} className="rounded-sm border border-slate-100 px-2 py-1">
                 {String(event.event_at).slice(0, 19).replace("T", " ")} · {event.event_kind} · {event.severity} · Unit {event.unit_number ?? "N/A"} ·
                 lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
               </div>

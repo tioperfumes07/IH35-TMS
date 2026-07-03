@@ -16,7 +16,7 @@ export function TimePicker({ value, onChange, className = "", disabled, id, aria
       aria-label={ariaLabel ?? "Time"}
       type="time"
       disabled={disabled}
-      className={`h-7 rounded border border-gray-300 px-2 text-xs ${className}`}
+      className={`h-7 rounded-sm border border-gray-300 px-2 text-xs ${className}`}
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />

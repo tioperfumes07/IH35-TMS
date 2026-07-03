@@ -14,7 +14,7 @@ export function CompanyViolationCorrectiveActionForm({ loading, onComplete }: Pr
 
   return (
     <form
-      className="space-y-2 rounded border border-gray-200 bg-gray-50 p-3"
+      className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3"
       onSubmit={(event) => {
         event.preventDefault();
         onComplete(completedDate, notes);
@@ -25,12 +25,12 @@ export function CompanyViolationCorrectiveActionForm({ loading, onComplete }: Pr
         <DatePicker
           value={completedDate}
           onChange={(next) => setCompletedDate(next)}
-          className="rounded border border-gray-300 px-2 py-1 text-xs"
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
         />
         <input
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
-          className="rounded border border-gray-300 px-2 py-1 text-xs"
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           placeholder="Completion notes"
         />
       </div>

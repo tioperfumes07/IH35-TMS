@@ -55,13 +55,13 @@ export function DriverSchedulerGridPage() {
     <div className="space-y-3">
       <PageHeader title="Driver Scheduler" subtitle={`${range.start} through ${range.end} — fleet leave grid`} />
 
-      <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2 text-xs">
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs">
         <span className="font-semibold text-gray-600">Range</span>
         {[7, 14, 30, 40].map((d) => (
           <button
             key={d}
             type="button"
-            className={`rounded px-2 py-1 ${windowDays === d ? "bg-slate-800 text-white" : "bg-gray-100 text-gray-700"}`}
+            className={`rounded-sm px-2 py-1 ${windowDays === d ? "bg-slate-800 text-white" : "bg-gray-100 text-gray-700"}`}
             onClick={() => setWindowDays(d)}
           >
             {d}d
@@ -73,7 +73,7 @@ export function DriverSchedulerGridPage() {
       {query.isError ? <div className="text-sm text-red-700">Failed to load scheduler grid.</div> : null}
 
       {query.data ? (
-        <div className="max-w-[calc(100vw-48px)] overflow-auto rounded border border-gray-200 bg-white">
+        <div className="max-w-[calc(100vw-48px)] overflow-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-max border-collapse text-[10px]">
             <thead>
               <tr>
@@ -123,7 +123,7 @@ export function DriverSchedulerGridPage() {
       ) : null}
 
       {query.data?.pending_requests?.length ? (
-        <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
           <div className="font-semibold">Pending in this window</div>
           <ul className="list-inside list-disc">
             {query.data.pending_requests.map((p) => (

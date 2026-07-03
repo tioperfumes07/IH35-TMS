@@ -31,14 +31,14 @@ export function TripCostCalculator({ unitId, companyId }: { unitId: string; comp
   const r = mutation.data;
 
   return (
-    <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-3" data-testid="vp-trip-cost">
+    <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-3" data-testid="vp-trip-cost">
       <button type="button" className="text-sm font-semibold text-gray-800" onClick={() => setOpen(!open)}>
         Trip cost calculator {open ? "▾" : "▸"}
       </button>
       {open ? (
         <div className="mt-2 space-y-2">
           <input
-            className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             placeholder="Destination ZIP"
             value={destination}
             onChange={(e) => setDestination(e.target.value)}

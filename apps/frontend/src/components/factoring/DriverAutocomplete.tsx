@@ -30,13 +30,13 @@ export function DriverAutocomplete({ companyId, value, onChange, placeholder = "
   return (
     <div className="space-y-1" data-driver-autocomplete="true">
       <input
-        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
         value={search || selectedName}
         placeholder={placeholder}
         onChange={(event) => setSearch(event.target.value)}
       />
       {search.trim() ? (
-        <div className="max-h-40 overflow-y-auto rounded border border-gray-200 bg-white">
+        <div className="max-h-40 overflow-y-auto rounded-sm border border-gray-200 bg-white">
           {(driversQuery.data ?? []).slice(0, 20).map((driver) => (
             <button
               key={driver.id}

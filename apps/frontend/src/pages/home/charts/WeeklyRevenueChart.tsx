@@ -25,7 +25,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
   }
 
   if (query.isLoading) {
-    return <div className="h-[240px] animate-pulse rounded bg-slate-100" />;
+    return <div className="h-[240px] animate-pulse rounded-sm bg-slate-100" />;
   }
 
   if (query.isError) {
@@ -44,7 +44,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
     return (
       <div className="home-recharts-print w-full">
         <h3 className="mb-2 text-sm font-semibold text-slate-900">Weekly revenue</h3>
-        <div className="flex h-[240px] items-center justify-center rounded border border-dashed border-slate-200 text-sm text-slate-500">
+        <div className="flex h-[240px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-sm text-slate-500">
           No revenue recorded in the last 7 days.
         </div>
       </div>
@@ -66,7 +66,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
             }
           />
           <Tooltip
-            formatter={(value: number) => [formatUsdFromCents(Math.round(value * 100)), "Revenue"]}
+            formatter={(value) => [formatUsdFromCents(Math.round(Number(value) * 100)), "Revenue"]}
             labelFormatter={(l) => `Day ${l}`}
           />
           <Line type="monotone" dataKey="revenue_dollars" stroke={LINE_COLOR} strokeWidth={2} dot={{ r: 3 }} name="Revenue" />

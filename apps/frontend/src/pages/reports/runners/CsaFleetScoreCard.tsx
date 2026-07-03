@@ -22,7 +22,7 @@ export function CsaFleetScoreCard({ value }: Props) {
         : "bg-emerald-100 text-emerald-700 border-emerald-300";
   const maxBasic = Math.max(1, ...BASICS.map((b) => Number(value[b.key] ?? 0)));
   return (
-    <section className="rounded border border-slate-200 bg-white p-4">
+    <section className="rounded-sm border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-3xl font-semibold text-slate-900">{Number(value.total_points ?? 0).toLocaleString()}</div>
@@ -31,11 +31,11 @@ export function CsaFleetScoreCard({ value }: Props) {
         <span className={`rounded-full border px-2 py-1 text-xs font-semibold uppercase ${pillClass}`}>{thresholdStatus}</span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded border border-slate-200 p-2">
+        <div className="rounded-sm border border-slate-200 p-2">
           <div className="text-slate-500">Inspections</div>
           <div className="font-semibold text-slate-900">{Number(value.total_inspections ?? 0).toLocaleString()}</div>
         </div>
-        <div className="rounded border border-slate-200 p-2">
+        <div className="rounded-sm border border-slate-200 p-2">
           <div className="text-slate-500">Out of Service</div>
           <div className="font-semibold text-slate-900">{Number(value.total_oos ?? 0).toLocaleString()}</div>
         </div>
@@ -50,8 +50,8 @@ export function CsaFleetScoreCard({ value }: Props) {
                 <span>{basic.label}</span>
                 <span>{score.toFixed(1)}</span>
               </div>
-              <div className="h-2 rounded bg-slate-100">
-                <div className="h-2 rounded bg-[#1f2a44]" style={{ width }} />
+              <div className="h-2 rounded-sm bg-slate-100">
+                <div className="h-2 rounded-sm bg-[#1f2a44]" style={{ width }} />
               </div>
             </div>
           );

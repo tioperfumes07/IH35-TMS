@@ -135,7 +135,7 @@ export function FinancialStatementsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           Financial statements are not yet enabled for this company. (Feature flag <code>{FINANCE_STATEMENTS_UI_FLAG}</code> is off.)
         </div>
       </div>
@@ -225,14 +225,14 @@ export function FinancialStatementsPage() {
         ))}
       </div>
 
-      <div className="no-print mb-4 flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white p-3">
+      <div className="no-print mb-4 flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
         <BasisSelector value={basis} onChange={setBasis} />
         {usesRange ? (
           <>
             <label className="text-xs text-slate-600">
               From
               <DatePicker
-                className="mt-1 block h-9 rounded border border-slate-300 px-2"
+                className="mt-1 block h-9 rounded-sm border border-slate-300 px-2"
                 value={period.start}
                 onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
               />
@@ -240,7 +240,7 @@ export function FinancialStatementsPage() {
             <label className="text-xs text-slate-600">
               To
               <DatePicker
-                className="mt-1 block h-9 rounded border border-slate-300 px-2"
+                className="mt-1 block h-9 rounded-sm border border-slate-300 px-2"
                 value={period.end}
                 onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
               />
@@ -253,7 +253,7 @@ export function FinancialStatementsPage() {
           <>
             <label className="text-xs text-slate-600">
               As-of date
-              <DatePicker className="mt-1 block h-9 rounded border border-slate-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
+              <DatePicker className="mt-1 block h-9 rounded-sm border border-slate-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
             </label>
             <Button size="sm" onClick={() => setAppliedAsOf(asOf)}>
               Apply
@@ -308,7 +308,7 @@ export function FinancialStatementsPage() {
                   ))}
                 />
               ))}
-              <div className="rounded border border-slate-200 bg-white px-3 py-2">
+              <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
                 <div className="flex items-center justify-between text-sm font-semibold">
                   <span>Net income</span>
                   <span className={plQuery.data.net_income < 0 ? "text-rose-700" : "text-emerald-700"}>{money(plQuery.data.net_income)}</span>
@@ -363,7 +363,7 @@ export function FinancialStatementsPage() {
                   </tr>
                 ))}
               />
-              <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
                 <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold">Equity</div>
                 <table className="min-w-full text-left text-xs">
                   <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
@@ -418,7 +418,7 @@ export function FinancialStatementsPage() {
               />
             </div>
           ) : null}
-          <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
             <table className="min-w-full text-left text-xs">
               <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                 <tr>
@@ -472,7 +472,7 @@ function SummaryCard({ label, value, tone }: { label: string; value: string; ton
   const border = tone === "negative" ? "border-rose-300" : tone === "positive" ? "border-emerald-200" : "border-slate-200";
   const text = tone === "negative" ? "text-rose-700" : tone === "positive" ? "text-emerald-700" : "text-slate-900";
   return (
-    <div className={`rounded border bg-white px-3 py-2 ${border}`}>
+    <div className={`rounded-sm border bg-white px-3 py-2 ${border}`}>
       <div className="text-[11px] font-semibold uppercase text-slate-500">{label}</div>
       <div className={`text-lg font-semibold ${text}`}>{value}</div>
     </div>
@@ -495,7 +495,7 @@ function StatementTable({
   emptyColSpan: number;
 }) {
   return (
-    <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+    <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
       <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold">{title}</div>
       <table className="min-w-full text-left text-xs">
         <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">

@@ -151,13 +151,13 @@ export function OnboardingWizard() {
   }
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm">Select an operating company to begin onboarding.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company to begin onboarding.</div>;
   }
   if (stateQuery.isLoading) {
-    return <div className="rounded border bg-white p-4 text-sm">Loading onboarding…</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Loading onboarding…</div>;
   }
   if (stateQuery.isError) {
-    return <div className="rounded border bg-white p-4 text-sm text-red-700">Could not load onboarding state.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-red-700">Could not load onboarding state.</div>;
   }
 
   const progressPct = Math.round(((activeIndex + (completed ? 1 : 0)) / ONBOARDING_STEP_ORDER.length) * 100);
@@ -166,23 +166,23 @@ export function OnboardingWizard() {
     <div data-testid="operator-onboarding-wizard" className="mx-auto max-w-4xl space-y-4">
       <PageHeader title="Operator onboarding" subtitle="Six guided steps to a fully configured account" />
 
-      <div className="h-2 w-full overflow-hidden rounded bg-gray-100">
+      <div className="h-2 w-full overflow-hidden rounded-sm bg-gray-100">
         <div className="h-full bg-[#1F2A44] transition-all" style={{ width: `${progressPct}%` }} />
       </div>
 
       {completed ? (
-        <div className="rounded border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+        <div className="rounded-sm border border-green-200 bg-green-50 p-4 text-sm text-green-800">
           Onboarding complete. You can revisit any step from settings.
         </div>
       ) : null}
 
-      <div className="rounded border border-gray-200 bg-white p-4">
+      <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="mb-4 flex flex-wrap gap-2">
           {ONBOARDING_STEP_ORDER.map((step, idx) => (
             <button
               key={step}
               type="button"
-              className={`rounded px-2 py-1 text-xs ${idx === activeIndex ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700"}`}
+              className={`rounded-sm px-2 py-1 text-xs ${idx === activeIndex ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700"}`}
               onClick={() => setActiveIndex(idx)}
             >
               {idx + 1}. {ONBOARDING_STEP_LABELS[step]}
@@ -244,7 +244,7 @@ export function OnboardingWizard() {
             {activeIndex < ONBOARDING_STEP_ORDER.length - 1 ? (
               <button
                 type="button"
-                className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
                 disabled={!canAdvance || patchMut.isPending}
                 onClick={() => void saveAndAdvance()}
               >
@@ -253,7 +253,7 @@ export function OnboardingWizard() {
             ) : (
               <button
                 type="button"
-                className="rounded border border-green-600 px-3 py-1.5 text-sm font-semibold text-green-700 disabled:opacity-50"
+                className="rounded-sm border border-green-600 px-3 py-1.5 text-sm font-semibold text-green-700 disabled:opacity-50"
                 disabled={patchMut.isPending}
                 onClick={() => void completeOnboarding()}
               >
@@ -263,7 +263,7 @@ export function OnboardingWizard() {
             {activeIndex > 0 ? (
               <button
                 type="button"
-                className="rounded border px-3 py-1.5 text-sm text-gray-700"
+                className="rounded-sm border px-3 py-1.5 text-sm text-gray-700"
                 onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
               >
                 Back

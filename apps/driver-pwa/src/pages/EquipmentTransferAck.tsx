@@ -29,7 +29,7 @@ export function EquipmentTransferAckPage() {
       </Link>
       <h1 className="text-lg font-semibold">{t("transfer_ack.title")}</h1>
       {(outbound.data?.rows ?? []).map((row) => (
-        <button key={row.id} type="button" className="block w-full rounded border p-3 text-left" onClick={() => ackDropoff.mutate(row.id)}>
+        <button key={row.id} type="button" className="block w-full rounded-sm border p-3 text-left" onClick={() => ackDropoff.mutate(row.id)}>
           {t("transfer_ack.ack_dropoff", { id: row.id.slice(0, 8) })}
         </button>
       ))}
@@ -37,7 +37,7 @@ export function EquipmentTransferAckPage() {
         <button
           key={row.id}
           type="button"
-          className="block w-full rounded border p-3 text-left"
+          className="block w-full rounded-sm border p-3 text-left"
           disabled={!row.dual_ack?.dropoff_ack_at}
           onClick={() => ackPickup.mutate(row.id)}
         >

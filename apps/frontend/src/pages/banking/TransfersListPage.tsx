@@ -84,18 +84,18 @@ export function TransfersListPage() {
       />
       {transfersQuery.isError ? <ListErrorBanner onRetry={() => void transfersQuery.refetch()} /> : null}
 
-      <div className="grid grid-cols-1 gap-3 rounded border border-gray-200 bg-white p-3 md:grid-cols-6">
+      <div className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-6">
         <label className="text-xs text-gray-600">
           From
-          <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
         <label className="text-xs text-gray-600">
           Type
-          <SelectCombobox value={type} onChange={(e) => setType(e.target.value as TransferType | "")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={type} onChange={(e) => setType(e.target.value as TransferType | "")} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
             <option value="">All</option>
             <option value="bank_to_bank">Bank-to-Bank</option>
             <option value="cc_payment">CC Payment</option>
@@ -106,7 +106,7 @@ export function TransfersListPage() {
         </label>
         <label className="text-xs text-gray-600">
           Account
-          <SelectCombobox value={accountId} onChange={(e) => setAccountId(e.target.value)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={accountId} onChange={(e) => setAccountId(e.target.value)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
             <option value="">All</option>
             {(bankAccountsQuery.data?.accounts ?? []).map((account) => (
               <option key={account.id} value={account.id}>
@@ -117,7 +117,7 @@ export function TransfersListPage() {
         </label>
         <label className="text-xs text-gray-600">
           Status
-          <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as "active" | "revoked" | "")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as "active" | "revoked" | "")} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
             <option value="">All</option>
             <option value="active">Active</option>
             <option value="revoked">Revoked</option>
@@ -135,7 +135,7 @@ export function TransfersListPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white p-3">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white p-3">
         <table className="min-w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
@@ -162,11 +162,11 @@ export function TransfersListPage() {
                 <td className="border-b border-gray-100 px-2 py-2">{row.reference_number || "-"}</td>
                 <td className="border-b border-gray-100 px-2 py-2">
                   {row.revoked_at ? (
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700">revoked</span>
+                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-700">revoked</span>
                   ) : row.qbo_journal_entry_id ? (
-                    <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">synced</span>
+                    <span className="rounded-sm bg-green-100 px-2 py-0.5 text-xs text-green-700">synced</span>
                   ) : (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700">pending</span>
+                    <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-700">pending</span>
                   )}
                 </td>
                 <td className="border-b border-gray-100 px-2 py-2">

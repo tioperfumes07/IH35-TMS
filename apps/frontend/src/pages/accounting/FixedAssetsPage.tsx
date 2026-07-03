@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -10,7 +11,7 @@ import {
 
 const fmtCents = (c: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString("en-US") : "—");
+const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const titleize = (s: string) => s.replace(/_/g, " ");
 
 const STATUS_COLOR: Record<string, string> = {
@@ -26,7 +27,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[88vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[88vh] flex flex-col" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
           <div>
             <h2 className="text-base font-semibold text-gray-900">{detail.name}</h2>
@@ -53,24 +54,24 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
         </div>
 
         {detail.disposal && (
-          <div className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             <p className="font-semibold mb-1">Disposed {fmtDate(detail.disposal.disposal_date)} ({titleize(detail.disposal.disposal_type)})</p>
             <p>Proceeds {fmtCents(detail.disposal.proceeds_cents)} · Book value {fmtCents(detail.disposal.book_value_at_disposal_cents)} · {detail.disposal.gain_loss_cents >= 0 ? "Gain" : "Loss"} {fmtCents(Math.abs(detail.disposal.gain_loss_cents))}</p>
           </div>
         )}
 
         {detail.je_preview.depreciation_je_template && (
-          <div className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             <p className="font-semibold mb-1">GL Posting Preview (GATED — autopost flag OFF)</p>
             <p>Per-period JE: Dr Depreciation Expense / Cr Accumulated Depreciation</p>
           </div>
         )}
 
         {detail.schedule_note && (
-          <p className="mb-3 text-xs text-gray-500 rounded bg-gray-50 px-2 py-1">{detail.schedule_note}</p>
+          <p className="mb-3 text-xs text-gray-500 rounded-sm bg-gray-50 px-2 py-1">{detail.schedule_note}</p>
         )}
 
-        <div className="overflow-y-auto flex-1 rounded border border-gray-200">
+        <div className="overflow-y-auto flex-1 rounded-sm border border-gray-200">
           <table className="min-w-full text-xs divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
@@ -126,7 +127,7 @@ export function FixedAssetsPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="Fixed Assets" subtitle="Fixed asset register and depreciation schedules">
-        <div className="rounded border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           Fixed asset tracking is not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">Enable the FIXED_ASSETS_ENABLED feature flag to use this module.</p>
         </div>
@@ -142,7 +143,7 @@ export function FixedAssetsPage() {
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="fully_depreciated">Fully Depreciated</option>
@@ -162,7 +163,7 @@ export function FixedAssetsPage() {
           <p className="text-xs text-gray-400 mt-1">Assets will appear here once they are added to the register.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -188,7 +189,7 @@ export function FixedAssetsPage() {
                     {row.is_owner_operated ? "Self" : (row.owner_company_name ?? "Leased-in")}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
+                    <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
                       {titleize(row.status)}
                     </span>
                   </td>
@@ -202,10 +203,10 @@ export function FixedAssetsPage() {
       {total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
           <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
         </div>
       )}
     </AccountingSubNavWrapper>

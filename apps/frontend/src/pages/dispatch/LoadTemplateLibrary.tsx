@@ -233,7 +233,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
         {q.isLoading ? <div className="text-gray-500">Loading…</div> : null}
         {!q.isLoading && rows.length === 0 ? <div className="text-gray-500">No saved templates. Use “Save as template” on a load.</div> : null}
         {rows.map((t) => (
-          <div key={t.id} className="rounded border border-gray-200 p-2">
+          <div key={t.id} className="rounded-sm border border-gray-200 p-2">
             <div className="font-semibold text-gray-800">{t.name}</div>
             <div className="text-[11px] text-gray-500">Updated {t.updated_at ? new Date(t.updated_at).toLocaleString() : "—"}</div>
           </div>
@@ -291,7 +291,7 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
       >
         <label className="text-xs font-semibold text-gray-600">
           Template name
-          <input value={name} onChange={(ev) => setName(ev.target.value)} className="mt-0.5 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={name} onChange={(ev) => setName(ev.target.value)} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
         {err ? <div className="text-xs text-red-600">{err}</div> : null}
         <div className="flex justify-end gap-2 pt-1">

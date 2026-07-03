@@ -490,7 +490,7 @@ export function UsersPage() {
               <div className="relative">
                 <button
                   type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded border border-gray-300 hover:bg-gray-100"
+                  className="flex h-7 w-7 items-center justify-center rounded-sm border border-gray-300 hover:bg-gray-100"
                   onClick={(event) => {
                     event.stopPropagation();
                     setMenuUserId((current) => (current === row.id ? null : row.id));
@@ -499,10 +499,10 @@ export function UsersPage() {
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </button>
                 {menuUserId === row.id ? (
-                  <div className="absolute right-0 z-20 mt-1 w-36 rounded border border-gray-200 bg-white p-1 text-xs shadow">
+                  <div className="absolute right-0 z-20 mt-1 w-36 rounded-sm border border-gray-200 bg-white p-1 text-xs shadow-sm">
                     <button
                       type="button"
-                      className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100"
+                      className="block w-full rounded-sm px-2 py-1 text-left hover:bg-gray-100"
                       onClick={() => {
                         if (!isOwnerOrAdmin) return;
                         setRoleModalUser(row);
@@ -514,7 +514,7 @@ export function UsersPage() {
                     </button>
                     <button
                       type="button"
-                      className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100"
+                      className="block w-full rounded-sm px-2 py-1 text-left hover:bg-gray-100"
                       onClick={async () => {
                         if (!isOwnerOrAdmin) return;
                         setMenuUserId(null);
@@ -550,7 +550,7 @@ export function UsersPage() {
               onChange={(event) => setInviteName(event.target.value)}
               required
               type="text"
-              className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div>
@@ -560,7 +560,7 @@ export function UsersPage() {
               onChange={(event) => setInviteEmail(event.target.value)}
               required
               type="email"
-              className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div>
@@ -574,7 +574,7 @@ export function UsersPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Password setup</label>
-            <div className="space-y-2 rounded border border-gray-200 p-2 text-xs text-gray-700">
+            <div className="space-y-2 rounded-sm border border-gray-200 p-2 text-xs text-gray-700">
               <label className="inline-flex items-center gap-2">
                 <input
                   type="radio"
@@ -603,7 +603,7 @@ export function UsersPage() {
                 onChange={(event) => setInviteInitialPassword(event.target.value)}
                 type="password"
                 autoComplete="new-password"
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
               <PasswordChecklist password={inviteInitialPassword} />
               {!invitePasswordReady ? (
@@ -613,7 +613,7 @@ export function UsersPage() {
           ) : null}
           {checkingReturningDispatcher ? <div className="text-xs text-gray-500">Checking returning dispatcher history...</div> : null}
           {returningDetection ? (
-            <div ref={returningWarningRef} className="rounded border-2 border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
+            <div ref={returningWarningRef} className="rounded-sm border-2 border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
               <p className="flex items-center gap-1.5 font-semibold text-amber-800">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 Returning dispatcher detected — review required
@@ -691,7 +691,7 @@ export function UsersPage() {
               value={roleReason}
               onChange={(event) => setRoleReason(event.target.value)}
               rows={3}
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
             />
           </div>
           <div className="flex justify-end gap-2">

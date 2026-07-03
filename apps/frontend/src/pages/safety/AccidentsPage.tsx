@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSafetyAccidents } from "../../api/safety";
 import { Button } from "../../components/Button";
@@ -47,7 +48,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="accidents-page">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-sm font-semibold text-slate-800">Accidents & Incidents</div>
           <div className="text-[11px] text-slate-500">Live accident reports with damage details, photos, and maintenance WO spawn.</div>
@@ -64,7 +65,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs" data-testid="accidents-table">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>
@@ -79,7 +80,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
           <tbody>
             {rows.map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100" data-testid={`accident-row-${String(row.id)}`}>
-                <td className="px-2 py-1">{String(row.accident_at ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{formatDateUS(row.accident_at)}</td>
                 <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.unit_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.location ?? row.description ?? "—")}</td>

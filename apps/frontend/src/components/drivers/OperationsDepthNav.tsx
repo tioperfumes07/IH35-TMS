@@ -70,7 +70,7 @@ export function OperationsDepthNav({ activeSlug, onChange }: Props) {
             >
               {group.group}
             </button>
-            <div className="absolute left-0 z-20 hidden min-w-[12rem] flex-col rounded border border-gray-200 bg-white py-1 shadow-lg group-hover:flex">
+            <div className="absolute left-0 z-20 hidden min-w-48 flex-col rounded-sm border border-gray-200 bg-white py-1 shadow-lg group-hover:flex">
               {group.items.map((item) => (
                 <button
                   key={item.slug}

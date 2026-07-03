@@ -54,7 +54,7 @@ export function LegalMattersListPage() {
         <>
           <div className="flex flex-wrap gap-2">
             <SelectCombobox
-              className="rounded border border-gray-200 px-2 py-1 text-sm"
+              className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -66,7 +66,7 @@ export function LegalMattersListPage() {
               ))}
             </SelectCombobox>
             <SelectCombobox
-              className="rounded border border-gray-200 px-2 py-1 text-sm"
+              className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
             >
@@ -77,7 +77,7 @@ export function LegalMattersListPage() {
                 </option>
               ))}
             </SelectCombobox>
-            <SelectCombobox className="rounded border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
+            <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
               <option value="">All types</option>
               {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
                 <option key={s} value={s}>
@@ -93,7 +93,7 @@ export function LegalMattersListPage() {
           ) : rows.length === 0 ? (
             <p className="text-sm text-gray-600">No matters match filters.</p>
           ) : (
-            <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-gray-50 text-xs uppercase text-gray-600">
                   <tr>
@@ -118,7 +118,7 @@ export function LegalMattersListPage() {
                         <td className="px-3 py-2">{String(row.severity ?? "")}</td>
                         <td className="px-3 py-2">
                           {urgent ? (
-                            <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
+                            <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
                               SOL {sol}d
                             </span>
                           ) : (

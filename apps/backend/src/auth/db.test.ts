@@ -9,10 +9,14 @@ const connectMock = vi.fn();
 
 vi.mock("pg", () => ({
   default: {
-    Pool: vi.fn(() => ({
-      connect: connectMock,
-      on: vi.fn(),
-    })),
+    // vitest 4: a mock used as a constructor (`new Pool()`) must be a
+    // `function`/`class`, not an arrow function (arrows have no [[Construct]]).
+    Pool: vi.fn(function () {
+      return {
+        connect: connectMock,
+        on: vi.fn(),
+      };
+    }),
   },
 }));
 

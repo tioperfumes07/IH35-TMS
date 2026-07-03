@@ -165,14 +165,14 @@ export function LoginPage() {
             <button
               type="button"
               onClick={() => setMode("phone")}
-              className={`min-h-11 rounded border text-sm font-semibold ${mode === "phone" ? "border-white text-white" : "border-pwa-border text-pwa-text-secondary"}`}
+              className={`min-h-11 rounded-sm border text-sm font-semibold ${mode === "phone" ? "border-white text-white" : "border-pwa-border text-pwa-text-secondary"}`}
             >
               {t("login.tab_phone")}
             </button>
             <button
               type="button"
               onClick={() => setMode("email")}
-              className={`min-h-11 rounded border text-sm font-semibold ${mode === "email" ? "border-white text-white" : "border-pwa-border text-pwa-text-secondary"}`}
+              className={`min-h-11 rounded-sm border text-sm font-semibold ${mode === "email" ? "border-white text-white" : "border-pwa-border text-pwa-text-secondary"}`}
             >
               {t("login.tab_email")}
             </button>

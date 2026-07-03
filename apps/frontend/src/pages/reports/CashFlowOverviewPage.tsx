@@ -167,7 +167,7 @@ export function CashFlowOverviewPage() {
             <label className="text-xs text-gray-600">
               As-of date
               <DatePicker
-                className="mt-1 h-9 rounded border border-gray-300 px-2"
+                className="mt-1 h-9 rounded-sm border border-gray-300 px-2"
                 value={asOf}
                 onChange={(next) => setAsOf(next)}
               />
@@ -175,27 +175,27 @@ export function CashFlowOverviewPage() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Operating balance</div>
               <div className="text-xl font-semibold">{money(query.data.current_state.operating_balance_cents)}</div>
               <div className="text-[11px] text-gray-500">Kind = operating (excl. payroll/DIP buckets)</div>
               <MiniSparkline values={kpiSpark} />
             </div>
             <div
-              className={`rounded border bg-white p-3 ${query.data.current_state.dip_balance_cents > 0 && query.data.current_state.dip_balance_cents < DIP_ATTENTION_CENTS ? "border-2 border-[#C9A55F]" : "border-gray-200"}`}
+              className={`rounded-sm border bg-white p-3 ${query.data.current_state.dip_balance_cents > 0 && query.data.current_state.dip_balance_cents < DIP_ATTENTION_CENTS ? "border-2 border-[#C9A55F]" : "border-gray-200"}`}
             >
               <div className="text-[11px] font-semibold uppercase text-gray-500">DIP balance</div>
               <div className="text-xl font-semibold">{money(query.data.current_state.dip_balance_cents)}</div>
               <div className="text-[11px] text-gray-500">Gold border when DIP balance is low</div>
             </div>
             <div
-              className={`rounded border bg-white p-3 ${query.data.current_state.payroll_balance_cents < PAYROLL_ALERT_CENTS ? "border-2 border-[#DC3545]" : "border-gray-200"}`}
+              className={`rounded-sm border bg-white p-3 ${query.data.current_state.payroll_balance_cents < PAYROLL_ALERT_CENTS ? "border-2 border-[#DC3545]" : "border-gray-200"}`}
             >
               <div className="text-[11px] font-semibold uppercase text-gray-500">Payroll balance</div>
               <div className="text-xl font-semibold">{money(query.data.current_state.payroll_balance_cents)}</div>
               <div className="text-[11px] text-gray-500">Alert when below {money(PAYROLL_ALERT_CENTS)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Factoring reserves held</div>
               <div className="text-xl font-semibold">{money(query.data.current_state.factoring_reserves_held_cents)}</div>
               <div className="text-[11px] text-gray-500">
@@ -204,7 +204,7 @@ export function CashFlowOverviewPage() {
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold">30-day projected combined balance</div>
             <div className="text-xs text-gray-500 mb-2">
               Straight-line blend of net projected change (±10% shaded band). Tooltip shows cumulative AR/AP/settlement
@@ -217,15 +217,13 @@ export function CashFlowOverviewPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
                   <Tooltip
-                    formatter={(value: number, name: string) => [money(value), name]}
-                    labelFormatter={(l) => String(l)}
                     content={({ active, payload, label }) =>
                       active && payload?.length ? (
-                        <div className="rounded border border-gray-200 bg-white p-2 text-xs shadow">
+                        <div className="rounded-sm border border-gray-200 bg-white p-2 text-xs shadow-sm">
                           <div className="font-semibold">{label}</div>
                           {payload.map((p) => (
                             <div key={String(p.dataKey)}>
-                              {p.name}: {money(Number(p.value))}
+                              {String(p.name)}: {money(Number(p.value))}
                             </div>
                           ))}
                           <div className="mt-1 border-t border-gray-100 pt-1 text-gray-600">
@@ -246,7 +244,7 @@ export function CashFlowOverviewPage() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="mb-2 text-sm font-semibold">Last 7 days — inflows vs outflows</div>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -254,13 +252,13 @@ export function CashFlowOverviewPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={(v) => money(Number(v))} width={68} tick={{ fontSize: 10 }} />
-                    <Tooltip formatter={(v: number) => money(Number(v))} />
+                    <Tooltip formatter={(v) => money(Number(v))} />
                     <Bar dataKey="v" fill="#0d9488" name="Amount" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="mb-2 text-sm font-semibold">Last 30 days — avg daily flow</div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
@@ -275,7 +273,7 @@ export function CashFlowOverviewPage() {
             </div>
           </div>
 
-          <details className="no-print rounded border border-gray-200 bg-white p-3">
+          <details className="no-print rounded-sm border border-gray-200 bg-white p-3">
             <summary className="cursor-pointer text-sm font-semibold">Alerts & follow-ups</summary>
             <ul className="mt-2 list-inside list-disc space-y-2 text-sm text-gray-700">
               <li>

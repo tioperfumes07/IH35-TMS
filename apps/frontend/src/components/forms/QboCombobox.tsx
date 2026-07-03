@@ -90,7 +90,7 @@ export function QboCombobox({
   return (
     <div ref={rootRef} className="relative w-full">
       <input
-        className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
         placeholder={placeholder ?? "Type to search QuickBooks…"}
         value={draft}
         onFocus={() => setOpen(true)}
@@ -130,7 +130,7 @@ export function QboCombobox({
       />
 
       {open ? (
-        <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border border-gray-200 bg-white shadow-md">
+        <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-sm border border-gray-200 bg-white shadow-md">
           {resultsQuery.isLoading ? <div className="px-2 py-2 text-xs text-gray-600">Searching QuickBooks mirror…</div> : null}
           {resultsQuery.isError ? (
             <div className="px-2 py-2 text-xs text-red-600">Could not load suggestions.</div>

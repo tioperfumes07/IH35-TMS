@@ -167,7 +167,7 @@ export function CustomerProfitabilityPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           Min revenue (USD)
           {/* M-1: dollars-mode filter; Math.round(minRevDollars*100)=min_revenue_cents byte-for-byte. */}
@@ -176,7 +176,7 @@ export function CustomerProfitabilityPage() {
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.start}
             onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           />
@@ -184,7 +184,7 @@ export function CustomerProfitabilityPage() {
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.end}
             onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />
@@ -199,25 +199,25 @@ export function CustomerProfitabilityPage() {
       {query.data ? (
         <>
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Revenue</div>
               <div className="text-lg font-semibold">{money(query.data.totals.revenue_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Direct cost</div>
               <div className="text-lg font-semibold">{money(query.data.totals.direct_cost_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Gross margin</div>
               <div className="text-lg font-semibold">{money(query.data.totals.gross_margin_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Margin %</div>
               <div className="text-lg font-semibold">{pct(query.data.totals.gross_margin_pct)}</div>
             </div>
           </div>
 
-          <div className="overflow-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-xs">
               <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                 <tr>
@@ -278,7 +278,7 @@ export function CustomerProfitabilityPage() {
                         {(r.flags ?? []).map((f) => {
                           const meta = FLAG_UI[f];
                           return (
-                            <span key={f} className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
+                            <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
                               {meta.label}
                             </span>
                           );
@@ -291,7 +291,7 @@ export function CustomerProfitabilityPage() {
             </table>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold">Top 5 customers by revenue (margin % overlay)</div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -301,8 +301,8 @@ export function CustomerProfitabilityPage() {
                   <YAxis yAxisId="left" tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
                   <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `${v}%`} width={40} tick={{ fontSize: 10 }} />
                   <Tooltip
-                    formatter={(value: number, name: string) =>
-                      name === "marginPct" ? [`${value.toFixed(1)}%`, "Margin %"] : [money(Number(value)), "Revenue"]
+                    formatter={(value, name) =>
+                      name === "marginPct" ? [`${Number(value).toFixed(1)}%`, "Margin %"] : [money(Number(value)), "Revenue"]
                     }
                   />
                   <Legend />

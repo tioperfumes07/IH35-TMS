@@ -127,7 +127,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div className="text-sm font-semibold text-gray-900">Documents ({filteredFiles.length})</div>
         {canUpload ? (
           <Button type="button" onClick={() => setUploadOpen(true)}>
@@ -136,7 +136,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
         ) : null}
       </div>
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
         <div className="space-y-1 md:col-span-2">
           <label className="text-xs font-semibold text-gray-600">Category</label>
           <Combobox
@@ -153,7 +153,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
           <DatePicker
             value={dateFrom}
             onChange={(next) => setDateFrom(next)}
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
         <div className="space-y-1">
@@ -161,7 +161,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
           <DatePicker
             value={dateTo}
             onChange={(next) => setDateTo(next)}
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
         <div className="space-y-1">
@@ -171,7 +171,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search filename"
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
         {isOwner ? (
@@ -182,7 +182,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
         ) : null}
       </div>
 
-      {documentsError ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{documentsError}</div> : null}
+      {documentsError ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{documentsError}</div> : null}
 
       <DataTable
         rows={filteredFiles}
@@ -209,7 +209,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
             label: "Actions",
             className: "w-[270px]",
             render: (row) => (
-              <div className="flex flex-wrap gap-1" onClick={(event) => event.stopPropagation()}>
+              <div className="flex flex-wrap gap-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                 <Button size="sm" variant="secondary" onClick={() => setSelectedPreviewFile(row)} disabled={!row.upload_completed_at}>
                   Preview
                 </Button>

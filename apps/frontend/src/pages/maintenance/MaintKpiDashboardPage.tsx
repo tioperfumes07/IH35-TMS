@@ -179,7 +179,7 @@ export function MaintKpiDashboardPage() {
           <label className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase text-slate-500">From</span>
             <DatePicker
-              className="rounded border border-gray-300 px-2 py-1"
+              className="rounded-sm border border-gray-300 px-2 py-1"
               value={periodStart}
               onChange={(next) => setPeriodStart(next)}
               data-testid="maint-kpi-filter-start"
@@ -188,7 +188,7 @@ export function MaintKpiDashboardPage() {
           <label className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase text-slate-500">To</span>
             <DatePicker
-              className="rounded border border-gray-300 px-2 py-1"
+              className="rounded-sm border border-gray-300 px-2 py-1"
               value={periodEnd}
               onChange={(next) => setPeriodEnd(next)}
               data-testid="maint-kpi-filter-end"
@@ -197,7 +197,7 @@ export function MaintKpiDashboardPage() {
           <label className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase text-slate-500">Unit</span>
             <select
-              className="min-w-[8rem] rounded border border-gray-300 px-2 py-1"
+              className="min-w-32 rounded-sm border border-gray-300 px-2 py-1"
               value={unitId}
               onChange={(e) => setUnitId(e.target.value)}
               data-testid="maint-kpi-filter-unit"
@@ -228,7 +228,7 @@ export function MaintKpiDashboardPage() {
         ))}
       </div>
 
-      <section className="rounded border border-slate-200 bg-slate-50 p-3" data-testid="maint-kpi-pm-hub">
+      <section className="rounded-sm border border-slate-200 bg-slate-50 p-3" data-testid="maint-kpi-pm-hub">
         <div className="text-xs font-semibold uppercase text-slate-900">PM compliance hub</div>
         <p className="mt-1 text-xs text-slate-800">
           Manage schedules and the auto-WO engine from linked maintenance surfaces.
@@ -236,14 +236,14 @@ export function MaintKpiDashboardPage() {
         <div className="mt-2 flex flex-wrap gap-2">
           <Link
             to="/maintenance/pm-auto-engine"
-            className="rounded bg-slate-900 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-slate-900 px-3 py-1 text-xs font-semibold text-white"
             data-testid="maint-kpi-link-pm-engine"
           >
             PM auto engine
           </Link>
           <Link
             to="/maintenance/pm-schedule"
-            className="rounded border border-slate-400 bg-white px-3 py-1 text-xs font-semibold text-slate-900"
+            className="rounded-sm border border-slate-400 bg-white px-3 py-1 text-xs font-semibold text-slate-900"
             data-testid="maint-kpi-link-pm-schedule"
           >
             PM schedule
@@ -251,7 +251,7 @@ export function MaintKpiDashboardPage() {
         </div>
       </section>
 
-      <section className="overflow-x-auto rounded border border-gray-200 bg-white" data-testid="maint-kpi-drilldown">
+      <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white" data-testid="maint-kpi-drilldown">
         <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-slate-800">
           Drill-down — {activeKpi.replace(/_/g, " ")}
         </div>

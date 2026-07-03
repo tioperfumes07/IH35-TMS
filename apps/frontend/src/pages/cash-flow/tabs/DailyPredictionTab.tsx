@@ -32,7 +32,7 @@ function addDays(iso: string, delta: number): string {
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
   const abs = Math.abs(cents);
-  const dollars = (abs / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const dollars = (abs / 100).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (opts?.sign && cents < 0) return `−${dollars}`;
   if (opts?.sign && cents > 0) return `+${dollars}`;
   return cents < 0 ? `−${dollars}` : dollars;
@@ -95,7 +95,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         <button
           type="button"
           onClick={() => setDate((d) => addDays(d, -1))}
-          className="flex size-8 items-center justify-center rounded hover:bg-gray-100"
+          className="flex size-8 items-center justify-center rounded-sm hover:bg-gray-100"
           aria-label="Previous day"
         >
           <ChevronLeft className="h-4 w-4 text-gray-600" />
@@ -112,13 +112,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             </button>
           )}
           {date === todayIso() && (
-            <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Today</span>
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Today</span>
           )}
         </div>
         <button
           type="button"
           onClick={() => setDate((d) => addDays(d, 1))}
-          className="flex size-8 items-center justify-center rounded hover:bg-gray-100"
+          className="flex size-8 items-center justify-center rounded-sm hover:bg-gray-100"
           aria-label="Next day"
         >
           <ChevronRight className="h-4 w-4 text-gray-600" />
@@ -174,7 +174,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       )}
 
       {isError && (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           Failed to load prediction. Check your connection and try again.
         </div>
       )}
@@ -191,7 +191,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
           {isLoading ? (
             <div className="space-y-2 p-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[32px] animate-pulse rounded bg-gray-100" />
+                <div key={i} className="h-[32px] animate-pulse rounded-sm bg-gray-100" />
               ))}
             </div>
           ) : data?.income_items.length === 0 ? (
@@ -241,7 +241,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
           {isLoading ? (
             <div className="space-y-2 p-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[32px] animate-pulse rounded bg-gray-100" />
+                <div key={i} className="h-[32px] animate-pulse rounded-sm bg-gray-100" />
               ))}
             </div>
           ) : (
@@ -287,7 +287,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     placeholder="Label (e.g. Fuel surcharge)"
                     value={addLabel}
                     onChange={(e) => setAddLabel(e.target.value)}
-                    className="flex-1 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+                    className="flex-1 rounded-sm border border-gray-200 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
                   />
                   {/* M-1: dollars-mode; seam Math.round(parseFloat(addAmount...)*100)=amount_cents byte-for-byte. */}
                   <MoneyInput
@@ -300,7 +300,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     type="button"
                     onClick={handleAddSubmit}
                     disabled={mutation.isPending}
-                    className="flex items-center gap-1 rounded bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#263452] disabled:opacity-50"
+                    className="flex items-center gap-1 rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#263452] disabled:opacity-50"
                   >
                     <Plus className="h-3 w-3" />
                     Add
@@ -349,7 +349,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   </span>
                   <span className={`mt-1 text-xs font-bold ${pos ? "text-emerald-600" : "text-red-600"}`}>
                     {pos ? "+" : ""}
-                    {(entry.predicted_net_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
+                    {(entry.predicted_net_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </button>
               );

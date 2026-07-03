@@ -8,7 +8,7 @@ type Props = {
 
 function Table({ title, rows, onOpen }: { title: string; rows: WorkOrder[]; onOpen: (id: string) => void }) {
   return (
-    <div className="rounded border border-gray-200 bg-white">
+    <div className="rounded-sm border border-gray-200 bg-white">
       <div className="border-b border-gray-200 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-600">{title}</div>
       <div>
         {rows.map((row) => (

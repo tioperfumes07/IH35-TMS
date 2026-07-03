@@ -126,16 +126,16 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         }
       />
 
-      <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-600">{description}</div>
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">{description}</div>
 
-      <div className="grid gap-2 rounded border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
+      <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search code or display name" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
-          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
             <option value="all">All</option>
@@ -143,7 +143,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-slate-50">
             <tr className="text-slate-600">

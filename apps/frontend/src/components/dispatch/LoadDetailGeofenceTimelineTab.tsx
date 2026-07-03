@@ -102,7 +102,7 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
 
   return (
     <div
-      className={`relative rounded border p-3 text-sm ${stop.is_layover ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-white"}`}
+      className={`relative rounded-sm border p-3 text-sm ${stop.is_layover ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-white"}`}
     >
       {stop.is_layover && (
         <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-amber-700">
@@ -120,9 +120,9 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
           </div>
         </div>
         <div className="flex flex-wrap justify-end gap-1">
-          <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${src.className}`}>{src.label}</span>
+          <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${src.className}`}>{src.label}</span>
           {det && (
-            <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${det.className}`}>{det.label}</span>
+            <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${det.className}`}>{det.label}</span>
           )}
         </div>
       </div>
@@ -178,7 +178,7 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
 
   if (query.error) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         Failed to load geofence timeline.
       </div>
     );
@@ -188,7 +188,7 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
 
   if (stops.length === 0) {
     return (
-      <div className="rounded border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
         No pickup or delivery stops found.
         <div className="mt-1 text-xs text-gray-400">
           Timeline data populates as the driver arrives at and departs each stop.
@@ -202,7 +202,7 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
   return (
     <div className="space-y-3">
       {!hasAnyDwell && (
-        <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
           No arrival/departure timestamps yet — timeline will populate as the load progresses.
         </div>
       )}

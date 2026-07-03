@@ -68,7 +68,7 @@ export function IncomingTransferRequest({ operatingCompanyId, driverUuid, fetchJ
   if (!active || !mode) return null;
 
   return (
-    <div className="rounded border border-amber-300 bg-amber-50 p-3" data-testid="incoming-transfer-request">
+    <div className="rounded-sm border border-amber-300 bg-amber-50 p-3" data-testid="incoming-transfer-request">
       <div className="font-semibold">
         {mode === "outbound" ? t("equipment.confirm_drop_title") : t("equipment.confirm_pickup_title")}
       </div>
@@ -80,14 +80,14 @@ export function IncomingTransferRequest({ operatingCompanyId, driverUuid, fetchJ
         })}
       </div>
       <input
-        className="mt-2 w-full rounded border px-2 py-1 text-sm"
+        className="mt-2 w-full rounded-sm border px-2 py-1 text-sm"
         placeholder={t("equipment.evidence_placeholder")}
         value={evidenceUuid}
         onChange={(e) => setEvidenceUuid(e.target.value)}
       />
       <button
         type="button"
-        className="mt-2 rounded bg-blue-700 px-3 py-1 text-sm text-white disabled:opacity-50"
+        className="mt-2 rounded-sm bg-blue-700 px-3 py-1 text-sm text-white disabled:opacity-50"
         disabled={busy || !evidenceUuid}
         onClick={confirm}
       >

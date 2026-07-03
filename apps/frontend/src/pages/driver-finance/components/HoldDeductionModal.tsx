@@ -45,7 +45,7 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
     <Modal open={open} onClose={onClose} title="Hold Deduction">
       {!deduction ? null : (
         <div className="space-y-2 text-xs">
-          <div className="rounded border border-gray-200 bg-gray-50 p-2">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
             <div className="font-semibold">{deduction.description}</div>
             <div>Balance left: ${deduction.balance_left.toFixed(2)}</div>
             <div>This period: ${deduction.this_period_amount.toFixed(2)}</div>
@@ -56,7 +56,7 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               rows={3}
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
           </div>
           <div>
@@ -65,7 +65,7 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
               type="date"
               value={holdUntil}
               onChange={(event) => setHoldUntil(event.target.value)}
-              className="h-8 w-full rounded border border-gray-300 px-2 text-sm"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>
           <div className="flex gap-2">

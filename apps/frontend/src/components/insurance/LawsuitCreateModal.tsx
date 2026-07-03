@@ -184,12 +184,12 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
         }}
       >
         {serverError ? (
-          <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+          <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
             {serverError}
           </div>
         ) : null}
         {formError ? (
-          <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="alert">
+          <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="alert">
             {formError}
           </div>
         ) : null}
@@ -198,7 +198,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Case Number *</span>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.case_number}
               onChange={(event) => updateField("case_number", event.target.value)}
             />
@@ -208,7 +208,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Status</span>
             <select
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.status}
               onChange={(event) => updateField("status", event.target.value as InsuranceLawsuitStatus)}
             >
@@ -223,7 +223,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Plaintiff *</span>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.plaintiff}
               onChange={(event) => updateField("plaintiff", event.target.value)}
             />
@@ -233,7 +233,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Defendant *</span>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.defendant}
               onChange={(event) => updateField("defendant", event.target.value)}
             />
@@ -243,7 +243,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Court Name *</span>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.court_name}
               onChange={(event) => updateField("court_name", event.target.value)}
             />
@@ -253,7 +253,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Filed Date *</span>
             <DatePicker
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.filed_date}
               onChange={(next) => updateField("filed_date", next)}
             />
@@ -263,7 +263,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Linked Claim</span>
             <select
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.claim_id}
               onChange={(event) => updateField("claim_id", event.target.value)}
             >
@@ -300,7 +300,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Attorney Name</span>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.attorney_name}
               onChange={(event) => updateField("attorney_name", event.target.value)}
             />
@@ -310,7 +310,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
             <span className="text-xs font-semibold text-slate-700">Attorney Email</span>
             <input
               type="email"
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.attorney_email}
               onChange={(event) => updateField("attorney_email", event.target.value)}
             />
@@ -321,7 +321,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
         <label className="space-y-1">
           <span className="text-xs font-semibold text-slate-700">Notes</span>
           <textarea
-            className="w-full rounded border border-gray-300 px-2 py-1"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1"
             rows={3}
             value={form.notes}
             onChange={(event) => updateField("notes", event.target.value)}
@@ -329,12 +329,12 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
         </label>
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
-          <button type="button" className="rounded border border-gray-300 px-3 py-1.5 text-xs" onClick={onClose}>
+          <button type="button" className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs" onClick={onClose}>
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded border border-[#16A34A] bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+            className="rounded-sm border border-[#16A34A] bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
             disabled={createMutation.isPending}
           >
             {createMutation.isPending ? "Creating..." : "+ Lawsuit"}

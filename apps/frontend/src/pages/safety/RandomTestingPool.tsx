@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 async function apiGet(path: string) {
@@ -29,19 +30,19 @@ export function RandomTestingPool() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded border border-gray-200 bg-white p-4 text-xs">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
         <h3 className="text-sm font-semibold text-slate-900">Active pool ({members.length})</h3>
         <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
           {members.map((member) => (
             <li key={String(member.driver_id)} className="flex justify-between border-b border-gray-100 py-1">
               <span>{String(member.driver_id).slice(0, 8)}…</span>
-              <span>{String(member.added_at ?? "").slice(0, 10)}</span>
+              <span>{formatDateUS(member.added_at)}</span>
             </li>
           ))}
           {members.length === 0 ? <li className="text-slate-500">No active CDL drivers in pool.</li> : null}
         </ul>
       </div>
-      <div className="rounded border border-gray-200 bg-white p-4 text-xs">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
         <h3 className="text-sm font-semibold text-slate-900">Recent draws & selections</h3>
         <ul className="mt-2 space-y-1">
           {draws.slice(0, 5).map((draw) => (

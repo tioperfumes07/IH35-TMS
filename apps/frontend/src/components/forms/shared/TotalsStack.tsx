@@ -12,7 +12,7 @@ export function TotalsStack({ subtotal, taxRate = 8.25, grandLabel, taxRateMode 
   const readonly = taxRateMode === "readonly";
 
   return (
-    <div className="totals-stack overflow-hidden rounded border border-gray-300 bg-white text-xs">
+    <div className="totals-stack overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
       <div className="totals-row flex items-center justify-end gap-6 px-[18px] py-[7px]">
         <span className="font-semibold text-slate-600">Subtotal</span>
         <span className="font-semibold text-slate-900">${subtotal.toFixed(2)}</span>
@@ -21,7 +21,7 @@ export function TotalsStack({ subtotal, taxRate = 8.25, grandLabel, taxRateMode 
         <div className="flex items-center gap-2">
           <span className="font-semibold text-slate-600">Tax %</span>
           <input
-            className="tax-input w-[60px] rounded border border-gray-300 px-[6px] py-[3px] text-right"
+            className="tax-input w-[60px] rounded-sm border border-gray-300 px-[6px] py-[3px] text-right"
             type="number"
             step="0.01"
             value={taxRate}

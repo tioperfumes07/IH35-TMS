@@ -13,7 +13,7 @@ export function WizardStep3({ form, onChange }: Props) {
       <label className="block text-sm">
         Commodity *
         <input
-          className="mt-1 w-full rounded border px-2 py-1.5"
+          className="mt-1 w-full rounded-sm border px-2 py-1.5"
           value={form.commodity}
           onChange={(e) => onChange({ commodity: e.target.value })}
         />
@@ -24,7 +24,7 @@ export function WizardStep3({ form, onChange }: Props) {
           <input
             type="number"
             min={0}
-            className="mt-1 w-full rounded border px-2 py-1.5"
+            className="mt-1 w-full rounded-sm border px-2 py-1.5"
             value={form.weight}
             onChange={(e) => onChange({ weight: e.target.value })}
           />

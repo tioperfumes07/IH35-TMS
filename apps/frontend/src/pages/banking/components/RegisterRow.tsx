@@ -24,7 +24,7 @@ export function RegisterRow({ row, selected, bulkSelected = false, onBulkToggle,
       className={`border-t border-gray-100 text-xs ${status === "uncategorized" ? "bg-amber-50" : ""} ${selected ? "border-l-2 border-l-blue-500" : ""}`}
       onClick={onSelect}
     >
-      <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
+      <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
         <input type="checkbox" checked={bulkSelected} onChange={() => onBulkToggle?.()} aria-label="Select row" />
       </td>
       <td className="px-2 py-1">{String(row.txn_date ?? "")}</td>
@@ -36,7 +36,7 @@ export function RegisterRow({ row, selected, bulkSelected = false, onBulkToggle,
       <td className="px-2 py-1">{String(row.category ?? "—")}</td>
       <td className="px-2 py-1">
         {status === "uncategorized" ? (
-          <button type="button" onClick={onCategorize} className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">Categorize ▼</button>
+          <button type="button" onClick={onCategorize} className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">Categorize ▼</button>
         ) : (
           <button type="button" onClick={onUndo} className="text-slate-700 underline">Undo</button>
         )}

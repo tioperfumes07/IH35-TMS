@@ -6,7 +6,7 @@ export function PlannerRangeToolbar() {
 
   return (
     <div
-      className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2 text-xs"
+      className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs"
       data-testid="dispatch-planner-range-toolbar"
     >
       <span className="font-semibold text-gray-600">Range</span>
@@ -14,7 +14,7 @@ export function PlannerRangeToolbar() {
         <button
           key={d}
           type="button"
-          className={`rounded px-2 py-1 ${windowDays === d ? "bg-slate-800 text-white" : "bg-gray-100 text-gray-700"}`}
+          className={`rounded-sm px-2 py-1 ${windowDays === d ? "bg-slate-800 text-white" : "bg-gray-100 text-gray-700"}`}
           onClick={() => setWindowDays(d)}
         >
           {d}d

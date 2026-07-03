@@ -14,7 +14,7 @@ export function Compliance425CPage() {
   return (
     <div className="space-y-3">
       <h2 className="text-base font-semibold text-gray-900">Compliance / 425C Linkage</h2>
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs text-gray-600">Read-only 425C audit linkage feed for maintenance events.</div>
         <table className="w-full text-left text-xs">
           <thead className="text-[11px] uppercase text-gray-600">

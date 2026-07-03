@@ -22,10 +22,10 @@ export function InstallPWAPrompt() {
   if (!show) return null;
 
   return (
-    <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+    <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
       <div className="flex items-start justify-between gap-2">
         <p>{t("driver.install_prompt")}</p>
-        <button type="button" className="shrink-0 rounded border border-amber-300 px-2 py-0.5 text-[11px] font-semibold" onClick={() => setOpen(!open)}>
+        <button type="button" className="shrink-0 rounded-sm border border-amber-300 px-2 py-0.5 text-[11px] font-semibold" onClick={() => setOpen(!open)}>
           {t("driver.install_button")}
         </button>
       </div>

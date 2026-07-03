@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { createWorkOrder, suggestExpenseLoad, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
 import { ApiError } from "../../../api/client";
+import { companyToday } from "../../../lib/businessDate";
 import { Button } from "../../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
@@ -18,15 +19,15 @@ import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
 import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
 
 // ---- render-v5 presentational helpers (match docs/approved-screens/maintenance-create-wo-render-v5.html) ----
-const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-[12.5px] text-[#1f2937] outline-none focus:border-[#1f2a44]";
+const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-[12.5px] text-sidebar-bg outline-hidden focus:border-[#1f2a44]";
 
 function SectionCard({ badge, title, right, testid, children }: { badge: string; title: string; right?: string; testid?: string; children: ReactNode }) {
   return (
     <section data-testid={testid} className="rounded-[7px] border border-[#d6dae1] bg-white">
       <div className="flex items-center gap-2 rounded-t-[7px] border-b border-[#e6e9ee] bg-[#fafbfc] px-2.5 py-1.5">
-        <span className="grid h-[18px] w-[18px] place-items-center rounded bg-[#1d2b45] text-[10px] font-bold text-white">{badge}</span>
-        <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#374151]">{title}</span>
-        {right ? <span className="ml-auto text-[10.5px] text-[#6b7280]">{right}</span> : null}
+        <span className="grid h-[18px] w-[18px] place-items-center rounded-sm bg-[#1d2b45] text-[10px] font-bold text-white">{badge}</span>
+        <span className="text-[10.5px] font-bold uppercase tracking-wide text-sidebar-active">{title}</span>
+        {right ? <span className="ml-auto text-[10.5px] text-inactive">{right}</span> : null}
       </div>
       <div className="p-2.5">{children}</div>
     </section>
@@ -36,7 +37,7 @@ function SectionCard({ badge, title, right, testid, children }: { badge: string;
 function FieldV5({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1">
-      <span className="text-[10.5px] font-semibold uppercase tracking-wide text-[#6b7280]">{label}</span>
+      <span className="text-[10.5px] font-semibold uppercase tracking-wide text-inactive">{label}</span>
       {children}
     </label>
   );
@@ -45,8 +46,8 @@ function FieldV5({ label, children }: { label: string; children: ReactNode }) {
 function SegYesNo({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
     <div data-testid="wo-oos-seg" className="inline-flex h-[30px] overflow-hidden rounded-[5px] border border-[#d6dae1]">
-      <button type="button" onClick={() => onChange(true)} className={`px-3 text-[11px] font-semibold ${value ? "bg-[#b91c1c] text-white" : "bg-white text-[#6b7280]"}`}>Yes</button>
-      <button type="button" onClick={() => onChange(false)} className={`px-3 text-[11px] font-semibold ${!value ? "bg-[#1d2b45] text-white" : "bg-white text-[#6b7280]"}`}>No</button>
+      <button type="button" onClick={() => onChange(true)} className={`px-3 text-[11px] font-semibold ${value ? "bg-[#b91c1c] text-white" : "bg-white text-inactive"}`}>Yes</button>
+      <button type="button" onClick={() => onChange(false)} className={`px-3 text-[11px] font-semibold ${!value ? "bg-[#1d2b45] text-white" : "bg-white text-inactive"}`}>No</button>
     </div>
   );
 }
@@ -56,7 +57,7 @@ function CccRow({ tone, label, register, placeholder }: { tone: "cmp" | "cau" | 
   return (
     <div className="mb-2 overflow-hidden rounded-md border border-[#e6e9ee] last:mb-0">
       <div className={`px-2 py-1 text-[9.5px] font-extrabold uppercase tracking-wide text-white ${bg}`}>{label}</div>
-      <textarea {...register} placeholder={placeholder} className="h-10 w-full resize-y border-0 px-2 py-1.5 text-[12.5px] outline-none" />
+      <textarea {...register} placeholder={placeholder} className="h-10 w-full resize-y border-0 px-2 py-1.5 text-[12.5px] outline-hidden" />
     </div>
   );
 }
@@ -76,7 +77,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
       <div className="flex items-center gap-2 bg-[#0f1a30] px-2.5 py-1.5 text-white">
         <span className="text-[10px] font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
         <span className="ml-auto text-[10px] text-[#aab6cd]">tires · batteries · lamps · mirrors — where it sits + serial</span>
-        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded bg-[#1f2a44] px-2 py-0.5 text-[10px] font-semibold text-white">+ Add part</button>
+        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-[10px] font-semibold text-white">+ Add part</button>
       </div>
       {parts.length === 0 ? (
         <div className="px-3 py-3 text-[11px] text-[#94a3b8]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
@@ -89,9 +90,9 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                 <div className="mb-1.5 flex flex-wrap gap-1">
                   {LOC_CATS.map((c) => (
                     <button type="button" key={c.key} onClick={() => onChange(i, { part_type: c.key, position_code: "" })}
-                      className={`rounded px-2 py-0.5 text-[11px] font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#475569]"}`}>{c.label}</button>
+                      className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#475569]"}`}>{c.label}</button>
                   ))}
-                  <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded border border-[#d6dae1] px-2 text-[11px] text-[#b91c1c]">Remove</button>
+                  <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#d6dae1] px-2 text-[11px] text-[#b91c1c]">Remove</button>
                 </div>
                 {/* truck silhouette — clickable wheel/position grid */}
                 <div className="rounded-md border border-[#e6e9ee] bg-[#f8fafc] p-2">
@@ -104,7 +105,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                   <div className="flex flex-wrap gap-1">
                     {cat.positions.map((pos) => (
                       <button type="button" key={pos} onClick={() => onChange(i, { position_code: pos })}
-                        className={`rounded border px-2 py-0.5 text-[10px] font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#94a3b8] bg-white text-[#475569]"}`}>{pos}</button>
+                        className={`rounded-sm border px-2 py-0.5 text-[10px] font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#94a3b8] bg-white text-[#475569]"}`}>{pos}</button>
                     ))}
                   </div>
                 </div>
@@ -226,7 +227,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       wo_type: initialType,
       source_type: DEFAULT_SOURCE_BY_TYPE[initialType],
       bucket: "in_house",
-      service_date: new Date().toISOString().slice(0, 10),
+      service_date: companyToday(),
       unit_id: "",
       driver_id: "",
       class_hint: "",
@@ -249,7 +250,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       description: "",
       payment_timing: "vendor_invoice",
       bill_terms: "net_30",
-      bill_date: new Date().toISOString().slice(0, 10),
+      bill_date: companyToday(),
       due_date: "",
       roadside_callout_at: "",
       roadside_arrived_at: "",
@@ -264,7 +265,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       repair_cause: "",
       repair_correction: "",
       status: "open",
-      open_date: new Date().toISOString().slice(0, 10),
+      open_date: companyToday(),
       open_time: "",
       close_date: "",
       close_time: "",
@@ -535,11 +536,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
   return (
     <Modal open={open} onClose={onClose} title="Create / Edit Work Order" sizePreset="lg" wide>
-      <div data-testid="create-wo-render-v5" className="space-y-2.5 text-[12.5px] text-[#1f2937]">
+      <div data-testid="create-wo-render-v5" className="space-y-2.5 text-[12.5px] text-sidebar-bg">
         {/* Subbar — WO # · status · opened timestamp (render: .subbar) */}
-        <div className="flex flex-wrap items-center gap-2 rounded bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
           <span>WO #</span>
-          <span className="rounded border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white">new — auto on save</span>
+          <span className="rounded-sm border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white">new — auto on save</span>
           <span>·</span>
           <span className="capitalize">{form.watch("status") || "draft"}</span>
           <span className="ml-auto text-[#8aa0c4]">All changes timestamped</span>
@@ -594,7 +595,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               </div>
             </div>
           ) : null}
-          <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-900">
+          <div className="mt-2 rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-900">
             Class auto-derive: <span className="font-semibold">{classHint}</span>
           </div>
         </SectionCard>
@@ -626,7 +627,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               onRemove={(i) => setSerializedParts((p) => p.filter((_, j) => j !== i))}
             />
             {requiresLoadForG18 ? (
-              <div className="mt-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">
+              <div className="mt-2 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">
                 Required: this expense type must link to a load (G18).
               </div>
             ) : null}
@@ -648,13 +649,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   onInvoiceLaborChange={setInvoiceLaborInput}
                 />
               ) : (
-                <div className="rounded border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] text-slate-600">
+                <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] text-slate-600">
                   No separate vendor invoice to reconcile for this payment type.
                 </div>
               )}
             </div>
             <div>
-              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-[#6b7280]">How was it paid?</div>
+              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-inactive">How was it paid?</div>
               {/* Segmented Expense / Bill / In-house (render: #paySeg) */}
               <div data-testid="wo-pay-seg" className="mb-2 flex gap-1.5">
                 {([
@@ -665,7 +666,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   const on = paymentTiming === p.v;
                   return (
                     <button type="button" key={p.v} onClick={() => form.setValue("payment_timing", p.v)}
-                      className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#d6dae1] bg-white text-[#374151]"}`}>
+                      className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#d6dae1] bg-white text-sidebar-active"}`}>
                       <div className="text-[12px] font-extrabold">{p.h}</div>
                       <div className="text-[9.5px] opacity-75">{p.s}</div>
                     </button>
@@ -725,7 +726,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             {paymentTiming === "vendor_invoice" ? "Create work order & Bill" : paymentTiming === "paid_same_day" ? "Create work order & Expense" : "Create work order"}
           </button>
         </div>
-        <div className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-900">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-900">
           Posts to QBO with class {classHint} on every line
         </div>
       </div>

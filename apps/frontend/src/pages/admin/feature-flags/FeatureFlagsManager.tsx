@@ -94,25 +94,25 @@ export function FeatureFlagsManager() {
     <div className="p-6 space-y-6" data-testid="feature-flags-manager">
       <PageHeader title="Feature Flags" subtitle="Per-tenant rollout and per-user overrides" />
 
-      {error ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+      {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
 
-      <section className="rounded border border-gray-200 bg-white p-4 space-y-3">
+      <section className="rounded-sm border border-gray-200 bg-white p-4 space-y-3">
         <h2 className="text-sm font-semibold text-gray-900">Create flag</h2>
         <div className="flex flex-wrap gap-2">
           <input
-            className="rounded border border-gray-300 px-2 py-1 text-sm"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             placeholder="flag_key"
             value={newFlagKey}
             onChange={(e) => setNewFlagKey(e.target.value)}
           />
           <input
-            className="min-w-[240px] rounded border border-gray-300 px-2 py-1 text-sm"
+            className="min-w-[240px] rounded-sm border border-gray-300 px-2 py-1 text-sm"
             placeholder="description"
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
           />
           <input
-            className="min-w-[280px] rounded border border-gray-300 px-2 py-1 text-sm"
+            className="min-w-[280px] rounded-sm border border-gray-300 px-2 py-1 text-sm"
             placeholder="tenant override company UUID"
             value={tenantOverrideCompanyId}
             onChange={(e) => setTenantOverrideCompanyId(e.target.value)}
@@ -127,7 +127,7 @@ export function FeatureFlagsManager() {
         </div>
       </section>
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="mb-3 text-sm font-semibold text-gray-900">Flags</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">

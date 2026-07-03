@@ -55,7 +55,7 @@ export function PreviewModal({ file, canEditMetadata, onClose, onRequestEditMeta
   return (
     <Modal open onClose={onClose} title={`Preview - ${file.original_filename}`}>
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2 rounded border border-gray-200 bg-gray-50 p-2 text-xs text-gray-700">
+        <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs text-gray-700">
           <div>
             <span className="font-semibold">Category:</span> {file.category_label ?? "Uncategorized"}
           </div>
@@ -70,14 +70,14 @@ export function PreviewModal({ file, canEditMetadata, onClose, onRequestEditMeta
           </div>
         </div>
 
-        <div className="rounded border border-gray-200 bg-white p-2">
+        <div className="rounded-sm border border-gray-200 bg-white p-2">
           {isLoading ? <div className="text-sm text-gray-500">Loading preview...</div> : null}
           {!isLoading && errorMessage ? <div className="text-sm text-red-600">{errorMessage}</div> : null}
           {!isLoading && !errorMessage && downloadUrl && isImage(file.mime_type) ? (
-            <img src={downloadUrl} alt={file.original_filename} className="max-h-[60vh] w-full rounded object-contain" />
+            <img src={downloadUrl} alt={file.original_filename} className="max-h-[60vh] w-full rounded-sm object-contain" />
           ) : null}
           {!isLoading && !errorMessage && downloadUrl && isPdf(file.mime_type) ? (
-            <object data={downloadUrl} type="application/pdf" className="h-[60vh] w-full rounded border border-gray-200">
+            <object data={downloadUrl} type="application/pdf" className="h-[60vh] w-full rounded-sm border border-gray-200">
               <p className="p-3 text-sm text-gray-600">PDF preview unavailable in this browser. Use Download.</p>
             </object>
           ) : null}

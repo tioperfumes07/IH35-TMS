@@ -64,7 +64,7 @@ function ReconRow({ row }: { row: DailyReconRow }) {
       <td className="px-3 py-2 text-gray-700">{formatCents(row.tms_amount_cents)}</td>
       <td className="px-3 py-2 text-gray-500 truncate max-w-[180px]">{row.tms_memo ?? "—"}</td>
       <td className="px-3 py-2">
-        <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${badge.cls}`}>
+        <span className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${badge.cls}`}>
           {badge.label}
         </span>
       </td>
@@ -124,7 +124,7 @@ export function DailyReconPage() {
             }`}
           >
             <p className="font-semibold text-gray-900">{count}</p>
-            <p className={`mt-0.5 inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${b.cls}`}>{b.label}</p>
+            <p className={`mt-0.5 inline-flex rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${b.cls}`}>{b.label}</p>
           </button>
         );
       })}
@@ -144,7 +144,7 @@ export function DailyReconPage() {
       ) : query.isError ? (
         <p className="text-sm text-red-600">Failed to load reconciliation data.</p>
       ) : !data?.gl_posting_active ? (
-        <div className="rounded border border-amber-200 bg-amber-50 px-4 py-6 text-center">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-6 text-center">
           <p className="font-semibold text-amber-800">TMS posting not enabled — nothing to reconcile yet.</p>
           <p className="mt-1 text-sm text-amber-700">
             The GL_POSTING_ENABLED feature flag is off for this entity. Once posting is live, daily TMS
@@ -161,7 +161,7 @@ export function DailyReconPage() {
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="h-10 rounded border border-gray-300 px-2 text-sm"
+                className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
               />
             </div>
             <div className="flex flex-col gap-0.5">
@@ -170,7 +170,7 @@ export function DailyReconPage() {
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="h-10 rounded border border-gray-300 px-2 text-sm"
+                className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
               />
             </div>
             <div className="flex flex-col gap-0.5">
@@ -178,7 +178,7 @@ export function DailyReconPage() {
               <select
                 value={entityType}
                 onChange={(e) => setEntityType(e.target.value)}
-                className="h-10 rounded border border-gray-300 px-2 text-sm"
+                className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 {ENTITY_TYPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -190,7 +190,7 @@ export function DailyReconPage() {
               <select
                 value={matchStatus}
                 onChange={(e) => setMatchStatus(e.target.value as DailyReconMatchStatus | "all")}
-                className="h-10 rounded border border-gray-300 px-2 text-sm"
+                className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 {MATCH_STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -201,13 +201,13 @@ export function DailyReconPage() {
 
           {/* Days */}
           {data.days.length === 0 ? (
-            <div className="rounded border border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-500">
+            <div className="rounded-sm border border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-500">
               No transactions found for the selected filters.
             </div>
           ) : (
             <div className="space-y-4">
               {data.days.map((day) => (
-                <div key={day.date} className="overflow-hidden rounded border border-gray-200 bg-white">
+                <div key={day.date} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
                   {/* Day header */}
                   <div className={`flex items-center justify-between px-4 py-2 ${
                     day.all_reconciled

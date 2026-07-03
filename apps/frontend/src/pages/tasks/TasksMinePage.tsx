@@ -40,14 +40,14 @@ export function TasksMinePage() {
           ["Overdue", overdue.length],
           ["Completed (window)", tasks.filter((t) => t.status === "completed").length],
         ] as Array<[string, number]>).map(([label, value]) => (
-          <div key={label} className="rounded border border-slate-200 bg-white p-3">
+          <div key={label} className="rounded-sm border border-slate-200 bg-white p-3">
             <div className="text-xs font-semibold text-slate-500">{label}</div>
             <div className="text-xl font-bold text-slate-900">{value}</div>
           </div>
         ))}
       </div>
 
-      <div className="rounded border border-slate-200 bg-white">
+      <div className="rounded-sm border border-slate-200 bg-white">
         {query.isLoading ? (
           <div className="p-4 text-xs text-slate-500">Loading your tasks…</div>
         ) : query.isError ? (
@@ -79,7 +79,7 @@ export function TasksMinePage() {
                   </td>
                   <td className="px-3 py-2 text-slate-600">{priorityLabel(t.priority)}</td>
                   <td className="px-3 py-2">
-                    <span className={`rounded border px-1.5 py-0.5 text-[10px] ${TASK_STATUS_BADGE[t.status]}`}>
+                    <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] ${TASK_STATUS_BADGE[t.status]}`}>
                       {taskStatusLabel(t.status)}
                     </span>
                   </td>

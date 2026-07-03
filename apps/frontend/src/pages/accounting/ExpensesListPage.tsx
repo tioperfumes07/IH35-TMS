@@ -136,7 +136,7 @@ export function ExpensesListPage() {
         <SelectCombobox
           value={status}
           onChange={(e) => setStatus(e.target.value as "" | ExpenseListStatus)}
-          className="h-8 rounded border border-gray-300 px-2 text-[13px]"
+          className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]"
         >
           {STATUS_OPTIONS.map((o) => (
             <option key={o.label} value={o.value}>
@@ -147,11 +147,11 @@ export function ExpensesListPage() {
       </label>
       <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
         From date
-        <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-8 rounded border border-gray-300 px-2 text-[13px]" />
+        <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
       </label>
       <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
         To date
-        <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-8 rounded border border-gray-300 px-2 text-[13px]" />
+        <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
       </label>
       <div className="ml-auto flex items-center gap-3 text-[11px] text-gray-600">
         <span>Total: {money(totals.total)}</span>
@@ -168,7 +168,7 @@ export function ExpensesListPage() {
       actions={
         <Link
           to="/accounting/expenses"
-          className="rounded border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
         >
           + Record expense
         </Link>

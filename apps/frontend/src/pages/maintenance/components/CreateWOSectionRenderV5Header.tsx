@@ -19,7 +19,7 @@ function Cell({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-const INPUT = "h-7 w-full rounded border border-gray-300 px-2";
+const INPUT = "h-7 w-full rounded-sm border border-gray-300 px-2";
 
 export function CreateWOSectionRenderV5Header({ register }: { register: UseFormRegister<CreateWOFormValues> }) {
   const usersQuery = useQuery({
@@ -31,7 +31,7 @@ export function CreateWOSectionRenderV5Header({ register }: { register: UseFormR
     u.name?.trim() || `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email || "—";
 
   return (
-    <section data-testid="wo-renderv5-header" className="rounded border border-slate-300 bg-white p-2 text-xs">
+    <section data-testid="wo-renderv5-header" className="rounded-sm border border-slate-300 bg-white p-2 text-xs">
       <div className="mb-1 font-semibold text-[#1F2A44]">Work order header</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <Cell label="Status">

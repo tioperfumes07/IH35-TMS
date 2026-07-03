@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useState } from "react";
 import { addAccidentPhoto, setSafetyAccidentStatus, spawnSafetyLiability, spawnSafetyWo } from "../../api/safety";
 import { Button } from "../Button";
@@ -55,11 +56,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </button>
         </div>
         {createMode ? (
-          <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">
+          <div className="mb-2 rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">
             Office intake uses this form layout. Persisted reports also arrive from the driver mobile app or maintenance work order conversion.
           </div>
         ) : null}
-        <div className="space-y-2 rounded border border-gray-200 bg-white p-2">
+        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-2">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Accident Damage Details</div>
           <div className="grid grid-cols-6 gap-2">
             <Field label="Record Type *" className="col-span-1">
@@ -86,34 +87,34 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             </Field>
             <div className="col-span-1" />
             <Field label="Incident Date *" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.accident_at ?? "").slice(0, 10)} />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.accident_at ?? "").slice(0, 10)} />
             </Field>
             <Field label="Report Date" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={companyToday()} />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={companyToday()} />
             </Field>
             <Field label="Bill or Expense Number (if applicable)" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
 
             <div className="col-span-6 h-2" />
             <Field label="Repair Vendor" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
             <div className="col-span-4" />
             <Field label="Load" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
 
             <div className="col-span-6 h-2" />
             <Field label="Driver" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.driver_id ?? "")} />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.driver_id ?? "")} />
             </Field>
             <Field label="Unit" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.unit_id ?? "")} />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.unit_id ?? "")} />
             </Field>
             <div className="col-span-3" />
             <Field label="Class" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2" readOnly value="Auto class" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2" readOnly value="Auto class" />
             </Field>
 
             <div className="col-span-6 h-2" />
@@ -129,29 +130,29 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
               />
             </Field>
             <Field label="Police Report Number" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
             <Field label="Insurance Claim Number" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
             <div className="col-span-3" />
 
             <Field label="Location" className="col-span-6">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.location ?? "")} />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={String(accident.location ?? "")} />
             </Field>
             <Field label="3rd Party Name" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
             <Field label="3rd Party Plate" className="col-span-1">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
             <div className="col-span-4" />
             <div className="col-span-6 h-2" />
             <Field label="Vendor Invoice" className="col-span-6">
-              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />
             </Field>
             <Field label="Memo" className="col-span-6">
-              <textarea className="w-full rounded border border-gray-300 px-2 py-1" rows={2} defaultValue={String(accident.notes ?? accident.description ?? "")} />
+              <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1" rows={2} defaultValue={String(accident.notes ?? accident.description ?? "")} />
             </Field>
           </div>
         </div>
@@ -197,7 +198,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           >
             Spawn WO
           </Button>
-          <label className={`rounded border border-gray-300 px-2 py-1 text-center ${canMutate ? "" : "opacity-50"}`}>
+          <label className={`rounded-sm border border-gray-300 px-2 py-1 text-center ${canMutate ? "" : "opacity-50"}`}>
             <input
               type="file"
               className="hidden"
@@ -220,7 +221,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </label>
         </div>
         {spawnedWoDisplayId ? (
-          <div className="mt-2 rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700">
+          <div className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700">
             New WO (source type AC): {spawnedWoDisplayId}
           </div>
         ) : null}

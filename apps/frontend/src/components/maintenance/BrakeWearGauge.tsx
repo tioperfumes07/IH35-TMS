@@ -34,7 +34,7 @@ export function BrakeWearGauge({ position, thicknessMm, thresholdMm, projectedDa
   const thresholdPct = Math.min(100, (thresholdMm / maxMm) * 100);
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-3" data-testid={`brake-wear-gauge-${position}`}>
+    <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`brake-wear-gauge-${position}`}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-gray-900">{position}</span>
         <span className={`text-[11px] font-medium ${styles.text}`}>{styles.label}</span>

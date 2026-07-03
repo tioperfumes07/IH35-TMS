@@ -32,7 +32,7 @@ function formatSum(value: number): string {
   if (Math.abs(value) >= 1000) {
     return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
-  return value.toFixed(2);
+  return Number(value).toFixed(2);
 }
 
 const PAGE_SIZE_OPTIONS = [50, 75, 100, 200, 300];
@@ -108,7 +108,7 @@ export function ListViewFooter<T>({
                 <select
                   value={pagination.pageSize}
                   onChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
-                  className="border border-gray-300 rounded text-xs px-1 py-0.5"
+                  className="border border-gray-300 rounded-sm text-xs px-1 py-0.5"
                 >
                   {PAGE_SIZE_OPTIONS.map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -162,7 +162,7 @@ function PageButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-8 h-8 text-xs border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+      className="w-8 h-8 text-xs border border-gray-300 rounded-sm hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {label}
     </button>

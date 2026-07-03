@@ -150,26 +150,26 @@ export function LegalAttorneyReviewPortalPage() {
         <div className="space-y-3">
           <h2 className="text-xs font-semibold uppercase text-gray-500">English (controlling)</h2>
           <div
-            className="prose prose-sm max-h-[480px] max-w-none overflow-auto rounded border border-gray-200 bg-white p-3"
+            className="prose prose-sm max-h-[480px] max-w-none overflow-auto rounded-sm border border-gray-200 bg-white p-3"
             dangerouslySetInnerHTML={{ __html: preview.en }}
           />
         </div>
         <div className="space-y-3">
           <h2 className="text-xs font-semibold uppercase text-gray-500">Español</h2>
           <div
-            className="prose prose-sm max-h-[480px] max-w-none overflow-auto rounded border border-gray-200 bg-white p-3"
+            className="prose prose-sm max-h-[480px] max-w-none overflow-auto rounded-sm border border-gray-200 bg-white p-3"
             dangerouslySetInnerHTML={{ __html: preview.es }}
           />
         </div>
       </section>
 
-      <section className="space-y-3 rounded border border-gray-200 bg-slate-50 p-4">
+      <section className="space-y-3 rounded-sm border border-gray-200 bg-slate-50 p-4">
         <h2 className="text-sm font-semibold text-gray-900">Your attestation</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="block text-xs font-medium text-gray-700">
             Attorney name
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
               value={attorneyName}
               onChange={(e) => setAttorneyName(e.target.value)}
               autoComplete="name"
@@ -178,7 +178,7 @@ export function LegalAttorneyReviewPortalPage() {
           <label className="block text-xs font-medium text-gray-700">
             Bar number
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
               value={barNumber}
               onChange={(e) => setBarNumber(e.target.value)}
               autoComplete="off"
@@ -188,7 +188,7 @@ export function LegalAttorneyReviewPortalPage() {
         <label className="block text-xs font-medium text-gray-700">
           Notes (optional, approve only)
           <textarea
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -197,7 +197,7 @@ export function LegalAttorneyReviewPortalPage() {
         <label className="block text-xs font-medium text-gray-700">
           Comments for request changes / reject
           <textarea
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
             rows={4}
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}

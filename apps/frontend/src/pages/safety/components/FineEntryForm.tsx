@@ -145,7 +145,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
         submitMutation.mutate();
       }}
     >
-      {error ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
+      {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="flex flex-col gap-1 md:col-span-2">
@@ -153,7 +153,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
           <input
             value={driverId}
             onChange={(event) => setDriverId(event.target.value)}
-            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             placeholder="UUID"
             required
           />
@@ -165,7 +165,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
             <input
               value={reasonUuid}
               onChange={(event) => setReasonUuid(event.target.value)}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               placeholder="Internal fine reason"
               required
             />
@@ -177,7 +177,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
               <input
                 value={issuedByAuthority}
                 onChange={(event) => setIssuedByAuthority(event.target.value)}
-                className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -185,7 +185,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
               <input
                 value={jurisdiction}
                 onChange={(event) => setJurisdiction(event.target.value)}
-                className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
@@ -193,7 +193,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
               <input
                 value={violationDescription}
                 onChange={(event) => setViolationDescription(event.target.value)}
-                className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
                 required
               />
             </div>
@@ -206,7 +206,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
             type="date"
             value={issuedDate}
             onChange={(event) => setIssuedDate(event.target.value)}
-            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             required
           />
         </div>
@@ -224,13 +224,13 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
             rows={2}
           />
         </div>
       </div>
 
-      <fieldset className="rounded border border-amber-200 bg-amber-50 p-3">
+      <fieldset className="rounded-sm border border-amber-200 bg-amber-50 p-3">
         <legend className="px-1 text-xs font-semibold uppercase text-amber-900">Settlement deduction schedule</legend>
         <p className="mb-2 text-xs text-amber-800">
           Creates an auto-deduction policy (type fine). Net-floor cap may roll unpaid portions to the next settlement.
@@ -257,7 +257,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
               type="number"
               min={2}
               max={52}
-              className="w-16 rounded border border-gray-300 px-1 py-0.5 text-sm"
+              className="w-16 rounded-sm border border-gray-300 px-1 py-0.5 text-sm"
               value={installments}
               disabled={scheduleMode !== "split"}
               onChange={(event) => setInstallments(event.target.value)}

@@ -115,12 +115,12 @@ export function AnomalyDetailDrawer({
         </div>
 
         {!anomaly ? (
-          <div className="mt-4 rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+          <div className="mt-4 rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
             Loading anomaly details...
           </div>
         ) : (
           <div className="mt-3 space-y-3 text-sm">
-            <div className="grid grid-cols-2 gap-2 rounded border border-gray-200 bg-gray-50 p-3 text-xs">
+            <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs">
               <div>
                 <span className="font-semibold">Type:</span> {anomaly.anomaly_type}
               </div>
@@ -146,12 +146,12 @@ export function AnomalyDetailDrawer({
 
             <div>
               <div className="mb-1 text-xs font-semibold text-gray-700">Evidence</div>
-              <pre className="max-h-80 overflow-auto rounded border border-gray-200 bg-slate-950 p-3 text-[11px] text-slate-100">
+              <pre className="max-h-80 overflow-auto rounded-sm border border-gray-200 bg-slate-950 p-3 text-[11px] text-slate-100">
                 {JSON.stringify(anomaly.evidence ?? {}, null, 2)}
               </pre>
             </div>
 
-            <div className="rounded border border-gray-200 bg-white p-3 text-xs">
+            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
               <div className="font-semibold text-gray-700">Status-change audit trail</div>
               <div className="mt-2 text-gray-600">
                 <div>Status: {anomaly.status}</div>
@@ -161,13 +161,13 @@ export function AnomalyDetailDrawer({
               </div>
             </div>
 
-            <div className="space-y-2 rounded border border-gray-200 bg-white p-3">
+            <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
               <label className="block text-xs font-semibold text-gray-700" htmlFor="anomaly-resolution-note">
                 Resolution note
               </label>
               <textarea
                 id="anomaly-resolution-note"
-                className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 rows={3}
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
@@ -176,7 +176,7 @@ export function AnomalyDetailDrawer({
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                  className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
                   onClick={() => ackMutation.mutate()}
                   disabled={ackMutation.isPending || anomaly.status !== "new"}
                 >
@@ -184,7 +184,7 @@ export function AnomalyDetailDrawer({
                 </button>
                 <button
                   type="button"
-                  className="rounded bg-emerald-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                  className="rounded-sm bg-emerald-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
                   onClick={() => resolveMutation.mutate()}
                   disabled={resolveMutation.isPending || note.trim().length === 0}
                 >
@@ -192,7 +192,7 @@ export function AnomalyDetailDrawer({
                 </button>
                 <button
                   type="button"
-                  className="rounded bg-amber-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                  className="rounded-sm bg-amber-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
                   onClick={() => dismissMutation.mutate()}
                   disabled={dismissMutation.isPending || note.trim().length === 0}
                 >

@@ -45,7 +45,7 @@ export function UnitTollTagsTab({ unitId, companyId }: UnitTollTagsTabProps) {
   const lowBalanceIds = new Set((tagsQuery.data?.low_balance_tags ?? []).map((tag) => tag.uuid));
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-3" data-testid="unit-toll-tags-tab">
+    <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-toll-tags-tab">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-900">Toll Tags</h3>
         <span className="text-xs text-gray-500">TxTAG · EZ-Pass · I-Pass</span>
@@ -74,7 +74,7 @@ export function UnitTollTagsTab({ unitId, companyId }: UnitTollTagsTabProps) {
                     {formatMoney(tag.balance_current)}
                   </span>
                   {lowBalanceIds.has(tag.uuid) ? (
-                    <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-semibold text-amber-800">
+                    <span className="ml-1 rounded-sm bg-amber-100 px-1 py-0.5 text-[10px] font-semibold text-amber-800">
                       Low
                     </span>
                   ) : null}

@@ -37,7 +37,7 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
   }, [driverId, unitId]);
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-3">
+    <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
         <span className="text-xs text-gray-500">Last {days} days</span>

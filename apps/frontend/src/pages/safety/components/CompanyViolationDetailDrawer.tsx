@@ -117,27 +117,27 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
             onClick={() => patchMutation.mutate({ status: "in_progress" })}
           >
             Mark In Progress
           </button>
           <button
             type="button"
-            className="rounded bg-amber-700 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-amber-700 px-3 py-1 text-xs font-semibold text-white"
             onClick={() => escalateMutation.mutate()}
           >
             Escalate
           </button>
         </div>
 
-        <div className="mt-4 rounded border border-slate-200 bg-slate-50 p-3">
+        <div className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-3">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Resolve Violation</div>
           <div className="mt-2 grid gap-2 md:grid-cols-2">
             <label className="text-xs font-medium text-slate-700">
               Outcome
               <SelectCombobox
-                className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-xs"
+                className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
                 value={outcome}
                 onChange={(event) => setOutcome(event.target.value as typeof outcome)}
               >
@@ -163,7 +163,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
             <label className="text-xs font-medium text-slate-700 md:col-span-2">
               Resolution Notes (minimum 20 characters)
               <textarea
-                className="mt-1 w-full rounded border border-slate-300 px-2 py-2 text-xs"
+                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-2 text-xs"
                 rows={3}
                 value={resolutionNotes}
                 onChange={(event) => setResolutionNotes(event.target.value)}
@@ -173,7 +173,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <div className="mt-2">
             <button
               type="button"
-              className="rounded bg-emerald-700 px-3 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-sm bg-emerald-700 px-3 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               disabled={resolveMutation.isPending || resolutionNotes.trim().length < 20}
               onClick={() => resolveMutation.mutate()}
             >

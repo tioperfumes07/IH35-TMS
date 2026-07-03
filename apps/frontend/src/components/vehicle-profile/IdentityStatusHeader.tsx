@@ -33,7 +33,7 @@ export function IdentityStatusHeader({
       : "Location unavailable";
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
@@ -49,7 +49,7 @@ export function IdentityStatusHeader({
           <label className="text-xs text-gray-600">
             Status
             <select
-              className="ml-2 rounded border px-2 py-1 text-sm"
+              className="ml-2 rounded-sm border px-2 py-1 text-sm"
               value={currentStatus}
               onChange={(e) => {
                 const next = e.target.value as (typeof STATUSES)[number];

@@ -19,14 +19,14 @@ export function RecentActivitySection({ activity }: { activity: Activity }) {
   const slice = rows.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h2 className="text-sm font-semibold text-gray-800">Recent activity</h2>
       <div className="mt-2 flex gap-2">
         {TABS.map((t) => (
           <button
             key={t}
             type="button"
-            className={`rounded px-2 py-1 text-xs ${tab === t ? "bg-gray-800 text-white" : "bg-gray-100"}`}
+            className={`rounded-sm px-2 py-1 text-xs ${tab === t ? "bg-gray-800 text-white" : "bg-gray-100"}`}
             onClick={() => {
               setTab(t);
               setPage(0);

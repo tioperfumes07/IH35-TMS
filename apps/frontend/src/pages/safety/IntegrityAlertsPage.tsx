@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createIntegrityAlertRule,
@@ -88,7 +89,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="rounded border px-3 py-1 text-xs font-semibold"
+          className="rounded-sm border px-3 py-1 text-xs font-semibold"
           style={pageTab === "inbox" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
           onClick={() => setPageTab("inbox")}
         >
@@ -96,7 +97,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         </button>
         <button
           type="button"
-          className="rounded border px-3 py-1 text-xs font-semibold"
+          className="rounded-sm border px-3 py-1 text-xs font-semibold"
           style={pageTab === "rules" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
           onClick={() => setPageTab("rules")}
         >
@@ -105,7 +106,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         {pageTab === "inbox" ? (
           <button
             type="button"
-            className="ml-auto rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="ml-auto rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
             disabled={evaluateMutation.isPending}
             onClick={() => evaluateMutation.mutate()}
           >
@@ -114,7 +115,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         ) : (
           <button
             type="button"
-            className="ml-auto rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="ml-auto rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
             data-testid="integrity-rule-create-btn"
             onClick={() => {
               setEditingRule(null);
@@ -132,16 +133,16 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
             <input
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              className="rounded border border-gray-300 px-2 py-1 text-xs"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
               placeholder="Category"
             />
-            <SelectCombobox value={severity} onChange={(event) => setSeverity(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-xs">
+            <SelectCombobox value={severity} onChange={(event) => setSeverity(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
               <option value="">All severities</option>
               <option value="info">Info</option>
               <option value="warning">Warning</option>
               <option value="critical">Critical</option>
             </SelectCombobox>
-            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-xs">
+            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
               <option value="">All statuses</option>
               <option value="unresolved">Unresolved</option>
               <option value="investigating">Investigating</option>
@@ -151,7 +152,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
             </SelectCombobox>
           </div>
 
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-[980px] w-full text-left text-xs">
               <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
                 <tr>
@@ -166,7 +167,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
               <tbody>
                 {rows.map((row) => (
                   <tr key={String(row.id)} className="border-t border-gray-100">
-                    <td className="px-2 py-1">{String(row.created_at ?? "").slice(0, 10)}</td>
+                    <td className="px-2 py-1">{formatDateUS(row.created_at)}</td>
                     <td className="px-2 py-1">{String(row.alert_category ?? "—")}</td>
                     <td className="px-2 py-1">{String(row.severity ?? "—")}</td>
                     <td className="px-2 py-1">{String(row.subject_type ?? "—")}</td>
@@ -190,7 +191,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
           </div>
         </>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white" data-testid="integrity-rules-panel">
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white" data-testid="integrity-rules-panel">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
               <tr>
@@ -237,14 +238,14 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       )}
 
       {createRuleOpen ? (
-        <div className="rounded border border-gray-200 bg-white p-3 text-xs" data-testid="integrity-rule-editor">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs" data-testid="integrity-rule-editor">
           <h4 className="font-semibold text-gray-900">{editingRule ? "Edit rule" : "Create rule"}</h4>
           <div className="mt-2 grid grid-cols-2 gap-2">
             {!editingRule ? (
               <label className="flex flex-col gap-1">
                 Code
                 <input
-                  className="rounded border px-2 py-1"
+                  className="rounded-sm border px-2 py-1"
                   value={draftRule.rule_code}
                   onChange={(e) => setDraftRule((d) => ({ ...d, rule_code: e.target.value }))}
                 />
@@ -253,7 +254,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
             <label className="flex flex-col gap-1">
               Name
               <input
-                className="rounded border px-2 py-1"
+                className="rounded-sm border px-2 py-1"
                 value={draftRule.rule_name}
                 onChange={(e) => setDraftRule((d) => ({ ...d, rule_name: e.target.value }))}
               />
@@ -261,7 +262,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
             <label className="flex flex-col gap-1">
               Source view
               <input
-                className="rounded border px-2 py-1"
+                className="rounded-sm border px-2 py-1"
                 value={draftRule.source_view}
                 onChange={(e) => setDraftRule((d) => ({ ...d, source_view: e.target.value }))}
               />
@@ -269,7 +270,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
             <label className="flex flex-col gap-1">
               Alert category
               <input
-                className="rounded border px-2 py-1"
+                className="rounded-sm border px-2 py-1"
                 value={draftRule.alert_category}
                 onChange={(e) => setDraftRule((d) => ({ ...d, alert_category: e.target.value }))}
               />
@@ -278,13 +279,13 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              className="rounded bg-slate-700 px-3 py-1 font-semibold text-white"
+              className="rounded-sm bg-slate-700 px-3 py-1 font-semibold text-white"
               disabled={saveRuleMutation.isPending}
               onClick={() => saveRuleMutation.mutate()}
             >
               Save
             </button>
-            <button type="button" className="rounded border px-3 py-1" onClick={() => setCreateRuleOpen(false)}>
+            <button type="button" className="rounded-sm border px-3 py-1" onClick={() => setCreateRuleOpen(false)}>
               Cancel
             </button>
           </div>

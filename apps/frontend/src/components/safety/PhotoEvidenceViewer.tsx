@@ -19,12 +19,12 @@ export function PhotoEvidenceViewer({ open, onClose, imageUrl, sha256, exif }: P
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex overflow-y-auto bg-black/70 p-4" data-testid="photo-evidence-viewer">
-      <div className="mx-auto flex w-full max-w-5xl max-h-[calc(100vh-2rem)] gap-3 overflow-y-auto rounded border border-slate-200 bg-white p-3">
+      <div className="mx-auto flex w-full max-w-5xl max-h-[calc(100vh-2rem)] gap-3 overflow-y-auto rounded-sm border border-slate-200 bg-white p-3">
         <div className="flex-1">
           {imageUrl ? (
             <img src={imageUrl} alt="Damage evidence" className="max-h-[70vh] w-full object-contain" />
           ) : (
-            <div className="flex h-64 items-center justify-center rounded border border-dashed border-slate-300 text-sm text-slate-500">
+            <div className="flex h-64 items-center justify-center rounded-sm border border-dashed border-slate-300 text-sm text-slate-500">
               No preview URL
             </div>
           )}

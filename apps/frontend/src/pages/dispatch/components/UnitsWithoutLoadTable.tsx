@@ -29,7 +29,7 @@ function LocationCell({ loc }: { loc: UnitLiveLocation | null }) {
 
 export function UnitsWithoutLoadTable({ rows, onRowClick }: Props) {
   return (
-    <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <table className="min-w-full text-left text-[11px]">
         <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
           <tr>

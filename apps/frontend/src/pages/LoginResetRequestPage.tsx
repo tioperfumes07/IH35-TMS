@@ -38,7 +38,7 @@ export function LoginResetRequestPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
-      <div className="w-full max-w-md rounded border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
         <h1 style={{ fontFamily: typography.fontSerif }} className="text-[20px] font-semibold text-gray-900">
           Reset password
         </h1>
@@ -57,7 +57,7 @@ export function LoginResetRequestPage() {
               onChange={(ev) => setEmail(ev.target.value)}
               aria-invalid={emailInvalid}
               aria-describedby={emailInvalid ? "reset-email-err" : undefined}
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             {emailInvalid ? (
               <p id="reset-email-err" className="mt-1 text-xs text-red-700">
@@ -80,7 +80,7 @@ export function LoginResetRequestPage() {
           </Button>
         </form>
         <p className="mt-4 text-center text-sm">
-          <Link to="/login" className="text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
+          <Link to="/login" className="text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400">
             Back to sign in
           </Link>
         </p>

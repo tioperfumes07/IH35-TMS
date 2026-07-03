@@ -32,7 +32,7 @@ export function PickupCard({ stop, onArrived, onDeparted, onUploadDoc, busy }: P
   return (
     <PwaCard title={t("dispatch.pickup_title")} subtitle={stop.location_name} data-testid="dispatch-pickup-card">
       <div className="space-y-2 text-sm">
-        <div className="rounded border border-pwa-border px-2 py-1 text-xs capitalize text-pwa-text-secondary">
+        <div className="rounded-sm border border-pwa-border px-2 py-1 text-xs capitalize text-pwa-text-secondary">
           {t("dispatch.status_label", { status, geofence: stop.geofence_status })}
         </div>
         <div className="text-xs text-pwa-text-secondary">
@@ -66,7 +66,7 @@ export function PickupCard({ stop, onArrived, onDeparted, onUploadDoc, busy }: P
         {stop.actual_departure_at ? (
           <div className="text-xs">{t("dispatch.departed_at", { time: new Date(stop.actual_departure_at).toLocaleString() })}</div>
         ) : null}
-        {stop.dispatcher_notes ? <div className="rounded bg-[#101522] p-2 text-xs">{stop.dispatcher_notes}</div> : null}
+        {stop.dispatcher_notes ? <div className="rounded-sm bg-[#101522] p-2 text-xs">{stop.dispatcher_notes}</div> : null}
         <div className="text-xs text-pwa-text-secondary">
           {t("dispatch.docs_label", { docs: stop.doc_requirements.join(", ").toUpperCase() || "—" })}
         </div>

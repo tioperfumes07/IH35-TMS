@@ -30,7 +30,7 @@ function AgingBucketCard({ title, buckets, accent }: { title: string; buckets: A
   ];
 
   return (
-    <section className="rounded border border-slate-200 bg-white shadow-sm">
+    <section className="rounded-sm border border-slate-200 bg-white shadow-xs">
       <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold" style={{ color: accent }}>
         {title}
       </div>
@@ -86,11 +86,11 @@ export function AccountingHome({ auth }: Props) {
       />
 
       {!companyId ? (
-        <section className="rounded border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+        <section className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
           Select an operating company to load accounting home metrics.
         </section>
       ) : homeQuery.isError ? (
-        <section className="rounded border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-900">
+        <section className="rounded-sm border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-900">
           Failed to load accounting home data. Try refreshing.
         </section>
       ) : null}

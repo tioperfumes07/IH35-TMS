@@ -133,11 +133,11 @@ export function SettlementSummaryPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.start}
             onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           />
@@ -145,7 +145,7 @@ export function SettlementSummaryPage() {
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.end}
             onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />
@@ -165,26 +165,26 @@ export function SettlementSummaryPage() {
       {query.data ? (
         <>
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Gross pay</div>
               <div className="text-lg font-semibold">{money(query.data.totals.gross_pay_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Total deductions</div>
               <div className="text-lg font-semibold">{money(query.data.totals.deduction_total_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Total chargebacks</div>
               <div className="text-lg font-semibold">{money(query.data.totals.chargeback_total_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Net pay</div>
               <div className="text-lg font-semibold">{money(query.data.totals.net_pay_cents)}</div>
             </div>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-            <div className="overflow-auto rounded border border-gray-200 bg-white">
+            <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
               <table className="min-w-full text-left text-xs">
                 <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                   <tr>
@@ -261,7 +261,7 @@ export function SettlementSummaryPage() {
               </table>
             </div>
 
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="mb-2 text-sm font-semibold">Deductions by type</div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -271,7 +271,7 @@ export function SettlementSummaryPage() {
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: number) => money(v)} />
+                    <Tooltip formatter={(v) => money(Number(v))} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>

@@ -15,13 +15,13 @@ export function FactoringIndexPage() {
 
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
+      <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
           {SUBNAV.map((item) => (
             <NavLink
               key={item.id}
               to={item.href}
-              className={({ isActive }) => (isActive || tab === item.id ? "border-b border-white pb-0.5 font-semibold" : "")}
+              className={({ isActive }: { isActive: boolean }) => (isActive || tab === item.id ? "border-b border-white pb-0.5 font-semibold" : "")}
               onClick={() => setTab(item.id)}
             >
               {item.label}

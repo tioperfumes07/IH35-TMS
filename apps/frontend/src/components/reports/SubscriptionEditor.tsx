@@ -84,7 +84,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
           <label className="block">
             <span className="font-medium text-slate-700">Report</span>
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={reportSlug}
               onChange={(e) => setReportSlug(e.target.value)}
               disabled={Boolean(initial?.report_slug)}
@@ -100,7 +100,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
           <label className="block">
             <span className="font-medium text-slate-700">Cadence</span>
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={cadence}
               onChange={(e) => setCadence(e.target.value as SubscriptionFormValues["cadence"])}
             >
@@ -116,7 +116,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
             <label className="block">
               <span className="font-medium text-slate-700">Day of week</span>
               <select
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
                 value={dayOfWeek ?? 1}
                 onChange={(e) => setDayOfWeek(Number(e.target.value))}
               >
@@ -136,7 +136,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
                 type="number"
                 min={1}
                 max={31}
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
                 value={dayOfMonth ?? 1}
                 onChange={(e) => setDayOfMonth(Number(e.target.value))}
               />
@@ -147,7 +147,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
             <span className="font-medium text-slate-700">Time (local)</span>
             <input
               type="time"
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={timeOfDay}
               onChange={(e) => setTimeOfDay(e.target.value)}
             />
@@ -156,7 +156,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
           <label className="block">
             <span className="font-medium text-slate-700">Timezone</span>
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
             />
@@ -165,7 +165,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
           <label className="block">
             <span className="font-medium text-slate-700">Recipients</span>
             <textarea
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               rows={2}
               value={recipientsText}
               onChange={(e) => setRecipientsText(e.target.value)}
@@ -176,7 +176,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
           <label className="block">
             <span className="font-medium text-slate-700">Delivery format</span>
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={deliveryFormat}
               onChange={(e) => setDeliveryFormat(e.target.value as SubscriptionFormValues["delivery_format"])}
             >

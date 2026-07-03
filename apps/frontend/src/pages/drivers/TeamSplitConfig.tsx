@@ -88,7 +88,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
 
       <div className="space-y-2">
         {active.map((row) => (
-          <div key={row.id} className="rounded border border-gray-200 bg-white p-3">
+          <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-sm font-semibold text-gray-900">
@@ -114,7 +114,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           <label className="block text-xs font-medium text-gray-700">
             Primary driver
             <SelectCombobox
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
               value={primaryDriverId}
               onChange={(e) => setPrimaryDriverId(e.target.value)}
             >
@@ -129,7 +129,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           <label className="block text-xs font-medium text-gray-700">
             Secondary driver
             <SelectCombobox
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
               value={secondaryDriverId}
               onChange={(e) => setSecondaryDriverId(e.target.value)}
             >
@@ -158,7 +158,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           </div>
           <label className="block text-xs font-medium text-gray-700">
             Memo
-            <textarea className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" value={memo} onChange={(e) => setMemo(e.target.value)} />
+            <textarea className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={memo} onChange={(e) => setMemo(e.target.value)} />
           </label>
           {error ? <p className="text-xs text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-2">

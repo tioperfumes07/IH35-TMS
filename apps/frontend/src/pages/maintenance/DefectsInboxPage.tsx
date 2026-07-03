@@ -53,7 +53,7 @@ export function DefectsInboxPage() {
       <PageHeader title="DVIR Defects" subtitle="Review driver-submitted defects and triage into work orders." />
       <div className="flex items-center justify-end">
         <SelectCombobox
-          className="h-9 rounded border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
           aria-label="Triage status filter"
@@ -67,7 +67,7 @@ export function DefectsInboxPage() {
         </SelectCombobox>
       </div>
 
-      <div className="overflow-hidden rounded border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <table className="w-full table-fixed text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>
@@ -99,7 +99,7 @@ export function DefectsInboxPage() {
                   <div className="flex flex-wrap gap-1">
                     <Link
                       to={`/maintenance/defects/${row.id}`}
-                      className="rounded border border-gray-300 px-2 py-1 text-[11px] hover:bg-gray-50"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] hover:bg-gray-50"
                       data-testid={`defect-detail-link-${row.id}`}
                     >
                       Detail

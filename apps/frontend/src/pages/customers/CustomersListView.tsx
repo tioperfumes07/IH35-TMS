@@ -9,6 +9,7 @@ import { TableSelection, TableSelectionHeader } from "../../components/bulk/Tabl
 import { TableControls, Paginator, TableHeaderCell, useTableController, type TableColumn } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useBulkSelection } from "../../hooks/useBulkSelection";
+import { useListState, type ListQueryStatus } from "../../components/list-state";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -53,11 +54,13 @@ type FilterChip = "all" | "late_pay" | "medium" | "active" | "overdue";
 type Props = {
   companyId: string;
   customers: Customer[];
+  /** Roster query status so the empty state renders only once the fetch settles. */
+  status: ListQueryStatus;
   openByCustomerId: Map<string, number>;
   onSelectCustomer?: (customerId: string) => void;
 };
 
-export function CustomersListView({ companyId, customers, openByCustomerId, onSelectCustomer }: Props) {
+export function CustomersListView({ companyId, customers, status, openByCustomerId, onSelectCustomer }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const selection = useBulkSelection();
@@ -117,6 +120,9 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
   const pageRows = table.paged;
   const pageRowIds = pageRows.map((row) => row.id);
 
+  // LIST-EMPTY-1: empty row renders only once the roster fetch settles.
+  const listState = useListState(status, table.filteredCount === 0);
+
   const bulkMutation = useMutation({
     mutationFn: async ({ ids, action, payload, reason }: { ids: string[]; action: string; payload?: Record<string, unknown>; reason?: string }) =>
       bulkUpdate({ domain: "mdata", resource: "customers", ids, action, payload, reason, operatingCompanyId: companyId }),
@@ -142,7 +148,7 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
     switch (key) {
       case "name":
         return (
-          <Link to={`/customers/${customer.id}`} className="text-slate-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+          <Link to={`/customers/${customer.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
             {customer.name}
           </Link>
         );
@@ -230,7 +236,7 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
         cap={selection.cap}
       >
         {({ isSelected, toggle }) => (
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
                 <tr>
@@ -263,7 +269,7 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
                     className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
                     onClick={() => onSelectCustomer?.(customer.id)}
                   >
-                    <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 py-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label={`Select ${customer.name}`}
@@ -282,9 +288,16 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
                     ))}
                   </tr>
                 ))}
-                {pageRows.length === 0 ? (
+                {listState.isLoading ? (
                   <tr>
-                    <td colSpan={table.visibleColumns.length + 1} className="px-3 py-6 text-center text-gray-500">
+                    <td colSpan={table.visibleColumns.length + 1} className="px-3 py-6 text-center text-slate-500">
+                      Loading customers…
+                    </td>
+                  </tr>
+                ) : null}
+                {listState.isEmpty ? (
+                  <tr>
+                    <td colSpan={table.visibleColumns.length + 1} className="px-3 py-6 text-center text-slate-500">
                       No customers match this filter.
                     </td>
                   </tr>

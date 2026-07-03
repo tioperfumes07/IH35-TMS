@@ -1,8 +1,10 @@
+import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers, listUnits, listVendors } from "../../../api/mdata";
 import { getAllAccounts } from "../../../api/banking";
 import { Modal } from "../../../components/Modal";
+import { companyToday } from "../../../lib/businessDate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { EXPENSE_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
@@ -20,7 +22,7 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
   const [taxRate, setTaxRate] = useState(8.25);
   const [expenseType, setExpenseType] = useState("fuel");
   const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
-  const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [expenseDate, setExpenseDate] = useState(() => companyToday());
   const [expenseNumber, setExpenseNumber] = useState("");
   const [payFromAccountId, setPayFromAccountId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("fuel_card");
@@ -70,24 +72,24 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
       <div className="space-y-3">
         <TypeTabBar tabs={EXPENSE_TYPE_TABS} activeId={expenseType} onChange={setExpenseType} />
 
-        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
           Expense Details
         </div>
 
-        <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
+        <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
           <Field label="Expense Type *">
-            <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value={EXPENSE_TYPE_TABS.find((tab) => tab.id === expenseType)?.label ?? "Fuel Expense"} readOnly />
+            <input className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs" value={EXPENSE_TYPE_TABS.find((tab) => tab.id === expenseType)?.label ?? "Fuel Expense"} readOnly />
           </Field>
           <Field label="Expense Date">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" type="date" value={expenseDate} onChange={(event) => setExpenseDate(event.target.value)} />
+            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" type="date" value={expenseDate} onChange={(event) => setExpenseDate(event.target.value)} />
           </Field>
           <Field label="Expense Number">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Expense Number" value={expenseNumber} onChange={(event) => setExpenseNumber(event.target.value)} />
+            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Expense Number" value={expenseNumber} onChange={(event) => setExpenseNumber(event.target.value)} />
           </Field>
           <div className="md:col-span-3" />
 
           <Field label="Pay From Account">
-            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={payFromAccountId} onChange={(event) => setPayFromAccountId(event.target.value)}>
+            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={payFromAccountId} onChange={(event) => setPayFromAccountId(event.target.value)}>
               <option value="">Select account...</option>
               {(accountsQuery.data?.accounts ?? []).map((account) => (
                 <option key={String(account.id ?? "")} value={String(account.id ?? "")}>
@@ -97,7 +99,7 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
             </SelectCombobox>
           </Field>
           <Field label="Payment Method">
-            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
+            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
               <option value="fuel_card">Fuel card</option>
               <option value="debit">Debit</option>
               <option value="credit">Credit</option>
@@ -108,7 +110,7 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
 
           <div className="md:col-span-6 h-2" />
           <Field label="Payee">
-            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={payeeId} onChange={(event) => setPayeeId(event.target.value)}>
+            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={payeeId} onChange={(event) => setPayeeId(event.target.value)}>
               <option value="">Select payee...</option>
               {payeeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -119,12 +121,12 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
           </Field>
           <div className="md:col-span-4" />
           <Field label="Load Number">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Load Number" value={loadNumber} onChange={(event) => setLoadNumber(event.target.value)} />
+            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Load Number" value={loadNumber} onChange={(event) => setLoadNumber(event.target.value)} />
           </Field>
 
           <div className="md:col-span-6 h-2" />
           <Field label="Driver">
-            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={driverId} onChange={(event) => setDriverId(event.target.value)}>
+            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={driverId} onChange={(event) => setDriverId(event.target.value)}>
               <option value="">Select driver...</option>
               {(driversQuery.data?.drivers ?? []).map((driver) => (
                 <option key={driver.id} value={driver.id}>
@@ -134,7 +136,7 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
             </SelectCombobox>
           </Field>
           <Field label="Unit Number">
-            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={unitId} onChange={(event) => setUnitId(event.target.value)}>
+            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={unitId} onChange={(event) => setUnitId(event.target.value)}>
               <option value="">Select unit...</option>
               {((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => (
                 <option key={String(unit.id ?? "")} value={String(unit.id ?? "")}>
@@ -145,12 +147,12 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
           </Field>
           <div className="md:col-span-3" />
           <Field label="Class">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={className} onChange={(event) => setClassName(event.target.value)} placeholder="Class" />
+            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={className} onChange={(event) => setClassName(event.target.value)} placeholder="Class" />
           </Field>
 
           <div className="md:col-span-6 h-2" />
           <Field label="Invoice Number">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Invoice Number" value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value)} />
+            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Invoice Number" value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value)} />
           </Field>
           <div className="md:col-span-5" />
         </div>

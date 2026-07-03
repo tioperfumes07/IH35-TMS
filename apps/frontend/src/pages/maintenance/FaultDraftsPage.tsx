@@ -78,7 +78,7 @@ export function FaultDraftsPage() {
       {draftsQuery.isLoading ? <p className="text-sm text-gray-600">Loading drafts…</p> : null}
       {draftsQuery.isError ? <p className="text-sm text-red-600">Failed to load fault-driven drafts.</p> : null}
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
             <tr>
@@ -119,7 +119,7 @@ export function FaultDraftsPage() {
 
       {selected ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded bg-white p-4 shadow-lg">
+          <div className="w-full max-w-lg rounded-sm bg-white p-4 shadow-lg">
             <h3 className="text-base font-semibold">{selected.wo_title ?? selected.display_id ?? "Draft WO"}</h3>
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{selected.description}</p>
             <div className="mt-4 flex flex-wrap gap-2">

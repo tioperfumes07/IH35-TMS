@@ -56,14 +56,14 @@ export function CurrentPeriodTab({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
         <label className="text-xs font-semibold uppercase text-slate-600">
           Company
-          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
             <option value="trucking">{profiles.trucking.name}</option>
             <option value="transportation">{profiles.transportation.name}</option>
           </SelectCombobox>
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Month
-          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
             {MONTHS.map((m, i) => (
               <option key={m} value={i}>
                 {m}
@@ -73,7 +73,7 @@ export function CurrentPeriodTab({
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Year
-          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
             {YEARS.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -81,21 +81,21 @@ export function CurrentPeriodTab({
             ))}
           </SelectCombobox>
         </label>
-        <button type="button" onClick={onCreateOrLoad} className="self-end rounded bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onCreateOrLoad} className="self-end rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
           Create / Load Draft
         </button>
-        <button type="button" onClick={onImportBanking} className="self-end rounded bg-emerald-700 px-3 py-2 text-sm font-semibold text-white" disabled={!form.reportId || loading}>
+        <button type="button" onClick={onImportBanking} className="self-end rounded-sm bg-emerald-700 px-3 py-2 text-sm font-semibold text-white" disabled={!form.reportId || loading}>
           ⟳ Import from Banking
         </button>
         <div className="self-end text-xs text-slate-500">{autoSaveLabel}</div>
       </div>
 
-      <div className="rounded border bg-slate-50 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border bg-slate-50 p-3 text-xs text-slate-700">
         <strong>{profiles[activeCompany].name}</strong> · Case #{profiles[activeCompany].caseNumber || "—"} · Court {profiles[activeCompany].division},{" "}
         {profiles[activeCompany].district} · Petition date is managed by report creation.
       </div>
 
-      <div className="rounded border bg-white">
+      <div className="rounded-sm border bg-white">
         <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Part 1 — Questionnaire (Lines 1-18)</div>
         {QUESTIONNAIRE.map((q, i) => {
           const answer = form.answers[q.num] ?? (q.expectYes ? "yes" : "no");
@@ -129,7 +129,7 @@ export function CurrentPeriodTab({
         })}
       </div>
 
-      <div className="rounded border bg-white">
+      <div className="rounded-sm border bg-white">
         <div className="border-b bg-emerald-800 px-3 py-2 text-sm font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
         {[
           ["19", "openingBalance", "Total opening balance of all accounts"],
@@ -141,7 +141,7 @@ export function CurrentPeriodTab({
               <strong>{line}.</strong> {label}
             </span>
             <input
-              className="rounded border px-2 py-1.5 text-right"
+              className="rounded-sm border px-2 py-1.5 text-right"
               value={String((form as unknown as Record<string, string>)[key] ?? "")}
               onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
             />
@@ -168,10 +168,10 @@ export function CurrentPeriodTab({
           ["30", "otherProFeesThisMonth", "Other professional fees this month"],
           ["31", "otherProFeesSinceFiling", "Other professional fees since filing"],
         ].map(([line, key, label]) => (
-          <label key={key} className="rounded border bg-white px-3 py-2 text-sm">
+          <label key={key} className="rounded-sm border bg-white px-3 py-2 text-sm">
             <strong>{line}.</strong> {label}
             <input
-              className="mt-1 w-full rounded border px-2 py-1.5 text-right"
+              className="mt-1 w-full rounded-sm border px-2 py-1.5 text-right"
               value={String((form as unknown as Record<string, string>)[key] ?? "")}
               onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
             />
@@ -179,7 +179,7 @@ export function CurrentPeriodTab({
         ))}
       </div>
 
-      <div className="rounded border bg-white">
+      <div className="rounded-sm border bg-white">
         <div className="border-b bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
         {form.hasCarryForward ? (
           <div className="border-b bg-amber-50 px-3 py-2 text-xs text-amber-800">
@@ -194,13 +194,13 @@ export function CurrentPeriodTab({
         </div>
         <div className="grid grid-cols-[1fr_170px_170px_170px] items-center border-b px-3 py-2 text-sm">
           <span>32. Cash receipts</span>
-          <input className="rounded border px-2 py-1.5 text-right" value={form.projReceiptsLast} onChange={(e) => setForm((prev) => ({ ...prev, projReceiptsLast: e.target.value }))} />
+          <input className="rounded-sm border px-2 py-1.5 text-right" value={form.projReceiptsLast} onChange={(e) => setForm((prev) => ({ ...prev, projReceiptsLast: e.target.value }))} />
           <span className="text-right">${nv(form.totalReceipts).toFixed(2)}</span>
           <span className="text-right">${pDR.toFixed(2)}</span>
         </div>
         <div className="grid grid-cols-[1fr_170px_170px_170px] items-center border-b px-3 py-2 text-sm">
           <span>33. Cash disbursements</span>
-          <input className="rounded border px-2 py-1.5 text-right" value={form.projDisbLast} onChange={(e) => setForm((prev) => ({ ...prev, projDisbLast: e.target.value }))} />
+          <input className="rounded-sm border px-2 py-1.5 text-right" value={form.projDisbLast} onChange={(e) => setForm((prev) => ({ ...prev, projDisbLast: e.target.value }))} />
           <span className="text-right">${nv(form.totalDisbursements).toFixed(2)}</span>
           <span className="text-right">${pDD.toFixed(2)}</span>
         </div>
@@ -212,11 +212,11 @@ export function CurrentPeriodTab({
         </div>
         <div className="grid grid-cols-[1fr_220px] items-center border-b px-3 py-2 text-sm">
           <span>35. Next month projected receipts</span>
-          <input className="rounded border px-2 py-1.5 text-right" value={form.projReceiptsNext} onChange={(e) => setForm((prev) => ({ ...prev, projReceiptsNext: e.target.value }))} />
+          <input className="rounded-sm border px-2 py-1.5 text-right" value={form.projReceiptsNext} onChange={(e) => setForm((prev) => ({ ...prev, projReceiptsNext: e.target.value }))} />
         </div>
         <div className="grid grid-cols-[1fr_220px] items-center border-b px-3 py-2 text-sm">
           <span>36. Next month projected disbursements</span>
-          <input className="rounded border px-2 py-1.5 text-right" value={form.projDisbNext} onChange={(e) => setForm((prev) => ({ ...prev, projDisbNext: e.target.value }))} />
+          <input className="rounded-sm border px-2 py-1.5 text-right" value={form.projDisbNext} onChange={(e) => setForm((prev) => ({ ...prev, projDisbNext: e.target.value }))} />
         </div>
         <div className="grid grid-cols-[1fr_220px] items-center bg-slate-50 px-3 py-2 text-sm font-semibold">
           <span>37. Next month projected net cash flow</span>
@@ -225,14 +225,14 @@ export function CurrentPeriodTab({
         <label className="block border-t px-3 py-2 text-xs font-semibold uppercase text-slate-600">
           Override Reason (required for carry-forward overrides)
           <textarea
-            className="mt-1 h-20 w-full rounded border px-2 py-1.5 text-sm normal-case"
+            className="mt-1 h-20 w-full rounded-sm border px-2 py-1.5 text-sm normal-case"
             value={form.projectionOverrideReason}
             onChange={(e) => setForm((prev) => ({ ...prev, projectionOverrideReason: e.target.value }))}
           />
         </label>
       </div>
 
-      <div className="rounded border bg-white">
+      <div className="rounded-sm border bg-white">
         <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Part 8 — Attachments</div>
         {[
           ["att38", "38. Bank statements"],
@@ -253,13 +253,13 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={onSave} disabled={!form.reportId || loading} className="rounded bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onSave} disabled={!form.reportId || loading} className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
           Save Draft
         </button>
-        <button type="button" onClick={onGeneratePdf} disabled={!form.reportId || loading} className="rounded bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onGeneratePdf} disabled={!form.reportId || loading} className="rounded-sm bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">
           Save & Generate Filing PDF
         </button>
-        <button type="button" onClick={onMarkFiled} disabled={!form.reportId || loading} className="rounded bg-emerald-700 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onMarkFiled} disabled={!form.reportId || loading} className="rounded-sm bg-emerald-700 px-3 py-2 text-sm font-semibold text-white">
           Mark Filed
         </button>
       </div>

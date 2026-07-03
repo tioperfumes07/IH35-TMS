@@ -47,7 +47,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
 
   if (!driverId) {
     return (
-      <div className="rounded border border-dashed border-gray-300 p-4 text-center text-xs text-slate-500">
+      <div className="rounded-sm border border-dashed border-gray-300 p-4 text-center text-xs text-slate-500">
         Select a driver to view the DQF checklist.
       </div>
     );
@@ -67,7 +67,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
           <label className="block text-xs text-slate-600">
             Add checklist item
             <input
-              className="mt-1 block min-w-[260px] rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 block min-w-[260px] rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={itemName}
               onChange={(event) => setItemName(event.target.value)}
               placeholder="e.g. MVR, Med Card, Road Test"
@@ -75,7 +75,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
           </label>
           <button
             type="submit"
-            className="rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+            className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             disabled={createMutation.isPending || !itemName.trim()}
           >
             Add item
@@ -83,7 +83,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
         </form>
       ) : null}
 
-      <div className="overflow-x-auto rounded border border-gray-200">
+      <div className="overflow-x-auto rounded-sm border border-gray-200">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
             <tr>
@@ -100,12 +100,12 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
               <tr key={item.id} className="border-t border-gray-100">
                 <td className="px-2 py-2 font-medium text-slate-800">{item.item_name}</td>
                 <td className="px-2 py-2">
-                  <span className={`rounded px-1.5 py-0.5 ${dqfItemStatusClass(item.status)}`}>{item.status}</span>
+                  <span className={`rounded-sm px-1.5 py-0.5 ${dqfItemStatusClass(item.status)}`}>{item.status}</span>
                 </td>
                 <td className="px-2 py-2 text-slate-600">{item.effective_date ?? "—"}</td>
                 <td className="px-2 py-2 text-slate-600">{item.expiry_date ?? "—"}</td>
                 <td className="px-2 py-2">
-                  <span className={`rounded px-1.5 py-0.5 ${dqfExpiryPillClass(item.expiry_pill)}`}>
+                  <span className={`rounded-sm px-1.5 py-0.5 ${dqfExpiryPillClass(item.expiry_pill)}`}>
                     {item.expiry_pill ?? "unknown"}
                   </span>
                 </td>
@@ -116,7 +116,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
                         <button
                           key={status}
                           type="button"
-                          className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] hover:bg-gray-50 disabled:opacity-50"
+                          className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] hover:bg-gray-50 disabled:opacity-50"
                           disabled={patchMutation.isPending || item.status === status}
                           onClick={() => patchMutation.mutate({ id: item.id, status })}
                         >

@@ -39,7 +39,7 @@ export function createDriverW8ben(driverId: string, companyId: string, body: W8B
   );
 }
 
-const inputCls = "rounded border border-gray-300 h-9 px-2 text-[13px]";
+const inputCls = "rounded-sm border border-gray-300 h-9 px-2 text-[13px]";
 const labelCls = "text-xs font-semibold text-gray-600";
 
 export function W8BenModal({ open, driverId, companyId, driverName, onClose, onCreated }: Props) {
@@ -204,7 +204,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
             rows={2}
             maxLength={2000}
           />

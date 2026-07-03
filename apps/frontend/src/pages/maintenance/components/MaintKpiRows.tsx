@@ -6,7 +6,7 @@ type Props = {
 
 function Card({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+    <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
       <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="font-semibold">{value}</div>
     </div>

@@ -55,13 +55,13 @@ export function TrailerProfilePage() {
   };
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
   }
   if (profileQ.isLoading) {
-    return <div className="rounded border bg-white p-4 text-sm">Loading trailer profile…</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Loading trailer profile…</div>;
   }
   if (!profileQ.data) {
-    return <div className="rounded border bg-white p-4 text-sm">Trailer not found.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm">Trailer not found.</div>;
   }
 
   const aggregate = profileQ.data;

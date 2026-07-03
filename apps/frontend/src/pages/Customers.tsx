@@ -184,6 +184,13 @@ export function CustomersPage() {
     queryFn: () => listInvoices(companyId),
     enabled: Boolean(companyId),
   });
+  // LIST-EMPTY-1: shared list-state status — children render "No customers found."
+  // only once this settles, never during the roster fetch.
+  const customersStatus = {
+    isPending: customersQuery.isPending,
+    isError: customersQuery.isError,
+    isFetching: customersQuery.isFetching,
+  };
 
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
@@ -287,28 +294,28 @@ export function CustomersPage() {
         subtitle="Customer list and transactions"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="customers">
+            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="customers">
               <button
                 type="button"
-                className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                className={`rounded-sm px-2 py-1 font-medium ${viewMode === "list" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setViewMode("list")}
               >
                 List view
               </button>
               <button
                 type="button"
-                className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                className={`rounded-sm px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setViewMode("master-detail")}
               >
                 Master-detail
               </button>
             </div>
-            <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="customers">
+            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="customers">
               {(["active", "inactive", "all"] as const).map((value) => (
                 <button
                   key={value}
                   type="button"
-                  className={`rounded px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
                   onClick={() => setListStatus(value)}
                 >
                   {value}
@@ -326,6 +333,7 @@ export function CustomersPage() {
         <CustomersListView
           companyId={companyId}
           customers={customersSorted}
+          status={customersStatus}
           openByCustomerId={openByCustomerId}
           onSelectCustomer={(customerId) => {
             setSelectedCustomerId(customerId);
@@ -336,6 +344,7 @@ export function CustomersPage() {
       <div className="flex gap-3">
         <CustomerListSidebar
           customers={visibleCustomers}
+          status={customersStatus}
           totalCount={customersSorted.length}
           page={sidebarPage}
           pageSize={sidebarPageSize}
@@ -354,7 +363,7 @@ export function CustomersPage() {
           {selectedCustomer ? (
             <>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px]">
-                <section className="rounded border border-gray-200 bg-white p-3">
+                <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900">{selectedCustomer.name}</h2>
@@ -374,7 +383,7 @@ export function CustomersPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <ActionButton onClick={() => navigate(`/customers/${selectedCustomer.id}`)}>Edit</ActionButton>
-                      <ActionButton className="rounded border border-emerald-700 bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-600" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
+                      <ActionButton className="rounded-sm border border-emerald-700 bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-600" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
                         New transaction
                       </ActionButton>
                     </div>
@@ -388,7 +397,7 @@ export function CustomersPage() {
                     <p><span className="font-semibold text-gray-600">Custom fields:</span> —</p>
                   </div>
                 </section>
-                <section className="rounded border border-gray-200 bg-white p-3">
+                <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <h3 className="mb-2 text-sm font-semibold text-gray-900">Financial summary</h3>
                   <p className="text-sm text-gray-600">Open balance</p>
                   <p className="text-xl font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
@@ -400,9 +409,9 @@ export function CustomersPage() {
               <SecondaryNavTabs tabs={CUSTOMER_TABS} activeId={activeTab} onChange={(id) => setActiveTab(id as CustomerTabId)} />
 
               {activeTab === "transaction_list" ? (
-                <div className="rounded border border-gray-200 bg-white p-3">
+                <div className="rounded-sm border border-gray-200 bg-white p-3">
                   <div className="relative mb-2 flex flex-wrap items-center gap-2">
-                    <SelectCombobox value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm">
+                    <SelectCombobox value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm">
                       <option value="">Type: All</option>
                       <option value="from_load">from_load</option>
                       <option value="driver_damage">driver_damage</option>
@@ -412,7 +421,7 @@ export function CustomersPage() {
                       <option value="manual">manual</option>
                     </SelectCombobox>
                     <ActionButton onClick={() => setShowFilterBox((open) => !open)}>Filter</ActionButton>
-                    <span className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
+                    <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
                       {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
                     </span>
                     <SelectCombobox value={String(pageSize)} onChange={(event) => setPageSize(Number(event.target.value) || 50)} className="h-8 min-w-[84px] text-xs">
@@ -422,11 +431,11 @@ export function CustomersPage() {
                       <option value="200">200</option>
                       <option value="300">300</option>
                     </SelectCombobox>
-                    <button type="button" aria-label="Columns" className="ml-auto rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50" onClick={() => setShowColumnChooser((open) => !open)}>Columns</button>
+                    <button type="button" aria-label="Columns" className="ml-auto rounded-sm border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50" onClick={() => setShowColumnChooser((open) => !open)}>Columns</button>
                     {showFilterBox ? (
-                      <div className="absolute left-0 top-9 z-10 w-[320px] rounded border border-gray-200 bg-white p-2 shadow">
+                      <div className="absolute left-0 top-9 z-10 w-[320px] rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
-                        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm">
+                        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm">
                           <option value="">All</option>
                           <option value="draft">draft</option>
                           <option value="sent">sent</option>
@@ -437,15 +446,15 @@ export function CustomersPage() {
                         </SelectCombobox>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
                         <div className="mb-2 grid grid-cols-2 gap-2">
-                          <DatePicker value={dateFrom} onChange={setDateFrom} className="rounded border border-gray-300 px-2 py-1 text-sm" />
-                          <DatePicker value={dateTo} onChange={setDateTo} className="rounded border border-gray-300 px-2 py-1 text-sm" />
+                          <DatePicker value={dateFrom} onChange={setDateFrom} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                          <DatePicker value={dateTo} onChange={setDateTo} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
                         </div>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
-                        <input value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
+                        <input value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
                       </div>
                     ) : null}
                     {showColumnChooser ? (
-                      <div className="absolute right-0 top-9 z-10 w-[220px] rounded border border-gray-200 bg-white p-2 shadow">
+                      <div className="absolute right-0 top-9 z-10 w-[220px] rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
                         {COLUMN_OPTIONS.map((column) => (
                           <label key={column.key} className="flex items-center gap-2 py-0.5 text-xs">
                             <input
@@ -497,7 +506,7 @@ export function CustomersPage() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+                        className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
                         disabled={safeCurrentPage <= 1}
                         onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       >
@@ -506,7 +515,7 @@ export function CustomersPage() {
                       <span>Page {safeCurrentPage} of {totalPages}</span>
                       <button
                         type="button"
-                        className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+                        className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
                         disabled={safeCurrentPage >= totalPages}
                         onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       >
@@ -522,11 +531,11 @@ export function CustomersPage() {
                   operatingCompanyId={companyId || undefined}
                 />
               ) : (
-                <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">No rows for this tab yet.</div>
+                <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">No rows for this tab yet.</div>
               )}
             </>
           ) : (
-            <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">No customer selected.</div>
+            <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">No customer selected.</div>
           )}
         </main>
       </div>
@@ -542,7 +551,7 @@ export function CustomersPage() {
           }}
         >
           {createFormError ? (
-            <div role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+            <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
               {createFormError}
             </div>
           ) : null}
@@ -552,7 +561,7 @@ export function CustomersPage() {
               data-field="legal_name"
               value={createLegalName}
               onChange={(event) => setCreateLegalName(event.target.value)}
-              className="w-full rounded border border-gray-300 px-2 py-1.5"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5"
             />
             {createFieldErrors.legal_name ? (
               <span id="legal_name-error" className="mt-1 block text-xs text-red-700">
@@ -566,7 +575,7 @@ export function CustomersPage() {
               <input
                 value={createEmail}
                 onChange={(event) => setCreateEmail(event.target.value)}
-                className="w-full rounded border border-gray-300 px-2 py-1.5"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5"
               />
             </label>
             <label className="block text-sm">
@@ -574,7 +583,7 @@ export function CustomersPage() {
               <input
                 value={createPhone}
                 onChange={(event) => setCreatePhone(event.target.value)}
-                className="w-full rounded border border-gray-300 px-2 py-1.5"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5"
               />
             </label>
           </div>

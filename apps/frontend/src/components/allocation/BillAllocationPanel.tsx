@@ -175,7 +175,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
   }
 
   return (
-    <section className="space-y-3 rounded border border-gray-200 bg-white p-3">
+    <section className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-gray-900">Bill unit allocation</h3>
@@ -185,7 +185,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
         </div>
         <button
           type="button"
-          className="rounded bg-[#1F2A44] px-3 py-1 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-60"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-60"
           disabled={isSubmitting || !selectedIds.length}
           onClick={() => void onAllocate()}
         >
@@ -194,7 +194,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
       </div>
 
       {sourceMode === "fallback" ? (
-        <p className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
+        <p className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
           {OFFLINE_PREVIEW_BANNER}
         </p>
       ) : null}
@@ -207,7 +207,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
         {isLoadingAssets ? <p className="text-sm text-gray-500">Loading assets…</p> : null}
         <div className="grid gap-2 md:grid-cols-2">
           {assets.map((asset) => (
-            <label key={asset.id} className="flex items-center gap-2 rounded border border-gray-200 px-2 py-1 text-sm">
+            <label key={asset.id} className="flex items-center gap-2 rounded-sm border border-gray-200 px-2 py-1 text-sm">
               <input
                 type="checkbox"
                 checked={selectedIds.includes(asset.id)}
@@ -229,7 +229,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
             <label key={asset.id} className="text-xs font-semibold text-gray-600">
               {asset.unit_code} %
               <input
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm font-normal text-gray-900"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm font-normal text-gray-900"
                 value={manualPct[asset.id] ?? ""}
                 onChange={(event) => setManualPct((current) => ({ ...current, [asset.id]: event.target.value }))}
               />
@@ -244,7 +244,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
             <label key={asset.id} className="text-xs font-semibold text-gray-600">
               {asset.unit_code} miles
               <input
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm font-normal text-gray-900"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm font-normal text-gray-900"
                 value={miles[asset.id] ?? ""}
                 onChange={(event) => setMiles((current) => ({ ...current, [asset.id]: event.target.value }))}
               />

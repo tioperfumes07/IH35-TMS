@@ -40,7 +40,7 @@ export function PmSchedulePage() {
           + Create
         </Button>
       </div>
-      <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="mb-2 text-xs text-gray-500">Due-soon threshold is company-configurable (days/miles/hours).</div>
         <table className="w-full text-left text-xs">
           <thead className="text-[11px] uppercase text-gray-600">
@@ -62,7 +62,7 @@ export function PmSchedulePage() {
                 <td className="py-1 text-right">
                   <button
                     type="button"
-                    className="rounded border border-gray-300 px-2 py-0.5 text-[11px]"
+                    className="rounded-sm border border-gray-300 px-2 py-0.5 text-[11px]"
                     onClick={() => generateM.mutate(row.id)}
                     disabled={generateM.isPending}
                   >

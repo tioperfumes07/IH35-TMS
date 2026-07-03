@@ -113,7 +113,7 @@ export function FilterBar({
           type="button"
           aria-expanded={filtersOpen}
           onClick={() => setFiltersOpen((o) => !o)}
-          className="flex h-8 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
+          className="flex h-8 items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
           Filters
@@ -138,7 +138,7 @@ export function FilterBar({
 
       {/* Filters popover — every prior filter lives here; nothing removed, just collapsed. */}
       {filtersOpen ? (
-        <div className="absolute left-0 z-30 mt-1 w-[min(680px,90vw)] space-y-2 rounded border border-gray-200 bg-white p-3 shadow-lg">
+        <div className="absolute left-0 z-30 mt-1 w-[min(680px,90vw)] space-y-2 rounded-sm border border-gray-200 bg-white p-3 shadow-lg">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-gray-600">Operating Company</label>
@@ -220,7 +220,7 @@ export function FilterBar({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2 text-xs">
-            <span className="rounded bg-gray-100 px-2 py-1 text-gray-700">Active filters: {activeCount}</span>
+            <span className="rounded-sm bg-gray-100 px-2 py-1 text-gray-700">Active filters: {activeCount}</span>
             {value.companyIds.map((id) => {
               const company = companies.find((item) => item.id === id);
               return (
@@ -228,7 +228,7 @@ export function FilterBar({
                   key={id}
                   type="button"
                   onClick={() => onChange({ ...value, companyIds: value.companyIds.filter((companyId) => companyId !== id) })}
-                  className="rounded border border-gray-300 px-2 py-1 hover:bg-gray-50"
+                  className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50"
                 >
                   Company: {company?.label ?? id} ×
                 </button>
@@ -239,18 +239,18 @@ export function FilterBar({
                 key={status}
                 type="button"
                 onClick={() => onChange({ ...value, statuses: value.statuses.filter((item) => item !== status) })}
-                className="rounded border border-gray-300 px-2 py-1 hover:bg-gray-50"
+                className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50"
               >
                 Status: {STATUS_LABEL[status]} ×
               </button>
             ))}
             {customerOption ? (
-              <button type="button" onClick={() => onChange({ ...value, customerId: null })} className="rounded border border-gray-300 px-2 py-1 hover:bg-gray-50">
+              <button type="button" onClick={() => onChange({ ...value, customerId: null })} className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50">
                 Customer: {customerOption.label} ×
               </button>
             ) : null}
             {driverOption ? (
-              <button type="button" onClick={() => onChange({ ...value, driverId: null })} className="rounded border border-gray-300 px-2 py-1 hover:bg-gray-50">
+              <button type="button" onClick={() => onChange({ ...value, driverId: null })} className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50">
                 Driver: {driverOption.label} ×
               </button>
             ) : null}

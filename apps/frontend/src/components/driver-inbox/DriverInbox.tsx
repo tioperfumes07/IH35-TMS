@@ -109,7 +109,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
   const showCash = tab === "all" || tab === "cash_advance";
 
   return (
-    <div className="overflow-hidden rounded border border-[#e5e7eb] bg-[#f8f8f4]">
+    <div className="overflow-hidden rounded-sm border border-[#e5e7eb] bg-[#f8f8f4]">
       <div className="px-[18px] pt-[14px] pb-[10px]">
         <span className="text-[20px] font-semibold text-[#1A1F36]">Inbox</span>
         <span className="ml-[10px] text-[12px] text-[#8A92AB]">Driver Hub · requests from the driver app</span>
@@ -145,15 +145,15 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
             const preview = previewQuery.data;
             const timeline = (timelineQuery.data?.timeline ?? null) as Record<string, unknown> | null;
             return (
-              <div key={id} className="mb-[10px] rounded border border-[#e5e7eb] bg-white px-[14px] py-3">
+              <div key={id} className="mb-[10px] rounded-sm border border-[#e5e7eb] bg-white px-[14px] py-3">
                 <button type="button" className="flex w-full items-start gap-[10px] text-left" onClick={() => setOpenId(open ? null : id)}>
-                  <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[11px] font-semibold text-[#4A5170]">
+                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[11px] font-semibold text-[#4A5170]">
                     {initials(name)}
                   </span>
                   <span className="flex-1">
                     <span className="block">
                       <span className="text-[13px] font-semibold text-[#1A1F36]">{name}</span>{" "}
-                      <span className="rounded-sm bg-[#fef3e2] px-[6px] py-[2px] text-[9px] font-semibold uppercase tracking-[0.25px] text-[#854f0b]">Cash advance</span>{" "}
+                      <span className="rounded-xs bg-[#fef3e2] px-[6px] py-[2px] text-[9px] font-semibold uppercase tracking-[0.25px] text-[#854f0b]">Cash advance</span>{" "}
                       <span className="text-[11px] text-[#8A92AB]">
                         {String(row.submitted_at ?? "").replace("T", " ").slice(0, 16)}
                         {timeline?.viewed_at ? " · viewed" : ""}
@@ -165,7 +165,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                 </button>
 
                 {open ? (
-                  <div className="mt-[10px] rounded border border-[#e5e7eb] bg-[#f8f8f4] px-[11px] py-[9px]">
+                  <div className="mt-[10px] rounded-sm border border-[#e5e7eb] bg-[#f8f8f4] px-[11px] py-[9px]">
                     <div className="mb-[7px] text-[9px] font-semibold uppercase tracking-[0.25px] text-[#6B7280]">
                       Linkage — what posts on approve
                     </div>
@@ -194,7 +194,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                         <span className="text-[#8A92AB]">Pay from</span>
                         <span>
                           <select
-                            className="h-[28px] w-full rounded-sm border border-[#e5e7eb] text-[11px]"
+                            className="h-[28px] w-full rounded-xs border border-[#e5e7eb] text-[11px]"
                             value={payFrom[id] ?? ""}
                             onChange={(e) => setPayFrom((p) => ({ ...p, [id]: e.target.value }))}
                           >
@@ -216,7 +216,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                     <div className="mt-[10px] flex justify-end gap-2">
                       <button
                         type="button"
-                        className="rounded-sm border border-[#e5e7eb] bg-white px-3 py-[5px] text-[11px] text-[#4A5170]"
+                        className="rounded-xs border border-[#e5e7eb] bg-white px-3 py-[5px] text-[11px] text-[#4A5170]"
                         onClick={() => setDenyForId(id)}
                       >
                         Deny
@@ -224,7 +224,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                       <button
                         type="button"
                         disabled={approveMut.isPending}
-                        className="rounded-sm border border-[#16A34A] bg-[#16A34A] px-[14px] py-[5px] text-[11px] font-semibold text-white disabled:opacity-70"
+                        className="rounded-xs border border-[#16A34A] bg-[#16A34A] px-[14px] py-[5px] text-[11px] font-semibold text-white disabled:opacity-70"
                         onClick={() => approveMut.mutate(id)}
                       >
                         Approve &amp; post
@@ -250,20 +250,20 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
             <h2 className="text-base font-semibold text-[#1A1F36]">Deny request</h2>
             <p className="mt-1 text-[12px] text-[#8A92AB]">Reason is recorded to the audit trail and shared with the driver.</p>
             <textarea
-              className="mt-3 w-full rounded border border-[#e5e7eb] p-2 text-sm"
+              className="mt-3 w-full rounded-sm border border-[#e5e7eb] p-2 text-sm"
               rows={4}
               value={denyReason}
               onChange={(e) => setDenyReason(e.target.value)}
               placeholder="Denial reason (required)"
             />
             <div className="mt-3 flex justify-end gap-2">
-              <button type="button" className="rounded-sm border border-[#e5e7eb] bg-white px-3 py-[5px] text-[11px] text-[#4A5170]" onClick={() => setDenyForId(null)}>
+              <button type="button" className="rounded-xs border border-[#e5e7eb] bg-white px-3 py-[5px] text-[11px] text-[#4A5170]" onClick={() => setDenyForId(null)}>
                 Cancel
               </button>
               <button
                 type="button"
                 disabled={denyReason.trim().length < 1 || denyMut.isPending}
-                className="rounded-sm border border-[#16A34A] bg-[#16A34A] px-[14px] py-[5px] text-[11px] font-semibold text-white disabled:opacity-60"
+                className="rounded-xs border border-[#16A34A] bg-[#16A34A] px-[14px] py-[5px] text-[11px] font-semibold text-white disabled:opacity-60"
                 onClick={() => void denyMut.mutate()}
               >
                 Confirm deny

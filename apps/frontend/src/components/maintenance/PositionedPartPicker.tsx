@@ -145,7 +145,7 @@ export function PositionedPartPicker({
         </svg>
 
         {/* Position info panel */}
-        <div className="absolute bottom-2 right-2 bg-white/90 p-2 rounded shadow text-xs">
+        <div className="absolute bottom-2 right-2 bg-white/90 p-2 rounded-sm shadow-sm text-xs">
           <p className="font-medium">{positionSet.display_name}</p>
           {positionSet.vehicle_make && (
             <p className="text-gray-600">{positionSet.vehicle_make}</p>

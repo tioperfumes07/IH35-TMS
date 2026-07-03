@@ -39,7 +39,7 @@ export function DriverScoringTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Driver Safety Scoring</h3>
           <p className="text-xs text-slate-500">
@@ -53,7 +53,7 @@ export function DriverScoringTab() {
               key={value}
               type="button"
               onClick={() => setPreset(value)}
-              className={`rounded px-2 py-1 capitalize ${preset === value ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+              className={`rounded-sm px-2 py-1 capitalize ${preset === value ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
             >
               {value}
             </button>
@@ -61,7 +61,7 @@ export function DriverScoringTab() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>

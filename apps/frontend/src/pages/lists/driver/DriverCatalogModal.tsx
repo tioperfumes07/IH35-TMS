@@ -125,7 +125,7 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
           <input
             value={form.code}
             onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             placeholder="EXAMPLE-CODE"
           />
           {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
@@ -133,18 +133,18 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
 
         <label className="block text-xs font-semibold text-gray-600">
           Display Name
-          <input value={form.display_name} onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={form.display_name} onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Description
-          <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+          <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Sort Order
-          <input type="number" min={0} step={1} value={form.sort_order} onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input type="number" min={0} step={1} value={form.sort_order} onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           {errors.sort_order ? <div className="mt-1 text-[11px] text-red-700">{errors.sort_order}</div> : null}
         </label>
 
@@ -153,7 +153,7 @@ export function DriverCatalogModal({ open, operatingCompanyId, displayName, clie
           Active
         </label>
 
-        {submitError ? <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
+        {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
 
         <div className="flex items-center justify-between">
           <div>
