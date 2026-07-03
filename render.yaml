@@ -54,3 +54,27 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+
+  # RECON-01 — QBO↔TMS reconciliation passes (read-only; NEVER auto-fixes). No-op per entity while
+  # TMS_QBO_RECON_ENABLED is OFF (default). Schedules are UTC (Render does not observe DST) = Central
+  # Standard Time: 06:00 CST = 12:00 UTC (AM bank-count); 19:00 CST = 01:00 UTC (PM categorization-diff).
+  # DB creds are set on the cron service in the Render dashboard (same as loves-card-import).
+  - type: cron
+    name: recon-am-bank-count
+    runtime: node
+    schedule: "0 12 * * *"
+    buildCommand: npm install && npm run build:backend
+    startCommand: node dist/accounting/recon/run-recon.js am
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+
+  - type: cron
+    name: recon-pm-categorization-diff
+    runtime: node
+    schedule: "0 1 * * *"
+    buildCommand: npm install && npm run build:backend
+    startCommand: node dist/accounting/recon/run-recon.js pm
+    envVars:
+      - key: NODE_VERSION
+        value: 22

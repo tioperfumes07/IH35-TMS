@@ -209,6 +209,7 @@ import { registerBankingEscrowVisualizerRoutes } from "./banking/escrow-visualiz
 import { registerBankingReconciliationRoutes } from "./banking/reconciliation.routes.js";
 import { registerBankingP7Wave2Routes } from "./banking/p7-wave2.routes.js";
 import { registerBankingObligationReconcileRoutes } from "./banking/obligation-reconcile.routes.js";
+import { registerReconRoutes } from "./accounting/recon/recon.routes.js";
 import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
 import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
@@ -884,6 +885,7 @@ async function main() {
   await registerBankingReconciliationRoutes(app);
   await registerBankingP7Wave2Routes(app);
   await registerBankingObligationReconcileRoutes(app);
+  await registerReconRoutes(app);
   await registerFactoringRoutes(app);
   await registerFactoringBatchRoutes(app);
   await registerFactorRoutes(app);
