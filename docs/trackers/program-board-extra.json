@@ -611,5 +611,17 @@
    "created_at": "2026-07-03T14:59:30-05:00",
    "body": "Q11 — Truly-live board metrics need either (a) a scheduled reconcile cron ~every 20 min, or (b) a GitHub token in the backend. REC: (a) cron — no new secret. Which?"
   }
+ ],
+ "locked_decisions": [
+  {
+   "id": "VENDOR/CUSTOMER CATEGORIZATION",
+   "date_ct": "07/03/2026 CT",
+   "decision": "Owner-Batch V1/V2: the default expense category is a RECOMMENDATION that pre-fills the match/categorization panel and can be overridden — NEVER a silent hard auto-post. Everything with money lands on the ledger (double-entry), categorization human-confirmed. (Jorge 2026-07-03)"
+  },
+  {
+   "id": "AUDIT EVIDENCE",
+   "date_ct": "07/03/2026 CT",
+   "decision": "The tracker row is enough to authorize standard-pattern fixes; a before→after preview is required only for judgment-heavy surfaces; no per-row broken-state screenshots required. (Jorge 2026-07-03)"
+  }
  ]
 }
