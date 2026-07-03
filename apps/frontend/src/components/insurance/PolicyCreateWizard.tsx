@@ -17,7 +17,7 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (policyId?: string) => void;
 };
 
 type UnitRow = {
@@ -243,7 +243,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         `Policy created + ${result.billCount} bills scheduled (${formatMoney(result.totalAmountCents)} total).`,
         "success"
       );
-      onCreated();
+      onCreated(result.policyId);
     },
     onError: (err) => {
       setServerError(String((err as Error)?.message ?? "Unexpected error creating policy."));

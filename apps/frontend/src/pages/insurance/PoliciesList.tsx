@@ -12,6 +12,7 @@ import { Button } from "../../components/Button";
 import { DataTable } from "../../components/DataTable";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
 import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
+import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function formatMoney(cents: number) {
@@ -40,6 +41,8 @@ export function PoliciesList() {
   const companyId = selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
+  // TASKS-PLANNER-V2 — the just-created policy, offered a "Tasks" completion button (role='result').
+  const [lastPolicyId, setLastPolicyId] = useState<string | null>(null);
 
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<"" | InsurancePolicyStatus>("");
@@ -104,6 +107,18 @@ export function PoliciesList() {
           ) : null}
         </div>
       </header>
+
+      {lastPolicyId ? (
+        <div className="flex items-center justify-between gap-3 rounded-sm border border-gray-200 bg-white px-3 py-2">
+          <span className="text-xs text-gray-600">Close an open task this policy fulfils:</span>
+          <TaskLinkPicker
+            operatingCompanyId={companyId}
+            targetType="policy"
+            targetId={lastPolicyId}
+            onLinked={() => setLastPolicyId(null)}
+          />
+        </div>
+      ) : null}
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="grid gap-3 md:grid-cols-4">
@@ -170,8 +185,9 @@ export function PoliciesList() {
         open={createOpen}
         operatingCompanyId={companyId}
         onClose={() => setCreateOpen(false)}
-        onCreated={async () => {
+        onCreated={async (policyId) => {
           setCreateOpen(false);
+          if (policyId) setLastPolicyId(policyId);
           await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", companyId] });
         }}
       />
@@ -179,8 +195,9 @@ export function PoliciesList() {
         open={wizardOpen}
         operatingCompanyId={companyId}
         onClose={() => setWizardOpen(false)}
-        onCreated={async () => {
+        onCreated={async (policyId) => {
           setWizardOpen(false);
+          if (policyId) setLastPolicyId(policyId);
           await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", companyId] });
         }}
       />
