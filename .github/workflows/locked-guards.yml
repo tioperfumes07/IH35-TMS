@@ -188,6 +188,9 @@ jobs:
       - name: verify:fleet-table-rows-clickable
         run: npm run verify:fleet-table-rows-clickable
 
+      - name: verify:driver-profile-navigation
+        run: npm run verify:driver-profile-navigation
+
       - name: verify:fleet-counters-match-rows
         run: npm run verify:fleet-counters-match-rows
 

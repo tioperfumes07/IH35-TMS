@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  isPerEntityGatedFlag,
+  isPerEntityOnlyFlag,
   isPostingFlag,
   isRolloutEnabled,
   resolveFlagEnabled,
@@ -165,5 +167,69 @@ describe("resolveFlagEnabled — posting flags are per-entity-only", () => {
   it("one entity's ON override does not leak to another entity", () => {
     const overrides = [postingOverride({ operating_company_id: "company-1", enabled: true })];
     expect(resolveFlagEnabled(POSTING, overrides, { operating_company_id: "company-2" })).toBe(false);
+  });
+});
+
+describe("isPerEntityOnlyFlag / isPerEntityGatedFlag (FLAG-HARDEN-1)", () => {
+  it("recognizes the RATECON per-entity-only key", () => {
+    expect(isPerEntityOnlyFlag("RATECON_EXTRACT_ENABLED")).toBe(true);
+    expect(isPerEntityGatedFlag("RATECON_EXTRACT_ENABLED")).toBe(true);
+  });
+
+  it("recognizes future per-entity-only flags by the naming-convention suffix", () => {
+    expect(isPerEntityOnlyFlag("SOME_FEATURE_PER_ENTITY_ONLY")).toBe(true);
+  });
+
+  it("does not treat ordinary rollout flags as per-entity-only", () => {
+    expect(isPerEntityOnlyFlag("usmca_hidden")).toBe(false);
+    expect(isPerEntityOnlyFlag("QBO_RECONCILE_UI_ENABLED")).toBe(false);
+  });
+
+  it("per-entity-gated covers posting flags too", () => {
+    expect(isPerEntityGatedFlag("FACTORING_GL_POSTING_ENABLED")).toBe(true);
+    expect(isPerEntityOnlyFlag("FACTORING_GL_POSTING_ENABLED")).toBe(false); // posting, not per-entity-only
+  });
+});
+
+describe("resolveFlagEnabled — per-entity-only flags ignore global default/rollout (FLAG-HARDEN-1)", () => {
+  const RATECON: FeatureFlagRow = {
+    flag_key: "RATECON_EXTRACT_ENABLED",
+    description: "Rate-con AI extraction",
+    default_enabled: false,
+    rollout_pct: 0,
+  };
+  const rateconOverride = (partial: Partial<FeatureFlagOverrideRow>): FeatureFlagOverrideRow => ({
+    ...override(partial),
+    flag_key: RATECON.flag_key,
+  });
+
+  it("stays OFF when global rollout is 100% and endpoint passes no user_uuid (the live defect)", () => {
+    const flag: FeatureFlagRow = { ...RATECON, rollout_pct: 100 };
+    // The extract endpoint calls isEnabled with operating_company_id only — rollout must NOT flip it on.
+    expect(resolveFlagEnabled(flag, [], { operating_company_id: "91e0bf0a-133f-4ce8-a734-2586cfa66d96" })).toBe(false);
+  });
+
+  it("stays OFF when global rollout is 100% even with a user_uuid (no cross-entity leak)", () => {
+    const flag: FeatureFlagRow = { ...RATECON, rollout_pct: 100 };
+    expect(resolveFlagEnabled(flag, [], { user_uuid: "user-1" })).toBe(false);
+  });
+
+  it("stays OFF when global default_enabled is true", () => {
+    const flag: FeatureFlagRow = { ...RATECON, default_enabled: true };
+    expect(resolveFlagEnabled(flag, [], { operating_company_id: "company-1", user_uuid: "user-1" })).toBe(false);
+  });
+
+  it("turns ON only via an explicit per-entity (tenant) override — the TRANSP live path", () => {
+    const transp = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
+    expect(
+      resolveFlagEnabled(RATECON, [rateconOverride({ operating_company_id: transp, enabled: true })], {
+        operating_company_id: transp,
+      })
+    ).toBe(true);
+  });
+
+  it("one entity's ON override does not leak to another entity", () => {
+    const overrides = [rateconOverride({ operating_company_id: "company-1", enabled: true })];
+    expect(resolveFlagEnabled(RATECON, overrides, { operating_company_id: "company-2" })).toBe(false);
   });
 });
