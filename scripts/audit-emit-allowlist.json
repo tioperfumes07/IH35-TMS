@@ -2,6 +2,10 @@
   "_comment": "Explicit allowlist of routes files that contain mutations but do NOT require a spine event emit. Each entry must have a reviewed reason. Add new entries only after explicit review — do not add to suppress a guard failure without fixing the root cause.",
   "allowlist": [
     {
+      "file": "apps/backend/src/audit/audit-chain-verify.service.ts",
+      "reason": "Audit infrastructure itself (B19-V2) — the INSERT into ops.audit_chain_verifications IS the append-only tamper-verification record; it must NOT recursively emit a spine event (that would create an audit-of-the-audit loop). Read-only vs events.event_log."
+    },
+    {
       "file": "apps/backend/src/identity/company-context.routes.ts",
       "reason": "Session/context switch — not a data mutation, no business event"
     },
