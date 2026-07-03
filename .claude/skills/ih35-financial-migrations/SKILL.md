@@ -17,9 +17,10 @@ always: fresh branch → author → validate on a **local** Postgres (never prod
 `git diff --staged --stat` + the **full SQL** → **wait for explicit "OK to merge"** → they merge.
 Preparing the PR and getting CI green is fine; merging is not yours.
 
-Bundled resources (read/copy them):
-- `resources/idempotent-migration-template.sql` — a complete CREATE-only table migration to copy.
-- `resources/forced-rls-grants-snippet.sql` — the FORCED-RLS + grants block on its own.
+Bundled resources (read/copy them — `.sql.tmpl` so the hold-merge-gate treats them as templates, not a
+runnable migration; rename to `.sql` under `db/migrations/` when you use them):
+- `resources/idempotent-migration-template.sql.tmpl` — a complete CREATE-only table migration to copy.
+- `resources/forced-rls-grants-snippet.sql.tmpl` — the FORCED-RLS + grants block on its own.
 
 ---
 
