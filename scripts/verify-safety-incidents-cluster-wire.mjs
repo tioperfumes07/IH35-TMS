@@ -67,12 +67,18 @@ function main() {
     failures.push("incidents.routes.test.ts must include at least 6 vitest cases");
   }
 
-  for (const [label, source, testId] of [
-    ["DamageReportsPage", damagePage, "damage-reports-page"],
-    ["TrailerInterchangesPage", trailerPage, "trailer-interchanges-page"],
-    ["CargoClaimsPage", cargoPage, "cargo-claims-page"],
+  for (const [label, source, testId, surfaceMarker] of [
+    ["DamageReportsPage", damagePage, "damage-reports-page", "SafetyIncidentsClusterSurface"],
+    ["TrailerInterchangesPage", trailerPage, "trailer-interchanges-page", "SafetyIncidentsClusterSurface"],
+    // SC4: CargoClaimsPage wires the dedicated Carmack/49 CFR 1005.2 cargo-claim intake surface,
+    // not the generic location+description cluster skeleton (which damage/interchange keep).
+    ["CargoClaimsPage", cargoPage, "cargo-claims-page", "CargoClaimIntakeSurface"],
   ]) {
-    if (!source.includes(`data-testid="${testId}"`) && !source.includes("SafetyIncidentsClusterSurface")) {
+    if (
+      !source.includes(`data-testid="${testId}"`) &&
+      !source.includes(`pageTestId="${testId}"`) &&
+      !source.includes(surfaceMarker)
+    ) {
       failures.push(`${label} must wire incidents cluster surface`);
     }
     if (source.includes("+ New") || source.includes("+ Add ")) {
