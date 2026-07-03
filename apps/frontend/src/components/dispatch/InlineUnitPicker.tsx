@@ -56,7 +56,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
   }
 
   return (
-    <div className="relative z-20 min-w-[180px]" onClick={(event) => event.stopPropagation()}>
+    <div className="relative z-20 min-w-[180px]" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
       <Combobox
         options={options}
         value={unitId}

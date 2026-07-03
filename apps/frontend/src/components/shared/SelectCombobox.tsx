@@ -24,15 +24,17 @@ function flattenOptions(children: ReactNode): OptionRow[] {
   const out: OptionRow[] = [];
   Children.forEach(children, (child) => {
     if (!isValidElement(child)) return;
+    // React 19 types ReactElement.props as `unknown`; narrow to the option/optgroup shape we read.
+    const props = child.props as { value?: unknown; children?: ReactNode; disabled?: boolean };
     if (child.type === "option") {
-      const val = child.props.value == null ? "" : String(child.props.value);
-      const raw = child.props.children;
+      const val = props.value == null ? "" : String(props.value);
+      const raw = props.children;
       const label = typeof raw === "string" ? raw : Array.isArray(raw) ? raw.join(" ") : String(raw ?? "");
-      out.push({ value: val, label, disabled: Boolean(child.props.disabled) });
+      out.push({ value: val, label, disabled: Boolean(props.disabled) });
       return;
     }
     if (child.type === "optgroup") {
-      out.push(...flattenOptions(child.props.children));
+      out.push(...flattenOptions(props.children));
     }
   });
   return out;

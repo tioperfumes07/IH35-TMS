@@ -13,7 +13,7 @@ const columns = [
   { key: "name", label: "Part Name" },
   { key: "sku", label: "SKU" },
   { key: "on_hand_qty", label: "On Hand Qty", align: "right" as const },
-  { key: "unit_cost", label: "Unit Cost", align: "right" as const, format: (v: number) => v ? `$${v.toFixed(2)}` : "—" },
+  { key: "unit_cost", label: "Unit Cost", align: "right" as const, format: (v: number) => v ? `$${Number(v).toFixed(2)}` : "—" },
   { key: "location", label: "Location/Bin" },
   { key: "status", label: "Status", badge: true },
 ];

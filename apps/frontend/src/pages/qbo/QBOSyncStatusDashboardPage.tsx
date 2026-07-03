@@ -293,7 +293,7 @@ export function QBOSyncStatusDashboardPage() {
                         </Button>
                       )}
                       {entityHref(r.entity_kind, r.entity_id) ? (
-                        <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-slate-700 underline" onClick={(e) => e.stopPropagation()}>
+                        <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-slate-700 underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                           View entity
                         </Link>
                       ) : null}

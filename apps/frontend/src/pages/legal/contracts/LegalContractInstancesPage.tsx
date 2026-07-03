@@ -293,7 +293,7 @@ export function LegalContractInstancesPage() {
             <tbody>
               {filteredRows.map((row) => (
                 <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => setActiveDetailId(row.id)}>
-                  <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+                  <td className="px-2 py-2" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(row.id)}

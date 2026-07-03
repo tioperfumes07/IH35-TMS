@@ -69,7 +69,7 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
             <Cell fill={fillActive} />
             <Cell fill={fillRest} />
           </Pie>
-          <Tooltip formatter={(v: number, name: string) => [`${v}%`, name === "active" ? "Utilized" : "Available capacity"]} />
+          <Tooltip formatter={(v, name) => [`${v}%`, name === "active" ? "Utilized" : "Available capacity"]} />
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pt-7 text-center">

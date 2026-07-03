@@ -28,7 +28,7 @@ function hmm(min: number | null): string {
 export function num(n: number | string | null | undefined, digits = 0): string {
   if (n == null || n === "") return "—";
   const v = typeof n === "number" ? n : Number(n);
-  return Number.isFinite(v) ? v.toFixed(digits) : "—";
+  return Number.isFinite(v) ? Number(v).toFixed(digits) : "—";
 }
 
 const HOS_WARN_MIN = 60; // shift/drive remaining under this → amber

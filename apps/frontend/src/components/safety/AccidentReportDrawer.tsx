@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useState } from "react";
 import { addAccidentPhoto, setSafetyAccidentStatus, spawnSafetyLiability, spawnSafetyWo } from "../../api/safety";
 import { Button } from "../Button";

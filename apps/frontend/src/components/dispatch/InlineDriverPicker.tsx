@@ -54,7 +54,7 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
   }
 
   return (
-    <div className="relative z-20 min-w-[200px]" onClick={(event) => event.stopPropagation()}>
+    <div className="relative z-20 min-w-[200px]" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
       <Combobox
         options={options}
         value={driverId}

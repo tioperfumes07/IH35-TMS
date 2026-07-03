@@ -209,7 +209,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
             label: "Actions",
             className: "w-[270px]",
             render: (row) => (
-              <div className="flex flex-wrap gap-1" onClick={(event) => event.stopPropagation()}>
+              <div className="flex flex-wrap gap-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                 <Button size="sm" variant="secondary" onClick={() => setSelectedPreviewFile(row)} disabled={!row.upload_completed_at}>
                   Preview
                 </Button>

@@ -86,7 +86,7 @@ export function CSAScoreTab() {
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700">{basic.label}</span>
               <span className={`font-semibold ${severityColor(basic.value)}`}>
-                {basic.value == null ? "-" : basic.value.toFixed(2)}
+                {basic.value == null ? "-" : Number(basic.value).toFixed(2)}
               </span>
             </div>
             <div className="mt-1 text-[11px] text-slate-500">

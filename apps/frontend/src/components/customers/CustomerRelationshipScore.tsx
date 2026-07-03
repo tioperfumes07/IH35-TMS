@@ -24,7 +24,7 @@ function tierClass(tier: CustomerRelationshipScore["health_tier"] | null | undef
 
 function subscoreValue(value: number | null | undefined) {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
-  return value.toFixed(1);
+  return Number(value).toFixed(1);
 }
 
 export function CustomerRelationshipScore({ score, loading = false, error = null }: Props) {

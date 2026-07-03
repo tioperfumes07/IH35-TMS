@@ -32,7 +32,7 @@ function formatSum(value: number): string {
   if (Math.abs(value) >= 1000) {
     return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
-  return value.toFixed(2);
+  return Number(value).toFixed(2);
 }
 
 const PAGE_SIZE_OPTIONS = [50, 75, 100, 200, 300];

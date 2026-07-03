@@ -10,7 +10,7 @@ function renderCustomerCell(load: DispatchLoadRow): ReactNode {
   return (
     <Link
       to={`/customers/${load.customer_id}`}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
       className="text-slate-700 hover:underline"
       data-testid="loads-customer-link"
     >
@@ -624,7 +624,7 @@ export function DispatchBoard({
         <Fragment key={load.id}>
           <tr onClick={() => onRowClick(load.id)} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50">
             {showBulk ? (
-              <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
+              <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                 <input
                   type="checkbox"
                   aria-label={`Select load ${load.load_number}`}
@@ -820,7 +820,7 @@ export function DispatchBoard({
                                   onClick={() => { if (!String(load.id).startsWith("unit:")) onRowClick(load.id); }}
                                   className={`border-b border-gray-100 hover:bg-gray-50 ${String(load.id).startsWith("unit:") ? "" : "cursor-pointer"}`}
                                 >
-                                  <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
+                                  <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                                     <input
                                       type="checkbox"
                                       aria-label={`Select load ${load.load_number}`}

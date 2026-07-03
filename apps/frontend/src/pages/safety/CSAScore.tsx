@@ -55,7 +55,7 @@ const BASIC_ORDER: BasicCategory[] = [
 ];
 
 function formatScore(value: number | null) {
-  return value == null ? "-" : value.toFixed(2);
+  return value == null ? "-" : Number(value).toFixed(2);
 }
 
 function bandClassName(band: BasicTile["risk_band"]) {

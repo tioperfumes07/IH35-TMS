@@ -188,7 +188,7 @@ export function DeadheadReportPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="week_starting" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} unit="%" />
-                    <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+                    <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
                     <Line type="monotone" dataKey="deadhead_pct" stroke="#dc2626" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>

@@ -194,7 +194,7 @@ export function AuditTrailPage() {
                       </td>
                       <td className="px-3 py-2">
                         {link
-                          ? <a href={link} className="text-[#16A34A] underline hover:text-[#15803d]" onClick={(e) => e.stopPropagation()}>{row.source_table}</a>
+                          ? <a href={link} className="text-[#16A34A] underline hover:text-[#15803d]" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>{row.source_table}</a>
                           : <span className="text-gray-400">{row.source_table ?? row.source ?? "—"}</span>}
                       </td>
                     </tr>

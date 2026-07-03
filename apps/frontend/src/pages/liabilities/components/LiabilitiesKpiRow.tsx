@@ -16,7 +16,7 @@ export function LiabilitiesKpiRow({ kpis }: Props) {
       {cards.map(([label, value], idx) => (
         <div key={label} className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
           <div className="text-[10px] uppercase text-gray-500">{label}</div>
-          <div className={`font-semibold ${idx === 2 ? "text-amber-700" : ""}`}>{idx < 2 || idx === 5 ? value : `$${value.toFixed(2)}`}</div>
+          <div className={`font-semibold ${idx === 2 ? "text-amber-700" : ""}`}>{idx < 2 || idx === 5 ? value : `$${Number(value).toFixed(2)}`}</div>
         </div>
       ))}
     </div>

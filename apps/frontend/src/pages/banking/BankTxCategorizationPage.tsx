@@ -420,7 +420,7 @@ export function BankTxCategorizationPage() {
                       className={`cursor-pointer border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
                       onClick={() => setSelectedRowId(id)}
                     >
-                      <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-1.5" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                         <input type="checkbox" checked={Boolean(bulkSelected[id])} onChange={() => toggleBulk(id)} />
                       </td>
                       <td className="whitespace-nowrap px-2 py-1.5 text-gray-800">{txDate(tx) || "—"}</td>
@@ -455,7 +455,7 @@ export function BankTxCategorizationPage() {
                           </Button>
                         ) : null}
                       </td>
-                      <td className="px-2 py-1.5 align-top" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-1.5 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                         <div className="flex flex-col gap-1">
                           <div className="flex flex-wrap gap-1">
                             <SelectCombobox

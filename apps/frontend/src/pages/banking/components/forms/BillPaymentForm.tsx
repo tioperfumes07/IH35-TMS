@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listBills } from "../../../../api/accounting";

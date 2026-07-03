@@ -182,7 +182,7 @@ function buildColumns(
             <Link
               to={`/accounting/chart-of-accounts/register/${row.id}`}
               className="text-slate-700 hover:underline"
-              onClick={(event) => event.stopPropagation()}
+              onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
             >
               View register
             </Link>
@@ -190,7 +190,7 @@ function buildColumns(
             <Link
               to="/reports/profit-loss"
               className="text-slate-700 hover:underline"
-              onClick={(event) => event.stopPropagation()}
+              onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
             >
               Run report
             </Link>

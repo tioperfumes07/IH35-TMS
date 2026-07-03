@@ -229,7 +229,7 @@ export function DocumentsPage() {
             key: "actions",
             label: "Actions",
             render: (row) => (
-              <div className="flex gap-1" onClick={(event) => event.stopPropagation()}>
+              <div className="flex gap-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                 <Button size="sm" variant="secondary" onClick={() => setSelectedPreviewFile(row)}>
                   Preview
                 </Button>

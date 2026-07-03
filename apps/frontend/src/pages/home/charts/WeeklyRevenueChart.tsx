@@ -66,7 +66,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
             }
           />
           <Tooltip
-            formatter={(value: number) => [formatUsdFromCents(Math.round(value * 100)), "Revenue"]}
+            formatter={(value) => [formatUsdFromCents(Math.round(Number(value) * 100)), "Revenue"]}
             labelFormatter={(l) => `Day ${l}`}
           />
           <Line type="monotone" dataKey="revenue_dollars" stroke={LINE_COLOR} strokeWidth={2} dot={{ r: 3 }} name="Revenue" />

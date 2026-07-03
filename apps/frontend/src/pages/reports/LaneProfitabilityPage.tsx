@@ -260,7 +260,7 @@ export function LaneProfitabilityPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={70} />
                   <YAxis tickFormatter={(v) => `$${v}`} />
-                  <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}/mi`, "Profit/mile"]} />
+                  <Tooltip formatter={(v) => [`$${Number(v).toFixed(2)}/mi`, "Profit/mile"]} />
                   <Bar dataKey="profit_per_mile" name="Profit/mile">
                     {chartData.map((entry) => (
                       <Cell

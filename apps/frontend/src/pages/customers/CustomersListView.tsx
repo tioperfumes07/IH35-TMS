@@ -142,7 +142,7 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
     switch (key) {
       case "name":
         return (
-          <Link to={`/customers/${customer.id}`} className="text-slate-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+          <Link to={`/customers/${customer.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
             {customer.name}
           </Link>
         );
@@ -263,7 +263,7 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
                     className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
                     onClick={() => onSelectCustomer?.(customer.id)}
                   >
-                    <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 py-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label={`Select ${customer.name}`}

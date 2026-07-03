@@ -898,7 +898,7 @@ export function BankingTransactionsDesignView({
                     className="cursor-pointer border-t border-gray-100 text-sm hover:bg-gray-50"
                     onClick={() => setExpandedTxId((cur) => (cur === tx.id ? null : tx.id))}
                   >
-                    <td className="px-1 py-2 align-top" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-1 py-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={bulkSelection.isSelected(tx.id)}
@@ -912,7 +912,7 @@ export function BankingTransactionsDesignView({
                           type="date"
                           className="h-7 rounded border border-gray-300 px-2 text-xs"
                           value={tx.transaction_date.slice(0, 10)}
-                          onClick={(event) => event.stopPropagation()}
+                          onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
                           readOnly
                         />
                       ) : (
@@ -958,7 +958,7 @@ export function BankingTransactionsDesignView({
                         {draft.mode === "match" ? "Match" : "Categorize"}
                       </span>
                     </td>
-                    <td className="px-1 py-2 align-top" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-1 py-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <div className="relative flex items-center justify-end gap-1">
                         <ActionButton className="h-7 px-2 text-[11px]" onClick={() => void postTransaction(tx)} disabled={postingTxId === tx.id}>
                           {postingTxId === tx.id ? "Posting..." : "Post"}
