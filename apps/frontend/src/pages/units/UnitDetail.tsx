@@ -25,7 +25,7 @@ export function UnitDetail() {
     <div className="space-y-3 p-4" data-testid="unit-detail-page">
       <PageHeader title={`Unit ${id.slice(0, 8)}`} subtitle="Permits and toll tags" />
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
-      <div className="flex flex-wrap gap-1 rounded border border-gray-200 bg-white p-1">
+      <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
         {(["permits", "toll-tags"] as const).map((tab) => (
           <button
             key={tab}

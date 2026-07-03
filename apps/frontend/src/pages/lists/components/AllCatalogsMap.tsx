@@ -234,26 +234,26 @@ type DomainSectionProps = {
 // both surfaces render identically from DOMAIN_CONFIG.
 export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: DomainSectionProps) {
   return (
-    <div id={listsDomainSectionId(domain.key)} className="rounded border border-slate-100 px-2 py-2 text-xs">
+    <div id={listsDomainSectionId(domain.key)} className="rounded-sm border border-slate-100 px-2 py-2 text-xs">
       <div className="mb-2 flex items-center justify-between gap-3">
         {onDomainClick ? (
           <button
             type="button"
             data-testid="domain-header-link"
             onClick={() => onDomainClick(domain.key)}
-            className={`rounded px-2 py-0.5 font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-slate-400 ${domain.pillClass}`}
+            className={`rounded-sm px-2 py-0.5 font-semibold hover:underline focus:outline-hidden focus:ring-2 focus:ring-slate-400 ${domain.pillClass}`}
           >
             {domain.label}
           </button>
         ) : (
-          <span className={`rounded px-2 py-0.5 font-semibold ${domain.pillClass}`}>{domain.label}</span>
+          <span className={`rounded-sm px-2 py-0.5 font-semibold ${domain.pillClass}`}>{domain.label}</span>
         )}
         {/* #P3 parity — live row count via the same useModuleCount source as the ribbon badge. */}
-        <DomainRowCountBadge domain={domain.key} className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600" />
+        <DomainRowCountBadge domain={domain.key} className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600" />
       </div>
       <div className="grid gap-1.5 md:grid-cols-2">
         {domain.catalogs.map((catalog) => (
-          <div key={`${domain.key}-${catalog.name}`} className="rounded border border-slate-100 px-2 py-1.5">
+          <div key={`${domain.key}-${catalog.name}`} className="rounded-sm border border-slate-100 px-2 py-1.5">
             {catalog.live && catalog.catalogKey ? (
               <button type="button" className="text-left font-semibold text-slate-700 hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
                 {catalog.name}
@@ -279,7 +279,7 @@ type Props = {
 export function AllCatalogsMap({ onCatalogClick, onDomainClick }: Props) {
   const domains = sortDomainsForDisplay(DOMAIN_CONFIG);
   return (
-    <div className="rounded border border-slate-200 bg-white p-3">
+    <div className="rounded-sm border border-slate-200 bg-white p-3">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">All Catalogs Domain Map</div>
       <div className="space-y-2">
         {domains.map((domain) => (

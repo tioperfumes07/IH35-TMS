@@ -99,19 +99,19 @@ export function ProfilePage() {
             </div>
           </div>
           <div className="mt-4 grid gap-2">
-            <Link to="/earnings" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
+            <Link to="/earnings" className="min-h-11 rounded-sm border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
               {t("profile.nav_earnings")}
             </Link>
-            <Link to="/hos" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
+            <Link to="/hos" className="min-h-11 rounded-sm border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
               {t("profile.nav_hos")}
             </Link>
-            <Link to="/my-disputes" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
+            <Link to="/my-disputes" className="min-h-11 rounded-sm border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
               {t("profile.nav_disputes")}
             </Link>
-            <Link to="/messages" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
+            <Link to="/messages" className="min-h-11 rounded-sm border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
               {t("profile.nav_messages")}
             </Link>
-            <Link to="/dvir/pre/load-1002" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
+            <Link to="/dvir/pre/load-1002" className="min-h-11 rounded-sm border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
               {t("profile.nav_submit_dvir")}
             </Link>
           </div>

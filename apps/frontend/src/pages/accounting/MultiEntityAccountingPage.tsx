@@ -49,7 +49,7 @@ export function MultiEntityAccountingPage() {
   return (
     <AccountingSubNavWrapper title="Multi-entity accounting" subtitle="Consolidated accounting summary across selected operating companies.">
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Scope</div>
         <div className="grid gap-3 md:grid-cols-4">
           <div className="md:col-span-2 space-y-1">
@@ -74,9 +74,9 @@ export function MultiEntityAccountingPage() {
           </div>
           <div className="space-y-2">
             <label className="block text-xs text-gray-500">Start</label>
-            <DatePicker value={start} onChange={(next) => setStart(next)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+            <DatePicker value={start} onChange={(next) => setStart(next)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
             <label className="block text-xs text-gray-500">End</label>
-            <DatePicker value={end} onChange={(next) => setEnd(next)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+            <DatePicker value={end} onChange={(next) => setEnd(next)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
           </div>
           <div className="flex items-end">
             <Button
@@ -93,22 +93,22 @@ export function MultiEntityAccountingPage() {
       {summaryQuery.data ? (
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs text-gray-500">Revenue</div>
               <div className="mt-1 text-lg font-semibold text-gray-900">{money(summaryQuery.data.consolidated.revenue_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs text-gray-500">Expense</div>
               <div className="mt-1 text-lg font-semibold text-gray-900">{money(summaryQuery.data.consolidated.expense_cents)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs text-gray-500">Net income</div>
               <div className="mt-1 text-lg font-semibold text-gray-900">{money(summaryQuery.data.consolidated.net_income_cents)}</div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
               <table className="min-w-full text-left text-xs">
                 <thead className="bg-gray-50 text-gray-600">
                   <tr>
@@ -131,7 +131,7 @@ export function MultiEntityAccountingPage() {
               </table>
             </div>
 
-            <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
               <table className="min-w-full text-left text-xs">
                 <thead className="bg-gray-50 text-gray-600">
                   <tr>

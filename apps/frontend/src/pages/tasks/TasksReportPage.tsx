@@ -80,14 +80,14 @@ export function TasksReportPage() {
       <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
       <TasksModuleTabs />
 
-      <div className="flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-xs">
+      <div className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs">
         <span className="font-semibold text-slate-600">Window</span>
         {WINDOWS.map(([label, days]) => (
           <button
             key={label}
             type="button"
             onClick={() => setWindowDays(days)}
-            className={`rounded px-2 py-1 ${windowDays === days ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+            className={`rounded-sm px-2 py-1 ${windowDays === days ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
           >
             {label}
           </button>
@@ -104,14 +104,14 @@ export function TasksReportPage() {
           ["Completion rate", `${completionRate}%`],
           ["Open", tasks.filter((t) => isOpenTaskStatus(t.status)).length],
         ] as Array<[string, number | string]>).map(([label, value]) => (
-          <div key={label} className="rounded border border-slate-200 bg-white p-3">
+          <div key={label} className="rounded-sm border border-slate-200 bg-white p-3">
             <div className="text-xs font-semibold text-slate-500">{label}</div>
             <div className="text-xl font-bold text-slate-900">{value}</div>
           </div>
         ))}
       </div>
 
-      <div className="rounded border border-slate-200 bg-white">
+      <div className="rounded-sm border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">By assignee</div>
         {byEmployee.length === 0 ? (
           <div className="p-6 text-center text-xs text-slate-500">No tasks in this window.</div>

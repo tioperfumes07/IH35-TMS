@@ -60,7 +60,7 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
   const perDiemCount = rows.filter((r: LayoverSummary) => r.per_diem_count > 0).length;
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-3">
+    <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-slate-900">Layovers (last 30 days)</h2>
         <Link
@@ -74,19 +74,19 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
         <p className="text-xs text-gray-400">Loading...</p>
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div className="rounded bg-gray-50 p-3 text-center">
+          <div className="rounded-sm bg-gray-50 p-3 text-center">
             <p className="text-lg font-bold text-slate-900">{totalLayovers}</p>
             <p className="text-xs text-gray-500">Total layovers</p>
           </div>
-          <div className="rounded bg-gray-50 p-3 text-center">
+          <div className="rounded-sm bg-gray-50 p-3 text-center">
             <p className="text-lg font-bold text-slate-900">{totalHours.toFixed(1)}</p>
             <p className="text-xs text-gray-500">Total hours</p>
           </div>
-          <div className="rounded bg-amber-50 p-3 text-center">
+          <div className="rounded-sm bg-amber-50 p-3 text-center">
             <p className="text-lg font-bold text-amber-800">{billableCount}</p>
             <p className="text-xs text-amber-600">Billable</p>
           </div>
-          <div className="rounded bg-green-50 p-3 text-center">
+          <div className="rounded-sm bg-green-50 p-3 text-center">
             <p className="text-lg font-bold text-green-800">{perDiemCount}</p>
             <p className="text-xs text-green-600">Per diem eligible</p>
           </div>
@@ -184,16 +184,16 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const hos = hosQ.data?.hos ?? aggregate?.hos ?? null;
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-white p-3 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   if (driverQ.isLoading || profileQ.isLoading) {
-    return <div className="rounded border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading driver profile…</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading driver profile…</div>;
   }
 
   if (!driver || !aggregate) {
     return (
-      <div className="space-y-2 rounded border border-gray-200 bg-white p-3 text-sm text-slate-600">
+      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">
         <p>Driver not found.</p>
         {onBack ? (
           <button type="button" onClick={onBack} className="text-xs font-semibold text-slate-700 hover:underline">
@@ -344,7 +344,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         />
       </KpiStrip>
 
-      <section className="rounded border border-gray-200 bg-white p-3">
+      <section className="rounded-sm border border-gray-200 bg-white p-3">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">DQF checklist</h2>
         <DriverDqfPanel companyId={companyId} driverId={id} editable />
       </section>

@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -129,21 +130,21 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
     <form className="space-y-3" onSubmit={handleSubmit}>
       <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />
 
-      <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
         Bill Details
       </div>
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Bill Type *">
           <input
-            className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs"
             value={BILL_TYPE_TABS.find((t) => t.id === billType)?.label ?? "Repair Bill"}
             readOnly
           />
         </Field>
         <Field label="Bill Date *">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             type="date"
             value={billDate}
             onChange={(event) => setBillDate(event.target.value)}
@@ -151,7 +152,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         </Field>
         <Field label="Terms">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={terms}
             onChange={(event) => setTerms(event.target.value)}
           >
@@ -162,7 +163,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         </Field>
         <Field label="Due Date *">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             type="date"
             value={dueDate}
             onChange={(event) => setDueDate(event.target.value)}
@@ -170,7 +171,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         </Field>
         <Field label="Bill Number *">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={billNumber}
             onChange={(event) => setBillNumber(event.target.value)}
             placeholder="Bill Number"
@@ -193,7 +194,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         <Field label="Vendor *">
           <>
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={vendorId}
             onChange={(event) => setVendorId(event.target.value)}
           >
@@ -219,7 +220,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         </Field>
         <Field label="Load Number">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="Load Number"
             value={loadNumber}
             onChange={(event) => setLoadNumber(event.target.value)}
@@ -230,7 +231,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         <div className="md:col-span-6 h-2" />
         <Field label="Driver">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={driverId}
             onChange={(event) => setDriverId(event.target.value)}
           >
@@ -244,7 +245,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         </Field>
         <Field label="Unit">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={unitId}
             onChange={(event) => setUnitId(event.target.value)}
           >
@@ -259,7 +260,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         <div className="md:col-span-3" />
         <Field label="Class">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={className}
             onChange={(event) => setClassName(event.target.value)}
             placeholder="Class"
@@ -270,7 +271,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
       <TwoSectionLineEditor mode="bill" onChange={setLines} partsLaborMode="parts-and-labor" />
       <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Bill Total = A + B" />
 
-      <div className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
+      <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
         Line-level bill persistence posts a single vendor bill total until multi-line bill API ships.
       </div>
 
@@ -286,7 +287,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         <button
           type="submit"
           disabled={submitting || !operatingCompanyId || totalCents <= 0 || !vendorId.trim()}
-          className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-sm bg-slate-800 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Saving…" : "Create bill"}
         </button>

@@ -114,7 +114,7 @@ export function CSAMitigationQueuePage() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="text-sm font-semibold text-slate-800">CSA Mitigation Queue</div>
         <div className="mt-1 text-xs text-slate-600">
           Open actions sorted by urgency. Generated{" "}
@@ -122,13 +122,13 @@ export function CSAMitigationQueuePage() {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs font-semibold text-slate-700">Add mitigation action</div>
         <div className="flex flex-wrap items-end gap-2 text-xs">
           <label className="flex flex-col gap-1">
             <span>Category</span>
             <select
-              className="rounded border border-gray-300 px-2 py-1"
+              className="rounded-sm border border-gray-300 px-2 py-1"
               value={basicCategory}
               onChange={(event) => setBasicCategory(event.target.value as BasicCategory)}
             >
@@ -143,13 +143,13 @@ export function CSAMitigationQueuePage() {
             <span>Due date</span>
             <DatePicker
               value={dueDate}
-              className="rounded border border-gray-300 px-2 py-1"
+              className="rounded-sm border border-gray-300 px-2 py-1"
               onChange={(next) => setDueDate(next)}
             />
           </label>
           <button
             type="button"
-            className="rounded border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
+            className="rounded-sm border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
             disabled={!companyId || !canMutate || createMutation.isPending}
             onClick={() => createMutation.mutate()}
           >
@@ -158,7 +158,7 @@ export function CSAMitigationQueuePage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>
@@ -189,7 +189,7 @@ export function CSAMitigationQueuePage() {
                 <td className="px-2 py-1">
                   <button
                     type="button"
-                    className="rounded border border-gray-300 px-2 py-0.5 disabled:opacity-50"
+                    className="rounded-sm border border-gray-300 px-2 py-0.5 disabled:opacity-50"
                     disabled={!canMutate || completeMutation.isPending}
                     onClick={() => completeMutation.mutate(row.id)}
                   >

@@ -50,13 +50,13 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
         }}
       >
         {displayLabel || "—"}
-        {error ? <span className="ml-1 rounded bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
+        {error ? <span className="ml-1 rounded-sm bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
       </button>
     );
   }
 
   return (
-    <div className="relative z-20 min-w-[180px]" onClick={(event) => event.stopPropagation()}>
+    <div className="relative z-20 min-w-[180px]" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
       <Combobox
         options={options}
         value={unitId}

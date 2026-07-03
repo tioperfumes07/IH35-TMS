@@ -71,7 +71,7 @@ export function RecurringBillList() {
           <label className="flex cursor-pointer items-center gap-1.5 text-xs text-gray-500">
             <input
               type="checkbox"
-              className="h-3.5 w-3.5 rounded"
+              className="h-3.5 w-3.5 rounded-sm"
               checked={showInactive}
               onChange={(e) => setShowInactive(e.target.checked)}
             />
@@ -80,7 +80,7 @@ export function RecurringBillList() {
         </div>
         <button
           onClick={() => navigate("/accounting/bills/recurring/create")}
-          className="flex items-center gap-1.5 rounded bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1F2A44]"
+          className="flex items-center gap-1.5 rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1F2A44]"
         >
           <Plus className="h-3.5 w-3.5" />
           Create Recurring Bill
@@ -95,13 +95,13 @@ export function RecurringBillList() {
       )}
 
       {templatesQuery.isError && (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           Failed to load recurring templates.
         </div>
       )}
 
       {!templatesQuery.isLoading && templates.length === 0 && (
-        <div className="rounded border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center">
           <p className="text-sm text-gray-500">No recurring bill templates yet.</p>
           <button
             onClick={() => navigate("/accounting/bills/recurring/create")}
@@ -113,7 +113,7 @@ export function RecurringBillList() {
       )}
 
       {templates.length > 0 && (
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-full divide-y divide-gray-100 text-sm">
             <thead>
               <tr className="bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -151,7 +151,7 @@ export function RecurringBillList() {
                             title="Generate bill now"
                             disabled={generateNowMutation.isPending}
                             onClick={() => generateNowMutation.mutate(tmpl.uuid)}
-                            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-slate-700 disabled:opacity-50"
+                            className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-slate-700 disabled:opacity-50"
                           >
                             <Zap className="h-3.5 w-3.5" />
                           </button>
@@ -163,7 +163,7 @@ export function RecurringBillList() {
                                 deactivateMutation.mutate(tmpl.uuid);
                               }
                             }}
-                            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600 disabled:opacity-50"
+                            className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600 disabled:opacity-50"
                           >
                             <ToggleLeft className="h-3.5 w-3.5" />
                           </button>

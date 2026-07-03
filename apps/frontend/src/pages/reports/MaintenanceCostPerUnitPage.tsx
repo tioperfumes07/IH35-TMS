@@ -124,14 +124,14 @@ export function MaintenanceCostPerUnitPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockVPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           From
-          <DatePicker className="mt-1 block h-9 rounded border px-2" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
+          <DatePicker className="mt-1 block h-9 rounded-sm border px-2" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <DatePicker className="mt-1 block h-9 rounded border px-2" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
+          <DatePicker className="mt-1 block h-9 rounded-sm border px-2" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
         </label>
         <Button size="sm" onClick={() => setApplied({ ...period })}>
           Apply
@@ -152,7 +152,7 @@ export function MaintenanceCostPerUnitPage() {
               ["Truck count", String(t.truck_count)],
             ] as const
           ).map(([k, v]) => (
-            <div key={k} className="rounded border border-gray-200 bg-white p-3">
+            <div key={k} className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">{k}</div>
               <div className="text-lg font-semibold">{v}</div>
             </div>
@@ -162,7 +162,7 @@ export function MaintenanceCostPerUnitPage() {
 
       {query.data ? (
         <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-          <div className="overflow-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-xs">
               <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                 <tr>
@@ -211,7 +211,7 @@ export function MaintenanceCostPerUnitPage() {
                     <td className="px-2 py-2">
                       <div className="flex flex-wrap gap-1">
                         {(r.flags ?? []).map((f) => (
-                          <span key={f} className="rounded border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
+                          <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
                             {FLAG_META[f].label}
                           </span>
                         ))}
@@ -224,7 +224,7 @@ export function MaintenanceCostPerUnitPage() {
           </div>
 
           {pieData.length > 0 ? (
-            <div className="h-72 rounded border border-gray-200 bg-white p-2">
+            <div className="h-72 rounded-sm border border-gray-200 bg-white p-2">
               <div className="text-xs font-semibold text-gray-700">By category</div>
               <ResponsiveContainer width="100%" height="90%">
                 <PieChart>
@@ -233,8 +233,8 @@ export function MaintenanceCostPerUnitPage() {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => money(value)} />
-                  <Legend formatter={(value, _entry, i) => `${formatChartLegendLabel(value)} · ${money(pieData[i]?.value ?? 0)}`} />
+                  <Tooltip formatter={(value) => money(Number(value))} />
+                  <Legend formatter={(value: string, _entry: unknown, i: number) => `${formatChartLegendLabel(value)} · ${money(pieData[i]?.value ?? 0)}`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

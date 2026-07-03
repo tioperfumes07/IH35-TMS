@@ -66,27 +66,27 @@ export function CSAScoreTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-3">
-        <SelectCombobox className="rounded border border-gray-300 px-2 py-1 text-xs" value={period} onChange={(e) => setPeriod(e.target.value)}>
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-3">
+        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={period} onChange={(e) => setPeriod(e.target.value)}>
           <option value="rolling-24">Rolling 24-month</option>
           <option value="custom">Custom range</option>
         </SelectCombobox>
-        <button type="button" className="rounded bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!isOwner || recomputeMutation.isPending} onClick={() => recomputeMutation.mutate()}>
+        <button type="button" className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!isOwner || recomputeMutation.isPending} onClick={() => recomputeMutation.mutate()}>
           Manual recompute
         </button>
-        <button type="button" className="rounded border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate()}>
+        <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate()}>
           Pull from FMCSA SAFER
         </button>
         {saferMutation.isError ? <span className="text-xs text-amber-700">FMCSA SAFER lookup is not available yet (service returned an error).</span> : null}
       </div>
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-2">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">
         {basics.map((basic) => (
-          <div key={basic.label} className="rounded border border-gray-100 bg-gray-50 p-2">
+          <div key={basic.label} className="rounded-sm border border-gray-100 bg-gray-50 p-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700">{basic.label}</span>
               <span className={`font-semibold ${severityColor(basic.value)}`}>
-                {basic.value == null ? "-" : basic.value.toFixed(2)}
+                {basic.value == null ? "-" : Number(basic.value).toFixed(2)}
               </span>
             </div>
             <div className="mt-1 text-[11px] text-slate-500">
@@ -99,7 +99,7 @@ export function CSAScoreTab() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>

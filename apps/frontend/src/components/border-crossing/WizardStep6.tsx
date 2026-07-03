@@ -43,7 +43,7 @@ export function WizardStep6({ form, ports, result }: Props) {
         </div>
       </dl>
       {result?.emanifestReference ? (
-        <div className="rounded border border-green-300 bg-green-50 p-3 text-sm">
+        <div className="rounded-sm border border-green-300 bg-green-50 p-3 text-sm">
           <p>
             Crossing logged · eManifest ref <strong>{result.emanifestReference}</strong>
           </p>

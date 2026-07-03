@@ -6,7 +6,7 @@ export function FinanceProjectionsPage() {
     <div className="space-y-4">
       <PageHeader title="Projections" />
       <FinanceModuleTabs />
-      <div className="rounded border border-gray-200 bg-white p-8">
+      <div className="rounded-sm border border-gray-200 bg-white p-8">
         <div className="text-center">
           <h3 className="text-lg font-semibold text-gray-900">Financial Projections</h3>
           <p className="mt-2 text-sm text-gray-500">

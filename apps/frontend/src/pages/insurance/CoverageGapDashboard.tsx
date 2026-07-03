@@ -63,12 +63,12 @@ export function CoverageGapDashboard() {
   }, [coverageGapsQuery.data, policiesQuery.data]);
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
   }
 
   return (
     <div className="space-y-4">
-      <header className="rounded border border-gray-200 bg-white p-4">
+      <header className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Coverage Gap Dashboard</h2>
         <p className="mt-1 text-xs text-slate-600">Identify units without coverage, policies approaching expiration, and requirement mismatches.</p>
       </header>
@@ -78,25 +78,25 @@ export function CoverageGapDashboard() {
       ) : null}
 
       {coverageGapsQuery.isError || policiesQuery.isError ? (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load coverage gap dashboard data.</div>
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load coverage gap dashboard data.</div>
       ) : null}
 
       <section className="grid gap-3 md:grid-cols-3">
-        <article className="rounded border border-gray-200 bg-white p-4">
+        <article className="rounded-sm border border-gray-200 bg-white p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 30 days</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.expiring30.length}</p>
         </article>
-        <article className="rounded border border-gray-200 bg-white p-4">
+        <article className="rounded-sm border border-gray-200 bg-white p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 60 days</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.expiring60.length}</p>
         </article>
-        <article className="rounded border border-gray-200 bg-white p-4">
+        <article className="rounded-sm border border-gray-200 bg-white p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 90 days</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.expiring90.length}</p>
         </article>
       </section>
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">Units Without Active Coverage</h3>
         <div className="mt-2 overflow-x-auto">
           <table className="min-w-full text-left text-xs">
@@ -125,7 +125,7 @@ export function CoverageGapDashboard() {
         </div>
       </section>
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">Units With Mismatched Coverage Requirements</h3>
         <div className="mt-2 overflow-x-auto">
           <table className="min-w-full text-left text-xs">

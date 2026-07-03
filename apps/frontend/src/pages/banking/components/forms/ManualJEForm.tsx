@@ -10,7 +10,7 @@ export function ManualJEForm({ value, onChange }: Props) {
         JE Date
         <input
           type="date"
-          className="mt-1 h-8 w-full rounded border border-gray-300 px-2"
+          className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
           value={String(value.date ?? "")}
           onChange={(event) => onChange({ ...value, date: event.target.value })}
         />
@@ -18,7 +18,7 @@ export function ManualJEForm({ value, onChange }: Props) {
       <label className="block">
         Memo
         <input
-          className="mt-1 h-8 w-full rounded border border-gray-300 px-2"
+          className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
           value={String(value.memo ?? "")}
           onChange={(event) => onChange({ ...value, memo: event.target.value })}
         />

@@ -194,11 +194,11 @@ export function ProfitPerTruckPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.start}
             onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           />
@@ -206,7 +206,7 @@ export function ProfitPerTruckPage() {
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.end}
             onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />
@@ -222,7 +222,7 @@ export function ProfitPerTruckPage() {
         <label className="text-xs text-gray-600">
           Search truck/driver
           <input
-            className="mt-1 block h-9 w-52 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 w-52 rounded-sm border border-gray-300 px-2"
             value={search}
             placeholder="e.g. 102 or Pat"
             onChange={(event) => setSearch(event.target.value)}
@@ -231,7 +231,7 @@ export function ProfitPerTruckPage() {
         <label className="text-xs text-gray-600">
           Flag
           <select
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={flagFilter}
             onChange={(event) => setFlagFilter(event.target.value as FlagFilter)}
           >
@@ -265,7 +265,7 @@ export function ProfitPerTruckPage() {
               ["Worst CPM", worstCpmTruck ? `${worstCpmTruck.unit_number} (${money(worstCpmTruck.cost_per_mile_cents)})` : "—"],
             ] as const
           ).map(([label, val]) => (
-            <div key={label} className="rounded border border-gray-200 bg-white px-2 py-2">
+            <div key={label} className="rounded-sm border border-gray-200 bg-white px-2 py-2">
               <div className="text-[10px] font-semibold uppercase text-gray-500">{label}</div>
               <div className="text-sm font-semibold leading-tight">{val}</div>
             </div>
@@ -275,7 +275,7 @@ export function ProfitPerTruckPage() {
 
       {query.data ? (
         <>
-          <div className="overflow-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-xs">
               <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                 <tr>
@@ -350,7 +350,7 @@ export function ProfitPerTruckPage() {
                         {(r.flags ?? []).map((f) => {
                           const meta = FLAG_UI[f];
                           return (
-                            <span key={f} className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
+                            <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
                               {meta.label}
                             </span>
                           );
@@ -366,7 +366,7 @@ export function ProfitPerTruckPage() {
             ) : null}
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold">Top 10 trucks by per-mile metrics</div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -374,7 +374,7 @@ export function ProfitPerTruckPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(v: number) => money(Number(v))} />
+                  <Tooltip formatter={(v) => money(Number(v))} />
                   <Legend />
                   <Bar dataKey="revenuePerMile" name="Revenue / mi" fill="#334155" />
                   <Bar dataKey="costPerMile" name="Cost / mi" fill="#f59e0b" />

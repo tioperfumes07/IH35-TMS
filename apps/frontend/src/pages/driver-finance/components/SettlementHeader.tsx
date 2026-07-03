@@ -10,7 +10,7 @@ type Props = {
 
 export function SettlementHeader({ driverName, driverDisplayId, periodStart, periodEnd, status, computedAt, onRefresh }: Props) {
   return (
-    <div className="grid grid-cols-1 gap-2 rounded border border-gray-200 bg-white p-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-4">
       <div>
         <div className="text-[10px] uppercase text-gray-500">Driver</div>
         <div className="text-sm font-semibold">{driverName}</div>

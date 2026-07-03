@@ -36,7 +36,7 @@ export function DriverLoadDetailPage() {
       <p className="text-xs text-slate-600">
         {t("driver.customer")}: {load.customer_name}
       </p>
-      <div className="rounded border border-slate-200 bg-white p-2">
+      <div className="rounded-sm border border-slate-200 bg-white p-2">
         <p className="text-[11px] font-semibold uppercase text-slate-500">{t("driver.stops")}</p>
         <ul className="mt-1 space-y-1 text-xs">
           {load.stops.map((s: DriverLoad["stops"][number]) => (
@@ -46,7 +46,7 @@ export function DriverLoadDetailPage() {
           ))}
         </ul>
       </div>
-      <div className="rounded border border-slate-200 bg-white p-2">
+      <div className="rounded-sm border border-slate-200 bg-white p-2">
         <p className="text-[11px] font-semibold text-slate-600">{t("driver.bol")}</p>
         <iframe
           title="rate-confirmation"

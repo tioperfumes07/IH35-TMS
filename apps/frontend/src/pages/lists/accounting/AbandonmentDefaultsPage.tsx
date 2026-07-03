@@ -56,25 +56,25 @@ export function AbandonmentDefaultsPage() {
     <div className="mx-auto max-w-3xl space-y-3 px-3 py-3">
       <PageHeader title="Abandonment defaults" subtitle="Company thresholds for auto-computed abandonment chargebacks." />
 
-      {!companyId ? <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm">Select a company.</div> : null}
-      {!allowed ? <div className="rounded border border-rose-200 bg-rose-50 p-3 text-sm">Owner/Administrator only.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm">Select a company.</div> : null}
+      {!allowed ? <div className="rounded-sm border border-rose-200 bg-rose-50 p-3 text-sm">Owner/Administrator only.</div> : null}
 
-      <div className="space-y-3 rounded border border-gray-200 bg-white p-4 text-sm">
+      <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-sm">
         <label className="block text-xs font-semibold text-slate-600">
           Default towing (¢)
-          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={towing} onChange={(e) => setTowing(e.target.value.replace(/[^\d]/g, ""))} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={towing} onChange={(e) => setTowing(e.target.value.replace(/[^\d]/g, ""))} />
         </label>
         <label className="block text-xs font-semibold text-slate-600">
           Deadhead rate (¢ / mile)
-          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={ratePerMile} onChange={(e) => setRatePerMile(e.target.value.replace(/[^\d]/g, ""))} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={ratePerMile} onChange={(e) => setRatePerMile(e.target.value.replace(/[^\d]/g, ""))} />
         </label>
         <label className="block text-xs font-semibold text-slate-600">
           Replacement premium (%)
-          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={premiumPct} onChange={(e) => setPremiumPct(e.target.value)} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={premiumPct} onChange={(e) => setPremiumPct(e.target.value)} />
         </label>
         <label className="block text-xs font-semibold text-slate-600">
           Require approval above (¢)
-          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={threshold} onChange={(e) => setThreshold(e.target.value.replace(/[^\d]/g, ""))} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={threshold} onChange={(e) => setThreshold(e.target.value.replace(/[^\d]/g, ""))} />
         </label>
 
         <div className="flex justify-end">

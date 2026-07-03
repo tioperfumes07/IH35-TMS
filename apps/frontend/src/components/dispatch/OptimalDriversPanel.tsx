@@ -69,7 +69,7 @@ export function OptimalDriversPanel({
   );
 
   return (
-    <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-3" data-testid="optimal-drivers-panel">
+    <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3" data-testid="optimal-drivers-panel">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Ranked driver suggestions</p>
@@ -121,7 +121,7 @@ export function OptimalDriversPanel({
       </ul>
 
       {showOverrideWarning ? (
-        <div className="rounded border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900">
+        <div className="rounded-sm border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900">
           Selected driver is not the top-ranked suggestion. Enable <strong>Manual override</strong> to confirm a non-optimal pick.
         </div>
       ) : null}

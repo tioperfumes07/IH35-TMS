@@ -295,10 +295,10 @@ export function MyDocumentsPage() {
         {previewError ? <div className="text-sm text-hos-violation">{previewError}</div> : null}
         {!previewError && !previewUrl ? <div className="text-sm text-pwa-text-secondary">{t("documents.loading_preview")}</div> : null}
         {!previewError && previewUrl && previewFile && isImageMime(previewFile.mime_type) ? (
-          <img src={previewUrl} alt={previewFile.original_filename} className="max-h-[60vh] w-full rounded object-contain" />
+          <img src={previewUrl} alt={previewFile.original_filename} className="max-h-[60vh] w-full rounded-sm object-contain" />
         ) : null}
         {!previewError && previewUrl && previewFile && previewFile.mime_type === "application/pdf" ? (
-          <object data={previewUrl} type="application/pdf" className="h-[60vh] w-full rounded" />
+          <object data={previewUrl} type="application/pdf" className="h-[60vh] w-full rounded-sm" />
         ) : null}
         {!previewError && previewUrl && previewFile && !isImageMime(previewFile.mime_type) && previewFile.mime_type !== "application/pdf" ? (
           <div className="space-y-2">

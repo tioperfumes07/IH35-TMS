@@ -33,7 +33,7 @@ export function DriverAssignmentSection({
   });
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-800">Driver assignment</h3>
         {onQuickAssign ? (
@@ -44,7 +44,7 @@ export function DriverAssignmentSection({
       </div>
       {mismatch ? <p className="mt-1 text-xs text-amber-700">Default driver differs from currently driving (Samsara).</p> : null}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <div className="rounded border border-gray-100 p-3">
+        <div className="rounded-sm border border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Default driver</div>
           <div className="text-sm font-medium">
             {defaultDriver?.id ? (
@@ -60,7 +60,7 @@ export function DriverAssignmentSection({
             Clear default
           </Button>
         </div>
-        <div className="rounded border border-gray-100 p-3">
+        <div className="rounded-sm border border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Currently driving</div>
           <div className="text-sm font-medium">
             {currentDriver?.id ? (

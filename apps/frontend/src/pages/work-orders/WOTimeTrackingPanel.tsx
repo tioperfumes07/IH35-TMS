@@ -156,7 +156,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
   };
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+    <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Labor time tracking</div>
       <p className="mt-1 text-xs text-slate-600">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
 
@@ -164,7 +164,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
         <label className="text-xs text-slate-600">
           Actor kind
           <SelectCombobox
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
             value={actorKind}
             onChange={(e) => setActorKind(e.target.value as (typeof ACTORS)[number])}
           >
@@ -178,7 +178,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
         <label className="text-xs text-slate-600">
           Labor rate (¢/hr)
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
             value={laborRate}
             onChange={(e) => setLaborRate(e.target.value.replace(/[^\d]/g, ""))}
             placeholder="optional"
@@ -186,7 +186,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
         </label>
         <label className="text-xs text-slate-600 md:col-span-1">
           Notes
-          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
       </div>
 
@@ -202,11 +202,11 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
         <div className="mt-2 grid gap-2 md:grid-cols-2">
           <label className="text-xs text-slate-600">
             Started (ISO)
-            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]" value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]" value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
           </label>
           <label className="text-xs text-slate-600">
             Ended (ISO)
-            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
           </label>
         </div>
         <div className="mt-2">

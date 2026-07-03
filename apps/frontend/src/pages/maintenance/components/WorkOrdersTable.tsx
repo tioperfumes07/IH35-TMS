@@ -136,7 +136,7 @@ export function WorkOrdersTable({
             <label className="flex items-center gap-1 text-xs text-gray-600">
               <span>Source type</span>
               <SelectCombobox
-                className="min-h-12 rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                className="min-h-12 rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
                 value={sourceTypeFilter}
                 onChange={(e) => onSourceTypeChange(e.target.value)}
               >
@@ -151,13 +151,13 @@ export function WorkOrdersTable({
               </SelectCombobox>
             </label>
             <input
-              className="min-h-12 rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+              className="min-h-12 rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
               value={externalVendorFilter}
               onChange={(e) => onExternalVendorChange(e.target.value)}
               placeholder="External vendor id…"
             />
             <input
-              className="min-h-12 w-full max-w-xs rounded border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+              className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search WO / unit / driver / status…"

@@ -61,7 +61,7 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
         Enter your Samsara API key to pull your initial fleet inventory and enable live telematics.
       </p>
 
-      <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="flex items-center gap-2">
           <span className={`inline-block h-2 w-2 rounded-full ${configured ? "bg-emerald-500" : "bg-gray-400"}`} />
           <span className="font-medium text-gray-900">{configured ? "Configured" : "Not configured"}</span>
@@ -74,7 +74,7 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
         <input
           type="password"
           autoComplete="off"
-          className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           value={apiToken}
           disabled={disabled}
           onChange={(e) => setApiToken(e.target.value)}
@@ -85,7 +85,7 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
         <input
           type="password"
           autoComplete="off"
-          className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           value={webhookSecret}
           disabled={disabled}
           onChange={(e) => setWebhookSecret(e.target.value)}
@@ -95,7 +95,7 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
         <span className="font-medium text-gray-700">Samsara org id</span>
         <input
           type="text"
-          className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           value={orgId}
           disabled={disabled}
           onChange={(e) => setOrgId(e.target.value)}
@@ -108,7 +108,7 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
         type="button"
         disabled={disabled || !companyId || !apiToken || !webhookSecret || testMutation.isPending}
         onClick={() => testMutation.mutate()}
-        className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
       >
         Test connection &amp; pull fleet
       </button>

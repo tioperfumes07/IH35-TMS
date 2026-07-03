@@ -105,7 +105,7 @@ export function TypeCatalogAdmin() {
   const orderedRows = useMemo(() => query.data ?? [], [query.data]);
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage insurance type catalog.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage insurance type catalog.</div>;
   }
 
   const beginEdit = (row: InsuranceTypeCatalogEntry) => {
@@ -118,18 +118,18 @@ export function TypeCatalogAdmin() {
 
   return (
     <div className="space-y-4">
-      <header className="rounded border border-gray-200 bg-white p-4">
+      <header className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Type Catalog Admin</h2>
         <p className="mt-1 text-xs text-slate-600">Create, edit, and deactivate entries from insurance type catalog.</p>
       </header>
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Add Type</h3>
         <div className="mt-2 grid gap-2 md:grid-cols-5">
           <label className="text-xs font-semibold text-slate-600">
             Code
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={newCode}
               onChange={(event) => setNewCode(event.target.value as InsuranceCoverageType)}
             >
@@ -143,7 +143,7 @@ export function TypeCatalogAdmin() {
           <label className="text-xs font-semibold text-slate-600 md:col-span-2">
             Name
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
               placeholder="Display name"
@@ -153,7 +153,7 @@ export function TypeCatalogAdmin() {
             Sort order
             <input
               type="number"
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={newSortOrder}
               onChange={(event) => setNewSortOrder(event.target.value)}
             />
@@ -167,7 +167,7 @@ export function TypeCatalogAdmin() {
         <label className="mt-2 block text-xs font-semibold text-slate-600">
           Description
           <input
-            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={newDescription}
             onChange={(event) => setNewDescription(event.target.value)}
             placeholder="Optional"
@@ -176,9 +176,9 @@ export function TypeCatalogAdmin() {
       </section>
 
       {query.isLoading ? <div className="text-sm text-slate-500">Loading type catalog...</div> : null}
-      {query.isError ? <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load type catalog.</div> : null}
+      {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load type catalog.</div> : null}
 
-      <section className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-slate-600">
             <tr>
@@ -199,7 +199,7 @@ export function TypeCatalogAdmin() {
                   <td className="px-3 py-2 text-slate-700">
                     {isEditing ? (
                       <input
-                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         value={editingName}
                         onChange={(event) => setEditingName(event.target.value)}
                       />
@@ -210,7 +210,7 @@ export function TypeCatalogAdmin() {
                   <td className="px-3 py-2 text-slate-700">
                     {isEditing ? (
                       <input
-                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         value={editingDescription}
                         onChange={(event) => setEditingDescription(event.target.value)}
                       />
@@ -222,7 +222,7 @@ export function TypeCatalogAdmin() {
                     {isEditing ? (
                       <input
                         type="number"
-                        className="w-20 rounded border border-gray-300 px-2 py-1 text-xs"
+                        className="w-20 rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         value={editingSortOrder}
                         onChange={(event) => setEditingSortOrder(event.target.value)}
                       />
@@ -237,9 +237,9 @@ export function TypeCatalogAdmin() {
                         Active
                       </label>
                     ) : row.active ? (
-                      <span className="rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">active</span>
+                      <span className="rounded-sm bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">active</span>
                     ) : (
-                      <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">inactive</span>
+                      <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">inactive</span>
                     )}
                   </td>
                   <td className="px-3 py-2">

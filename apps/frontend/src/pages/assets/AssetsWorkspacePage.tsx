@@ -123,7 +123,7 @@ export function AssetsWorkspacePage() {
           <div className="flex items-center gap-2">
             <Link
               to="/maintenance/vehicles"
-              className="rounded border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
             >
               Open Vehicle Master Data
             </Link>
@@ -132,13 +132,13 @@ export function AssetsWorkspacePage() {
       />
 
       {!companyId ? (
-        <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Select an operating company to load assets.
         </p>
       ) : null}
 
       {sourceMode === "fallback" ? (
-        <p className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
+        <p className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
           {OFFLINE_PREVIEW_BANNER}
         </p>
       ) : null}

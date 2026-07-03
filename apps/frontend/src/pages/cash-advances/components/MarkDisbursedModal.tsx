@@ -46,7 +46,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClos
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed inset-x-0 top-20 z-50 mx-auto w-full max-w-lg rounded border border-gray-200 bg-white p-4 text-xs shadow-xl">
+      <div className="fixed inset-x-0 top-20 z-50 mx-auto w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 text-xs shadow-xl">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Mark Disbursed</h3>
           <ModalCloseButton title="Mark Disbursed" onClose={onClose} />
@@ -55,7 +55,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClos
         <div className="grid gap-2">
           <label className="space-y-1">
             <span>Disbursement Method</span>
-            <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
+            <SelectCombobox className="w-full rounded-sm border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
               <option value="direct_bank_transfer">Direct bank transfer</option>
               <option value="wire">Wire</option>
               <option value="comdata">Comdata / EFS</option>
@@ -66,25 +66,25 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClos
           {method === "direct_bank_transfer" ? (
             <label className="space-y-1">
               <span>Bank transaction ID/reference</span>
-              <input className="w-full rounded border border-gray-300 px-2 py-1" value={bankTxnId} onChange={(e) => setBankTxnId(e.target.value)} />
+              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={bankTxnId} onChange={(e) => setBankTxnId(e.target.value)} />
             </label>
           ) : null}
           {method === "wire" ? (
             <label className="space-y-1">
               <span>Wire confirmation reference</span>
-              <input className="w-full rounded border border-gray-300 px-2 py-1" value={wireRef} onChange={(e) => setWireRef(e.target.value)} />
+              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={wireRef} onChange={(e) => setWireRef(e.target.value)} />
             </label>
           ) : null}
           {method === "comdata" ? (
             <label className="space-y-1">
               <span>Comdata transaction ID</span>
-              <input className="w-full rounded border border-gray-300 px-2 py-1" value={comdataTxnId} onChange={(e) => setComdataTxnId(e.target.value)} />
+              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={comdataTxnId} onChange={(e) => setComdataTxnId(e.target.value)} />
             </label>
           ) : null}
           {method === "in_person_check" ? (
             <label className="space-y-1">
               <span>Check number</span>
-              <input className="w-full rounded border border-gray-300 px-2 py-1" value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} />
+              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} />
             </label>
           ) : null}
         </div>

@@ -122,13 +122,13 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Type Code
-          <input value={form.type_code} onChange={(event) => setForm((v) => ({ ...v, type_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" placeholder="UNSAFE-DRIVING" />
+          <input value={form.type_code} onChange={(event) => setForm((v) => ({ ...v, type_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" placeholder="UNSAFE-DRIVING" />
           {errors.type_code ? <div className="mt-1 text-[11px] text-red-700">{errors.type_code}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Type Name
-          <input value={form.type_name} onChange={(event) => setForm((v) => ({ ...v, type_name: event.target.value }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={form.type_name} onChange={(event) => setForm((v) => ({ ...v, type_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           {errors.type_name ? <div className="mt-1 text-[11px] text-red-700">{errors.type_name}</div> : null}
         </label>
 
@@ -156,7 +156,7 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
           Active
         </label>
 
-        {submitError ? <div className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
+        {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
 
         <div className="flex items-center justify-between">
           <div>

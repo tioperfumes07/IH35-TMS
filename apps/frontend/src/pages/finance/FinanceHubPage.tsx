@@ -23,7 +23,7 @@ function kpiDisplay(kpi: FinanceHubKpi): string {
 
 function KpiCard({ kpi }: { kpi: FinanceHubKpi }) {
   return (
-    <div className="flex flex-col justify-between rounded border border-slate-200 bg-white p-4">
+    <div className="flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-4">
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{kpi.label}</div>
         <div className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{kpiDisplay(kpi)}</div>
@@ -75,7 +75,7 @@ export function FinanceHubPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           The Finance Hub is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_UI_FLAG}</code> is off.)
         </div>
       </div>

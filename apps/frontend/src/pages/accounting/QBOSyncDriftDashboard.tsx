@@ -108,7 +108,7 @@ export function QBOSyncDriftDashboard() {
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {data.entities.map((entity) => (
-              <div key={entity.entity_type} className="rounded-lg border border-border bg-card p-4 shadow-sm">
+              <div key={entity.entity_type} className="rounded-lg border border-border bg-card p-4 shadow-xs">
                 <div className="text-sm font-medium text-muted-foreground">{entity.label}</div>
                 <div className="mt-2 text-2xl font-semibold">
                   {entity.synced} / {entity.total_local}
@@ -156,7 +156,7 @@ export function QBOSyncDriftDashboard() {
                               <button
                                 key={action}
                                 type="button"
-                                className="rounded border border-border px-2 py-0.5 text-xs disabled:opacity-50"
+                                className="rounded-sm border border-border px-2 py-0.5 text-xs disabled:opacity-50"
                                 disabled={resolveMutation.isPending}
                                 onClick={() => resolveMutation.mutate({ id: row.id, action })}
                               >

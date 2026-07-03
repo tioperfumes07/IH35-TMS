@@ -100,16 +100,16 @@ export function CashFlowStatementPage() {
       />
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
-      <p className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
         This report is always accrual basis per CPA sign-off.
       </p>
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.start}
             onChange={(next) => setPeriod((previous) => ({ ...previous, start: next }))}
           />
@@ -117,7 +117,7 @@ export function CashFlowStatementPage() {
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={period.end}
             onChange={(next) => setPeriod((previous) => ({ ...previous, end: next }))}
           />
@@ -129,19 +129,19 @@ export function CashFlowStatementPage() {
 
       {query.data ? (
         <div className="grid gap-2 md:grid-cols-4">
-          <div className="rounded border border-gray-200 bg-white px-3 py-2">
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Net cash change</div>
             <div className="text-lg font-semibold">{money(query.data.net_cash_change)}</div>
           </div>
-          <div className="rounded border border-gray-200 bg-white px-3 py-2">
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Cash at start</div>
             <div className="text-lg font-semibold">{money(query.data.cash_at_start)}</div>
           </div>
-          <div className="rounded border border-gray-200 bg-white px-3 py-2">
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Cash at end</div>
             <div className="text-lg font-semibold">{money(query.data.cash_at_end)}</div>
           </div>
-          <div className={`rounded border bg-white px-3 py-2 ${query.data.reconciled ? "border-emerald-200" : "border-amber-300"}`}>
+          <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.reconciled ? "border-emerald-200" : "border-amber-300"}`}>
             <div className="text-[11px] font-semibold uppercase text-gray-500">Reconciliation</div>
             <div className={`text-lg font-semibold ${query.data.reconciled ? "text-emerald-700" : "text-amber-700"}`}>
               {query.data.reconciled ? "Reconciled" : "Needs review"}
@@ -160,7 +160,7 @@ export function CashFlowStatementPage() {
             { key: "investing", title: "Investing activities", lines: investingLines, total: query.data.investing.total },
             { key: "financing", title: "Financing activities", lines: financingLines, total: query.data.financing.total },
           ].map((section) => (
-            <div key={section.key} className="overflow-auto rounded border border-gray-200 bg-white">
+            <div key={section.key} className="overflow-auto rounded-sm border border-gray-200 bg-white">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">{section.title}</div>
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">

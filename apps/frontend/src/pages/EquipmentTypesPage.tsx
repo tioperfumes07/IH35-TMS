@@ -242,7 +242,7 @@ export function EquipmentTypesPage() {
         actions={
           <div className="flex items-center gap-2">
             {canManage ? (
-              <label className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">
+              <label className="flex items-center gap-2 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
                 <input type="checkbox" checked={includeInactive} onChange={(event) => setIncludeInactive(event.target.checked)} />
                 Show inactive
               </label>
@@ -253,7 +253,7 @@ export function EquipmentTypesPage() {
       />
 
       {equipmentTypesQuery.isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading equipment types...</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading equipment types...</div>
       ) : (
         <div className="space-y-2">
           {rows.map((typeRow) => {
@@ -262,7 +262,7 @@ export function EquipmentTypesPage() {
               <div
                 key={typeRow.id}
                 id={`equipment-type-${typeRow.id}`}
-                className={`rounded border bg-white ${highlightId === typeRow.id ? "border-slate-300 ring-1 ring-slate-400" : "border-gray-200"}`}
+                className={`rounded-sm border bg-white ${highlightId === typeRow.id ? "border-slate-300 ring-1 ring-slate-400" : "border-gray-200"}`}
               >
                 <button
                   type="button"
@@ -271,7 +271,7 @@ export function EquipmentTypesPage() {
                 >
                   <div className="flex min-w-0 flex-col">
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{typeRow.code}</span>
+                      <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{typeRow.code}</span>
                       <span className="text-[13px] font-semibold text-gray-900">{typeRow.name}</span>
                       <span
                         className={`rounded px-2 py-0.5 text-xs font-semibold ${
@@ -315,7 +315,7 @@ export function EquipmentTypesPage() {
                           });
                         }
                       }}
-                      className="flex h-7 w-7 items-center justify-center rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      className="flex h-7 w-7 items-center justify-center rounded-sm border border-gray-300 text-gray-700 hover:bg-gray-100"
                       title="Edit equipment type"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -336,10 +336,10 @@ export function EquipmentTypesPage() {
                         >
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{item.code}</span>
+                              <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{item.code}</span>
                               <span className="text-[13px] text-gray-900">{item.name}</span>
                               {item.is_required ? (
-                                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Required</span>
+                                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Required</span>
                               ) : null}
                             </div>
                             <div className="mt-0.5 text-[11px] text-gray-500">
@@ -387,7 +387,7 @@ export function EquipmentTypesPage() {
               </div>
             );
           })}
-          {rows.length === 0 ? <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No equipment types found.</div> : null}
+          {rows.length === 0 ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No equipment types found.</div> : null}
         </div>
       )}
 
@@ -426,7 +426,7 @@ export function EquipmentTypesPage() {
                 onChange={(event) =>
                   setAddEquipmentForm((current) => ({ ...current, code: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "") }))
                 }
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
                 placeholder="DRY_VAN_SPECIAL"
               />
             </div>
@@ -435,7 +435,7 @@ export function EquipmentTypesPage() {
               <input
                 value={addEquipmentForm.name}
                 onChange={(event) => setAddEquipmentForm((current) => ({ ...current, name: event.target.value }))}
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div className="md:col-span-2">
@@ -444,7 +444,7 @@ export function EquipmentTypesPage() {
                 value={addEquipmentForm.description}
                 onChange={(event) => setAddEquipmentForm((current) => ({ ...current, description: event.target.value }))}
                 rows={2}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               />
             </div>
             <div>
@@ -455,12 +455,12 @@ export function EquipmentTypesPage() {
                 onChange={(event) =>
                   setAddEquipmentForm((current) => ({ ...current, sort_order: Number(event.target.value || "0") }))
                 }
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
           </div>
 
-          <div className="space-y-2 rounded border border-gray-200 p-3">
+          <div className="space-y-2 rounded-sm border border-gray-200 p-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Line Items</h3>
               <Button
@@ -477,7 +477,7 @@ export function EquipmentTypesPage() {
               </Button>
             </div>
             {addEquipmentForm.line_items.map((lineItem, index) => (
-              <div key={`${lineItem.code}-${index}`} className="grid grid-cols-1 gap-2 rounded border border-gray-200 p-2 md:grid-cols-6">
+              <div key={`${lineItem.code}-${index}`} className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 p-2 md:grid-cols-6">
                 <input
                   value={lineItem.code}
                   onChange={(event) =>
@@ -489,7 +489,7 @@ export function EquipmentTypesPage() {
                     }))
                   }
                   placeholder="Code"
-                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                  className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 />
                 <input
                   value={lineItem.name}
@@ -502,7 +502,7 @@ export function EquipmentTypesPage() {
                     }))
                   }
                   placeholder="Name"
-                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                  className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 />
                 <Combobox
                   options={lineItemUnitComboboxOptions}
@@ -529,7 +529,7 @@ export function EquipmentTypesPage() {
                     }))
                   }
                   placeholder="Sort"
-                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                  className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 />
                 <label className="flex items-center gap-1 text-xs text-gray-600">
                   <input
@@ -572,7 +572,7 @@ export function EquipmentTypesPage() {
                   }
                   rows={2}
                   placeholder="Description (optional)"
-                  className="md:col-span-6 rounded border border-gray-300 px-2 py-1 text-xs"
+                  className="md:col-span-6 rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 />
               </div>
             ))}
@@ -612,7 +612,7 @@ export function EquipmentTypesPage() {
             <input
               value={editingEquipmentForm.name}
               onChange={(event) => setEditingEquipmentForm((current) => ({ ...current, name: event.target.value }))}
-              className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div>
@@ -621,7 +621,7 @@ export function EquipmentTypesPage() {
               value={editingEquipmentForm.description}
               onChange={(event) => setEditingEquipmentForm((current) => ({ ...current, description: event.target.value }))}
               rows={2}
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
             />
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -633,7 +633,7 @@ export function EquipmentTypesPage() {
                 onChange={(event) =>
                   setEditingEquipmentForm((current) => ({ ...current, sort_order: Number(event.target.value || "0") }))
                 }
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <label className="mt-6 flex items-center gap-2 text-sm text-gray-700">
@@ -696,7 +696,7 @@ export function EquipmentTypesPage() {
                     code: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""),
                   }))
                 }
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div>
@@ -704,7 +704,7 @@ export function EquipmentTypesPage() {
               <input
                 value={addLineItemForm.name}
                 onChange={(event) => setAddLineItemForm((current) => ({ ...current, name: event.target.value }))}
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div>
@@ -722,7 +722,7 @@ export function EquipmentTypesPage() {
                 type="number"
                 value={addLineItemForm.sort_order}
                 onChange={(event) => setAddLineItemForm((current) => ({ ...current, sort_order: Number(event.target.value || "0") }))}
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div className="md:col-span-2">
@@ -731,7 +731,7 @@ export function EquipmentTypesPage() {
                 value={addLineItemForm.description}
                 onChange={(event) => setAddLineItemForm((current) => ({ ...current, description: event.target.value }))}
                 rows={2}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               />
             </div>
             <label className="md:col-span-2 flex items-center gap-2 text-sm text-gray-700">
@@ -785,7 +785,7 @@ export function EquipmentTypesPage() {
               <input
                 value={editingLineItemForm.name}
                 onChange={(event) => setEditingLineItemForm((current) => ({ ...current, name: event.target.value }))}
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <div>
@@ -805,7 +805,7 @@ export function EquipmentTypesPage() {
                 onChange={(event) =>
                   setEditingLineItemForm((current) => ({ ...current, sort_order: Number(event.target.value || "0") }))
                 }
-                className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               />
             </div>
             <label className="mt-6 flex items-center gap-2 text-sm text-gray-700">
@@ -822,7 +822,7 @@ export function EquipmentTypesPage() {
                 value={editingLineItemForm.description}
                 onChange={(event) => setEditingLineItemForm((current) => ({ ...current, description: event.target.value }))}
                 rows={2}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               />
             </div>
             <label className="md:col-span-2 flex items-center gap-2 text-sm text-gray-700">

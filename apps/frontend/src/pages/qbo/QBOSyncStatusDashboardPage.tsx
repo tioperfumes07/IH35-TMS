@@ -131,30 +131,30 @@ export function QBOSyncStatusDashboardPage() {
       {runsQuery.isError ? <ReportBlockVPendingBanner error={runsQuery.error} onRetry={() => void runsQuery.refetch()} /> : null}
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded border border-emerald-200 bg-emerald-50 p-3">
+        <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3">
           <div className="text-[11px] font-semibold uppercase text-emerald-800">Healthy (24h)</div>
           <div className="text-2xl font-semibold text-emerald-900">{kpis.healthy}</div>
         </div>
-        <div className="rounded border border-amber-200 bg-amber-50 p-3">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
           <div className="text-[11px] font-semibold uppercase text-amber-900">Pending</div>
           <div className="text-2xl font-semibold text-amber-950">{kpis.pending}</div>
         </div>
-        <div className="rounded border border-amber-200 bg-amber-50 p-3">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
           <div className="text-[11px] font-semibold uppercase text-amber-900">Failed (retrying)</div>
           <div className="text-2xl font-semibold text-amber-950">{kpis.failedRetry}</div>
         </div>
-        <div className="rounded border border-red-200 bg-red-50 p-3">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3">
           <div className="flex items-center gap-2 text-[11px] font-semibold uppercase text-red-900">
             Dead letter
             {kpis.dead > 0 ? (
-              <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">needs attention</span>
+              <span className="rounded-sm bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">needs attention</span>
             ) : null}
           </div>
           <div className="text-2xl font-semibold text-red-900">{kpis.dead}</div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded border border-gray-200 bg-white p-2">
+      <div className="flex flex-wrap gap-2 rounded-sm border border-gray-200 bg-white p-2">
         <button
           type="button"
           onClick={() => setActiveTab("runs")}
@@ -179,11 +179,11 @@ export function QBOSyncStatusDashboardPage() {
       {activeTab !== "runs" ? null : (
         <>
 
-      <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           Status
           <SelectCombobox
-            className="mt-1 block h-9 rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-sm"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -199,7 +199,7 @@ export function QBOSyncStatusDashboardPage() {
         <label className="text-xs text-gray-600">
           Kind
           <input
-            className="mt-1 block h-9 w-40 rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 block h-9 w-40 rounded-sm border border-gray-300 px-2 text-sm"
             value={kind}
             onChange={(e) => setKind(e.target.value)}
             placeholder="customer_sync…"
@@ -208,7 +208,7 @@ export function QBOSyncStatusDashboardPage() {
         <label className="text-xs text-gray-600">
           Time range
           <SelectCombobox
-            className="mt-1 block h-9 rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-sm"
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
           >
@@ -221,7 +221,7 @@ export function QBOSyncStatusDashboardPage() {
         <label className="text-xs text-gray-600">
           Search
           <input
-            className="mt-1 block h-9 w-48 rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 block h-9 w-48 rounded-sm border border-gray-300 px-2 text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="error text…"
@@ -230,7 +230,7 @@ export function QBOSyncStatusDashboardPage() {
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1fr_320px]">
-        <div className="overflow-auto rounded border border-gray-200 bg-white">
+        <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
           {runsQuery.isLoading ? <p className="p-3 text-sm text-gray-500">Loading sync runs…</p> : null}
           <table className="min-w-full text-left text-xs">
             <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
@@ -261,7 +261,7 @@ export function QBOSyncStatusDashboardPage() {
                     <td className="px-2 py-2">{r.started_at?.slice(0, 19) ?? "—"}</td>
                     <td className="px-2 py-2 font-medium">{r.kind}</td>
                     <td className="px-2 py-2">
-                      <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>
+                      <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>
                     </td>
                     <td className="px-2 py-2 text-right">{r.retry_count}</td>
                     <td className="max-w-xs truncate px-2 py-2 text-gray-700">{r.last_error ?? "—"}</td>
@@ -293,7 +293,7 @@ export function QBOSyncStatusDashboardPage() {
                         </Button>
                       )}
                       {entityHref(r.entity_kind, r.entity_id) ? (
-                        <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-slate-700 underline" onClick={(e) => e.stopPropagation()}>
+                        <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-slate-700 underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                           View entity
                         </Link>
                       ) : null}
@@ -315,14 +315,14 @@ export function QBOSyncStatusDashboardPage() {
           </table>
         </div>
 
-        <div className="space-y-2 rounded border border-gray-200 bg-white p-3">
+        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-sm font-semibold">Recent alerts (24h)</div>
           {alertsQuery.isError ? (
             <ReportBlockVPendingBanner error={alertsQuery.error} onRetry={() => void alertsQuery.refetch()} />
           ) : (
             <ul className="max-h-[520px] space-y-2 overflow-auto text-xs">
               {recentAlerts.map((a: QboSyncAlertRecord) => (
-                <li key={a.id} className="rounded border border-amber-100 bg-amber-50/60 p-2">
+                <li key={a.id} className="rounded-sm border border-amber-100 bg-amber-50/60 p-2">
                   <div className="font-semibold text-amber-950">{a.severity}</div>
                   <div className="text-gray-800">{a.message ?? "—"}</div>
                   <div className="text-[10px] text-gray-500">{a.created_at}</div>

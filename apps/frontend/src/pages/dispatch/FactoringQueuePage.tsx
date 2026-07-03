@@ -157,7 +157,7 @@ export function FactoringQueuePage() {
             >
               Refresh
             </Button>
-            <Link to="/accounting/factoring" className="rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+            <Link to="/accounting/factoring" className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
               Accounting → Factoring
             </Link>
           </div>
@@ -167,26 +167,26 @@ export function FactoringQueuePage() {
       {/* Summary strip */}
       {summaryQ.data ? (
         <div className="grid gap-2 sm:grid-cols-4">
-          <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Active Factor</div>
             <div className="mt-1 font-semibold text-gray-900">
               {summaryQ.data.active_factor_name || "Not configured"}
             </div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Reserve Balance</div>
             <div className="mt-1 font-semibold text-gray-900">
               {money.format((summaryQ.data.reserve_balance || 0) / 100)}
             </div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">MTD Advances</div>
             <div className="mt-1 font-semibold text-gray-900">
               {money.format((summaryQ.data.mtd_advanced_total || 0) / 100)}{" "}
               <span className="text-xs text-gray-500">({summaryQ.data.mtd_advances_count} batch)</span>
             </div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Packet Queue</div>
             <div className="mt-1 font-semibold text-gray-900">
               {(countByStage["NOT_FACTORED"] ?? 0) + (countByStage["PACKET_READY"] ?? 0)} pending{" "}
@@ -199,7 +199,7 @@ export function FactoringQueuePage() {
       ) : null}
 
       {/* Stage filter tabs */}
-      <div className="flex flex-wrap gap-1 rounded border border-gray-200 bg-white p-2">
+      <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-2">
         {ALL_STAGES.map((stage) => {
           const count = stage === "ALL" ? rows.length : (countByStage[stage] ?? 0);
           return (
@@ -226,13 +226,13 @@ export function FactoringQueuePage() {
             placeholder="Search load # or customer…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 placeholder-gray-400"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700 placeholder-gray-400"
           />
         </div>
       </div>
 
       {/* Queue table */}
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="border-b bg-gray-50 text-left text-[11px] uppercase tracking-wide text-gray-500">
             <tr>

@@ -39,7 +39,7 @@ export function CertExpiryBadge({ label, expiresAt }: Props) {
           : `${days}d`;
 
   return (
-    <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-semibold ${classNameForStatus(status)}`}>
+    <span className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${classNameForStatus(status)}`}>
       {label}: {detail}
     </span>
   );

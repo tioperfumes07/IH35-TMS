@@ -81,7 +81,7 @@ export function PortalLoadDetailPage() {
 
       {detail ? (
         <>
-          <div className="rounded border border-slate-200 bg-white p-4">
+          <div className="rounded-sm border border-slate-200 bg-white p-4">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-xl font-semibold">Load {detail.load.load_number}</h1>
               <StatusBadge variant="neutral">{detail.load.status.replace(/_/g, " ")}</StatusBadge>
@@ -93,19 +93,19 @@ export function PortalLoadDetailPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded border border-slate-200 bg-white p-4 text-sm">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
               <h2 className="font-semibold text-slate-900">Pickup</h2>
               <p className="mt-2 text-slate-700">{pickup?.address_line1}</p>
               <p className="text-slate-700">{[pickup?.city, pickup?.state].filter(Boolean).join(", ")}</p>
             </div>
-            <div className="rounded border border-slate-200 bg-white p-4 text-sm">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
               <h2 className="font-semibold text-slate-900">Delivery</h2>
               <p className="mt-2 text-slate-700">{delivery?.address_line1}</p>
               <p className="text-slate-700">{[delivery?.city, delivery?.state].filter(Boolean).join(", ")}</p>
             </div>
           </div>
 
-          <div className="rounded border border-slate-200 bg-white p-4">
+          <div className="rounded-sm border border-slate-200 bg-white p-4">
             <h2 className="font-semibold text-slate-900">Live location</h2>
             {detail.tracking ? (
               <p className="mt-2 text-sm text-slate-700">
@@ -116,12 +116,12 @@ export function PortalLoadDetailPage() {
             )}
           </div>
 
-          <div className="rounded border border-slate-200 bg-white p-4">
+          <div className="rounded-sm border border-slate-200 bg-white p-4">
             <h2 className="mb-4 font-semibold text-slate-900">Milestones</h2>
             <ol className="space-y-4 border-l-2 border-slate-200 pl-4">
               {detail.milestones.map((m) => (
                 <li key={m.id} className="relative">
-                  <span className="absolute -left-[1.35rem] top-1 h-3 w-3 rounded-full bg-[#1F2A44]" aria-hidden />
+                  <span className="absolute left-[-1.35rem] top-1 h-3 w-3 rounded-full bg-[#1F2A44]" aria-hidden />
                   <p className="font-medium capitalize text-slate-900">{milestoneLabel(m.milestone_type)}</p>
                   <p className="text-xs text-slate-500">{new Date(m.occurred_at).toLocaleString()}</p>
                 </li>
@@ -130,7 +130,7 @@ export function PortalLoadDetailPage() {
             </ol>
           </div>
 
-          <div className="rounded border border-slate-200 bg-white p-4">
+          <div className="rounded-sm border border-slate-200 bg-white p-4">
             <h2 className="mb-3 font-semibold text-slate-900">Documents</h2>
             <ul className="space-y-2 text-sm">
               {(docsQuery.data ?? []).map((doc) => (

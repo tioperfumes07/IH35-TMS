@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAllAccounts } from "../../../../api/banking";
@@ -84,28 +85,28 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
 
   return (
     <div className="space-y-2 text-xs">
-      <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
         Expense Details
       </div>
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Expense Date">
           <input
             type="date"
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.expense_date ?? "")}
             onChange={(event) => onChange({ ...value, expense_date: event.target.value })}
           />
         </Field>
         <Field label="Expense Number">
           <input
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.expense_number ?? "")}
             onChange={(event) => onChange({ ...value, expense_number: event.target.value })}
           />
         </Field>
         <Field label="Vendor">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.vendor_id ?? "")}
             onChange={(event) => onChange({ ...value, vendor_id: event.target.value })}
           >
@@ -119,7 +120,7 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
         </Field>
         <Field label="Pay From Account">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.expense_account_id ?? "")}
             onChange={(event) => onChange({ ...value, expense_account_id: event.target.value })}
           >
@@ -133,7 +134,7 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
         </Field>
         <Field label="Payment Method">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.payment_method ?? "")}
             onChange={(event) => onChange({ ...value, payment_method: event.target.value })}
           >
@@ -147,7 +148,7 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
         </Field>
         <Field label="Location">
           <SelectCombobox
-            className="h-8 w-full rounded border border-gray-300 px-2 text-xs"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.location ?? "")}
             onChange={(event) => onChange({ ...value, location: event.target.value })}
           >

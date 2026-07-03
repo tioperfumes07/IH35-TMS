@@ -15,7 +15,7 @@ function statusClass(status: SettlementListRow["status"]) {
 
 export function SettlementsTable({ rows, onOpen }: Props) {
   return (
-    <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <table className="min-w-[1100px] w-full text-left text-xs">
         <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
           <tr>

@@ -75,12 +75,12 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                   to={meta.to}
                   data-tour={meta.dataTour}
                   onClick={() => onMobileClose?.()}
-                  className={({ isActive }) =>
+                  className={({ isActive }: { isActive: boolean }) =>
                     `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceActive ? "bg-white/10" : ""}`
                   }
                   style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
                 >
-                  {({ isActive }) => (
+                  {({ isActive }: { isActive: boolean }) => (
                     <>
                       <div className="flex items-center justify-center">
                         <meta.Icon className="h-4 w-4" />

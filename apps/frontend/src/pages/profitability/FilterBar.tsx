@@ -19,14 +19,14 @@ const EQUIPMENT_TYPES = [
 
 export function FilterBar({ filters, onChange }: FilterBarProps) {
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+    <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex flex-col gap-1">
         <label className="text-xs text-gray-600">From</label>
         <input
           type="date"
           value={filters.dateFrom}
           onChange={e => onChange({ ...filters, dateFrom: e.target.value })}
-          className="w-[130px] min-h-11 text-sm border rounded px-2"
+          className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
         />
       </div>
 
@@ -36,7 +36,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
           type="date"
           value={filters.dateTo}
           onChange={e => onChange({ ...filters, dateTo: e.target.value })}
-          className="w-[130px] min-h-11 text-sm border rounded px-2"
+          className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
         />
       </div>
 
@@ -45,7 +45,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         <select
           value={filters.equipmentType || ""}
           onChange={e => onChange({ ...filters, equipmentType: e.target.value || undefined })}
-          className="w-[120px] min-h-11 text-sm border rounded px-2"
+          className="w-[120px] min-h-11 text-sm border rounded-sm px-2"
         >
           {EQUIPMENT_TYPES.map(t => (
             <option key={t.value} value={t.value}>{t.label}</option>
@@ -53,7 +53,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         </select>
       </div>
 
-      <button className="min-h-11 px-3 text-sm border rounded hover:bg-gray-50 ml-auto">
+      <button className="min-h-11 px-3 text-sm border rounded-sm hover:bg-gray-50 ml-auto">
         Export
       </button>
     </div>

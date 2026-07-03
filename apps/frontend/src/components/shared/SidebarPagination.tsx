@@ -29,7 +29,7 @@ export function SidebarPagination({
         <label className="inline-flex items-center gap-1">
           <span>Page size</span>
           <select
-            className="rounded border border-gray-300 px-1 py-0.5 text-xs"
+            className="rounded-sm border border-gray-300 px-1 py-0.5 text-xs"
             value={pageSize}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
           >
@@ -46,16 +46,16 @@ export function SidebarPagination({
           Page {safePage} of {totalPages}
         </span>
         <div className="flex items-center gap-1">
-          <button type="button" className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40" disabled={safePage <= 1} onClick={() => onPageChange(1)}>
+          <button type="button" className="rounded-sm border border-gray-300 px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40" disabled={safePage <= 1} onClick={() => onPageChange(1)}>
             First
           </button>
-          <button type="button" className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40" disabled={safePage <= 1} onClick={() => onPageChange(safePage - 1)}>
+          <button type="button" className="rounded-sm border border-gray-300 px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40" disabled={safePage <= 1} onClick={() => onPageChange(safePage - 1)}>
             Previous
           </button>
-          <button type="button" className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40" disabled={safePage >= totalPages} onClick={() => onPageChange(safePage + 1)}>
+          <button type="button" className="rounded-sm border border-gray-300 px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40" disabled={safePage >= totalPages} onClick={() => onPageChange(safePage + 1)}>
             Next
           </button>
-          <button type="button" className="rounded border border-gray-300 px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40" disabled={safePage >= totalPages} onClick={() => onPageChange(totalPages)}>
+          <button type="button" className="rounded-sm border border-gray-300 px-2 py-0.5 hover:bg-gray-50 disabled:opacity-40" disabled={safePage >= totalPages} onClick={() => onPageChange(totalPages)}>
             Last
           </button>
         </div>
@@ -68,7 +68,7 @@ export function SidebarPagination({
           max={totalPages}
           defaultValue={safePage}
           key={safePage}
-          className="w-16 rounded border border-gray-300 px-1 py-0.5"
+          className="w-16 rounded-sm border border-gray-300 px-1 py-0.5"
           onKeyDown={(event) => {
             if (event.key !== "Enter") return;
             const value = Number((event.target as HTMLInputElement).value);

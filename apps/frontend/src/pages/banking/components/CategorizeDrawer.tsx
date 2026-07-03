@@ -72,18 +72,18 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
           <button type="button" className="text-xs text-gray-500 underline" onClick={onClose}>Close</button>
         </div>
 
-        <section className="mb-3 rounded border border-gray-200 bg-gray-50 p-2 text-xs">
+        <section className="mb-3 rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
           <div className="font-semibold">Transaction Detail</div>
           <div className="mt-1">Date: {String(transaction.txn_date ?? "")}</div>
           <div>Description: {String(transaction.description ?? "")}</div>
           <div>Amount: ${Number(transaction.amount ?? 0).toFixed(2)}</div>
         </section>
 
-        <section className="mb-3 rounded border border-gray-200 bg-white p-2 text-xs">
+        <section className="mb-3 rounded-sm border border-gray-200 bg-white p-2 text-xs">
           <div className="mb-1 font-semibold">Suggestions</div>
           <div className="space-y-1">
             {(suggestionsQuery.data?.suggestions ?? []).slice(0, 3).map((sugg) => (
-              <div key={String(sugg.id)} className="flex items-center justify-between rounded border border-gray-100 px-2 py-1">
+              <div key={String(sugg.id)} className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
                 <div className="truncate">{String(sugg.category ?? "categorized")} · ${Number(sugg.amount ?? 0).toFixed(2)}</div>
                 <button
                   type="button"
@@ -115,7 +115,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
               <button
                 key={key}
                 type="button"
-                className={`rounded border px-2 py-1 text-xs ${action === key ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-200 bg-white text-gray-700"}`}
+                className={`rounded-sm border px-2 py-1 text-xs ${action === key ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-200 bg-white text-gray-700"}`}
                 onClick={() => setAction(key)}
               >
                 {label}
@@ -124,7 +124,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
           </div>
         </section>
 
-        <section className="mb-3 rounded border border-gray-200 bg-white p-2">
+        <section className="mb-3 rounded-sm border border-gray-200 bg-white p-2">
           {formNode}
         </section>
 

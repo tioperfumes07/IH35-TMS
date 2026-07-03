@@ -31,7 +31,7 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
   const total = rows.reduce((sum, row) => sum + Number(row.override_gallons ?? row.gallons ?? 0), 0);
 
   return (
-    <section className="rounded border border-emerald-200 bg-white">
+    <section className="rounded-sm border border-emerald-200 bg-white">
       <div className="border-b border-emerald-200 bg-emerald-50 px-3 py-2">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-900">Step 2 · State gallons (Q{quarter} {year})</h3>
         <p className="text-xs text-emerald-800">Relay → Loves upload → dispatch fuel records with dedupe.</p>
@@ -39,7 +39,7 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
       <div className="space-y-2 px-3 py-3 text-xs">
         <button
           type="button"
-          className="rounded border border-emerald-400 bg-emerald-100 px-3 py-1.5 font-semibold text-emerald-900 disabled:opacity-50"
+          className="rounded-sm border border-emerald-400 bg-emerald-100 px-3 py-1.5 font-semibold text-emerald-900 disabled:opacity-50"
           disabled={runMutation.isPending}
           onClick={() => void runMutation.mutateAsync()}
         >
@@ -48,7 +48,7 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
         {prepQuery.data?.gallons_aggregated_at ? (
           <p className="text-slate-600">Last aggregated: {new Date(prepQuery.data.gallons_aggregated_at).toLocaleString()}</p>
         ) : null}
-        <div className="overflow-x-auto rounded border border-slate-200">
+        <div className="overflow-x-auto rounded-sm border border-slate-200">
           <table className="min-w-full text-left">
             <thead className="bg-slate-50 text-slate-600">
               <tr>

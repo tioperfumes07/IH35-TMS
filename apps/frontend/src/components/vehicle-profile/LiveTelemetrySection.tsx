@@ -8,7 +8,7 @@ export function LiveTelemetrySection({
   const parsed = (samsara?.raw_payload_parsed as Record<string, unknown>) ?? {};
   const faults = (parsed.fault_codes as Array<{ code: string; severity: string; description: string | null }>) ?? [];
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-gray-800">Live telemetry (Samsara)</h3>
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
         <div>GPS: {latestPosition ? `${latestPosition.lat}, ${latestPosition.lng}` : "—"}</div>

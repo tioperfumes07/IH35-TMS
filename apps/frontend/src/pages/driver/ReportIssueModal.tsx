@@ -104,7 +104,7 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
         </div>
         <label className="block text-xs text-gray-600">{t("driver.report_type")}</label>
         <SelectCombobox
-          className="mb-2 mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mb-2 mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           value={reportType}
           onChange={(e) => setReportType(e.target.value as typeof reportType)}
         >
@@ -115,7 +115,7 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
         </SelectCombobox>
         <label className="block text-xs text-gray-600">{t("driver.report_desc")}</label>
         <textarea
-          className="mb-2 mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mb-2 mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -132,12 +132,12 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
         <input type="file" accept="audio/*" className="mb-3 mt-1 w-full text-xs" onChange={(e) => setVoice(e.target.files?.[0] ?? null)} />
         {error ? <p className="mb-2 text-xs text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
-          <button type="button" className="rounded border border-gray-300 px-3 py-1.5 text-sm" onClick={onClose} disabled={busy}>
+          <button type="button" className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm" onClick={onClose} disabled={busy}>
             Cancel
           </button>
           <button
             type="button"
-            className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+            className="rounded-sm bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
             onClick={() => void submit()}
             disabled={busy || description.trim().length < 3}
           >

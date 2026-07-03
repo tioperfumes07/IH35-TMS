@@ -101,7 +101,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="training-records-page">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-sm font-semibold text-slate-800">Training Records</div>
           <div className="text-[11px] text-slate-500">Per-driver completion history with expiry tracking.</div>
@@ -137,7 +137,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             <select
               value={driverId}
               onChange={(event) => setDriverId(event.target.value)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
               data-testid="training-record-driver"
               required
             >
@@ -154,7 +154,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             <input
               value={trainingName}
               onChange={(event) => setTrainingName(event.target.value)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
               data-testid="training-record-name"
               required
             />
@@ -174,7 +174,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             <DatePicker
               value={expiryDate}
               onChange={(next) => setExpiryDate(next)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
               data-testid="training-record-expiry"
             />
           </label>
@@ -183,7 +183,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              className="mt-1 block min-h-16 w-full rounded border border-gray-200 px-2 py-1 text-xs"
+              className="mt-1 block min-h-16 w-full rounded-sm border border-gray-200 px-2 py-1 text-xs"
               data-testid="training-record-notes"
             />
           </label>

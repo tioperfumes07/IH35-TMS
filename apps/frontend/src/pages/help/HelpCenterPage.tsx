@@ -31,7 +31,7 @@ export function HelpCenterPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by title or keywords…"
-          className="w-full max-w-xl rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="w-full max-w-xl rounded-sm border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
         />
       </div>
 
@@ -44,7 +44,7 @@ export function HelpCenterPage() {
               <li key={a.slug}>
                 <Link
                   to={`/help/${a.slug}`}
-                  className="text-sm font-medium text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                  className="text-sm font-medium text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
                   {a.title}
                 </Link>
@@ -56,14 +56,14 @@ export function HelpCenterPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {CATEGORY_ORDER.map((cat) => (
-            <section key={cat} className="rounded border border-gray-200 bg-white p-4">
+            <section key={cat} className="rounded-sm border border-gray-200 bg-white p-4">
               <h2 className="text-base font-semibold text-gray-900">{cat}</h2>
               <ul className="mt-2 space-y-1">
                 {(byCat[cat] ?? []).map((a) => (
                   <li key={a.slug}>
                     <Link
                       to={`/help/${a.slug}`}
-                      className="text-sm text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                      className="text-sm text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
                     >
                       {a.title}
                     </Link>

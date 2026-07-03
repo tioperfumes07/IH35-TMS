@@ -37,16 +37,16 @@ export function AbandonmentQueuePage() {
     <div className="mx-auto max-w-6xl space-y-3 px-3 py-3">
       <PageHeader title="Abandonment chargebacks" subtitle={subtitle} />
 
-      {!companyId ? <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm">Select a company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm">Select a company.</div> : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <SelectCombobox className="h-9 rounded border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+        <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
           <option value="pending">Pending</option>
           <option value="all">All</option>
         </SelectCombobox>
       </div>
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full border-collapse text-left text-[13px]">
           <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600">
             <tr>

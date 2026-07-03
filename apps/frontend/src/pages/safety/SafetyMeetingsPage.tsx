@@ -115,7 +115,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="safety-meetings-page">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-sm font-semibold text-slate-800">Safety Meetings</div>
           <div className="text-[11px] text-slate-500">Schedule meetings, track required attendees, and sync attendance to safety events.</div>
@@ -138,7 +138,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
       />
 
       {expandedMeetingId ? (
-        <div className="rounded border border-gray-200 bg-white px-3 py-2" data-testid="safety-meeting-attendance-panel">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2" data-testid="safety-meeting-attendance-panel">
           {(() => {
             const meeting = meetings.find((row) => row.id === expandedMeetingId);
             if (!meeting) return null;
@@ -195,14 +195,14 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
             <input
               value={topic}
               onChange={(event) => setTopic(event.target.value)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
               data-testid="safety-meeting-topic"
               required
             />
           </label>
           <div>
             <div className="text-xs font-semibold text-slate-600">Required attendees</div>
-            <div className="mt-1 max-h-40 space-y-1 overflow-y-auto rounded border border-gray-200 p-2">
+            <div className="mt-1 max-h-40 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
               {drivers.map((driver) => (
                 <label key={driver.id} className="flex items-center gap-2 text-xs text-slate-700">
                   <input

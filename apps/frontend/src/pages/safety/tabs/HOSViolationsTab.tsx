@@ -53,18 +53,18 @@ export function HOSViolationsTab() {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-8">
-        <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="driver_id" value={form.driver_id} onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))} />
-        <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Violation type" value={form.violation_code} onChange={(e) => setForm((v) => ({ ...v, violation_code: e.target.value }))} />
-        <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Description" value={form.violation_description} onChange={(e) => setForm((v) => ({ ...v, violation_description: e.target.value }))} />
-        <input className="rounded border border-gray-300 px-2 py-1 text-xs" type="datetime-local" value={form.occurred_at.slice(0, 16)} onChange={(e) => setForm((v) => ({ ...v, occurred_at: new Date(e.target.value).toISOString() }))} />
-        <SelectCombobox className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.source} onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as typeof form.source }))}>
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-8">
+        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="driver_id" value={form.driver_id} onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))} />
+        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Violation type" value={form.violation_code} onChange={(e) => setForm((v) => ({ ...v, violation_code: e.target.value }))} />
+        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Description" value={form.violation_description} onChange={(e) => setForm((v) => ({ ...v, violation_description: e.target.value }))} />
+        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" type="datetime-local" value={form.occurred_at.slice(0, 16)} onChange={(e) => setForm((v) => ({ ...v, occurred_at: new Date(e.target.value).toISOString() }))} />
+        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.source} onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as typeof form.source }))}>
           <option value="manual">manual_office</option>
           <option value="eld_import">samsara_auto</option>
           <option value="dot_inspection">dot_citation</option>
         </SelectCombobox>
-        <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Duration/status" value={form.duty_status} onChange={(e) => setForm((v) => ({ ...v, duty_status: e.target.value }))} />
-        <SelectCombobox className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
+        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Duration/status" value={form.duty_status} onChange={(e) => setForm((v) => ({ ...v, duty_status: e.target.value }))} />
+        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
           <option value="low">low</option>
           <option value="medium">medium</option>
           <option value="high">high</option>
@@ -72,7 +72,7 @@ export function HOSViolationsTab() {
         </SelectCombobox>
         <button
           type="button"
-          className="rounded bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+          className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
           disabled={!form.driver_id || !form.violation_code || createMutation.isPending}
           onClick={() => createMutation.mutate()}
         >
@@ -80,7 +80,7 @@ export function HOSViolationsTab() {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>

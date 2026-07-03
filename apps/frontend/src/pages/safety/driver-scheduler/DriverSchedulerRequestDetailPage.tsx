@@ -62,7 +62,7 @@ export function DriverSchedulerRequestDetailPage() {
 
       {req ? (
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded border border-gray-200 bg-white p-3 text-xs">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="font-semibold text-gray-900">Driver</div>
             <div>{String(req.driver_name ?? "")}</div>
             <div className="mt-2 font-semibold">Type</div>
@@ -76,7 +76,7 @@ export function DriverSchedulerRequestDetailPage() {
             <div className="mt-2 font-semibold">Status</div>
             <div>{String(req.status)}</div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3 text-xs">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="font-semibold text-gray-900">Review actions</div>
             {String(req.status) === "pending_review" ? (
               <div className="mt-2 space-y-2">
@@ -86,7 +86,7 @@ export function DriverSchedulerRequestDetailPage() {
                 <div>
                   <label className="block text-xs font-medium text-gray-600">Deny reason</label>
                   <textarea
-                    className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                    className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                     rows={2}
                     value={deniedReason}
                     onChange={(e) => setDeniedReason(e.target.value)}
@@ -111,7 +111,7 @@ export function DriverSchedulerRequestDetailPage() {
       ) : null}
 
       {query.data?.audit_log?.length ? (
-        <div className="rounded border border-gray-200 bg-white p-3 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="mb-1 font-semibold">Audit trail</div>
           <ul className="space-y-1">
             {query.data.audit_log.map((a) => (

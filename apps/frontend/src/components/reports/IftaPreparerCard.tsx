@@ -29,7 +29,7 @@ export function IftaPreparerCard({ status }: Props) {
   const canSubmit = typedConfirm.trim().toUpperCase() === requiredPhrase;
 
   return (
-    <section className="rounded border border-[#f59e0b] border-l-[3px] bg-white">
+    <section className="rounded-sm border border-[#f59e0b] border-l-[3px] bg-white">
       <div className="flex items-center justify-between border-b border-[#f59e0b] bg-[#fef3c7] px-3 py-2">
         <h3 className="text-xs font-semibold uppercase tracking-[0.04em] text-[#92400e]">IFTA Quarterly Preparer</h3>
         <div className="text-xs text-[#92400e]">
@@ -38,7 +38,7 @@ export function IftaPreparerCard({ status }: Props) {
       </div>
 
       <div className="space-y-2 px-3 py-3 text-xs">
-        <p className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">
           This report is always accrual basis per CPA sign-off.
         </p>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
@@ -68,7 +68,7 @@ export function IftaPreparerCard({ status }: Props) {
           <button
             type="button"
             disabled
-            className="inline-flex items-center gap-1 rounded border border-[#f59e0b] px-3 py-1.5 text-xs font-semibold text-[#92400e] opacity-60"
+            className="inline-flex items-center gap-1 rounded-sm border border-[#f59e0b] px-3 py-1.5 text-xs font-semibold text-[#92400e] opacity-60"
           >
             ⚡ Generate IFTA-ready CSV
           </button>
@@ -76,7 +76,7 @@ export function IftaPreparerCard({ status }: Props) {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="inline-flex items-center gap-1 rounded border border-[#f59e0b] bg-[#fef3c7] px-3 py-1.5 text-xs font-semibold text-[#92400e] hover:bg-[#fde68a]"
+            className="inline-flex items-center gap-1 rounded-sm border border-[#f59e0b] bg-[#fef3c7] px-3 py-1.5 text-xs font-semibold text-[#92400e] hover:bg-[#fde68a]"
           >
             ⚡ Generate IFTA-ready CSV
           </button>
@@ -98,18 +98,18 @@ export function IftaPreparerCard({ status }: Props) {
             <input
               value={typedConfirm}
               onChange={(event) => setTypedConfirm(event.target.value)}
-              className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
               placeholder={requiredPhrase}
             />
           </label>
           <div className="flex justify-end gap-2">
-            <button type="button" className="rounded border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700" onClick={() => setConfirmOpen(false)}>
+            <button type="button" className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700" onClick={() => setConfirmOpen(false)}>
               Cancel
             </button>
             <button
               type="button"
               disabled={!canSubmit}
-              className="rounded border border-[#f59e0b] bg-[#fef3c7] px-3 py-1.5 text-xs font-semibold text-[#92400e] disabled:opacity-50"
+              className="rounded-sm border border-[#f59e0b] bg-[#fef3c7] px-3 py-1.5 text-xs font-semibold text-[#92400e] disabled:opacity-50"
               onClick={() => setConfirmOpen(false)}
             >
               Submit

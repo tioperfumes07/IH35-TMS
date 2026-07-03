@@ -104,7 +104,7 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
     switch (key) {
       case "name":
         return (
-          <Link to={`/vendors/${vendor.id}`} className="text-slate-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+          <Link to={`/vendors/${vendor.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
             {vendor.name}
           </Link>
         );
@@ -173,7 +173,7 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
         cap={selection.cap}
       >
         {({ isSelected, toggle }) => (
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
                 <tr>
@@ -206,7 +206,7 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
                     className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
                     onClick={() => onSelectVendor?.(vendor.id)}
                   >
-                    <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 py-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label={`Select ${vendor.name}`}

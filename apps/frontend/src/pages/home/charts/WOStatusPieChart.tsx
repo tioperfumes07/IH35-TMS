@@ -45,7 +45,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
   }
 
   if (query.isLoading) {
-    return <div className="h-[260px] animate-pulse rounded bg-slate-100" />;
+    return <div className="h-[260px] animate-pulse rounded-sm bg-slate-100" />;
   }
 
   if (query.isError) {
@@ -60,7 +60,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
     return (
       <div className="home-recharts-print w-full">
         <h3 className="mb-2 text-sm font-semibold text-slate-900">Work orders by status</h3>
-        <div className="flex h-[260px] items-center justify-center rounded border border-dashed border-slate-200 text-sm text-slate-500">
+        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-sm text-slate-500">
           No open work orders.
         </div>
       </div>
@@ -99,7 +99,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number) => {
+            formatter={(value) => {
               const count = Number(value);
               const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
               return [`${count} (${pct}%)`, "Count"];
@@ -109,7 +109,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
               return formatWoStatusLabel(st?.status);
             }}
           />
-          <Legend verticalAlign="middle" align="right" layout="vertical" formatter={(value) => formatWoStatusLabel(value)} />
+          <Legend verticalAlign="middle" align="right" layout="vertical" formatter={(value: string) => formatWoStatusLabel(value)} />
         </PieChart>
       </ResponsiveContainer>
     </div>

@@ -58,10 +58,10 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
           <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
           {description ? <p className="text-xs text-gray-600">{description}</p> : null}
         </div>
-        <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">{total} record(s)</span>
+        <span className="rounded-sm bg-gray-100 px-2 py-1 text-xs text-gray-600">{total} record(s)</span>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200">
+      <div className="overflow-x-auto rounded-sm border border-gray-200">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
@@ -104,7 +104,7 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
       <div className="flex items-center justify-end gap-2 text-xs">
         <button
           type="button"
-          className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+          className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
           onClick={() => setPage((current) => Math.max(1, current - 1))}
           disabled={page <= 1 || query.isLoading}
         >
@@ -113,7 +113,7 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
         <span className="text-gray-600">Page {page}</span>
         <button
           type="button"
-          className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+          className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
           onClick={() => setPage((current) => current + 1)}
           disabled={!hasMore || query.isLoading}
         >

@@ -51,13 +51,13 @@ export function CashGlSetupPage() {
         title="Bank Account → Cash GL Account"
       />
       {!canEdit ? (
-        <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           Read-only: only an Owner or Administrator can change a bank account's cash GL mapping.
         </div>
       ) : null}
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
@@ -74,7 +74,7 @@ export function CashGlSetupPage() {
                     value={bank.ledger_account_id ?? ""}
                     disabled={!canEdit || savingId === bank.id}
                     onChange={(event) => onPick(bank, event.target.value)}
-                    className="h-9 w-full max-w-md rounded border border-gray-300 px-2 text-sm"
+                    className="h-9 w-full max-w-md rounded-sm border border-gray-300 px-2 text-sm"
                   >
                     <option value="">— Not mapped —</option>
                     {coaOptions.map((o) => (

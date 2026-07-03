@@ -55,7 +55,7 @@ export function EdiTransactionLog() {
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-sm font-medium">Status</label>
           <select
-            className="rounded border px-3 py-2 text-sm"
+            className="rounded-sm border px-3 py-2 text-sm"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -69,7 +69,7 @@ export function EdiTransactionLog() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="overflow-x-auto rounded border">
+          <div className="overflow-x-auto rounded-sm border">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left">
                 <tr>
@@ -90,7 +90,7 @@ export function EdiTransactionLog() {
                     <td className="px-3 py-2 font-mono">{m.transaction_type}</td>
                     <td className="px-3 py-2">{m.direction}</td>
                     <td className="px-3 py-2">
-                      <span className={`rounded px-2 py-0.5 text-xs ${statusBadgeClass(m.status)}`}>
+                      <span className={`rounded-sm px-2 py-0.5 text-xs ${statusBadgeClass(m.status)}`}>
                         {m.status}
                       </span>
                     </td>
@@ -109,7 +109,7 @@ export function EdiTransactionLog() {
             </table>
           </div>
 
-          <div className="rounded border p-4">
+          <div className="rounded-sm border p-4">
             <h3 className="mb-2 text-sm font-semibold">Raw EDI viewer</h3>
             {selected ? (
               <div className="space-y-2 text-xs">
@@ -124,7 +124,7 @@ export function EdiTransactionLog() {
                 )}
                 <button
                   type="button"
-                  className="rounded border px-3 py-1 text-xs"
+                  className="rounded-sm border px-3 py-1 text-xs"
                   onClick={() => pushToastPlaceholder("Reprocess queued (foundation stub)")}
                 >
                   Reprocess

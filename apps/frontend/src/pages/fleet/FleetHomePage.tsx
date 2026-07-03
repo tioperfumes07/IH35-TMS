@@ -20,7 +20,7 @@ export function FleetHomePage() {
       {companyId ? (
         <FleetTablePage operatingCompanyId={companyId} defaultActiveOnly />
       ) : (
-        <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           Select an operating company to view the fleet.
         </div>
       )}

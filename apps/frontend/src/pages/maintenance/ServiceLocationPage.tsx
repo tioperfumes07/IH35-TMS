@@ -22,7 +22,7 @@ const BUCKET_LABEL: Record<string, string> = {
 
 // KPI tiles → the filtered Active-WOs list (00-MASTER-LINK-MAP: KPI tile → the list it represents).
 function BucketTile({ label, value, bucket }: { label: string; value: number; bucket?: string }) {
-  const cls = "rounded border border-gray-200 bg-white px-2 py-1 text-left text-[11px] hover:bg-gray-50";
+  const cls = "rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] hover:bg-gray-50";
   const inner = (
     <>
       <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>

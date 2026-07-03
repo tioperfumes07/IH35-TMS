@@ -18,7 +18,7 @@ export function RegisterTable({ rows, selectedTransactionId, onSelect, onCategor
   const pageRowIds = rows.map((row) => String(row.id));
 
   return (
-    <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <BulkActionBar
         {...selection.bulkActionBarProps([
           { id: "categorize", label: "Categorize", onClick: () => pushToast("Bulk categorize register rows.", "success") },

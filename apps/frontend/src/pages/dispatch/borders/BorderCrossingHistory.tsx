@@ -53,7 +53,7 @@ export function BorderCrossingHistory() {
           <DatePicker
             value={from}
             onChange={(next) => setFrom(next)}
-            className="border rounded px-3 py-1.5 text-sm"
+            className="border rounded-sm px-3 py-1.5 text-sm"
           />
         </div>
         <div>
@@ -61,7 +61,7 @@ export function BorderCrossingHistory() {
           <DatePicker
             value={to}
             onChange={(next) => setTo(next)}
-            className="border rounded px-3 py-1.5 text-sm"
+            className="border rounded-sm px-3 py-1.5 text-sm"
           />
         </div>
       </div>

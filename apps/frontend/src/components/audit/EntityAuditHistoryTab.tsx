@@ -85,7 +85,7 @@ function EventRow({ event }: { event: EventWithPayload }) {
         <td className="px-3 py-2">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 hover:bg-gray-200 rounded"
+            className="p-1 hover:bg-gray-200 rounded-sm"
             aria-label={expanded ? "Collapse" : "Expand"}
           >
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -172,11 +172,11 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
   return (
     <div className="space-y-4" data-testid={`${entityType}-audit-history-tab`}>
       {/* QBO-style Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded border">
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-sm border">
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={fromDate}
             onChange={(next) => setFromDate(next)}
           />
@@ -184,7 +184,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={toDate}
             onChange={(next) => setToDate(next)}
           />
@@ -192,7 +192,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
         <label className="text-xs text-gray-600">
           Event type
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={eventTypeFilter}
             onChange={(e) => setEventTypeFilter(e.target.value)}
           >
@@ -207,7 +207,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
           <input
             type="text"
             placeholder="Email or ID"
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm w-32"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm w-32"
             value={actorFilter}
             onChange={(e) => setActorFilter(e.target.value)}
           />
@@ -215,7 +215,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
         <label className="text-xs text-gray-600">
           Status
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -227,7 +227,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
         <label className="text-xs text-gray-600">
           Source
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
           >
@@ -271,7 +271,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
       ) : !events.length ? (
         <div className="text-sm text-gray-500 p-4">No audit events found for this record.</div>
       ) : (
-        <div className="overflow-x-auto border rounded">
+        <div className="overflow-x-auto border rounded-sm">
           <table className="w-full text-left">
             <thead className="bg-gray-100 border-b">
               <tr>

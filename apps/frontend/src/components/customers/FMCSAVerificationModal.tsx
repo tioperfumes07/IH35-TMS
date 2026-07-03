@@ -95,7 +95,7 @@ export function FMCSAVerificationModal({
   return (
     <Modal open={open} onClose={resetAndClose} title="Verify FMCSA Authority">
       <div className="space-y-3">
-        <div className="rounded border border-gray-200 p-3">
+        <div className="rounded-sm border border-gray-200 p-3">
           <div className="text-xs font-semibold text-gray-600">Lookup Type</div>
           <div className="mt-2 flex gap-3 text-sm">
             <label className="flex items-center gap-2">
@@ -130,7 +130,7 @@ export function FMCSAVerificationModal({
               value={lookupValue}
               onChange={(event) => setLookupValue(event.target.value)}
               placeholder={lookupType === "usdot" ? "e.g. 384859" : "e.g. MC-123456"}
-              className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
 
@@ -144,7 +144,7 @@ export function FMCSAVerificationModal({
         </div>
 
         {result ? (
-          <div className="rounded border border-gray-200 p-3">
+          <div className="rounded-sm border border-gray-200 p-3">
             <div className="mb-2 flex items-center gap-2">
               <StatusBadge variant={authorityVariant(result.authority_status)}>{`Authority: ${result.authority_status}`}</StatusBadge>
               {result.cached ? <StatusBadge variant="info">Cached</StatusBadge> : null}

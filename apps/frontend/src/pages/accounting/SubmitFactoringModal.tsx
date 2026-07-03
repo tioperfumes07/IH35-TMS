@@ -112,7 +112,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
         <div className="grid gap-2 md:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Factoring company</span>
-            <SelectCombobox className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={vendorId} onChange={(event) => setVendorId(event.target.value)}>
+            <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={vendorId} onChange={(event) => setVendorId(event.target.value)}>
               <option value="">Select vendor</option>
               {(vendorsQuery.data ?? []).map((vendor) => (
                 <option key={vendor.id} value={vendor.id}>
@@ -123,33 +123,33 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Submission batch ref</span>
-            <input className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={submissionRef} onChange={(event) => setSubmissionRef(event.target.value)} />
+            <input className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={submissionRef} onChange={(event) => setSubmissionRef(event.target.value)} />
           </label>
         </div>
 
         <div className="grid gap-2 md:grid-cols-3">
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Advance rate %</span>
-            <input className="h-9 rounded border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={advanceRatePct} onChange={(event) => setAdvanceRatePct(event.target.value)} />
+            <input className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={advanceRatePct} onChange={(event) => setAdvanceRatePct(event.target.value)} />
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Reserve %</span>
-            <input className="h-9 rounded border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={reservePct} onChange={(event) => setReservePct(event.target.value)} />
+            <input className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={reservePct} onChange={(event) => setReservePct(event.target.value)} />
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Factor fee %</span>
-            <input className="h-9 rounded border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={factorFeePct} onChange={(event) => setFactorFeePct(event.target.value)} />
+            <input className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={factorFeePct} onChange={(event) => setFactorFeePct(event.target.value)} />
           </label>
         </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-xs font-semibold text-gray-600">Notes</span>
-          <textarea className="min-h-[70px] rounded border border-gray-300 p-2 text-[13px]" value={notes} onChange={(event) => setNotes(event.target.value)} />
+          <textarea className="min-h-[70px] rounded-sm border border-gray-300 p-2 text-[13px]" value={notes} onChange={(event) => setNotes(event.target.value)} />
         </label>
 
         <div>
           <div className="mb-1 text-xs font-semibold text-gray-600">Invoices to factor</div>
-          <div className="max-h-64 overflow-y-auto rounded border border-gray-200">
+          <div className="max-h-64 overflow-y-auto rounded-sm border border-gray-200">
             <table className="min-w-full text-left text-xs">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
@@ -184,7 +184,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
           </div>
         </div>
 
-        {error ? <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</div> : null}
+        {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</div> : null}
 
         <div className="flex items-center justify-between border-t border-gray-200 pt-2">
           <div className="text-xs text-gray-600">Selected total: {money(selectedTotal)}</div>

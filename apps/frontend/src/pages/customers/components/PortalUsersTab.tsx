@@ -129,15 +129,15 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
         >
           <label className="block text-sm">
             Email
-            <input className="mt-1 w-full rounded border border-gray-300 px-3 py-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </label>
           <label className="block text-sm">
             Temporary password
-            <input className="mt-1 w-full rounded border border-gray-300 px-3 py-2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </label>
           <label className="block text-sm">
             Full name
-            <input className="mt-1 w-full rounded border border-gray-300 px-3 py-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </label>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" type="button" onClick={() => setOpen(false)}>

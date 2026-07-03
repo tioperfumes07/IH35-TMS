@@ -39,21 +39,21 @@ export function CashFlowReport() {
     <div className="space-y-4 p-4">
       <PageHeader title="Cash flow" subtitle="Tenant-scoped liquidity snapshot (GAP-45)" />
       <ReportsSubNav />
-      <div className="flex flex-wrap items-end gap-3 rounded border bg-white p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4">
         <label className="text-sm">
           As of
-          <DatePicker className="ml-2 rounded border px-2 py-1" value={asOf} onChange={(next) => setAsOf(next)} />
+          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <Button onClick={() => setApplied(asOf)}>Apply</Button>
       </div>
       {query.isLoading ? <p>Loading…</p> : null}
       {summary ? (
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded border bg-white p-4">
+          <div className="rounded-sm border bg-white p-4">
             <div className="text-sm text-slate-600">Operating balance</div>
             <div className="text-2xl font-semibold">{money(summary.operating_balance_cents)}</div>
           </div>
-          <div className="rounded border bg-white p-4">
+          <div className="rounded-sm border bg-white p-4">
             <div className="text-sm text-slate-600">Scoped loads (OCI)</div>
             <div className="text-2xl font-semibold">{summary.scoped_load_count}</div>
             <div className="text-xs text-slate-500">Company: {summary.operating_company_id}</div>

@@ -120,7 +120,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
       {rows.length === 0 ? (
         <p className="text-[10px] text-gray-500">No accessorial charges yet. Use + Create charge or quick seeds (detention · layover · lumper).</p>
       ) : (
-        <div className="overflow-hidden rounded border border-gray-200">
+        <div className="overflow-hidden rounded-sm border border-gray-200">
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr className="border-b border-gray-100 bg-[#f7f8fa] text-left text-[9px] font-semibold uppercase tracking-wide text-gray-500">
@@ -138,7 +138,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
                     <SelectCombobox
                       value={row.code}
                       onChange={(event) => handleCodeChange(row.id, event.target.value)}
-                      className="h-7 w-full min-w-[7rem] text-xs"
+                      className="h-7 w-full min-w-28 text-xs"
                     >
                       <option value="">{catalogQuery.isLoading ? "Loading codes…" : "Select code"}</option>
                       {catalogOptions.map((option) => (
@@ -153,7 +153,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
                       type="text"
                       value={row.description}
                       onChange={(event) => onRowsChange(updateRow(rows, row.id, { description: event.target.value }))}
-                      className="h-7 w-full rounded border border-gray-300 px-2 text-xs"
+                      className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
                     />
                   </td>
                   <td className="px-2 py-1 text-right">

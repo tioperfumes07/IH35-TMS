@@ -86,7 +86,7 @@ export function DocsHomePage() {
         }}
       />
 
-      <section className="rounded border border-gray-200 bg-white p-3">
+      <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-3">
           <label className="space-y-1 text-xs font-semibold text-gray-600">
             Type filter
@@ -96,7 +96,7 @@ export function DocsHomePage() {
                 setTypeFilter(event.target.value);
                 setPage(1);
               }}
-              className="h-9 w-full rounded border border-gray-300 px-2 text-sm font-normal"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
               placeholder="Category code, label, mime type"
             />
           </label>
@@ -108,13 +108,13 @@ export function DocsHomePage() {
                 setExpiresBefore(next);
                 setPage(1);
               }}
-              className="h-9 w-full rounded border border-gray-300 px-2 text-sm font-normal"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
             />
           </label>
           <div className="flex items-end">
             <button
               type="button"
-              className="h-9 rounded border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
               onClick={() => {
                 setTypeFilter("");
                 setExpiresBefore("");
@@ -127,12 +127,12 @@ export function DocsHomePage() {
           </div>
         </div>
 
-        {listQuery.isLoading ? <div className="h-20 animate-pulse rounded bg-slate-100" /> : null}
+        {listQuery.isLoading ? <div className="h-20 animate-pulse rounded-sm bg-slate-100" /> : null}
         {emptyState ? (
-          <div className="rounded border border-dashed border-gray-300 p-6 text-center">
+          <div className="rounded-sm border border-dashed border-gray-300 p-6 text-center">
             <p className="text-base font-semibold text-gray-900">No documents found</p>
             <p className="mt-1 text-sm text-gray-600">No documents yet. Click + Upload Document to add one.</p>
-            <button type="button" className="mt-3 rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white opacity-70">
+            <button type="button" className="mt-3 rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white opacity-70">
               + Upload Document
             </button>
           </div>
@@ -165,7 +165,7 @@ export function DocsHomePage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+              className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
               disabled={!canPrev}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
             >
@@ -173,7 +173,7 @@ export function DocsHomePage() {
             </button>
             <button
               type="button"
-              className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+              className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
               disabled={!canNext}
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
             >
@@ -188,7 +188,7 @@ export function DocsHomePage() {
 
 function KpiCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-gray-200 bg-white px-3 py-2">
+    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
       <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</div>
       <div className="text-lg font-semibold text-gray-900">{value}</div>
     </div>

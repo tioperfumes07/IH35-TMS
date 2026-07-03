@@ -48,7 +48,7 @@ export function BulkProgressDialog({
   return (
     <Modal open={open} onClose={onClose} title="Bulk update progress">
       <div className="space-y-4 text-sm">
-        <div className="h-2 overflow-hidden rounded bg-gray-200">
+        <div className="h-2 overflow-hidden rounded-sm bg-gray-200">
           <div
             className="h-full bg-[#1F2A44] transition-all duration-300"
             style={{ width: `${progressPct}%` }}
@@ -78,7 +78,7 @@ export function BulkProgressDialog({
           </div>
         )}
         {!loading && failedCount > 0 ? (
-          <div className="max-h-48 overflow-y-auto rounded border border-red-100 bg-red-50 p-2">
+          <div className="max-h-48 overflow-y-auto rounded-sm border border-red-100 bg-red-50 p-2">
             <p className="mb-2 text-xs font-semibold uppercase text-red-800">Failures</p>
             <ul className="space-y-1 text-xs text-red-900">
               {failed.map((item) => {
@@ -104,7 +104,7 @@ export function BulkProgressDialog({
           {!loading && failedCount > 0 && onRetryFailed ? (
             <button
               type="button"
-              className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
+              className="rounded-sm border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
               onClick={onRetryFailed}
             >
               Retry failed
@@ -112,7 +112,7 @@ export function BulkProgressDialog({
           ) : null}
           <button
             type="button"
-            className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white"
             onClick={onClose}
             disabled={loading}
           >

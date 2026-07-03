@@ -110,7 +110,7 @@ export function PhotoChain({
           {photos.map((photo) => (
             <div key={photo.id} className="rounded-lg border border-pwa-border bg-[#111827] p-2">
               <div className="flex gap-2">
-                <img src={photo.preview_url} alt="" className="h-16 w-16 rounded object-cover" />
+                <img src={photo.preview_url} alt="" className="h-16 w-16 rounded-sm object-cover" />
                 <div className="flex-1 text-xs text-pwa-text-secondary">
                   <div>{Math.max(1, Math.round(photo.exif.size_bytes / 1024))} KB</div>
                   <div>{photo.exif.mime_type}</div>

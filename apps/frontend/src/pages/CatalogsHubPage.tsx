@@ -70,7 +70,7 @@ export function CatalogsHubPage() {
       </KpiStrip>
 
       {registryQuery.isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading catalog registry...</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading catalog registry...</div>
       ) : (
         <div className="space-y-5">
           {(registryQuery.data ?? []).map((department) => (
@@ -92,21 +92,21 @@ export function CatalogsHubPage() {
                       <button
                         type="button"
                         onClick={() => navigate(catalog.route_path)}
-                        className={`flex h-8 w-full items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1 text-left transition ${style.border} ${style.tint}`}
+                        className={`flex h-8 w-full items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left transition ${style.border} ${style.tint}`}
                       >
                         <span className={`h-2 w-2 shrink-0 rounded-full ${style.dot}`} />
                         <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-800">{catalog.name}</span>
-                        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600">{catalog.item_count}</span>
+                        <span className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600">{catalog.item_count}</span>
                       </button>
 
                       {isOpen ? (
-                        <div className="absolute left-0 top-full z-30 mt-1 w-max min-w-full max-w-[560px] rounded border border-gray-200 bg-white p-1 shadow-lg">
+                        <div className="absolute left-0 top-full z-30 mt-1 w-max min-w-full max-w-[560px] rounded-sm border border-gray-200 bg-white p-1 shadow-lg">
                           <div className="max-h-80 overflow-auto">
                             {(activePreview?.items ?? []).map((item) => (
                               <button
                                 key={item.id}
                                 type="button"
-                                className="flex w-full items-center justify-between gap-4 rounded px-2 py-1 text-left text-xs hover:bg-gray-100"
+                                className="flex w-full items-center justify-between gap-4 rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
                                 onClick={(event) => {
                                   event.stopPropagation();
                                   navigate(item.route_path);
@@ -121,7 +121,7 @@ export function CatalogsHubPage() {
                           {activePreview?.truncated && hiddenCount > 0 ? (
                             <button
                               type="button"
-                              className="mt-1 w-full rounded border border-gray-200 bg-gray-50 px-2 py-1 text-left text-[11px] text-gray-600 hover:bg-gray-100"
+                              className="mt-1 w-full rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-left text-[11px] text-gray-600 hover:bg-gray-100"
                               onClick={() => {
                                 navigate(catalog.route_path);
                                 setHoveredCode(null);

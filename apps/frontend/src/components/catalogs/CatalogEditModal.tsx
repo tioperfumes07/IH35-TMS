@@ -66,7 +66,7 @@ function FieldInput({
         value={String(value ?? "")}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
       >
         <option value="">Select…</option>
         {field.enumOptions.map((option) => (
@@ -85,7 +85,7 @@ function FieldInput({
         value={String(value ?? "")}
         disabled={disabled}
         placeholder={field.placeholder ?? "Foreign key ID"}
-        className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
         onChange={(event) => onChange(event.target.value)}
       />
     );
@@ -99,7 +99,7 @@ function FieldInput({
       value={field.type === "number" ? String(value ?? "") : String(value ?? "")}
       disabled={disabled}
       placeholder={field.placeholder}
-      className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+      className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
       onChange={(event) => {
         if (field.type === "number") {
           const parsed = event.target.value === "" ? "" : Number(event.target.value);

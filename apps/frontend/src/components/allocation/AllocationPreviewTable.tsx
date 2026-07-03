@@ -15,7 +15,7 @@ export function AllocationPreviewTable({ rows, totalCents, isLoading }: Props) {
   const balanced = allocated === totalCents;
 
   return (
-    <section className="rounded border border-gray-200 bg-white">
+    <section className="rounded-sm border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
         <h3 className="text-sm font-semibold text-gray-900">Allocation preview</h3>
         <span className={`text-xs font-medium ${balanced ? "text-green-700" : "text-amber-700"}`}>

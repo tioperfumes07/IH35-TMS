@@ -61,7 +61,7 @@ export function PayrollIntegrationPage() {
             type="button"
             onClick={handleRefresh}
             disabled={refreshMutation.isPending}
-            className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
           >
             {refreshMutation.isPending ? "Refreshing…" : "Refresh from QBO"}
           </button>
@@ -69,20 +69,20 @@ export function PayrollIntegrationPage() {
       />
 
       {/* Period selector */}
-      <div className="flex items-center gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="flex items-center gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-sm font-medium text-gray-700">Period:</label>
         <input
           type="date"
           value={period.start}
           onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))}
-          className="rounded border border-gray-300 px-2 py-1 text-sm"
+          className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
         />
         <span className="text-gray-400">→</span>
         <input
           type="date"
           value={period.end}
           onChange={(e) => setPeriod((p) => ({ ...p, end: e.target.value }))}
-          className="rounded border border-gray-300 px-2 py-1 text-sm"
+          className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
         />
       </div>
 
@@ -91,7 +91,7 @@ export function PayrollIntegrationPage() {
       {/* 4 KPI cards */}
       <div className="grid gap-3 md:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className={`rounded border p-4 ${kpi.highlight ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-white"}`}>
+          <div key={kpi.label} className={`rounded-sm border p-4 ${kpi.highlight ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-white"}`}>
             <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{kpi.label}</div>
             <div className={`mt-1 text-2xl font-bold tabular-nums ${kpi.highlight ? "text-slate-700" : "text-gray-900"}`}>
               {aggregateQuery.isLoading ? "…" : kpi.value}
@@ -103,7 +103,7 @@ export function PayrollIntegrationPage() {
 
       {/* Class allocation bar */}
       {data && (
-        <div className="rounded border border-gray-200 bg-white p-4">
+        <div className="rounded-sm border border-gray-200 bg-white p-4">
           <ClassAllocationView allocations={data.by_class} totalCents={data.grand_total} />
         </div>
       )}

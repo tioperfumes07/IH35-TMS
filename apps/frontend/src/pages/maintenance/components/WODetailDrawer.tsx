@@ -48,9 +48,9 @@ export function WODetailDrawer({ open, workOrder, canRefreshDisplayId, onRefresh
           <h3 className="text-sm font-semibold">Work Order Detail</h3>
           <button type="button" className="text-gray-500 underline" onClick={onClose}>Close</button>
         </div>
-        <div className="space-y-1 rounded border border-gray-200 bg-gray-50 p-2">
+        <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
           <div>Display ID: {String(workOrder.display_id ?? "—")}</div>
-          <div>Source Type: <span className="rounded bg-gray-200 px-1 py-0.5">{sourceType}</span></div>
+          <div>Source Type: <span className="rounded-sm bg-gray-200 px-1 py-0.5">{sourceType}</span></div>
           <div>Status: {status}</div>
           <div>Opened: {formatDateTime(workOrder.opened_at)}</div>
           <div>Closed: {formatDateTime(workOrder.closed_at)}</div>
@@ -61,7 +61,7 @@ export function WODetailDrawer({ open, workOrder, canRefreshDisplayId, onRefresh
           <div>Cost (total): {String(workOrder.total_actual_cost ?? "0")}</div>
         </div>
         {isExternal ? (
-          <div className="mt-2 rounded border border-gray-200 p-2">
+          <div className="mt-2 rounded-sm border border-gray-200 p-2">
             <div className="mb-1 font-semibold">External Vendor Invoice</div>
             <div>Vendor: {String(workOrder.external_vendor_id ?? "—")}</div>
             <div>WO #: {String(workOrder.external_vendor_wo_number ?? "—")}</div>
@@ -70,12 +70,12 @@ export function WODetailDrawer({ open, workOrder, canRefreshDisplayId, onRefresh
             <div>R2 PDF Doc ID: {String(workOrder.external_vendor_invoice_doc_id ?? "—")}</div>
           </div>
         ) : (
-          <div className="mt-2 rounded border border-gray-200 p-2">
+          <div className="mt-2 rounded-sm border border-gray-200 p-2">
             <div className="mb-1 font-semibold">Parts Links (IS/IT)</div>
             <div className="text-gray-600">Linked parts invoices render here from maintenance.parts_invoice_links.</div>
           </div>
         )}
-        <div className="mt-3 rounded border border-gray-200 p-2">
+        <div className="mt-3 rounded-sm border border-gray-200 p-2">
           <div className="mb-1 font-semibold">Audit History</div>
           <div className="text-gray-600">Display ID changes and completion actions are available in audit events.</div>
         </div>

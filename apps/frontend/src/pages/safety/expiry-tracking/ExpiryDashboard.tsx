@@ -81,23 +81,23 @@ export function ExpiryDashboard() {
   );
 
   if (!companyId) {
-    return <div className="rounded border border-slate-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   return (
-    <section className="space-y-3 rounded border border-slate-200 bg-white p-4">
+    <section className="space-y-3 rounded-sm border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Certificate Expiry Dashboard</h3>
           <p className="text-xs text-slate-600">Track CDL, medical card, hazmat, TWIC, passport, and drug test due dates.</p>
         </div>
-        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {filteredRows.length}</span>
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {filteredRows.length}</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <label className="flex items-center gap-1">
           <span className="text-slate-500">Cert:</span>
-          <select className="rounded border border-slate-300 px-2 py-1" value={certType} onChange={(e) => setCertType(e.target.value as "all" | CertType)}>
+          <select className="rounded-sm border border-slate-300 px-2 py-1" value={certType} onChange={(e) => setCertType(e.target.value as "all" | CertType)}>
             {CERT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -108,7 +108,7 @@ export function ExpiryDashboard() {
         <label className="flex items-center gap-1">
           <span className="text-slate-500">Severity:</span>
           <select
-            className="rounded border border-slate-300 px-2 py-1"
+            className="rounded-sm border border-slate-300 px-2 py-1"
             value={severity}
             onChange={(e) => setSeverity(e.target.value as "all" | CertSeverity)}
           >
@@ -143,7 +143,7 @@ export function ExpiryDashboard() {
                 <td className="px-2 py-1">{row.expiry_date}</td>
                 <td className="px-2 py-1">{row.days_until_expiry}</td>
                 <td className="px-2 py-1">
-                  <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${severityClassName(row.severity)}`}>{row.severity}</span>
+                  <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${severityClassName(row.severity)}`}>{row.severity}</span>
                 </td>
               </tr>
             ))}

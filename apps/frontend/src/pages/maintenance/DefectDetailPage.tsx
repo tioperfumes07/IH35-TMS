@@ -69,7 +69,7 @@ export function DefectDetailPage() {
 
       {defect ? (
         <>
-          <header className="rounded border border-gray-200 bg-white p-4">
+          <header className="rounded-sm border border-gray-200 bg-white p-4">
             <h1 className="text-lg font-semibold text-gray-900">
               {defect.item_key} · {defect.severity}
             </h1>
@@ -84,11 +84,11 @@ export function DefectDetailPage() {
             </p>
           </header>
 
-          <section className="rounded border border-gray-200 bg-white p-4">
+          <section className="rounded-sm border border-gray-200 bg-white p-4">
             <h2 className="text-sm font-semibold text-gray-900">Mechanic notes</h2>
             <textarea
               rows={3}
-              className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={mechanicNotes}
               onChange={(event) => setMechanicNotes(event.target.value)}
               placeholder="Shop triage notes…"
@@ -112,7 +112,7 @@ export function DefectDetailPage() {
             </div>
           </section>
 
-          <section className="rounded border border-gray-200 bg-white p-4">
+          <section className="rounded-sm border border-gray-200 bg-white p-4">
             <h2 className="text-sm font-semibold text-gray-900">Triage history</h2>
             <ul className="mt-2 space-y-1 text-xs text-gray-700">
               {history.map((entry, index) => (

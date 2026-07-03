@@ -76,7 +76,7 @@ function ScrollChevron({
   return (
     <button
       type="button"
-      className="hidden shrink-0 rounded border border-gray-200 bg-white p-1 text-slate-600 shadow-sm hover:bg-gray-50 lg:inline-flex"
+      className="hidden shrink-0 rounded-sm border border-gray-200 bg-white p-1 text-slate-600 shadow-xs hover:bg-gray-50 lg:inline-flex"
       aria-label={direction === "left" ? "Scroll sub-tabs left" : "Scroll sub-tabs right"}
       data-subtab-scroll-chevron={direction}
       onClick={onClick}

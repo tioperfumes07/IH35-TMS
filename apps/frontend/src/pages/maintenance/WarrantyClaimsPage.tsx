@@ -127,11 +127,11 @@ export function WarrantyClaimsPage() {
         </Button>
       </div>
 
-      <div className="grid gap-3 rounded border border-gray-200 bg-white p-3 md:grid-cols-[1fr_auto]">
+      <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[1fr_auto]">
         <label className="text-xs text-gray-700">
           Detect from work order
           <input
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             placeholder="Work order UUID"
             value={detectWoId}
             onChange={(e) => setDetectWoId(e.target.value)}
@@ -198,7 +198,7 @@ export function WarrantyClaimsPage() {
           <label className="block text-xs">
             Part description
             <input
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={claimDraft.part_description}
               onChange={(e) => setClaimDraft((d) => ({ ...d, part_description: e.target.value }))}
             />
@@ -206,7 +206,7 @@ export function WarrantyClaimsPage() {
           <label className="block text-xs">
             Vendor
             <select
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={claimDraft.vendor_id}
               onChange={(e) => setClaimDraft((d) => ({ ...d, vendor_id: e.target.value }))}
               data-testid="warranty-vendor-select"
@@ -233,7 +233,7 @@ export function WarrantyClaimsPage() {
           <label className="block text-xs">
             Work order ID (optional)
             <input
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={claimDraft.work_order_id}
               onChange={(e) => setClaimDraft((d) => ({ ...d, work_order_id: e.target.value }))}
             />
@@ -261,7 +261,7 @@ export function WarrantyClaimsPage() {
           <label className="block text-xs">
             Vendor claim number
             <input
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={fileClaimNumber}
               onChange={(e) => setFileClaimNumber(e.target.value)}
             />

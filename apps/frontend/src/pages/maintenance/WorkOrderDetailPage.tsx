@@ -312,7 +312,7 @@ export function WorkOrderDetailPage() {
 
       {invoiceCents != null ? (
         <div
-          className={`rounded border px-3 py-2 text-sm ${invoiceMismatch ? "border-red-300 bg-red-50 text-red-900" : "border-gray-200 bg-white text-gray-800"}`}
+          className={`rounded-sm border px-3 py-2 text-sm ${invoiceMismatch ? "border-red-300 bg-red-50 text-red-900" : "border-gray-200 bg-white text-gray-800"}`}
         >
           Invoice {money.format(invoiceCents / 100)} vs Line items {money.format(linesCents / 100)} · Δ{" "}
           {money.format((deltaCents ?? 0) / 100)}
@@ -320,7 +320,7 @@ export function WorkOrderDetailPage() {
       ) : null}
 
       {oosDowntimeEstimate ? (
-        <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950">
+        <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950">
           <div className="font-semibold">OOS severe — downtime cost estimate</div>
           <p className="mt-1 text-xs">
             {oosDowntimeEstimate.daysOos.toFixed(1)} days OOS × {money.format(oosDowntimeEstimate.dailyLossCents / 100)}/day ={" "}
@@ -408,7 +408,7 @@ export function WorkOrderDetailPage() {
             </label>
             <textarea
               id="wo-reason"
-              className="mt-1 w-full rounded border border-slate-300 p-2 text-sm"
+              className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-sm"
               rows={3}
               value={reasonText}
               onChange={(event) => setReasonText(event.target.value)}
@@ -441,7 +441,7 @@ export function WorkOrderDetailPage() {
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-3">
-          <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
+          <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</div>
@@ -454,7 +454,7 @@ export function WorkOrderDetailPage() {
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Asset Selector</div>
                 <SelectCombobox
-                  className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm"
+                  className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
                   value={selectedAssetId}
                   onChange={(event) => setSelectedAssetId(event.target.value)}
                 >
@@ -467,12 +467,12 @@ export function WorkOrderDetailPage() {
                 </SelectCombobox>
               </div>
             </div>
-            <div className="mt-3 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+            <div className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
               Asset + line save wiring will call MAINT-11 mutation contract once backend PR is merged.
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="mb-2 text-sm font-semibold text-gray-900">Parts Picker + Labor Lines (P&S)</div>
             <div className="mb-2 text-xs text-gray-600">
               Section A uses P&S Category, Section B uses P&S Item, and sub-rows map parts/labor.
@@ -491,16 +491,16 @@ export function WorkOrderDetailPage() {
         </div>
 
         <div className="space-y-3">
-          <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="mb-2 text-sm font-semibold text-gray-900">Posting Preview</div>
             {previewQ.isLoading ? <div className="text-xs text-gray-500">Loading posting preview...</div> : null}
             {previewQ.isError ? (
-              <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                 Posting preview unavailable in this backend build. MAINT-11 contract fallback is active.
               </div>
             ) : null}
             {!previewQ.isLoading && !previewQ.isError && previewQ.data == null ? (
-              <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                 Posting preview endpoint not deployed yet for this environment.
               </div>
             ) : null}
@@ -514,7 +514,7 @@ export function WorkOrderDetailPage() {
                     { label: "Lines", value: String(previewQ.data.lines?.length ?? 0) },
                   ]}
                 />
-                <div className="max-h-60 overflow-auto rounded border border-gray-100">
+                <div className="max-h-60 overflow-auto rounded-sm border border-gray-100">
                   <table className="min-w-full text-left text-[11px]">
                     <thead className="bg-gray-50">
                       <tr>
@@ -552,7 +552,7 @@ export function WorkOrderDetailPage() {
         </div>
       </div>
 
-      <details className="rounded border border-gray-200 bg-white">
+      <details className="rounded-sm border border-gray-200 bg-white">
         <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-900">WO cost context (live)</summary>
         <div className="border-t border-gray-100 px-3 py-2 text-xs text-gray-700">
           {costQ.isLoading ? <p>Loading…</p> : null}
@@ -568,7 +568,7 @@ export function WorkOrderDetailPage() {
         </div>
       </details>
 
-      <details className="rounded border border-gray-200 bg-white">
+      <details className="rounded-sm border border-gray-200 bg-white">
         <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-900">Line items (raw)</summary>
         <pre className="max-h-64 overflow-auto border-t border-gray-100 p-2 text-[11px]">
           {JSON.stringify(wo.line_items ?? [], null, 2)}

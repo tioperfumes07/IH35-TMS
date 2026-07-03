@@ -37,7 +37,7 @@ export function SevereRepairEstimateModal({ open, operatingCompanyId, entityId, 
         </div>
         <label className="block text-xs font-semibold text-slate-600">
           Notes
-          <textarea className="mt-1 min-h-24 w-full rounded border border-slate-300 px-2 py-1 text-sm" value={notes} onChange={(event) => setNotes(event.target.value)} />
+          <textarea className="mt-1 min-h-24 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm" value={notes} onChange={(event) => setNotes(event.target.value)} />
         </label>
         <UploadZone
           operatingCompanyId={operatingCompanyId}

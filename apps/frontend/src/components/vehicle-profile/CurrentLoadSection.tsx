@@ -10,14 +10,14 @@ export function CurrentLoadSection({
 }) {
   if (!currentLoad) {
     return (
-      <section className="rounded border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+      <section className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
         <h3 className="font-semibold text-gray-800">Current load</h3>
         <p className="mt-1">Available — no active load assigned to unit {unitId.slice(0, 8)}.</p>
       </section>
     );
   }
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-gray-800">Current load</h3>
       <p className="mt-1 text-sm">
         Load {String(currentLoad.load_number)} · {String(currentLoad.pickup ?? "?")} → {String(currentLoad.delivery ?? "?")}

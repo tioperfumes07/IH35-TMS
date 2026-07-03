@@ -7,7 +7,7 @@ type Props = {
 
 export function InTransitTriageBand({ issues, onTriage }: Props) {
   return (
-    <div className="rounded border border-amber-300 bg-amber-50">
+    <div className="rounded-sm border border-amber-300 bg-amber-50">
       <div className="border-b border-amber-200 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">In-Transit Issues</div>
       <div className="max-h-40 overflow-y-auto">
         {issues.map((issue) => (

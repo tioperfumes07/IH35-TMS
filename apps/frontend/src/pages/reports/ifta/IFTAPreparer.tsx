@@ -41,14 +41,14 @@ export function IFTAPreparer() {
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
-      <p className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
         Accrual basis per CPA sign-off. Run Steps 1→4 in order; CSV uploads to secure storage with signed download.
       </p>
 
       {!prepReady ? (
         <button
           type="button"
-          className="rounded border border-amber-400 bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-900 disabled:opacity-50"
+          className="rounded-sm border border-amber-400 bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-900 disabled:opacity-50"
           disabled={!companyId || createMutation.isPending}
           onClick={() => void createMutation.mutateAsync()}
         >

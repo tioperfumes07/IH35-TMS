@@ -106,7 +106,7 @@ export function ChatPage() {
                   key={th.id}
                   type="button"
                   onClick={() => setActiveThreadId(th.id)}
-                  className="w-full rounded border border-pwa-border px-3 py-2 text-left"
+                  className="w-full rounded-sm border border-pwa-border px-3 py-2 text-left"
                 >
                   <div className="text-sm font-semibold">{threadLabel(th)}</div>
                   <div className="text-xs text-pwa-text-secondary">{formatWhen(th.updated_at)}</div>
@@ -120,7 +120,7 @@ export function ChatPage() {
               ← {t("chat.all_chats", "All chats")}
             </button>
             {threads.find((x) => x.id === activeThreadId)?.status === "archived" ? (
-              <div className="mb-2 rounded bg-pwa-bg px-2 py-1 text-xs text-pwa-text-secondary">{t("chat.archived_banner", "Archived — load closed, read-only")}</div>
+              <div className="mb-2 rounded-sm bg-pwa-bg px-2 py-1 text-xs text-pwa-text-secondary">{t("chat.archived_banner", "Archived — load closed, read-only")}</div>
             ) : null}
             <div className="mb-3 max-h-[50vh] space-y-2 overflow-y-auto" data-testid="pwa-chat-messages">
               {messages.map((m) => {
@@ -142,7 +142,7 @@ export function ChatPage() {
                             type="button"
                             disabled={ackMutation.isPending}
                             onClick={() => ackMutation.mutate(m)}
-                            className="ml-1 rounded border border-pwa-border px-2 py-0.5 text-xs font-semibold disabled:opacity-40"
+                            className="ml-1 rounded-sm border border-pwa-border px-2 py-0.5 text-xs font-semibold disabled:opacity-40"
                           >
                             {t("chat.acknowledge", "Acknowledge")}
                           </button>
@@ -161,7 +161,7 @@ export function ChatPage() {
               onChange={(e) => setDraft(e.target.value)}
               rows={2}
               placeholder={t("chat.placeholder", "Message dispatch…")}
-              className="mb-2 w-full resize-none rounded border border-pwa-border bg-pwa-bg px-2 py-1 text-sm"
+              className="mb-2 w-full resize-none rounded-sm border border-pwa-border bg-pwa-bg px-2 py-1 text-sm"
             />
             <PwaButton
               disabled={!draft.trim() || threads.find((x) => x.id === activeThreadId)?.status === "archived"}

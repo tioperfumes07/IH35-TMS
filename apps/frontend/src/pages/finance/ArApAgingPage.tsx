@@ -61,7 +61,7 @@ function ArInvoicesDrill({ operatingCompanyId, customer, asOfDate }: { operating
   return (
     <tr className="bg-gray-50">
       <td colSpan={BUCKET_COLS.length + 2} className="px-3 py-2">
-        <div className="rounded border border-gray-200 bg-white">
+        <div className="rounded-sm border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
             Open invoices — {customer.customer_name}
           </div>
@@ -114,7 +114,7 @@ function ApBillsDrill({ operatingCompanyId, vendor, asOfDate }: { operatingCompa
   return (
     <tr className="bg-gray-50">
       <td colSpan={BUCKET_COLS.length + 2} className="px-3 py-2">
-        <div className="rounded border border-gray-200 bg-white">
+        <div className="rounded-sm border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
             Open bills — {vendor.vendor_name}
           </div>
@@ -230,7 +230,7 @@ export function ArApAgingPage() {
       <div className="space-y-4">
         <PageHeader title="AR / AP Aging" subtitle="Accounts receivable & payable aging (read-only)" />
         <FinanceModuleTabs />
-        <div className="rounded border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           AR / AP aging is not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">Enable the AR_AP_AGING_UI_ENABLED feature flag to use this report.</p>
         </div>
@@ -257,21 +257,21 @@ export function ArApAgingPage() {
                   setAsOfDate(v && v <= today ? v : today);
                   setExpanded(null);
                 }}
-                className="h-9 px-2 text-[13px] rounded border border-gray-300 bg-white text-gray-700 tabular-nums"
+                className="h-9 px-2 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 tabular-nums"
               />
             </div>
             <button
               type="button"
               onClick={handleExport}
               disabled={rowCount === 0}
-              className="h-9 px-3 text-[13px] rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="h-9 px-3 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               Export CSV
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className="h-9 px-3 text-[13px] rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              className="h-9 px-3 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
             >
               Print
             </button>
@@ -285,7 +285,7 @@ export function ArApAgingPage() {
           type="button"
           onClick={() => { setMode("ar"); setExpanded(null); }}
           className={[
-            "h-9 px-4 text-[13px] rounded border font-medium",
+            "h-9 px-4 text-[13px] rounded-sm border font-medium",
             mode === "ar" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
           ].join(" ")}
         >
@@ -295,7 +295,7 @@ export function ArApAgingPage() {
           type="button"
           onClick={() => { setMode("ap"); setExpanded(null); }}
           className={[
-            "h-9 px-4 text-[13px] rounded border font-medium",
+            "h-9 px-4 text-[13px] rounded-sm border font-medium",
             mode === "ap" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
           ].join(" ")}
         >
@@ -311,11 +311,11 @@ export function ArApAgingPage() {
       </p>
 
       {!operatingCompanyId ? (
-        <div className="rounded border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           Select an operating company to view aging.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-full text-sm divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

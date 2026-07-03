@@ -104,12 +104,12 @@ export function GeofenceDwellReport() {
         }
       />
 
-      <section className="rounded border border-slate-200 bg-white p-3">
+      <section className="rounded-sm border border-slate-200 bg-white p-3">
         <div className="grid gap-3 md:grid-cols-4">
           <label className="text-xs text-slate-700">
             Start
             <DatePicker
-              className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
               value={periodStart}
               onChange={(next) => setPeriodStart(next)}
             />
@@ -117,7 +117,7 @@ export function GeofenceDwellReport() {
           <label className="text-xs text-slate-700">
             End
             <DatePicker
-              className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
               value={periodEnd}
               onChange={(next) => setPeriodEnd(next)}
             />
@@ -125,7 +125,7 @@ export function GeofenceDwellReport() {
           <label className="text-xs text-slate-700">
             Geofence
             <select
-              className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
               value={geofenceId}
               onChange={(event) => setGeofenceId(event.target.value)}
             >
@@ -140,7 +140,7 @@ export function GeofenceDwellReport() {
           <label className="text-xs text-slate-700">
             Kind
             <select
-              className="mt-1 block h-9 w-full rounded border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
               value={locationKind}
               onChange={(event) => setLocationKind(event.target.value as GeofenceLocationKind | "")}
             >
@@ -170,21 +170,21 @@ export function GeofenceDwellReport() {
       </section>
 
       <section className="grid gap-2 sm:grid-cols-3">
-        <div className="rounded border border-slate-200 bg-white px-3 py-2">
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
           <div className="text-[11px] uppercase text-slate-500">Visits</div>
           <div className="text-lg font-semibold text-slate-900">{summary.events}</div>
         </div>
-        <div className="rounded border border-slate-200 bg-white px-3 py-2">
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
           <div className="text-[11px] uppercase text-slate-500">Closed dwells</div>
           <div className="text-lg font-semibold text-slate-900">{summary.completedDwells}</div>
         </div>
-        <div className="rounded border border-slate-200 bg-white px-3 py-2">
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
           <div className="text-[11px] uppercase text-slate-500">Avg dwell</div>
           <div className="text-lg font-semibold text-slate-900">{minutesToClock(summary.avgDwell)}</div>
         </div>
       </section>
 
-      <section className="rounded border border-slate-200 bg-white p-3">
+      <section className="rounded-sm border border-slate-200 bg-white p-3">
         {reportQuery.isLoading ? <p className="text-sm text-slate-500">Loading report...</p> : null}
         <div className="overflow-auto">
           <table className="min-w-full text-left text-xs">

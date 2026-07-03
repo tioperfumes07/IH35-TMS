@@ -38,11 +38,11 @@ export function LocaleSwitcher() {
   const currentLanguage = normalizeLocale(i18n.resolvedLanguage ?? i18n.language) ?? "en";
 
   return (
-    <label className="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs" style={{ borderColor: "rgba(255,255,255,0.2)", color: "inherit" }}>
+    <label className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-xs" style={{ borderColor: "rgba(255,255,255,0.2)", color: "inherit" }}>
       <span className="sr-only">{t("common.language", "Language")}</span>
       <select
         aria-label={t("common.language", "Language")}
-        className="bg-transparent text-xs outline-none"
+        className="bg-transparent text-xs outline-hidden"
         value={currentLanguage}
         onChange={(event) => {
           const nextLocale = normalizeLocale(event.target.value) ?? "en";

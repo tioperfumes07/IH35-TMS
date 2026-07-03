@@ -123,7 +123,7 @@ export function RecordExpenseForm({
         <div className="mt-1">
           <SelectCombobox
             id={fieldId("category")}
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             value={values.categoryId}
             onChange={(event) => {
               const nextId = event.target.value;
@@ -151,7 +151,7 @@ export function RecordExpenseForm({
           Date
           <input
             id={fieldId("date")}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             type="date"
             value={values.billDate}
             onChange={(event) => setValues((prev) => ({ ...prev, billDate: event.target.value }))}
@@ -175,7 +175,7 @@ export function RecordExpenseForm({
         <div className="mt-1">
           <SelectCombobox
             id={fieldId("unit")}
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             value={values.unitId}
             onChange={(event) => {
               const nextId = event.target.value;
@@ -202,7 +202,7 @@ export function RecordExpenseForm({
         Description
         <input
           id={fieldId("description")}
-          className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           value={values.description}
           onChange={(event) => setValues((prev) => ({ ...prev, description: event.target.value }))}
         />
@@ -213,7 +213,7 @@ export function RecordExpenseForm({
         <div className="mt-1">
           <SelectCombobox
             id={fieldId("payment-method")}
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             value={values.paymentMethod}
             onChange={(event) =>
               setValues((prev) => ({
@@ -237,7 +237,7 @@ export function RecordExpenseForm({
         <div className="mt-1">
           <SelectCombobox
             id={fieldId("payment-account")}
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             value={values.paymentAccountId}
             onChange={(event) => {
               const nextId = event.target.value;

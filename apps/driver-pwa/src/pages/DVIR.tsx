@@ -62,15 +62,15 @@ export function DvirPage() {
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-28">
         <PwaCard title={isPostTrip ? t("dvir.title_post") : t("dvir.title_pre")} subtitle={`Load ${loadId}`}>
           <div className="grid gap-2">
-            <input value={unit} onChange={(event) => setUnit(event.target.value)} className="h-10 rounded border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.unit")} />
-            <input value={trailer} onChange={(event) => setTrailer(event.target.value)} className="h-10 rounded border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.trailer")} />
-            <input value={odometer} onChange={(event) => setOdometer(event.target.value)} className="h-10 rounded border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.odometer")} />
-            <input value={location} onChange={(event) => setLocation(event.target.value)} className="h-10 rounded border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.location")} />
+            <input value={unit} onChange={(event) => setUnit(event.target.value)} className="h-10 rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.unit")} />
+            <input value={trailer} onChange={(event) => setTrailer(event.target.value)} className="h-10 rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.trailer")} />
+            <input value={odometer} onChange={(event) => setOdometer(event.target.value)} className="h-10 rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.odometer")} />
+            <input value={location} onChange={(event) => setLocation(event.target.value)} className="h-10 rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.location")} />
           </div>
         </PwaCard>
 
-        {oosBlocked ? <div className="rounded border border-[#7f1d1d] bg-[#7f1d1d] px-3 py-2 text-sm text-[#fca5a5]">{t("dvir.oos_banner")}</div> : null}
-        {hasMajor ? <div className="rounded border border-[#7f1d1d] bg-[#2a1417] px-3 py-2 text-xs text-[#fca5a5]">{t("dvir.major_blocks")}</div> : null}
+        {oosBlocked ? <div className="rounded-sm border border-[#7f1d1d] bg-[#7f1d1d] px-3 py-2 text-sm text-[#fca5a5]">{t("dvir.oos_banner")}</div> : null}
+        {hasMajor ? <div className="rounded-sm border border-[#7f1d1d] bg-[#2a1417] px-3 py-2 text-xs text-[#fca5a5]">{t("dvir.major_blocks")}</div> : null}
 
         {items.map((item, idx) => (
           <DvirItemRow

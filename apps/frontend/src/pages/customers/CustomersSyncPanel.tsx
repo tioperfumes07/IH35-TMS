@@ -94,7 +94,7 @@ export function CustomersSyncPanel({ operatingCompanyId }: Props) {
           </span>
           <button
             type="button"
-            className="rounded border border-border px-3 py-1"
+            className="rounded-sm border border-border px-3 py-1"
             onClick={() => statusQuery.refetch()}
           >
             Retry
@@ -107,7 +107,7 @@ export function CustomersSyncPanel({ operatingCompanyId }: Props) {
       )}
       <button
         type="button"
-        className="rounded bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50"
+        className="rounded-sm bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50"
         disabled={busy || !operatingCompanyId}
         onClick={() => pullMutation.mutate()}
       >
@@ -115,7 +115,7 @@ export function CustomersSyncPanel({ operatingCompanyId }: Props) {
       </button>
       <button
         type="button"
-        className="rounded border border-border px-3 py-1 disabled:opacity-50"
+        className="rounded-sm border border-border px-3 py-1 disabled:opacity-50"
         disabled={busy || !operatingCompanyId}
         onClick={() => reconcileMutation.mutate()}
       >

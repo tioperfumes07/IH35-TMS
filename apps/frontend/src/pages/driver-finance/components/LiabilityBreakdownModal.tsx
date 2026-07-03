@@ -39,7 +39,7 @@ export function LiabilityBreakdownModal({ open, liabilities, onClose }: Props) {
           ))}
         </tbody>
       </table>
-      <div className="mt-2 rounded border border-gray-200 bg-gray-50 p-2 text-xs">
+      <div className="mt-2 rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
         <div>TOTAL ACTIVE: <span className="font-semibold">${total.toFixed(2)}</span></div>
         <div>EXCLUDING PENDING ACK: <span className="font-semibold">${excludingPending.toFixed(2)}</span></div>
       </div>

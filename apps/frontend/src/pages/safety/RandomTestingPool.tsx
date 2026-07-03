@@ -29,7 +29,7 @@ export function RandomTestingPool() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded border border-gray-200 bg-white p-4 text-xs">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
         <h3 className="text-sm font-semibold text-slate-900">Active pool ({members.length})</h3>
         <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
           {members.map((member) => (
@@ -41,7 +41,7 @@ export function RandomTestingPool() {
           {members.length === 0 ? <li className="text-slate-500">No active CDL drivers in pool.</li> : null}
         </ul>
       </div>
-      <div className="rounded border border-gray-200 bg-white p-4 text-xs">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
         <h3 className="text-sm font-semibold text-slate-900">Recent draws & selections</h3>
         <ul className="mt-2 space-y-1">
           {draws.slice(0, 5).map((draw) => (

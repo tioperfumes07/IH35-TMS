@@ -22,7 +22,7 @@ export function ClassAllocationView({ allocations, totalCents }: Props) {
   return (
     <div className="space-y-3">
       <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Class Allocation</h4>
-      <div className="flex h-4 w-full overflow-hidden rounded">
+      <div className="flex h-4 w-full overflow-hidden rounded-sm">
         {allocations.map((alloc) => (
           <div
             key={alloc.class}
@@ -35,7 +35,7 @@ export function ClassAllocationView({ allocations, totalCents }: Props) {
       <div className="flex flex-wrap gap-4">
         {allocations.map((alloc) => (
           <div key={alloc.class} className="flex items-center gap-2 text-sm">
-            <span className={`inline-block h-3 w-3 rounded-sm ${CLASS_COLORS[alloc.class] ?? "bg-gray-400"}`} />
+            <span className={`inline-block h-3 w-3 rounded-xs ${CLASS_COLORS[alloc.class] ?? "bg-gray-400"}`} />
             <span className="font-medium">{alloc.class}</span>
             <span className="tabular-nums text-gray-600">{cents(alloc.amount_cents)}</span>
             <span className="text-gray-400">({((alloc.amount_cents / totalCents) * 100).toFixed(1)}%)</span>

@@ -77,9 +77,9 @@ export function CarrierBootstrapPage() {
         subtitle="Hidden carriers (pre-launch) can pull TRANSP catalog + CoA templates."
       />
 
-      {error ? <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">{error}</div> : null}
+      {error ? <div className="rounded-sm border border-red-300 bg-red-50 p-3 text-sm text-red-800">{error}</div> : null}
 
-      <section className="rounded border border-gray-200 bg-white p-4 shadow-sm">
+      <section className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
         <h2 className="mb-3 text-lg font-semibold">Hidden carriers</h2>
         {carriersQuery.isLoading ? <p className="text-sm text-gray-600">Loading…</p> : null}
         {carriersQuery.isError ? (
@@ -99,7 +99,7 @@ export function CarrierBootstrapPage() {
                 </div>
                 <button
                   type="button"
-                  className="rounded bg-[#1F2A44] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  className="rounded-sm bg-[#1F2A44] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
                   disabled={bootstrapMutation.isPending}
                   onClick={() => bootstrapMutation.mutate(carrier.code)}
                 >
@@ -112,7 +112,7 @@ export function CarrierBootstrapPage() {
       </section>
 
       {lastResult ? (
-        <section className="rounded border border-green-200 bg-green-50 p-4 text-sm">
+        <section className="rounded-sm border border-green-200 bg-green-50 p-4 text-sm">
           <p className="font-medium text-green-900">Bootstrap complete</p>
           <p className="text-green-800">CoA rows cloned: {lastResult.coa_cloned}</p>
           <p className="text-green-800">Storage prefix: {lastResult.storage_prefix}</p>

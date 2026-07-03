@@ -92,14 +92,14 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="grid gap-2 md:grid-cols-3">
           <label className="text-xs">
             <div className="mb-1 text-gray-500">Status</div>
             <SelectCombobox
               value={status}
               onChange={(event) => setStatus(event.target.value as "open" | "all")}
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
             >
               <option value="all">All</option>
               <option value="open">Open / Under Review</option>
@@ -110,7 +110,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             <input
               value={driverId}
               onChange={(event) => setDriverId(event.target.value)}
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               placeholder="Optional driver UUID filter"
             />
           </label>
@@ -122,7 +122,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
@@ -156,7 +156,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
                 </td>
                 <td className="px-3 py-2">{money(row.disputed_amount_cents)}</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(row.status)}`}>{row.status}</span>
+                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(row.status)}`}>{row.status}</span>
                 </td>
                 <td className="px-3 py-2">{Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 86400000))}d ago</td>
                 <td className="px-3 py-2">
@@ -178,7 +178,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       </div>
 
       {detail ? (
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">Dispute Detail</p>
@@ -211,14 +211,14 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
           </div>
 
           <div className="grid gap-2 text-xs md:grid-cols-2">
-            <div className="rounded border border-gray-100 p-2">
+            <div className="rounded-sm border border-gray-100 p-2">
               <p className="font-semibold text-gray-700">Dispute</p>
               <p>Category: {detail.dispute_category}</p>
               <p>Status: {detail.status}</p>
               <p>Opened: {openedDaysAgo ?? "-"} days ago</p>
               <p>Description: {detail.dispute_description}</p>
             </div>
-            <div className="rounded border border-gray-100 p-2">
+            <div className="rounded-sm border border-gray-100 p-2">
               <p className="font-semibold text-gray-700">Settlement Breakdown</p>
               <p>Period: {detail.period_start ?? "-"} to {detail.period_end ?? "-"}</p>
               <p>Gross: {money(Number(detail.gross_pay ?? 0))}</p>
@@ -227,7 +227,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             </div>
           </div>
 
-          <div className="mt-3 space-y-2 rounded border border-gray-100 p-2">
+          <div className="mt-3 space-y-2 rounded-sm border border-gray-100 p-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Action Panel</p>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -241,7 +241,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
               <SelectCombobox
                 value={resolution}
                 onChange={(event) => setResolution(event.target.value as "in_favor" | "rejected" | "partial")}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
               >
                 <option value="in_favor">Resolve in Favor</option>
                 <option value="rejected">Reject</option>
@@ -260,12 +260,12 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             <textarea
               value={resolutionNotes}
               onChange={(event) => setResolutionNotes(event.target.value)}
-              className="min-h-[90px] w-full rounded border border-gray-300 px-2 py-1 text-xs"
+              className="min-h-[90px] w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               placeholder="Resolution notes (minimum 20 chars, required for audit clarity)"
             />
 
             {resolution === "in_favor" || resolution === "partial" ? (
-              <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+              <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
                 Corrective JE preview: debit and credit entries will be posted for {money(resolutionAmountPreviewCents)}.
               </div>
             ) : null}

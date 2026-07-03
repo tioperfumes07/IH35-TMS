@@ -62,12 +62,12 @@ export function ActivityLogPage() {
     <div className="space-y-4">
       <PageHeader title="Activity log" subtitle="Latest audit.append_event rows (newest first)" />
 
-      <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-800">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800">
         <div className="grid gap-3 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Actor user id
             <input
-              className="rounded border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
               value={actorUserId}
               onChange={(e) => setActorUserId(e.target.value)}
               placeholder="UUID"
@@ -76,7 +76,7 @@ export function ActivityLogPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Action contains
             <input
-              className="rounded border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
               value={action}
               onChange={(e) => setAction(e.target.value)}
               placeholder="event_class substring"
@@ -85,7 +85,7 @@ export function ActivityLogPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity type contains
             <input
-              className="rounded border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
               value={entityType}
               onChange={(e) => setEntityType(e.target.value)}
               placeholder="payload.entity_type"
@@ -95,7 +95,7 @@ export function ActivityLogPage() {
             Since (local)
             <input
               type="datetime-local"
-              className="rounded border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
               value={since}
               onChange={(e) => setSince(e.target.value)}
             />
@@ -104,7 +104,7 @@ export function ActivityLogPage() {
         <div className="mt-3 flex gap-2">
           <button
             type="button"
-            className="rounded bg-slate-900 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-slate-800"
+            className="rounded-sm bg-slate-900 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-slate-800"
             onClick={() =>
               setApplied({
                 actorUserId,
@@ -118,7 +118,7 @@ export function ActivityLogPage() {
           </button>
           <button
             type="button"
-            className="rounded border border-gray-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:bg-gray-50"
+            className="rounded-sm border border-gray-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:bg-gray-50"
             onClick={() => {
               setActorUserId("");
               setAction("");
@@ -133,10 +133,10 @@ export function ActivityLogPage() {
       </div>
 
       {activityQuery.isError ? (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">Failed to load activity log.</div>
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">Failed to load activity log.</div>
       ) : null}
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full divide-y divide-gray-200 text-left text-xs">
           <thead className="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-600">
             <tr>
@@ -163,7 +163,7 @@ export function ActivityLogPage() {
                     <tr className="bg-gray-50">
                       <td colSpan={5} className="px-3 py-3">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Full payload (JSON)</div>
-                        <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded border border-gray-200 bg-white p-3 text-[11px] text-gray-900">
+                        <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-gray-200 bg-white p-3 text-[11px] text-gray-900">
                           {JSON.stringify(row.payload ?? {}, null, 2)}
                         </pre>
                       </td>

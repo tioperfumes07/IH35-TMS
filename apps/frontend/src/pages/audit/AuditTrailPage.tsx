@@ -112,54 +112,54 @@ export function AuditTrailPage() {
     <div className="space-y-4 p-4">
       <PageHeader title="Audit Trail" subtitle="Universal spine event log — read-only" />
 
-      <div className="rounded border border-gray-200 bg-white p-4">
+      <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Module
-            <select className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={module} onChange={(e) => setModule(e.target.value)}>
+            <select className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={module} onChange={(e) => setModule(e.target.value)}>
               {MODULE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Action / event type
-            <input className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. invoice.created" />
+            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. invoice.created" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity type
-            <input className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={entityType} onChange={(e) => setEntityType(e.target.value)} placeholder="e.g. invoice" />
+            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={entityType} onChange={(e) => setEntityType(e.target.value)} placeholder="e.g. invoice" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity ID (UUID)
-            <input className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={entityId} onChange={(e) => setEntityId(e.target.value)} placeholder="uuid" />
+            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={entityId} onChange={(e) => setEntityId(e.target.value)} placeholder="uuid" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Actor user ID
-            <input className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} placeholder="uuid" />
+            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} placeholder="uuid" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Correlation ID
-            <input className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={correlationId} onChange={(e) => setCorrelationId(e.target.value)} placeholder="uuid" />
+            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={correlationId} onChange={(e) => setCorrelationId(e.target.value)} placeholder="uuid" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             From
-            <input type="datetime-local" className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" onChange={(e) => setFromDate(e.target.value ? new Date(e.target.value).toISOString() : "")} />
+            <input type="datetime-local" className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" onChange={(e) => setFromDate(e.target.value ? new Date(e.target.value).toISOString() : "")} />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             To
-            <input type="datetime-local" className="rounded border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" onChange={(e) => setToDate(e.target.value ? new Date(e.target.value).toISOString() : "")} />
+            <input type="datetime-local" className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" onChange={(e) => setToDate(e.target.value ? new Date(e.target.value).toISOString() : "")} />
           </label>
         </div>
         <div className="mt-3 flex items-center gap-2">
-          <button type="button" onClick={applyFilters} className="rounded bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d]">Apply</button>
-          <button type="button" onClick={resetFilters} className="rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Reset</button>
+          <button type="button" onClick={applyFilters} className="rounded-sm bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d]">Apply</button>
+          <button type="button" onClick={resetFilters} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Reset</button>
           {rows.length > 0 && (
-            <button type="button" onClick={() => downloadCSV(rows)} className="ml-2 rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Export CSV</button>
+            <button type="button" onClick={() => downloadCSV(rows)} className="ml-2 rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Export CSV</button>
           )}
           {totalCount > 0 && <span className="ml-auto text-xs text-gray-500">{totalCount.toLocaleString()} event{totalCount !== 1 ? "s" : ""}</span>}
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         {query.isLoading && <div className="p-4 text-sm text-gray-500">Loading…</div>}
         {query.isError && <div className="p-4 text-sm text-red-600">Failed to load audit trail.</div>}
         {!query.isLoading && !query.isError && rows.length === 0 && (
@@ -194,7 +194,7 @@ export function AuditTrailPage() {
                       </td>
                       <td className="px-3 py-2">
                         {link
-                          ? <a href={link} className="text-[#16A34A] underline hover:text-[#15803d]" onClick={(e) => e.stopPropagation()}>{row.source_table}</a>
+                          ? <a href={link} className="text-[#16A34A] underline hover:text-[#15803d]" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>{row.source_table}</a>
                           : <span className="text-gray-400">{row.source_table ?? row.source ?? "—"}</span>}
                       </td>
                     </tr>
@@ -205,7 +205,7 @@ export function AuditTrailPage() {
                           <div className="grid gap-3 text-xs md:grid-cols-2">
                             <div>
                               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Payload</div>
-                              <pre className="max-h-48 overflow-auto rounded border border-gray-100 bg-white p-2 text-[11px] leading-tight">{JSON.stringify(row.payload, null, 2)}</pre>
+                              <pre className="max-h-48 overflow-auto rounded-sm border border-gray-100 bg-white p-2 text-[11px] leading-tight">{JSON.stringify(row.payload, null, 2)}</pre>
                             </div>
                             <div className="space-y-2">
                               {row.correlation_id && <div><span className="font-semibold text-gray-500">Correlation ID: </span><span className="font-mono text-gray-700">{row.correlation_id}</span></div>}
@@ -226,9 +226,9 @@ export function AuditTrailPage() {
 
       {totalPages > 1 && (
         <div className="flex items-center gap-3 text-sm">
-          <button type="button" disabled={currentPage <= 1} onClick={() => setApplied((p) => ({ ...p, offset: Math.max(0, p.offset - PAGE_SIZE) }))} className="rounded border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">← Previous</button>
+          <button type="button" disabled={currentPage <= 1} onClick={() => setApplied((p) => ({ ...p, offset: Math.max(0, p.offset - PAGE_SIZE) }))} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">← Previous</button>
           <span className="text-xs text-gray-600">Page {currentPage} of {totalPages}</span>
-          <button type="button" disabled={currentPage >= totalPages} onClick={() => setApplied((p) => ({ ...p, offset: p.offset + PAGE_SIZE }))} className="rounded border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">Next →</button>
+          <button type="button" disabled={currentPage >= totalPages} onClick={() => setApplied((p) => ({ ...p, offset: p.offset + PAGE_SIZE }))} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">Next →</button>
         </div>
       )}
     </div>

@@ -53,7 +53,7 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
           {actions}
           <Link
             to="/vendors"
-            className="rounded border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+            className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
           >
             + Vendor
           </Link>
@@ -61,12 +61,12 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
             <button
               type="button"
               onClick={() => setCreateMenuOpen((open) => !open)}
-              className="rounded border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-sm font-semibold text-white hover:bg-[#0f1729]"
+              className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-sm font-semibold text-white hover:bg-[#0f1729]"
             >
               + Create ▾
             </button>
             {createMenuOpen ? (
-              <div className="absolute right-0 z-20 mt-1 min-w-[180px] rounded border border-gray-200 bg-white shadow-md">
+              <div className="absolute right-0 z-20 mt-1 min-w-[180px] rounded-sm border border-gray-200 bg-white shadow-md">
                 {CREATE_MENU.map((item) => (
                   <Link
                     key={item.label}
@@ -83,7 +83,7 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
         </div>
       </div>
 
-      <nav className="overflow-x-auto rounded border border-gray-200 bg-white px-2 py-1" aria-label="Accounting sub-navigation">
+      <nav className="overflow-x-auto rounded-sm border border-gray-200 bg-white px-2 py-1" aria-label="Accounting sub-navigation">
         <div className="flex min-w-max gap-1">
           {ACCOUNTING_CLEAN_TABS.map((tab) => {
             const active = tabActive(pathname, tab.to);
@@ -110,13 +110,13 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
               More ▾
             </button>
             {moreMenuOpen ? (
-              <div className="absolute left-0 top-full z-20 mt-1 min-w-[200px] rounded border border-gray-200 bg-white shadow-md">
+              <div className="absolute left-0 top-full z-20 mt-1 min-w-[200px] rounded-sm border border-gray-200 bg-white shadow-md">
                 {ACCOUNTING_MORE_TABS.map((item) => (
                   <NavLink
                     key={item.label}
                     to={item.to}
                     onClick={() => setMoreMenuOpen(false)}
-                    className={({ isActive }) =>
+                    className={({ isActive }: { isActive: boolean }) =>
                       `block border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 ${
                         isActive ? "bg-gray-100 font-semibold text-gray-900" : "text-gray-800 hover:bg-gray-50"
                       }`

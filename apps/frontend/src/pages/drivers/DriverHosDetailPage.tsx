@@ -43,7 +43,7 @@ export function DriverHosDetailPage() {
         subtitle={driverQuery.data ? `${driverQuery.data.first_name} ${driverQuery.data.last_name}` : "Driver timeline and FMCSA clocks"}
         actions={
           id ? (
-            <Link to={`/drivers/${id}`} className="rounded border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700">
+            <Link to={`/drivers/${id}`} className="rounded-sm border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700">
               Back to driver
             </Link>
           ) : null
@@ -51,7 +51,7 @@ export function DriverHosDetailPage() {
       />
 
       {!operatingCompanyId ? (
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           Select an operating company to view HOS details.
         </div>
       ) : null}
@@ -59,23 +59,23 @@ export function DriverHosDetailPage() {
       {hosQuery.data ? (
         <>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">11hr drive</div>
               <div className="text-lg font-semibold">{minutesToLabel(hosQuery.data.clocks.drive_remaining_min)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">14hr window</div>
               <div className="text-lg font-semibold">{minutesToLabel(hosQuery.data.clocks.window_remaining_min)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">30m break</div>
               <div className="text-lg font-semibold">{minutesToLabel(hosQuery.data.clocks.break_remaining_min)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">70hr cycle</div>
               <div className="text-lg font-semibold">{minutesToLabel(hosQuery.data.clocks.cycle_remaining_min)}</div>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">Status</div>
               <div className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusClass(hosQuery.data.clocks.status)}`}>
                 {hosQuery.data.clocks.status}
@@ -83,11 +83,11 @@ export function DriverHosDetailPage() {
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <h2 className="text-sm font-semibold text-gray-900">24-hour duty status timeline</h2>
             <div className="mt-2 space-y-1">
               {hosQuery.data.timeline_24h.map((event) => (
-                <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
+                <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
                   <span className="font-semibold">{event.duty_status}</span>
                   <span>{new Date(event.started_at).toLocaleString()} → {event.ended_at ? new Date(event.ended_at).toLocaleString() : "open"}</span>
                   <span className="text-gray-500">{event.location ?? "location n/a"}</span>
@@ -97,11 +97,11 @@ export function DriverHosDetailPage() {
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <h2 className="text-sm font-semibold text-gray-900">Last 8 days summary</h2>
             <div className="mt-2 space-y-1">
               {hosQuery.data.summary_8d.map((row) => (
-                <div key={`${row.service_day}-${row.duty_status}`} className="flex items-center justify-between rounded border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
+                <div key={`${row.service_day}-${row.duty_status}`} className="flex items-center justify-between rounded-sm border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
                   <span>{row.service_day} · {row.duty_status}</span>
                   <span>{minutesToLabel(Number(row.total_minutes ?? 0))}</span>
                 </div>
@@ -110,7 +110,7 @@ export function DriverHosDetailPage() {
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <h2 className="text-sm font-semibold text-gray-900">Manual edit audit</h2>
             <p className="mt-1 text-xs text-gray-600">
               Manual edits require supervisor sign-off. Current count: {hosQuery.data.manual_edits.count}
@@ -120,7 +120,7 @@ export function DriverHosDetailPage() {
             ) : (
               <div className="mt-2 space-y-1">
                 {hosQuery.data.manual_edits.events.map((event) => (
-                  <div key={event.id} className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                  <div key={event.id} className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                     {new Date(event.started_at).toLocaleString()} · {event.duty_status}
                   </div>
                 ))}

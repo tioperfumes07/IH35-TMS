@@ -147,7 +147,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   if (loadQ.isLoading) {
     return (
-      <div className="rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 animate-pulse" data-testid="drawer-fines-deductions-card">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 animate-pulse" data-testid="drawer-fines-deductions-card">
         Loading fines &amp; deductions…
       </div>
     );
@@ -155,7 +155,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   if (!loadQ.data) {
     return (
-      <div className="rounded border border-gray-200 p-4 text-sm text-gray-500" data-testid="drawer-fines-deductions-card">
+      <div className="rounded-sm border border-gray-200 p-4 text-sm text-gray-500" data-testid="drawer-fines-deductions-card">
         Load not found.
       </div>
     );
@@ -163,7 +163,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   if (!driverId) {
     return (
-      <div className="rounded border border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-600" data-testid="drawer-fines-deductions-card">
+      <div className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-600" data-testid="drawer-fines-deductions-card">
         Assign a driver to this load to view fines and settlement deductions.
       </div>
     );
@@ -171,7 +171,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   return (
     <div className="space-y-3" data-testid="drawer-fines-deductions-card">
-      <div className="rounded border border-slate-200 bg-slate-50 p-3">
+      <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Fines &amp; Deductions</h3>
         <p className="mt-1 text-xs text-slate-700">
           Fine auto-deduction policies apply per settlement (net-floor cap; over-cap rolls to next period). Confirm or defer
@@ -180,14 +180,14 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       </div>
 
       {/* Pending — confirm / defer per settlement */}
-      <section className="rounded border border-amber-200 bg-white p-3">
+      <section className="rounded-sm border border-amber-200 bg-white p-3">
         <h4 className="mb-2 text-xs font-semibold uppercase text-amber-800">Pending review (this load)</h4>
         {!canReviewEscrow && loadPendingRows.length > 0 ? (
           <p className="mb-2 text-xs text-amber-700">Owner approval required to confirm or defer escrow deductions.</p>
         ) : null}
         <div className="space-y-2">
           {loadPendingRows.map((row) => (
-            <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-amber-100 bg-amber-50 px-2 py-1.5 text-xs">
+            <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber-100 bg-amber-50 px-2 py-1.5 text-xs">
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-amber-900">{formatMoney(row.proposed_amount_cents)}</div>
                 <div className="truncate text-amber-800" title={row.proposed_reason}>
@@ -217,23 +217,23 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       </section>
 
       {/* Active fine policies */}
-      <section className="rounded border border-gray-200 bg-white p-3">
+      <section className="rounded-sm border border-gray-200 bg-white p-3">
         <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">Active fine deduction policies</h4>
         <div className="space-y-2">
           {activeFinePolicies.map((policy) => {
             const { owed, deducted, pct, remaining } = policyProgress(policy);
             return (
-              <div key={policy.id} className="rounded border border-gray-100 bg-gray-50 px-2 py-1.5 text-xs">
+              <div key={policy.id} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1.5 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-gray-900">{formatMoney(remaining)} remaining</span>
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-700">{policy.status}</span>
+                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-700">{policy.status}</span>
                 </div>
                 <div className="text-gray-600">
                   {formatMoney(deducted)} / {formatMoney(owed)} · max {formatMoney(policy.max_per_settlement_cents)} / settlement
                 </div>
                 {policy.memo ? <div className="text-gray-500">{policy.memo}</div> : null}
-                <div className="mt-1 h-1.5 rounded bg-gray-200">
-                  <div className="h-1.5 rounded bg-[#1F2A44]" style={{ width: `${pct}%` }} />
+                <div className="mt-1 h-1.5 rounded-sm bg-gray-200">
+                  <div className="h-1.5 rounded-sm bg-[#1F2A44]" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             );
@@ -244,7 +244,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
       {/* Current settlement fine lines */}
       {preSettlementQ.data?.settlement ? (
-        <section className="rounded border border-gray-200 bg-white p-3">
+        <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
             This settlement ({preSettlementQ.data.settlement.display_id ?? preSettlementQ.data.settlement.id.slice(0, 8)})
           </h4>
@@ -269,7 +269,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       ) : null}
 
       {/* History */}
-      <section className="rounded border border-gray-200 bg-white p-3">
+      <section className="rounded-sm border border-gray-200 bg-white p-3">
         <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">Deduction history</h4>
         <div className="space-y-1">
           {historyFinePolicies.map((policy) => {
@@ -300,7 +300,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       >
         {selectedPending ? (
           <div className="space-y-3 text-sm">
-            <div className="rounded border border-gray-200 bg-gray-50 p-3">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 p-3">
               <div>
                 <span className="font-semibold">Amount:</span> {formatMoney(selectedPending.proposed_amount_cents)}
               </div>
@@ -312,13 +312,13 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
             <label className="block text-xs font-semibold uppercase text-gray-600">
               Review notes
               <textarea
-                className="mt-1 min-h-24 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                className="mt-1 min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 value={reviewNotes}
                 onChange={(event) => setReviewNotes(event.target.value)}
                 placeholder="Required to defer (min 10 chars)…"
               />
             </label>
-            {actionError ? <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{actionError}</div> : null}
+            {actionError ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{actionError}</div> : null}
             <div className="flex justify-end gap-2">
               <Button
                 size="sm"
@@ -331,7 +331,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               </Button>
               <Button
                 size="sm"
-                className="!border-emerald-600 !bg-emerald-600 hover:!bg-emerald-700"
+                className="border-emerald-600! bg-emerald-600! hover:bg-emerald-700!"
                 loading={approveMutation.isPending}
                 onClick={() => void approveMutation.mutateAsync()}
               >

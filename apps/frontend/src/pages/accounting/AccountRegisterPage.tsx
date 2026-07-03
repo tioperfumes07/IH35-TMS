@@ -74,7 +74,7 @@ function applyPreset(preset: string): { from: string; to: string } | null {
 
 function kpiCard(label: string, value: string, sublabel: string) {
   return (
-    <div className="rounded border border-gray-200 bg-white px-3 py-2 border-l-4 border-l-slate-300">
+    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 border-l-4 border-l-slate-300">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className="text-lg font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
@@ -82,7 +82,7 @@ function kpiCard(label: string, value: string, sublabel: string) {
   );
 }
 
-const inputCls = "h-9 rounded border border-gray-300 px-2 text-[13px]";
+const inputCls = "h-9 rounded-sm border border-gray-300 px-2 text-[13px]";
 
 export function AccountRegisterPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -245,12 +245,12 @@ export function AccountRegisterPage() {
           <button
             type="button"
             onClick={() => setFilterOpen((o) => !o)}
-            className="h-9 rounded border border-gray-300 bg-white px-3 text-[13px] font-semibold text-gray-700 hover:bg-gray-50"
+            className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-semibold text-gray-700 hover:bg-gray-50"
           >
             Filter{activeChips.length ? ` (${activeChips.length})` : ""}
           </button>
           {filterOpen ? (
-            <div className="absolute left-0 top-10 z-20 w-72 rounded border border-gray-200 bg-white p-3 shadow-lg">
+            <div className="absolute left-0 top-10 z-20 w-72 rounded-sm border border-gray-200 bg-white p-3 shadow-lg">
               <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Transaction type
                 <SelectCombobox value={typeLabel} onChange={(e) => setTypeLabel(e.target.value)} className={inputCls}>
@@ -289,7 +289,7 @@ export function AccountRegisterPage() {
           type="button"
           onClick={exportCsv}
           disabled={!report || report.rows.length === 0}
-          className="h-9 rounded border border-gray-300 bg-white px-3 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+          className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40"
         >
           Export CSV
         </button>
@@ -327,13 +327,13 @@ export function AccountRegisterPage() {
       </div>
 
       {!accountId ? (
-        <p className="rounded border border-gray-200 bg-white px-3 py-6 text-center text-sm text-gray-500">
+        <p className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-center text-sm text-gray-500">
           Select an account to view its register.
         </p>
       ) : view === "register" && registerQuery.isError ? (
         /* CHAIN-02: a rejected register request (e.g. 400/404) must not leave the table silently blank —
            surface it so the user can correct the account or date range instead of seeing an empty grid. */
-        <p className="rounded border border-red-200 bg-red-50 px-3 py-6 text-center text-sm text-red-700">
+        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-6 text-center text-sm text-red-700">
           Couldn't load the register for this account and date range. Check the selected account and the
           From/To dates, then try again.
         </p>
@@ -342,10 +342,10 @@ export function AccountRegisterPage() {
         {/* C/R (cleared/reconciled) is a bank-reconciliation concept; the GL posting model carries no
             cleared state and no posting→bank_transaction link exists (verified). Show an honest banner
             instead of a fake checkmark — bank reconciliation surfaces it once that linkage is built. */}
-        <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-800">
+        <div className="mb-2 rounded-sm border border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-800">
           Reconciliation not yet available — the C/R column reflects GL postings, which carry no cleared/reconciled state yet.
         </div>
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-full text-left text-xs">
             <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
               <tr>
@@ -410,7 +410,7 @@ export function AccountRegisterPage() {
         </div>
         </>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-full text-left text-xs">
             <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
               <tr>

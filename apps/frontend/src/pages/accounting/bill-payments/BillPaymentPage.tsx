@@ -27,7 +27,7 @@ export function BillPaymentPage() {
         </div>
       }
     >
-      <SelectCombobox className="h-9 max-w-xl rounded border px-2 text-[13px]" value={selectedBillId} onChange={(e) => setSelectedBillId(e.target.value)}>
+      <SelectCombobox className="h-9 max-w-xl rounded-sm border px-2 text-[13px]" value={selectedBillId} onChange={(e) => setSelectedBillId(e.target.value)}>
         <option value="">Select bill</option>
         {(billsQuery.data?.rows ?? []).map((b) => <option key={b.id} value={b.id}>{b.bill_number || b.id}</option>)}
       </SelectCombobox>

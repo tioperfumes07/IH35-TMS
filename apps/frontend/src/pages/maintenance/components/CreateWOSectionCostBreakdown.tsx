@@ -28,18 +28,18 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
   );
 
   return (
-    <section className="rounded border border-slate-200 bg-slate-50 p-3">
+    <section className="rounded-sm border border-slate-200 bg-slate-50 p-3">
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">C. Cost Breakdown</h3>
       <div className="space-y-2">
         {fields.map((field, idx) => (
-          <div key={field.id} className="grid grid-cols-1 gap-2 rounded border border-slate-200 bg-white p-2 md:grid-cols-7">
-            <SelectCombobox {...register(`line_items.${idx}.line_type`)} className="h-8 rounded border border-gray-300 px-2 text-sm">
+          <div key={field.id} className="grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-white p-2 md:grid-cols-7">
+            <SelectCombobox {...register(`line_items.${idx}.line_type`)} className="h-8 rounded-sm border border-gray-300 px-2 text-sm">
               <option value="parts">Parts</option>
               <option value="labor">Labor</option>
               <option value="other">Other</option>
             </SelectCombobox>
-            <input {...register(`line_items.${idx}.description`)} placeholder="Description" className="h-8 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
-            <input type="number" step="0.01" {...register(`line_items.${idx}.quantity`, { valueAsNumber: true })} placeholder="Qty" className="h-8 rounded border border-gray-300 px-2 text-sm" />
+            <input {...register(`line_items.${idx}.description`)} placeholder="Description" className="h-8 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+            <input type="number" step="0.01" {...register(`line_items.${idx}.quantity`, { valueAsNumber: true })} placeholder="Qty" className="h-8 rounded-sm border border-gray-300 px-2 text-sm" />
             {/* M-1: dollars-mode via Controller; WO line unit_cost/amount = z.number() DOLLARS (work-orders.routes), byte-for-byte. */}
             <Controller control={control} name={`line_items.${idx}.unit_cost`} render={({ field }) => (
               <MoneyInput valueDollars={field.value ?? null} onChangeDollars={(d) => field.onChange(d ?? 0)} ariaLabel="Unit cost (USD)" className="w-full" />
@@ -69,12 +69,12 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
           + Create line
         </Button>
       </div>
-      <div className="mt-2 rounded border border-green-200 bg-green-50 px-2 py-1 text-xs">
+      <div className="mt-2 rounded-sm border border-green-200 bg-green-50 px-2 py-1 text-xs">
         Parts Subtotal: <span className="font-semibold">${totals.parts.toFixed(2)}</span> · Labor Subtotal:{" "}
         <span className="font-semibold">${totals.labor.toFixed(2)}</span> · Estimated Total:{" "}
         <span className="font-semibold">${totals.total.toFixed(2)}</span>
       </div>
-      <div className="mt-2 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+      <div className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
         On save: work order and accounting artifacts are created according to payment timing.
       </div>
     </section>

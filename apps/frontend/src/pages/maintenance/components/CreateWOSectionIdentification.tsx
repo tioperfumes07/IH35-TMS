@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
@@ -84,13 +85,13 @@ export function CreateWOSectionIdentification({
     .map((row) => ({ value: row.id, label: `${row.first_name} ${row.last_name}`.trim() || row.id }))
     .sort((a, b) => a.label.localeCompare(b.label));
   return (
-    <section className="rounded border border-gray-200 bg-white p-3">
+    <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
         <Field label="WO Number">
-          <input value="Auto on save" readOnly className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-sm" />
+          <input value="Auto on save" readOnly className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-sm" />
         </Field>
         <Field label="Date Opened *">
-          <input type="date" {...register("service_date")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input type="date" {...register("service_date")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </Field>
         <Field label="Unit *">
           {operatingCompanyId && setValue ? (
@@ -104,7 +105,7 @@ export function CreateWOSectionIdentification({
               />
             </>
           ) : (
-            <input {...register("unit_id", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("unit_id", { required: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           )}
         </Field>
         <Field label="Driver locked — assigned to this trip">
@@ -119,14 +120,14 @@ export function CreateWOSectionIdentification({
               />
             </>
           ) : (
-            <input {...register("driver_id", { required: requireDriverAndLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("driver_id", { required: requireDriverAndLoad })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           )}
         </Field>
         <Field label="Class (auto)">
-          <input {...register("class_hint")} readOnly className="h-8 w-full rounded border border-emerald-200 bg-emerald-50 px-2 text-sm font-semibold text-emerald-900" />
+          <input {...register("class_hint")} readOnly className="h-8 w-full rounded-sm border border-emerald-200 bg-emerald-50 px-2 text-sm font-semibold text-emerald-900" />
         </Field>
         <Field label="Load # auto — unit on active trip">
-          <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
       <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
@@ -204,7 +205,7 @@ export function CreateWOSectionIdentification({
                 </div>
                 <button
                   type="button"
-                  className="h-9 rounded border border-gray-300 px-2 text-xs"
+                  className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
                   onClick={() => setQuickCreateKind("vendor")}
                   aria-label="Quick create vendor"
                 >
@@ -213,11 +214,11 @@ export function CreateWOSectionIdentification({
               </div>
             </>
           ) : (
-            <input {...register("vendor_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("vendor_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           )}
         </Field>
         <Field label="Vendor RO / Invoice #">
-          <input {...register("vendor_invoice_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input {...register("vendor_invoice_number")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
 
@@ -255,7 +256,7 @@ export function CreateWOSectionIdentification({
                 </div>
                 <button
                   type="button"
-                  className="h-9 rounded border border-gray-300 px-2 text-xs"
+                  className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
                   onClick={() => setQuickCreateKind("customer")}
                   aria-label="Quick create customer"
                 >
@@ -264,40 +265,40 @@ export function CreateWOSectionIdentification({
               </div>
             </>
           ) : (
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-sm" disabled />
+            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" disabled />
           )}
         </Field>
       </div>
       {operatingCompanyId && setValue && getValues && (bucket === "external" || repairLocation === "external_shop") ? (
         <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
           <Field label="Shop name">
-            <input {...register("shop_name")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("shop_name")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
           <Field label="Shop phone">
-            <input {...register("shop_phone")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("shop_phone")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
           <Field label="Shop address">
-            <input {...register("shop_address")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("shop_address")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
         </div>
       ) : null}
       {bucket === "roadside" ? (
         <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
           <Field label="Roadside Callout At *">
-            <input type="datetime-local" {...register("roadside_callout_at")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input type="datetime-local" {...register("roadside_callout_at")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
           <Field label="Roadside Arrived At">
-            <input type="datetime-local" {...register("roadside_arrived_at")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input type="datetime-local" {...register("roadside_arrived_at")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
           <Field label="Roadside Provider Vendor ID *">
-            <input {...register("roadside_provider_vendor_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("roadside_provider_vendor_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
           <Field label="Breakdown Load ID *">
-            <input {...register("roadside_breakdown_load_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("roadside_breakdown_load_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
           <div className="md:col-span-4">
             <Field label="Roadside Location (min 10 chars) *">
-              <input {...register("roadside_location")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+              <input {...register("roadside_location")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
             </Field>
           </div>
         </div>
@@ -305,24 +306,24 @@ export function CreateWOSectionIdentification({
       {requireExternalFields ? (
         <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
           <Field label="External Vendor WO Number *">
-            <input {...register("external_vendor_wo_number", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("external_vendor_wo_number", { required: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
           <Field label="External Vendor Invoice Number *">
-            <input {...register("external_vendor_invoice_number", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("external_vendor_invoice_number", { required: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
         </div>
       ) : null}
       <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
         <div className="md:col-span-3">
           <Field label="Description">
-            <input {...register("description", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            <input {...register("description", { required: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </Field>
         </div>
       </div>
       {suggestedLoad ? (
-        <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+        <div className="mt-2 rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
           Suggested load: <span className="font-semibold">{suggestedLoad.load_number}</span>{" "}
-          <span className="rounded bg-emerald-100 px-1 py-0.5 uppercase">{suggestedLoad.confidence}</span>
+          <span className="rounded-sm bg-emerald-100 px-1 py-0.5 uppercase">{suggestedLoad.confidence}</span>
         </div>
       ) : null}
       {showExemptionReason ? (
@@ -331,7 +332,7 @@ export function CreateWOSectionIdentification({
             <textarea
               {...register("load_exemption_reason")}
               rows={2}
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               placeholder="historical_pre_launch_data ... (min 20 chars)"
             />
           </Field>

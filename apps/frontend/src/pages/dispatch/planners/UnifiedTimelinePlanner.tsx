@@ -77,7 +77,7 @@ function StatusPill({ status }: { status: "Available" | "On-load" | "On-leave" }
       : status === "On-load"
         ? "bg-slate-200 text-slate-800"
         : "bg-slate-100 text-slate-500";
-  return <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${cls}`}>{status}</span>;
+  return <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${cls}`}>{status}</span>;
 }
 
 export function UnifiedTimelinePlanner() {
@@ -142,7 +142,7 @@ export function UnifiedTimelinePlanner() {
 
   return (
     <div data-testid="dispatch-unified-timeline-page" className="space-y-2">
-      <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-max border-collapse text-[10px]">
           <thead>
             <tr>
@@ -213,7 +213,7 @@ export function UnifiedTimelinePlanner() {
                           type="button"
                           data-testid={`timeline-book-${driver.id}`}
                           onClick={() => openBookForUnit(driver.unit_id)}
-                          className="ml-2 rounded bg-[#1F2A44] px-1.5 py-0.5 text-[9px] font-semibold text-white"
+                          className="ml-2 rounded-sm bg-[#1F2A44] px-1.5 py-0.5 text-[9px] font-semibold text-white"
                         >
                           + Book
                         </button>

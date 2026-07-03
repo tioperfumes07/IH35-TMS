@@ -24,7 +24,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
           <div>
             <h2 className="text-base font-semibold text-gray-900">{detail.description}</h2>
@@ -46,7 +46,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
         </div>
 
         {detail.je_preview.purchase_je && (
-          <div className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             <p className="font-semibold mb-1">GL Posting Preview (GATED — flag OFF)</p>
             <p>Purchase JE: Dr Prepaid Asset {fmtCents(detail.total_amount_cents)} / Cr Cash {fmtCents(detail.total_amount_cents)}</p>
             {detail.je_preview.amortization_je_template && (
@@ -55,7 +55,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           </div>
         )}
 
-        <div className="overflow-y-auto flex-1 rounded border border-gray-200">
+        <div className="overflow-y-auto flex-1 rounded-sm border border-gray-200">
           <table className="min-w-full text-xs divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
@@ -73,8 +73,8 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
                   <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">{fmtCents(row.remaining_balance_cents)}</td>
                   <td className="px-3 py-1.5">
                     {row.posted
-                      ? <span className="inline-block rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-800">Posted</span>
-                      : <span className="inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">Pending</span>}
+                      ? <span className="inline-block rounded-sm bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-800">Posted</span>
+                      : <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">Pending</span>}
                   </td>
                   <td className="px-3 py-1.5 font-mono text-gray-400">
                     {row.posted_journal_entry_id ? row.posted_journal_entry_id.slice(0, 8) + "…" : "—"}
@@ -117,33 +117,33 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-base font-semibold text-gray-900">New Prepaid Expense</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
         </div>
-        {error && <p className="text-sm text-red-600 mb-3 rounded bg-red-50 px-3 py-2">{error}</p>}
+        {error && <p className="text-sm text-red-600 mb-3 rounded-sm bg-red-50 px-3 py-2">{error}</p>}
         <div className="space-y-3 text-sm">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Description *</label>
-            <input className="w-full rounded border border-gray-300 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
               value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="e.g. Annual insurance premium" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Asset Number</label>
-            <input className="w-full rounded border border-gray-300 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
               value={form.asset_number} onChange={(e) => setForm({ ...form, asset_number: e.target.value })} placeholder="Optional" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Purchase Date *</label>
-              <input type="date" className="w-full rounded border border-gray-300 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              <input type="date" className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                 value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Amortization Start *</label>
-              <input type="date" className="w-full rounded border border-gray-300 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              <input type="date" className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                 value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
             </div>
           </div>
@@ -159,20 +159,20 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Periods (months) *</label>
               <input type="number" min="1" max="360"
-                className="w-full rounded border border-gray-300 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                 value={form.periods} onChange={(e) => setForm({ ...form, periods: e.target.value })} />
             </div>
           </div>
           {(form.total_amount_dollars ?? 0) > 0 && Number(form.periods) > 0 && (
-            <p className="text-xs text-gray-500 rounded bg-gray-50 px-2 py-1">
+            <p className="text-xs text-gray-500 rounded-sm bg-gray-50 px-2 py-1">
               Monthly: {fmtCents(Math.floor((form.total_amount_dollars ?? 0) * 100 / Number(form.periods)))} (GL posting GATED — flag OFF)
             </p>
           )}
         </div>
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="rounded border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button onClick={onClose} className="rounded-sm border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
           <button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}
-            className="rounded bg-emerald-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+            className="rounded-sm bg-emerald-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
             {mutation.isPending ? "Creating…" : "Create"}
           </button>
         </div>
@@ -218,7 +218,7 @@ export function PrepaidExpensesPage() {
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="fully_amortized">Fully Amortized</option>
@@ -227,7 +227,7 @@ export function PrepaidExpensesPage() {
         <span className="text-xs text-gray-500">{total.toLocaleString()} asset{total !== 1 ? "s" : ""}</span>
         <div className="ml-auto">
           <button onClick={() => setShowCreate(true)}
-            className="rounded bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800">
+            className="rounded-sm bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800">
             + Create Prepaid
           </button>
         </div>
@@ -243,7 +243,7 @@ export function PrepaidExpensesPage() {
           <p className="text-xs text-gray-400 mt-1">Create a prepaid asset to track insurance, subscriptions, and other prepaid costs.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -266,7 +266,7 @@ export function PrepaidExpensesPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-gray-500">{fmtCents(row.total_amount_cents - row.amortized_cents)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-center text-gray-500">{row.pending_periods}</td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
+                    <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
                       {row.status.replace("_", " ")}
                     </span>
                   </td>
@@ -283,10 +283,10 @@ export function PrepaidExpensesPage() {
       {total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
           <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
         </div>
       )}
     </AccountingSubNavWrapper>

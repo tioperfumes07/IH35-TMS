@@ -95,7 +95,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
                 const nextCode = event.target.value.toUpperCase();
                 setForm((current) => ({ ...current, code: nextCode }));
               }}
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
               placeholder="EXAMPLE-CODE"
             />
             {fieldErrors.code ? <span className="text-xs text-red-600">{fieldErrors.code}</span> : null}
@@ -107,7 +107,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
             <input
               value={form.display_name}
               onChange={(event) => setForm((current) => ({ ...current, display_name: event.target.value }))}
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
               placeholder="Display name"
             />
             {fieldErrors.display_name ? <span className="text-xs text-red-600">{fieldErrors.display_name}</span> : null}
@@ -119,7 +119,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
               value={form.description}
               onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
               rows={3}
-              className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               placeholder="Optional description"
             />
           </label>
@@ -130,7 +130,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
               type="number"
               value={form.sort_order}
               onChange={(event) => setForm((current) => ({ ...current, sort_order: event.target.value }))}
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
             />
             {fieldErrors.sort_order ? <span className="text-xs text-red-600">{fieldErrors.sort_order}</span> : null}
           </label>
@@ -143,7 +143,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
           ) : null}
         </div>
 
-        {submitError ? <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{submitError}</div> : null}
+        {submitError ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{submitError}</div> : null}
 
         <div className="flex items-center justify-between gap-2">
           <div>

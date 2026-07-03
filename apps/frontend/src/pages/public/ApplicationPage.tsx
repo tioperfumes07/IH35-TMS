@@ -72,7 +72,7 @@ export function ApplicationPage() {
 
   if (portalError || !portalQ.data) {
     return (
-      <div className="mx-auto max-w-lg rounded border border-red-200 bg-red-50 p-6 text-sm text-red-800" data-testid="application-page">
+      <div className="mx-auto max-w-lg rounded-sm border border-red-200 bg-red-50 p-6 text-sm text-red-800" data-testid="application-page">
         Application link is invalid or expired.
       </div>
     );
@@ -80,7 +80,7 @@ export function ApplicationPage() {
 
   if (submitted) {
     return (
-      <div className="mx-auto max-w-lg space-y-3 rounded border bg-white p-6 shadow-sm" data-testid="application-page">
+      <div className="mx-auto max-w-lg space-y-3 rounded-sm border bg-white p-6 shadow-xs" data-testid="application-page">
         <h1 className="text-xl font-semibold text-gray-900">Application received</h1>
         <p className="text-sm text-gray-600">
           Thank you for applying to {portalQ.data.company_name}. Our recruiting team will review your submission.
@@ -90,13 +90,13 @@ export function ApplicationPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 rounded border bg-white p-6 shadow-sm" data-testid="application-page">
+    <div className="mx-auto max-w-lg space-y-4 rounded-sm border bg-white p-6 shadow-xs" data-testid="application-page">
       <header className="space-y-1">
         <h1 className="text-xl font-semibold text-gray-900">Driver application</h1>
         <p className="text-sm text-gray-600">{portalQ.data.company_name}</p>
       </header>
 
-      <p className="rounded bg-amber-50 p-3 text-xs text-amber-900" data-testid="application-fcra-notice">
+      <p className="rounded-sm bg-amber-50 p-3 text-xs text-amber-900" data-testid="application-fcra-notice">
         {portalQ.data.compliance.fcra_notice} Applicants must be at least {portalQ.data.compliance.minimum_age} years old for
         interstate CDL operations.
       </p>
@@ -115,7 +115,7 @@ export function ApplicationPage() {
         <label className="grid gap-1 text-sm">
           <span>First name</span>
           <input
-            className="rounded border px-3 py-2"
+            className="rounded-sm border px-3 py-2"
             data-testid="application-first-name"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
@@ -125,7 +125,7 @@ export function ApplicationPage() {
         <label className="grid gap-1 text-sm">
           <span>Last name</span>
           <input
-            className="rounded border px-3 py-2"
+            className="rounded-sm border px-3 py-2"
             data-testid="application-last-name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
@@ -135,7 +135,7 @@ export function ApplicationPage() {
         <label className="grid gap-1 text-sm">
           <span>Phone</span>
           <input
-            className="rounded border px-3 py-2"
+            className="rounded-sm border px-3 py-2"
             data-testid="application-phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -146,7 +146,7 @@ export function ApplicationPage() {
           <span>Email (optional)</span>
           <input
             type="email"
-            className="rounded border px-3 py-2"
+            className="rounded-sm border px-3 py-2"
             data-testid="application-email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -156,7 +156,7 @@ export function ApplicationPage() {
           <span>Date of birth</span>
           <input
             type="date"
-            className="rounded border px-3 py-2"
+            className="rounded-sm border px-3 py-2"
             data-testid="application-dob"
             value={dateOfBirth}
             onChange={(e) => setDateOfBirth(e.target.value)}
@@ -166,12 +166,12 @@ export function ApplicationPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm">
             <span>CDL number (optional)</span>
-            <input className="rounded border px-3 py-2" value={cdlNumber} onChange={(e) => setCdlNumber(e.target.value)} />
+            <input className="rounded-sm border px-3 py-2" value={cdlNumber} onChange={(e) => setCdlNumber(e.target.value)} />
           </label>
           <label className="grid gap-1 text-sm">
             <span>CDL state</span>
             <input
-              className="rounded border px-3 py-2 uppercase"
+              className="rounded-sm border px-3 py-2 uppercase"
               maxLength={2}
               value={cdlState}
               onChange={(e) => setCdlState(e.target.value)}
@@ -184,7 +184,7 @@ export function ApplicationPage() {
             type="number"
             min={0}
             max={60}
-            className="rounded border px-3 py-2"
+            className="rounded-sm border px-3 py-2"
             value={yearsExperience}
             onChange={(e) => setYearsExperience(e.target.value)}
           />

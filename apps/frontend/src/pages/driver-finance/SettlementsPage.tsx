@@ -124,7 +124,7 @@ export function SettlementsPage() {
         <KpiCard label="Held Deductions" value={kpis.held_deductions} />
         <KpiCard label="YTD Settlements" value={kpis.ytd_settlements} />
       </div>
-      <div className="rounded border border-gray-200 bg-white p-2">
+      <div className="rounded-sm border border-gray-200 bg-white p-2">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Pipeline</p>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -184,7 +184,7 @@ function setFilter(
 
 function KpiCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+    <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
       <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="font-semibold">{value}</div>
     </div>

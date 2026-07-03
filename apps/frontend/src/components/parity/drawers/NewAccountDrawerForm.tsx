@@ -185,7 +185,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Account name *</span>
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="e.g. BOA-CHECKING-1135"
@@ -196,7 +196,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Account number</span>
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               value={form.accountNumber}
               onChange={(e) => set("accountNumber", e.target.value)}
               placeholder="e.g. 1000"
@@ -206,7 +206,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Account type *</span>
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               value={form.accountType}
               onChange={(e) => set("accountType", e.target.value)}
             >
@@ -225,7 +225,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Detail type *</span>
               <select
-                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
                 value={form.detailType}
                 onChange={(e) => set("detailType", e.target.value)}
               >
@@ -242,7 +242,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
               type="checkbox"
               checked={form.isSubaccount}
               onChange={(e) => set("isSubaccount", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded-sm border-gray-300"
             />
             Make this a sub-account
           </label>
@@ -251,7 +251,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Parent account *</span>
               <input
-                className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
                 value={form.parentAccount}
                 onChange={(e) => set("parentAccount", e.target.value)}
                 placeholder="Parent account name"
@@ -262,7 +262,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <label className="block">
             <span className="text-xs font-medium text-gray-700">Description</span>
             <textarea
-              className="mt-1 w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-none"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               rows={2}
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
@@ -274,7 +274,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
               type="checkbox"
               checked={form.billableExpenses}
               onChange={(e) => set("billableExpenses", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded-sm border-gray-300"
             />
             Use for billable expenses
           </label>
@@ -285,7 +285,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
               type="checkbox"
               checked={form.lockAccount}
               onChange={(e) => set("lockAccount", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded-sm border-gray-300"
             />
             Lock account (restrict posting)
           </label>
@@ -294,7 +294,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
         {/* RIGHT COLUMN — live BS/P&L preview */}
         <div className="flex flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Where this account lands</p>
-          <div className="min-h-[120px] rounded border border-dashed border-gray-200 bg-gray-50 p-3">
+          <div className="min-h-[120px] rounded-sm border border-dashed border-gray-200 bg-gray-50 p-3">
             {form.accountType ? (
               <div className="text-xs text-gray-700">
                 <p className="font-medium text-gray-900">{form.accountType}</p>
@@ -302,7 +302,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
                   <p className="mt-0.5 text-gray-500">Sub-type: {form.detailType}</p>
                 )}
                 {bsPlSection && (
-                  <p className="mt-2 rounded bg-slate-100 px-2 py-1.5 text-slate-700">
+                  <p className="mt-2 rounded-sm bg-slate-100 px-2 py-1.5 text-slate-700">
                     {bsPlSection}
                   </p>
                 )}
@@ -317,7 +317,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             )}
           </div>
           {ACCOUNT_CREATE_GATED && (
-            <div className="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <div className="mt-2 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
               <span className="font-semibold">Account creation gated.</span> The form is ready but the submit is disabled pending financial-cluster approval. Contact Jorge to enable.
             </div>
           )}
@@ -329,14 +329,14 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
         <button
           type="button"
           onClick={onClose}
-          className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={saving || ACCOUNT_CREATE_GATED}
-          className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 hover:bg-emerald-700"
+          className="rounded-sm bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 hover:bg-emerald-700"
           title={ACCOUNT_CREATE_GATED ? "Account create awaiting financial approval" : undefined}
         >
           {saving ? "Saving…" : ACCOUNT_CREATE_GATED ? "Awaiting approval" : "Save"}

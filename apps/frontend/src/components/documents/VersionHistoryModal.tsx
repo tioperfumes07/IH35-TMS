@@ -92,7 +92,7 @@ export function VersionHistoryModal({
 
           <div className="space-y-2">
             {versions.map((version) => (
-              <div key={version.id} className="rounded border border-gray-200 bg-white p-2">
+              <div key={version.id} className="rounded-sm border border-gray-200 bg-white p-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-semibold text-gray-900">
                     v{version.version_number} - {version.original_filename}

@@ -158,7 +158,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="training-programs-page">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-sm font-semibold text-slate-800">Training Programs</div>
           <div className="text-[11px] text-slate-500">Define required programs and assign drivers to completion tracking.</div>
@@ -194,7 +194,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
               data-testid="training-program-name"
               required
             />
@@ -204,7 +204,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value as TrainingProgramCategory)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
               data-testid="training-program-category"
             >
               <option value="entry_level">Entry level</option>
@@ -219,7 +219,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             <select
               value={frequency}
               onChange={(event) => setFrequency(event.target.value as TrainingProgramFrequency)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
               data-testid="training-program-frequency"
             >
               <option value="one_time">One time</option>
@@ -236,7 +236,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
                 max={60}
                 value={recertifyMonths}
                 onChange={(event) => setRecertifyMonths(event.target.value)}
-                className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
                 data-testid="training-program-months"
               />
             </label>
@@ -246,7 +246,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             <input
               value={passingGrade}
               onChange={(event) => setPassingGrade(event.target.value)}
-              className="mt-1 block h-8 w-full rounded border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
               data-testid="training-program-passing-grade"
             />
           </label>
@@ -273,7 +273,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
           <div className="text-xs text-slate-600">
             Program: <span className="font-semibold text-slate-800">{selectedProgram?.name ?? "—"}</span>
           </div>
-          <div className="max-h-48 space-y-1 overflow-y-auto rounded border border-gray-200 p-2">
+          <div className="max-h-48 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
             {(driversQuery.data?.drivers ?? []).map((driver) => (
               <label key={driver.id} className="flex items-center gap-2 text-xs text-slate-700">
                 <input

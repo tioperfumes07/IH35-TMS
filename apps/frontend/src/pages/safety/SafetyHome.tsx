@@ -100,7 +100,7 @@ export function SafetyHomePage() {
     <div className="space-y-3">
       <PageHeader title="Safety" subtitle="Driver events, training, accidents, CSA" />
 
-      <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
+      <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
           {safetyTabs.map((item) => (
             <button
@@ -135,7 +135,7 @@ export function SafetyHomePage() {
         <ComplaintsPage operatingCompanyId={companyId} role={auth.user?.role} />
       ) : (
         tab === "HOS Violations" || tab === "Vehicle Inspections" || tab === "Liabilities" || tab === "Integrity Alerts" || tab === "Settings" ? (
-          <div className="rounded border border-gray-200 bg-white px-3 py-8 text-center text-sm text-gray-500">This tab is available in v5 shell and will be expanded with dedicated workflows.</div>
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-8 text-center text-sm text-gray-500">This tab is available in v5 shell and will be expanded with dedicated workflows.</div>
         ) : (
           <SafetyEventsTable
             rows={eventRows}

@@ -157,63 +157,63 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         <div className="flex flex-wrap gap-2 text-xs">
           {STEPS.map((s, i) => (
             <button key={s} onClick={() => setStepIdx(i)}
-              className={`rounded px-2 py-1 ${i === stepIdx ? "bg-[#1f2a44] text-white" : "bg-slate-100 text-slate-600"}`}>
+              className={`rounded-sm px-2 py-1 ${i === stepIdx ? "bg-[#1f2a44] text-white" : "bg-slate-100 text-slate-600"}`}>
               {i + 1}. {s}
             </button>
           ))}
         </div>
 
-        {ensureQuery.isError && <p className="text-sm text-[#dc2626]">Could not load the lease-to-own template (is the feature flag on?).</p>}
+        {ensureQuery.isError && <p className="text-sm text-crit">Could not load the lease-to-own template (is the feature flag on?).</p>}
 
         {/* Step 1 — Parties & Terms */}
         {stepIdx === 0 && (
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="md:col-span-2 rounded bg-slate-50 p-2 text-sm">
+            <div className="md:col-span-2 rounded-sm bg-slate-50 p-2 text-sm">
               <strong>Seller:</strong> {seller ? seller.legal_name : "loading…"} <span className="text-slate-500">(equipment owner — TRK default)</span>
             </div>
             <label className="flex flex-col gap-1 text-sm">Seller signer
-              <input className="rounded border px-2 py-1" value={sellerSigner.signer_name} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_name: e.target.value })} />
+              <input className="rounded-sm border px-2 py-1" value={sellerSigner.signer_name} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_name: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Seller signer title
-              <input className="rounded border px-2 py-1" value={sellerSigner.signer_title} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_title: e.target.value })} />
+              <input className="rounded-sm border px-2 py-1" value={sellerSigner.signer_title} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_title: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Truck-owner to lease from
-              <select className="rounded border px-2 py-1" value={ownerCompanyId} onChange={(e) => setOwnerCompanyId(e.target.value)}>
+              <select className="rounded-sm border px-2 py-1" value={ownerCompanyId} onChange={(e) => setOwnerCompanyId(e.target.value)}>
                 {ownerOptions.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
               </select>
             </label>
             <label className="flex flex-col gap-1 text-sm">Lessee (Buyer) legal name
-              <input className="rounded border px-2 py-1" value={lessee.name} onChange={(e) => setLessee({ ...lessee, name: e.target.value })} placeholder="Acme Transportation, Inc." />
+              <input className="rounded-sm border px-2 py-1" value={lessee.name} onChange={(e) => setLessee({ ...lessee, name: e.target.value })} placeholder="Acme Transportation, Inc." />
             </label>
             <label className="flex flex-col gap-1 text-sm">Lessee entity type
-              <input className="rounded border px-2 py-1" value={lessee.entity_type} onChange={(e) => setLessee({ ...lessee, entity_type: e.target.value })} placeholder="Inc. / LLC" />
+              <input className="rounded-sm border px-2 py-1" value={lessee.entity_type} onChange={(e) => setLessee({ ...lessee, entity_type: e.target.value })} placeholder="Inc. / LLC" />
             </label>
             <label className="flex flex-col gap-1 text-sm">Lessee signer
-              <input className="rounded border px-2 py-1" value={lessee.signer} onChange={(e) => setLessee({ ...lessee, signer: e.target.value })} />
+              <input className="rounded-sm border px-2 py-1" value={lessee.signer} onChange={(e) => setLessee({ ...lessee, signer: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Lessee signer title
-              <input className="rounded border px-2 py-1" value={lessee.title} onChange={(e) => setLessee({ ...lessee, title: e.target.value })} placeholder="President" />
+              <input className="rounded-sm border px-2 py-1" value={lessee.title} onChange={(e) => setLessee({ ...lessee, title: e.target.value })} placeholder="President" />
             </label>
             <label className="flex flex-col gap-1 text-sm md:col-span-2">Lessee address
-              <input className="rounded border px-2 py-1" value={lessee.address} onChange={(e) => setLessee({ ...lessee, address: e.target.value })} />
+              <input className="rounded-sm border px-2 py-1" value={lessee.address} onChange={(e) => setLessee({ ...lessee, address: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Lease term (months)
-              <input type="number" className="rounded border px-2 py-1" value={terms.term_months} onChange={(e) => setTerms({ ...terms, term_months: e.target.value })} />
+              <input type="number" className="rounded-sm border px-2 py-1" value={terms.term_months} onChange={(e) => setTerms({ ...terms, term_months: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Use charge (%)
-              <input type="number" className="rounded border px-2 py-1" value={terms.use_charge_pct} onChange={(e) => setTerms({ ...terms, use_charge_pct: e.target.value })} />
+              <input type="number" className="rounded-sm border px-2 py-1" value={terms.use_charge_pct} onChange={(e) => setTerms({ ...terms, use_charge_pct: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Governing law
-              <input className="rounded border px-2 py-1" value={terms.governing_law} onChange={(e) => setTerms({ ...terms, governing_law: e.target.value })} />
+              <input className="rounded-sm border px-2 py-1" value={terms.governing_law} onChange={(e) => setTerms({ ...terms, governing_law: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Venue county
-              <input className="rounded border px-2 py-1" value={terms.venue_county} onChange={(e) => setTerms({ ...terms, venue_county: e.target.value })} />
+              <input className="rounded-sm border px-2 py-1" value={terms.venue_county} onChange={(e) => setTerms({ ...terms, venue_county: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Execution date
-              <input type="date" className="rounded border px-2 py-1" value={terms.execution_date} onChange={(e) => setTerms({ ...terms, execution_date: e.target.value })} />
+              <input type="date" className="rounded-sm border px-2 py-1" value={terms.execution_date} onChange={(e) => setTerms({ ...terms, execution_date: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Reference # (optional)
-              <input className="rounded border px-2 py-1" value={terms.reference_no} onChange={(e) => setTerms({ ...terms, reference_no: e.target.value })} />
+              <input className="rounded-sm border px-2 py-1" value={terms.reference_no} onChange={(e) => setTerms({ ...terms, reference_no: e.target.value })} />
             </label>
           </div>
         )}
@@ -221,9 +221,9 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {/* Step 2 — Vehicles */}
         {stepIdx === 1 && (
           <div className="space-y-2">
-            <input className="w-full rounded border px-2 py-1 text-sm" placeholder="Search unit #, VIN, make, model…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input className="w-full rounded-sm border px-2 py-1 text-sm" placeholder="Search unit #, VIN, make, model…" value={search} onChange={(e) => setSearch(e.target.value)} />
             <p className="text-xs text-slate-500">{selectedList.length} selected · {filteredUnits.length} shown</p>
-            <div className="max-h-72 overflow-x-auto overflow-y-auto rounded border">
+            <div className="max-h-72 overflow-x-auto overflow-y-auto rounded-sm border">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50"><tr><th className="p-1"></th><th className="p-1 text-left">Unit</th><th className="p-1 text-left">VIN</th><th className="p-1 text-left">Make/Model/Yr</th><th className="p-1 text-left">Owner</th><th className="p-1 text-left">Status</th></tr></thead>
                 <tbody>
@@ -233,7 +233,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
                       <td className="p-1">{u.unit_number}</td>
                       <td className="p-1 font-mono text-xs">{u.vin}</td>
                       <td className="p-1">{[u.make, u.model, u.year].filter(Boolean).join(" ")}</td>
-                      <td className="p-1"><span className="rounded bg-slate-100 px-1 text-xs">{u.owner_label ?? "—"}</span></td>
+                      <td className="p-1"><span className="rounded-sm bg-slate-100 px-1 text-xs">{u.owner_label ?? "—"}</span></td>
                       <td className="p-1 text-xs">{u.status}</td>
                     </tr>
                   ))}
@@ -246,17 +246,17 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
 
         {/* Step 3 — Per-truck terms */}
         {stepIdx === 2 && (
-          <div className="max-h-80 overflow-x-auto overflow-y-auto rounded border">
+          <div className="max-h-80 overflow-x-auto overflow-y-auto rounded-sm border">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50"><tr><th className="p-1 text-left">Unit</th><th className="p-1 text-left">Lienholder</th><th className="p-1 text-left">Balance owed</th><th className="p-1 text-left">Monthly lease</th><th className="p-1 text-left">Due date</th></tr></thead>
               <tbody>
                 {selectedList.map(({ unit, terms: t }) => (
                   <tr key={unit.id} className="border-t">
                     <td className="p-1">{unit.unit_number} <span className="text-xs text-slate-500">{[unit.make, unit.model, unit.year].filter(Boolean).join(" ")}</span></td>
-                    <td className="p-1"><input className="w-28 rounded border px-1" value={t.lienholder} onChange={(e) => setTruckTerm(unit.id, "lienholder", e.target.value)} /></td>
+                    <td className="p-1"><input className="w-28 rounded-sm border px-1" value={t.lienholder} onChange={(e) => setTruckTerm(unit.id, "lienholder", e.target.value)} /></td>
                     <td className="p-1"><MoneyInput className="w-28" valueDollars={t.balance_owed ? Number(t.balance_owed) : null} onChangeDollars={(d) => setTruckTerm(unit.id, "balance_owed", d == null ? "" : String(d))} ariaLabel="Balance owed (USD)" /></td>
                     <td className="p-1"><MoneyInput className="w-28" valueDollars={t.monthly_lease_amount ? Number(t.monthly_lease_amount) : null} onChangeDollars={(d) => setTruckTerm(unit.id, "monthly_lease_amount", d == null ? "" : String(d))} ariaLabel="Monthly lease (USD)" /></td>
-                    <td className="p-1"><input className="w-24 rounded border px-1" value={t.payment_due_date} onChange={(e) => setTruckTerm(unit.id, "payment_due_date", e.target.value)} placeholder="1st" /></td>
+                    <td className="p-1"><input className="w-24 rounded-sm border px-1" value={t.payment_due_date} onChange={(e) => setTruckTerm(unit.id, "payment_due_date", e.target.value)} placeholder="1st" /></td>
                   </tr>
                 ))}
                 {selectedList.length === 0 && <tr><td colSpan={5} className="p-3 text-center text-sm text-slate-500">Select vehicles in step 2 first.</td></tr>}
@@ -268,8 +268,8 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {/* Step 4 — Preview & Save */}
         {stepIdx === 3 && (
           <div className="space-y-2">
-            {!canSave && <p className="text-xs text-[#dc2626]">Need a lessee name and at least one vehicle to save.</p>}
-            <div className="max-h-96 overflow-auto rounded border bg-white p-4 text-sm" dangerouslySetInnerHTML={{ __html: previewHtml || "<p>Loading preview…</p>" }} />
+            {!canSave && <p className="text-xs text-crit">Need a lessee name and at least one vehicle to save.</p>}
+            <div className="max-h-96 overflow-auto rounded-sm border bg-white p-4 text-sm" dangerouslySetInnerHTML={{ __html: previewHtml || "<p>Loading preview…</p>" }} />
           </div>
         )}
 

@@ -36,7 +36,7 @@ function LogTable({ entries }: { entries: CustomerNotifyLogEntry[] }) {
     return <p className="text-sm text-slate-600">No delivery confirmations logged yet.</p>;
   }
   return (
-    <div className="overflow-x-auto rounded border">
+    <div className="overflow-x-auto rounded-sm border">
       <table className="min-w-full text-sm">
         <thead className="bg-slate-50 text-left">
           <tr>
@@ -120,7 +120,7 @@ export function NotifyPreferencesPage() {
         <label className="text-sm">
           Customer
           <select
-            className="ml-2 rounded border px-2 py-1"
+            className="ml-2 rounded-sm border px-2 py-1"
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value)}
             data-testid="notify-customer-select"
@@ -135,7 +135,7 @@ export function NotifyPreferencesPage() {
         </label>
         <button
           type="button"
-          className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
           disabled={!companyId || syncM.isPending}
           onClick={() => syncM.mutate()}
           data-testid="notify-sync-button"
@@ -146,7 +146,7 @@ export function NotifyPreferencesPage() {
 
       {customerId && prefs ? (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded border p-4" data-testid="notify-preferences-panel">
+          <div className="rounded-sm border p-4" data-testid="notify-preferences-panel">
             <h2 className="mb-3 font-semibold">Notify preferences</h2>
             <div className="space-y-2">
               <PrefToggle label="Opt in to customer ETA alerts" checked={prefs.opt_in} onChange={(v) => saveM.mutate({ opt_in: v })} />
@@ -158,7 +158,7 @@ export function NotifyPreferencesPage() {
               <PrefToggle label="Delayed" checked={prefs.notify_on_delayed} disabled={!prefs.opt_in} onChange={(v) => saveM.mutate({ notify_on_delayed: v })} />
             </div>
           </div>
-          <div className="rounded border p-4 text-sm text-slate-600">
+          <div className="rounded-sm border p-4 text-sm text-slate-600">
             <p>Milestone events trigger template-based SMS (Twilio) and email (Resend) when opted in.</p>
             <p className="mt-2">Portal milestone templates are the starting point; near-arrival and delayed use dedicated templates.</p>
           </div>

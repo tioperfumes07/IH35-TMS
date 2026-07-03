@@ -40,7 +40,7 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
     <Modal open={open} onClose={onClose} title="Upload Loves Prices">
       <div className="space-y-3 text-xs">
         <label
-          className="block rounded border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center text-gray-600"
+          className="block rounded-sm border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center text-gray-600"
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => {
             event.preventDefault();
@@ -59,7 +59,7 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
           />
           Drag & drop .xlsx or click to pick file
         </label>
-        <div className="rounded border border-gray-200 bg-white px-2 py-1">
+        <div className="rounded-sm border border-gray-200 bg-white px-2 py-1">
           Selected: <span className="font-semibold">{file?.name ?? "none"}</span>
         </div>
         <div className="flex gap-2">

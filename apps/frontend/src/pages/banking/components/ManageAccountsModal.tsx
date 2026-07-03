@@ -58,7 +58,7 @@ export function ManageAccountsModal({ open, operatingCompanyId, accounts, onClos
       <DndContext onDragEnd={onDragEnd}>
         <div className="space-y-2 text-xs">
           {rows.map((row, idx) => (
-            <div key={row.id} id={row.id} className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] items-center gap-2 rounded border border-gray-200 px-2 py-1">
+            <div key={row.id} id={row.id} className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] items-center gap-2 rounded-sm border border-gray-200 px-2 py-1">
               <span className="cursor-grab text-gray-500">⋮⋮</span>
               <div>
                 <div className="font-semibold">{row.display_name}</div>
@@ -75,7 +75,7 @@ export function ManageAccountsModal({ open, operatingCompanyId, accounts, onClos
                 visible
               </label>
               <SelectCombobox
-                className="h-7 rounded border border-gray-300 px-1"
+                className="h-7 rounded-sm border border-gray-300 px-1"
                 value={String(byId.get(row.id)?.tag ?? "")}
                 onChange={(event) =>
                   setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, tag: event.target.value } : item)))

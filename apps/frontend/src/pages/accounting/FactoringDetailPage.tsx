@@ -25,7 +25,7 @@ function money(cents: number) {
 }
 
 function statusPill(status: FactoringAdvanceDetail["status"]) {
-  const base = "rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+  const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
   if (status === "reserve_held" || status === "collected") return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
   if (status === "released") return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
@@ -242,20 +242,20 @@ export function FactoringDetailPage() {
           {action === "advance" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Advanced at</span>
-              <input type="datetime-local" className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={advancedAt} onChange={(event) => setAdvancedAt(event.target.value)} />
+              <input type="datetime-local" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={advancedAt} onChange={(event) => setAdvancedAt(event.target.value)} />
             </label>
           ) : null}
           {action === "reserve_held" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Collected at</span>
-              <input type="datetime-local" className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={collectedAt} onChange={(event) => setCollectedAt(event.target.value)} />
+              <input type="datetime-local" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={collectedAt} onChange={(event) => setCollectedAt(event.target.value)} />
             </label>
           ) : null}
           {action === "release" ? (
             <>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-semibold text-gray-600">Released at</span>
-                <input type="datetime-local" className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={releasedAt} onChange={(event) => setReleasedAt(event.target.value)} />
+                <input type="datetime-local" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={releasedAt} onChange={(event) => setReleasedAt(event.target.value)} />
               </label>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-semibold text-gray-600">Factor fee (USD)</span>
@@ -272,20 +272,20 @@ export function FactoringDetailPage() {
           {action === "recourse" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Recourse reason</span>
-              <textarea className="min-h-[80px] rounded border border-gray-300 p-2 text-[13px]" value={recourseReason} onChange={(event) => setRecourseReason(event.target.value)} />
+              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-[13px]" value={recourseReason} onChange={(event) => setRecourseReason(event.target.value)} />
             </label>
           ) : null}
           {action === "void" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Void reason</span>
-              <textarea className="min-h-[80px] rounded border border-gray-300 p-2 text-[13px]" value={voidReason} onChange={(event) => setVoidReason(event.target.value)} />
+              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-[13px]" value={voidReason} onChange={(event) => setVoidReason(event.target.value)} />
             </label>
           ) : null}
 
           {action && action !== "recourse" && action !== "void" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Notes</span>
-              <textarea className="min-h-[80px] rounded border border-gray-300 p-2 text-[13px]" value={notes} onChange={(event) => setNotes(event.target.value)} />
+              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-[13px]" value={notes} onChange={(event) => setNotes(event.target.value)} />
             </label>
           ) : null}
 

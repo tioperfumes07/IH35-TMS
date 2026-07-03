@@ -12,10 +12,10 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
   const active = roadside.filter((wo) => wo.status !== "complete");
 
   return (
-    <section className="overflow-hidden rounded border border-gray-200 bg-white">
+    <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
       <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
         <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Road Service Active</span>
-        <span className="rounded bg-white px-1.5 text-[10px] font-bold text-gray-600">{active.length}</span>
+        <span className="rounded-sm bg-white px-1.5 text-[10px] font-bold text-gray-600">{active.length}</span>
       </div>
       {active.length === 0 ? (
         <div className="px-2 py-1.5 text-[11px] text-gray-400">No active road service</div>

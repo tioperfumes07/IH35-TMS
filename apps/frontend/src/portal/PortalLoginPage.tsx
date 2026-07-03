@@ -33,14 +33,14 @@ export function PortalLoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <form onSubmit={onSubmit} className="w-full max-w-md rounded border border-slate-200 bg-white p-6 shadow-sm">
+      <form onSubmit={onSubmit} className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-xs">
         <h1 className="text-xl font-semibold text-slate-900">Shipper portal sign in</h1>
         <p className="mt-1 text-sm text-slate-600">Track your loads in real time.</p>
         <label className="mt-4 block text-sm">
           <span className="font-medium text-slate-700">Email</span>
           <input
             type="email"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-sm border border-slate-300 px-3 py-2"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -50,7 +50,7 @@ export function PortalLoginPage() {
           <span className="font-medium text-slate-700">Password</span>
           <input
             type="password"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-sm border border-slate-300 px-3 py-2"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

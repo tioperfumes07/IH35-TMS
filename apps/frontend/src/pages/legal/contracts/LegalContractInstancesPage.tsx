@@ -26,11 +26,11 @@ const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string 
 ];
 
 function statusClass(status: LegalContractStatus) {
-  if (status === "signed_electronically") return "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
-  if (status === "sent" || status === "viewed") return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  if (status === "expired") return "rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
-  if (status === "voided") return "rounded bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  return "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+  if (status === "signed_electronically") return "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
+  if (status === "sent" || status === "viewed") return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+  if (status === "expired") return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+  if (status === "voided") return "rounded-sm bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+  return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 export function LegalContractInstancesPage() {
@@ -166,18 +166,18 @@ export function LegalContractInstancesPage() {
 
       <LegalModuleTabs activeTabId="contracts" />
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="h-9 rounded border border-gray-300 px-2 text-sm xl:col-span-2"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-sm xl:col-span-2"
             placeholder="Search signer or template code"
           />
           <SelectCombobox
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as "all" | LegalContractStatus)}
-            className="h-9 rounded border border-gray-300 px-2 text-sm"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
           >
             {STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -188,7 +188,7 @@ export function LegalContractInstancesPage() {
           <SelectCombobox
             value={templateFilter}
             onChange={(event) => setTemplateFilter(event.target.value)}
-            className="h-9 rounded border border-gray-300 px-2 text-sm"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
           >
             <option value="">All templates</option>
             {templateOptions.map((code) => (
@@ -200,7 +200,7 @@ export function LegalContractInstancesPage() {
           <SelectCombobox
             value={signerTypeFilter}
             onChange={(event) => setSignerTypeFilter(event.target.value)}
-            className="h-9 rounded border border-gray-300 px-2 text-sm"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
           >
             <option value="all">All signer types</option>
             <option value="driver">Driver</option>
@@ -210,13 +210,13 @@ export function LegalContractInstancesPage() {
             <option value="other">Other</option>
           </SelectCombobox>
           <div className="grid grid-cols-2 gap-2 xl:col-span-2">
-            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded border border-gray-300 px-2 text-sm" />
-            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded border border-gray-300 px-2 text-sm" />
+            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
+            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
           </div>
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex flex-wrap gap-2">
           <Button size="sm" variant="secondary" disabled={selectedRows.length === 0} loading={sendReminderMutation.isPending} onClick={() => sendReminderMutation.mutate()}>
             Send Reminder
@@ -293,7 +293,7 @@ export function LegalContractInstancesPage() {
             <tbody>
               {filteredRows.map((row) => (
                 <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => setActiveDetailId(row.id)}>
-                  <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+                  <td className="px-2 py-2" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(row.id)}
@@ -329,7 +329,7 @@ export function LegalContractInstancesPage() {
       </div>
 
       {activeDetailId ? (
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
             <div className="text-sm font-semibold text-gray-900">Instance Detail</div>
             <Button size="sm" variant="secondary" onClick={() => setActiveDetailId(null)}>
@@ -346,7 +346,7 @@ export function LegalContractInstancesPage() {
                 <div><span className="font-semibold">Status:</span> {detailQuery.data.status}</div>
                 <div><span className="font-semibold">Language:</span> {detailQuery.data.language}</div>
               </div>
-              <div className="rounded border border-gray-200 bg-gray-50 p-2">
+              <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
                 <div className="mb-1 text-xs font-semibold uppercase text-gray-500">Filled Variables</div>
                 <pre className="overflow-x-auto text-xs">{JSON.stringify(detailQuery.data.filled_variables ?? {}, null, 2)}</pre>
               </div>
@@ -356,7 +356,7 @@ export function LegalContractInstancesPage() {
                   <div className="space-y-1">
                     {detailQuery.data.signatures.length === 0 ? <div className="text-xs text-gray-500">No signatures yet.</div> : null}
                     {detailQuery.data.signatures.map((signature) => (
-                      <div key={signature.id} className="rounded border border-gray-200 bg-white px-2 py-1 text-xs">
+                      <div key={signature.id} className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">
                         {signature.signed_by_name} · {new Date(signature.signed_at).toLocaleString()} · IP {signature.signer_ip ?? "—"}
                       </div>
                     ))}
@@ -367,7 +367,7 @@ export function LegalContractInstancesPage() {
                   <div className="max-h-44 space-y-1 overflow-auto">
                     {detailQuery.data.audit_log.length === 0 ? <div className="text-xs text-gray-500">No audit events yet.</div> : null}
                     {detailQuery.data.audit_log.map((entry) => (
-                      <div key={entry.id} className="rounded border border-gray-200 bg-white px-2 py-1 text-xs">
+                      <div key={entry.id} className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">
                         <div className="font-semibold">{entry.event_type}</div>
                         <div>{new Date(entry.created_at).toLocaleString()}</div>
                       </div>

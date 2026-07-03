@@ -112,7 +112,7 @@ export function ListViewDemo() {
           200-row synthetic dataset · resize, reorder, sort, filter, gear, multi-select, totals, export
         </p>
       </div>
-      <div className="flex-1 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+      <div className="flex-1 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-xs">
         <ListView
           columns={COLUMNS}
           rows={pageRows}
@@ -126,7 +126,7 @@ export function ListViewDemo() {
           density="cozy"
           badgeSlot={(r) =>
             r.status === "Inactive" ? (
-              <span className="ml-1 text-[9px] bg-gray-200 text-gray-600 rounded px-1 py-0.5">
+              <span className="ml-1 text-[9px] bg-gray-200 text-gray-600 rounded-sm px-1 py-0.5">
                 Inactive
               </span>
             ) : null
@@ -134,7 +134,7 @@ export function ListViewDemo() {
           batchActions={
             <button
               type="button"
-              className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+              className="px-3 py-1 text-xs bg-red-500 text-white rounded-sm hover:bg-red-600"
             >
               Archive selected
             </button>

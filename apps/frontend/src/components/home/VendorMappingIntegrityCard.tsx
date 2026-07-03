@@ -24,12 +24,12 @@ function statusLabel(status: "green" | "yellow" | "red") {
 export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }: Props) {
   if (isLoading) {
     return (
-      <section className="rounded border border-slate-200 bg-white">
+      <section className="rounded-sm border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Vendor Mapping Integrity</div>
         <div className="space-y-2 p-3">
-          <div className="h-6 animate-pulse rounded bg-slate-100" />
-          <div className="h-6 animate-pulse rounded bg-slate-100" />
-          <div className="h-6 animate-pulse rounded bg-slate-100" />
+          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
         </div>
       </section>
     );
@@ -37,7 +37,7 @@ export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }
 
   if (isError) {
     return (
-      <section className="rounded border border-red-200 bg-red-50">
+      <section className="rounded-sm border border-red-200 bg-red-50">
         <div className="border-b border-red-200 px-3 py-2 text-sm font-semibold text-red-900">Vendor Mapping Integrity</div>
         <div className="flex items-center justify-between px-3 py-3 text-sm text-red-800">
           <span>Failed to load mapping integrity.</span>
@@ -59,25 +59,25 @@ export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }
   };
 
   return (
-    <section className="rounded border border-slate-200 bg-white">
+    <section className="rounded-sm border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
         <div className="text-sm font-semibold text-slate-900">Vendor Mapping Integrity</div>
-        <span className={`inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold ${pillClass(status)}`}>{statusLabel(status)}</span>
+        <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${pillClass(status)}`}>{statusLabel(status)}</span>
       </div>
       <div className="space-y-1 px-3 py-2">
-        <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Total issues</span>
           <span className="font-semibold text-slate-800">{totals.total_issues}</span>
         </div>
-        <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Unmapped drivers</span>
           <span className="font-semibold text-slate-800">{totals.unmapped_drivers}</span>
         </div>
-        <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Duplicate mappings</span>
           <span className="font-semibold text-slate-800">{totals.duplicate_mapping}</span>
         </div>
-        <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Name drift</span>
           <span className="font-semibold text-slate-800">{totals.name_mismatch}</span>
         </div>
