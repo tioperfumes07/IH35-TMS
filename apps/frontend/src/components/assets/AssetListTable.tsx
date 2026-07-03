@@ -21,7 +21,7 @@ function LifecyclePill({ value }: { value: AssetLifecycle }) {
 
 export function AssetListTable({ rows, isLoading }: Props) {
   return (
-    <section className="overflow-hidden rounded border border-gray-200 bg-white">
+    <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
       <header className="border-b border-gray-200 px-3 py-2">
         <h2 className="text-sm font-semibold text-gray-900">Asset register</h2>
       </header>

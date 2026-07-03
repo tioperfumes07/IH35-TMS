@@ -32,17 +32,17 @@ export function SafetyTabPlaceholder({ title, legacyHref }: Props) {
   });
 
   return (
-    <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
+    <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         {(kpiQ.data?.cards ?? []).map((card) => (
-          <div key={card.label} className="rounded border border-gray-200 bg-gray-50 p-2">
+          <div key={card.label} className="rounded-sm border border-gray-200 bg-gray-50 p-2">
             <div className="text-[10px] uppercase tracking-wide text-gray-500">{card.label}</div>
             <div className="text-sm font-semibold text-gray-900">{Number(card.value ?? 0).toLocaleString()}</div>
           </div>
         ))}
       </div>
-      <div className="rounded border border-dashed border-gray-300 bg-white p-4 text-center text-xs text-slate-500">
+      <div className="rounded-sm border border-dashed border-gray-300 bg-white p-4 text-center text-xs text-slate-500">
         No records yet. Data-entry workflows ship in upcoming safety blocks.
       </div>
       {legacyHref ? (

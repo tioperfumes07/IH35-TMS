@@ -10,11 +10,11 @@ type Props = {
 export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
   if (isLoading) {
     return (
-      <section className="rounded border border-slate-200 bg-white">
+      <section className="rounded-sm border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Pending &amp; Sync</div>
         <div className="space-y-2 p-3">
-          <div className="h-4 animate-pulse rounded bg-slate-100" />
-          <div className="h-4 animate-pulse rounded bg-slate-100" />
+          <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
         </div>
       </section>
     );
@@ -27,7 +27,7 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
   const lastSync = data?.qbo.last_sync_at;
 
   return (
-    <section className="rounded border border-slate-200 bg-white">
+    <section className="rounded-sm border border-slate-200 bg-white">
       <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Pending &amp; Sync</div>
       <ul className="divide-y divide-slate-100 text-sm">
         <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">

@@ -14,7 +14,7 @@ export function EarningsSection({ lines }: Props) {
   const subtotal = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   const totalMiles = lines.reduce((sum, line) => sum + Number(line.miles || 0), 0);
   return (
-    <section className="rounded border border-green-200 bg-green-50 p-2">
+    <section className="rounded-sm border border-green-200 bg-green-50 p-2">
       <h3 className="mb-1 text-xs font-semibold uppercase text-green-800">A. Earnings</h3>
       <table className="w-full text-left text-xs">
         <thead className="text-[10px] uppercase text-gray-600">

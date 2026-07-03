@@ -67,7 +67,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Reason</label>
           <SelectCombobox
-            className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             value={reasonCode}
             onChange={(e) => setReasonCode(e.target.value)}
           >
@@ -80,7 +80,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Notes (optional)</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
         </div>
         {mut.isError ? <div className="text-xs text-red-600">Could not reassign. Check permissions and try again.</div> : null}
         <div className="flex justify-end gap-2 pt-1">

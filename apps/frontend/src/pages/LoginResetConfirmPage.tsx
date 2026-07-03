@@ -44,7 +44,7 @@ export function LoginResetConfirmPage() {
   if (!token) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
-        <div className="w-full max-w-md rounded border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
           <h1 style={{ fontFamily: typography.fontSerif }} className="text-[20px] font-semibold text-gray-900">
             Invalid link
           </h1>
@@ -60,7 +60,7 @@ export function LoginResetConfirmPage() {
   if (done) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
-        <div className="w-full max-w-md rounded border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
           <h1 style={{ fontFamily: typography.fontSerif }} className="text-[20px] font-semibold text-gray-900">
             Password updated
           </h1>
@@ -75,7 +75,7 @@ export function LoginResetConfirmPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
-      <div className="w-full max-w-md rounded border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
         <h1 style={{ fontFamily: typography.fontSerif }} className="text-[20px] font-semibold text-gray-900">
           Choose a new password
         </h1>
@@ -92,11 +92,11 @@ export function LoginResetConfirmPage() {
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
               aria-describedby="new-password-meter"
-              className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             <div id="new-password-meter" className="mt-2" aria-live="polite">
               <div
-                className="flex h-2 overflow-hidden rounded bg-gray-100"
+                className="flex h-2 overflow-hidden rounded-sm bg-gray-100"
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={strength.max}

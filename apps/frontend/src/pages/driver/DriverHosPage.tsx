@@ -17,7 +17,7 @@ export function DriverHosPage() {
       <p className="text-xs">
         {t("driver.duty_status")}: <span className="font-semibold">{snap.duty_status}</span>
       </p>
-      <div className="rounded border border-slate-200 bg-white p-2">
+      <div className="rounded-sm border border-slate-200 bg-white p-2">
         <p className="text-[11px] font-semibold text-slate-500">{t("driver.clocks")}</p>
         <ul className="mt-1 space-y-1 text-xs">
           {snap.clocks.map((c: HosSnapshot["clocks"][number]) => (

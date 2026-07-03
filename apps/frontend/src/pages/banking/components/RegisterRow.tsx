@@ -36,7 +36,7 @@ export function RegisterRow({ row, selected, bulkSelected = false, onBulkToggle,
       <td className="px-2 py-1">{String(row.category ?? "—")}</td>
       <td className="px-2 py-1">
         {status === "uncategorized" ? (
-          <button type="button" onClick={onCategorize} className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">Categorize ▼</button>
+          <button type="button" onClick={onCategorize} className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">Categorize ▼</button>
         ) : (
           <button type="button" onClick={onUndo} className="text-slate-700 underline">Undo</button>
         )}

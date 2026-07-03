@@ -55,15 +55,15 @@ export function DriversReferenceCatalogModal({ open, displayName, client, onClos
       <div className="space-y-3">
         <label className="block text-sm">
           <span className="mb-1 block text-xs font-medium text-slate-600">Code</span>
-          <input value={code} onChange={(event) => setCode(event.target.value)} className="h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={code} onChange={(event) => setCode(event.target.value)} className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
         <label className="block text-sm">
           <span className="mb-1 block text-xs font-medium text-slate-600">Label</span>
-          <input value={label} onChange={(event) => setLabel(event.target.value)} className="h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={label} onChange={(event) => setLabel(event.target.value)} className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
         <label className="block text-sm">
           <span className="mb-1 block text-xs font-medium text-slate-600">Sort order</span>
-          <input value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} type="number" className="h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} type="number" className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
         </label>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">

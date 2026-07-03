@@ -74,20 +74,20 @@ export function GeofenceReconciliationReport() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             max={today}
-            className="border rounded px-3 py-1.5 text-sm"
+            className="border rounded-sm px-3 py-1.5 text-sm"
           />
         </div>
       </div>
       {isLoading && <p className="text-gray-500">Loading...</p>}
       {!isLoading && findings.length === 0 && (
-        <div className="bg-green-50 border border-green-200 rounded p-4 text-green-700">
+        <div className="bg-green-50 border border-green-200 rounded-sm p-4 text-green-700">
           No anomalies found for {date}.
         </div>
       )}
       {Object.entries(byClass).map(([cls, items]) => (
         <div key={cls} className="mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${ANOMALY_COLORS[cls]}`}>
+            <span className={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${ANOMALY_COLORS[cls]}`}>
               {ANOMALY_LABELS[cls] ?? cls}
             </span>
             <span className="text-sm text-gray-500">{items.length} finding{items.length !== 1 ? "s" : ""}</span>
@@ -118,7 +118,7 @@ export function GeofenceReconciliationReport() {
                     {!f.resolved && (
                       <button
                         onClick={() => resolveMutation.mutate({ uuid: f.uuid, note: "Resolved via UI" })}
-                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-sm"
                       >
                         Mark Resolved
                       </button>

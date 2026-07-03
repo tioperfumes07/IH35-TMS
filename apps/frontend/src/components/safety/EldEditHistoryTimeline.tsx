@@ -50,7 +50,7 @@ export function EldEditHistoryTimeline({ driverUuid, operatingCompanyId, compact
 
   if (edits.length === 0) {
     return (
-      <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
         No mirrored Samsara HOS log edits found for this driver in the last 30 days.
       </div>
     );
@@ -65,8 +65,8 @@ export function EldEditHistoryTimeline({ driverUuid, operatingCompanyId, compact
       ) : null}
       <ol className="space-y-2 border-l-2 border-slate-300 pl-4">
         {edits.map((edit) => (
-          <li key={edit.id} className="relative rounded border border-gray-200 bg-white p-3 text-sm">
-            <span className="absolute -left-[1.15rem] top-4 h-2.5 w-2.5 rounded-full bg-slate-1000" aria-hidden />
+          <li key={edit.id} className="relative rounded-sm border border-gray-200 bg-white p-3 text-sm">
+            <span className="absolute left-[-1.15rem] top-4 h-2.5 w-2.5 rounded-full bg-slate-1000" aria-hidden />
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-semibold text-gray-900">{edit.field_name}</span>
               <span className="text-xs text-gray-500">{formatTimestamp(edit.edited_at)}</span>
@@ -75,10 +75,10 @@ export function EldEditHistoryTimeline({ driverUuid, operatingCompanyId, compact
               Edited by {edit.edited_by} · Reason: {edit.reason}
             </div>
             <div className="mt-2 grid gap-1 text-xs md:grid-cols-2">
-              <div className="rounded bg-red-50 px-2 py-1 text-red-800">
+              <div className="rounded-sm bg-red-50 px-2 py-1 text-red-800">
                 <span className="font-semibold">Before:</span> {edit.before_state ?? "—"}
               </div>
-              <div className="rounded bg-green-50 px-2 py-1 text-green-800">
+              <div className="rounded-sm bg-green-50 px-2 py-1 text-green-800">
                 <span className="font-semibold">After:</span> {edit.after_state ?? "—"}
               </div>
             </div>

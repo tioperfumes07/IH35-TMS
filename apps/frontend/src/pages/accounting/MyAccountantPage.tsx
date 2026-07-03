@@ -38,7 +38,7 @@ function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
           {lastClosed.closed_at ? ` (closed ${fmtDate(lastClosed.closed_at)})` : ""}
         </p>
       )}
-      <div className="overflow-x-auto rounded border border-gray-200">
+      <div className="overflow-x-auto rounded-sm border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -55,7 +55,7 @@ function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
                 <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(p.period_start)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(p.period_end)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
-                  <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[p.status] ?? "bg-gray-100 text-gray-600"}`}>
+                  <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[p.status] ?? "bg-gray-100 text-gray-600"}`}>
                     {titleize(p.status)}
                   </span>
                 </td>
@@ -95,7 +95,7 @@ export function MyAccountantPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="My Accountant" subtitle="Read-only accountant workspace">
-        <div className="rounded border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           The accountant workspace is not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">Enable the MY_ACCOUNTANT_ENABLED feature flag to use this module.</p>
         </div>
@@ -121,7 +121,7 @@ export function MyAccountantPage() {
             <Link
               key={r.to}
               to={r.to}
-              className="rounded border border-gray-200 px-3 py-2 transition-colors hover:border-slate-300 hover:bg-slate-50"
+              className="rounded-sm border border-gray-200 px-3 py-2 transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
               <div className="text-sm font-medium text-slate-700">{r.label}</div>
               <div className="text-xs text-gray-500">{r.description}</div>
@@ -134,7 +134,7 @@ export function MyAccountantPage() {
         {!operatingCompanyId ? (
           <p className="py-2 text-sm text-gray-500">Select an entity to enable exports.</p>
         ) : (
-          <div className="overflow-x-auto rounded border border-gray-200">
+          <div className="overflow-x-auto rounded-sm border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <tbody className="divide-y divide-gray-100 bg-white">
                 {ACCOUNTANT_EXPORT_STATEMENTS.map((s) => (
@@ -167,7 +167,7 @@ export function MyAccountantPage() {
       </SectionCard>
 
       <SectionCard title="Invite your accountant" subtitle="Give your CPA read access to the books">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-amber-200 bg-amber-50 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-200 bg-amber-50 p-3">
           <p className="text-xs text-amber-800">
             Inviting an accountant grants access and is managed under access control. This action is not available from this read-only workspace.
           </p>
@@ -175,7 +175,7 @@ export function MyAccountantPage() {
             type="button"
             disabled
             title="Managed under access control — not available here"
-            className="cursor-not-allowed rounded border border-gray-300 bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-400"
+            className="cursor-not-allowed rounded-sm border border-gray-300 bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-400"
           >
             Invite accountant
           </button>

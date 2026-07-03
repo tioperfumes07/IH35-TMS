@@ -18,7 +18,7 @@ export function JumpToTabArchived({ items, onSelect, trigger }: Props) {
     <HoverDropdown
       trigger={
         trigger ?? (
-          <button className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
+          <button className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
             Jump to tab
           </button>
         )
@@ -31,7 +31,7 @@ export function JumpToTabArchived({ items, onSelect, trigger }: Props) {
           <button
             key={item.id}
             type="button"
-            className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-slate-100"
+            className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-slate-100"
             onClick={() => onSelect(item.id)}
           >
             {item.label}

@@ -103,11 +103,11 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   return (
     <div className="space-y-3" data-testid="driver-audit-history-tab">
       {/* ARCHIVE (A24-6): prior placeholder lived inline on DriverDetail — now live drill-down with QBO-style filters */}
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded border">
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-sm border">
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={fromDate}
             onChange={(next) => setFromDate(next)}
             data-testid="driver-audit-filter-from"
@@ -116,7 +116,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={toDate}
             onChange={(next) => setToDate(next)}
             data-testid="driver-audit-filter-to"
@@ -125,7 +125,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         <label className="text-xs text-gray-600">
           Event type
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={eventTypeFilter}
             onChange={(e) => setEventTypeFilter(e.target.value)}
             data-testid="driver-audit-filter-event-type"
@@ -143,7 +143,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
           <input
             type="text"
             placeholder="Email or ID"
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm w-32"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm w-32"
             value={actorFilter}
             onChange={(e) => setActorFilter(e.target.value)}
             data-testid="driver-audit-filter-actor"
@@ -152,7 +152,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         <label className="text-xs text-gray-600">
           Status
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             data-testid="driver-audit-filter-status"
@@ -165,7 +165,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         <label className="text-xs text-gray-600">
           Source
           <select
-            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
             data-testid="driver-audit-filter-source"
@@ -250,7 +250,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
                     </button>
                     {expanded ? (
                       <pre
-                        className="mt-2 max-h-48 overflow-auto rounded bg-gray-50 p-2 text-[10px]"
+                        className="mt-2 max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
                         data-testid={`driver-audit-diff-${row.id}`}
                       >
                         {payloadDiff(row.payload)}

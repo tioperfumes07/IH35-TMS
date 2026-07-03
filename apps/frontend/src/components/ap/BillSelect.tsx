@@ -34,7 +34,7 @@ export function BillSelect({ operatingCompanyId, vendorId, value, onChange, disa
           const bill = bills.find((row) => row.id === next) ?? null;
           onChange(next || null, bill);
         }}
-        className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
       >
         <option value="" disabled>
           {placeholder}

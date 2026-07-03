@@ -218,7 +218,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
 
   const renderInput = (def: FieldDef) => {
     const value = draft[def.key] ?? "";
-    const inputClass = "h-8 w-full rounded border border-gray-300 px-2 text-xs";
+    const inputClass = "h-8 w-full rounded-sm border border-gray-300 px-2 text-xs";
     if (def.type === "boolean") {
       return (
         <input
@@ -233,7 +233,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
       return (
         <textarea
           id={def.key}
-          className={`${inputClass} min-h-[4rem] py-1`}
+          className={`${inputClass} min-h-16 py-1`}
           value={String(value)}
           onChange={(e) => setField(def.key, e.target.value)}
         />
@@ -289,7 +289,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
       modalKind="edit-vehicle"
       sizePreset="lg"
     >
-      <div className="flex min-h-[24rem] flex-col gap-3">
+      <div className="flex min-h-96 flex-col gap-3">
         <div className="flex flex-wrap gap-1 border-b border-gray-200 pb-2">
           {visibleTabs.map((tab) => (
             <button

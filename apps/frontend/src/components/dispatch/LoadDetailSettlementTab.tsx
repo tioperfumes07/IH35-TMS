@@ -41,7 +41,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 function statusBadge(status: string) {
   const entry = STATUS_BADGE[status] ?? { label: status, className: "bg-gray-100 text-gray-700" };
   return (
-    <span className={`rounded px-2 py-0.5 text-xs font-semibold ${entry.className}`}>{entry.label}</span>
+    <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${entry.className}`}>{entry.label}</span>
   );
 }
 
@@ -61,7 +61,7 @@ function LegRow({ label, leg, isCurrent }: { label: string; leg: SettlementLeg |
         {leg.load_number}
       </span>
       {isCurrent && (
-        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+        <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
           this load
         </span>
       )}
@@ -84,7 +84,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
 
   if (query.error) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         Failed to load settlement data.
       </div>
     );
@@ -94,7 +94,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
 
   if (!settlement) {
     return (
-      <div className="rounded border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
         No settlement or pre-settlement found for this load.
         <div className="mt-1 text-xs text-gray-400">
           A pre-settlement is created automatically when the driver delivers the northbound leg.
@@ -123,7 +123,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
       </div>
 
       {/* Trip legs */}
-      <div className="rounded border border-gray-200 p-3">
+      <div className="rounded-sm border border-gray-200 p-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Trip Legs</div>
         <div className="space-y-2">
           <LegRow
@@ -140,7 +140,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
       </div>
 
       {/* Pay summary */}
-      <div className="grid grid-cols-2 gap-2 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
+      <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
         <div>
           <div className="text-xs text-gray-500">Gross pay</div>
           <div className="font-semibold text-gray-900">{formatMoneyCents(settlement.gross_pay, currencyCode)}</div>

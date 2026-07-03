@@ -57,10 +57,10 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
     <div>
       <div className="flex gap-3 mb-4">
         <DatePicker value={from} onChange={(next) => setFrom(next)}
-          className="border rounded px-2 py-1 text-sm" />
+          className="border rounded-sm px-2 py-1 text-sm" />
         <span className="self-center text-gray-400">—</span>
         <DatePicker value={to} onChange={(next) => setTo(next)}
-          className="border rounded px-2 py-1 text-sm" />
+          className="border rounded-sm px-2 py-1 text-sm" />
       </div>
       {isLoading && <p className="text-gray-400 text-sm">Loading...</p>}
       {!isLoading && rows.length === 0 && (
@@ -87,7 +87,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
                 <td className="px-3 py-2">
                   <button
                     onClick={() => billableMutation.mutate({ uuid: r.uuid, billable: !r.billable_to_customer })}
-                    className={`text-xs px-2 py-0.5 rounded ${r.billable_to_customer ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-600"}`}
+                    className={`text-xs px-2 py-0.5 rounded-sm ${r.billable_to_customer ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-600"}`}
                   >
                     {r.billable_to_customer ? "Billable" : "Not billable"}
                   </button>

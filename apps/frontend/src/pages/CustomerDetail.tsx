@@ -1150,7 +1150,7 @@ export function CustomerDetailPage() {
                     value={hydratedForm.layover_notes}
                     onChange={(event) => setForm((current) => ({ ...current, layover_notes: event.target.value }))}
                     rows={3}
-                    className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                    className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
                   />
                 </div>
               </>
@@ -1236,7 +1236,7 @@ export function CustomerDetailPage() {
                 onChange={(event) => setForm((current) => ({ ...current, factoring_notes: event.target.value }))}
                 disabled={!editMode}
                 rows={3}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
               />
             </div>
           </DataPanel>
@@ -1249,7 +1249,7 @@ export function CustomerDetailPage() {
                 onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
                 disabled={!editMode}
                 rows={4}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
               />
             </div>
           </DataPanel>
@@ -1260,7 +1260,7 @@ export function CustomerDetailPage() {
                 <div className="text-xs text-gray-600">Operational contacts and communication owners</div>
                 <div className="flex items-center gap-2">
                   {canViewInactiveContacts ? (
-                    <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                    <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
                       <input type="checkbox" checked={includeInactiveContacts} onChange={(event) => setIncludeInactiveContacts(event.target.checked)} />
                       Show inactive
                     </label>
@@ -1383,7 +1383,7 @@ export function CustomerDetailPage() {
                 onChange={(event) => setForm((current) => ({ ...current, quality_notes: event.target.value }))}
                 disabled={!editMode || !canEditQualityNotes}
                 rows={3}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
               />
             </div>
           </DataPanel>
@@ -1404,7 +1404,7 @@ export function CustomerDetailPage() {
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {canWriteQuality ? (
-                  <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                  <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
                     <input type="checkbox" checked={showVoidedQuality} onChange={(event) => setShowVoidedQuality(event.target.checked)} />
                     Show voided
                   </label>
@@ -1419,9 +1419,9 @@ export function CustomerDetailPage() {
             <div className="space-y-2">
               {qualityEventsQuery.isLoading ? <div className="text-xs text-gray-500">Loading events...</div> : null}
               {qualityEvents.map((event) => (
-                <div key={event.id} className={`rounded border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-white"}`}>
+                <div key={event.id} className={`rounded-sm border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-white"}`}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px]">{event.event_date}</span>
+                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{event.event_date}</span>
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
                     <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
                     {event.dollar_impact_amount ? <strong className="text-sm">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
@@ -1462,7 +1462,7 @@ export function CustomerDetailPage() {
             <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} />
           </ErrorBoundary>
         ) : (
-          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
             You do not have permission to view customer documents.
           </div>
         )
@@ -1488,7 +1488,7 @@ export function CustomerDetailPage() {
             </DataPanel>
           </ErrorBoundary>
         ) : (
-          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
             {!canViewDocuments ? "You do not have permission to view customer contracts." : "Loading…"}
           </div>
         )
@@ -1504,7 +1504,7 @@ export function CustomerDetailPage() {
             <div className="text-xs text-gray-600">Operational contacts and communication owners</div>
             <div className="flex items-center gap-2">
               {canViewInactiveContacts ? (
-                <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
                   <input type="checkbox" checked={includeInactiveContacts} onChange={(event) => setIncludeInactiveContacts(event.target.checked)} />
                   Show inactive
                 </label>
@@ -1622,7 +1622,7 @@ export function CustomerDetailPage() {
               <div>Layover/day: {billingSummary?.layover_config?.layover_charge_per_day ?? "-"}</div>
             </div>
           </DataPanel>
-          <div className="md:col-span-3 rounded border border-gray-200 bg-white">
+          <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white">
             <button
               type="button"
               className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50"
@@ -1634,7 +1634,7 @@ export function CustomerDetailPage() {
             {recordPaymentOpen ? (
               <div className="space-y-3 border-t border-gray-100 p-3 text-xs">
                 {paymentsBackendPending ? (
-                  <div className="rounded border border-amber-200 bg-amber-50 p-2 text-amber-950">
+                  <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-amber-950">
                     Backend pending — file <strong>P6-T11204</strong> for customer payment APIs.{" "}
                     <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void customerPaymentsQuery.refetch()}>
                       Retry
@@ -1644,7 +1644,7 @@ export function CustomerDetailPage() {
                 <div className="grid gap-2 md:grid-cols-2">
                   <label className="block">
                     Payment date
-                    <DatePicker className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payDate} onChange={setPayDate} />
+                    <DatePicker className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={payDate} onChange={setPayDate} />
                   </label>
                   <label className="block">
                     Amount (USD)
@@ -1653,7 +1653,7 @@ export function CustomerDetailPage() {
                   </label>
                   <label className="block">
                     Method
-                    <SelectCombobox className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
+                    <SelectCombobox className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
                       <option value="ach">ACH</option>
                       <option value="check">Check</option>
                       <option value="wire">Wire</option>
@@ -1663,12 +1663,12 @@ export function CustomerDetailPage() {
                   </label>
                   <label className="block">
                     Reference
-                    <input className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payRef} onChange={(e) => setPayRef(e.target.value)} />
+                    <input className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={payRef} onChange={(e) => setPayRef(e.target.value)} />
                   </label>
                 </div>
                 <label className="block">
                   Memo
-                  <textarea className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" rows={2} value={payMemo} onChange={(e) => setPayMemo(e.target.value)} />
+                  <textarea className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" rows={2} value={payMemo} onChange={(e) => setPayMemo(e.target.value)} />
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -1698,7 +1698,7 @@ export function CustomerDetailPage() {
                   />
                   Auto-match oldest open invoices first
                 </label>
-                <div className="rounded border border-gray-100 bg-gray-50 p-2">
+                <div className="rounded-sm border border-gray-100 bg-gray-50 p-2">
                   <div className="font-semibold text-gray-800">Apply to invoices</div>
                   <p className="mt-1 text-gray-600">
                     Applying {formatCurrencyCents(paymentApplicationBreakdown.appliedSum)} of {formatCurrencyCents(paymentCents)} payment
@@ -1756,7 +1756,7 @@ export function CustomerDetailPage() {
               </div>
             ) : null}
           </div>
-          <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
+          <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Payment history</div>
             {paymentsBackendPending ? (
               <p className="text-sm text-amber-800">
@@ -1819,7 +1819,7 @@ export function CustomerDetailPage() {
               </div>
             )}
           </div>
-          <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
+          <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Receivables Aging</div>
             {!hasOpenInvoices ? (
               <div className="text-sm text-gray-600">No open invoices.</div>
@@ -1865,7 +1865,7 @@ export function CustomerDetailPage() {
               </div>
             )}
           </div>
-          <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
+          <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Recent Invoices</h3>
               <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => navigate("/accounting/invoices")}>
@@ -1909,11 +1909,11 @@ export function CustomerDetailPage() {
       ) : null}
 
       {activeTab === "Lanes & Pricing" ? (
-        <div className="rounded border border-gray-200 bg-white p-4">
+        <div className="rounded-sm border border-gray-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-sm text-gray-600">Customer lane pricing definitions</div>
             <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+              <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
                 <input type="checkbox" checked={includeInactiveLanes} onChange={(event) => setIncludeInactiveLanes(event.target.checked)} />
                 Show inactive
               </label>
@@ -2062,7 +2062,7 @@ export function CustomerDetailPage() {
                 value={laneForm.notes}
                 onChange={(event) => setLaneForm((current) => ({ ...current, notes: event.target.value }))}
                 rows={3}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               />
             </div>
           </div>
@@ -2146,7 +2146,7 @@ export function CustomerDetailPage() {
                 value={contactForm.notes}
                 onChange={(event) => setContactForm((current) => ({ ...current, notes: event.target.value }))}
                 rows={3}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               />
             </div>
           </div>
@@ -2242,7 +2242,7 @@ export function CustomerDetailPage() {
                 value={qualityForm.details}
                 onChange={(event) => setQualityForm((current) => ({ ...current, details: event.target.value }))}
                 rows={3}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               />
             </div>
           </div>
@@ -2266,7 +2266,7 @@ export function CustomerDetailPage() {
               value={voidReason}
               onChange={(event) => setVoidReason(event.target.value)}
               rows={3}
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
             />
           </div>
           <div className="flex justify-end gap-2">
@@ -2298,7 +2298,7 @@ export function CustomerDetailPage() {
           </p>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Reason</label>
-            <textarea value={statusReason} onChange={(event) => setStatusReason(event.target.value)} rows={3} className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
+            <textarea value={statusReason} onChange={(event) => setStatusReason(event.target.value)} rows={3} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setStatusConfirmOpen(false)}>
@@ -2324,7 +2324,7 @@ export function CustomerDetailPage() {
         <div className="space-y-2">
           {fmcsaHistoryQuery.isLoading ? <div className="text-sm text-gray-500">Loading verification history...</div> : null}
           {(fmcsaHistoryQuery.data ?? []).map((lookup) => (
-            <div key={lookup.lookup_id} className="rounded border border-gray-200 p-2 text-sm">
+            <div key={lookup.lookup_id} className="rounded-sm border border-gray-200 p-2 text-sm">
               <div className="flex items-center justify-between">
                 <strong>{lookup.legal_name ?? "Unknown carrier"}</strong>
                 <StatusBadge variant={lookup.authority_status === "ACTIVE" ? "positive" : "crit"}>{lookup.authority_status}</StatusBadge>
@@ -2421,7 +2421,7 @@ function Field({
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
-        className="h-9 rounded border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+        className="h-9 rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
       />
     </div>
   );

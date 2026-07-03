@@ -131,7 +131,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
           {STEPS.map((label, idx) => (
             <span
               key={label}
-              className={`rounded px-2 py-1 ${idx === stepIdx ? "bg-[#1f2a44] text-white" : "bg-gray-100 text-gray-600"}`}
+              className={`rounded-sm px-2 py-1 ${idx === stepIdx ? "bg-[#1f2a44] text-white" : "bg-gray-100 text-gray-600"}`}
             >
               {idx + 1}. {label}
             </span>
@@ -144,7 +144,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
             <SelectCombobox
               value={templateId}
               onChange={(event) => setTemplateId(event.target.value)}
-              className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             >
               <option value="">Select template</option>
               {templates.map((row) => (
@@ -163,7 +163,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <SelectCombobox
                 value={signerType}
                 onChange={(event) => setSignerType(event.target.value as typeof signerType)}
-                className="h-9 rounded border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 <option value="driver">Driver</option>
                 <option value="employee">Employee</option>
@@ -177,7 +177,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <SelectCombobox
                 value={language}
                 onChange={(event) => setLanguage(event.target.value as typeof language)}
-                className="h-9 rounded border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 <option value="en">English</option>
                 <option value="es">Spanish</option>
@@ -189,7 +189,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <input
                 value={signerName}
                 onChange={(event) => setSignerName(event.target.value)}
-                className="h-9 rounded border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
                 placeholder="Full legal name"
               />
             </div>
@@ -198,7 +198,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <input
                 value={signerEmail}
                 onChange={(event) => setSignerEmail(event.target.value)}
-                className="h-9 rounded border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
                 placeholder="name@example.com"
               />
             </div>
@@ -207,7 +207,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <input
                 value={signerPhone}
                 onChange={(event) => setSignerPhone(event.target.value)}
-                className="h-9 rounded border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
                 placeholder="+19565550000"
               />
             </div>
@@ -224,7 +224,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                   onChange={(event) =>
                     setVariableRows((prev) => prev.map((item, idx) => (idx === index ? { ...item, key: event.target.value } : item)))
                   }
-                  className="h-9 rounded border border-gray-300 px-2 text-sm"
+                  className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
                   placeholder="variable_name"
                 />
                 <input
@@ -232,7 +232,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                   onChange={(event) =>
                     setVariableRows((prev) => prev.map((item, idx) => (idx === index ? { ...item, value: event.target.value } : item)))
                   }
-                  className="h-9 rounded border border-gray-300 px-2 text-sm"
+                  className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
                   placeholder="Value"
                 />
                 <Button
@@ -251,12 +251,12 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
         ) : null}
 
         {stepIdx === 3 ? (
-          <div className="space-y-2 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
+          <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
             <div><span className="font-semibold">Template:</span> {selectedTemplate ? templateLabel(selectedTemplate) : "—"}</div>
             <div><span className="font-semibold">Signer:</span> {signerName || "—"} ({signerType})</div>
             <div><span className="font-semibold">Language:</span> {language}</div>
             <div className="font-semibold">Filled variables preview:</div>
-            <pre className="overflow-x-auto rounded bg-white p-2 text-xs">
+            <pre className="overflow-x-auto rounded-sm bg-white p-2 text-xs">
               {JSON.stringify(
                 variableRows.reduce<Record<string, string>>((acc, row) => {
                   if (row.key.trim()) acc[row.key.trim()] = row.value;
@@ -275,7 +275,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
             <SelectCombobox
               value={verifyChannel}
               onChange={(event) => setVerifyChannel(event.target.value as typeof verifyChannel)}
-              className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             >
               <option value="none">None</option>
               <option value="sms">SMS code</option>
@@ -290,7 +290,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
             <textarea
               value={customMessage}
               onChange={(event) => setCustomMessage(event.target.value)}
-              className="min-h-[84px] w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="min-h-[84px] w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               placeholder="Optional custom message"
             />
           </div>

@@ -54,7 +54,7 @@ export function FaroCSVUploadWidget({
   return (
     <div className="space-y-3" data-faro-csv-upload="true">
       <div
-        className={`rounded border-2 border-dashed px-4 py-8 text-center ${dragOver ? "border-slate-300 bg-slate-100" : "border-gray-300 bg-gray-50"}`}
+        className={`rounded-sm border-2 border-dashed px-4 py-8 text-center ${dragOver ? "border-slate-300 bg-slate-100" : "border-gray-300 bg-gray-50"}`}
         onDragOver={(event) => {
           event.preventDefault();
           setDragOver(true);
@@ -84,7 +84,7 @@ export function FaroCSVUploadWidget({
       </div>
 
       {preview.headers.length > 0 ? (
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-gray-50">
               <tr>
@@ -129,7 +129,7 @@ export function FaroCSVUploadWidget({
       </button>
       {showJsonFallback ? (
         <textarea
-          className="h-32 w-full rounded border border-gray-300 px-2 py-1 font-mono text-xs"
+          className="h-32 w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
           value={jsonFallback}
           onChange={(event) => onJsonFallbackChange(event.target.value)}
           placeholder='[{"invoice_number":"INV-1001", ...}]'

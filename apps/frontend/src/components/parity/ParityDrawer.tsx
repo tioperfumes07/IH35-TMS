@@ -38,7 +38,7 @@ export function ParityDrawer({
       <aside
         role="dialog"
         aria-label={title}
-        className={`absolute right-0 top-0 flex h-full max-h-[100vh] flex-col border-l border-gray-200 bg-white shadow-xl ${widthClass}`}
+        className={`absolute right-0 top-0 flex h-full max-h-screen flex-col border-l border-gray-200 bg-white shadow-xl ${widthClass}`}
       >
         <header className="flex items-start justify-between gap-2 border-b border-gray-200 px-4 py-3">
           <div className="min-w-0">
@@ -49,7 +49,7 @@ export function ParityDrawer({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="min-h-11 rounded px-2 text-gray-500 hover:bg-gray-100 sm:min-h-0"
+            className="min-h-11 rounded-sm px-2 text-gray-500 hover:bg-gray-100 sm:min-h-0"
           >
             ✕
           </button>

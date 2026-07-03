@@ -9,11 +9,11 @@ import { TypeCatalogAdmin } from "../../insurance/TypeCatalogAdmin";
 
 export function InsuranceTab() {
   const navClassName = ({ isActive }: { isActive: boolean }) =>
-    `rounded px-3 py-1.5 text-xs font-medium ${isActive ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-slate-100"}`;
+    `rounded-sm px-3 py-1.5 text-xs font-medium ${isActive ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-slate-100"}`;
 
   return (
     <div className="space-y-4">
-      <nav className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2">
+      <nav className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2">
         <NavLink end to="/safety/insurance" className={navClassName}>
           Landing
         </NavLink>

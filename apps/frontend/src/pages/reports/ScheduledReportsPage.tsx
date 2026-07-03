@@ -88,7 +88,7 @@ export function ScheduledReportsPage() {
       {listQuery.isError ? <ScheduledReportsBackendPendingBanner error={listQuery.error} onRetry={() => void listQuery.refetch()} /> : null}
       {listQuery.isLoading ? <p className="text-sm text-gray-500">Loading schedules…</p> : null}
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
             <tr>
@@ -110,7 +110,7 @@ export function ScheduledReportsPage() {
                 <td className="px-2 py-2">{r.last_run_at?.slice(0, 19) ?? "—"}</td>
                 <td className="px-2 py-2">{r.next_run_at?.slice(0, 19) ?? "—"}</td>
                 <td className="px-2 py-2">
-                  <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>
+                  <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>
                 </td>
                 <td className="space-x-1 px-2 py-2">
                   <Button size="sm" variant="secondary" onClick={() => setModalOpen(true)}>

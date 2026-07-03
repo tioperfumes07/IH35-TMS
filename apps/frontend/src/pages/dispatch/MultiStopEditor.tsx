@@ -74,11 +74,11 @@ function SortableRow({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="rounded border border-gray-200 bg-white p-2 text-sm shadow-sm">
+    <div ref={setNodeRef} style={style} className="rounded-sm border border-gray-200 bg-white p-2 text-sm shadow-xs">
       <div className="flex items-start gap-2">
         <button
           type="button"
-          className="mt-1 cursor-grab rounded border border-gray-200 px-1 text-xs text-gray-500"
+          className="mt-1 cursor-grab rounded-sm border border-gray-200 px-1 text-xs text-gray-500"
           {...attributes}
           {...listeners}
           aria-label="Drag to reorder"
@@ -89,7 +89,7 @@ function SortableRow({
           <div>
             <div className="text-[10px] font-semibold text-gray-500">#{index + 1} Type</div>
             <SelectCombobox
-              className="mt-0.5 h-8 w-full rounded border border-gray-300 px-1 text-xs"
+              className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-1 text-xs"
               value={row.stop_type}
               onChange={(e) => onChange(row.key, { stop_type: e.target.value as UiStopType })}
             >
@@ -108,24 +108,24 @@ function SortableRow({
           <div className="col-span-2">
             <div className="text-[10px] font-semibold text-gray-500">Address</div>
             <input
-              className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-xs"
+              className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={row.location_address}
               onChange={(e) => onChange(row.key, { location_address: e.target.value })}
             />
           </div>
           <div>
             <div className="text-[10px] font-semibold text-gray-500">City</div>
-            <input className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-xs" value={row.city} onChange={(e) => onChange(row.key, { city: e.target.value })} />
+            <input className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.city} onChange={(e) => onChange(row.key, { city: e.target.value })} />
           </div>
           <div>
             <div className="text-[10px] font-semibold text-gray-500">ST</div>
-            <input className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-xs" value={row.state} onChange={(e) => onChange(row.key, { state: e.target.value })} />
+            <input className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.state} onChange={(e) => onChange(row.key, { state: e.target.value })} />
           </div>
           <div>
             <div className="text-[10px] font-semibold text-gray-500">Window start</div>
             <input
               type="datetime-local"
-              className="mt-0.5 h-8 w-full rounded border border-gray-300 px-1 text-xs"
+              className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-1 text-xs"
               value={row.window_start}
               onChange={(e) => onChange(row.key, { window_start: e.target.value })}
             />
@@ -134,7 +134,7 @@ function SortableRow({
             <div className="text-[10px] font-semibold text-gray-500">Window end</div>
             <input
               type="datetime-local"
-              className="mt-0.5 h-8 w-full rounded border border-gray-300 px-1 text-xs"
+              className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-1 text-xs"
               value={row.window_end}
               onChange={(e) => onChange(row.key, { window_end: e.target.value })}
             />
@@ -149,7 +149,7 @@ function SortableRow({
           </label>
           <div className="col-span-2">
             <div className="text-[10px] font-semibold text-gray-500">Notes</div>
-            <textarea className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-xs" rows={2} value={row.notes} onChange={(e) => onChange(row.key, { notes: e.target.value })} />
+            <textarea className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={2} value={row.notes} onChange={(e) => onChange(row.key, { notes: e.target.value })} />
           </div>
         </div>
       </div>
@@ -283,7 +283,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
       <Button type="button" size="sm" variant="secondary" onClick={addStop}>
         + Add stop
       </Button>
-      <div className="rounded border border-gray-100 bg-gray-50 p-2 text-xs text-gray-700">
+      <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs text-gray-700">
         Est. leg miles: ~{totals.dist} · Est. hours: ~{totals.hrs.toFixed(1)}
       </div>
       {mut.isError ? <div className="text-xs text-red-600">Save failed (need at least 2 stops).</div> : null}

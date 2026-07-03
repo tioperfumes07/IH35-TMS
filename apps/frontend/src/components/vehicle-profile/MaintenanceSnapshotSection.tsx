@@ -26,7 +26,7 @@ export function MaintenanceSnapshotSection({
     OPEN_WO_STATUSES.has(String(wo.status ?? "").toLowerCase()),
   );
   return (
-    <section id="asset-maintenance" className="scroll-mt-4 rounded border border-gray-200 bg-white p-4">
+    <section id="asset-maintenance" className="scroll-mt-4 rounded-sm border border-gray-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-gray-800">Maintenance snapshot</h3>
       <p className="mt-1 text-xs text-gray-600">
         Open WOs: in-house {openWoCount.in_house} · external {openWoCount.external} · roadside {openWoCount.roadside} (
@@ -66,7 +66,7 @@ export function MaintenanceSnapshotSection({
           pmEntries.map(([key, val]) => {
             const row = val as Record<string, unknown>;
             return (
-              <div key={key} className="rounded border border-gray-100 p-2 text-xs">
+              <div key={key} className="rounded-sm border border-gray-100 p-2 text-xs">
                 <div className="font-semibold capitalize">{key.replace(/_/g, " ")}</div>
                 <div>Miles remaining: {String(row.miles_remaining ?? "—")}</div>
                 <div>Due est: {String(row.due_date_est ?? "—")}</div>

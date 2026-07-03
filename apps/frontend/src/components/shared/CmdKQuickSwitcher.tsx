@@ -110,7 +110,7 @@ export function CmdKQuickSwitcher() {
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-start justify-center bg-black/40 px-4 pt-[12vh]"
+      className="fixed inset-0 z-120 flex items-start justify-center bg-black/40 px-4 pt-[12vh]"
       data-testid="cmd-k-quick-switcher"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close();
@@ -121,7 +121,7 @@ export function CmdKQuickSwitcher() {
           <input
             ref={inputRef}
             data-testid="cmd-k-input"
-            className="w-full border-0 text-base outline-none"
+            className="w-full border-0 text-base outline-hidden"
             placeholder="Search loads, drivers, customers…"
             value={query}
             onChange={(event) => setQuery(event.target.value)}

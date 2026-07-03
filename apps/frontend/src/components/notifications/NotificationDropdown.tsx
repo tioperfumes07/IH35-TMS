@@ -31,7 +31,7 @@ function SeverityIcon({ severity }: { severity: string }) {
 export function NotificationDropdown({ notifications, onClose, onMarkRead, onDismiss, onMarkAllRead }: Props) {
   return (
     <div
-      className="absolute right-0 top-9 z-40 w-[min(420px,92vw)] rounded border border-gray-200 bg-white shadow-lg"
+      className="absolute right-0 top-9 z-40 w-[min(420px,92vw)] rounded-sm border border-gray-200 bg-white shadow-lg"
       data-testid="notification-dropdown"
     >
       <div className="flex items-center justify-between border-b px-3 py-2">
@@ -44,7 +44,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
           >
             Mark all read
           </button>
-          <button type="button" className="rounded p-1 hover:bg-gray-100" aria-label="Close" onClick={onClose}>
+          <button type="button" className="rounded-sm p-1 hover:bg-gray-100" aria-label="Close" onClick={onClose}>
             <X className="h-3.5 w-3.5" />
           </button>
         </div>

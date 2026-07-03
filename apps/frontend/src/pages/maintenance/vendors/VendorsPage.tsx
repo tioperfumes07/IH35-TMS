@@ -165,7 +165,7 @@ export function VendorsPage() {
 
   return (
     <div className="space-y-3" data-testid="maint-vendors-page">
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-white p-3">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div>
           <h2 className="text-base font-semibold text-gray-900">Maintenance Vendors</h2>
           <p className="text-xs text-gray-600">
@@ -178,7 +178,7 @@ export function VendorsPage() {
         </div>
         <div className="flex items-center gap-2">
           <input
-            className="h-8 rounded border border-gray-300 px-2 text-xs"
+            className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search vendors"
@@ -189,7 +189,7 @@ export function VendorsPage() {
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <input type="file" accept=".csv,text/csv" disabled={!csvEnabled} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
           <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => importMutation.mutate()}>
@@ -213,14 +213,14 @@ export function VendorsPage() {
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vendor">
         <div className="space-y-2">
-          <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Display name" value={draft.display_name} onChange={(e) => setDraft((p) => ({ ...p, display_name: e.target.value }))} />
-          <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Code (optional)" value={draft.code} onChange={(e) => setDraft((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />
+          <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Display name" value={draft.display_name} onChange={(e) => setDraft((p) => ({ ...p, display_name: e.target.value }))} />
+          <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Code (optional)" value={draft.code} onChange={(e) => setDraft((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Email" value={draft.contact_email} onChange={(e) => setDraft((p) => ({ ...p, contact_email: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Phone" value={draft.contact_phone} onChange={(e) => setDraft((p) => ({ ...p, contact_phone: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Email" value={draft.contact_email} onChange={(e) => setDraft((p) => ({ ...p, contact_email: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Phone" value={draft.contact_phone} onChange={(e) => setDraft((p) => ({ ...p, contact_phone: e.target.value }))} />
           </div>
-          <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Type" value={draft.type} onChange={(e) => setDraft((p) => ({ ...p, type: e.target.value }))} />
-          <textarea className="w-full rounded border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
+          <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Type" value={draft.type} onChange={(e) => setDraft((p) => ({ ...p, type: e.target.value }))} />
+          <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
           <Button disabled={!draft.display_name || createMutation.isPending} onClick={() => createMutation.mutate()}>
             Save
           </Button>
@@ -230,12 +230,12 @@ export function VendorsPage() {
       <Modal open={Boolean(editing)} onClose={() => setEditing(null)} title="Edit Vendor">
         {editing ? (
           <div className="space-y-2">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={editing.display_name} onChange={(e) => setEditing((p) => (p ? { ...p, display_name: e.target.value } : p))} />
+            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={editing.display_name} onChange={(e) => setEditing((p) => (p ? { ...p, display_name: e.target.value } : p))} />
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.contact_email ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, contact_email: e.target.value || null } : p))} />
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.contact_phone ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, contact_phone: e.target.value || null } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.contact_email ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, contact_email: e.target.value || null } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.contact_phone ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, contact_phone: e.target.value || null } : p))} />
             </div>
-            <textarea className="w-full rounded border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value || null } : p))} />
+            <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value || null } : p))} />
             <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
               Save Changes
             </Button>

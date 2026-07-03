@@ -60,7 +60,7 @@ export function DriverShell() {
             <PageHelpLink className="h-7 w-7 border-slate-300 text-slate-600 hover:bg-slate-100" />
             <button
               type="button"
-              className="rounded border border-slate-300 px-2 py-0.5"
+              className="rounded-sm border border-slate-300 px-2 py-0.5"
               onClick={() => {
                 localStorage.setItem("ih35_driver_i18n_lang", "en");
                 void i18next.changeLanguage("en");
@@ -70,7 +70,7 @@ export function DriverShell() {
             </button>
             <button
               type="button"
-              className="rounded border border-slate-300 px-2 py-0.5"
+              className="rounded-sm border border-slate-300 px-2 py-0.5"
               onClick={() => {
                 localStorage.setItem("ih35_driver_i18n_lang", "es");
                 void i18next.changeLanguage("es");

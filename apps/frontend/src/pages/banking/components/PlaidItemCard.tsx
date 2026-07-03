@@ -15,11 +15,11 @@ export function PlaidItemCard({ institution, accounts, actions, nowMs }: Props) 
   const lastSyncMs = latestPlaidLastSyncedAtMs(accounts);
 
   return (
-    <div className="rounded border border-gray-100 p-3">
+    <div className="rounded-sm border border-gray-100 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 gap-2">
           <div
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-gray-100 text-xs font-bold text-gray-700"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-gray-100 text-xs font-bold text-gray-700"
             aria-hidden
           >
             {institution.slice(0, 1).toUpperCase()}

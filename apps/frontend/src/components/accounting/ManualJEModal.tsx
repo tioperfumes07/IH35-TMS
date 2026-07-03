@@ -150,7 +150,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
               Journal date
               <input
                 type="date"
-                className="mt-1 h-8 w-full rounded border border-gray-300 px-2"
+                className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
               />
@@ -158,7 +158,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             <label className="block">
               Reference number (optional)
               <input
-                className="mt-1 h-8 w-full rounded border border-gray-300 px-2"
+                className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
                 value={referenceNumber}
                 onChange={(e) => setReferenceNumber(e.target.value)}
               />
@@ -166,7 +166,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             <label className="block">
               Memo
               <textarea
-                className="mt-1 min-h-16 w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={memo}
                 onChange={(e) => setMemo(e.target.value)}
               />
@@ -189,7 +189,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
           </>
         ) : (
           <>
-            <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] text-gray-700">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] text-gray-700">
               <span className="font-semibold">Date:</span> {date}
               {referenceNumber.trim() ? (
                 <>
@@ -213,9 +213,9 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                 <span>Description</span>
               </div>
               {lines.map((line, idx) => (
-                <div key={idx} className="grid grid-cols-5 gap-1 rounded border border-gray-200 p-1.5">
+                <div key={idx} className="grid grid-cols-5 gap-1 rounded-sm border border-gray-200 p-1.5">
                   <SelectCombobox
-                    className="h-8 rounded border border-gray-300 px-1"
+                    className="h-8 rounded-sm border border-gray-300 px-1"
                     value={line.account_id}
                     onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, account_id: e.target.value } : row)))}
                   >
@@ -227,7 +227,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                     ))}
                   </SelectCombobox>
                   <SelectCombobox
-                    className="h-8 rounded border border-gray-300 px-1"
+                    className="h-8 rounded-sm border border-gray-300 px-1"
                     value={line.class_id}
                     onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, class_id: e.target.value } : row)))}
                   >
@@ -254,7 +254,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                   />
                   <div className="flex items-center gap-1">
                     <input
-                      className="h-8 flex-1 rounded border border-gray-300 px-2"
+                      className="h-8 flex-1 rounded-sm border border-gray-300 px-2"
                       placeholder="Description"
                       value={line.description}
                       onChange={(e) =>
@@ -282,8 +282,8 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             <div
               className={
                 balanced
-                  ? "rounded border border-green-200 bg-green-50 px-2 py-1 text-green-700"
-                  : "rounded border border-red-200 bg-red-50 px-2 py-1 text-red-700"
+                  ? "rounded-sm border border-green-200 bg-green-50 px-2 py-1 text-green-700"
+                  : "rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-700"
               }
             >
               Debits ${(totalDebitCents / 100).toFixed(2)} / Credits ${(totalCreditCents / 100).toFixed(2)}{" "}

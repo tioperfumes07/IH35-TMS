@@ -17,7 +17,7 @@ export function Step3JurisdictionCalc({ filing }: Props) {
   const rows = data.jurisdiction_rows ?? [];
 
   return (
-    <section className="rounded border border-amber-200 bg-white" data-ifta-step="3">
+    <section className="rounded-sm border border-amber-200 bg-white" data-ifta-step="3">
       <div className="border-b border-amber-200 bg-amber-50 px-3 py-2">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-900">Step 3 · Jurisdiction tax calc</h3>
         <p className="text-xs text-amber-800">
@@ -29,7 +29,7 @@ export function Step3JurisdictionCalc({ filing }: Props) {
         </p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
-        <div className="overflow-x-auto rounded border border-slate-200">
+        <div className="overflow-x-auto rounded-sm border border-slate-200">
           <table className="min-w-full text-left">
             <thead className="bg-slate-50 text-slate-600">
               <tr>

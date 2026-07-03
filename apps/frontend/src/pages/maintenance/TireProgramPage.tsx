@@ -214,11 +214,11 @@ export function TireProgramPage() {
       <h3 className="text-xs font-semibold uppercase text-gray-600">{title}</h3>
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
         {positions.map((slot) => (
-          <div key={slot.code} className="rounded border border-gray-200 bg-white p-3 text-xs">
+          <div key={slot.code} className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="mb-1 flex items-center justify-between gap-2">
               <span className="font-medium text-gray-900">{slot.label}</span>
               {slot.record?.is_low_tread ? (
-                <span className="rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-700">
+                <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-700">
                   Low tread
                 </span>
               ) : null}
@@ -275,11 +275,11 @@ export function TireProgramPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 rounded border border-gray-200 bg-white p-3 md:grid-cols-[1fr_auto]">
+      <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[1fr_auto]">
         <label className="text-xs text-gray-700">
           Vehicle
           <select
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={unitId}
             onChange={(e) => setUnitId(e.target.value)}
             data-testid="tire-program-unit-select"
@@ -344,7 +344,7 @@ export function TireProgramPage() {
           </section>
         </div>
       ) : (
-        <div className="rounded border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+        <div className="rounded-sm border border-dashed border-gray-300 p-6 text-sm text-gray-500">
           Select a vehicle to view steer/drive tire layout and history.
         </div>
       )}
@@ -354,7 +354,7 @@ export function TireProgramPage() {
           <label className="block text-xs">
             Position
             <select
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={mountDraft.position_code}
               onChange={(e) => setMountDraft((d) => ({ ...d, position_code: e.target.value }))}
             >
@@ -369,7 +369,7 @@ export function TireProgramPage() {
           <label className="block text-xs">
             Brand
             <select
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={mountDraft.brand_id}
               onChange={(e) => {
                 const brand = (brandsQ.data?.rows ?? []).find((b) => b.id === e.target.value);
@@ -391,7 +391,7 @@ export function TireProgramPage() {
           <label className="block text-xs">
             Serial number
             <input
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={mountDraft.serial_number}
               onChange={(e) => setMountDraft((d) => ({ ...d, serial_number: e.target.value }))}
             />
@@ -399,7 +399,7 @@ export function TireProgramPage() {
           <label className="block text-xs">
             Tread depth (32nds)
             <input
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={mountDraft.tread_depth_32nds}
               onChange={(e) => setMountDraft((d) => ({ ...d, tread_depth_32nds: e.target.value }))}
             />
@@ -419,7 +419,7 @@ export function TireProgramPage() {
           <label className="block text-xs">
             Brand name
             <input
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={brandName}
               onChange={(e) => setBrandName(e.target.value)}
             />
@@ -443,7 +443,7 @@ export function TireProgramPage() {
             <label className="block text-xs">
               To position
               <select
-                className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={toPosition}
                 onChange={(e) => setToPosition(e.target.value)}
               >
@@ -467,7 +467,7 @@ export function TireProgramPage() {
             <label className="block text-xs">
               New serial number
               <input
-                className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={mountDraft.serial_number}
                 onChange={(e) => setMountDraft((d) => ({ ...d, serial_number: e.target.value }))}
               />
@@ -475,7 +475,7 @@ export function TireProgramPage() {
             <label className="block text-xs">
               Starting tread (32nds)
               <input
-                className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={mountDraft.tread_depth_32nds}
                 onChange={(e) => setMountDraft((d) => ({ ...d, tread_depth_32nds: e.target.value }))}
               />
@@ -490,7 +490,7 @@ export function TireProgramPage() {
             <label className="block text-xs">
               Tread depth (32nds)
               <input
-                className="mt-1 block w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={treadDepth}
                 onChange={(e) => setTreadDepth(e.target.value)}
               />

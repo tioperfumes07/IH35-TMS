@@ -19,9 +19,9 @@ export function ComparableUnitsWidget({ unitNumber, comparable }: { unitNumber: 
   const showBanner = dev > 15;
 
   return (
-    <div className="mt-3 rounded border border-gray-200 p-3" data-testid="vp-comparable-units">
+    <div className="mt-3 rounded-sm border border-gray-200 p-3" data-testid="vp-comparable-units">
       {showBanner ? (
-        <div className="mb-2 rounded bg-red-50 px-2 py-1 text-xs text-red-800" data-testid="vp-comparable-banner">
+        <div className="mb-2 rounded-sm bg-red-50 px-2 py-1 text-xs text-red-800" data-testid="vp-comparable-banner">
           Above-fleet-avg maintenance — review recommended (+{dev}%).
         </div>
       ) : null}

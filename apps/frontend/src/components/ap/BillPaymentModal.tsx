@@ -179,20 +179,20 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           }
         }}
       >
-        {error ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
+        {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
 
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Vendor
-            <input readOnly value={vendorName} className="h-9 rounded border border-gray-300 bg-gray-100 px-2 text-[13px]" />
+            <input readOnly value={vendorName} className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment date
-            <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Method
-            <SelectCombobox value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
               {METHOD_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -208,12 +208,12 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           {paymentMethod === "check" ? (
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Check #
-              <input value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+              <input value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
             </label>
           ) : null}
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-3">
             Reference
-            <input value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            <input value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
         </div>
 
@@ -222,7 +222,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           Auto-apply oldest bills first (FIFO)
         </label>
 
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
@@ -287,7 +287,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Memo
-          <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} className="rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
+          <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
         </label>
 
         <div className="flex justify-end gap-2">

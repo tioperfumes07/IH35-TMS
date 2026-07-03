@@ -133,7 +133,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       key: "renewal_severity",
       label: "Status",
       render: (row) => (
-        <span className={`rounded px-1.5 py-0.5 font-semibold ${severityClass(String(row.renewal_severity ?? ""))}`}>
+        <span className={`rounded-sm px-1.5 py-0.5 font-semibold ${severityClass(String(row.renewal_severity ?? ""))}`}>
           {row.archived_at ? "Archived" : String(row.renewal_severity ?? "—")}
         </span>
       ),
@@ -156,12 +156,12 @@ export function PermitsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="permits-page">
-      <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
         Track operating authority, IFTA, oversize/overweight, and hazmat permits with configurable renewal alerts.
       </div>
 
       <div
-        className="rounded border border-amber-200 bg-amber-50 p-3"
+        className="rounded-sm border border-amber-200 bg-amber-50 p-3"
         data-testid="permits-renewal-dashboard"
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -176,12 +176,12 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               max={365}
               value={reminderDays}
               onChange={(event) => setReminderDays(event.target.value)}
-              className="w-16 rounded border border-amber-300 px-2 py-1 text-xs"
+              className="w-16 rounded-sm border border-amber-300 px-2 py-1 text-xs"
               data-testid="permits-reminder-days-input"
             />
             <button
               type="button"
-              className="rounded bg-amber-800 px-2 py-1 text-xs font-semibold text-white"
+              className="rounded-sm bg-amber-800 px-2 py-1 text-xs font-semibold text-white"
               disabled={reminderMutation.isPending}
               onClick={() => reminderMutation.mutate()}
             >
@@ -195,7 +195,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
           <ul className="space-y-1">
             {renewalAlerts.map((row) => (
               <li key={String(row.id)} className="flex flex-wrap items-center gap-2 text-xs text-amber-900">
-                <span className={`rounded px-1.5 py-0.5 font-semibold ${severityClass(String(row.renewal_severity ?? ""))}`}>
+                <span className={`rounded-sm px-1.5 py-0.5 font-semibold ${severityClass(String(row.renewal_severity ?? ""))}`}>
                   {String(row.days_to_expiry ?? "—")}d
                 </span>
                 <span>{PERMIT_TYPE_LABELS[(row.permit_type as SafetyPermitType) ?? "other"] ?? row.permit_type}</span>
@@ -210,7 +210,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+          className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
           data-testid="permits-create-btn"
           onClick={() => setCreateOpen(true)}
         >
@@ -239,7 +239,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
 
       {createOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" data-testid="permits-create-modal">
-          <div className="w-full max-w-lg rounded border border-gray-200 bg-white p-4 shadow-lg">
+          <div className="w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
             <h3 className="mb-3 text-sm font-semibold text-slate-800">Create permit</h3>
             <div className="grid gap-2">
               <label className="text-xs">
@@ -247,7 +247,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 <SelectCombobox
                   value={draft.permit_type}
                   onChange={(event) => setDraft((prev) => ({ ...prev, permit_type: event.target.value as SafetyPermitType }))}
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 >
                   {Object.entries(PERMIT_TYPE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -261,7 +261,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 <input
                   value={draft.permit_number}
                   onChange={(event) => setDraft((prev) => ({ ...prev, permit_number: event.target.value }))}
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               {draft.permit_type === "state_operating_authority" ? (
@@ -270,7 +270,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                   <SelectCombobox
                     value={draft.issuing_state}
                     onChange={(event) => setDraft((prev) => ({ ...prev, issuing_state: event.target.value }))}
-                    className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                    className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                   >
                     {US_STATES.map((state) => (
                       <option key={state} value={state}>
@@ -285,7 +285,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 <input
                   value={draft.holder_name}
                   onChange={(event) => setDraft((prev) => ({ ...prev, holder_name: event.target.value }))}
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               <label className="text-xs">
@@ -293,7 +293,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 <DatePicker
                   value={draft.expiry_date}
                   onChange={(next) => setDraft((prev) => ({ ...prev, expiry_date: next }))}
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               <label className="text-xs">
@@ -301,18 +301,18 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 <textarea
                   value={draft.notes}
                   onChange={(event) => setDraft((prev) => ({ ...prev, notes: event.target.value }))}
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                   rows={2}
                 />
               </label>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" className="rounded border px-3 py-1 text-xs" onClick={() => setCreateOpen(false)}>
+              <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={() => setCreateOpen(false)}>
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+                className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
                 disabled={!draft.expiry_date || createMutation.isPending}
                 onClick={() => createMutation.mutate()}
               >

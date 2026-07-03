@@ -33,7 +33,7 @@ export function ItemCombobox({
       {onSearchChange ? (
         <input
           type="search"
-          className="w-full rounded border px-2 py-1 text-sm"
+          className="w-full rounded-sm border px-2 py-1 text-sm"
           placeholder="Filter items…"
           value={searchValue}
           disabled={disabled}

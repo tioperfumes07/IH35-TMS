@@ -19,7 +19,7 @@ export function SwipeActionRow({ children, actions }: Props) {
   const maxReveal = Math.min(actions.length * 72, 216);
 
   return (
-    <div className="relative overflow-hidden rounded border border-gray-200 bg-white" data-testid="swipe-action-row">
+    <div className="relative overflow-hidden rounded-sm border border-gray-200 bg-white" data-testid="swipe-action-row">
       <div className="absolute inset-y-0 right-0 flex">
         {actions.map((action) => (
           <button

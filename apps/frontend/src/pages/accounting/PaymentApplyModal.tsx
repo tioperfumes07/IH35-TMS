@@ -45,7 +45,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
       >
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search invoice #" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search invoice #" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
         </label>
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -60,7 +60,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
               const defaultApply = Math.min(Number(unappliedCents ?? 0), Number(invoice.amount_open_cents ?? 0));
               setApplyAmountDollars(defaultApply > 0 ? defaultApply / 100 : null);
             }}
-            className="h-9 rounded border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
           >
             <option value="">Select invoice</option>
             {filteredInvoices.map((invoice) => (
@@ -77,7 +77,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
           <MoneyInput valueDollars={applyAmountDollars} onChangeDollars={setApplyAmountDollars} ariaLabel="Apply amount (USD)" />
         </label>
 
-        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
           Unapplied available: {money(unappliedCents)}
           {selectedInvoice ? ` · Invoice open: ${money(selectedInvoice.amount_open_cents)}` : ""}
         </div>

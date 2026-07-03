@@ -232,23 +232,23 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       {activeTab === "accounts" ? (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
-            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Cash posting</div><div className="font-semibold">{money.format(cashPosting)}</div></div>
-            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">DIP balance</div><div className="font-semibold">{money.format(dipBalance)}</div></div>
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Cash posting</div><div className="font-semibold">{money.format(cashPosting)}</div></div>
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">DIP balance</div><div className="font-semibold">{money.format(dipBalance)}</div></div>
             <button
               type="button"
               onClick={() => setActiveTab("transactions")}
-              className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-left text-[11px] transition hover:bg-amber-100"
+              className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-left text-[11px] transition hover:bg-amber-100"
             >
               <div className="text-[10px] uppercase text-amber-700">Uncategorized</div>
               <div className="font-semibold text-amber-800">{uncategorizedCount}</div>
             </button>
-            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Recon accts</div><div className="font-semibold">{reconAccounts}</div></div>
-            <div className="rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-slate-700">Factoring res</div><div className="font-semibold text-slate-700">{money.format(factoringReserve)}</div></div>
-            <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-emerald-700">Escrow feed</div><div className="font-semibold text-emerald-900">{money.format(escrowFeed)}</div></div>
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Recon accts</div><div className="font-semibold">{reconAccounts}</div></div>
+            <div className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-slate-700">Factoring res</div><div className="font-semibold text-slate-700">{money.format(factoringReserve)}</div></div>
+            <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-emerald-700">Escrow feed</div><div className="font-semibold text-emerald-900">{money.format(escrowFeed)}</div></div>
           </div>
 
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr_1fr]">
-            <div className="rounded border border-gray-200 bg-white">
+            <div className="rounded-sm border border-gray-200 bg-white">
               <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <span>Bank accounts</span>
                 <button className="text-slate-700 hover:underline" type="button" onClick={() => setManageOpen(true)}>+</button>
@@ -273,7 +273,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </label>
             </div>
 
-            <div className="rounded border border-slate-300 bg-slate-100">
+            <div className="rounded-sm border border-slate-300 bg-slate-100">
               <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
                 <span>Factoring · virtual bank</span>
                 <span className="text-[10px]">Open</span>
@@ -288,7 +288,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </div>
             </div>
 
-            <div className="rounded border border-emerald-200 bg-emerald-50">
+            <div className="rounded-sm border border-emerald-200 bg-emerald-50">
               <div className="border-b border-emerald-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">Driver escrow visualizer</div>
               <div className="space-y-1 px-3 py-2 text-sm">
                 <div className="flex justify-between"><span>Total escrow held</span><span>{money.format(escrowFeed)}</span></div>
@@ -329,7 +329,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "reconciliation" ? (
         <div className="space-y-3">
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Reconciliation</p>
               <div className="flex flex-wrap items-center gap-3">
@@ -347,7 +347,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <button
                   key={session.id}
                   type="button"
-                  className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                  className="w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
                   onClick={() => navigate(`/banking/reconciliation?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
                 >
                   Open: {session.period_start} to {session.period_end} ({Number(session.variance_cents ?? 0) / 100})
@@ -364,7 +364,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   <button
                     key={session.id}
                     type="button"
-                    className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                    className="w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
                     onClick={() => navigate(`/banking/reconciliation?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
                   >
                     {session.period_start} to {session.period_end} - variance {Number(session.variance_cents ?? 0) / 100}
@@ -433,13 +433,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       />
       {startReconOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-lg rounded bg-white p-4 shadow-lg">
+          <div className="w-full max-w-lg rounded-sm bg-white p-4 shadow-lg">
             <h3 className="text-base font-semibold text-gray-900">Start reconciliation</h3>
             <div className="mt-3 grid grid-cols-1 gap-3">
               <SelectCombobox
                 value={reconAccountId}
                 onChange={(event) => setReconAccountId(event.target.value)}
-                className="rounded border border-gray-300 px-2 py-1 text-sm"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
               >
                 <option value="">Select bank account</option>
                 {(plaidAccountsQuery.data?.accounts ?? []).map((account) => (
@@ -451,12 +451,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <DatePicker
                 value={reconPeriodStart}
                 onChange={(next) => setReconPeriodStart(next)}
-                className="rounded border border-gray-300 px-2 py-1 text-sm"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
               />
               <DatePicker
                 value={reconPeriodEnd}
                 onChange={(next) => setReconPeriodEnd(next)}
-                className="rounded border border-gray-300 px-2 py-1 text-sm"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
               />
               {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
               <MoneyInput

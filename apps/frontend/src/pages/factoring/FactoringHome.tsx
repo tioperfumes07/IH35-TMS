@@ -208,19 +208,19 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       />
 
       <div className="grid gap-2 md:grid-cols-4">
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Active Factor</div>
           <div className="mt-1 font-semibold text-gray-900">{summary?.active_factor_name ?? activeFactorVendor?.name ?? "Not configured"}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Reserve Balance</div>
           <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(summary?.reserve_balance)}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Chargeback Balance</div>
           <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(summary?.chargeback_balance)}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Recourse Days</div>
           <div className="mt-1 font-semibold text-gray-900">{Number(summary?.recourse_days ?? 90)}</div>
         </div>
@@ -282,7 +282,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         />
       ) : null}
 
-      <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
+      <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
           {SUBNAV.map((item) => {
             const target = FACTORING_TAB_PATH[item.id];
@@ -315,13 +315,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       </div>
 
       {tab === "reserve_tracker" ? (
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <ReserveTracker />
         </div>
       ) : null}
 
       {tab === "recourse_pipeline" ? (
-        <div className="space-y-2 rounded border border-gray-200 bg-white p-3">
+        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-medium text-gray-900">Invoices inside recourse window (sorted by days until expiry)</span>
             <span className="text-gray-600">
@@ -336,13 +336,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "chargebacks_fees" ? (
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Chargebacks + fee history</div>
             <div className="overflow-x-auto">
               <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
             </div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Monthly fee summaries</div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 text-xs">
@@ -377,7 +377,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "statements_settings" ? (
         <div className="space-y-3">
-          <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="font-medium text-gray-900">Single-factor invariant status</div>
             <div className="mt-1 text-gray-700">
               Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
@@ -388,7 +388,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             <div className="mt-1 text-gray-700">Configured recourse period: {Number(settingsQuery.data?.current?.recourse_days ?? 90)} days</div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Statement history</div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 text-xs">
@@ -419,7 +419,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="font-medium text-gray-900">Faro deactivation (Owner-only)</div>
             <p className="mt-1 text-gray-600">Disables the active factor for this operating company. Intended for controlled migration windows only.</p>
             <div className="mt-2">
@@ -461,17 +461,17 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "faro_imports" ? (
         <div className="space-y-3">
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Upsert Faro daily import batch</div>
             <div className="grid gap-2 md:grid-cols-3 mb-3">
               <input
                 type="date"
-                className="rounded border border-gray-300 px-2 py-1 text-sm"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 value={faroStatementDate}
                 onChange={(event) => setFaroStatementDate(event.target.value)}
               />
               <input
-                className="rounded border border-gray-300 px-2 py-1 text-sm"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 value={faroStatementRef}
                 onChange={(event) => setFaroStatementRef(event.target.value)}
                 placeholder="statement reference"
@@ -536,7 +536,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               }}
             />
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Recent Faro imports</div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 text-xs">
@@ -577,17 +577,17 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "equipment_loans" ? (
         <div className="space-y-3">
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Create equipment loan</div>
             <div className="grid gap-2 md:grid-cols-5">
               <input
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={loanEquipmentId}
                 onChange={(event) => setLoanEquipmentId(event.target.value)}
                 placeholder="equipment uuid"
               />
               <input
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={loanLenderVendorId}
                 onChange={(event) => setLoanLenderVendorId(event.target.value)}
                 placeholder="lender vendor uuid"
@@ -601,12 +601,12 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 placeholder="Principal"
               />
               <input
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={loanAprPercent}
                 onChange={(event) => setLoanAprPercent(event.target.value)}
                 placeholder="apr percent"
               />
-              <input type="date" className="rounded border border-gray-300 px-2 py-1 text-xs" value={loanStartedOn} onChange={(event) => setLoanStartedOn(event.target.value)} />
+              <input type="date" className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={loanStartedOn} onChange={(event) => setLoanStartedOn(event.target.value)} />
             </div>
             <div className="mt-2">
               <Button
@@ -640,11 +640,11 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               </Button>
             </div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Loans + ledger actions</div>
             <div className="space-y-2">
               {(equipmentLoansQuery.data?.rows ?? []).map((row) => (
-                <div key={row.id} className="rounded border border-gray-200 p-2 text-xs">
+                <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <span className="font-semibold">{row.equipment_number || row.equipment_id}</span> · {row.lender_vendor_name || row.lender_vendor_id} ·{" "}
@@ -684,7 +684,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             </div>
           </div>
           {selectedLoanId ? (
-            <div className="rounded border border-gray-200 bg-white p-3 text-xs">
+            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
               <div className="mb-2 font-medium text-gray-900">Selected loan ledger: {selectedLoanId}</div>
               <p>Attributions: {(selectedLoanLedgerQuery.data?.attributions ?? []).length}</p>
               <p>Payments: {(selectedLoanLedgerQuery.data?.payments ?? []).length}</p>
@@ -695,7 +695,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "vendor_merges" ? (
         <div className="space-y-3">
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Merge duplicate QBO vendors for a driver</div>
             <div className="grid gap-2 md:grid-cols-2">
               <DriverAutocomplete
@@ -707,19 +707,19 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 }}
               />
               <input
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={mergeReason}
                 onChange={(event) => setMergeReason(event.target.value)}
                 placeholder="reason"
               />
               <input
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={mergeFromVendor}
                 onChange={(event) => setMergeFromVendor(event.target.value)}
                 placeholder="from qbo vendor id"
               />
               <input
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={mergeToVendor}
                 onChange={(event) => setMergeToVendor(event.target.value)}
                 placeholder="to qbo vendor id"
@@ -766,7 +766,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               </Button>
             </div>
           </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Recent merge history</div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 text-xs">
@@ -814,7 +814,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             <label className="block">
               Load UUID
               <input
-                className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
                 value={loanActionLoadId}
                 onChange={(e) => setLoanActionLoadId(e.target.value)}
                 placeholder="Load UUID for attribution"

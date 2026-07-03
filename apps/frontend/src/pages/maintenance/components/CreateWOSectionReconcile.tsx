@@ -62,7 +62,7 @@ export function CreateWOSectionReconcile({
           data-testid={testid}
           value={input}
           onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs tabular-nums"
+          className="h-7 w-28 rounded-sm border border-gray-300 px-2 text-right text-xs tabular-nums"
           placeholder="0.00"
         />
       </td>
@@ -73,7 +73,7 @@ export function CreateWOSectionReconcile({
   );
 
   return (
-    <section data-testid="wo-vendor-invoice-reconcile" className="rounded border border-slate-300 bg-slate-50 p-2 text-xs">
+    <section data-testid="wo-vendor-invoice-reconcile" className="rounded-sm border border-slate-300 bg-slate-50 p-2 text-xs">
       <div className="mb-1 font-semibold text-[#1F2A44]">Vendor Invoice Reconcile</div>
       <div className="overflow-x-auto">
       <table className="w-full min-w-[360px] border-collapse">

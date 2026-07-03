@@ -32,7 +32,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
     <div className="space-y-3 p-3" data-testid="anomaly-dashboard">
       <div className="flex items-center gap-2">
         <h1 className="text-lg font-semibold">Anomaly Alerts</h1>
-        <select className="rounded border px-2 py-1 text-sm" value={severity} onChange={(e) => setSeverity(e.target.value)}>
+        <select className="rounded-sm border px-2 py-1 text-sm" value={severity} onChange={(e) => setSeverity(e.target.value)}>
           <option value="">All severities</option>
           <option value="critical">Critical</option>
           <option value="high">High</option>

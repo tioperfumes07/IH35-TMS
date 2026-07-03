@@ -116,7 +116,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
         <label className="block space-y-1">
           <span className="font-medium">Driver</span>
           <select
-            className="w-full rounded border border-gray-300 px-2 py-1"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1"
             value={driverId}
             onChange={(e) => {
               setDriverId(e.target.value);
@@ -135,7 +135,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
         <label className="block space-y-1">
           <span className="font-medium">Settlement</span>
           <select
-            className="w-full rounded border border-gray-300 px-2 py-1"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1"
             value={settlementId}
             disabled={!driverId}
             onChange={(e) => setSettlementId(e.target.value)}
@@ -152,7 +152,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
         <label className="block space-y-1">
           <span className="font-medium">Dispute type</span>
           <select
-            className="w-full rounded border border-gray-300 px-2 py-1"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1"
             value={disputeType}
             onChange={(e) => setDisputeType(e.target.value as SettlementDisputeType)}
           >
@@ -177,7 +177,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
         <label className="block space-y-1">
           <span className="font-medium">Description</span>
           <textarea
-            className="min-h-24 w-full rounded border border-gray-300 px-2 py-1"
+            className="min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Explain what is wrong with this settlement (min 10 characters)"

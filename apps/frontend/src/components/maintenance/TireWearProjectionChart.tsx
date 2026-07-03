@@ -51,14 +51,14 @@ export function TireWearProjectionChart({
 
   if (chartData.length === 0) {
     return (
-      <div className="rounded border border-dashed border-gray-300 p-4 text-xs text-gray-500" data-testid="tire-wear-chart-empty">
+      <div className="rounded-sm border border-dashed border-gray-300 p-4 text-xs text-gray-500" data-testid="tire-wear-chart-empty">
         No tread measurements recorded for {position}.
       </div>
     );
   }
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-3" data-testid="tire-wear-projection-chart">
+    <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="tire-wear-projection-chart">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h4 className="text-xs font-semibold text-gray-900">{position} tread trend</h4>
         {projectedReplacementDate ? (

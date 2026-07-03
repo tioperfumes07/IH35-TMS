@@ -53,7 +53,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Date</span><span>{fmtDate(data.source.date)}</span></div>
             <hr />
             <a href={data.download_url} target="_blank" rel="noreferrer"
-              className="inline-block rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+              className="inline-block rounded-sm bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
               Download Receipt ↗
             </a>
           </div>
@@ -93,9 +93,9 @@ export function ReceiptsPage() {
       <div className="flex flex-wrap gap-2 mb-4">
         <input type="search" placeholder="Search filename, notes…" value={search}
           onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500" />
         <select value={entityType} onChange={(e) => { setEntityType(e.target.value as "" | "expense" | "bill"); setOffset(0); }}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
           <option value="">All sources</option>
           <option value="expense">Expenses</option>
           <option value="bill">Bills</option>
@@ -113,7 +113,7 @@ export function ReceiptsPage() {
           <p className="text-xs text-gray-400 mt-1">Upload a receipt when creating an expense or bill.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200">
+        <div className="overflow-x-auto rounded-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -134,7 +134,7 @@ export function ReceiptsPage() {
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{fmtBytes(row.size_bytes)}</td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className="inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700 capitalize">{row.source.type}</span>
+                    <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700 capitalize">{row.source.type}</span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <Link to={row.source.detail_path} className="text-slate-700 hover:underline text-xs">
@@ -145,7 +145,7 @@ export function ReceiptsPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{fmtCents(row.source.amount_cents)}</td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {row.source.status && (
-                      <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.source.status] ?? "bg-gray-100 text-gray-600"}`}>
+                      <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.source.status] ?? "bg-gray-100 text-gray-600"}`}>
                         {row.source.status}
                       </span>
                     )}
@@ -163,10 +163,10 @@ export function ReceiptsPage() {
       {total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
           <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
+            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
         </div>
       )}
     </AccountingSubNavWrapper>

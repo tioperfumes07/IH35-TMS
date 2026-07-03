@@ -31,7 +31,7 @@ function TrendChart({ periods }: { periods: DriverSafetyScoreRow[] }) {
 
   return (
     <div className="space-y-1">
-      <svg viewBox="0 0 100 100" className="h-24 w-full rounded border border-slate-100 bg-slate-50 p-2">
+      <svg viewBox="0 0 100 100" className="h-24 w-full rounded-sm border border-slate-100 bg-slate-50 p-2">
         <polyline points={coordinates} fill="none" stroke="currentColor" strokeWidth="4" className="text-slate-700" />
       </svg>
       <div className="flex justify-between text-[10px] text-slate-500">
@@ -53,7 +53,7 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
   const latest = useMemo(() => (periods.length > 0 ? periods[periods.length - 1] : null), [periods]);
 
   return (
-    <div className="space-y-3 rounded border border-gray-200 bg-white p-3">
+    <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h4 className="text-sm font-semibold text-slate-900">{driverName}</h4>
@@ -68,19 +68,19 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
 
       {latest ? (
         <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
-          <div className="rounded border border-slate-100 p-2">
+          <div className="rounded-sm border border-slate-100 p-2">
             <div className="text-slate-500">Latest score</div>
             <div className="font-semibold">{latest.composite_score?.toFixed(1) ?? "N/A"}</div>
           </div>
-          <div className="rounded border border-slate-100 p-2">
+          <div className="rounded-sm border border-slate-100 p-2">
             <div className="text-slate-500">Fleet rank</div>
             <div className="font-semibold">{latest.rank_in_fleet ?? "—"}</div>
           </div>
-          <div className="rounded border border-slate-100 p-2">
+          <div className="rounded-sm border border-slate-100 p-2">
             <div className="text-slate-500">Miles</div>
             <div className="font-semibold">{latest.miles_driven.toFixed(0)}</div>
           </div>
-          <div className="rounded border border-slate-100 p-2">
+          <div className="rounded-sm border border-slate-100 p-2">
             <div className="text-slate-500">Period</div>
             <div className="font-semibold">
               {latest.period_start} → {latest.period_end}
@@ -89,7 +89,7 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded border border-slate-100">
+      <div className="overflow-x-auto rounded-sm border border-slate-100">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>

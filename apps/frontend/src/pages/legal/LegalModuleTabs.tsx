@@ -20,7 +20,7 @@ export function LegalModuleTabs({ activeTabId }: { activeTabId: (typeof TABS)[nu
         const target = TABS.find((tab) => tab.id === next);
         if (target) navigate(target.to);
       }}
-      className="rounded border border-gray-200"
+      className="rounded-sm border border-gray-200"
     />
   );
 }

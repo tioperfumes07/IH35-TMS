@@ -146,7 +146,7 @@ export function ReportsRunnerPage() {
       <div className="space-y-3">
         <ReportsSubNav />
         <PageHeader title={`Reports / ${reportMeta.name}`} />
-        <div className="rounded border border-slate-200 bg-white px-3 py-4 text-sm text-slate-600">Runner configuration is not available yet for this report.</div>
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-4 text-sm text-slate-600">Runner configuration is not available yet for this report.</div>
       </div>
     );
   }
@@ -155,8 +155,8 @@ export function ReportsRunnerPage() {
     return (
       <div className="space-y-3">
         <ReportsSubNav />
-        <PageHeader title={`Reports / ${reportMeta.name}`} actions={<button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={() => navigate("/reports")}>Back</button>} />
-        <section className="rounded border border-amber-200 bg-amber-50 p-4">
+        <PageHeader title={`Reports / ${reportMeta.name}`} actions={<button type="button" className="rounded-sm border px-3 py-1.5 text-sm" onClick={() => navigate("/reports")}>Back</button>} />
+        <section className="rounded-sm border border-amber-200 bg-amber-50 p-4">
           <h2 className="text-lg font-semibold text-amber-900">Report unavailable in this phase</h2>
           <p className="mt-1 text-sm text-amber-800">
             {reportMeta.description} This runner ships with {STUB_PHASE[reportMeta.id] ?? "a later phase"}.
@@ -175,13 +175,13 @@ export function ReportsRunnerPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700"
+              className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700"
               onClick={() => downloadCSV(config.csvFilename(filters), config.columns, resultRows)}
               disabled={resultRows.length === 0}
             >
               Download CSV
             </button>
-            <button type="button" className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700" disabled>
+            <button type="button" className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700" disabled>
               Save
             </button>
           </div>
@@ -191,7 +191,7 @@ export function ReportsRunnerPage() {
       <RunnerFilters filters={config.filters} values={filters} onChange={(key, value) => setFilters((curr) => ({ ...curr, [key]: value }))} onRun={runReport} isRunning={isRunning} />
 
       {error ? (
-        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}{" "}
           <button type="button" className="underline" onClick={runReport}>
             Retry
@@ -200,7 +200,7 @@ export function ReportsRunnerPage() {
       ) : null}
 
       {isRunning ? (
-        <div className="rounded border border-slate-200 bg-white px-3 py-6 text-center text-sm text-slate-500">Running report...</div>
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-6 text-center text-sm text-slate-500">Running report...</div>
       ) : (
         <section className="space-y-2">
           <div className="text-xs text-slate-500">

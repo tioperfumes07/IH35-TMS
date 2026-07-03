@@ -63,7 +63,7 @@ export function DispatchChatPage() {
       ) : (
         <div className="flex min-h-0 flex-1 gap-4 p-4">
           {/* Thread list */}
-          <aside className="flex w-72 flex-col overflow-y-auto rounded border border-slate-200">
+          <aside className="flex w-72 flex-col overflow-y-auto rounded-sm border border-slate-200">
             {threadsQuery.isLoading ? (
               <p className="p-3 text-sm text-slate-500">Loading…</p>
             ) : threads.length === 0 ? (
@@ -81,7 +81,7 @@ export function DispatchChatPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{threadLabel(t)}</span>
                       {t.has_unacknowledged_confirmation ? (
-                        <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">
+                        <span className="rounded-sm bg-red-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">
                           Unacknowledged
                         </span>
                       ) : null}
@@ -94,7 +94,7 @@ export function DispatchChatPage() {
           </aside>
 
           {/* Message pane */}
-          <section className="flex min-w-0 flex-1 flex-col rounded border border-slate-200">
+          <section className="flex min-w-0 flex-1 flex-col rounded-sm border border-slate-200">
             {!activeThread ? (
               <div className="flex flex-1 items-center justify-center text-sm text-slate-400">Select a thread</div>
             ) : (
@@ -112,10 +112,10 @@ export function DispatchChatPage() {
                         {m.status === "tombstoned" ? (
                           <span className="italic text-slate-400">message removed</span>
                         ) : m.msg_type === "cash_advance_card" ? (
-                          <span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-[#1f2a44]">Cash advance {dollars} · {m.cash_advance_status ?? "pending"}</span>
+                          <span className="rounded-sm bg-slate-100 px-2 py-0.5 font-semibold text-[#1f2a44]">Cash advance {dollars} · {m.cash_advance_status ?? "pending"}</span>
                         ) : m.msg_type === "confirmation_request" ? (
                           <span>
-                            <span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-[#1f2a44]">Confirmation</span>{" "}
+                            <span className="rounded-sm bg-slate-100 px-2 py-0.5 font-semibold text-[#1f2a44]">Confirmation</span>{" "}
                             <span className="text-slate-800">{m.body}</span>{" "}
                             {m.acked_at ? (
                               <span className="text-xs font-semibold text-slate-600">✓ acknowledged {fmtTime(m.acked_at)}</span>
@@ -137,14 +137,14 @@ export function DispatchChatPage() {
                     onChange={(e) => setDraft(e.target.value)}
                     rows={2}
                     placeholder="Message the driver…"
-                    className="flex-1 resize-none rounded border border-slate-300 px-2 py-1 text-sm focus:border-[#1f2a44] focus:outline-none"
+                    className="flex-1 resize-none rounded-sm border border-slate-300 px-2 py-1 text-sm focus:border-[#1f2a44] focus:outline-hidden"
                   />
                   <div className="flex flex-col gap-1 self-end">
                     <button
                       type="button"
                       disabled={!draft.trim() || sendMutation.isPending || activeThread.status === "archived"}
                       onClick={() => sendMutation.mutate({ body: draft.trim() })}
-                      className="rounded bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                      className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
                     >
                       Send
                     </button>
@@ -152,7 +152,7 @@ export function DispatchChatPage() {
                       type="button"
                       disabled={!draft.trim() || sendMutation.isPending || activeThread.status === "archived"}
                       onClick={() => sendMutation.mutate({ body: draft.trim(), msgType: "confirmation_request" })}
-                      className="rounded border border-[#1f2a44] px-3 py-1 text-xs font-semibold text-[#1f2a44] disabled:opacity-40"
+                      className="rounded-sm border border-[#1f2a44] px-3 py-1 text-xs font-semibold text-[#1f2a44] disabled:opacity-40"
                     >
                       Send confirmation
                     </button>

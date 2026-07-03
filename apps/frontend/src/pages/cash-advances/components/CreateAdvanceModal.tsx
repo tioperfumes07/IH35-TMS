@@ -103,7 +103,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed inset-x-0 top-8 z-50 mx-auto w-full max-w-3xl rounded border border-gray-200 bg-white p-4 text-xs shadow-xl">
+      <div className="fixed inset-x-0 top-8 z-50 mx-auto w-full max-w-3xl rounded-sm border border-gray-200 bg-white p-4 text-xs shadow-xl">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Create Advance</h3>
           <ModalCloseButton title="Create Advance" onClose={onClose} />
@@ -112,7 +112,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
             <span>Driver</span>
-            <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+            <SelectCombobox className="w-full rounded-sm border border-gray-300 px-2 py-1" value={driverId} onChange={(e) => setDriverId(e.target.value)}>
               <option value="">Select driver</option>
               {(driversQuery.data?.drivers ?? []).map((driver) => (
                 <option key={driver.id} value={driver.id}>
@@ -133,7 +133,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           </label>
           <label className="space-y-1">
             <span>Purpose</span>
-            <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={purpose} onChange={(e) => setPurpose(e.target.value as CashAdvancePurpose)}>
+            <SelectCombobox className="w-full rounded-sm border border-gray-300 px-2 py-1" value={purpose} onChange={(e) => setPurpose(e.target.value as CashAdvancePurpose)}>
               {PURPOSE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -143,7 +143,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           </label>
           <label className="space-y-1">
             <span>Disbursement Method</span>
-            <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
+            <SelectCombobox className="w-full rounded-sm border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
               {METHOD_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -154,7 +154,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1 md:col-span-2">
             <span>Recipient Name (wire / check / vendor)</span>
             <input
-              className="w-full rounded border border-gray-300 px-2 py-1"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={recipientName}
               onChange={(e) => setRecipientName(e.target.value)}
               placeholder="Recipient name"
@@ -162,7 +162,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           </label>
         </div>
 
-        <div className="mt-3 rounded border border-slate-300 bg-slate-100 p-2">
+        <div className="mt-3 rounded-sm border border-slate-300 bg-slate-100 p-2">
           <div className="mb-1 flex items-center justify-between">
             <div className="font-semibold">Bill Payment Linkage</div>
             <label className="inline-flex items-center gap-1">
@@ -175,7 +175,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
               <label className="space-y-1">
                 <span>Unpaid Bill</span>
                 <SelectCombobox
-                  className="w-full rounded border border-gray-300 px-2 py-1"
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
                   value={linkedBillId}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -194,7 +194,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   ))}
                 </SelectCombobox>
               </label>
-              <div className="rounded border border-slate-300 bg-white p-2">
+              <div className="rounded-sm border border-slate-300 bg-white p-2">
                 <div>Bill amount auto-fills advance amount.</div>
                 <div>Recipient becomes vendor on disbursement.</div>
                 {selectedBill ? <div className="mt-1">Selected: {String(selectedBill.display_id)}</div> : null}
@@ -203,7 +203,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           ) : null}
         </div>
 
-        <div className="mt-3 rounded border border-gray-200 p-2">
+        <div className="mt-3 rounded-sm border border-gray-200 p-2">
           <div className="mb-1 font-semibold">Repayment Schedule</div>
           <div className="grid gap-2 md:grid-cols-3">
             <label className="space-y-1">
@@ -212,7 +212,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                 type="number"
                 min={1}
                 max={104}
-                className="w-full rounded border border-gray-300 px-2 py-1"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={periods}
                 onChange={(e) => {
                   const nextPeriods = Number(e.target.value || "1");
@@ -236,7 +236,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
             </label>
             <label className="space-y-1">
               <span>Cadence</span>
-              <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={cadence} onChange={(e) => setCadence(e.target.value as "weekly" | "biweekly")}>
+              <SelectCombobox className="w-full rounded-sm border border-gray-300 px-2 py-1" value={cadence} onChange={(e) => setCadence(e.target.value as "weekly" | "biweekly")}>
                 <option value="weekly">Weekly</option>
                 <option value="biweekly">Biweekly</option>
               </SelectCombobox>
@@ -245,7 +245,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           <div className="mt-1 text-gray-600">Auto-suggest default: 4 weekly installments.</div>
         </div>
 
-        {abovePolicyWarn ? <div className="mt-3 rounded border border-amber-300 bg-amber-50 p-2 text-amber-800">{abovePolicyWarn}</div> : null}
+        {abovePolicyWarn ? <div className="mt-3 rounded-sm border border-amber-300 bg-amber-50 p-2 text-amber-800">{abovePolicyWarn}</div> : null}
 
         <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

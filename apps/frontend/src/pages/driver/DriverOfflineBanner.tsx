@@ -32,7 +32,7 @@ export function DriverOfflineBanner() {
 
   return (
     <div
-      className={`mb-2 rounded border px-2 py-1 text-xs ${failed ? "border-red-300 bg-red-50 text-red-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}
+      className={`mb-2 rounded-sm border px-2 py-1 text-xs ${failed ? "border-red-300 bg-red-50 text-red-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}
       role="status"
     >
       {failed ? (
@@ -40,7 +40,7 @@ export function DriverOfflineBanner() {
           <span>Failed to sync — retry?</span>
           <button
             type="button"
-            className="rounded border border-red-400 px-2 py-0.5"
+            className="rounded-sm border border-red-400 px-2 py-0.5"
             onClick={() => {
               setFailed(false);
               void (async () => {

@@ -23,7 +23,7 @@ const SEGMENTS: { key: Segment; label: string }[] = [
 function legChip(leg: TripLeg) {
   const dest = [leg.delivery_city, leg.delivery_state].filter(Boolean).join(", ");
   return (
-    <span key={leg.load_id} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold text-white" style={{ backgroundColor: TRIP_COLOR[leg.trip_type] }}>
+    <span key={leg.load_id} className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold text-white" style={{ backgroundColor: TRIP_COLOR[leg.trip_type] }}>
       {leg.trip_type}{dest ? ` · ${dest}` : ""}
     </span>
   );
@@ -31,7 +31,7 @@ function legChip(leg: TripLeg) {
 
 function Kpi({ label, value, accent }: { label: string; value: number; accent?: string }) {
   return (
-    <div className="rounded border border-slate-200 bg-white px-3 py-1.5 text-center">
+    <div className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-center">
       <div className="text-base font-bold" style={accent ? { color: accent } : undefined}>{value}</div>
       <div className="text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
     </div>
@@ -42,7 +42,7 @@ function LegendSwatch({ color, dashed, label }: { color?: string; dashed?: boole
   return (
     <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-600">
       <span
-        className="inline-block h-3 w-3 rounded-sm"
+        className="inline-block h-3 w-3 rounded-xs"
         style={dashed ? { border: "1px dashed #94a3b8", background: "#f1f5f9" } : { backgroundColor: color }}
       />
       {label}
@@ -106,7 +106,7 @@ export function TripPairingBoardPage() {
       {/* Bespoke trip-pairing toolbar (GUARD ruling: NOT FilterBar — wrong filter model). 6-segment toggle
           + trailer-type dropdown (disabled until C1b adds trailer_type to the board payload) + search + Export. */}
       <div className="mb-3 flex flex-wrap items-center gap-2 print:hidden">
-        <div className="inline-flex overflow-hidden rounded border border-slate-300">
+        <div className="inline-flex overflow-hidden rounded-sm border border-slate-300">
           {SEGMENTS.map((s) => (
             <button
               key={s.key}
@@ -123,7 +123,7 @@ export function TripPairingBoardPage() {
         <select
           disabled
           title="Trailer-type filtering lights up once trailer_type is on the board payload (C1b backend)."
-          className="h-9 rounded border border-slate-300 bg-slate-50 px-2 text-[12px] text-slate-400"
+          className="h-9 rounded-sm border border-slate-300 bg-slate-50 px-2 text-[12px] text-slate-400"
         >
           <option>All trailer types</option>
           <option>Reefer</option>
@@ -131,7 +131,7 @@ export function TripPairingBoardPage() {
           <option>Flatbed</option>
         </select>
         <input
-          className="h-9 w-56 rounded border border-slate-300 px-2 text-sm"
+          className="h-9 w-56 rounded-sm border border-slate-300 px-2 text-sm"
           placeholder="Search unit or driver…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -139,7 +139,7 @@ export function TripPairingBoardPage() {
         <button
           type="button"
           onClick={() => window.print()}
-          className="ml-auto h-9 rounded border border-slate-300 bg-white px-2.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
+          className="ml-auto h-9 rounded-sm border border-slate-300 bg-white px-2.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
         >
           Export
         </button>
@@ -156,12 +156,12 @@ export function TripPairingBoardPage() {
             <section>
               <div className="mb-1 flex items-center gap-2">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-slate-700">Unbooked / available</span>
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">{unbooked.length}</span>
+                <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">{unbooked.length}</span>
                 <span className="text-[11px] text-slate-500">— no trip assigned; book a Northbound to start a tour</span>
               </div>
-              <div className="flex flex-wrap gap-2 rounded border border-slate-200 bg-slate-50 p-2">
+              <div className="flex flex-wrap gap-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
                 {unbooked.map((u) => (
-                  <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 rounded border border-slate-200 bg-white px-2.5 py-2 text-xs">
+                  <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 rounded-sm border border-slate-200 bg-white px-2.5 py-2 text-xs">
                     <span className="font-semibold text-slate-800">{u.unit_number ?? "—"}</span>
                     <span className="text-slate-500">{u.driver_name ?? "no driver"}</span>
                     {/* C1b: live location ("now: <city>") arrives with the backend payload — not fabricated. */}
@@ -169,7 +169,7 @@ export function TripPairingBoardPage() {
                     <button
                       type="button"
                       onClick={() => setBookUnitId(u.unit_id)}
-                      className="mt-0.5 inline-flex w-fit items-center rounded bg-[#1F2A44] px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-[#0f1729]"
+                      className="mt-0.5 inline-flex w-fit items-center rounded-sm bg-[#1F2A44] px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-[#0f1729]"
                     >
                       + Book NB
                     </button>
@@ -184,10 +184,10 @@ export function TripPairingBoardPage() {
           <section>
             <div className="mb-1 flex items-center gap-2">
               <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-slate-800">Assigned trips</span>
-              <span className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">{tours.length}</span>
+              <span className="rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">{tours.length}</span>
               <span className="text-[11px] text-slate-500">— multi-leg tours stack under the unit; SB return = settlement closes</span>
             </div>
-            <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+            <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
                   <tr>
@@ -229,7 +229,7 @@ export function TripPairingBoardPage() {
                           {sb ? (
                             legChip(sb)
                           ) : t.open_return ? (
-                            <span className="inline-flex items-center rounded border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">
+                            <span className="inline-flex items-center rounded-sm border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">
                               + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${new Date(t.return_avail_date).toLocaleDateString()}` : ""}
                             </span>
                           ) : (
@@ -238,9 +238,9 @@ export function TripPairingBoardPage() {
                         </td>
                         <td className="px-2 py-1.5">
                           {t.settlement_signal === "round_trip" ? (
-                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">Round trip</span>
+                            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">Round trip</span>
                           ) : t.settlement_signal === "settlement_open" ? (
-                            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                            <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
                               Up north · settlement open{t.up_north_days != null ? ` · ${t.up_north_days}d` : ""}
                             </span>
                           ) : (
@@ -259,7 +259,7 @@ export function TripPairingBoardPage() {
           </section>
 
           {/* Legend — five states (NB/TR/SB navy-family per §7; open-return dashed; settlement-open amber). */}
-          <div className="flex flex-wrap items-center gap-4 rounded border border-slate-200 bg-white px-3 py-2">
+          <div className="flex flex-wrap items-center gap-4 rounded-sm border border-slate-200 bg-white px-3 py-2">
             <LegendSwatch color={TRIP_COLOR.NB} label="NB Northbound" />
             <LegendSwatch color={TRIP_COLOR.TR} label="TR Triangulation" />
             <LegendSwatch color={TRIP_COLOR.SB} label="SB Southbound return" />

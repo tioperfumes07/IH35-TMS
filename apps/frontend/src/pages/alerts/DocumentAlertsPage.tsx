@@ -46,7 +46,7 @@ function RuleEditor({
   });
 
   return (
-    <div className="rounded border border-gray-200 p-3" data-testid={`rule-editor-${rule.document_type}`}>
+    <div className="rounded-sm border border-gray-200 p-3" data-testid={`rule-editor-${rule.document_type}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-semibold text-slate-900">{rule.rule_name}</p>
@@ -60,7 +60,7 @@ function RuleEditor({
       <label className="mt-2 block text-xs font-medium text-slate-600">
         Days before expiry (comma-separated)
         <input
-          className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           value={daysText}
           onChange={(e) => setDaysText(e.target.value)}
           aria-label={`Thresholds for ${rule.rule_name}`}

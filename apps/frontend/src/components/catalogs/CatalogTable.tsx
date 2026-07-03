@@ -20,8 +20,8 @@ type Props = {
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
-    : "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
+    : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 function compareValues(a: unknown, b: unknown, dir: "asc" | "desc") {
@@ -158,17 +158,17 @@ export function CatalogTable({
         destructiveActions={["archive"]}
       />
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={`Search ${filterableColumns.map((column) => column.label.toLowerCase()).join(" or ") || "rows"}`}
-          className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
         />
         <SelectCombobox
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as "true" | "false" | "all")}
-          className="h-9 rounded border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
         >
           <option value="true">Active</option>
           <option value="false">Inactive</option>
@@ -185,7 +185,7 @@ export function CatalogTable({
         cap={SELECTION_CAP}
       >
         {(selectCtx) => (
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
                 <tr>

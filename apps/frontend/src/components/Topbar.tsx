@@ -172,7 +172,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
         {onOpenMobileNav ? (
           <button
             type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded border text-white hover:bg-white/10 md:hidden"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-sm border text-white hover:bg-white/10 md:hidden"
             style={{ borderColor: colors.sidebarBorder }}
             aria-label={t("common.open_navigation_menu", "Open navigation menu")}
             onClick={onOpenMobileNav}
@@ -185,7 +185,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
           {office && legalNameChip ? (
             <span
-              className={`max-w-[min(280px,42vw)] truncate rounded px-2 py-0.5 text-[10px] font-semibold normal-case leading-tight ${chipClass}`}
+              className={`max-w-[min(280px,42vw)] truncate rounded-sm px-2 py-0.5 text-[10px] font-semibold normal-case leading-tight ${chipClass}`}
               title={legalNameChip}
             >
               {legalNameChip}
@@ -214,7 +214,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             <button
               type="button"
               aria-label={t("topbar.global_create", "+ Create")}
-              className="flex h-7 items-center gap-1 rounded border px-2 font-semibold hover:bg-white/10"
+              className="flex h-7 items-center gap-1 rounded-sm border px-2 font-semibold hover:bg-white/10"
               style={{ borderColor: "#16A34A", backgroundColor: "#16A34A", color: "#ffffff", fontSize: 12 }}
               onClick={() => setCreateOpen((v) => !v)}
             >
@@ -223,7 +223,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             </button>
             {createOpen ? (
               <div
-                className="absolute right-0 z-30 mt-1 min-w-[200px] rounded border border-gray-200 bg-white py-1 shadow-lg"
+                className="absolute right-0 z-30 mt-1 min-w-[200px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg"
                 data-testid="global-create-menu"
               >
                 {([
@@ -251,7 +251,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           <button
             type="button"
             aria-label={t("topbar.tasks", "Tasks")}
-            className="flex h-7 items-center gap-1 rounded border px-2 hover:bg-white/10"
+            className="flex h-7 items-center gap-1 rounded-sm border px-2 hover:bg-white/10"
             style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.75)", fontSize: 12 }}
             onClick={() => navigate("/tasks")}
           >
@@ -265,7 +265,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
         <span style={{ fontSize: typography.pageSubtitle, color: colors.sidebarTextMuted }}>{dateLabel}</span>
         <button
           type="button"
-          className="flex h-7 items-center gap-1 rounded border px-2 hover:bg-white/10"
+          className="flex h-7 items-center gap-1 rounded-sm border px-2 hover:bg-white/10"
           style={{ borderColor: colors.sidebarBorder, color: colors.sidebarTextActive, fontSize: typography.pageSubtitle }}
           onClick={() => setOpen((current) => !current)}
         >
@@ -273,10 +273,10 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           <ChevronDown className="h-3 w-3" />
         </button>
         {open ? (
-          <div className="absolute right-0 top-8 z-30 w-40 rounded border border-gray-200 bg-white p-1 shadow" style={{ zIndex: 30 }}>
+          <div className="absolute right-0 top-8 z-30 w-40 rounded-sm border border-gray-200 bg-white p-1 shadow-sm" style={{ zIndex: 30 }}>
             <button
               type="button"
-              className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-gray-100"
+              className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
               onClick={() => {
                 setOpen(false);
                 navigate("/settings");
@@ -286,7 +286,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             </button>
             <button
               type="button"
-              className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-gray-100"
+              className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
               onClick={async () => {
                 setOpen(false);
                 try {
@@ -307,12 +307,12 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       </header>
       {qboErrorBannerMessage ? (
         <div className="px-3 pb-2">
-          <div className="rounded border border-red-400/60 bg-red-500/10 px-3 py-2 text-xs text-red-100">
+          <div className="rounded-sm border border-red-400/60 bg-red-500/10 px-3 py-2 text-xs text-red-100">
             <span className="font-semibold">{t("topbar.qbo_sync_error", "QBO sync error.")}</span> {qboErrorBannerMessage}
             {qboSyncPill?.needsReconnect && companyId ? (
               <button
                 type="button"
-                className="ml-2 rounded border border-red-300/60 px-2 py-0.5 text-[11px] font-semibold hover:bg-red-500/20"
+                className="ml-2 rounded-sm border border-red-300/60 px-2 py-0.5 text-[11px] font-semibold hover:bg-red-500/20"
                 onClick={() => {
                   window.location.href = getQboAuthorizeStartUrl(companyId);
                 }}

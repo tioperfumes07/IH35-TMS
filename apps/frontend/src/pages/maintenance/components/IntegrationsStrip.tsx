@@ -40,7 +40,7 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
   const relayVis = RELAY_NOT_CONFIGURED;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600">
       <span className="inline-flex items-center gap-1">
         <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(qboVis.dot)}`} />
         {qboVis.label}

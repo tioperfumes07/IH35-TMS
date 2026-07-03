@@ -54,7 +54,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
 
   if (!companyId) {
     return (
-      <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
         Select an operating company to view claims.
       </div>
     );
@@ -74,7 +74,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       </div>
 
       {query.isLoading ? <div className="text-sm text-gray-500">Loading claims...</div> : null}
-      {query.isError ? <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load claims.</div> : null}
+      {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load claims.</div> : null}
       {!query.isLoading && rows.length === 0 ? <div className="text-sm text-gray-600">No claims found.</div> : null}
 
       {rows.length > 0 ? (

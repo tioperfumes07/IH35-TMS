@@ -26,18 +26,18 @@ function statusClass(status: string) {
 export function RecentActivityCard({ rows }: Props) {
   const top = rows.slice(0, 10);
   return (
-    <div className="rounded border border-slate-200 bg-white p-3">
+    <div className="rounded-sm border border-slate-200 bg-white p-3">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Recent Catalog Activity</div>
       <div className="space-y-2 text-xs">
         {top.map((row, idx) => (
-          <div key={`${row.created_at}-${idx}`} className="rounded border border-slate-100 px-2 py-1.5">
+          <div key={`${row.created_at}-${idx}`} className="rounded-sm border border-slate-100 px-2 py-1.5">
             <div className="text-slate-500">{timeAgo(row.created_at)}</div>
             <div className="text-slate-800">
               {row.catalog_key} · {row.action} · {row.entity_name}
             </div>
             <div className="mt-1 flex items-center justify-between">
               <span className="text-slate-500">{row.user_display_name}</span>
-              <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${statusClass(row.qbo_sync_status)}`}>{row.qbo_sync_status}</span>
+              <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${statusClass(row.qbo_sync_status)}`}>{row.qbo_sync_status}</span>
             </div>
           </div>
         ))}

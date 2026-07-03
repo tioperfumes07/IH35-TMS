@@ -24,7 +24,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
           <h3 className="text-sm font-semibold">Liability Detail</h3>
           <button type="button" className="text-gray-500 underline" onClick={onClose}>Close</button>
         </div>
-        <div className="space-y-1 rounded border border-gray-200 bg-gray-50 p-2">
+        <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
           <div>Type: {String(liability.type ?? "—")}</div>
           <div>Source: {String(liability.source_description ?? "—")}</div>
           <div>Original: ${Number(liability.original_amount ?? 0).toFixed(2)}</div>
@@ -32,17 +32,17 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
           <div>Balance: ${Number(liability.current_balance ?? 0).toFixed(2)}</div>
           <div>Scheduled deduction: ${Number(liability.scheduled_deduction ?? 0).toFixed(2)}</div>
         </div>
-        <div className="mt-2 rounded border border-gray-200 p-2">
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="font-semibold">Acknowledgment / Forfeiture</div>
           <div>Status: {Boolean(liability.requires_acknowledgment) && !liability.acknowledgment_uuid ? "Pending Ack" : "Acknowledged/Not required"}</div>
           <div>Forfeiture clause: {Boolean(liability.forfeiture_clause_active) ? "Active" : "Not active"}</div>
           <div>Signed at: {String(liability.forfeiture_clause_signed_at ?? "n/a")}</div>
         </div>
-        <div className="mt-2 rounded border border-gray-200 p-2">
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="mb-1 font-semibold">Settlement History (reverse-link)</div>
           <div className="space-y-1">
             {settlementHistory.map((row) => (
-              <div key={String(row.settlement_id ?? row.id)} className="rounded border border-gray-100 px-2 py-1">
+              <div key={String(row.settlement_id ?? row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
                 Settlement {String(row.settlement_id ?? "—")} · ${Number(row.amount ?? 0).toFixed(2)}
               </div>
             ))}

@@ -33,7 +33,7 @@ export function TrueStatusChips({
         const isReached = reached.has(stage);
         const classes = isReached
           ? "border-[#14532d] bg-[#14532d] text-[#4ade80]"
-          : "border-[#404756] bg-[#404756] text-[#94a3b8]";
+          : "border-[#404756] bg-[#404756] text-pwa-text-secondary";
         return (
           <span key={stage} className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] ${classes}`}>
             {isReached ? "✓ " : ""}

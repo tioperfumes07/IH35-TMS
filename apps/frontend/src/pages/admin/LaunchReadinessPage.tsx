@@ -11,8 +11,8 @@ function dotClass(status: LaunchTile["status"]): string {
 
 function TileRow({ label, tile }: { label: string; tile: LaunchTile }) {
   return (
-    <div className="flex items-start gap-3 rounded border border-gray-100 bg-white px-3 py-2">
-      <span className={`mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full ${dotClass(tile.status)}`} />
+    <div className="flex items-start gap-3 rounded-sm border border-gray-100 bg-white px-3 py-2">
+      <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${dotClass(tile.status)}`} />
       <div className="min-w-0">
         <div className="text-sm font-semibold text-gray-900">{label}</div>
         <div className="text-xs text-gray-600">{tile.detail}</div>
@@ -32,7 +32,7 @@ export function LaunchReadinessPage() {
     return (
       <div className="space-y-3">
         <PageHeader title="Launch readiness" subtitle="Owner / Administrator" />
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           Could not load readiness data. Confirm you are signed in as Owner or Administrator.
         </div>
       </div>
@@ -53,7 +53,7 @@ export function LaunchReadinessPage() {
       ) : (
         <>
           {data.errors?.length ? (
-            <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
               Partial data: {data.errors.join(" · ")}
             </div>
           ) : null}
@@ -74,7 +74,7 @@ export function LaunchReadinessPage() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Migrations</h2>
             <div
-              className="rounded border border-gray-200 bg-white p-4 text-sm"
+              className="rounded-sm border border-gray-200 bg-white p-4 text-sm"
               style={{ borderColor: colors.sidebarBorder }}
             >
               <div className="grid gap-2 sm:grid-cols-3">
@@ -92,7 +92,7 @@ export function LaunchReadinessPage() {
                 </div>
               </div>
               {data.migrations.pending_filenames.length ? (
-                <div className="mt-3 max-h-32 overflow-auto rounded bg-gray-50 p-2 font-mono text-[11px] text-gray-700">
+                <div className="mt-3 max-h-32 overflow-auto rounded-sm bg-gray-50 p-2 font-mono text-[11px] text-gray-700">
                   {data.migrations.pending_filenames.join(", ")}
                 </div>
               ) : null}
@@ -113,7 +113,7 @@ export function LaunchReadinessPage() {
                   ["Bank transactions (30d)", data.master_counts.bank_transactions_last_30_days],
                 ] as const
               ).map(([label, value]) => (
-                <div key={label} className="rounded border border-gray-100 bg-white px-3 py-2">
+                <div key={label} className="rounded-sm border border-gray-100 bg-white px-3 py-2">
                   <div className="text-xs uppercase text-gray-500">{label}</div>
                   <div className="text-lg font-semibold text-gray-900">{value}</div>
                 </div>

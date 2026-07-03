@@ -22,7 +22,7 @@ export function ListErrorState({ title = "Couldn't load list", status, message, 
       <AlertCircle className="h-8 w-8 shrink-0 text-amber-600" aria-hidden />
       <div className="space-y-1">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="max-w-md text-xs text-slate-600 break-words">{detail}</div>
+        <div className="max-w-md text-xs text-slate-600 wrap-break-word">{detail}</div>
       </div>
       <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
         Retry

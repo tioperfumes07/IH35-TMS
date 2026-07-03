@@ -275,7 +275,7 @@ export function UserDetailPage() {
         <DataPanel title="Company Access">
           <div className="space-y-2 text-sm">
             {(userDetailQuery.data?.accessible_companies ?? []).map((company) => (
-              <div key={company.id} className="rounded border border-gray-200 px-2 py-1.5">
+              <div key={company.id} className="rounded-sm border border-gray-200 px-2 py-1.5">
                 <div className="font-medium">{company.short_name ?? company.code}</div>
                 <div className="min-w-0 max-w-full text-xs text-gray-500">
                   <span title={company.legal_name} className="single-line-name">
@@ -292,7 +292,7 @@ export function UserDetailPage() {
 
       {tab === "safety" && canShowSafetyTab ? (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-gray-200 bg-white p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-gray-200 bg-white p-3">
             <div>
               <h2 className="text-sm font-semibold">Dispatcher Safety File</h2>
               <p className="text-xs text-gray-500">Permanent accountability record for operational events.</p>
@@ -308,7 +308,7 @@ export function UserDetailPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 rounded border border-gray-200 bg-white p-3 text-xs md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs md:grid-cols-5">
             <div>
               <div className="text-gray-500">Total events</div>
               <div className="text-sm font-semibold">{costSummary.totalEvents}</div>
@@ -335,12 +335,12 @@ export function UserDetailPage() {
             {(safetyEventsQuery.data ?? []).map((event) => (
               <div
                 key={event.id}
-                className={`rounded border p-3 ${event.voided_at ? "border-gray-300 bg-gray-100 text-gray-500" : "border-gray-200 bg-white"}`}
+                className={`rounded-sm border p-3 ${event.voided_at ? "border-gray-300 bg-gray-100 text-gray-500" : "border-gray-200 bg-white"}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{event.event_date}</span>
-                    <span className="rounded bg-slate-100 px-2 py-0.5 text-xs capitalize">{eventTypeLabel(event.event_type)}</span>
+                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{event.event_date}</span>
+                    <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs capitalize">{eventTypeLabel(event.event_type)}</span>
                     <StatusBadge status={event.severity} />
                   </div>
                   <div className="font-semibold">{money(event.cost_amount)}</div>
@@ -401,7 +401,7 @@ export function UserDetailPage() {
         </div>
       ) : null}
 
-      {tab === "activity" ? <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">User activity history will appear here once audit exports are enabled.</div> : null}
+      {tab === "activity" ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">User activity history will appear here once audit exports are enabled.</div> : null}
 
       <Modal open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Create Dispatcher Safety Event">
         <form
@@ -471,7 +471,7 @@ export function UserDetailPage() {
               value={eventDate}
               max={new Date().toISOString().slice(0, 10)}
               onChange={(event) => setEventDate(event.target.value)}
-              className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div>
@@ -509,13 +509,13 @@ export function UserDetailPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Summary</label>
-            <input value={summary} onChange={(event) => setSummary(event.target.value)} maxLength={500} className="w-full rounded border border-gray-300 h-9 px-2 text-[13px]" />
+            <input value={summary} onChange={(event) => setSummary(event.target.value)} maxLength={500} className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Details</label>
-            <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={4} maxLength={5000} className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
+            <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={4} maxLength={5000} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
           </div>
-          <div className="rounded border border-gray-200 p-2">
+          <div className="rounded-sm border border-gray-200 p-2">
             <label className="inline-flex items-center gap-2 text-xs">
               <input type="checkbox" checked={enableCost} onChange={(event) => setEnableCost(event.target.checked)} />
               Cost attribution
@@ -555,7 +555,7 @@ export function UserDetailPage() {
               </div>
             ) : null}
           </div>
-          <div className="rounded border border-gray-200 p-2">
+          <div className="rounded-sm border border-gray-200 p-2">
             <label className="inline-flex items-center gap-2 text-xs">
               <input type="checkbox" checked={enableRelated} onChange={(event) => setEnableRelated(event.target.checked)} />
               Related entities
@@ -593,7 +593,7 @@ export function UserDetailPage() {
             onChange={(event) => setVoidReason(event.target.value)}
             rows={4}
             placeholder="Void reason (min 10 chars)"
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setVoidEventId(null)}>
@@ -624,7 +624,7 @@ export function UserDetailPage() {
             value={editDetails}
             onChange={(event) => setEditDetails(event.target.value)}
             rows={4}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
             placeholder="Details"
           />
           <Combobox

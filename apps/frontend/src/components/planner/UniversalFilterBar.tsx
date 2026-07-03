@@ -188,7 +188,7 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
   const handleTo = (to: string) => onChange({ ...value, period: "custom", to });
 
   // 28px height, content-width (proportionate), compact layout
-  const btnBase = "h-[28px] px-2 text-xs border rounded flex items-center gap-1 bg-white";
+  const btnBase = "h-[28px] px-2 text-xs border rounded-sm flex items-center gap-1 bg-white";
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 border-b bg-gray-50">
@@ -206,7 +206,7 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
           <span>▼</span>
         </button>
         {isOpen && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white border rounded shadow-md min-w-[10rem] max-w-[12rem]">
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white border rounded-sm shadow-md min-w-40 max-w-48">
             {(Object.keys(PRESET_LABELS) as PeriodPreset[]).map((k) => (
               <button
                 key={k}
@@ -225,7 +225,7 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
       <div className="flex items-center gap-1">
         <span className="text-xs text-gray-500">From</span>
         <DatePicker
-          className="h-[28px] px-2 text-xs border rounded bg-white"
+          className="h-[28px] px-2 text-xs border rounded-sm bg-white"
           value={value.from}
           onChange={(next) => handleFrom(next)}
         />
@@ -233,7 +233,7 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
       <div className="flex items-center gap-1">
         <span className="text-xs text-gray-500">To</span>
         <DatePicker
-          className="h-[28px] px-2 text-xs border rounded bg-white"
+          className="h-[28px] px-2 text-xs border rounded-sm bg-white"
           value={value.to}
           onChange={(next) => handleTo(next)}
         />

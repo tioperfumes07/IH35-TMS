@@ -41,7 +41,7 @@ function kindBadge(kind: BankMatchCandidateKind) {
   return (
     <span
       data-testid="match-candidate-kind"
-      className="inline-flex items-center rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700"
+      className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700"
     >
       {KIND_LABELS[kind]}
     </span>
@@ -95,7 +95,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
           <button
             type="button"
             data-testid="match-drawer-close"
-            className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-50"
+            className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-50"
             onClick={onClose}
           >
             Close
@@ -140,7 +140,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                     {isTopAuto ? (
                       <span
                         data-testid="match-candidate-top"
-                        className="inline-flex items-center rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white"
+                        className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white"
                       >
                         Best match
                       </span>
@@ -175,8 +175,8 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                     data-testid="match-candidate-confirm"
                     className={
                       canConfirm
-                        ? "rounded border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-white hover:bg-slate-800 disabled:opacity-60"
-                        : "rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-400"
+                        ? "rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-white hover:bg-slate-800 disabled:opacity-60"
+                        : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-400"
                     }
                     disabled={!canConfirm || isConfirming}
                     title={

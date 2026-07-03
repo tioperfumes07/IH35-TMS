@@ -128,7 +128,7 @@ export function TransactionRegisterPage() {
           type="button"
           onClick={exportCsv}
           disabled={rows.length === 0}
-          className="inline-flex h-9 items-center gap-1 rounded border border-slate-300 bg-white px-2 text-[12px] text-slate-700 disabled:opacity-50"
+          className="inline-flex h-9 items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 text-[12px] text-slate-700 disabled:opacity-50"
         >
           <Download className="h-3.5 w-3.5" /> Export CSV
         </button>
@@ -164,7 +164,7 @@ export function TransactionRegisterPage() {
                 setSearch(event.target.value);
               }}
               placeholder="Description or customer / vendor / driver"
-              className="h-9 rounded border border-slate-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
@@ -175,7 +175,7 @@ export function TransactionRegisterPage() {
                 setPage(0);
                 setDirection(event.target.value as "all" | "in" | "out");
               }}
-              className="h-9 rounded border border-slate-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
             >
               <option value="all">All</option>
               <option value="in">Money in</option>
@@ -191,16 +191,16 @@ export function TransactionRegisterPage() {
                 setStatus(event.target.value);
               }}
               placeholder="e.g. paid, uncategorized"
-              className="h-9 rounded border border-slate-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
             From
-            <DatePicker value={fromDate} onChange={(next) => { setPage(0); setFromDate(next); }} className="h-9 rounded border border-slate-300 px-2 text-[13px]" />
+            <DatePicker value={fromDate} onChange={(next) => { setPage(0); setFromDate(next); }} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
             To
-            <DatePicker value={toDate} onChange={(next) => { setPage(0); setToDate(next); }} className="h-9 rounded border border-slate-300 px-2 text-[13px]" />
+            <DatePicker value={toDate} onChange={(next) => { setPage(0); setToDate(next); }} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
           </label>
         </div>
 
@@ -214,7 +214,7 @@ export function TransactionRegisterPage() {
       {query.isError ? (
         <ListErrorState {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
       ) : (
-        <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-slate-50">
               <tr className="text-slate-600">
@@ -246,7 +246,7 @@ export function TransactionRegisterPage() {
                 rows.map((r) => (
                   <tr key={`${r.source}:${r.id}`} className="border-t border-slate-100 hover:bg-slate-50">
                     <td className="px-3 py-2">
-                      <span className={`rounded border px-2 py-0.5 text-[11px] ${sourceBadgeClass(r.source)}`}>
+                      <span className={`rounded-sm border px-2 py-0.5 text-[11px] ${sourceBadgeClass(r.source)}`}>
                         {r.type}
                       </span>
                     </td>
@@ -292,7 +292,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="h-9 rounded border border-slate-300 bg-white px-3 disabled:opacity-50"
+            className="h-9 rounded-sm border border-slate-300 bg-white px-3 disabled:opacity-50"
           >
             Previous
           </button>
@@ -303,7 +303,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={() => setPage((p) => (p + 1 < pageCount ? p + 1 : p))}
             disabled={page + 1 >= pageCount}
-            className="h-9 rounded border border-slate-300 bg-white px-3 disabled:opacity-50"
+            className="h-9 rounded-sm border border-slate-300 bg-white px-3 disabled:opacity-50"
           >
             Next
           </button>

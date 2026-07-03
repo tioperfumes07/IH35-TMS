@@ -98,7 +98,7 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
       <div className="max-h-[70vh] space-y-3 overflow-auto pr-1 text-sm">
         <label className="block text-xs text-gray-600">
           Report
-          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={reportId} onChange={(e) => setReportId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={reportId} onChange={(e) => setReportId(e.target.value)}>
             {libraryIds.map((id) => (
               <option key={id} value={id}>
                 {id}
@@ -107,11 +107,11 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
           </SelectCombobox>
         </label>
 
-        <fieldset className="rounded border border-gray-200 p-2">
+        <fieldset className="rounded-sm border border-gray-200 p-2">
           <legend className="px-1 text-xs font-semibold text-gray-700">Parameters</legend>
           <label className="mt-1 block text-xs text-gray-600">
             Date range type
-            <SelectCombobox className="mt-1 h-9 w-full rounded border px-2" value={rangeType} onChange={(e) => setRangeType(e.target.value as typeof rangeType)}>
+            <SelectCombobox className="mt-1 h-9 w-full rounded-sm border px-2" value={rangeType} onChange={(e) => setRangeType(e.target.value as typeof rangeType)}>
               <option value="rolling">Rolling window</option>
               <option value="calendar">Calendar preset</option>
             </SelectCombobox>
@@ -119,12 +119,12 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
           {rangeType === "rolling" ? (
             <label className="mt-2 block text-xs text-gray-600">
               Last days
-              <input type="number" className="mt-1 h-9 w-full rounded border px-2" value={rollingDays} onChange={(e) => setRollingDays(Number(e.target.value))} />
+              <input type="number" className="mt-1 h-9 w-full rounded-sm border px-2" value={rollingDays} onChange={(e) => setRollingDays(Number(e.target.value))} />
             </label>
           ) : (
             <label className="mt-2 block text-xs text-gray-600">
               Preset
-              <SelectCombobox className="mt-1 h-9 w-full rounded border px-2" value={calendarPreset} onChange={(e) => setCalendarPreset(e.target.value as typeof calendarPreset)}>
+              <SelectCombobox className="mt-1 h-9 w-full rounded-sm border px-2" value={calendarPreset} onChange={(e) => setCalendarPreset(e.target.value as typeof calendarPreset)}>
                 <option value="current_month">Current month</option>
                 <option value="prev_month">Previous month</option>
                 <option value="quarter">Quarter</option>
@@ -140,7 +140,7 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
           ) : null}
         </fieldset>
 
-        <fieldset className="rounded border border-gray-200 p-2">
+        <fieldset className="rounded-sm border border-gray-200 p-2">
           <legend className="px-1 text-xs font-semibold text-gray-700">Frequency</legend>
           <label className="flex items-center gap-2 text-xs text-gray-600">
             <input type="checkbox" checked={showCron} onChange={(e) => setShowCron(e.target.checked)} />
@@ -148,25 +148,25 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
           </label>
           {!showCron ? (
             <>
-              <SelectCombobox className="mt-1 h-9 w-full rounded border px-2" value={freqKind} onChange={(e) => setFreqKind(e.target.value as typeof freqKind)}>
+              <SelectCombobox className="mt-1 h-9 w-full rounded-sm border px-2" value={freqKind} onChange={(e) => setFreqKind(e.target.value as typeof freqKind)}>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
               </SelectCombobox>
               <label className="mt-2 block text-xs text-gray-600">
                 Local time (HH:MM)
-                <input className="mt-1 h-9 w-full rounded border px-2" value={timeLocal} onChange={(e) => setTimeLocal(e.target.value)} />
+                <input className="mt-1 h-9 w-full rounded-sm border px-2" value={timeLocal} onChange={(e) => setTimeLocal(e.target.value)} />
               </label>
               {freqKind === "weekly" ? (
                 <label className="mt-2 block text-xs text-gray-600">
                   Day of week (0 Sun – 6 Sat)
-                  <input type="number" min={0} max={6} className="mt-1 h-9 w-full rounded border px-2" value={dayOfWeek} onChange={(e) => setDayOfWeek(Number(e.target.value))} />
+                  <input type="number" min={0} max={6} className="mt-1 h-9 w-full rounded-sm border px-2" value={dayOfWeek} onChange={(e) => setDayOfWeek(Number(e.target.value))} />
                 </label>
               ) : null}
               {freqKind === "monthly" ? (
                 <label className="mt-2 block text-xs text-gray-600">
                   Day of month
-                  <input type="number" min={1} max={28} className="mt-1 h-9 w-full rounded border px-2" value={dayOfMonth} onChange={(e) => setDayOfMonth(Number(e.target.value))} />
+                  <input type="number" min={1} max={28} className="mt-1 h-9 w-full rounded-sm border px-2" value={dayOfMonth} onChange={(e) => setDayOfMonth(Number(e.target.value))} />
                 </label>
               ) : null}
             </>
@@ -174,7 +174,7 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
             <>
               <label className="mt-1 block text-xs text-gray-600">
                 Cron
-                <input className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs" value={cronExpr} onChange={(e) => setCronExpr(e.target.value)} />
+                <input className="mt-1 w-full rounded-sm border px-2 py-1 font-mono text-xs" value={cronExpr} onChange={(e) => setCronExpr(e.target.value)} />
               </label>
             </>
           )}
@@ -182,16 +182,16 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
 
         <label className="block text-xs text-gray-600">
           Recipients (comma / newline)
-          <textarea className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs" rows={2} value={recipients} onChange={(e) => setRecipients(e.target.value)} />
+          <textarea className="mt-1 w-full rounded-sm border px-2 py-1 font-mono text-xs" rows={2} value={recipients} onChange={(e) => setRecipients(e.target.value)} />
         </label>
         <label className="block text-xs text-gray-600">
           CC (optional)
-          <textarea className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs" rows={2} value={cc} onChange={(e) => setCc(e.target.value)} />
+          <textarea className="mt-1 w-full rounded-sm border px-2 py-1 font-mono text-xs" rows={2} value={cc} onChange={(e) => setCc(e.target.value)} />
         </label>
 
         <label className="block text-xs text-gray-600">
           Format
-          <SelectCombobox className="mt-1 h-9 w-full rounded border px-2" value={format} onChange={(e) => setFormat(e.target.value as typeof format)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border px-2" value={format} onChange={(e) => setFormat(e.target.value as typeof format)}>
             <option value="pdf">PDF</option>
             <option value="xlsx">XLSX</option>
             <option value="csv">CSV</option>
@@ -200,7 +200,7 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
 
         <label className="block text-xs text-gray-600">
           Subject template
-          <input className="mt-1 w-full rounded border px-2 py-1 text-xs" value={subjectTpl} onChange={(e) => setSubjectTpl(e.target.value)} />
+          <input className="mt-1 w-full rounded-sm border px-2 py-1 text-xs" value={subjectTpl} onChange={(e) => setSubjectTpl(e.target.value)} />
         </label>
 
         <div className="flex flex-wrap gap-2">

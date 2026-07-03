@@ -24,7 +24,7 @@ export function AtRiskQueuePage() {
   });
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   const loads = loadsQ.data?.loads ?? [];
@@ -35,13 +35,13 @@ export function AtRiskQueuePage() {
         title="At-Risk Queue"
         subtitle="In-transit loads with late or near-late ETA predictions"
         actions={
-          <Link to="/dispatch" className="rounded border px-3 py-1.5 text-sm">
+          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
             Dispatch Home
           </Link>
         }
       />
 
-      <section className="overflow-x-auto rounded border bg-white">
+      <section className="overflow-x-auto rounded-sm border bg-white">
         <table className="min-w-full text-sm">
           <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>

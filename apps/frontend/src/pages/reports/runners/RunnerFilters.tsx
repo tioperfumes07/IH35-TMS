@@ -53,7 +53,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
   }, [filters, values]);
 
   return (
-    <section className="rounded border border-slate-200 bg-white p-3">
+    <section className="rounded-sm border border-slate-200 bg-white p-3">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {filters.map((filter) => {
           if (filter.type === "date_range") {
@@ -61,9 +61,9 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               <div key={filter.key} className="md:col-span-2 xl:col-span-2">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
                 <div className="flex items-center gap-2">
-                  <DatePicker className="rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values.from ?? "")} onChange={(next) => onChange("from", next)} />
+                  <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values.from ?? "")} onChange={(next) => onChange("from", next)} />
                   <span className="text-slate-500">to</span>
-                  <DatePicker className="rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values.to ?? "")} onChange={(next) => onChange("to", next)} />
+                  <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values.to ?? "")} onChange={(next) => onChange("to", next)} />
                 </div>
               </div>
             );
@@ -72,7 +72,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <input type="month" className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)} />
+                <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)} />
               </label>
             );
           }
@@ -81,7 +81,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <SelectCombobox className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
                   <option value="">All units</option>
                   {units.map((unit) => (
                     <option key={unit.id} value={unit.id}>
@@ -97,7 +97,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <SelectCombobox className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
                   <option value="">Select driver</option>
                   {drivers.map((driver) => (
                     <option key={driver.id} value={driver.id}>
@@ -113,7 +113,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
           return (
             <label key={filter.key} className="block">
               <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-              <SelectCombobox className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+              <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
                 {companies.map((company) => (
                   <option key={company.id} value={company.id}>
                     {company.legal_name}
@@ -129,7 +129,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
           type="button"
           onClick={onRun}
           disabled={requiredMissing || isRunning}
-          className="rounded border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isRunning ? "Running..." : "Run report"}
         </button>

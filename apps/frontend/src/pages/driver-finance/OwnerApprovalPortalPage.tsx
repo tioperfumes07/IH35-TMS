@@ -85,19 +85,19 @@ export function OwnerApprovalPortalPage() {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900">
       <div className="mx-auto max-w-4xl space-y-4">
-        <div className="rounded border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
           <h1 className="text-lg font-semibold">Owner approval — cash advance request</h1>
           <p className="mt-1 text-sm text-slate-600">Documented decision required (minimum 30 characters).</p>
         </div>
 
         {loading ? <p className="text-sm text-slate-600">Loading…</p> : null}
         {error && !done ? <p className="text-sm text-red-600">Could not open this approval ({error}).</p> : null}
-        {done ? <p className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-900">{done}</p> : null}
+        {done ? <p className="rounded-sm border border-green-200 bg-green-50 p-3 text-sm text-green-900">{done}</p> : null}
 
         {data && !done ? (
           <>
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded border border-slate-200 bg-white p-4 text-sm">
+              <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Request</div>
                 <p className="mt-2 font-mono text-xs">{String(req?.display_id ?? "")}</p>
                 <p className="mt-2">
@@ -111,7 +111,7 @@ export function OwnerApprovalPortalPage() {
                 </p>
                 <p className="mt-2 text-xs text-slate-600">Submitted: {String(req?.submitted_at ?? "").replace("T", " ").slice(0, 19)}</p>
               </div>
-              <div className="rounded border border-slate-200 bg-white p-4 text-sm">
+              <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Policy</div>
                 <p className="mt-2">
                   Standard threshold: <strong>{money(data.policy.threshold_dollars)}</strong>
@@ -122,13 +122,13 @@ export function OwnerApprovalPortalPage() {
                 <p className="mt-1">
                   Over policy by: <strong>{money(data.policy.policy_overage_dollars)}</strong>
                 </p>
-                <div className={`mt-3 inline-block rounded px-2 py-1 text-xs font-semibold ${recTone}`}>
+                <div className={`mt-3 inline-block rounded-sm px-2 py-1 text-xs font-semibold ${recTone}`}>
                   Risk recommendation: {data.recommendation.toUpperCase()}
                 </div>
               </div>
             </div>
 
-            <div className="rounded border border-slate-200 bg-white p-4">
+            <div className="rounded-sm border border-slate-200 bg-white p-4">
               <h2 className="text-sm font-semibold text-slate-900">12-month driver history</h2>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
                 <div>
@@ -162,10 +162,10 @@ export function OwnerApprovalPortalPage() {
               </div>
             </div>
 
-            <div className="rounded border border-slate-200 bg-white p-4">
+            <div className="rounded-sm border border-slate-200 bg-white p-4">
               <label className="block text-sm font-semibold text-slate-900">Owner notes (required, 30+ characters)</label>
               <textarea
-                className="mt-2 w-full rounded border border-slate-200 p-2 text-sm"
+                className="mt-2 w-full rounded-sm border border-slate-200 p-2 text-sm"
                 rows={5}
                 value={ownerNotes}
                 onChange={(e) => setOwnerNotes(e.target.value)}

@@ -75,7 +75,7 @@ export function AssignDriverDropdown({
       </label>
       <SelectCombobox
         id={selectId}
-        className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
         value={value}
         disabled={disabled || (!driversOverride && q.isLoading)}
         onChange={(e) => onSelectId(e.target.value)}
@@ -95,13 +95,13 @@ export function AssignDriverDropdown({
         ))}
       </SelectCombobox>
       {pendingUnsafe ? (
-        <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
           <p className="font-semibold">Driver is out of hours today</p>
           <p className="mt-1">{pendingUnsafe.display_name} may not have enough on-duty time for this pickup.</p>
           <div className="mt-2 flex gap-2">
             <button
               type="button"
-              className="rounded bg-amber-700 px-2 py-1 text-white"
+              className="rounded-sm bg-amber-700 px-2 py-1 text-white"
               onClick={() => {
                 onChange(pendingUnsafe.driver_id);
                 setPendingUnsafe(null);
@@ -109,7 +109,7 @@ export function AssignDriverDropdown({
             >
               Assign anyway
             </button>
-            <button type="button" className="rounded border border-amber-600 px-2 py-1" onClick={() => setPendingUnsafe(null)}>
+            <button type="button" className="rounded-sm border border-amber-600 px-2 py-1" onClick={() => setPendingUnsafe(null)}>
               Cancel
             </button>
           </div>

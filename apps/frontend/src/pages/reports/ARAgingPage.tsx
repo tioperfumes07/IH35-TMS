@@ -167,19 +167,19 @@ export function ARAgingPage() {
         }
       />
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
-      <p className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
         This report is always accrual basis per CPA sign-off.
       </p>
       {query.isError ? <p className="text-sm text-red-600">Failed to load report.</p> : null}
 
-      <div className="no-print grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-4">
+      <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         <label className="text-xs text-gray-600">
           As-of date
-          <DatePicker className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
+          <DatePicker className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <label className="text-xs text-gray-600">
           Customer contains
-          <input className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={search} onChange={(e) => setSearch(e.target.value)} />
         </label>
         <label className="text-xs text-gray-600">
           Min balance ($)
@@ -188,7 +188,7 @@ export function ARAgingPage() {
         </label>
         <label className="text-xs text-gray-600">
           Aging bucket
-          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={bucketFilter} onChange={(e) => setBucketFilter(e.target.value as typeof bucketFilter)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={bucketFilter} onChange={(e) => setBucketFilter(e.target.value as typeof bucketFilter)}>
             <option value="all">All</option>
             <option value="61+">61+ days past due portion</option>
           </SelectCombobox>
@@ -196,27 +196,27 @@ export function ARAgingPage() {
       </div>
 
       <div className="grid gap-2 md:grid-cols-4">
-        <div className="rounded border border-gray-200 bg-white px-3 py-2">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-[11px] font-semibold uppercase text-gray-500">Total open</div>
           <div className="text-lg font-semibold">{money(kpis.total)}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white px-3 py-2">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-[11px] font-semibold uppercase text-gray-500">0–30 days</div>
           <div className="text-lg font-semibold">{money(kpis.day0_30)}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white px-3 py-2">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-[11px] font-semibold uppercase text-gray-500">31–60 days</div>
           <div className="text-lg font-semibold">{money(kpis.day31_60)}</div>
         </div>
         <div
-          className={`rounded border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-[#DC3545]" : "border border-gray-200"}`}
+          className={`rounded-sm border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-[#DC3545]" : "border border-gray-200"}`}
         >
           <div className="text-[11px] font-semibold uppercase text-gray-500">61+ days</div>
           <div className="text-lg font-semibold">{money(kpis.day61p)}</div>
         </div>
       </div>
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>

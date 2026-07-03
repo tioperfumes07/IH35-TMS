@@ -43,7 +43,7 @@ export function TrailerRecentActivitySection({ equipmentId, companyId }: Props) 
   const woRows = woQ.data?.work_orders ?? [];
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4" data-testid="tp-section-9-activity">
+    <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="tp-section-9-activity">
       <h2 className="text-sm font-semibold text-gray-800">Recent activity</h2>
       <div className="mt-3 grid gap-4 md:grid-cols-3">
         <div>

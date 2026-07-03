@@ -115,7 +115,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
   }
 
   if (!operatingCompanyId) {
-    return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage COI requests.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage COI requests.</div>;
   }
 
   return (
@@ -124,7 +124,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
         <label className="text-xs font-semibold text-gray-600">
           Status filter
           <select
-            className="ml-2 rounded border border-gray-300 px-2 py-1 text-xs"
+            className="ml-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={statusFilter}
             onChange={(event) => setStatusFilter((event.target.value || "") as "" | CoiRequestStatus)}
           >
@@ -142,11 +142,11 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
       </div>
 
       {requestOpen ? (
-        <div className="mb-3 grid gap-2 rounded border border-gray-200 bg-gray-50 p-3 md:grid-cols-2">
+        <div className="mb-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-2">
           <label className="block text-xs">
             Policy ID (optional)
             <input
-              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={requestPolicyId}
               onChange={(event) => setRequestPolicyId(event.target.value)}
               placeholder="policy uuid"
@@ -155,7 +155,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
           <label className="block text-xs">
             Expires At (optional)
             <DatePicker
-              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={requestExpiresAt}
               onChange={(next) => setRequestExpiresAt(next)}
             />
@@ -164,7 +164,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
             Notes
             <textarea
               rows={2}
-              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={requestNotes}
               onChange={(event) => setRequestNotes(event.target.value)}
               placeholder="Requested coverage details"
@@ -179,7 +179,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
       ) : null}
 
       {query.isLoading ? <div className="text-sm text-gray-500">Loading COI requests...</div> : null}
-      {query.isError ? <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load COI requests.</div> : null}
+      {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load COI requests.</div> : null}
 
       {!query.isLoading && requests.length === 0 ? <div className="text-sm text-gray-600">No COI requests yet for this customer.</div> : null}
 
@@ -227,11 +227,11 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
       ) : null}
 
       {selected ? (
-        <div className="mt-3 grid gap-2 rounded border border-gray-200 bg-gray-50 p-3 md:grid-cols-2">
+        <div className="mt-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-2">
           <label className="block text-xs">
             Status
             <select
-              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={editStatus}
               onChange={(event) => setEditStatus(event.target.value as CoiRequestStatus)}
             >
@@ -245,7 +245,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
           <label className="block text-xs">
             Expires At
             <DatePicker
-              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={editExpiresAt}
               onChange={(next) => setEditExpiresAt(next)}
             />
@@ -253,7 +253,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
           <label className="block text-xs md:col-span-2">
             Document URL
             <input
-              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={editDocumentUrl}
               onChange={(event) => setEditDocumentUrl(event.target.value)}
               placeholder="https://..."
@@ -263,7 +263,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
             Notes
             <textarea
               rows={2}
-              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
               value={editNotes}
               onChange={(event) => setEditNotes(event.target.value)}
             />

@@ -10,7 +10,7 @@ export function NetPaySummary({ earnings, extraPay, reimbursements, deductions, 
   const gross = earnings + extraPay + reimbursements;
   const net = gross - deductions;
   return (
-    <div className="rounded border border-green-300 bg-white p-3 text-xs">
+    <div className="rounded-sm border border-green-300 bg-white p-3 text-xs">
       <div className="mb-1 text-sm font-semibold text-green-700">Net Pay Summary</div>
       <div className="space-y-1">
         <Row label="Earnings" value={earnings} />

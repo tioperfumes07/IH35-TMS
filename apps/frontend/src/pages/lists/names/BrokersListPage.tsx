@@ -8,8 +8,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 function statusPillClass(status: string) {
   return status === "active"
-    ? "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
-    : "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
+    : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 export function BrokersListPage() {
@@ -50,17 +50,17 @@ export function BrokersListPage() {
         countBadge={rows.length}
       />
 
-      <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-600">
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">
         Brokers are customers with the <strong>Broker</strong> type — a role on the customer record, not a
         separate master. This is a filtered directory; create or edit a broker from its customer record.
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by name, code, MC# or DOT#"
-          className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
+          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
         />
       </div>
 

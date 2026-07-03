@@ -14,7 +14,7 @@ export function SafetyKpiRow({ kpis }: Props) {
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
       {cards.map(([label, value]) => (
-        <div key={label} className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
+        <div key={label} className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
           <div className="text-[10px] uppercase text-gray-500">{label}</div>
           <div className="font-semibold text-gray-900">{value}</div>
         </div>

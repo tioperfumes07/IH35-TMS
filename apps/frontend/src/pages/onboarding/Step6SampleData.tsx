@@ -43,7 +43,7 @@ export function Step6SampleData({ value, disabled, seeding, onSeed }: Props) {
       </label>
 
       {value.seeded ? (
-        <div className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+        <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
           Sample data seeded{value.last_seeded_at ? ` at ${value.last_seeded_at}` : ""}.
           {value.summary ? (
             <ul className="mt-1 list-disc pl-5 text-xs">
@@ -61,7 +61,7 @@ export function Step6SampleData({ value, disabled, seeding, onSeed }: Props) {
         type="button"
         disabled={disabled || !optIn || seeding}
         onClick={onSeed}
-        className="rounded bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
       >
         {seeding ? "Seeding…" : value.seeded ? "Re-seed sample data" : "Seed sample data"}
       </button>

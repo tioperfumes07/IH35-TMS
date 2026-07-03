@@ -121,7 +121,7 @@ export function DispatchSettingsPage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded border p-4" data-testid="dispatch-settings-default-view">
+        <section className="rounded-sm border p-4" data-testid="dispatch-settings-default-view">
           <h2 className="mb-3 font-semibold">Default landing view</h2>
           <p className="mb-3 text-sm text-slate-600">
             Choose which dispatch surface opens when you visit Dispatch Home without a view override.
@@ -154,11 +154,11 @@ export function DispatchSettingsPage() {
           </div>
         </section>
 
-        <section className="rounded border p-4" data-testid="dispatch-settings-default-sort">
+        <section className="rounded-sm border p-4" data-testid="dispatch-settings-default-sort">
           <h2 className="mb-3 font-semibold">Default sort</h2>
           <p className="mb-3 text-sm text-slate-600">Applied when opening the loads list until you change sort in the board.</p>
           <select
-            className="w-full rounded border px-2 py-1 text-sm"
+            className="w-full rounded-sm border px-2 py-1 text-sm"
             value={localSettings.default_sort}
             data-testid="dispatch-default-sort-select"
             onChange={(e) => patchLocal({ default_sort: e.target.value })}
@@ -171,7 +171,7 @@ export function DispatchSettingsPage() {
           </select>
         </section>
 
-        <section className="rounded border p-4" data-testid="dispatch-settings-alert-thresholds">
+        <section className="rounded-sm border p-4" data-testid="dispatch-settings-alert-thresholds">
           <h2 className="mb-3 font-semibold">Alert thresholds</h2>
           <p className="mb-3 text-sm text-slate-600">
             Minutes past scheduled arrival before load rows show yellow (barely making it) or red (late) indicators.
@@ -182,7 +182,7 @@ export function DispatchSettingsPage() {
               <input
                 type="number"
                 min={0}
-                className="mt-1 w-full rounded border px-2 py-1"
+                className="mt-1 w-full rounded-sm border px-2 py-1"
                 value={localSettings.alert_yellow_minutes}
                 data-testid="dispatch-alert-yellow-minutes"
                 onChange={(e) => patchLocal({ alert_yellow_minutes: Number(e.target.value) || 0 })}
@@ -193,7 +193,7 @@ export function DispatchSettingsPage() {
               <input
                 type="number"
                 min={0}
-                className="mt-1 w-full rounded border px-2 py-1"
+                className="mt-1 w-full rounded-sm border px-2 py-1"
                 value={localSettings.alert_red_minutes}
                 data-testid="dispatch-alert-red-minutes"
                 onChange={(e) => patchLocal({ alert_red_minutes: Number(e.target.value) || 0 })}
@@ -202,7 +202,7 @@ export function DispatchSettingsPage() {
           </div>
         </section>
 
-        <section className="rounded border p-4" data-testid="dispatch-settings-auto-routing">
+        <section className="rounded-sm border p-4" data-testid="dispatch-settings-auto-routing">
           <h2 className="mb-3 font-semibold">Auto-routing rules</h2>
           <p className="mb-3 text-sm text-slate-600">
             Controls for optimal-driver suggestions in Book Load and reassignment flows.

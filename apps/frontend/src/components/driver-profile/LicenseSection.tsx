@@ -11,7 +11,7 @@ export function LicenseSection({ license }: { license: Record<string, unknown> }
   const days = license.days_until_expiration as number | null | undefined;
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h2 className="mb-2 text-sm font-semibold text-slate-900">License & endorsements</h2>
       <div className="grid gap-2 text-xs text-slate-700 md:grid-cols-2">
         <div>CDL {String(license.cdl_number ?? "—")}</div>

@@ -265,10 +265,10 @@ export function BankTxCategorizationPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
-      {!companyId ? <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select an operating company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select an operating company.</div> : null}
 
       {backendPending ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
           <span>
             Backend pending — file <strong>P6-T11204</strong> ticket. Uncategorized transaction endpoints are not available yet.
           </span>
@@ -279,28 +279,28 @@ export function BankTxCategorizationPage() {
       ) : null}
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-[10px] font-semibold uppercase text-gray-500">Uncategorized</div>
           <div className={`text-lg font-semibold ${Number(kpiUncCount ?? 0) > 0 ? "text-red-600" : "text-gray-900"}`}>
             {uncCountDisplay}
             {Number(kpiUncCount ?? 0) > 0 ? (
-              <span className="ml-2 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">Action</span>
+              <span className="ml-2 rounded-sm bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">Action</span>
             ) : null}
           </div>
         </div>
-        <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-[10px] font-semibold uppercase text-gray-500">Total uncategorized amount</div>
           <div className="text-lg font-semibold text-gray-900">
             {formatMoneyCents(mergedMeta.total_uncategorized_amount_cents)}
           </div>
         </div>
-        <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-[10px] font-semibold uppercase text-gray-500">Processed this week</div>
           <div className="text-lg font-semibold text-gray-900">
             {mergedMeta.processed_this_week_count != null ? mergedMeta.processed_this_week_count : "—"}
           </div>
         </div>
-        <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-[10px] font-semibold uppercase text-gray-500">Auto-categorize hit rate</div>
           <div className="text-lg font-semibold text-gray-900">
             {mergedMeta.auto_categorize_hit_rate_pct != null && mergedMeta.auto_categorize_hit_rate_pct !== undefined
@@ -311,7 +311,7 @@ export function BankTxCategorizationPage() {
       </div>
 
       <div className="flex flex-col gap-3 lg:flex-row">
-        <aside className="w-full shrink-0 space-y-2 rounded border border-gray-200 bg-white p-3 lg:w-60">
+        <aside className="w-full shrink-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3 lg:w-60">
           <div className="text-xs font-semibold text-gray-800">Bank accounts</div>
           <div className="max-h-40 space-y-1 overflow-y-auto text-xs">
             {(bankAccountsQuery.data?.accounts ?? []).map((a) => {
@@ -337,11 +337,11 @@ export function BankTxCategorizationPage() {
           </div>
           <label className="block text-xs">
             From
-            <DatePicker className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={dateFrom} onChange={(next) => setDateFrom(next)} />
+            <DatePicker className="mt-0.5 w-full rounded-sm border border-gray-300 px-1 py-1" value={dateFrom} onChange={(next) => setDateFrom(next)} />
           </label>
           <label className="block text-xs">
             To
-            <DatePicker className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={dateTo} onChange={(next) => setDateTo(next)} />
+            <DatePicker className="mt-0.5 w-full rounded-sm border border-gray-300 px-1 py-1" value={dateTo} onChange={(next) => setDateTo(next)} />
           </label>
           <label className="block text-xs">
             Amount min (USD)
@@ -354,7 +354,7 @@ export function BankTxCategorizationPage() {
           </label>
           <label className="block text-xs">
             Search description
-            <input className="mt-0.5 w-full rounded border border-gray-300 px-1 py-1" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input className="mt-0.5 w-full rounded-sm border border-gray-300 px-1 py-1" value={search} onChange={(e) => setSearch(e.target.value)} />
           </label>
           <Button size="sm" variant="secondary" onClick={() => void uncQuery.refetch()}>
             Apply filters
@@ -363,16 +363,16 @@ export function BankTxCategorizationPage() {
 
         <main className="min-w-0 flex-1 space-y-2">
           {uncQuery.isError && !backendPending ? (
-            <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-800">Could not load uncategorized transactions.</div>
+            <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-800">Could not load uncategorized transactions.</div>
           ) : null}
           {bulkIds.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-100 p-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-xs">
               <span className="font-semibold">{bulkIds.length} selected</span>
               <Button size="sm" variant="secondary" onClick={() => void applyBulkSuggestions()}>
                 Apply suggestion to all selected
               </Button>
               <SelectCombobox
-                className="h-8 rounded border border-gray-300 px-2"
+                className="h-8 rounded-sm border border-gray-300 px-2"
                 value={batchCoaId}
                 onChange={(e) => setBatchCoaId(e.target.value)}
               >
@@ -395,7 +395,7 @@ export function BankTxCategorizationPage() {
               </button>
             </div>
           ) : null}
-          <div className="overflow-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-xs">
               <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
                 <tr>
@@ -459,7 +459,7 @@ export function BankTxCategorizationPage() {
                         <div className="flex flex-col gap-1">
                           <div className="flex flex-wrap gap-1">
                             <SelectCombobox
-                              className="h-8 max-w-[140px] rounded border border-gray-300 px-1 text-[11px]"
+                              className="h-8 max-w-[140px] rounded-sm border border-gray-300 px-1 text-[11px]"
                               value={coaPickByTx[id] ?? ""}
                               onChange={(e) => setCoaPickByTx((p) => ({ ...p, [id]: e.target.value }))}
                             >
@@ -532,7 +532,7 @@ export function BankTxCategorizationPage() {
           </div>
         </main>
 
-        <aside className="shrink-0 space-y-2 rounded border border-gray-200 bg-white p-3 lg:w-72">
+        <aside className="shrink-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3 lg:w-72">
           <div className="text-xs font-semibold text-gray-800">Selected transaction</div>
           {!selectedTx ? <p className="text-xs text-gray-500">Select a row.</p> : null}
           {selectedTx ? (
@@ -601,7 +601,7 @@ export function BankTxCategorizationPage() {
         <div className="space-y-2 text-xs">
           <label className="block">
             Note
-            <textarea className="mt-1 w-full rounded border border-gray-300 p-2" value={skipNote} onChange={(e) => setSkipNote(e.target.value)} rows={4} />
+            <textarea className="mt-1 w-full rounded-sm border border-gray-300 p-2" value={skipNote} onChange={(e) => setSkipNote(e.target.value)} rows={4} />
           </label>
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="secondary" onClick={() => setSkipTx(null)}>

@@ -230,7 +230,7 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
         cap={selection.cap}
       >
         {({ isSelected, toggle }) => (
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
                 <tr>

@@ -17,7 +17,7 @@ function money(cents: number) {
 }
 
 function factoringPillClass(status: string | null | undefined) {
-  const base = "rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+  const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
   if (status === "reserve_held" || status === "collected") return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
   if (status === "released") return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
@@ -167,7 +167,7 @@ export function InvoiceDetailPage() {
       />
 
       {invoice.source_load_chargeback_requested ? (
-        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
           <div className="font-semibold uppercase tracking-wide">Chargeback flag</div>
           <div>{invoice.source_load_chargeback_reason || "This invoice is tied to a load marked for customer chargeback review."}</div>
         </div>
@@ -258,7 +258,7 @@ export function InvoiceDetailPage() {
                   value={newLineDesc}
                   onChange={(e) => setNewLineDesc(e.target.value)}
                   placeholder="Line description"
-                  className="mt-1 h-9 w-48 rounded border border-gray-300 px-2 text-xs"
+                  className="mt-1 h-9 w-48 rounded-sm border border-gray-300 px-2 text-xs"
                 />
               </label>
               <label className="text-xs text-gray-600">

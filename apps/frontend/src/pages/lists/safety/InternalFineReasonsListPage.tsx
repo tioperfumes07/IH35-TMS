@@ -55,9 +55,9 @@ export function InternalFineReasonsListPage() {
         }
       />
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or reason name" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
-        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-sm">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or reason name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
           {STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

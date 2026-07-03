@@ -94,7 +94,7 @@ export function CashAdvanceRequestsPage() {
       ) : sorted.length === 0 ? (
         <p className="text-sm text-gray-600">No pending requests.</p>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-600">
               <tr>
@@ -131,7 +131,7 @@ export function CashAdvanceRequestsPage() {
                     <td className="px-3 py-2">
                       {waitingOwner ? (
                         <div className="space-y-1">
-                          <span className="inline-flex rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                          <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                             Pending Owner Approval
                           </span>
                           {ownerUrl ? (
@@ -139,7 +139,7 @@ export function CashAdvanceRequestsPage() {
                               <div className="text-[10px] uppercase text-gray-500">Owner link (copy)</div>
                               <input
                                 readOnly
-                                className="mt-0.5 w-full max-w-xs rounded border border-gray-200 px-1 py-0.5 font-mono text-[10px]"
+                                className="mt-0.5 w-full max-w-xs rounded-sm border border-gray-200 px-1 py-0.5 font-mono text-[10px]"
                                 value={ownerUrl}
                                 onFocus={(e) => e.target.select()}
                               />
@@ -149,7 +149,7 @@ export function CashAdvanceRequestsPage() {
                           )}
                         </div>
                       ) : above ? (
-                        <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Above policy</span>
+                        <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Above policy</span>
                       ) : (
                         <span className="text-xs text-gray-500">Within policy</span>
                       )}
@@ -157,7 +157,7 @@ export function CashAdvanceRequestsPage() {
                     <td className="px-3 py-2 text-xs text-gray-600">{String(row.submitted_at ?? "").replace("T", " ").slice(0, 19)}</td>
                     <td className="px-3 py-2">
                       <input
-                        className="w-40 max-w-full rounded border border-gray-200 px-2 py-1 text-xs"
+                        className="w-40 max-w-full rounded-sm border border-gray-200 px-2 py-1 text-xs"
                         placeholder="Approval notes"
                         value={approveNotesById[id] ?? ""}
                         onChange={(e) => setApproveNotesById((prev) => ({ ...prev, [id]: e.target.value }))}
@@ -207,7 +207,7 @@ export function CashAdvanceRequestsPage() {
             <h2 className="text-base font-semibold text-gray-900">Deny request</h2>
             <p className="mt-1 text-sm text-gray-600">Reason is visible to audit and helps the driver understand the decision.</p>
             <textarea
-              className="mt-3 w-full rounded border border-gray-200 p-2 text-sm"
+              className="mt-3 w-full rounded-sm border border-gray-200 p-2 text-sm"
               rows={4}
               value={denyReason}
               onChange={(e) => setDenyReason(e.target.value)}

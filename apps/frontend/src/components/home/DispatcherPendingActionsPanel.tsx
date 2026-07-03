@@ -12,10 +12,10 @@ export function DispatcherPendingActionsPanel({
   bookingGapOpen,
 }: DispatcherPendingActionsPanelProps) {
   return (
-    <section data-testid="dispatcher-pending-actions-panel" className="rounded border border-slate-200 bg-white">
+    <section data-testid="dispatcher-pending-actions-panel" className="rounded-sm border border-slate-200 bg-white">
       <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Pending actions</div>
       <ul className="space-y-2 p-3 text-sm">
-        <li className="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2">
+        <li className="flex items-center justify-between gap-2 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2">
           <div>
             <div className="font-semibold text-amber-900">Detention approvals</div>
             <div className="text-xs text-amber-900/80">Requests waiting for owner approval on your queue.</div>
@@ -27,7 +27,7 @@ export function DispatcherPendingActionsPanel({
             </Link>
           </div>
         </li>
-        <li className="flex items-center justify-between gap-2 rounded border border-slate-300 bg-slate-100 px-3 py-2">
+        <li className="flex items-center justify-between gap-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2">
           <div>
             <div className="font-semibold text-slate-700">Message queue</div>
             <div className="text-xs text-slate-700/80">Unread inbound driver/customer message threads.</div>
@@ -39,7 +39,7 @@ export function DispatcherPendingActionsPanel({
             </Link>
           </div>
         </li>
-        <li className="flex items-center justify-between gap-2 rounded border border-red-200 bg-red-50 px-3 py-2">
+        <li className="flex items-center justify-between gap-2 rounded-sm border border-red-200 bg-red-50 px-3 py-2">
           <div>
             <div className="font-semibold text-red-900">Booking gaps (7d)</div>
             <div className="text-xs text-red-900/80">Loads still not dispatched from your recent bookings.</div>

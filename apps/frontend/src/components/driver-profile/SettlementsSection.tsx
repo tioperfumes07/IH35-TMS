@@ -18,7 +18,7 @@ export function SettlementsSection({
 }) {
   const weeks = (settlements.last_4_weeks as Array<Record<string, unknown>>) ?? [];
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-800">Settlements</h2>
         <label className="flex items-center gap-2 text-xs text-gray-700">
@@ -30,19 +30,19 @@ export function SettlementsSection({
         </a>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <div className="rounded border border-gray-100 p-2">
+        <div className="rounded-sm border border-gray-100 p-2">
           <div className="text-[10px] uppercase text-gray-500">YTD gross</div>
           <div className="font-semibold">{cents(settlements.ytd_gross)}</div>
         </div>
-        <div className="rounded border border-gray-100 p-2">
+        <div className="rounded-sm border border-gray-100 p-2">
           <div className="text-[10px] uppercase text-gray-500">YTD deductions</div>
           <div className="font-semibold">{cents(settlements.ytd_deductions)}</div>
         </div>
-        <div className="rounded border border-gray-100 p-2">
+        <div className="rounded-sm border border-gray-100 p-2">
           <div className="text-[10px] uppercase text-gray-500">YTD net</div>
           <div className="font-semibold">{cents(settlements.ytd_net)}</div>
         </div>
-        <div className="rounded border border-gray-100 p-2">
+        <div className="rounded-sm border border-gray-100 p-2">
           <div className="text-[10px] uppercase text-gray-500">Lifetime net</div>
           <div className="font-semibold">{cents(settlements.lifetime_with_company)}</div>
         </div>

@@ -80,14 +80,14 @@ export function CoaRolesPage() {
     >
 
       {!validateQuery.isLoading ? (
-        <div className={`rounded border px-3 py-2 text-xs ${validateQuery.data?.valid ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+        <div className={`rounded-sm border px-3 py-2 text-xs ${validateQuery.data?.valid ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
           {validateQuery.data?.valid
             ? "All required roles have active mappings."
             : `Missing role mappings: ${(validateQuery.data?.missing_roles ?? []).join(", ") || "unknown"}`}
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
@@ -110,7 +110,7 @@ export function CoaRolesPage() {
                   <td className="px-3 py-2">
                     <input
                       list={`coa-role-account-options-${row.role}`}
-                      className="h-9 w-full min-w-[280px] rounded border border-gray-300 px-2 text-sm"
+                      className="h-9 w-full min-w-[280px] rounded-sm border border-gray-300 px-2 text-sm"
                       value={value}
                       onChange={(event) => setDraftByRole((prev) => ({ ...prev, [row.role]: event.target.value }))}
                       placeholder="Select account id"

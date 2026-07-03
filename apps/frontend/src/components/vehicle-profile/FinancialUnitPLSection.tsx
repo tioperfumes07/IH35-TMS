@@ -31,8 +31,8 @@ function Bar({ label, value, fleet, higherIsBetter }: { label: string; value: nu
         <span className={good ? "text-green-700" : "text-red-700"}>{usd(value)} vs fleet {usd(fleet)}</span>
       </div>
       <div className="mt-1 flex h-2 gap-1">
-        <div className="rounded bg-[#1F2A44]" style={{ width: `${(value / max) * 100}%` }} />
-        <div className="rounded bg-gray-300" style={{ width: `${(fleet / max) * 100}%` }} />
+        <div className="rounded-sm bg-[#1F2A44]" style={{ width: `${(value / max) * 100}%` }} />
+        <div className="rounded-sm bg-gray-300" style={{ width: `${(fleet / max) * 100}%` }} />
       </div>
     </div>
   );
@@ -69,11 +69,11 @@ export function FinancialUnitPLSection({
   const fleetAvg = fin.fleet_avg ?? { revenue_cents: 0, cost_cents: 0, profit_per_mile_cents: null };
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-800">Financial unit P&amp;L</h2>
         <select
-          className="rounded border border-gray-300 px-2 py-1 text-xs"
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={period}
           onChange={(e) => setPeriod(e.target.value as Period)}
           data-testid="vp-financial-period"
@@ -103,7 +103,7 @@ export function FinancialUnitPLSection({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-gray-100 p-2">
+    <div className="rounded-sm border border-gray-100 p-2">
       <div className="text-xs text-gray-500">{label}</div>
       <div className="text-sm font-semibold">{value}</div>
     </div>

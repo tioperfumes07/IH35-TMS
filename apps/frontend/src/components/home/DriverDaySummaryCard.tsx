@@ -40,7 +40,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
   }, [query.data?.rows, sortKey]);
 
   return (
-    <section className="rounded border border-slate-200 bg-white">
+    <section className="rounded-sm border border-slate-200 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Driver day-summaries</h3>
@@ -49,7 +49,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
         <DatePicker
           value={date}
           onChange={(next) => setDate(next)}
-          className="rounded border border-slate-300 px-2 py-1 text-xs"
+          className="rounded-sm border border-slate-300 px-2 py-1 text-xs"
         />
       </div>
       {query.isLoading ? (
@@ -60,7 +60,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
           <button
             type="button"
             onClick={() => void query.refetch()}
-            className="mt-2 rounded border border-red-300 px-2 py-1 text-red-700 hover:bg-red-50"
+            className="mt-2 rounded-sm border border-red-300 px-2 py-1 text-red-700 hover:bg-red-50"
           >
             Retry
           </button>

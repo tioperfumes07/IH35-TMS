@@ -88,7 +88,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
           Driver UUID
           <input
             type="text"
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 font-mono text-xs"
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
             placeholder="xxxxxxxx-xxxx-…"
             value={driverUuid}
             onChange={(e) => setDriverUuid(e.target.value)}
@@ -98,7 +98,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
         <label className="block text-xs text-slate-600">
           Test Type
           <select
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={testType}
             onChange={(e) => setTestType(e.target.value as TestType)}
           >
@@ -113,7 +113,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
         <label className="block text-xs text-slate-600">
           Test Kind
           <select
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={testKind}
             onChange={(e) => setTestKind(e.target.value as TestKind)}
           >
@@ -128,7 +128,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
         <label className="block text-xs text-slate-600">
           Scheduled Date (optional)
           <DatePicker
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={scheduledAt}
             onChange={(next) => setScheduledAt(next)}
           />
@@ -139,7 +139,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
         <button
           type="button"
           disabled={!canSubmit}
-          className="rounded bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+          className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
           onClick={() => mutation.mutate()}
         >
           {mutation.isPending ? "Scheduling…" : "Schedule Test"}

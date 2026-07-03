@@ -51,7 +51,7 @@ function renderBody(body: string, mentionNames: string[]) {
     <>
       {parts.map((part, i) =>
         tokens.includes(part) ? (
-          <span key={i} className="rounded bg-slate-100 px-1 font-semibold text-[#1f2a44]" data-testid="tasks-chat-mention">
+          <span key={i} className="rounded-sm bg-slate-100 px-1 font-semibold text-[#1f2a44]" data-testid="tasks-chat-mention">
             {part}
           </span>
         ) : (
@@ -176,7 +176,7 @@ export function TasksChatPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
         {/* Task picker */}
-        <div className="rounded border border-slate-200 bg-white" data-testid="tasks-chat-picker">
+        <div className="rounded-sm border border-slate-200 bg-white" data-testid="tasks-chat-picker">
           <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500">Tasks</div>
           {tasksQuery.isLoading ? (
             <div className="p-4 text-xs text-slate-500">Loading tasks…</div>
@@ -212,12 +212,12 @@ export function TasksChatPage() {
         {/* Thread + composer + activity */}
         <div className="space-y-4">
           {!activeTaskId ? (
-            <div className="rounded border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+            <div className="rounded-sm border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
               Select a task to view its conversation.
             </div>
           ) : (
             <>
-              <div className="rounded border border-slate-200 bg-white">
+              <div className="rounded-sm border border-slate-200 bg-white">
                 <div className="border-b border-slate-200 px-4 py-2">
                   <div className="text-sm font-semibold text-[#1f2a44]">{selectedTask?.title ?? "Task"}</div>
                   {selectedTask ? (
@@ -241,7 +241,7 @@ export function TasksChatPage() {
                         .map((id) => employeeById.get(id)?.name)
                         .filter((n): n is string => Boolean(n));
                       return (
-                        <div key={c.id} className="rounded border border-slate-100 bg-slate-50 p-2" data-testid="tasks-chat-comment">
+                        <div key={c.id} className="rounded-sm border border-slate-100 bg-slate-50 p-2" data-testid="tasks-chat-comment">
                           <div className="flex items-baseline justify-between">
                             <span className="text-xs font-semibold text-[#1f2a44]">{c.author_name ?? c.author_email ?? "Unknown"}</span>
                             <span className="text-[10px] text-slate-400">{formatCompanyTime(c.created_at)}</span>
@@ -262,11 +262,11 @@ export function TasksChatPage() {
                     placeholder="Write a comment… use @ to mention a teammate"
                     rows={3}
                     data-testid="tasks-chat-composer"
-                    className="w-full resize-none rounded border border-slate-300 px-2 py-1.5 text-xs text-slate-800 focus:border-slate-500 focus:outline-none"
+                    className="w-full resize-none rounded-sm border border-slate-300 px-2 py-1.5 text-xs text-slate-800 focus:border-slate-500 focus:outline-hidden"
                   />
                   {mentionQuery !== null && mentionMatches.length > 0 ? (
                     <ul
-                      className="absolute bottom-16 left-3 z-10 max-h-48 w-64 overflow-y-auto rounded border border-slate-300 bg-white shadow"
+                      className="absolute bottom-16 left-3 z-10 max-h-48 w-64 overflow-y-auto rounded-sm border border-slate-300 bg-white shadow-sm"
                       data-testid="tasks-chat-mention-menu"
                     >
                       {mentionMatches.map((emp) => (
@@ -296,7 +296,7 @@ export function TasksChatPage() {
                       onClick={() => createMutation.mutate()}
                       data-testid="tasks-chat-post"
                       className={[
-                        "rounded px-3 py-1.5 text-xs font-semibold text-white",
+                        "rounded-sm px-3 py-1.5 text-xs font-semibold text-white",
                         canPost ? "bg-[#1f2a44] hover:bg-[#0f1729]" : "cursor-not-allowed bg-slate-300",
                       ].join(" ")}
                     >
@@ -310,7 +310,7 @@ export function TasksChatPage() {
               </div>
 
               {/* Activity feed */}
-              <div className="rounded border border-slate-200 bg-white" data-testid="tasks-chat-activity">
+              <div className="rounded-sm border border-slate-200 bg-white" data-testid="tasks-chat-activity">
                 <div className="border-b border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500">Activity</div>
                 <div className="max-h-[260px] overflow-y-auto p-4">
                   {activityQuery.isLoading ? (

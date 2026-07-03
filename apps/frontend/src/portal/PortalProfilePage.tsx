@@ -58,7 +58,7 @@ export function PortalProfilePage() {
       {profileQuery.isLoading ? <p className="text-sm text-slate-600">Loading…</p> : null}
       {profileQuery.data ? (
         <form
-          className="space-y-4 rounded border border-slate-200 bg-white p-4"
+          className="space-y-4 rounded-sm border border-slate-200 bg-white p-4"
           onSubmit={(e) => {
             e.preventDefault();
             saveMutation.mutate();
@@ -66,11 +66,11 @@ export function PortalProfilePage() {
         >
           <label className="block text-sm">
             <span className="font-medium text-slate-700">Email</span>
-            <input className="mt-1 w-full rounded border border-slate-200 bg-slate-50 px-3 py-2" value={profileQuery.data.email} readOnly />
+            <input className="mt-1 w-full rounded-sm border border-slate-200 bg-slate-50 px-3 py-2" value={profileQuery.data.email} readOnly />
           </label>
           <label className="block text-sm">
             <span className="font-medium text-slate-700">Full name</span>
-            <input className="mt-1 w-full rounded border border-slate-300 px-3 py-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            <input className="mt-1 w-full rounded-sm border border-slate-300 px-3 py-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </label>
           <fieldset className="space-y-2 text-sm">
             <legend className="font-medium text-slate-700">Email notifications</legend>

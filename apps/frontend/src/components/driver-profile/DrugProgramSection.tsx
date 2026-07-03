@@ -3,7 +3,7 @@ export function DrugProgramSection({ drug }: { drug: Record<string, unknown> }) 
   const inPool = Boolean(drug.in_random_pool);
 
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h2 className="mb-2 text-sm font-semibold text-slate-900">Drug & alcohol program</h2>
       <p className="text-xs text-slate-700">
         Random pool: <span className="font-medium">{inPool ? "Enrolled" : "Not enrolled"}</span>

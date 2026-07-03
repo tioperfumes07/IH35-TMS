@@ -7,7 +7,7 @@ type Props = {
 
 export function SyncStatusStrip({ syncedAt, transactionCount, uncategorizedCount, pendingSyncCount }: Props) {
   return (
-    <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
       <span className="font-semibold">QBO Sync:</span>{" "}
       <span className="text-green-700">Connected</span>
       <span className="mx-2 text-gray-400">|</span>

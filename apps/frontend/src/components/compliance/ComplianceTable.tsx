@@ -32,7 +32,7 @@ export function ComplianceTable({
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm">
           Type{" "}
-          <select className="ml-1 rounded border px-2 py-1" value={typeFilter} onChange={(e) => onTypeFilter(e.target.value)}>
+          <select className="ml-1 rounded-sm border px-2 py-1" value={typeFilter} onChange={(e) => onTypeFilter(e.target.value)}>
             <option value="">All</option>
             {types.map((t) => (
               <option key={t} value={t}>
@@ -44,7 +44,7 @@ export function ComplianceTable({
         <label className="text-sm">
           Owner{" "}
           <select
-            className="ml-1 rounded border px-2 py-1"
+            className="ml-1 rounded-sm border px-2 py-1"
             value={ownerTypeFilter}
             onChange={(e) => onOwnerTypeFilter(e.target.value)}
           >
@@ -56,7 +56,7 @@ export function ComplianceTable({
             ))}
           </select>
         </label>
-        <button type="button" className="rounded bg-slate-800 px-3 py-1 text-sm text-white" onClick={onExportCsv}>
+        <button type="button" className="rounded-sm bg-slate-800 px-3 py-1 text-sm text-white" onClick={onExportCsv}>
           Export CSV
         </button>
       </div>

@@ -169,7 +169,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
       {contractsQuery.isLoading ? (
         <div className="text-xs text-gray-500">Loading contracts…</div>
       ) : contracts.length === 0 ? (
-        <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-xs text-gray-500">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-xs text-gray-500">
           No contracts on file.{canWrite ? " Upload one above." : ""}
         </div>
       ) : (
@@ -218,7 +218,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
         >
           <form className="space-y-3" onSubmit={handleMetaSubmit}>
             {supersedeTarget && (
-              <p className="text-xs text-amber-700 bg-amber-50 rounded p-2">
+              <p className="text-xs text-amber-700 bg-amber-50 rounded-sm p-2">
                 Superseding: <strong>{CONTRACT_TYPE_LABELS[supersedeTarget.contract_type]}</strong>
                 {supersedeTarget.effective_date ? ` (effective ${formatDate(supersedeTarget.effective_date)})` : ""}
               </p>
@@ -228,7 +228,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
               <select
                 value={meta.contract_type}
                 onChange={(e) => setMeta((m) => ({ ...m, contract_type: e.target.value as CustomerContract["contract_type"] }))}
-                className="h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+                className="h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
                 required
               >
                 {Object.entries(CONTRACT_TYPE_LABELS).map(([val, label]) => (
@@ -242,7 +242,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 <DatePicker
                   value={meta.effective_date}
                   onChange={(next) => setMeta((m) => ({ ...m, effective_date: next }))}
-                  className="h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+                  className="h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
                 />
               </label>
               <label className="block text-sm">
@@ -250,7 +250,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 <DatePicker
                   value={meta.expiration_date}
                   onChange={(next) => setMeta((m) => ({ ...m, expiration_date: next }))}
-                  className="h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+                  className="h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
                 />
               </label>
             </div>
@@ -261,7 +261,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 onChange={(e) => setMeta((m) => ({ ...m, notes: e.target.value }))}
                 rows={2}
                 maxLength={2000}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               />
             </label>
             <div className="flex justify-end gap-2">

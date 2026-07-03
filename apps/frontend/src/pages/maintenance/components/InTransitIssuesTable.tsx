@@ -78,7 +78,7 @@ export function InTransitIssuesTable({ issues, onTriage }: Props) {
       label: "Severity",
       sortable: true,
       render: (issue) => (
-        <span className={`rounded border px-1.5 py-0.5 text-[10px] ${severityChip(issue.severity)}`}>{issue.severity}</span>
+        <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] ${severityChip(issue.severity)}`}>{issue.severity}</span>
       ),
     },
     { key: "gps_label", label: "Location", render: (issue) => issue.gps_label ?? "—" },
@@ -90,7 +90,7 @@ export function InTransitIssuesTable({ issues, onTriage }: Props) {
   const rowActions = (issue: InTransitIssue) => (
     <button
       type="button"
-      className="rounded border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+      className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
       onClick={() => onTriage(issue)}
     >
       Triage

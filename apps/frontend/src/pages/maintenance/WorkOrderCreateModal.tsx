@@ -93,14 +93,14 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
   const activeLine = lines.find((line) => line.id === activeLineId) ?? null;
 
   return (
-    <div className="space-y-4 rounded border border-gray-200 bg-white p-4">
+    <div className="space-y-4 rounded-sm border border-gray-200 bg-white p-4">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">WHERE &amp; HOW — DRIVES THE ACCOUNTING AUTO-POST</div>
 
       <div className="flex gap-2">
-        <button type="button" className="rounded border px-3 py-1 text-sm" onClick={addCategoryLine}>
+        <button type="button" className="rounded-sm border px-3 py-1 text-sm" onClick={addCategoryLine}>
           + Category line (Section A)
         </button>
-        <button type="button" className="rounded border px-3 py-1 text-sm" onClick={addItemLine}>
+        <button type="button" className="rounded-sm border px-3 py-1 text-sm" onClick={addItemLine}>
           + Item line (Section B)
         </button>
       </div>
@@ -110,7 +110,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
           <label className="text-xs font-medium text-slate-600">Category (expense CoA)</label>
           <input
             type="search"
-            className="mb-1 w-full rounded border px-2 py-1 text-sm"
+            className="mb-1 w-full rounded-sm border px-2 py-1 text-sm"
             placeholder="Filter accounts…"
             value={categorySearch}
             onChange={(e) => setCategorySearch(e.target.value)}
@@ -119,7 +119,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
           <SelectCombobox
             value={activeLine.category_id ?? ""}
             onChange={(event) => patchLine(activeLine.id, { category_id: event.target.value })}
-            className="w-full rounded border px-2 py-1"
+            className="w-full rounded-sm border px-2 py-1"
           >
             <option value="">{categoriesQuery.isLoading ? "Loading accounts…" : "Select category…"}</option>
             {categoryOptions.map((option) => (
@@ -136,7 +136,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
           <label className="text-xs font-medium text-slate-600">Service item</label>
           <input
             type="search"
-            className="mb-1 w-full rounded border px-2 py-1 text-sm"
+            className="mb-1 w-full rounded-sm border px-2 py-1 text-sm"
             placeholder="Filter items…"
             value={itemSearch}
             onChange={(e) => setItemSearch(e.target.value)}
@@ -145,7 +145,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
           <SelectCombobox
             value={activeLine.item_id ?? ""}
             onChange={(event) => patchLine(activeLine.id, { item_id: event.target.value })}
-            className="w-full rounded border px-2 py-1"
+            className="w-full rounded-sm border px-2 py-1"
           >
             <option value="">{itemsQuery.isLoading ? "Loading items…" : "Select item…"}</option>
             {itemOptions.map((option) => (

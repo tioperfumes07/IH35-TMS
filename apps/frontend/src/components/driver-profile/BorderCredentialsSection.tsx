@@ -22,11 +22,11 @@ export function BorderCredentialsSection({ border }: { border: Record<string, un
     ["B1 visa", visa?.status, null],
   ] as const;
   return (
-    <section className="rounded border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h2 className="text-sm font-semibold text-gray-800">Border ops credentials</h2>
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(([title, primary, exp]) => (
-          <div key={title} className="rounded border border-gray-100 p-3">
+          <div key={title} className="rounded-sm border border-gray-100 p-3">
             <div className="text-[10px] uppercase text-gray-500">{title}</div>
             <div className="text-sm font-medium text-gray-900">{String(primary ?? "—")}</div>
             {exp ? <div className={`text-xs ${expClass(String(exp))}`}>Exp {String(exp)}</div> : null}

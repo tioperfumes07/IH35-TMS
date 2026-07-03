@@ -69,7 +69,7 @@ export function QboVendorLinkagePage() {
   }
 
   if (auth.user?.role !== "Owner" && auth.user?.role !== "Administrator") {
-    return <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-600">Owner/Admin only.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-600">Owner/Admin only.</div>;
   }
 
   return (
@@ -91,13 +91,13 @@ export function QboVendorLinkagePage() {
 
       {activeTab === "drivers" ? (
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white p-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-2">
             <div className="flex items-center gap-2">
               <label className="text-xs font-semibold text-gray-600">Filter:</label>
               <SelectCombobox
                 value={filter}
                 onChange={(event) => setFilter(event.target.value as "all" | "linked" | "unlinked")}
-                className="h-8 rounded border border-gray-300 px-2 text-xs"
+                className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value="all">All</option>
                 <option value="linked">Linked</option>
@@ -108,7 +108,7 @@ export function QboVendorLinkagePage() {
               Auto-Link High Confidence (&gt; 0.9)
             </Button>
           </div>
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="min-w-full text-left text-xs">
               <thead className="bg-gray-50">
                 <tr className="text-gray-600">
@@ -147,7 +147,7 @@ export function QboVendorLinkagePage() {
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-gray-50">
               <tr className="text-gray-600">
@@ -169,7 +169,7 @@ export function QboVendorLinkagePage() {
                         <input
                           value={classByUnit[unit.id] ?? unit.qbo_class_id ?? ""}
                           onChange={(event) => setClassByUnit((current) => ({ ...current, [unit.id!]: event.target.value }))}
-                          className="h-7 rounded border border-gray-300 px-2 text-xs"
+                          className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
                           placeholder="QBO class id"
                         />
                         <Button

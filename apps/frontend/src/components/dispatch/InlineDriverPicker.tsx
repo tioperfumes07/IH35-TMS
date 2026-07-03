@@ -48,7 +48,7 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
         }}
       >
         <span title={displayLabel || undefined}>{displayLabel || "Unassigned"}</span>
-        {error ? <span className="ml-1 rounded bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
+        {error ? <span className="ml-1 rounded-sm bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
       </button>
     );
   }

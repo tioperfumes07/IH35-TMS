@@ -30,11 +30,11 @@ export function BookLoadValidationSection({ issues }: Props) {
               {check.advisory ? "!" : "✓"}
             </span>
             <span className="flex-1">{check.text}</span>
-            <span className="rounded border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[9px] text-gray-500">{check.code}</span>
+            <span className="rounded-sm border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[9px] text-gray-500">{check.code}</span>
           </div>
         ))}
       </div>
-      <div className="rounded border border-gray-200 bg-[#f7f8fa] p-2.5 text-xs text-gray-800">
+      <div className="rounded-sm border border-gray-200 bg-[#f7f8fa] p-2.5 text-xs text-gray-800">
         <div className="mb-2 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">On save — book + dispatch</div>
         <div className="space-y-1.5">
           {saveActions.map((action) => (

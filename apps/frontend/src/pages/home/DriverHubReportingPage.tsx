@@ -28,7 +28,7 @@ function fmtPct(p: number | null): string {
 
 function Card({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-gray-200 bg-white p-3">
+    <div className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">{label}</div>
       <div className="mt-1 text-lg font-semibold text-[#1A1F36]">{value}</div>
     </div>
@@ -79,7 +79,7 @@ export function DriverHubReportingPage() {
     enabled: Boolean(companyId) && Boolean(from) && Boolean(to),
   });
   const data = query.data;
-  const inputCls = "min-h-11 rounded border border-gray-300 px-2 text-sm";
+  const inputCls = "min-h-11 rounded-sm border border-gray-300 px-2 text-sm";
 
   return (
     <div className="space-y-3">
@@ -92,14 +92,14 @@ export function DriverHubReportingPage() {
             type="button"
             disabled={!data || data.by_driver.length === 0}
             onClick={() => data && exportCsv(data)}
-            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
             Export CSV
           </button>
         }
       />
 
-      <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <div className="space-y-1">
           <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">From</label>
           <input type="date" className={inputCls} value={from} max={to} onChange={(e) => setFrom(e.target.value)} />
@@ -114,11 +114,11 @@ export function DriverHubReportingPage() {
       </div>
 
       {!companyId ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Select a company to view reporting.</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Select a company to view reporting.</div>
       ) : query.isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading…</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading…</div>
       ) : query.isError ? (
-        <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">Could not load reporting.</div>
+        <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">Could not load reporting.</div>
       ) : data ? (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
@@ -131,7 +131,7 @@ export function DriverHubReportingPage() {
             <Card label="Approved volume" value={fmtCents(data.summary.total_approved_advance_cents)} />
           </div>
 
-          <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="w-full text-xs">
               <thead className="bg-gray-50 text-[#6B7280]">
                 <tr>
@@ -167,7 +167,7 @@ export function DriverHubReportingPage() {
           </div>
 
           {data.not_computed.length > 0 ? (
-            <div className="rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+            <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
               <span className="font-semibold">Not yet computed: </span>
               {data.not_computed.join(" ")}
             </div>

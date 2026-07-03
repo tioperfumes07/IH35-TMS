@@ -108,7 +108,7 @@ export function BankReconciliationPage() {
         subtitle="Review unmatched transactions, accept/reject auto matches, and close reconciled periods."
       />
 
-      <div className="grid grid-cols-1 gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
+      <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
         <SelectCombobox value={accountId} onChange={(event) => setAccountId(event.target.value)} className="text-sm">
           <option value="">Select bank account</option>
           {(accountsQuery.data ?? []).map((account) => (
@@ -117,9 +117,9 @@ export function BankReconciliationPage() {
             </option>
           ))}
         </SelectCombobox>
-        <input type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
-        <input type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
-        <div className="flex items-center rounded border border-gray-200 px-2 text-xs text-gray-700">
+        <input type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+        <input type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+        <div className="flex items-center rounded-sm border border-gray-200 px-2 text-xs text-gray-700">
           Progress: {worklistQuery.data?.progress.percent ?? 0}% ({worklistQuery.data?.progress.matched_or_skipped_transactions ?? 0}/
           {worklistQuery.data?.progress.total_transactions ?? 0})
         </div>
@@ -141,7 +141,7 @@ export function BankReconciliationPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 text-sm font-semibold text-gray-900">Bank transactions worklist</div>
           <div className="max-h-[520px] space-y-1 overflow-auto">
             {[...(worklistQuery.data?.unmatched_transactions ?? []), ...(worklistQuery.data?.auto_matched_candidates ?? [])].map((row) => (
@@ -165,7 +165,7 @@ export function BankReconciliationPage() {
         </div>
 
         <div className="space-y-3">
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Selected transaction actions</div>
             {!selectedRow ? <div className="text-xs text-gray-500">Select a transaction from the worklist.</div> : null}
             {selectedRow ? (
@@ -222,7 +222,7 @@ export function BankReconciliationPage() {
                     value={manualLedgerId}
                     onChange={(event) => setManualLedgerId(event.target.value)}
                     placeholder="Ledger entry id (uuid)"
-                    className="rounded border border-gray-300 px-2 py-1 text-sm md:col-span-2"
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-sm md:col-span-2"
                   />
                 </div>
                 <ActionButton
@@ -247,11 +247,11 @@ export function BankReconciliationPage() {
             ) : null}
           </div>
 
-          <div className="rounded border border-gray-200 bg-white p-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Variance-resolved entries (Q8)</div>
             <div className="max-h-[180px] space-y-1 overflow-auto">
               {(worklistQuery.data?.variance_resolved_entries ?? []).map((entry) => (
-                <div key={entry.journal_entry_id} className="rounded border border-gray-100 px-2 py-1 text-xs text-gray-700">
+                <div key={entry.journal_entry_id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs text-gray-700">
                   {entry.entry_date} · {entry.reference_no ?? entry.journal_entry_id} · {money(entry.variance_cents)}
                 </div>
               ))}

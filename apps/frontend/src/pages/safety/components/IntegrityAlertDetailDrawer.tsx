@@ -92,21 +92,21 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
             onClick={() => ackMutation.mutate()}
           >
             Acknowledge
           </button>
           <button
             type="button"
-            className="rounded bg-emerald-700 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-emerald-700 px-3 py-1 text-xs font-semibold text-white"
             onClick={() => resolveMutation.mutate()}
           >
             Resolve
           </button>
           <button
             type="button"
-            className="rounded border border-slate-400 px-3 py-1 text-xs font-semibold text-slate-800"
+            className="rounded-sm border border-slate-400 px-3 py-1 text-xs font-semibold text-slate-800"
             data-testid="integrity-alert-snooze-btn"
             onClick={() => snoozeMutation.mutate()}
           >

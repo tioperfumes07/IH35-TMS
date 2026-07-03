@@ -43,7 +43,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
 
   if (query.isError || !query.data?.settlement) {
     return (
-      <div className="rounded border border-gray-200 p-4 text-sm text-gray-500">
+      <div className="rounded-sm border border-gray-200 p-4 text-sm text-gray-500">
         No active pre-settlement found for this driver.
       </div>
     );
@@ -65,7 +65,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
   return (
     <div className="space-y-3 text-sm">
       {/* Header */}
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-gray-50 p-3">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-gray-50 p-3">
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
           <div className="font-semibold text-gray-900">
@@ -90,8 +90,8 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
       <div className="space-y-1">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Linked Trips</div>
         {settlement.first_load_number ? (
-          <div className="flex items-center gap-2 rounded border border-slate-300 bg-slate-100 px-2 py-1.5">
-            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
+          <div className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
               NB
             </span>
             <span className="font-mono text-xs font-semibold text-slate-700">
@@ -101,8 +101,8 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         ) : null}
         {settlement.last_load_number &&
         settlement.last_load_number !== settlement.first_load_number ? (
-          <div className="flex items-center gap-2 rounded border border-emerald-100 bg-emerald-50 px-2 py-1.5">
-            <span className="rounded bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
+          <div className="flex items-center gap-2 rounded-sm border border-emerald-100 bg-emerald-50 px-2 py-1.5">
+            <span className="rounded-sm bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
               SB
             </span>
             <span className="font-mono text-xs font-semibold text-emerald-900">
@@ -110,7 +110,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             </span>
           </div>
         ) : (
-          <div className="rounded border border-dashed border-gray-200 px-2 py-1.5 text-xs text-gray-400">
+          <div className="rounded-sm border border-dashed border-gray-200 px-2 py-1.5 text-xs text-gray-400">
             Return (SB) load not yet linked — use "Add to it" from the board
           </div>
         )}
@@ -125,7 +125,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
                 Earnings
               </div>
               {earningLines.map((l) => (
-                <div key={l.id} className="flex items-center justify-between rounded bg-gray-50 px-2 py-1 text-xs">
+                <div key={l.id} className="flex items-center justify-between rounded-sm bg-gray-50 px-2 py-1 text-xs">
                   <span className="text-gray-700">{l.description}</span>
                   <span className="font-semibold text-gray-900">${Number(l.amount).toFixed(2)}</span>
                 </div>
@@ -138,7 +138,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
                 Deductions
               </div>
               {deductionLines.map((l) => (
-                <div key={l.id} className="flex items-center justify-between rounded bg-gray-50 px-2 py-1 text-xs">
+                <div key={l.id} className="flex items-center justify-between rounded-sm bg-gray-50 px-2 py-1 text-xs">
                   <span className="text-gray-700">{l.description}</span>
                   <span className="font-semibold text-red-600">−${Number(l.amount).toFixed(2)}</span>
                 </div>
@@ -151,7 +151,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
                 Reimbursements
               </div>
               {reimbLines.map((l) => (
-                <div key={l.id} className="flex items-center justify-between rounded bg-gray-50 px-2 py-1 text-xs">
+                <div key={l.id} className="flex items-center justify-between rounded-sm bg-gray-50 px-2 py-1 text-xs">
                   <span className="text-gray-700">{l.description}</span>
                   <span className="font-semibold text-emerald-600">+${Number(l.amount).toFixed(2)}</span>
                 </div>
@@ -164,7 +164,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
       )}
 
       {/* Totals */}
-      <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
         <div className="flex justify-between py-0.5">
           <span className="text-gray-600">Gross pay</span>
           <span className="font-semibold text-gray-900">${Number(settlement.gross_pay).toFixed(2)}</span>
@@ -191,7 +191,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
 
       {/* Settle & Pay guard message */}
       {!isSettleEnabled ? (
-        <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           <strong>Settle &amp; Pay</strong> enables once the driver returns and the SB load is delivered
           (status → delivered/pending docs).
         </div>

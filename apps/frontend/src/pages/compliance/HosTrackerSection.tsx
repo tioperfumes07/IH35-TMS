@@ -89,8 +89,8 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         {/* KPI row */}
         <div className="flex flex-wrap gap-2">
           {kpis.map((k) => (
-            <div key={k.label} className="flex h-[30px] min-w-[120px] flex-1 items-center justify-between rounded border border-slate-200 bg-white px-2.5">
-              <span className="text-[9px] uppercase tracking-[0.05em] text-slate-500">{k.label}</span>
+            <div key={k.label} className="flex h-[30px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
+              <span className="text-[9px] uppercase tracking-wider text-slate-500">{k.label}</span>
               <span className={`text-[16px] font-semibold tabular-nums ${k.cls}`}>{k.value}</span>
             </div>
           ))}
@@ -103,7 +103,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               key={d.date}
               type="button"
               onClick={() => setSelectedDate(d.date)}
-              className={`rounded border px-2.5 py-1 text-center text-[11px] leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
+              className={`rounded-sm border px-2.5 py-1 text-center text-[11px] leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
             >
               {d.mon} {d.day}
               <span className="block text-[8.5px] text-slate-400">{d.weekday}</span>
@@ -115,12 +115,12 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
             sortable+resizable table. For now: an honest per-driver summary from the canonical roster. */}
         {rosterQ.isLoading ? (
           <div className="space-y-1">
-            {[0, 1, 2, 3].map((i) => <div key={i} className="h-[28px] animate-pulse rounded bg-slate-100" />)}
+            {[0, 1, 2, 3].map((i) => <div key={i} className="h-[28px] animate-pulse rounded-sm bg-slate-100" />)}
           </div>
         ) : rosterQ.isError ? (
           <div className="px-3 py-6 text-sm text-red-600">Failed to load HOS roster.</div>
         ) : (
-          <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
             <table className="w-full text-left text-[11px]">
               <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
                 {/* GLOBAL-TABLE-ALIGNMENT (Block A): this section uses a local table (not the shared
@@ -184,7 +184,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                 <div className="text-sm font-semibold text-slate-900">{selectedDriver.driver_name ?? "—"}</div>
                 <div className="text-[11px] text-slate-500">Unit {selectedDriver.unit_number ?? "—"} · {selectedDate} · HOS cycle detail</div>
               </div>
-              <button type="button" onClick={() => setSelectedDriver(null)} className="rounded px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
+              <button type="button" onClick={() => setSelectedDriver(null)} className="rounded-sm px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
             </div>
             {!selectedDriver.available || !selectedDriver.clocks ? (
               <div className="px-4 py-10 text-center text-sm text-slate-500">HOS unavailable for this driver on {selectedDate}.</div>
@@ -199,7 +199,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                       { label: "Break", v: selectedDriver.clocks.break_remaining_min },
                       { label: "Cycle (70h)", v: selectedDriver.clocks.cycle_remaining_min },
                     ].map((c) => (
-                      <div key={c.label} className="rounded border border-slate-200 px-2.5 py-1.5">
+                      <div key={c.label} className="rounded-sm border border-slate-200 px-2.5 py-1.5">
                         <div className="text-[9px] uppercase tracking-wide text-slate-500">{c.label}</div>
                         <div className="text-[15px] font-semibold tabular-nums text-slate-900">{hmm(c.v)}</div>
                       </div>
@@ -214,8 +214,8 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                       return (
                         <div key={day.date} className="flex items-center gap-2">
                           <span className="w-16 shrink-0 text-[10px] text-slate-500">{day.date.slice(5)}</span>
-                          <div className="h-3 flex-1 rounded bg-slate-100">
-                            <div className="h-3 rounded bg-[#1f2a44]" style={{ width: `${pct}%` }} />
+                          <div className="h-3 flex-1 rounded-sm bg-slate-100">
+                            <div className="h-3 rounded-sm bg-[#1f2a44]" style={{ width: `${pct}%` }} />
                           </div>
                           <span className="w-12 shrink-0 text-right text-[10px] tabular-nums text-slate-600">{hmm(day.on_duty_min)}</span>
                         </div>

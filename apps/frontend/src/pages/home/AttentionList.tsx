@@ -59,9 +59,9 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
   if (query.isLoading) {
     return (
       <div className="space-y-2 py-2">
-        <div className="h-5 animate-pulse rounded bg-slate-100" />
-        <div className="h-5 animate-pulse rounded bg-slate-100" />
-        <div className="h-5 animate-pulse rounded bg-slate-100" />
+        <div className="h-5 animate-pulse rounded-sm bg-slate-100" />
+        <div className="h-5 animate-pulse rounded-sm bg-slate-100" />
+        <div className="h-5 animate-pulse rounded-sm bg-slate-100" />
       </div>
     );
   }

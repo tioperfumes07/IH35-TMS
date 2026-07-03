@@ -82,7 +82,7 @@ export function MoneyInput({
         aria-label={ariaLabel}
         inputMode="decimal"
         disabled={disabled}
-        className="h-7 w-full rounded border border-gray-300 pl-5 pr-2 text-right text-xs"
+        className="h-7 w-full rounded-sm border border-gray-300 pl-5 pr-2 text-right text-xs"
         placeholder={placeholder ?? "0.00"}
         value={text}
         onFocus={() => {

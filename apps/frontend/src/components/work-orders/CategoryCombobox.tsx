@@ -33,7 +33,7 @@ export function CategoryCombobox({
       {onSearchChange ? (
         <input
           type="search"
-          className="w-full rounded border px-2 py-1 text-sm"
+          className="w-full rounded-sm border px-2 py-1 text-sm"
           placeholder="Filter accounts…"
           value={searchValue}
           disabled={disabled}

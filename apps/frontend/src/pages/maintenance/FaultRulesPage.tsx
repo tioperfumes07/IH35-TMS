@@ -94,7 +94,7 @@ export function FaultRulesPage() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
             <tr>

@@ -141,7 +141,7 @@ export function PartsMasterDataPage() {
       label: "Source",
       sortable: true,
       render: (row) => (
-        <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
           {row.voided_at ? "Voided" : row.source === "csv" ? "CSV" : "Manual"}
         </span>
       ),
@@ -170,13 +170,13 @@ export function PartsMasterDataPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded border border-gray-200 bg-white p-3">
+      <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div>
           <h1 className="text-base font-semibold text-gray-900">Maintenance Parts</h1>
           <p className="text-xs text-gray-600">Primary CSV bulk-load path with manual create/edit/void support.</p>
         </div>
         <div className="flex items-center gap-2">
-          <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parts" />
+          <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parts" />
           {/* ARCHIVE-not-DELETE (B25): prior header CTA "+ Create" — Sunset: 2026-09. Canonical: + Create Part. */}
           <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
             + Create Part
@@ -185,21 +185,21 @@ export function PartsMasterDataPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-gray-500">Total Parts</div>
           <div className="text-sm font-semibold">{kpisQuery.data?.total_parts ?? 0}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-gray-500">Low Stock</div>
           <div className="text-sm font-semibold">{kpisQuery.data?.low_stock_count ?? 0}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-gray-500">Total Inventory Value</div>
           <div className="text-sm font-semibold">${Number(kpisQuery.data?.total_inventory_value ?? 0).toLocaleString()}</div>
         </div>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
           <input type="file" accept=".csv,text/csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
           <Button size="sm" variant="secondary" disabled={!csvFile} onClick={() => importMutation.mutate()}>
@@ -224,18 +224,18 @@ export function PartsMasterDataPage() {
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Part">
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Part number" value={draft.part_number} onChange={(e) => setDraft((p) => ({ ...p, part_number: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Name" value={draft.name} onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Part number" value={draft.part_number} onChange={(e) => setDraft((p) => ({ ...p, part_number: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Name" value={draft.name} onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Vendor default" value={draft.vendor_default} onChange={(e) => setDraft((p) => ({ ...p, vendor_default: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Vendor default" value={draft.vendor_default} onChange={(e) => setDraft((p) => ({ ...p, vendor_default: e.target.value }))} />
             <MoneyInput valueDollars={draft.unit_cost} onChangeDollars={(d) => setDraft((p) => ({ ...p, unit_cost: d }))} ariaLabel="Unit cost" placeholder="Unit cost" />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Qty on hand" type="number" value={draft.qty_on_hand} onChange={(e) => setDraft((p) => ({ ...p, qty_on_hand: e.target.value }))} />
-            <input className="h-8 rounded border border-gray-300 px-2 text-xs" placeholder="Reorder threshold" type="number" value={draft.reorder_threshold} onChange={(e) => setDraft((p) => ({ ...p, reorder_threshold: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Qty on hand" type="number" value={draft.qty_on_hand} onChange={(e) => setDraft((p) => ({ ...p, qty_on_hand: e.target.value }))} />
+            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Reorder threshold" type="number" value={draft.reorder_threshold} onChange={(e) => setDraft((p) => ({ ...p, reorder_threshold: e.target.value }))} />
           </div>
-          <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Location" value={draft.location} onChange={(e) => setDraft((p) => ({ ...p, location: e.target.value }))} />
+          <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Location" value={draft.location} onChange={(e) => setDraft((p) => ({ ...p, location: e.target.value }))} />
           <Button disabled={!draft.part_number || !draft.name || createMutation.isPending} onClick={() => createMutation.mutate()}>
             Save
           </Button>
@@ -246,12 +246,12 @@ export function PartsMasterDataPage() {
         {editing ? (
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.part_number} onChange={(e) => setEditing((p) => (p ? { ...p, part_number: e.target.value } : p))} />
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.name} onChange={(e) => setEditing((p) => (p ? { ...p, name: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.part_number} onChange={(e) => setEditing((p) => (p ? { ...p, part_number: e.target.value } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.name} onChange={(e) => setEditing((p) => (p ? { ...p, name: e.target.value } : p))} />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" type="number" value={editing.qty_on_hand} onChange={(e) => setEditing((p) => (p ? { ...p, qty_on_hand: Number(e.target.value || 0) } : p))} />
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" type="number" value={editing.reorder_threshold} onChange={(e) => setEditing((p) => (p ? { ...p, reorder_threshold: Number(e.target.value || 0) } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" type="number" value={editing.qty_on_hand} onChange={(e) => setEditing((p) => (p ? { ...p, qty_on_hand: Number(e.target.value || 0) } : p))} />
+              <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" type="number" value={editing.reorder_threshold} onChange={(e) => setEditing((p) => (p ? { ...p, reorder_threshold: Number(e.target.value || 0) } : p))} />
             </div>
             <Button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>Save Changes</Button>
           </div>

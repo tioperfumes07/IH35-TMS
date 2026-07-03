@@ -205,7 +205,7 @@ export function DataTable<T>({
             Rows
             <select
               aria-label="Rows per page"
-              className="h-6 rounded border border-gray-300 bg-white px-1 text-[11px]"
+              className="h-6 rounded-sm border border-gray-300 bg-white px-1 text-[11px]"
               value={selectedPageSize}
               onChange={(e) => setSelectedPageSize(Number(e.target.value))}
             >
@@ -218,7 +218,7 @@ export function DataTable<T>({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="h-7 rounded border border-gray-300 px-2 disabled:opacity-40"
+            className="h-7 rounded-sm border border-gray-300 px-2 disabled:opacity-40"
             onClick={() => setPage((current) => Math.max(1, current - 1))}
             disabled={inError || safePage <= 1}
           >
@@ -229,7 +229,7 @@ export function DataTable<T>({
           </span>
           <button
             type="button"
-            className="h-7 rounded border border-gray-300 px-2 disabled:opacity-40"
+            className="h-7 rounded-sm border border-gray-300 px-2 disabled:opacity-40"
             onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
             disabled={inError || safePage >= pageCount}
           >

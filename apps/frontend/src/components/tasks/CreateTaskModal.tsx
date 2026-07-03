@@ -97,7 +97,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, onClose
     Boolean(operatingCompanyId) && title.trim().length > 0 && assignedTo.length > 0 && scheduledDate.length > 0 && !mutation.isPending;
 
   const labelCls = "block text-[11px] font-semibold uppercase tracking-wide text-gray-600";
-  const inputCls = "mt-1 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-800 focus:border-slate-300 focus:outline-none";
+  const inputCls = "mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-800 focus:border-slate-300 focus:outline-hidden";
 
   return (
     <Modal open={open} onClose={onClose} title="Create task" modalKind="create-task" sizePreset="md">
@@ -171,13 +171,13 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, onClose
         <p className="text-[11px] text-gray-500">New tasks start with status <span className="font-semibold">Pending</span>; change it on the board after creating.</p>
 
         <div className="flex items-center justify-end gap-2 pt-1">
-          <button type="button" className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50" onClick={onClose}>
+          <button type="button" className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50" onClick={onClose}>
             Cancel
           </button>
           <button
             type="submit"
             disabled={!canSubmit}
-            className="rounded bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-sm bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {mutation.isPending ? "Creating…" : "Create task"}
           </button>

@@ -935,7 +935,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search by name"
-                  className="h-8 w-full max-w-xs rounded border border-gray-300 px-2 text-[13px]"
+                  className="h-8 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-[13px]"
                 />
               </div>
               <DataTable
@@ -1105,7 +1105,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <input
               value={teamForm.team_name}
               onChange={(event) => setTeamForm((current) => ({ ...current, team_name: event.target.value }))}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1115,7 +1115,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               onChange={(event) =>
                 setTeamForm((current) => ({ ...current, split_method: event.target.value as DriverTeamSplitMethod }))
               }
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="50_50">50_50</option>
               <option value="60_40">60_40</option>
@@ -1130,7 +1130,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <SelectCombobox
               value={teamForm.primary_driver_id}
               onChange={(event) => setTeamForm((current) => ({ ...current, primary_driver_id: event.target.value }))}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="">Select driver</option>
               {(driversQuery.data ?? []).map((driver) => (
@@ -1143,7 +1143,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <SelectCombobox
               value={teamForm.co_driver_id}
               onChange={(event) => setTeamForm((current) => ({ ...current, co_driver_id: event.target.value }))}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             >
               <option value="">Select driver</option>
               {(driversQuery.data ?? []).map((driver) => (
@@ -1157,7 +1157,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               type="number"
               value={teamForm.primary_share_pct}
               onChange={(event) => setTeamForm((current) => ({ ...current, primary_share_pct: event.target.value }))}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1166,7 +1166,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               type="number"
               value={teamForm.co_share_pct}
               onChange={(event) => setTeamForm((current) => ({ ...current, co_share_pct: event.target.value }))}
-              className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1174,7 +1174,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <DatePicker
               value={teamForm.effective_from}
               onChange={(value) => setTeamForm((current) => ({ ...current, effective_from: value }))}
-              className="rounded border border-gray-300 px-2 text-sm py-2"
+              className="rounded-sm border border-gray-300 px-2 text-sm py-2"
             />
           </div>
           <div className="md:col-span-2 flex flex-col gap-1">
@@ -1182,7 +1182,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <textarea
               value={teamForm.notes}
               onChange={(event) => setTeamForm((current) => ({ ...current, notes: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               rows={3}
             />
           </div>
@@ -1196,13 +1196,13 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       <Modal open={teamDetailOpen} onClose={() => setTeamDetailOpen(false)} title="Team Detail">
         {teamDetailQuery.data ? (
           <div className="space-y-3">
-            <div className="rounded border border-gray-200 bg-gray-50 p-2 text-xs">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
               <p className="font-semibold">{String(teamDetailQuery.data.team_name)}</p>
               <p>Primary: {String(teamDetailQuery.data.primary_driver_name ?? teamDetailQuery.data.primary_driver_id)}</p>
               <p>Co: {String(teamDetailQuery.data.co_driver_name ?? teamDetailQuery.data.secondary_driver_id)}</p>
               <p>Split: {String(teamDetailQuery.data.split_method)} ({Number(teamDetailQuery.data.primary_share_pct)} / {Number(teamDetailQuery.data.co_share_pct)})</p>
             </div>
-            <div className="rounded border border-gray-200 bg-white p-2 text-xs">
+            <div className="rounded-sm border border-gray-200 bg-white p-2 text-xs">
               <p className="mb-1 font-semibold">Settlement history per load</p>
               {(teamDetailQuery.data.settlement_history ?? []).length === 0 ? (
                 <p className="text-gray-500">No split history yet.</p>
@@ -1215,20 +1215,20 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 ))
               )}
             </div>
-            <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs">
+            <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs">
               <p className="mb-1 font-semibold">Update Split</p>
               <div className="grid grid-cols-2 gap-2">
                 <DatePicker
                   value={teamForm.effective_from}
                   onChange={(value) => setTeamForm((current) => ({ ...current, effective_from: value }))}
-                  className="rounded border border-gray-300 px-2 py-1"
+                  className="rounded-sm border border-gray-300 px-2 py-1"
                 />
                 <SelectCombobox
                   value={teamForm.split_method}
                   onChange={(event) =>
                     setTeamForm((current) => ({ ...current, split_method: event.target.value as DriverTeamSplitMethod }))
                   }
-                  className="rounded border border-gray-300 px-2 py-1"
+                  className="rounded-sm border border-gray-300 px-2 py-1"
                 >
                   <option value="50_50">50_50</option>
                   <option value="60_40">60_40</option>
@@ -1241,14 +1241,14 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   type="number"
                   value={teamForm.primary_share_pct}
                   onChange={(event) => setTeamForm((current) => ({ ...current, primary_share_pct: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-1"
+                  className="rounded-sm border border-gray-300 px-2 py-1"
                   placeholder="Primary %"
                 />
                 <input
                   type="number"
                   value={teamForm.co_share_pct}
                   onChange={(event) => setTeamForm((current) => ({ ...current, co_share_pct: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-1"
+                  className="rounded-sm border border-gray-300 px-2 py-1"
                   placeholder="Co %"
                 />
               </div>
@@ -1353,7 +1353,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   clearDriverFieldError(key);
                   setForm((current) => ({ ...current, [key]: event.target.value }));
                 }}
-                className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border h-9 px-2 text-[13px]")}
+                className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
               />
               <FieldError id={key} message={driverFieldErrors[key]} />
             </div>
@@ -1389,7 +1389,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 clearDriverFieldError("country_code");
                 setForm((current) => ({ ...current, country_code: event.target.value }));
               }}
-              className={fieldErrorClassname(Boolean(driverFieldErrors.country_code), "rounded border h-9 px-2 text-[13px]")}
+              className={fieldErrorClassname(Boolean(driverFieldErrors.country_code), "rounded-sm border h-9 px-2 text-[13px]")}
             >
               <option value="+1">US (+1)</option>
               <option value="+52">Mexico (+52)</option>
@@ -1406,7 +1406,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 clearDriverFieldError("phone_input");
                 setForm((current) => ({ ...current, phone_input: event.target.value }));
               }}
-              className={fieldErrorClassname(Boolean(driverFieldErrors.phone_input), "rounded border h-9 px-2 text-[13px]")}
+              className={fieldErrorClassname(Boolean(driverFieldErrors.phone_input), "rounded-sm border h-9 px-2 text-[13px]")}
               placeholder="(956) 555-0001"
             />
             <FieldError id="phone_input" message={driverFieldErrors.phone_input} />
@@ -1486,7 +1486,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                         clearDriverFieldError(key);
                         setForm((current) => ({ ...current, [key]: event.target.value }));
                       }}
-                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border h-9 px-2 text-[13px]")}
+                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
                     />
                     <FieldError id={key} message={driverFieldErrors[key]} />
                   </div>
@@ -1548,7 +1548,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                         clearDriverFieldError(key);
                         setForm((current) => ({ ...current, [key]: event.target.value }));
                       }}
-                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border h-9 px-2 text-[13px]")}
+                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
                     />
                     <FieldError id={key} message={driverFieldErrors[key]} />
                   </div>
@@ -1563,7 +1563,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                       clearDriverFieldError("emergency_contact_address");
                       setForm((current) => ({ ...current, emergency_contact_address: event.target.value }));
                     }}
-                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_address), "rounded border px-2 py-1.5 text-[13px]")}
+                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_address), "rounded-sm border px-2 py-1.5 text-[13px]")}
                     rows={2}
                   />
                   <FieldError id="emergency_contact_address" message={driverFieldErrors.emergency_contact_address} />
@@ -1578,7 +1578,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                       clearDriverFieldError("emergency_contact_notes");
                       setForm((current) => ({ ...current, emergency_contact_notes: event.target.value }));
                     }}
-                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_notes), "rounded border px-2 py-1.5 text-[13px]")}
+                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_notes), "rounded-sm border px-2 py-1.5 text-[13px]")}
                     rows={2}
                   />
                   <FieldError id="emergency_contact_notes" message={driverFieldErrors.emergency_contact_notes} />
@@ -1593,9 +1593,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               <div className="mt-1 text-xs">
                 Prior safety events match this CURP/CDL identity. Review before proceeding.
               </div>
-              <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded bg-white/70 p-2 text-xs">
+              <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded-sm bg-white/70 p-2 text-xs">
                 {returningDetection.matched_events.map((event) => (
-                  <div key={event.event_id} className="rounded border border-gray-200 bg-white p-1.5">
+                  <div key={event.event_id} className="rounded-sm border border-gray-200 bg-white p-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <span>{event.event_date}</span>
                       <StatusBadge status={event.severity} />
@@ -1616,7 +1616,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 <span>I have reviewed prior safety records and want to proceed with this hire</span>
               </label>
               {overrideReturningWarning && terminatedMatches.length > 0 ? (
-                <div className="mt-2 space-y-2 rounded border border-amber-200 bg-amber-50 p-2">
+                <div className="mt-2 space-y-2 rounded-sm border border-amber-200 bg-amber-50 p-2">
                   <label className="flex items-center gap-2 text-xs">
                     <input
                       type="radio"
@@ -1681,7 +1681,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               Phone {createSummary.phone} was already registered. Linked existing account.
             </p>
           ) : null}
-          <div className="rounded border border-gray-200 bg-gray-50 p-2 text-xs break-all">{createSummary?.invite_url}</div>
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs break-all">{createSummary?.invite_url}</div>
           <div className="flex justify-end gap-2">
             <Button
               variant="secondary"

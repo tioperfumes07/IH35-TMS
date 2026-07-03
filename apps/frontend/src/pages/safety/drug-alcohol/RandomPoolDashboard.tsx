@@ -99,7 +99,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
         <button
           type="button"
           disabled={drawMutation.isPending}
-          className="rounded border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-40"
+          className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-40"
           onClick={() => drawMutation.mutate()}
         >
           {drawMutation.isPending ? "Running draw…" : "Run Manual Draw"}
@@ -119,31 +119,31 @@ export function RandomPoolDashboard({ companyId }: Props) {
       {/* ── Summary tile for most recent draw ──────────────────────────── */}
       {mostRecent ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
-          <div className="rounded border border-gray-100 p-3 text-center">
+          <div className="rounded-sm border border-gray-100 p-3 text-center">
             <div className="text-[11px] uppercase tracking-wide text-slate-500">Pool Size</div>
             <div className="mt-1 text-xl font-semibold text-slate-900">{mostRecent.pool_size}</div>
           </div>
-          <div className="rounded border border-gray-100 p-3 text-center">
+          <div className="rounded-sm border border-gray-100 p-3 text-center">
             <div className="text-[11px] uppercase tracking-wide text-slate-500">Drug Selected</div>
             <div className="mt-1 text-xl font-semibold text-slate-900">
               {mostRecent.drug_drawn_count}
               <span className="ml-1 text-xs font-normal text-slate-500">{drugPct(mostRecent)}</span>
             </div>
           </div>
-          <div className="rounded border border-gray-100 p-3 text-center">
+          <div className="rounded-sm border border-gray-100 p-3 text-center">
             <div className="text-[11px] uppercase tracking-wide text-slate-500">Alcohol Selected</div>
             <div className="mt-1 text-xl font-semibold text-slate-900">
               {mostRecent.alcohol_drawn_count}
               <span className="ml-1 text-xs font-normal text-slate-500">{alcoholPct(mostRecent)}</span>
             </div>
           </div>
-          <div className="rounded border border-gray-100 p-3 text-center">
+          <div className="rounded-sm border border-gray-100 p-3 text-center">
             <div className="text-[11px] uppercase tracking-wide text-slate-500">FMCSA Min.</div>
             <div className="mt-1">
               {meetsMinimums(mostRecent) ? (
-                <span className="rounded bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800">Met</span>
+                <span className="rounded-sm bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800">Met</span>
               ) : (
-                <span className="rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-800">Below Min.</span>
+                <span className="rounded-sm bg-red-50 px-2 py-1 text-xs font-medium text-red-800">Below Min.</span>
               )}
             </div>
           </div>

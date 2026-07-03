@@ -31,7 +31,7 @@ export function CbpWaitTimesWidget({ title = "CBP wait times (Laredo region)" }:
   }, []);
 
   return (
-    <aside data-testid="cbp-wait-times-widget" className="rounded border border-gray-200 bg-white p-3">
+    <aside data-testid="cbp-wait-times-widget" className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 text-sm font-semibold text-gray-800">{title}</div>
       {loading ? (
         <p className="text-xs text-gray-500">Loading CBP wait times…</p>

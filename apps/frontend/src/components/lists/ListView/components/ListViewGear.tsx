@@ -27,7 +27,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="List settings"
-        className="p-1.5 rounded border border-gray-300 hover:bg-gray-100 text-gray-600 text-sm"
+        className="p-1.5 rounded-sm border border-gray-300 hover:bg-gray-100 text-gray-600 text-sm"
       >
         ⚙
       </button>
@@ -56,7 +56,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                           },
                         })
                       }
-                      className="rounded border-gray-300"
+                      className="rounded-sm border-gray-300"
                     />
                     {col.label}
                   </label>
@@ -75,7 +75,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={s}
                     type="button"
                     onClick={() => set({ pageSize: s })}
-                    className={`px-2 py-1 text-xs rounded border ${gear.pageSize === s ? "bg-slate-1000 text-white border-slate-300" : "border-gray-300 hover:bg-gray-50"}`}
+                    className={`px-2 py-1 text-xs rounded-sm border ${gear.pageSize === s ? "bg-slate-1000 text-white border-slate-300" : "border-gray-300 hover:bg-gray-50"}`}
                   >
                     {s}
                   </button>
@@ -88,7 +88,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
             {/* Density: Cozy / Compact */}
             <section>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Density</p>
-              <div className="flex rounded overflow-hidden border border-gray-300 text-xs">
+              <div className="flex rounded-sm overflow-hidden border border-gray-300 text-xs">
                 {DENSITY_OPTIONS.map(({ value, label }) => (
                   <button
                     key={value}
@@ -112,11 +112,11 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                   type="checkbox"
                   checked={gear.includeInactive}
                   onChange={(e) => set({ includeInactive: e.target.checked })}
-                  className="rounded border-gray-300"
+                  className="rounded-sm border-gray-300"
                 />
                 Include inactive
               </label>
-              <div className="flex rounded overflow-hidden border border-gray-300 text-xs mb-2">
+              <div className="flex rounded-sm overflow-hidden border border-gray-300 text-xs mb-2">
                 {(["all", "active", "inactive"] as const).map((v) => (
                   <button
                     key={v}
@@ -133,7 +133,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                   type="checkbox"
                   checked={gear.showBadges}
                   onChange={(e) => set({ showBadges: e.target.checked })}
-                  className="rounded border-gray-300"
+                  className="rounded-sm border-gray-300"
                 />
                 Show badges
               </label>

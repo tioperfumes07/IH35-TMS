@@ -39,7 +39,7 @@ export function DvirItemRow({
             key={status.key}
             type="button"
             onClick={() => onStatusChange(status.key)}
-            className="min-h-11 rounded border text-xs font-semibold uppercase tracking-[0.04em]"
+            className="min-h-11 rounded-sm border text-xs font-semibold uppercase tracking-[0.04em]"
             style={item.status === status.key ? { backgroundColor: status.bg, color: status.text, borderColor: status.bg } : undefined}
           >
             {t(`dvir.status.${status.key}`)}
@@ -50,14 +50,14 @@ export function DvirItemRow({
         value={item.note}
         onChange={(event) => onNoteChange(event.target.value)}
         placeholder={isMajor ? noteRequiredLabel : ""}
-        className="mt-2 h-20 w-full rounded border border-pwa-border bg-[#101522] p-2 text-sm text-pwa-text-primary"
+        className="mt-2 h-20 w-full rounded-sm border border-pwa-border bg-[#101522] p-2 text-sm text-pwa-text-primary"
       />
       <div className="mt-2 flex items-center justify-between">
         <button
           type="button"
           disabled={item.photo_keys.length >= MAX_DVIR_DEFECT_PHOTOS}
           onClick={onAddPhoto}
-          className="min-h-11 rounded border border-pwa-border px-3 text-xs font-semibold text-pwa-text-secondary disabled:opacity-40"
+          className="min-h-11 rounded-sm border border-pwa-border px-3 text-xs font-semibold text-pwa-text-secondary disabled:opacity-40"
         >
           {t("dvir.add_photo")}
         </button>

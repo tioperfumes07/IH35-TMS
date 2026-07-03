@@ -35,15 +35,15 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
   props.onBlockersChange?.(blockers.length > 0);
   if (!q.data && !q.isLoading) return null;
   return (
-    <div className="space-y-2 rounded border border-gray-200 p-3" data-testid="auth-gate-panel">
+    <div className="space-y-2 rounded-sm border border-gray-200 p-3" data-testid="auth-gate-panel">
       {blockers.map((b, i) => (
-        <div key={`b-${i}`} className="rounded bg-red-50 px-2 py-1 text-sm text-red-800">{b.workflow}: {b.message}</div>
+        <div key={`b-${i}`} className="rounded-sm bg-red-50 px-2 py-1 text-sm text-red-800">{b.workflow}: {b.message}</div>
       ))}
       {warnings.map((w, i) => (
-        <div key={`w-${i}`} className="rounded bg-amber-50 px-2 py-1 text-sm text-amber-900">{w.workflow}: {w.message}</div>
+        <div key={`w-${i}`} className="rounded-sm bg-amber-50 px-2 py-1 text-sm text-amber-900">{w.workflow}: {w.message}</div>
       ))}
       {info.map((inf, i) => (
-        <div key={`i-${i}`} className="rounded bg-slate-100 px-2 py-1 text-sm text-slate-700">{inf.message}</div>
+        <div key={`i-${i}`} className="rounded-sm bg-slate-100 px-2 py-1 text-sm text-slate-700">{inf.message}</div>
       ))}
       {q.isLoading ? <p className="text-xs text-gray-500">Checking dispatch authorization gates…</p> : null}
     </div>

@@ -15,11 +15,11 @@ const titleize = (s: string) => s.replace(/_/g, " ");
 
 function SyncPill({ inSync }: { inSync: boolean }) {
   return inSync ? (
-    <span className="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+    <span className="inline-flex items-center rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
       In sync
     </span>
   ) : (
-    <span className="inline-flex items-center rounded bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
+    <span className="inline-flex items-center rounded-sm bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
       Drift
     </span>
   );
@@ -57,7 +57,7 @@ export function QboReconciliationPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="TMS ↔ QBO Reconciliation" subtitle="Daily count & balance agreement between TMS and QuickBooks">
-        <div className="rounded border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           The daily TMS ↔ QBO reconciliation screen is not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">Enable the {FLAG} feature flag to use this module.</p>
         </div>
@@ -77,7 +77,7 @@ export function QboReconciliationPage() {
       ) : (
         <div className="space-y-5">
           {/* Sync state / last run */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded border border-gray-200 bg-white px-4 py-3 text-xs text-gray-600">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-sm border border-gray-200 bg-white px-4 py-3 text-xs text-gray-600">
             <div>
               <span className="text-gray-400">Overall: </span>
               {allInSync ? (
@@ -113,7 +113,7 @@ export function QboReconciliationPage() {
           {/* Per-object count reconciliation */}
           <div>
             <h2 className="mb-2 text-sm font-semibold text-gray-800">Object counts</h2>
-            <div className="overflow-x-auto rounded border border-gray-200">
+            <div className="overflow-x-auto rounded-sm border border-gray-200">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
@@ -177,7 +177,7 @@ export function QboReconciliationPage() {
           {balances.length > 0 && (
             <div>
               <h2 className="mb-2 text-sm font-semibold text-gray-800">Balance reconciliation</h2>
-              <div className="overflow-x-auto rounded border border-gray-200">
+              <div className="overflow-x-auto rounded-sm border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
@@ -229,13 +229,13 @@ export function QboReconciliationPage() {
               )}
             </div>
             {visibleFindings.length === 0 ? (
-              <div className="rounded border border-gray-200 bg-white px-4 py-8 text-center text-sm text-gray-400">
+              <div className="rounded-sm border border-gray-200 bg-white px-4 py-8 text-center text-sm text-gray-400">
                 {findings.length === 0
                   ? "No reconciliation findings recorded. A reconciliation run populates this list."
                   : "No findings for the selected object."}
               </div>
             ) : (
-              <div className="overflow-x-auto rounded border border-gray-200">
+              <div className="overflow-x-auto rounded-sm border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
@@ -255,7 +255,7 @@ export function QboReconciliationPage() {
                         <td className="px-3 py-2 whitespace-nowrap capitalize">{titleize(f.finding_type)}</td>
                         <td className="px-3 py-2 whitespace-nowrap text-gray-600">{titleize(f.mirror_category)}</td>
                         <td className="px-3 py-2 whitespace-nowrap">
-                          <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${SEVERITY_CLASS[f.severity] ?? "bg-gray-100 text-gray-600"}`}>
+                          <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${SEVERITY_CLASS[f.severity] ?? "bg-gray-100 text-gray-600"}`}>
                             {titleize(f.severity)}
                           </span>
                         </td>

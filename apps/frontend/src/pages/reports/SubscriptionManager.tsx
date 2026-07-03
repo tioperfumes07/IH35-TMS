@@ -156,7 +156,7 @@ export function SubscriptionManager() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {subsQuery.isLoading ? <p className="text-sm text-gray-500">Loading subscriptions…</p> : null}
 
-      <div className="rounded border border-gray-200 bg-white p-2">
+      <div className="rounded-sm border border-gray-200 bg-white p-2">
         <MobileOptimizedTable
           rows={rows}
           rowKey={(row) => row.uuid}
@@ -227,7 +227,7 @@ export function SubscriptionManager() {
 
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-slate-800">Delivery history</h3>
-        <div className="rounded border border-gray-200 bg-white p-2">
+        <div className="rounded-sm border border-gray-200 bg-white p-2">
           <MobileOptimizedTable
             rows={logRows}
             rowKey={(log) => log.uuid}

@@ -77,7 +77,7 @@ export function MigrationStatusPage() {
       ) : null}
 
       {query.data ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-800">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800">
           <div className="flex flex-wrap items-center gap-3">
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
@@ -97,7 +97,7 @@ export function MigrationStatusPage() {
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Expected (repo)</div>
-              <ul className="mt-2 max-h-[420px] space-y-1 overflow-auto rounded border border-gray-100 bg-gray-50 p-2">
+              <ul className="mt-2 max-h-[420px] space-y-1 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2">
                 {rows.map((name) => (
                   <li key={name} className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
@@ -107,7 +107,7 @@ export function MigrationStatusPage() {
                     {missing.has(name) ? (
                       <button
                         type="button"
-                        className="shrink-0 rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100"
+                        className="shrink-0 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100"
                         onClick={() => copySql(name)}
                       >
                         {copied === name ? "Copied" : "Copy SQL"}
@@ -120,7 +120,7 @@ export function MigrationStatusPage() {
 
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Applied (database)</div>
-              <ul className="mt-2 max-h-[420px] space-y-1 overflow-auto rounded border border-gray-100 bg-gray-50 p-2">
+              <ul className="mt-2 max-h-[420px] space-y-1 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2">
                 {applied.length ? (
                   applied.map((name) => (
                     <li key={name} className="flex items-start gap-2">

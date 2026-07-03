@@ -158,7 +158,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             Issue date
             <input
               data-field="issue_date"
-              className={fieldErrorClassname(Boolean(invoiceFieldErrors.issue_date), "mt-1 h-9 w-full rounded border px-2 text-sm")}
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.issue_date), "mt-1 h-9 w-full rounded-sm border px-2 text-sm")}
               type="date"
               value={issueDate}
               aria-describedby={invoiceFieldErrors.issue_date ? "issue_date-error" : undefined}
@@ -173,7 +173,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             Due date
             <input
               data-field="due_date"
-              className={fieldErrorClassname(Boolean(invoiceFieldErrors.due_date), "mt-1 h-9 w-full rounded border px-2 text-sm")}
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.due_date), "mt-1 h-9 w-full rounded-sm border px-2 text-sm")}
               type="date"
               value={dueDate}
               aria-describedby={invoiceFieldErrors.due_date ? "due_date-error" : undefined}
@@ -188,7 +188,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             Notes
             <textarea
               data-field="notes"
-              className={fieldErrorClassname(Boolean(invoiceFieldErrors.notes), "mt-1 min-h-24 w-full rounded border px-2 py-1 text-sm")}
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.notes), "mt-1 min-h-24 w-full rounded-sm border px-2 py-1 text-sm")}
               value={notes}
               aria-describedby={invoiceFieldErrors.notes ? "notes-error" : undefined}
               onChange={(event) => {

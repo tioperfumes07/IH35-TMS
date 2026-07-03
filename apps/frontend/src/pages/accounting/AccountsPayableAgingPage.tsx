@@ -148,14 +148,14 @@ export function AccountsPayableAgingPage() {
           <div className="mt-1"><DatePicker value={asOf} onChange={(d) => setAsOf(d || today())} /></div>
         </label>
 
-        <div className="inline-flex overflow-hidden rounded border border-slate-300">
+        <div className="inline-flex overflow-hidden rounded-sm border border-slate-300">
           <button type="button" className={`px-3 py-1.5 text-sm ${view === "by_vendor" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
           <button type="button" className={`px-3 py-1.5 text-sm ${view === "by_type" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
         </div>
 
         <label className="text-xs font-semibold text-slate-600">
           Vendor type
-          <select className="mt-1 block h-9 rounded border border-slate-300 px-2 text-sm" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as ApAgingDisplayGroup | "all")}>
+          <select className="mt-1 block h-9 rounded-sm border border-slate-300 px-2 text-sm" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as ApAgingDisplayGroup | "all")}>
             <option value="all">All types</option>
             {GROUP_ORDER.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
@@ -187,7 +187,7 @@ export function AccountsPayableAgingPage() {
             pageSize={table.pageSize}
             onPageSizeChange={table.setPageSize}
           />
-          <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
             <table className="w-full text-left text-xs">
               <thead className="sticky top-0 z-10 bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
                 <tr>
@@ -227,16 +227,16 @@ export function AccountsPayableAgingPage() {
           </div>
           {table.pageCount > 1 ? (
             <div className="flex items-center justify-end gap-2 text-xs text-slate-600">
-              <button type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={table.page <= 1} onClick={() => table.setPage(table.page - 1)}>Prev</button>
+              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-40" disabled={table.page <= 1} onClick={() => table.setPage(table.page - 1)}>Prev</button>
               <span>Page {table.page} / {table.pageCount}</span>
-              <button type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={table.page >= table.pageCount} onClick={() => table.setPage(table.page + 1)}>Next</button>
+              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-40" disabled={table.page >= table.pageCount} onClick={() => table.setPage(table.page + 1)}>Next</button>
             </div>
           ) : null}
         </div>
       ) : (
         <div className="space-y-2">
           <div className="w-56"><TableSearch value={search} onChange={setSearch} placeholder="Search vendor…" /></div>
-          <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
             <table className="w-full text-left text-xs">
               <thead className="sticky top-0 z-10 bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
                 <tr>

@@ -208,7 +208,7 @@ export function InspectionsPage() {
         </Button>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <table className="w-full text-left text-xs">
           <thead className="text-[11px] uppercase text-gray-600">
             <tr>
@@ -267,7 +267,7 @@ export function InspectionsPage() {
           <label className="block">
             <span className="text-xs text-gray-600">Unit</span>
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
               value={draft.unit_id}
               onChange={(e) => setDraft((d) => ({ ...d, unit_id: e.target.value }))}
             >
@@ -283,7 +283,7 @@ export function InspectionsPage() {
           <label className="block">
             <span className="text-xs text-gray-600">Inspection type</span>
             <select
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
               value={draft.inspection_type}
               onChange={(e) =>
                 setDraft((d) => ({
@@ -305,7 +305,7 @@ export function InspectionsPage() {
             <label className="block">
               <span className="text-xs text-gray-600">Link DVIR submission</span>
               <select
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={draft.dvir_submission_id}
                 onChange={(e) => setDraft((d) => ({ ...d, dvir_submission_id: e.target.value }))}
               >
@@ -323,7 +323,7 @@ export function InspectionsPage() {
             <label className="block">
               <span className="text-xs text-gray-600">Scheduled date</span>
               <DatePicker
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={draft.scheduled_date}
                 onChange={(next) => setDraft((d) => ({ ...d, scheduled_date: next }))}
               />
@@ -331,7 +331,7 @@ export function InspectionsPage() {
             <label className="block">
               <span className="text-xs text-gray-600">Inspection date</span>
               <DatePicker
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={draft.inspection_date}
                 onChange={(next) => setDraft((d) => ({ ...d, inspection_date: next }))}
               />
@@ -341,7 +341,7 @@ export function InspectionsPage() {
           <label className="block">
             <span className="text-xs text-gray-600">Inspector</span>
             <input
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
               value={draft.inspector_name}
               onChange={(e) => setDraft((d) => ({ ...d, inspector_name: e.target.value }))}
             />
@@ -352,7 +352,7 @@ export function InspectionsPage() {
               <span className="text-xs text-gray-600">Mileage</span>
               <input
                 type="number"
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={draft.mileage}
                 onChange={(e) => setDraft((d) => ({ ...d, mileage: e.target.value }))}
               />
@@ -360,7 +360,7 @@ export function InspectionsPage() {
             <label className="block">
               <span className="text-xs text-gray-600">Outcome</span>
               <select
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={draft.outcome ?? ""}
                 onChange={(e) => setDraft((d) => ({ ...d, outcome: e.target.value as InspectionDraft["outcome"] }))}
               >
@@ -384,7 +384,7 @@ export function InspectionsPage() {
           <label className="block">
             <span className="text-xs text-gray-600">Notes</span>
             <textarea
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
               rows={3}
               value={draft.notes}
               onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}

@@ -21,13 +21,13 @@ export function ItemsCatalog() {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded border border-border p-4">
+    <div className="flex flex-col gap-3 rounded-sm border border-border p-4">
       <h2 className="text-lg font-semibold">Products &amp; Services (QBO Items)</h2>
       <p className="text-sm text-muted-foreground">Pull and reconcile QBO items into catalogs.items for WO auto-post.</p>
       <div className="flex gap-2">
         <button
           type="button"
-          className="rounded bg-primary px-3 py-1 text-primary-foreground"
+          className="rounded-sm bg-primary px-3 py-1 text-primary-foreground"
           onClick={async () => {
             const result = await postItemsAction("/api/v1/qbo-sync/items/pull-now", operatingCompanyId);
             setStatus(`Pulled ${result.rowsUpserted ?? 0} items`);
@@ -37,7 +37,7 @@ export function ItemsCatalog() {
         </button>
         <button
           type="button"
-          className="rounded border px-3 py-1"
+          className="rounded-sm border px-3 py-1"
           onClick={async () => {
             const result = await postItemsAction("/api/v1/qbo-sync/items/reconcile-now", operatingCompanyId);
             setStatus(`Reconciled · healed ${result.healed ?? 0} · drift ${result.driftDetected ?? 0}`);

@@ -7,7 +7,7 @@ type Props = {
 
 export function FrequentlyRunTable({ rows, onRun }: Props) {
   return (
-    <section className="rounded border border-slate-200 bg-white">
+    <section className="rounded-sm border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
         <h3 className="text-sm font-semibold text-slate-900">Frequently run</h3>
         {/* Removed dead "View all" href="#" link — this table already lives on the reports
@@ -30,7 +30,7 @@ export function FrequentlyRunTable({ rows, onRun }: Props) {
                     {row.name}
                   </button>
                   {row.status === "stub" ? (
-                    <span className="ml-2 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                    <span className="ml-2 rounded-sm border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
                       {row.id === "ar-aging" ? "P5" : "P4"}
                     </span>
                   ) : null}

@@ -125,7 +125,7 @@ export function EldAuditTrailViewer() {
   };
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-600">Select an operating company.</div>;
   }
 
   return (
@@ -145,12 +145,12 @@ export function EldAuditTrailViewer() {
         }
       />
 
-      <section className="rounded border border-gray-200 bg-white p-4">
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="grid gap-3 md:grid-cols-3">
           <label className="text-sm text-gray-700">
             Driver
             <select
-              className="mt-1 w-full rounded border border-gray-300 h-9 px-2 text-[13px]"
+              className="mt-1 w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               value={driverUuid}
               onChange={(event) => setDriverUuid(event.target.value)}
             >
@@ -165,7 +165,7 @@ export function EldAuditTrailViewer() {
           <label className="text-sm text-gray-700">
             From
             <DatePicker
-              className="mt-1 w-full rounded border border-gray-300 px-2 text-sm py-2"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 text-sm py-2"
               value={from}
               onChange={(next) => setFrom(next)}
             />
@@ -173,7 +173,7 @@ export function EldAuditTrailViewer() {
           <label className="text-sm text-gray-700">
             To
             <DatePicker
-              className="mt-1 w-full rounded border border-gray-300 px-2 text-sm py-2"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 text-sm py-2"
               value={to}
               onChange={(next) => setTo(next)}
             />
@@ -181,7 +181,7 @@ export function EldAuditTrailViewer() {
         </div>
       </section>
 
-      <section ref={printRef} className="rounded border border-gray-200 bg-white p-4 print:border-0">
+      <section ref={printRef} className="rounded-sm border border-gray-200 bg-white p-4 print:border-0">
         {historyQuery.isLoading ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}
         {driverUuid && !historyQuery.isLoading ? (
           historyQuery.data?.edits.length ? (

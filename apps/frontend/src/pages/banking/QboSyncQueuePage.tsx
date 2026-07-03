@@ -72,7 +72,7 @@ export function QboSyncQueuePage() {
     <div className="space-y-3">
       <PageHeader title="QBO Sync Queue" subtitle="Review pending/failed/blocked banking sync jobs" />
       {statsQuery.isError || queueQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
-      <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <p>Pending: {Number(statsQuery.data?.pending ?? 0)}</p>
           <p>In-flight: {Number(statsQuery.data?.in_flight ?? 0)}</p>
@@ -85,11 +85,11 @@ export function QboSyncQueuePage() {
           </p>
         </div>
       </div>
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Queue Items</div>
         <div className="space-y-2">
           {(queueQuery.data?.items ?? []).map((item) => (
-            <div key={item.id} className="rounded border border-gray-100 p-2 text-xs">
+            <div key={item.id} className="rounded-sm border border-gray-100 p-2 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="space-y-0.5">
                   <p className="font-semibold text-gray-900">

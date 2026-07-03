@@ -83,27 +83,27 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
   const latest = query.data?.rows?.[0];
 
   if (!companyId) {
-    return <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Select an operating company.</div>;
   }
 
   if (query.isLoading) {
-    return <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">Loading cargo sensor timeline…</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Loading cargo sensor timeline…</div>;
   }
 
   if (query.isError || !query.data) {
-    return <div className="rounded border border-gray-200 bg-white p-3 text-sm text-red-700">Failed to load cargo sensor timeline.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-red-700">Failed to load cargo sensor timeline.</div>;
   }
 
   if (query.data.rows.length === 0) {
     return (
-      <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500" data-testid="cargo-sensor-timeline-empty">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500" data-testid="cargo-sensor-timeline-empty">
         No cargo sensor readings for this load yet.
       </div>
     );
   }
 
   return (
-    <section className="space-y-3 rounded border border-gray-200 bg-white p-3" data-testid="cargo-sensor-timeline">
+    <section className="space-y-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="cargo-sensor-timeline">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-900">Cargo sensor timeline</h3>
         {latest ? (

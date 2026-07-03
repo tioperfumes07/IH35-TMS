@@ -86,7 +86,7 @@ function TaskDrawer({ task, onClose }: DrawerProps) {
         <button type="button" onClick={onClose} className="ml-2 text-gray-400 hover:text-gray-600 text-xs">✕</button>
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-xs">
-        <div><span className="text-gray-500">Status: </span><span className={`inline-block rounded px-1 ${STATUS_COLORS[task.status]}`}>{statusLabel[task.status]}</span></div>
+        <div><span className="text-gray-500">Status: </span><span className={`inline-block rounded-sm px-1 ${STATUS_COLORS[task.status]}`}>{statusLabel[task.status]}</span></div>
         {task.task_type_name && <div><span className="text-gray-500">Type: </span>{task.task_type_name}</div>}
         <div><span className="text-gray-500">Category: </span>{task.category}</div>
         <div><span className="text-gray-500">Date: </span>{task.scheduled_date}</div>
@@ -101,7 +101,7 @@ function TaskDrawer({ task, onClose }: DrawerProps) {
         {task.notes && (
           <div>
             <div className="text-gray-500 mb-0.5">Notes:</div>
-            <div className="rounded border border-gray-100 bg-gray-50 p-1.5 text-gray-700 whitespace-pre-wrap">{task.notes}</div>
+            <div className="rounded-sm border border-gray-100 bg-gray-50 p-1.5 text-gray-700 whitespace-pre-wrap">{task.notes}</div>
           </div>
         )}
       </div>
@@ -118,11 +118,11 @@ function TaskBlock({ task, onClick }: TaskBlockProps) {
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
-      className={`group cursor-pointer rounded border px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 ${STATUS_COLORS[task.status]}`}
+      className={`group cursor-pointer rounded-sm border px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 ${STATUS_COLORS[task.status]}`}
       style={{ minHeight: 27 }}
     >
       <div className="flex items-start gap-1">
-        <span className={`mt-0.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${PRIORITY_DOT[task.priority] ?? PRIORITY_DOT[0]}`} />
+        <span className={`mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full ${PRIORITY_DOT[task.priority] ?? PRIORITY_DOT[0]}`} />
         <span className="flex-1 truncate font-medium">{task.title}</span>
       </div>
       <ProgressBar pct={task.progress_pct} />
@@ -254,7 +254,7 @@ export function TaskPlannerGrid() {
 
         {/* Detail drawer ~170px */}
         {selectedTask && (
-          <div className="flex-shrink-0 border-l border-gray-200 bg-white overflow-hidden" style={{ width: 170 }}>
+          <div className="shrink-0 border-l border-gray-200 bg-white overflow-hidden" style={{ width: 170 }}>
             <TaskDrawer task={selectedTask} onClose={() => setSelectedTask(null)} />
           </div>
         )}

@@ -34,13 +34,13 @@ export function AnomaliesTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <span className="text-xs font-semibold text-slate-700">Severity</span>
         {SEVERITY_FILTERS.map((item) => (
           <button
             key={item}
             type="button"
-            className={`rounded px-2 py-1 text-xs ${severity === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+            className={`rounded-sm px-2 py-1 text-xs ${severity === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
             onClick={() => setSeverity(item)}
           >
             {item}
@@ -51,7 +51,7 @@ export function AnomaliesTab() {
           <button
             key={item}
             type="button"
-            className={`rounded px-2 py-1 text-xs ${status === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+            className={`rounded-sm px-2 py-1 text-xs ${status === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
             onClick={() => setStatus(item)}
           >
             {item}
@@ -59,7 +59,7 @@ export function AnomaliesTab() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>
@@ -79,7 +79,7 @@ export function AnomaliesTab() {
                 onClick={() => setSelected(row)}
               >
                 <td className="px-2 py-1">
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${severityBadgeClass(row.severity)}`}>{row.severity}</span>
+                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${severityBadgeClass(row.severity)}`}>{row.severity}</span>
                 </td>
                 <td className="px-2 py-1">{row.anomaly_type}</td>
                 <td className="px-2 py-1">

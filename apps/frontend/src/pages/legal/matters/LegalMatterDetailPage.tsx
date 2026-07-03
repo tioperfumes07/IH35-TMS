@@ -131,7 +131,7 @@ export function LegalMatterDetailPage() {
               <button
                 key={t}
                 type="button"
-                className={`rounded px-3 py-1 text-sm ${tab === t ? "bg-gray-900 text-white" : "border border-gray-200 bg-white"}`}
+                className={`rounded-sm px-3 py-1 text-sm ${tab === t ? "bg-gray-900 text-white" : "border border-gray-200 bg-white"}`}
                 onClick={() => setTab(t)}
               >
                 {t}
@@ -140,7 +140,7 @@ export function LegalMatterDetailPage() {
           </div>
 
           {tab === "overview" ? (
-            <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-800">
+            <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800">
               <p>
                 <strong>Status:</strong> {String(matter?.status ?? "")} · <strong>Severity:</strong>{" "}
                 {String(matter?.severity ?? "")}
@@ -152,7 +152,7 @@ export function LegalMatterDetailPage() {
                 <div className="mt-4 border-t border-gray-100 pt-3">
                   <p className="text-xs font-semibold uppercase text-gray-500">Close matter</p>
                   <textarea
-                    className="mt-2 w-full rounded border border-gray-200 p-2 text-sm"
+                    className="mt-2 w-full rounded-sm border border-gray-200 p-2 text-sm"
                     placeholder="Outcome documentation (required)"
                     value={closeNotes}
                     onChange={(e) => setCloseNotes(e.target.value)}
@@ -171,17 +171,17 @@ export function LegalMatterDetailPage() {
           ) : null}
 
           {tab === "timeline" ? (
-            <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
+            <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
               {admin ? (
                 <div className="space-y-2 border-b border-gray-100 pb-3">
                   <input
-                    className="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                    className="w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                     placeholder="event_type"
                     value={eventType}
                     onChange={(e) => setEventType(e.target.value)}
                   />
                   <textarea
-                    className="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                    className="w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                     placeholder='event_body JSON e.g. {"note":"..."}'
                     value={eventBody}
                     onChange={(e) => setEventBody(e.target.value)}
@@ -193,7 +193,7 @@ export function LegalMatterDetailPage() {
               ) : null}
               <ul className="space-y-2 text-sm">
                 {(detailQuery.data.events ?? []).map((ev: LegalMatterEvent) => (
-                  <li key={String(ev.id ?? Math.random())} className="rounded bg-gray-50 px-2 py-1">
+                  <li key={String(ev.id ?? Math.random())} className="rounded-sm bg-gray-50 px-2 py-1">
                     <span className="font-semibold">{String(ev.event_type ?? "")}</span>{" "}
                     <span className="text-xs text-gray-500">{String(ev.created_at ?? "")}</span>
                     <pre className="mt-1 overflow-x-auto text-xs">{JSON.stringify(ev.event_body, null, 2)}</pre>
@@ -204,12 +204,12 @@ export function LegalMatterDetailPage() {
           ) : null}
 
           {tab === "documents" ? (
-            <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
+            <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
               {admin ? (
                 <div className="space-y-2 border-b border-gray-100 pb-3">
                   <input type="file" onChange={(e) => setDocFile(e.target.files?.[0] ?? null)} />
                   <input
-                    className="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                    className="w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
                     placeholder="Title"
                     value={docTitle}
                     onChange={(e) => setDocTitle(e.target.value)}
@@ -245,10 +245,10 @@ export function LegalMatterDetailPage() {
           ) : null}
 
           {tab === "deadlines" ? (
-            <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
+            <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
               {admin ? (
                 <div className="grid gap-2 border-b border-gray-100 pb-3 md:grid-cols-2">
-                  <SelectCombobox className="rounded border border-gray-200 px-2 py-1 text-sm" value={dlType} onChange={(e) => setDlType(e.target.value)}>
+                  <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={dlType} onChange={(e) => setDlType(e.target.value)}>
                     {["statute_of_limitations", "response", "hearing", "filing", "other"].map((t) => (
                       <option key={t} value={t}>
                         {t}
@@ -256,19 +256,19 @@ export function LegalMatterDetailPage() {
                     ))}
                   </SelectCombobox>
                   <input
-                    className="rounded border border-gray-200 px-2 py-1 text-sm"
+                    className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
                     placeholder="Title"
                     value={dlTitle}
                     onChange={(e) => setDlTitle(e.target.value)}
                   />
                   <input
                     type="datetime-local"
-                    className="rounded border border-gray-200 px-2 py-1 text-sm"
+                    className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
                     value={dlAt}
                     onChange={(e) => setDlAt(e.target.value)}
                   />
                   <input
-                    className="rounded border border-gray-200 px-2 py-1 text-sm"
+                    className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
                     placeholder="reminder emails comma-separated"
                     value={dlEmails}
                     onChange={(e) => setDlEmails(e.target.value)}
@@ -280,7 +280,7 @@ export function LegalMatterDetailPage() {
               ) : null}
               <ul className="space-y-2 text-sm">
                 {(detailQuery.data.deadlines ?? []).map((d: LegalMatterDeadline) => (
-                  <li key={String(d.id ?? "")} className="flex flex-wrap items-center justify-between gap-2 rounded bg-gray-50 px-2 py-2">
+                  <li key={String(d.id ?? "")} className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-gray-50 px-2 py-2">
                     <div>
                       <div className="font-semibold">{String(d.title ?? "")}</div>
                       <div className="text-xs text-gray-600">
@@ -304,7 +304,7 @@ export function LegalMatterDetailPage() {
           ) : null}
 
           {tab === "notes" ? (
-            <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700 whitespace-pre-wrap">
+            <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700 whitespace-pre-wrap">
               {String(matter?.internal_notes ?? "") || "No internal notes."}
             </div>
           ) : null}

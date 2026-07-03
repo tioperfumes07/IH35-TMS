@@ -29,7 +29,7 @@ export function AssignmentHistoryPage() {
   });
 
   if (!companyId) {
-    return <div className="rounded border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
   const rows = historyQ.data?.rows ?? [];
@@ -64,36 +64,36 @@ export function AssignmentHistoryPage() {
         title="Assignment History"
         subtitle="Load driver and unit reassignment audit trail"
         actions={
-          <Link to="/dispatch" className="rounded border px-3 py-1.5 text-sm">
+          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
             Dispatch Home
           </Link>
         }
       />
 
-      <section className="grid gap-3 rounded border bg-white p-4 md:grid-cols-4">
+      <section className="grid gap-3 rounded-sm border bg-white p-4 md:grid-cols-4">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Driver ID</label>
           <input
             value={driverId}
             onChange={(event) => setDriverId(event.target.value)}
-            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             placeholder="Filter by driver UUID"
           />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">From</label>
-          <DatePicker value={from} onChange={(next) => setFrom(next)} className="rounded border px-2 text-sm py-2" />
+          <DatePicker value={from} onChange={(next) => setFrom(next)} className="rounded-sm border px-2 text-sm py-2" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">To</label>
-          <DatePicker value={to} onChange={(next) => setTo(next)} className="rounded border px-2 text-sm py-2" />
+          <DatePicker value={to} onChange={(next) => setTo(next)} className="rounded-sm border px-2 text-sm py-2" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Reason contains</label>
           <input
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="rounded border border-gray-300 h-9 px-2 text-[13px]"
+            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>
       </section>

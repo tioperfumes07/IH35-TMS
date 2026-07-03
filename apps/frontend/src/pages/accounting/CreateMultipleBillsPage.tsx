@@ -144,9 +144,9 @@ export function CreateMultipleBillsPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Create multiple bills" subtitle="Bulk vendor bill drafting from selected bank transactions." />
-      {!companyId ? <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">Select an operating company.</p> : null}
+      {!companyId ? <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">Select an operating company.</p> : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
         <span className="font-medium text-gray-800">Rows: {rows.length}</span>
         <span className="text-gray-700">Total draft amount: ${totalUsd.toFixed(2)}</span>
         <div className="flex gap-2">
@@ -159,7 +159,7 @@ export function CreateMultipleBillsPage() {
         </div>
       </div>
 
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
             <tr>
@@ -181,7 +181,7 @@ export function CreateMultipleBillsPage() {
                   {row.bank_transaction_id ? row.bank_transaction_id.slice(0, 8) : "manual"}
                 </td>
                 <td className="px-2 py-1.5">
-                  <SelectCombobox className="h-8 min-w-[180px] rounded border border-gray-300 px-2" value={row.vendor_id} onChange={(event) => updateRow(row.id, { vendor_id: event.target.value })}>
+                  <SelectCombobox className="h-8 min-w-[180px] rounded-sm border border-gray-300 px-2" value={row.vendor_id} onChange={(event) => updateRow(row.id, { vendor_id: event.target.value })}>
                     <option value="">Select vendor…</option>
                     {(vendorsQuery.data?.vendors ?? []).map((vendor) => (
                       <option key={vendor.id} value={vendor.id}>
@@ -191,13 +191,13 @@ export function CreateMultipleBillsPage() {
                   </SelectCombobox>
                 </td>
                 <td className="px-2 py-1.5">
-                  <input type="date" className="h-8 rounded border border-gray-300 px-2" value={row.bill_date} onChange={(event) => updateRow(row.id, { bill_date: event.target.value })} />
+                  <input type="date" className="h-8 rounded-sm border border-gray-300 px-2" value={row.bill_date} onChange={(event) => updateRow(row.id, { bill_date: event.target.value })} />
                 </td>
                 <td className="px-2 py-1.5">
-                  <input type="date" className="h-8 rounded border border-gray-300 px-2" value={row.due_date} onChange={(event) => updateRow(row.id, { due_date: event.target.value })} />
+                  <input type="date" className="h-8 rounded-sm border border-gray-300 px-2" value={row.due_date} onChange={(event) => updateRow(row.id, { due_date: event.target.value })} />
                 </td>
                 <td className="px-2 py-1.5">
-                  <input className="h-8 rounded border border-gray-300 px-2" value={row.bill_number} onChange={(event) => updateRow(row.id, { bill_number: event.target.value })} />
+                  <input className="h-8 rounded-sm border border-gray-300 px-2" value={row.bill_number} onChange={(event) => updateRow(row.id, { bill_number: event.target.value })} />
                 </td>
                 <td className="px-2 py-1.5">
                   {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → amount_cents byte-for-byte. */}
@@ -209,7 +209,7 @@ export function CreateMultipleBillsPage() {
                   />
                 </td>
                 <td className="px-2 py-1.5">
-                  <SelectCombobox className="h-8 min-w-[180px] rounded border border-gray-300 px-2" value={row.coa_account_id} onChange={(event) => updateRow(row.id, { coa_account_id: event.target.value })}>
+                  <SelectCombobox className="h-8 min-w-[180px] rounded-sm border border-gray-300 px-2" value={row.coa_account_id} onChange={(event) => updateRow(row.id, { coa_account_id: event.target.value })}>
                     <option value="">Optional</option>
                     {(coaQuery.data?.accounts ?? []).map((account) => (
                       <option key={account.id} value={account.id}>
@@ -219,12 +219,12 @@ export function CreateMultipleBillsPage() {
                   </SelectCombobox>
                 </td>
                 <td className="px-2 py-1.5">
-                  <input className="h-8 min-w-[220px] rounded border border-gray-300 px-2" value={row.memo} onChange={(event) => updateRow(row.id, { memo: event.target.value })} />
+                  <input className="h-8 min-w-[220px] rounded-sm border border-gray-300 px-2" value={row.memo} onChange={(event) => updateRow(row.id, { memo: event.target.value })} />
                 </td>
                 <td className="px-2 py-1.5 text-right">
                   <button
                     type="button"
-                    className="rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-700 hover:bg-gray-50"
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700 hover:bg-gray-50"
                     onClick={() => setRows((current) => current.filter((item) => item.id !== row.id))}
                     disabled={rows.length <= 1}
                   >
@@ -238,7 +238,7 @@ export function CreateMultipleBillsPage() {
       </div>
 
       {lastResult ? (
-        <div className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <p className="font-semibold text-gray-900">Last run: {lastResult.ok} created, {lastResult.failed.length} failed.</p>
           {lastResult.failed.length > 0 ? (
             <ul className="mt-1 space-y-1 text-red-700">

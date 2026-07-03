@@ -35,7 +35,7 @@ export function KpiCard({ label, number, accent, to }: Props) {
 
   if (to) {
     return (
-      <Link to={to} aria-label={`${label} — view details`} className="block flex-1 rounded transition hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+      <Link to={to} aria-label={`${label} — view details`} className="block flex-1 rounded-sm transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400">
         {card}
       </Link>
     );

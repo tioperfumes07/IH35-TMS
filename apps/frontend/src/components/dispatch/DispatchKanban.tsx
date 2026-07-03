@@ -309,7 +309,7 @@ function KanbanDispatchCard({
       {...attributes}
       {...listeners}
       onClick={() => onClick(load.id)}
-      className={`relative cursor-pointer rounded border border-gray-200 bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow ${
+      className={`relative cursor-pointer rounded border border-gray-200 bg-white p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-sm ${
         isDragging ? "opacity-60" : ""
       } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
       data-testid={`kanban-card-${load.load_number}`}
@@ -330,7 +330,7 @@ function KanbanDispatchCard({
       <div className="mt-1 text-xs font-medium text-gray-800">{driverNameLabel(load)}</div>
 
       <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-gray-600">
-        <span className="rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-700">{mode}</span>
+        <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-700">{mode}</span>
         <span>{weight}</span>
         <span className="truncate" title={commodity}>
           {commodity}
@@ -339,9 +339,9 @@ function KanbanDispatchCard({
 
       {dwell ? (
         <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
-          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">Dwell {formatMinutes(dwell.dwell)}</span>
-          <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-800">Free {formatMinutes(dwell.free)}</span>
-          <span className={`rounded px-1.5 py-0.5 ${dwell.det != null && dwell.det > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-600"}`}>
+          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-slate-700">Dwell {formatMinutes(dwell.dwell)}</span>
+          <span className="rounded-sm bg-emerald-50 px-1.5 py-0.5 text-emerald-800">Free {formatMinutes(dwell.free)}</span>
+          <span className={`rounded-sm px-1.5 py-0.5 ${dwell.det != null && dwell.det > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-600"}`}>
             Det {formatMinutes(dwell.det)}
           </span>
         </div>
@@ -350,20 +350,20 @@ function KanbanDispatchCard({
       <div className="mt-2 flex flex-wrap items-center gap-1">
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${onTimeChipClass(load)}`}>{onTimeChipLabel(load)}</span>
         {isBreakdown(load) ? (
-          <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">Breakdown</span>
+          <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">Breakdown</span>
         ) : null}
         {isEtaHeld(load) ? (
-          <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">ETA held</span>
+          <span className="rounded-sm bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">ETA held</span>
         ) : null}
         {hasActiveGeofenceBreach ? (
-          <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">Geofence</span>
+          <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">Geofence</span>
         ) : null}
       </div>
 
       {isDeliveredColumn ? (
         <div className="mt-2 flex flex-wrap items-center gap-1">
           {factoring ? (
-            <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-slate-700">{factoring}</span>
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-slate-700">{factoring}</span>
           ) : null}
           <DeliveredProfitBadge load={load} />
         </div>
@@ -401,7 +401,7 @@ function KanbanCompactCard({
       {...listeners}
       onClick={() => onClick(load.id)}
       title={`${load.load_number} · ${driverUnitLabel(load)} · ${lane}`}
-      className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-[11px] shadow-sm transition hover:bg-gray-50 ${
+      className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
       data-testid={`kanban-compact-card-${load.load_number}`}
@@ -447,7 +447,7 @@ function KanbanStandardCard({
       {...listeners}
       onClick={() => onClick(load.id)}
       title={`${cardPrimaryLabel(load)} · ${load.load_number} · ${lane}`}
-      className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-[11px] shadow-sm transition hover:bg-gray-50 ${
+      className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
       data-testid={`kanban-standard-card-${load.load_number}`}
@@ -499,7 +499,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           onBook(load.id);
         }
       }}
-      className="cursor-pointer rounded border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50"
+      className="cursor-pointer rounded-sm border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate text-xs font-semibold text-gray-900">{unit}</span>
@@ -510,7 +510,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
             e.stopPropagation();
             onBook(load.id);
           }}
-          className="shrink-0 rounded bg-[#1F2A44] px-2 py-1 text-[10px] font-semibold text-white hover:bg-[#2a3656]"
+          className="shrink-0 rounded-sm bg-[#1F2A44] px-2 py-1 text-[10px] font-semibold text-white hover:bg-[#2a3656]"
         >
           + Book load
         </button>
@@ -556,7 +556,7 @@ function KanbanDispatchColumn({
 
   if (column.collapsedByDefault) {
     return (
-      <section className="min-w-[270px] rounded border border-gray-200 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
+      <section className="min-w-[270px] rounded-sm border border-gray-200 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
         <header className="flex items-center justify-between border-b border-gray-100 pb-2">
           {headerLink}
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
@@ -569,15 +569,15 @@ function KanbanDispatchColumn({
   const minWidth = density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]";
   return (
     <section
-      className={`${minWidth} flex-1 rounded border border-gray-200 bg-white p-2`}
+      className={`${minWidth} flex-1 rounded-sm border border-gray-200 bg-white p-2`}
       data-testid={`kanban-column-${column.key}`}
     >
       <header className="mb-2 flex items-center justify-between border-b border-gray-100 pb-2">
         {headerLink}
         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
       </header>
-      <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}>
-        {loads.length === 0 ? <div className="rounded border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
+      <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded-sm p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}>
+        {loads.length === 0 ? <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
         {loads.map((load) => {
           const breach = Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id));
           if (column.key === "awaiting_assignment") {
@@ -661,7 +661,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
   }
 
   if (loading) {
-    return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading dispatch board...</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading dispatch board...</div>;
   }
 
   return (
@@ -704,7 +704,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
 
         {/* Part D — Fleet out-of-service strip, pinned at the bottom of the board. */}
         <section
-          className="sticky bottom-0 mt-2 rounded border border-amber-200 bg-amber-50 p-2"
+          className="sticky bottom-0 mt-2 rounded-sm border border-amber-200 bg-amber-50 p-2"
           data-testid="dispatch-kanban-oos-strip"
         >
           <header className="flex items-center justify-between">
@@ -722,12 +722,12 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                   key={load.id}
                   type="button"
                   onClick={() => onLoadClick(load.id)}
-                  className="flex items-center gap-2 rounded border border-amber-300 bg-white px-2 py-1 text-[11px] hover:bg-amber-100"
+                  className="flex items-center gap-2 rounded-sm border border-amber-300 bg-white px-2 py-1 text-[11px] hover:bg-amber-100"
                 >
                   <span className="text-red-600" aria-hidden>▲</span>
                   <span className="font-semibold text-gray-900">{driverUnitLabel(load)}</span>
                   <span className="font-mono text-[10px] text-gray-500">{load.load_number}</span>
-                  <span className="rounded bg-red-100 px-1.5 text-[10px] font-semibold text-red-800">Breakdown</span>
+                  <span className="rounded-sm bg-red-100 px-1.5 text-[10px] font-semibold text-red-800">Breakdown</span>
                 </button>
               ))}
             </div>
