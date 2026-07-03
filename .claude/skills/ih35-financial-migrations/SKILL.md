@@ -66,7 +66,7 @@ Every new entity-owned table gets:
    Miss the grant and it 500s at runtime with "permission denied". The canonical grant array lives in
    migration 0065 + DEFAULT PRIVILEGES; self-contained per-table grants (as in the template) are the safe habit.
 
-See `resources/forced-rls-grants-snippet.sql`.
+See `resources/forced-rls-grants-snippet.sql.tmpl`.
 
 ## 5. Feature-flag seeding (default OFF)
 Money/behavior-changing logic ships behind a flag that defaults OFF:
