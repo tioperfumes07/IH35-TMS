@@ -15,6 +15,9 @@ export function DamageReportsPage({ operatingCompanyId }: Props) {
         pageTestId: "damage-reports-page",
         createLabel: "+ Create damage report",
         detailLabel: "Open report",
+        // SC2 typed creator: damage amount on top of the common driver/unit/trailer/load/date set.
+        typedFields: ["damage_amount_cents"],
+        requiredExtraFields: [],
       }}
     />
   );

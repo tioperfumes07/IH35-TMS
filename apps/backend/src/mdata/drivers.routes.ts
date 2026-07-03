@@ -58,6 +58,14 @@ const driverAggregateQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// Simple by-id GET (non-aggregate branch): operating_company_id is OPTIONAL here. When present it
+// seeds the scope resolution; when absent we fall back to the caller's default/first-accessible
+// company. Either way the driver is matched by home company OR an active driver_company_authorization
+// (mirrors buildDriverAggregate) so a driver the caller is authorized to see is never a false 404.
+const driverByIdQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
+});
+
 const createDriverBodySchema = z.object({
   identity_user_id: z.string().uuid().optional(),
   create_login_user: z.boolean().optional().default(false),
@@ -947,10 +955,17 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       return aggregate;
     }
 
+    // Optional operating_company_id (frontend #1890 passes the SELECTED company). A valid uuid is
+    // handled by the aggregate branch above; this parse keeps the non-aggregate path from 400ing and
+    // lets an explicitly-requested company seed the scope resolution below.
+    const parsedByIdQuery = driverByIdQuerySchema.safeParse(req.query ?? {});
+    const requestedCompanyId = parsedByIdQuery.success ? parsedByIdQuery.data.operating_company_id : undefined;
+
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       // Entity scope (USMCA cross-entity leak fix): a by-id driver read must not return a driver
-      // belonging to another operating company. Scope to the user's current company.
-      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      // belonging to another operating company. Scope to the requested company when supplied,
+      // otherwise the caller's default/first-accessible company.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, requestedCompanyId);
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       const res = await client.query(
@@ -969,7 +984,19 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
           WHERE id = $1
-            AND operating_company_id = $2
+            AND (
+              operating_company_id = $2
+              OR EXISTS (
+                -- driver_company_authorizations fallback (mirrors buildDriverAggregate): a driver the
+                -- caller's company is insurance-authorized to see must not be a false 404. The dca RLS
+                -- SELECT policy already restricts rows to user-accessible companies.
+                SELECT 1 FROM mdata.driver_company_authorizations dca
+                WHERE dca.driver_id = mdata.drivers.id
+                  AND dca.company_id = $2
+                  AND dca.is_authorized = true
+                  AND dca.deactivated_at IS NULL
+              )
+            )
           LIMIT 1
         `,
         [parsedParams.data.id, scopedCompanyId]
