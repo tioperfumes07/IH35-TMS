@@ -382,6 +382,17 @@ export function createDrugProgramTest(
   });
 }
 
+// FMCSA consortium random-pool enrollment (GAP-81 — safety.da_program_enrollments).
+// Bulk-enrolls every active CDL driver so the random draw has a non-empty pool.
+// Note: this feeds the GAP-81 consortium pool (RandomPoolDashboard / Drug & Alcohol
+// Program tab), which is a separate surface from the compliance rate card.
+export function bulkEnrollRandomPool(companyId: string, consortiumName: string) {
+  return apiRequest<{ enrolled_count: number; enrolled_driver_uuids: string[] }>(
+    `/api/safety/drug-alcohol/enrollments/bulk-active`,
+    { method: "POST", body: { operating_company_id: companyId, consortium_name: consortiumName } }
+  );
+}
+
 export function listRandomPoolEntries(companyId: string) {
   return apiRequest<{ random_pools: Array<Record<string, unknown>> }>(`/api/v1/safety/drug-program/random-pools?${q(companyId)}`).then(
     (payload) => ({ entries: payload.random_pools ?? [] })

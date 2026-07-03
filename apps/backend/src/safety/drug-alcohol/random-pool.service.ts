@@ -1,7 +1,11 @@
 /**
  * Random Pool Service — GAP-81 / FMCSA Part 382 §382.305
  *
- * Quarterly draw: 10 % drug / 10 % alcohol minimum selection rates.
+ * Quarterly draw: 12.5 % drug / 2.5 % alcohol minimum selection rates.
+ *   49 CFR 382.305 sets ANNUAL random minimums of 50 % controlled substances and
+ *   10 % alcohol (of average driver positions). A carrier that draws four times a
+ *   year must select 50 % ÷ 4 = 12.5 % (drug) and 10 % ÷ 4 = 2.5 % (alcohol) each
+ *   quarter to attain the annual minimum. See computeDrawCounts for the details.
  * Cryptographic randomness (node:crypto randomBytes) for FMCSA audit compliance.
  * Each draw is persisted in safety.da_random_pool_draws with full driver UUID array
  * and per-driver test-kind JSONB so any auditor can reproduce the record.
@@ -49,14 +53,26 @@ export function cryptoShuffle<T>(items: T[]): T[] {
 }
 
 /**
- * Minimum selection counts per FMCSA §382.305.
- * Federal minimums: 50% drug / 10% alcohol annually → 12.5% / 2.5% quarterly.
- * We use 10% / 10% per spec (conservative — exceeds minimums).
+ * Minimum selection counts per FMCSA 49 CFR 382.305.
+ *
+ * Federal ANNUAL random minimums (of average driver positions):
+ *   - Controlled substances (drug):  50 %  — 382.305(b)(2). Raised from 25 % to
+ *     50 % effective 2020-01-01 (84 FR 68427) and has remained 50 % every year
+ *     since (FMCSA confirms the rate by Federal Register notice each December).
+ *   - Alcohol:                        10 %  — 382.305(b)(1). The Administrator may
+ *     adjust the alcohol minimum year-to-year based on the industry violation rate.
+ *
+ * A carrier running four random draws per year must select, per QUARTERLY draw:
+ *   drug    = 50 % ÷ 4 = 12.5 %      alcohol = 10 % ÷ 4 = 2.5 %
+ * so that four quarters attain the annual minimum. Math.ceil (below) guarantees
+ * each draw is at least the target, so the annual total is >= the federal floor.
+ * Defaults are overridable so the Administrator's annual alcohol adjustment (or a
+ * more frequent draw cadence) can be supplied by the caller.
  */
 export function computeDrawCounts(
   poolSize: number,
-  targetDrugPct = 10,
-  targetAlcoholPct = 10
+  targetDrugPct = 12.5,
+  targetAlcoholPct = 2.5
 ): { drugCount: number; alcoholCount: number } {
   if (poolSize === 0) return { drugCount: 0, alcoholCount: 0 };
   const drugCount = Math.max(1, Math.ceil((poolSize * targetDrugPct) / 100));
@@ -83,6 +99,60 @@ export async function listActiveEnrolledDrivers(
   return res.rows.map((r) => r.driver_uuid);
 }
 
+// ─── Bulk enrollment ────────────────────────────────────────────────────────────
+
+/**
+ * Enroll every ACTIVE human driver of the company into the consortium random pool.
+ *
+ * This is the root-cause fix for the "empty pool" defect: the pool query
+ * (listActiveEnrolledDrivers) correctly reads safety.da_program_enrollments — an
+ * enrollment-based pool is the correct FMCSA consortium design — but no enrollment
+ * rows existed because there was no bulk-enroll path. This inserts one active
+ * enrollment per eligible driver that is not already actively enrolled.
+ *
+ * Idempotent: re-running enrolls only drivers not already active in the pool
+ * (NOT EXISTS guard — the enrollment table has no unique (company,driver) index,
+ * so existence is checked explicitly rather than via ON CONFLICT).
+ *
+ * "Active human driver" matches the mdata.drivers list semantics used elsewhere:
+ * status = 'Active', not archived, excluding the system pseudo-drivers.
+ * Returns the drivers newly enrolled (for the CRUD-audit count).
+ */
+export async function bulkEnrollActiveDrivers(
+  client: PoolClient,
+  operatingCompanyId: string,
+  consortiumName: string
+): Promise<{ enrolledCount: number; enrolledDriverUuids: string[] }> {
+  const res = await client.query<{ driver_uuid: string }>(
+    `
+      INSERT INTO safety.da_program_enrollments
+        (operating_company_id, driver_uuid, consortium_name, enrolled_at, is_active)
+      SELECT $1, d.id, $2, CURRENT_DATE, true
+      FROM mdata.drivers d
+      WHERE d.operating_company_id = $1::uuid
+        AND d.status = 'Active'
+        AND d.archived_at IS NULL
+        AND (
+          TRIM(d.first_name) || ' ' || TRIM(d.last_name) NOT IN ('Safety Safety', 'System System')
+          AND (d.cdl_number IS NULL OR lower(trim(d.cdl_number)) NOT IN ('safety', 'system'))
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM safety.da_program_enrollments e
+          WHERE e.operating_company_id = $1::uuid
+            AND e.driver_uuid = d.id
+            AND e.is_active = true
+        )
+      RETURNING driver_uuid::text
+    `,
+    [operatingCompanyId, consortiumName]
+  );
+  return {
+    enrolledCount: res.rows.length,
+    enrolledDriverUuids: res.rows.map((r) => r.driver_uuid),
+  };
+}
+
 // ─── Draw ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -100,7 +170,7 @@ export async function drawRandomPool(
   operatingCompanyId: string,
   options: { targetDrugPct?: number; targetAlcoholPct?: number } = {}
 ): Promise<DrawSummary> {
-  const { targetDrugPct = 10, targetAlcoholPct = 10 } = options;
+  const { targetDrugPct = 12.5, targetAlcoholPct = 2.5 } = options;
 
   const allDrivers = await listActiveEnrolledDrivers(client, operatingCompanyId);
   const poolSize = allDrivers.length;
