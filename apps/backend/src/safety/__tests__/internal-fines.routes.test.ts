@@ -1,0 +1,142 @@
+import Fastify, { type FastifyInstance } from "fastify";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { registerSafetyV5Routes } from "../safety-v5.routes.js";
+
+const COMPANY = "11111111-1111-4111-8111-111111111111";
+const DRIVER = "33333333-3333-4333-8333-333333333333";
+const REASON = "44444444-4444-4444-8444-444444444444";
+const APPROVER = "55555555-5555-4555-8555-555555555555";
+const FINE_ID = "66666666-6666-4666-8666-666666666666";
+const LIABILITY_ID = "77777777-7777-4777-8777-777777777777";
+
+const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit, mockAssertMembership } = vi.hoisted(() => {
+  const query = vi.fn();
+  const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => Promise<unknown>) =>
+    fn({ query })
+  );
+  const appendCrudAudit = vi.fn(async () => undefined);
+  const assertCompanyMembership = vi.fn(async () => undefined);
+  return { mockQuery: query, mockWithCurrentUser: withCurrentUser, mockAppendCrudAudit: appendCrudAudit, mockAssertMembership: assertCompanyMembership };
+});
+
+vi.mock("../../auth/db.js", () => ({
+  withCurrentUser: mockWithCurrentUser,
+}));
+
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: mockAssertMembership,
+}));
+
+vi.mock("../../auth/session-middleware.js", () => ({
+  requireAuth: () => true,
+}));
+
+vi.mock("../../audit/crud-audit.js", () => ({
+  appendCrudAudit: mockAppendCrudAudit,
+}));
+
+// The OOS-inspection path imports the WO service; it is never reached by these fine tests, but stub it so
+// route registration does not pull in the full maintenance stack.
+vi.mock("../../maintenance/two-section-service.js", () => ({
+  createWorkOrderWithLines: vi.fn(async () => ({ woUuid: "wo", display_id: "WO-x", classHint: "x" })),
+}));
+
+function baseQuery() {
+  return vi.fn(async (sql: string) => {
+    if (sql.includes("set_config") || sql.includes("BEGIN") || sql.includes("COMMIT") || sql.includes("ROLLBACK")) {
+      return { rows: [], rowCount: 0 };
+    }
+    if (sql.includes("INSERT INTO safety.internal_fines")) {
+      return { rows: [{ id: FINE_ID, status: "pending" }], rowCount: 1 };
+    }
+    if (sql.includes("INSERT INTO driver_finance.driver_liabilities")) {
+      return { rows: [{ id: LIABILITY_ID, current_balance: 100, status: "pending_recovery" }], rowCount: 1 };
+    }
+    if (sql.includes("UPDATE safety.internal_fines")) {
+      return { rows: [{ id: FINE_ID, status: "converted_to_liability" }], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  });
+}
+
+describe("safety internal-fines approval control (FD1)", () => {
+  let app: FastifyInstance;
+
+  beforeEach(async () => {
+    mockQuery.mockReset();
+    mockQuery.mockImplementation(baseQuery());
+    mockAppendCrudAudit.mockClear();
+    mockAssertMembership.mockClear();
+    app = Fastify({ logger: false });
+    app.decorateRequest("user", null);
+    app.addHook("preHandler", async (req) => {
+      req.user = { uuid: APPROVER, role: "Safety", email: "safety@ih35.local" };
+    });
+    await registerSafetyV5Routes(app);
+    await app.ready();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it("rejects an approved fine with no approver → 400 approver_required", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/internal-fines?operating_company_id=${COMPANY}`,
+      payload: {
+        driver_uuid: DRIVER,
+        reason_uuid: REASON,
+        amount: 1,
+        imposed_date: "2026-07-03",
+        status: "approved",
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "approver_required" });
+    // No DB work should have happened — validation short-circuits before the transaction.
+    const liabilityInserts = mockQuery.mock.calls.filter((c) => String(c[0]).includes("driver_finance.driver_liabilities"));
+    expect(liabilityInserts).toHaveLength(0);
+  });
+
+  it("accepts an approved fine WITH an approver → 201 + liability row + converted status", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/internal-fines?operating_company_id=${COMPANY}`,
+      payload: {
+        driver_uuid: DRIVER,
+        reason_uuid: REASON,
+        amount: 1,
+        imposed_date: "2026-07-03",
+        status: "approved",
+        approved_by_user_uuid: APPROVER,
+      },
+    });
+    expect(res.statusCode).toBe(201);
+    const body = res.json();
+    expect(body.fine).toMatchObject({ id: FINE_ID });
+    expect(body.liability).toMatchObject({ id: LIABILITY_ID, current_balance: 100, status: "pending_recovery" });
+    const liabilityInserts = mockQuery.mock.calls.filter((c) => String(c[0]).includes("driver_finance.driver_liabilities"));
+    expect(liabilityInserts).toHaveLength(1);
+    const converts = mockQuery.mock.calls.filter((c) => String(c[0]).includes("converted_to_liability"));
+    expect(converts.length).toBeGreaterThanOrEqual(1);
+    expect(mockAppendCrudAudit).toHaveBeenCalled();
+  });
+
+  it("creates a pending fine with NO approver and NO liability → 201", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/internal-fines?operating_company_id=${COMPANY}`,
+      payload: {
+        driver_uuid: DRIVER,
+        reason_uuid: REASON,
+        amount: 1,
+        imposed_date: "2026-07-03",
+        status: "pending",
+      },
+    });
+    expect(res.statusCode).toBe(201);
+    const liabilityInserts = mockQuery.mock.calls.filter((c) => String(c[0]).includes("driver_finance.driver_liabilities"));
+    expect(liabilityInserts).toHaveLength(0);
+  });
+});
