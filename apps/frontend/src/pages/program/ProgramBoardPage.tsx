@@ -198,7 +198,7 @@ export function ProgramBoardPage() {
         </span>
         {data?.source_generated_on ? (
           <span className="rounded border border-gray-300 bg-white px-2 py-1">
-            Reconcile snapshot <span className="font-semibold tabular-nums">{data.source_generated_on}</span>
+            Reconcile snapshot <span className="font-semibold tabular-nums">{formatDateCt(data.source_generated_on)}</span>
           </span>
         ) : null}
         {Object.entries(data?.counts ?? {}).map(([k, v]) => {
