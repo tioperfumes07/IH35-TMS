@@ -761,7 +761,7 @@
     "@sentry/profiling-node": "^10.53.1",
     "@sentry/react": "^10.56.0",
     "@types/web-push": "^3.6.4",
-    "arctic": "^2.3.4",
+    "arctic": "^3.7.0",
     "bullmq": "^5.76.5",
     "cron-parser": "^5.0.7",
     "dotenv": "^17.4.2",
