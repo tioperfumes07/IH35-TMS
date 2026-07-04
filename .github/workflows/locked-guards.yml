@@ -48,6 +48,12 @@ jobs:
       - name: verify:startup-migration-drift-guard
         run: npm run verify:startup-migration-drift-guard
 
+      - name: verify:migration-filenames
+        run: npm run verify:migration-filenames
+
+      - name: verify:no-hard-delete-load-stops
+        run: npm run verify:no-hard-delete-load-stops
+
       - name: verify:record-expense-driverless-posting
         run: npm run verify:record-expense-driverless-posting
 

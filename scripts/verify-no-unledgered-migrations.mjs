@@ -8,7 +8,10 @@ const MIGRATIONS_DIR = path.join(ROOT, "db", "migrations");
 const BACKFILL_SQL = path.join(ROOT, "scripts", "batch-8-ledger-backfill.sql");
 const MISSING_LIST = path.join(ROOT, "docs", "batch-8", "missing-migrations.txt");
 const NORMAL_LIST = path.join(ROOT, "docs", "batch-8", "normal-ledgered-migrations.txt");
-const MIGRATION_NAME = /^\d{4}[a-z]?_.+\.sql$/i;
+// Match BOTH legacy 4-digit (0010_, 0193a_) AND current 12-digit timestamp (202606272100_) migration
+// filenames. The old /^\d{4}[a-z]?_/ silently SKIPPED every timestamp migration (A2-4). \d{4,} reads the
+// full prefix; \d{4}[a-z]? still covers 0193a. (matches verify-migration-application-consistency.mjs:65)
+const MIGRATION_NAME = /^\d{4,}[a-z]?_.+\.sql$/i;
 
 function fail(message) {
   console.error(`verify:no-unledgered-migrations FAILED\n- ${message}`);

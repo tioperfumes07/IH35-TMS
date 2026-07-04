@@ -68,7 +68,10 @@ if (!fs.existsSync(migrationsAbs)) {
 }
 const sqlFiles = fs
   .readdirSync(migrationsAbs)
-  .filter((name) => /^\d{4}[a-z]?_.+\.sql$/i.test(name));
+  // Match BOTH legacy 4-digit (0010_, 0193a_) AND current 12-digit timestamp (202606272100_) migration
+  // filenames. The old /^\d{4}[a-z]?_/ silently SKIPPED every timestamp migration (A2-4). \d{4,} reads the
+  // full prefix; \d{4}[a-z]? still covers 0193a. (matches verify-migration-application-consistency.mjs:65)
+  .filter((name) => /^\d{4,}[a-z]?_.+\.sql$/i.test(name));
 if (sqlFiles.length === 0) {
   fail("db/migrations must contain at least one SQL migration");
 }
