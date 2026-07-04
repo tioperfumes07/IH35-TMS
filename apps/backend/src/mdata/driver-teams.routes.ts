@@ -322,16 +322,29 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     if ("relationship" in b) add("relationship", b.relationship ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
     values.push(parsedParams.data.id);
+    const idIdx = values.length;
 
     const updated = await withCurrentUser(user.uuid, async (client) => {
-      const oldRes = await client.query(`SELECT * FROM mdata.driver_teams WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      // Entity scope (USMCA cross-entity leak fix): a by-id team mutation must not cross operating
+      // companies — RLS on mdata.driver_teams is role-scoped, so an Owner could otherwise PATCH
+      // another entity's team by id. Bind operating_company_id from the caller's company context.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      const oldRes = await client.query(
+        `SELECT * FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.id, scopedCompanyId]
+      );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
+      values.push(scopedCompanyId);
+      const companyIdx = values.length;
       const res = await client.query(
         `
           UPDATE mdata.driver_teams
           SET ${setParts.join(", ")}
-          WHERE id = $${values.length}
+          WHERE id = $${idIdx}
+            AND operating_company_id = $${companyIdx}
           RETURNING *
         `,
         values
@@ -369,15 +382,21 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const updated = await withCurrentUser(user.uuid, async (client) => {
+      // Entity scope (USMCA cross-entity leak fix): scope the deactivate to the caller's operating
+      // company so an Owner can't deactivate another entity's team by id (RLS is role-scoped).
+      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
           UPDATE mdata.driver_teams
           SET is_active = false,
               effective_to = COALESCE(effective_to, CURRENT_DATE)
           WHERE id = $1
+            AND operating_company_id = $2
           RETURNING *
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, scopedCompanyId]
       );
       const row = res.rows[0] ?? null;
       if (!row) return null;
@@ -411,7 +430,16 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
 
     try {
       const result = await withCurrentUser(user.uuid, async (client) => {
-        const teamRes = await client.query(`SELECT * FROM mdata.driver_teams WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+        // Entity scope (USMCA cross-entity leak fix): scope the source-team read to the caller's
+        // operating company so replace-driver can't deactivate/rebuild another entity's team by id
+        // (RLS on mdata.driver_teams is role-scoped, not entity-scoped).
+        const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
+        if (!scopedCompanyId) return { error: "mdata_driver_team_not_found" as const };
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        const teamRes = await client.query(
+          `SELECT * FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [parsedParams.data.id, scopedCompanyId]
+        );
         const team = teamRes.rows[0] ?? null;
         if (!team) return { error: "mdata_driver_team_not_found" as const };
         if (!team.is_active) return { error: "driver_team_not_active" as const };

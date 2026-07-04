@@ -411,7 +411,16 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      const res = await client.query(`${locationSelectSql()} WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      // Entity scope (USMCA cross-entity leak fix): a by-id location read must not cross operating
+      // companies — RLS on mdata.locations is role-scoped, so an Owner could otherwise read another
+      // entity's location by id. Bind operating_company_id from the caller's company context.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      const res = await client.query(`${locationSelectSql()} WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+        parsedParams.data.id,
+        scopedCompanyId,
+      ]);
       const location = res.rows[0] ?? null;
       if (!location) return null;
       const contactsRes = await client.query(
