@@ -30,7 +30,7 @@ export function FrequentlyRunTable({ rows, onRun }: Props) {
                     {row.name}
                   </button>
                   {row.status === "stub" ? (
-                    <span className="ml-2 rounded-sm border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                    <span className="ml-2 rounded-sm border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
                       {row.id === "ar-aging" ? "P5" : "P4"}
                     </span>
                   ) : null}

@@ -31,15 +31,15 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
   const total = rows.reduce((sum, row) => sum + Number(row.override_miles ?? row.miles ?? 0), 0);
 
   return (
-    <section className="rounded-sm border border-amber-200 bg-white">
-      <div className="border-b border-amber-200 bg-amber-50 px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-900">Step 1 · State miles (Q{quarter} {year})</h3>
-        <p className="text-xs text-amber-800">Pulled from Samsara vehicle state miles with load-stop fallback.</p>
+    <section className="rounded-sm border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-900">Step 1 · State miles (Q{quarter} {year})</h3>
+        <p className="text-xs text-slate-800">Pulled from Samsara vehicle state miles with load-stop fallback.</p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
         <button
           type="button"
-          className="rounded-sm border border-amber-400 bg-amber-100 px-3 py-1.5 font-semibold text-amber-900 disabled:opacity-50"
+          className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
           disabled={runMutation.isPending}
           onClick={() => void runMutation.mutateAsync()}
         >

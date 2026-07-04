@@ -142,9 +142,9 @@ export function ReportsHomePage() {
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {reportsKpis.map((item) => (
-          <div key={item.label} className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-[#f59e0b]" : "border-slate-200"}`}>
+          <div key={item.label} className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-[#334155]" : "border-slate-200"}`}>
             <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
-            <div className={`text-lg font-semibold ${item.warn ? "text-[#92400e]" : "text-slate-900"}`}>{item.value}</div>
+            <div className={`text-lg font-semibold ${item.warn ? "text-[#334155]" : "text-slate-900"}`}>{item.value}</div>
             <div className="text-xs text-slate-500">{item.meta}</div>
           </div>
         ))}

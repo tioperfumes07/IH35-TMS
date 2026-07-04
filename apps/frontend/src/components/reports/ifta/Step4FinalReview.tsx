@@ -58,10 +58,10 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
   };
 
   return (
-    <section className="rounded-sm border border-amber-200 bg-white" data-ifta-step="4">
-      <div className="border-b border-amber-200 bg-amber-50 px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-900">Step 4 · Final review</h3>
-        <p className="text-xs text-amber-800">Owner-only confirmation required before filing submission.</p>
+    <section className="rounded-sm border border-slate-200 bg-white" data-ifta-step="4">
+      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-900">Step 4 · Final review</h3>
+        <p className="text-xs text-slate-800">Owner-only confirmation required before filing submission.</p>
       </div>
       <div className="space-y-3 px-3 py-3 text-xs">
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
@@ -80,7 +80,7 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
         </div>
 
         {!isOwner ? (
-          <p className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-2 text-amber-900">
+          <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-2 text-slate-900">
             Owner role required to approve and mark this IFTA filing as filed.
           </p>
         ) : null}
@@ -88,7 +88,7 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
         {isOwner && canApprove ? (
           <button
             type="button"
-            className="inline-flex items-center gap-1 rounded-sm border border-amber-500 bg-amber-100 px-3 py-2 font-semibold text-amber-900 disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-sm border border-slate-500 bg-slate-100 px-3 py-2 font-semibold text-slate-900 disabled:opacity-50"
             disabled={approving}
             onClick={() => setConfirmOpen(true)}
             data-ifta-wf064-trigger="true"
@@ -98,12 +98,12 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
         ) : null}
 
         {isOwner && canMarkFiled ? (
-          <div className="space-y-2 rounded-sm border border-green-200 bg-green-50 px-3 py-2">
-            <p className="font-semibold text-green-900">Owner approved — record state filing confirmation</p>
-            <label className="block text-green-900">
+          <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="font-semibold text-slate-900">Owner approved — record state filing confirmation</p>
+            <label className="block text-slate-900">
               Confirmation number
               <input
-                className="mt-1 w-full rounded-sm border border-green-300 px-2 py-1"
+                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1"
                 value={confirmationNumber}
                 onChange={(event) => setConfirmationNumber(event.target.value)}
                 data-testid="ifta-confirmation-number"
@@ -111,7 +111,7 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
             </label>
             <button
               type="button"
-              className="rounded-sm border border-green-500 bg-green-100 px-3 py-1.5 font-semibold text-green-900 disabled:opacity-50"
+              className="rounded-sm border border-slate-500 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
               disabled={!confirmationNumber.trim() || filingPending}
               onClick={() => void onMarkFiled(confirmationNumber.trim())}
             >
@@ -121,7 +121,7 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
         ) : null}
 
         {filing.status === "filed" ? (
-          <p className="rounded-sm border border-green-300 bg-green-50 px-2 py-2 text-green-800">
+          <p className="rounded-sm border border-slate-300 bg-slate-50 px-2 py-2 text-slate-800">
             Filed {filing.filed_at ? new Date(filing.filed_at).toLocaleString() : ""}
             {filing.confirmation_number ? ` · Confirmation #${filing.confirmation_number}` : ""}
           </p>
