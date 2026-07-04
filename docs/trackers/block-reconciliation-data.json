@@ -1,11 +1,11 @@
 {
  "date": "2026-07-04",
- "generated_at_iso": "2026-07-04T15:41:05.709Z",
+ "generated_at_iso": "2026-07-04T19:17:29.310Z",
  "counts": {
   "PENDING": 4,
-  "PENDING (GATED)": 43,
-  "NEEDS-VERIFY": 4,
-  "DONE": 473
+  "PENDING (GATED)": 39,
+  "NEEDS-VERIFY": 3,
+  "DONE": 478
  },
  "universe": {
   "total_blocks_after_dedup": 524,
@@ -443,17 +443,6 @@
    "pr": null
   },
   {
-   "id": "FINAL-ADDITIONS-PAGE",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "Final Additions launch punch-list page",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "HOS-FANOUT-03-08",
    "source": "program",
    "fin": false,
@@ -514,17 +503,6 @@
    "pr": null
   },
   {
-   "id": "USERS-DEACTIVATE",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "Users deactivate discoverable + non-silent",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "USMCA-LAUNCH-carrier",
    "source": "program",
    "fin": false,
@@ -542,28 +520,6 @@
    "status": "PENDING (GATED)",
    "evidence": "no merged PR / no files on main",
    "name": "Full QBO-parity create panels + profiles (uploaded spec)",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "VISUAL-DISPATCH",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "§7 visual sweep for dispatch — 190 palette/date/box/vocab fixes",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "VISUAL-LISTS",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "§7 visual sweep for lists — 19 palette/date/box/vocab fixes",
    "registered_on": null,
    "pr": null
   },
@@ -664,17 +620,6 @@
    "name": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma",
    "registered_on": "2026-07-02",
    "pr": 1838
-  },
-  {
-   "id": "VISUAL-SAFETY",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1597 title-match only, unverified",
-   "name": "§7 visual sweep for safety — 75 palette/date/box/vocab fixes",
-   "registered_on": null,
-   "pr": 1597
   },
   {
    "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
@@ -2999,6 +2944,17 @@
    "pr": 977
   },
   {
+   "id": "FINAL-ADDITIONS-PAGE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1924 merged 2026-07-04",
+   "name": "Final Additions launch punch-list page",
+   "registered_on": null,
+   "pr": 1924
+  },
+  {
    "id": "FIX-AT-RISK-LOADS-SD-CITY",
    "source": ".block-ready",
    "fin": false,
@@ -5285,6 +5241,17 @@
    "pr": 1536
   },
   {
+   "id": "USERS-DEACTIVATE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1904 merged 2026-07-04",
+   "name": "Users deactivate discoverable + non-silent",
+   "registered_on": null,
+   "pr": 1904
+  },
+  {
    "id": "USMCA-MASTERDATA-IMPORT",
    "source": ".block-ready",
    "fin": true,
@@ -5421,6 +5388,17 @@
    "name": "§7 visual sweep for customers — 11 palette/date/box/vocab fixes",
    "registered_on": null,
    "pr": 1941
+  },
+  {
+   "id": "VISUAL-DISPATCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1953 merged 2026-07-04",
+   "name": "§7 visual sweep for dispatch — 190 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1953
   },
   {
    "id": "VISUAL-DOCS",
@@ -5566,6 +5544,17 @@
    "pr": 1931
   },
   {
+   "id": "VISUAL-LISTS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1952 merged 2026-07-04",
+   "name": "§7 visual sweep for lists — 19 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1952
+  },
+  {
    "id": "VISUAL-REPORTS",
    "source": ".block-ready",
    "fin": true,
@@ -5575,6 +5564,17 @@
    "name": "§7 visual sweep for reports — 19 palette/date/box/vocab fixes",
    "registered_on": null,
    "pr": 1937
+  },
+  {
+   "id": "VISUAL-SAFETY",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1950 merged 2026-07-04",
+   "name": "§7 visual sweep for safety — 75 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1950
   },
   {
    "id": "VISUAL-SETTLEMENTS",
@@ -5744,10 +5744,106 @@
  ],
  "merged_prs": [
   {
+   "number": 2007,
+   "title": "fix(ratecon/docs): upload under the ACTIVE company — fixes rate-con 404 for multi-company users",
+   "mergedAt": "2026-07-04T19:05:46Z",
+   "branch": "fix/ratecon-step-tagged-errors"
+  },
+  {
+   "number": 2006,
+   "title": "fix(lists): TBL-STANDARD batch 2 — settled-only empty state across 58 paged lists",
+   "mergedAt": "2026-07-04T19:04:08Z",
+   "branch": "fix/tbl-standard-sweep-batch2"
+  },
+  {
+   "number": 2005,
+   "title": "feat(book-load): §A click-to-upload button + resizable wizard window",
+   "mergedAt": "2026-07-04T18:45:44Z",
+   "branch": "feat/bookload-a-button-and-resizable"
+  },
+  {
+   "number": 2004,
+   "title": "fix(ratecon): model 404 → claude-sonnet-5 + 90s extraction timeout",
+   "mergedAt": "2026-07-04T18:42:30Z",
+   "branch": "fix/ratecon-extract-timeout-90s"
+  },
+  {
+   "number": 2003,
+   "title": "fix(lists): TBL-STANDARD batch 1 — settled-only empty state (Equipment Types, Driver Load Statuses)",
+   "mergedAt": "2026-07-04T18:28:04Z",
+   "branch": "fix/tbl-standard-batch1-false-empty"
+  },
+  {
+   "number": 2002,
+   "title": "feat(customers): V8 roster Type + Credit-status filters",
+   "mergedAt": "2026-07-04T18:20:06Z",
+   "branch": "feat/v8-customer-roster-filters"
+  },
+  {
+   "number": 2001,
+   "title": "fix(ratecon): extraction error self-reports the real cause (timeout/504/upload/raw)",
+   "mergedAt": "2026-07-04T18:08:55Z",
+   "branch": "fix/ratecon-error-self-report"
+  },
+  {
+   "number": 2000,
+   "title": "[HOLD-FOR-JORGE] feat(recon): wire createQboReconSource — live QBO bank register pull",
+   "mergedAt": "2026-07-04T17:59:19Z",
+   "branch": "feat/recon-qbo-source-wire"
+  },
+  {
+   "number": 1999,
+   "title": "fix(qbo): correct watchdog — per-company connection check (follow-up to #1997)",
+   "mergedAt": "2026-07-04T17:27:40Z",
+   "branch": "fix/qbo-watchdog-skip-never-connected"
+  },
+  {
+   "number": 1998,
+   "title": "docs(recon): QBO reconciliation module spec + activation",
+   "mergedAt": "2026-07-04T17:25:06Z",
+   "branch": "docs/qbo-reconciliation-module-spec"
+  },
+  {
+   "number": 1997,
+   "title": "fix(qbo): stop 'QBO disconnected' email spam for never-connected entities (USMCA)",
+   "mergedAt": "2026-07-04T17:02:54Z",
+   "branch": "fix/qbo-watchdog-skip-never-connected"
+  },
+  {
+   "number": 1996,
+   "title": "[HOLD-FOR-JORGE] docs: opening-balance tie-out ceremony (QBO 12/31/2024 anchor + flip plan)",
+   "mergedAt": "2026-07-04T16:17:24Z",
+   "branch": "docs/opening-balance-tieout-ceremony"
+  },
+  {
+   "number": 1995,
+   "title": "chore(program): reconcile block snapshot 2026-07-04 (Program Board refresh)",
+   "mergedAt": "2026-07-04T16:08:14Z",
+   "branch": "chore/program-reconcile-2026-07-04"
+  },
+  {
    "number": 1993,
    "title": "fix(ci): aggregate boot-smoke picks in-entity unit — unblocks prod deploy (USMCA import regression)",
    "mergedAt": "2026-07-04T06:49:20Z",
    "branch": "fix/aggregate-smoke-cross-entity-unit"
+  },
+  {
+   "number": 1992,
+   "title": "[HOLD-FOR-JORGE — MIGRATION] fix(chat): break participants RLS infinite recursion (42P17) — DDL already live on prod",
+   "mergedAt": "2026-07-04T16:15:40Z",
+   "branch": "fix/chat-participants-rls-recursion"
+  },
+  {
+   "number": 1990,
+   "title": "[HOLD-FOR-JORGE] fix(xe-fin): escrow-timeline — bind entity scope on financial read",
+   "mergedAt": "2026-07-04T16:14:49Z",
+   "branch": "fix/xe-fin-escrow-timeline"
+  },
+  {
+   "number": 1989,
+   "title": "[HOLD-FOR-JORGE] fix(xe-fin): settlement-lineitems — bind entity scope on financial read",
+   "mergedAt": "2026-07-04T16:15:44Z",
+   "branch": "fix/xe-fin-settlement-lineitems"
   },
   {
    "number": 1988,
@@ -5816,6 +5912,12 @@
    "branch": "fix/visual2-dispatch"
   },
   {
+   "number": 1977,
+   "title": "fix(visual2): maintenance dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T15:45:22Z",
+   "branch": "fix/visual2-maintenance"
+  },
+  {
    "number": 1976,
    "title": "fix(visual2): lists dead-controls/back-arrows/layout/pagination",
    "mergedAt": "2026-07-04T04:10:48Z",
@@ -5828,6 +5930,12 @@
    "branch": "fix/visual2-accounting"
   },
   {
+   "number": 1974,
+   "title": "fix(visual2): finance dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T16:04:01Z",
+   "branch": "fix/visual2-finance"
+  },
+  {
    "number": 1973,
    "title": "fix(visual2): compliance dead-controls/back-arrows/layout/pagination",
    "mergedAt": "2026-07-04T04:12:00Z",
@@ -5838,6 +5946,12 @@
    "title": "fix(visual2): factoring dead-controls/back-arrows/layout/pagination",
    "mergedAt": "2026-07-04T04:03:53Z",
    "branch": "fix/visual2-factoring"
+  },
+  {
+   "number": 1971,
+   "title": "fix(visual2): users dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T15:46:25Z",
+   "branch": "fix/visual2-users"
   },
   {
    "number": 1970,
@@ -5888,6 +6002,12 @@
    "branch": "fix/visual2-customers"
   },
   {
+   "number": 1962,
+   "title": "fix(visual2): legal dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T16:05:44Z",
+   "branch": "fix/visual2-legal"
+  },
+  {
    "number": 1961,
    "title": "fix(visual2): docs dead-controls/back-arrows/layout/pagination",
    "mergedAt": "2026-07-04T03:46:05Z",
@@ -5900,10 +6020,22 @@
    "branch": "fix/visual2-vendors"
   },
   {
+   "number": 1959,
+   "title": "fix(visual2): settlements dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T17:35:54Z",
+   "branch": "fix/visual2-settlements"
+  },
+  {
    "number": 1958,
    "title": "fix(visual2): inventory dead-controls/back-arrows/layout/pagination",
    "mergedAt": "2026-07-04T03:48:47Z",
    "branch": "fix/visual2-inventory"
+  },
+  {
+   "number": 1957,
+   "title": "fix(visual2): home dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T15:52:54Z",
+   "branch": "fix/visual2-home"
   },
   {
    "number": 1956,
@@ -5918,10 +6050,28 @@
    "branch": "chore/register-visual-fix-blocks"
   },
   {
+   "number": 1953,
+   "title": "fix(visual): dispatch §7 palette/vocab cleanup",
+   "mergedAt": "2026-07-04T17:39:11Z",
+   "branch": "fix/visual-dispatch"
+  },
+  {
+   "number": 1952,
+   "title": "fix(visual): lists §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T15:42:40Z",
+   "branch": "fix/visual-lists"
+  },
+  {
    "number": 1951,
    "title": "fix(visual): eld §7 palette/date/box/vocab cleanup",
    "mergedAt": "2026-07-04T02:49:09Z",
    "branch": "fix/visual-eld"
+  },
+  {
+   "number": 1950,
+   "title": "fix(visual): safety §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T15:48:30Z",
+   "branch": "fix/visual-safety"
   },
   {
    "number": 1949,
@@ -6074,6 +6224,12 @@
    "branch": "chore/raise-fe-bundle-perf-budget"
   },
   {
+   "number": 1924,
+   "title": "feat(program): Final Additions launch punch-list page (/program/final-additions)",
+   "mergedAt": "2026-07-04T15:53:50Z",
+   "branch": "feat/final-additions-punchlist-page"
+  },
+  {
    "number": 1923,
    "title": "[HOLD-FOR-JORGE] fix(accounting): AR + AP payment recording 400 on every click (contract drift)",
    "mergedAt": "2026-07-04T13:55:01Z",
@@ -6186,6 +6342,12 @@
    "title": "docs(trackers): lost-work audit (773 blocks since May5, 14 truly-lost)",
    "mergedAt": "2026-07-03T22:20:12Z",
    "branch": "docs/lost-work-audit"
+  },
+  {
+   "number": 1904,
+   "title": "fix(identity): make user Deactivate discoverable + non-silent, dedup dead deactivate route",
+   "mergedAt": "2026-07-04T17:45:19Z",
+   "branch": "fix/users-deactivate-control"
   },
   {
    "number": 1903,
@@ -9180,172 +9342,40 @@
    "title": "feat(dispatch): Book Load §C empty-diff — stop card = exactly the 11 render-v6 fields",
    "mergedAt": "2026-06-23T09:41:18Z",
    "branch": "feat/load-stops-empty-diff"
-  },
-  {
-   "number": 1364,
-   "title": "feat(guard): verify:design-parity structural gate — render-tests required for complex screens",
-   "mergedAt": "2026-06-23T08:08:04Z",
-   "branch": "feat/parity-guard-structural"
-  },
-  {
-   "number": 1363,
-   "title": "feat(dispatch): Book Load §B HOS collapsible + §E document move (render-v6)",
-   "mergedAt": "2026-06-23T08:04:52Z",
-   "branch": "feat/load-hos-collapsible-docs"
-  },
-  {
-   "number": 1362,
-   "title": "feat(dispatch): Book Load §C two-row stop rebuild (render-v6) + render-test",
-   "mergedAt": "2026-06-23T08:07:58Z",
-   "branch": "feat/load-stops-tworow"
-  },
-  {
-   "number": 1361,
-   "title": "feat(dispatch): Book Load §B reefer/flatbed conditional panels (render-v6) [HOLD-FOR-JORGE]",
-   "mergedAt": "2026-06-23T07:44:06Z",
-   "branch": "feat/load-reefer-tarp"
-  },
-  {
-   "number": 1360,
-   "title": "feat(dispatch): load-stop Zip Code (render-v6 §C) — postal_code [HOLD-FOR-JORGE]",
-   "mergedAt": "2026-06-23T07:44:04Z",
-   "branch": "feat/load-stops-zip"
-  },
-  {
-   "number": 1359,
-   "title": "feat(maint): WO wizard render-v5 header fields (live #1353 columns) + render-test",
-   "mergedAt": "2026-06-23T07:12:20Z",
-   "branch": "feat/wo-renderv5-header"
-  },
-  {
-   "number": 1358,
-   "title": "fix(dispatch): #1355 false-DONE — HOS block + stop cards actually render live",
-   "mergedAt": "2026-06-23T06:19:45Z",
-   "branch": "fix/1355-hos-stops-render"
-  },
-  {
-   "number": 1357,
-   "title": "feat(maint): Severe Repairs parity columns + Arriving Soon guard-map fix",
-   "mergedAt": "2026-06-23T05:44:03Z",
-   "branch": "feat/maint-parity-columns"
-  },
-  {
-   "number": 1356,
-   "title": "feat(guard): verify:design-parity — design-file enforcement contract …",
-   "mergedAt": "2026-06-23T05:29:43Z",
-   "branch": "feat/design-parity-guard"
-  },
-  {
-   "number": 1355,
-   "title": "feat(dispatch): load wizard render-v6 — Driver HOS block (§B) + stop cards (§C)",
-   "mergedAt": "2026-06-23T05:19:16Z",
-   "branch": "feat/load-wizard-v6-hos"
-  },
-  {
-   "number": 1354,
-   "title": "feat(maint): Block 8 — VMRS repair-detail + asset-location (serialized parts) on Create WO",
-   "mergedAt": "2026-06-23T05:04:17Z",
-   "branch": "feat/block8-vmrs-wiring"
-  },
-  {
-   "number": 1353,
-   "title": "feat(maint): WO enhancements migration — render-v5 header gaps + Cancel + Void columns (RUN #1352)",
-   "mergedAt": "2026-06-23T05:02:58Z",
-   "branch": "feat/wo-enhancements-cancel-migration"
-  },
-  {
-   "number": 1352,
-   "title": "docs(maint): WO enhancements migration SQL — render-v5 header gaps + Cancel/Void (for review)",
-   "mergedAt": "2026-06-23T04:11:15Z",
-   "branch": "docs/wo-enhancements-cancel-migration"
-  },
-  {
-   "number": 1351,
-   "title": "feat(maint): Block 8 migration — VMRS cols + wo_serialized_parts (RUN #1348 + 2 hardening)",
-   "mergedAt": "2026-06-23T04:22:42Z",
-   "branch": "feat/block8-vmrs-serialized-parts-migration"
-  },
-  {
-   "number": 1350,
-   "title": "feat(dispatch): Block 7 piece_count + customer_po_number — migration + create→detail→patch round-trip",
-   "mergedAt": "2026-06-23T04:22:35Z",
-   "branch": "feat/block7-piece-po-migration-and-wiring"
-  },
-  {
-   "number": 1349,
-   "title": "fix(dispatch): planner-week 500 — mdata.units has no operating_company_id (§4) + class fix + guard",
-   "mergedAt": "2026-06-23T00:31:13Z",
-   "branch": "fix/planner-units-operating-company-id-500"
-  },
-  {
-   "number": 1348,
-   "title": "docs(maint): Block 8 gaps 2+3 migration SQL (VMRS + asset-location) — for review",
-   "mergedAt": "2026-06-23T00:22:52Z",
-   "branch": "docs/block8-vmrs-assetloc-migrations"
-  },
-  {
-   "number": 1347,
-   "title": "feat(maint): Block 8 gap 1 — two-sided vendor-invoice reconcile HARD-GATE on Create WO",
-   "mergedAt": "2026-06-23T00:17:24Z",
-   "branch": "feat/block8-wo-vendor-invoice-reconcile"
-  },
-  {
-   "number": 1346,
-   "title": "feat(dispatch): load wizard §B — conditional reefer/flatbed equipment detail",
-   "mergedAt": "2026-06-23T00:05:40Z",
-   "branch": "feat/wizard-reefer-flatbed-conditional"
-  },
-  {
-   "number": 1345,
-   "title": "feat(dispatch): Planners Phase 1 — unified Timeline board (fixes the empty Driver grid)",
-   "mergedAt": "2026-06-22T23:50:44Z",
-   "branch": "feat/planners-unified-timeline"
-  },
-  {
-   "number": 1344,
-   "title": "docs(dispatch): planners unified layout proposal (for sign-off before build)",
-   "mergedAt": "2026-06-22T23:54:53Z",
-   "branch": "docs/dispatch-planners-layout"
-  },
-  {
-   "number": 1343,
-   "title": "fix(infra): frontend HTML no edge-cache — strip s-maxage so deploys are instantly visible",
-   "mergedAt": "2026-06-22T20:46:19Z",
-   "branch": "fix/frontend-html-no-edge-cache"
-  },
-  {
-   "number": 1342,
-   "title": "feat(dispatch): Block 7 — commodity/weight/reefer-setpoint/trip_type round-trip in Edit wizard",
-   "mergedAt": "2026-06-22T20:33:39Z",
-   "branch": "feat/block7-loads-field-roundtrip"
-  },
-  {
-   "number": 1341,
-   "title": "docs(dispatch): Block 7 piece_count + customer_po_number migration SQL (FOR REVIEW)",
-   "mergedAt": "2026-06-22T20:28:13Z",
-   "branch": "docs/block7-piece-po-migration-sql"
-  },
-  {
-   "number": 1340,
-   "title": "fix(dispatch): Awaiting-truck card — explicit \"+ Book load\" button",
-   "mergedAt": "2026-06-22T20:21:15Z",
-   "branch": "fix/awaiting-truck-explicit-book-button"
-  },
-  {
-   "number": 1339,
-   "title": "feat(dispatch): loads list Customer cell → customer detail link (record-cell link expansion)",
-   "mergedAt": "2026-06-22T20:02:25Z",
-   "branch": "feat/dispatch-loads-customer-link"
-  },
-  {
-   "number": 1338,
-   "title": "docs(dispatch): planners rebuild plan + Phase-0 empty-grid diagnosis",
-   "mergedAt": "2026-06-22T19:53:53Z",
-   "branch": "docs/dispatch-planners-plan"
   }
  ],
- "merged_pr_total": 1871,
+ "merged_pr_total": 1898,
  "hold_for_jorge": [
+  {
+   "number": 2000,
+   "title": "[HOLD-FOR-JORGE] feat(recon): wire createQboReconSource — live QBO bank register pull",
+   "mergedAt": "2026-07-04T17:59:19Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1996,
+   "title": "[HOLD-FOR-JORGE] docs: opening-balance tie-out ceremony (QBO 12/31/2024 anchor + flip plan)",
+   "mergedAt": "2026-07-04T16:17:24Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1992,
+   "title": "[HOLD-FOR-JORGE — MIGRATION] fix(chat): break participants RLS infinite recursion (42P17) — DDL already live on prod",
+   "mergedAt": "2026-07-04T16:15:40Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1990,
+   "title": "[HOLD-FOR-JORGE] fix(xe-fin): escrow-timeline — bind entity scope on financial read",
+   "mergedAt": "2026-07-04T16:14:49Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1989,
+   "title": "[HOLD-FOR-JORGE] fix(xe-fin): settlement-lineitems — bind entity scope on financial read",
+   "mergedAt": "2026-07-04T16:15:44Z",
+   "category": "HOLD"
+  },
   {
    "number": 1923,
    "title": "[HOLD-FOR-JORGE] fix(accounting): AR + AP payment recording 400 on every click (contract drift)",
