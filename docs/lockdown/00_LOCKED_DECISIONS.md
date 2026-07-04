@@ -105,3 +105,26 @@ See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).
 8.8 **Owner decisions LOCKED 2026-07-02** (details in `docs/specs/ACCOUNTING-ARCHITECTURE.md` "Locked owner decisions"): (1) factoring_advance push GATED OFF (folded into the JE kill-switch); (2) all push flags OFF for all entities, EVENT-gated; (3) driver→QBO vendor = no synchronous create, reconcile links it; (4) FIN-2 approved; (5) retire the sync counter; (6) required-doc regulatory defaults, warn-first; (7) canonical Faro vendor `3585f27e`; (8) BS-only opening + a mandatory RE-roll tieout test in IMPORT-4v2. Reconcile: AM bank pass reads QBO's real register (not the sync queue) + row-level match.
 
 **Canonical cross-refs:** `docs/specs/TMS-QBO-RECONCILIATION.md`, `docs/specs/QBO-CLONE-PROGRAM.md`, the QBO-IMPORT program blocks, and auto-memory `qbo-import-design-corrections` + `cpa-locked-decisions-2026-07-01`.
+
+---
+
+## 9. Driver-pay / deduction / escrow engine — LOCKED 2026-07-04 (audit-fix decisions B–I)
+Locked by the owner while triaging the shared 130-finding audit. Source of truth: auto-memory `[[audit-fix-decisions-2026-07-04]]`, Desktop `IH35-TMS-BUG-FIX-OWNER-DECISIONS.md`, tracker `docs/trackers/BUG-AUDIT-FIX-TRACKER.md`. All financial items build behind OFF flags on a Neon test branch → owner OK + CPA-verify in staging → only then flip a prod flag; never self-merge.
+
+9.1 **Canonical deduction store = `driver_finance.driver_settlement_deductions`** (the FIN-18 poster already reads it). The live settlement route must write deductions here and stamp `applied_to_settlement_id` (today it writes `settlement_lines` auto_deduction, which the poster never reads → drivers silently overpaid). Retire the `payroll.*` copy + the `settlement_lines` auto_deduction path.
+
+9.2 **Net-pay floor = 5% DEFAULT, EDITABLE per settlement.** Corrects the earlier "10%" record. Driver keeps ≥5% of gross by default; the settlement UI shows an **Accept / Edit-amount** control so the operator can adjust the deducted amount, and on termination/leaving may override the floor and deduct up to the **full final check** (owes $2,000, final check $1,500 → deduct all $1,500). One floor resolver, one config source, default 5%, overridable.
+
+9.3 **Recovery ordering = PAY FIRST, then escrow.** Walkoff/abandonment/damage recoveries deduct from the driver's **settlement pay first**, and only draw from **escrow for any shortfall**. Escrow is a last-resort buffer that must keep GROWING — a fine (overweight, etc.) can arrive 30–45 days AFTER a driver leaves and escrow must still cover it. Migration 0094's auto-escrow-on-walkoff trigger must be reworked to hit pay first, escrow only if pay is insufficient, and fire a **single** charge per event (kills the current double-charge where the app chargeback AND the escrow trigger both fire).
+
+9.4 **Escrow return = 60–90 day return-on-separation, net of open claims.** Every escrow draw debits the **Driver Escrow liability** (QBO-1150040187), never an expense — see `[[driver-escrow-is-liability]]`.
+
+9.5 **Deduction authorization = the signed HIRE CONTRACT — no separate driver e-sign.** The `CONSENT_MISSING` gate (finding G11-1) is satisfied by the hire contract, not a driver-facing e-sign template. The hire-contract template is built later in the **Legal module** and carries the payroll-deduction authorization for new drivers. (Simplifies the former "Repair B / consent template" build.)
+
+9.6 **Schema canonicals:** `finance.loans` kept as a documented §4 exception (no rename); `reporting.*` canonical for scheduled reports (migrate `reports.*` rows in, archive the old); `mdata.qbo_*` canonical for the QBO mirror (repoint the `accounting.qbo_*` writers); `mdata.vendors` canonical for vendors (+ a resolver so WO/expense pickers read it).
+
+9.7 **Everything links to the load.** Create Bill gains line items + `load_id`; universal rule — diesel, expenses, repairs, on-trip maintenance, truck, trailer, driver all connect to the load/driver. See `[[cross-module-linkage-rule]]`.
+
+9.8 **Never delete — ARCHIVE only.** Everything stays findable in the log + audits (§7 additive-only).
+
+9.9 **GL posting flags:** `SETTLEMENT_GL_POSTING_ENABLED` + `LEASE_GL_POSTING_ENABLED` → **OFF per-entity** until Repairs A+B land + CPA-verify (owner-confirmed 2026-07-04). The other 7 GL flags remain ON.
