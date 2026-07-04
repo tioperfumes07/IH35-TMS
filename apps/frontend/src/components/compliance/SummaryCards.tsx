@@ -11,8 +11,8 @@ type Props = {
 export function SummaryCards({ summary, activeSeverity, onSelect }: Props) {
   const cards: Array<{ key: ComplianceSeverity; label: string; count: number; className: string }> = [
     { key: "red", label: "Critical / Expired", count: summary.red, className: "border-red-500 bg-red-50" },
-    { key: "yellow", label: "Due 7–30 days", count: summary.yellow, className: "border-amber-500 bg-amber-50" },
-    { key: "green", label: "OK (>30 days)", count: summary.green, className: "border-green-600 bg-green-50" },
+    { key: "yellow", label: "Due 7–30 days", count: summary.yellow, className: "border-slate-400 bg-slate-100" },
+    { key: "green", label: "OK (>30 days)", count: summary.green, className: "border-slate-400 bg-slate-100" },
   ];
   return (
     <div className="grid gap-4 md:grid-cols-3" data-testid="compliance-summary-cards">

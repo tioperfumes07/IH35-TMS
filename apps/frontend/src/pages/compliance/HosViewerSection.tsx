@@ -38,9 +38,9 @@ function clockTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit", hour12: false });
 }
 const STATUS_VERDICT: Record<string, { label: string; cls: string }> = {
-  ok: { label: "OK", cls: "text-emerald-700" },
-  warning_1hr: { label: "Low (<1h)", cls: "text-amber-700" },
-  warning_15min: { label: "Low (<15m)", cls: "text-amber-700" },
+  ok: { label: "OK", cls: "text-slate-700" },
+  warning_1hr: { label: "Low (<1h)", cls: "text-slate-700" },
+  warning_15min: { label: "Low (<15m)", cls: "text-slate-700" },
   violation: { label: "Violation", cls: "text-red-700" },
 };
 const TOTAL_ORDER: HosDutyStatus[] = ["driving", "on_duty_not_driving", "sleeper", "off_duty", "personal_conveyance", "yard_moves"];
