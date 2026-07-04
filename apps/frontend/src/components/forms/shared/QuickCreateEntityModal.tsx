@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
-import { createQboAccount, createQboCustomer, createQboItem, createQboVendor } from "../../../api/qbo-mdata";
+import { createQboAccount, createQboItem, createQboVendor } from "../../../api/qbo-mdata";
+import { createCustomer } from "../../../api/mdata";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 
@@ -99,13 +100,18 @@ export function QuickCreateEntityModal({
         });
         onCreated({ id: String(res.vendor.id), label: parsed.data.name });
       } else if (kind === "customer") {
-        const res = await createQboCustomer(operatingCompanyId, {
-          display_name: parsed.data.name,
-          company_name: parsed.data.company?.trim() || parsed.data.name,
-          primary_email: parsed.data.email || undefined,
-          primary_phone: parsed.data.phone || undefined,
+        // D1-1: write the inline quick-create customer to the REAL mdata.customers table
+        // (POST /api/v1/mdata/customers — the same endpoint the full Customers page uses) so the
+        // returned id is a bookable/invoiceable FK. Previously this wrote to the QBO mirror
+        // (mdata.qbo_customers) that no customer picker/search/list reads, leaving a dangling id.
+        const res = await createCustomer({
+          name: parsed.data.name,
+          operating_company_id: operatingCompanyId,
+          email: parsed.data.email || undefined,
+          phone: parsed.data.phone || undefined,
+          main_contact_name: parsed.data.company?.trim() || undefined,
         });
-        onCreated({ id: String(res.customer.id), label: parsed.data.name });
+        onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "item") {
         const res = await createQboItem(operatingCompanyId, {
           name: parsed.data.name,

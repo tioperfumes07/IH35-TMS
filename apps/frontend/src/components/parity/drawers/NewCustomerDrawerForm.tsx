@@ -3,7 +3,7 @@
  * OPERATIONAL gate: customer create is non-financial.
  */
 import { useState } from "react";
-import { createQboCustomer } from "../../../api/qbo-mdata";
+import { createCustomer } from "../../../api/mdata";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -54,13 +54,24 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
     if (!displayName) { pushToast("Customer display name is required.", "error"); return; }
     setSaving(true);
     try {
-      const res = await createQboCustomer(operatingCompanyId, {
-        display_name: displayName,
-        company_name: form.companyName.trim() || undefined,
-        primary_email: form.email.trim() || undefined,
-        primary_phone: form.phone.trim() || undefined,
+      // D1-1: write to the REAL mdata.customers table (POST /api/v1/mdata/customers — the same
+      // endpoint the full Customers page create uses) so the returned id is a bookable/invoiceable
+      // FK. Previously this wrote to the QBO mirror (mdata.qbo_customers) that no customer picker/
+      // search/list reads, so an inline-created customer never appeared and its id was dangling.
+      const res = await createCustomer({
+        name: displayName,
+        operating_company_id: operatingCompanyId,
+        email: form.email.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        website: form.website.trim() || undefined,
+        billing_address: form.billingLine1.trim() || undefined,
+        billing_state: form.billingState.trim() || undefined,
+        main_contact_name: `${form.firstName} ${form.lastName}`.trim() || undefined,
+        main_contact_email: form.email.trim() || undefined,
+        main_contact_phone: form.phone.trim() || undefined,
+        main_contact_mobile: form.mobile.trim() || undefined,
       });
-      onCreated({ id: String(res.customer.id), label: displayName });
+      onCreated({ id: String(res.id), label: displayName });
       pushToast("Customer created", "success");
       onClose();
     } catch (err) {
