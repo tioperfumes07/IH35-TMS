@@ -16,6 +16,11 @@ import { RATECON_EXTRACTION_MODEL } from "../ai/models.js";
 export const RATECON_MODEL = RATECON_EXTRACTION_MODEL;
 export const RATECON_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 export const RATECON_MAX_PAGES = 15;
+// Rate-con extraction reads a multi-page PDF end-to-end (base64 document input) before emitting JSON —
+// that legitimately runs 30–60s on a dense broker sheet. The generic 30s Anthropic default was too tight
+// and surfaced as a "timed out" extraction failure; give this call a 90s ceiling (still bounded, still
+// aborts cleanly). Callers can override via options.timeoutMs.
+export const RATECON_EXTRACT_TIMEOUT_MS = 90_000;
 
 export type Confidence = "high" | "medium" | "low";
 
@@ -210,7 +215,7 @@ export async function extractRateConPdf(
         },
       ],
     },
-    { apiKey: options?.apiKey, fetchImpl: options?.fetchImpl, timeoutMs: options?.timeoutMs },
+    { apiKey: options?.apiKey, fetchImpl: options?.fetchImpl, timeoutMs: options?.timeoutMs ?? RATECON_EXTRACT_TIMEOUT_MS },
   );
 
   const extraction = parseRateConExtraction(extractText(payload));
