@@ -1,6 +1,6 @@
 {
  "date": "2026-07-03",
- "generated_at_iso": "2026-07-04T00:40:09.704Z",
+ "generated_at_iso": "2026-07-04T02:40:00.575Z",
  "counts": {
   "PENDING": 4,
   "PENDING (GATED)": 33,
@@ -5216,6 +5216,156 @@
  ],
  "merged_prs": [
   {
+   "number": 1948,
+   "title": "fix(visual): users §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:38:03Z",
+   "branch": "fix/visual-users"
+  },
+  {
+   "number": 1946,
+   "title": "fix(visual): accounting §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:35:01Z",
+   "branch": "fix/visual-accounting"
+  },
+  {
+   "number": 1944,
+   "title": "fix(visual): compliance §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:36:06Z",
+   "branch": "fix/visual-compliance"
+  },
+  {
+   "number": 1943,
+   "title": "fix(visual): inventory §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:31:48Z",
+   "branch": "fix/visual-inventory"
+  },
+  {
+   "number": 1942,
+   "title": "fix(visual): cash-flow §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:31:51Z",
+   "branch": "fix/visual-cash-flow"
+  },
+  {
+   "number": 1941,
+   "title": "fix(visual): customers §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:32:56Z",
+   "branch": "fix/visual-customers"
+  },
+  {
+   "number": 1940,
+   "title": "fix(visual): banking §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:32:59Z",
+   "branch": "fix/visual-banking"
+  },
+  {
+   "number": 1939,
+   "title": "fix(visual): insurance §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:39:04Z",
+   "branch": "fix/visual-insurance"
+  },
+  {
+   "number": 1938,
+   "title": "fix(visual): form_425 §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:28:28Z",
+   "branch": "fix/visual-form_425"
+  },
+  {
+   "number": 1937,
+   "title": "fix(visual): reports §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:23:42Z",
+   "branch": "fix/visual-reports"
+  },
+  {
+   "number": 1936,
+   "title": "fix(visual): drivers §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:29:39Z",
+   "branch": "fix/visual-drivers"
+  },
+  {
+   "number": 1935,
+   "title": "fix(visual): driver-hub §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:24:58Z",
+   "branch": "fix/visual-driver-hub"
+  },
+  {
+   "number": 1934,
+   "title": "fix(visual): tasks §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:29:41Z",
+   "branch": "fix/visual-tasks"
+  },
+  {
+   "number": 1933,
+   "title": "fix(visual): settlements §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:17:28Z",
+   "branch": "fix/visual-settlements"
+  },
+  {
+   "number": 1932,
+   "title": "fix(visual): vendors §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:21:20Z",
+   "branch": "fix/visual-vendors"
+  },
+  {
+   "number": 1931,
+   "title": "fix(visual): legal §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:18:47Z",
+   "branch": "fix/visual-legal"
+  },
+  {
+   "number": 1930,
+   "title": "fix(visual): factoring §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:18:50Z",
+   "branch": "fix/visual-factoring"
+  },
+  {
+   "number": 1929,
+   "title": "fix(visual): fuel §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:14:52Z",
+   "branch": "fix/visual-fuel"
+  },
+  {
+   "number": 1928,
+   "title": "fix(visual): fleet §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:14:55Z",
+   "branch": "fix/visual-fleet"
+  },
+  {
+   "number": 1927,
+   "title": "docs(visual): full-app visual audit punch-list — 252 defects across 28 modules",
+   "mergedAt": "2026-07-04T02:10:35Z",
+   "branch": "docs/visual-audit-punchlist-252"
+  },
+  {
+   "number": 1926,
+   "title": "fix(vendors): discoverable Edit at top + flatten accounting-category box-in-box",
+   "mergedAt": "2026-07-04T01:50:10Z",
+   "branch": "fix/vendor-profile-edit-and-category-box"
+  },
+  {
+   "number": 1925,
+   "title": "chore(perf): raise fe bundle budget to clear the red (pending code-split)",
+   "mergedAt": "2026-07-04T01:40:59Z",
+   "branch": "chore/raise-fe-bundle-perf-budget"
+  },
+  {
+   "number": 1922,
+   "title": "fix(accounting-ui): register Source column shows source, not type",
+   "mergedAt": "2026-07-04T00:59:37Z",
+   "branch": "fix/register-source-column-label"
+  },
+  {
+   "number": 1921,
+   "title": "chore(program): refresh block-reconciliation snapshot 2026-07-03 (advance Program Board)",
+   "mergedAt": "2026-07-04T00:52:15Z",
+   "branch": "chore/program-board-reconcile-2026-07-03"
+  },
+  {
+   "number": 1920,
+   "title": "fix(accounting-ui): §7 polish — US dates in register, drop yellow pills, honest expense toast",
+   "mergedAt": "2026-07-04T00:41:26Z",
+   "branch": "fix/accounting-ui-polish-batch"
+  },
+  {
    "number": 1919,
    "title": "[HOLD-FOR-JORGE] fix(accounting): Manual Journal Entry create/void 400 (contract drift)",
    "mergedAt": "2026-07-04T00:39:54Z",
@@ -5274,6 +5424,12 @@
    "title": "feat(ci): money-path no-swallow guard (recovered lost-work RELIABILITY-05)",
    "mergedAt": "2026-07-03T23:21:34Z",
    "branch": "feat/money-path-no-swallow-guard"
+  },
+  {
+   "number": 1908,
+   "title": "[HOLD-FOR-JORGE] feat(tasks): Tasks Planner v2 — entity/record links, profiles, alarms, transaction-side completion",
+   "mergedAt": "2026-07-04T00:58:03Z",
+   "branch": "feat/tasks-planner-v2-connectivity"
   },
   {
    "number": 1907,
@@ -8658,165 +8814,9 @@
    "title": "[HOLD-FOR-JORGE] CHAIN-03 STEP-2: one canonical bill resolver + flag-gated Bill→GL post (TRANSP only)",
    "mergedAt": "2026-06-22T02:10:47Z",
    "branch": "feat/chain-03-bill-gl-step2"
-  },
-  {
-   "number": 1298,
-   "title": "[HOLD-FOR-JORGE] CHAIN-03 STEP-1: Create Bill → GL DRAFT-JE proof (TRANSP only, writes nothing)",
-   "mergedAt": "2026-06-22T02:21:58Z",
-   "branch": "feat/chain-03-bill-gl-draft-step1"
-  },
-  {
-   "number": 1296,
-   "title": "docs(maintenance): PM-SCHEDULE-TABLE-CONSOLIDATION design-first finding (#37)",
-   "mergedAt": "2026-06-21T21:08:31Z",
-   "branch": "docs/pm-schedule-table-consolidation-design"
-  },
-  {
-   "number": 1295,
-   "title": "fix(maintenance): PM auto-engine reads live odometer too (#37 part 2a)",
-   "mergedAt": "2026-06-21T20:52:01Z",
-   "branch": "fix/pm-auto-engine-live-odometer"
-  },
-  {
-   "number": 1294,
-   "title": "fix(maintenance): PM countdown reads live odometer, not empty webhook payload (#37)",
-   "mergedAt": "2026-06-21T20:32:51Z",
-   "branch": "fix/pm-countdown-live-odometer"
-  },
-  {
-   "number": 1293,
-   "title": "fix(dispatch): wire real per-load profitability card into LoadDetailDrawer (DISP-PROFIT #3)",
-   "mergedAt": "2026-06-21T19:39:11Z",
-   "branch": "fix/disp-profit-card-wired"
-  },
-  {
-   "number": 1292,
-   "title": "chore(samsara): probe A-vs-B engineStates regression check (#7 disambiguation)",
-   "mergedAt": "2026-06-21T19:31:06Z",
-   "branch": "chore/samsara-odometer-probe-avsb"
-  },
-  {
-   "number": 1291,
-   "title": "fix(insurance): coverage-gap counts UNITS not assets (GUARD #40 / INS-COVERAGE)",
-   "mergedAt": "2026-06-21T19:26:16Z",
-   "branch": "fix/ins-coverage-gap-counts-units"
-  },
-  {
-   "number": 1290,
-   "title": "chore(samsara): probe obdOdometerMeters stats types (FINISH-OPS #7 proof, diagnostic-only)",
-   "mergedAt": "2026-06-21T19:08:01Z",
-   "branch": "chore/samsara-odometer-probe"
-  },
-  {
-   "number": 1289,
-   "title": "[HOLD-FOR-JORGE] telematics: Samsara odometer ingest (Block E #13 / FINISH-OPS #7)",
-   "mergedAt": "2026-06-21T20:17:09Z",
-   "branch": "feat/samsara-odometer-ingest"
-  },
-  {
-   "number": 1288,
-   "title": "docs(insurance): INS-COVERAGE assets-vs-units coverage-gap diagnosis (#22)",
-   "mergedAt": "2026-06-21T18:36:55Z",
-   "branch": "docs/ins-coverage-assets-units-diagnosis"
-  },
-  {
-   "number": 1287,
-   "title": "[HOLD-FOR-JORGE] catalogs: Cargo Claim Reasons (#8) — new table + CRUD + page (FINAL)",
-   "mergedAt": "2026-06-21T17:48:38Z",
-   "branch": "feat/catalog-cargo-claim-reasons"
-  },
-  {
-   "number": 1286,
-   "title": "[HOLD-FOR-JORGE] catalogs: DOT Violation Types (#7) — new table + CRUD + page",
-   "mergedAt": "2026-06-21T17:30:56Z",
-   "branch": "feat/catalog-dot-violation-types"
-  },
-  {
-   "number": 1285,
-   "title": "feat(catalogs): Brokers directory (#3) — filtered view over customer_type='broker'",
-   "mergedAt": "2026-06-21T17:11:20Z",
-   "branch": "feat/catalog-brokers"
-  },
-  {
-   "number": 1284,
-   "title": "feat(catalogs): Termination Reasons catalog (#10) — Owner-gated CRUD + page",
-   "mergedAt": "2026-06-21T16:50:08Z",
-   "branch": "feat/catalog-termination-reasons"
-  },
-  {
-   "number": 1283,
-   "title": "feat(catalogs): Complaint Types catalog (#6) — safety CRUD endpoint + page",
-   "mergedAt": "2026-06-21T16:31:19Z",
-   "branch": "feat/catalog-complaint-types"
-  },
-  {
-   "number": 1282,
-   "title": "feat(catalogs): Load Cancellation Reasons catalog page (#9) — frontend wire-up of existing endpoint",
-   "mergedAt": "2026-06-21T16:11:00Z",
-   "branch": "feat/catalog-load-cancellation-reasons"
-  },
-  {
-   "number": 1281,
-   "title": "[HOLD-FOR-JORGE] gate v2: target-aware ALTER own-new-table neutral",
-   "mergedAt": "2026-06-21T04:31:00Z",
-   "branch": "chore/gate-alter-own-new-table"
-  },
-  {
-   "number": 1280,
-   "title": "fix(catalogs): create mdata.maintenance_services table (services-cata…",
-   "mergedAt": "2026-06-21T04:41:07Z",
-   "branch": "fix/maintenance-services-table"
-  },
-  {
-   "number": 1278,
-   "title": "[HOLD-FOR-JORGE] gate: CREATE-TABLE-only neutral (allow purely-additive new-table migrations)",
-   "mergedAt": "2026-06-21T03:58:16Z",
-   "branch": "chore/gate-create-table-neutral"
-  },
-  {
-   "number": 1277,
-   "title": "docs(catalogs): A1b CATALOG-AUDIT-RUN — lock live classification + finalize A2.. build order",
-   "mergedAt": "2026-06-21T03:31:11Z",
-   "branch": "docs/catalog-audit-run"
-  },
-  {
-   "number": 1276,
-   "title": "docs(catalogs): A1 CATALOG-AUDIT-LIVE — catalog inventory + STUB build-order + read-only auditor",
-   "mergedAt": "2026-06-21T02:52:15Z",
-   "branch": "chore/catalog-audit-live"
-  },
-  {
-   "number": 1275,
-   "title": "fix(drivers): AUTO-01-FOLLOWUP — case-insensitive ?status= on /mdata/drivers",
-   "mergedAt": "2026-06-21T02:28:54Z",
-   "branch": "fix/drivers-status-case-insensitive"
-  },
-  {
-   "number": 1271,
-   "title": "fix(ci): HOLD-MERGE-GATE — block title-blind merge of HOLD/financial PRs",
-   "mergedAt": "2026-06-20T22:33:21Z",
-   "branch": "fix/hold-merge-gate"
-  },
-  {
-   "number": 1270,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-05 (CHAIN-07) — settlements 500 diagnosis + GL tie-out design",
-   "mergedAt": "2026-06-20T21:13:38Z",
-   "branch": "hold/hold-05-chain-07-settlements-tieout"
-  },
-  {
-   "number": 1269,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-04 (CHAIN-06) — Invoice→AR→Receive chain design",
-   "mergedAt": "2026-06-20T21:13:25Z",
-   "branch": "hold/hold-04-chain-06-invoice-ar-receive"
-  },
-  {
-   "number": 1268,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-03 (CHAIN-05) — bank feed categorize→match→post chain design",
-   "mergedAt": "2026-06-20T21:13:10Z",
-   "branch": "hold/hold-03-chain-05-bank-feed-post"
   }
  ],
- "merged_pr_total": 1809,
+ "merged_pr_total": 1835,
  "hold_for_jorge": [
   {
    "number": 1919,
@@ -8829,6 +8829,12 @@
    "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo): close bank_transaction write-back hole (M7 / IMPORT-P0b gap)",
    "mergedAt": "2026-07-04T00:10:16Z",
    "category": "TIER-1 financial"
+  },
+  {
+   "number": 1908,
+   "title": "[HOLD-FOR-JORGE] feat(tasks): Tasks Planner v2 — entity/record links, profiles, alarms, transaction-side completion",
+   "mergedAt": "2026-07-04T00:58:03Z",
+   "category": "HOLD"
   },
   {
    "number": 1897,
