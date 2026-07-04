@@ -16,18 +16,28 @@ Migrate = pass the roster query status into the list surface and gate its empty 
 `useListState(status, isEmpty).isEmpty` (see VendorsListView / VendorListSidebar for the pattern).
 Adding a migrated file to the guard's `MIGRATED` registry then locks it against regression.
 
-## Migrated + locked (6)
-- apps/frontend/src/pages/vendors/VendorsListView.tsx
-- apps/frontend/src/pages/vendors/VendorListSidebar.tsx
-- apps/frontend/src/pages/customers/CustomersListView.tsx
-- apps/frontend/src/pages/customers/CustomerListSidebar.tsx
-- apps/frontend/src/pages/EquipmentTypesPage.tsx        (TBL-STANDARD batch 1, 2026-07-04)
-- apps/frontend/src/pages/DriverLoadStatusesPage.tsx    (TBL-STANDARD batch 1, 2026-07-04)
+## Migrated + locked — 62 surfaces (guard `MIGRATED` array is the source of truth)
+Batch 1 (4, LIST-EMPTY-1) = the vendors/customers roster views. Batch 2 (2026-07-04) migrated the
+remaining 58 offenders across accounting, banking, dispatch, factoring, insurance, legal, maintenance,
+safety, reports, lists, work-orders + the customer/vendor/driver detail pages — every one routed through
+`useListState` and registered in `scripts/verify-list-empty-settled.mjs` (run it for the authoritative list).
 
-> Note: `Vendors.tsx` / `Customers.tsx` still appear below because their *transaction* sub-tables
-> ("No transactions for current filters.") remain bare-length — the roster lists themselves are fixed.
+## Remaining sweep offenders — 8 (deliberately NOT migrated; each justified)
+These 8 do not fit the settled-only recipe and were left as-is on purpose:
+- `accounting/InvoiceCreateModal.tsx` — no query status (fed by `useInvoiceCreateFromLoad {loads,isLoading}`, not a `useQuery`).
+- `accounting/PostingLineagePage.tsx` — not a query race (empty is `useMutation`-driven + null-guarded).
+- `notifications/NotificationCenterPage.tsx` — `useNotifications` exposes only a `loading` bool; empty already `!loading`-guarded.
+- `cash-advances/components/CashAdvancesTable.tsx` — child receives `rows` as a prop, owns no query (needs prop threading).
+- `dispatch/components/LoadTable.tsx` — same (rows-prop child).
+- `drivers/DriversTable.tsx` — same.
+- `driver-finance/components/SettlementsTable.tsx` — same.
+- `safety/components/SafetyEventsTable.tsx` — same.
 
-## Sweep offenders — 65 (as of 2026-07-03)
+> Deferred residual: `DispatchBoard` migrated its owned-query roster empty, but three loads-derived empties
+> there still gate on a `loading` prop from the out-of-scope `DispatchList` parent — threading
+> `ListQueryStatus` there is a future pass (the file no longer shows in the sweep, so it isn't guard-tracked).
+
+## Original sweep offenders — 65 (as of 2026-07-03, historical)
 - apps/frontend/src/pages/CustomerDetail.tsx
 - apps/frontend/src/pages/Customers.tsx
 - apps/frontend/src/pages/DriverDetail.tsx
