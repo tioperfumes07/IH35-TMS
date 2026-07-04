@@ -99,6 +99,9 @@ export function useRateConExtraction({
             mime_type: file.type || "application/pdf",
             size_bytes: file.size,
             sha256_hash: sha,
+            // File under the SAME company the extract step reads from — otherwise a multi-company user's
+            // upload lands under the lowest-UUID accessible company and extract 404s "file_not_found".
+            operating_company_id: operatingCompanyId,
           }),
         );
         const put = await fetch(up.presigned_url, {
