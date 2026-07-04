@@ -82,13 +82,13 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
             <p className="text-lg font-bold text-slate-900">{totalHours.toFixed(1)}</p>
             <p className="text-xs text-gray-500">Total hours</p>
           </div>
-          <div className="rounded-sm bg-amber-50 p-3 text-center">
-            <p className="text-lg font-bold text-amber-800">{billableCount}</p>
-            <p className="text-xs text-amber-600">Billable</p>
+          <div className="rounded-sm bg-slate-100 p-3 text-center">
+            <p className="text-lg font-bold text-slate-700">{billableCount}</p>
+            <p className="text-xs text-slate-700">Billable</p>
           </div>
-          <div className="rounded-sm bg-green-50 p-3 text-center">
-            <p className="text-lg font-bold text-green-800">{perDiemCount}</p>
-            <p className="text-xs text-green-600">Per diem eligible</p>
+          <div className="rounded-sm bg-slate-100 p-3 text-center">
+            <p className="text-lg font-bold text-slate-700">{perDiemCount}</p>
+            <p className="text-xs text-slate-700">Per diem eligible</p>
           </div>
         </div>
       )}
@@ -237,7 +237,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 onClick={() => void toggleVisibility(driver.id, driver.status === "Inactive")}
                 className={`rounded border px-2 py-1 text-xs font-semibold disabled:opacity-50 ${
                   driver.status === "Inactive"
-                    ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    ? "border-slate-300 text-slate-700 hover:bg-slate-100"
                     : "border-slate-300 text-slate-600 hover:bg-slate-50"
                 }`}
                 title={driver.status === "Inactive" ? "Show this driver in dispatch pickers and lists" : "Hide this driver from dispatch pickers and lists (reversible)"}

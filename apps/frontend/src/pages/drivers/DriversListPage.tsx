@@ -11,6 +11,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
 import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
+import { formatDateUS } from "../../lib/formatDate";
 import { DriversTable } from "./DriversTable";
 
 type DriversListPageProps = {
@@ -107,7 +108,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
       };
       const header = ["Last name", "First name", "Hire date", "Termination date", "Pay basis", "Status", "CDL number", "CDL state", "Phone", "Driver ID"];
       const lines = all.drivers.map((d) =>
-        [d.last_name, d.first_name, d.hire_date ?? "", d.termination_date ?? "", d.pay_basis ?? "", d.status ?? "", d.cdl_number ?? "", d.cdl_state ?? "", d.phone ?? "", d.id]
+        [d.last_name, d.first_name, formatDateUS(d.hire_date), formatDateUS(d.termination_date), d.pay_basis ?? "", d.status ?? "", d.cdl_number ?? "", d.cdl_state ?? "", d.phone ?? "", d.id]
           .map(esc)
           .join(",")
       );

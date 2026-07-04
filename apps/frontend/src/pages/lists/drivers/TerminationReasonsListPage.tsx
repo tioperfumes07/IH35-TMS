@@ -38,7 +38,7 @@ function severityBadgeClass(severity: DriverTerminationSeverity) {
     case "severe":
       return "rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
     case "warning":
-      return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+      return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
     default:
       return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   }
@@ -46,7 +46,7 @@ function severityBadgeClass(severity: DriverTerminationSeverity) {
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
+    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
     : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 

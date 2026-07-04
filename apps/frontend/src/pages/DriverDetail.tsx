@@ -746,8 +746,8 @@ export function DriverDetailPage() {
             />
           </div>
           {driver.is_rehire ? (
-            <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              <span className="rounded-sm bg-amber-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>
+            <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-800">
+              <span className="rounded-sm bg-slate-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>
               {driver.prior_driver_id ? (
                 <Link to={`/drivers/${driver.prior_driver_id}`} className="text-xs font-semibold text-slate-700 hover:underline">
                   ← View prior driver record
@@ -837,7 +837,7 @@ export function DriverDetailPage() {
               </Button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Phone login enabled</span>
+                <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">Phone login enabled</span>
                 <Button
                   variant="danger"
                   onClick={() => disablePhoneLoginMutation.mutate()}
@@ -976,7 +976,7 @@ export function DriverDetailPage() {
               <h2 className="text-sm font-semibold text-gray-900">QBO Vendor Linkage</h2>
               <p className="text-xs text-gray-600">
                 Status:{" "}
-                <span className={driver.qbo_vendor_id ? "font-semibold text-emerald-700" : "font-semibold text-amber-700"}>
+                <span className={driver.qbo_vendor_id ? "font-semibold text-slate-700" : "font-semibold text-slate-700"}>
                   {driver.qbo_vendor_id ? "Linked" : "Unlinked"}
                 </span>
               </p>
@@ -1123,7 +1123,7 @@ export function DriverDetailPage() {
                     </span>
                     <span
                       className={`rounded px-2 py-1 text-xs font-semibold ${
-                        qualification.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-200 text-gray-700"
+                        qualification.is_active ? "bg-slate-100 text-slate-700" : "bg-gray-200 text-gray-700"
                       }`}
                     >
                       {qualification.is_active ? "Active" : "Inactive"}
@@ -1259,11 +1259,11 @@ export function DriverDetailPage() {
                     event.event_type === "termination"
                       ? "bg-red-100 text-red-800"
                       : event.event_type === "incident"
-                      ? "bg-amber-100 text-amber-800"
+                      ? "bg-slate-100 text-slate-700"
                       : event.event_type === "complaint"
                       ? "bg-orange-100 text-orange-800"
                       : event.event_type === "commendation"
-                      ? "bg-emerald-100 text-emerald-800"
+                      ? "bg-slate-100 text-slate-700"
                       : "bg-slate-100 text-slate-700";
                   return (
                     <div key={event.id} className={`rounded-sm border p-3 ${isVoided ? "border-gray-300 bg-gray-100" : "border-gray-200 bg-white"}`}>

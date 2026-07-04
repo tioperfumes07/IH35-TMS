@@ -125,9 +125,9 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
             {money(Number(debt?.total_active_debt ?? 0))}
           </div>
         </div>
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
-          <div className="text-[11px] uppercase text-amber-700">Outstanding liabilities</div>
-          <div className="text-lg font-semibold text-amber-900" data-testid="driver-earnings-liabilities-total">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
+          <div className="text-[11px] uppercase text-slate-700">Outstanding liabilities</div>
+          <div className="text-lg font-semibold text-slate-800" data-testid="driver-earnings-liabilities-total">
             {money(totalOutstandingLiabilities)}
           </div>
         </div>
@@ -138,12 +138,12 @@ export function EarningsTab({ driverId, operatingCompanyId }: Props) {
           </div>
           <div className="text-[10px] text-slate-700">{approvedAdvancesForDriver.length} approved advance(s)</div>
         </div>
-        <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3">
-          <div className="text-[11px] uppercase text-emerald-700">Pending ack liabilities</div>
-          <div className="text-lg font-semibold text-emerald-900">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
+          <div className="text-[11px] uppercase text-slate-700">Pending ack liabilities</div>
+          <div className="text-lg font-semibold text-slate-800">
             {money(Number(debt?.pending_ack_total ?? 0))}
           </div>
-          <div className="text-[10px] text-emerald-700">{Number(debt?.pending_ack_count ?? 0)} pending</div>
+          <div className="text-[10px] text-slate-700">{Number(debt?.pending_ack_count ?? 0)} pending</div>
         </div>
       </div>
 

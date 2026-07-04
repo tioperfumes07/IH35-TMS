@@ -90,11 +90,11 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {([
-                ["Will create", s.will_create, "text-emerald-700"],
+                ["Will create", s.will_create, "text-slate-700"],
                 ["Already in roster", s.dup_existing, "text-slate-600"],
-                ["Duplicate in file", s.dup_in_file, "text-amber-700"],
+                ["Duplicate in file", s.dup_in_file, "text-slate-700"],
                 ["Skipped (junk)", s.invalid, "text-slate-500"],
-                ["New w/o phone", s.will_create_no_phone, "text-amber-700"],
+                ["New w/o phone", s.will_create_no_phone, "text-slate-700"],
                 ["Total rows", s.total, "text-slate-900"],
               ] as const).map(([label, n, cls]) => (
                 <div key={label} className="rounded-sm border border-gray-200 p-2">

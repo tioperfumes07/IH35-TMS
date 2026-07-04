@@ -32,7 +32,7 @@ export function OnboardingDocUploadField({
       />
       {uploading ? <p className="text-xs text-slate-500">Uploading via docs module…</p> : null}
       {fileId ? (
-        <p className="text-xs text-green-700">
+        <p className="text-xs text-slate-700">
           Uploaded: {fileName || fileId}
         </p>
       ) : (
