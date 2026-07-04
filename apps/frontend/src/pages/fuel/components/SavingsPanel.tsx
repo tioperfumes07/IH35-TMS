@@ -8,8 +8,8 @@ type Props = {
 
 export function SavingsPanel({ driverSavings, fleetSavings, lostSavings, topDriverName, topDriverAmount }: Props) {
   return (
-    <div className="rounded-sm border border-green-300 bg-white p-3 text-xs">
-      <div className="mb-2 text-sm font-semibold text-green-800">Savings Tracker</div>
+    <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs">
+      <div className="mb-2 text-sm font-semibold text-slate-700">Savings Tracker</div>
       <Row label="Savings YTD (driver)" value={`$${driverSavings.toFixed(2)}`} />
       <Row label="Savings YTD (fleet)" value={`$${fleetSavings.toFixed(2)}`} />
       <Row label="Highest-saver driver" value={`${topDriverName} ($${topDriverAmount.toFixed(2)})`} />

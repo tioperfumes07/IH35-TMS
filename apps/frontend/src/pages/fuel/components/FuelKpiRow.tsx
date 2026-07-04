@@ -6,10 +6,10 @@ type Props = {
 };
 
 function lovesSyncTone(lovesSyncAt: string | null, status?: LovesSyncStatus["status"]) {
-  if (!lovesSyncAt) return status === "error" ? "text-red-700" : "text-amber-700";
+  if (!lovesSyncAt) return status === "error" ? "text-red-700" : "text-slate-700";
   const ageHours = (Date.now() - new Date(lovesSyncAt).getTime()) / 3600000;
   if (status === "error") return "text-red-700";
-  return ageHours > 2 || status === "stale" ? "text-amber-700" : "text-gray-900";
+  return ageHours > 2 || status === "stale" ? "text-slate-700" : "text-gray-900";
 }
 
 function formatLovesSyncLabel(
