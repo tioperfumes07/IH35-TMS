@@ -8,6 +8,7 @@ import {
 } from "../../api/factoring";
 import { BatchDetail } from "./BatchDetail";
 import { Button } from "../../components/Button";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -78,7 +79,14 @@ export function BatchWizard() {
   };
 
   return (
-    <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
+    <div className="space-y-3">
+      <PageHeader
+        backHref="/factoring"
+        breadcrumb={["Factoring", "Batch Wizard"]}
+        title="Factoring Batch Wizard"
+        subtitle="Assemble paid-ready invoices into a factoring batch"
+      />
+      <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {[
           { id: 1, label: "Select invoices" },
@@ -212,6 +220,7 @@ export function BatchWizard() {
           {submittedBatchId && companyId ? <BatchDetail batchId={submittedBatchId} companyId={companyId} /> : null}
         </div>
       ) : null}
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
 } from "../../api/factoring";
 import { listCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -115,6 +116,12 @@ export function FactorAdmin() {
 
   return (
     <div className="space-y-3">
+      <PageHeader
+        backHref="/factoring"
+        breadcrumb={["Factoring", "Factors"]}
+        title="Factor Administration"
+        subtitle="Manage factors, assign customers, and review assignment/batch history"
+      />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-sm font-semibold text-gray-900">Factor Administration</div>

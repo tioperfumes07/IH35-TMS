@@ -7,6 +7,7 @@ import {
   listFactors,
 } from "../../api/factoring";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { PageHeader } from "../../components/layout/PageHeader";
 
 const LOOKAHEAD_WINDOWS = [7, 14, 30, 60] as const;
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -107,7 +108,14 @@ export function ReserveDashboard() {
   };
 
   return (
-    <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
+    <div className="space-y-3">
+      <PageHeader
+        backHref="/factoring"
+        breadcrumb={["Factoring", "Reserves"]}
+        title="Reserve Dashboard"
+        subtitle="Reserve balances, release forecasts, and movement history by factor"
+      />
+      <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <div className="text-xs uppercase tracking-wide text-gray-500">Factor Filter</div>
@@ -271,6 +279,7 @@ export function ReserveDashboard() {
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </div>
   );
