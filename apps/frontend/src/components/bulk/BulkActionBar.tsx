@@ -8,6 +8,8 @@ export type BulkActionItem = {
   destructive?: boolean;
   danger?: boolean;
   disabled?: boolean;
+  /** Native tooltip, e.g. an honest "Coming soon" note on a disabled action. */
+  title?: string;
   /** Permission key checked against bulk role matrix when set. */
   action?: string;
   onClick: () => void;
@@ -81,6 +83,7 @@ export function BulkActionBar({
                 : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
             }
             disabled={applying || action.disabled}
+            title={action.title}
             onClick={action.onClick}
           >
             {action.icon ? <span className="mr-1 inline-flex align-middle">{action.icon}</span> : null}
