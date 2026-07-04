@@ -17,6 +17,18 @@ async function sha256Hex(file: File): Promise<string> {
     .join("");
 }
 
+/** Run one upload/extract step and, on failure, rethrow with the step name prefixed onto the message
+ *  (e.g. "confirm-upload: API request failed with status 404") so the surfaced error pinpoints which of
+ *  the four calls broke — instead of a bare status that could be any of them. */
+async function step<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    const msg = String((e as Error)?.message ?? e);
+    throw new Error(`${label}: ${msg}`);
+  }
+}
+
 /**
  * Single canonical mapping of a thrown extraction error to user-facing copy. Identical for the panel and
  * the drop zone — flag-off, oversized, unconfigured, upstream-failure, and generic. The flag-off case
@@ -79,22 +91,26 @@ export function useRateConExtraction({
       try {
         setPhase("uploading");
         const sha = await sha256Hex(file);
-        const up = await requestUploadUrl({
-          original_filename: file.name,
-          mime_type: file.type || "application/pdf",
-          size_bytes: file.size,
-          sha256_hash: sha,
-        });
+        // Tag each step so a failure names WHICH call broke (upload-url / R2 PUT / confirm / extract)
+        // instead of a bare "status 404" that could be any of them. Surfaces via the raw-reason fallback.
+        const up = await step("request-upload-url", () =>
+          requestUploadUrl({
+            original_filename: file.name,
+            mime_type: file.type || "application/pdf",
+            size_bytes: file.size,
+            sha256_hash: sha,
+          }),
+        );
         const put = await fetch(up.presigned_url, {
           method: "PUT",
           body: file,
           headers: { "content-type": file.type || "application/pdf" },
         });
         if (!put.ok) throw new Error(`upload_failed_${put.status}`);
-        await confirmUpload(up.file_id);
+        await step("confirm-upload", () => confirmUpload(up.file_id));
 
         setPhase("extracting");
-        const res = await extractRateCon(operatingCompanyId, up.file_id);
+        const res = await step("extract", () => extractRateCon(operatingCompanyId, up.file_id));
         setResult(res);
         setPhase("done");
         onPrefill(rateConExtractionToPrefill(res.extraction), res);
