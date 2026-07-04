@@ -20,7 +20,7 @@ function LocationCell({ loc }: { loc: UnitLiveLocation | null }) {
   const place = [loc.city, loc.state].filter(Boolean).join(", ") || loc.formatted || "Unknown";
   return (
     <span title={loc.formatted ?? undefined}>
-      {loc.stale ? <span className="mr-1 text-amber-500" title={`stale · last fix ${loc.captured_at_ct}`}>●</span> : null}
+      {loc.stale ? <span className="mr-1 text-slate-700" title={`stale · last fix ${loc.captured_at_ct}`}>●</span> : null}
       {place}
       <span className="ml-1 text-[10px] text-gray-400">· as of {loc.captured_at_ct}</span>
     </span>
@@ -47,7 +47,7 @@ export function UnitsWithoutLoadTable({ rows, onRowClick }: Props) {
               <td className="px-2 py-1"><LocationCell loc={row.location} /></td>
               <td className="px-2 py-1">
                 {row.last_drop_at ? new Date(row.last_drop_at).toLocaleString() : "No prior drop"} ·
-                <span className="ml-1 text-amber-700">Need Load</span>
+                <span className="ml-1 text-slate-700">Need Load</span>
               </td>
               <td className={`px-2 py-1 ${idleClass(row.hours_since_last_delivery)}`}>
                 {row.hours_since_last_delivery ?? "-"}

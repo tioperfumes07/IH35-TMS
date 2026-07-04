@@ -97,7 +97,7 @@ export function DispatchAlertsPage() {
   return (
     <div className="space-y-4" data-testid="dispatch-alerts-page">
       <PageHeader title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
-      {!companyId ? <p className="text-sm text-amber-800">Select an operating company to load counts.</p> : null}
+      {!companyId ? <p className="text-sm text-slate-700">Select an operating company to load counts.</p> : null}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (
           <Link

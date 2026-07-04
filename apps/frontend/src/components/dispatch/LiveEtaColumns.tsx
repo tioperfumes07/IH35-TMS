@@ -31,9 +31,9 @@ function pwaPingLabel(lastPingAt: string | null): string {
 
 function pwaPingClass(lastPingAt: string | null): string {
   const label = pwaPingLabel(lastPingAt);
-  if (label === "Online") return "bg-emerald-100 text-emerald-800";
+  if (label === "Online") return "bg-slate-100 text-slate-700";
   if (label === "Recent") return "bg-slate-100 text-slate-700";
-  if (label === "Stale") return "bg-amber-100 text-amber-800";
+  if (label === "Stale") return "bg-slate-100 text-slate-700";
   return "bg-gray-100 text-gray-600";
 }
 
@@ -45,8 +45,8 @@ function formatEtaTime(etaAt: string | null): string {
 }
 
 function onTimeClass(prediction: DispatchLoadRow["on_time_prediction"]): string {
-  if (prediction === "green") return "bg-emerald-100 text-emerald-800";
-  if (prediction === "amber") return "bg-amber-100 text-amber-800";
+  if (prediction === "green") return "bg-slate-100 text-slate-700";
+  if (prediction === "amber") return "bg-slate-100 text-slate-700";
   if (prediction === "red") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-500";
 }

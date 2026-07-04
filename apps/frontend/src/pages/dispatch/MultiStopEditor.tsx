@@ -281,8 +281,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
         </SortableContext>
       </DndContext>
       <Button type="button" size="sm" variant="secondary" onClick={addStop}>
-        + Add stop
-      </Button>
+        + Create stop      </Button>
       <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs text-gray-700">
         Est. leg miles: ~{totals.dist} · Est. hours: ~{totals.hrs.toFixed(1)}
       </div>

@@ -27,13 +27,13 @@ const lifecycleLabel: Record<DispatchLifecycleStage, string> = {
 
 function lifecycleClass(lifecycle: DispatchLifecycleStage) {
   if (lifecycle === "accident" || lifecycle === "breakdown") return "border-red-500 bg-red-100 text-red-700";
-  if (lifecycle === "no_gps" || lifecycle === "detention") return "border-amber-500 bg-amber-100 text-amber-700";
+  if (lifecycle === "no_gps" || lifecycle === "detention") return "border-slate-200 bg-slate-100 text-slate-700";
   return "border-slate-300 bg-slate-100 text-slate-700";
 }
 
 function etaClass(confidence?: DispatchConfidenceClass | null) {
-  if (confidence === "on_time") return "text-green-700";
-  if (confidence === "tight") return "text-amber-700";
+  if (confidence === "on_time") return "text-slate-700";
+  if (confidence === "tight") return "text-slate-700";
   return "text-red-700";
 }
 

@@ -30,7 +30,7 @@ export function MultiStopExtraRateEditor({ control, register, stopIndex }: Props
             })
           }
         >
-          + Add extra rate
+          + Create extra rate
         </button>
       </div>
       {fields.length === 0 ? <p className="text-[10px] text-gray-500">No extra rates for this stop.</p> : null}

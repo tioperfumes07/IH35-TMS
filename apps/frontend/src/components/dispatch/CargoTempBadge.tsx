@@ -19,8 +19,8 @@ type CargoTimelineResponse = {
 
 function statusClass(status: "green" | "amber" | "red") {
   if (status === "red") return "bg-red-100 text-red-800";
-  if (status === "amber") return "bg-amber-100 text-amber-800";
-  return "bg-emerald-100 text-emerald-800";
+  if (status === "amber") return "bg-slate-100 text-slate-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 function statusLabel(status: "green" | "amber" | "red") {

@@ -9,8 +9,8 @@ type Props = {
 };
 
 function progressPill(progress: DispatchLoadRow["progress_status"]) {
-  if (progress === "early" || progress === "on_track") return "bg-emerald-100 text-emerald-800";
-  if (progress === "behind") return "bg-amber-100 text-amber-800";
+  if (progress === "early" || progress === "on_track") return "bg-slate-100 text-slate-700";
+  if (progress === "behind") return "bg-slate-100 text-slate-700";
   if (progress === "delayed") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-700";
 }
@@ -66,7 +66,7 @@ export function LoadCard({ load, hasActiveGeofenceBreach = false, onClick }: Pro
               event.stopPropagation();
               onClick(load.id);
             }}
-            className={`rounded-sm px-1 py-0.5 ${load.geofence_ready ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-600"}`}
+            className={`rounded-sm px-1 py-0.5 ${load.geofence_ready ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
           >
             🗺️
           </button>

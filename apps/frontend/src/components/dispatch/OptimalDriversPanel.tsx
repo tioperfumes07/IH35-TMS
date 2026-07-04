@@ -113,7 +113,7 @@ export function OptimalDriversPanel({
                   <span className="font-mono text-[11px] text-slate-700">{fmtScore(d.total_score)} pts</span>
                 </span>
                 <span className="text-[10px] text-slate-500">{breakdownLabel(d)}</span>
-                {d.ineligible_reason ? <span className="text-[10px] text-amber-700">{d.ineligible_reason}</span> : null}
+                {d.ineligible_reason ? <span className="text-[10px] text-slate-700">{d.ineligible_reason}</span> : null}
               </button>
             </li>
           );
@@ -121,7 +121,7 @@ export function OptimalDriversPanel({
       </ul>
 
       {showOverrideWarning ? (
-        <div className="rounded-sm border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-[11px] text-slate-700">
           Selected driver is not the top-ranked suggestion. Enable <strong>Manual override</strong> to confirm a non-optimal pick.
         </div>
       ) : null}

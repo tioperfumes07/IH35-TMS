@@ -762,7 +762,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             ) : watchedTripType === "TR" || watchedTripType === "SB" ? (
               <p className="mt-1 text-[11px] text-gray-600">Part of this unit's tour — follows its most recent Northbound leg (joined automatically).</p>
             ) : null}
-            <p className="mt-1 rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-[10.5px] text-amber-800">
+            <p className="mt-1 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-[10.5px] text-slate-700">
               Every load must be classified NB, TR, or SB. NB starts a tour; TR/SB join it; the settlement closes when the SB leg returns to Laredo.
             </p>
           </div>
@@ -771,7 +771,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             <div
               className={`mx-3 mt-2 rounded border px-3 py-2 text-xs ${
                 gateBanner.type === "advisory"
-                  ? "border-amber-300 bg-amber-50 text-amber-900"
+                  ? "border-slate-200 bg-slate-100 text-slate-700"
                   : "border-red-300 bg-red-50 text-red-900"
               }`}
             >

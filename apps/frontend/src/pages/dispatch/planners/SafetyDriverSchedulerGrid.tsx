@@ -9,8 +9,8 @@ import type { PlannerRange } from "./planner-range";
 import { listPlannerDays } from "./planner-range";
 
 function leaveCellClass(leaveType: string | undefined): string {
-  if (leaveType === "vacation") return "bg-emerald-100";
-  if (leaveType === "sick") return "bg-yellow-100";
+  if (leaveType === "vacation") return "bg-slate-100";
+  if (leaveType === "sick") return "bg-slate-100";
   if (leaveType === "personal") return "bg-orange-100";
   if (leaveType === "wfh") return "bg-slate-100";
   return "bg-white";
@@ -85,7 +85,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
       </div>
 
       {query.data.pending_requests?.length ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
           <div className="font-semibold">Pending in this window</div>
           <ul className="list-inside list-disc">
             {query.data.pending_requests.map((p) => (

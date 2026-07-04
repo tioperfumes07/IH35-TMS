@@ -198,17 +198,17 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
       {/* render-v6 §C stop-add buttons. */}
       <div className="flex flex-wrap gap-3">
         <button type="button" className="text-xs font-semibold text-[#16203a] hover:underline" onClick={() => append(newStop("pickup", fields.length + 1))}>
-          + Add pickup
+          + Create pickup
         </button>
         <button type="button" className="text-xs font-semibold text-[#16203a] hover:underline" onClick={() => append(newStop("delivery", fields.length + 1))}>
-          + Add delivery
+          + Create delivery
         </button>
         <button
           type="button"
           className="text-xs font-semibold text-[#16203a] hover:underline"
           onClick={() => append(newStop(fields.length % 2 === 0 ? "pickup" : "delivery", fields.length + 1))}
         >
-          + Add stop · multi-leg
+          + Create stop · multi-leg
         </button>
       </div>
     </section>

@@ -58,15 +58,15 @@ type RowOverride = {
 
 function statusVariant(status: DispatchLoadRow["status"]) {
   if (status === "cancelled") return "bg-red-100 text-red-700";
-  if (status === "delivered") return "bg-emerald-100 text-emerald-700";
+  if (status === "delivered") return "bg-slate-100 text-slate-700";
   if (status === "in_transit" || status === "at_pickup" || status === "at_delivery") return "bg-slate-100 text-slate-700";
   if (status === "closed" || status === "paid" || status === "invoiced") return "bg-gray-200 text-gray-700";
-  return "bg-amber-100 text-amber-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 function progressPill(progress?: DispatchLoadRow["progress_status"]) {
-  if (progress === "early" || progress === "on_track") return "bg-emerald-100 text-emerald-800";
-  if (progress === "behind") return "bg-amber-100 text-amber-800";
+  if (progress === "early" || progress === "on_track") return "bg-slate-100 text-slate-700";
+  if (progress === "behind") return "bg-slate-100 text-slate-700";
   if (progress === "delayed") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-700";
 }
@@ -355,17 +355,17 @@ export function DispatchList({
                     <td className="px-3 py-2">{new Date(load.created_at).toLocaleDateString()}</td>
                   </tr>
                   {showPreSettlementPrompt && openPreSettlement ? (
-                    <tr className="border-b border-amber-100 bg-amber-50">
+                    <tr className="border-b border-slate-200 bg-slate-100">
                       <td colSpan={colSpan} className="px-3 py-1.5">
-                        <div className="flex items-center gap-2 text-xs text-amber-900">
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
                           <span className="font-semibold">⚠ Driver has open pre-settlement</span>
                           {openPreSettlement.settlement_number ? (
-                            <span className="font-mono text-amber-700">{openPreSettlement.settlement_number}</span>
+                            <span className="font-mono text-slate-700">{openPreSettlement.settlement_number}</span>
                           ) : null}
-                          <span className="text-amber-600">· add this load to it?</span>
+                          <span className="text-slate-700">· add this load to it?</span>
                           <button
                             type="button"
-                            className="rounded-sm bg-amber-300 px-2 py-0.5 text-xs font-semibold text-amber-900 hover:bg-amber-400"
+                            className="rounded-sm bg-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-300"
                             onClick={(event) => {
                               event.stopPropagation();
                               onAddToPreSettlement?.(

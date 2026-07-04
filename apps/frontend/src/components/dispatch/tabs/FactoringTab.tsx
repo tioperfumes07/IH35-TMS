@@ -110,9 +110,9 @@ const STAGE_LABELS: Record<FactoringStage, string> = {
 const STAGE_COLORS: Record<FactoringStage, string> = {
   NOT_FACTORED: "bg-gray-100 text-gray-600 border-gray-200",
   PACKET_READY: "bg-slate-100 text-slate-700 border-slate-300",
-  SUBMITTED: "bg-amber-50 text-amber-700 border-amber-200",
-  ADVANCE_RECEIVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  RESERVE_RELEASED: "bg-green-100 text-green-800 border-green-200",
+  SUBMITTED: "bg-slate-100 text-slate-700 border-slate-200",
+  ADVANCE_RECEIVED: "bg-slate-100 text-slate-700 border-slate-200",
+  RESERVE_RELEASED: "bg-slate-100 text-slate-700 border-slate-200",
   CHARGED_BACK: "bg-red-50 text-red-700 border-red-200",
 };
 
@@ -121,7 +121,7 @@ const STAGE_COLORS: Record<FactoringStage, string> = {
 function CheckItem({ label, ok, note }: { label: string; ok: boolean; note?: string }) {
   return (
     <div className="flex items-start gap-2 text-sm">
-      <span className={`mt-0.5 text-base leading-none ${ok ? "text-emerald-600" : "text-gray-300"}`}>
+      <span className={`mt-0.5 text-base leading-none ${ok ? "text-slate-700" : "text-gray-300"}`}>
         {ok ? "✓" : "○"}
       </span>
       <div>
@@ -373,7 +373,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           ) : null}
         </div>
         {!isDeliverable ? (
-          <p className="mt-2 text-[11px] text-amber-700">
+          <p className="mt-2 text-[11px] text-slate-700">
             Packet assembles once load status is delivered or later.
           </p>
         ) : null}
@@ -420,8 +420,8 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
           {/* Stage: PACKET_READY → dispatcher approves */}
           {stage === "PACKET_READY" && !meta.approved_at && (
-            <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
-              <p className="mb-2 text-xs font-medium text-amber-900">
+            <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
+              <p className="mb-2 text-xs font-medium text-slate-700">
                 Dispatcher approval required before submitting to FARO.
               </p>
               <Button
@@ -436,8 +436,8 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
           {/* Stage: PACKET_READY + approved → submit to FARO */}
           {stage === "PACKET_READY" && meta.approved_at && !submitOpen && (
-            <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3">
-              <p className="mb-2 text-xs text-emerald-800">
+            <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
+              <p className="mb-2 text-xs text-slate-700">
                 Packet approved on {new Date(meta.approved_at).toLocaleString()}. Ready to submit to FARO.
               </p>
               <Button
@@ -448,7 +448,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                 Submit to FARO
               </Button>
               {linkedInvoice && !candidateIds.has(linkedInvoice.id) ? (
-                <p className="mt-1 text-[11px] text-amber-700">Invoice may already be in a batch or already factored.</p>
+                <p className="mt-1 text-[11px] text-slate-700">Invoice may already be in a batch or already factored.</p>
               ) : null}
             </div>
           )}

@@ -64,7 +64,7 @@ function QueueRow({
       <td className="px-3 py-2">
         {item.status === "ready_review" ? <ExtractedSummary item={item} /> : null}
         {item.status === "pending_ocr" || item.status === "processing" ? (
-          <span className="text-xs text-amber-800">OCR processing…</span>
+          <span className="text-xs text-slate-700">OCR processing…</span>
         ) : null}
       </td>
       <td className="px-3 py-2">

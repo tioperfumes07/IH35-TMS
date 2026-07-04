@@ -136,11 +136,11 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
         />
         {needsApproval ? (
           ownerInlineApprove ? (
-            <div className="rounded-sm border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+            <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
               As Owner, confirming will approve &amp; cancel this load immediately.
             </div>
           ) : (
-            <div className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+            <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
               This will be submitted for Owner approval; the load isn&apos;t cancelled until an Owner approves.
             </div>
           )
