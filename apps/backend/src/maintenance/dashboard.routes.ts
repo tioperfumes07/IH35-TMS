@@ -57,8 +57,41 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     const companyId = parsed.data.operating_company_id;
 
     const rows = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "views.maintenance_severe_repair_alerts"))) return [];
-      const res = await client.query(`SELECT * FROM views.maintenance_severe_repair_alerts LIMIT 50`);
+      if (!(await relationExists(client, "maintenance.work_orders"))) return [];
+      // XE-SCOPE: views.maintenance_severe_repair_alerts (0041) has NO company column and runs under
+      // role-based RLS, so a plain `SELECT * FROM views.maintenance_severe_repair_alerts` BLENDS
+      // TRANSP+TRK+USMCA repair alerts for a multi-entity Owner. We reproduce the view's exact
+      // SELECT/joins/filter/order against the base tables and pin it to the viewed operating company
+      // via w.operating_company_id = $1. Column shape is byte-for-byte the view's resolved output for
+      // this schema: assigned_vendor=w.vendor_id::text (no assigned_vendor col; vendor_id exists, 0146),
+      // total_estimated_cost=w.total_actual_cost::numeric (no total_estimated_cost col; 0049),
+      // severity=w.severity (0095). A WO from another entity can never surface here now.
+      const res = await client.query(
+        `
+          SELECT
+            w.id,
+            COALESCE(w.display_id, w.id::text) AS wo_display_id,
+            w.unit_id,
+            w.opened_at,
+            w.repair_location,
+            w.vendor_id::text AS assigned_vendor,
+            w.total_actual_cost::numeric AS total_estimated_cost,
+            w.severity AS severity,
+            w.status,
+            COALESCE(u.unit_number, '') AS unit_display_id
+          FROM maintenance.work_orders w
+          JOIN mdata.units u ON u.id = w.unit_id
+          WHERE w.operating_company_id = $1::uuid
+            AND w.status NOT IN ('complete', 'cancelled')
+            AND (
+              w.severity = 'severe'
+              OR (w.status = 'waiting_parts' AND w.opened_at < now() - INTERVAL '5 days')
+            )
+          ORDER BY w.severity DESC NULLS LAST
+          LIMIT 50
+        `,
+        [companyId]
+      );
       return res.rows;
     });
     return { alerts: rows };
