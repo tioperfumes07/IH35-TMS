@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,9 +30,16 @@ export function ManualJEListPage() {
   const [toDate, setToDate] = useState("");
   const [accountId, setAccountId] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 200;
+
+  // Reset to the first page whenever a filter changes so offset paging stays coherent.
+  useEffect(() => {
+    setPage(0);
+  }, [status, source, fromDate, toDate, accountId]);
 
   const entriesQuery = useQuery({
-    queryKey: ["journal-entries", companyId, status, source, fromDate, toDate, accountId],
+    queryKey: ["journal-entries", companyId, status, source, fromDate, toDate, accountId, page],
     queryFn: () =>
       listJournalEntries(companyId, {
         status: status === "all" ? undefined : status,
@@ -40,10 +47,14 @@ export function ManualJEListPage() {
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
         account_id: accountId || undefined,
-        limit: 200,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
       }),
     enabled: Boolean(companyId),
   });
+
+  const pageRows = entriesQuery.data?.journal_entries ?? [];
+  const hasNextPage = pageRows.length === PAGE_SIZE;
 
   const voidMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidJournalEntry(id, companyId, reason),
@@ -133,6 +144,23 @@ export function ManualJEListPage() {
           </tbody>
         </table>
       </div>
+
+      <div className="flex items-center justify-between gap-2 text-xs text-gray-600">
+        <span>
+          Showing {pageRows.length === 0 ? 0 : page * PAGE_SIZE + 1}
+          {pageRows.length > 0 ? `–${page * PAGE_SIZE + pageRows.length}` : ""}
+        </span>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="secondary" disabled={page === 0 || entriesQuery.isFetching} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+            ← Prev
+          </Button>
+          <span>Page {page + 1}</span>
+          <Button size="sm" variant="secondary" disabled={!hasNextPage || entriesQuery.isFetching} onClick={() => setPage((p) => p + 1)}>
+            Next →
+          </Button>
+        </div>
+      </div>
+
       {companyId ? (
         <ManualJEModal
           open={createOpen}
