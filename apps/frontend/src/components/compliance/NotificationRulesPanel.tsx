@@ -23,6 +23,7 @@ export function NotificationRulesPanel({ rules, onCreate, onArchive }: Props) {
           Create Rule
         </button>
       </div>
+      <div className="overflow-x-auto">
       <table className="min-w-full border text-sm">
         <thead>
           <tr className="bg-slate-100 text-left">
@@ -51,6 +52,7 @@ export function NotificationRulesPanel({ rules, onCreate, onArchive }: Props) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
