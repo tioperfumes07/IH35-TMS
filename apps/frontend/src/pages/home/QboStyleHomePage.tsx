@@ -130,7 +130,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <button
             type="button"
             disabled
-            title="Coming soon"
+            title="Not yet available"
             className="rounded-sm px-2 py-1 text-gray-300 cursor-not-allowed"
           >
             Customize
@@ -138,7 +138,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <button
             type="button"
             disabled
-            title="Coming soon"
+            title="Not yet available"
             className="rounded-sm px-2 py-1 text-gray-300 cursor-not-allowed"
           >
             Privacy
