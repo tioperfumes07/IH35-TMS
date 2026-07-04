@@ -224,8 +224,8 @@ export function LegalContractInstancesPage() {
           <Button
             size="sm"
             variant="secondary"
-            disabled={selectedRows.length === 0}
-            onClick={() => pushToast("Void action wiring is queued for legal workflow PR5.", "info")}
+            disabled
+            title="Coming soon — bulk void is not yet wired to a backend endpoint"
           >
             Void
           </Button>
