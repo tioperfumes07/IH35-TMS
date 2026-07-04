@@ -89,6 +89,10 @@ export function VendorsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  // V8 — roster-level Category filter for the LEFT vendor list (distinct from the transaction
+  // filter box below, which scopes the SELECTED vendor's bills). Options are built dynamically
+  // from the categories actually present, so the dropdown never shows a category no vendor uses.
+  const [rosterCategory, setRosterCategory] = useState("");
   const [showFilterBox, setShowFilterBox] = useState(false);
   const [showColumnChooser, setShowColumnChooser] = useState(false);
   const [pageSize, setPageSize] = useState(50);
@@ -125,11 +129,23 @@ export function VendorsPage() {
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
   const visibleVendors = useMemo(() => {
-    const all = vendorsQuery.data ?? [];
-    if (listStatus === "all") return all;
-    if (listStatus === "inactive") return all.filter((vendor) => vendor.deactivated_at != null);
-    return all.filter((vendor) => vendor.deactivated_at == null);
-  }, [vendorsQuery.data, listStatus]);
+    let all = vendorsQuery.data ?? [];
+    if (listStatus === "inactive") all = all.filter((vendor) => vendor.deactivated_at != null);
+    else if (listStatus !== "all") all = all.filter((vendor) => vendor.deactivated_at == null);
+    // V8 roster filter — applied here so the sidebar + count + selection stay in sync.
+    if (rosterCategory) all = all.filter((vendor) => (vendor.vendor_category ?? "") === rosterCategory);
+    return all;
+  }, [vendorsQuery.data, listStatus, rosterCategory]);
+
+  // V8 — distinct categories present across the full roster (before the category filter), sorted.
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const vendor of vendorsQuery.data ?? []) {
+      const c = (vendor.vendor_category ?? "").trim();
+      if (c) set.add(c);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [vendorsQuery.data]);
 
   const vendorsSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -212,7 +228,7 @@ export function VendorsPage() {
 
   useEffect(() => {
     setSidebarPage(1);
-  }, [search, sortByName, sidebarPageSize, companyId]);
+  }, [search, sortByName, sidebarPageSize, companyId, rosterCategory]);
 
   // AUTO-13: honest error state instead of a blank list when the vendors fetch 500s.
   if (vendorsQuery.isError) {
@@ -258,6 +274,22 @@ export function VendorsPage() {
                 </button>
               ))}
             </div>
+            {/* V8 — roster Category filter (filters the left vendor list, not transactions). */}
+            {categoryOptions.length > 0 ? (
+              <SelectCombobox
+                value={rosterCategory}
+                onChange={(event) => setRosterCategory(event.target.value)}
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                aria-label="Filter vendors by category"
+              >
+                <option value="">All categories</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </SelectCombobox>
+            ) : null}
             <ActionButton onClick={() => setCreateOpen(true)}>
               + Create Vendor
             </ActionButton>
