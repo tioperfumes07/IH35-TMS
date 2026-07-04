@@ -135,6 +135,7 @@ export function AccountingAuditTrailPage() {
         {eventQuery.isLoading ? <div className="p-3 text-sm text-slate-500">Loading audit trail…</div> : null}
         {!eventQuery.isLoading && events.length === 0 ? <div className="p-3 text-sm text-slate-500">No audit events found.</div> : null}
         {events.length > 0 ? (
+          <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
               <tr>
@@ -218,6 +219,7 @@ export function AccountingAuditTrailPage() {
               ))}
             </tbody>
           </table>
+          </div>
         ) : null}
         {eventQuery.hasNextPage ? (
           <div className="border-t border-slate-200 px-3 py-2">
@@ -236,6 +238,7 @@ export function AccountingAuditTrailPage() {
           {lineageMut.isPending ? <div className="text-xs text-slate-500">Loading lineage…</div> : null}
           {lineageRows && lineageRows.length === 0 ? <div className="text-xs text-slate-500">No lineage rows found.</div> : null}
           {lineageRows && lineageRows.length > 0 ? (
+            <div className="overflow-x-auto">
             <table className="min-w-full text-left text-xs">
               <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
                 <tr>
@@ -264,6 +267,7 @@ export function AccountingAuditTrailPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           ) : null}
         </div>
       ) : null}
