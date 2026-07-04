@@ -7,6 +7,7 @@ import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
   operatingCompanyId?: string;
@@ -134,7 +135,7 @@ function ClaimRow({ claim }: { claim: InsuranceClaim }) {
           "-"
         )}
       </td>
-      <td className="px-2 py-1.5 text-gray-700">{claim.accident_date}</td>
+      <td className="px-2 py-1.5 text-gray-700">{formatDateUS(claim.accident_date)}</td>
       <td className="px-2 py-1.5 text-gray-700">{formatMoney(claim.amount_claimed_cents)}</td>
       <td className="px-2 py-1.5 text-gray-700">{formatMoney(claim.amount_paid_cents)}</td>
     </tr>

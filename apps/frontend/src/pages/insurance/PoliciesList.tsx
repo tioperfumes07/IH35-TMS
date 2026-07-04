@@ -13,6 +13,7 @@ import { DataTable } from "../../components/DataTable";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
 import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
+import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function formatMoney(cents: number) {
@@ -27,8 +28,8 @@ function daysUntil(value: string) {
 }
 
 function statusBadge(status: InsurancePolicyStatus) {
-  if (status === "active") return "bg-emerald-50 text-emerald-700";
-  if (status === "pending") return "bg-amber-50 text-amber-800";
+  if (status === "active") return "bg-slate-100 text-slate-700";
+  if (status === "pending") return "bg-slate-100 text-slate-700";
   if (status === "expired") return "bg-slate-100 text-slate-700";
   return "bg-red-50 text-red-700";
 }
@@ -81,8 +82,8 @@ export function PoliciesList() {
     { key: "insurer_name", label: "Insurer", sortable: true },
     { key: "coverage_type", label: "Type", sortable: true },
     { key: "total_premium_cents", label: "Coverage Amount", sortable: true, numeric: true, render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
-    { key: "effective_date", label: "Effective Date", sortable: true, align: "right" as const },
-    { key: "expiry_date", label: "Expiry Date", sortable: true, align: "right" as const },
+    { key: "effective_date", label: "Effective Date", sortable: true, align: "right" as const, render: (p: InsurancePolicy) => formatDateUS(p.effective_date) },
+    { key: "expiry_date", label: "Expiry Date", sortable: true, align: "right" as const, render: (p: InsurancePolicy) => formatDateUS(p.expiry_date) },
     { key: "status", label: "Status", sortable: true, render: (p: InsurancePolicy) => (
       <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${statusBadge(p.status)}`}>{p.status}</span>
     ) },

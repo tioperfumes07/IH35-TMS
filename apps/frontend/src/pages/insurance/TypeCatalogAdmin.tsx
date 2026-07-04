@@ -237,7 +237,7 @@ export function TypeCatalogAdmin() {
                         Active
                       </label>
                     ) : row.active ? (
-                      <span className="rounded-sm bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">active</span>
+                      <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">active</span>
                     ) : (
                       <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">inactive</span>
                     )}
