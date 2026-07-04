@@ -113,7 +113,7 @@ function PasswordChecklist({ password }: { password: string }) {
       {PASSWORD_CHECKLIST.map((item) => {
         const met = item.test(password);
         return (
-          <li key={item.key} className={met ? "text-green-700" : "text-gray-500"}>
+          <li key={item.key} className={met ? "text-slate-700" : "text-gray-500"}>
             {met ? "✓" : "○"} {item.label}
           </li>
         );
@@ -607,14 +607,14 @@ export function UsersPage() {
               />
               <PasswordChecklist password={inviteInitialPassword} />
               {!invitePasswordReady ? (
-                <p className="mt-1 text-xs text-amber-700">{OFFICE_PASSWORD_HINT}</p>
+                <p className="mt-1 text-xs text-slate-700">{OFFICE_PASSWORD_HINT}</p>
               ) : null}
             </div>
           ) : null}
           {checkingReturningDispatcher ? <div className="text-xs text-gray-500">Checking returning dispatcher history...</div> : null}
           {returningDetection ? (
-            <div ref={returningWarningRef} className="rounded-sm border-2 border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
-              <p className="flex items-center gap-1.5 font-semibold text-amber-800">
+            <div ref={returningWarningRef} className="rounded-sm border-2 border-slate-400 bg-slate-100 p-3 text-xs text-slate-700">
+              <p className="flex items-center gap-1.5 font-semibold text-slate-700">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 Returning dispatcher detected — review required
               </p>

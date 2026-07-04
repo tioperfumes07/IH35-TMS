@@ -13,6 +13,7 @@ import {
   type DispatcherSafetyEvent,
 } from "../api/identity";
 import { listCustomers, listDrivers } from "../api/mdata";
+import { formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { MoneyInput } from "../components/forms/MoneyInput";
@@ -339,7 +340,7 @@ export function UserDetailPage() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{event.event_date}</span>
+                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{formatDateUS(event.event_date)}</span>
                     <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs capitalize">{eventTypeLabel(event.event_type)}</span>
                     <StatusBadge status={event.severity} />
                   </div>
