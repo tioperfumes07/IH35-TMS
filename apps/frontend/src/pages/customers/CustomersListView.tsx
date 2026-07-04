@@ -136,6 +136,57 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
 
   const selectedIds = () => Array.from(selection.selectedIds);
 
+  // Export Selected → real client-side CSV download of the chosen customer rows
+  // (mirrors the Blob/anchor pattern used in the driver/audit exports). No backend call.
+  const exportSelectedCsv = () => {
+    const ids = selection.selectedIds;
+    const rows = customers.filter((c) => ids.has(c.id));
+    if (rows.length === 0) {
+      pushToast("Select at least one customer to export.", "info");
+      return;
+    }
+    const headers = [
+      "Name",
+      "Customer Code",
+      "Email",
+      "Phone",
+      "Billing State",
+      "Open Balance",
+      "FMCSA Verified",
+      "Health Tier",
+      "Quality Flag",
+      "Last Activity",
+      "Created",
+    ];
+    const cell = (v: string | number | null | undefined) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = rows.map((c) =>
+      [
+        c.name,
+        c.customer_code ?? "",
+        c.email ?? "",
+        c.phone ?? "",
+        c.billing_state ?? "",
+        fmtMoney(openByCustomerId.get(c.id) ?? 0),
+        c.fmcsa_verified_at ? "Yes" : "No",
+        relationshipTierBadge(c.relationship_health_tier).label,
+        qualityBadge(c).label,
+        c.updated_at ? new Date(c.updated_at).toLocaleDateString() : "",
+        c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+      ]
+        .map(cell)
+        .join(",")
+    );
+    const csv = [headers.map(cell).join(","), ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `customers-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    pushToast(`Exported ${rows.length} customer(s) to CSV.`, "success");
+  };
+
   const filterChips: Array<{ id: FilterChip; label: string }> = [
     { id: "all", label: "All" },
     { id: "late_pay", label: "Late-pay" },
@@ -219,9 +270,23 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                   reason: "Bulk deactivate from list view",
                 }),
             },
-            { id: "export", label: "Export CSV", onClick: () => pushToast(`Export queued for ${selection.count} customer(s).`, "success") },
-            { id: "statement", label: "Send Statement", onClick: () => pushToast(`Statement batch queued for ${selection.count} customer(s).`, "success") },
-            { id: "fmcsa", label: "Verify FMCSA", onClick: () => pushToast(`FMCSA refresh queued for ${selection.count} customer(s).`, "success") },
+            { id: "export", label: "Export CSV", onClick: exportSelectedCsv },
+            // No bulk statement-batch endpoint exists yet — honestly disabled instead of a fake success toast.
+            {
+              id: "statement",
+              label: "Send Statement",
+              disabled: true,
+              title: "Coming soon — needs a customer statement-batch endpoint",
+              onClick: () => pushToast("Statement batches are not available yet.", "info"),
+            },
+            // No bulk FMCSA endpoint — FMCSA is verified per-customer on the detail page. Honestly disabled.
+            {
+              id: "fmcsa",
+              label: "Verify FMCSA",
+              disabled: true,
+              title: "Coming soon — verify FMCSA per customer on the detail page",
+              onClick: () => pushToast("Bulk FMCSA verification is not available yet — open a customer to verify.", "info"),
+            },
           ],
           bulkMutation.isPending
         )}
