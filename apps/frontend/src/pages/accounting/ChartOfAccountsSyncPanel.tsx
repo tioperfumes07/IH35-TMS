@@ -106,7 +106,7 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
       {(showDriftFilter ?? true) && (
         <button
           type="button"
-          className={`rounded-full border px-3 py-1 ${driftOnly ? "border-amber-500 bg-amber-50 text-amber-900" : "border-border"}`}
+          className={`rounded-full border px-3 py-1 ${driftOnly ? "border-slate-400 bg-slate-50 text-slate-800" : "border-border"}`}
           onClick={toggleDrift}
         >
           Drift{status?.drift_detected ? ` (${status.drift_detected})` : ""}

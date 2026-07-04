@@ -16,7 +16,7 @@ const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const titleize = (s: string) => s.replace(/_/g, " ");
 
 const STATUS_COLOR: Record<string, string> = {
-  open: "bg-emerald-100 text-emerald-800",
+  open: "bg-slate-100 text-slate-700",
   closed: "bg-slate-100 text-slate-700",
   locked: "bg-slate-100 text-slate-700",
 };
@@ -168,8 +168,8 @@ export function MyAccountantPage() {
       </SectionCard>
 
       <SectionCard title="Invite your accountant" subtitle="Give your CPA read access to the books">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-200 bg-amber-50 p-3">
-          <p className="text-xs text-amber-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3">
+          <p className="text-xs text-slate-700">
             Inviting an accountant grants access and is managed under access control. This action is not available from this read-only workspace.
           </p>
           <button

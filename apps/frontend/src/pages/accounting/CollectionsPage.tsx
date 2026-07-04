@@ -104,7 +104,7 @@ export function CollectionsPage() {
   return (
     <AccountingSubNavWrapper title="AR collections workflow" subtitle="Accrual-only overdue follow-up queue with contact history and next-action scheduling.">
 
-      {!companyId ? <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before managing collections.</p> : null}
+      {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">Select an operating company before managing collections.</p> : null}
 
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-4">
         <label className="text-xs text-gray-600">

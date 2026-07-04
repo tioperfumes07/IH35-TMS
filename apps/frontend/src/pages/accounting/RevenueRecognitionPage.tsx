@@ -17,7 +17,7 @@ const titleize = (s: string) => s.replace(/_/g, " ");
 const STATUS_COLOR: Record<string, string> = {
   draft: "bg-gray-100 text-gray-600",
   active: "bg-slate-100 text-slate-700",
-  fully_recognized: "bg-emerald-100 text-emerald-800",
+  fully_recognized: "bg-slate-100 text-slate-700",
   voided: "bg-red-100 text-red-700",
 };
 
@@ -87,7 +87,7 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
           <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
         </div>
 
-        <div className="mb-3 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+        <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
           <p className="font-semibold mb-1">GL Posting (GATED — REVENUE_RECOGNITION_POST_ENABLED OFF)</p>
           <p>Deferral: Dr AR / Cr Deferred Revenue · Per-period: Dr Deferred Revenue / Cr Revenue</p>
         </div>

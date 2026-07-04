@@ -34,7 +34,7 @@ const GROUP_CHIP: Record<ApAgingDisplayGroup, string> = {
   Repair: "bg-slate-100 text-slate-700",
   Diesel: "bg-slate-100 text-slate-700",
   Insurance: "bg-slate-100 text-slate-700",
-  Intercompany: "bg-amber-100 text-amber-800",
+  Intercompany: "bg-slate-100 text-slate-700",
   Other: "bg-slate-100 text-slate-600",
 };
 

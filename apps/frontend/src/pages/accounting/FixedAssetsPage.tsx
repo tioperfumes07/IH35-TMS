@@ -16,8 +16,8 @@ const titleize = (s: string) => s.replace(/_/g, " ");
 
 const STATUS_COLOR: Record<string, string> = {
   active: "bg-slate-100 text-slate-700",
-  fully_depreciated: "bg-emerald-100 text-emerald-800",
-  disposed: "bg-amber-100 text-amber-800",
+  fully_depreciated: "bg-slate-100 text-slate-700",
+  disposed: "bg-slate-100 text-slate-700",
   voided: "bg-red-100 text-red-700",
 };
 
@@ -35,7 +35,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
               {detail.asset_number ? `#${detail.asset_number} · ` : ""}{detail.class_name ?? "—"} · {titleize(detail.method)} · {detail.useful_life_months} mo · {titleize(detail.convention)}
             </p>
             {!detail.is_owner_operated && detail.owner_company_name && (
-              <p className="text-xs text-amber-700 mt-0.5">Owned by {detail.owner_company_name} (operated here)</p>
+              <p className="text-xs text-slate-600 mt-0.5">Owned by {detail.owner_company_name} (operated here)</p>
             )}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-4">×</button>
@@ -54,14 +54,14 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
         </div>
 
         {detail.disposal && (
-          <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
             <p className="font-semibold mb-1">Disposed {fmtDate(detail.disposal.disposal_date)} ({titleize(detail.disposal.disposal_type)})</p>
             <p>Proceeds {fmtCents(detail.disposal.proceeds_cents)} · Book value {fmtCents(detail.disposal.book_value_at_disposal_cents)} · {detail.disposal.gain_loss_cents >= 0 ? "Gain" : "Loss"} {fmtCents(Math.abs(detail.disposal.gain_loss_cents))}</p>
           </div>
         )}
 
         {detail.je_preview.depreciation_je_template && (
-          <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
             <p className="font-semibold mb-1">GL Posting Preview (GATED — autopost flag OFF)</p>
             <p>Per-period JE: Dr Depreciation Expense / Cr Accumulated Depreciation</p>
           </div>

@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { getJournalEntry } from "../../../api/accounting";
@@ -59,7 +60,7 @@ export function JournalEntryDetailPage() {
       <DataPanel title="Entry Header">
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>
-          <span className="text-sm text-gray-900">{entry.entry_date}</span>
+          <span className="text-sm text-gray-900">{formatDateUS(entry.entry_date)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Source</span>

@@ -100,7 +100,7 @@ export function QBOSyncDriftDashboard() {
       ) : data ? (
         <>
           {data.last_alert ? (
-            <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <div className="rounded-md border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800">
               Last alert: {data.last_alert.entity_type.replace(/_/g, " ")} on {data.last_alert.alert_day} (
               {data.last_alert.drift_count} drifts)
             </div>
@@ -114,7 +114,7 @@ export function QBOSyncDriftDashboard() {
                   {entity.synced} / {entity.total_local}
                 </div>
                 <div className="mt-1 text-sm">
-                  Drift: <span className={entity.drift > 0 ? "text-amber-700 font-medium" : ""}>{entity.drift}</span>
+                  Drift: <span className={entity.drift > 0 ? "text-slate-600 font-medium" : ""}>{entity.drift}</span>
                   {" · "}Log: {entity.unresolved_drift_log}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">Last sync: {formatRelative(entity.last_sync)}</div>

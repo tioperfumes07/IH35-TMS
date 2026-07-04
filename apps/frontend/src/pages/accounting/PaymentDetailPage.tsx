@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
@@ -118,7 +119,7 @@ export function PaymentDetailPage() {
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>
-          <span className="text-sm text-gray-900">{payment.payment_date}</span>
+          <span className="text-sm text-gray-900">{formatDateUS(payment.payment_date)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Method</span>

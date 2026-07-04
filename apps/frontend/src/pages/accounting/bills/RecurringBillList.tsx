@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../../lib/formatDate";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +22,7 @@ function frequencyLabel(f: string) {
 
 function statusBadge(isActive: boolean) {
   return isActive ? (
-    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Active</span>
+    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Active</span>
   ) : (
     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Inactive</span>
   );
@@ -133,7 +134,7 @@ export function RecurringBillList() {
                   <td className="px-4 py-2 font-medium text-gray-900">{tmpl.template_name}</td>
                   <td className="px-4 py-2 font-mono text-xs text-gray-500">{tmpl.vendor_uuid.slice(0, 8)}…</td>
                   <td className="px-4 py-2 text-gray-700">{frequencyLabel(tmpl.frequency)}</td>
-                  <td className="px-4 py-2 text-gray-700">{tmpl.next_generation_date}</td>
+                  <td className="px-4 py-2 text-gray-700">{formatDateUS(tmpl.next_generation_date)}</td>
                   <td className="px-4 py-2 text-right font-medium text-gray-900">{money(tmpl.amount)}</td>
                   <td className="px-4 py-2 text-center">
                     {tmpl.auto_post ? (

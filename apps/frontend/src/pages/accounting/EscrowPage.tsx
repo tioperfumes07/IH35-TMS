@@ -58,7 +58,7 @@ export function EscrowPage() {
               {(accountsQuery.data.rows as EscrowAccount[]).map((row) => (
                 <tr
                   key={row.id}
-                  className={`cursor-pointer border-b border-slate-100 ${selectedAccountId === row.id ? "bg-emerald-50" : ""}`}
+                  className={`cursor-pointer border-b border-slate-100 ${selectedAccountId === row.id ? "bg-slate-100" : ""}`}
                   onClick={() => {
                     setSelectedAccountId(row.id);
                     postingsQuery.mutate(row.id);

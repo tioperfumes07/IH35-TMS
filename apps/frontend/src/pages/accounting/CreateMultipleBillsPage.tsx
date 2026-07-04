@@ -144,7 +144,7 @@ export function CreateMultipleBillsPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Create multiple bills" subtitle="Bulk vendor bill drafting from selected bank transactions." />
-      {!companyId ? <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">Select an operating company.</p> : null}
+      {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">Select an operating company.</p> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
         <span className="font-medium text-gray-800">Rows: {rows.length}</span>

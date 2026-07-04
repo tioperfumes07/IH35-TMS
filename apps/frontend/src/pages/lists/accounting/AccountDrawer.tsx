@@ -342,7 +342,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               {mode === "create" ? "New Account" : "Edit Account"}
             </h2>
             {isLocked ? (
-              <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
                 LOCKED
               </span>
             ) : null}
@@ -367,7 +367,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {isLocked ? (
-            <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
               This account is locked. It cannot be edited or archived. To unlock, contact an administrator.
             </div>
           ) : null}
