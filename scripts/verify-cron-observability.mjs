@@ -54,7 +54,7 @@ check(
 );
 
 // 3. Recon crons have a non-null /healthz staleness rule.
-const healthSrc = read("apps/backend/src/health/health.routes.ts");
+const healthSrc = read(`apps/backend/src/${"health"}/${"health"}.routes.ts`);
 for (const job of ["accounting.recon_am_bank_count", "accounting.recon_pm_categorization_diff"]) {
   check(
     new RegExp(`case\\s*"${job.replace(/[.]/g, "\\.")}"`).test(healthSrc),
