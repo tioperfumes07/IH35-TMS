@@ -61,6 +61,7 @@ export function ComplianceTable({
           Export CSV
         </button>
       </div>
+      <div className="overflow-x-auto">
       <table className="min-w-full border text-sm">
         <thead>
           <tr className="bg-slate-100 text-left">
@@ -91,6 +92,7 @@ export function ComplianceTable({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

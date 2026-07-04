@@ -15,6 +15,7 @@ export function NotificationLogPanel({ entries }: Props) {
   return (
     <div data-testid="compliance-log-panel">
       <h3 className="mb-3 text-lg font-semibold">Notification Log</h3>
+      <div className="overflow-x-auto">
       <table className="min-w-full border text-sm">
         <thead>
           <tr className="bg-slate-100 text-left">
@@ -39,6 +40,7 @@ export function NotificationLogPanel({ entries }: Props) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
