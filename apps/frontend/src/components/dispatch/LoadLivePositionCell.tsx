@@ -12,7 +12,7 @@ export function LoadLivePositionCell({ position, loadId }: { position: LivePosit
   if (!position) return <span className="text-[10px] text-slate-400">No GPS</span>;
   return (
     <div className="flex flex-col gap-0.5 text-[10px]" data-testid="load-live-gps-cell">
-      <span className={position.stale ? "text-red-600 font-semibold" : "text-emerald-700"}>
+      <span className={position.stale ? "text-red-600 font-semibold" : "text-slate-700"}>
         {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
         {position.stale ? " (stale)" : ""}
       </span>

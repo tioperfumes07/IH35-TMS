@@ -36,7 +36,7 @@ type SortKey = keyof TripProfitabilityRow;
 
 function marginClass(pct: number) {
   if (pct < 0) return "text-red-600 font-semibold";
-  if (pct < 10) return "text-amber-700";
+  if (pct < 10) return "text-slate-700";
   return "text-green-700";
 }
 

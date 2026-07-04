@@ -56,7 +56,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
 
   if (query.error) {
     return (
-      <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+      <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
         Profitability data unavailable.
       </div>
     );
@@ -70,14 +70,14 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
 
   const variantBg: Record<typeof variant, string> = {
     positive: "bg-green-50 border-green-200",
-    breakeven: "bg-amber-50 border-amber-200",
+    breakeven: "bg-slate-100 border-slate-200",
     negative: "bg-red-50 border-red-200",
     loading: "bg-gray-50 border-gray-200",
     unavailable: "bg-gray-50 border-gray-200",
   };
   const variantText: Record<typeof variant, string> = {
     positive: "text-green-800",
-    breakeven: "text-amber-800",
+    breakeven: "text-slate-700",
     negative: "text-red-700",
     loading: "text-gray-500",
     unavailable: "text-gray-500",
@@ -90,7 +90,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Net Profit</span>
           {d.data_completeness === "partial" && (
-            <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700" title={`Estimate — missing: ${d.missing_sources.join(", ")}`}>
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700" title={`Estimate — missing: ${d.missing_sources.join(", ")}`}>
               Estimate
             </span>
           )}

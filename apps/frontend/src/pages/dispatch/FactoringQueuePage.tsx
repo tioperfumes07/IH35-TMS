@@ -68,9 +68,9 @@ const STAGE_LABELS: Record<FactoringQueueRow["packet_stage"], string> = {
 const STAGE_PILL: Record<FactoringQueueRow["packet_stage"], string> = {
   NOT_FACTORED: "bg-gray-100 text-gray-600 border-gray-200",
   PACKET_READY: "bg-slate-100 text-slate-700 border-slate-300",
-  SUBMITTED: "bg-amber-50 text-amber-700 border-amber-200",
-  ADVANCE_RECEIVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  RESERVE_RELEASED: "bg-green-100 text-green-800 border-green-200",
+  SUBMITTED: "bg-slate-100 text-slate-700 border-slate-200",
+  ADVANCE_RECEIVED: "bg-slate-100 text-slate-700 border-slate-200",
+  RESERVE_RELEASED: "bg-slate-100 text-slate-700 border-slate-200",
   CHARGED_BACK: "bg-red-50 text-red-700 border-red-200",
 };
 
@@ -287,14 +287,14 @@ export function FactoringQueuePage() {
                       {STAGE_LABELS[row.packet_stage]}
                     </span>
                     {row.packet_approved_at && row.packet_stage === "PACKET_READY" ? (
-                      <div className="mt-0.5 text-[10px] text-emerald-700">✓ Approved</div>
+                      <div className="mt-0.5 text-[10px] text-slate-700">✓ Approved</div>
                     ) : null}
                   </td>
                   <td className="px-3 py-2">
                     {row.missing_doc_types.length === 0 ? (
-                      <span className="text-[10px] text-emerald-600">✓ Complete</span>
+                      <span className="text-[10px] text-slate-700">✓ Complete</span>
                     ) : (
-                      <span className="text-[10px] text-amber-700">
+                      <span className="text-[10px] text-slate-700">
                         Missing: {row.missing_doc_types.join(", ")}
                       </span>
                     )}
@@ -308,7 +308,7 @@ export function FactoringQueuePage() {
                         {row.invoice_display_id ?? "Invoice"}
                       </Link>
                     ) : (
-                      <span className="text-amber-700">No invoice</span>
+                      <span className="text-slate-700">No invoice</span>
                     )}
                   </td>
                 </tr>

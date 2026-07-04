@@ -299,7 +299,7 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
           <div
             className={`rounded border px-3 py-2 text-xs ${
               gateBanner.type === "advisory"
-                ? "border-amber-300 bg-amber-50 text-amber-900"
+                ? "border-slate-200 bg-slate-100 text-slate-700"
                 : "border-red-300 bg-red-50 text-red-900"
             }`}
           >

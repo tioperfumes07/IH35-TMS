@@ -492,11 +492,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           {activeTab === "Documents" ? (
             load ? (
               <div className="space-y-2">
-                <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-2">
+                <div className="rounded-sm border border-slate-200 bg-slate-100 p-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs text-emerald-900">
+                    <div className="text-xs text-slate-700">
                       Factoring package (rate confirmation + POD/BOL + invoice)
-                      <div className="mt-1 text-[11px] text-emerald-800">
+                      <div className="mt-1 text-[11px] text-slate-700">
                         {packageState.meta.generated_at
                           ? `Generated ${new Date(packageState.meta.generated_at).toLocaleString()}`
                           : "Not generated yet"}
@@ -534,7 +534,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       </Button>
                     </div>
                   </div>
-                  {!isPackageEligible ? <div className="mt-1 text-[11px] text-emerald-800">Package auto-generates once load is delivered/closed.</div> : null}
+                  {!isPackageEligible ? <div className="mt-1 text-[11px] text-slate-700">Package auto-generates once load is delivered/closed.</div> : null}
                 </div>
                 <div className="rounded-sm border border-slate-300 bg-slate-100 p-2">
                   <div className="flex items-center justify-between gap-2">

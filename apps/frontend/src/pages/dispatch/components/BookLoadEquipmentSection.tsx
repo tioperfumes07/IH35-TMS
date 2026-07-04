@@ -254,7 +254,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           (Frozen/Fresh) is asked FIRST, THEN "Reefer temperature (°F)" (the single setpoint reefer_temp_f).
           temperature_type persists via migration 202606231600 (W-FIX-1). Reefer mode + Pre-cool removed. */}
       {isReefer ? (
-        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded-sm border border-amber-200 bg-amber-50 p-2 md:grid-cols-2">
+        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-slate-100 p-2 md:grid-cols-2">
           <Field
             label="Temperature type"
             input={
@@ -290,7 +290,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {/* Render-v6 §B conditional detail: revealed by trailer type. Reefer setpoint above (reefer only);
           flatbed reveals the tarp-type detail (the "Tarps" required toggle stays in the Equipment chips). */}
       {isFlatbed ? (
-        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded-sm border border-amber-200 bg-amber-50 p-2 md:grid-cols-3">
+        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-slate-100 p-2 md:grid-cols-3">
           {/* RENDER-A-v2 §B flatbed = Tarp required? · Tarp qty · Tarp size. The old "Tarp type" material
               dropdown is a separate extra beyond the size dropdown → kept hidden for round-trip. */}
           <input type="hidden" {...register("tarp_type")} />

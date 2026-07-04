@@ -79,10 +79,10 @@ function TripCard({
 function NeedsReturnCard({ onBookReturn }: { onBookReturn: () => void }) {
   return (
     <div
-      className="flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-amber-400 bg-amber-50/40 p-3 text-center"
+      className="flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-slate-200 bg-slate-100/40 p-3 text-center"
       data-testid="round-trip-needs-return"
     >
-      <span className="text-xs font-semibold text-amber-900">Needs return</span>
+      <span className="text-xs font-semibold text-slate-700">Needs return</span>
       <Button type="button" size="sm" variant="secondary" onClick={onBookReturn}>
         + Book return
       </Button>
@@ -267,9 +267,9 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
 
               <div className="hidden items-center justify-center md:flex">
                 {pair.needsReturn && !pair.returnLoad ? (
-                  <span className="rounded-sm bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-900">Needs return</span>
+                  <span className="rounded-sm bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">Needs return</span>
                 ) : pair.returnLoad ? (
-                  <span className="rounded-sm bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-800">Paired</span>
+                  <span className="rounded-sm bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">Paired</span>
                 ) : (
                   <span className="rounded-sm bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-700">Open</span>
                 )}

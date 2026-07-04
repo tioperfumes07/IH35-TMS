@@ -35,8 +35,8 @@ function parseWeekStart(input?: string): Date {
 
 function hosClass(status: PlannerDriverRow["hos_status"]): string {
   if (status === "violation") return "bg-red-100 text-red-700";
-  if (status === "warning_15min" || status === "warning_1hr") return "bg-amber-100 text-amber-700";
-  return "bg-emerald-100 text-emerald-700";
+  if (status === "warning_15min" || status === "warning_1hr") return "bg-slate-100 text-slate-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {

@@ -10,9 +10,9 @@ import { usePlannerRange } from "./PlannerRangeContext";
 type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
 
 function truckStatusClass(status: TruckStatus): string {
-  if (status === "assigned") return "bg-emerald-100 text-emerald-800";
+  if (status === "assigned") return "bg-slate-100 text-slate-700";
   if (status === "available") return "bg-slate-100 text-slate-700";
-  if (status === "reserved-hold") return "bg-amber-100 text-amber-800";
+  if (status === "reserved-hold") return "bg-slate-100 text-slate-700";
   return "bg-red-100 text-red-800";
 }
 
