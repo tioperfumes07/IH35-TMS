@@ -70,3 +70,28 @@ export function validateLoadStatusTransition(
   }
   return { ok: true };
 }
+
+/** true when a load can no longer transition forward (cancelled / completed / abandoned / walkoff / no-show). */
+export function isTerminalLoadStatus(currentMdataStatus: string): boolean {
+  return allowedTransitions[fromMdataStatus(currentMdataStatus)].length === 0;
+}
+
+/**
+ * Guards raw driver-PWA stop arrival/departure writes to `mdata.loads.status`.
+ *
+ * `at_pickup`/`at_delivery` are stop micro-states that both live inside the `dispatched`/`in_transit`
+ * lifecycle stages, so an idempotent move within the same stage (from === to) is allowed. Any other
+ * move must be a legal forward transition. This blocks resurrecting a terminal load (e.g. a driver
+ * PWA tapping "arrived" on a CANCELLED load) without altering the allowed-transition table.
+ */
+export function validateLoadStopStatusWrite(
+  currentMdataStatus: string,
+  targetMdataStatus: string
+): { ok: true } | { ok: false; from: DispatchStatus; to: DispatchStatus } {
+  const from = fromMdataStatus(currentMdataStatus);
+  const to = fromMdataStatus(targetMdataStatus);
+  if (to === from || allowedTransitions[from].includes(to)) {
+    return { ok: true };
+  }
+  return { ok: false, from, to };
+}
