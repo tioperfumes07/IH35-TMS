@@ -1,11 +1,11 @@
 {
- "date": "2026-07-03",
- "generated_at_iso": "2026-07-04T04:29:11.146Z",
+ "date": "2026-07-04",
+ "generated_at_iso": "2026-07-04T15:41:05.709Z",
  "counts": {
   "PENDING": 4,
-  "PENDING (GATED)": 45,
+  "PENDING (GATED)": 43,
   "NEEDS-VERIFY": 4,
-  "DONE": 471
+  "DONE": 473
  },
  "universe": {
   "total_blocks_after_dedup": 524,
@@ -240,17 +240,6 @@
    "status": "PENDING (GATED)",
    "evidence": "[verified 2026-07-03] partial built-gated; money flags OFF",
    "name": "STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS",
-   "pr": null
-  },
-  {
-   "id": "AR-AP-PAYMENT-CONTRACT",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "AR+AP payment recording 400 contract fix",
-   "registered_on": null,
    "pr": null
   },
   {
@@ -543,17 +532,6 @@
    "status": "PENDING (GATED)",
    "evidence": "GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge.",
    "name": "FOUNDATIONS / TASK USMCA — USMCA carrier launch (July 2026)",
-   "pr": null
-  },
-  {
-   "id": "USMCA-MASTERDATA-IMPORT",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "Import driver profiles (83) + trucks (93) + trailers (91) into USMCA entity for testing. Applied to prod 2026-07-03 via ",
-   "registered_on": null,
    "pr": null
   },
   {
@@ -947,6 +925,17 @@
    "evidence": "[verified 2026-07-03] finance-hub routes/service + page on main (flag-gated OFF by design)",
    "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)",
    "pr": null
+  },
+  {
+   "id": "AR-AP-PAYMENT-CONTRACT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1923 merged 2026-07-04",
+   "name": "AR+AP payment recording 400 contract fix",
+   "registered_on": null,
+   "pr": 1923
   },
   {
    "id": "BANKING-CATEGORIZE-C1",
@@ -5296,6 +5285,17 @@
    "pr": 1536
   },
   {
+   "id": "USMCA-MASTERDATA-IMPORT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1956 merged 2026-07-04",
+   "name": "Import driver profiles (83) + trucks (93) + trailers (91) into USMCA entity for testing. Applied to prod 2026-07-03 via ",
+   "registered_on": null,
+   "pr": 1956
+  },
+  {
    "id": "UX-A-table-alignment-DONE",
    "source": "program",
    "fin": false,
@@ -5744,6 +5744,72 @@
  ],
  "merged_prs": [
   {
+   "number": 1993,
+   "title": "fix(ci): aggregate boot-smoke picks in-entity unit — unblocks prod deploy (USMCA import regression)",
+   "mergedAt": "2026-07-04T06:49:20Z",
+   "branch": "fix/aggregate-smoke-cross-entity-unit"
+  },
+  {
+   "number": 1988,
+   "title": "fix(xe): lows-byid cross-entity scope",
+   "mergedAt": "2026-07-04T06:05:00Z",
+   "branch": "fix/xe-byid-lows"
+  },
+  {
+   "number": 1987,
+   "title": "fix(xe): customer-contacts cross-entity scope",
+   "mergedAt": "2026-07-04T06:14:30Z",
+   "branch": "fix/xe-customer-contacts"
+  },
+  {
+   "number": 1986,
+   "title": "fix(xe): switch-company-usmca-filter cross-entity scope",
+   "mergedAt": "2026-07-04T06:02:46Z",
+   "branch": "fix/xe-switch-usmca-filter"
+  },
+  {
+   "number": 1985,
+   "title": "fix(xe): locations cross-entity scope",
+   "mergedAt": "2026-07-04T06:16:36Z",
+   "branch": "fix/xe-mdata-locations"
+  },
+  {
+   "number": 1984,
+   "title": "fix(xe): severe-alerts cross-entity scope",
+   "mergedAt": "2026-07-04T06:02:49Z",
+   "branch": "fix/xe-maint-severe-alerts"
+  },
+  {
+   "number": 1983,
+   "title": "fix(xe): names-master-cap cross-entity scope",
+   "mergedAt": "2026-07-04T06:10:19Z",
+   "branch": "fix/xe-names-master-cap"
+  },
+  {
+   "number": 1982,
+   "title": "fix(xe): maint-drivers-byid cross-entity scope",
+   "mergedAt": "2026-07-04T06:00:40Z",
+   "branch": "fix/xe-maint-drivers-byid"
+  },
+  {
+   "number": 1981,
+   "title": "fix(auth): resolveOperatingCompanyId prefers default company (USMCA-activation safety)",
+   "mergedAt": "2026-07-04T05:52:59Z",
+   "branch": "fix/resolve-opco-prefer-default"
+  },
+  {
+   "number": 1980,
+   "title": "fix(compliance): Form 2290 draft 500 — phantom operating_company_id on mdata.units",
+   "mergedAt": "2026-07-04T05:50:44Z",
+   "branch": "fix/form2290-units-phantom-opco"
+  },
+  {
+   "number": 1979,
+   "title": "chore(program): register USMCA masterdata import + refresh reconcile",
+   "mergedAt": "2026-07-04T05:18:12Z",
+   "branch": "chore/program-refresh-usmca-2"
+  },
+  {
    "number": 1978,
    "title": "fix(visual2): dispatch dead-controls/back-arrows/layout/pagination",
    "mergedAt": "2026-07-04T04:14:06Z",
@@ -5792,6 +5858,12 @@
    "branch": "fix/visual2-banking"
   },
   {
+   "number": 1967,
+   "title": "fix(visual2): reports dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T07:08:56Z",
+   "branch": "fix/visual2-reports"
+  },
+  {
    "number": 1966,
    "title": "fix(visual2): drivers dead-controls/back-arrows/layout/pagination",
    "mergedAt": "2026-07-04T03:59:02Z",
@@ -5832,6 +5904,12 @@
    "title": "fix(visual2): inventory dead-controls/back-arrows/layout/pagination",
    "mergedAt": "2026-07-04T03:48:47Z",
    "branch": "fix/visual2-inventory"
+  },
+  {
+   "number": 1956,
+   "title": "feat(usmca): masterdata import tool (drivers/trucks/trailers → USMCA) — dry-run default, gated run",
+   "mergedAt": "2026-07-04T05:18:15Z",
+   "branch": "feat/usmca-masterdata-import-tool"
   },
   {
    "number": 1955,
@@ -5996,6 +6074,12 @@
    "branch": "chore/raise-fe-bundle-perf-budget"
   },
   {
+   "number": 1923,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): AR + AP payment recording 400 on every click (contract drift)",
+   "mergedAt": "2026-07-04T13:55:01Z",
+   "branch": "fix/ar-ap-payment-recording-contract-hold"
+  },
+  {
    "number": 1922,
    "title": "fix(accounting-ui): register Source column shows source, not type",
    "mergedAt": "2026-07-04T00:59:37Z",
@@ -6068,6 +6152,12 @@
    "branch": "feat/tasks-planner-v2-deferred"
   },
   {
+   "number": 1910,
+   "title": "feat(scheduler): P8C-K driver-leave crons (reminder/rollover/escalation) + driver self-balance",
+   "mergedAt": "2026-07-04T15:03:52Z",
+   "branch": "feat/driver-scheduler-crons-balance"
+  },
+  {
    "number": 1909,
    "title": "feat(ci): money-path no-swallow guard (recovered lost-work RELIABILITY-05)",
    "mergedAt": "2026-07-03T23:21:34Z",
@@ -6114,6 +6204,12 @@
    "title": "chore(tracker): refresh Program Board — live reconcile (DONE=436)",
    "mergedAt": "2026-07-03T21:38:16Z",
    "branch": "chore/refresh-board-b86788957"
+  },
+  {
+   "number": 1900,
+   "title": "fix(safety): repoint incidents.trailer_id FK mdata.units→mdata.equipment + trailer validation [HOLD-FOR-JORGE]",
+   "mergedAt": "2026-07-04T14:34:32Z",
+   "branch": "fix/sc-trailer-fk-equipment"
   },
   {
    "number": 1899,
@@ -9246,106 +9342,16 @@
    "title": "docs(dispatch): planners rebuild plan + Phase-0 empty-grid diagnosis",
    "mergedAt": "2026-06-22T19:53:53Z",
    "branch": "docs/dispatch-planners-plan"
-  },
-  {
-   "number": 1337,
-   "title": "fix(dispatch): Awaiting-assignment truck card — clickable + Book load (drag was eating the click)",
-   "mergedAt": "2026-06-22T19:42:18Z",
-   "branch": "fix/dispatch-awaiting-truck-book-button"
-  },
-  {
-   "number": 1336,
-   "title": "test(dispatch): E2E lock — ?view=kanban renders the REAL Kanban board, not the List (GUARD #1332)",
-   "mergedAt": "2026-06-22T19:33:00Z",
-   "branch": "test/dispatch-kanban-real-board-e2e"
-  },
-  {
-   "number": 1335,
-   "title": "fix(dispatch): Cancel Load — preValidation enum rejected every real catalog reason code",
-   "mergedAt": "2026-06-22T19:18:41Z",
-   "branch": "fix/cancel-load-enum-vs-catalog"
-  },
-  {
-   "number": 1334,
-   "title": "test(dispatch): lock the #1332 Kanban dead-view fix (?view=kanban must mount Kanban)",
-   "mergedAt": "2026-06-22T19:13:38Z",
-   "branch": "test/dispatch-kanban-view-lock"
-  },
-  {
-   "number": 1333,
-   "title": "feat(dispatch): Awaiting-assignment truck card → + Book load (truck pre-filled)",
-   "mergedAt": "2026-06-22T19:04:40Z",
-   "branch": "feat/dispatch-book-load-per-truck"
-  },
-  {
-   "number": 1332,
-   "title": "fix(dispatch): dead Kanban view — board ignored the Kanban tab on /dispatch/loads",
-   "mergedAt": "2026-06-22T18:57:19Z",
-   "branch": "fix/dispatch-kanban-dead-view"
-  },
-  {
-   "number": 1331,
-   "title": "fix(users): \"+ Add User\" → \"+ Create User\" (§7 +Create vocab lock)",
-   "mergedAt": "2026-06-22T18:52:06Z",
-   "branch": "fix/users-create-vocab"
-  },
-  {
-   "number": 1330,
-   "title": "perf(dispatch): parallelize Loads Planner week fetches (was sequential → hung on load)",
-   "mergedAt": "2026-06-22T18:50:05Z",
-   "branch": "fix/loads-planner-parallel-fetch"
-  },
-  {
-   "number": 1329,
-   "title": "fix(dispatch): Load Cancel was 100% broken — wrong payload field names + swallowed 400",
-   "mergedAt": "2026-06-22T18:37:23Z",
-   "branch": "fix/load-cancel-contract-and-error-surface"
-  },
-  {
-   "number": 1328,
-   "title": "chore(guard): add §7 create-vocab scanner (report-only) — flags \"+ Ad…",
-   "mergedAt": "2026-06-22T18:15:26Z",
-   "branch": "feat/create-vocab-guard"
-  },
-  {
-   "number": 1327,
-   "title": "docs(maint): Block 4 parts + services catalog design (doc-only, gated on Jorge's part data)",
-   "mergedAt": "2026-06-22T18:10:40Z",
-   "branch": "docs/block4-parts-services-catalog"
-  },
-  {
-   "number": 1326,
-   "title": "chore(guard): §7 create-vocab scanner (report-only) — flags '+ Add/New <Entity>' CTAs",
-   "mergedAt": "2026-06-22T18:01:50Z",
-   "branch": "feat/create-vocab-guard"
-  },
-  {
-   "number": 1325,
-   "title": "chore(guard): lock drivers/customers/vendors list record-cell links against regression",
-   "mergedAt": "2026-06-22T18:01:08Z",
-   "branch": "feat/lock-list-record-cell-links"
-  },
-  {
-   "number": 1324,
-   "title": "feat(dispatch): Block 7 — Edit Load opens the FULL wizard pre-filled (replaces rate+notes stub)",
-   "mergedAt": "2026-06-22T17:42:23Z",
-   "branch": "feat/dispatch-load-edit-full-wizard"
-  },
-  {
-   "number": 1323,
-   "title": "feat(ui): §7 finish — portal + vendor-category chips + guard covers whole rendered-UI (portal/layouts/lib)",
-   "mergedAt": "2026-06-22T16:46:49Z",
-   "branch": "feat/frontend-section7-finish"
-  },
-  {
-   "number": 1322,
-   "title": "feat(ui): §7 blue eradication across ALL pages + §7 guard scans whole frontend (app-wide closure)",
-   "mergedAt": "2026-06-22T16:35:31Z",
-   "branch": "feat/pages-section7-cleanup"
   }
  ],
- "merged_pr_total": 1855,
+ "merged_pr_total": 1871,
  "hold_for_jorge": [
+  {
+   "number": 1923,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): AR + AP payment recording 400 on every click (contract drift)",
+   "mergedAt": "2026-07-04T13:55:01Z",
+   "category": "HOLD"
+  },
   {
    "number": 1919,
    "title": "[HOLD-FOR-JORGE] fix(accounting): Manual Journal Entry create/void 400 (contract drift)",
@@ -9362,6 +9368,12 @@
    "number": 1908,
    "title": "[HOLD-FOR-JORGE] feat(tasks): Tasks Planner v2 — entity/record links, profiles, alarms, transaction-side completion",
    "mergedAt": "2026-07-04T00:58:03Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1900,
+   "title": "fix(safety): repoint incidents.trailer_id FK mdata.units→mdata.equipment + trailer validation [HOLD-FOR-JORGE]",
+   "mergedAt": "2026-07-04T14:34:32Z",
    "category": "HOLD"
   },
   {
