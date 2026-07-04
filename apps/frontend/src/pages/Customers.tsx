@@ -198,6 +198,12 @@ export function CustomersPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  // V8 — roster-level filters for the LEFT customer list (distinct from the transaction
+  // filter box, which scopes the SELECTED customer's invoices). rosterType = broker/direct_shipper;
+  // rosterCreditStatus = the business `status` field (credit_hold/blacklist), separate from the
+  // Active/Inactive soft-delete tabs (deactivated_at). Both default to "" = no filter.
+  const [rosterType, setRosterType] = useState<"" | "broker" | "direct_shipper">("");
+  const [rosterCreditStatus, setRosterCreditStatus] = useState<"" | "active" | "inactive" | "credit_hold" | "blacklist">("");
   const [showFilterBox, setShowFilterBox] = useState(false);
   const [showColumnChooser, setShowColumnChooser] = useState(false);
   const [pageSize, setPageSize] = useState(50);
@@ -280,11 +286,15 @@ export function CustomersPage() {
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
   const visibleCustomers = useMemo(() => {
-    const all = customersQuery.data ?? [];
-    if (listStatus === "all") return all;
-    if (listStatus === "inactive") return all.filter((customer) => customer.deactivated_at != null);
-    return all.filter((customer) => customer.deactivated_at == null);
-  }, [customersQuery.data, listStatus]);
+    let all = customersQuery.data ?? [];
+    if (listStatus === "inactive") all = all.filter((customer) => customer.deactivated_at != null);
+    else if (listStatus !== "all") all = all.filter((customer) => customer.deactivated_at == null);
+    // V8 roster filters — applied here so BOTH the sidebar (visibleCustomers) and the
+    // customersSorted consumers (list view, totalCount, selection) stay in sync.
+    if (rosterType) all = all.filter((customer) => customer.customer_type === rosterType);
+    if (rosterCreditStatus) all = all.filter((customer) => customer.status === rosterCreditStatus);
+    return all;
+  }, [customersQuery.data, listStatus, rosterType, rosterCreditStatus]);
 
   const customersSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -361,7 +371,7 @@ export function CustomersPage() {
 
   useEffect(() => {
     setSidebarPage(1);
-  }, [search, sortByName, sidebarPageSize, companyId]);
+  }, [search, sortByName, sidebarPageSize, companyId, rosterType, rosterCreditStatus]);
 
   // AUTO-13: honest error state instead of a blank list when the customers fetch 500s.
   if (customersQuery.isError) {
@@ -407,6 +417,29 @@ export function CustomersPage() {
                 </button>
               ))}
             </div>
+            {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
+            <SelectCombobox
+              value={rosterType}
+              onChange={(event) => setRosterType(event.target.value as typeof rosterType)}
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              aria-label="Filter customers by type"
+            >
+              <option value="">All types</option>
+              <option value="broker">Broker</option>
+              <option value="direct_shipper">Direct shipper</option>
+            </SelectCombobox>
+            <SelectCombobox
+              value={rosterCreditStatus}
+              onChange={(event) => setRosterCreditStatus(event.target.value as typeof rosterCreditStatus)}
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              aria-label="Filter customers by credit status"
+            >
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="credit_hold">Credit hold</option>
+              <option value="blacklist">Blacklist</option>
+            </SelectCombobox>
             <ActionButton onClick={() => setCreateOpen(true)}>
               + Create Customer
             </ActionButton>
