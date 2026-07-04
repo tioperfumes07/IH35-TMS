@@ -14,8 +14,8 @@ type BasicRow = {
 
 function severityColor(value: number | null) {
   if (value == null) return "text-slate-400";
-  if (value < 65) return "text-emerald-700";
-  if (value < 80) return "text-amber-700";
+  if (value < 65) return "text-slate-700";
+  if (value < 80) return "text-slate-700";
   return "text-red-700";
 }
 
@@ -78,7 +78,7 @@ export function CSAScoreTab() {
         <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate()}>
           Pull from FMCSA SAFER
         </button>
-        {saferMutation.isError ? <span className="text-xs text-amber-700">FMCSA SAFER lookup is not available yet (service returned an error).</span> : null}
+        {saferMutation.isError ? <span className="text-xs text-slate-700">FMCSA SAFER lookup is not available yet (service returned an error).</span> : null}
       </div>
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">

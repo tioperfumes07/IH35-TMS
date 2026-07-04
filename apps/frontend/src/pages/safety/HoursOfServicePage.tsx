@@ -128,8 +128,8 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
       </div>
 
       <div className="grid gap-2 md:grid-cols-3" data-testid="safety-hos-kpi-tiles">
-        <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-3 py-2">
-          <div className="text-[10px] uppercase text-emerald-800">Drivers on duty</div>
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
+          <div className="text-[10px] uppercase text-slate-700">Drivers on duty</div>
           <div className="text-xl font-semibold text-emerald-900" data-testid="safety-hos-kpi-on-duty">
             {metrics.onDuty}
           </div>
@@ -140,19 +140,19 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             {metrics.offDuty}
           </div>
         </div>
-        <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2">
-          <div className="text-[10px] uppercase text-amber-800">Approaching 11h drive cap</div>
-          <div className="text-xl font-semibold text-amber-900" data-testid="safety-hos-kpi-approaching-cap">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
+          <div className="text-[10px] uppercase text-slate-700">Approaching 11h drive cap</div>
+          <div className="text-xl font-semibold text-slate-700" data-testid="safety-hos-kpi-approaching-cap">
             {metrics.approachingCap}
           </div>
-          <div className="text-[10px] text-amber-700">Within {NEAR_CAP_MINUTES} min of {ELEVEN_HOUR_CAP_MIN / 60}h limit</div>
+          <div className="text-[10px] text-slate-700">Within {NEAR_CAP_MINUTES} min of {ELEVEN_HOUR_CAP_MIN / 60}h limit</div>
         </div>
       </div>
 
       {metrics.nearViolations.length > 0 ? (
-        <section className="rounded-sm border border-amber-300 bg-amber-50 p-3" data-testid="safety-hos-near-violations">
-          <h2 className="text-xs font-semibold uppercase text-amber-900">Near-violation alerts</h2>
-          <ul className="mt-2 space-y-1 text-xs text-amber-950">
+        <section className="rounded-sm border border-slate-300 bg-slate-50 p-3" data-testid="safety-hos-near-violations">
+          <h2 className="text-xs font-semibold uppercase text-slate-700">Near-violation alerts</h2>
+          <ul className="mt-2 space-y-1 text-xs text-slate-700">
             {metrics.nearViolations.map((row) => (
               <li key={row.driverId} className="flex flex-wrap items-center justify-between gap-2">
                 <span>
@@ -161,7 +161,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
                 </span>
                 <Link
                   to={`/drivers/${row.driverId}/hos`}
-                  className="font-semibold text-amber-900 underline"
+                  className="font-semibold text-slate-700 underline"
                   data-testid={`safety-hos-drilldown-${row.driverId}`}
                 >
                   View HOS

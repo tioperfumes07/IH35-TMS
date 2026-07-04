@@ -146,7 +146,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
         </button>
 
         {successMsg ? (
-          <span className="text-xs font-medium text-emerald-700">{successMsg}</span>
+          <span className="text-xs font-medium text-slate-700">{successMsg}</span>
         ) : null}
 
         {mutation.isError ? (

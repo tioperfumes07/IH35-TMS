@@ -152,9 +152,9 @@ export function ComplaintsTab() {
 
   if (isPrivacyGateError(complaintsQuery.error)) {
     return (
-      <div className="rounded-sm border border-amber-200 bg-amber-50 p-6 text-center">
-        <Lock className="mx-auto h-5 w-5 text-amber-700" />
-        <p className="mt-2 text-sm font-semibold text-amber-900">This area is restricted to Owner / Admin / Safety roles. Contact your administrator if you need access.</p>
+      <div className="rounded-sm border border-slate-200 bg-slate-50 p-6 text-center">
+        <Lock className="mx-auto h-5 w-5 text-slate-700" />
+        <p className="mt-2 text-sm font-semibold text-slate-700">This area is restricted to Owner / Admin / Safety roles. Contact your administrator if you need access.</p>
       </div>
     );
   }

@@ -45,7 +45,7 @@ export default function PositionHistoryPage() {
   const actionBadgeClass = (action: string) => {
     switch (action) {
       case "installed":
-        return "bg-green-100 text-green-800";
+        return "bg-slate-100 text-slate-700";
       case "removed":
         return "bg-red-100 text-red-800";
       case "replaced":

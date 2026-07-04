@@ -124,7 +124,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           </button>
           <button
             type="button"
-            className="rounded-sm bg-amber-700 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
             onClick={() => escalateMutation.mutate()}
           >
             Escalate

@@ -230,9 +230,9 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
         </div>
       </div>
 
-      <fieldset className="rounded-sm border border-amber-200 bg-amber-50 p-3">
-        <legend className="px-1 text-xs font-semibold uppercase text-amber-900">Settlement deduction schedule</legend>
-        <p className="mb-2 text-xs text-amber-800">
+      <fieldset className="rounded-sm border border-slate-200 bg-slate-50 p-3">
+        <legend className="px-1 text-xs font-semibold uppercase text-slate-700">Settlement deduction schedule</legend>
+        <p className="mb-2 text-xs text-slate-700">
           Creates an auto-deduction policy (type fine). Net-floor cap may roll unpaid portions to the next settlement.
         </p>
         <div className="flex flex-wrap gap-3">
@@ -266,7 +266,7 @@ export function FineEntryForm({ operatingCompanyId, kind, onSuccess, onCancel }:
           </label>
         </div>
         {amountUsd && Number(amountUsd) > 0 ? (
-          <p className="mt-2 text-xs text-amber-900">
+          <p className="mt-2 text-xs text-slate-700">
             Max per settlement: $
             {(maxPerSettlementCents(Math.round(Number(amountUsd) * 100), schedule) / 100).toFixed(2)}
           </p>

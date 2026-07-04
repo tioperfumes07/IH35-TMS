@@ -45,7 +45,7 @@ const DOT_REFERENCE_CARDS: DotReferenceCard[] = [
 
 function tierClass(severity: string) {
   if (severity === "expired") return "bg-red-50 text-red-800";
-  if (severity === "critical") return "bg-amber-50 text-amber-900";
+  if (severity === "critical") return "bg-slate-50 text-slate-700";
   return "bg-slate-100 text-slate-700";
 }
 

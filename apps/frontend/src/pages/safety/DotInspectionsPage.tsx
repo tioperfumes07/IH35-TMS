@@ -99,7 +99,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
                   <span className="font-semibold text-gray-800">
                     {String(row.station_label ?? "DOT station")} · Unit {String(row.unit_number ?? "—")}
                   </span>
-                  <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">{String(row.dwell_minutes ?? 0)} min</span>
+                  <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">{String(row.dwell_minutes ?? 0)} min</span>
                 </div>
                 <p className="mt-1 text-gray-600">
                   Driver: {String(row.driver_name ?? "Unknown")} · Departed: {String(row.departed_at ?? "n/a")}
