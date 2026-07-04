@@ -424,6 +424,30 @@ export function VendorDetailPage() {
 
       {activeTab === "Profile" ? (
         <DataPanel title="Vendor Profile">
+          {/* Edit control at the TOP so it's discoverable — the fields (Vendor Type, etc.) are
+              read-only until Edit is on, matching QBO's header Edit. Previously the only Edit button
+              was buried at the bottom, so the profile looked un-editable and dropdowns wouldn't open. */}
+          <div className="mb-3 flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
+            <span className="text-[11px] text-slate-500">
+              {profileEditMode ? "Editing — change any field, then Save." : "Read-only. Click Edit to change vendor details."}
+            </span>
+            <div className="flex gap-2">
+              {!profileEditMode ? (
+                <Button type="button" size="sm" onClick={() => setProfileEditMode(true)}>
+                  Edit
+                </Button>
+              ) : (
+                <>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => setProfileEditMode(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="button" size="sm" loading={updateVendorMutation.isPending} onClick={() => updateVendorMutation.mutate()}>
+                    Save
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
           <FlatFieldGrid
             columns={3}
             className="mb-3"
@@ -511,38 +535,40 @@ export function VendorDetailPage() {
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Accounting category</span>
-            <div className="flex flex-col gap-2 text-sm text-gray-900">
-              <VendorCategoryChip code={vendor.vendor_category} />
-              {!companyId ? (
+            {/* Single flat row (no nested box-in-box): current chip + inline editor. */}
+            {!companyId ? (
+              <div className="flex items-center gap-2 text-sm text-gray-900">
+                <VendorCategoryChip code={vendor.vendor_category} />
                 <span className="text-xs text-amber-700">Select operating company to edit.</span>
-              ) : (
-                <div className="flex flex-wrap items-center gap-2">
-                  <SelectCombobox
-                    className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-                    value={categoryDraft}
-                    onChange={(e) => setCategoryDraft(e.target.value as VendorCategoryValue)}
-                  >
-                    {VENDOR_CATEGORY_VALUES.map((c) => (
-                      <option key={c} value={c}>
-                        {c.replace(/_/g, " ")}
-                      </option>
-                    ))}
-                  </SelectCombobox>
-                  <label className="flex items-center gap-1 text-xs">
-                    <input type="checkbox" checked={lockCategory} onChange={(e) => setLockCategory(e.target.checked)} />
-                    Lock
-                  </label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    loading={patchCategoryMutation.isPending}
-                    onClick={() => patchCategoryMutation.mutate()}
-                  >
-                    Save category
-                  </Button>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-900">
+                <VendorCategoryChip code={vendor.vendor_category} />
+                <SelectCombobox
+                  className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+                  value={categoryDraft}
+                  onChange={(e) => setCategoryDraft(e.target.value as VendorCategoryValue)}
+                >
+                  {VENDOR_CATEGORY_VALUES.map((c) => (
+                    <option key={c} value={c}>
+                      {c.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </SelectCombobox>
+                <label className="flex items-center gap-1 text-xs">
+                  <input type="checkbox" checked={lockCategory} onChange={(e) => setLockCategory(e.target.checked)} />
+                  Lock
+                </label>
+                <Button
+                  type="button"
+                  size="sm"
+                  loading={patchCategoryMutation.isPending}
+                  onClick={() => patchCategoryMutation.mutate()}
+                >
+                  Save category
+                </Button>
+              </div>
+            )}
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Telephone</span>
@@ -731,25 +757,7 @@ export function VendorDetailPage() {
               className="w-full max-w-2xl rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Profile actions</span>
-            <div className="flex gap-2">
-              {!profileEditMode ? (
-                <Button type="button" size="sm" onClick={() => setProfileEditMode(true)}>
-                  Edit
-                </Button>
-              ) : (
-                <>
-                  <Button type="button" size="sm" variant="secondary" onClick={() => setProfileEditMode(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="button" size="sm" loading={updateVendorMutation.isPending} onClick={() => updateVendorMutation.mutate()}>
-                    Save
-                  </Button>
-                </>
-              )}
-            </div>
-          </DataPanelRow>
+          {/* Edit/Save/Cancel moved to the top of the panel (discoverable). */}
         </DataPanel>
       ) : null}
 
