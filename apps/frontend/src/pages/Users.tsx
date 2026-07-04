@@ -378,6 +378,42 @@ export function UsersPage() {
     setInviteOpen(true);
   };
 
+  // Export the currently-selected users to a real client-side CSV (name/email/role/status/auth/last-login),
+  // mirroring the Blob-download pattern used in DriversListPage. Reads the rows already loaded in the table —
+  // no backend call, correct per-entity RLS because the list itself was fetched through the session.
+  const handleExportSelected = () => {
+    const selectedRows = filteredUsers.filter((row) => userBulk.selectedIds.has(row.id));
+    if (selectedRows.length === 0) {
+      pushToast("No users selected to export", "info");
+      return;
+    }
+    const esc = (value: unknown) => {
+      const s = value == null ? "" : String(value);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = ["Name", "Email", "Role", "Status", "Auth method", "Last login"];
+    const lines = selectedRows.map((row) =>
+      [
+        row.name ?? "",
+        row.email ?? "",
+        ROLE_LABEL[row.role as UserRole] ?? row.role,
+        userStatus(row),
+        row.auth_method ?? "Invite pending",
+        formatLastLoginAt(row.last_login_at),
+      ]
+        .map(esc)
+        .join(",")
+    );
+    const csv = [header.map(esc).join(","), ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = `IH35-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(href);
+  };
+
   return (
     <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-3">
       <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Create User</ActionButton>} />
@@ -414,8 +450,11 @@ export function UsersPage() {
 
       <BulkActionBar
         {...userBulk.bulkActionBarProps([
-          { id: "deactivate", label: "Deactivate", destructive: true, action: "deactivate", onClick: () => pushToast("Bulk deactivate users — endpoint pending.", "success") },
-          { id: "export", label: "Export Selected", onClick: () => pushToast("Export users queued.", "success") },
+          // No bulk-deactivate backend endpoint exists (only per-user deactivateUser). Honestly disabled with a
+          // "Coming soon" tooltip instead of firing a fake success toast. Deactivate users one at a time via the
+          // row ⋯ menu → Deactivate, which is wired to the real endpoint.
+          { id: "deactivate", label: "Deactivate", destructive: true, action: "deactivate", disabled: true, title: "Coming soon — deactivate users individually from the row menu", onClick: () => pushToast("Bulk deactivate is not available yet — use the row menu to deactivate a user.", "info") },
+          { id: "export", label: "Export Selected", title: "Download selected users as CSV", onClick: handleExportSelected },
         ])}
       >
         <TableSelectionHeader

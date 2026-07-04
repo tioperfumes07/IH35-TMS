@@ -18,6 +18,7 @@ import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { DataPanel } from "../components/layout/DataPanel";
+import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -229,18 +230,13 @@ export function UserDetailPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">{targetUser.email ?? "User detail"}</h1>
-          <p className="text-xs text-gray-500">{targetUser.role}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <StatusBadge status={targetUser.deactivated_at ? "Inactive" : "Active"} />
-          <Link to="/users" className="text-xs text-slate-700 hover:underline">
-            Back to users
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/users"
+        breadcrumb={["Users"]}
+        title={targetUser.email ?? "User detail"}
+        subtitle={targetUser.role}
+        actions={<StatusBadge status={targetUser.deactivated_at ? "Inactive" : "Active"} />}
+      />
 
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
         <Button variant={tab === "profile" ? "primary" : "secondary"} onClick={() => setTab("profile")}>
