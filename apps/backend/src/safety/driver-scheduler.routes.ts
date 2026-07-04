@@ -182,6 +182,24 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     return result.request;
   });
 
+  // Driver-facing self balance (GAP 2): returns ONLY the authenticated driver's own leave balance.
+  // Driver self-resolution comes from requireDriverSession → req.driver (never list-and-take-first, never
+  // an arbitrary :driver_id). Reuses the office getLeaveBalance computation, scoped to the driver's own id.
+  app.get("/api/v1/driver/scheduler/balance", async (req, reply) => {
+    if (!(await requireDriverSession(req, reply))) return;
+    const parsedQuery = z.object({ year: z.coerce.number().int().min(2000).max(2100).optional() }).safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const d = req.driver!;
+    const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
+    if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
+    const year = parsedQuery.data.year ?? new Date().getUTCFullYear();
+    const bal = await withCurrentUser(req.user!.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      return getLeaveBalance(client, oc, d.id, year);
+    });
+    return { balance: bal, year };
+  });
+
   app.get("/api/v1/safety/scheduler/grid", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;

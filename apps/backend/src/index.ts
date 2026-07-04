@@ -336,6 +336,9 @@ import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js"
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeBankReconAutoMatchCron } from "./cron/bank-recon-auto-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
+import { initializeDriverLeaveAdvanceReminderCron } from "./cron/driver-leave-advance-reminder.cron.js";
+import { initializeDriverLeaveBalanceRolloverCron } from "./cron/driver-leave-balance-rollover.cron.js";
+import { initializeDriverLeavePendingEscalationCron } from "./cron/driver-leave-pending-escalation.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { backfillLegalTemplateLibraries } from "./legal/template-library-provision.service.js";
 import { initializeSafetyRemindersCron } from "./safety/reminders.cron.js";
@@ -1135,6 +1138,16 @@ async function main() {
     app.log.info("[STARTUP] geofence-breach-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-breach-cron failed");
+  }
+
+  try {
+    // P8C-K driver scheduler leave crons — each self-gates OFF unless its env flag is set to "true".
+    initializeDriverLeaveAdvanceReminderCron(app);
+    initializeDriverLeaveBalanceRolloverCron(app);
+    initializeDriverLeavePendingEscalationCron(app);
+    app.log.info("[STARTUP] driver-leave scheduler crons initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] driver-leave scheduler crons failed");
   }
 
   try {

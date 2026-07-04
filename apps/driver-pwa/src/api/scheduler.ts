@@ -26,6 +26,25 @@ export function listMyLeaveRequests() {
   return apiRequest<{ requests: DriverLeaveRequestRow[] }>("/api/v1/driver/scheduler/my-requests");
 }
 
+export type MyLeaveBalance = {
+  plan_year: number;
+  vacation_allocated: number;
+  vacation_used: number;
+  sick_allocated: number;
+  sick_used: number;
+  personal_allocated: number;
+  personal_used: number;
+} | null;
+
+export type MyLeaveBalanceResponse = {
+  balance: MyLeaveBalance;
+  year: number;
+};
+
+export function getMyLeaveBalance() {
+  return apiRequest<MyLeaveBalanceResponse>("/api/v1/driver/scheduler/balance");
+}
+
 export function createLeaveRequest(body: {
   leave_type: "vacation" | "sick" | "personal" | "wfh";
   start_date: string;
