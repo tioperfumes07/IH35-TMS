@@ -428,6 +428,28 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       const oldRow = oldRes.rows[0];
       if (!oldRow) return null;
 
+      // G1-1 anti-escalation (LIVE-EXPLOITABLE fix — audit 2026-07-04): the PATCH was gated only by
+      // isAdminRole, so ANY Administrator could set role=Owner on themselves or anyone (full escalation to
+      // the money tier). Enforce: (1) only an Owner may grant the Owner role or re-role an existing Owner,
+      // (2) no one may change their OWN role, (3) never demote the last active Owner.
+      const newRole = parsedBody.data.role;
+      if (newRole !== undefined && newRole !== oldRow.role) {
+        const callerIsOwner = authUser.role === "Owner";
+        if ((newRole === "Owner" || oldRow.role === "Owner") && !callerIsOwner) {
+          return { roleGuard: "owner_role_requires_owner" as const };
+        }
+        if (parsedParams.data.id === authUser.uuid) {
+          return { roleGuard: "cannot_change_own_role" as const };
+        }
+        if (oldRow.role === "Owner" && newRole !== "Owner") {
+          const owners = await client.query<{ n: string }>(
+            `SELECT count(*)::text AS n FROM identity.users WHERE role = 'Owner' AND deactivated_at IS NULL AND id <> $1::uuid`,
+            [oldRow.id]
+          );
+          if (Number(owners.rows[0]?.n ?? 0) === 0) return { roleGuard: "cannot_demote_last_owner" as const };
+        }
+      }
+
       const res = await client.query<IdentityUserRow>(
         `
           UPDATE identity.users
@@ -467,6 +489,9 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       return updatedRow;
     });
 
+    if (updated && typeof updated === "object" && "roleGuard" in updated) {
+      return reply.code(403).send({ error: updated.roleGuard });
+    }
     if (!updated) {
       return reply.code(404).send({ error: "identity_user_not_found" });
     }
