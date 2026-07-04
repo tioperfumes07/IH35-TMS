@@ -9,6 +9,7 @@ import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
 import { ListsHubPage } from "../pages/lists/ListsHubPage";
 import { ProgramBoardPage } from "../pages/program/ProgramBoardPage";
+import { FinalAdditionsPage } from "../pages/program/FinalAdditionsPage";
 import { DomainCatalogHubPage } from "../pages/lists/DomainCatalogHubPage";
 import { DetailTypesListPage } from "../pages/lists/accounting/DetailTypesListPage";
 import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
@@ -618,6 +619,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ProgramBoardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/program/final-additions"
+          element={
+            <ProtectedRoute>
+              <FinalAdditionsPage />
             </ProtectedRoute>
           }
         />
