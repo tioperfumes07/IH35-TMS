@@ -363,7 +363,7 @@ export function VendorDetailPage() {
         subtitle={vendor.vendor_type}
         actions={
           <div className="flex items-center gap-2">
-            <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-emerald-100 text-emerald-700"}`}>
+            <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`}>
               {vendor.deactivated_at ? "Inactive" : "Active"}
             </span>
             {vendor.deactivated_at ? (
@@ -379,7 +379,7 @@ export function VendorDetailPage() {
         }
       />
       {reworkSignalCount > 0 ? (
-        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
           Warning: {reworkSignalCount} possible re-do signal(s) in last 30 days (same vendor/unit/failure pattern).
         </div>
       ) : null}
@@ -508,10 +508,10 @@ export function VendorDetailPage() {
               <span
                 className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                   profileForm.qualityRating === "good"
-                    ? "bg-emerald-100 text-emerald-800"
+                    ? "bg-slate-100 text-slate-700"
                     : profileForm.qualityRating === "bad"
                       ? "bg-red-100 text-red-800"
-                      : "bg-amber-100 text-amber-800"
+                      : "bg-slate-100 text-slate-700"
                 }`}
               >
                 {profileForm.qualityRating === "good" ? "Good" : profileForm.qualityRating === "bad" ? "Bad" : "Medium"}
@@ -539,7 +539,7 @@ export function VendorDetailPage() {
             {!companyId ? (
               <div className="flex items-center gap-2 text-sm text-gray-900">
                 <VendorCategoryChip code={vendor.vendor_category} />
-                <span className="text-xs text-amber-700">Select operating company to edit.</span>
+                <span className="text-xs text-slate-600">Select operating company to edit.</span>
               </div>
             ) : (
               <div className="flex flex-wrap items-center gap-2 text-sm text-gray-900">
@@ -776,7 +776,7 @@ export function VendorDetailPage() {
             {billPayOpen ? (
               <div className="space-y-3 border-t border-gray-100 p-3 text-xs">
                 {vendorPaymentBackendPending ? (
-                  <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-amber-950">
+                  <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-slate-700">
                     Backend pending — file <strong>P6-T11204</strong> for vendor bill payment APIs.{" "}
                     <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
                       Retry
@@ -845,7 +845,7 @@ export function VendorDetailPage() {
                   <p className="mt-1 text-gray-600">
                     Applying {money.format(vendorBillPayBreakdown.appliedSum / 100)} of {money.format(billPayCents / 100)} payment
                     {vendorBillPayBreakdown.creditCents > 0 ? (
-                      <span className="text-amber-800"> · {money.format(vendorBillPayBreakdown.creditCents / 100)} vendor credit</span>
+                      <span className="text-slate-700"> · {money.format(vendorBillPayBreakdown.creditCents / 100)} vendor credit</span>
                     ) : null}
                   </p>
                   {billPayManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
@@ -898,7 +898,7 @@ export function VendorDetailPage() {
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Recent bill payments</div>
             {vendorPaymentBackendPending ? (
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-slate-700">
                 Backend pending — history unavailable until backend ships (P6-T11204).
               </p>
             ) : vendorPaymentsQuery.isLoading ? (
