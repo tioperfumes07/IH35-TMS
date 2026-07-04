@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice } from "../../api/accounting";
 import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
@@ -107,6 +108,15 @@ export function InvoiceDetailPage() {
   );
 
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading invoice...</div>;
+  if (detailQuery.isError)
+    return (
+      <ListErrorState
+        title="Couldn't load invoice"
+        status={0}
+        message={(detailQuery.error as Error | undefined)?.message}
+        onRetry={() => void detailQuery.refetch()}
+      />
+    );
   if (!invoice) return <div className="text-sm text-red-600">Invoice not found.</div>;
 
   return (

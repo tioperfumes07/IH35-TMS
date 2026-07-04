@@ -8,6 +8,7 @@ import { PodCapture } from "../components/PodCapture";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
+import { formatTime } from "../lib/formatDateTime";
 import { useGeofence } from "../lib/geofence";
 
 export function StopActionPage() {
@@ -90,7 +91,7 @@ export function StopActionPage() {
           {status === "arrived" && hasDoc ? (
             <PwaButton className="w-full" onClick={() => void handleDepart()}>{t("stop.mark_departed")}</PwaButton>
           ) : null}
-          {status === "departed" ? <div className="text-sm text-pwa-text-secondary">{t("stop.departed_at")}: {new Date().toLocaleTimeString()}</div> : null}
+          {status === "departed" ? <div className="text-sm text-pwa-text-secondary">{t("stop.departed_at")}: {formatTime(new Date())}</div> : null}
         </PwaCard>
 
         <PwaButton variant="secondary" onClick={() => navigate(`/incident/new?loadId=${resolvedLoad.id}&stopId=${resolvedStop.id}`)}>

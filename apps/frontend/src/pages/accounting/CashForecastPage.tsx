@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCashForecast, getCashForecastSettings, upsertCashForecastSettings, type CashForecastSettings } from "../../api/accounting";
 import { useToast } from "../../components/Toast";
@@ -171,6 +172,18 @@ export function CashForecastPage() {
               <tr>
                 <td colSpan={8} className="px-3 py-4 text-gray-500">
                   Loading forecast...
+                </td>
+              </tr>
+            ) : null}
+            {!forecastQuery.isLoading && forecastQuery.isError ? (
+              <tr>
+                <td colSpan={8} className="px-3 py-2">
+                  <ListErrorState
+                    title="Couldn't load cash forecast"
+                    status={0}
+                    message={(forecastQuery.error as Error | undefined)?.message}
+                    onRetry={() => void forecastQuery.refetch()}
+                  />
                 </td>
               </tr>
             ) : null}

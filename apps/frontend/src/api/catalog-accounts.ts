@@ -68,9 +68,24 @@ export function getCatalogAccount(id: string) {
 
 // Active chart of accounts (entity-scoped server-side). Used e.g. for the Record-Expense payment-account
 // picker, where the caller filters to postable Asset (bank/cash) accounts.
-export function listCatalogAccounts(params?: { status?: string; limit?: number }) {
-  const qs = new URLSearchParams();
-  qs.set("status", params?.status ?? "active");
-  qs.set("limit", String(params?.limit ?? 300));
-  return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
+//
+// G9-H6: /catalogs/accounts hard-caps `limit` at 200 (accounts.routes.ts) and returns no total, while the
+// chart has 371 accounts — so a single call silently drops the OLDEST accounts (ORDER BY created_at DESC).
+// When the caller does not force a specific `limit`, page by offset until a short page so the FULL chart is
+// returned; a caller passing an explicit `limit` still gets exactly that page (backend clamps it to <=200).
+export async function listCatalogAccounts(params?: { status?: string; limit?: number }) {
+  const status = params?.status ?? "active";
+  if (params?.limit !== undefined) {
+    const qs = new URLSearchParams({ status, limit: String(params.limit) });
+    return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
+  }
+  const PAGE = 200;
+  const accounts: CatalogAccount[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const qs = new URLSearchParams({ status, limit: String(PAGE), offset: String(offset) });
+    const res = await apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
+    accounts.push(...res.accounts);
+    if (res.accounts.length < PAGE) break;
+  }
+  return { accounts };
 }

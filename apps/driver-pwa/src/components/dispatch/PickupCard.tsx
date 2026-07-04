@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { DispatchViewStop } from "../../lib/dispatch-api-client";
 import { PwaButton } from "../PwaButton";
 import { PwaCard } from "../PwaCard";
+import { formatDateTime } from "../../lib/formatDateTime";
 
 type PickupCardProps = {
   stop: DispatchViewStop;
@@ -56,15 +57,15 @@ export function PickupCard({ stop, onArrived, onDeparted, onUploadDoc, busy }: P
         {stop.hours ? <div className="text-xs text-pwa-text-secondary">{t("dispatch.hours_label", { hours: stop.hours })}</div> : null}
         <div className="text-xs text-pwa-text-secondary">
           {t("dispatch.window_label", {
-            start: new Date(stop.scheduled_arrival_at).toLocaleString(),
-            end: new Date(stop.scheduled_departure_at).toLocaleString(),
+            start: formatDateTime(stop.scheduled_arrival_at),
+            end: formatDateTime(stop.scheduled_departure_at),
           })}
         </div>
         {stop.actual_arrival_at ? (
-          <div className="text-xs">{t("dispatch.arrived_at", { time: new Date(stop.actual_arrival_at).toLocaleString() })}</div>
+          <div className="text-xs">{t("dispatch.arrived_at", { time: formatDateTime(stop.actual_arrival_at) })}</div>
         ) : null}
         {stop.actual_departure_at ? (
-          <div className="text-xs">{t("dispatch.departed_at", { time: new Date(stop.actual_departure_at).toLocaleString() })}</div>
+          <div className="text-xs">{t("dispatch.departed_at", { time: formatDateTime(stop.actual_departure_at) })}</div>
         ) : null}
         {stop.dispatcher_notes ? <div className="rounded-sm bg-[#101522] p-2 text-xs">{stop.dispatcher_notes}</div> : null}
         <div className="text-xs text-pwa-text-secondary">
