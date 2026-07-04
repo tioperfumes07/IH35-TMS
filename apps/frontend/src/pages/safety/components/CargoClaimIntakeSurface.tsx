@@ -14,6 +14,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
+import { formatUsdCents } from "../../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -35,8 +36,7 @@ function todayISODate(): string {
 
 function formatCents(cents: unknown): string {
   const n = typeof cents === "number" ? cents : Number(cents ?? 0);
-  if (!Number.isFinite(n)) return "$0.00";
-  return `$${(n / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(n);
 }
 
 const emptyForm = {

@@ -1,11 +1,12 @@
 import type { IftaFiling } from "../../../api/reports-ifta";
+import { formatUsd } from "../../../lib/money";
 
 type Props = {
   filing: IftaFiling;
 };
 
 function fmtMoney(value: number) {
-  return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  return formatUsd(value);
 }
 
 function fmtNum(value: number, digits = 3) {

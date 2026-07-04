@@ -21,6 +21,7 @@ import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-
 import { Link } from "react-router-dom";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
+import { formatUsdCents } from "../../../lib/money";
 
 type ItemGroup = { itemId: string; accounts: PlaidBankAccount[] };
 
@@ -37,8 +38,7 @@ function groupByPlaidItem(accounts: PlaidBankAccount[]): ItemGroup[] {
 
 function formatMoney(cents: number, isCredit: boolean) {
   const sign = isCredit ? 1 : -1;
-  const v = (sign * cents) / 100;
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
+  return formatUsdCents(sign * cents);
 }
 
 function categoryLabel(t: PlaidBankTransaction) {

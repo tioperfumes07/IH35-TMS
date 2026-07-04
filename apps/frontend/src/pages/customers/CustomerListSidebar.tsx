@@ -5,11 +5,10 @@ import { CardLink } from "../../components/shared/CardLink";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
-
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+import { formatUsdCents } from "../../lib/money";
 
 function fmtMoney(cents: number) {
-  return usd.format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 function customerQualityRating(paymentScore: string | null | undefined, overallFlag: "preferred" | "standard" | "caution" | "avoid") {

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDeadheadNextLoadSuggestions, type DeadheadNextLoadSuggestion } from "../../api/dispatch";
+import { formatUsdCents } from "../../lib/money";
 
 export type DeadheadOptimizerPanelProps = {
   operatingCompanyId: string;
@@ -17,7 +18,7 @@ function fmtMiles(n: number) {
 
 function fmtMoneyCents(cents: number) {
   if (!Number.isFinite(cents)) return "—";
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 export function DeadheadOptimizerPanel({

@@ -3,6 +3,7 @@ import { formatDateUS } from "../lib/formatDate";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
+import { formatUsdCents } from "../lib/money";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -239,7 +240,7 @@ function CustomerFinancialOverviewSection(props: {
           {props.summary.ar_aging_buckets.map((b) => (
             <div key={b.bucket} className="flex justify-between">
               <span>{agingLabels[b.bucket] ?? b.bucket}</span>
-              <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(b.open_cents / 100)}</span>
+              <span>{formatUsdCents(b.open_cents)}</span>
             </div>
           ))}
         </div>
@@ -250,7 +251,7 @@ function CustomerFinancialOverviewSection(props: {
             <div key={l.id} className="flex justify-between gap-2 border-b border-gray-100 py-1">
               <span className="truncate">{l.load_number ?? l.id.slice(0, 8)}</span>
               <StatusBadge variant="neutral">{l.status ?? "—"}</StatusBadge>
-              <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(l.rate_total_cents ?? 0) / 100)}</span>
+              <span>{formatUsdCents(Number(l.rate_total_cents ?? 0))}</span>
             </div>
           ))}
           {props.summary.recent_loads.length === 0 ? <p className="text-gray-500">No loads.</p> : null}
@@ -298,10 +299,8 @@ function emptyLaneForm() {
   };
 }
 
-const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-
 function formatCurrencyCents(cents: number | null | undefined) {
-  return usdFormatter.format((Number(cents ?? 0) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 function formatDateShort(value: string | null | undefined) {
@@ -1967,7 +1966,7 @@ export function CustomerDetailPage() {
                     <td className="px-2 py-1.5 text-gray-700">{lane.origin_city}, {lane.origin_state}</td>
                     <td className="px-2 py-1.5 text-gray-700">{lane.destination_city}, {lane.destination_state}</td>
                     <td className="px-2 py-1.5 text-gray-700">{lane.typical_miles ?? "-"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">${(Number(lane.base_rate_cents ?? 0) / 100).toFixed(2)}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{formatUsdCents(Number(lane.base_rate_cents ?? 0))}</td>
                     <td className="px-2 py-1.5 text-gray-700">{lane.fsc_per_mile_cents == null ? "-" : `$${(lane.fsc_per_mile_cents / 100).toFixed(2)}`}</td>
                     <td className="px-2 py-1.5 text-gray-700">{lane.deactivated_at ? "Inactive" : "Active"}</td>
                     <td className="px-2 py-1.5 text-gray-700">

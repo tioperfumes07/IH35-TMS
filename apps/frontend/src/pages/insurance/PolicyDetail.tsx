@@ -16,9 +16,10 @@ import {
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatUsdCents } from "../../lib/money";
 
 function formatMoney(cents: number) {
-  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(cents);
 }
 
 export function PolicyDetail() {

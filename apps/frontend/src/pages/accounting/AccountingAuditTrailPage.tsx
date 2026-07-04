@@ -12,9 +12,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { useListState } from "../../components/list-state";
+import { formatUsdCents } from "../../lib/money";
 
 function fmtMoneyCents(value: number) {
-  return (value / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
+  return formatUsdCents(value);
 }
 
 function fmtDate(iso: string) {

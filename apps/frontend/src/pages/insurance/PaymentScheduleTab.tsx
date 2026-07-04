@@ -12,6 +12,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId?: string;
@@ -39,7 +40,7 @@ function statusLabel(status: PaymentScheduleStatus): string {
 }
 
 function formatMoney(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return formatUsdCents(cents);
 }
 
 function canMarkPaid(schedule: InsurancePaymentSchedule): boolean {

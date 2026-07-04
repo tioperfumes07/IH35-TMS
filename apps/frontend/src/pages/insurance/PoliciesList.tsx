@@ -15,9 +15,10 @@ import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizar
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatUsdCents } from "../../lib/money";
 
 function formatMoney(cents: number) {
-  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(cents);
 }
 
 function daysUntil(value: string) {

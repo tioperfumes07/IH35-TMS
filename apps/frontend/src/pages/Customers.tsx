@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ListErrorState } from "../components/ListErrorState";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
+import { formatUsdCents } from "../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listInvoices } from "../api/accounting";
@@ -86,10 +87,8 @@ const COLUMN_OPTIONS: Array<{ key: ColumnKey; label: string; defaultOn: boolean 
   { key: "loaded_miles", label: "Loaded miles", defaultOn: false },
 ];
 
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-
 function fmtMoney(cents: number | null | undefined) {
-  return usd.format((Number(cents ?? 0) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 function customerQualityRating(paymentScore: string | null | undefined, overallFlag: "preferred" | "standard" | "caution" | "avoid") {

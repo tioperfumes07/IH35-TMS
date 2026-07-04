@@ -10,11 +10,10 @@ import { TableControls, Paginator, TableHeaderCell, useTableController, type Tab
 import { useToast } from "../../components/Toast";
 import { useBulkSelection } from "../../hooks/useBulkSelection";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
-
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+import { formatUsdCents } from "../../lib/money";
 
 function fmtMoney(cents: number) {
-  return usd.format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 function qualityBadge(customer: Customer) {

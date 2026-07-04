@@ -5,6 +5,7 @@ import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_UI_FLAG, getFinanceHubOverview, type FinanceHubKpi } from "../../api/financeHub";
+import { formatUsdCents } from "../../lib/money";
 
 // AF-6 — Finance Hub landing dashboard.
 // READ-ONLY: a single GET aggregates headline KPIs from the existing read-only finance/accounting
@@ -13,7 +14,7 @@ import { FINANCE_HUB_UI_FLAG, getFinanceHubOverview, type FinanceHubKpi } from "
 // lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no
 // money posting.
 
-const fmtCents = (c: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((c || 0) / 100);
+const fmtCents = (c: number) => formatUsdCents(c);
 
 function kpiDisplay(kpi: FinanceHubKpi): string {
   if (kpi.value_kind === "money_cents") return fmtCents(Number(kpi.value) || 0);

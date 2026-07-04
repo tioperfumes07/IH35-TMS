@@ -9,6 +9,7 @@ import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId?: string;
@@ -32,7 +33,7 @@ function lawsuitStatusVariant(status: InsuranceLawsuitStatus): "neutral" | "warn
 }
 
 function formatMoney(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return formatUsdCents(cents);
 }
 
 export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {

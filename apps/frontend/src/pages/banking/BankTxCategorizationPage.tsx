@@ -23,6 +23,7 @@ import { useToast } from "../../components/Toast";
 import { ManualJEModal } from "./components/ManualJEModal";
 import { TransferModal } from "./TransferModal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { formatUsdCents } from "../../lib/money";
 
 function txDate(tx: Record<string, unknown>) {
   return String(tx.transaction_date ?? tx.txn_date ?? "");
@@ -61,7 +62,7 @@ function coaIdFromSuggestion(s: Record<string, unknown>) {
 
 function formatMoneyCents(cents: number | null | undefined) {
   if (cents == null || Number.isNaN(Number(cents))) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(cents) / 100);
+  return formatUsdCents(Number(cents));
 }
 
 function mergeMeta(

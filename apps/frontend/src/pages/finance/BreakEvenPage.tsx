@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { formatUsdCents } from "../../lib/money";
 import {
   FINANCE_BREAK_EVEN_UI_FLAG,
   getBreakEvenInputs,
@@ -17,7 +18,7 @@ import {
 // can reclassify each expense line fixed/variable, edit miles, and pick the revenue basis as a non-persisted
 // what-if. Nothing here posts, writes, or moves money. Gated behind FINANCE_BREAK_EVEN_UI_ENABLED (OFF).
 
-const fmtCents = (c: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((c || 0) / 100);
+const fmtCents = (c: number) => formatUsdCents(c);
 const fmtInt = (n: number) => new Intl.NumberFormat("en-US").format(Math.round(n || 0));
 // Per-mile figures are cents/mile → dollars/mile with 3 decimals (industry convention, e.g. $1.583/mi).
 const fmtPerMile = (centsPerMile: number | null) =>

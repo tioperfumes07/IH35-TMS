@@ -12,11 +12,10 @@ import {
 import { PageHeader } from "../../components/layout/PageHeader";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatUsdCents } from "../../lib/money";
 
 function formatMoney(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    Math.max(0, cents) / 100
-  );
+  return formatUsdCents(Math.max(0, cents));
 }
 
 function formatElapsed(startedAt: string, nowMs: number): string {

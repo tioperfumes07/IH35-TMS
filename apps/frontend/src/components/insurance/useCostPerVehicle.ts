@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { AllocationMethod } from "../../api/insurance";
+import { formatUsdCents } from "../../lib/money";
 
 export type CostPerVehicleResult = {
   costPerVehiclePerMonthCents: number[];
@@ -15,7 +16,7 @@ function splitCentsExact(totalCents: number, count: number): number[] {
 }
 
 function formatCurrency(cents: number): string {
-  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(cents);
 }
 
 export function useCostPerVehicle(

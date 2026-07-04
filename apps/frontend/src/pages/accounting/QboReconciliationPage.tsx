@@ -4,11 +4,11 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { getQboReconciliation, type ReconFinding, type ReconObject } from "../../api/qbo-recon";
+import { formatUsdCents } from "../../lib/money";
 
 const FLAG = "TMS_QBO_RECON_UI_ENABLED";
 
-const fmtCents = (c: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
+const fmtCents = (c: number) => formatUsdCents(c);
 const fmtNum = (n: number) => n.toLocaleString("en-US");
 const fmtTs = (s: string | null) => (s ? new Date(s).toLocaleString("en-US") : "—");
 const titleize = (s: string) => s.replace(/_/g, " ");

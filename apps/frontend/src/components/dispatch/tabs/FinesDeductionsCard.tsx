@@ -21,6 +21,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { listAutoDeductionPolicies, type AutoDeductionPolicy } from "../../../hooks/useAutoDeductionPolicies";
 import { Button } from "../../Button";
 import { Modal } from "../../Modal";
+import { formatUsdCents } from "../../../lib/money";
 
 export type FinesDeductionsCardProps = {
   loadId: string;
@@ -29,7 +30,7 @@ export type FinesDeductionsCardProps = {
 };
 
 function formatMoney(cents: number) {
-  return `$${(Number(cents || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(cents);
 }
 
 function formatDateTime(value: string | null | undefined) {

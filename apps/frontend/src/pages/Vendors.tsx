@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
 import { listVendors, type VendorOption } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
+import { formatUsdCents } from "../lib/money";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ActionButton } from "../components/shared/ActionButton";
@@ -57,10 +58,8 @@ const COLUMN_OPTIONS: Array<{ key: ColumnKey; label: string; defaultOn: boolean 
   { key: "loaded_miles", label: "Loaded miles", defaultOn: false },
 ];
 
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-
 function fmtMoney(cents: number | null | undefined) {
-  return usd.format((Number(cents ?? 0) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 function buildAchDisplay(vendor: VendorOption) {

@@ -7,6 +7,7 @@ import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
 import { listDispatchLoads } from "../api/dispatch";
 import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinance";
 import { getActiveLiabilities } from "../api/liabilities";
+import { formatUsd, formatUsdCents } from "../lib/money";
 import {
   createDriverTeam,
   deactivateDriverTeam,
@@ -82,7 +83,7 @@ function formatDate(value: string | null) {
 }
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
+  return formatUsd(value);
 }
 
 function isWithinNextDays(dateIso: string | null | undefined, days: number) {
@@ -814,7 +815,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 (teamDetailQuery.data.settlement_history ?? []).slice(0, 20).map((row, index) => (
                   <div key={`${index}-${String((row as Record<string, unknown>).id ?? "")}`} className="border-t border-gray-100 py-1">
                     Load {String((row as Record<string, unknown>).load_id ?? "—")} · Driver {String((row as Record<string, unknown>).driver_id ?? "—")} ·
-                    Pay ${((Number((row as Record<string, unknown>).driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
+                    Pay {formatUsdCents(Number((row as Record<string, unknown>).driver_pay_cents ?? 0) || 0)}
                   </div>
                 ))
               )}
