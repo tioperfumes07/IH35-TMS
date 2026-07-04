@@ -2,19 +2,19 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (7709 files) + 1839 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (7756 files) + 1855 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
 - **PENDING**: 4
-- **PENDING (GATED)**: 44
+- **PENDING (GATED)**: 45
 - **NEEDS-VERIFY**: 4
 - **DONE**: 471
 
-## Universe — why 523 blocks (the "456 vs 294 .block-ready" gap, explained)
+## Universe — why 524 blocks (the "456 vs 294 .block-ready" gap, explained)
 The reconciler spans **5 sources**, de-duped by id — the block count is the union, **not** the `.block-ready` file count.
 - Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count.
-- **`.block-ready/*.json` files on disk:** 361
-- **By source (after de-dup):** program: 61 · .block-ready: 350 · enterprise-29: 29 · accounting: 26 · gap-spec: 57
+- **`.block-ready/*.json` files on disk:** 362
+- **By source (after de-dup):** program: 61 · .block-ready: 351 · enterprise-29: 29 · accounting: 26 · gap-spec: 57
 
 ## Delta — blocks added since 2026-06-16 (today's work, now counted)
 Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no new blocks were registered.
@@ -81,6 +81,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | STMT-3-1099-425c-consolidation | PENDING (GATED) | 💰 | T2 |  | program | forward spec — 0 named artifacts on main |
 | USERS-DEACTIVATE | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
 | USMCA-LAUNCH-carrier | PENDING (GATED) |  | T1 |  | program | GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge. |
+| USMCA-MASTERDATA-IMPORT | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
 | VENDOR-CUSTOMER-QBO-PARITY | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
 | VISUAL-DISPATCH | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
 | VISUAL-LISTS | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
