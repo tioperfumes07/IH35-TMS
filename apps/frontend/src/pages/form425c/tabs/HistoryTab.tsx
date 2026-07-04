@@ -21,6 +21,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
         {loading ? <div className="p-3 text-sm text-slate-500">Loading reports...</div> : null}
         {!loading && !reports.length ? <div className="p-3 text-sm text-slate-500">No reports found.</div> : null}
         {reports.length ? (
+          <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-100 text-xs uppercase text-slate-600">
               <tr>
@@ -52,6 +53,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         ) : null}
       </div>
     </div>
