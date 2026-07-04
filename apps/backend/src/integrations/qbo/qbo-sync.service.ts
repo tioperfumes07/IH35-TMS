@@ -7,6 +7,7 @@ import { sendEmail } from "../../notifications/email.service.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
 import { syncEntityToQbo } from "./sync-outbound-accounting.js";
+import { isEntityPushEnabled } from "../../qbo/qbo-entity-push-gate.js";
 
 export type QueueEntityType =
   | "bank_transaction"
@@ -511,6 +512,36 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
       }
       if (job.entity_type !== "bank_transaction") {
         throw new Error(`unsupported_entity_type_${job.entity_type}`);
+      }
+      // IMPORT-P0b — bank_transaction was OMITTED from the entity-push kill-switch. Unlike
+      // invoice/bill/customer/vendor/account/item (which route through syncEntityToQbo and consult
+      // the shared gate), this branch called syncBankTransaction → POST /purchase directly, with no
+      // flag and no origin check. Under the locked no-write-back architecture
+      // (docs/specs/ACCOUNTING-ARCHITECTURE.md) QBO is reconcile-only: categorizing a bank-feed row
+      // must NEVER create a QBO Purchase unless the owner explicitly turns QBO_ENTITY_PUSH_ENABLED ON
+      // for this company. Default OFF ⇒ this path makes ZERO QBO calls. Gate BEFORE any token fetch.
+      const bankPushEnabled = await withLuciaBypass(async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+        return isEntityPushEnabled(client, job.operating_company_id);
+      });
+      if (!bankPushEnabled) {
+        await markJobResult(job, "blocked", {
+          errorMessage: "qbo_entity_push_disabled_bank_transaction",
+          errorDetails: { reason: "flag_off", flag: "QBO_ENTITY_PUSH_ENABLED", entity_type: "bank_transaction" },
+        });
+        blockedConflict += 1;
+        await appendSyncAudit(
+          "integrations.qbo_sync.blocked",
+          {
+            queue_id: job.id,
+            operating_company_id: job.operating_company_id,
+            entity_id: job.entity_id,
+            reason: "entity_push_flag_off_bank_transaction",
+          },
+          "info",
+          null
+        );
+        continue;
       }
       const token = await getValidAccessToken(job.operating_company_id);
       const txn = await loadBankTxnContext(job.operating_company_id, job.entity_id);
