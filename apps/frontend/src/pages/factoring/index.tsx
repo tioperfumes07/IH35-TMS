@@ -15,7 +15,7 @@ export function FactoringIndexPage() {
 
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
+      <div className="overflow-x-auto rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
           {SUBNAV.map((item) => (
             <NavLink

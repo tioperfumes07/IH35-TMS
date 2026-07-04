@@ -10,6 +10,7 @@ import { BatchDetail } from "./BatchDetail";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -124,8 +125,8 @@ export function BatchWizard() {
                     </td>
                     <td className="px-2 py-2 font-medium text-gray-900">{invoice.display_id ?? invoice.id}</td>
                     <td className="px-2 py-2">{invoice.customer_name ?? "—"}</td>
-                    <td className="px-2 py-2">{invoice.issue_date ?? "—"}</td>
-                    <td className="px-2 py-2">{invoice.due_date ?? "—"}</td>
+                    <td className="px-2 py-2">{formatDateUS(invoice.issue_date) || "—"}</td>
+                    <td className="px-2 py-2">{formatDateUS(invoice.due_date) || "—"}</td>
                     <td className="px-2 py-2 text-right">{asMoney(invoice.total_cents)}</td>
                   </tr>
                 ))}
@@ -189,7 +190,7 @@ export function BatchWizard() {
       {step === 3 && draftBatch ? (
         <div className="space-y-3">
           <div className="text-sm text-gray-700">Step 3: confirm and submit the factoring batch.</div>
-          <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
             Submitting this batch moves status from <code>draft</code> to <code>submitted</code>.
           </div>
           <div className="flex justify-end gap-2">
@@ -205,7 +206,7 @@ export function BatchWizard() {
 
       {step === 4 ? (
         <div className="space-y-3">
-          <div className="rounded-sm border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+          <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
             Step 4 complete. Batch submitted successfully.
           </div>
           {submittedBatchId && companyId ? <BatchDetail batchId={submittedBatchId} companyId={companyId} /> : null}

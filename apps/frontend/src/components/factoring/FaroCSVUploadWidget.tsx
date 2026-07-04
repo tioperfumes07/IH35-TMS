@@ -117,7 +117,7 @@ export function FaroCSVUploadWidget({
           ))}
         </ul>
       ) : csvText ? (
-        <p className="text-xs text-emerald-700">{preview.rows.length} preview row(s) valid</p>
+        <p className="text-xs text-slate-700">{preview.rows.length} preview row(s) valid</p>
       ) : null}
 
       <Button size="sm" disabled={!valid || uploading} onClick={onUpload}>

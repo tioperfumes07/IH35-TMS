@@ -282,7 +282,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         />
       ) : null}
 
-      <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
+      <div className="overflow-x-auto rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
           {SUBNAV.map((item) => {
             const target = FACTORING_TAB_PATH[item.id];
@@ -381,7 +381,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             <div className="font-medium text-gray-900">Single-factor invariant status</div>
             <div className="mt-1 text-gray-700">
               Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
-              <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-green-700" : "text-red-700"}>
+              <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-slate-700" : "text-red-700"}>
                 {settingsQuery.data?.current?.single_factor_invariant_ok ? "Compliant" : "Violation"}
               </span>
             </div>
@@ -432,7 +432,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 Deactivate active factor
               </Button>
             </div>
-            {!canDeactivate ? <div className="mt-2 text-xs text-amber-700">Only Owner role can deactivate an active factor.</div> : null}
+            {!canDeactivate ? <div className="mt-2 text-xs text-slate-700">Only Owner role can deactivate an active factor.</div> : null}
           </div>
           <div data-deactivate-factor-confirm-modal="true">
             <DeactivateFactorConfirmModal
