@@ -31,9 +31,14 @@ if (!userPrefsRoutes.includes("operating_company_id")) {
   fail(`${USER_PREFS_ROUTES} must reference operating_company_id`);
 }
 
-const identityRoutes = read(IDENTITY_ROUTES);
-if (identityRoutes.includes("/api/v1/identity/users") && !identityRoutes.includes("operating_company_id")) {
-  fail(`${IDENTITY_ROUTES} contains users handlers and must reference operating_company_id`);
+// IDENTITY_ROUTES was a dead-orphan duplicate removed in the users-deactivate fix. Only enforce the
+// tenant-scope rule if the file still exists (do not require the orphan to be present).
+const identityRoutesAbs = path.join(ROOT, IDENTITY_ROUTES);
+if (fs.existsSync(identityRoutesAbs)) {
+  const identityRoutes = fs.readFileSync(identityRoutesAbs, "utf8");
+  if (identityRoutes.includes("/api/v1/identity/users") && !identityRoutes.includes("operating_company_id")) {
+    fail(`${IDENTITY_ROUTES} contains users handlers and must reference operating_company_id`);
+  }
 }
 
 console.log("verify:users-tenant-scope — OK");
