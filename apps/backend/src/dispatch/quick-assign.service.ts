@@ -1,6 +1,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { notifyLoadAssigned } from "../services/push-notification.service.js";
+import { assertDriverQualifiedForLoad, DriverNotQualifiedError } from "./driver-qualification.service.js";
 
 type QuickAssignInput = {
   operating_company_id: string;
@@ -27,7 +28,8 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
     try {
       const loadRes = await client.query(
         `
-          SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number
+          SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
+                 COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2
@@ -38,6 +40,16 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
       );
       const load = loadRes.rows[0];
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
+
+      // Shared driver-qualification gate (G9-C1 + D3-1): deactivated / archived / expired-CDL /
+      // expired-medical are DOT hard-stops, plus the hazmat H-endorsement on a hazmat load. This
+      // path previously enforced only unit-block / HOS / drug. Throws → mapped to a 422 by the route.
+      const qualBlock = await assertDriverQualifiedForLoad(client, {
+        driverId: input.driver_id,
+        operatingCompanyId: input.operating_company_id,
+        isHazmat: Boolean((load as { is_hazmat?: boolean }).is_hazmat),
+      });
+      if (qualBlock) throw new DriverNotQualifiedError(qualBlock);
 
       const warnings: Array<{ code: string; severity: "advisory" | "hard_block"; message: string }> = [];
       if (input.unit_id) {
