@@ -52,6 +52,7 @@ import {
   MAINTENANCE_OPERATION_LINKS,
 } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 import { MAINTENANCE_TAB_PATH, maintenanceTabFromPath } from "../../router/route-manifest";
+import { useListState } from "../../components/list-state";
 
 export { MAINTENANCE_MASTER_DATA_LINKS, MAINTENANCE_OPERATION_LINKS } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 
@@ -158,6 +159,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     enabled: Boolean(companyId),
     retry: false,
   });
+  // Reorder-list empty row renders only once its query settles (no first-fetch flash).
+  const partsReorderListState = useListState(partsReorderQuery, (partsReorderQuery.data?.rows ?? []).length === 0);
   const statusMutation = useMutation({
     mutationFn: (args: { id: string; status: "in_progress" | "waiting_parts" | "complete" }) =>
       transitionWorkOrder(args.id, companyId, { new_status: args.status }),
@@ -395,7 +398,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                       </tr>
                     );
                     })}
-                    {(partsReorderQuery.data?.rows ?? []).length === 0 ? (
+                    {partsReorderListState.isEmpty ? (
                       <tr>
                         <td className="px-2 py-2 text-gray-500" colSpan={5}>
                           No parts inventory rows found.

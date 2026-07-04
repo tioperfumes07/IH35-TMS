@@ -18,6 +18,7 @@ import { VendorListSidebar } from "./vendors/VendorListSidebar";
 import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
 import { VendorCreateModal } from "../components/vendors/VendorCreateModal";
 import { useViewModePref } from "../hooks/useViewModePref";
+import { useListState } from "../components/list-state";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 
@@ -221,6 +222,9 @@ export function VendorsPage() {
     () => txRows.slice(pageStartIndex, pageStartIndex + pageSize),
     [pageSize, pageStartIndex, txRows]
   );
+  // Route the transactions empty state through the shared primitive so it renders
+  // only once the bills query settles, never during the in-flight fetch.
+  const billsListState = useListState(billsQuery, pagedRows.length === 0);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -450,7 +454,7 @@ export function VendorsPage() {
                             </tr>
                           );
                         })}
-                        {pagedRows.length === 0 ? (
+                        {billsListState.isEmpty ? (
                           <tr><td colSpan={COLUMN_OPTIONS.filter((column) => columns[column.key]).length} className="px-2 py-3 text-center text-sm text-gray-500">No transactions for current filters.</td></tr>
                         ) : null}
                       </tbody>

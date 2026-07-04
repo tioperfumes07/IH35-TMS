@@ -8,6 +8,7 @@ import {
 } from "../../api/factoring";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { useListState } from "../../components/list-state";
 
 const LOOKAHEAD_WINDOWS = [7, 14, 30, 60] as const;
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -107,6 +108,11 @@ export function ReserveDashboard() {
     60: forecast60Query.data?.total_projected_release_cents ?? 0,
   };
 
+  // Empty states render only once their backing query settles (never mid-fetch).
+  const balancesListState = useListState(balancesQuery, (balancesQuery.data ?? []).length === 0);
+  const historyListState = useListState(historyQuery, (historyQuery.data?.movements ?? []).length === 0);
+  const forecastListState = useListState(forecast60Query, (forecast60Query.data?.schedule ?? []).length === 0);
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -143,7 +149,7 @@ export function ReserveDashboard() {
             <div className="text-xs text-gray-600">Total movements: {balance.movement_count}</div>
           </div>
         ))}
-        {(balancesQuery.data ?? []).length === 0 ? (
+        {balancesListState.isEmpty ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-sm text-gray-500">No reserve balances found.</div>
         ) : null}
       </div>
@@ -170,7 +176,7 @@ export function ReserveDashboard() {
                     <td className="px-2 py-2 text-right font-medium">{asMoney(row.running_balance_cents)}</td>
                   </tr>
                 ))}
-                {(historyQuery.data?.movements ?? []).length === 0 ? (
+                {historyListState.isLoading || historyListState.isEmpty ? (
                   <tr>
                     <td className="px-2 py-3 text-gray-500" colSpan={3}>
                       {historyQuery.isLoading ? "Loading balance history..." : "No reserve movements found for the selected factor."}
@@ -233,7 +239,7 @@ export function ReserveDashboard() {
                     <td className="px-2 py-2 text-right">{row.source_movement_count}</td>
                   </tr>
                 ))}
-                {(forecast60Query.data?.schedule ?? []).length === 0 ? (
+                {forecastListState.isLoading || forecastListState.isEmpty ? (
                   <tr>
                     <td className="px-2 py-3 text-gray-500" colSpan={3}>
                       {forecast60Query.isLoading ? "Calculating reserve release forecast..." : "No projected reserve releases in the selected window."}
@@ -269,7 +275,7 @@ export function ReserveDashboard() {
                   <td className="px-2 py-2 text-right">{asMoney(movement.amount_cents)}</td>
                 </tr>
               ))}
-              {(historyQuery.data?.movements ?? []).length === 0 ? (
+              {historyListState.isEmpty ? (
                 <tr>
                   <td className="px-2 py-3 text-gray-500" colSpan={5}>
                     No recent movements for this factor.

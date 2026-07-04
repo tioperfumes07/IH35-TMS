@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getReceipts, getReceiptDetail, type ReceiptItem } from "../../api/receipts";
+import { useListState } from "../../components/list-state";
 
 const fmtCents = (c: number | null) =>
   c == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
@@ -73,7 +74,7 @@ export function ReceiptsPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const limit = 50;
 
-  const { data, isLoading, isError } = useQuery({
+  const listQuery = useQuery({
     queryKey: ["receipts", operatingCompanyId, entityType, search, offset],
     queryFn: () => getReceipts({
       operating_company_id: operatingCompanyId,
@@ -83,9 +84,11 @@ export function ReceiptsPage() {
     }),
     enabled: Boolean(selectedCompanyId),
   });
+  const { data, isLoading, isError } = listQuery;
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
+  const listState = useListState(listQuery, items.length === 0);
 
   return (
     <AccountingSubNavWrapper title="Receipts" subtitle="Uploaded receipts linked to expenses and bills">
@@ -108,7 +111,7 @@ export function ReceiptsPage() {
         <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
       ) : isError ? (
         <p className="text-sm text-red-600 py-8 text-center">Failed to load receipts.</p>
-      ) : items.length === 0 ? (
+      ) : listState.isEmpty ? (
         <div className="py-12 text-center">
           <p className="text-sm text-gray-500">No receipts found.</p>
           <p className="text-xs text-gray-400 mt-1">Upload a receipt when creating an expense or bill.</p>

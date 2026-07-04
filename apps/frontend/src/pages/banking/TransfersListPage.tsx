@@ -10,6 +10,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useListState } from "../../components/list-state";
 
 const PAGE_SIZE = 50;
 
@@ -60,6 +61,8 @@ export function TransfersListPage() {
 
   const rows = transfersQuery.data?.transfers ?? [];
   const hasNext = rows.length === PAGE_SIZE;
+  // Empty message renders only once the transfers query settles, never mid-fetch.
+  const listState = useListState(transfersQuery, rows.length === 0);
   const accountNameMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const account of bankAccountsQuery.data?.accounts ?? []) {
@@ -217,7 +220,7 @@ export function TransfersListPage() {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={9} className="px-2 py-4 text-center text-sm text-gray-500">
                   No transfers found for this filter.

@@ -12,6 +12,7 @@ import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useListState } from "../../../components/list-state";
 
 function money(cents: number | null | undefined) {
   return `$${((Number(cents ?? 0) || 0) / 100).toFixed(2)}`;
@@ -77,6 +78,8 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   });
 
   const rows = disputesQuery.data?.disputes ?? [];
+  // Empty state renders only once the disputes query settles (never mid-fetch).
+  const listState = useListState(disputesQuery, rows.length === 0);
   const detail = detailQuery.data?.dispute ?? selected;
   const openedDaysAgo = useMemo(() => {
     if (!detail?.opened_at) return null;
@@ -166,7 +169,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {listState.isLoading || listState.isEmpty ? (
               <tr>
                 <td colSpan={8} className="px-3 py-6 text-center text-gray-500">
                   {disputesQuery.isLoading ? "Loading disputes..." : "No disputes found for current filter."}

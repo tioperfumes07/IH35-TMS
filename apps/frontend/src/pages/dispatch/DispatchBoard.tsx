@@ -44,6 +44,7 @@ import { DriverHosClockValue } from "../../components/dispatch/hos/DriverHosCloc
 import { HOS_COLUMNS } from "../../components/dispatch/hos/hosClocks";
 import { LoadLivePositionCell } from "../../components/dispatch/LoadLivePositionCell";
 import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
+import { useListState } from "../../components/list-state";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -320,6 +321,8 @@ export function DispatchBoard({
     staleTime: 30_000,
   });
   const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
+  // Awaiting-units empty renders only once the roster query settles (never mid-fetch).
+  const unitsListState = useListState(unitsWithoutLoadQuery, unassignedUnits.length === 0);
 
   const triSignalsQuery = useQuery({
     queryKey: ["dispatch-board", "tri-signals", companyId],
@@ -911,7 +914,7 @@ export function DispatchBoard({
                     </tr>
                   ))
                 )}
-                {!unitsWithoutLoadQuery.isLoading && unassignedUnits.length === 0 ? (
+                {unitsListState.isEmpty ? (
                   <tr>
                     <td colSpan={5} className="px-2 py-3 text-center text-gray-500">
                       All units currently have active loads.

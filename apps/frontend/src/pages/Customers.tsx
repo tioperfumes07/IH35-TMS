@@ -26,6 +26,7 @@ import { CustomerListSidebar } from "./customers/CustomerListSidebar";
 import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 import { useViewModePref } from "../hooks/useViewModePref";
+import { useListState } from "../components/list-state";
 
 type CustomerTabId =
   | "transaction_list"
@@ -364,6 +365,9 @@ export function CustomersPage() {
     () => txRows.slice(pageStartIndex, pageStartIndex + pageSize),
     [pageSize, pageStartIndex, txRows]
   );
+  // Route the transactions empty state through the shared primitive so it renders
+  // only once the invoices query settles, never during the in-flight fetch.
+  const invoicesListState = useListState(invoicesQuery, pagedRows.length === 0);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -613,7 +617,7 @@ export function CustomersPage() {
                             </tr>
                           );
                         })}
-                        {pagedRows.length === 0 ? (
+                        {invoicesListState.isEmpty ? (
                           <tr><td colSpan={COLUMN_OPTIONS.filter((column) => columns[column.key]).length} className="px-2 py-3 text-center text-sm text-gray-500">No transactions for current filters.</td></tr>
                         ) : null}
                       </tbody>

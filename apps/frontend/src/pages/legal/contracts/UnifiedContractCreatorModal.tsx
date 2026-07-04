@@ -7,6 +7,7 @@ import { useToast } from "../../../components/Toast";
 import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } from "../../../api/legal-contracts";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
 import { listDrivers, listCustomers } from "../../../api/mdata";
+import { useListState } from "../../../components/list-state";
 
 // Unified bilingual contract creator (Lease / NDA / Policy / any active category).
 // Flow: doc category -> template+version (active) -> EN/ES -> fill from variable_schema
@@ -143,6 +144,8 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
 
   const isLease = selectedTemplate?.category === "lease";
   const leaseUnits = unitsQuery.data?.units ?? [];
+  // Eligible-units empty message renders only once the units query settles (no first-fetch flash).
+  const leaseUnitsListState = useListState(unitsQuery, leaseUnits.length === 0);
 
   // Merge schema fields with lease-only handoff payload (Exhibit-A units + ASC 842
   // election) that FIN-22 reads off filled_variables. Legal stores it; Finance classifies.
@@ -361,7 +364,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                   and any GL — Legal posts nothing.
                 </div>
                 <div className="max-h-36 space-y-1 overflow-auto rounded-sm border border-slate-200 bg-white p-2">
-                  {leaseUnits.length === 0 ? (
+                  {leaseUnitsListState.isEmpty ? (
                     <div className="text-xs text-slate-500">No eligible units found for this entity.</div>
                   ) : (
                     leaseUnits.map((u) => (

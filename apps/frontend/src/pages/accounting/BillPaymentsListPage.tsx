@@ -11,6 +11,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { PayBillModal } from "./PayBillModal";
+import { useListState } from "../../components/list-state";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -93,6 +94,8 @@ export function BillPaymentsListPage() {
     () => rows.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0),
     [rows]
   );
+
+  const listState = useListState(paymentsQuery, rows.length === 0);
 
   const selectedBill = useMemo(() => {
     if (!selectedBillId) return null;
@@ -211,7 +214,7 @@ export function BillPaymentsListPage() {
                 </td>
               </tr>
             ) : null}
-            {!paymentsQuery.isLoading && rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={9} className="px-3 py-3 text-gray-500">
                   No bill payments found.

@@ -21,6 +21,7 @@ import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { useListState } from "../../components/list-state";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
 export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
@@ -135,6 +136,7 @@ export function BillsPage() {
     return all.filter((bill) => billMatchesCategory(bill, category));
   }, [billsQuery.data?.rows, category]);
   const pageRowIds = useMemo(() => rows.map((bill) => bill.id), [rows]);
+  const listState = useListState(billsQuery, rows.length === 0);
 
   const billKpis = useMemo(() => {
     const all = billsQuery.data?.rows ?? [];
@@ -305,7 +307,7 @@ export function BillsPage() {
                 </td>
               </tr>
             ) : null}
-            {!billsQuery.isLoading && rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={11} className="px-3 py-4 text-gray-500">
                   No bills found.

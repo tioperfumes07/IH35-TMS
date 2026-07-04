@@ -28,6 +28,7 @@ import {
 } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
+import { useListState } from "../../components/list-state";
 
 const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -78,6 +79,7 @@ export function InvoicesListPage() {
 
   const invoices = query.data ?? [];
   const pageRowIds = useMemo(() => invoices.map((invoice) => invoice.id), [invoices]);
+  const listState = useListState(query, invoices.length === 0);
 
   const runInvoiceBulk = async (action: "mark_sent" | "mark_factored", payload?: Record<string, unknown>) => {
     if (!selectedCompanyId) {
@@ -236,7 +238,7 @@ export function InvoicesListPage() {
                 </td>
               </tr>
             ) : null}
-            {!query.isError && !query.isLoading && invoices.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td className="px-3 py-3 text-gray-500" colSpan={9}>
                   No invoices found for the selected filters.

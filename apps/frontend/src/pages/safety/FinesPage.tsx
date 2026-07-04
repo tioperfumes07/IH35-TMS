@@ -6,6 +6,7 @@ import { CompanyViolationsPage } from "./CompanyViolationsPage";
 import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useListState } from "../../components/list-state";
 
 type Props = {
   operatingCompanyId: string;
@@ -51,6 +52,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
   });
 
   const rows = useMemo(() => finesQuery.data?.fines ?? [], [finesQuery.data?.fines]);
+  // LIST-EMPTY: the empty message renders only after the fines query settles.
+  const listState = useListState(finesQuery, rows.length === 0);
 
   if (recordTypeFilter === "company-violation") {
     return (
@@ -150,7 +153,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={7} className="px-2 py-3 text-center text-gray-500">
                   No fines found.

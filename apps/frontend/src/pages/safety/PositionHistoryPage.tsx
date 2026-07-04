@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listPositionHistory } from "../../api/position-history";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useListState } from "../../components/list-state";
 
 function formatDateTime(isoString: string): string {
   return new Date(isoString).toLocaleString();
@@ -41,6 +42,8 @@ export default function PositionHistoryPage() {
 
   const records = historyQuery.data?.rows || [];
   const total = historyQuery.data?.total || 0;
+  // LIST-EMPTY: the empty message renders only after the history query settles.
+  const listState = useListState(historyQuery, records.length === 0);
 
   const actionBadgeClass = (action: string) => {
     switch (action) {
@@ -127,7 +130,7 @@ export default function PositionHistoryPage() {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {historyQuery.isLoading ? (
                   <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">Loading...</td></tr>
-                ) : records.length === 0 ? (
+                ) : listState.isEmpty ? (
                   <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">No position history records found</td></tr>
                 ) : (
                   records.map((record) => (
@@ -167,7 +170,7 @@ export default function PositionHistoryPage() {
         <div className="space-y-3 sm:hidden">
           {historyQuery.isLoading ? (
             <p className="text-center text-gray-500">Loading...</p>
-          ) : records.length === 0 ? (
+          ) : listState.isEmpty ? (
             <p className="text-center text-gray-500">No position history records found</p>
           ) : (
             records.map((record) => (

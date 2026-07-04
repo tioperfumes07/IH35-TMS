@@ -10,6 +10,7 @@ import { listDrivers } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useListState } from "../../../components/list-state";
 
 function isPrivacyGateError(error: unknown) {
   if (!(error instanceof ApiError)) return false;
@@ -128,6 +129,9 @@ export function ComplaintsTab() {
   if (!form.complaint_type) missingFields.push("Type");
   if (!form.summary) missingFields.push("Summary");
   const createDisabled = missingFields.length > 0 || createMutation.isPending;
+
+  // LIST-EMPTY: the empty message renders only after the complaints query settles.
+  const listState = useListState(complaintsQuery, (complaintsQuery.data?.complaints ?? []).length === 0);
 
   function resolveRespondent(row: Record<string, unknown>) {
     const driverId = row.respondent_driver_id ? String(row.respondent_driver_id) : "";
@@ -256,7 +260,7 @@ export function ComplaintsTab() {
                 </td>
               </tr>
             ))}
-            {(complaintsQuery.data?.complaints ?? []).length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
                   No complaints found.

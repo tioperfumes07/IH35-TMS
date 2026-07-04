@@ -13,6 +13,7 @@ import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
+import { useListState } from "../../../components/list-state";
 
 type Props = {
   operatingCompanyId: string;
@@ -114,6 +115,8 @@ export function CargoClaimIntakeSurface({
   });
 
   const rows = listQuery.data?.incidents ?? [];
+  // LIST-EMPTY: the empty message renders only after the incidents query settles.
+  const listState = useListState(listQuery, rows.length === 0);
   const reasons = reasonsQuery.data?.rows ?? [];
   const customers = customersQuery.data?.customers ?? [];
   const loads = loadsQuery.data?.loads ?? [];
@@ -413,7 +416,7 @@ export function CargoClaimIntakeSurface({
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={5} className="px-2 py-3 text-center text-slate-500">
                   No records found.

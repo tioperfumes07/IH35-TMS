@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { fetchDailyRecon, type DailyReconMatchStatus, type DailyReconRow } from "../../api/daily-recon";
+import { useListState } from "../../components/list-state";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -108,6 +109,7 @@ export function DailyReconPage() {
   });
 
   const data = query.data;
+  const listState = useListState(query, (data?.days.length ?? 0) === 0);
 
   const kpiStrip = data?.gl_posting_active ? (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -200,7 +202,7 @@ export function DailyReconPage() {
           </div>
 
           {/* Days */}
-          {data.days.length === 0 ? (
+          {listState.isEmpty ? (
             <div className="rounded-sm border border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-500">
               No transactions found for the selected filters.
             </div>

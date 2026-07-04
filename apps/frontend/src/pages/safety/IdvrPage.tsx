@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
+import { useListState } from "../../components/list-state";
 
 type Props = {
   operatingCompanyId: string;
@@ -30,6 +31,8 @@ export function IdvrPage({ operatingCompanyId }: Props) {
   });
 
   const rows = listQuery.data?.submissions ?? [];
+  // LIST-EMPTY: the empty message renders only after the DVIR query settles.
+  const listState = useListState(listQuery, rows.length === 0);
 
   return (
     <div className="space-y-3" data-testid="idvr-page">
@@ -114,7 +117,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
                   No DVIR submissions found for the selected filters.

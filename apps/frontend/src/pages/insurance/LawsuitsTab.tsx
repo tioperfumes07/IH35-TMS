@@ -8,6 +8,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { useListState } from "../../components/list-state";
 
 type Props = {
   operatingCompanyId?: string;
@@ -50,6 +51,9 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
     enabled: Boolean(companyId),
   });
 
+  // Empty message renders only once the lawsuits query settles (no first-fetch flash).
+  const listState = useListState(query, (query.data ?? []).length === 0);
+
   if (!companyId) {
     return (
       <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
@@ -75,7 +79,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
       {query.isError ? (
         <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load lawsuits.</div>
       ) : null}
-      {!query.isLoading && rows.length === 0 ? <div className="text-sm text-gray-600">No lawsuits found.</div> : null}
+      {listState.isEmpty ? <div className="text-sm text-gray-600">No lawsuits found.</div> : null}
 
       {rows.length > 0 ? (
         <div className="overflow-x-auto">

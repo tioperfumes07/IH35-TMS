@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useListState } from "../../components/list-state";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -79,6 +80,7 @@ export function PaymentsListPage() {
   });
 
   const rows = query.data?.rows ?? [];
+  const listState = useListState(query, rows.length === 0);
   const totals = useMemo(() => {
     return rows.reduce(
       (acc, row) => {
@@ -171,7 +173,7 @@ export function PaymentsListPage() {
                 </td>
               </tr>
             ) : null}
-            {!query.isLoading && rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td className="px-3 py-3 text-gray-500" colSpan={9}>
                   No payments found.

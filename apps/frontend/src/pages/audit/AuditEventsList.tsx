@@ -4,6 +4,7 @@ import { listAuditEvents } from "../../api/audit";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { useListState } from "../../components/list-state";
 
 function bulkCallPreview(id: string | null | undefined): string {
   if (!id) return "—";
@@ -40,6 +41,8 @@ export function AuditEventsList() {
       }),
     enabled: Boolean(allowed && operatingCompanyId),
   });
+  // Empty message renders only once the events query settles, never mid-fetch.
+  const listState = useListState(eventsQuery, (eventsQuery.data?.events ?? []).length === 0);
 
   if (!allowed) {
     return (
@@ -128,7 +131,7 @@ export function AuditEventsList() {
             ))}
           </tbody>
         </table>
-        {!eventsQuery.isLoading && rows.length === 0 ? (
+        {listState.isEmpty ? (
           <div className="p-3 text-sm text-gray-500">No audit events found.</div>
         ) : null}
       </div>

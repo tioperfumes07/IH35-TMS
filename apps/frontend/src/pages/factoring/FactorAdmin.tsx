@@ -12,6 +12,7 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useListState } from "../../components/list-state";
 
 function formatPct(value: number) {
   return `${(Number(value || 0) * 100).toFixed(2)}%`;
@@ -114,6 +115,17 @@ export function FactorAdmin() {
     [customersQuery.data, detailCustomerId]
   );
 
+  // Empty states render only once their backing query settles (never mid-fetch).
+  const factorsListState = useListState(factorsQuery, (factorsQuery.data ?? []).length === 0);
+  const assignmentsListState = useListState(
+    customerFactorDetailQuery,
+    (customerFactorDetailQuery.data?.assignments ?? []).filter((row) => row.factor_id === selectedFactor?.id).length === 0
+  );
+  const batchesListState = useListState(
+    customerFactorDetailQuery,
+    (customerFactorDetailQuery.data?.batches ?? []).length === 0
+  );
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -166,7 +178,7 @@ export function FactorAdmin() {
                 <td className="px-2 py-2">{new Date(factor.updated_at).toLocaleDateString()}</td>
               </tr>
             ))}
-            {!factorsQuery.isLoading && (factorsQuery.data ?? []).length === 0 ? (
+            {factorsListState.isEmpty ? (
               <tr>
                 <td className="px-2 py-4 text-gray-500" colSpan={7}>
                   No factors configured yet.
@@ -226,8 +238,7 @@ export function FactorAdmin() {
                             <td className="px-2 py-2">{row.effective_to ?? "Active"}</td>
                           </tr>
                         ))}
-                      {!customerFactorDetailQuery.isLoading &&
-                      (customerFactorDetailQuery.data?.assignments ?? []).filter((row) => row.factor_id === selectedFactor.id).length === 0 ? (
+                      {assignmentsListState.isEmpty ? (
                         <tr>
                           <td className="px-2 py-3 text-gray-500" colSpan={3}>
                             No assignments found for this factor/customer.
@@ -258,7 +269,7 @@ export function FactorAdmin() {
                           <td className="px-2 py-2">{row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : "-"}</td>
                         </tr>
                       ))}
-                      {!customerFactorDetailQuery.isLoading && (customerFactorDetailQuery.data?.batches ?? []).length === 0 ? (
+                      {batchesListState.isEmpty ? (
                         <tr>
                           <td className="px-2 py-3 text-gray-500" colSpan={3}>
                             No batch history for this customer.

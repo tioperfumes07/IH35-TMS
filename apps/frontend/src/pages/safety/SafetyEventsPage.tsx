@@ -9,6 +9,7 @@ import {
   type SafetyEventLogRow,
 } from "../../api/safety";
 import { Modal } from "../../components/Modal";
+import { useListState } from "../../components/list-state";
 
 type Props = {
   operatingCompanyId: string;
@@ -100,6 +101,9 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   });
 
   const rows = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
+  // LIST-EMPTY: each empty message renders only after its own query settles.
+  const listState = useListState(eventsQuery, rows.length === 0);
+  const notesListState = useListState(notesQuery, (notesQuery.data ?? []).length === 0);
   const logModalDirty =
     draft.title.trim() !== INITIAL_DRAFT.title.trim() ||
     draft.event_type.trim() !== INITIAL_DRAFT.event_type.trim() ||
@@ -194,7 +198,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={7} className="px-2 py-4 text-center text-gray-500">
                   No safety events found.
@@ -234,7 +238,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
                   </div>
                 </div>
               ))}
-              {(notesQuery.data ?? []).length === 0 ? <div className="text-xs text-gray-500">No notes yet.</div> : null}
+              {notesListState.isEmpty ? <div className="text-xs text-gray-500">No notes yet.</div> : null}
             </div>
           </div>
         </div>
