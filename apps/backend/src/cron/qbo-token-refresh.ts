@@ -11,14 +11,23 @@ let initialized = false;
 const disconnectAlertCooldownMs = 12 * 60 * 60 * 1000;
 const lastDisconnectAlertAt = new Map<string, number>();
 
-async function listActiveCompanyIds() {
+// A company can only be "disconnected" from QBO if it has (or had) a live connection. A parallel-books
+// or future entity that never linked QBO (e.g. USMCA) has NO connection row — it is not disconnected,
+// it is simply not a QBO tenant — so the watchdog must skip it, else it emails a re-auth reminder every
+// 15 min forever (the in-memory 12h cooldown resets on every deploy/restart, so it never suppresses).
+async function listQboWatchdogCompanyIds() {
   return withLuciaBypass(async (client) => {
     const res = await client.query<{ id: string }>(
       `
-        SELECT id::text AS id
-        FROM org.companies
-        WHERE is_active = true
-        ORDER BY id
+        SELECT c.id::text AS id
+        FROM org.companies c
+        WHERE c.is_active = true
+          AND EXISTS (
+            SELECT 1 FROM integrations.qbo_connections qc
+            WHERE qc.operating_company_id = c.id
+              AND qc.revoked_at IS NULL
+          )
+        ORDER BY c.id
       `
     );
     return res.rows.map((row) => row.id);
@@ -77,7 +86,7 @@ export async function initializeQboTokenRefreshCron(app: FastifyInstance) {
         "qbo.token_refresh_cron",
         async () => {
           markRunnerTick("token_refresh_cron");
-          const activeCompanyIds = await listActiveCompanyIds();
+          const activeCompanyIds = await listQboWatchdogCompanyIds();
           for (const companyId of activeCompanyIds) {
             assertTenantContext(companyId, "qbo.token_refresh_cron");
             try {
