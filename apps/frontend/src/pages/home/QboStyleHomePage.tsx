@@ -199,18 +199,18 @@ export function QboStyleHomePage({ auth }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900">{fmt$(tile.current_balance * 100)}</span>
                         {tile.uncategorized_count > 0 ? (
-                          <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
                             {tile.uncategorized_count} to review
                           </span>
                         ) : (
-                          <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">Reviewed</span>
+                          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">Reviewed</span>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
                 {totalUncategorized > 0 && (
-                  <Link to="/banking" className="mt-3 block text-xs text-amber-600 hover:underline">
+                  <Link to="/banking" className="mt-3 block text-xs text-slate-700 hover:underline">
                     {totalUncategorized} transactions need review
                   </Link>
                 )}
@@ -332,7 +332,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 <p className="text-xs text-gray-400">Total</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-semibold text-green-600">{integrationConnected}</p>
+                <p className="text-xl font-semibold text-slate-700">{integrationConnected}</p>
                 <p className="text-xs text-gray-400">Connected</p>
               </div>
               <div className="text-center">
@@ -342,11 +342,11 @@ export function QboStyleHomePage({ auth }: Props) {
             </div>
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
               <div className="flex items-center gap-2">
-                {qboConnected ? <CheckCircle className="h-3.5 w-3.5 text-green-500" /> : <AlertCircle className="h-3.5 w-3.5 text-red-500" />}
+                {qboConnected ? <CheckCircle className="h-3.5 w-3.5 text-slate-600" /> : <AlertCircle className="h-3.5 w-3.5 text-red-500" />}
                 <span>QuickBooks Online {qboConnected ? "· Synced" : `· ${qboFailed} failed`}</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                <CheckCircle className="h-3.5 w-3.5 text-slate-600" />
                 <span>Samsara · Connected</span>
               </div>
               <div className="flex items-center gap-2">
@@ -355,7 +355,7 @@ export function QboStyleHomePage({ auth }: Props) {
               </div>
             </div>
             {qboOutbox > 0 && (
-              <p className="mt-2 text-xs text-amber-600">{qboOutbox} transactions pending sync</p>
+              <p className="mt-2 text-xs text-slate-600">{qboOutbox} transactions pending sync</p>
             )}
           </div>
 
