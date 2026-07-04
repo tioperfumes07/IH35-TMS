@@ -21,7 +21,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerOcrRoutes(app: FastifyInstance) {
-  app.post("/api/v1/ocr/rate-confirmation/:attachment_id", async (req, reply) => {
+  app.post("/api/v1/ocr/rate-confirmation/:attachment_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});
