@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { StatusBadge } from "../../components/StatusBadge";
 import { BulkSelectableTable } from "../../components/shared/BulkSelectableTable";
@@ -19,6 +20,35 @@ type Props = {
 
 export function DriversTable({ rows, onOpenProfile }: Props) {
   const { pushToast } = useToast();
+  // Mirror the current bulk selection so the "Export Selected" action (whose onClick is fixed at
+  // config time and can't see the render-prop ctx) exports exactly the checked rows.
+  const selectedRowsRef = useRef<DriverTableRow[]>([]);
+
+  function handleExportSelected() {
+    const scope = selectedRowsRef.current.length > 0 ? selectedRowsRef.current : rows;
+    if (scope.length === 0) {
+      pushToast("No drivers to export.", "info");
+      return;
+    }
+    const esc = (value: unknown) => {
+      const s = value == null ? "" : String(value);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = ["Driver", "Status", "DQF level", "Present", "Missing", "Expired", "Driver ID"];
+    const lines = scope.map((row) =>
+      [row.name, row.status, row.summary.level, row.summary.presentCount, row.summary.missingCount, row.summary.expiredCount, row.driverId]
+        .map(esc)
+        .join(",")
+    );
+    const csv = [header.map(esc).join(","), ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = `IH35-drivers-dqf-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(href);
+  }
 
   return (
     <BulkSelectableTable
@@ -28,24 +58,30 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
       bulkActions={[
         {
           id: "export",
-          label: "Export Selected",
-          onClick: () => pushToast(`Export queued for ${rows.length} drivers.`, "success"),
+          label: "Export Selected (CSV)",
+          onClick: handleExportSelected,
         },
         {
+          // No bulk tag endpoint exists yet — honestly disabled instead of a fake success toast.
           id: "tag",
-          label: "Tag",
-          onClick: () => pushToast("Tag drivers — wire bulk endpoint in follow-up.", "success"),
+          label: "Tag (coming soon)",
+          disabled: true,
+          onClick: () => pushToast("Bulk tagging is not available yet.", "info"),
         },
         {
+          // No bulk deactivate endpoint exists yet — honestly disabled (deactivate one driver from the profile).
           id: "deactivate",
-          label: "Deactivate",
+          label: "Deactivate (coming soon)",
           destructive: true,
           action: "deactivate",
-          onClick: () => pushToast("Deactivate — wire bulk endpoint in follow-up.", "success"),
+          disabled: true,
+          onClick: () => pushToast("Bulk deactivate is not available yet — deactivate a driver from their profile.", "info"),
         },
       ]}
     >
-      {(ctx) => (
+      {(ctx) => {
+        selectedRowsRef.current = rows.filter((row) => ctx.isSelected(row.driverId));
+        return (
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
             <tr>
@@ -114,7 +150,8 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
             ) : null}
           </tbody>
         </table>
-      )}
+        );
+      }}
     </BulkSelectableTable>
   );
 }
