@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const qualityReadRoles = new Set(["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"]);
@@ -154,10 +155,20 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const events = await withCurrentUser(authUser.uuid, async (client) => {
-      const customerRes = await client.query(`SELECT id FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.customer_id]);
+      // XE-IDOR fix (financial read leak): mdata.* RLS is role-scoped, NOT entity-scoped, so an
+      // id-only parent-existence check exposes another operating company's dispute dollars. Resolve
+      // the caller's operating company and bind it on BOTH the parent check and the events query so
+      // a foreign customer id can only ever return the caller's own entity's rows.
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!companyId) return { error: "mdata_customer_not_found" as const };
+
+      const customerRes = await client.query(
+        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.customer_id, companyId]
+      );
       if (!customerRes.rows[0]) return { error: "mdata_customer_not_found" as const };
 
-      const filters = ["e.customer_id = $1"];
+      const filters = ["e.customer_id = $1", "c.operating_company_id = $2"];
       if (!parsedQuery.data.include_voided) filters.push("e.voided_at IS NULL");
       const res = await client.query(
         `
@@ -169,12 +180,13 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
             e.voided_at, e.voided_by_user_id, vu.email AS voided_by_user_email, e.void_reason,
             e.created_at, e.updated_at
           FROM mdata.customer_quality_events e
+          JOIN mdata.customers c ON c.id = e.customer_id
           LEFT JOIN catalogs.customer_quality_event_reasons r ON r.id = e.reason_id
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
           WHERE ${filters.join(" AND ")}
           ORDER BY e.event_date DESC, e.created_at DESC
         `,
-        [parsedParams.data.customer_id]
+        [parsedParams.data.customer_id, companyId]
       );
       return { events: res.rows };
     });

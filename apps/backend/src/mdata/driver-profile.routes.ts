@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -95,6 +96,14 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
+      // XE-IDOR fix (financial read leak): driver pay rates were keyed by driver_id ONLY. mdata.*
+      // RLS is role-scoped, NOT entity-scoped, so a foreign driver id exposed another operating
+      // company's negotiated pay rates. Resolve the caller's operating company and JOIN
+      // mdata.drivers on operating_company_id so this can only ever return the caller's own
+      // entity's qualifications (the pay-rate query below is transitively scoped by these ids).
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!companyId) return { qualifications: [] };
+
       const includeInactive = parsedQuery.data.include_inactive === "true";
       const qualificationsRes = await client.query(
         `
@@ -109,12 +118,13 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             et.code AS equipment_type_code,
             et.name AS equipment_type_name
           FROM mdata.driver_equipment_qualifications dq
+          JOIN mdata.drivers d ON d.id = dq.driver_id AND d.operating_company_id = $2
           JOIN catalogs.equipment_types et ON et.id = dq.equipment_type_id
           WHERE dq.driver_id = $1
             ${includeInactive ? "" : "AND dq.deactivated_at IS NULL"}
           ORDER BY dq.qualified_at DESC, et.sort_order, et.name
         `,
-        [parsed.data.id]
+        [parsed.data.id, companyId]
       );
 
       const qualificationIds = qualificationsRes.rows.map((row) => String(row.id));
