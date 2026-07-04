@@ -51,7 +51,7 @@ export function FinanceModuleTabs() {
               className={[
                 "whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium",
                 isActive
-                  ? "border-green-600 text-green-700"
+                  ? "border-[#1f2a44] text-[#1f2a44]"
                   : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
               ].join(" ")}
             >
