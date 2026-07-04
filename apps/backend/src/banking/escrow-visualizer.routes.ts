@@ -50,12 +50,19 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const res = await client
         .query(
+          // §4 landmine: there is NO mdata.drivers.escrow_balance column (the prior ref returned blank
+          // via the .catch fallback below). Driver escrow lives in driver_finance.escrow_balances
+          // (current_balance_cents — migration 202606120600). Expose it as dollars for the visualizer,
+          // which renders escrow_balance with .toFixed(2).
           `
             SELECT
               d.id AS driver_id,
               CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
-              COALESCE(d.escrow_balance, 0) AS escrow_balance
+              COALESCE(eb.current_balance_cents, 0) / 100.0 AS escrow_balance
             FROM mdata.drivers d
+            LEFT JOIN driver_finance.escrow_balances eb
+              ON eb.driver_id = d.id
+              AND eb.operating_company_id = d.operating_company_id
             WHERE d.operating_company_id = $1
               AND d.deactivated_at IS NULL
             ORDER BY driver_name

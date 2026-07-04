@@ -124,15 +124,19 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
       if (!input.unit_id) pendingFields.push("assigned_unit_id");
       if (!input.trailer_id) pendingFields.push("assigned_secondary_driver_id");
 
+      // DISP-1 corruption fix: the trailer is an mdata.equipment id and must NOT be written into
+      // assigned_secondary_driver_id — that is the CO-DRIVER column (FK -> mdata.drivers, migration 0034).
+      // The trailer's only real sink is dispatch.load_assignment_history.new_trailer_id (recorded below).
+      // The pending-fields tracking key intentionally keeps its legacy "assigned_secondary_driver_id"
+      // label so the frontend draft/complete contract is unchanged.
       await client.query(
         `
           UPDATE mdata.loads
           SET assigned_primary_driver_id = $2,
               assigned_unit_id = COALESCE($3, assigned_unit_id),
-              assigned_secondary_driver_id = $4,
-              is_quicksave_draft = $5,
-              quicksave_pending_fields = $6::jsonb,
-              quicksave_completed_at = CASE WHEN $5 = false THEN now() ELSE NULL END,
+              is_quicksave_draft = $4,
+              quicksave_pending_fields = $5::jsonb,
+              quicksave_completed_at = CASE WHEN $4 = false THEN now() ELSE NULL END,
               updated_at = now()
           WHERE id = $1
         `,
@@ -140,7 +144,6 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
           input.load_id,
           input.driver_id,
           input.unit_id ?? null,
-          input.trailer_id ?? null,
           pendingFields.length > 0,
           pendingFields.length > 0 ? JSON.stringify(pendingFields) : null,
         ]
@@ -165,7 +168,10 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
           input.driver_id,
           load.assigned_unit_id ?? null,
           input.unit_id ?? load.assigned_unit_id ?? null,
-          load.assigned_secondary_driver_id ?? null,
+          // previous_trailer_id: FK -> mdata.equipment. It must NOT be sourced from
+          // assigned_secondary_driver_id (a driver id) — that was a latent FK-violation. There is no
+          // trailer stored on the load row; a prior trailer would live in history, not needed here.
+          null,
           input.trailer_id ?? null,
           userId,
           JSON.stringify([...acknowledged]),
@@ -229,14 +235,17 @@ export async function completeQuicksaveDraft(
     const pendingFields: string[] = [];
     if (!unitId) pendingFields.push("assigned_unit_id");
     if (!trailerId) pendingFields.push("assigned_secondary_driver_id");
+    // DISP-1 corruption fix: the "assigned_secondary_driver_id" draft field actually carries a trailer
+    // (mdata.equipment) id, so it must NOT be written into assigned_secondary_driver_id (the CO-DRIVER
+    // column, FK -> mdata.drivers). Update only the co-driver-safe columns here; the trailer is persisted
+    // below on the real link dispatch.load_assignment_history.new_trailer_id.
     const update = await client.query(
       `
         UPDATE mdata.loads
         SET assigned_unit_id = COALESCE($3, assigned_unit_id),
-            assigned_secondary_driver_id = COALESCE($4, assigned_secondary_driver_id),
-            is_quicksave_draft = $5,
-            quicksave_pending_fields = $6::jsonb,
-            quicksave_completed_at = CASE WHEN $5 = false THEN now() ELSE quicksave_completed_at END,
+            is_quicksave_draft = $4,
+            quicksave_pending_fields = $5::jsonb,
+            quicksave_completed_at = CASE WHEN $4 = false THEN now() ELSE quicksave_completed_at END,
             updated_at = now()
         WHERE id = $1
           AND operating_company_id = $2
@@ -246,12 +255,40 @@ export async function completeQuicksaveDraft(
         input.load_id,
         input.operating_company_id,
         unitId,
-        trailerId,
         pendingFields.length > 0,
         pendingFields.length > 0 ? JSON.stringify(pendingFields) : null,
       ]
     );
     if (!update.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
+
+    // Persist the trailer on the real link (mdata.equipment id -> new_trailer_id). Resolve entity-scoped
+    // first (same as book-load W-FIX-3b) so we never attach a foreign company's trailer or FK-violate.
+    if (trailerId) {
+      const trailerRes = await client.query<{ id: string }>(
+        `
+          SELECT id::text
+          FROM mdata.equipment
+          WHERE id = $1::uuid
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            AND deactivated_at IS NULL
+          LIMIT 1
+        `,
+        [trailerId, input.operating_company_id]
+      );
+      if (trailerRes.rows[0]?.id) {
+        await client.query(
+          `
+            INSERT INTO dispatch.load_assignment_history (
+              operating_company_id, load_id, assignment_method,
+              previous_trailer_id, new_trailer_id,
+              assigned_by_user_id, warnings_acknowledged
+            )
+            VALUES ($1::uuid, $2::uuid, 'quicksave', NULL, $3::uuid, $4::uuid, '[]'::jsonb)
+          `,
+          [input.operating_company_id, input.load_id, trailerRes.rows[0].id, userId]
+        );
+      }
+    }
     return { load_id: input.load_id, pending_fields: pendingFields, is_quicksave_draft: pendingFields.length > 0 };
   });
 }

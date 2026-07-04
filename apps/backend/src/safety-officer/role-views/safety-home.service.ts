@@ -96,32 +96,38 @@ async function countOpenAccidents7d(client: DbClient, ociId: string): Promise<{ 
   if (!(await tableExists(client, "safety.accident_reports"))) {
     return { open: 0, pendingInvestigations: 0 };
   }
+  // §4 landmine: safety.accident_reports (migration 0049 + 202607031500) has NO `status` and NO
+  // `investigation_status` column — its real columns are id/operating_company_id/driver_id/unit_id/
+  // vendor_id/load_id/accident_at/description. The prior FILTER/WHERE on those phantom columns 42703'd
+  // → the WHOLE safety role-home endpoint 500'd (Promise.all reject), showing false all-zero KPIs. Count
+  // by real columns only; pending-investigation state is not tracked on this table, so report 0.
   const res = await client.query(
     `
-      SELECT
-        count(*)::int AS open_count,
-        count(*) FILTER (WHERE investigation_status IN ('pending', 'in_progress', 'open'))::int AS pending_investigations
+      SELECT count(*)::int AS open_count
       FROM safety.accident_reports
       WHERE operating_company_id = $1::uuid
         AND accident_at >= (CURRENT_DATE - INTERVAL '7 days')
-        AND status NOT IN ('closed', 'resolved')
     `,
     [ociId]
   );
   return {
     open: num(res.rows[0]?.open_count),
-    pendingInvestigations: num(res.rows[0]?.pending_investigations),
+    pendingInvestigations: 0,
   };
 }
 
 async function countPendingDaDraws(client: DbClient, ociId: string): Promise<number> {
-  if (!(await tableExists(client, "safety.da_random_pool_draws"))) return 0;
+  // §4 landmine: safety.da_random_pool_draws (migration 0327) has NO `status` column (it is an audit
+  // trail of completed draws). The prior `status IN (...)` 42703'd → the safety role-home endpoint 500'd.
+  // Pending drug/alcohol tests are tracked on safety.da_test_records.result = 'pending' (same migration),
+  // which is exactly this KPI ("await test scheduling or completion"). Read the real table.
+  if (!(await tableExists(client, "safety.da_test_records"))) return 0;
   const res = await client.query(
     `
       SELECT count(*)::int AS c
-      FROM safety.da_random_pool_draws
+      FROM safety.da_test_records
       WHERE operating_company_id = $1::uuid
-        AND status IN ('pending', 'scheduled', 'awaiting_tests')
+        AND result = 'pending'
     `,
     [ociId]
   );
