@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { apiRequest } from "../../api/client";
+import { PageHeader } from "../../components/layout/PageHeader";
 
 type TransferRow = {
   id: string;
@@ -25,8 +26,12 @@ export function TransfersInProgressPage() {
 
   return (
     <div className="space-y-3" data-testid="transfers-in-progress-page">
-      <h2 className="text-lg font-semibold text-slate-900">Equipment transfers in progress</h2>
-      <p className="text-sm text-slate-500">Dual confirmation — pending until both drivers acknowledge.</p>
+      <PageHeader
+        backHref="/fleet"
+        breadcrumb={["Fleet", "Transfers in progress"]}
+        title="Equipment transfers in progress"
+        subtitle="Dual confirmation — pending until both drivers acknowledge."
+      />
       {(query.data ?? []).map((row) => (
         <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
           Dropoff: {row.dual_ack?.dropoff_ack_at ? "✓" : "pending"} · Pickup: {row.dual_ack?.pickup_ack_at ? "✓" : "pending"}

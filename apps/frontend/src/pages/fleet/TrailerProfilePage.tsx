@@ -70,7 +70,7 @@ export function TrailerProfilePage() {
 
   return (
     <div className="space-y-4 pb-20">
-      <PageHeader title={String(equipment.equipment_number ?? "Trailer")} subtitle="Trailer profile" />
+      <PageHeader backHref="/fleet" breadcrumb={["Fleet", String(equipment.equipment_number ?? "Trailer")]} title={String(equipment.equipment_number ?? "Trailer")} subtitle="Trailer profile" />
       <div data-testid="tp-section-1-identity">
         <IdentityStatusHeader
           equipment={equipment}
