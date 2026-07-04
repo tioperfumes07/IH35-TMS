@@ -150,6 +150,26 @@ function numOrUndef(v: unknown): number | undefined {
   return n;
 }
 
+/** Build one editable accessorial ROW per extracted rate-con accessorial (never collapsed into one line).
+ *  Falls back to the legacy single summed row only when the extraction carried no per-line accessorials. */
+function rateConAccessorialRows(json: Record<string, unknown>): AccessorialRow[] {
+  const lines = Array.isArray(json.accessorial_lines)
+    ? (json.accessorial_lines as Array<{ code?: string; description?: string; amount_cents?: number }>)
+    : [];
+  const valid = lines.filter((l) => Number(l.amount_cents) > 0);
+  if (valid.length > 0) {
+    return valid.map((l) => ({
+      id: `acc-${crypto.randomUUID()}`,
+      code: String(l.code || "ACCESSORIAL"),
+      description: String(l.description || "Accessorial"),
+      amount_cents: Number(l.amount_cents),
+      taxable: false,
+    }));
+  }
+  const legacy = Number(json.accessorial_cents);
+  return legacy > 0 ? rowFromLegacyAccessorialCents(legacy) : [];
+}
+
 const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 .blw-sec{background:#fff;border:1px solid #e3e6eb;border-radius:7px;overflow:hidden}
 .blw-sec-hd{display:flex;align-items:center;gap:9px;padding:7px 11px;background:#eef1f4;border-bottom:1px solid #e3e6eb}
@@ -560,12 +580,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         border_routing: values.border_routing || undefined,
         trip_type: values.trip_type || undefined,
         tour_id: values.tour_id || undefined,
-        trailer_type: values.trailer_type as
-          | "refrigerated_van"
-          | "dry_van"
-          | "flatbed"
-          | "power_only_no_trailer"
-          | "power_only_customer_trailer",
+        // Guard empty → undefined: the backend trailer_type is z.enum(...).optional(), which rejects "" (a
+        // bare empty string is NOT "optional") with a 400. When equipment type isn't detected/selected the
+        // form holds "", so coerce it to undefined like every other optional enum field here.
+        trailer_type:
+          (values.trailer_type || undefined) as
+            | "refrigerated_van"
+            | "dry_van"
+            | "flatbed"
+            | "power_only_no_trailer"
+            | "power_only_customer_trailer"
+            | undefined,
         assigned_unit_id: values.assigned_unit_id || undefined,
         assigned_trailer_unit_id: values.assigned_trailer_unit_id || undefined, // W-FIX-3b → mdata.loads.trailer_id
         team_id: values.assignment_mode === "team" ? values.team_id || undefined : undefined,
@@ -639,6 +664,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           return;
         }
         if (error.status === 400) {
+          // Surface the exact field that failed validation instead of a bare "status 400". A zod
+          // validation_error carries details.fieldErrors keyed by field name — name the first one so a
+          // dispatcher (and we) can see WHICH field is wrong rather than guessing.
+          const details = (data.details as { fieldErrors?: Record<string, string[]> } | undefined) ?? undefined;
+          const fieldErrors = details?.fieldErrors ?? {};
+          const firstField = Object.keys(fieldErrors)[0];
+          if (code === "validation_error" && firstField) {
+            const reason = fieldErrors[firstField]?.[0] ?? "invalid";
+            setSubmitErrorMessage(`Couldn't save — “${firstField}” is invalid (${reason}). Fix that field and try again.`);
+            return;
+          }
           setSubmitErrorMessage(message);
           return;
         }
@@ -874,8 +910,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                         operatingCompanyId={operatingCompanyId}
                         onPrefill={(prefill) => {
                           applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, prefill.json);
-                          if (typeof prefill.json.accessorial_cents === "number" && prefill.json.accessorial_cents > 0) {
-                            form.setValue("accessorial_rows", rowFromLegacyAccessorialCents(prefill.json.accessorial_cents as number), { shouldDirty: true });
+                          const accRows = rateConAccessorialRows(prefill.json);
+                          if (accRows.length > 0) {
+                            form.setValue("accessorial_rows", accRows, { shouldDirty: true });
+                          }
+                          if (typeof prefill.json.trailer_type === "string") {
+                            form.setValue("trailer_type", prefill.json.trailer_type, { shouldDirty: true });
                           }
                           pushToast(
                             prefill.lowConfidenceFields.length
@@ -1213,8 +1253,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     operatingCompanyId={operatingCompanyId}
                     onPrefill={(prefill) => {
                       applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, prefill.json);
-                      if (typeof prefill.json.accessorial_cents === "number" && prefill.json.accessorial_cents > 0) {
-                        form.setValue("accessorial_rows", rowFromLegacyAccessorialCents(prefill.json.accessorial_cents as number), { shouldDirty: true });
+                      const accRows = rateConAccessorialRows(prefill.json);
+                      if (accRows.length > 0) {
+                        form.setValue("accessorial_rows", accRows, { shouldDirty: true });
+                      }
+                      if (typeof prefill.json.trailer_type === "string") {
+                        form.setValue("trailer_type", prefill.json.trailer_type, { shouldDirty: true });
                       }
                       pushToast(
                         prefill.lowConfidenceFields.length
