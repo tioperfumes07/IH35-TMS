@@ -16,12 +16,13 @@
   ],
   "allowed_files": [
     ".block-ready/RECON-02.json",
-    "apps/frontend/src/pages/accounting/recon/ReconRunsTab.tsx",
-    "apps/frontend/src/pages/accounting/recon/ReconExceptionsTab.tsx",
+    "apps/frontend/src/api/recon.ts",
+    "apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx",
     "apps/frontend/src/i18n/en.json",
     "apps/frontend/src/i18n/es.json",
     "docs/specs/TMS-QBO-RECONCILIATION.md"
   ],
+  "signature_corrected_2026-07-04": "As-built (merged #1838): the Runs + Exceptions tabs were inlined into the existing QboReconcileCapturesPage.tsx and the API lives in a new api/recon.ts (not the separately-planned ReconRunsTab.tsx/ReconExceptionsTab.tsx nor api/accounting.ts). Signature updated to the real on-main files so the reconcile reflects the true built state.",
   "extends_existing": [
     "apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx",
     "apps/frontend/src/api/accounting.ts"

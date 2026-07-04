@@ -1,11 +1,11 @@
 {
  "date": "2026-07-04",
- "generated_at_iso": "2026-07-04T19:17:29.310Z",
+ "generated_at_iso": "2026-07-04T19:25:55.233Z",
  "counts": {
   "PENDING": 4,
   "PENDING (GATED)": 39,
-  "NEEDS-VERIFY": 3,
-  "DONE": 478
+  "NEEDS-VERIFY": 2,
+  "DONE": 479
  },
  "universe": {
   "total_blocks_after_dedup": 524,
@@ -122,7 +122,7 @@
   },
   {
    "id": "RECON-02",
-   "status": "NEEDS-VERIFY",
+   "status": "DONE",
    "pr": 1838,
    "registered_on": "2026-07-02",
    "title": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma"
@@ -609,17 +609,6 @@
    "name": "RECON-01 Schema + scheduled jobs + exception engine: additive CREATE TABLE accounting.recon_runs + accounting.recon_exce",
    "registered_on": "2026-07-02",
    "pr": 1831
-  },
-  {
-   "id": "RECON-02",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1838 title-match only, unverified",
-   "name": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma",
-   "registered_on": "2026-07-02",
-   "pr": 1838
   },
   {
    "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
@@ -4949,6 +4938,17 @@
    "pr": 1780
   },
   {
+   "id": "RECON-02",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 file(s) on main",
+   "name": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma",
+   "registered_on": "2026-07-02",
+   "pr": 1838
+  },
+  {
    "id": "REGISTER-SOURCE-COL",
    "source": ".block-ready",
    "fin": true,
@@ -5743,6 +5743,12 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 2008,
+   "title": "fix(ratecon/docs): upload under the ACTIVE company — the real rate-con 404 fix (recovered from #2007 squash loss)",
+   "mergedAt": "2026-07-04T19:19:14Z",
+   "branch": "fix/ratecon-upload-active-company"
+  },
   {
    "number": 2007,
    "title": "fix(ratecon/docs): upload under the ACTIVE company — fixes rate-con 404 for multi-company users",
@@ -9336,15 +9342,9 @@
    "title": "feat(guard): verify:wizard-section-equality — EXACT field-set per section (fail-on-extra)",
    "mergedAt": "2026-06-23T09:44:39Z",
    "branch": "feat/parity-exact-equality"
-  },
-  {
-   "number": 1366,
-   "title": "feat(dispatch): Book Load §C empty-diff — stop card = exactly the 11 render-v6 fields",
-   "mergedAt": "2026-06-23T09:41:18Z",
-   "branch": "feat/load-stops-empty-diff"
   }
  ],
- "merged_pr_total": 1898,
+ "merged_pr_total": 1899,
  "hold_for_jorge": [
   {
    "number": 2000,
