@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # IH35-TMS — BUG AUDIT FIX TRACKER (single source of truth)
 
 Generated 2026-07-04 from the shared 130-finding read-only sweep (Cascade + Claude-Coder-2, byte-identical core).
@@ -151,6 +152,8 @@ Parsed detailed findings: **130** · Financial (STOP-gate): **49** · Safe-to-fi
 | H7-2 | LOW | safe | H7 — Factoring | Minor vendor/runtime hygiene: Plaid dead-env, QBO stale health probe, Node/TS drift | integrations/plaid/plaid-client.ts:22; admin/healt | Remove the dead Plaid env branch; bump the health probe to 75; roadmap Node 24;  | OPEN |  |  |
 | B3-3 | INFO | safe | B3 — Maintenance | Fuel G18 trigger not armed against load hard-delete | db/migrations/0300_create_fuel_transactions.sql:10 | If a load hard-delete is ever added, use ON DELETE RESTRICT or re-validate. | OPEN |  |  |
 =======
+=======
+>>>>>>> Stashed changes
 # IH35-TMS — BUG AUDIT FIX TRACKER (FULL 160)
 
 Generated 2026-07-04 · APPEND-ONLY (mark DONE, never delete).
@@ -319,4 +322,7 @@ Generated 2026-07-04 · APPEND-ONLY (mark DONE, never delete).
 | H2-2 | LOW | safe | Deps | Stale apps/backend/package-lock.json carries 2 unshipped HIGH CVEs | PENDING |  |
 | H7-2 | LOW | safe | Vendor/Runtime | Minor vendor/runtime hygiene: Plaid dead-env, QBO stale health probe, Node/TS dr | PENDING |  |
 | B3-3 | INFO | safe | Maintenance/Fuel | Fuel G18 trigger not armed against load hard-delete | PENDING |  |
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
