@@ -25,7 +25,7 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
             {profiles[k].name}
           </button>
         ))}
-        <button type="button" onClick={onSave} disabled={saving} className="ml-auto rounded-sm bg-emerald-600 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onSave} disabled={saving} className="ml-auto rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white">
           {saving ? "Saving..." : "Save Defaults"}
         </button>
       </div>

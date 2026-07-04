@@ -64,7 +64,7 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
         <button type="button" className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white" onClick={() => setParsed(parseQBText(raw, profile.bankAccounts))}>
           Parse Income Deposits
         </button>
-        <button type="button" className="rounded-sm bg-emerald-600 px-3 py-2 text-sm font-semibold text-white" onClick={() => onApplyTotal(includedTotal)} disabled={!parsed.length}>
+        <button type="button" className="rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white" onClick={() => onApplyTotal(includedTotal)} disabled={!parsed.length}>
           Apply ${includedTotal.toFixed(2)} to Line 20
         </button>
       </div>

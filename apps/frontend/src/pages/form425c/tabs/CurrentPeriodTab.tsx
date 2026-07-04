@@ -84,7 +84,7 @@ export function CurrentPeriodTab({
         <button type="button" onClick={onCreateOrLoad} className="self-end rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
           Create / Load Draft
         </button>
-        <button type="button" onClick={onImportBanking} className="self-end rounded-sm bg-emerald-700 px-3 py-2 text-sm font-semibold text-white" disabled={!form.reportId || loading}>
+        <button type="button" onClick={onImportBanking} className="self-end rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white" disabled={!form.reportId || loading}>
           ⟳ Import from Banking
         </button>
         <div className="self-end text-xs text-slate-500">{autoSaveLabel}</div>
@@ -130,7 +130,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-emerald-800 px-3 py-2 text-sm font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
+        <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
         {[
           ["19", "openingBalance", "Total opening balance of all accounts"],
           ["20", "totalReceipts", "Total cash receipts"],
@@ -182,7 +182,7 @@ export function CurrentPeriodTab({
       <div className="rounded-sm border bg-white">
         <div className="border-b bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
         {form.hasCarryForward ? (
-          <div className="border-b bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div className="border-b bg-slate-100 px-3 py-2 text-xs text-slate-700">
             Column A came from previous month carry-forward. Manual edits require reason (30+ chars).
           </div>
         ) : null}
@@ -259,7 +259,7 @@ export function CurrentPeriodTab({
         <button type="button" onClick={onGeneratePdf} disabled={!form.reportId || loading} className="rounded-sm bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">
           Save & Generate Filing PDF
         </button>
-        <button type="button" onClick={onMarkFiled} disabled={!form.reportId || loading} className="rounded-sm bg-emerald-700 px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onMarkFiled} disabled={!form.reportId || loading} className="rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white">
           Mark Filed
         </button>
       </div>
