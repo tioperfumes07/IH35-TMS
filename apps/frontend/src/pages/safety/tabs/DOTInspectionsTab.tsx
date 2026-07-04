@@ -6,6 +6,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createDotInspection, listDotInspections, uploadDotInspectionPdf, voidDotInspection } from "../../../api/safetyV64";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
+import { useListState } from "../../../components/list-state";
 
 export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -66,6 +67,9 @@ export function DOTInspectionsTab() {
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", companyId] });
     },
   });
+
+  // LIST-EMPTY: the empty message renders only after the inspections query settles.
+  const listState = useListState(query, (query.data?.dot_inspections ?? []).length === 0);
 
   return (
     <div className="space-y-3">
@@ -131,7 +135,7 @@ export function DOTInspectionsTab() {
                 </td>
               </tr>
             ))}
-            {(query.data?.dot_inspections ?? []).length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={8} className="px-2 py-3 text-center text-slate-500">
                   No DOT inspections found.

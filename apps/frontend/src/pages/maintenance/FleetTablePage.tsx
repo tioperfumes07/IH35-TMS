@@ -5,6 +5,7 @@ import { apiRequest } from "../../api/client";
 import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
+import { useListState } from "../../components/list-state";
 
 type Props = {
   operatingCompanyId: string;
@@ -169,6 +170,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
     [allRows, kindFilter, effectiveStatus, softDeleteFilter, locationByUnit, maintByUnit]
   );
 
+  // Empty state renders only once the roster query settles (no first-fetch flash).
+  const listState = useListState(rowsQuery, rows.length === 0);
+
   // Use the server's authoritative total (GO-LIVE Block 1A) so the count reflects the FULL fleet, not just
   // the fetched page — the unified/trailers endpoint previously returned no total, leaving "of 50".
   const totalVehicleCount =
@@ -299,7 +303,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         ) : null}
       </div>
 
-      {rows.length === 0 ? (
+      {listState.isEmpty ? (
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           <div className="font-semibold">{hasActiveFilter ? "No fleet rows match this filter" : "No fleet rows yet"}</div>
           <div className="mt-1 text-xs">

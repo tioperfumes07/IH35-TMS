@@ -13,6 +13,7 @@ import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useListState } from "../../components/list-state";
 
 type ClaimDraft = {
   part_description: string;
@@ -113,6 +114,9 @@ export function WarrantyClaimsPage() {
 
   const claims = claimsQ.data?.rows ?? [];
 
+  // Empty row renders only once the claims query settles (no first-fetch flash).
+  const listState = useListState(claimsQ, claims.length === 0);
+
   return (
     <div className="space-y-4" data-testid="maint-warranty-claims-page">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -182,7 +186,7 @@ export function WarrantyClaimsPage() {
                 </td>
               </tr>
             ))}
-            {claims.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={6} className="py-3 text-gray-500">
                   No warranty claims yet.

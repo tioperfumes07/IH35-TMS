@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useListState } from "../../components/list-state";
 
 function money(cents: number) {
   return (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -32,6 +33,8 @@ export function EscrowPage() {
     () => ((accountsQuery.data?.rows ?? []) as EscrowAccount[]).find((row) => row.id === selectedAccountId) ?? null,
     [accountsQuery.data?.rows, selectedAccountId]
   );
+
+  const listState = useListState(accountsQuery, (accountsQuery.data?.rows ?? []).length === 0);
 
   return (
     <div className="space-y-4 p-4">
@@ -77,7 +80,7 @@ export function EscrowPage() {
         </div>
       ) : null}
 
-      {accountsQuery.data?.rows && accountsQuery.data.rows.length === 0 ? (
+      {listState.isEmpty ? (
         <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">No escrow accounts found.</div>
       ) : null}
 

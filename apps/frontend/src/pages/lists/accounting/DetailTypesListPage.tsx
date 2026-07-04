@@ -8,6 +8,7 @@ import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useListState } from "../../../components/list-state";
 
 type StatusFilter = "true" | "false" | "all";
 
@@ -42,6 +43,7 @@ export function DetailTypesListPage() {
     enabled: Boolean(companyId),
   });
   const rows = listQuery.data?.rows ?? [];
+  const listState = useListState(listQuery, rows.length === 0);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["detail-types"] });
   const createMutation = useMutation({
@@ -142,7 +144,7 @@ export function DetailTypesListPage() {
           <div className="px-3 py-6 text-sm text-gray-500">Loading detail types…</div>
         ) : listQuery.isError ? (
           <div className="px-3 py-6 text-sm text-red-600">Failed to load detail types.</div>
-        ) : rows.length === 0 ? (
+        ) : listState.isEmpty ? (
           <div className="px-3 py-6 text-sm text-gray-500">No detail types found.</div>
         ) : null}
       </div>

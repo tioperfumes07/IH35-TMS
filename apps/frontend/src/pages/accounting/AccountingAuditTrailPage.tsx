@@ -11,6 +11,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
+import { useListState } from "../../components/list-state";
 
 function fmtMoneyCents(value: number) {
   return (value / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -76,6 +77,8 @@ export function AccountingAuditTrailPage() {
     [accountsQuery.data?.pages],
   );
 
+  const eventsListState = useListState(eventQuery, events.length === 0);
+
   return (
     <AccountingSubNavWrapper title="Audit Trail" subtitle="Immutable posting events with tenant-scoped source lineage lookup">
 
@@ -133,7 +136,7 @@ export function AccountingAuditTrailPage() {
 
       <div className="rounded-sm border border-slate-200 bg-white">
         {eventQuery.isLoading ? <div className="p-3 text-sm text-slate-500">Loading audit trail…</div> : null}
-        {!eventQuery.isLoading && events.length === 0 ? <div className="p-3 text-sm text-slate-500">No audit events found.</div> : null}
+        {eventsListState.isEmpty ? <div className="p-3 text-sm text-slate-500">No audit events found.</div> : null}
         {events.length > 0 ? (
           <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">

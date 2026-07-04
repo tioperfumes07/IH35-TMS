@@ -5,6 +5,7 @@ import { getSafetyAccidents } from "../../api/safety";
 import { Button } from "../../components/Button";
 import { AccidentReportDrawer } from "../../components/safety/AccidentReportDrawer";
 import { companyNow } from "../../lib/businessDate";
+import { useListState } from "../../components/list-state";
 
 type Props = {
   operatingCompanyId: string;
@@ -34,6 +35,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   });
 
   const rows = accidentsQuery.data?.accidents ?? [];
+  // LIST-EMPTY: the empty message renders only after the accidents query settles.
+  const listState = useListState(accidentsQuery, rows.length === 0);
   const createMode = String(selectedAccident?.id ?? "") === "__create__";
 
   const openAccident = (row: Record<string, unknown>) => {
@@ -92,7 +95,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={6} className="px-2 py-3 text-center text-slate-500">
                   No accident reports found.

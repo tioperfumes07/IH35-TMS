@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { useListState } from "../../components/list-state";
 import {
   getFixedAssets, getFixedAssetDetail,
   type FixedAssetListItem, type FixedAssetDetail,
@@ -109,11 +110,12 @@ export function FixedAssetsPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const limit = 50;
 
-  const { data, isLoading, isError } = useQuery({
+  const assetsQuery = useQuery({
     queryKey: ["fixed-assets", operatingCompanyId, statusFilter, offset],
     queryFn: () => getFixedAssets({ operating_company_id: operatingCompanyId, status: statusFilter || undefined, limit, offset }),
     enabled: Boolean(selectedCompanyId) && enabled,
   });
+  const { data, isLoading, isError } = assetsQuery;
 
   const { data: detail, isLoading: detailLoading } = useQuery({
     queryKey: ["fixed-asset-detail", detailId, operatingCompanyId],
@@ -123,6 +125,7 @@ export function FixedAssetsPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
+  const listState = useListState(assetsQuery, items.length === 0);
 
   if (!flagLoading && !enabled) {
     return (
@@ -157,7 +160,7 @@ export function FixedAssetsPage() {
         <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
       ) : isError ? (
         <p className="text-sm text-red-600 py-8 text-center">Failed to load fixed assets.</p>
-      ) : items.length === 0 ? (
+      ) : listState.isEmpty ? (
         <div className="py-12 text-center">
           <p className="text-sm text-gray-500">No fixed assets found.</p>
           <p className="text-xs text-gray-400 mt-1">Assets will appear here once they are added to the register.</p>

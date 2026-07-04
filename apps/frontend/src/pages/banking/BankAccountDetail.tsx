@@ -14,6 +14,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useListState } from "../../components/list-state";
 
 const PAGE_SIZE = 50;
 
@@ -67,6 +68,8 @@ export function BankAccountDetailPage() {
   const transactions = transactionsQuery.data?.transactions ?? [];
   const hasNextPage = transactions.length === PAGE_SIZE;
   const account = detailQuery.data?.account;
+  // Empty message renders only once the transactions query settles, never mid-fetch.
+  const listState = useListState(transactionsQuery, transactions.length === 0);
 
   const headerTitle = useMemo(() => {
     if (!account) return "Bank Account";
@@ -217,7 +220,7 @@ export function BankAccountDetailPage() {
                   </td>
                 </tr>
               ))}
-              {transactions.length === 0 ? (
+              {listState.isEmpty ? (
                 <tr>
                   <td colSpan={5} className="px-2 py-4 text-center text-sm text-gray-500">
                     No transactions found for this filter.

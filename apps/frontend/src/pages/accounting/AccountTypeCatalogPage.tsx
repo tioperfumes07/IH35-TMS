@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { getAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../api/account-type-catalog";
+import { useListState } from "../../components/list-state";
 
 const STATEMENT_COLOR: Record<string, string> = {
   "Balance Sheet": "bg-slate-100 text-slate-700",
@@ -23,10 +24,12 @@ function groupBy(entries: AccountTypeCatalogEntry[]): [string, AccountTypeCatalo
 export function AccountTypeCatalogPage() {
   const [search, setSearch] = useState("");
 
-  const { data, isLoading, isError } = useQuery({
+  const query = useQuery({
     queryKey: ["account-type-catalog"],
     queryFn: getAccountTypeCatalog,
   });
+  const { data, isLoading, isError } = query;
+  const listState = useListState(query, (data ?? []).length === 0);
 
   const filtered = useMemo(() => {
     const entries = data ?? [];
@@ -74,7 +77,7 @@ export function AccountTypeCatalogPage() {
         <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
       ) : isError ? (
         <p className="py-8 text-center text-sm text-red-600">Failed to load account type catalog.</p>
-      ) : (data ?? []).length === 0 ? (
+      ) : listState.isEmpty ? (
         <div className="py-12 text-center">
           <p className="text-sm text-gray-500">No account types found.</p>
           <p className="mt-1 text-xs text-gray-400">The account-type taxonomy has not been seeded yet.</p>

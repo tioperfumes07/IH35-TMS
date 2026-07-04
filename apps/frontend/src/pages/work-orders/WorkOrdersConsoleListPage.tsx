@@ -8,6 +8,7 @@ import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useListState } from "../../components/list-state";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 
@@ -44,6 +45,9 @@ export function WorkOrdersConsoleListPage() {
       }),
     enabled: Boolean(companyId),
   });
+
+  // Empty row renders only once the work-order query settles (no first-fetch flash).
+  const listState = useListState(listQuery, (listQuery.data?.work_orders ?? []).length === 0);
 
   const tabCounts = listQuery.data?.tab_counts;
   // tab_counts keys mirror the segment ids, so the active segment's count is a real total.
@@ -146,7 +150,7 @@ export function WorkOrdersConsoleListPage() {
                 </td>
               </tr>
             ) : null}
-            {!listQuery.isError && !listQuery.isLoading && (listQuery.data?.work_orders ?? []).length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td className="px-2 py-4 text-sm text-slate-500" colSpan={8}>
                   No work orders match the current filters.

@@ -14,6 +14,7 @@ import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyToday } from "../../../lib/businessDate";
+import { useListState } from "../../../components/list-state";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
@@ -156,6 +157,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   }, [fleetRows]);
 
   const rows = listQuery.data?.incidents ?? [];
+  // LIST-EMPTY: the empty message renders only after the incidents query settles.
+  const listState = useListState(listQuery, rows.length === 0);
   const detail = createMode ? selected : detailQuery.data?.incident ?? selected;
 
   const openRow = (row: DraftState) => {
@@ -310,7 +313,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 </tr>
               );
             })}
-            {rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={6} className="px-2 py-3 text-center text-slate-500">
                   No records found.

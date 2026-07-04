@@ -14,6 +14,7 @@ import { TruckLeaseCreatorModal } from "./TruckLeaseCreatorModal";
 import { UnifiedContractCreatorModal } from "./UnifiedContractCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useListState } from "../../../components/list-state";
 
 const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
   { value: "all", label: "All statuses" },
@@ -95,6 +96,9 @@ export function LegalContractInstancesPage() {
       return true;
     });
   }, [dateFrom, dateTo, rows, signerTypeFilter, templateFilter]);
+
+  // Empty message renders only once the contract list settles (no first-fetch flash).
+  const listState = useListState(listQuery, filteredRows.length === 0);
 
   const templateOptions = useMemo(
     () => Array.from(new Set(rows.map((row) => row.template_code))).sort(),
@@ -322,7 +326,7 @@ export function LegalContractInstancesPage() {
               ))}
             </tbody>
           </table>
-          {filteredRows.length === 0 ? (
+          {listState.isEmpty ? (
             <div className="px-2 py-4 text-sm text-gray-500">No contract instances found for current filters.</div>
           ) : null}
         </div>

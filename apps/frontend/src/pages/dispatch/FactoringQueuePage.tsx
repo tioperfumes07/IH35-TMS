@@ -14,6 +14,7 @@ import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { useListState } from "../../components/list-state";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -135,6 +136,9 @@ export function FactoringQueuePage() {
     return acc;
   }, {});
 
+  // Empty state renders only once the queue query settles (never mid-fetch).
+  const listState = useListState(queueQ, filtered.length === 0);
+
   if (!companyId) {
     return (
       <div className="mx-auto max-w-6xl p-4 text-sm text-gray-500">
@@ -253,7 +257,7 @@ export function FactoringQueuePage() {
                   Loading factoring queue…
                 </td>
               </tr>
-            ) : filtered.length === 0 ? (
+            ) : listState.isEmpty ? (
               <tr>
                 <td colSpan={8} className="px-3 py-8 text-center text-gray-500">
                   {rows.length === 0 ? "No delivered loads in factoring queue." : "No loads match the current filter."}

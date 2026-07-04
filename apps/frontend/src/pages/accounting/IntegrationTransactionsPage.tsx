@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
+import { useListState } from "../../components/list-state";
 
 const fmtCents = (c: number | null) =>
   c == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
@@ -32,7 +33,7 @@ export function IntegrationTransactionsPage() {
   const [offset, setOffset] = useState(0);
   const limit = 50;
 
-  const { data, isLoading, isError } = useQuery({
+  const txnQuery = useQuery({
     queryKey: ["integration-transactions", operatingCompanyId, syncStatus, entityType, search, offset],
     queryFn: () => getIntegrationTransactions({
       operating_company_id: operatingCompanyId,
@@ -43,9 +44,11 @@ export function IntegrationTransactionsPage() {
     }),
     enabled: Boolean(selectedCompanyId),
   });
+  const { data, isLoading, isError } = txnQuery;
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
+  const listState = useListState(txnQuery, items.length === 0);
 
   return (
     <AccountingSubNavWrapper title="Integration Transactions" subtitle="QBO sync queue — all entity sync statuses">
@@ -74,7 +77,7 @@ export function IntegrationTransactionsPage() {
         <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
       ) : isError ? (
         <p className="text-sm text-red-600 py-8 text-center">Failed to load integration transactions.</p>
-      ) : items.length === 0 ? (
+      ) : listState.isEmpty ? (
         <p className="text-sm text-gray-500 py-8 text-center">No integration transactions found.</p>
       ) : (
         <div className="overflow-x-auto rounded-sm border border-gray-200">

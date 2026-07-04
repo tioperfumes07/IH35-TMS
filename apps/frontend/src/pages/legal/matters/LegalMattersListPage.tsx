@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS } from "../../../lib/formatDate";
+import { useListState } from "../../../components/list-state";
 
 function daysUntil(dateStr: unknown) {
   if (!dateStr || typeof dateStr !== "string") return null;
@@ -36,6 +37,9 @@ export function LegalMattersListPage() {
   });
 
   const rows = listQuery.data?.matters ?? [];
+
+  // Empty message renders only once the matters query settles (no first-fetch flash).
+  const listState = useListState(listQuery, rows.length === 0);
 
   return (
     <div className="space-y-3">
@@ -91,7 +95,7 @@ export function LegalMattersListPage() {
             <p className="text-sm text-gray-600">Loading…</p>
           ) : listQuery.isError ? (
             <p className="text-sm text-red-600">Could not load matters.</p>
-          ) : rows.length === 0 ? (
+          ) : listState.isEmpty ? (
             <p className="text-sm text-gray-600">No matters match filters.</p>
           ) : (
             <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">

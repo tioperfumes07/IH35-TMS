@@ -8,6 +8,7 @@ import {
   getRevenueContracts, getRevenueContractDetail,
   type RevenueContractListItem, type RevenueContractDetail, type RevenueObligation,
 } from "../../api/revenue-recognition";
+import { useListState } from "../../components/list-state";
 
 const fmtCents = (c: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
@@ -111,11 +112,12 @@ export function RevenueRecognitionPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const limit = 50;
 
-  const { data, isLoading, isError } = useQuery({
+  const listQuery = useQuery({
     queryKey: ["revenue-contracts", operatingCompanyId, statusFilter, offset],
     queryFn: () => getRevenueContracts({ operating_company_id: operatingCompanyId, status: statusFilter || undefined, limit, offset }),
     enabled: Boolean(selectedCompanyId) && enabled,
   });
+  const { data, isLoading, isError } = listQuery;
 
   const { data: detail, isLoading: detailLoading } = useQuery({
     queryKey: ["revenue-contract-detail", detailId, operatingCompanyId],
@@ -125,6 +127,7 @@ export function RevenueRecognitionPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
+  const listState = useListState(listQuery, items.length === 0);
 
   if (!flagLoading && !enabled) {
     return (
@@ -159,7 +162,7 @@ export function RevenueRecognitionPage() {
         <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
       ) : isError ? (
         <p className="text-sm text-red-600 py-8 text-center">Failed to load revenue contracts.</p>
-      ) : items.length === 0 ? (
+      ) : listState.isEmpty ? (
         <div className="py-12 text-center">
           <p className="text-sm text-gray-500">No revenue contracts found.</p>
           <p className="text-xs text-gray-400 mt-1">Contracts will appear here once revenue recognition is in use.</p>
