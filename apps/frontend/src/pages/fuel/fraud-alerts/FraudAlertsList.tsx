@@ -25,7 +25,7 @@ type SortKey = "detected_at" | "severity" | "rule_id" | "status";
 
 function severityClass(severity: FraudAlertRow["severity"]) {
   if (severity === "critical") return "bg-red-100 text-red-800";
-  if (severity === "warn") return "bg-amber-100 text-amber-800";
+  if (severity === "warn") return "bg-slate-100 text-slate-700";
   return "bg-slate-100 text-slate-700";
 }
 

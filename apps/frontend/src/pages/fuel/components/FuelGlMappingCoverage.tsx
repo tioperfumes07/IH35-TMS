@@ -85,11 +85,11 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
                 className={
                   c.mapped
                     ? "inline-flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-700"
-                    : "inline-flex items-center gap-1.5 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800"
+                    : "inline-flex items-center gap-1.5 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700"
                 }
               >
                 <span
-                  className={`inline-block h-[7px] w-[7px] rounded-full ${c.mapped ? "bg-slate-400" : "bg-amber-500"}`}
+                  className={`inline-block h-[7px] w-[7px] rounded-full ${c.mapped ? "bg-slate-400" : "bg-slate-700"}`}
                 />
                 {c.label}
                 <span className="text-[10px] font-normal">{c.mapped ? "mapped" : "unmapped"}</span>
@@ -99,7 +99,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
 
           {unmappedCount > 0 ? (
             <div
-              className="mt-3 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-900"
+              className="mt-3 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700"
               data-testid="fuel-gl-mapping-warning"
             >
               {unmappedCount} fuel {unmappedCount === 1 ? "category is" : "categories are"} not mapped to a
