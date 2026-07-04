@@ -309,7 +309,14 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
     const parsed = namesSearchQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const { q, type, limit, offset, include_archived, operating_company_id } = parsed.data;
-    const perTypeLimit = Math.min(limit + offset, 50);
+    // Per-type fetch ceiling: each entity type is queried independently, then all buckets are
+    // merge-sorted by display_name and sliced by offset/limit. The per-type LIMIT must be at least
+    // (limit + offset) so the merged page is correct. The old hard clamp of 50 truncated each type
+    // below its real row count (e.g. 83+ drivers in a single entity), silently dropping the tail of
+    // a broad search. Ceiling raised to 500 to comfortably exceed current per-type population while
+    // still bounding an abusively large offset. (Non-financial read/scope fix.)
+    const PER_TYPE_FETCH_CEILING = 500;
+    const perTypeLimit = Math.min(limit + offset, PER_TYPE_FETCH_CEILING);
 
     const merged = await withCompanyScope(authUser.uuid, operating_company_id, async (client) => {
       const buckets: NamesMasterRow[] = [];
