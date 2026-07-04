@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { useListState } from "../components/list-state";
 import { Pencil } from "lucide-react";
 import { z } from "zod";
 import { useSearchParams } from "react-router-dom";
@@ -219,6 +220,9 @@ export function EquipmentTypesPage() {
     () => (equipmentTypesQuery.data ?? []).filter((typeRow) => typeRow.deactivated_at == null),
     [equipmentTypesQuery.data]
   );
+  // TBL-STANDARD (LIST-EMPTY-1 follow-on): render the empty state only once the roster query
+  // has settled — never as a flash during the initial fetch.
+  const listState = useListState(equipmentTypesQuery, rows.length === 0);
 
   function toggleExpanded(id: string) {
     setExpandedIds((current) => (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]));
@@ -387,7 +391,7 @@ export function EquipmentTypesPage() {
               </div>
             );
           })}
-          {rows.length === 0 ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No equipment types found.</div> : null}
+          {listState.isEmpty ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No equipment types found.</div> : null}
         </div>
       )}
 

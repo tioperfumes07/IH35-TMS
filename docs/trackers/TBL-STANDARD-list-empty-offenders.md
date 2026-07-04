@@ -16,11 +16,13 @@ Migrate = pass the roster query status into the list surface and gate its empty 
 `useListState(status, isEmpty).isEmpty` (see VendorsListView / VendorListSidebar for the pattern).
 Adding a migrated file to the guard's `MIGRATED` registry then locks it against regression.
 
-## Migrated + locked (4)
+## Migrated + locked (6)
 - apps/frontend/src/pages/vendors/VendorsListView.tsx
 - apps/frontend/src/pages/vendors/VendorListSidebar.tsx
 - apps/frontend/src/pages/customers/CustomersListView.tsx
 - apps/frontend/src/pages/customers/CustomerListSidebar.tsx
+- apps/frontend/src/pages/EquipmentTypesPage.tsx        (TBL-STANDARD batch 1, 2026-07-04)
+- apps/frontend/src/pages/DriverLoadStatusesPage.tsx    (TBL-STANDARD batch 1, 2026-07-04)
 
 > Note: `Vendors.tsx` / `Customers.tsx` still appear below because their *transaction* sub-tables
 > ("No transactions for current filters.") remain bare-length — the roster lists themselves are fixed.

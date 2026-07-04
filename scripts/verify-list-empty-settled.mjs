@@ -46,6 +46,9 @@ const MIGRATED = [
   { file: "apps/frontend/src/pages/vendors/VendorListSidebar.tsx", empties: ["No vendors found."] },
   { file: "apps/frontend/src/pages/customers/CustomersListView.tsx", empties: ["No customers match this filter."] },
   { file: "apps/frontend/src/pages/customers/CustomerListSidebar.tsx", empties: ["No customers found."] },
+  // TBL-STANDARD batch 1 (2026-07-04) — inline-query catalog pages.
+  { file: "apps/frontend/src/pages/EquipmentTypesPage.tsx", empties: ["No equipment types found."] },
+  { file: "apps/frontend/src/pages/DriverLoadStatusesPage.tsx", empties: ["No statuses found."] },
 ];
 
 for (const { file, empties } of MIGRATED) {
