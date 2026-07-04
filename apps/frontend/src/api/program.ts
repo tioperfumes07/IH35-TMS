@@ -22,7 +22,7 @@ export type ExtraItem = {
   fin: boolean;
   registered_on: string | null;
   notes?: string;
-  track?: "owner-batch" | "dispatch-kit";
+  track?: "owner-batch" | "dispatch-kit" | "audit";
   // Owner-Batch review tag (data-driven; owner-populated). "proceed-on-row" = standard-pattern defect I can
   // build straight from the row; "needs-your-preview" = judgment-heavy, post a before→after preview first.
   // Absent → treated as "proceed-on-row".

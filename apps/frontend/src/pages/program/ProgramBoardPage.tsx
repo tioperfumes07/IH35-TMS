@@ -28,7 +28,7 @@ type Row = {
   fin: boolean;
   status: string;
   pr: number | null;
-  track: "block" | "owner-batch" | "dispatch-kit";
+  track: "block" | "owner-batch" | "dispatch-kit" | "audit";
   review?: string; // Owner-Batch review tag (proceed-on-row | needs-your-preview); absent → proceed-on-row
 };
 
@@ -38,7 +38,7 @@ export function reviewTag(raw: string | undefined): "proceed-on-row" | "needs-yo
   return (raw || "").trim().toLowerCase() === "needs-your-preview" ? "needs-your-preview" : "proceed-on-row";
 }
 
-type TabId = "focus" | "all" | "pending" | "owner" | "dispatch" | "merged" | "hold" | "questions" | "ideas";
+type TabId = "focus" | "all" | "pending" | "owner" | "dispatch" | "audit" | "merged" | "hold" | "questions" | "ideas";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "focus", label: "Focus" },
@@ -46,6 +46,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "pending", label: "Pending" },
   { id: "owner", label: "Owner-Batch" },
   { id: "dispatch", label: "Dispatch-Kit" },
+  { id: "audit", label: "Audit & Bug Sweep" },
   { id: "merged", label: "Merged PRs" },
   { id: "hold", label: "HOLD-FOR-JORGE" },
   { id: "questions", label: "Questions" },
@@ -203,6 +204,11 @@ export function ProgramBoardPage() {
     () => (data?.extra ?? []).filter((e) => e.track === "dispatch-kit").map(extraToRow),
     [data]
   );
+  // Audit & Bug Sweep track — the 160-finding 2026-07-04 sweep (append-only; mark DONE, never delete).
+  const auditRows = useMemo<Row[]>(
+    () => (data?.extra ?? []).filter((e) => e.track === "audit").map(extraToRow),
+    [data]
+  );
 
   // Every item across blocks + both owner tracks — the full universe the All and Pending tabs both draw
   // from (All shows all of it; Pending shows the not-done slice).
@@ -257,6 +263,7 @@ export function ProgramBoardPage() {
     if (tab === "all") rows = allRows;
     else if (tab === "owner") rows = ownerRows;
     else if (tab === "dispatch") rows = dispatchRows;
+    else if (tab === "audit") rows = auditRows;
     else if (tab === "focus" || tab === "pending") rows = allRows.filter((r) => isOpenStatus(r.status));
     else rows = [];
 
