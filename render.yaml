@@ -78,3 +78,18 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+
+  # G10-C1 — daily audit hash-chain verification (tamper-evidence). Runs verifyEventChain per active
+  # operating company, records to ops.audit_chain_verifications (append-only legal evidence), and alarms
+  # the owner on a chain break or a missed run. Read-only against events.event_log; posts no money, flips
+  # no flag. Schedule is UTC (Render does not observe DST): 09:00 UTC = 03:00 CST (a quiet overnight
+  # window). DB creds are set on the cron service in the Render dashboard (same as loves-card-import).
+  - type: cron
+    name: audit-chain-verify
+    runtime: node
+    schedule: "0 9 * * *"
+    buildCommand: npm install && npm run build:backend
+    startCommand: node dist/audit/run-audit-chain-verify.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22

@@ -765,6 +765,7 @@
     "verify:event-log-worm": "node scripts/verify-event-log-worm.mjs",
     "verify:recon-read-only": "node scripts/verify-recon-read-only.mjs",
     "verify:audit-chain-verify": "node scripts/verify-audit-chain-verify.mjs",
+    "verify:audit-chain-cron": "node scripts/verify-audit-chain-cron-registered.mjs",
     "verify:ratecon-extract-guard": "node scripts/verify-ratecon-extract-guard.mjs",
     "verify:md-clone-origin": "node scripts/verify-md-clone-origin.mjs",
     "verify:safety-settings-trigger-secdef": "node scripts/verify-safety-settings-trigger-secdef.mjs",
