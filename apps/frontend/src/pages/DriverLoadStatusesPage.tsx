@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useListState } from "../components/list-state";
 import { Pencil } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { z } from "zod";
@@ -111,6 +112,8 @@ export function DriverLoadStatusesPage() {
   });
 
   const statuses = useMemo(() => statusesQuery.data ?? [], [statusesQuery.data]);
+  // TBL-STANDARD (LIST-EMPTY-1 follow-on): settled-only empty state, no mid-fetch flash.
+  const listState = useListState(statusesQuery, statuses.length === 0);
   const highlightId = searchParams.get("highlight");
 
   useEffect(() => {
@@ -188,7 +191,7 @@ export function DriverLoadStatusesPage() {
               </div>
             </div>
           ))}
-          {statuses.length === 0 ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No statuses found.</div> : null}
+          {listState.isEmpty ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No statuses found.</div> : null}
         </div>
       )}
 
