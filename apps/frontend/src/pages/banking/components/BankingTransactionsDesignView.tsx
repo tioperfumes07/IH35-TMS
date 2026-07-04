@@ -497,7 +497,7 @@ export function BankingTransactionsDesignView({
               type="button"
               className={`rounded border px-2 py-1 text-left text-xs transition ${
                 account.id === selectedAccount?.id
-                  ? "border-[#1A1F36] bg-[#1A1F36] text-white"
+                  ? "border-[#1f2a44] bg-[#1f2a44] text-white"
                   : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               }`}
               onClick={() => onSelectAccount(account.id)}
@@ -577,7 +577,7 @@ export function BankingTransactionsDesignView({
                 key={tab.id}
                 type="button"
                 className={`rounded px-2 py-1 text-xs font-semibold ${
-                  active ? "bg-[#1A1F36] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  active ? "bg-[#1f2a44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
                 onClick={() => setActiveReviewTab(tab.id as ReviewTabId)}
               >
@@ -599,7 +599,7 @@ export function BankingTransactionsDesignView({
                 key={option}
                 type="button"
                 className={`px-2.5 py-1 ${option !== "all" ? "border-l border-gray-300" : ""} ${
-                  amountFilter === option ? "bg-[#1A1F36] text-white" : "text-gray-700"
+                  amountFilter === option ? "bg-[#1f2a44] text-white" : "text-gray-700"
                 }`}
                 onClick={() => setAmountFilter(option)}
               >
@@ -674,7 +674,7 @@ export function BankingTransactionsDesignView({
                   key={option}
                   type="button"
                   className={`px-2.5 py-1 ${option === "item" ? "border-l border-gray-300" : ""} ${
-                    categorizeBy === option ? "bg-[#1A1F36] text-white" : "text-gray-700"
+                    categorizeBy === option ? "bg-[#1f2a44] text-white" : "text-gray-700"
                   }`}
                   onClick={() => setCategorizeBy(option)}
                 >
@@ -741,7 +741,7 @@ export function BankingTransactionsDesignView({
                       <button
                         key={size}
                         type="button"
-                        className={`rounded-sm border px-2 py-1 text-xs ${viewSettings.pageSize === size ? "border-[#1A1F36] bg-[#1A1F36] text-white" : "border-gray-300 text-gray-700"}`}
+                        className={`rounded-sm border px-2 py-1 text-xs ${viewSettings.pageSize === size ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-700"}`}
                         onClick={() => setViewSettings((prev) => ({ ...prev, pageSize: size }))}
                       >
                         {size}
