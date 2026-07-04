@@ -4,6 +4,7 @@
  */
 import { describe, expect, it, vi } from "vitest";
 import {
+  bulkEnrollActiveDrivers,
   computeDrawCounts,
   cryptoShuffle,
   drawRandomPool,
@@ -50,22 +51,68 @@ describe("computeDrawCounts", () => {
     expect(alcoholCount).toBe(1);
   });
 
-  it("computes 10% ceiling for 40-driver pool", () => {
-    const { drugCount, alcoholCount } = computeDrawCounts(40, 10, 10);
-    expect(drugCount).toBe(4);
-    expect(alcoholCount).toBe(4);
+  it("defaults to the FMCSA 382.305 quarterly rates (12.5% drug / 2.5% alcohol)", () => {
+    // 40-driver pool: ceil(40 * 12.5/100) = 5 drug, ceil(40 * 2.5/100) = 1 alcohol.
+    const { drugCount, alcoholCount } = computeDrawCounts(40);
+    expect(drugCount).toBe(5);
+    expect(alcoholCount).toBe(1);
+  });
+
+  it("tiny pool floors at 1 per kind (Math.max guard)", () => {
+    // 3-driver pool: ceil(3 * 12.5/100)=1, ceil(3 * 2.5/100)=1.
+    const { drugCount, alcoholCount } = computeDrawCounts(3);
+    expect(drugCount).toBe(1);
+    expect(alcoholCount).toBe(1);
+  });
+
+  it("annual drug attainment >= 50% federal minimum across 4 quarterly draws", () => {
+    // Four 12.5% draws on a 40-pool: 5 * 4 = 20 tests = 50% of 40 → meets 382.305(b)(2).
+    const perQuarter = computeDrawCounts(40).drugCount;
+    expect((perQuarter * 4) / 40).toBeGreaterThanOrEqual(0.5);
   });
 
   it("ceiling rounds up fractional counts", () => {
-    // 10% of 7 = 0.7 → ceil → 1
-    const { drugCount } = computeDrawCounts(7, 10, 10);
+    // 12.5% of 7 = 0.875 → ceil → 1
+    const { drugCount } = computeDrawCounts(7);
     expect(drugCount).toBe(1);
   });
 
-  it("respects custom percentages", () => {
+  it("respects custom percentages (Administrator override)", () => {
     const { drugCount, alcoholCount } = computeDrawCounts(100, 25, 15);
     expect(drugCount).toBe(25);
     expect(alcoholCount).toBe(15);
+  });
+});
+
+// ─── bulkEnrollActiveDrivers ──────────────────────────────────────────────────
+
+describe("bulkEnrollActiveDrivers", () => {
+  it("returns the count and uuids of newly enrolled drivers", async () => {
+    const client = {
+      query: vi.fn().mockResolvedValue({
+        rows: [{ driver_uuid: "d1" }, { driver_uuid: "d2" }, { driver_uuid: "d3" }],
+      }),
+    } as unknown as import("pg").PoolClient;
+
+    const result = await bulkEnrollActiveDrivers(client, "co-1", "Acme Consortium");
+
+    expect(result.enrolledCount).toBe(3);
+    expect(result.enrolledDriverUuids).toEqual(["d1", "d2", "d3"]);
+  });
+
+  it("is idempotent — inserts only drivers not already actively enrolled", async () => {
+    const client = {
+      query: vi.fn().mockResolvedValue({ rows: [] }),
+    } as unknown as import("pg").PoolClient;
+
+    const result = await bulkEnrollActiveDrivers(client, "co-1", "Acme Consortium");
+    expect(result.enrolledCount).toBe(0);
+
+    const sql = (client.query as unknown as { mock: { calls: unknown[][] } }).mock.calls[0]?.[0] as string;
+    // Guards the idempotency + active-human-driver contract in the SQL itself.
+    expect(sql).toContain("NOT EXISTS");
+    expect(sql).toContain("d.status = 'Active'");
+    expect(sql).toContain("d.archived_at IS NULL");
   });
 });
 
