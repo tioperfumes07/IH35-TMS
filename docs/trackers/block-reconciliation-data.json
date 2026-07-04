@@ -1,6 +1,6 @@
 {
  "date": "2026-07-03",
- "generated_at_iso": "2026-07-03T22:43:28.109Z",
+ "generated_at_iso": "2026-07-04T00:40:09.704Z",
  "counts": {
   "PENDING": 4,
   "PENDING (GATED)": 33,
@@ -5216,6 +5216,72 @@
  ],
  "merged_prs": [
   {
+   "number": 1919,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): Manual Journal Entry create/void 400 (contract drift)",
+   "mergedAt": "2026-07-04T00:39:54Z",
+   "branch": "fix/manual-je-contract-hold"
+  },
+  {
+   "number": 1918,
+   "title": "docs(banking): H2 beginning-balance reconciliation design (gated build)",
+   "mergedAt": "2026-07-04T00:20:59Z",
+   "branch": "docs/bank-recon-beginning-balance-h2"
+  },
+  {
+   "number": 1917,
+   "title": "fix(banking): Transactions view polish — locked palette (L10) + wire bulk Exclude/Export (H3)",
+   "mergedAt": "2026-07-04T00:17:18Z",
+   "branch": "fix/banking-txn-palette-l10"
+  },
+  {
+   "number": 1916,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo): close bank_transaction write-back hole (M7 / IMPORT-P0b gap)",
+   "mergedAt": "2026-07-04T00:10:16Z",
+   "branch": "fix/qbo-bank-transaction-pushgate-hold"
+  },
+  {
+   "number": 1915,
+   "title": "fix(banking): correct money direction on CSV statement import (M6)",
+   "mergedAt": "2026-07-03T23:56:57Z",
+   "branch": "fix/banking-csv-import-direction-m6"
+  },
+  {
+   "number": 1914,
+   "title": "fix(banking): open reconciliation sessions on the workspace route (H4)",
+   "mergedAt": "2026-07-03T23:54:08Z",
+   "branch": "fix/banking-recon-session-deeplink-h4"
+  },
+  {
+   "number": 1913,
+   "title": "fix(banking): categorize Post/Match use real /categorize contract (C1 — unblocks 2,650 txns)",
+   "mergedAt": "2026-07-03T23:51:17Z",
+   "branch": "fix/banking-categorize-contract-c1"
+  },
+  {
+   "number": 1912,
+   "title": "fix(accounting): cash-position today uses company tz not UTC (Module-13 defect)",
+   "mergedAt": "2026-07-03T23:39:26Z",
+   "branch": "fix/cash-flow-today-company-tz"
+  },
+  {
+   "number": 1911,
+   "title": "feat(tasks): Tasks Planner v2 deferred — WO/Policy/Purchase buttons + unit/bill/WO Tasks tabs",
+   "mergedAt": "2026-07-03T23:22:35Z",
+   "branch": "feat/tasks-planner-v2-deferred"
+  },
+  {
+   "number": 1909,
+   "title": "feat(ci): money-path no-swallow guard (recovered lost-work RELIABILITY-05)",
+   "mergedAt": "2026-07-03T23:21:34Z",
+   "branch": "feat/money-path-no-swallow-guard"
+  },
+  {
+   "number": 1907,
+   "title": "chore(tracker): board refresh to-the-minute",
+   "mergedAt": "2026-07-03T22:53:00Z",
+   "branch": "chore/board-refresh-to-the-minute"
+  },
+  {
    "number": 1906,
    "title": "docs(trackers): design-vs-implementation gap audit (planner/scheduler/fuel/tasks)",
    "mergedAt": "2026-07-03T22:26:28Z",
@@ -5232,6 +5298,12 @@
    "title": "feat(security): USERS-1 — block fixture/probe emails from creating ACTIVE prod users",
    "mergedAt": "2026-07-03T22:31:35Z",
    "branch": "feat/users1-prod-fixture-guard"
+  },
+  {
+   "number": 1902,
+   "title": "feat(safety): SM3 — driver safety cards on the Safety landing + wire the dead layout filter/counters",
+   "mergedAt": "2026-07-04T00:27:21Z",
+   "branch": "feat/sm3-safety-home-driver-cards"
   },
   {
    "number": 1901,
@@ -5280,6 +5352,12 @@
    "title": "fix(safety): incidents cluster — typed creators for damage/interchange/cargo on the shared surface",
    "mergedAt": "2026-07-03T21:42:23Z",
    "branch": "feat/sc-cluster-typed-creators"
+  },
+  {
+   "number": 1891,
+   "title": "fix(safety): SM2 D&A — pool bulk-enroll, correct 382.305 quarterly drug rate (10%→12.5%), history filters",
+   "mergedAt": "2026-07-03T23:08:19Z",
+   "branch": "feat/sm2-drug-alcohol"
   },
   {
    "number": 1890,
@@ -5400,6 +5478,18 @@
    "title": "chore(perf): realign driver-pwa bundle budget to React-19 baseline",
    "mergedAt": "2026-07-03T16:52:09Z",
    "branch": "chore/perf-budget-realign-react19"
+  },
+  {
+   "number": 1869,
+   "title": "fix(ui): restore navy chrome (topbar/sidebar were near-black)",
+   "mergedAt": "2026-07-03T23:04:51Z",
+   "branch": "fix/chrome-navy-not-black"
+  },
+  {
+   "number": 1868,
+   "title": "feat(deps): @dnd-kit/sortable 8→10 (off main)",
+   "mergedAt": "2026-07-03T22:59:55Z",
+   "branch": "feat/dnd-kit-10-clean"
   },
   {
    "number": 1867,
@@ -8724,100 +8814,22 @@
    "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-03 (CHAIN-05) — bank feed categorize→match→post chain design",
    "mergedAt": "2026-06-20T21:13:10Z",
    "branch": "hold/hold-03-chain-05-bank-feed-post"
-  },
-  {
-   "number": 1267,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-02 (CHAIN-04) — Bill Payment tie-out design + draft JE",
-   "mergedAt": "2026-06-20T21:13:02Z",
-   "branch": "hold/hold-02-chain-04-bill-payment-tieout"
-  },
-  {
-   "number": 1266,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-01 (CHAIN-03) — Create Bill → GL design + draft JE proof",
-   "mergedAt": "2026-06-20T21:12:51Z",
-   "branch": "hold/hold-01-chain-03-create-bill-gl-design"
-  },
-  {
-   "number": 1265,
-   "title": "docs(accounting): AUTO-20 (STMT-1) — verdict: Balance Sheet + Cash Flow already render real numbers read-only",
-   "mergedAt": "2026-06-20T20:38:26Z",
-   "branch": "feat/auto-20-stmt-display"
-  },
-  {
-   "number": 1264,
-   "title": "docs(accounting): AUTO-19 (AF-0) — accounting re-baseline truth snapshot (read-only)",
-   "mergedAt": "2026-06-20T20:38:29Z",
-   "branch": "docs/auto-19-af0-truth-doc"
-  },
-  {
-   "number": 1263,
-   "title": "fix(accounting): AUTO-18 (CHAIN-02) — account register surfaces request errors (params verified passed)",
-   "mergedAt": "2026-06-20T20:34:23Z",
-   "branch": "fix/auto-18-register-params-400"
-  },
-  {
-   "number": 1262,
-   "title": "fix(accounting): AUTO-17 (CHAIN-01) — Create-Bill vendor picker surfaces empty/loading/error honestly",
-   "mergedAt": "2026-06-20T20:31:40Z",
-   "branch": "feat/auto-17-vendor-picker-wiring"
-  },
-  {
-   "number": 1261,
-   "title": "docs(help): AUTO-16 — backfill real content for 8 stubbed Help module guides",
-   "mergedAt": "2026-06-20T20:26:31Z",
-   "branch": "feat/auto-16-help-articles"
-  },
-  {
-   "number": 1260,
-   "title": "chore(ux): AUTO-15 — Drug/Alcohol + Training safety tables → shared DataTable",
-   "mergedAt": "2026-06-20T20:22:09Z",
-   "branch": "chore/auto-15-table-sweep"
-  },
-  {
-   "number": 1259,
-   "title": "test(backend): AUTO-14 — read-endpoint smoke tests (driver-inactivity + hos-driver-map previews)",
-   "mergedAt": "2026-06-20T20:22:14Z",
-   "branch": "test/auto-14-backend-test-scaffolding"
-  },
-  {
-   "number": 1258,
-   "title": "feat(ux): AUTO-13 — Vendors/Customers lists show error state on 500 (not blank)",
-   "mergedAt": "2026-06-20T20:22:18Z",
-   "branch": "feat/auto-13-list-error-states"
-  },
-  {
-   "number": 1257,
-   "title": "fix(ux): AUTO-12 — .code-cell never breaks/hyphenates codes (CSS) + guard",
-   "mergedAt": "2026-06-20T20:18:36Z",
-   "branch": "fix/auto-12-code-cell-hyphen"
-  },
-  {
-   "number": 1256,
-   "title": "docs(auto-11): VERIFY — Factoring/Faro shipped; reserve-tracker dashboard the only gap",
-   "mergedAt": "2026-06-20T20:18:50Z",
-   "branch": "docs/auto-11-factoring-faro-verify"
-  },
-  {
-   "number": 1255,
-   "title": "docs(auto-10): VERIFY — Reports module present-vs-missing enumeration",
-   "mergedAt": "2026-06-20T20:18:31Z",
-   "branch": "docs/auto-10-reports-missing"
-  },
-  {
-   "number": 1254,
-   "title": "docs(auto-09): VERIFY — Safety waves W3/W4/W5 shipped + LOCKED-complete",
-   "mergedAt": "2026-06-20T20:18:45Z",
-   "branch": "docs/auto-09-safety-waves-verify"
-  },
-  {
-   "number": 1253,
-   "title": "docs(auto-08): VERIFY — per-load profitability already built (DONE-verify)",
-   "mergedAt": "2026-06-20T20:18:41Z",
-   "branch": "docs/auto-08-per-load-profit-verify"
   }
  ],
- "merged_pr_total": 1794,
+ "merged_pr_total": 1809,
  "hold_for_jorge": [
+  {
+   "number": 1919,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): Manual Journal Entry create/void 400 (contract drift)",
+   "mergedAt": "2026-07-04T00:39:54Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1916,
+   "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo): close bank_transaction write-back hole (M7 / IMPORT-P0b gap)",
+   "mergedAt": "2026-07-04T00:10:16Z",
+   "category": "TIER-1 financial"
+  },
   {
    "number": 1897,
    "title": "feat(ci): HOLD-migration ledger guard — held migrations can't silently fire on prod",
