@@ -15,7 +15,10 @@ import {
 const SOURCE_TAG = "BT-2-DOCS-SCHEMA-AND-R2";
 const DEFAULT_UPLOAD_EXPIRES_SECONDS = 900;
 const DEFAULT_DOWNLOAD_EXPIRES_SECONDS = 300;
-const SUPPORTED_LINK_ENTITY_TYPES = ["driver", "customer", "vendor", "unit", "equipment"] as const;
+// DOCS-1: `load` was omitted here (though present in the zod enum + the docs.file_links
+// CHECK constraint), so the Load Documents tab could never link/upload a document and
+// rendered empty. mdata.loads is a non-financial master-data table; adding it here is safe.
+const SUPPORTED_LINK_ENTITY_TYPES = ["driver", "customer", "vendor", "unit", "equipment", "load"] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
 const linkParamSchema = z.object({ file_id: z.string().uuid(), link_id: z.string().uuid() });
@@ -182,6 +185,11 @@ async function ensureLinkEntityExists(
   }
   if (entityType === "equipment") {
     const res = await client.query("SELECT id FROM mdata.equipment WHERE id = $1 LIMIT 1", [entityId]);
+    return res.rows.length > 0;
+  }
+  if (entityType === "load") {
+    // §4: loads live in mdata.loads with soft-delete via soft_deleted_at.
+    const res = await client.query("SELECT id FROM mdata.loads WHERE id = $1 AND soft_deleted_at IS NULL LIMIT 1", [entityId]);
     return res.rows.length > 0;
   }
   return false;

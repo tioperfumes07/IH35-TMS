@@ -454,6 +454,7 @@ export function UsersPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search users"
+          aria-label="Search users"
           className="h-8 w-full min-w-0 max-w-sm rounded-md border border-gray-300 px-2 text-[13px]"
         />
       </div>
