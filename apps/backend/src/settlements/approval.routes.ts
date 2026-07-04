@@ -14,6 +14,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import * as approvalService from "./approval.service.js";
 import * as tripLinkEngine from "./trip-link.engine.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 
 // Validation schemas
 const approveLineSchema = z.object({
@@ -84,9 +85,18 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
     if (!user) return;
 
     const { id } = req.params as { id: string };
+    const query = req.query as Record<string, unknown>;
+    const requestedCompanyId = String(query.operating_company_id || "") || null;
 
     return withCurrentUser(user.uuid, async (client) => {
-      const items = await approvalService.getSettlementLineItems(client, id);
+      // IDOR fix (xe-fin): resolve the caller's entity (explicit param or their default company)
+      // and bind it as a scope predicate on the financial read, so a foreign settlement id can
+      // only ever return THIS operating company's line items.
+      const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, requestedCompanyId);
+      if (!operatingCompanyId) {
+        return reply.code(400).send({ error: "operating_company_id required" });
+      }
+      const items = await approvalService.getSettlementLineItems(client, id, operatingCompanyId);
       return { items };
     });
   });
