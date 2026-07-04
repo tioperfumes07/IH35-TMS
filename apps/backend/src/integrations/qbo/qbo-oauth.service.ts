@@ -552,6 +552,21 @@ export async function revokeConnection(connectionId: string, operatingCompanyId:
   return { ok: true };
 }
 
+/** True if the company has EVER had a QBO connection row (any state, incl. revoked). The disconnect
+ *  watchdog uses this to skip NEVER-connected entities (e.g. parallel-books USMCA, which has no QBO
+ *  company) so they don't get re-auth reminder emails forever. RLS on integrations.qbo_connections is
+ *  operating_company_id-scoped (NOT lucia-bypassable), so we must set the GUC per company. */
+export async function companyHasQboConnectionRecord(operatingCompanyId: string): Promise<boolean> {
+  return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const res = await client.query(
+      `SELECT 1 FROM integrations.qbo_connections WHERE operating_company_id = $1 LIMIT 1`,
+      [operatingCompanyId]
+    );
+    return res.rows.length > 0;
+  });
+}
+
 export async function getQboConnectionStatus(operatingCompanyId: string) {
   const connection = await getActiveConnectionByCompany(operatingCompanyId);
   if (!connection) {
