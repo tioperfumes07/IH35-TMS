@@ -248,7 +248,7 @@ export function TransactionRegisterPage() {
                   <tr key={`${r.source}:${r.id}`} className="border-t border-slate-100 hover:bg-slate-50">
                     <td className="px-3 py-2">
                       <span className={`rounded-sm border px-2 py-0.5 text-[11px] ${sourceBadgeClass(r.source)}`}>
-                        {r.type}
+                        {r.source}
                       </span>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-slate-700">{r.date ? formatDateUS(r.date) : "—"}</td>
