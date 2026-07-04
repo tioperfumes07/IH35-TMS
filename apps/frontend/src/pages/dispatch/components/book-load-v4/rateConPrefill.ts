@@ -39,18 +39,44 @@ function equipmentToTrailerType(equipment: string | null): string | undefined {
   return undefined;
 }
 
-/** Map an extracted stop to the wizard's BookStop-ish shape. Appointment_required → time_window_type. */
+/** Fallback for when the model fuses city/state/zip into the street address ("695 Summa Ave, Amityville,
+ *  NY 11701") instead of splitting them. Pulls the "City, ST ZIP" tail off the end so §C's City/State/Zip
+ *  fields still populate. Returns the cleaned street line + any recovered parts (null when nothing matched;
+ *  the street is then returned unchanged). Purely additive — only used to fill parts the model left empty. */
+export function splitAddressTail(address: string | null | undefined): {
+  line1: string;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+} {
+  const raw = (address ?? "").trim();
+  if (!raw) return { line1: "", city: null, state: null, zip: null };
+  // "<street>, <City>, <ST> <ZIP>" — ST is a 2-letter code; ZIP optional (5 or 5-4). Requires a non-empty
+  // street before the tail so a bare "City, ST" isn't mistaken for a street.
+  const m = raw.match(/^(.*?),\s*([A-Za-z][A-Za-z .'-]+?),\s*([A-Za-z]{2})\s*(\d{5}(?:-\d{4})?)?\s*$/);
+  if (m && m[1].trim()) {
+    return { line1: m[1].trim(), city: m[2].trim() || null, state: m[3].toUpperCase(), zip: m[4] || null };
+  }
+  return { line1: raw, city: null, state: null, zip: null };
+}
+
+/** Map an extracted stop to the wizard's BookStop-ish shape. Appointment_required → time_window_type.
+ *  When the model didn't split city out of the address, recover it from the address tail. */
 function toBookStop(s: RateConExtraction["stops"][number], index: number) {
+  const hasCity = Boolean(s.city && s.city.trim());
+  const parsed = hasCity ? null : splitAddressTail(s.address);
+  const recovered = parsed && parsed.city ? parsed : null;
+  const zip = s.zip ?? recovered?.zip ?? null;
   return {
     stop_type: s.type === "delivery" ? "delivery" : "pickup",
     sequence_number: index + 1,
-    city: s.city ?? "",
-    state: s.state ?? "",
+    city: s.city ?? recovered?.city ?? "",
+    state: s.state ?? recovered?.state ?? "",
     country: "US",
-    address_line1: s.address ?? "",
+    address_line1: recovered ? recovered.line1 : s.address ?? "",
     scheduled_arrival_at: s.date ?? "",
     time_window_type: s.appointment_required ? "appointment" : "open_window",
-    stop_notes: [s.name, s.zip, s.time_window].filter(Boolean).join(" · ") || undefined,
+    stop_notes: [s.name, zip, s.time_window].filter(Boolean).join(" · ") || undefined,
   };
 }
 
