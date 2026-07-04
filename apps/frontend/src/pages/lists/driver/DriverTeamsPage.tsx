@@ -1,9 +1,14 @@
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 
 export function DriverTeamsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-3">
-      <PageHeader title="Driver teams" subtitle="Team loads + settlement splits (alias API)" />
+      <BackArrowHeader
+        backTo="/lists"
+        breadcrumb={["Lists & Catalogs", "Driver", "Driver Teams"]}
+        title="Driver teams"
+      />
+      <p className="text-sm text-gray-500">Team loads + settlement splits (alias API)</p>
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
         <p className="mb-2">
           CRUD API: <span className="font-mono">/api/v1/driver-teams</span> (maps to `mdata.driver_teams` shares as split percentages).
