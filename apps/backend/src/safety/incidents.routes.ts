@@ -149,15 +149,16 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
 
     const created = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
       // SC-TRAILER-FK: the trailer FK points at mdata.equipment (trailers live there; mdata.units is
-      // trucks only). Validate an RLS-SCOPED EXISTENCE against mdata.equipment — the row must be
-      // visible under this request's withCompanyScope (RLS does the entity gate: TRK-owned trailers
-      // operated by TRANSP are visible via owner_company_id OR currently_leased_to_company_id, so this
-      // is NOT an owner==operating compare). A truck uuid (mdata.units only) or a cross-entity trailer
-      // is simply not found here → 400 invalid_trailer, never a raw FK-violation 500.
+      // trucks only). Validate existence with an EXPLICIT entity predicate — RLS on mdata.* is
+      // role-scoped, NOT app.operating_company_id-scoped, so an Owner sees every entity's equipment and
+      // cannot be relied on for the entity gate. Pin it in the query: a TRK-owned trailer operated by
+      // TRANSP is visible via owner_company_id OR currently_leased_to_company_id (so this is NOT an
+      // owner==operating compare). A truck uuid (mdata.units only) or a cross-entity trailer is simply
+      // not found here → 400 invalid_trailer, never a raw FK-violation 500.
       if (trailerId !== null) {
         const trailerRes = await client.query<{ id: string }>(
-          `SELECT id FROM mdata.equipment WHERE id = $1 LIMIT 1`,
-          [trailerId]
+          `SELECT id FROM mdata.equipment WHERE id = $1 AND (owner_company_id = $2 OR currently_leased_to_company_id = $2) LIMIT 1`,
+          [trailerId, body.data.operating_company_id]
         );
         if (trailerRes.rows.length === 0) {
           return { error: "invalid_trailer" as const };
