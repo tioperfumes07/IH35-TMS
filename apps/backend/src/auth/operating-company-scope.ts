@@ -83,19 +83,30 @@ export async function resolveOperatingCompanyId(
   requested?: string | null
 ): Promise<string | null> {
   if (requested) return requested;
+  // Prefer the user's DEFAULT company; only fall back to the lowest accessible UUID if there is none.
+  // (The old `UNION … ORDER BY id LIMIT 1` picked the minimum UUID across ALL accessible companies, so
+  // the default was lost. That silently flipped a multi-entity Owner's param-omitting endpoints to
+  // whichever entity had the lowest id — and USMCA (5c854333…) < TRANSP (91e0bf0a…), so activating
+  // USMCA would hijack TRANSP's default resolution. Explicit COALESCE(default, lowest) fixes it.)
   const res = await client.query(
     `
-      SELECT c.id
-      FROM identity.users u
-      JOIN org.companies c ON c.id = u.default_company_id
-      WHERE u.id = $1
-        AND c.deactivated_at IS NULL
-      UNION
-      SELECT c.id
-      FROM org.companies c
-      WHERE c.id IN (SELECT org.user_accessible_company_ids())
-      ORDER BY id
-      LIMIT 1
+      SELECT COALESCE(
+        (
+          SELECT c.id
+          FROM identity.users u
+          JOIN org.companies c ON c.id = u.default_company_id
+          WHERE u.id = $1
+            AND c.deactivated_at IS NULL
+        ),
+        (
+          SELECT c.id
+          FROM org.companies c
+          WHERE c.id IN (SELECT org.user_accessible_company_ids())
+            AND c.deactivated_at IS NULL
+          ORDER BY id
+          LIMIT 1
+        )
+      ) AS id
     `,
     [userId]
   );
