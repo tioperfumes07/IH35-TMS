@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # IH35-TMS — BUG AUDIT FIX TRACKER (single source of truth)
 
 Generated 2026-07-04 from the shared 130-finding read-only sweep (Cascade + Claude-Coder-2, byte-identical core).
@@ -149,3 +150,173 @@ Parsed detailed findings: **130** · Financial (STOP-gate): **49** · Safe-to-fi
 | H2-2 | LOW | safe | H2 — Security | Stale apps/backend/package-lock.json carries 2 unshipped HIGH CVEs | apps/backend/package-lock.json | Delete/regenerate the stale lockfile. | OPEN |  |  |
 | H7-2 | LOW | safe | H7 — Factoring | Minor vendor/runtime hygiene: Plaid dead-env, QBO stale health probe, Node/TS drift | integrations/plaid/plaid-client.ts:22; admin/healt | Remove the dead Plaid env branch; bump the health probe to 75; roadmap Node 24;  | OPEN |  |  |
 | B3-3 | INFO | safe | B3 — Maintenance | Fuel G18 trigger not armed against load hard-delete | db/migrations/0300_create_fuel_transactions.sql:10 | If a load hard-delete is ever added, use ON DELETE RESTRICT or re-validate. | OPEN |  |  |
+=======
+# IH35-TMS — BUG AUDIT FIX TRACKER (FULL 160)
+
+Generated 2026-07-04 · APPEND-ONLY (mark DONE, never delete).
+
+160 findings · DONE 14 · PENDING 87 · GATED 59
+
+| ID | Sev | Lane | Module | Title | Status | PR |
+|---|---|---|---|---|---|---|
+| FLAG-LIVE | CRIT | FIN | Accounting/Flags | CONFIRMED: all 9 GL-posting flags (incl. SETTLEMENT) are ON in prod for all 3 en | PENDING (GATED) |  |
+| G1-1 | CRIT | safe | Security/Identity | [LIVE-EXPLOITABLE] Any Administrator can promote themselves to Owner | DONE | #2017 |
+| G10-C1 | CRIT | safe | Compliance/Audit | Tamper-evident audit chain verifier is never invoked | DONE | #2020 |
+| G10-C2 | CRIT | FIN | Integrations/QBO | Dead QBO refresh token not surfaced — UI shows 'connected', recon silently stops | PENDING (GATED) |  |
+| G10-C3 | CRIT | safe | Observability | Sentry only half-live: crons + driver-PWA report to nobody; nothing pages on fai | DONE | #2024 |
+| G10-C4 | CRIT | safe | Reliability/Queues | QBO-sync in_flight + email 'sending' rows orphan on any crash (no reaper) | DONE | #2024 |
+| G11-1 | CRIT | FIN | Finance/Deductions | Deduction-authorization template doesn't exist → every FIN-18 deduction post is  | PENDING (GATED) |  |
+| G4-IDEM1 | CRIT | FIN | Reliability/Money | Money routes off the idempotency allow-list → duplicate money on double-click/re | PENDING (GATED) |  |
+| G4-TX1 | CRIT | FIN | Reliability/GL | Source-row + GL post span two separate transactions → orphaned GL / money-paid-w | PENDING (GATED) |  |
+| G9-C1 | CRIT | safe | Dispatch/Compliance | Unqualified drivers assignable via quick-assign / quicksave / planner | DONE | #2019 |
+| G9-C2 | CRIT | FIN | Compliance/MOR | Chapter 11 MOR cash lines are always $0 and omit own-transfer exclusion | PENDING (GATED) |  |
+| G9-C3 | CRIT | FIN | Accounting/Governance | Three financial void endpoints have NO role guard | PENDING (GATED) |  |
+| H3-1 | CRIT | FIN | Accounting/Flags | A real GL-posting flag evades the per-entity money kill-switch | PENDING (GATED) |  |
+| M-DISP-1 | CRIT | safe | Dispatch | quick-assign/quicksave write a trailer's ID into the co-driver column (FK violat | PENDING |  |
+| M-ELD-1 | CRIT | safe | ELD | ELD is not built — audit trail queries a phantom TABLE (500 on every request); n | PENDING |  |
+| M-FLEET-1 | CRIT | safe | Fleet | Trailer quick-assign updates mdata.equipment WHERE operating_company_id (phantom | PENDING |  |
+| M-SETTLE-1 | CRIT | FIN | Settlements | A second, UN-flag-gated settlement posting engine posts real Bills+Payments | PENDING (GATED) |  |
+| M-WOID-1 | CRIT | FIN | Maintenance | WO-ID generator queries phantom mdata.units.operating_company_id (migrations nev | PENDING (GATED) |  |
+| REPO-PUBLIC | CRIT | safe | Security/Infra | GitHub repo tioperfumes07/IH35-TMS is PUBLIC — entire codebase readable on the i | PENDING |  |
+| A2-1 | HIGH | safe | DB/Migrations | 18 reused migration numbers, no CI guard (already caused an outage) | DONE | #2023 |
+| A2-2 | HIGH | safe | DB/Grants | Grant-gap guard is non-blocking AND doesn't watch the schema that broke | PENDING |  |
+| B1-1 | HIGH | FIN | Accounting/Recon | QBO reconciliation source pulls only 2 of ~6 bank-hitting txn types | PENDING (GATED) |  |
+| C1-1 | HIGH | FIN | Settlements/GL | load-linkage work landed in an ORPHANED parallel settlement engine | PENDING (GATED) |  |
+| C1-2 | HIGH | FIN | Settlements/GL | settlement->GL deduction linkage severed | PENDING (GATED) |  |
+| C2-1 | HIGH | FIN | Cross-entity/QBO | COA drift-detector reads catalogs.accounts with no entity filter | PENDING (GATED) |  |
+| D1-1 | HIGH | safe | Customers | Inline 'New Customer' writes to a mirror table no picker reads | PENDING |  |
+| D2-1 | HIGH | safe | Maintenance | Two maintenance modals save nothing (non-persisting stubs) | PENDING |  |
+| D3-1 | HIGH | safe | Dispatch/Safety | Hazmat load can be dispatched to an unendorsed driver | DONE | #2019 |
+| D5-1 | HIGH | safe | Inventory | Inventory part create is broken in prod (missing credentials) | PENDING |  |
+| E1-1 | HIGH | FIN | Schema/QBO | QBO mirror split-brain: accounting.qbo_* vs mdata.qbo_* | PENDING (GATED) |  |
+| E1-3 | HIGH | safe | Schema/Reports | Two scheduled-report engines (reports.* vs reporting.*) | PENDING |  |
+| E1-4 | HIGH | FIN | Schema/Settlements | Driver settlements spread across 4 schemas | PENDING (GATED) |  |
+| E2-1 | HIGH | safe | DB/Migrations | Duplicate migration numbers unguarded (root cause of A2-1) | DONE | #2023 |
+| E2-2 | HIGH | FIN | Dispatch/Integrity | driver_layovers: missing FKs + operating_company_id is TEXT | PENDING (GATED) |  |
+| E2-3 | HIGH | FIN | Dispatch/Integrity | border_crossing_events: missing FKs + TEXT op-co | PENDING (GATED) |  |
+| G1-2 | HIGH | FIN | Security/Money | Bills pay/void trust client company-id with no membership check | PENDING (GATED) |  |
+| G1-3 | HIGH | FIN | Security/Money | Settlement + cash-advance approvals skip membership check | PENDING (GATED) |  |
+| G10-H1 | HIGH | FIN | Evidence | load_stops retains a DELETE grant with 8 CASCADE evidence children | PENDING (GATED) |  |
+| G10-H2 | HIGH | safe | CI/Evidence | The 'no hard-delete load_stops' CI guard is never wired into CI | DONE | #2023 |
+| G10-H3 | HIGH | safe | API-contract | Six live UI features call routes that don't exist (404); three move money | PENDING |  |
+| G10-H4 | HIGH | FIN | Integrations/QBO | QBO push generic catch = infinite retry, no dead-letter cap | PENDING (GATED) |  |
+| G10-H5 | HIGH | FIN | Security | Plaid access token stored in plaintext | PENDING (GATED) |  |
+| G11-2 | HIGH | FIN | Finance/Settlements | Two deduction sub-ledgers that don't reconcile (overpay OR GL hard-block) | PENDING (GATED) |  |
+| G11-3 | HIGH | FIN | Finance/Settlements | Three net-pay-floor implementations with different defaults (10% vs 50%) | PENDING (GATED) |  |
+| G11-5 | HIGH | FIN | Finance/Period | Period-close lock is a single high-water mark with no reopen path | PENDING (GATED) |  |
+| G2-1 | HIGH | FIN | Security/Audit | One real SQL-injection via unvalidated operating_company_id in an audit-log call | PENDING (GATED) |  |
+| G4-HEALTH | HIGH | safe | Reliability/Health | Recon + several money crons have no freshness surface (fail dark) | DONE | #2024 |
+| G5-2 | HIGH | safe | Reliability/QBO | DB connection + open transaction held across a QuickBooks HTTP call | PENDING |  |
+| G6-1 | HIGH | FIN | Accounting/Dates | Financial 'today' computed in UTC, not Central Time (~40+ sites) | PENDING (GATED) |  |
+| G7-1 | HIGH | FIN | Settlements/Tests | Driver-settlement payment state machine has no test | PENDING (GATED) |  |
+| G7-2 | HIGH | safe | USMCA/TODO | Two latent USMCA-launch breakers hiding in TODOs | PENDING |  |
+| G8-1 | HIGH | safe | Driver-PWA/i18n | Driver-app dates render in device locale + timezone, not app language | PENDING |  |
+| G9-H1 | HIGH | FIN | Settlements | Settlement double-pay race (no compare-and-swap) | PENDING (GATED) |  |
+| G9-H2 | HIGH | FIN | Settlements | Duplicate open settlements per driver (no unique index) | PENDING (GATED) |  |
+| G9-H4 | HIGH | safe | Dispatch | Load status machine advisory; driver-PWA can resurrect a cancelled load | PENDING |  |
+| G9-H5 | HIGH | FIN | Reports | Profit/pay reports double-count and include cancelled/voided rows | PENDING (GATED) |  |
+| G9-H6 | HIGH | safe | Catalogs/UI | CoA management list + trailer list cap at 50 (oldest records unreachable) | PENDING |  |
+| H1-1 | HIGH | safe | Security/RateLimit | Public credential + OTP endpoints have no rate limit | DONE | #2021 |
+| H2-1 | HIGH | FIN | Security/Deps | xlsx (SheetJS) prototype-pollution + ReDoS, reachable on uploaded spreadsheets | PENDING (GATED) |  |
+| H3-2 | HIGH | FIN | Accounting/Flags | Three posting flags unprotected + read with no entity context (global-only enabl | PENDING (GATED) |  |
+| H4-2 | HIGH | safe | Security/Samsara | Samsara webhook: signature doesn't match vendor scheme + writes attacker payload | PENDING |  |
+| H5-1 | HIGH | safe | Data/Retention | Append-only spine tables grow unbounded (no pruning/partition on the real tables | PENDING |  |
+| H5-2 | HIGH | safe | Data/Retention | Partition scaffolding is orphaned AND expires 2027-12 (latent time-bomb) | PENDING |  |
+| H6-1 | HIGH | FIN | Reliability/QBO | QBO OAuth refresh-token rotation race can knock the connection offline | PENDING (GATED) |  |
+| H6-2 | HIGH | FIN | Cash-Advance | Cash-advance number generator: MAX+1, no lock, no unique → silent duplicate IDs | PENDING (GATED) |  |
+| M-CASH-1 | HIGH | FIN | Cash-Flow | Void exclusion is a no-op ('void' vs 'voided') — cancelled bills show as future  | PENDING (GATED) |  |
+| M-COMP-1 | HIGH | safe | Compliance | IFTA files the WRONG quarter at the point of action | PENDING |  |
+| M-DISP-2 | HIGH | safe | Dispatch | CDL/medical qualification gate exists only in Book Load — sibling assign paths s | PENDING |  |
+| M-DOCS-1 | HIGH | safe | Docs | Load Documents tab is dead-on-arrival (route blocks 'load' type) | PENDING |  |
+| M-DRIVER-1 | HIGH | safe | Drivers | Second driver create/edit surface bypasses rehire-match / vendor-linkage / invit | PENDING |  |
+| M-DRIVER-2 | HIGH | safe | Drivers | mdata.drivers.escrow_balance is a phantom column (read by the escrow visualizer) | PENDING |  |
+| M-FACTOR-1 | HIGH | FIN | Factoring | The reserve figure reads a column NOTHING writes to; FOUR un-reconciled reserve  | PENDING (GATED) |  |
+| M-FUEL-1 | HIGH | safe | Fuel | fuel.fuel_transactions is never written — 7 profitability + IFTA reports read $0 | PENDING |  |
+| M-HOME-1 | HIGH | safe | Home | Safety role-home silently 500s → every Safety user sees all-zero KPIs (false 'al | PENDING |  |
+| M-INV-1 | HIGH | safe | Inventory | Inventory part SKU is fake (returns the row UUID) + create drops category/notes | PENDING |  |
+| M-LEGAL-1 | HIGH | safe | Legal | Legal Matters has NO backend role gate — any role can read/write litigation data | PENDING |  |
+| M-LISTS-1 | HIGH | FIN | Cross-entity | Lists cross-entity WRITE + READ leaks (flag-colors, cancellation-reasons, stub-p | PENDING (GATED) |  |
+| M-MOR-2 | HIGH | FIN | 425C/MOR | MOR/Exhibits use multiple phantom columns → $0; UST quarterly fee understated; e | PENDING (GATED) |  |
+| M-REPORTS-1 | HIGH | FIN | Reports | AR/AP aging: two implementations, the UI uses the broken one (misclassifies not- | PENDING (GATED) |  |
+| M-SAFE-1 | HIGH | safe | Safety | Accident 'At Fault' is a dead stub with no schema column (+ other unwired accide | PENDING |  |
+| M-SETTLE-2 | HIGH | FIN | Settlements | Net-pay floor is 10%/50%/50% across three paths — none matches the CPA-locked 5% | PENDING (GATED) |  |
+| SWL-1 | HIGH | FIN | Reliability/Audit | 61 money/dispatch spine-event emits swallowed with zero breadcrumb | PENDING (GATED) |  |
+| D1-2 | MED-HIGH | safe | Vendors | Vendors split across two disjoint tables | PENDING |  |
+| E2-4 | MED-HIGH | FIN | Safety/Integrity | Drug-&-alcohol records can orphan from their driver | PENDING (GATED) |  |
+| FLAG-LEASE | MED-HIGH | FIN | Accounting/Flags | LEASE_GL_POSTING_ENABLED is ON despite the locked 'never flip until lease engine | PENDING (GATED) |  |
+| G6-2 | MED-HIGH | safe | Vendors | Vendor create has no dedup guard (customers have one) | PENDING |  |
+| H3-3 | MED-HIGH | FIN | Accounting/Flags | Void flags classified inconsistently between two guards | PENDING (GATED) |  |
+| H4-3 | MED-HIGH | safe | Security/Cost | AI-cost endpoints have no throttle (direct $ per call) | DONE | #2021 |
+| M-LISTS-2 | MED-HIGH | FIN | Accounting/Catalogs | 'Merge accounts' only deactivates — it doesn't repoint GL references | PENDING (GATED) |  |
+| A1-1 | MED | safe | Connections/QBO | QBO mirror-staleness alarm self-disables | PENDING |  |
+| A2-3 | MED | safe | DB/CI | Immutability guard blind to all 238 timestamp migrations | DONE | #2023 |
+| B2-2 | MED | safe | Dispatch/Drivers | Driver-picker 50-cap in ~14 non-dispatch pickers | PENDING |  |
+| C1-3 | MED | safe | Frontend/Routing | Three live buttons dead-end to Home | PENDING |  |
+| C1-4 | MED | safe | Code-quality | Dead/duplicate components | PENDING |  |
+| D1-3 | MED | safe | Customers/Vendors | Inline drawers silently drop most captured fields | PENDING |  |
+| D1-4 | MED | safe | Customers | Sub-customer 'Parent *' required but never enforced or sent | PENDING |  |
+| D2-2 | MED | safe | Maintenance/G18 | G18 load-FK not enforced on the vendor-Bill path | PENDING |  |
+| D4-1 | MED | safe | Samsara/Telematics | Webhook driver-pairing keyed to equipment, not units | PENDING |  |
+| E1-2 | MED | FIN | Schema/Naming | finance.* schema exists and is live (violates 'never finance.*') | PENDING (GATED) |  |
+| E1-5 | MED | safe | Schema/Naming | maint.* stranded next to maintenance.* | PENDING |  |
+| E2-5 | MED | FIN | Maintenance/Integrity | Samsara fault-code history can orphan from its unit | PENDING (GATED) |  |
+| G1-6 | MED | safe | Security | resolveOperatingCompanyId returns client value unvalidated | PENDING |  |
+| G10-M | MED | safe | Integrations/Reliability | 7 MED: unsigned audit hash, row_changes no mutation trigger, stop re-key breaks  | PENDING |  |
+| G11-10 | MED | FIN | Finance/Period | Month-close checklist is unsatisfiable in normal operation | PENDING (GATED) |  |
+| G11-6 | MED | FIN | Finance/Recon | No GL-control-account ↔ sub-ledger tie-out exists | PENDING (GATED) |  |
+| G11-7 | MED | FIN | Finance/Factoring | Factoring reserve tracked in two places that never reconcile; asymmetric idempot | PENDING (GATED) |  |
+| G11-9 | MED | FIN | Finance/Escrow | Escrow-abandonment deduction may book to the wrong account class | PENDING (GATED) |  |
+| G2-2 | MED | safe | Security | operating_company_id trusted raw as tenant scope on money/dispatch routes | PENDING |  |
+| G3-1 | MED | safe | Security | CSRF gap on file-upload routes (SameSite=None cookie, no CSRF token) | PENDING |  |
+| G3-2 | MED | safe | Security | Plaid webhook signature not bound to body/freshness (replay-able) | PENDING |  |
+| G3-3 | MED | safe | Security/Reliability | No multipart file-size limit → memory-exhaustion DoS | PENDING |  |
+| G4-DEPLOY | MED | safe | Reliability/Deploy | preDeploy smoke hinges on a live prod row + leaves a test Owner in prod | PENDING |  |
+| G5-3 | MED | safe | Performance | No frontend code-splitting → mobile LCP over the 4s ceiling on 7/8 routes | PENDING |  |
+| G6-3 | MED | safe | Customers | Customer dedup is case-sensitive, not entity-scoped, race-prone | PENDING |  |
+| G6-4 | MED | FIN | Accounting | bills.amount_cents nullable + dual money representation | PENDING (GATED) |  |
+| G6-6 | MED | safe | Accounting | Default payments list returns voided rows | PENDING |  |
+| G7-3 | MED | safe | Code-quality | Accounting read-queries cast rows to any (§4 landmine class) | PENDING |  |
+| G7-4 | MED | safe | Tests | 7 end-to-end specs are empty stubs (false-green) | PENDING |  |
+| G8-2 | MED | safe | i18n | Two live translation directories → stale-Spanish drift | PENDING |  |
+| G8-4 | MED | safe | Accessibility | Search/filter inputs have no accessible name (~65 files) + no a11y lint | PENDING |  |
+| G8-5 | MED | safe | Frontend | Data pages with no error state render blank/forever-spinner on the live 500s | PENDING |  |
+| G9-M | MED | safe | Business-logic | 8 workflow/status defects (auto-pay statuses, load-number 500, bulk set_status,  | PENDING |  |
+| H1-2 | MED | safe | Infra/Config | CORS defaults to the wrong origins for prod (with credentials) | PENDING |  |
+| H1-3 | MED | safe | Infra/Config | CSP still report-only + no deploy health-gate + preDeploy auth-bypass touches pr | PENDING |  |
+| H2-3 | MED | safe | Deps/Auth | Lucia auth library is deprecated / end-of-maintenance | PENDING |  |
+| H3-4 | MED | FIN | Accounting/Flags | Settlement recovery cutover flag read raw, bypassing the resolver | PENDING (GATED) |  |
+| H4-4 | MED | safe | Security | Office-login account/role enumeration + timing oracle | PENDING |  |
+| H4-5 | MED | safe | Security/Perf | Heavy financial exports + file uploads have no throttle or size cap | PENDING |  |
+| H5-3 | MED | safe | Data/Evidence | No R2-evidence presence check + DR drill is a stub + 7-day emailed evidence link | PENDING |  |
+| H6-3 | MED | safe | Reliability/Cron | Geofence alerts duplicate on overlap + no cron single-flight (horizontal-scale l | PENDING |  |
+| H7-1 | MED | FIN | Factoring/Vendor | Faro→RTS: RTS has no public API — factoring integration is Faro-CSV-shaped | PENDING (GATED) |  |
+| M-DHUB-1 | MED | safe | Driver-Hub | An entire second cash-advance approve/deny system was built but never registered | PENDING |  |
+| M-DOCS-2 | MED | safe | Docs/Security | Entity document uploader has no size/type limits; attachment DELETE is ungated | PENDING |  |
+| M-FINHUB-1 | MED | safe | Finance-Hub | FINANCE_HUB_UI flag is split-brain (env-var backend / unseeded DB-flag frontend) | PENDING |  |
+| M-HOME-2 | MED | safe | Home | Cash Position + Factoring Balance home tiles always show $0 (response-shape mism | PENDING |  |
+| M-RECONCILE-NOTE | MED | FIN | Settlements/Meta | OPEN: agents disagree on the settlement/deduction engine — needs a definitive re | PENDING (GATED) |  |
+| M-SETTLE-3 | MED | safe | Settlements | The Settlements module's own Dispute tab 404s (route never registered) | PENDING |  |
+| M-USERS-2 | MED | safe | Security/Users | Whole user directory readable by ANY authenticated role + 2 admins can mint an O | PENDING |  |
+| SWL-2 | MED | safe | Reliability | Three silent masks: banking recon suggestions, Finance Hub $0, mirror-integrity  | PENDING |  |
+| A1-2 | LOW-MED | safe | Ops/Cron | Recon crons can fail silently (no health endpoint) | PENDING |  |
+| B1-2 | LOW-MED | FIN | Accounting/COA-roles | Stale factoring-reserve role still typed Liability | PENDING (GATED) |  |
+| B3-1 | LOW-MED | safe | Maintenance/WO | Orphan legacy WO-create endpoint mints malformed WO numbers | PENDING |  |
+| C2-2 | LOW-MED | safe | Cross-entity/Admin | Launch-readiness counts sum across all entities | PENDING |  |
+| C2-3 | LOW-MED | safe | Cross-entity/Samsara | Position-poll worker reads all entities' units | PENDING |  |
+| E1-6 | LOW-MED | safe | Schema/Naming | bank.* / geo.* stranded next to banking.* / geofence.* | PENDING |  |
+| G5-4 | LOW-MED | safe | Performance | N+1 loops in report-refresh jobs + SELECT * on wide accounting tables | PENDING |  |
+| A2-4 | LOW | safe | DB/CI | Two more migration guards skip timestamp migrations | DONE | #2023 |
+| A2-5 | LOW | safe | DB/Migrations | A few foundation migrations aren't idempotent | PENDING |  |
+| B1-3 | LOW | FIN | Accounting/Bills | DELETE-then-INSERT on bill_unit_allocation (breaks void-not-delete) | PENDING (GATED) |  |
+| B3-2 | LOW | safe | Compliance/2290 | Form 2290 deadline off-by-one during August | PENDING |  |
+| C1-5 | LOW | safe | Uploads | Upload-orphan trap inside the dead maintenance modals | PENDING |  |
+| C2-4 | LOW | safe | Cross-entity/PII | Two bypass reads of drivers by PK only | PENDING |  |
+| D1-5 | LOW | safe | Customers | customer_type not enforced client-side | PENDING |  |
+| D2-3 | LOW | safe | Maintenance | No edit-WO UI; PATCH is dead; 'Edit' label misleads | PENDING |  |
+| D3-3 | LOW | safe | Dispatch/Customers | Stale customer_id if you type over a picked customer | PENDING |  |
+| D5-4 | LOW | safe | Design-lock | Green-CTA / green-band palette deviations | PENDING |  |
+| G3-5 | LOW | safe | Security | CSP still report-only; Samsara webhook placeholder sig; error-message echo | PENDING |  |
+| H2-2 | LOW | safe | Deps | Stale apps/backend/package-lock.json carries 2 unshipped HIGH CVEs | PENDING |  |
+| H7-2 | LOW | safe | Vendor/Runtime | Minor vendor/runtime hygiene: Plaid dead-env, QBO stale health probe, Node/TS dr | PENDING |  |
+| B3-3 | INFO | safe | Maintenance/Fuel | Fuel G18 trigger not armed against load hard-delete | PENDING |  |
+>>>>>>> Stashed changes
