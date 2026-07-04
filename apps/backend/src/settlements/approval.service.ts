@@ -167,7 +167,8 @@ export async function getSettlementSummary(
  */
 export async function getSettlementLineItems(
   client: Queryable,
-  settlementId: string
+  settlementId: string,
+  operatingCompanyId: string
 ): Promise<SettlementLineItem[]> {
   const result = await client.query<{
     id: string;
@@ -199,17 +200,21 @@ export async function getSettlementLineItems(
       li.dispute_reason,
       li.created_at
     FROM settlement.settlement_line li
-    WHERE li.settlement_id = $1
-    ORDER BY 
-      CASE li.line_type 
-        WHEN 'additional_pay' THEN 1 
-        WHEN 'deduction' THEN 2 
-        WHEN 'escrow' THEN 3 
-        WHEN 'expense' THEN 4 
-        ELSE 5 
+    -- IDOR fix (xe-fin): bind the caller's entity scope. RLS on settlement.* is role-scoped,
+    -- NOT entity-scoped, so filtering by settlement_id alone lets a foreign settlement id return
+    -- another operating company's line amounts/deductions. approve/reject already scope by
+    -- operating_company_id; this read now matches. See auth/operating-company-scope.ts.
+    WHERE li.settlement_id = $1 AND li.operating_company_id = $2
+    ORDER BY
+      CASE li.line_type
+        WHEN 'additional_pay' THEN 1
+        WHEN 'deduction' THEN 2
+        WHEN 'escrow' THEN 3
+        WHEN 'expense' THEN 4
+        ELSE 5
       END,
       li.created_at DESC
-  `, [settlementId]);
+  `, [settlementId, operatingCompanyId]);
   
   return result.rows.map(row => ({
     id: row.id,
