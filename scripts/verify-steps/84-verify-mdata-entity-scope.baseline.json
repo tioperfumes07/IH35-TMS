@@ -186,6 +186,16 @@
       "preview": "` SELECT id::text, operating_company_id::text, 'customer'::text AS entity_type FROM mdata.customers WHERE deactivated_at"
     },
     {
+      "key": "apps/backend/src/cron/driver-leave-advance-reminder.cron.ts#dff9d69f1ecda724fdfd01f138b7ee63692a26b8",
+      "file": "apps/backend/src/cron/driver-leave-advance-reminder.cron.ts",
+      "preview": "` SELECT r.id::text AS leave_request_id, r.operating_company_id::text AS operating_company_id, r.driver_id::text AS driv"
+    },
+    {
+      "key": "apps/backend/src/cron/driver-leave-pending-escalation.cron.ts#5070933a6a31dc9d18a8a45e1b4ccb4b6e66cb6a",
+      "file": "apps/backend/src/cron/driver-leave-pending-escalation.cron.ts",
+      "preview": "` SELECT r.id::text AS leave_request_id, r.operating_company_id::text AS operating_company_id, r.request_number, r.leave"
+    },
+    {
       "key": "apps/backend/src/customers/list.routes.ts#70d72643fa242e4706ddcbd9e84b6efea438a148",
       "file": "apps/backend/src/customers/list.routes.ts",
       "preview": "`SELECT COUNT(*)::int AS total_count FROM mdata.customers ${whereClause}`"
@@ -604,11 +614,6 @@
       "key": "apps/backend/src/lists/oem-parts.brand-match.ts#0ec288bb66ad88fe093efae95c2a1859e118c86f",
       "file": "apps/backend/src/lists/oem-parts.brand-match.ts",
       "preview": "` SELECT DISTINCT UPPER(TRIM(make)) AS brand FROM mdata.units WHERE deactivated_at IS NULL AND make IS NOT NULL AND TRIM"
-    },
-    {
-      "key": "apps/backend/src/maintenance/drivers.routes.ts#046d4c11a6dd9abddba123ce0d36fa2b19f67322",
-      "file": "apps/backend/src/maintenance/drivers.routes.ts",
-      "preview": "`SELECT * FROM mdata.drivers WHERE id = $1 LIMIT 1`"
     },
     {
       "key": "apps/backend/src/maintenance/drivers.routes.ts#75efac5cbcdd042a23ec36fdad981b49f55e3468",
