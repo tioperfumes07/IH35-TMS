@@ -30,7 +30,7 @@ function Card({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">{label}</div>
-      <div className="mt-1 text-lg font-semibold text-[#1A1F36]">{value}</div>
+      <div className="mt-1 text-lg font-semibold text-[#1f2a44]">{value}</div>
     </div>
   );
 }
@@ -151,9 +151,9 @@ export function DriverHubReportingPage() {
                 ) : (
                   data.by_driver.map((r) => (
                     <tr key={r.driver_id} className="border-t border-gray-100">
-                      <td className="px-2 py-1.5 text-left text-[#1A1F36]">{r.driver_name}</td>
+                      <td className="px-2 py-1.5 text-left text-[#1f2a44]">{r.driver_name}</td>
                       <td className="px-2 py-1.5 text-right">{r.total_requests}</td>
-                      <td className="px-2 py-1.5 text-right text-[#16A34A]">{r.approved}</td>
+                      <td className="px-2 py-1.5 text-right text-[#334155]">{r.approved}</td>
                       <td className="px-2 py-1.5 text-right">{r.denied}</td>
                       <td className="px-2 py-1.5 text-right">{fmtPct(r.approval_rate_pct)}</td>
                       <td className="px-2 py-1.5 text-right">{fmtSeconds(r.avg_time_to_view_seconds)}</td>
@@ -167,7 +167,7 @@ export function DriverHubReportingPage() {
           </div>
 
           {data.not_computed.length > 0 ? (
-            <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+            <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-[11px] text-slate-700">
               <span className="font-semibold">Not yet computed: </span>
               {data.not_computed.join(" ")}
             </div>

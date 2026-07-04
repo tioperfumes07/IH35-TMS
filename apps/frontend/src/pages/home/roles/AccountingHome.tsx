@@ -86,7 +86,7 @@ export function AccountingHome({ auth }: Props) {
       />
 
       {!companyId ? (
-        <section className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+        <section className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-3 text-sm text-slate-700">
           Select an operating company to load accounting home metrics.
         </section>
       ) : homeQuery.isError ? (
@@ -99,7 +99,7 @@ export function AccountingHome({ auth }: Props) {
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <AgingBucketCard title="Accounts Receivable Aging" buckets={homeQuery.data?.ar_aging} accent="#1F2A44" />
-        <AgingBucketCard title="Accounts Payable Aging" buckets={homeQuery.data?.ap_aging} accent="#b45309" />
+        <AgingBucketCard title="Accounts Payable Aging" buckets={homeQuery.data?.ap_aging} accent="#334155" />
       </section>
 
       <AccountingPendingApprovalsPanel data={homeQuery.data} isLoading={homeQuery.isLoading} />

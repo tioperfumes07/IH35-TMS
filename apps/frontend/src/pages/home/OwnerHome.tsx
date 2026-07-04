@@ -263,7 +263,7 @@ export function OwnerHome({ auth }: Props) {
                       {String(r.driver_name ?? "")}
                     </span>
                   </span>
-                  <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">Above policy</span>
+                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">Above policy</span>
                 </li>
               ))}
             </ul>
@@ -387,7 +387,7 @@ export function OwnerHome({ auth }: Props) {
                 item.alert === "crit"
                   ? "border-l-[3px] border-l-crit"
                   : item.alert === "warn"
-                    ? "border-l-[3px] border-l-[#f59e0b]"
+                    ? "border-l-[3px] border-l-[#334155]"
                     : "border-slate-200"
               }`}
             >
@@ -397,9 +397,9 @@ export function OwnerHome({ auth }: Props) {
                   item.alert === "crit"
                     ? "text-crit"
                     : item.alert === "warn"
-                      ? "text-[#92400e]"
+                      ? "text-[#334155]"
                       : item.healthy
-                        ? "text-[#16a34a]"
+                        ? "text-[#334155]"
                         : "text-slate-900"
                 }`}
               >
