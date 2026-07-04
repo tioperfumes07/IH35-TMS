@@ -325,7 +325,7 @@ export function SettlementDetailPage() {
                 .then(() => pushToast("Debt summary acknowledged", "success"))
                 .catch(() => pushToast("Failed to acknowledge settlement", "error"));
             }}
-            onSaveDraft={() => pushToast("Draft save is not available yet", "info")}
+            onSaveDraft={() => pushToast("Draft persistence is not available yet", "info")}
             onFinalize={() => {
               if (!companyId) return;
               void finalizeSettlement(settlementId, companyId)
