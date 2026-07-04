@@ -4,7 +4,7 @@ import { InventoryModuleTabs } from "./InventoryModuleTabs";
 export function InventoryPurchasesPage() {
   return (
     <div className="space-y-4">
-      <PageHeader title="Purchase History" />
+      <PageHeader title="Purchase History" backHref="/inventory" breadcrumb={["Inventory", "Purchase History"]} />
       <InventoryModuleTabs />
       <div className="rounded-sm border border-gray-200 bg-white p-8">
         <div className="text-center">
