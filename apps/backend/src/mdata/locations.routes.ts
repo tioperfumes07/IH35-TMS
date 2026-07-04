@@ -214,7 +214,15 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const { limit, offset, status, is_active, search, city, state, location_type, operating_company_id } = parsedQuery.data;
-    const locations = await withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      // Cross-entity scope fix: mdata.locations RLS is role-scoped, NOT entity-scoped, so an
+      // operating_company_id predicate applied only "if the caller passed the param" leaked every
+      // entity's locations (TRANSP ↔ TRK ↔ USMCA) whenever the param was omitted. ALWAYS resolve the
+      // scope (requested company, else the user's current/default company — the same helper the
+      // sibling POST uses) and bind the predicate unconditionally; 400 when no company is resolvable.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
+      if (!scopedCompanyId) return { error: "operating_company_id_required" as const };
+
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status === "active" || is_active === "true") filters.push("deactivated_at IS NULL");
@@ -238,10 +246,9 @@ export async function registerLocationRoutes(app: FastifyInstance) {
           `(location_name ILIKE $${idx} OR location_code ILIKE $${idx} OR address_line1 ILIKE $${idx} OR city ILIKE $${idx})`
         );
       }
-      if (operating_company_id) {
-        values.push(operating_company_id);
-        filters.push(`operating_company_id = $${values.length}`);
-      }
+      // ALWAYS bind the resolved operating company — never optional (cross-entity leak guard).
+      values.push(scopedCompanyId);
+      filters.push(`operating_company_id = $${values.length}`);
       values.push(limit);
       values.push(offset);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -255,9 +262,10 @@ export async function registerLocationRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows };
     });
-    return { locations };
+    if ("error" in result) return reply.code(400).send({ error: result.error });
+    return { locations: result.rows };
   });
 
   app.post("/api/v1/mdata/locations", async (req, reply) => {
