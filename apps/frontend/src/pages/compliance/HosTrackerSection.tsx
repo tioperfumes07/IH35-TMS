@@ -35,15 +35,15 @@ function hmm(min: number | null): string {
 }
 
 const STATUS_VERDICT: Record<string, { label: string; cls: string }> = {
-  ok: { label: "OK", cls: "text-emerald-700" },
-  warning_1hr: { label: "Low", cls: "text-amber-700" },
-  warning_15min: { label: "Low", cls: "text-amber-700" },
+  ok: { label: "OK", cls: "text-slate-700" },
+  warning_1hr: { label: "Low", cls: "text-slate-700" },
+  warning_15min: { label: "Low", cls: "text-slate-700" },
   violation: { label: "Violation", cls: "text-red-700" },
 };
 
 function driverVerdict(d: HosRosterDriver): { label: string; cls: string } {
   if (!d.available || !d.clocks) return { label: "Unavailable", cls: "text-slate-400" };
-  return STATUS_VERDICT[d.clocks.status] ?? { label: "OK", cls: "text-emerald-700" };
+  return STATUS_VERDICT[d.clocks.status] ?? { label: "OK", cls: "text-slate-700" };
 }
 
 export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: string }) {
@@ -68,7 +68,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
   const kpis: { label: string; value: number; cls: string }[] = [
     { label: "On Duty", value: c.on_duty, cls: "text-slate-900" },
     { label: "Driving", value: c.driving, cls: "text-slate-900" },
-    { label: "Low hours", value: c.low, cls: "text-amber-700" },
+    { label: "Low hours", value: c.low, cls: "text-slate-700" },
     { label: "Violation", value: c.violation, cls: "text-red-700" },
     { label: "Unavailable", value: c.unavailable, cls: "text-slate-500" },
   ];

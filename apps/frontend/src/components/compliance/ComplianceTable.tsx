@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { ComplianceCredential } from "../../api/compliance";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
   rows: ComplianceCredential[];
@@ -12,8 +13,8 @@ type Props = {
 
 const severityClass: Record<string, string> = {
   red: "text-red-700",
-  yellow: "text-amber-700",
-  green: "text-green-700",
+  yellow: "text-slate-700",
+  green: "text-slate-700",
 };
 
 export function ComplianceTable({
@@ -78,7 +79,7 @@ export function ComplianceTable({
               <td className="p-2">{row.label}</td>
               <td className="p-2">{row.owner_type}</td>
               <td className="p-2">{row.owner_name}</td>
-              <td className="p-2">{row.expiration_date ?? "—"}</td>
+              <td className="p-2">{formatDateUS(row.expiration_date) || "—"}</td>
               <td className="p-2">{row.days_until_expiration ?? "—"}</td>
               <td className={`p-2 font-medium ${severityClass[row.severity] ?? ""}`}>{row.severity}</td>
               <td className="p-2">

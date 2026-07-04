@@ -207,7 +207,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                 <tr
                   key={r.unit_id}
                   onClick={() => navigate(`/fleet/units/${r.unit_id}`)}
-                  className={`cursor-pointer border-t border-slate-100 hover:bg-slate-50 ${r.stale ? "bg-amber-50" : ""}`}
+                  className={`cursor-pointer border-t border-slate-100 hover:bg-slate-50 ${r.stale ? "bg-slate-100" : ""}`}
                   title="Open unit detail"
                 >
                   {isVisible("unit_number") ? <td className="px-2 py-1.5 font-medium">{r.unit_number ?? "—"}</td> : null}
@@ -222,7 +222,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                   {isVisible("heading_deg") ? <td className="px-2 py-1.5 text-right tabular-nums">{num(r.heading_deg)}</td> : null}
                   {isVisible("engine_state") ? <td className="px-2 py-1.5">{r.engine_state ?? "—"}</td> : null}
                   {isVisible("last_update") ? (
-                    <td className={`px-2 py-1.5 whitespace-nowrap ${r.stale ? "font-semibold text-amber-700" : ""}`}>
+                    <td className={`px-2 py-1.5 whitespace-nowrap ${r.stale ? "font-semibold text-slate-700" : ""}`}>
                       {r.captured_at_local ?? "—"}
                       {r.minutes_since_fix != null ? (
                         <span className="ml-1 text-[10px] text-slate-400">({r.minutes_since_fix} min ago)</span>
@@ -230,12 +230,12 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                     </td>
                   ) : null}
                   {isVisible("drive_remaining_min") ? (
-                    <td className={`px-2 py-1.5 text-right tabular-nums ${r.drive_remaining_min != null && r.drive_remaining_min < HOS_WARN_MIN ? "text-amber-700 font-semibold" : ""}`}>
+                    <td className={`px-2 py-1.5 text-right tabular-nums ${r.drive_remaining_min != null && r.drive_remaining_min < HOS_WARN_MIN ? "text-slate-700 font-semibold" : ""}`}>
                       {hmm(r.drive_remaining_min)}
                     </td>
                   ) : null}
                   {isVisible("window_remaining_min") ? (
-                    <td className={`px-2 py-1.5 text-right tabular-nums ${r.window_remaining_min != null && r.window_remaining_min < HOS_WARN_MIN ? "text-amber-700 font-semibold" : ""}`}>
+                    <td className={`px-2 py-1.5 text-right tabular-nums ${r.window_remaining_min != null && r.window_remaining_min < HOS_WARN_MIN ? "text-slate-700 font-semibold" : ""}`}>
                       {hmm(r.window_remaining_min)}
                     </td>
                   ) : null}
@@ -303,7 +303,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                       <td className={`px-2 py-1.5 ${r.driver_name ? "" : "text-slate-400 italic"}`}>{r.driver_name ?? "Not assigned"}</td>
                       <td className={`px-2 py-1.5 ${r.city ? "" : "text-slate-400"}`}>{r.city ?? "—"}</td>
                       <td className={`px-2 py-1.5 ${r.state ? "" : "text-slate-400"}`}>{r.state ?? "—"}</td>
-                      <td className="px-2 py-1.5 whitespace-nowrap font-semibold text-amber-700">
+                      <td className="px-2 py-1.5 whitespace-nowrap font-semibold text-slate-700">
                         {r.captured_at_local ?? "Never reported"}
                         {r.minutes_since_fix != null ? (
                           <span className="ml-1 text-[10px] font-normal text-slate-400">({r.minutes_since_fix} min ago)</span>

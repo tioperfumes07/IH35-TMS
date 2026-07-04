@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Filing = Record<string, unknown>;
 
@@ -102,7 +103,7 @@ export function Form2290Filings() {
           {filings.map((filing) => (
             <tr key={String(filing.id)} className="border-b border-gray-100">
               <td className="py-2">
-                {String(filing.tax_period_start)} → {String(filing.tax_period_end)}
+                {formatDateUS(filing.tax_period_start)} → {formatDateUS(filing.tax_period_end)}
               </td>
               <td>{String(filing.filing_status)}</td>
               <td>${Number(filing.total_tax_due ?? 0).toFixed(2)}</td>

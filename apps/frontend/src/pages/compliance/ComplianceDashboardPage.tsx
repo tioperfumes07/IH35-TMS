@@ -21,6 +21,7 @@ import { HosViewerSection } from "./HosViewerSection";
 import { RequiredDocumentsSection } from "./RequiredDocumentsSection";
 import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 
 type ComplianceTab = "overview" | "hos_tracker" | "hos_viewer" | "violations" | "hos_history" | "required_docs";
 const COMPLIANCE_TABS: { id: ComplianceTab; label: string }[] = [
@@ -46,7 +47,7 @@ function exportCsv(rows: ComplianceCredential[]) {
   const lines = [
     header.join(","),
     ...rows.map((r) =>
-      [r.type, r.owner_type, `"${r.owner_name.replace(/"/g, '""')}"`, r.expiration_date ?? "", r.days_until_expiration ?? "", r.severity].join(",")
+      [r.type, r.owner_type, `"${r.owner_name.replace(/"/g, '""')}"`, formatDateUS(r.expiration_date), r.days_until_expiration ?? "", r.severity].join(",")
     ),
   ];
   const blob = new Blob([lines.join("\n")], { type: "text/csv" });
