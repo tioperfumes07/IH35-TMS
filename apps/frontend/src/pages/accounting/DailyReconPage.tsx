@@ -27,8 +27,8 @@ const MATCH_STATUS_OPTIONS: Array<{ value: DailyReconMatchStatus | "all"; label:
 ];
 
 const STATUS_BADGES: Record<DailyReconMatchStatus, { label: string; cls: string }> = {
-  matched:         { label: "Matched",           cls: "bg-emerald-100 text-emerald-800" },
-  missing_in_qbo:  { label: "Missing in QBO",    cls: "bg-amber-100 text-amber-800" },
+  matched:         { label: "Matched",           cls: "bg-slate-100 text-slate-700" },
+  missing_in_qbo:  { label: "Missing in QBO",    cls: "bg-slate-100 text-slate-700" },
   amount_mismatch: { label: "Amount Mismatch",   cls: "bg-red-100 text-red-800" },
   missing_in_tms:  { label: "Missing in TMS",    cls: "bg-orange-100 text-orange-800" },
 };
@@ -138,15 +138,15 @@ export function DailyReconPage() {
       kpiStrip={kpiStrip}
     >
       {!companyId ? (
-        <p className="text-sm text-amber-800">Select an operating company.</p>
+        <p className="text-sm text-slate-700">Select an operating company.</p>
       ) : query.isLoading ? (
         <p className="text-sm text-gray-500">Loading…</p>
       ) : query.isError ? (
         <p className="text-sm text-red-600">Failed to load reconciliation data.</p>
       ) : !data?.gl_posting_active ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-6 text-center">
-          <p className="font-semibold text-amber-800">TMS posting not enabled — nothing to reconcile yet.</p>
-          <p className="mt-1 text-sm text-amber-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-4 py-6 text-center">
+          <p className="font-semibold text-slate-700">TMS posting not enabled — nothing to reconcile yet.</p>
+          <p className="mt-1 text-sm text-slate-600">
             The GL_POSTING_ENABLED feature flag is off for this entity. Once posting is live, daily TMS
             journal entries will appear here paired against QBO sync queue results.
           </p>
@@ -211,14 +211,14 @@ export function DailyReconPage() {
                   {/* Day header */}
                   <div className={`flex items-center justify-between px-4 py-2 ${
                     day.all_reconciled
-                      ? "bg-emerald-50 border-b border-emerald-200"
+                      ? "bg-slate-50 border-b border-slate-200"
                       : "bg-gray-50 border-b border-gray-200"
                   }`}>
                     <span className="font-semibold text-sm text-gray-900">{day.date}</span>
                     {day.all_reconciled ? (
-                      <span className="text-xs font-semibold text-emerald-700">All reconciled</span>
+                      <span className="text-xs font-semibold text-slate-600">All reconciled</span>
                     ) : (
-                      <span className="text-xs text-amber-700">
+                      <span className="text-xs text-slate-600">
                         {day.rows.filter((r) => r.match_status !== "matched").length} item(s) need attention
                       </span>
                     )}

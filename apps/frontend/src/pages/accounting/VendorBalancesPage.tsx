@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listVendorBalances, listVendorBills, getVendorBill, voidVendorBillPayment, type VendorBill } from "../../api/accounting";
@@ -120,7 +121,7 @@ export function VendorBalancesPage() {
               const remaining = Math.max(0, Number(bill.amount_cents) - Number(bill.paid_cents));
               const dueDelta = bill.due_date ? daysUntil(bill.due_date) : null;
               const dueTone =
-                dueDelta === null ? "text-gray-500" : dueDelta < 0 ? "text-red-600" : dueDelta <= 7 ? "text-amber-600" : "text-gray-600";
+                dueDelta === null ? "text-gray-500" : dueDelta < 0 ? "text-red-600" : dueDelta <= 7 ? "text-slate-600" : "text-gray-600";
               return (
                 <div key={bill.id} className={`border-b border-gray-100 px-3 py-2 ${selectedBillId === bill.id ? "bg-slate-100" : ""}`}>
                   <button type="button" className="w-full text-left" onClick={() => setSelectedBillId(bill.id)}>
@@ -162,7 +163,7 @@ export function VendorBalancesPage() {
             {(billDetailQuery.data?.payments ?? []).map((payment) => (
               <div key={payment.id} className="border-b border-gray-100 px-3 py-2 text-xs">
                 <div className="flex items-center justify-between text-gray-900">
-                  <span>{payment.payment_date}</span>
+                  <span>{formatDateUS(payment.payment_date)}</span>
                   <span className="font-semibold">{money(payment.amount_cents)}</span>
                 </div>
                 <div className="text-gray-600">{payment.payment_method} · {payment.reference_number || payment.check_number || "-"}</div>

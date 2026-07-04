@@ -33,7 +33,7 @@ export function PeriodComparisonPage() {
     <AccountingSubNavWrapper title="Period comparison" subtitle="Side-by-side period variance for P&L or balance sheet with accrual/cash basis selection.">
 
       {!companyId ? (
-        <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Select an operating company before running comparison.</p>
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">Select an operating company before running comparison.</p>
       ) : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">

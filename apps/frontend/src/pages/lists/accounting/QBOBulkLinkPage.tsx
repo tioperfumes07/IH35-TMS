@@ -208,9 +208,9 @@ export function QBOBulkLinkPage() {
                 </p>
               ) : null}
               {noMatches.length > 0 ? (
-                <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs">
-                  <div className="font-semibold text-amber-900">No automatic match</div>
-                  <ul className="mt-1 max-h-40 list-inside list-disc overflow-auto text-amber-800">
+                <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs">
+                  <div className="font-semibold text-slate-800">No automatic match</div>
+                  <ul className="mt-1 max-h-40 list-inside list-disc overflow-auto text-slate-700">
                     {noMatches.map((r) => (
                       <li key={`${r.entity_kind}-${r.id}`}>
                         {r.name} ({r.entity_kind})

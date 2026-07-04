@@ -122,7 +122,7 @@ function kpiCard(label: string, value: string, sublabel: string, tone: "neutral"
     tone === "danger"
       ? "border-l-4 border-l-red-500"
       : tone === "warn"
-        ? "border-l-4 border-l-amber-500"
+        ? "border-l-4 border-l-slate-400"
         : "border-l-4 border-l-slate-300";
   return (
     <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
@@ -399,7 +399,7 @@ export function AccountingHubPage() {
       subtitle="Bills, expenses, invoices, settlements & transaction review"
       kpiStrip={kpiStrip}
     >
-      {!companyId ? <p className="text-sm text-amber-800">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-sm text-slate-700">Select an operating company.</p> : null}
       <div className="grid gap-2 lg:grid-cols-3">
         {homePanel("Settlements", settlementsRows, settlementsQ.isLoading ? "Loading…" : "No settlements found.", "/driver-finance/settlements", "View all")}
         {homePanel(

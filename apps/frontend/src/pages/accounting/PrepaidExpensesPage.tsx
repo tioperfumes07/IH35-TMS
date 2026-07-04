@@ -15,7 +15,7 @@ const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
 const STATUS_COLOR: Record<string, string> = {
   active: "bg-slate-100 text-slate-700",
-  fully_amortized: "bg-emerald-100 text-emerald-800",
+  fully_amortized: "bg-slate-100 text-slate-700",
   voided: "bg-red-100 text-red-700",
 };
 
@@ -47,7 +47,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
         </div>
 
         {detail.je_preview.purchase_je && (
-          <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
             <p className="font-semibold mb-1">GL Posting Preview (GATED — flag OFF)</p>
             <p>Purchase JE: Dr Prepaid Asset {fmtCents(detail.total_amount_cents)} / Cr Cash {fmtCents(detail.total_amount_cents)}</p>
             {detail.je_preview.amortization_je_template && (
@@ -67,14 +67,14 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {detail.schedule.map((row) => (
-                <tr key={row.id} className={row.posted ? "bg-emerald-50" : "hover:bg-gray-50"}>
+                <tr key={row.id} className={row.posted ? "bg-slate-50" : "hover:bg-gray-50"}>
                   <td className="px-3 py-1.5 text-gray-500">{row.period_number}</td>
                   <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(row.period_date)}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(row.amount_cents)}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">{fmtCents(row.remaining_balance_cents)}</td>
                   <td className="px-3 py-1.5">
                     {row.posted
-                      ? <span className="inline-block rounded-sm bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-800">Posted</span>
+                      ? <span className="inline-block rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">Posted</span>
                       : <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">Pending</span>}
                   </td>
                   <td className="px-3 py-1.5 font-mono text-gray-400">

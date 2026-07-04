@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -181,7 +182,7 @@ export function PaymentsListPage() {
               <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/payments/${row.id}`)}>
                 <td className={`px-3 py-2 ${row.voided_at ? "text-gray-500 line-through" : "text-gray-900"}`}>{row.display_id}</td>
                 <td className="px-3 py-2 text-gray-700">{row.customer_name}</td>
-                <td className="px-3 py-2 text-gray-700">{row.payment_date}</td>
+                <td className="px-3 py-2 text-gray-700">{formatDateUS(row.payment_date)}</td>
                 <td className="px-3 py-2 text-gray-700">{row.payment_method}</td>
                 <td className="px-3 py-2 text-gray-700">{row.reference ?? "-"}</td>
                 <td className="px-3 py-2 text-gray-700">{money(row.amount_cents)}</td>

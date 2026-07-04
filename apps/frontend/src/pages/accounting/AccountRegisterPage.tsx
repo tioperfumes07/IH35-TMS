@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -342,7 +343,7 @@ export function AccountRegisterPage() {
         {/* C/R (cleared/reconciled) is a bank-reconciliation concept; the GL posting model carries no
             cleared state and no posting→bank_transaction link exists (verified). Show an honest banner
             instead of a fake checkmark — bank reconciliation surfaces it once that linkage is built. */}
-        <div className="mb-2 rounded-sm border border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-800">
+        <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] text-slate-700">
           Reconciliation not yet available — the C/R column reflects GL postings, which carry no cleared/reconciled state yet.
         </div>
         <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
@@ -381,7 +382,7 @@ export function AccountRegisterPage() {
                     title="Open source transaction"
                     className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
                   >
-                    <td className={`${cell} whitespace-nowrap`}>{r.entry_date}</td>
+                    <td className={`${cell} whitespace-nowrap`}>{formatDateUS(r.entry_date)}</td>
                     <td className={cell}>{r.type}</td>
                     <td className={cell}>{r.reference ?? "—"}</td>
                     <td className={cell}>{r.payee ?? "—"}</td>

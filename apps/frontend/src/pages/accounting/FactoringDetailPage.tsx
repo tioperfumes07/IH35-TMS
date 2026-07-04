@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
@@ -27,8 +28,8 @@ function money(cents: number) {
 function statusPill(status: FactoringAdvanceDetail["status"]) {
   const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
-  if (status === "reserve_held" || status === "collected") return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
-  if (status === "released") return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
+  if (status === "reserve_held" || status === "collected") return `${base} bg-slate-50 text-slate-600 border border-slate-200`;
+  if (status === "released") return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
   if (status === "recourse_returned") return `${base} bg-red-50 text-red-700 border border-red-200`;
   if (status === "voided") return `${base} bg-slate-100 text-slate-500 border border-slate-200 line-through`;
   return `${base} bg-slate-50 text-slate-700 border border-slate-200`;
@@ -212,7 +213,7 @@ export function FactoringDetailPage() {
                 <tr key={invoice.id} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
                   <td className="px-2 py-1.5 text-gray-900">{invoice.display_id}</td>
                   <td className="px-2 py-1.5 text-gray-700">{invoice.customer_name}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{invoice.issue_date}</td>
+                  <td className="px-2 py-1.5 text-gray-700">{formatDateUS(invoice.issue_date)}</td>
                   <td className="px-2 py-1.5 text-gray-700">{money(invoice.total_cents)}</td>
                   <td className="px-2 py-1.5 text-gray-700">{invoice.factoring_status}</td>
                 </tr>

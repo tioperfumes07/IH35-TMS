@@ -208,13 +208,13 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
           {/* CHAIN-01: never leave the vendor picker silently blank — say WHY it's empty so an empty
               dropdown reads as an honest data/scoping signal, not a broken control. */}
           {!operatingCompanyId ? (
-            <p className="mt-1 text-[11px] text-amber-700">Select an operating company to load vendors.</p>
+            <p className="mt-1 text-[11px] text-slate-600">Select an operating company to load vendors.</p>
           ) : vendorsQuery.isLoading ? (
             <p className="mt-1 text-[11px] text-gray-500">Loading vendors…</p>
           ) : vendorsQuery.isError ? (
             <p className="mt-1 text-[11px] text-red-600">Couldn't load vendors. Refresh to try again.</p>
           ) : vendorOptions.length === 0 ? (
-            <p className="mt-1 text-[11px] text-amber-700">No vendors found for this company. Create a vendor first, or check the selected company.</p>
+            <p className="mt-1 text-[11px] text-slate-600">No vendors found for this company. Create a vendor first, or check the selected company.</p>
           ) : null}
           </>
         </Field>

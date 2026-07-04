@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { Fragment, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,8 +30,8 @@ function money(cents: number) {
 }
 
 function statusBadgeClass(status: BillStatus) {
-  if (status === "paid") return "bg-green-100 text-green-800";
-  if (status === "partial") return "bg-amber-100 text-amber-900";
+  if (status === "paid") return "bg-slate-100 text-slate-700";
+  if (status === "partial") return "bg-slate-100 text-slate-800";
   if (status === "voided") return "bg-gray-200 text-gray-700";
   return "bg-red-50 text-red-800";
 }
@@ -40,7 +41,7 @@ function statusBadgeClass(status: BillStatus) {
 function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
   if (isReconciled) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-800">
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
         <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.5 6.5l2.5 2.5 4.5-5" strokeLinecap="round" strokeLinejoin="round" /></svg> Matched
       </span>
     );
@@ -83,7 +84,7 @@ function daysAgoIso(days: number, date = new Date()) {
 
 function billKpiCard(label: string, value: string, sublabel: string, tone: "neutral" | "warn" | "danger" = "neutral") {
   const toneClass =
-    tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-amber-500" : "border-l-4 border-l-slate-300";
+    tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-slate-400" : "border-l-4 border-l-slate-300";
   return (
     <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
@@ -335,7 +336,7 @@ export function BillsPage() {
                     </td>
                     <td className="px-3 py-2 font-medium text-gray-900">{bill.vendor_name || bill.vendor_id || "—"}</td>
                     <td className="px-3 py-2">{bill.bill_number || bill.id.slice(0, 8)}</td>
-                    <td className="px-3 py-2">{bill.bill_date}</td>
+                    <td className="px-3 py-2">{formatDateUS(bill.bill_date)}</td>
                     <td className="px-3 py-2 text-right">{money(bill.amount_cents)}</td>
                     <td className="px-3 py-2 text-right">{money(bill.paid_cents)}</td>
                     <td className="px-3 py-2 text-right font-semibold">{money(bal)}</td>
@@ -382,7 +383,7 @@ export function BillsPage() {
                               <tbody>
                                 {(paymentsQuery.data?.payments ?? []).map((p) => (
                                   <tr key={p.id}>
-                                    <td className="py-1 pr-2">{p.payment_date}</td>
+                                    <td className="py-1 pr-2">{formatDateUS(p.payment_date)}</td>
                                     <td className="py-1 pr-2 text-right">{money(p.amount_cents)}</td>
                                     <td className="py-1 pr-2 font-mono text-[10px]">{p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : "—"}</td>
                                     <td className="py-1 pr-2 text-gray-700">{p.memo || p.reference_number || "—"}</td>

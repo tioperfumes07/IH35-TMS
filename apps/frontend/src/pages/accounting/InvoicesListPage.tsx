@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -256,7 +257,7 @@ export function InvoicesListPage() {
                 <td className="code-cell px-3 py-2 text-gray-900">
                   <span className="inline-flex items-center gap-1">
                     {invoice.display_id}
-                    {invoice.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-amber-600" /> : null}
+                    {invoice.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-slate-600" /> : null}
                   </span>
                 </td>
                 <td className="min-w-0 max-w-[240px] px-3 py-2 text-gray-700">
@@ -269,12 +270,12 @@ export function InvoicesListPage() {
                     );
                   })()}
                 </td>
-                <td className="px-3 py-2 text-gray-700">{invoice.issue_date}</td>
-                <td className="px-3 py-2 text-gray-700">{invoice.due_date}</td>
+                <td className="px-3 py-2 text-gray-700">{formatDateUS(invoice.issue_date)}</td>
+                <td className="px-3 py-2 text-gray-700">{formatDateUS(invoice.due_date)}</td>
                 <td className="px-3 py-2 text-gray-700">{invoice.status}</td>
                 <td className="px-3 py-2 text-gray-700">
                   {invoice.source_load_chargeback_requested ? (
-                    <span className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                    <span className="rounded-sm border border-slate-300 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
                       flagged
                     </span>
                   ) : (

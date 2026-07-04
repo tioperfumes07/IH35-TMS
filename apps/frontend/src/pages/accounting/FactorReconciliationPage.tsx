@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -106,7 +107,7 @@ export function FactorReconciliationPage() {
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-gray-900">{run.statement_date}</span>
+                  <span className="font-semibold text-gray-900">{formatDateUS(run.statement_date)}</span>
                   <span className="text-gray-600">
                     {(run.mismatch_count ?? 0)}/{run.item_count ?? 0} mismatches
                   </span>

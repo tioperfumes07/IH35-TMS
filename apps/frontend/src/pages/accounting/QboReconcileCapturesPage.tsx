@@ -26,15 +26,15 @@ const STATUS_PILL: Record<string, string> = {
   applied: "bg-slate-100 text-slate-700",
   received: "bg-gray-100 text-gray-600",
   fetched: "bg-gray-100 text-gray-600",
-  conflict: "bg-amber-100 text-amber-800",
+  conflict: "bg-slate-100 text-slate-700",
   error: "bg-red-100 text-red-700",
   duplicate: "bg-gray-100 text-gray-500",
 };
 const SEVERITY_PILL: Record<string, string> = {
   low: "bg-gray-100 text-gray-600",
   info: "bg-gray-100 text-gray-600",
-  medium: "bg-amber-100 text-amber-800",
-  warn: "bg-amber-100 text-amber-800",
+  medium: "bg-slate-100 text-slate-700",
+  warn: "bg-slate-100 text-slate-700",
   high: "bg-red-100 text-red-700",
   critical: "bg-red-100 text-red-700",
 };

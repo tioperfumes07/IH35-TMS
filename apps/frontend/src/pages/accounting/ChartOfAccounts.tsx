@@ -23,7 +23,7 @@ export function ChartOfAccounts() {
         onDriftFilterToggle={setDriftOnly}
       />
       {driftOnly && (
-        <p className="text-sm text-amber-800">
+        <p className="text-sm text-slate-700">
           Showing drift filter active — reconcile or sync to heal unmatched CoA rows.
         </p>
       )}

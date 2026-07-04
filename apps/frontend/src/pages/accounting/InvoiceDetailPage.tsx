@@ -1,3 +1,4 @@
+import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -19,8 +20,8 @@ function money(cents: number) {
 function factoringPillClass(status: string | null | undefined) {
   const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
-  if (status === "reserve_held" || status === "collected") return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
-  if (status === "released") return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
+  if (status === "reserve_held" || status === "collected") return `${base} bg-slate-50 text-slate-600 border border-slate-200`;
+  if (status === "released") return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
   if (status === "recourse_returned") return `${base} bg-red-50 text-red-700 border border-red-200`;
   return `${base} bg-slate-50 text-slate-700 border border-slate-200`;
 }
@@ -167,7 +168,7 @@ export function InvoiceDetailPage() {
       />
 
       {invoice.source_load_chargeback_requested ? (
-        <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800">
           <div className="font-semibold uppercase tracking-wide">Chargeback flag</div>
           <div>{invoice.source_load_chargeback_reason || "This invoice is tied to a load marked for customer chargeback review."}</div>
         </div>
@@ -181,11 +182,11 @@ export function InvoiceDetailPage() {
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Issue Date</span>
-            <span className="text-sm text-gray-900">{invoice.issue_date}</span>
+            <span className="text-sm text-gray-900">{formatDateUS(invoice.issue_date)}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Due Date</span>
-            <span className="text-sm text-gray-900">{invoice.due_date}</span>
+            <span className="text-sm text-gray-900">{formatDateUS(invoice.due_date)}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Source Load</span>

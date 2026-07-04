@@ -82,13 +82,13 @@ async function fetchAllCatalogRows(operatingCompanyId: string, includeInactive: 
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
+    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
     : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 function syncBadgeClasses(badge: CoaListRow["syncBadge"]) {
-  if (badge === "synced") return "bg-emerald-100 text-emerald-700";
-  if (badge === "qbo-only") return "bg-amber-100 text-amber-800";
+  if (badge === "synced") return "bg-slate-100 text-slate-700";
+  if (badge === "qbo-only") return "bg-slate-100 text-slate-700";
   return "bg-slate-100 text-slate-600";
 }
 
