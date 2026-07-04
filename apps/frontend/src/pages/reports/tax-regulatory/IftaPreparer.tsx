@@ -13,20 +13,18 @@ import { useAuth } from "../../../auth/useAuth";
 import { StepWizard } from "../../../components/reports/ifta/StepWizard";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-
-function currentQuarterLabel(now = new Date()) {
-  const month = now.getUTCMonth();
-  const quarter = Math.floor(month / 3) + 1;
-  const year = now.getUTCFullYear();
-  return `${year}-Q${quarter}`;
-}
+import { filingQuarterLabel, recentQuarterOptions, toQuarterLabel } from "../ifta/quarter";
 
 export function IftaPreparer() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const auth = useAuth();
   const isOwner = auth.user?.role === "Owner";
-  const quarter = useMemo(() => currentQuarterLabel(), []);
+  // COMP-1: default to the quarter being FILED (most recently closed), not the
+  // current calendar quarter — and let the user pick the target quarter. Preparing
+  // during April must file Q1, not the current calendar quarter (Q2).
+  const [quarter, setQuarter] = useState(() => filingQuarterLabel());
+  const quarterOptions = useMemo(() => recentQuarterOptions(8), []);
   const queryClient = useQueryClient();
   const [filingUuid, setFilingUuid] = useState<string | null>(null);
 
@@ -96,15 +94,36 @@ export function IftaPreparer() {
       </p>
 
       {!filingUuid ? (
-        <button
-          type="button"
-          className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 disabled:opacity-50"
-          disabled={!companyId || prepareMutation.isPending}
-          onClick={() => void prepareMutation.mutateAsync()}
-          data-testid="ifta-prepare-quarter"
-        >
-          {prepareMutation.isPending ? "Preparing…" : `Prepare ${quarter} filing`}
-        </button>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+            Filing quarter
+            <select
+              aria-label="Filing quarter"
+              value={quarter}
+              onChange={(event) => setQuarter(event.target.value)}
+              disabled={!companyId || prepareMutation.isPending}
+              className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs font-normal text-slate-900 disabled:opacity-50"
+            >
+              {quarterOptions.map((option) => {
+                const label = toQuarterLabel(option);
+                return (
+                  <option key={label} value={label}>
+                    Q{option.quarter} {option.year}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 disabled:opacity-50"
+            disabled={!companyId || prepareMutation.isPending}
+            onClick={() => void prepareMutation.mutateAsync()}
+            data-testid="ifta-prepare-quarter"
+          >
+            {prepareMutation.isPending ? "Preparing…" : `Prepare ${quarter} filing`}
+          </button>
+        </div>
       ) : null}
 
       {historyQuery.data?.filings?.length ? (

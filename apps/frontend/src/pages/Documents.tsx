@@ -200,6 +200,7 @@ export function DocumentsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search filename"
+            aria-label="Search filename"
             className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>

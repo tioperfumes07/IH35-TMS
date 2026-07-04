@@ -144,6 +144,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
                 setPage(0);
               }}
               placeholder="Search drivers"
+              aria-label="Search drivers"
             />
             <button
               type="button"

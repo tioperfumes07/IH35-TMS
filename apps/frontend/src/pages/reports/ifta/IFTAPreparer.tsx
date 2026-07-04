@@ -8,16 +8,16 @@ import { IFTAStepCSVExport } from "./IFTAStepCSVExport";
 import { IFTAStepGallons } from "./IFTAStepGallons";
 import { IFTAStepMiles } from "./IFTAStepMiles";
 import { IFTAStepTax } from "./IFTAStepTax";
-
-function currentQuarterYear(now = new Date()) {
-  const month = now.getUTCMonth();
-  return { quarter: Math.floor(month / 3) + 1, year: now.getUTCFullYear() };
-}
+import { filingQuarterLabel, parseQuarterLabel, recentQuarterOptions, toQuarterLabel } from "./quarter";
 
 export function IFTAPreparer() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const { quarter, year } = useMemo(() => currentQuarterYear(), []);
+  // COMP-1: default to the quarter being FILED (most recently closed), not the
+  // current calendar quarter. Filing Q1 during April must target Q1, not Q2.
+  const [selectedLabel, setSelectedLabel] = useState(() => filingQuarterLabel());
+  const { quarter, year } = useMemo(() => parseQuarterLabel(selectedLabel), [selectedLabel]);
+  const quarterOptions = useMemo(() => recentQuarterOptions(8), []);
   const [preparationId, setPreparationId] = useState<string | null>(null);
 
   const createMutation = useMutation({
@@ -46,14 +46,35 @@ export function IFTAPreparer() {
       </p>
 
       {!prepReady ? (
-        <button
-          type="button"
-          className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 disabled:opacity-50"
-          disabled={!companyId || createMutation.isPending}
-          onClick={() => void createMutation.mutateAsync()}
-        >
-          {createMutation.isPending ? "Creating…" : `Create Q${quarter} ${year} preparation`}
-        </button>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+            Filing quarter
+            <select
+              aria-label="Filing quarter"
+              value={selectedLabel}
+              onChange={(event) => setSelectedLabel(event.target.value)}
+              disabled={!companyId || createMutation.isPending}
+              className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs font-normal text-slate-900 disabled:opacity-50"
+            >
+              {quarterOptions.map((option) => {
+                const label = toQuarterLabel(option);
+                return (
+                  <option key={label} value={label}>
+                    Q{option.quarter} {option.year}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 disabled:opacity-50"
+            disabled={!companyId || createMutation.isPending}
+            onClick={() => void createMutation.mutateAsync()}
+          >
+            {createMutation.isPending ? "Creating…" : `Create Q${quarter} ${year} preparation`}
+          </button>
+        </div>
       ) : null}
 
       {prepReady && preparationId ? (
