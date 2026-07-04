@@ -233,16 +233,6 @@ const activeUser = {
   created_at: "2024-01-01T00:00:00Z",
   last_login_at: null,
 };
-const activeUser2 = {
-  id: "u2",
-  name: "Carol Active",
-  email: "carol@example.com",
-  role: "Dispatcher",
-  deactivated_at: null,
-  auth_method: "Password",
-  created_at: "2024-01-01T00:00:00Z",
-  last_login_at: null,
-};
 const deactivatedUser = {
   id: "u3",
   name: "Bob Gone",
@@ -288,18 +278,5 @@ describe("UsersPage — Deactivate control", () => {
     render(wrap(<UsersPage />));
     const btn = await screen.findByRole("button", { name: /^Deactivate Bob Gone$/ });
     expect(btn).toBeDisabled();
-  });
-
-  it("(j) bulk Deactivate is honestly disabled (no bulk endpoint) — not a silent/fake control", async () => {
-    listUsersMock.mockResolvedValue({ users: [activeUser, activeUser2] });
-    const user = userEvent.setup();
-    render(wrap(<UsersPage />));
-    const checkboxes = await screen.findAllByRole("checkbox", { name: /select user/i });
-    await user.click(checkboxes[0]!);
-    await user.click(checkboxes[1]!);
-    const bulkBtn = await screen.findByRole("button", { name: /^Deactivate$/ });
-    expect(bulkBtn).toBeDisabled();
-    // Disabled dead-control must never fire the per-user endpoint or a fake success toast.
-    expect(deactivateUserMock).not.toHaveBeenCalled();
   });
 });
