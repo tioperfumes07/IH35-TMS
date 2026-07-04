@@ -1,23 +1,23 @@
 {
  "date": "2026-07-03",
- "generated_at_iso": "2026-07-04T03:13:28.878Z",
+ "generated_at_iso": "2026-07-04T04:29:11.146Z",
  "counts": {
   "PENDING": 4,
-  "PENDING (GATED)": 44,
+  "PENDING (GATED)": 45,
   "NEEDS-VERIFY": 4,
   "DONE": 471
  },
  "universe": {
-  "total_blocks_after_dedup": 523,
+  "total_blocks_after_dedup": 524,
   "by_source_after_dedup": {
    "program": 61,
-   ".block-ready": 350,
+   ".block-ready": 351,
    "enterprise-29": 29,
    "accounting": 26,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 361
+   ".block-ready (*.json files)": 362
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count."
  },
@@ -543,6 +543,17 @@
    "status": "PENDING (GATED)",
    "evidence": "GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge.",
    "name": "FOUNDATIONS / TASK USMCA — USMCA carrier launch (July 2026)",
+   "pr": null
+  },
+  {
+   "id": "USMCA-MASTERDATA-IMPORT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Import driver profiles (83) + trucks (93) + trailers (91) into USMCA entity for testing. Applied to prod 2026-07-03 via ",
+   "registered_on": null,
    "pr": null
   },
   {
@@ -5733,6 +5744,102 @@
  ],
  "merged_prs": [
   {
+   "number": 1978,
+   "title": "fix(visual2): dispatch dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:14:06Z",
+   "branch": "fix/visual2-dispatch"
+  },
+  {
+   "number": 1976,
+   "title": "fix(visual2): lists dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:10:48Z",
+   "branch": "fix/visual2-lists"
+  },
+  {
+   "number": 1975,
+   "title": "fix(visual2): accounting dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:02:35Z",
+   "branch": "fix/visual2-accounting"
+  },
+  {
+   "number": 1973,
+   "title": "fix(visual2): compliance dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:12:00Z",
+   "branch": "fix/visual2-compliance"
+  },
+  {
+   "number": 1972,
+   "title": "fix(visual2): factoring dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:03:53Z",
+   "branch": "fix/visual2-factoring"
+  },
+  {
+   "number": 1970,
+   "title": "fix(visual2): fleet dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:08:35Z",
+   "branch": "fix/visual2-fleet"
+  },
+  {
+   "number": 1969,
+   "title": "fix(visual2): form_425 dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:05:07Z",
+   "branch": "fix/visual2-form_425"
+  },
+  {
+   "number": 1968,
+   "title": "fix(visual2): banking dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:05:11Z",
+   "branch": "fix/visual2-banking"
+  },
+  {
+   "number": 1966,
+   "title": "fix(visual2): drivers dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T03:59:02Z",
+   "branch": "fix/visual2-drivers"
+  },
+  {
+   "number": 1965,
+   "title": "fix(visual2): fuel dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:06:22Z",
+   "branch": "fix/visual2-fuel"
+  },
+  {
+   "number": 1964,
+   "title": "fix(visual2): safety dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T03:56:30Z",
+   "branch": "fix/visual2-safety"
+  },
+  {
+   "number": 1963,
+   "title": "fix(visual2): customers dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T04:00:19Z",
+   "branch": "fix/visual2-customers"
+  },
+  {
+   "number": 1961,
+   "title": "fix(visual2): docs dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T03:46:05Z",
+   "branch": "fix/visual2-docs"
+  },
+  {
+   "number": 1960,
+   "title": "fix(visual2): vendors dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T03:51:24Z",
+   "branch": "fix/visual2-vendors"
+  },
+  {
+   "number": 1958,
+   "title": "fix(visual2): inventory dead-controls/back-arrows/layout/pagination",
+   "mergedAt": "2026-07-04T03:48:47Z",
+   "branch": "fix/visual2-inventory"
+  },
+  {
+   "number": 1955,
+   "title": "chore(program): register visual + fix work as blocks — board numbers now move/burn down",
+   "mergedAt": "2026-07-04T03:25:51Z",
+   "branch": "chore/register-visual-fix-blocks"
+  },
+  {
    "number": 1951,
    "title": "fix(visual): eld §7 palette/date/box/vocab cleanup",
    "mergedAt": "2026-07-04T02:49:09Z",
@@ -9235,105 +9342,9 @@
    "title": "feat(ui): §7 blue eradication across ALL pages + §7 guard scans whole frontend (app-wide closure)",
    "mergedAt": "2026-06-22T16:35:31Z",
    "branch": "feat/pages-section7-cleanup"
-  },
-  {
-   "number": 1320,
-   "title": "feat(ui): §7 blue eradication across ALL shared components + §7 guard shared-component root-gap fix",
-   "mergedAt": "2026-06-22T16:24:05Z",
-   "branch": "feat/shared-components-section7-cleanup"
-  },
-  {
-   "number": 1319,
-   "title": "feat(dispatch): §7 blue eradication across dispatch module + §7 guard coverage-gap extension [HOLD-FOR-JORGE — keystone]",
-   "mergedAt": "2026-06-22T16:03:11Z",
-   "branch": "feat/dispatch-section7-palette-cleanup"
-  },
-  {
-   "number": 1318,
-   "title": "feat(fleet): trailer profile to spec — truck/load + per-WO record links + ToastProvider test fix [HOLD-FOR-JORGE — keystone]",
-   "mergedAt": "2026-06-22T15:46:11Z",
-   "branch": "feat/fleet-trailer-profile-to-spec"
-  },
-  {
-   "number": 1317,
-   "title": "feat(fleet): vehicle/trailer profile §7 blue eradication + driver/per-WO links + §7 guard coverage-gap fix [HOLD-FOR-JORGE — keystone]",
-   "mergedAt": "2026-06-22T15:06:30Z",
-   "branch": "feat/fleet-vehicle-profile-record-links"
-  },
-  {
-   "number": 1316,
-   "title": "feat(maint): Arriving Soon hybrid table+expand · In-Transit flat table (queue G) [HOLD-FOR-JORGE — keystone]",
-   "mergedAt": "2026-06-22T14:07:36Z",
-   "branch": "feat/maint-arriving-soon-universal-list"
-  },
-  {
-   "number": 1315,
-   "title": "feat(maint): Fleet table keystone — ODOMETER · NEXT PM · OPEN WO + Unit links + CSV export [HOLD-FOR-JORGE — awaits GUARD]",
-   "mergedAt": "2026-06-22T13:23:27Z",
-   "branch": "feat/maint-fleet-table-keystone"
-  },
-  {
-   "number": 1314,
-   "title": "feat(maint): Master Data (4 pages) → universal-list ParityTable + record-cell links (PR-E·MD)",
-   "mergedAt": "2026-06-22T12:34:23Z",
-   "branch": "feat/maint-master-data-universal-list"
-  },
-  {
-   "number": 1311,
-   "title": "chore(ci): Bump actions/checkout from 6 to 7",
-   "mergedAt": "2026-06-25T21:22:53Z",
-   "branch": "dependabot/github_actions/actions/checkout-7"
-  },
-  {
-   "number": 1310,
-   "title": "feat(maint): Parts Inventory → universal-list ParityTable (PR-E)",
-   "mergedAt": "2026-06-22T05:34:09Z",
-   "branch": "feat/maint-parts-inventory-universal-list"
-  },
-  {
-   "number": 1309,
-   "title": "feat(maint): Damage/Driver-Reports tab → universal-list ParityTable + Driver link (PR-D)",
-   "mergedAt": "2026-06-22T05:23:15Z",
-   "branch": "feat/maint-damage-reports-universal-list"
-  },
-  {
-   "number": 1308,
-   "title": "feat(maint): Service/Location tab + WO-list ?location/?bucket filter — real drill-through (PR-C)",
-   "mergedAt": "2026-06-22T05:18:42Z",
-   "branch": "feat/maint-wo-list-location-bucket-filter"
-  },
-  {
-   "number": 1307,
-   "title": "feat(guard): assert maintenance ParityTable record cells are anchors (Task A — link no-regression lock)",
-   "mergedAt": "2026-06-22T05:06:53Z",
-   "branch": "feat/maint-record-cell-link-guard"
-  },
-  {
-   "number": 1306,
-   "title": "feat(maint): Active WOs tab → universal-list ParityTable, one selection model, clickable links (PR-6)",
-   "mergedAt": "2026-06-22T05:07:31Z",
-   "branch": "feat/maint-active-wos-universal-list"
-  },
-  {
-   "number": 1305,
-   "title": "feat(maint): Severe Repairs tab → universal-list ParityTable + clickable links (PR-5)",
-   "mergedAt": "2026-06-22T03:44:27Z",
-   "branch": "feat/maint-severe-repairs-universal-list"
-  },
-  {
-   "number": 1304,
-   "title": "feat(maint): Road Service tab → universal-list ParityTable + clickable links (PR-4)",
-   "mergedAt": "2026-06-22T03:38:28Z",
-   "branch": "feat/maint-service-location-universal-list"
-  },
-  {
-   "number": 1303,
-   "title": "feat(maint): ParityTable → universal-list contract + §7 active colors (PR-3, KEYSTONE — do not auto-merge)",
-   "mergedAt": "2026-06-22T03:16:07Z",
-   "branch": "feat/maint-paritytable-universal-list"
   }
  ],
- "merged_pr_total": 1839,
+ "merged_pr_total": 1855,
  "hold_for_jorge": [
   {
    "number": 1919,

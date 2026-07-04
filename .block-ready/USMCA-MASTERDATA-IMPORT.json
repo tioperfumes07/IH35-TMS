@@ -1,0 +1,13 @@
+{
+  "block_id": "USMCA-MASTERDATA-IMPORT",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "USMCA-LAUNCH",
+  "task": "Import driver profiles (83) + trucks (93) + trailers (91) into USMCA entity for testing. Applied to prod 2026-07-03 via lucia-bypass; validated on a Neon test branch first.",
+  "branch": "feat/usmca-masterdata-import-tool",
+  "allowed_files": [".block-ready/_markers/USMCA-MASTERDATA-IMPORT.done"],
+  "runtime_path": "scripts",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}
