@@ -213,10 +213,10 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     )}
                     <span className={`ml-2 inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium ${
                       item.basis === "Confirmed"
-                        ? "bg-emerald-50 text-emerald-700"
+                        ? "bg-slate-100 text-slate-700"
                         : item.basis === "Predicted"
                         ? "bg-slate-100 text-slate-700"
-                        : "bg-amber-50 text-amber-700"
+                        : "bg-slate-100 text-slate-700"
                     }`}>
                       {item.basis}
                     </span>
