@@ -4,21 +4,26 @@
 // Invariant (CLAUDE.md §2, Ch.11): mdata.load_stops are POD/stop evidence.
 // They must never be physically deleted — only soft-deleted via soft_deleted_at.
 //
-// This guard scans all .ts files in apps/backend/src and any .sql files in
-// db/migrations for the pattern `DELETE FROM mdata.load_stops` and fails if found.
+// This guard scans all runtime source files under apps/ and packages/ for a hard
+// `DELETE FROM [mdata.]load_stops` and fails if found — G10-H2 broadened it from a
+// single-directory (apps/backend/src) scan so the invariant holds in ANY runtime file
+// (backend, PWA, workers, packages), and to also catch the unqualified `load_stops`
+// form and the optional-schema/quoted variants.
 //
 // Run: node scripts/verify-inv1-no-hard-delete-load-stops.mjs
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fail = (msg) => { console.error(`FAIL verify-inv1-no-hard-delete-load-stops: ${msg}`); process.exit(1); };
 
-const PATTERN = /DELETE\s+FROM\s+mdata\.load_stops/i;
+// Hard DELETE against load_stops, schema optional (mdata.) and identifiers optionally quoted.
+const PATTERN = /DELETE\s+FROM\s+(?:"?mdata"?\.)?"?load_stops"?/i;
 
 function walkDir(dir, exts, results = []) {
+  if (!existsSync(dir)) return results;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const fp = join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -31,9 +36,13 @@ function walkDir(dir, exts, results = []) {
   return results;
 }
 
-// Scan only TypeScript runtime files — SQL migrations may reference these table names
-// in comments documenting the fix and are not runtime DELETE callers.
-const allFiles = walkDir(join(root, "apps/backend/src"), [".ts"]);
+// Scan runtime source across ALL apps + packages (not just apps/backend/src) so a hard
+// DELETE anywhere in the codebase is caught. SQL migrations are intentionally NOT scanned —
+// they may reference these table names in comments documenting the fix and are not runtime
+// DELETE callers (INV-1 is a void-never-delete runtime invariant).
+const SCAN_ROOTS = ["apps", "packages"];
+const SCAN_EXTS = [".ts", ".tsx", ".mts", ".cts", ".js", ".mjs", ".cjs"];
+const allFiles = SCAN_ROOTS.flatMap((r) => walkDir(join(root, r), SCAN_EXTS, []));
 
 const offenders = [];
 for (const fp of allFiles) {
