@@ -487,6 +487,67 @@ export function BankingTransactionsDesignView({
     }
   }
 
+  // Shared Excel/CSV export (used by the Print/Export menu and the bulk bar). Called at click time,
+  // so the memoized tableRows / runningBalanceById are already initialized.
+  function exportTransactionsToExcel(rows: PlaidBankTransaction[], filename: string) {
+    const header = ["Date", "Description", "Spent", "Received", "Balance", "From/To", "Customer", "Product/Service"];
+    const lines = rows.map((tx) => {
+      const { spent, received } = spentReceived(tx);
+      const draft = getDraft(tx);
+      const bal = runningBalanceById.get(tx.id);
+      return [
+        formatBankTransactionDate(tx.transaction_date),
+        transactionLabel(tx),
+        spent > 0 ? (spent / 100).toFixed(2) : "",
+        received > 0 ? (received / 100).toFixed(2) : "",
+        bal == null ? "" : (bal / 100).toFixed(2),
+        draft.fromTo,
+        draft.customerProject,
+        draft.productService,
+      ];
+    });
+    const csv = [header, ...lines].map((row) => row.map((cell) => toExcelValue(String(cell ?? ""))).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(href);
+  }
+
+  // Bulk-bar handlers (H3). The bar previously fired fake success toasts with no action.
+  const selectedTableRows = () => tableRows.filter((tx) => bulkSelection.selectedIds.has(tx.id));
+
+  async function bulkExclude() {
+    const rows = selectedTableRows();
+    if (rows.length === 0) {
+      pushToast("Select transactions to exclude.", "error");
+      return;
+    }
+    let ok = 0;
+    for (const tx of rows) {
+      try {
+        await skipBankTransactionInvestigation(tx.id, companyId, { note: "Bulk-excluded from Banking transactions view." });
+        ok += 1;
+      } catch {
+        // continue; report the count that succeeded
+      }
+    }
+    pushToast(ok === rows.length ? `Excluded ${ok} transaction(s).` : `Excluded ${ok} of ${rows.length}; some failed.`, ok > 0 ? "success" : "error");
+    bulkSelection.clearSelection();
+    onDataChanged();
+  }
+
+  function bulkExport() {
+    const rows = selectedTableRows();
+    if (rows.length === 0) {
+      pushToast("Select transactions to export.", "error");
+      return;
+    }
+    exportTransactionsToExcel(rows, "banking-transactions-selected.xls");
+  }
+
   return (
     <div className="space-y-3">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -777,30 +838,7 @@ export function BankingTransactionsDesignView({
                     className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-gray-50"
                     onClick={() => {
                       setPrintExportMenuOpen(false);
-                      const header = ["Date", "Description", "Spent", "Received", "Balance", "From/To", "Customer", "Product/Service"];
-                      const lines = tableRows.map((tx) => {
-                        const { spent, received } = spentReceived(tx);
-                        const draft = getDraft(tx);
-                        const bal = runningBalanceById.get(tx.id);
-                        return [
-                          formatBankTransactionDate(tx.transaction_date),
-                          transactionLabel(tx),
-                          spent > 0 ? (spent / 100).toFixed(2) : "",
-                          received > 0 ? (received / 100).toFixed(2) : "",
-                          bal == null ? "" : (bal / 100).toFixed(2),
-                          draft.fromTo,
-                          draft.customerProject,
-                          draft.productService,
-                        ];
-                      });
-                      const csv = [header, ...lines].map((row) => row.map((cell) => toExcelValue(String(cell ?? ""))).join(",")).join("\n");
-                      const blob = new Blob([csv], { type: "application/vnd.ms-excel;charset=utf-8;" });
-                      const href = URL.createObjectURL(blob);
-                      const anchor = document.createElement("a");
-                      anchor.href = href;
-                      anchor.download = "banking-transactions.xls";
-                      anchor.click();
-                      URL.revokeObjectURL(href);
+                      exportTransactionsToExcel(tableRows, "banking-transactions.xls");
                     }}
                   >
                     <Download className="h-3.5 w-3.5" />
@@ -815,9 +853,9 @@ export function BankingTransactionsDesignView({
 
       <BulkActionBar
         {...bulkSelection.bulkActionBarProps([
-          { id: "categorize", label: "Categorize", onClick: () => pushToast("Bulk categorize — wire banking bulk endpoint.", "success") },
-          { id: "exclude", label: "Exclude", onClick: () => pushToast("Bulk exclude queued.", "success") },
-          { id: "export", label: "Export Selected", onClick: () => pushToast("Export selected transactions queued.", "success") },
+          { id: "categorize", label: "Categorize", onClick: () => pushToast("Open a transaction and choose its account to categorize. Bulk categorize-by-account is coming next.", "info") },
+          { id: "exclude", label: "Exclude", onClick: () => void bulkExclude() },
+          { id: "export", label: "Export Selected", onClick: () => bulkExport() },
         ])}
       />
 
