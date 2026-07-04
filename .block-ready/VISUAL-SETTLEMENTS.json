@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-SETTLEMENTS",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-SWEEP",
+  "task": "§7 visual sweep for settlements — 13 palette/date/box/vocab fixes",
+  "branch": "fix/visual-settlements",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-SETTLEMENTS.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

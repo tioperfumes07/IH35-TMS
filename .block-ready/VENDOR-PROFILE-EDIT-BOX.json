@@ -1,0 +1,15 @@
+{
+  "block_id": "VENDOR-PROFILE-EDIT-BOX",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Vendor profile Edit-at-top + flatten category box",
+  "branch": "fix/vendor-profile-edit-and-category-box",
+  "allowed_files": [
+    ".block-ready/_markers/VENDOR-PROFILE-EDIT-BOX.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

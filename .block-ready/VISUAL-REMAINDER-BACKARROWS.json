@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-REMAINDER-BACKARROWS",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-REMAINDER",
+  "task": "Add §7 back-arrow+breadcrumb to 12 pages missing it",
+  "branch": "fix/visual-remainder-backarrows",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-REMAINDER-BACKARROWS.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

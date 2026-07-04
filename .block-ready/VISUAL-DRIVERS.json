@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-DRIVERS",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-SWEEP",
+  "task": "§7 visual sweep for drivers — 58 palette/date/box/vocab fixes",
+  "branch": "fix/visual-drivers",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-DRIVERS.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

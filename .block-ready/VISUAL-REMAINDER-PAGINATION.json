@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-REMAINDER-PAGINATION",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-REMAINDER",
+  "task": "Add pagination to 2 capped lists",
+  "branch": "fix/visual-remainder-pagination",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-REMAINDER-PAGINATION.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

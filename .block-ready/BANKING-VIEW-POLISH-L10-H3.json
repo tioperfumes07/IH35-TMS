@@ -1,0 +1,15 @@
+{
+  "block_id": "BANKING-VIEW-POLISH-L10-H3",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Transactions view palette + bulk wiring",
+  "branch": "fix/banking-txn-palette-l10",
+  "allowed_files": [
+    ".block-ready/_markers/BANKING-VIEW-POLISH-L10-H3.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

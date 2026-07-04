@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-FINANCE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-SWEEP",
+  "task": "§7 visual sweep for finance — 1 palette/date/box/vocab fixes",
+  "branch": "fix/visual-finance",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-FINANCE.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

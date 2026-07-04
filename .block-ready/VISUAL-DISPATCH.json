@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-DISPATCH",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-SWEEP",
+  "task": "§7 visual sweep for dispatch — 190 palette/date/box/vocab fixes",
+  "branch": "fix/visual-dispatch",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-DISPATCH.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

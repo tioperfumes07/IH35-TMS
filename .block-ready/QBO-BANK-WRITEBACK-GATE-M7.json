@@ -1,0 +1,15 @@
+{
+  "block_id": "QBO-BANK-WRITEBACK-GATE-M7",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "bank_transaction QBO write-back kill-switch",
+  "branch": "fix/qbo-bank-transaction-pushgate-hold",
+  "allowed_files": [
+    ".block-ready/_markers/QBO-BANK-WRITEBACK-GATE-M7.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

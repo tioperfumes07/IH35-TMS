@@ -1,0 +1,15 @@
+{
+  "block_id": "PERF-BUDGET-RAISE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Raise fe bundle perf budget",
+  "branch": "chore/raise-fe-bundle-perf-budget",
+  "allowed_files": [
+    ".block-ready/_markers/PERF-BUDGET-RAISE.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

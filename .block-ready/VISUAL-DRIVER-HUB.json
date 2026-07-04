@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-DRIVER-HUB",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-SWEEP",
+  "task": "§7 visual sweep for driver-hub — 4 palette/date/box/vocab fixes",
+  "branch": "fix/visual-driver-hub",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-DRIVER-HUB.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

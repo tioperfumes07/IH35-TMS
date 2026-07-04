@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-REMAINDER-BROKEN-EDIT",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-REMAINDER",
+  "task": "Fix 3 broken edit/dropdown controls",
+  "branch": "fix/visual-remainder-broken-edit",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-REMAINDER-BROKEN-EDIT.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

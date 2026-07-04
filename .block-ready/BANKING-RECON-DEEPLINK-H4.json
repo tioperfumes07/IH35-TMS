@@ -1,0 +1,15 @@
+{
+  "block_id": "BANKING-RECON-DEEPLINK-H4",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Reconciliation session opens workspace route",
+  "branch": "fix/banking-recon-session-deeplink-h4",
+  "allowed_files": [
+    ".block-ready/_markers/BANKING-RECON-DEEPLINK-H4.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

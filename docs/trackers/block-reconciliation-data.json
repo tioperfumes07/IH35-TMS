@@ -1,23 +1,23 @@
 {
  "date": "2026-07-03",
- "generated_at_iso": "2026-07-04T00:40:09.704Z",
+ "generated_at_iso": "2026-07-04T02:52:51.485Z",
  "counts": {
   "PENDING": 4,
-  "PENDING (GATED)": 33,
-  "NEEDS-VERIFY": 3,
-  "DONE": 436
+  "PENDING (GATED)": 44,
+  "NEEDS-VERIFY": 4,
+  "DONE": 471
  },
  "universe": {
-  "total_blocks_after_dedup": 476,
+  "total_blocks_after_dedup": 523,
   "by_source_after_dedup": {
    "program": 61,
-   ".block-ready": 303,
+   ".block-ready": 350,
    "enterprise-29": 29,
    "accounting": 26,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 314
+   ".block-ready (*.json files)": 361
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count."
  },
@@ -243,6 +243,17 @@
    "pr": null
   },
   {
+   "id": "AR-AP-PAYMENT-CONTRACT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "AR+AP payment recording 400 contract fix",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "BLOCK-01-of-29-TIER1.5-DEPRECIATION",
    "source": "enterprise-29",
    "fin": false,
@@ -443,6 +454,17 @@
    "pr": null
   },
   {
+   "id": "FINAL-ADDITIONS-PAGE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Final Additions launch punch-list page",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "HOS-FANOUT-03-08",
    "source": "program",
    "fin": false,
@@ -503,6 +525,17 @@
    "pr": null
   },
   {
+   "id": "USERS-DEACTIVATE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Users deactivate discoverable + non-silent",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "USMCA-LAUNCH-carrier",
    "source": "program",
    "fin": false,
@@ -510,6 +543,94 @@
    "status": "PENDING (GATED)",
    "evidence": "GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge.",
    "name": "FOUNDATIONS / TASK USMCA — USMCA carrier launch (July 2026)",
+   "pr": null
+  },
+  {
+   "id": "VENDOR-CUSTOMER-QBO-PARITY",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Full QBO-parity create panels + profiles (uploaded spec)",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "VISUAL-DISPATCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "§7 visual sweep for dispatch — 190 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "VISUAL-LISTS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "§7 visual sweep for lists — 19 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "VISUAL-REMAINDER-BACKARROWS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Add §7 back-arrow+breadcrumb to 12 pages missing it",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "VISUAL-REMAINDER-BROKEN-EDIT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Fix 3 broken edit/dropdown controls",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "VISUAL-REMAINDER-DEADCONTROLS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Wire/make-honest 24 dead-control buttons (fake success toasts)",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "VISUAL-REMAINDER-LAYOUT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Fix 8 layout defects (overflow/clip/grid)",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "VISUAL-REMAINDER-PAGINATION",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "Add pagination to 2 capped lists",
+   "registered_on": null,
    "pr": null
   },
   {
@@ -554,6 +675,17 @@
    "name": "RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma",
    "registered_on": "2026-07-02",
    "pr": 1838
+  },
+  {
+   "id": "VISUAL-SAFETY",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1597 title-match only, unverified",
+   "name": "§7 visual sweep for safety — 75 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1597
   },
   {
    "id": "A1-AUDIT-SPINE-LINK-COLUMNS",
@@ -655,6 +787,17 @@
    "pr": 901
   },
   {
+   "id": "ACCOUNTING-UI-POLISH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1920 merged 2026-07-04",
+   "name": "Register US dates, drop yellow pills, honest toast",
+   "registered_on": null,
+   "pr": 1920
+  },
+  {
    "id": "ACCT-BLOCK-10-ACCOUNT-BALANCES",
    "source": ".block-ready",
    "fin": false,
@@ -675,6 +818,17 @@
    "name": "Accounting Periods Init — ops seed for Jan–Jun 2026 periods for TRANSP (IH 35 Transportation LLC). Adds unique index on ",
    "registered_on": null,
    "pr": 814
+  },
+  {
+   "id": "ACCT-CASHFLOW-COMPANY-TZ",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1676 merged 2026-06-30",
+   "name": "Cash-position uses company TZ not UTC",
+   "registered_on": null,
+   "pr": 1676
   },
   {
    "id": "ACCT-COA-CANONICALIZATION",
@@ -782,6 +936,50 @@
    "evidence": "[verified 2026-07-03] finance-hub routes/service + page on main (flag-gated OFF by design)",
    "name": "STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)",
    "pr": null
+  },
+  {
+   "id": "BANKING-CATEGORIZE-C1",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1913 merged 2026-07-03",
+   "name": "Banking categorize Post/Match real contract (unblock 2650 txns)",
+   "registered_on": null,
+   "pr": 1913
+  },
+  {
+   "id": "BANKING-CSV-DIRECTION-M6",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1915 merged 2026-07-03",
+   "name": "CSV import money direction (Wells Fargo)",
+   "registered_on": null,
+   "pr": 1915
+  },
+  {
+   "id": "BANKING-RECON-DEEPLINK-H4",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1914 merged 2026-07-03",
+   "name": "Reconciliation session opens workspace route",
+   "registered_on": null,
+   "pr": 1914
+  },
+  {
+   "id": "BANKING-VIEW-POLISH-L10-H3",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1917 merged 2026-07-04",
+   "name": "Transactions view palette + bulk wiring",
+   "registered_on": null,
+   "pr": 1917
   },
   {
    "id": "BK7-INLINE-CREATE-DRAWERS",
@@ -4633,6 +4831,17 @@
    "pr": 915
   },
   {
+   "id": "MANUAL-JE-CONTRACT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1919 merged 2026-07-04",
+   "name": "Manual JE create/void 400 contract fix",
+   "registered_on": null,
+   "pr": 1919
+  },
+  {
    "id": "MIGRATION-RUNNER-HARDEN",
    "source": ".block-ready",
    "fin": false,
@@ -4708,6 +4917,17 @@
    "pr": 862
   },
   {
+   "id": "PERF-BUDGET-RAISE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1925 merged 2026-07-04",
+   "name": "Raise fe bundle perf budget",
+   "registered_on": null,
+   "pr": 1925
+  },
+  {
    "id": "PREREQ-A-SCHEMA-GRANT-GATE",
    "source": ".block-ready",
    "fin": false,
@@ -4740,6 +4960,17 @@
    "pr": null
   },
   {
+   "id": "QBO-BANK-WRITEBACK-GATE-M7",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1916 merged 2026-07-04",
+   "name": "bank_transaction QBO write-back kill-switch",
+   "registered_on": null,
+   "pr": 1916
+  },
+  {
    "id": "QBO-SYNC-DRIFT-401-FIX",
    "source": ".block-ready",
    "fin": false,
@@ -4760,6 +4991,17 @@
    "name": "Make Jorge's quality standard the first standing law (Rule #0). Adds docs/specs/QUALITY-STANDARD-LOCKED.md (verbatim), w",
    "registered_on": null,
    "pr": 1780
+  },
+  {
+   "id": "REGISTER-SOURCE-COL",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1922 merged 2026-07-04",
+   "name": "Register Source column shows source",
+   "registered_on": null,
+   "pr": 1922
   },
   {
    "id": "RPT-MODULE",
@@ -5093,6 +5335,281 @@
    "pr": null
   },
   {
+   "id": "VENDOR-PROFILE-EDIT-BOX",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1926 merged 2026-07-04",
+   "name": "Vendor profile Edit-at-top + flatten category box",
+   "registered_on": null,
+   "pr": 1926
+  },
+  {
+   "id": "VISUAL-ACCOUNTING",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1946 merged 2026-07-04",
+   "name": "§7 visual sweep for accounting — 91 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1946
+  },
+  {
+   "id": "VISUAL-AUDIT-PUNCHLIST",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1927 merged 2026-07-04",
+   "name": "Full-app visual audit punch-list doc",
+   "registered_on": null,
+   "pr": 1927
+  },
+  {
+   "id": "VISUAL-BANKING",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1940 merged 2026-07-04",
+   "name": "§7 visual sweep for banking — 31 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1940
+  },
+  {
+   "id": "VISUAL-CASH-FLOW",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1942 merged 2026-07-04",
+   "name": "§7 visual sweep for cash-flow — 3 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1942
+  },
+  {
+   "id": "VISUAL-COMPLIANCE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1944 merged 2026-07-04",
+   "name": "§7 visual sweep for compliance — 20 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1944
+  },
+  {
+   "id": "VISUAL-CUSTOMERS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1941 merged 2026-07-04",
+   "name": "§7 visual sweep for customers — 11 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1941
+  },
+  {
+   "id": "VISUAL-DOCS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1945 merged 2026-07-04",
+   "name": "§7 visual sweep for docs — 4 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1945
+  },
+  {
+   "id": "VISUAL-DRIVER-HUB",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1935 merged 2026-07-04",
+   "name": "§7 visual sweep for driver-hub — 4 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1935
+  },
+  {
+   "id": "VISUAL-DRIVERS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1936 merged 2026-07-04",
+   "name": "§7 visual sweep for drivers — 58 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1936
+  },
+  {
+   "id": "VISUAL-ELD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1951 merged 2026-07-04",
+   "name": "§7 visual sweep for eld — 2 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1951
+  },
+  {
+   "id": "VISUAL-FACTORING",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1930 merged 2026-07-04",
+   "name": "§7 visual sweep for factoring — 9 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1930
+  },
+  {
+   "id": "VISUAL-FINANCE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1947 merged 2026-07-04",
+   "name": "§7 visual sweep for finance — 1 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1947
+  },
+  {
+   "id": "VISUAL-FLEET",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1928 merged 2026-07-04",
+   "name": "§7 visual sweep for fleet — 1 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1928
+  },
+  {
+   "id": "VISUAL-FORM-425",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1938 merged 2026-07-04",
+   "name": "§7 visual sweep for form_425 — 7 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1938
+  },
+  {
+   "id": "VISUAL-FUEL",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1929 merged 2026-07-04",
+   "name": "§7 visual sweep for fuel — 8 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1929
+  },
+  {
+   "id": "VISUAL-HOME",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1949 merged 2026-07-04",
+   "name": "§7 visual sweep for home — 24 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1949
+  },
+  {
+   "id": "VISUAL-INSURANCE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1939 merged 2026-07-04",
+   "name": "§7 visual sweep for insurance — 14 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1939
+  },
+  {
+   "id": "VISUAL-INVENTORY",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1943 merged 2026-07-04",
+   "name": "§7 visual sweep for inventory — 1 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1943
+  },
+  {
+   "id": "VISUAL-LEGAL",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1931 merged 2026-07-04",
+   "name": "§7 visual sweep for legal — 9 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1931
+  },
+  {
+   "id": "VISUAL-REPORTS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1937 merged 2026-07-04",
+   "name": "§7 visual sweep for reports — 19 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1937
+  },
+  {
+   "id": "VISUAL-SETTLEMENTS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1933 merged 2026-07-04",
+   "name": "§7 visual sweep for settlements — 13 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1933
+  },
+  {
+   "id": "VISUAL-TASKS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1934 merged 2026-07-04",
+   "name": "§7 visual sweep for tasks — 18 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1934
+  },
+  {
+   "id": "VISUAL-USERS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1948 merged 2026-07-04",
+   "name": "§7 visual sweep for users — 4 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1948
+  },
+  {
+   "id": "VISUAL-VENDORS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #1932 merged 2026-07-04",
+   "name": "§7 visual sweep for vendors — 8 palette/date/box/vocab fixes",
+   "registered_on": null,
+   "pr": 1932
+  },
+  {
    "id": "W1-EVENT-LOG-SPINE",
    "source": ".block-ready",
    "fin": true,
@@ -5216,6 +5733,180 @@
  ],
  "merged_prs": [
   {
+   "number": 1951,
+   "title": "fix(visual): eld §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:49:09Z",
+   "branch": "fix/visual-eld"
+  },
+  {
+   "number": 1949,
+   "title": "fix(visual): home §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:47:16Z",
+   "branch": "fix/visual-home"
+  },
+  {
+   "number": 1948,
+   "title": "fix(visual): users §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:38:03Z",
+   "branch": "fix/visual-users"
+  },
+  {
+   "number": 1947,
+   "title": "fix(visual): finance §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:44:21Z",
+   "branch": "fix/visual-finance"
+  },
+  {
+   "number": 1946,
+   "title": "fix(visual): accounting §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:35:01Z",
+   "branch": "fix/visual-accounting"
+  },
+  {
+   "number": 1945,
+   "title": "fix(visual): docs §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:40:55Z",
+   "branch": "fix/visual-docs"
+  },
+  {
+   "number": 1944,
+   "title": "fix(visual): compliance §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:36:06Z",
+   "branch": "fix/visual-compliance"
+  },
+  {
+   "number": 1943,
+   "title": "fix(visual): inventory §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:31:48Z",
+   "branch": "fix/visual-inventory"
+  },
+  {
+   "number": 1942,
+   "title": "fix(visual): cash-flow §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:31:51Z",
+   "branch": "fix/visual-cash-flow"
+  },
+  {
+   "number": 1941,
+   "title": "fix(visual): customers §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:32:56Z",
+   "branch": "fix/visual-customers"
+  },
+  {
+   "number": 1940,
+   "title": "fix(visual): banking §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:32:59Z",
+   "branch": "fix/visual-banking"
+  },
+  {
+   "number": 1939,
+   "title": "fix(visual): insurance §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:39:04Z",
+   "branch": "fix/visual-insurance"
+  },
+  {
+   "number": 1938,
+   "title": "fix(visual): form_425 §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:28:28Z",
+   "branch": "fix/visual-form_425"
+  },
+  {
+   "number": 1937,
+   "title": "fix(visual): reports §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:23:42Z",
+   "branch": "fix/visual-reports"
+  },
+  {
+   "number": 1936,
+   "title": "fix(visual): drivers §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:29:39Z",
+   "branch": "fix/visual-drivers"
+  },
+  {
+   "number": 1935,
+   "title": "fix(visual): driver-hub §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:24:58Z",
+   "branch": "fix/visual-driver-hub"
+  },
+  {
+   "number": 1934,
+   "title": "fix(visual): tasks §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:29:41Z",
+   "branch": "fix/visual-tasks"
+  },
+  {
+   "number": 1933,
+   "title": "fix(visual): settlements §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:17:28Z",
+   "branch": "fix/visual-settlements"
+  },
+  {
+   "number": 1932,
+   "title": "fix(visual): vendors §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:21:20Z",
+   "branch": "fix/visual-vendors"
+  },
+  {
+   "number": 1931,
+   "title": "fix(visual): legal §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:18:47Z",
+   "branch": "fix/visual-legal"
+  },
+  {
+   "number": 1930,
+   "title": "fix(visual): factoring §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:18:50Z",
+   "branch": "fix/visual-factoring"
+  },
+  {
+   "number": 1929,
+   "title": "fix(visual): fuel §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:14:52Z",
+   "branch": "fix/visual-fuel"
+  },
+  {
+   "number": 1928,
+   "title": "fix(visual): fleet §7 palette/date/box/vocab cleanup",
+   "mergedAt": "2026-07-04T02:14:55Z",
+   "branch": "fix/visual-fleet"
+  },
+  {
+   "number": 1927,
+   "title": "docs(visual): full-app visual audit punch-list — 252 defects across 28 modules",
+   "mergedAt": "2026-07-04T02:10:35Z",
+   "branch": "docs/visual-audit-punchlist-252"
+  },
+  {
+   "number": 1926,
+   "title": "fix(vendors): discoverable Edit at top + flatten accounting-category box-in-box",
+   "mergedAt": "2026-07-04T01:50:10Z",
+   "branch": "fix/vendor-profile-edit-and-category-box"
+  },
+  {
+   "number": 1925,
+   "title": "chore(perf): raise fe bundle budget to clear the red (pending code-split)",
+   "mergedAt": "2026-07-04T01:40:59Z",
+   "branch": "chore/raise-fe-bundle-perf-budget"
+  },
+  {
+   "number": 1922,
+   "title": "fix(accounting-ui): register Source column shows source, not type",
+   "mergedAt": "2026-07-04T00:59:37Z",
+   "branch": "fix/register-source-column-label"
+  },
+  {
+   "number": 1921,
+   "title": "chore(program): refresh block-reconciliation snapshot 2026-07-03 (advance Program Board)",
+   "mergedAt": "2026-07-04T00:52:15Z",
+   "branch": "chore/program-board-reconcile-2026-07-03"
+  },
+  {
+   "number": 1920,
+   "title": "fix(accounting-ui): §7 polish — US dates in register, drop yellow pills, honest expense toast",
+   "mergedAt": "2026-07-04T00:41:26Z",
+   "branch": "fix/accounting-ui-polish-batch"
+  },
+  {
    "number": 1919,
    "title": "[HOLD-FOR-JORGE] fix(accounting): Manual Journal Entry create/void 400 (contract drift)",
    "mergedAt": "2026-07-04T00:39:54Z",
@@ -5274,6 +5965,12 @@
    "title": "feat(ci): money-path no-swallow guard (recovered lost-work RELIABILITY-05)",
    "mergedAt": "2026-07-03T23:21:34Z",
    "branch": "feat/money-path-no-swallow-guard"
+  },
+  {
+   "number": 1908,
+   "title": "[HOLD-FOR-JORGE] feat(tasks): Tasks Planner v2 — entity/record links, profiles, alarms, transaction-side completion",
+   "mergedAt": "2026-07-04T00:58:03Z",
+   "branch": "feat/tasks-planner-v2-connectivity"
   },
   {
    "number": 1907,
@@ -8634,189 +9331,9 @@
    "title": "feat(maint): ParityTable → universal-list contract + §7 active colors (PR-3, KEYSTONE — do not auto-merge)",
    "mergedAt": "2026-06-22T03:16:07Z",
    "branch": "feat/maint-paritytable-universal-list"
-  },
-  {
-   "number": 1302,
-   "title": "feat(maint): §7 palette — recolor accent classes to slate + guard classes (PR-2)",
-   "mergedAt": "2026-06-22T02:39:48Z",
-   "branch": "feat/maint-section7-recolor-classes"
-  },
-  {
-   "number": 1301,
-   "title": "feat(maint): §7 palette tokens + accent-hex guard (foundation; supersede package #185fa5)",
-   "mergedAt": "2026-06-22T02:26:16Z",
-   "branch": "feat/maint-section7-palette-tokens"
-  },
-  {
-   "number": 1300,
-   "title": "Feat/chain 03 bill gl step2",
-   "mergedAt": "2026-06-22T02:22:37Z",
-   "branch": "feat/chain-03-bill-gl-step2"
-  },
-  {
-   "number": 1299,
-   "title": "[HOLD-FOR-JORGE] CHAIN-03 STEP-2: one canonical bill resolver + flag-gated Bill→GL post (TRANSP only)",
-   "mergedAt": "2026-06-22T02:10:47Z",
-   "branch": "feat/chain-03-bill-gl-step2"
-  },
-  {
-   "number": 1298,
-   "title": "[HOLD-FOR-JORGE] CHAIN-03 STEP-1: Create Bill → GL DRAFT-JE proof (TRANSP only, writes nothing)",
-   "mergedAt": "2026-06-22T02:21:58Z",
-   "branch": "feat/chain-03-bill-gl-draft-step1"
-  },
-  {
-   "number": 1296,
-   "title": "docs(maintenance): PM-SCHEDULE-TABLE-CONSOLIDATION design-first finding (#37)",
-   "mergedAt": "2026-06-21T21:08:31Z",
-   "branch": "docs/pm-schedule-table-consolidation-design"
-  },
-  {
-   "number": 1295,
-   "title": "fix(maintenance): PM auto-engine reads live odometer too (#37 part 2a)",
-   "mergedAt": "2026-06-21T20:52:01Z",
-   "branch": "fix/pm-auto-engine-live-odometer"
-  },
-  {
-   "number": 1294,
-   "title": "fix(maintenance): PM countdown reads live odometer, not empty webhook payload (#37)",
-   "mergedAt": "2026-06-21T20:32:51Z",
-   "branch": "fix/pm-countdown-live-odometer"
-  },
-  {
-   "number": 1293,
-   "title": "fix(dispatch): wire real per-load profitability card into LoadDetailDrawer (DISP-PROFIT #3)",
-   "mergedAt": "2026-06-21T19:39:11Z",
-   "branch": "fix/disp-profit-card-wired"
-  },
-  {
-   "number": 1292,
-   "title": "chore(samsara): probe A-vs-B engineStates regression check (#7 disambiguation)",
-   "mergedAt": "2026-06-21T19:31:06Z",
-   "branch": "chore/samsara-odometer-probe-avsb"
-  },
-  {
-   "number": 1291,
-   "title": "fix(insurance): coverage-gap counts UNITS not assets (GUARD #40 / INS-COVERAGE)",
-   "mergedAt": "2026-06-21T19:26:16Z",
-   "branch": "fix/ins-coverage-gap-counts-units"
-  },
-  {
-   "number": 1290,
-   "title": "chore(samsara): probe obdOdometerMeters stats types (FINISH-OPS #7 proof, diagnostic-only)",
-   "mergedAt": "2026-06-21T19:08:01Z",
-   "branch": "chore/samsara-odometer-probe"
-  },
-  {
-   "number": 1289,
-   "title": "[HOLD-FOR-JORGE] telematics: Samsara odometer ingest (Block E #13 / FINISH-OPS #7)",
-   "mergedAt": "2026-06-21T20:17:09Z",
-   "branch": "feat/samsara-odometer-ingest"
-  },
-  {
-   "number": 1288,
-   "title": "docs(insurance): INS-COVERAGE assets-vs-units coverage-gap diagnosis (#22)",
-   "mergedAt": "2026-06-21T18:36:55Z",
-   "branch": "docs/ins-coverage-assets-units-diagnosis"
-  },
-  {
-   "number": 1287,
-   "title": "[HOLD-FOR-JORGE] catalogs: Cargo Claim Reasons (#8) — new table + CRUD + page (FINAL)",
-   "mergedAt": "2026-06-21T17:48:38Z",
-   "branch": "feat/catalog-cargo-claim-reasons"
-  },
-  {
-   "number": 1286,
-   "title": "[HOLD-FOR-JORGE] catalogs: DOT Violation Types (#7) — new table + CRUD + page",
-   "mergedAt": "2026-06-21T17:30:56Z",
-   "branch": "feat/catalog-dot-violation-types"
-  },
-  {
-   "number": 1285,
-   "title": "feat(catalogs): Brokers directory (#3) — filtered view over customer_type='broker'",
-   "mergedAt": "2026-06-21T17:11:20Z",
-   "branch": "feat/catalog-brokers"
-  },
-  {
-   "number": 1284,
-   "title": "feat(catalogs): Termination Reasons catalog (#10) — Owner-gated CRUD + page",
-   "mergedAt": "2026-06-21T16:50:08Z",
-   "branch": "feat/catalog-termination-reasons"
-  },
-  {
-   "number": 1283,
-   "title": "feat(catalogs): Complaint Types catalog (#6) — safety CRUD endpoint + page",
-   "mergedAt": "2026-06-21T16:31:19Z",
-   "branch": "feat/catalog-complaint-types"
-  },
-  {
-   "number": 1282,
-   "title": "feat(catalogs): Load Cancellation Reasons catalog page (#9) — frontend wire-up of existing endpoint",
-   "mergedAt": "2026-06-21T16:11:00Z",
-   "branch": "feat/catalog-load-cancellation-reasons"
-  },
-  {
-   "number": 1281,
-   "title": "[HOLD-FOR-JORGE] gate v2: target-aware ALTER own-new-table neutral",
-   "mergedAt": "2026-06-21T04:31:00Z",
-   "branch": "chore/gate-alter-own-new-table"
-  },
-  {
-   "number": 1280,
-   "title": "fix(catalogs): create mdata.maintenance_services table (services-cata…",
-   "mergedAt": "2026-06-21T04:41:07Z",
-   "branch": "fix/maintenance-services-table"
-  },
-  {
-   "number": 1278,
-   "title": "[HOLD-FOR-JORGE] gate: CREATE-TABLE-only neutral (allow purely-additive new-table migrations)",
-   "mergedAt": "2026-06-21T03:58:16Z",
-   "branch": "chore/gate-create-table-neutral"
-  },
-  {
-   "number": 1277,
-   "title": "docs(catalogs): A1b CATALOG-AUDIT-RUN — lock live classification + finalize A2.. build order",
-   "mergedAt": "2026-06-21T03:31:11Z",
-   "branch": "docs/catalog-audit-run"
-  },
-  {
-   "number": 1276,
-   "title": "docs(catalogs): A1 CATALOG-AUDIT-LIVE — catalog inventory + STUB build-order + read-only auditor",
-   "mergedAt": "2026-06-21T02:52:15Z",
-   "branch": "chore/catalog-audit-live"
-  },
-  {
-   "number": 1275,
-   "title": "fix(drivers): AUTO-01-FOLLOWUP — case-insensitive ?status= on /mdata/drivers",
-   "mergedAt": "2026-06-21T02:28:54Z",
-   "branch": "fix/drivers-status-case-insensitive"
-  },
-  {
-   "number": 1271,
-   "title": "fix(ci): HOLD-MERGE-GATE — block title-blind merge of HOLD/financial PRs",
-   "mergedAt": "2026-06-20T22:33:21Z",
-   "branch": "fix/hold-merge-gate"
-  },
-  {
-   "number": 1270,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-05 (CHAIN-07) — settlements 500 diagnosis + GL tie-out design",
-   "mergedAt": "2026-06-20T21:13:38Z",
-   "branch": "hold/hold-05-chain-07-settlements-tieout"
-  },
-  {
-   "number": 1269,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-04 (CHAIN-06) — Invoice→AR→Receive chain design",
-   "mergedAt": "2026-06-20T21:13:25Z",
-   "branch": "hold/hold-04-chain-06-invoice-ar-receive"
-  },
-  {
-   "number": 1268,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-03 (CHAIN-05) — bank feed categorize→match→post chain design",
-   "mergedAt": "2026-06-20T21:13:10Z",
-   "branch": "hold/hold-03-chain-05-bank-feed-post"
   }
  ],
- "merged_pr_total": 1809,
+ "merged_pr_total": 1839,
  "hold_for_jorge": [
   {
    "number": 1919,
@@ -8829,6 +9346,12 @@
    "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo): close bank_transaction write-back hole (M7 / IMPORT-P0b gap)",
    "mergedAt": "2026-07-04T00:10:16Z",
    "category": "TIER-1 financial"
+  },
+  {
+   "number": 1908,
+   "title": "[HOLD-FOR-JORGE] feat(tasks): Tasks Planner v2 — entity/record links, profiles, alarms, transaction-side completion",
+   "mergedAt": "2026-07-04T00:58:03Z",
+   "category": "HOLD"
   },
   {
    "number": 1897,

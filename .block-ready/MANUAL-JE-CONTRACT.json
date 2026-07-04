@@ -1,0 +1,15 @@
+{
+  "block_id": "MANUAL-JE-CONTRACT",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Manual JE create/void 400 contract fix",
+  "branch": "fix/manual-je-contract-hold",
+  "allowed_files": [
+    ".block-ready/_markers/MANUAL-JE-CONTRACT.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

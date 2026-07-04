@@ -1,0 +1,15 @@
+{
+  "block_id": "AR-AP-PAYMENT-CONTRACT",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "AR+AP payment recording 400 contract fix",
+  "branch": "fix/ar-ap-payment-recording-contract-hold",
+  "allowed_files": [
+    ".block-ready/_markers/AR-AP-PAYMENT-CONTRACT.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

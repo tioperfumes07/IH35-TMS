@@ -1,0 +1,15 @@
+{
+  "block_id": "BANKING-CATEGORIZE-C1",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Banking categorize Post/Match real contract (unblock 2650 txns)",
+  "branch": "fix/banking-categorize-contract-c1",
+  "allowed_files": [
+    ".block-ready/_markers/BANKING-CATEGORIZE-C1.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-COMPLIANCE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-SWEEP",
+  "task": "§7 visual sweep for compliance — 20 palette/date/box/vocab fixes",
+  "branch": "fix/visual-compliance",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-COMPLIANCE.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

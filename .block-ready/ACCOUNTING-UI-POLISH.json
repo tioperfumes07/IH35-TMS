@@ -1,0 +1,15 @@
+{
+  "block_id": "ACCOUNTING-UI-POLISH",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Register US dates, drop yellow pills, honest toast",
+  "branch": "fix/accounting-ui-polish-batch",
+  "allowed_files": [
+    ".block-ready/_markers/ACCOUNTING-UI-POLISH.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
