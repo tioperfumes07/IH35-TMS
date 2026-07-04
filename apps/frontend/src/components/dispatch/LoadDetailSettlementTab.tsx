@@ -31,10 +31,10 @@ type Props = {
 };
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  open: { label: "Open (pre-settlement)", className: "bg-amber-100 text-amber-800" },
+  open: { label: "Open (pre-settlement)", className: "bg-slate-100 text-slate-700" },
   closed: { label: "Closed", className: "bg-slate-100 text-slate-700" },
   finalized: { label: "Finalized", className: "bg-slate-100 text-slate-700" },
-  paid: { label: "Paid", className: "bg-green-100 text-green-800" },
+  paid: { label: "Paid", className: "bg-slate-100 text-slate-700" },
   void: { label: "Void", className: "bg-red-100 text-red-700" },
 };
 
@@ -117,7 +117,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
         <div className="flex flex-col items-end gap-1">
           {statusBadge(settlement.status)}
           {settlement.is_open && (
-            <span className="text-[10px] text-amber-600">Awaiting southbound return to close</span>
+            <span className="text-[10px] text-slate-600">Awaiting southbound return to close</span>
           )}
         </div>
       </div>
