@@ -10,6 +10,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
   operatingCompanyId?: string;
@@ -121,7 +122,7 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id} className="border-b border-gray-100">
-                  <td className="px-2 py-1.5 text-gray-800">{row.due_date}</td>
+                  <td className="px-2 py-1.5 text-gray-800">{formatDateUS(row.due_date)}</td>
                   <td className="px-2 py-1.5 text-gray-700">{formatMoney(row.amount_cents)}</td>
                   <td className="px-2 py-1.5 text-gray-700">{formatMoney(row.late_fee_cents)}</td>
                   <td className="px-2 py-1.5">

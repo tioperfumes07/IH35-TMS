@@ -371,7 +371,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               ))}
             </div>
             {selectedUnitIds.length === 0 && (
-              <p className="text-xs text-amber-700">Select at least one vehicle to continue.</p>
+              <p className="text-xs text-slate-700">Select at least one vehicle to continue.</p>
             )}
             <div className="max-h-52 overflow-y-auto rounded-sm border border-gray-200 p-2">
               {unitsQuery.isLoading ? (
@@ -447,10 +447,10 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               </div>
             </Field>
             {premiumCents > 0 && termMonths > 0 && selectedUnitIds.length > 0 ? (
-              <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-4 py-3">
-                <p className="text-xs font-semibold text-emerald-800">Cost per vehicle insured per month</p>
-                <p className="mt-0.5 text-lg font-bold text-emerald-700">{costInfo.costPerVehicleDisplay}</p>
-                <p className="mt-0.5 text-xs text-emerald-600">
+              <div className="rounded-sm border border-slate-200 bg-slate-100 px-4 py-3">
+                <p className="text-xs font-semibold text-slate-700">Cost per vehicle insured per month</p>
+                <p className="mt-0.5 text-lg font-bold text-slate-700">{costInfo.costPerVehicleDisplay}</p>
+                <p className="mt-0.5 text-xs text-slate-600">
                   {selectedUnitIds.length} vehicle{selectedUnitIds.length !== 1 ? "s" : ""} ·{" "}
                   {formatMoney(costInfo.totalMonthlyPremiumCents)} / mo total · {termMonths} month term
                 </p>
@@ -482,7 +482,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold text-slate-700">Per vehicle / mo</span>
-                <span className="font-semibold text-emerald-700">{costInfo.costPerVehicleDisplay}</span>
+                <span className="font-semibold text-slate-700">{costInfo.costPerVehicleDisplay}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold text-slate-700">Allocation</span>

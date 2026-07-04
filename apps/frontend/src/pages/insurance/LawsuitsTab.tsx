@@ -7,6 +7,7 @@ import { LawsuitCreateModal } from "../../components/insurance/LawsuitCreateModa
 import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
   operatingCompanyId?: string;
@@ -129,7 +130,7 @@ function LawsuitRow({ lawsuit }: { lawsuit: InsuranceLawsuit }) {
         )}
       </td>
       <td className="px-2 py-1.5 text-gray-700">{lawsuit.court_name}</td>
-      <td className="px-2 py-1.5 text-gray-700">{lawsuit.filed_date}</td>
+      <td className="px-2 py-1.5 text-gray-700">{formatDateUS(lawsuit.filed_date)}</td>
       <td className="px-2 py-1.5 text-gray-700">{formatMoney(lawsuit.demand_cents)}</td>
       <td className="px-2 py-1.5 text-gray-700">{formatMoney(lawsuit.settlement_cents)}</td>
     </tr>
