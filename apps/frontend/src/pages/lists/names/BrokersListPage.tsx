@@ -8,7 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 function statusPillClass(status: string) {
   return status === "active"
-    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
+    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
     : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 

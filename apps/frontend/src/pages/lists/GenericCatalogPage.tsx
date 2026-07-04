@@ -83,7 +83,7 @@ export function GenericCatalogPage({ catalogName: catalogNameProp }: Props) {
     return (
       <div className="space-y-3">
         <ListsSubNav />
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-sm text-slate-700">
           Unknown or unsupported catalog route
           {params.domain && params.catalogKey ? `: ${params.domain}/${params.catalogKey}` : "."}
         </div>
