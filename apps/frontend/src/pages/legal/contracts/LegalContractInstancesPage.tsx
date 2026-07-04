@@ -225,7 +225,7 @@ export function LegalContractInstancesPage() {
             size="sm"
             variant="secondary"
             disabled
-            title="Coming soon — bulk void is not yet wired to a backend endpoint"
+            title="Bulk void not yet wired to a backend endpoint"
           >
             Void
           </Button>
