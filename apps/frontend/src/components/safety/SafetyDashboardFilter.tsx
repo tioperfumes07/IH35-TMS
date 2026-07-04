@@ -8,6 +8,9 @@ type Props = {
   onActivityWindowChange: (next: SafetyActivityWindow) => void;
   shown: number;
   total: number;
+  // SM3: the counter line only renders when the active tab has reported counts. Tabs that do not feed
+  // the bar therefore show no counter instead of a permanent, misleading "0 active · 0 resolved · 0 total".
+  countsReported?: boolean;
 };
 
 const STATUS_OPTIONS: Array<{ id: SafetyDriverFilter; label: string }> = [
@@ -37,6 +40,7 @@ export function SafetyDashboardFilter({
   onActivityWindowChange,
   shown,
   total,
+  countsReported = false,
 }: Props) {
   const hidden = Math.max(0, total - shown);
   return (
@@ -76,9 +80,11 @@ export function SafetyDashboardFilter({
             </button>
           );
         })}
-        <span className="ml-auto text-slate-400">
-          {shown} active · {hidden} resolved · {total} total · window {activityWindow}
-        </span>
+        {countsReported ? (
+          <span className="ml-auto text-slate-400" data-testid="safety-counter-line">
+            {shown} active · {hidden} resolved · {total} total · window {activityWindow}
+          </span>
+        ) : null}
       </div>
     </div>
   );
