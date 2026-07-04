@@ -174,7 +174,7 @@ export function CategorizationRulesPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Auto-Categorize Rules" subtitle="Map Plaid category patterns to Chart of Accounts" />
+      <PageHeader backHref="/banking" title="Auto-Categorize Rules" subtitle="Map Plaid category patterns to Chart of Accounts" />
       {rulesQuery.isError || previewQuery.isError || accountsQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">

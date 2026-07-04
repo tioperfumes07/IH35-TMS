@@ -152,7 +152,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const headerActions =
     activeTab === "accounts" ? (
       <div className="flex flex-wrap items-center gap-2">
-        <ActionButton>+ Import Statement</ActionButton>
+        <span title="Import a statement CSV from the Transactions tab (per bank account).">
+          <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>+ Import Statement</ActionButton>
+        </span>
         <ActionButton onClick={() => setManageOpen(true)}>+ Create Account / Manage Accounts</ActionButton>
         <PlaidLinkButton
           operatingCompanyId={companyId}
