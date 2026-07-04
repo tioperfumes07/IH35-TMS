@@ -76,6 +76,8 @@ export function InventoryPartsStockPage() {
     <div className="space-y-4">
       <PageHeader
         title="Parts & Stock"
+        backHref="/"
+        breadcrumb={["Inventory", "Parts & Stock"]}
         actions={
           <Button onClick={() => setIsCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-2" /> Create part
