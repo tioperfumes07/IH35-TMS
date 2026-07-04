@@ -127,8 +127,22 @@ export function QboStyleHomePage({ auth }: Props) {
           <p className="mt-0.5 text-sm text-gray-500">Here's what's happening with your business today.</p>
         </div>
         <div className="flex gap-2 text-xs text-gray-400">
-          <button type="button" className="rounded-sm px-2 py-1 hover:bg-gray-100">Customize</button>
-          <button type="button" className="rounded-sm px-2 py-1 hover:bg-gray-100">Privacy</button>
+          <button
+            type="button"
+            disabled
+            title="Coming soon"
+            className="rounded-sm px-2 py-1 text-gray-300 cursor-not-allowed"
+          >
+            Customize
+          </button>
+          <button
+            type="button"
+            disabled
+            title="Coming soon"
+            className="rounded-sm px-2 py-1 text-gray-300 cursor-not-allowed"
+          >
+            Privacy
+          </button>
         </div>
       </div>
 
