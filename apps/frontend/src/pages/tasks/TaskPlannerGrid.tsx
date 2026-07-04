@@ -18,13 +18,14 @@ import {
 } from "../../api/tasks";
 import { UniversalFilterBar, type FilterState } from "../../components/planner/UniversalFilterBar";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
   pending:     "bg-gray-100 text-gray-700 border-gray-300",
   in_progress: "bg-slate-100 text-slate-700 border-slate-300",
   blocked:     "bg-red-50 text-red-800 border-red-300",
-  review:      "bg-yellow-50 text-yellow-800 border-yellow-300",
-  completed:   "bg-green-50 text-green-800 border-green-300",
+  review:      "bg-slate-100 text-slate-700 border-slate-300",
+  completed:   "bg-slate-100 text-slate-800 border-slate-300",
   cancelled:   "bg-gray-50 text-gray-400 border-gray-200 line-through",
 };
 
@@ -63,7 +64,7 @@ function ProgressBar({ pct }: { pct: number }) {
     <div className="mt-0.5 flex items-center gap-1">
       <div className="relative h-1.5 flex-1 rounded-full bg-gray-200 overflow-hidden">
         <div
-          className="h-full rounded-full bg-green-500 transition-all"
+          className="h-full rounded-full bg-slate-600 transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -89,7 +90,7 @@ function TaskDrawer({ task, onClose }: DrawerProps) {
         <div><span className="text-gray-500">Status: </span><span className={`inline-block rounded-sm px-1 ${STATUS_COLORS[task.status]}`}>{statusLabel[task.status]}</span></div>
         {task.task_type_name && <div><span className="text-gray-500">Type: </span>{task.task_type_name}</div>}
         <div><span className="text-gray-500">Category: </span>{task.category}</div>
-        <div><span className="text-gray-500">Date: </span>{task.scheduled_date}</div>
+        <div><span className="text-gray-500">Date: </span>{formatDateUS(task.scheduled_date)}</div>
         {task.start_time && <div><span className="text-gray-500">Start: </span>{task.start_time}</div>}
         {task.location && <div><span className="text-gray-500">Location: </span>{task.location}</div>}
         {task.estimated_minutes != null && <div><span className="text-gray-500">Est: </span>{task.estimated_minutes}m</div>}
@@ -214,7 +215,7 @@ export function TaskPlannerGrid() {
                   return (
                     <th
                       key={d}
-                      className={`border border-gray-200 px-1 py-1 text-center text-[10px] font-semibold ${isToday ? "bg-green-50 text-green-700" : "text-gray-600"}`}
+                      className={`border border-gray-200 px-1 py-1 text-center text-[10px] font-semibold ${isToday ? "bg-slate-100 text-slate-700" : "text-gray-600"}`}
                     >
                       <div>{fmtDow(d)}</div>
                       <div className="text-[9px] font-normal opacity-70">{fmtMD(d)}</div>

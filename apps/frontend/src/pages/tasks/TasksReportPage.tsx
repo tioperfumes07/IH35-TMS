@@ -133,7 +133,7 @@ export function TasksReportPage() {
                 <tr key={r.name} className="border-t border-slate-100">
                   <td className="px-3 py-2 font-medium text-slate-800">{r.name}</td>
                   <td className="px-3 py-2 text-slate-600">{r.total}</td>
-                  <td className="px-3 py-2 text-green-700">{r.completed}</td>
+                  <td className="px-3 py-2 text-slate-600">{r.completed}</td>
                   <td className="px-3 py-2 text-slate-600">{r.open}</td>
                   <td className={`px-3 py-2 ${r.overdue > 0 ? "font-semibold text-red-700" : "text-slate-600"}`}>{r.overdue}</td>
                   <td className="px-3 py-2 text-slate-600">{r.avgActualMinutes ?? "—"}</td>
