@@ -85,6 +85,10 @@ export function requestUploadUrl(payload: {
   sha256_hash?: string;
   category_id?: string;
   entity_links?: Array<{ entity_type: FileEntityType; entity_id: string }>;
+  /** The active company to file the upload under. Pass this whenever the file will later be read scoped to a
+   *  specific company (e.g. rate-con extract) — otherwise the server files it under the lowest-UUID company
+   *  the user can access, and the scoped read 404s. Server verifies access before honoring it. */
+  operating_company_id?: string;
 }) {
   return apiRequest<{
     file_id: string;
