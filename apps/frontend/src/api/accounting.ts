@@ -920,16 +920,19 @@ export function createJournalEntry(
     }>;
   }
 ) {
+  // The backend createJournalEntryBodySchema requires operating_company_id in the BODY (not just the
+  // query string withCompany adds). Without it every "+ Create" JE save 400'd. Send it in both.
   return apiRequest<JournalEntry>(withCompany("/api/v1/accounting/journal-entries", operatingCompanyId), {
     method: "POST",
-    body: payload,
+    body: { ...payload, operating_company_id: operatingCompanyId },
   });
 }
 
 export function voidJournalEntry(id: string, operatingCompanyId: string, reason: string) {
+  // voidBodySchema also requires operating_company_id in the body — send it (not just the query).
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/journal-entries/${id}/void`, operatingCompanyId), {
     method: "POST",
-    body: { reason },
+    body: { reason, operating_company_id: operatingCompanyId },
   });
 }
 

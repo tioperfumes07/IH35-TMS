@@ -15,7 +15,7 @@ const fmtBytes = (n: number) =>
 const STATUS_COLOR: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700", posted: "bg-emerald-100 text-emerald-800",
   void: "bg-red-100 text-red-700", approved: "bg-slate-100 text-slate-700",
-  pending_approval: "bg-yellow-100 text-yellow-800",
+  pending_approval: "bg-slate-100 text-slate-700",
 };
 
 function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId: string; onClose: () => void }) {

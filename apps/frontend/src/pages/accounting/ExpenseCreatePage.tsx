@@ -20,7 +20,7 @@ export function ExpenseCreatePage() {
             operatingCompanyId={companyId}
             idPrefix="record-expense-page"
             onSubmitted={(created) => {
-              pushToast("Expense recorded as vendor bill", "success");
+              pushToast("Expense recorded", "success");
               setLastExpenseId(created?.targetId ?? null);
             }}
           />
