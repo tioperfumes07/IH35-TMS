@@ -156,7 +156,7 @@ export function VehicleProfilePage() {
   return (
     <div className="space-y-3 p-4 pb-24">
       <div className="flex items-center justify-between gap-2">
-        <PageHeader title={`Unit ${unitNumber}`} subtitle="Vehicle profile · fleet unit" />
+        <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile · fleet unit" />
         <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} />
       </div>
       {profileQuery.isError ? <ListErrorBanner onRetry={() => void profileQuery.refetch()} /> : null}
