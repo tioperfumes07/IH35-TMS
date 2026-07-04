@@ -45,6 +45,38 @@ function isCarrier(v: VendorOption): boolean {
   return String(v.vendor_type ?? "").toLowerCase().includes("carrier");
 }
 
+// VISUAL2: honest client-side CSV export (mirrors useListExport's Blob-download pattern) so the
+// bulk "Export CSV" button actually produces a file instead of firing a fake success toast.
+function toCsvCell(value: string): string {
+  const s = value.replace(/"/g, '""');
+  return /[",\n\r]/.test(s) ? `"${s}"` : s;
+}
+
+function exportVendorsCsv(rows: VendorOption[], openByVendorId: Map<string, number>) {
+  const header = ["Name", "Email", "Phone", "Vendor Type", "Open Balance", "Quality", "FMCSA Authority", "Last Transaction", "Created"];
+  const body = rows.map((v) =>
+    [
+      v.name ?? "",
+      v.email ?? "",
+      v.phone ?? "",
+      v.vendor_type ?? "",
+      fmtMoney(openByVendorId.get(v.id) ?? 0),
+      vendorQualityLabel(v.notes).label,
+      isCarrier(v) ? "Carrier" : "",
+      v.updated_at ? new Date(v.updated_at).toLocaleDateString() : "",
+      v.created_at ? new Date(v.created_at).toLocaleDateString() : "",
+    ].map(toCsvCell).join(",")
+  );
+  const csv = [header.map(toCsvCell).join(","), ...body].join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `vendors-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 type Props = {
   companyId: string;
   vendors: VendorOption[];
@@ -163,7 +195,16 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             {
               id: "export",
               label: "Export CSV",
-              onClick: () => pushToast(`Export queued for ${selection.count} vendor(s).`, "success"),
+              onClick: () => {
+                const ids = new Set(selection.selectedIds);
+                const rows = vendors.filter((v) => ids.has(v.id));
+                if (rows.length === 0) {
+                  pushToast("Select at least one vendor to export.", "info");
+                  return;
+                }
+                exportVendorsCsv(rows, openByVendorId);
+                pushToast(`Exported ${rows.length} vendor(s) to CSV.`, "success");
+              },
             },
           ],
           bulkMutation.isPending
