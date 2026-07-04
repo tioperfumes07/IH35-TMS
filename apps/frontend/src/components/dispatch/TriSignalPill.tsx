@@ -7,8 +7,8 @@ type Props = {
 
 function pillClass(signal: TriSignalResult["signal"]) {
   if (signal === "delayed") return "bg-red-100 text-red-700";
-  if (signal === "behind") return "bg-slate-100 text-slate-700";
-  return "bg-slate-100 text-slate-700";
+  if (signal === "behind") return "bg-amber-100 text-amber-800";
+  return "bg-emerald-100 text-emerald-800";
 }
 
 function pillLabel(signal: TriSignalResult["signal"]) {
