@@ -16,6 +16,7 @@ import {
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { taskStatusLabel } from "./taskDisplay";
 import { activeMentionToken, keptMentionIds } from "./tasksChatMentions";
+import { formatDateUS } from "../../lib/formatDate";
 
 // TASK-3 Team Chat — task-scoped collaboration (option a). Threaded comments on a task +
 // @mention of employees + a per-task activity feed. Lives INSIDE the Tasks module; NOT a
@@ -199,7 +200,7 @@ export function TasksChatPage() {
                     >
                       <div className="font-medium">{t.title}</div>
                       <div className="mt-0.5 text-[10px] text-slate-500">
-                        {t.scheduled_date} · {taskStatusLabel(t.status)}
+                        {formatDateUS(t.scheduled_date)} · {taskStatusLabel(t.status)}
                       </div>
                     </button>
                   </li>
@@ -222,7 +223,7 @@ export function TasksChatPage() {
                   <div className="text-sm font-semibold text-[#1f2a44]">{selectedTask?.title ?? "Task"}</div>
                   {selectedTask ? (
                     <div className="mt-0.5 text-[11px] text-slate-500">
-                      {selectedTask.scheduled_date} · {taskStatusLabel(selectedTask.status)}
+                      {formatDateUS(selectedTask.scheduled_date)} · {taskStatusLabel(selectedTask.status)}
                     </div>
                   ) : null}
                 </div>

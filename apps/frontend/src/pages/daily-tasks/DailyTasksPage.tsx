@@ -61,10 +61,10 @@ function toDateTimeLocalValue(value: Date): string {
 }
 
 function statusBadge(status: DailyTask["status"]) {
-  if (status === "completed") return "bg-emerald-100 text-emerald-800";
+  if (status === "completed") return "bg-slate-100 text-slate-800";
   if (status === "accepted") return "bg-slate-100 text-slate-700";
   if (status === "cancelled") return "bg-zinc-200 text-zinc-700";
-  return "bg-amber-100 text-amber-800";
+  return "bg-slate-100 text-slate-700";
 }
 
 function priorityBadge(priority: DailyTask["priority"]) {
@@ -244,7 +244,7 @@ export function DailyTasksPage() {
       </div>
 
       {!companyId ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select an operating company first.</div>
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">Select an operating company first.</div>
       ) : null}
 
       <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">

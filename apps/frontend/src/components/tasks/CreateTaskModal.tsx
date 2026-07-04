@@ -275,7 +275,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
               className="whitespace-nowrap rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-gray-50"
               onClick={() => setShowAddProfile((v) => !v)}
             >
-              + Add profile
+              + Create profile
             </button>
           </div>
           {showAddProfile ? (

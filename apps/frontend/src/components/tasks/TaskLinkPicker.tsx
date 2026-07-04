@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { createTaskLink, fetchTasks, type Task, type TaskTargetType } from "../../api/tasks";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -88,7 +89,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
                       {t.title}
                       {t.anticipated_category ? <span className="ml-1 text-[11px] text-slate-500">({t.anticipated_category})</span> : null}
                     </td>
-                    <td className="py-1.5 pr-3 text-gray-600">{t.scheduled_date ?? "—"}</td>
+                    <td className="py-1.5 pr-3 text-gray-600">{formatDateUS(t.scheduled_date) || "—"}</td>
                     <td className="py-1.5 pr-3 text-gray-600">{t.assigned_to_name ?? "—"}</td>
                     <td className="py-1.5 pr-3">
                       <button

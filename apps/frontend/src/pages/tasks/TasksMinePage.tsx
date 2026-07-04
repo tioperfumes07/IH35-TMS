@@ -6,6 +6,7 @@ import { getMe } from "../../api/identity";
 import { fetchPlannerTasks } from "../../api/tasks";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { TASK_STATUS_BADGE, isOpenTaskStatus, priorityLabel, taskStatusLabel } from "./taskDisplay";
+import { formatDateUS } from "../../lib/formatDate";
 
 // TASK-2: My Tasks — the current user's assigned tasks (was an unbuilt placeholder). Reads the
 // existing /api/v1/tasks/planner endpoint filtered by assigned_to = current user.
@@ -75,7 +76,7 @@ export function TasksMinePage() {
                   <td
                     className={`px-3 py-2 ${isOpenTaskStatus(t.status) && t.scheduled_date < today ? "font-semibold text-red-700" : "text-slate-600"}`}
                   >
-                    {t.scheduled_date}
+                    {formatDateUS(t.scheduled_date)}
                   </td>
                   <td className="px-3 py-2 text-slate-600">{priorityLabel(t.priority)}</td>
                   <td className="px-3 py-2">
