@@ -48,3 +48,52 @@ describe("rateConExtractionToPrefill", () => {
     expect(notes).toContain("Ref: RC-9001");
   });
 });
+
+import { splitAddressTail } from "./rateConPrefill";
+
+describe("splitAddressTail — recover city/state/zip fused into the street", () => {
+  it("splits '<street>, <City>, <ST> <ZIP>'", () => {
+    expect(splitAddressTail("695 Summa Ave, Amityville, NY 11701")).toEqual({
+      line1: "695 Summa Ave",
+      city: "Amityville",
+      state: "NY",
+      zip: "11701",
+    });
+  });
+
+  it("splits without a zip", () => {
+    expect(splitAddressTail("3909 S County Rd 1290, Midland, TX")).toEqual({
+      line1: "3909 S County Rd 1290",
+      city: "Midland",
+      state: "TX",
+      zip: null,
+    });
+  });
+
+  it("leaves an already-split street untouched (no tail match)", () => {
+    expect(splitAddressTail("1 Dock Rd")).toEqual({ line1: "1 Dock Rd", city: null, state: null, zip: null });
+  });
+
+  it("handles empty/undefined", () => {
+    expect(splitAddressTail(null)).toEqual({ line1: "", city: null, state: null, zip: null });
+  });
+});
+
+describe("toBookStop address recovery via rateConExtractionToPrefill", () => {
+  it("recovers city/state from a fused address when the model left city null", () => {
+    const e: RateConExtraction = {
+      ...extraction,
+      stops: [
+        { type: "pickup", name: "Ship", address: "695 Summa Ave, Amityville, NY 11701", city: null, state: null, zip: null, date: null, time_window: null, appointment_required: false },
+        { type: "delivery", name: null, address: "1 Dock Rd", city: "Dallas", state: "TX", zip: null, date: null, time_window: null, appointment_required: false },
+      ],
+    };
+    const stops = rateConExtractionToPrefill(e).json.stops as Array<Record<string, unknown>>;
+    expect(stops[0].city).toBe("Amityville");
+    expect(stops[0].state).toBe("NY");
+    expect(stops[0].address_line1).toBe("695 Summa Ave");
+    // second stop already had a city → address left as-is
+    expect(stops[1].city).toBe("Dallas");
+    expect(stops[1].address_line1).toBe("1 Dock Rd");
+  });
+});
