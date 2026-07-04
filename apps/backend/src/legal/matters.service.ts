@@ -74,12 +74,27 @@ export const closeMatterSchema = z.object({
   outcome_summary: z.string().trim().min(10).max(10_000),
 });
 
+// Roles allowed to READ legal-matters (litigation data — office staff only, never drivers/portal).
+// Owner + Administrator at minimum; the remaining office roles preserve existing access.
+export const LEGAL_MATTERS_READ_ROLES = [
+  "Owner",
+  "Administrator",
+  "Manager",
+  "Accountant",
+  "Dispatcher",
+  "Safety",
+  "Mechanic",
+] as const;
+
+// Roles allowed to WRITE/manage legal-matters (create/update/close/documents/deadlines).
+export const LEGAL_MATTERS_MANAGE_ROLES = ["Owner", "Administrator"] as const;
+
 export function canManageLegalMatters(role: string) {
-  return role === "Owner" || role === "Administrator";
+  return (LEGAL_MATTERS_MANAGE_ROLES as readonly string[]).includes(role);
 }
 
 export function canAccessLegalMattersOffice(role: string) {
-  return ["Owner", "Administrator", "Manager", "Accountant", "Dispatcher", "Safety", "Mechanic"].includes(role);
+  return (LEGAL_MATTERS_READ_ROLES as readonly string[]).includes(role);
 }
 
 async function setOperatingCompany(client: QueryableClient, operatingCompanyId: string) {

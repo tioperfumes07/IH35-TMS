@@ -7,14 +7,14 @@ import {
   addMatterDeadlineRow,
   addMatterDocumentRow,
   addMatterEventRow,
-  canAccessLegalMattersOffice,
-  canManageLegalMatters,
   closeMatter,
   closeMatterSchema,
   completeMatterDeadline,
   createMatter,
   getMatter,
   getMatterDocumentForDownload,
+  LEGAL_MATTERS_MANAGE_ROLES,
+  LEGAL_MATTERS_READ_ROLES,
   legalMattersReportsSummary,
   listMatters,
   matterCreateSchema,
@@ -59,6 +59,16 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
+// Legal matters hold litigation evidence — gate every handler on role, the same way other sensitive
+// routes do (docs/files.routes.ts). Reads: office roles; writes: Owner/Administrator only.
+function requireRole(reply: FastifyReply, role: string, allowed: readonly string[]) {
+  if (!allowed.includes(role)) {
+    reply.code(403).send({ error: "forbidden" });
+    return false;
+  }
+  return true;
+}
+
 async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: PoolClient) => Promise<T>) {
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
@@ -71,7 +81,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.get("/api/v1/legal/matters/reports/summary", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canAccessLegalMattersOffice(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const parsed = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const summary = await withCompanyScope(authUser.uuid, parsed.data.operating_company_id, async (client) =>
@@ -83,7 +93,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.get("/api/v1/legal/matters", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canAccessLegalMattersOffice(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const rows = await withCompanyScope(authUser.uuid, parsed.data.operating_company_id, async (client) =>
@@ -103,7 +113,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.get("/api/v1/legal/matters/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canAccessLegalMattersOffice(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -123,7 +133,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.get("/api/v1/legal/matters/:id/documents/:documentId/download", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canAccessLegalMattersOffice(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const p = documentIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -146,7 +156,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.post("/api/v1/legal/matters", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canManageLegalMatters(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!q.success) return sendValidationError(reply, q.error);
     const body = matterCreateSchema.safeParse(req.body ?? {});
@@ -172,7 +182,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.patch("/api/v1/legal/matters/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canManageLegalMatters(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -194,7 +204,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.post("/api/v1/legal/matters/:id/close", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canManageLegalMatters(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -217,7 +227,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.post("/api/v1/legal/matters/:id/events", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canManageLegalMatters(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -238,7 +248,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.post("/api/v1/legal/matters/:id/documents", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canManageLegalMatters(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -283,7 +293,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.post("/api/v1/legal/matters/:id/deadlines", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canManageLegalMatters(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -304,7 +314,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.patch("/api/v1/legal/matters/:id/deadlines/:deadline_id/complete", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    if (!canManageLegalMatters(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = deadlineCompleteParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});

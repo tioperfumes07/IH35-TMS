@@ -236,19 +236,19 @@
       "preview": "`SELECT identity_user_id FROM mdata.drivers WHERE id = $1 LIMIT 1`"
     },
     {
-      "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#540601fae615a9b3d5cfe749f05e4f78d0eb1597",
+      "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#213f50bfb5d83b4dc194577b21fbc191f1b1c65d",
       "file": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
-      "preview": "` SELECT s.id, s.stop_type::text, loc.latitude, loc.longitude FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.loa"
+      "preview": "` SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude FROM mdata."
+    },
+    {
+      "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#2b2bd0cfd9bc7ca4e2adb99886c28480d96eb5e3",
+      "file": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
+      "preview": "` SELECT s.id, s.stop_type::text, l.status::text AS load_status, loc.latitude, loc.longitude FROM mdata.load_stops s JOI"
     },
     {
       "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#6b7feac4860c4f4cc3bbde3afc69b792f3c2728b",
       "file": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
       "preview": "` SELECT s.id, l.operating_company_id::text FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.load_id WHERE s.id = "
-    },
-    {
-      "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#80b74a335b89215100e155b52ebfe8ec475ff4a7",
-      "file": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
-      "preview": "` SELECT s.id, s.stop_type::text, s.status::text, loc.latitude, loc.longitude FROM mdata.load_stops s JOIN mdata.loads l"
     },
     {
       "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#c8ae4cb429c9283f825bddd728309dbfe7ef9994",

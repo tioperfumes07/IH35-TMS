@@ -493,6 +493,8 @@
     "verify:cmd-k-quick-switcher": "node scripts/verify-cmd-k-quick-switcher.mjs",
     "verify:mobile-responsive-audit": "node scripts/verify-mobile-responsive-audit.mjs",
     "verify:no-raw-frontend-api-fetch": "node scripts/verify-no-raw-frontend-api-fetch.mjs",
+    "verify:frontend-api-routes": "node scripts/verify-frontend-api-routes-exist.mjs",
+    "verify:legal-matters-role-gate": "node scripts/verify-legal-matters-role-gate.mjs",
     "verify:mdata-list-pagination": "node scripts/verify-mdata-list-pagination.mjs",
     "verify:driver-entity-default": "node scripts/verify-driver-entity-default.mjs",
     "verify:driver-profile-navigation": "node scripts/verify-driver-profile-navigation.mjs",
