@@ -121,3 +121,20 @@ court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation 
 *Cross-refs: `docs/lockdown/00_LOCKED_DECISIONS.md` §8 · `docs/specs/TMS-QBO-RECONCILIATION.md` ·
 `docs/specs/QBO-CLONE-PROGRAM.md` · QBO-IMPORT program blocks · auto-memory
 `qbo-import-design-corrections`, `cpa-locked-decisions-2026-07-01`, `driver-escrow-is-liability`.*
+
+---
+
+## Driver-pay / deduction / escrow engine — LOCKED owner decisions (2026-07-04)
+(Registered in `docs/lockdown/00_LOCKED_DECISIONS.md` §9; memory `[[audit-fix-decisions-2026-07-04]]`.)
+
+**Canonical deduction ledger** = `driver_finance.driver_settlement_deductions` (cents). The live settlement-close route writes deductions here and stamps `applied_to_settlement_id`; the FIN-18 GL poster sums them into the settlement JE. The `settlement_lines` auto_deduction path and the `payroll.*` engine are retired.
+
+**Net-pay floor** = **5% default, editable per settlement**. UI shows Accept / Edit-amount when applying deductions; terminal settlements may deduct up to the full final check.
+
+**Recovery ordering** = **pay first, then escrow** for the shortfall. Escrow (a held-in-trust LIABILITY, QBO-1150040187) is the last-resort buffer and must keep growing to cover fines that arrive after separation. Migration 0094's walkoff trigger is reworked to pay-first, single-charge (no app-chargeback + escrow double-charge).
+
+**Escrow return** = 60–90 days after separation, net of open claims; draws debit the Driver Escrow liability.
+
+**Deduction authorization** = the signed **hire contract** (no separate driver e-sign); the `driver_deduction_auth` consent gate is satisfied by it. Hire-contract template later built in the Legal module for new drivers.
+
+**Everything links to the load** — bills gain line items + `load_id`; diesel/expenses/repairs/maintenance/truck/trailer/driver all connect to the load. Never delete — archive only.
