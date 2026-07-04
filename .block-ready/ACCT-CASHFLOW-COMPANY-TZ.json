@@ -1,0 +1,15 @@
+{
+  "block_id": "ACCT-CASHFLOW-COMPANY-TZ",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Cash-position uses company TZ not UTC",
+  "branch": "fix/cash-flow-today-company-tz",
+  "allowed_files": [
+    ".block-ready/_markers/ACCT-CASHFLOW-COMPANY-TZ.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

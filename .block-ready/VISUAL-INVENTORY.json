@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-INVENTORY",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-SWEEP",
+  "task": "§7 visual sweep for inventory — 1 palette/date/box/vocab fixes",
+  "branch": "fix/visual-inventory",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-INVENTORY.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

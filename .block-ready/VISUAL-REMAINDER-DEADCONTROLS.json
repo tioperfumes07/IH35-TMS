@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-REMAINDER-DEADCONTROLS",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-REMAINDER",
+  "task": "Wire/make-honest 24 dead-control buttons (fake success toasts)",
+  "branch": "fix/visual-remainder-deadcontrols",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-REMAINDER-DEADCONTROLS.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

@@ -1,0 +1,15 @@
+{
+  "block_id": "FINAL-ADDITIONS-PAGE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Final Additions launch punch-list page",
+  "branch": "feat/final-additions-punchlist-page",
+  "allowed_files": [
+    ".block-ready/_markers/FINAL-ADDITIONS-PAGE.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

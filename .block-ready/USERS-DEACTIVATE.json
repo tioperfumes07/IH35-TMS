@@ -1,0 +1,15 @@
+{
+  "block_id": "USERS-DEACTIVATE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Users deactivate discoverable + non-silent",
+  "branch": "fix/users-deactivate-control",
+  "allowed_files": [
+    ".block-ready/_markers/USERS-DEACTIVATE.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

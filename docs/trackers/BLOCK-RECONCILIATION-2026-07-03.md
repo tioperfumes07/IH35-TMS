@@ -2,19 +2,19 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (7703 files) + 1809 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (7709 files) + 1839 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
 - **PENDING**: 4
-- **PENDING (GATED)**: 33
-- **NEEDS-VERIFY**: 3
-- **DONE**: 436
+- **PENDING (GATED)**: 44
+- **NEEDS-VERIFY**: 4
+- **DONE**: 471
 
-## Universe — why 476 blocks (the "456 vs 294 .block-ready" gap, explained)
+## Universe — why 523 blocks (the "456 vs 294 .block-ready" gap, explained)
 The reconciler spans **5 sources**, de-duped by id — the block count is the union, **not** the `.block-ready` file count.
 - Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count.
-- **`.block-ready/*.json` files on disk:** 314
-- **By source (after de-dup):** program: 61 · .block-ready: 303 · enterprise-29: 29 · accounting: 26 · gap-spec: 57
+- **`.block-ready/*.json` files on disk:** 361
+- **By source (after de-dup):** program: 61 · .block-ready: 350 · enterprise-29: 29 · accounting: 26 · gap-spec: 57
 
 ## Delta — blocks added since 2026-06-16 (today's work, now counted)
 Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no new blocks were registered.
@@ -51,6 +51,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | AF-4-ap-bills-migration | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] ~$1.18M A/P migration not executed (Tier-1 held) |
 | AF-5-stub-catalogs | PENDING (GATED) | 💰 | T2 |  | program | [verified 2026-07-03] partial — catalog buildout ongoing, not confirmably complete |
 | AF-7-money-controls | PENDING (GATED) | 💰 | T1 |  | program | [verified 2026-07-03] partial built-gated; money flags OFF |
+| AR-AP-PAYMENT-CONTRACT | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
 | BLOCK-01-of-29-TIER1.5-DEPRECIATION | PENDING (GATED) |  | T1.5 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW | PENDING (GATED) |  | T1.5 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
 | BLOCK-03-of-29-TIER1.5-IFTA | PENDING (GATED) |  | T1.5 |  | enterprise-29 | deep-verified 2026-06-24 (feature grep) |
@@ -71,17 +72,28 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | DISP-WO-work-order-modal | PENDING (GATED) |  | T2 |  | program | LIVE-TRACED / BUILD. Tier 2 (build modal) — posting (create_bill_for_wo) Tier 1, STOPS for |
 | ENT-AUDIT | PENDING (GATED) |  | T1 |  | program | VERIFY-STATE / BUILD. Tier per scope (any GL posting = Tier 1, STOPS for Jorge). |
 | FH-VERIFY-finance-hub-modules | PENDING (GATED) | 💰 | T1 |  | program | forward spec — 0 named artifacts on main |
+| FINAL-ADDITIONS-PAGE | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
 | HOS-FANOUT-03-08 | PENDING (GATED) |  | T2 |  | program | GATED / VERIFY-STATE. Tier 2. |
 | HOS-MAP-driver-samsara-id | PENDING (GATED) |  | T2 |  | program | LIVE-TRACED / BUILD. Tier 2 (telematics) + MIGRATE if a backfill writes ids. STOPS for Jor |
 | HOS-PRC-DATA-verbatim-clocks | PENDING (GATED) |  | T2 |  | program | LIVE-TRACED / GATED. Tier 2 (telematics, no money). |
 | HOS-PRC2-reader-swap | PENDING (GATED) |  | T2 |  | program | GATED on GUARD per-driver verify (board == roster == Samsara certified ELD). Tier 2. |
 | STMT-2-opening-balances | PENDING (GATED) | 💰 | T1 |  | program | forward spec — 0 named artifacts on main |
 | STMT-3-1099-425c-consolidation | PENDING (GATED) | 💰 | T2 |  | program | forward spec — 0 named artifacts on main |
+| USERS-DEACTIVATE | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
 | USMCA-LAUNCH-carrier | PENDING (GATED) |  | T1 |  | program | GATED (launch July 2026). Tier 1 (new entity going live). STOPS for Jorge. |
+| VENDOR-CUSTOMER-QBO-PARITY | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
+| VISUAL-DISPATCH | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
+| VISUAL-LISTS | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
+| VISUAL-REMAINDER-BACKARROWS | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
+| VISUAL-REMAINDER-BROKEN-EDIT | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
+| VISUAL-REMAINDER-DEADCONTROLS | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
+| VISUAL-REMAINDER-LAYOUT | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
+| VISUAL-REMAINDER-PAGINATION | PENDING (GATED) | 💰 |  |  | .block-ready | no merged PR / no files on main |
 | VOID-VERIFY-void-everywhere | PENDING (GATED) | 💰 | T1 |  | program | forward spec — 0 named artifacts on main |
 | C7-ACCT-SUBNAV-CHROME | NEEDS-VERIFY | 💰 |  |  | .block-ready | 9/10 signature file(s) on main — partial, unverified |
 | RECON-01 | NEEDS-VERIFY | 💰 |  | #1831 | .block-ready | PR #1831 title-match only, unverified |
 | RECON-02 | NEEDS-VERIFY |  |  | #1838 | .block-ready | PR #1838 title-match only, unverified |
+| VISUAL-SAFETY | NEEDS-VERIFY | 💰 |  | #1597 | .block-ready | PR #1597 title-match only, unverified |
 | A1-AUDIT-SPINE-LINK-COLUMNS | DONE | 💰 |  | #884 | .block-ready | PR #884 merged 2026-06-11 |
 | A2-AUDIT-EMIT-DISPATCH | DONE |  |  | #886 | .block-ready | PR #886 merged 2026-06-12 |
 | A3-AUDIT-EMIT-MAINTENANCE | DONE |  |  | #888 | .block-ready | PR #888 merged 2026-06-12 |
@@ -91,8 +103,10 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | A7-AUDIT-PER-ENTITY-TABS | DONE |  |  | #909 | .block-ready | PR #909 merged 2026-06-12 |
 | A8-AUDIT-REPORTS-SECTION | DONE |  |  | #899 | .block-ready | PR #899 merged 2026-06-12 |
 | A9-AUDIT-CI-EMIT-GUARD | DONE |  |  | #901 | .block-ready | PR #901 merged 2026-06-12 |
+| ACCOUNTING-UI-POLISH | DONE | 💰 |  | #1920 | .block-ready | PR #1920 merged 2026-07-04 |
 | ACCT-BLOCK-10-ACCOUNT-BALANCES | DONE |  |  | #709 | .block-ready | PR #709 merged 2026-06-08 |
 | ACCT-BLOCK-11-PERIODS-INIT | DONE |  |  | #814 | .block-ready | PR #814 merged 2026-06-09 |
+| ACCT-CASHFLOW-COMPANY-TZ | DONE | 💰 |  | #1676 | .block-ready | PR #1676 merged 2026-06-30 |
 | ACCT-COA-CANONICALIZATION | DONE |  |  | #715 | .block-ready | PR #715 merged 2026-06-08 |
 | ACCT-INTEGRITY-VERIFY-EXTEND | DONE |  |  | #816 | .block-ready | PR #816 merged 2026-06-09 |
 | ACCT-QBOPAR-00-DESIGN-LOCK | DONE |  |  | #703 | .block-ready | PR #703 merged 2026-06-07 |
@@ -103,6 +117,10 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | AF-0-rebaseline | DONE | 💰 | T3 | #1264 | program | [verified 2026-07-03] doc block; PR #1264 doc on main |
 | AF-3-account-registers | DONE | 💰 | T2 |  | program | [verified 2026-07-03] account-register routes/service + page live on main |
 | AF-6-finance-hub | DONE | 💰 | T2 |  | program | [verified 2026-07-03] finance-hub routes/service + page on main (flag-gated OFF by design) |
+| BANKING-CATEGORIZE-C1 | DONE | 💰 |  | #1913 | .block-ready | PR #1913 merged 2026-07-03 |
+| BANKING-CSV-DIRECTION-M6 | DONE | 💰 |  | #1915 | .block-ready | PR #1915 merged 2026-07-03 |
+| BANKING-RECON-DEEPLINK-H4 | DONE | 💰 |  | #1914 | .block-ready | PR #1914 merged 2026-07-03 |
+| BANKING-VIEW-POLISH-L10-H3 | DONE | 💰 |  | #1917 | .block-ready | PR #1917 merged 2026-07-04 |
 | BK7-INLINE-CREATE-DRAWERS | DONE |  |  | #866 | .block-ready | all 3 file(s) on main |
 | BLOCK-04-of-29-TIER2-RATE-LIMIT | DONE |  | T2 |  | enterprise-29 | all 1 named artifact(s) on main |
 | BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS | DONE |  | T2 |  | enterprise-29 | all 1 named artifact(s) on main |
@@ -464,6 +482,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | LOCKDOWN-ENFORCEMENT-GUARDS | DONE |  |  | #755 | .block-ready | PR #755 merged 2026-06-08 |
 | M1-POSITIONED-PARTS | DONE |  |  | #913 | .block-ready | PR #913 merged 2026-06-12 |
 | M2-INTEGRITY-POSITION-HISTORY | DONE |  |  | #915 | .block-ready | PR #915 merged 2026-06-13 |
+| MANUAL-JE-CONTRACT | DONE | 💰 |  | #1919 | .block-ready | PR #1919 merged 2026-07-04 |
 | MIGRATION-RUNNER-HARDEN | DONE |  |  | #914 | .block-ready | PR #914 merged 2026-06-13 |
 | MNT-SHOP | DONE |  |  |  | program | all 3 named artifact(s) on main |
 | MX-OPS | DONE |  |  |  | program | all 3 named artifact(s) on main |
@@ -471,11 +490,14 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | OB1-NAV-HEADER-UNIFY | DONE |  |  | #894 | .block-ready | PR #894 merged 2026-06-12 |
 | P0-BLOCK-3-DRIVER-LOAD-HISTORY | DONE |  |  | #731 | .block-ready | PR #731 merged 2026-06-08 |
 | P5-T6-BANKING-TRANSFER | DONE |  |  | #862 | .block-ready | PR #862 merged 2026-06-10 |
+| PERF-BUDGET-RAISE | DONE | 💰 |  | #1925 | .block-ready | PR #1925 merged 2026-07-04 |
 | PREREQ-A-SCHEMA-GRANT-GATE | DONE |  |  | #684 | .block-ready | all 1 file(s) on main |
 | PREREQ-B-SETTLEMENT-DEDUCTION-SVC | DONE |  |  | #683 | .block-ready | PR #683 merged 2026-06-07 |
 | Q9-TZ-timezone-library | DONE |  | T2 |  | program | all 1 named artifact(s) on main |
+| QBO-BANK-WRITEBACK-GATE-M7 | DONE | 💰 |  | #1916 | .block-ready | PR #1916 merged 2026-07-04 |
 | QBO-SYNC-DRIFT-401-FIX | DONE |  |  | #1535 | .block-ready | PR #1535 merged 2026-06-27 |
 | QSTD-00 | DONE | 💰 |  | #1780 | .block-ready | PR #1780 merged 2026-07-02 |
+| REGISTER-SOURCE-COL | DONE | 💰 |  | #1922 | .block-ready | PR #1922 merged 2026-07-04 |
 | RPT-MODULE | DONE |  |  |  | program | all 3 named artifact(s) on main |
 | SAFE-W3 | DONE |  |  |  | program | all 3 named artifact(s) on main |
 | SAFE-W4 | DONE |  |  |  | program | all 3 named artifact(s) on main |
@@ -507,6 +529,31 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | UX-C-fleet-location | DONE |  | T2 |  | program | all 2 named artifact(s) on main |
 | UX-D-hos-cycle-drawer | DONE |  | T2 |  | program | all 1 named artifact(s) on main |
 | UX-E-compliance-hos-location | DONE |  | T2 |  | program | all 1 named artifact(s) on main |
+| VENDOR-PROFILE-EDIT-BOX | DONE | 💰 |  | #1926 | .block-ready | PR #1926 merged 2026-07-04 |
+| VISUAL-ACCOUNTING | DONE | 💰 |  | #1946 | .block-ready | PR #1946 merged 2026-07-04 |
+| VISUAL-AUDIT-PUNCHLIST | DONE | 💰 |  | #1927 | .block-ready | PR #1927 merged 2026-07-04 |
+| VISUAL-BANKING | DONE | 💰 |  | #1940 | .block-ready | PR #1940 merged 2026-07-04 |
+| VISUAL-CASH-FLOW | DONE | 💰 |  | #1942 | .block-ready | PR #1942 merged 2026-07-04 |
+| VISUAL-COMPLIANCE | DONE | 💰 |  | #1944 | .block-ready | PR #1944 merged 2026-07-04 |
+| VISUAL-CUSTOMERS | DONE | 💰 |  | #1941 | .block-ready | PR #1941 merged 2026-07-04 |
+| VISUAL-DOCS | DONE | 💰 |  | #1945 | .block-ready | PR #1945 merged 2026-07-04 |
+| VISUAL-DRIVER-HUB | DONE | 💰 |  | #1935 | .block-ready | PR #1935 merged 2026-07-04 |
+| VISUAL-DRIVERS | DONE | 💰 |  | #1936 | .block-ready | PR #1936 merged 2026-07-04 |
+| VISUAL-ELD | DONE | 💰 |  | #1951 | .block-ready | PR #1951 merged 2026-07-04 |
+| VISUAL-FACTORING | DONE | 💰 |  | #1930 | .block-ready | PR #1930 merged 2026-07-04 |
+| VISUAL-FINANCE | DONE | 💰 |  | #1947 | .block-ready | PR #1947 merged 2026-07-04 |
+| VISUAL-FLEET | DONE | 💰 |  | #1928 | .block-ready | PR #1928 merged 2026-07-04 |
+| VISUAL-FORM-425 | DONE | 💰 |  | #1938 | .block-ready | PR #1938 merged 2026-07-04 |
+| VISUAL-FUEL | DONE | 💰 |  | #1929 | .block-ready | PR #1929 merged 2026-07-04 |
+| VISUAL-HOME | DONE | 💰 |  | #1949 | .block-ready | PR #1949 merged 2026-07-04 |
+| VISUAL-INSURANCE | DONE | 💰 |  | #1939 | .block-ready | PR #1939 merged 2026-07-04 |
+| VISUAL-INVENTORY | DONE | 💰 |  | #1943 | .block-ready | PR #1943 merged 2026-07-04 |
+| VISUAL-LEGAL | DONE | 💰 |  | #1931 | .block-ready | PR #1931 merged 2026-07-04 |
+| VISUAL-REPORTS | DONE | 💰 |  | #1937 | .block-ready | PR #1937 merged 2026-07-04 |
+| VISUAL-SETTLEMENTS | DONE | 💰 |  | #1933 | .block-ready | PR #1933 merged 2026-07-04 |
+| VISUAL-TASKS | DONE | 💰 |  | #1934 | .block-ready | PR #1934 merged 2026-07-04 |
+| VISUAL-USERS | DONE | 💰 |  | #1948 | .block-ready | PR #1948 merged 2026-07-04 |
+| VISUAL-VENDORS | DONE | 💰 |  | #1932 | .block-ready | PR #1932 merged 2026-07-04 |
 | W1-EVENT-LOG-SPINE | DONE | 💰 |  |  | .block-ready | all 1 file(s) on main |
 | W1A-EVENT-LOG-IMMUTABLE | DONE | 💰 |  | #870 | .block-ready | PR #870 merged 2026-06-11 |
 | W1B-TASKS-MODULE | DONE | 💰 |  | #872 | .block-ready | PR #872 merged 2026-06-11 |

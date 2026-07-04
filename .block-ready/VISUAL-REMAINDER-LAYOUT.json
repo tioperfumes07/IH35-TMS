@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-REMAINDER-LAYOUT",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-REMAINDER",
+  "task": "Fix 8 layout defects (overflow/clip/grid)",
+  "branch": "fix/visual-remainder-layout",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-REMAINDER-LAYOUT.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

@@ -1,0 +1,15 @@
+{
+  "block_id": "BANKING-CSV-DIRECTION-M6",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "CSV import money direction (Wells Fargo)",
+  "branch": "fix/banking-csv-import-direction-m6",
+  "allowed_files": [
+    ".block-ready/_markers/BANKING-CSV-DIRECTION-M6.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

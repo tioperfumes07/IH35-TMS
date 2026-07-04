@@ -1,0 +1,15 @@
+{
+  "block_id": "VISUAL-AUDIT-PUNCHLIST",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCT-FIN-VISUAL",
+  "task": "Full-app visual audit punch-list doc",
+  "branch": "docs/visual-audit-punchlist-252",
+  "allowed_files": [
+    ".block-ready/_markers/VISUAL-AUDIT-PUNCHLIST.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

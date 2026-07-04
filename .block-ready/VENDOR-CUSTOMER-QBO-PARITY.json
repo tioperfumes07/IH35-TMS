@@ -1,0 +1,15 @@
+{
+  "block_id": "VENDOR-CUSTOMER-QBO-PARITY",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VISUAL-REMAINDER",
+  "task": "Full QBO-parity create panels + profiles (uploaded spec)",
+  "branch": "feat/qbo-parity-customers-vendors",
+  "allowed_files": [
+    ".block-ready/_markers/VENDOR-CUSTOMER-QBO-PARITY.done"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
