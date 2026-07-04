@@ -59,9 +59,10 @@ async function loadActiveTractors(client: Queryable, companyId: string): Promise
       WHERE deactivated_at IS NULL
         AND status = 'InService'
         AND vin IS NOT NULL
+        -- mdata.units has NO operating_company_id column (§4 landmine → 42703). Units are entity-scoped
+        -- by ownership: owner_company_id (owning carrier) OR currently_leased_to_company_id (lessee).
         AND (
-          operating_company_id = $1
-          OR owner_company_id = $1
+          owner_company_id = $1
           OR currently_leased_to_company_id = $1
         )
       ORDER BY unit_number
