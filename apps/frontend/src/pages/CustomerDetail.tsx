@@ -1640,7 +1640,7 @@ export function CustomerDetailPage() {
             {recordPaymentOpen ? (
               <div className="space-y-3 border-t border-gray-100 p-3 text-xs">
                 {paymentsBackendPending ? (
-                  <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-amber-950">
+                  <div className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-slate-700">
                     Backend pending — file <strong>P6-T11204</strong> for customer payment APIs.{" "}
                     <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void customerPaymentsQuery.refetch()}>
                       Retry
@@ -1709,7 +1709,7 @@ export function CustomerDetailPage() {
                   <p className="mt-1 text-gray-600">
                     Applying {formatCurrencyCents(paymentApplicationBreakdown.appliedSum)} of {formatCurrencyCents(paymentCents)} payment
                     {paymentApplicationBreakdown.creditBalanceCents > 0 ? (
-                      <span className="text-amber-800"> · {formatCurrencyCents(paymentApplicationBreakdown.creditBalanceCents)} to customer credit</span>
+                      <span className="text-slate-700"> · {formatCurrencyCents(paymentApplicationBreakdown.creditBalanceCents)} to customer credit</span>
                     ) : null}
                   </p>
                   {payManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
@@ -1765,7 +1765,7 @@ export function CustomerDetailPage() {
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Payment history</div>
             {paymentsBackendPending ? (
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-slate-700">
                 Backend pending — payment history unavailable until backend ships (P6-T11204).
               </p>
             ) : customerPaymentsQuery.isLoading ? (

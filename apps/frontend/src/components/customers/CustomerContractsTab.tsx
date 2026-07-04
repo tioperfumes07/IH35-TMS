@@ -182,7 +182,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
             { key: "effective_date", label: "Effective", render: (row: CustomerContract) => formatDate(row.effective_date) },
             { key: "expiration_date", label: "Expires", render: (row: CustomerContract) => formatDate(row.expiration_date) },
             { key: "created_at", label: "Uploaded", render: (row: CustomerContract) => formatDate(row.created_at) },
-            { key: "supersedes_id", label: "Status", render: (row: CustomerContract) => row.supersedes_id ? <span className="text-xs text-amber-600">Superseded</span> : <span className="text-xs text-green-700">Current</span> },
+            { key: "supersedes_id", label: "Status", render: (row: CustomerContract) => row.supersedes_id ? <span className="text-xs text-slate-500">Superseded</span> : <span className="text-xs text-slate-700">Current</span> },
             ...(canWrite
               ? [{
                   key: "actions",
@@ -219,7 +219,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
         >
           <form className="space-y-3" onSubmit={handleMetaSubmit}>
             {supersedeTarget && (
-              <p className="text-xs text-amber-700 bg-amber-50 rounded-sm p-2">
+              <p className="text-xs text-slate-700 bg-slate-50 rounded-sm p-2">
                 Superseding: <strong>{CONTRACT_TYPE_LABELS[supersedeTarget.contract_type]}</strong>
                 {supersedeTarget.effective_date ? ` (effective ${formatDate(supersedeTarget.effective_date)})` : ""}
               </p>
