@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { buildForecastWeeks, type ForecastSettings } from "./cash-forecast.math.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const forecastQuerySchema = companyQuerySchema.extend({
   weeks: z.coerce.number().int().min(1).max(26).optional().default(13),
@@ -130,7 +131,10 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
     const query = forecastQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const asOf = query.data.as_of_date ?? new Date().toISOString().slice(0, 10);
+    // CASH-FLOW-DATE fix: default "today" must be the company's business date (America/Chicago), not UTC.
+    // new Date().toISOString() rolls to tomorrow after ~6pm CT, showing the wrong day on the cash-position
+    // screen and hiding today's real expected income/close — a trust-breaking financial display defect.
+    const asOf = query.data.as_of_date ?? companyBusinessDate();
     const startWeek = startOfWeekIso(asOf);
     const endWeek = addDays(startWeek, query.data.weeks * 7 - 1);
 
