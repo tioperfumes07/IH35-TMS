@@ -151,7 +151,7 @@ export function WorkOrdersTable({
               variant="secondary"
               size="sm"
               disabled
-              title="Coming soon — bulk close endpoint not yet available"
+              title="Bulk close endpoint not yet available"
             >
               Close selected
             </Button>
