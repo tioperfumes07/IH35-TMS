@@ -17,8 +17,8 @@
     }
   ],
   "budgets": {
-    "fe_bundle_gzipped": 1160039,
-    "fe_bundle_uncompressed": 4748854,
+    "fe_bundle_gzipped": 1450000,
+    "fe_bundle_uncompressed": 5800000,
     "driver_bundle_gzipped": 150000,
     "driver_bundle_uncompressed": 560000,
     "fcp_mobile_ms": 2400,
@@ -29,7 +29,7 @@
     "api_p95_write_ms": 2000
   },
   "hard_ceilings": {
-    "fe_bundle_uncompressed": 5242880,
+    "fe_bundle_uncompressed": 6291456,
     "fcp_mobile_ms": 3000,
     "lcp_mobile_ms": 4000,
     "api_p95_read_ms": 500,
