@@ -17,10 +17,10 @@ export function Step3JurisdictionCalc({ filing }: Props) {
   const rows = data.jurisdiction_rows ?? [];
 
   return (
-    <section className="rounded-sm border border-amber-200 bg-white" data-ifta-step="3">
-      <div className="border-b border-amber-200 bg-amber-50 px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-900">Step 3 · Jurisdiction tax calc</h3>
-        <p className="text-xs text-amber-800">
+    <section className="rounded-sm border border-slate-200 bg-white" data-ifta-step="3">
+      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-900">Step 3 · Jurisdiction tax calc</h3>
+        <p className="text-xs text-slate-800">
           Rates from{" "}
           <a href={data.rates_source} className="underline" target="_blank" rel="noreferrer">
             IFTA tax matrix ({data.rates_quarter_key})

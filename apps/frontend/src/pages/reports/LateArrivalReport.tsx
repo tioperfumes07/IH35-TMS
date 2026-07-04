@@ -137,7 +137,7 @@ export function LateArrivalReport() {
             {(reportQuery.data?.rows ?? []).map((row) => (
               <tr
                 key={row.entity_id}
-                className={row.chronic_offender ? "bg-amber-50" : "border-t border-slate-100"}
+                className={row.chronic_offender ? "bg-slate-50" : "border-t border-slate-100"}
               >
                 <td className="px-3 py-2 font-medium text-slate-900">{row.entity_label}</td>
                 <td className="px-3 py-2">{row.late_count}</td>

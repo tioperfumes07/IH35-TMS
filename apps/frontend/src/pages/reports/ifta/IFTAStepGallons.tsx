@@ -31,15 +31,15 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
   const total = rows.reduce((sum, row) => sum + Number(row.override_gallons ?? row.gallons ?? 0), 0);
 
   return (
-    <section className="rounded-sm border border-emerald-200 bg-white">
-      <div className="border-b border-emerald-200 bg-emerald-50 px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-900">Step 2 · State gallons (Q{quarter} {year})</h3>
-        <p className="text-xs text-emerald-800">Relay → Loves upload → dispatch fuel records with dedupe.</p>
+    <section className="rounded-sm border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-900">Step 2 · State gallons (Q{quarter} {year})</h3>
+        <p className="text-xs text-slate-800">Relay → Loves upload → dispatch fuel records with dedupe.</p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
         <button
           type="button"
-          className="rounded-sm border border-emerald-400 bg-emerald-100 px-3 py-1.5 font-semibold text-emerald-900 disabled:opacity-50"
+          className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
           disabled={runMutation.isPending}
           onClick={() => void runMutation.mutateAsync()}
         >
