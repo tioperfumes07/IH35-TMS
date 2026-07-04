@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDocsFoundationKpis, listDocsFoundation, type DocsFoundationRow, type FileEntityType } from "../../api/docs";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { UploadModal } from "../../components/documents/UploadModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const ENTITY_TABS: Array<{ id: FileEntityType | "all"; label: string }> = [
@@ -37,6 +38,7 @@ export function DocsHomePage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [expiresBefore, setExpiresBefore] = useState("");
   const [page, setPage] = useState(1);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const limit = 25;
 
   const kpisQuery = useQuery({
@@ -68,7 +70,30 @@ export function DocsHomePage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Documents" subtitle="Documents organized by entity with expiration tracking" />
+      <PageHeader
+        title="Documents"
+        subtitle="Documents organized by entity with expiration tracking"
+        actions={
+          <button
+            type="button"
+            onClick={() => setUploadOpen(true)}
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
+          >
+            + Upload Document
+          </button>
+        }
+      />
+
+      {uploadOpen ? (
+        <UploadModal
+          onClose={() => setUploadOpen(false)}
+          onUploadSuccess={() => {
+            setUploadOpen(false);
+            void listQuery.refetch();
+            void kpisQuery.refetch();
+          }}
+        />
+      ) : null}
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <KpiCard label="Total Docs" value={String(kpisQuery.data?.total_docs ?? 0)} />
@@ -132,7 +157,11 @@ export function DocsHomePage() {
           <div className="rounded-sm border border-dashed border-gray-300 p-6 text-center">
             <p className="text-base font-semibold text-gray-900">No documents found</p>
             <p className="mt-1 text-sm text-gray-600">No documents yet. Click + Upload Document to add one.</p>
-            <button type="button" className="mt-3 rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white opacity-70">
+            <button
+              type="button"
+              onClick={() => setUploadOpen(true)}
+              className="mt-3 rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0f1729]"
+            >
               + Upload Document
             </button>
           </div>
