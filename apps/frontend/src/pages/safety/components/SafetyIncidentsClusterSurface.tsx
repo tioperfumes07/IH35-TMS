@@ -15,6 +15,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
+import { formatUsdCents } from "../../../lib/money";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
@@ -85,10 +86,6 @@ function toIsoAtNoon(dateStr: string): string | undefined {
   if (!dateStr) return undefined;
   const d = new Date(`${dateStr}T12:00:00`);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
-}
-
-function formatUsdCents(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((cents || 0) / 100);
 }
 
 function str(value: unknown): string {

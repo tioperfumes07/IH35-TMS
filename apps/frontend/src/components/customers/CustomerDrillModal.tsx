@@ -1,5 +1,6 @@
 import type { Customer } from "../../api/mdata";
 import { Modal } from "../Modal";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   open: boolean;
@@ -10,7 +11,7 @@ type Props = {
 };
 
 function fmtMoney(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 export function CustomerDrillModal({ open, customer, openBalanceCents = 0, overdueCents = 0, onClose }: Props) {

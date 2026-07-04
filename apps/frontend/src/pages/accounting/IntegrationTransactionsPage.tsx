@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -7,8 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
 import { useListState } from "../../components/list-state";
 
-const fmtCents = (c: number | null) =>
-  c == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
+const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
 const STATUS_COLOR: Record<string, string> = {

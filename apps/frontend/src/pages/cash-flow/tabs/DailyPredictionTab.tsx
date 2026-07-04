@@ -9,6 +9,7 @@ import {
   type SevenDayEntry,
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
+import { formatUsdCents } from "../../../lib/money";
 
 function fmtDate(iso: string): string {
   const [y, m, d] = iso.split("-");
@@ -32,7 +33,7 @@ function addDays(iso: string, delta: number): string {
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
   const abs = Math.abs(cents);
-  const dollars = (abs / 100).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const dollars = formatUsdCents(abs);
   if (opts?.sign && cents < 0) return `−${dollars}`;
   if (opts?.sign && cents > 0) return `+${dollars}`;
   return cents < 0 ? `−${dollars}` : dollars;
@@ -349,7 +350,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   </span>
                   <span className={`mt-1 text-xs font-bold ${pos ? "text-emerald-600" : "text-red-600"}`}>
                     {pos ? "+" : ""}
-                    {(entry.predicted_net_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatUsdCents(entry.predicted_net_cents)}
                   </span>
                 </button>
               );

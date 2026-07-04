@@ -11,11 +11,12 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState } from "../../components/list-state";
+import { formatUsdCents } from "../../lib/money";
 
 const PAGE_SIZE = 50;
 
 function formatMoney(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 function typeLabel(type: TransferType) {

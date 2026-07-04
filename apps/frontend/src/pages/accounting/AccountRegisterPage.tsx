@@ -1,4 +1,5 @@
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -10,8 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listCoaAccountsForJe, listAccountingAuditTrail } from "../../api/accounting";
 import { getAccountRegister, type AccountRegisterReport } from "../../api/account-register";
 
-const fmtCents = (cents: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((cents ?? 0) / 100);
+const fmtCents = (cents: number) => formatUsdCents(cents);
 
 // Drill-through: map a register row's source transaction to its REAL detail/source route (all verified to
 // exist in routes/manifest.tsx). invoice + customer_payment have true per-id detail; the rest resolve to

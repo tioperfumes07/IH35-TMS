@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "../../Button";
 import { Modal } from "../../Modal";
 import type { IftaFiling } from "../../../api/reports-ifta";
+import { formatUsd } from "../../../lib/money";
 
 type Props = {
   filing: IftaFiling;
@@ -13,7 +14,7 @@ type Props = {
 };
 
 function fmtMoney(value: number) {
-  return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  return formatUsd(value);
 }
 
 export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled, approving, filingPending }: Props) {

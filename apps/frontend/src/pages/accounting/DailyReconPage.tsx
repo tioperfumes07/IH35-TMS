@@ -5,8 +5,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { fetchDailyRecon, type DailyReconMatchStatus, type DailyReconRow } from "../../api/daily-recon";
 import { useListState } from "../../components/list-state";
-
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+import { formatUsdCents } from "../../lib/money";
 
 const ENTITY_TYPE_OPTIONS = [
   { value: "", label: "All types" },
@@ -36,7 +35,7 @@ const STATUS_BADGES: Record<DailyReconMatchStatus, { label: string; cls: string 
 
 function formatCents(cents: number | null): string {
   if (cents == null) return "—";
-  return money.format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 function entityLabel(type: string): string {

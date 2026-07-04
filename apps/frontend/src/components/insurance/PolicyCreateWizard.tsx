@@ -12,6 +12,7 @@ import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 import { useCostPerVehicle } from "./useCostPerVehicle";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   open: boolean;
@@ -190,8 +191,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     return monthlyAmounts;
   }, [premiumCents, termMonths]);
 
-  const formatMoney = (cents: number) =>
-    `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatMoney = (cents: number) => formatUsdCents(cents);
 
   const validateStep1 = () => {
     const errors: Partial<Record<keyof Step1, string>> = {};

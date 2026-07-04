@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -10,8 +11,7 @@ import {
 } from "../../api/prepaid-expenses";
 import { useListState } from "../../components/list-state";
 
-const fmtCents = (c: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
+const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
 const STATUS_COLOR: Record<string, string> = {
