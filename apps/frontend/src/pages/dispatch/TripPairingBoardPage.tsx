@@ -88,6 +88,39 @@ export function TripPairingBoardPage() {
   const unbooked = showUnbooked ? (data?.unbooked ?? []).filter(matches) : [];
   const tours = (data?.tours ?? []).filter(matches).filter(tourInSegment);
 
+  // Real client-side CSV export of exactly what's on the board (respects the active segment + search).
+  // Mirrors the Blob-download pattern used by DispatchBoard's "Export CSV".
+  const legsText = (row: TripPairingUnitRow, type: "NB" | "TR" | "SB") =>
+    row.legs
+      .filter((l) => l.trip_type === type)
+      .map((l) => [l.trip_type, [l.delivery_city, l.delivery_state].filter(Boolean).join(", ")].filter(Boolean).join(" · "))
+      .join(" | ");
+  const exportCsv = () => {
+    const headers = ["row_type", "unit", "driver", "northbound", "triangulation", "southbound", "status"];
+    const bodyRows: string[][] = [
+      ...unbooked.map((u) => ["unbooked", u.unit_number ?? "", u.driver_name ?? "", "", "", "", "available"]),
+      ...tours.map((t) => [
+        "assigned",
+        t.unit_number ?? "",
+        t.driver_name ?? "",
+        legsText(t, "NB"),
+        legsText(t, "TR"),
+        legsText(t, "SB") || (t.open_return ? "open return" : ""),
+        t.settlement_signal ?? t.status ?? "",
+      ]),
+    ];
+    const csv = [headers, ...bodyRows]
+      .map((row) => row.map((item) => `"${String(item).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `trip-pairing-board-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
       <PageHeader title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
@@ -104,7 +137,7 @@ export function TripPairingBoardPage() {
       ) : null}
 
       {/* Bespoke trip-pairing toolbar (GUARD ruling: NOT FilterBar — wrong filter model). 6-segment toggle
-          + trailer-type dropdown (disabled until C1b adds trailer_type to the board payload) + search + Export. */}
+          + trailer-type dropdown (disabled until C1b adds trailer_type to the board payload) + search + CSV export. */}
       <div className="mb-3 flex flex-wrap items-center gap-2 print:hidden">
         <div className="inline-flex overflow-hidden rounded-sm border border-slate-300">
           {SEGMENTS.map((s) => (
@@ -138,10 +171,12 @@ export function TripPairingBoardPage() {
         />
         <button
           type="button"
-          onClick={() => window.print()}
-          className="ml-auto h-9 rounded-sm border border-slate-300 bg-white px-2.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
+          onClick={exportCsv}
+          disabled={!data || (tours.length === 0 && unbooked.length === 0)}
+          title="Download the visible board rows (current segment + search) as CSV"
+          className="ml-auto h-9 rounded-sm border border-slate-300 bg-white px-2.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Export
+          Export CSV
         </button>
       </div>
 
