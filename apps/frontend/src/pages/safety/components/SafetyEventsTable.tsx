@@ -28,12 +28,46 @@ export function SafetyEventsTable({ rows, onOpenAccident }: Props) {
   const selection = useBulkSelection({ cap: 200, onCapExceeded: (e) => pushToast(e.message, "error") });
   const pageRowIds = rows.map((row) => String(row.id));
 
+  const exportSelectedCsv = () => {
+    const selected = rows.filter((row) => selection.selectedIds.has(String(row.id)));
+    if (selected.length === 0) {
+      pushToast("Select at least one event to export.", "info");
+      return;
+    }
+    const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const cols: Array<[string, (row: Record<string, unknown>) => string]> = [
+      ["Date", (row) => formatDateUS(row.event_at)],
+      ["Driver", (row) => String(row.driver_full_name ?? "")],
+      ["Unit", (row) => String(row.unit_display_id ?? "")],
+      ["Type", (row) => String(row.event_type ?? "")],
+      ["Severity", (row) => String(row.severity ?? "minor")],
+      ["Source", (row) => String(row.source ?? "system")],
+      ["Status", (row) => String(row.status ?? "open")],
+    ];
+    const header = cols.map(([label]) => esc(label)).join(",");
+    const body = selected.map((row) => cols.map(([, get]) => esc(get(row))).join(",")).join("\n");
+    const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `safety-events-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    pushToast(`Exported ${selected.length} safety event${selected.length === 1 ? "" : "s"}.`, "success");
+  };
+
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <BulkActionBar
         {...selection.bulkActionBarProps([
-          { id: "export", label: "Export Selected", onClick: () => pushToast("Export safety events queued.", "success") },
-          { id: "archive", label: "Archive", destructive: true, onClick: () => pushToast("Archive — bulk endpoint pending.", "success") },
+          { id: "export", label: "Export Selected", onClick: exportSelectedCsv },
+          {
+            id: "archive",
+            label: "Archive (coming soon)",
+            destructive: true,
+            disabled: true,
+            onClick: () => pushToast("Bulk archive is not available yet — no backend endpoint.", "info"),
+          },
         ])}
       />
       <TableSelection
