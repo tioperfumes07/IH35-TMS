@@ -859,7 +859,28 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <span className="blw-sec-meta">Section total <b>{money.format(sectionTotal / 100)}</b></span>
                 </div>
                 <div className="space-y-2 p-3">
-                  {/* render-v6 §A: the rate-confirmation/document dropzone is NOT here — moved to §E (bottom). */}
+                  {/* §A rate-con upload — RESTORED per owner 2026-07-04 (it is ALSO in §E Documents; additive,
+                      both drop zones fill the same draft). */}
+                  {!editLoadId ? (
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation (auto-fills this load)</label>
+                      <OcrDropZone
+                        operatingCompanyId={operatingCompanyId}
+                        onPrefill={(prefill) => {
+                          applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, prefill.json);
+                          if (typeof prefill.json.accessorial_cents === "number" && prefill.json.accessorial_cents > 0) {
+                            form.setValue("accessorial_rows", rowFromLegacyAccessorialCents(prefill.json.accessorial_cents as number), { shouldDirty: true });
+                          }
+                          pushToast(
+                            prefill.lowConfidenceFields.length
+                              ? "Rate con read — review the prefill (low-confidence fields flagged)"
+                              : "Rate con read — review the prefill",
+                            "success",
+                          );
+                        }}
+                      />
+                    </div>
+                  ) : null}
                   <LoadTemplatePicker
                     operatingCompanyId={operatingCompanyId}
                     onSelectTemplate={(row) => {
