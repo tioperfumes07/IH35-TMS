@@ -23,6 +23,7 @@ import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
 import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
+import { RateConUploadPanel } from "./book-load-v4/RateConUploadPanel";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 
 // Load Wizard V5 (Block H): compact, denser layout behind an OFF-by-default flag. The
@@ -676,7 +677,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         ref={panelRef}
         data-wizard-v5={wizardV5 ? "on" : undefined}
         className="flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1260px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
-        style={{ width: "100%" }}
+        // Owner 2026-07-04: let the dispatcher shrink/resize the wizard from the bottom-right corner so they
+        // can keep the units / dispatch board visible behind it. Native `resize: both` grip; floors keep it
+        // usable; the max-w/max-h classes cap the top end. The flex-col body already scrolls, so content
+        // stays reachable at any size.
+        style={{ width: "100%", resize: "both", minWidth: "440px", minHeight: "340px" }}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#16203a" }}>
@@ -859,12 +864,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   <span className="blw-sec-meta">Section total <b>{money.format(sectionTotal / 100)}</b></span>
                 </div>
                 <div className="space-y-2 p-3">
-                  {/* §A rate-con upload — RESTORED per owner 2026-07-04 (it is ALSO in §E Documents; additive,
-                      both drop zones fill the same draft). */}
+                  {/* §A rate-con upload — RESTORED per owner 2026-07-04 as the BUTTON variant (click → file
+                      picker), matching how it worked before. The drag-drop zone lives in §E (Documents).
+                      Both share the ONE extraction path and fill the same editable draft. */}
                   {!editLoadId ? (
                     <div className="space-y-1">
                       <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation (auto-fills this load)</label>
-                      <OcrDropZone
+                      <RateConUploadPanel
                         operatingCompanyId={operatingCompanyId}
                         onPrefill={(prefill) => {
                           applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, prefill.json);
