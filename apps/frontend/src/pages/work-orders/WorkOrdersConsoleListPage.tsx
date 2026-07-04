@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listWorkOrdersConsole } from "../../api/workOrdersConsole";
@@ -21,9 +21,16 @@ export function WorkOrdersConsoleListPage() {
   >("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc">("created_desc");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 100;
+
+  // Any filter/segment/search/sort change returns to the first page.
+  useEffect(() => {
+    setPage(0);
+  }, [segment, billing, svc, search, sort]);
 
   const listQuery = useQuery({
-    queryKey: ["work-orders-console", companyId, segment, billing, svc, search, sort],
+    queryKey: ["work-orders-console", companyId, segment, billing, svc, search, sort, page],
     queryFn: () =>
       listWorkOrdersConsole({
         operating_company_id: companyId,
@@ -32,13 +39,18 @@ export function WorkOrdersConsoleListPage() {
         wo_service_class: svc === "all" ? undefined : svc,
         search: search.trim() || undefined,
         sort,
-        limit: 100,
-        offset: 0,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
       }),
     enabled: Boolean(companyId),
   });
 
   const tabCounts = listQuery.data?.tab_counts;
+  // tab_counts keys mirror the segment ids, so the active segment's count is a real total.
+  const total = tabCounts?.[segment] ?? 0;
+  const pageStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const pageEnd = Math.min((page + 1) * PAGE_SIZE, total);
+  const hasNext = (page + 1) * PAGE_SIZE < total;
 
   const tabs = useMemo(
     () => [
@@ -174,6 +186,31 @@ export function WorkOrdersConsoleListPage() {
               : null}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+        <span>
+          {total === 0 ? "No work orders" : `Showing ${pageStart}–${pageEnd} of ${total}`}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+          >
+            Prev
+          </button>
+          <span>Page {page + 1}</span>
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!hasNext}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

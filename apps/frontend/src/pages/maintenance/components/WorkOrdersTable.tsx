@@ -39,6 +39,39 @@ function money(value: unknown) {
   return `$${Number(value ?? 0).toFixed(2)}`;
 }
 
+function csvEscape(value: unknown) {
+  const s = value == null ? "" : String(value);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+// Real client-side CSV export of the currently-selected work orders (no backend call).
+function exportSelectedCsv(selected: WorkOrder[]) {
+  const header = ["WO #", "Source", "Unit", "Driver", "Vendor", "Status", "Cost", "Timing"];
+  const lines = selected.map((row) =>
+    [
+      row.display_id ?? row.id,
+      row.source_type ?? "",
+      row.unit_number ?? row.unit_id,
+      row.driver_id ?? "",
+      row.external_vendor_id ?? "",
+      row.status ?? "",
+      money((row as Record<string, unknown>).total_actual_cost),
+      renderDuration(row),
+    ]
+      .map(csvEscape)
+      .join(","),
+  );
+  const blob = new Blob([`${header.join(",")}\n${lines.join("\n")}`], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `active-work-orders-selected-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function WorkOrdersTable({
   rows,
   sourceTypeFilter,
@@ -117,7 +150,8 @@ export function WorkOrdersTable({
               type="button"
               variant="secondary"
               size="sm"
-              onClick={() => pushToast(`Close ${selected.length} WO(s) — bulk endpoint pending.`, "success")}
+              disabled
+              title="Coming soon — bulk close endpoint not yet available"
             >
               Close selected
             </Button>
@@ -125,7 +159,10 @@ export function WorkOrdersTable({
               type="button"
               variant="secondary"
               size="sm"
-              onClick={() => pushToast(`Export ${selected.length} WO(s) queued.`, "success")}
+              onClick={() => {
+                exportSelectedCsv(selected);
+                pushToast(`Exported ${selected.length} WO(s) to CSV.`, "success");
+              }}
             >
               Export selected
             </Button>
