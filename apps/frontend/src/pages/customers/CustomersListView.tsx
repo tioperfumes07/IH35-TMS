@@ -25,9 +25,9 @@ function qualityBadge(customer: Customer) {
 }
 
 function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null | undefined) {
-  if (tier === "thriving") return { label: "Thriving", className: "bg-emerald-100 text-emerald-800" };
+  if (tier === "thriving") return { label: "Thriving", className: "bg-slate-100 text-slate-700" };
   if (tier === "healthy") return { label: "Healthy", className: "bg-teal-100 text-teal-800" };
-  if (tier === "watch") return { label: "Watch", className: "bg-amber-100 text-amber-800" };
+  if (tier === "watch") return { label: "Watch", className: "bg-slate-100 text-slate-700" };
   if (tier === "at_risk") return { label: "At Risk", className: "bg-red-100 text-red-800" };
   return { label: "Unknown", className: "bg-gray-100 text-gray-700" };
 }

@@ -15,9 +15,9 @@ function tierLabel(tier: CustomerRelationshipScore["health_tier"] | null | undef
 }
 
 function tierClass(tier: CustomerRelationshipScore["health_tier"] | null | undefined) {
-  if (tier === "thriving") return "bg-emerald-100 text-emerald-800";
+  if (tier === "thriving") return "bg-slate-100 text-slate-700";
   if (tier === "healthy") return "bg-teal-100 text-teal-800";
-  if (tier === "watch") return "bg-amber-100 text-amber-800";
+  if (tier === "watch") return "bg-slate-100 text-slate-700";
   if (tier === "at_risk") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-700";
 }
