@@ -12,7 +12,7 @@ const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
 const STATUS_COLOR: Record<string, string> = {
   synced: "bg-emerald-100 text-emerald-800",
-  pending: "bg-yellow-100 text-yellow-800",
+  pending: "bg-slate-100 text-slate-700",
   in_flight: "bg-slate-100 text-slate-700",
   failed: "bg-red-100 text-red-800",
   blocked: "bg-gray-100 text-gray-700",

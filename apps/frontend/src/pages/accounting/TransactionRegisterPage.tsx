@@ -6,6 +6,7 @@ import { listTransactionRegister, type RegisterTransaction, type TransactionSour
 import { DataPanel } from "../../components/layout/DataPanel";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -48,7 +49,7 @@ function toCsv(rows: RegisterTransaction[]): string {
   const lines = rows.map((r) =>
     [
       r.source,
-      r.date ?? "",
+      r.date ? formatDateUS(r.date) : "",
       r.description ?? "",
       r.type,
       r.counterparty ?? "",
@@ -250,7 +251,7 @@ export function TransactionRegisterPage() {
                         {r.type}
                       </span>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-slate-700">{r.date ?? "—"}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-slate-700">{r.date ? formatDateUS(r.date) : "—"}</td>
                     <td className="px-3 py-2 text-slate-800">{r.description ?? "—"}</td>
                     <td className="px-3 py-2 text-slate-600">{r.type}</td>
                     <td className="px-3 py-2 text-slate-700">{r.counterparty ?? "—"}</td>
