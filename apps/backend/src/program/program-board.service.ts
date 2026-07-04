@@ -40,7 +40,7 @@ export type ExtraItem = {
   fin: boolean;
   registered_on: string | null;
   notes?: string;
-  track?: "owner-batch" | "dispatch-kit";
+  track?: "owner-batch" | "dispatch-kit" | "audit";
   // Owner-Batch review tag (owner-populated). "proceed-on-row" | "needs-your-preview"; absent → proceed-on-row.
   review?: string;
 };
@@ -202,6 +202,7 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
   const extra = readRepoJson<{
     owner_batch?: ExtraItem[];
     dispatch_kit?: ExtraItem[];
+    audit_bug_sweep?: ExtraItem[];
     sequence?: SequenceStep[];
     questions?: Array<Partial<BoardNote> & { created_at?: string }>;
     locked_decisions?: LockedDecision[];
@@ -225,6 +226,8 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
   const extraItems: ExtraItem[] = [
     ...(extra?.owner_batch ?? []).map((it) => ({ ...it, track: "owner-batch" as const })),
     ...(extra?.dispatch_kit ?? []).map((it) => ({ ...it, track: "dispatch-kit" as const })),
+    // Audit & Bug Sweep track — the 160-finding 2026-07-04 sweep, append-only (mark DONE, never delete).
+    ...(extra?.audit_bug_sweep ?? []).map((it) => ({ ...it, track: "audit" as const })),
   ];
 
   // ── HONEST TIMESTAMPS ───────────────────────────────────────────────────────────────────────────
