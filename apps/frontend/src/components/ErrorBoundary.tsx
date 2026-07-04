@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { postClientError } from "../api/client-errors";
+import { captureReactError } from "../observability/sentry-client";
 
 type Props = {
   children: ReactNode;
@@ -69,6 +70,8 @@ export class ErrorBoundary extends Component<Props, State> {
       url: typeof window !== "undefined" ? window.location.href : undefined,
       user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
     });
+    // G10-C3: also report to Sentry (no-ops when VITE_SENTRY_DSN is unset).
+    void captureReactError(error, info.componentStack ?? undefined);
   }
 
   render() {

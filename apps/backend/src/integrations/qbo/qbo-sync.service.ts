@@ -393,8 +393,13 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         WITH candidates AS (
           SELECT id
           FROM integrations.qbo_sync_queue
-          WHERE sync_status IN ('pending', 'failed')
-            AND next_attempt_at <= now()
+          WHERE (
+              (sync_status IN ('pending', 'failed') AND next_attempt_at <= now())
+              -- G10-C4: reclaim rows orphaned in_flight by a mid-flight crash/redeploy. Mirrors the
+              -- outbox.events stale-lock pattern (locked_at < now() - interval '5 minutes'); here the
+              -- claim stamps last_attempt_at = now(), so a stale last_attempt_at means the worker died.
+              OR (sync_status = 'in_flight' AND last_attempt_at < now() - interval '5 minutes')
+            )
           ORDER BY next_attempt_at ASC, created_at ASC
           FOR UPDATE SKIP LOCKED
           LIMIT $1

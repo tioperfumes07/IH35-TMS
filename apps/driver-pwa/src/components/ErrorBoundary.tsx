@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { withTranslation, type WithTranslation } from "react-i18next";
+import { capturePwaError } from "../observability/sentry-pwa";
 import { PwaButton } from "./PwaButton";
 
 type ErrorBoundaryProps = {
@@ -22,6 +23,8 @@ class ErrorBoundaryInner extends Component<ErrorBoundaryProps, ErrorBoundaryStat
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("PWA ErrorBoundary caught component error", error, info);
+    // G10-C3: report to Sentry (no-ops when VITE_SENTRY_DSN is unset), not just console.
+    void capturePwaError(error, info.componentStack ?? "error_boundary");
   }
 
   render() {

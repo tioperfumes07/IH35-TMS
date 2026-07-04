@@ -12,6 +12,15 @@ import { runBankCountPass, runCategorizationDiffPass, type QboReconSource } from
 
 export const RECON_FLAG_KEY = "TMS_QBO_RECON_ENABLED";
 
+/**
+ * Canonical `_system.background_jobs` job names for the two recon passes. Used both by the standalone
+ * Render cron entrypoint (run-recon.ts) to record each run and by the /healthz staleness rule so a
+ * silently-dead recon pass surfaces on the deep health check (G4-HEALTH).
+ */
+export function reconJobName(pass: "am" | "pm"): string {
+  return pass === "am" ? "accounting.recon_am_bank_count" : "accounting.recon_pm_categorization_diff";
+}
+
 type QboRegisterTxn = {
   Id: string;
   TxnDate: string;
