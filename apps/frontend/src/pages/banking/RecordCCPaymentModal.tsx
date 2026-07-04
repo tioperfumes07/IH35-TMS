@@ -162,7 +162,7 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
           Memo (optional)
           <textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
         </label>
-        {!valid ? <p className="text-xs text-amber-700">Select vendor, liability COA, bank account, and enter an amount greater than zero.</p> : null}
+        {!valid ? <p className="text-xs text-slate-700">Select vendor, liability COA, bank account, and enter an amount greater than zero.</p> : null}
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="secondary" onClick={onClose}>
             Cancel

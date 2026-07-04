@@ -9,9 +9,9 @@ type Props = {
 };
 
 function statusPill(status: string) {
-  if (status === "uncategorized") return "bg-amber-100 text-amber-700";
+  if (status === "uncategorized") return "bg-slate-100 text-slate-700";
   if (status === "reconciled") return "bg-slate-100 text-slate-700";
-  return "bg-green-100 text-green-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 export function RegisterRow({ row, selected, bulkSelected = false, onBulkToggle, onSelect, onCategorize, onUndo }: Props) {
@@ -21,7 +21,7 @@ export function RegisterRow({ row, selected, bulkSelected = false, onBulkToggle,
   const withdrawals = Number(row.withdrawals ?? (amount < 0 ? Math.abs(amount) : 0));
   return (
     <tr
-      className={`border-t border-gray-100 text-xs ${status === "uncategorized" ? "bg-amber-50" : ""} ${selected ? "border-l-2 border-l-blue-500" : ""}`}
+      className={`border-t border-gray-100 text-xs ${status === "uncategorized" ? "bg-slate-100" : ""} ${selected ? "border-l-2 border-l-blue-500" : ""}`}
       onClick={onSelect}
     >
       <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
@@ -36,7 +36,7 @@ export function RegisterRow({ row, selected, bulkSelected = false, onBulkToggle,
       <td className="px-2 py-1">{String(row.category ?? "—")}</td>
       <td className="px-2 py-1">
         {status === "uncategorized" ? (
-          <button type="button" onClick={onCategorize} className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">Categorize ▼</button>
+          <button type="button" onClick={onCategorize} className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">Categorize ▼</button>
         ) : (
           <button type="button" onClick={onUndo} className="text-slate-700 underline">Undo</button>
         )}

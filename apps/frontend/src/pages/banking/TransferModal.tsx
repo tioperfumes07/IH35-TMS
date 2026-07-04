@@ -179,8 +179,8 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
           Memo (optional)
           <textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
         </label>
-        {!dateOk ? <p className="text-xs text-amber-700">Transfer date must be within the last 90 days (not today-future).</p> : null}
-        {!valid && dateOk ? <p className="text-xs text-amber-700">Select two different accounts and enter an amount greater than zero.</p> : null}
+        {!dateOk ? <p className="text-xs text-slate-700">Transfer date must be within the last 90 days (not today-future).</p> : null}
+        {!valid && dateOk ? <p className="text-xs text-slate-700">Select two different accounts and enter an amount greater than zero.</p> : null}
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="secondary" onClick={onClose}>
             Cancel

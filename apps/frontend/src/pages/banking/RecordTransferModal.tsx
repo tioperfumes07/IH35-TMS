@@ -208,7 +208,7 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
           Reference Number
           <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
         </label>
-        {!valid ? <p className="text-xs text-amber-700">Select both accounts, use different accounts, and enter an amount greater than zero.</p> : null}
+        {!valid ? <p className="text-xs text-slate-700">Select both accounts, use different accounts, and enter an amount greater than zero.</p> : null}
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="secondary" onClick={onClose}>
             Cancel

@@ -159,7 +159,7 @@ export function BankingPlaidConnectionsPanel({
                         <div
                           className={
                             reconnectHighlightItemId === itemId
-                              ? "rounded-md p-0.5 ring-2 ring-amber-400 ring-offset-1"
+                              ? "rounded-md p-0.5 ring-2 ring-slate-400 ring-offset-1"
                               : ""
                           }
                         >
@@ -214,7 +214,7 @@ export function BankingPlaidConnectionsPanel({
                   ))}
                 </p>
                 {showReconnectCta && itemId ? (
-                  <p className="mt-1 text-[10px] font-semibold uppercase text-amber-800">Reconnect needed</p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase text-slate-700">Reconnect needed</p>
                 ) : null}
               </div>
             </div>

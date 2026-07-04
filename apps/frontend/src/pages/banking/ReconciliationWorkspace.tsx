@@ -48,7 +48,7 @@ function computeSummary(transactions: PlaidBankTransaction[], statementBalanceCe
 function varianceClass(varianceCents: number) {
   const abs = Math.abs(varianceCents);
   if (abs === 0) return "text-green-700";
-  if (abs < 1000) return "text-amber-700";
+  if (abs < 1000) return "text-slate-700";
   return "text-red-700";
 }
 

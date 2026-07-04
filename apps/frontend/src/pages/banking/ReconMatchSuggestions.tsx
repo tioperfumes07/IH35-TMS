@@ -50,7 +50,7 @@ export function ReconMatchSuggestions(props: {
             disabled={props.disabled}
             title="Apply this match"
             onClick={() => props.onAccept(suggestion.obligation_type as ObligationType, suggestion.obligation_id)}
-            className="rounded-sm bg-amber-50 px-1 text-[10px] text-amber-900 enabled:hover:bg-amber-100 disabled:opacity-50"
+            className="rounded-sm bg-slate-100 px-1 text-[10px] text-slate-700 enabled:hover:bg-slate-100 disabled:opacity-50"
           >
             {suggestion.label} ({Math.round(suggestion.confidence * 100)}%)
           </button>
