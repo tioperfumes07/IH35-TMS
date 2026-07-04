@@ -7,6 +7,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { formatDateUS } from "../../../lib/formatDate";
 
 function daysUntil(dateStr: unknown) {
   if (!dateStr || typeof dateStr !== "string") return null;
@@ -118,12 +119,12 @@ export function LegalMattersListPage() {
                         <td className="px-3 py-2">{String(row.severity ?? "")}</td>
                         <td className="px-3 py-2">
                           {urgent ? (
-                            <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
+                            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
                               SOL {sol}d
                             </span>
                           ) : (
                             <span className="text-xs text-gray-600">
-                              {row.statute_of_limitations_at ? String(row.statute_of_limitations_at).slice(0, 10) : "—"}
+                              {row.statute_of_limitations_at ? formatDateUS(row.statute_of_limitations_at) : "—"}
                             </span>
                           )}
                         </td>

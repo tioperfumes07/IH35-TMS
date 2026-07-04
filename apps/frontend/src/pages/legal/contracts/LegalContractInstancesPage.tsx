@@ -26,9 +26,9 @@ const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string 
 ];
 
 function statusClass(status: LegalContractStatus) {
-  if (status === "signed_electronically") return "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
+  if (status === "signed_electronically") return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   if (status === "sent" || status === "viewed") return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  if (status === "expired") return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+  if (status === "expired") return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   if (status === "voided") return "rounded-sm bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }

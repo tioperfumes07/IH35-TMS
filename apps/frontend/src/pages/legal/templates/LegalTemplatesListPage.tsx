@@ -13,9 +13,9 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retired"] as const;
 
 function statusPillClass(status: string) {
-  if (status === "active") return "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700";
+  if (status === "active") return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   if (status === "approved") return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  if (status === "pending_review") return "rounded-sm bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800";
+  if (status === "pending_review") return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   if (status === "retired") return "rounded-sm bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
   return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
