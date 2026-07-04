@@ -8,8 +8,8 @@ type Props = {
 
 function driftClass(value: string) {
   const v = value.toLowerCase();
-  if (v === "0") return "text-emerald-700";
-  if (v.includes("pend")) return "text-amber-700";
+  if (v === "0") return "text-slate-700";
+  if (v.includes("pend")) return "text-slate-700";
   if (v.includes("drift")) return "text-red-700";
   return "text-slate-600";
 }

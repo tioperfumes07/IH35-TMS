@@ -47,7 +47,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "drivers",
     label: "Drivers",
-    pillClass: "bg-green-50 text-green-700",
+    pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "Pay Rate Templates", description: "Driver pay model templates", live: true, catalogKey: "pay-rate-templates" },
       { name: "Driver Deduction Types", description: "Standard deduction reason set", live: true, catalogKey: "deduction-types" },
@@ -80,7 +80,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "fuel",
     label: "Fuel",
-    pillClass: "bg-amber-50 text-amber-700",
+    pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "Fuel Card Types", description: "Fuel card program and method types", live: true, catalogKey: "card-types" },
       { name: "Fuel Exception Types", description: "Fuel anomaly and exception categories", live: true, catalogKey: "exception-types" },

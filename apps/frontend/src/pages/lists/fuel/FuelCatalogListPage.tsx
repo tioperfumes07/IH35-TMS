@@ -23,7 +23,7 @@ type Props = {
 };
 
 function statusPillClass(isActive: boolean) {
-  return isActive ? "rounded-sm bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700" : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+  return isActive ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700" : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
 export function FuelCatalogListPage({ client, displayName, breadcrumbPath }: Props) {
