@@ -123,8 +123,14 @@ export async function claimQueuedEmailsBatch(): Promise<Array<Record<string, unk
         WITH picked AS (
           SELECT id
           FROM email.email_queue
-          WHERE status = 'queued'
-            AND (next_retry_at IS NULL OR next_retry_at <= now())
+          WHERE (
+              (status = 'queued' AND (next_retry_at IS NULL OR next_retry_at <= now()))
+              -- G10-C4: reclaim rows orphaned in 'sending' by a mid-flight crash/redeploy. Mirrors the
+              -- outbox.events stale-lock pattern (locked_at < now() - interval '5 minutes'); here the
+              -- claim stamps updated_at = now(), so a stale updated_at means the worker died before
+              -- finalizeSuccess/handleFailure ran.
+              OR (status = 'sending' AND updated_at < now() - interval '5 minutes')
+            )
           ORDER BY created_at ASC
           LIMIT 50
           FOR UPDATE SKIP LOCKED
@@ -194,9 +200,19 @@ export async function processEmailQueueTick(logger?: Pick<FastifyBaseLogger, "in
         text,
         attachments,
       });
-      await withLuciaBypass(async (client) => {
-        await finalizeSuccess(client, id, sent.messageId);
-      });
+      // G10-C4: the message is already sent — if persisting the 'sent' status throws, do NOT fall into
+      // the failure path (that would re-send). Log it; the stale-lock reclaim above will pick the row
+      // back up after 5m and, worst case, re-send once — far better than the tick crashing mid-batch.
+      try {
+        await withLuciaBypass(async (client) => {
+          await finalizeSuccess(client, id, sent.messageId);
+        });
+      } catch (persistError) {
+        logger?.error?.(
+          { err: persistError, id },
+          "[email-cron] send succeeded but persisting 'sent' status failed; row will be reclaimed after stale-lock timeout"
+        );
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "send_failed";
       await withLuciaBypass(async (client) => {

@@ -195,11 +195,19 @@ function backgroundJobRule(jobName: string): { enabled: boolean; maxStaleMinutes
     case "qbo.forensic_import_runner":
       return { enabled: process.env.ENABLE_QBO_FORENSIC_RUNNER !== "false", maxStaleMinutes: 10 };
     case "cash_advance.expiry_cron":
-      return null;
+      // Daily 06:15 CT. Default-enabled unless explicitly turned off. 26h window = one run + margin.
+      return { enabled: process.env.ENABLE_CASH_ADVANCE_REQUEST_EXPIRY_CRON !== "false", maxStaleMinutes: 1560 };
     case "samsara.health_check_cron":
       return { enabled: process.env.ENABLE_SAMSARA_HEALTH_CHECK_CRON !== "false", maxStaleMinutes: 120 };
     case "legal.matters_reminder_cron":
-      return null;
+      // Daily 08:00 CT. Default-enabled unless explicitly turned off. 26h window = one run + margin.
+      return { enabled: process.env.ENABLE_LEGAL_MATTERS_REMINDER_CRON !== "false", maxStaleMinutes: 1560 };
+    // G4-HEALTH — recon crons run as standalone Render services (run-recon.ts) that now record a run
+    // row each pass. Strings must match reconJobName() in recon-cron.service.ts. Daily → 26h window.
+    case "accounting.recon_am_bank_count":
+      return { enabled: true, maxStaleMinutes: 1560 };
+    case "accounting.recon_pm_categorization_diff":
+      return { enabled: true, maxStaleMinutes: 1560 };
     default:
       return null;
   }
