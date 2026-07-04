@@ -18,9 +18,9 @@ function money(cents: number | null | undefined) {
 }
 
 function statusBadgeClass(status: SettlementDisputeStatus) {
-  if (status === "open") return "bg-yellow-100 text-yellow-800";
+  if (status === "open") return "bg-slate-100 text-slate-700";
   if (status === "under_review") return "bg-slate-100 text-slate-700";
-  if (status === "resolved_in_favor" || status === "partially_resolved") return "bg-green-100 text-green-800";
+  if (status === "resolved_in_favor" || status === "partially_resolved") return "bg-slate-100 text-slate-700";
   if (status === "withdrawn") return "bg-gray-100 text-gray-700";
   return "bg-red-100 text-red-700";
 }
@@ -265,7 +265,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             />
 
             {resolution === "in_favor" || resolution === "partial" ? (
-              <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+              <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
                 Corrective JE preview: debit and credit entries will be posted for {money(resolutionAmountPreviewCents)}.
               </div>
             ) : null}

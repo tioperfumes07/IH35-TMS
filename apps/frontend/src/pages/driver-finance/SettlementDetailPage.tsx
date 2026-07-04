@@ -201,13 +201,13 @@ export function SettlementDetailPage() {
         onRefresh={() => void debt.refresh()}
       />
       {canOpenDispute ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs">
-          <p className="mb-2 font-semibold text-amber-900">Open Dispute</p>
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs">
+          <p className="mb-2 font-semibold text-slate-700">Open Dispute</p>
           <div className="grid gap-2 md:grid-cols-3">
             <SelectCombobox
               value={disputeCategory}
               onChange={(event) => setDisputeCategory(event.target.value)}
-              className="rounded-sm border border-amber-300 bg-white px-2 py-1"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1"
             >
               <option value="missing_pay">missing_pay</option>
               <option value="wrong_deduction">wrong_deduction</option>
@@ -259,7 +259,7 @@ export function SettlementDetailPage() {
           <textarea
             value={disputeDescription}
             onChange={(event) => setDisputeDescription(event.target.value)}
-            className="mt-2 min-h-[80px] w-full rounded-sm border border-amber-300 bg-white px-2 py-1"
+            className="mt-2 min-h-[80px] w-full rounded-sm border border-slate-300 bg-white px-2 py-1"
             placeholder="Describe the settlement issue (minimum 20 characters)."
           />
         </div>

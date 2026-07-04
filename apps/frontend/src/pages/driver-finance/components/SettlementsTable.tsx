@@ -6,9 +6,9 @@ type Props = {
 };
 
 function statusClass(status: SettlementListRow["status"]) {
-  if (status === "paid") return "bg-green-100 text-green-700";
+  if (status === "paid") return "bg-slate-100 text-slate-700";
   if (status === "locked") return "bg-slate-100 text-slate-700";
-  if (status === "held") return "bg-amber-100 text-amber-700";
+  if (status === "held") return "bg-slate-100 text-slate-700";
   if (status === "cancelled") return "bg-red-100 text-red-700";
   return "bg-gray-100 text-gray-700";
 }

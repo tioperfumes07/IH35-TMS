@@ -78,8 +78,8 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <span
           className={`rounded-full px-2 py-1 text-xs font-semibold ${
             settlement.trip_closed_at
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-amber-100 text-amber-700"
+              ? "bg-slate-100 text-slate-700"
+              : "bg-slate-100 text-slate-700"
           }`}
         >
           {settlement.trip_closed_at ? "Driver returned" : "Trip in progress"}
@@ -101,11 +101,11 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         ) : null}
         {settlement.last_load_number &&
         settlement.last_load_number !== settlement.first_load_number ? (
-          <div className="flex items-center gap-2 rounded-sm border border-emerald-100 bg-emerald-50 px-2 py-1.5">
-            <span className="rounded-sm bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
+          <div className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
               SB
             </span>
-            <span className="font-mono text-xs font-semibold text-emerald-900">
+            <span className="font-mono text-xs font-semibold text-slate-700">
               {settlement.last_load_number}
             </span>
           </div>
@@ -191,7 +191,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
 
       {/* Settle & Pay guard message */}
       {!isSettleEnabled ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
           <strong>Settle &amp; Pay</strong> enables once the driver returns and the SB load is delivered
           (status → delivered/pending docs).
         </div>
