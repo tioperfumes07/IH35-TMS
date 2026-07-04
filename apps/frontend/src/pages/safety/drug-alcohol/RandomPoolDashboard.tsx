@@ -113,7 +113,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
       ) : null}
 
       {drawMutation.isSuccess ? (
-        <p className="mt-2 text-xs text-emerald-700">Draw complete — test records created.</p>
+        <p className="mt-2 text-xs text-slate-700">Draw complete — test records created.</p>
       ) : null}
 
       {/* ── Summary tile for most recent draw ──────────────────────────── */}
@@ -141,7 +141,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
             <div className="text-[11px] uppercase tracking-wide text-slate-500">FMCSA Min.</div>
             <div className="mt-1">
               {meetsMinimums(mostRecent) ? (
-                <span className="rounded-sm bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-800">Met</span>
+                <span className="rounded-sm bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700">Met</span>
               ) : (
                 <span className="rounded-sm bg-red-50 px-2 py-1 text-xs font-medium text-red-800">Below Min.</span>
               )}
@@ -184,7 +184,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
                     </td>
                     <td className="py-1.5">
                       {meetsMinimums(draw) ? (
-                        <span className="text-emerald-700">✓</span>
+                        <span className="text-slate-700">✓</span>
                       ) : (
                         <span className="text-red-700">✗</span>
                       )}

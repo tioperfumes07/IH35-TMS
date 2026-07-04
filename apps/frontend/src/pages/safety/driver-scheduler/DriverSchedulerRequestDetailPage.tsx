@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDateUS } from "../../../lib/formatDate";
 import { Link, useParams } from "react-router-dom";
 import { useState } from "react";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
@@ -69,7 +70,7 @@ export function DriverSchedulerRequestDetailPage() {
             <div>{String(req.leave_type)}</div>
             <div className="mt-2 font-semibold">Dates</div>
             <div>
-              {String(req.start_date).slice(0, 10)} – {String(req.end_date).slice(0, 10)}
+              {formatDateUS(req.start_date)} – {formatDateUS(req.end_date)}
             </div>
             <div className="mt-2 font-semibold">Reason</div>
             <div className="whitespace-pre-wrap text-gray-700">{String(req.reason ?? "")}</div>

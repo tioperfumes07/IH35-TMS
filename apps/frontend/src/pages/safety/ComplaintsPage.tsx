@@ -39,7 +39,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   });
 
   if (!canView) {
-    return <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">Complaints tab is restricted to Owner/Admin/Safety.</div>;
+    return <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Complaints tab is restricted to Owner/Admin/Safety.</div>;
   }
 
   return (

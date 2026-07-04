@@ -9,7 +9,7 @@ const STATUS_FILTERS: Array<SafetyAnomalyStatus | "all"> = ["all", "new", "ackno
 
 function severityBadgeClass(severity: SafetyAnomalySeverity) {
   if (severity === "critical") return "bg-red-100 text-red-800";
-  if (severity === "high") return "bg-amber-100 text-amber-800";
+  if (severity === "high") return "bg-slate-100 text-slate-700";
   if (severity === "medium") return "bg-slate-100 text-slate-700";
   return "bg-slate-100 text-slate-700";
 }

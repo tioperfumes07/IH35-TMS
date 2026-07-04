@@ -11,7 +11,7 @@ type Props = {
 
 function typePill(type: string) {
   if (type.includes("accident") || type.includes("hos")) return "bg-red-100 text-red-700";
-  if (type.includes("speed") || type.includes("brake")) return "bg-amber-100 text-amber-700";
+  if (type.includes("speed") || type.includes("brake")) return "bg-slate-100 text-slate-700";
   if (type.includes("training")) return "bg-slate-100 text-slate-700";
   if (type.includes("drug")) return "bg-slate-100 text-slate-700";
   return "bg-gray-100 text-gray-700";
@@ -19,7 +19,7 @@ function typePill(type: string) {
 
 function severityPill(severity: string) {
   if (severity.toLowerCase() === "critical") return "bg-red-100 text-red-700";
-  if (severity.toLowerCase() === "major") return "bg-amber-100 text-amber-700";
+  if (severity.toLowerCase() === "major") return "bg-slate-100 text-slate-700";
   return "bg-gray-100 text-gray-700";
 }
 

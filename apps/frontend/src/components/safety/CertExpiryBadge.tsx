@@ -21,8 +21,8 @@ function statusForDays(days: number | null): "critical" | "warn" | "ok" | "unkno
 
 function classNameForStatus(status: ReturnType<typeof statusForDays>): string {
   if (status === "critical") return "bg-red-100 text-red-700 border-red-200";
-  if (status === "warn") return "bg-amber-100 text-amber-700 border-amber-200";
-  if (status === "ok") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  if (status === "warn") return "bg-slate-100 text-slate-700 border-slate-200";
+  if (status === "ok") return "bg-slate-100 text-slate-700 border-slate-200";
   return "bg-slate-100 text-slate-600 border-slate-200";
 }
 

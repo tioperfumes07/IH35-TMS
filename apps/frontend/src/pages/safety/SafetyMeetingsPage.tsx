@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -85,7 +86,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   // Migrated to the shared QBO-parity grid (resize / sticky-header / density / export). Columns,
   // order, and the per-row "Track attendance" action are preserved verbatim (§7 additive-only).
   const meetingColumns: Array<ParityColumn<SafetyMeetingRow>> = [
-    { key: "occurred_at", label: "Date", sortable: true, render: (m) => String(m.occurred_at ?? "").slice(0, 10) },
+    { key: "occurred_at", label: "Date", sortable: true, render: (m) => formatDateUS(m.occurred_at) },
     { key: "title", label: "Topic", sortable: true },
     { key: "required", label: "Required", render: (m) => (m.required_attendees ?? []).length },
     {

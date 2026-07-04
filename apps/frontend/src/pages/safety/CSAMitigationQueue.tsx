@@ -50,8 +50,8 @@ function plusDaysIso(days: number) {
 
 function riskClass(riskBand: QueueItem["category_risk_band"]) {
   if (riskBand === "alert") return "text-red-700";
-  if (riskBand === "watch") return "text-amber-700";
-  if (riskBand === "ok") return "text-emerald-700";
+  if (riskBand === "watch") return "text-slate-700";
+  if (riskBand === "ok") return "text-slate-700";
   return "text-slate-500";
 }
 

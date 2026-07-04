@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCompanyViolations } from "../../api/safety";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -25,7 +26,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
   // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" detail action
   // are preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<CompanyViolationRow>> = [
-    { key: "reported_date", label: "Reported", sortable: true, render: (row) => String(row.reported_date ?? "").slice(0, 10) },
+    { key: "reported_date", label: "Reported", sortable: true, render: (row) => formatDateUS(row.reported_date) },
     { key: "violation_type", label: "Type", sortable: true, render: (row) => String(row.violation_type ?? "—") },
     { key: "violation_severity", label: "Severity", sortable: true, render: (row) => String(row.violation_severity ?? "—") },
     { key: "description", label: "Description", render: (row) => String(row.description ?? "—") },

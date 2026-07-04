@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDateUS } from "../../../lib/formatDate";
 import { Link } from "react-router-dom";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -45,7 +46,7 @@ export function DriverSchedulerRequestInboxPage() {
                 <td className="px-2 py-1">{String(r.driver_name ?? "")}</td>
                 <td className="px-2 py-1">{String(r.leave_type)}</td>
                 <td className="px-2 py-1">
-                  {String(r.start_date).slice(0, 10)} – {String(r.end_date).slice(0, 10)}
+                  {formatDateUS(r.start_date)} – {formatDateUS(r.end_date)}
                 </td>
                 <td className="px-2 py-1">
                   <Link to={`/safety/scheduler/requests/${String(r.id)}`}>

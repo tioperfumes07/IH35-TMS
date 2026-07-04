@@ -79,7 +79,7 @@ export function EldEditHistoryTimeline({ driverUuid, operatingCompanyId, compact
               <div className="rounded-sm bg-red-50 px-2 py-1 text-red-800">
                 <span className="font-semibold">Before:</span> {edit.before_state ?? "—"}
               </div>
-              <div className="rounded-sm bg-green-50 px-2 py-1 text-green-800">
+              <div className="rounded-sm bg-slate-50 px-2 py-1 text-slate-700">
                 <span className="font-semibold">After:</span> {edit.after_state ?? "—"}
               </div>
             </div>
