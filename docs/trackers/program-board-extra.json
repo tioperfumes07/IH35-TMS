@@ -946,12 +946,12 @@
       "name": "Inline 'New Customer' writes to a mirror table no picker reads",
       "wave": "Customers",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": ""
+      "notes": "PR #2025 \u00b7 fixed 2026-07-04"
     },
     {
       "id": "D2-1",
@@ -982,12 +982,12 @@
       "name": "Inventory part create is broken in prod (missing credentials)",
       "wave": "Inventory",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": ""
+      "notes": "PR #2025 \u00b7 fixed 2026-07-04"
     },
     {
       "id": "E1-1",
@@ -1150,12 +1150,12 @@
       "name": "Driver-app dates render in device locale + timezone, not app language",
       "wave": "Driver-PWA/i18n",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": ""
+      "notes": "PR #2030 \u00b7 fixed 2026-07-04"
     },
     {
       "id": "G9-H1",
@@ -1186,12 +1186,12 @@
       "name": "Load status machine advisory; driver-PWA can resurrect a cancelled load",
       "wave": "Dispatch",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": ""
+      "notes": "PR #2028 \u00b7 fixed 2026-07-04"
     },
     {
       "id": "G9-H5",
@@ -1210,12 +1210,12 @@
       "name": "CoA management list + trailer list cap at 50 (oldest records unreachable)",
       "wave": "Catalogs/UI",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": ""
+      "notes": "PR #2030 \u00b7 fixed 2026-07-04"
     },
     {
       "id": "G10-H1",
@@ -1246,12 +1246,12 @@
       "name": "Six live UI features call routes that don't exist (404); three move money",
       "wave": "API-contract",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": ""
+      "notes": "PR #2028 \u00b7 fixed 2026-07-04"
     },
     {
       "id": "G10-H5",
@@ -2014,12 +2014,12 @@
       "name": "Data pages with no error state render blank/forever-spinner on the live 500s",
       "wave": "Frontend",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": ""
+      "notes": "PR #2030 \u00b7 fixed 2026-07-04"
     },
     {
       "id": "G9-M",
