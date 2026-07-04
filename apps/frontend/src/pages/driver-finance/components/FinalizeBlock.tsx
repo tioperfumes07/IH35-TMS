@@ -28,7 +28,7 @@ export function FinalizeBlock({ checked, pendingAcks, staleDebt, onCheckedChange
         </span>
       </label>
       <div className="mt-2 flex gap-2">
-        <Button size="sm" variant="secondary" onClick={onSaveDraft}>Save Draft</Button>
+        <Button size="sm" variant="secondary" onClick={onSaveDraft} disabled title="Coming soon">Save Draft</Button>
         <Button size="sm" onClick={onFinalize} disabled={blocked}>Finalize Settlement</Button>
       </div>
       <div className={`mt-2 ${blocked ? "text-amber-700" : "text-green-700"}`}>{reason}</div>
