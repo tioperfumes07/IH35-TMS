@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { RecordExpenseForm } from "../../components/expenses/RecordExpenseForm";
+import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -7,6 +9,7 @@ export function ExpenseCreatePage() {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [lastExpenseId, setLastExpenseId] = useState<string | null>(null);
 
   return (
     <AccountingSubNavWrapper title="Expenses" subtitle="Record a vendor expense or bill payment">
@@ -16,8 +19,22 @@ export function ExpenseCreatePage() {
           <RecordExpenseForm
             operatingCompanyId={companyId}
             idPrefix="record-expense-page"
-            onSubmitted={() => pushToast("Expense recorded", "success")}
+            onSubmitted={(created) => {
+              pushToast("Expense recorded", "success");
+              setLastExpenseId(created?.targetId ?? null);
+            }}
           />
+        ) : null}
+        {companyId && lastExpenseId ? (
+          <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
+            <span className="text-xs text-gray-600">Close an open task this expense fulfils:</span>
+            <TaskLinkPicker
+              operatingCompanyId={companyId}
+              targetType="expense"
+              targetId={lastExpenseId}
+              onLinked={() => setLastExpenseId(null)}
+            />
+          </div>
         ) : null}
       </div>
     </AccountingSubNavWrapper>

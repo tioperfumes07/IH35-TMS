@@ -17,6 +17,7 @@ import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
+import { TasksTab } from "../../components/tasks/TasksTab";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
@@ -574,6 +575,10 @@ export function WorkOrderDetailPage() {
           {JSON.stringify(wo.line_items ?? [], null, 2)}
         </pre>
       </details>
+
+      <section className="rounded-sm border border-gray-200 bg-white p-3">
+        <TasksTab operatingCompanyId={companyId} targetType="work_order" targetId={id} targetLabel={`Work Order ${woNumber}`} />
+      </section>
     </div>
   );
 }

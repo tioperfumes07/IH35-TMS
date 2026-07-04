@@ -5,6 +5,7 @@ import { recordApBillPayment } from "../../api/ap";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { SelectCombobox } from "../shared/SelectCombobox";
+import { TaskLinkPicker } from "../tasks/TaskLinkPicker";
 import { useToast } from "../Toast";
 import { MoneyInput } from "../forms/MoneyInput";
 
@@ -60,6 +61,8 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
   const [amounts, setAmounts] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // TASKS-PLANNER-V2-CONNECTIVITY: after a payment posts, offer to close an open task it fulfils.
+  const [completedPaymentId, setCompletedPaymentId] = useState<string | null>(null);
 
   const billsQuery = useQuery({
     queryKey: ["ap-bill-payment-modal", operatingCompanyId, vendorId],
@@ -159,7 +162,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           }
           setSaving(true);
           try {
-            await recordApBillPayment(operatingCompanyId, {
+            const res = await recordApBillPayment(operatingCompanyId, {
               vendor_id: vendorId,
               paid_at: paymentDate,
               amount_cents: totalCents,
@@ -171,7 +174,11 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
             });
             pushToast(`Bill payment of ${money(totalCents)} recorded`, "success");
             onSaved();
-            onClose();
+            // If we have a payment id, keep the modal open on a completion step so the payment can
+            // close an open task; otherwise preserve the original auto-close behavior.
+            const paymentId = res?.bill_payment_ids?.[0] ?? res?.payment_batch_id ?? null;
+            if (paymentId) setCompletedPaymentId(paymentId);
+            else onClose();
           } catch (submitError) {
             setError(submitError instanceof Error ? submitError.message : "Failed to record payment.");
           } finally {
@@ -290,14 +297,31 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
         </label>
 
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={saving || manualInvalid}>
-            {saving ? "Saving…" : "Record payment"}
-          </Button>
-        </div>
+        {completedPaymentId ? (
+          <div className="flex items-center justify-between border-t border-gray-200 pt-3">
+            <span className="text-xs text-gray-600">Payment recorded. Close an open task it fulfils:</span>
+            <div className="flex items-center gap-2">
+              <TaskLinkPicker
+                operatingCompanyId={operatingCompanyId}
+                targetType="bill_payment"
+                targetId={completedPaymentId}
+                onLinked={() => { setCompletedPaymentId(null); onClose(); }}
+              />
+              <Button type="button" variant="secondary" onClick={() => { setCompletedPaymentId(null); onClose(); }}>
+                Done
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving || manualInvalid}>
+              {saving ? "Saving…" : "Record payment"}
+            </Button>
+          </div>
+        )}
       </form>
     </Modal>
   );

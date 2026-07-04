@@ -3,10 +3,12 @@ import { initializeCbpWaitTimesRefreshCron } from "../border-crossing/cbp-wait-t
 import { initializeComplianceReminderCron } from "../compliance/compliance-reminder.job.js";
 import { initializeDeadheadRefreshCron } from "../reports/deadhead-refresh.job.js";
 import { initializeLaneProfitabilityRefreshCron } from "../reports/lane-profitability-refresh.job.js";
+import { initializeTaskAlarmCron } from "../tasks/task-alarm.job.js";
 
 export function registerComplianceSchedulerJobs(app: FastifyInstance) {
   initializeComplianceReminderCron(app);
   initializeDeadheadRefreshCron(app);
   initializeLaneProfitabilityRefreshCron(app);
   initializeCbpWaitTimesRefreshCron(app);
+  initializeTaskAlarmCron(app);
 }

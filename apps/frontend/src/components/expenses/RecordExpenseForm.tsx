@@ -18,7 +18,8 @@ import {
 
 type Props = {
   operatingCompanyId: string;
-  onSubmitted?: () => void;
+  // Passes the created expense id so callers can offer transaction-side task completion (non-posting).
+  onSubmitted?: (created?: { targetType: "expense"; targetId: string }) => void;
   showSubmitButton?: boolean;
   submitLabel?: string;
   idPrefix?: string;
@@ -85,10 +86,10 @@ export function RecordExpenseForm({
     setSubmitting(true);
     setError(null);
     try {
-      await submitRecordExpense(operatingCompanyId, values, draftAttachmentEntityId);
+      const created = await submitRecordExpense(operatingCompanyId, values, draftAttachmentEntityId);
       setValues(initialRecordExpenseFormValues());
       setDraftAttachmentEntityId(crypto.randomUUID());
-      onSubmitted?.();
+      onSubmitted?.(created?.expense_id ? { targetType: "expense", targetId: created.expense_id } : undefined);
     } catch (submitError) {
       setError(String((submitError as Error).message || "Failed to record expense"));
     } finally {

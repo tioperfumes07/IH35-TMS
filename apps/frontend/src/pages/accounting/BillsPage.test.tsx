@@ -89,7 +89,7 @@ describe("BillsPage", () => {
     expect(screen.getByText("$40.00")).toBeInTheDocument();
     expect(screen.getByText("$60.00")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /Expand payments/i }));
+    await user.click(screen.getByRole("button", { name: /Expand details/i }));
 
     await waitFor(() => expect(accountingApi.listPaymentsForBill).toHaveBeenCalledWith("bill-partial-1", "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"));
     expect(await screen.findByText("REF-9")).toBeInTheDocument();
