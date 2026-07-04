@@ -70,7 +70,7 @@ export function QboSyncQueuePage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="QBO Sync Queue" subtitle="Review pending/failed/blocked banking sync jobs" />
+      <PageHeader backHref="/banking" title="QBO Sync Queue" subtitle="Review pending/failed/blocked banking sync jobs" />
       {statsQuery.isError || queueQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">

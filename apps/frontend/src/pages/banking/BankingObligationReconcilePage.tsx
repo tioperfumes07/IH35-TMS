@@ -109,7 +109,7 @@ export function BankingObligationReconcilePage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Bank reconciliation" subtitle="Drag a transaction onto an obligation, or use bulk actions." />
+      <PageHeader backHref="/banking" title="Bank reconciliation" subtitle="Drag a transaction onto an obligation, or use bulk actions." />
       {txnsQuery.isError || obligationsQuery.isError ? (
         <ListErrorBanner
           message={

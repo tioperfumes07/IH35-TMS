@@ -17,12 +17,51 @@ export function RegisterTable({ rows, selectedTransactionId, onSelect, onCategor
   const selection = useBulkSelection({ cap: 200, onCapExceeded: (e) => pushToast(e.message, "error") });
   const pageRowIds = rows.map((row) => String(row.id));
 
+  // Real client-side CSV export of the selected register rows (previously a fake success toast with no action).
+  function exportSelected() {
+    const selected = rows.filter((row) => selection.selectedIds.has(String(row.id)));
+    if (selected.length === 0) {
+      pushToast("Select transactions to export.", "error");
+      return;
+    }
+    const header = ["Date", "Description", "Deposits", "Withdrawals", "Balance", "Status", "Category"];
+    const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const lines = selected.map((row) => {
+      const amount = Number(row.amount ?? row.deposits ?? 0);
+      const deposits = Number(row.deposits ?? (amount >= 0 ? amount : 0));
+      const withdrawals = Number(row.withdrawals ?? (amount < 0 ? Math.abs(amount) : 0));
+      return [
+        String(row.txn_date ?? ""),
+        String(row.description ?? ""),
+        deposits > 0 ? deposits.toFixed(2) : "",
+        withdrawals > 0 ? withdrawals.toFixed(2) : "",
+        Number(row.balance ?? 0).toFixed(2),
+        String(row.status ?? "synced"),
+        String(row.category ?? ""),
+      ];
+    });
+    const csv = [header, ...lines].map((row) => row.map((cell) => escape(String(cell ?? ""))).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = "banking-register-selected.csv";
+    anchor.click();
+    URL.revokeObjectURL(href);
+    pushToast(`Exported ${selected.length} transaction(s).`, "success");
+  }
+
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <BulkActionBar
         {...selection.bulkActionBarProps([
-          { id: "categorize", label: "Categorize", onClick: () => pushToast("Bulk categorize register rows.", "success") },
-          { id: "export", label: "Export Selected", onClick: () => pushToast("Export register rows queued.", "success") },
+          {
+            id: "categorize",
+            label: "Categorize",
+            onClick: () =>
+              pushToast("Open a row and choose its account to categorize. Bulk categorize-by-account is coming next.", "info"),
+          },
+          { id: "export", label: "Export Selected", onClick: () => exportSelected() },
         ])}
       />
       <TableSelection
