@@ -10,7 +10,7 @@ function badgeClass(tile: BankingTile) {
   if (tile.tag?.includes("DIP")) return "bg-slate-100 text-slate-700";
   if (tile.is_relay) return "bg-slate-100 text-slate-700";
   if (tile.tag === "Factoring") return "bg-slate-100 text-slate-700";
-  if (tile.tag === "Escrow") return "bg-green-100 text-green-700";
+  if (tile.tag === "Escrow") return "bg-slate-100 text-slate-700";
   if (tile.account_type?.toLowerCase().includes("credit")) return "bg-red-100 text-red-700";
   return "bg-gray-100 text-gray-700";
 }
@@ -30,7 +30,7 @@ export function AccountTile({ tile, selected, onSelect }: Props) {
       </div>
       <div className="truncate text-xs font-semibold text-gray-900">{tile.display_name}</div>
       <div className="mt-1 text-sm font-bold text-gray-900">${Number(tile.current_balance ?? 0).toFixed(2)}</div>
-      <div className="mt-1 text-[11px] text-amber-700">Uncat: {Number(tile.uncategorized_count ?? 0)}</div>
+      <div className="mt-1 text-[11px] text-slate-700">Uncat: {Number(tile.uncategorized_count ?? 0)}</div>
     </button>
   );
 }

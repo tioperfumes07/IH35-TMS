@@ -237,14 +237,14 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             <button
               type="button"
               onClick={() => setActiveTab("transactions")}
-              className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-left text-[11px] transition hover:bg-amber-100"
+              className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-100"
             >
-              <div className="text-[10px] uppercase text-amber-700">Uncategorized</div>
-              <div className="font-semibold text-amber-800">{uncategorizedCount}</div>
+              <div className="text-[10px] uppercase text-slate-700">Uncategorized</div>
+              <div className="font-semibold text-slate-700">{uncategorizedCount}</div>
             </button>
             <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Recon accts</div><div className="font-semibold">{reconAccounts}</div></div>
             <div className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-slate-700">Factoring res</div><div className="font-semibold text-slate-700">{money.format(factoringReserve)}</div></div>
-            <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-emerald-700">Escrow feed</div><div className="font-semibold text-emerald-900">{money.format(escrowFeed)}</div></div>
+            <div className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-slate-700">Escrow feed</div><div className="font-semibold text-slate-700">{money.format(escrowFeed)}</div></div>
           </div>
 
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr_1fr]">
@@ -282,20 +282,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <div className="flex justify-between"><span>Reserves held</span><span>{money.format(factoringReserve)}</span></div>
                 <div className="flex justify-between"><span>Advances funded MTD</span><span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span></div>
                 <div className="flex justify-between"><span>Chargebacks open</span><span className="text-red-700">{money.format(0)}</span></div>
-                <div className="flex justify-between"><span>+30 aging fees</span><span className="text-amber-700">{money.format(0)}</span></div>
+                <div className="flex justify-between"><span>+30 aging fees</span><span className="text-slate-700">{money.format(0)}</span></div>
                 <div className="pt-1 text-xs text-gray-500">Last upload: {selectedTile?.last_txn_date ? String(selectedTile.last_txn_date) : "—"}</div>
                 {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
               </div>
             </div>
 
-            <div className="rounded-sm border border-emerald-200 bg-emerald-50">
-              <div className="border-b border-emerald-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">Driver escrow visualizer</div>
+            <div className="rounded-sm border border-slate-300 bg-slate-100">
+              <div className="border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Driver escrow visualizer</div>
               <div className="space-y-1 px-3 py-2 text-sm">
                 <div className="flex justify-between"><span>Total escrow held</span><span>{money.format(escrowFeed)}</span></div>
                 <div className="flex justify-between">
                   <span
                     title="Count of drivers whose escrow balance is currently non-zero."
-                    className="cursor-help border-b border-dotted border-emerald-400"
+                    className="cursor-help border-b border-dotted border-slate-400"
                   >
                     Drivers with escrow:
                   </span>
@@ -303,7 +303,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </div>
                 <div className="flex justify-between"><span>Contributions MTD</span><span>{money.format(0)}</span></div>
                 <div className="flex justify-between"><span>Deductions MTD</span><span>{money.format(0)}</span></div>
-                <button type="button" onClick={() => setActiveTab("driver_escrow")} className="pt-1 text-xs text-emerald-700 hover:underline">
+                <button type="button" onClick={() => setActiveTab("driver_escrow")} className="pt-1 text-xs text-slate-700 hover:underline">
                   Filter by name + date
                 </button>
               </div>

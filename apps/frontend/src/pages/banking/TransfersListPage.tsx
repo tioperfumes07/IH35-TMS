@@ -164,9 +164,9 @@ export function TransfersListPage() {
                   {row.revoked_at ? (
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-700">revoked</span>
                   ) : row.qbo_journal_entry_id ? (
-                    <span className="rounded-sm bg-green-100 px-2 py-0.5 text-xs text-green-700">synced</span>
+                    <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">synced</span>
                   ) : (
-                    <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-700">pending</span>
+                    <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">pending</span>
                   )}
                 </td>
                 <td className="border-b border-gray-100 px-2 py-2">

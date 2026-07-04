@@ -46,9 +46,9 @@ function suggestionLabel(tx: Record<string, unknown>): string {
 function confidenceChipClasses(tx: Record<string, unknown>): string {
   const conf = tx.categorization_confidence;
   const s = String(conf ?? "");
-  if (s === "rule_match") return "bg-emerald-100 text-emerald-900";
+  if (s === "rule_match") return "bg-slate-100 text-slate-700";
   if (s === "vendor_category_fallback") return "bg-slate-100 text-slate-700";
-  return "bg-amber-100 text-amber-900";
+  return "bg-slate-100 text-slate-700";
 }
 
 type TabId = "review" | "categorized" | "excluded";
@@ -180,7 +180,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                       <div className="flex shrink-0 flex-wrap items-center gap-2">
                         <ActionButton
                           type="button"
-                          className="border border-emerald-300 bg-emerald-50 text-emerald-900"
+                          className="border border-slate-300 bg-slate-50 text-slate-700"
                           disabled={acceptMutation.isPending || !draft.category_kind.trim()}
                           onClick={() =>
                             void acceptMutation.mutateAsync({

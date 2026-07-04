@@ -22,9 +22,9 @@ function money(cents: number) {
 }
 
 function syncStatusClasses(status: string) {
-  if (status === "active") return "bg-green-100 text-green-700";
+  if (status === "active") return "bg-slate-100 text-slate-700";
   if (status === "pending") return "bg-gray-100 text-gray-700";
-  if (status === "needs_reauth") return "bg-amber-100 text-amber-700";
+  if (status === "needs_reauth") return "bg-slate-100 text-slate-700";
   if (status === "error") return "bg-red-100 text-red-700";
   if (status === "disconnected") return "bg-gray-200 text-gray-600 line-through";
   return "bg-gray-100 text-gray-700";

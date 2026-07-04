@@ -72,7 +72,7 @@ export function CategorizationRulesPage() {
 
   if (!canAccess(auth.user?.role)) {
     return (
-      <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+      <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
         Auto-categorization rules are available to Owner/Admin/Accountant roles.
       </div>
     );
@@ -268,7 +268,7 @@ export function CategorizationRulesPage() {
               <div key={tx.id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs">
                 <p className="font-medium text-gray-900">{tx.description || "(No description)"}</p>
                 <p className="text-gray-600">{(tx.plaid_category ?? []).join(" / ") || "No Plaid category"}</p>
-                <p className={tx.coa_account_id ? "text-green-700" : "text-amber-700"}>
+                <p className={tx.coa_account_id ? "text-slate-700" : "text-slate-500"}>
                   {tx.coa_account_id
                     ? `Matched: ${tx.account_number || ""} ${tx.account_name || ""}`.trim()
                     : "Unmatched"}

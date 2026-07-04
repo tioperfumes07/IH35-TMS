@@ -265,10 +265,10 @@ export function BankTxCategorizationPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
-      {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select an operating company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">Select an operating company.</div> : null}
 
       {backendPending ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-300 bg-slate-100 p-3 text-sm text-slate-700">
           <span>
             Backend pending — file <strong>P6-T11204</strong> ticket. Uncategorized transaction endpoints are not available yet.
           </span>
