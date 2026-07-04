@@ -14,8 +14,8 @@ function minutesToLabel(minutes: number) {
 
 function statusClass(status: "ok" | "warning_1hr" | "warning_15min" | "violation") {
   if (status === "violation") return "bg-red-100 text-red-700";
-  if (status === "warning_15min" || status === "warning_1hr") return "bg-amber-100 text-amber-700";
-  return "bg-emerald-100 text-emerald-700";
+  if (status === "warning_15min" || status === "warning_1hr") return "bg-slate-100 text-slate-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 export function DriverHosDetailPage() {
@@ -51,7 +51,7 @@ export function DriverHosDetailPage() {
       />
 
       {!operatingCompanyId ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
           Select an operating company to view HOS details.
         </div>
       ) : null}
@@ -120,7 +120,7 @@ export function DriverHosDetailPage() {
             ) : (
               <div className="mt-2 space-y-1">
                 {hosQuery.data.manual_edits.events.map((event) => (
-                  <div key={event.id} className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                  <div key={event.id} className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-800">
                     {new Date(event.started_at).toLocaleString()} · {event.duty_status}
                   </div>
                 ))}

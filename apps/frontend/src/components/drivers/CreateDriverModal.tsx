@@ -128,7 +128,7 @@ type DriverCreateModalSnapshot = {
 function getDetectionSeverityClass(detection: ReturningDetectionResult | null) {
   if (!detection) return "border-gray-300 bg-gray-50 text-gray-800";
   if (detection.severity_summary.severe_count > 0) return "border-red-300 bg-red-50 text-red-900";
-  if (detection.severity_summary.warning_count > 0) return "border-amber-300 bg-amber-50 text-amber-900";
+  if (detection.severity_summary.warning_count > 0) return "border-slate-300 bg-slate-100 text-slate-800";
   return "border-slate-300 bg-slate-100 text-slate-700";
 }
 
@@ -761,7 +761,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated }: Creat
                 <span>I have reviewed prior safety records and want to proceed with this hire</span>
               </label>
               {overrideReturningWarning && terminatedMatches.length > 0 ? (
-                <div className="mt-2 space-y-2 rounded-sm border border-amber-200 bg-amber-50 p-2">
+                <div className="mt-2 space-y-2 rounded-sm border border-slate-200 bg-slate-100 p-2">
                   <label className="flex items-center gap-2 text-xs">
                     <input
                       type="radio"
@@ -822,7 +822,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated }: Creat
             WhatsApp invite sent to {createSummary?.phone}. Invite expires in 72 hours.
           </p>
           {createSummary?.linked_user_event_type === "existing_user" ? (
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-slate-700">
               Phone {createSummary.phone} was already registered. Linked existing account.
             </p>
           ) : null}

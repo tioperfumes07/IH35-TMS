@@ -10,8 +10,8 @@ type Props = {
 function tierClass(tier: string) {
   if (tier === "critical") return "bg-red-100 text-red-800";
   if (tier === "at_risk") return "bg-orange-100 text-orange-800";
-  if (tier === "watch") return "bg-amber-100 text-amber-800";
-  return "bg-emerald-100 text-emerald-800";
+  if (tier === "watch") return "bg-slate-100 text-slate-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 export function AtRiskDriverCard({ driverUuid, driverName, operatingCompanyId, riskScore, tier, topFactors }: Props) {

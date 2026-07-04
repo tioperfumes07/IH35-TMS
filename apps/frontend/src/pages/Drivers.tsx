@@ -819,7 +819,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 ))
               )}
             </div>
-            <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs">
+            <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs">
               <p className="mb-1 font-semibold">Update Split</p>
               <div className="grid grid-cols-2 gap-2">
                 <DatePicker

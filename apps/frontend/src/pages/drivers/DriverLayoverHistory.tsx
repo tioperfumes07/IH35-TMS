@@ -87,13 +87,13 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
                 <td className="px-3 py-2">
                   <button
                     onClick={() => billableMutation.mutate({ uuid: r.uuid, billable: !r.billable_to_customer })}
-                    className={`text-xs px-2 py-0.5 rounded-sm ${r.billable_to_customer ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-600"}`}
+                    className={`text-xs px-2 py-0.5 rounded-sm ${r.billable_to_customer ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
                   >
                     {r.billable_to_customer ? "Billable" : "Not billable"}
                   </button>
                 </td>
                 <td className="px-3 py-2">
-                  <span className={`text-xs ${r.per_diem_eligible ? "text-green-600" : "text-gray-400"}`}>
+                  <span className={`text-xs ${r.per_diem_eligible ? "text-slate-700" : "text-gray-400"}`}>
                     {r.per_diem_eligible ? "Eligible" : "Excluded"}
                   </span>
                 </td>

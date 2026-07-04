@@ -97,7 +97,7 @@ function ThreadPane({
             key={msg.id}
             className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
               msg.sender_side === "office" ? "ml-auto bg-slate-100 text-slate-700" : "mr-auto bg-gray-100 text-gray-900"
-            } ${!msg.read_at && msg.sender_side === "driver" ? "ring-2 ring-amber-400" : ""}`}
+            } ${!msg.read_at && msg.sender_side === "driver" ? "ring-2 ring-slate-400" : ""}`}
           >
             <p>{msg.message}</p>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-gray-500">
@@ -105,7 +105,7 @@ function ThreadPane({
               <span>{msg.channel}</span>
               <span>{msg.delivery_status}</span>
               {!msg.read_at && msg.sender_side === "driver" ? (
-                <button type="button" className="font-semibold text-amber-700 underline" onClick={() => onMarkRead(msg.id)}>
+                <button type="button" className="font-semibold text-slate-700 underline" onClick={() => onMarkRead(msg.id)}>
                   Mark read
                 </button>
               ) : null}

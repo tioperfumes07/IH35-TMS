@@ -68,7 +68,7 @@ export function DriverLateArrivalCard({ operatingCompanyId, driverId }: Props) {
   return (
     <div
       data-testid="driver-late-arrival-card"
-      className={`rounded-sm border p-3 ${data.chronic_offender ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-white"}`}
+      className={`rounded-sm border p-3 ${data.chronic_offender ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-white"}`}
     >
       <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Late arrival rate (30d)</div>
       <div className="mt-1 text-2xl font-semibold text-slate-900">{pct(data.late_rate)}</div>
@@ -76,7 +76,7 @@ export function DriverLateArrivalCard({ operatingCompanyId, driverId }: Props) {
         {data.late_count} late of {data.total_count} stops · {data.grace_minutes}m grace
       </div>
       {data.chronic_offender ? (
-        <div className="mt-2 text-xs font-medium text-amber-800">Chronic offender (&gt;20% late)</div>
+        <div className="mt-2 text-xs font-medium text-slate-700">Chronic offender (&gt;20% late)</div>
       ) : null}
     </div>
   );
