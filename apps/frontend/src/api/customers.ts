@@ -24,11 +24,28 @@ export type CustomerPaymentListRow = {
   qbo_journal_entry_id?: string | null;
 };
 
-export function recordCustomerPayment(customerId: string, payload: RecordCustomerPaymentPayload) {
-  return apiRequest<{ ok?: boolean; id?: string }>(`/api/v1/customers/${customerId}/payments`, {
-    method: "POST",
-    body: payload,
-  });
+export function recordCustomerPayment(
+  customerId: string,
+  operatingCompanyId: string,
+  payload: RecordCustomerPaymentPayload
+) {
+  // Contract fix: the backend POST /customers/:id/payments requires operating_company_id in the
+  // QUERY (companyQuerySchema) and a body of {received_at, payment_method, reference_number, ...}.
+  // The old call sent no operating_company_id and used {date, method, reference} → 400 on every
+  // "Record payment" click. Translate here so the caller keeps its natural field names.
+  return apiRequest<{ ok?: boolean; id?: string }>(
+    `/api/v1/customers/${customerId}/payments?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    {
+      method: "POST",
+      body: {
+        received_at: payload.date,
+        amount_cents: payload.amount_cents,
+        payment_method: payload.method,
+        reference_number: payload.reference,
+        applications: payload.applications,
+      },
+    }
+  );
 }
 
 export function listCustomerPayments(customerId: string, params: { limit?: number } = {}) {
