@@ -830,7 +830,7 @@ export function CustomerDetailPage() {
 
   const recordCustomerPaymentMutation = useMutation({
     mutationFn: () =>
-      recordCustomerPayment(id, {
+      recordCustomerPayment(id, selectedCompanyId ?? "", {
         date: payDate,
         amount_cents: paymentCents,
         method: payMethod,

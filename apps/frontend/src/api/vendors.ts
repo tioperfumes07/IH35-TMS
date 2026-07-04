@@ -23,10 +23,23 @@ export type VendorBillPaymentListRow = {
 };
 
 export function recordVendorBillPayment(vendorId: string, payload: RecordVendorBillPaymentPayload) {
-  return apiRequest<{ ok?: boolean; id?: string }>(`/api/v1/vendors/${vendorId}/bill-payments`, {
-    method: "POST",
-    body: payload,
-  });
+  // Contract fix: the backend POST /vendors/:id/bill-payments requires operating_company_id in the
+  // QUERY (companyQuerySchema) and a body of {paid_at, payment_method, reference_number, ...}. The old
+  // call sent operating_company_id in the BODY and used {date, method, reference} → 400 on every
+  // "Record bill payment" click. Move the id to the query and translate the field names here.
+  return apiRequest<{ ok?: boolean; id?: string }>(
+    `/api/v1/vendors/${vendorId}/bill-payments?operating_company_id=${encodeURIComponent(payload.operating_company_id)}`,
+    {
+      method: "POST",
+      body: {
+        paid_at: payload.date,
+        amount_cents: payload.amount_cents,
+        payment_method: payload.method,
+        reference_number: payload.reference,
+        applications: payload.applications,
+      },
+    }
+  );
 }
 
 export function listVendorBillPayments(
