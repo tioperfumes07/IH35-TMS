@@ -181,7 +181,7 @@ export function ReportsRunnerPage() {
             >
               Download CSV
             </button>
-            <button type="button" className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700" disabled>
+            <button type="button" className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:opacity-50" disabled title="Coming soon">
               Save
             </button>
           </div>
