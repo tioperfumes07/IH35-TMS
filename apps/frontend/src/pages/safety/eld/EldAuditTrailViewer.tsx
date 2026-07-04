@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { EldEditHistoryTimeline, type EldEditHistoryEntry } from "../../../components/safety/EldEditHistoryTimeline";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type EldAuditTrailResponse = {
   driver_uuid: string;
@@ -101,7 +102,7 @@ export function EldAuditTrailViewer() {
         <body>
           <h1>${payload.title}</h1>
           <p>Driver: ${payload.driver_name ?? payload.driver_uuid}</p>
-          <p>Period: ${payload.period.from} to ${payload.period.to}</p>
+          <p>Period: ${formatDateUS(payload.period.from)} to ${formatDateUS(payload.period.to)}</p>
           <p>Generated: ${payload.generated_at}</p>
           <p>${payload.fmcsa_notice}</p>
           <table border="1" cellpadding="6" cellspacing="0" width="100%">

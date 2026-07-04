@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { formatDateUS } from "../../lib/formatDate";
 
 export type EldEditHistoryEntry = {
   id: string;
@@ -60,7 +61,7 @@ export function EldEditHistoryTimeline({ driverUuid, operatingCompanyId, compact
     <div className={compact ? "space-y-2" : "space-y-3"}>
       {!compact ? (
         <p className="text-xs text-gray-600">
-          Read-only audit trail from mirrored Samsara HOS log edits ({historyQuery.data?.from} to {historyQuery.data?.to}).
+          Read-only audit trail from mirrored Samsara HOS log edits ({formatDateUS(historyQuery.data?.from)} to {formatDateUS(historyQuery.data?.to)}).
         </p>
       ) : null}
       <ol className="space-y-2 border-l-2 border-slate-300 pl-4">

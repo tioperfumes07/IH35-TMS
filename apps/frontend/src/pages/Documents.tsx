@@ -11,6 +11,7 @@ import { UploadModal } from "../components/documents/UploadModal";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
+import { formatDateUS } from "../lib/formatDate";
 
 const ENTITY_TYPE_OPTIONS = [
   { value: "all", label: "All" },
@@ -112,7 +113,7 @@ export function DocumentsPage() {
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="rounded-sm bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d]"
+            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
           >
             Upload document
           </button>
@@ -222,8 +223,8 @@ export function DocumentsPage() {
           { key: "category_label", label: "Category", render: (row) => row.category_label ?? "-" },
           { key: "entity", label: "Entity", render: (row) => entityLabel(row) },
           { key: "uploader_email", label: "Uploader", render: (row) => row.uploader_email ?? row.uploader_user_id },
-          { key: "document_date", label: "Doc Date", render: (row) => (row.document_date ? row.document_date.slice(0, 10) : "-") },
-          { key: "expiration_date", label: "Expires", render: (row) => (row.expiration_date ? row.expiration_date.slice(0, 10) : "-") },
+          { key: "document_date", label: "Doc Date", render: (row) => formatDateUS(row.document_date) || "-" },
+          { key: "expiration_date", label: "Expires", render: (row) => formatDateUS(row.expiration_date) || "-" },
           { key: "version_number", label: "Version", cellClass: "code-cell", render: (row) => `v${row.version_number}` },
           {
             key: "actions",

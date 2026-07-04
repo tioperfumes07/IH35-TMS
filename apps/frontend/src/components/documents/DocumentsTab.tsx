@@ -14,6 +14,7 @@ import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { DataTable } from "../DataTable";
 import { useToast } from "../Toast";
+import { formatDateUS } from "../../lib/formatDate";
 import { EditMetadataModal } from "./EditMetadataModal";
 import { PreviewModal } from "./PreviewModal";
 import { SoftDeleteModal } from "./SoftDeleteModal";
@@ -27,8 +28,7 @@ type DocumentsTabProps = {
 };
 
 function formatDate(value: string | null) {
-  if (!value) return "-";
-  return new Date(value).toISOString().slice(0, 10);
+  return formatDateUS(value) || "-";
 }
 
 function isUuid(value: string) {
