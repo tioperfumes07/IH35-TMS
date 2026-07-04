@@ -64,7 +64,7 @@ async function createPortalSession(portalUserId: string): Promise<string> {
 }
 
 export async function registerPortalAuthRoutes(app: FastifyInstance) {
-  app.post("/api/v1/portal/auth/login", async (req, reply) => {
+  app.post("/api/v1/portal/auth/login", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (rejectInternalSessionOnPortalRoute(req, reply)) return;
     const parsed = loginBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -113,7 +113,7 @@ export async function registerPortalAuthRoutes(app: FastifyInstance) {
     return reply.code(200).send({ ok: true });
   });
 
-  app.post("/api/v1/portal/auth/forgot-password", async (req, reply) => {
+  app.post("/api/v1/portal/auth/forgot-password", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = forgotBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const email = normalizeEmail(parsed.data.email);
@@ -167,7 +167,7 @@ export async function registerPortalAuthRoutes(app: FastifyInstance) {
     return reply.code(200).send({ ok: true, message: RESET_GENERIC_OK });
   });
 
-  app.post("/api/v1/portal/auth/reset-password", async (req, reply) => {
+  app.post("/api/v1/portal/auth/reset-password", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = resetBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 

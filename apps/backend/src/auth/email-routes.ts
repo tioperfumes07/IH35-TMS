@@ -97,7 +97,7 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
     return reply.code(200).send({ ok: true, message: GENERIC_MESSAGE });
   });
 
-  app.post("/api/v1/auth/email/verify", async (req, reply) => {
+  app.post("/api/v1/auth/email/verify", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = verifyBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const email = normalizeEmail(parsed.data.email);

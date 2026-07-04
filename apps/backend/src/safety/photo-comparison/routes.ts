@@ -91,7 +91,7 @@ function isManagerPlus(role: string) {
 }
 
 export async function registerPhotoComparisonRoutes(app: FastifyInstance) {
-  app.post("/api/safety/photo-comparison/evidence", async (req, reply) => {
+  app.post("/api/safety/photo-comparison/evidence", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = evidenceUploadQuerySchema.safeParse(req.query ?? {});
@@ -157,7 +157,7 @@ export async function registerPhotoComparisonRoutes(app: FastifyInstance) {
     return reply.code(201).send({ session_uuid: sessionUuid });
   });
 
-  app.post("/api/safety/photo-comparison/:session_uuid/post-trip", async (req, reply) => {
+  app.post("/api/safety/photo-comparison/:session_uuid/post-trip", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = sessionParamsSchema.safeParse(req.params ?? {});
