@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { getDownloadUrl, listFiles, type DocsFile } from "../api/docs";
 import { getCurrentDriver } from "../api/mdata";
+import { formatDateTime } from "../lib/formatDateTime";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
 import { Modal } from "../components/Modal";
@@ -243,7 +244,7 @@ export function MyDocumentsPage() {
                       {row.original_filename}
                     </div>
                     <div className="text-xs text-pwa-text-secondary">
-                      {categoryLabel(row, t)} · {new Date(row.created_at).toLocaleString()}
+                      {categoryLabel(row, t)} · {formatDateTime(row.created_at)}
                     </div>
                   </div>
                   <span className="text-xs text-pwa-text-secondary">{t("documents.tap_to_preview")}</span>
@@ -256,7 +257,7 @@ export function MyDocumentsPage() {
                   <div key={row.id} className="rounded-lg border border-pwa-border bg-[#1A2030] p-2">
                     <div className="text-sm">{row.original_filename}</div>
                     <div className="text-xs text-pwa-text-secondary">
-                      {categoryLabel(row, t)} · {row.synced_at ? new Date(row.synced_at).toLocaleString() : t("documents.synced_label")}
+                      {categoryLabel(row, t)} · {row.synced_at ? formatDateTime(row.synced_at) : t("documents.synced_label")}
                     </div>
                   </div>
                 ))

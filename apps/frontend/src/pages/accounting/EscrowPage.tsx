@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useListState } from "../../components/list-state";
 
@@ -43,6 +44,17 @@ export function EscrowPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
       {accountsQuery.isLoading ? <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">Loading escrow accounts...</div> : null}
+
+      {listState.isError ? (
+        <div className="rounded-sm border border-slate-200 bg-white">
+          <ListErrorState
+            title="Couldn't load escrow accounts"
+            status={0}
+            message={(accountsQuery.error as Error | undefined)?.message}
+            onRetry={() => void accountsQuery.refetch()}
+          />
+        </div>
+      ) : null}
 
       {accountsQuery.data?.rows && accountsQuery.data.rows.length > 0 ? (
         <div className="overflow-auto rounded-sm border border-slate-200 bg-white">

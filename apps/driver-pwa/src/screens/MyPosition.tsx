@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatTime } from "../lib/formatDateTime";
 
 type Position = { lat: number; lng: number; speed_mph: number | null; recorded_at: string; stale: boolean };
 
@@ -30,7 +31,7 @@ export function MyPositionScreen() {
         <>
           <p className="text-sm">{position.lat.toFixed(5)}, {position.lng.toFixed(5)}</p>
           <p className="text-sm">Speed: {position.speed_mph?.toFixed(1) ?? "—"} mph</p>
-          <p className="text-xs text-slate-500">Updated {new Date(position.recorded_at).toLocaleTimeString()}</p>
+          <p className="text-xs text-slate-500">Updated {formatTime(position.recorded_at)}</p>
         </>
       ) : (
         <p className="text-sm text-slate-500">Waiting for GPS…</p>

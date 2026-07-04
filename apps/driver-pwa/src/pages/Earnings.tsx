@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMyCurrentCycle, getMyPastCycles } from "../api/earnings";
 import { PwaCard } from "../components/PwaCard";
 import { TrueStatusChips } from "../components/TrueStatusChips";
+import { formatDate } from "../lib/formatDateTime";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 
@@ -71,7 +72,7 @@ export function EarningsPage() {
           <div className="space-y-1">
             {pastCycles.slice(0, 4).map((entry) => (
               <div key={entry.cycle_id} className="rounded-sm border border-pwa-border px-2 py-1 text-xs">
-                {new Date(entry.period_start).toLocaleDateString()} - {new Date(entry.period_end).toLocaleDateString()} · {money(entry.net_preview_cents)}
+                {formatDate(entry.period_start)} - {formatDate(entry.period_end)} · {money(entry.net_preview_cents)}
               </div>
             ))}
           </div>

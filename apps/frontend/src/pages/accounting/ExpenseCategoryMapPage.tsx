@@ -14,6 +14,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useListState } from "../../components/list-state";
+import { ListErrorState } from "../../components/ListErrorState";
 
 const KIND_OPTIONS: ExpenseCategoryMapKind[] = [
   "fuel",
@@ -142,6 +143,18 @@ export function ExpenseCategoryMapPage() {
               <tr>
                 <td className="px-3 py-3 text-gray-500" colSpan={7}>
                   Loading mappings...
+                </td>
+              </tr>
+            ) : null}
+            {listState.isError ? (
+              <tr>
+                <td className="px-3 py-2" colSpan={7}>
+                  <ListErrorState
+                    title="Couldn't load category mappings"
+                    status={0}
+                    message={(mapQuery.error as Error | undefined)?.message}
+                    onRetry={() => void mapQuery.refetch()}
+                  />
                 </td>
               </tr>
             ) : null}

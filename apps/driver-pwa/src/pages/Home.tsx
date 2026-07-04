@@ -16,6 +16,7 @@ import { LifecyclePill } from "../components/LifecyclePill";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
+import { formatDateTime } from "../lib/formatDateTime";
 import { subscribeSyncState, syncOnce } from "../lib/upload-sync";
 
 function deriveDriverName(email: string, fallback: string): string {
@@ -140,7 +141,7 @@ export function HomePage() {
             <p className="text-sm">
               {t("home.transfer_pending_body", {
                 from: pendingTransfer.from_driver_id,
-                expires: new Date(pendingTransfer.expires_at).toLocaleString(),
+                expires: formatDateTime(pendingTransfer.expires_at),
               })}
             </p>
             <p className="mt-1 text-xs text-pwa-text-secondary">
@@ -255,7 +256,7 @@ export function HomePage() {
               </p>
               <p className="mt-1 text-pwa-text-secondary">
                 {recentFuel.gallons !== null ? `${recentFuel.gallons.toFixed(1)} gal · ` : ""}
-                ${recentFuel.total_cost.toFixed(2)} · {new Date(recentFuel.transaction_at).toLocaleString()}
+                ${recentFuel.total_cost.toFixed(2)} · {formatDateTime(recentFuel.transaction_at)}
               </p>
               {[recentFuel.location_city, recentFuel.location_state].filter(Boolean).length ? (
                 <PwaButton
