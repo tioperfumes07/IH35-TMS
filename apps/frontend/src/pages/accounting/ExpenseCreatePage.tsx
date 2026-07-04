@@ -16,7 +16,7 @@ export function ExpenseCreatePage() {
           <RecordExpenseForm
             operatingCompanyId={companyId}
             idPrefix="record-expense-page"
-            onSubmitted={() => pushToast("Expense recorded as vendor bill", "success")}
+            onSubmitted={() => pushToast("Expense recorded", "success")}
           />
         ) : null}
       </div>
