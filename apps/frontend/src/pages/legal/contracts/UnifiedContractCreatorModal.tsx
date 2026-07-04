@@ -305,7 +305,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               </SelectCombobox>
             </label>
             {language === "es" ? (
-              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+              <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
                 Spanish body is a pending-translation placeholder; English controls until a certified translation is
                 recorded. Do not execute a driver-facing Spanish contract before then.
               </div>
@@ -511,7 +511,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
             </div>
 
             {selectedTemplate?.category === "lease" && (unitsQuery.data?.units?.length ?? 0) === 0 ? (
-              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+              <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
                 A Trucking-seller lease requires the units titled to IH 35 Trucking, LLC first. Exhibit A units are
                 linked to the lease after signature (handed to the Finance lease subledger).
               </div>

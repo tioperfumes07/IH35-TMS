@@ -204,7 +204,7 @@ export function LegalSignPage() {
   if (submitted) {
     return (
       <div className="mx-auto max-w-3xl p-6">
-        <h1 className="text-2xl font-semibold text-green-700">Signature Recorded</h1>
+        <h1 className="text-2xl font-semibold text-slate-700">Signature Recorded</h1>
         <p className="mt-2 text-sm text-gray-700">Your electronic signature was captured successfully. You may close this page.</p>
       </div>
     );
@@ -232,14 +232,14 @@ export function LegalSignPage() {
       </div>
 
       {!verificationPassed && (
-        <div className="mt-4 rounded-sm border border-amber-200 bg-amber-50 p-4">
-          <h2 className="text-lg font-semibold text-amber-900">Identity Verification</h2>
-          <p className="mt-1 text-sm text-amber-800">
+        <div className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-4">
+          <h2 className="text-lg font-semibold text-slate-800">Identity Verification</h2>
+          <p className="mt-1 text-sm text-slate-700">
             A verification code is required before signing.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
-              className="rounded-sm bg-amber-600 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-amber-300"
+              className="rounded-sm bg-[#334155] px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
               type="button"
               disabled={isStartingVerify}
               onClick={startVerification}
@@ -316,7 +316,7 @@ export function LegalSignPage() {
 
         <button
           type="button"
-          className="mt-4 rounded-sm bg-green-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-green-300"
+          className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
           disabled={!verificationPassed || isSubmitting}
           onClick={submitSignature}
         >
