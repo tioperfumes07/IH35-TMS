@@ -194,7 +194,7 @@ function ProjectionPanel({
       {/* Single horizontal add / edit row: the named columns, then optional "+ more". */}
       <div className="space-y-1.5 border-t border-gray-100 bg-gray-50 px-3 py-2 text-xs">
         {form.id ? (
-          <div className="rounded-sm bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800" data-mdp-editing={direction}>
+          <div className="rounded-sm bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700" data-mdp-editing={direction}>
             Editing existing {direction} line — change fields then press Save.
           </div>
         ) : null}
