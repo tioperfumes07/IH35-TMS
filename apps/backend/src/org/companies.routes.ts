@@ -10,9 +10,11 @@ import { requireAuth } from "../auth/session-middleware.js";
 // Defense-in-depth for the entity-independence LAW: filter not-yet-launched entities out of the
 // company-list responses regardless of access/deactivated state, behind USMCA_ACTIVE (default OFF).
 // Flip USMCA_ACTIVE=1 at launch to expose it. Entity ids are share-nothing; this only hides USMCA.
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+export const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const USMCA_ACTIVE = process.env.USMCA_ACTIVE === "1";
-function filterPreLaunchEntities<T extends { id: string }>(rows: T[]): T[] {
+// Exported so every company-list surface (e.g. identity/company-context.routes switch-company)
+// applies the SAME pre-launch gate and can't disagree with this picker. Reads USMCA_ACTIVE at import.
+export function filterPreLaunchEntities<T extends { id: string }>(rows: T[]): T[] {
   return USMCA_ACTIVE ? rows : rows.filter((row) => row.id !== USMCA_COMPANY_ID);
 }
 

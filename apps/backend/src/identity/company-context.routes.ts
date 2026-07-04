@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
+import { filterPreLaunchEntities } from "../org/companies.routes.js";
 
 const switchBodySchema = z.object({
   target_company_id: z.string().uuid(),
@@ -25,7 +26,7 @@ async function loadAccessibleCompanies(
   userId: string,
   role: string
 ) {
-  return client.query(
+  const res = await client.query(
     `
       SELECT c.id, c.code, c.legal_name, c.short_name
       FROM org.companies c
@@ -45,6 +46,12 @@ async function loadAccessibleCompanies(
     `,
     [userId, role]
   );
+  // XE fix (switch-company-usmca-filter): apply the SAME pre-launch gate the company picker
+  // (org/companies.routes GET /org/companies + /org/me/companies) uses, so switch-company /
+  // current-company can't surface USMCA before launch (USMCA_ACTIVE!=='1'). pg returns id as a
+  // uuid string; cast for the {id:string} helper. Owner short-circuit above would otherwise leak it.
+  const rows = res.rows as Array<Record<string, unknown> & { id: string }>;
+  return { rows: filterPreLaunchEntities(rows) };
 }
 
 async function buildCurrentCompanyPayload(
