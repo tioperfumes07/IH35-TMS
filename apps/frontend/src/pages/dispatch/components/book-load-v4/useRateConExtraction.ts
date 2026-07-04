@@ -36,7 +36,19 @@ export function rateConErrorMessage(err: unknown): string {
   if (code.includes("502") || code.includes("extraction_failed")) {
     return "AI extraction failed — try again; if it persists tell the administrator.";
   }
-  return "Couldn't extract this rate confirmation. You can still book the load manually.";
+  if (code.includes("504") || code.includes("timeout") || code.includes("aborted") || code.includes("Failed to fetch")) {
+    return "The rate confirmation took too long to read (timed out). Try a smaller/clearer PDF, or book manually.";
+  }
+  if (code.includes("upload_failed")) {
+    const status = code.replace(/\D/g, "").slice(0, 3);
+    return `The file couldn't be uploaded (${status || "network"}). Check your connection and try again.`;
+  }
+  // Surface the raw reason instead of hiding it — so an unexpected failure names itself for the dispatcher
+  // (and the admin) instead of always reading as a generic "couldn't extract".
+  const detail = code.replace(/[\r\n]+/g, " ").trim().slice(0, 80);
+  return detail
+    ? `Couldn't extract this rate confirmation (${detail}). You can still book the load manually.`
+    : "Couldn't extract this rate confirmation. You can still book the load manually.";
 }
 
 export type UseRateConExtraction = {
