@@ -32,6 +32,66 @@ const listQuerySchema = companyQuerySchema.extend({
 
 const detailParamsSchema = z.object({ id: z.string().uuid() });
 
+/** Row shape returned by the fixed-assets LIST query (money columns cast ::text). */
+interface FixedAssetListRow {
+  id: string;
+  asset_number: string | null;
+  name: string;
+  owner_operating_company_id: string;
+  owner_company_name: string | null;
+  class_id: string;
+  class_name: string | null;
+  purchase_price_cents: string;
+  salvage_value_cents: string;
+  prior_accumulated_depr_cents: string;
+  purchase_date: string;
+  in_service_date: string;
+  method: string;
+  useful_life_months: number;
+  convention: string;
+  total_expected_units: string | null;
+  status: string;
+  created_at: string;
+}
+
+/** Row shape returned by the fixed-asset DETAIL query (fa.* plus ::text aliases). */
+interface FixedAssetDetailRow {
+  id: string;
+  asset_number: string | null;
+  name: string;
+  class_id: string;
+  class_name: string | null;
+  owner_company_name: string | null;
+  unit_uuid: string | null;
+  vin_serial: string | null;
+  method: string;
+  useful_life_months: number;
+  convention: string;
+  status: string;
+  depr_expense_account_id: string | null;
+  accum_depr_account_id: string | null;
+  purchase_price_s: string;
+  salvage_s: string;
+  prior_accum_s: string;
+  total_units_s: string | null;
+  purchase_date_s: string;
+  in_service_date_s: string;
+  created_at_s: string;
+  owner_id_s: string;
+}
+
+/** Row shape returned by the latest-disposal query. */
+interface FixedAssetDisposalRow {
+  id: string;
+  disposal_date: string;
+  disposal_type: string;
+  proceeds_cents: string;
+  book_value_at_disposal_cents: string;
+  gain_loss_cents: string;
+  posting_status: string;
+  notes: string | null;
+}
+
 async function registerFixedAssetsRoutes(app: FastifyInstance) {
   // CLASS CATALOG (read)
   app.get("/api/v1/accounting/fixed-asset-classes", async (req, reply) => {
@@ -107,7 +167,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
 
       return {
         total, limit, offset,
-        items: listRes.rows.map((r: any) => {
+        items: listRes.rows.map((r: FixedAssetListRow) => {
           const compute = computeDepreciationSchedule({
             purchase_price_cents: Number(r.purchase_price_cents),
             salvage_value_cents: Number(r.salvage_value_cents),
@@ -174,7 +234,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
         [pp.data.id, qp.data.operating_company_id]
       );
       if (!res.rows[0]) return reply.code(404).send({ error: "not_found" });
-      const a = res.rows[0] as any;
+      const a = res.rows[0] as FixedAssetDetailRow;
 
       const compute = computeDepreciationSchedule({
         purchase_price_cents: Number(a.purchase_price_s),
@@ -198,7 +258,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
          ORDER BY disposal_date DESC LIMIT 1`,
         [pp.data.id]
       );
-      const disposal = dispRes.rows[0] as any;
+      const disposal = dispRes.rows[0] as FixedAssetDisposalRow | undefined;
 
       const autopostEnabled = await isEnabled(client, AUTOPOST_FLAG);
       const periodAmount = compute.rows.find((r) => r.depreciation_amount_cents > 0)?.depreciation_amount_cents ?? 0;

@@ -26,6 +26,12 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+
+// H3-2: GL_POSTING_ENABLED gates whether Daily Recon renders live data. It is a per-entity money-posting
+// flag — enable is ONLY via an explicit per-entity (operating_company_id) override, never a global
+// default_enabled/rollout (which would flip posting on for EVERY entity). See feature-flags/service.ts.
+const DAILY_RECON_GATE_FLAG_KEY = "GL_POSTING_ENABLED";
 
 const querySchema = companyQuerySchema.extend({
   from_date: z.string().date().optional(),
@@ -97,17 +103,21 @@ function detailPath(entityType: string, entityId: string): string | null {
   }
 }
 
-async function isDailyReconEnabled(client: { query: (sql: string, v?: unknown[]) => Promise<{ rows: unknown[] }> }, _operatingCompanyId: string): Promise<boolean> {
+async function isDailyReconEnabled(
+  client: { query: (sql: string, v?: unknown[]) => Promise<{ rows: unknown[] }> },
+  operatingCompanyId: string
+): Promise<boolean> {
   try {
-    // Canonical flag table is lib.feature_flags (GLOBAL: flag_key, default_enabled boolean).
-    // public.feature_flags never existed, so this gate was permanently inert (R08). Repointed.
-    // NOTE: flag key kept as 'GL_POSTING_ENABLED'; if a different key should gate Daily Recon
-    // that is an owner config decision — behavior stays OFF until the flag exists + is enabled.
-    const res = await client.query(
-      `SELECT default_enabled FROM lib.feature_flags WHERE flag_key = 'GL_POSTING_ENABLED' LIMIT 1`,
-      []
-    );
-    return (res.rows[0] as Record<string, unknown> | undefined)?.default_enabled === true;
+    // H3-2: route through the canonical isEnabled() resolver, scoped to this operating company —
+    // NOT a raw default_enabled read of the lib.feature_flags row. The raw read of default_enabled
+    // bypassed per-entity overrides: GL_POSTING_ENABLED is a per-entity money-posting flag whose
+    // default_enabled is ALWAYS false (a global enable is refused), so the raw gate was inert for
+    // any entity that had posting turned on via a per-entity override. isEnabled honors that override.
+    // NOTE: flag key kept as 'GL_POSTING_ENABLED'; if a different key should gate Daily Recon that is
+    // an owner config decision — behavior stays OFF until the flag is enabled for this entity.
+    return await isEnabled(client as never, DAILY_RECON_GATE_FLAG_KEY, {
+      operating_company_id: operatingCompanyId,
+    });
   } catch {
     return false;
   }

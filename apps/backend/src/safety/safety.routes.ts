@@ -31,6 +31,12 @@ const statusBodySchema = z.object({
 // SC1: office-created accident reports. The safety officer / office CAN create a report from the
 // computer (not view-only) and link it to the real Driver + Unit + Repair Vendor + Load records.
 const nullableUuid = z.string().uuid().nullish();
+// SAFE-1: carrier fault determination (three real states) + DOT/FMCSA preventability. at_fault mirrors
+// the drawer's three options; preventable is a distinct boolean (true=Preventable, false=Not
+// Preventable, null=Undetermined). Both nullish so an unassessed report persists as NULL, never a
+// false default.
+const atFaultEnum = z.enum(["yes", "no", "disputed"]).nullish();
+const preventableFlag = z.boolean().nullish();
 const createAccidentBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: nullableUuid,
@@ -39,6 +45,8 @@ const createAccidentBodySchema = z.object({
   load_id: nullableUuid,
   accident_at: z.string().min(1).nullish(),
   description: z.string().nullish(),
+  at_fault: atFaultEnum,
+  preventable: preventableFlag,
 });
 const patchAccidentBodySchema = z.object({
   driver_id: nullableUuid,
@@ -47,6 +55,8 @@ const patchAccidentBodySchema = z.object({
   load_id: nullableUuid,
   accident_at: z.string().min(1).nullish(),
   description: z.string().nullish(),
+  at_fault: atFaultEnum,
+  preventable: preventableFlag,
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -302,7 +312,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             vendor_id,
             load_id,
             accident_at,
-            description
+            description,
+            at_fault,
+            preventable
           )
           VALUES (
             $1,
@@ -311,7 +323,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             $4,
             $5,
             COALESCE($6::timestamptz, now()),
-            $7
+            $7,
+            $8,
+            $9
           )
           RETURNING *
         `,
@@ -323,6 +337,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           body.data.load_id ?? null,
           body.data.accident_at ?? null,
           body.data.description ?? null,
+          body.data.at_fault ?? null,
+          body.data.preventable ?? null,
         ]
       );
       const inserted = res.rows[0];
@@ -337,6 +353,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           unit_id: body.data.unit_id ?? null,
           vendor_id: body.data.vendor_id ?? null,
           load_id: body.data.load_id ?? null,
+          at_fault: body.data.at_fault ?? null,
+          preventable: body.data.preventable ?? null,
           origin: "office_creator",
           operating_company_id: companyId,
         },
@@ -371,6 +389,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       { key: "load_id", column: "load_id" },
       { key: "accident_at", column: "accident_at", cast: "::timestamptz" },
       { key: "description", column: "description" },
+      { key: "at_fault", column: "at_fault" },
+      { key: "preventable", column: "preventable" },
     ];
     const setClauses: string[] = [];
     const values: unknown[] = [];

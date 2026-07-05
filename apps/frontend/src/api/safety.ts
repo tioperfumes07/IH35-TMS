@@ -203,6 +203,9 @@ export function getSafetyAccidentDetail(id: string, companyId: string) {
 
 // SC1: office creator — the safety officer / office creates an accident report from the computer and
 // links it to the real Driver / Unit / Repair Vendor / Load records (persists the four catalog ids).
+// SAFE-1: at_fault = carrier fault determination (yes/no/disputed, null = not yet assessed);
+// preventable = DOT/FMCSA preventability (true=Preventable, false=Not Preventable, null=Undetermined).
+export type AccidentFault = "yes" | "no" | "disputed";
 export type CreateAccidentInput = {
   operating_company_id: string;
   driver_id?: string | null;
@@ -211,6 +214,8 @@ export type CreateAccidentInput = {
   load_id?: string | null;
   accident_at?: string | null;
   description?: string | null;
+  at_fault?: AccidentFault | null;
+  preventable?: boolean | null;
 };
 
 export function createSafetyAccident(body: CreateAccidentInput) {
@@ -224,6 +229,8 @@ export type PatchAccidentInput = {
   load_id?: string | null;
   accident_at?: string | null;
   description?: string | null;
+  at_fault?: AccidentFault | null;
+  preventable?: boolean | null;
 };
 
 export function patchSafetyAccident(id: string, companyId: string, body: PatchAccidentInput) {

@@ -116,6 +116,49 @@ for (const file of migrationFiles) {
   }
 }
 
+// (5) H3-2/H3-4: no RAW feature-flag reads outside the canonical resolver. A `SELECT ... FROM
+//     lib.feature_flags` (or lib.feature_flag_overrides) anywhere but lib/feature-flags/* bypasses
+//     isEnabled()/resolveFlagEnabled — so it silently skips per-entity/user overrides and the posting /
+//     per-entity-only OFF short-circuit. That is exactly how the daily-recon (GL_POSTING_ENABLED) and
+//     settlement (SETTLEMENT_CAPPED_RECOVERY_ENABLED) gates read `default_enabled` raw and missed
+//     per-entity scoping. Every flag read MUST go through isEnabled(). This bans the anti-pattern from
+//     regressing anywhere in the backend.
+const BACKEND_SRC = path.join(ROOT, "apps/backend/src");
+const CANONICAL_FLAG_DIR = path.join("lib", "feature-flags"); // the ONLY place allowed to query the tables
+const RAW_FLAG_READ = /FROM\s+lib\.feature_flag/i; // matches lib.feature_flags AND lib.feature_flag_overrides
+
+function walkTsFiles(dir, acc) {
+  let entries = [];
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return acc;
+  }
+  for (const ent of entries) {
+    const full = path.join(dir, ent.name);
+    if (ent.isDirectory()) {
+      if (ent.name === "node_modules" || ent.name === "dist") continue;
+      walkTsFiles(full, acc);
+    } else if (ent.isFile() && ent.name.endsWith(".ts")) {
+      acc.push(full);
+    }
+  }
+  return acc;
+}
+
+for (const file of walkTsFiles(BACKEND_SRC, [])) {
+  const rel = path.relative(ROOT, file);
+  // The canonical resolver + admin CRUD legitimately query the tables; tests may seed them directly.
+  if (rel.includes(path.join("apps/backend/src", CANONICAL_FLAG_DIR))) continue;
+  if (/\.test\.ts$/.test(file) || file.includes(`${path.sep}__tests__${path.sep}`)) continue;
+  const src = readFileSync(file, "utf8");
+  if (RAW_FLAG_READ.test(src)) {
+    failures.push(
+      `${rel}: raw feature-flag read (\`FROM lib.feature_flag...\`) outside lib/feature-flags — route it through isEnabled(key, { operating_company_id }) so per-entity/user overrides + the posting OFF short-circuit apply`
+    );
+  }
+}
+
 if (failures.length > 0) {
   console.error("verify:per-entity-only-flag-gates — FAILED");
   for (const f of failures) console.error(`  ✗ ${f}`);

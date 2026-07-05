@@ -71,6 +71,79 @@ function buildScheduleRows(
   return { periodCents, remainderCents, rows };
 }
 
+/** Row shape returned by the prepaid-expenses LIST query (money columns cast ::text). */
+interface PrepaidListRow {
+  id: string;
+  asset_number: string | null;
+  description: string;
+  purchase_date: string;
+  start_date: string;
+  end_date: string;
+  total_amount_cents: string;
+  periods: number;
+  period_amount_cents: string;
+  remainder_cents: string;
+  status: string;
+  posting_status: string;
+  posted_at: string | null;
+  created_at: string;
+  amortized_cents: string;
+  pending_periods: string;
+}
+
+/** Row shape returned by the prepaid-asset DETAIL query (pa.* plus ::text aliases). */
+interface PrepaidDetailRow {
+  id: string;
+  asset_number: string | null;
+  description: string;
+  periods: number;
+  status: string;
+  posting_status: string;
+  asset_account_id: string | null;
+  expense_account_id: string | null;
+  payment_account_id: string | null;
+  purchase_je_id: string | null;
+  purchase_date_s: string;
+  start_date_s: string;
+  end_date_s: string;
+  total_s: string;
+  period_s: string;
+  remainder_s: string;
+  posted_at_s: string | null;
+  created_at_s: string;
+  amortized_cents: string;
+  pending_periods: string;
+}
+
+/** Row shape returned by the amortization-schedule query. */
+interface PrepaidScheduleRow {
+  id: string;
+  period_number: number;
+  period_date: string;
+  amount_cents: string;
+  remaining_balance_cents: string;
+  posted: boolean;
+  posted_at: string | null;
+  posted_journal_entry_id: string | null;
+}
+
+/** Row shape returned by the CREATE INSERT ... RETURNING. */
+interface PrepaidInsertRow {
+  id: string;
+  asset_number: string | null;
+  description: string;
+  purchase_date: string;
+  start_date: string;
+  end_date: string;
+  total_amount_cents: string;
+  periods: number;
+  period_amount_cents: string;
+  remainder_cents: string;
+  status: string;
+  posting_status: string;
+  created_at: string;
+}
+
 async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
   // LIST
   app.get("/api/v1/accounting/prepaid-expenses", async (req, reply) => {
@@ -130,7 +203,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
 
       return {
         total, limit, offset,
-        items: listRes.rows.map((r: any) => ({
+        items: listRes.rows.map((r: PrepaidListRow) => ({
           id: r.id as string,
           asset_number: r.asset_number as string | null,
           description: r.description as string,
@@ -181,7 +254,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
         [pp.data.id, qp.data.operating_company_id]
       );
       if (!assetRes.rows[0]) return reply.code(404).send({ error: "not_found" });
-      const a = assetRes.rows[0] as any;
+      const a = assetRes.rows[0] as PrepaidDetailRow;
 
       const schedRes = await client.query(
         `SELECT id, period_number, period_date::text AS period_date,
@@ -228,7 +301,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
         created_at: a.created_at_s,
         amortized_cents: Number(a.amortized_cents),
         pending_periods: Number(a.pending_periods),
-        schedule: schedRes.rows.map((r: any) => ({
+        schedule: schedRes.rows.map((r: PrepaidScheduleRow) => ({
           id: r.id as string,
           period_number: r.period_number as number,
           period_date: r.period_date as string,
@@ -292,7 +365,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
           input.payment_account_id ?? null, user.uuid,
         ]
       );
-      const asset = assetRes.rows[0] as any;
+      const asset = assetRes.rows[0] as PrepaidInsertRow;
 
       const { rows: schedRows } = buildScheduleRows(
         asset.id, input.operating_company_id, input.start_date,

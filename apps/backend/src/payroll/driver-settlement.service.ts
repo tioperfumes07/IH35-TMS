@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import { createBill, payBill } from "../accounting/bills.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { depositEscrow, openEscrow } from "../accounting/escrow/service.js";
@@ -118,11 +119,20 @@ async function loadSettlementByPeriod(client: DbClient, input: ComputeSettlement
 }
 
 /** A3-2 cutover flag. OFF (default) = legacy blunt path; ON = capped-ledger engine. */
-async function settlementCappedRecoveryEnabled(client: DbClient): Promise<boolean> {
-  const res = await client.query<{ default_enabled: boolean }>(
-    `SELECT default_enabled FROM lib.feature_flags WHERE flag_key = 'SETTLEMENT_CAPPED_RECOVERY_ENABLED' LIMIT 1`
-  );
-  return Boolean(res.rows[0]?.default_enabled);
+const SETTLEMENT_CAPPED_RECOVERY_FLAG_KEY = "SETTLEMENT_CAPPED_RECOVERY_ENABLED";
+
+// H3-4: resolve the cutover flag through the canonical isEnabled() resolver, scoped to the settling
+// operating company — NOT a raw default_enabled read of the lib.feature_flags row. The raw read (a)
+// bypassed per-entity/user overrides (only a GLOBAL default flip could ever turn it on, flipping the
+// recovery engine for EVERY entity at once) and (b) skipped isEnabled's override + expiry semantics.
+// Routing through isEnabled honors an explicit per-entity override while preserving OFF-by-default.
+async function settlementCappedRecoveryEnabled(
+  client: DbClient,
+  operatingCompanyId: string
+): Promise<boolean> {
+  return isEnabled(client as never, SETTLEMENT_CAPPED_RECOVERY_FLAG_KEY, {
+    operating_company_id: operatingCompanyId,
+  });
 }
 
 export type DraftLinesResult = {
@@ -191,7 +201,7 @@ export async function buildDraftLines(client: DbClient, input: ComputeSettlement
     });
   }
 
-  const capped = await settlementCappedRecoveryEnabled(client);
+  const capped = await settlementCappedRecoveryEnabled(client, input.operatingCompanyId);
 
   if (!capped) {
     // ---- LEGACY blunt path (flag OFF) — byte-identical to pre-A3-2. ----
@@ -510,7 +520,7 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
     // Ordering: the ledger UPDATEs run on `client` (this settlement transaction) and are staged BEFORE
     // createJournalEntry; if the JE throws, this transaction rolls them back (failure-consistent — the
     // same sequential-commit pattern the Bill+BillPayment above already use). recovery = 0 -> no JE.
-    if (await settlementCappedRecoveryEnabled(client)) {
+    if (await settlementCappedRecoveryEnabled(client, input.operatingCompanyId)) {
       const grossCents = asCents(settlement.gross_cents);
       const floor = await resolveSettlementMinNet(
         client as unknown as Parameters<typeof resolveSettlementMinNet>[0],
