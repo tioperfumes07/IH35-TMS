@@ -1,3 +1,20 @@
+/**
+ * DEPRECATION NOTICE (H2-3).
+ *
+ * `lucia` and `@lucia-auth/adapter-postgresql` are END-OF-MAINTENANCE. The
+ * upstream project is frozen (no further releases, no security patches) and its
+ * author has recommended migrating off the library. We have therefore PINNED
+ * both packages to their last stable releases (`lucia@3.2.2`,
+ * `@lucia-auth/adapter-postgresql@3.1.2` — exact, no caret) so no floating
+ * upgrade can surprise us, and we consume Lucia through a single seam
+ * (`./session-provider.ts`) so the eventual swap to an in-house session layer
+ * is a localized change.
+ *
+ * DO NOT add new imports of `lucia` outside this file. Route all session
+ * create / validate / invalidate / cookie work through `./session-provider.ts`.
+ * Full plan + touchpoint inventory + block breakdown:
+ *   docs/specs/repairs/REPAIR-H2-3-LUCIA-DEPRECATION-DESIGN.md
+ */
 import { Lucia } from "lucia";
 import { NodePostgresAdapter } from "@lucia-auth/adapter-postgresql";
 import { Google } from "arctic";
