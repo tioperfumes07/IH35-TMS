@@ -8,8 +8,14 @@
 // HARD CONSTRAINTS:
 //   - READ-ONLY: every handler is GET and runs SELECT-only service functions. No writes to
 //     the local DB or to QBO. No QBO write-client is imported.
-//   - Behind OFF flag QBO_RECONCILE_UI_ENABLED (default OFF). When OFF every endpoint 404s,
-//     i.e. the surface is unreachable and the app is unchanged.
+//   - GATING (FLAG-SPLIT-BRAIN sweep): behind the OFF-by-default DB feature flag
+//     QBO_RECONCILE_UI_ENABLED in `lib.feature_flags`, resolved per-entity via the canonical
+//     `isEnabled(client, flag, {opco,user})` — the SAME flag + SAME resolver the frontend reads
+//     through `/api/feature-flags/check` (useFeatureFlag), so the two sides can never disagree (kills
+//     the prior process.env vs DB split-brain). When OFF every endpoint 404s, i.e. the surface is
+//     unreachable and the app is unchanged. The flag is per-entity-only (see PER_ENTITY_ONLY_FLAG_KEYS):
+//     a global default/rollout can never turn it on — enable is an explicit per-entity owner (Jorge)
+//     override; ships OFF.
 //   - Per-entity: scoped via withCompanyScope -> RLS on operating_company_id. QBO is
 //     TRANSP-connected today; we never surface another entity's QBO data.
 //   - Resolution/apply is OUT OF SCOPE.
@@ -25,20 +31,25 @@ import {
   listQboReconAlerts,
   listQboSyncConflicts,
 } from "../integrations/qbo/qbo-reconcile-read.service.js";
+import { withCurrentUser } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
-const RECONCILE_UI_ENABLED = process.env.QBO_RECONCILE_UI_ENABLED === "true";
+export const QBO_RECONCILE_UI_FLAG = "QBO_RECONCILE_UI_ENABLED";
 
 function canAccess(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Accountant";
 }
 
-/** When the flag is OFF the surface is unreachable: 404, app unchanged. */
-function flagGate(reply: import("fastify").FastifyReply): boolean {
-  if (!RECONCILE_UI_ENABLED) {
-    reply.code(404).send({ error: "not_found" });
-    return false;
-  }
-  return true;
+// Backend gate: resolve the SAME DB flag the frontend uses, scoped to this operating company + user.
+// No process.env read — the flag lives in lib.feature_flags and is owner-flipped per entity. When OFF
+// the surface is unreachable: 404, app unchanged.
+async function reconcileUiEnabled(userUuid: string, operatingCompanyId: string): Promise<boolean> {
+  return withCurrentUser(userUuid, (client) =>
+    isEnabled(client, QBO_RECONCILE_UI_FLAG, {
+      operating_company_id: operatingCompanyId,
+      user_uuid: userUuid,
+    })
+  );
 }
 
 const capturesQuerySchema = companyQuerySchema.extend({
@@ -61,13 +72,16 @@ const conflictsQuerySchema = companyQuerySchema.extend({
 export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
   // Overview: connection summary + sync-health table + last-poll timestamp.
   app.get("/api/v1/accounting/qbo-reconcile/overview", async (req, reply) => {
-    if (!flagGate(reply)) return;
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!canAccess(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+
+    // OFF flag → unreachable (404). Same DB flag + resolver as the frontend, so UI and API stay in lockstep.
+    if (!(await reconcileUiEnabled(user.uuid, query.data.operating_company_id)))
+      return reply.code(404).send({ error: "not_found" });
+    if (!canAccess(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const [connection, health, lastPolledAt] = await Promise.all([
@@ -85,13 +99,16 @@ export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
 
   // Modify captures: inbound QBO changes and whether TMS has reflected them.
   app.get("/api/v1/accounting/qbo-reconcile/modify-captures", async (req, reply) => {
-    if (!flagGate(reply)) return;
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!canAccess(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const query = capturesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+
+    // OFF flag → unreachable (404). Same DB flag + resolver as the frontend, so UI and API stay in lockstep.
+    if (!(await reconcileUiEnabled(user.uuid, query.data.operating_company_id)))
+      return reply.code(404).send({ error: "not_found" });
+    if (!canAccess(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       listQboModifyCaptures(client, {
@@ -108,13 +125,16 @@ export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
 
   // Conflicts (local vs QBO side by side) + recon alert history.
   app.get("/api/v1/accounting/qbo-reconcile/conflicts", async (req, reply) => {
-    if (!flagGate(reply)) return;
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!canAccess(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const query = conflictsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+
+    // OFF flag → unreachable (404). Same DB flag + resolver as the frontend, so UI and API stay in lockstep.
+    if (!(await reconcileUiEnabled(user.uuid, query.data.operating_company_id)))
+      return reply.code(404).send({ error: "not_found" });
+    if (!canAccess(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const [conflicts, alerts] = await Promise.all([

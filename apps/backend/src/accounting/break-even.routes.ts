@@ -8,10 +8,14 @@
 // enforce it). The break-even model itself is computed client-side so the owner can reclassify lines
 // as a non-persisted what-if.
 //
-// GATING: behind the OFF-by-default env flag FINANCE_BREAK_EVEN_UI_ENABLED. When the flag is not
-// exactly "true" the endpoint is UNREACHABLE (404) and the server behaves as if the feature does not
-// exist. The frontend gates the same surface via the lib.feature_flags flag of the same name. Flipping
-// this ON in prod is a separate owner sign-off; this ships OFF.
+// GATING (FLAG-SPLIT-BRAIN sweep): behind the OFF-by-default DB feature flag
+// FINANCE_BREAK_EVEN_UI_ENABLED in `lib.feature_flags`, resolved per-entity via the canonical
+// `isEnabled(client, flag, {opco,user})`. This is the SAME flag + SAME resolver the frontend reads
+// through `/api/feature-flags/check` (useFeatureFlag), so the two sides can never disagree (kills the
+// prior process.env vs DB split-brain). When the flag resolves OFF the endpoint is UNREACHABLE (404)
+// and the server behaves as if the feature does not exist. The flag is per-entity-only (see
+// PER_ENTITY_ONLY_FLAG_KEYS): a global default/rollout can never turn it on — enable is an explicit
+// per-entity override, an owner (Jorge) sign-off. Ships OFF.
 //
 // Per-entity: operating_company_id is required, membership is asserted, and the row-level company
 // scope is set before any read. No cross-entity bleed.
@@ -23,14 +27,20 @@ import { companyQuerySchema, currentAuthUser, validationError } from "./shared.j
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { getBreakEvenInputs } from "./break-even.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { withCurrentUser } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 export const FINANCE_BREAK_EVEN_UI_FLAG = "FINANCE_BREAK_EVEN_UI_ENABLED";
 
-// Backend gate (process.env per the read-only Finance contract). Split across two lines so the
-// hold-merge-gate FLAG_FLIP regex does not trip on a single-line env→boolean expression.
-export function isBreakEvenUiEnabled(): boolean {
-  const flagRaw = process.env.FINANCE_BREAK_EVEN_UI_ENABLED ?? "false";
-  return flagRaw === "true";
+// Backend gate: resolve the SAME DB flag the frontend uses, scoped to this operating company + user.
+// No process.env read — the flag lives in lib.feature_flags and is owner-flipped per entity.
+async function isBreakEvenUiEnabled(userUuid: string, operatingCompanyId: string): Promise<boolean> {
+  return withCurrentUser(userUuid, (client) =>
+    isEnabled(client, FINANCE_BREAK_EVEN_UI_FLAG, {
+      operating_company_id: operatingCompanyId,
+      user_uuid: userUuid,
+    })
+  );
 }
 
 // Office roles only — same set as the other read-only finance surfaces (Hub, aging, P&L).
@@ -54,15 +64,20 @@ function startOfYearIso(): string {
 
 export async function registerBreakEvenRoutes(app: FastifyInstance) {
   app.get("/api/v1/finance/break-even", async (req, reply) => {
-    // OFF flag → unreachable.
-    if (!isBreakEvenUiEnabled()) return reply.code(404).send({ error: "not_found" });
-
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!canAccessBreakEven(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
+    // Parse first: the per-entity flag resolution needs operating_company_id.
     const query = breakEvenQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+
+    // OFF flag → unreachable (404), server behaves as if the feature does not exist. Same DB flag
+    // + resolver as the frontend's /api/feature-flags/check, so backend and UI stay in lockstep.
+    const enabled = await isBreakEvenUiEnabled(user.uuid, query.data.operating_company_id);
+    if (!enabled) return reply.code(404).send({ error: "not_found" });
+
+    if (!canAccessBreakEven(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const from_date = query.data.from_date ?? startOfYearIso();

@@ -180,9 +180,17 @@ describe("isPerEntityOnlyFlag / isPerEntityGatedFlag (FLAG-HARDEN-1)", () => {
     expect(isPerEntityOnlyFlag("SOME_FEATURE_PER_ENTITY_ONLY")).toBe(true);
   });
 
+  it("recognizes the FLAG-SPLIT-BRAIN read-only finance-surface keys as per-entity-only", () => {
+    // These now resolve the SAME DB flag their frontend reads (kills the process.env split-brain) and
+    // are per-entity owner-flipped — a global default/rollout must never enable them.
+    expect(isPerEntityOnlyFlag("AR_AP_AGING_UI_ENABLED")).toBe(true);
+    expect(isPerEntityOnlyFlag("QBO_RECONCILE_UI_ENABLED")).toBe(true);
+    expect(isPerEntityOnlyFlag("FINANCE_BREAK_EVEN_UI_ENABLED")).toBe(true);
+    expect(isPerEntityGatedFlag("AR_AP_AGING_UI_ENABLED")).toBe(true);
+  });
+
   it("does not treat ordinary rollout flags as per-entity-only", () => {
     expect(isPerEntityOnlyFlag("usmca_hidden")).toBe(false);
-    expect(isPerEntityOnlyFlag("QBO_RECONCILE_UI_ENABLED")).toBe(false);
   });
 
   it("per-entity-gated covers posting flags too", () => {
