@@ -93,6 +93,18 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
+// DOCS-2: destructive attachment actions follow the void/cancel governance policy
+// (Owner/Administrator only) — mirroring the docs file DELETE gate in docs/files.routes.ts.
+const ATTACHMENT_DELETE_ROLES = ["Owner", "Administrator"];
+
+function requireRole(reply: FastifyReply, role: string, allowed: string[]) {
+  if (!allowed.includes(role)) {
+    reply.code(403).send({ error: "forbidden" });
+    return false;
+  }
+  return true;
+}
+
 export async function registerAttachmentsRoutes(app: FastifyInstance) {
   app.post("/api/v1/attachments/upload-url", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -179,6 +191,7 @@ export async function registerAttachmentsRoutes(app: FastifyInstance) {
   app.delete("/api/v1/attachments/:id", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!requireRole(reply, user.role, ATTACHMENT_DELETE_ROLES)) return;
     const params = idParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
