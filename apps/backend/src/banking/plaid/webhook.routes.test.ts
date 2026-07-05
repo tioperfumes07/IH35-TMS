@@ -1,4 +1,6 @@
-import { generateKeyPairSync } from "node:crypto";
+import { createHash, generateKeyPairSync } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { FastifyInstance } from "fastify";
 import Fastify from "fastify";
 import jwt from "jsonwebtoken";
@@ -49,19 +51,73 @@ describe("banking/plaid/webhook.routes.ts", () => {
     await app.close();
   });
 
-  it("verifyPlaidWebhookJwt verifies ES256 JWTs against PLAID_WEBHOOK_VERIFICATION_KEY (JWK)", async () => {
+  // Signs a Plaid-style webhook JWT: ES256 with `request_body_sha256` bound to the raw body + `iat`.
+  function signPlaidWebhook(
+    privateKey: import("node:crypto").KeyObject,
+    rawBody: string,
+    opts: { iat?: number; sha256?: string } = {}
+  ): string {
+    const bodyHash = opts.sha256 ?? createHash("sha256").update(rawBody, "utf8").digest("hex");
+    const iat = opts.iat ?? Math.floor(Date.now() / 1000);
+    return jwt.sign({ request_body_sha256: bodyHash, iat }, privateKey, { algorithm: "ES256" });
+  }
+
+  it("verifyPlaidWebhookJwt accepts a fresh JWT whose request_body_sha256 matches the raw body", async () => {
     const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
     process.env.PLAID_WEBHOOK_VERIFICATION_KEY = JSON.stringify(publicKey.export({ format: "jwk" }));
 
-    const token = jwt.sign({ sub: "plaid-webhook-test" }, privateKey, { algorithm: "ES256" });
-    await expect(verifyPlaidWebhookJwt(token)).resolves.toBe(true);
+    const rawBody = JSON.stringify({ webhook_type: "TRANSACTIONS", webhook_code: "DEFAULT_UPDATE", item_id: "i1" });
+    const token = signPlaidWebhook(privateKey, rawBody);
+    await expect(verifyPlaidWebhookJwt(token, rawBody)).resolves.toBe(true);
+  });
+
+  it("verifyPlaidWebhookJwt REJECTS a replay with a different body (request_body_sha256 mismatch)", async () => {
+    const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+    process.env.PLAID_WEBHOOK_VERIFICATION_KEY = JSON.stringify(publicKey.export({ format: "jwk" }));
+
+    const originalBody = JSON.stringify({ webhook_type: "TRANSACTIONS", webhook_code: "DEFAULT_UPDATE", item_id: "i1" });
+    const token = signPlaidWebhook(privateKey, originalBody); // JWT bound to originalBody
+    const tamperedBody = JSON.stringify({ webhook_type: "TRANSACTIONS", webhook_code: "DEFAULT_UPDATE", item_id: "ATTACKER" });
+    await expect(verifyPlaidWebhookJwt(token, tamperedBody)).resolves.toBe(false);
+  });
+
+  it("verifyPlaidWebhookJwt REJECTS a stale JWT (iat older than 5 minutes) to block replay", async () => {
+    const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+    process.env.PLAID_WEBHOOK_VERIFICATION_KEY = JSON.stringify(publicKey.export({ format: "jwk" }));
+
+    const rawBody = JSON.stringify({ webhook_type: "TRANSACTIONS", webhook_code: "DEFAULT_UPDATE", item_id: "i1" });
+    const staleIat = Math.floor(Date.now() / 1000) - 6 * 60; // 6 minutes old
+    const token = signPlaidWebhook(privateKey, rawBody, { iat: staleIat });
+    await expect(verifyPlaidWebhookJwt(token, rawBody)).resolves.toBe(false);
+  });
+
+  it("verifyPlaidWebhookJwt REJECTS a JWT missing the request_body_sha256 claim", async () => {
+    const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+    process.env.PLAID_WEBHOOK_VERIFICATION_KEY = JSON.stringify(publicKey.export({ format: "jwk" }));
+
+    const rawBody = JSON.stringify({ webhook_type: "TRANSACTIONS", webhook_code: "DEFAULT_UPDATE", item_id: "i1" });
+    const token = jwt.sign({ iat: Math.floor(Date.now() / 1000) }, privateKey, { algorithm: "ES256" });
+    await expect(verifyPlaidWebhookJwt(token, rawBody)).resolves.toBe(false);
   });
 
   it("verifyPlaidWebhookJwt rejects malformed tokens", async () => {
     process.env.PLAID_WEBHOOK_VERIFICATION_KEY = JSON.stringify(
       generateKeyPairSync("ec", { namedCurve: "P-256" }).publicKey.export({ format: "jwk" })
     );
-    await expect(verifyPlaidWebhookJwt("not-a-jwt")).resolves.toBe(false);
+    await expect(verifyPlaidWebhookJwt("not-a-jwt", "{}")).resolves.toBe(false);
+  });
+
+  // Static guard (G3-2): the body-hash + freshness checks must remain present in webhook-core.ts so
+  // this replay-protection can't silently regress.
+  it("STATIC GUARD: webhook-core binds the JWT to request_body_sha256 + iat freshness (constant-time)", () => {
+    const corePath = fileURLToPath(new URL("../../integrations/plaid/webhook-core.ts", import.meta.url));
+    const src = readFileSync(corePath, "utf8");
+    expect(src).toContain("request_body_sha256");
+    expect(src).toContain("timingSafeEqual");
+    expect(src).toContain("MAX_WEBHOOK_AGE_SECONDS");
+    expect(src).toMatch(/createHash\(["']sha256["']\)/);
+    // verifyPlaidWebhookJwt must require the raw body as a parameter (not just the token).
+    expect(src).toMatch(/verifyPlaidWebhookJwt\(\s*token:\s*string,\s*rawBody:/);
   });
 
   it("processPlaidWebhookAsync syncs transactions for TRANSACTIONS:SYNC_UPDATES_AVAILABLE", async () => {
