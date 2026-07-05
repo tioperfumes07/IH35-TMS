@@ -242,6 +242,14 @@ export async function refreshDeadheadCache(client: PoolClient, operatingCompanyI
     }
   }
 
+  // G5-4 (perf): batch every (unit × week) upsert into ONE multi-row INSERT instead of a per-row
+  // INSERT inside the nested loop (was N round-trips per refresh). Values, ranking, and fleet
+  // averages are computed exactly as before — this is a set-based rewrite, not a logic change.
+  // Each (unit_id, week_starting) pair is unique across `summaries` (one summary per unit×week),
+  // so a single statement can never touch the same ON CONFLICT target row twice.
+  const insertValues: unknown[] = [];
+  const insertPlaceholders: string[] = [];
+
   for (const week of weekStarts) {
     const weekRows = summaries.filter((s) => s.week_starting === week && s.total_miles > 0);
     const fleetAvg =
@@ -252,38 +260,46 @@ export async function refreshDeadheadCache(client: PoolClient, operatingCompanyI
 
     for (let i = 0; i < ranked.length; i += 1) {
       const row = ranked[i];
-      await client.query(
-        `
-          INSERT INTO reports.deadhead_cache (
-            operating_company_id, unit_id, week_starting,
-            total_miles, loaded_miles, deadhead_miles, deadhead_pct, load_count,
-            fleet_avg_deadhead_pct, rank_in_fleet, computed_at
-          ) VALUES ($1::uuid, $2::uuid, $3::date, $4, $5, $6, $7, $8, $9, $10, NOW())
-          ON CONFLICT (unit_id, week_starting) DO UPDATE SET
-            operating_company_id = EXCLUDED.operating_company_id,
-            total_miles = EXCLUDED.total_miles,
-            loaded_miles = EXCLUDED.loaded_miles,
-            deadhead_miles = EXCLUDED.deadhead_miles,
-            deadhead_pct = EXCLUDED.deadhead_pct,
-            load_count = EXCLUDED.load_count,
-            fleet_avg_deadhead_pct = EXCLUDED.fleet_avg_deadhead_pct,
-            rank_in_fleet = EXCLUDED.rank_in_fleet,
-            computed_at = NOW()
-        `,
-        [
-          operatingCompanyId,
-          row.unit_id,
-          row.week_starting,
-          row.total_miles,
-          row.loaded_miles,
-          row.deadhead_miles,
-          row.deadhead_pct,
-          row.load_count,
-          fleetAvg,
-          i + 1,
-        ]
+      const base = insertValues.length;
+      insertValues.push(
+        operatingCompanyId,
+        row.unit_id,
+        row.week_starting,
+        row.total_miles,
+        row.loaded_miles,
+        row.deadhead_miles,
+        row.deadhead_pct,
+        row.load_count,
+        fleetAvg,
+        i + 1
+      );
+      insertPlaceholders.push(
+        `($${base + 1}::uuid, $${base + 2}::uuid, $${base + 3}::date, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, NOW())`
       );
     }
+  }
+
+  if (insertPlaceholders.length > 0) {
+    await client.query(
+      `
+        INSERT INTO reports.deadhead_cache (
+          operating_company_id, unit_id, week_starting,
+          total_miles, loaded_miles, deadhead_miles, deadhead_pct, load_count,
+          fleet_avg_deadhead_pct, rank_in_fleet, computed_at
+        ) VALUES ${insertPlaceholders.join(", ")}
+        ON CONFLICT (unit_id, week_starting) DO UPDATE SET
+          operating_company_id = EXCLUDED.operating_company_id,
+          total_miles = EXCLUDED.total_miles,
+          loaded_miles = EXCLUDED.loaded_miles,
+          deadhead_miles = EXCLUDED.deadhead_miles,
+          deadhead_pct = EXCLUDED.deadhead_pct,
+          load_count = EXCLUDED.load_count,
+          fleet_avg_deadhead_pct = EXCLUDED.fleet_avg_deadhead_pct,
+          rank_in_fleet = EXCLUDED.rank_in_fleet,
+          computed_at = NOW()
+      `,
+      insertValues
+    );
   }
 
   return summaries.length;

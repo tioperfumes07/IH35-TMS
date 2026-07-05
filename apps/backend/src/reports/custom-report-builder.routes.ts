@@ -74,7 +74,8 @@ export async function registerCustomReportBuilderRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT *
+          SELECT id, operating_company_id, owner_user_id, name, base_view,
+                 fields, filters, group_by, sort_by, is_shared, created_at, updated_at
           FROM reports.custom_report_definitions
           WHERE operating_company_id = $1::uuid
             AND (owner_user_id = $2::uuid OR is_shared = true)
@@ -201,7 +202,8 @@ export async function registerCustomReportBuilderRoutes(app: FastifyInstance) {
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const defRes = await client.query(
         `
-          SELECT *
+          SELECT id, operating_company_id, owner_user_id, name, base_view,
+                 fields, filters, group_by, sort_by, is_shared, created_at, updated_at
           FROM reports.custom_report_definitions
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid

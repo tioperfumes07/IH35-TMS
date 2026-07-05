@@ -142,7 +142,8 @@ export async function updateFilingOverrides(
 ) {
   const existingRes = await client.query(
     `
-      SELECT *
+      SELECT uuid, operating_company_id, quarter, status, filing_data, prepared_by_user_uuid,
+             approved_by_user_uuid, approved_at, filed_at, confirmation_number, created_at
       FROM reports.ifta_filings
       WHERE uuid = $1::uuid
         AND operating_company_id = $2::uuid
@@ -279,7 +280,8 @@ export async function listFilings(client: Queryable, operatingCompanyId: string)
 export async function getFilingDraft(client: Queryable, operatingCompanyId: string, filingUuid: string) {
   const res = await client.query(
     `
-      SELECT *
+      SELECT uuid, operating_company_id, quarter, status, filing_data, prepared_by_user_uuid,
+             approved_by_user_uuid, approved_at, filed_at, confirmation_number, created_at
       FROM reports.ifta_filings
       WHERE uuid = $1::uuid
         AND operating_company_id = $2::uuid
