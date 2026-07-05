@@ -630,6 +630,9 @@ jobs:
       - name: Verify docs tenant scope
         run: npm run verify:docs-tenant-scope
 
+      - name: Verify resolveOperatingCompanyId enforces membership (G1-6)
+        run: npm run verify:resolve-opco-membership
+
       - name: Verify docs routes bootstrapped
         run: npm run verify:docs-routes-bootstrapped
 

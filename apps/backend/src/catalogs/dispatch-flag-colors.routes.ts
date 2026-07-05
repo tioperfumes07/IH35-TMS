@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const hexColorSchema = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "hex_color must be #RRGGBB");
@@ -66,31 +67,6 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
-async function resolveCompanyId(
-  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
-  userId: string,
-  requested?: string
-) {
-  if (requested) return requested;
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT c.id
-      FROM identity.users u
-      JOIN org.companies c ON c.id = u.default_company_id
-      WHERE u.id = $1
-        AND c.id IN (SELECT org.user_accessible_company_ids())
-      UNION
-      SELECT c.id
-      FROM org.companies c
-      WHERE c.id IN (SELECT org.user_accessible_company_ids())
-      ORDER BY id
-      LIMIT 1
-    `,
-    [userId]
-  );
-  return res.rows[0]?.id ?? null;
-}
-
 export async function registerDispatchFlagColorRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/dispatch-flag-colors", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -99,7 +75,7 @@ export async function registerDispatchFlagColorRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      const companyId = await resolveCompanyId(client, user.uuid, parsedQuery.data.operating_company_id);
+      const companyId = await resolveOperatingCompanyId(client, user.uuid, parsedQuery.data.operating_company_id);
       if (!companyId) return [];
       const values: unknown[] = [companyId];
       const filters: string[] = [`operating_company_id = $1`];

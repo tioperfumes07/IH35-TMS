@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const listQuerySchema = z.object({
@@ -36,25 +37,6 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
-async function resolveOperatingCompanyId(
-  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
-  requested?: string
-): Promise<string | null> {
-  if (requested) return requested;
-  const res = await client.query(
-    `
-      SELECT c.id
-      FROM org.companies c
-      WHERE c.id IN (SELECT org.user_accessible_company_ids())
-        AND c.deactivated_at IS NULL
-      ORDER BY c.id
-      LIMIT 1
-    `,
-    []
-  );
-  return res.rows[0]?.id ?? null;
-}
-
 export async function registerMdataAccountsRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/accounts", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -64,7 +46,7 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
     const { limit, offset, search, active, operating_company_id } = parsedQuery.data;
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
-      const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, operating_company_id);
+      const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
 
@@ -108,7 +90,7 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, parsedQuery.data.operating_company_id);
+      const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
@@ -155,7 +137,7 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
     setParts.push("updated_at = now()");
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
-      const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, parsedQuery.data.operating_company_id);
+      const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       values.push(parsedParams.data.id, resolvedOperatingCompanyId);

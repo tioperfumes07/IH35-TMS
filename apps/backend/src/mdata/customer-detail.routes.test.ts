@@ -77,12 +77,17 @@ describe("mdata customer detail route (always-on smoke)", () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it("GET /api/v1/mdata/customers/:id/detail returns 404 for unknown customers without DB fixtures", async () => {
+  it("GET /api/v1/mdata/customers/:id/detail does not 500 for unknown customers without DB fixtures", async () => {
     const res = await app.inject({
       method: "GET",
       url: `/api/v1/mdata/customers/${randomUUID()}/detail?operating_company_id=${randomUUID()}`,
       headers: testAuthHeaders(undefined, "Owner"),
     });
-    expect(res.statusCode).toBe(404);
+    // A RANDOM operating_company_id is not a company this caller is a member of, so
+    // resolveOperatingCompanyId now rejects it with 403 (G1-6 membership gate) BEFORE the
+    // customer lookup. The genuine "unknown customer -> 404" path (with a real member opco) is
+    // covered by the CI integration block above. Here we only assert the route is bootstrapped
+    // and never 500s.
+    expect([403, 404]).toContain(res.statusCode);
   });
 });
