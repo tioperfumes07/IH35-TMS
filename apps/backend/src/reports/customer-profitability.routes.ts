@@ -81,6 +81,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           FROM mdata.loads l
           WHERE l.operating_company_id = $1
             AND l.soft_deleted_at IS NULL
+            AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
           GROUP BY l.customer_id
         `,
@@ -93,6 +94,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           FROM mdata.loads l
           WHERE l.operating_company_id = $1
             AND l.soft_deleted_at IS NULL
+            AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
           GROUP BY l.customer_id
         `,
@@ -108,6 +110,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           JOIN mdata.loads l ON l.id = db.load_id
           WHERE db.operating_company_id = $1
             AND l.soft_deleted_at IS NULL
+            AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
           GROUP BY l.customer_id
         `,

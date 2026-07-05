@@ -98,6 +98,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
             LEFT JOIN mdata.customers c ON c.id = l.customer_id
             WHERE l.operating_company_id = $1
               AND l.soft_deleted_at IS NULL
+              AND l.status IS DISTINCT FROM 'cancelled'
               AND ${dateFilter}
           ),
           pay AS (

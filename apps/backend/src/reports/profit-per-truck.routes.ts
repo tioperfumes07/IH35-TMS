@@ -100,6 +100,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
               FROM mdata.loads l
               WHERE l.operating_company_id = $1
                 AND l.soft_deleted_at IS NULL
+                AND l.status IS DISTINCT FROM 'cancelled'
                 AND l.assigned_unit_id IS NOT NULL
                 AND l.created_at::date BETWEEN $2::date AND $3::date
             ),
@@ -177,6 +178,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
               JOIN mdata.loads l ON l.id = ft.load_id
               WHERE ft.operating_company_id = $1
                 AND l.soft_deleted_at IS NULL
+                AND l.status IS DISTINCT FROM 'cancelled'
                 AND l.created_at::date BETWEEN $2::date AND $3::date
                 AND l.assigned_unit_id IS NOT NULL
               GROUP BY l.assigned_unit_id
@@ -334,56 +336,53 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
         values.push(legacy.data.unit_id);
         unitFilter = ` AND u.id = $${values.length}`;
       }
+      // G9-H5 double-count fix: the previous query joined mdata.units → mdata.loads → maintenance.work_orders
+      // directly, producing a units×loads×work_orders CARTESIAN fan-out. With N loads and M work orders per
+      // unit, SUM(rate_total_cents) counted each load M times and SUM(work-order cost) counted each WO N times.
+      // Aggregate loads and work orders in SEPARATE per-unit CTEs (each grouped by unit_id → one row per unit)
+      // and join those, so every economic row is counted exactly once. Also exclude cancelled loads from revenue.
       const res = await client.query(
         `
+          WITH load_agg AS (
+            SELECT
+              l.assigned_unit_id AS unit_id,
+              COALESCE(SUM(CASE WHEN l.created_at >= $2::timestamptz AND l.created_at < $3::timestamptz THEN l.rate_total_cents ELSE 0 END), 0)::bigint AS revenue_cents
+            FROM mdata.loads l
+            WHERE l.operating_company_id = $1
+              AND l.soft_deleted_at IS NULL
+              AND l.status IS DISTINCT FROM 'cancelled'
+              AND l.assigned_unit_id IS NOT NULL
+            GROUP BY l.assigned_unit_id
+          ),
+          wo_agg AS (
+            SELECT
+              wo.unit_id AS unit_id,
+              COALESCE(
+                SUM(
+                  CASE
+                    WHEN COALESCE(wo.updated_at, wo.opened_at) >= $2::timestamptz
+                     AND COALESCE(wo.updated_at, wo.opened_at) < $3::timestamptz
+                    THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
+                    ELSE 0
+                  END
+                ),
+                0
+              )::bigint AS wo_cost_cents
+            FROM maintenance.work_orders wo
+            WHERE wo.operating_company_id = $1
+            GROUP BY wo.unit_id
+          )
           SELECT
             u.id AS unit_id,
             u.unit_number,
-            COALESCE(SUM(CASE WHEN l.created_at >= $2::timestamptz AND l.created_at < $3::timestamptz THEN l.rate_total_cents ELSE 0 END), 0)::bigint AS revenue_cents,
-            COALESCE(
-              SUM(
-                CASE
-                  WHEN COALESCE(wo.updated_at, wo.opened_at) >= $2::timestamptz
-                   AND COALESCE(wo.updated_at, wo.opened_at) < $3::timestamptz
-                  THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
-                  ELSE 0
-                END
-              ),
-              0
-            )::bigint AS wo_cost_cents
+            COALESCE(la.revenue_cents, 0)::bigint AS revenue_cents,
+            COALESCE(wa.wo_cost_cents, 0)::bigint AS wo_cost_cents
           FROM mdata.units u
-          LEFT JOIN mdata.loads l
-            ON l.assigned_unit_id = u.id
-            AND l.operating_company_id = $1
-            AND l.soft_deleted_at IS NULL
-          LEFT JOIN maintenance.work_orders wo
-            ON wo.unit_id = u.id
-            AND wo.operating_company_id = $1
+          JOIN load_agg la ON la.unit_id = u.id
+          LEFT JOIN wo_agg wa ON wa.unit_id = u.id
           WHERE u.deactivated_at IS NULL
-            AND EXISTS (
-              SELECT 1
-              FROM mdata.loads l_scope
-              WHERE l_scope.assigned_unit_id = u.id
-                AND l_scope.operating_company_id = $1
-                AND l_scope.soft_deleted_at IS NULL
-            )
             ${unitFilter}
-          GROUP BY u.id, u.unit_number
-          ORDER BY (
-            COALESCE(SUM(CASE WHEN l.created_at >= $2::timestamptz AND l.created_at < $3::timestamptz THEN l.rate_total_cents ELSE 0 END), 0)
-            -
-            COALESCE(
-              SUM(
-                CASE
-                  WHEN COALESCE(wo.updated_at, wo.opened_at) >= $2::timestamptz
-                   AND COALESCE(wo.updated_at, wo.opened_at) < $3::timestamptz
-                  THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
-                  ELSE 0
-                END
-              ),
-              0
-            )
-          ) DESC
+          ORDER BY (COALESCE(la.revenue_cents, 0) - COALESCE(wa.wo_cost_cents, 0)) DESC
         `,
         values
       );
