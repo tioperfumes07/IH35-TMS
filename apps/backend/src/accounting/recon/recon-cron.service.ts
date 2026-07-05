@@ -22,25 +22,165 @@ export function reconJobName(pass: "am" | "pm"): string {
   return pass === "am" ? "accounting.recon_am_bank_count" : "accounting.recon_pm_categorization_diff";
 }
 
-type QboRegisterTxn = {
-  Id: string;
-  TxnDate: string;
-  TotalAmt?: number | string;
-  DocNumber?: string;
-  PrivateNote?: string;
-  AccountRef?: { value?: string; name?: string };
-  DepositToAccountRef?: { value?: string; name?: string };
+type QboRef = { value?: string; name?: string };
+
+// ── Minimal QBO register entity shapes (only the fields this reconciler reads). All six of these entity
+// types can move money through a bank/credit-card account, so the recon source must pull all six or it
+// SILENTLY MISSES cash (B1-1). Field shapes per the QBO Accounting API; confirm against real data on the
+// first live run (kept defensive: every field optional, safe fallbacks).
+type QboDepositTxn = {
+  Id: string; TxnDate: string; TotalAmt?: number | string;
+  DocNumber?: string; PrivateNote?: string; DepositToAccountRef?: QboRef;
+};
+type QboPurchaseTxn = {
+  Id: string; TxnDate: string; TotalAmt?: number | string;
+  DocNumber?: string; PrivateNote?: string; AccountRef?: QboRef;
+  Credit?: boolean; // Credit=true → vendor refund/credit = money IN (rare); default is money OUT.
+};
+type QboTransferTxn = {
+  Id: string; TxnDate: string; Amount?: number | string;
+  DocNumber?: string; PrivateNote?: string; FromAccountRef?: QboRef; ToAccountRef?: QboRef;
+};
+type QboBillPaymentTxn = {
+  Id: string; TxnDate: string; TotalAmt?: number | string; DocNumber?: string; PrivateNote?: string;
+  PayType?: string; CheckPayment?: { BankAccountRef?: QboRef }; CreditCardPayment?: { CCAccountRef?: QboRef };
+};
+type QboPaymentTxn = {
+  Id: string; TxnDate: string; TotalAmt?: number | string;
+  DocNumber?: string; PrivateNote?: string; DepositToAccountRef?: QboRef;
+};
+type QboJournalEntryLine = {
+  Amount?: number | string;
+  JournalEntryLineDetail?: { PostingType?: string; AccountRef?: QboRef };
+};
+type QboJournalEntryTxn = {
+  Id: string; TxnDate: string; DocNumber?: string; PrivateNote?: string; Line?: QboJournalEntryLine[];
+};
+type QboAccount = { Id?: string; AccountType?: string };
+
+const toCents = (v: number | string | undefined): number => Math.round(Number(v ?? 0) * 100);
+
+/** All six QBO register-entity arrays for a window, plus the bank/credit-card account-id set used to scope
+ *  the ambiguous types (Payment, JournalEntry) to legs that actually hit a bank/cash account. */
+export type QboRegisterSources = {
+  deposits: QboDepositTxn[];
+  purchases: QboPurchaseTxn[];
+  transfers: QboTransferTxn[];
+  billPayments: QboBillPaymentTxn[];
+  payments: QboPaymentTxn[];
+  journalEntries: QboJournalEntryTxn[];
+  /** QBO Account Ids whose AccountType is Bank or Credit Card. */
+  bankAccountRefs: ReadonlySet<string>;
 };
 
-/** The live QBO register source (WIRED 2026-07-04). Pulls the entity's QBO bank register (Deposits = money
- *  IN, Purchases = money OUT) for the window and maps to ReconEntry using the SAME signed convention as the
- *  TMS side (credit/deposit positive). Auth comes from the live integrations.qbo_connections tokens via
- *  qboCompanyContext; any QBO API/auth error THROWS (the caller records the run as failed) so we NEVER
- *  fabricate an empty QBO side — an empty side would false-flag every TMS row. Only entities whose
- *  TMS_QBO_RECON_ENABLED flag is ON reach here, and by policy that flag is flipped only for QBO-connected
- *  entities. NOTE (verify before trusting flags): covers Deposit + Purchase; Transfer / BillPayment / Payment
- *  / JournalEntry that also hit bank accounts are a follow-up. QBO Purchase/Deposit field shapes should be
- *  confirmed against real data on first live run. */
+/** Pure QBO-register → ReconEntry[] mapper (no network, no DB — fully unit-testable). Normalizes ALL SIX
+ *  bank-hitting QBO transaction types to the SAME signed-cents convention as the TMS side (credit / money-IN
+ *  positive, money-OUT negative). This is register-side normalization for comparison ONLY — the engine never
+ *  posts; no GL math here. Covering all six is the B1-1 fix: previously only Deposit + Purchase were pulled,
+ *  so Transfers, BillPayments, directly-deposited customer Payments, and bank-leg JournalEntries never
+ *  reconciled and their cash movement went unseen. */
+export function buildReconEntriesFromQboRegister(src: QboRegisterSources): ReconEntry[] {
+  const entries: ReconEntry[] = [];
+
+  // 1) Deposit — money IN (+). DepositToAccountRef is the receiving bank account.
+  for (const d of src.deposits) {
+    entries.push({
+      txn_date: d.TxnDate,
+      amount_cents: toCents(d.TotalAmt),
+      reference: d.PrivateNote ?? d.DocNumber ?? null,
+      account_ref: d.DepositToAccountRef?.value ?? "unmapped",
+      source_ref: { kind: "bank_txn", id: `qbo:deposit:${d.Id}`, display: d.DocNumber ?? undefined },
+    });
+  }
+
+  // 2) Purchase — money OUT (−) by default; a Purchase flagged Credit=true is a vendor refund → money IN (+).
+  //    AccountRef is the bank/credit-card account the money moved through.
+  for (const p of src.purchases) {
+    const magnitude = toCents(p.TotalAmt);
+    entries.push({
+      txn_date: p.TxnDate,
+      amount_cents: p.Credit ? magnitude : -magnitude,
+      reference: p.PrivateNote ?? p.DocNumber ?? null,
+      account_ref: p.AccountRef?.value ?? "unmapped",
+      source_ref: { kind: "bank_txn", id: `qbo:purchase:${p.Id}`, display: p.DocNumber ?? undefined },
+    });
+  }
+
+  // 3) Transfer — bank→bank. TWO bank-hitting legs: the From account loses (−), the To account gains (+).
+  for (const t of src.transfers) {
+    const magnitude = toCents(t.Amount);
+    const ref = t.PrivateNote ?? t.DocNumber ?? null;
+    entries.push({
+      txn_date: t.TxnDate, amount_cents: -magnitude, reference: ref,
+      account_ref: t.FromAccountRef?.value ?? "unmapped",
+      source_ref: { kind: "bank_txn", id: `qbo:transfer:${t.Id}:from`, display: t.DocNumber ?? undefined },
+    });
+    entries.push({
+      txn_date: t.TxnDate, amount_cents: magnitude, reference: ref,
+      account_ref: t.ToAccountRef?.value ?? "unmapped",
+      source_ref: { kind: "bank_txn", id: `qbo:transfer:${t.Id}:to`, display: t.DocNumber ?? undefined },
+    });
+  }
+
+  // 4) BillPayment — money OUT (−). The bank/CC account depends on PayType (Check → CheckPayment.BankAccountRef,
+  //    CreditCard → CreditCardPayment.CCAccountRef).
+  for (const bp of src.billPayments) {
+    const acct = bp.CheckPayment?.BankAccountRef?.value ?? bp.CreditCardPayment?.CCAccountRef?.value ?? "unmapped";
+    entries.push({
+      txn_date: bp.TxnDate,
+      amount_cents: -toCents(bp.TotalAmt),
+      reference: bp.PrivateNote ?? bp.DocNumber ?? null,
+      account_ref: acct,
+      source_ref: { kind: "bank_txn", id: `qbo:billpayment:${bp.Id}`, display: bp.DocNumber ?? undefined },
+    });
+  }
+
+  // 5) Payment (customer receipt) — money IN (+), but ONLY when deposited DIRECTLY to a bank account
+  //    (DepositToAccountRef present AND in the bank/CC set). A Payment left in Undeposited Funds hits the bank
+  //    later via a Deposit (arm 1); including it here too would DOUBLE-COUNT the same cash, so skip it.
+  for (const pay of src.payments) {
+    const acct = pay.DepositToAccountRef?.value;
+    if (!acct || !src.bankAccountRefs.has(acct)) continue;
+    entries.push({
+      txn_date: pay.TxnDate,
+      amount_cents: toCents(pay.TotalAmt),
+      reference: pay.PrivateNote ?? pay.DocNumber ?? null,
+      account_ref: acct,
+      source_ref: { kind: "bank_txn", id: `qbo:payment:${pay.Id}`, display: pay.DocNumber ?? undefined },
+    });
+  }
+
+  // 6) JournalEntry — only the LEGS posting to a bank/cash account are bank-hitting. Standard bank-register
+  //    sign: a Debit to a bank/cash account increases it (money IN, +); a Credit decreases it (money OUT, −).
+  //    Non-bank legs (revenue/expense/AR/AP…) are not cash movements and are excluded via bankAccountRefs.
+  for (const je of src.journalEntries) {
+    (je.Line ?? []).forEach((line, idx) => {
+      const acct = line.JournalEntryLineDetail?.AccountRef?.value;
+      if (!acct || !src.bankAccountRefs.has(acct)) return;
+      const magnitude = toCents(line.Amount);
+      const isDebit = (line.JournalEntryLineDetail?.PostingType ?? "").toLowerCase() === "debit";
+      entries.push({
+        txn_date: je.TxnDate,
+        amount_cents: isDebit ? magnitude : -magnitude,
+        reference: je.PrivateNote ?? je.DocNumber ?? null,
+        account_ref: acct,
+        source_ref: { kind: "bank_txn", id: `qbo:journalentry:${je.Id}:${idx}`, display: je.DocNumber ?? undefined },
+      });
+    });
+  }
+
+  return entries;
+}
+
+/** The live QBO register source (WIRED 2026-07-04; B1-1 expanded 2026-07-05 to all six bank-hitting types).
+ *  Pulls the entity's full QBO bank register for the window — Deposit, Purchase, Transfer, BillPayment,
+ *  directly-deposited Payment, and bank-leg JournalEntry — and maps to ReconEntry with the SAME signed
+ *  convention as the TMS side (credit / money-IN positive). Auth comes from the live
+ *  integrations.qbo_connections tokens via qboCompanyContext; any QBO API/auth error THROWS (the caller
+ *  records the run as failed) so we NEVER fabricate an empty QBO side — an empty side would false-flag every
+ *  TMS row. Only entities whose TMS_QBO_RECON_ENABLED flag is ON reach here, and by policy that flag is
+ *  flipped only for QBO-connected entities. The extraction is a read-only mapping (buildReconEntriesFrom
+ *  QboRegister) — no GL posting. QBO field shapes should be confirmed against real data on the first live run. */
 function createQboReconSource(operatingCompanyId: string): QboReconSource | null {
   void operatingCompanyId;
   return {
@@ -48,37 +188,37 @@ function createQboReconSource(operatingCompanyId: string): QboReconSource | null
       const ctx = await qboCompanyContext(opco); // throws if the entity has no live QBO connection
       const ws = windowStart.slice(0, 10);
       const we = windowEnd.slice(0, 10);
-      const entries: ReconEntry[] = [];
+      const dateRange = `TxnDate >= '${ws}' AND TxnDate <= '${we}'`;
 
-      const deposits = await qboQuery<QboRegisterTxn>(
+      // Bank + Credit Card account ids — the set of accounts that represent real cash/payment accounts. Used to
+      // scope Payment (skip Undeposited Funds) and JournalEntry legs to bank-hitting rows only.
+      const accountsRes = await qboQuery<QboAccount>(
         ctx,
-        `SELECT * FROM Deposit WHERE TxnDate >= '${ws}' AND TxnDate <= '${we}' MAXRESULTS 1000`,
+        `SELECT * FROM Account WHERE AccountType IN ('Bank', 'Credit Card') MAXRESULTS 1000`,
       );
-      for (const d of (deposits.QueryResponse?.Deposit as QboRegisterTxn[] | undefined) ?? []) {
-        entries.push({
-          txn_date: d.TxnDate,
-          amount_cents: Math.round(Number(d.TotalAmt ?? 0) * 100), // deposit = credit/money-in = positive
-          reference: d.PrivateNote ?? d.DocNumber ?? null,
-          account_ref: d.DepositToAccountRef?.value ?? "unmapped",
-          source_ref: { kind: "bank_txn", id: `qbo:deposit:${d.Id}`, display: d.DocNumber ?? undefined },
-        });
+      const bankAccountRefs = new Set<string>();
+      for (const a of (accountsRes.QueryResponse?.Account as QboAccount[] | undefined) ?? []) {
+        if (a.Id) bankAccountRefs.add(a.Id);
       }
 
-      const purchases = await qboQuery<QboRegisterTxn>(
-        ctx,
-        `SELECT * FROM Purchase WHERE TxnDate >= '${ws}' AND TxnDate <= '${we}' MAXRESULTS 1000`,
-      );
-      for (const p of (purchases.QueryResponse?.Purchase as QboRegisterTxn[] | undefined) ?? []) {
-        entries.push({
-          txn_date: p.TxnDate,
-          amount_cents: -Math.round(Number(p.TotalAmt ?? 0) * 100), // purchase = money-out = negative
-          reference: p.PrivateNote ?? p.DocNumber ?? null,
-          account_ref: p.AccountRef?.value ?? "unmapped",
-          source_ref: { kind: "bank_txn", id: `qbo:purchase:${p.Id}`, display: p.DocNumber ?? undefined },
-        });
-      }
+      const [deposits, purchases, transfers, billPayments, payments, journalEntries] = await Promise.all([
+        qboQuery<QboDepositTxn>(ctx, `SELECT * FROM Deposit WHERE ${dateRange} MAXRESULTS 1000`),
+        qboQuery<QboPurchaseTxn>(ctx, `SELECT * FROM Purchase WHERE ${dateRange} MAXRESULTS 1000`),
+        qboQuery<QboTransferTxn>(ctx, `SELECT * FROM Transfer WHERE ${dateRange} MAXRESULTS 1000`),
+        qboQuery<QboBillPaymentTxn>(ctx, `SELECT * FROM BillPayment WHERE ${dateRange} MAXRESULTS 1000`),
+        qboQuery<QboPaymentTxn>(ctx, `SELECT * FROM Payment WHERE ${dateRange} MAXRESULTS 1000`),
+        qboQuery<QboJournalEntryTxn>(ctx, `SELECT * FROM JournalEntry WHERE ${dateRange} MAXRESULTS 1000`),
+      ]);
 
-      return entries;
+      return buildReconEntriesFromQboRegister({
+        deposits: (deposits.QueryResponse?.Deposit as QboDepositTxn[] | undefined) ?? [],
+        purchases: (purchases.QueryResponse?.Purchase as QboPurchaseTxn[] | undefined) ?? [],
+        transfers: (transfers.QueryResponse?.Transfer as QboTransferTxn[] | undefined) ?? [],
+        billPayments: (billPayments.QueryResponse?.BillPayment as QboBillPaymentTxn[] | undefined) ?? [],
+        payments: (payments.QueryResponse?.Payment as QboPaymentTxn[] | undefined) ?? [],
+        journalEntries: (journalEntries.QueryResponse?.JournalEntry as QboJournalEntryTxn[] | undefined) ?? [],
+        bankAccountRefs,
+      });
     },
   };
 }
