@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { aggregateForPeriod, getDispatcherDetail } from "./booking-gap.service.js";
 import { withCurrentUser } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -26,6 +27,7 @@ export async function registerBookingGapRoutes(app: FastifyInstance) {
     }
 
     const result = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, q.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
       return aggregateForPeriod(client, q.data.operating_company_id, q.data.from, q.data.to);
     });

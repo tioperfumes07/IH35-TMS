@@ -210,8 +210,9 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
     }
 
     return withCurrentUser(user.uuid, async (client) => {
+      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid, operatingCompanyId);
       const result = await client.query(`
-        SELECT 
+        SELECT
           q.id,
           q.expense_id,
           q.expense_table,
@@ -229,7 +230,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
         LEFT JOIN mdata.units u ON u.id = q.unit_id
         WHERE q.operating_company_id = $1 AND q.status != 'linked'
         ORDER BY q.created_at DESC
-      `, [operatingCompanyId]);
+      `, [scopedCompanyId]);
       return { items: result.rows };
     });
   });
@@ -273,14 +274,15 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
     }
 
     return withCurrentUser(user.uuid, async (client) => {
+      const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid, operatingCompanyId);
       // Check if settlement is finalized
       const check = await approvalService.checkAllLinesApproved(client, parsed.data.settlement_id);
-      
+
       // Get settlement status
       const statusResult = await client.query<{ approval_status: string }>(`
-        SELECT approval_status FROM settlement.settlement 
+        SELECT approval_status FROM settlement.settlement
         WHERE id = $1 AND operating_company_id = $2
-      `, [parsed.data.settlement_id, operatingCompanyId]);
+      `, [parsed.data.settlement_id, scopedCompanyId]);
       
       if (statusResult.rows.length === 0) {
         return reply.code(404).send({ error: "settlement not found" });

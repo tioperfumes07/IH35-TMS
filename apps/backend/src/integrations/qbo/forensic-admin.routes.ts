@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { buildIdempotencyKey, enqueueAdminJob } from "../../admin/admin-jobs.service.js";
 import { generateExcelReport } from "./forensic-report.service.js";
@@ -55,6 +56,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
     const query = batchQuerySchema.safeParse(queryRaw ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    if (query.data.operating_company_id) await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const row = await withLuciaBypass(async (client) => {
       const res = await client.query(
@@ -80,6 +82,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
 
     const body = startBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
     const duplicateCheck = await withLuciaBypass(async (client) => {
       const active = await client.query<{ id: string }>(
@@ -210,6 +213,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
 
     const query = batchQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    if (query.data.operating_company_id) await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const rows = await withLuciaBypass(async (client) => {
       const res = await client.query(
