@@ -67,6 +67,21 @@ describe("CustomersPage create validation", () => {
     });
   });
 
+  it("D1-5: blocks submit and does NOT call createCustomer when customer_type is empty", async () => {
+    const user = userEvent.setup();
+    vi.mocked(createCustomer).mockResolvedValue({ ok: true } as never);
+    render(wrap(<CustomersPage />));
+    await user.click(screen.getByRole("button", { name: /\+ Create Customer/i }));
+    await screen.findByRole("heading", { name: /create customer/i });
+    // Provide a legal name but leave customer_type unselected.
+    await user.type(document.querySelector('[data-field="legal_name"]')!, "Acme Logistics");
+    await user.click(screen.getByRole("button", { name: /^Save$/i }));
+    await waitFor(() => {
+      expect(document.getElementById("customer_type-error")).toBeTruthy();
+    });
+    expect(createCustomer).not.toHaveBeenCalled();
+  });
+
   it("maps 409 conflict to field", async () => {
     const user = userEvent.setup();
     vi.mocked(createCustomer).mockRejectedValue(
@@ -79,9 +94,13 @@ describe("CustomersPage create validation", () => {
     await user.click(screen.getByRole("button", { name: /\+ Create Customer/i }));
     await screen.findByRole("heading", { name: /create customer/i });
     await user.type(document.querySelector('[data-field="legal_name"]')!, "Acme Logistics");
+    // customer_type is now required client-side (D1-5) — select one so we reach the create request.
+    await user.selectOptions(document.querySelector('select[name="customer_type"]')!, "broker");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(/Could not save/i);
+      // The form error banner and the toast both carry role="alert"; assert one of them shows the message.
+      const alerts = screen.getAllByRole("alert");
+      expect(alerts.some((a) => /Could not save/i.test(a.textContent ?? ""))).toBe(true);
     });
     await waitFor(() => {
       expect(document.getElementById("mc_number-error")).toBeTruthy();
