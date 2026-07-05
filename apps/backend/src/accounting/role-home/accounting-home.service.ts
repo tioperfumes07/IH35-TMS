@@ -1,6 +1,7 @@
 import { getApAgingReport, type ApAgingTotals } from "../ap-aging.service.js";
 import { getArAgingReport, type ArAgingTotals } from "../ar-aging.service.js";
 import { withCompanyScope } from "../shared.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 export type AgingBuckets = {
   current_cents: number;
@@ -71,7 +72,7 @@ export async function getAccountingHomeData(input: {
   userId: string;
   operating_company_id: string;
 }): Promise<AccountingHomeData> {
-  const asOfDate = new Date().toISOString().slice(0, 10);
+  const asOfDate = companyBusinessDate();
 
   const [arReport, apReport, supplemental] = await Promise.all([
     getArAgingReport({

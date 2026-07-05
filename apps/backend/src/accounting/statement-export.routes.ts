@@ -11,6 +11,7 @@ import {
   exportProfitLossStatement,
   exportTrialBalanceStatement,
 } from "./statement-export.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -29,7 +30,7 @@ function canAccessStatementExport(role: string) {
 }
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 function exportError(req: FastifyRequest, reply: FastifyReply, error: unknown) {

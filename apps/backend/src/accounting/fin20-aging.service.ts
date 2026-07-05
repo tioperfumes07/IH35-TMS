@@ -16,6 +16,7 @@
 // due, plus the per-row open total. Money is integer cents.
 
 import { withCurrentUser } from "../auth/db.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export type AgingBuckets = {
   current_cents: number;
@@ -103,7 +104,7 @@ async function scopeCompany(client: { query: (sql: string, values?: unknown[]) =
 }
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 // A true historical request is a valid YYYY-MM-DD strictly before today. Today (or anything not a

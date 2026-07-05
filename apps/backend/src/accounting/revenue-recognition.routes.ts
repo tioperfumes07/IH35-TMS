@@ -13,6 +13,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const POST_FLAG = "REVENUE_RECOGNITION_POST_ENABLED";
 
@@ -100,7 +101,7 @@ function computeRecognitionSchedule(o: ObligationForCompute): { rows: Recognitio
 }
 
 function recognizedToDate(rows: RecognitionRow[]): number {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyBusinessDate();
   let sum = 0;
   for (const r of rows) {
     if (r.period_date <= today) sum += r.recognized_amount_cents;

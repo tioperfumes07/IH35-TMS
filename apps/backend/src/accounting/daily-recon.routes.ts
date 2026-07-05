@@ -25,6 +25,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const querySchema = companyQuerySchema.extend({
   from_date: z.string().date().optional(),
@@ -72,12 +73,14 @@ export type DailyReconResponse = {
 };
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 function daysAgoIso(n: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
+  // Anchor on the company business date (America/Chicago) so the range start stays aligned with
+  // todayIso() near midnight — noon-UTC avoids any DST/rounding roll while subtracting whole days.
+  const d = new Date(`${companyBusinessDate()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - n);
   return d.toISOString().slice(0, 10);
 }
 

@@ -22,6 +22,7 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { getBreakEvenInputs } from "./break-even.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export const FINANCE_BREAK_EVEN_UI_FLAG = "FINANCE_BREAK_EVEN_UI_ENABLED";
 
@@ -44,7 +45,7 @@ const breakEvenQuerySchema = companyQuerySchema.extend({
 });
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 function startOfYearIso(): string {

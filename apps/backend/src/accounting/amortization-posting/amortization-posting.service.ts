@@ -37,6 +37,7 @@ import {
   buildPrepaidAmortizationIdempotencyKey,
   type BalancedLine,
 } from "./amortization-posting.math.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -63,7 +64,7 @@ export type AmortizationReversalResult = {
   reversed_periods: Array<{ period_number: number; journal_entry_id: string; reversal_journal_entry_id: string | null }>;
 };
 
-const todayIso = (): string => new Date().toISOString().slice(0, 10);
+const todayIso = (): string => companyBusinessDate();
 
 /** Closed-period guard — reuses the shared accounting.closed_period_cutoff DB function (no new math). */
 async function assertOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string): Promise<void> {

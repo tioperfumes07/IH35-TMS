@@ -17,6 +17,7 @@ import {
   getArAgingCustomerInvoices,
   getApAgingVendorBills,
 } from "./fin20-aging.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 // Backend gate (process.env per FIN-20 contract). Flipping this ON in prod is a separate Jorge
 // sign-off; this PR ships it OFF.
@@ -30,7 +31,7 @@ function canAccessAging(role: string): boolean {
 }
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 const summaryQuerySchema = companyQuerySchema.extend({

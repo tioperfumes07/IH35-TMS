@@ -14,6 +14,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export const VOID_FLAG_KEY = "VOID_ENFORCEMENT_ENABLED";
 
@@ -93,7 +94,7 @@ export function assertBalanced(rows: Array<{ debit_or_credit: "debit" | "credit"
 
 /** Today's date as ISO YYYY-MM-DD (the "current open period" anchor for closed-period reversals). */
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 // ---------------------------------------------------------------------------

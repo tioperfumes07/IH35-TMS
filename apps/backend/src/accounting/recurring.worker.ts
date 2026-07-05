@@ -8,6 +8,7 @@ import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-rev
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export function computeNextRecurringRunUtc(fromIso: string, cadence: string, cronExpr: string | null): string {
   const dt = DateTime.fromISO(fromIso, { zone: "utc" });
@@ -65,7 +66,7 @@ async function materializeInvoice(client: PoolClient, tmpl: Record<string, unkno
   const customer = customerRes.rows[0];
   if (!customer) throw new Error("recurring_invoice_customer_not_found");
 
-  const issueDate = typeof body.issue_date === "string" ? body.issue_date : new Date().toISOString().slice(0, 10);
+  const issueDate = typeof body.issue_date === "string" ? body.issue_date : companyBusinessDate();
   const termsDays = Number(customer.days_until_due ?? 30);
   const dueDate =
     typeof body.due_date === "string"
@@ -221,7 +222,7 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
 async function materializeJournal(client: PoolClient, tmpl: Record<string, unknown>, actorId: string) {
   const oc = String(tmpl.operating_company_id);
   const body = tmpl.template_payload as Record<string, unknown>;
-  const entryDate = String(body.entry_date ?? new Date().toISOString().slice(0, 10));
+  const entryDate = String(body.entry_date ?? companyBusinessDate());
   const memo = typeof body.memo === "string" ? body.memo : null;
   const postings = Array.isArray(body.postings) ? (body.postings as Record<string, unknown>[]) : [];
   if (postings.length < 2) throw new Error("recurring_journal_min_two_lines");
@@ -327,7 +328,7 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
 async function materializeExpense(client: PoolClient, tmpl: Record<string, unknown>, actorId: string) {
   const oc = String(tmpl.operating_company_id);
   const body = tmpl.template_payload as Record<string, unknown>;
-  const expenseDate = String(body.expense_date ?? new Date().toISOString().slice(0, 10));
+  const expenseDate = String(body.expense_date ?? companyBusinessDate());
   const amountCents = Number(body.amount_cents ?? 0);
   if (amountCents <= 0) throw new Error("recurring_expense_invalid_amount");
   const totalAmount = amountCents / 100;
