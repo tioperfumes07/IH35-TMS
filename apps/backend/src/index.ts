@@ -427,6 +427,7 @@ import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
 import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
 import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
+import { initializeEvidencePresenceReconcileCron } from "./cron/evidence-presence-reconcile.cron.js";
 import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
 import taskRoutes from "./tasks/task.routes.js";
 import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
@@ -1346,6 +1347,15 @@ async function main() {
     app.log.info("[STARTUP] error-digest scheduler initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] error-digest scheduler failed");
+  }
+
+  try {
+    // FINDING H5-3 — nightly R2-evidence presence reconcile (read-only; default OFF via
+    // EVIDENCE_PRESENCE_RECONCILE_ENABLED). Fail-loud CRITICAL alarm on any evidence object missing in R2.
+    initializeEvidencePresenceReconcileCron(app);
+    app.log.info("[STARTUP] evidence-presence reconcile scheduler initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] evidence-presence reconcile scheduler failed");
   }
 
   try {
