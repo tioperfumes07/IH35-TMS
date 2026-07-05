@@ -34,14 +34,16 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
       // D5-1: route through the shared apiRequest helper instead of a raw fetch(). apiRequest adds
       // credentials:"include" (the prod API is cross-origin — a raw fetch dropped the session cookie
       // and 401'd before the body was read → "Failed to create part"), applies the API base URL, and
-      // attaches a POST Idempotency-Key. category/notes/is_active are forwarded (forward-compatible;
-      // the current backend createSchema strips them until columns exist).
+      // attaches a POST Idempotency-Key.
+      // INV-1: SKU/category/notes are now REAL, persisted backend columns. Send the SKU only when the
+      // user typed one — leaving it blank lets the backend generate a stable "PART-XXXXXXXX" SKU (no
+      // longer falls back to the part name, and no longer a fake id::text SKU). category + notes persist.
       return apiRequest<{ id: string }>(
         `/api/v1/maintenance/parts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
         {
           method: "POST",
           body: {
-            part_number: data.sku.trim() || data.name.trim(),
+            part_number: data.sku.trim() || undefined,
             name: data.name.trim(),
             category: data.category.trim() || undefined,
             qty_on_hand: Number(data.on_hand_qty) || 0,

@@ -462,7 +462,7 @@ export function FleetTable({
         {softDeleteFilter !== "active" ? (
           <button
             type="button"
-            className="rounded-sm border border-emerald-300 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+            className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             disabled={bulkApplying || selection.count === 0}
             onClick={onReactivateSelected}
           >

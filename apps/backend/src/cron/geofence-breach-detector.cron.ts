@@ -33,6 +33,11 @@ type CronRunStats = {
 const COMPANY_WATERMARKS = new Map<string, string>();
 let initialized = false;
 
+// Stable name for the cross-process single-flight advisory lock (hashed to a bigint key at
+// query time via Postgres hashtext()). Keep this string constant — changing it would let a
+// mid-deploy old+new instance each acquire a distinct lock and run concurrently.
+const GEOFENCE_CRON_LOCK_KEY = "safety.geofence_breach_detector_cron";
+
 function isGeofenceCronEnabled(): boolean {
   return (process.env.GEOFENCE_BREACH_CRON_ENABLED ?? "true").trim() !== "false";
 }
@@ -155,26 +160,47 @@ export async function runGeofenceBreachDetectionTick(
     ];
 
     for (const candidate of eventCandidates) {
+      const geofence = geofenceById.get(candidate.geofence_id);
+      const candidateCustomerId = geofence?.customer_id ?? null;
+
+      // Dedup: skip if an equivalent alert already exists inside the 5-minute window.
+      // Two matchers collapse duplicates:
+      //   1. same geofence_id  -> the same zone crossed again (re-run / GPS jitter).
+      //   2. same customer_id  -> OVERLAPPING zones for the SAME customer site. A single
+      //      physical crossing enters several distinct geofences (different geofence_id),
+      //      which previously emitted one identical alert per overlapping zone. Collapsing
+      //      on customer_id yields a single arrival/departure alert per crossing. Because
+      //      inserts below are visible to subsequent SELECTs on this same connection, this
+      //      also dedups overlapping candidates produced within the same tick.
       const existing = await client.query<{ id: string }>(
         `
           SELECT id::text
           FROM safety.geofence_breach_events
           WHERE operating_company_id = $1::uuid
             AND vehicle_id = $2::uuid
-            AND geofence_id = $3::uuid
             AND event_type = $4
             AND event_at >= ($5::timestamptz - interval '5 minutes')
+            AND (
+              geofence_id = $3::uuid
+              OR ($6::uuid IS NOT NULL AND customer_id = $6::uuid)
+            )
           ORDER BY event_at DESC
           LIMIT 1
         `,
-        [operatingCompanyId, transition.vehicle_id, candidate.geofence_id, candidate.event_type, transition.captured_at]
+        [
+          operatingCompanyId,
+          transition.vehicle_id,
+          candidate.geofence_id,
+          candidate.event_type,
+          transition.captured_at,
+          candidateCustomerId,
+        ]
       );
       if ((existing.rowCount ?? existing.rows.length) > 0) {
         dedupSkipped += 1;
         continue;
       }
 
-      const geofence = geofenceById.get(candidate.geofence_id);
       const inserted = await client.query<{ id: string }>(
         `
           INSERT INTO safety.geofence_breach_events (
@@ -256,28 +282,47 @@ export function initializeGeofenceBreachDetectorCron(app: FastifyInstance) {
     "*/1 * * * *",
     async () => {
       await withLuciaBypass(async (client) => {
-        const companies = await client.query<{ id: string }>(
-          `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
+        // Single-flight guard for horizontal scaling: under multiple backend instances the
+        // 60s cron fires on every replica, so without a cross-process lock they all scan the
+        // same window and race to insert duplicate breach events. A session-level Postgres
+        // advisory lock (keyed by a stable name via hashtext) lets exactly one instance run
+        // each tick; the others skip. The lock is held on THIS connection and released in the
+        // finally below; if the process dies mid-tick Postgres frees it on disconnect.
+        const lockRes = await client.query<{ locked: boolean }>(
+          `SELECT pg_try_advisory_lock(hashtext($1::text)) AS locked`,
+          [GEOFENCE_CRON_LOCK_KEY]
         );
+        if (!lockRes.rows[0]?.locked) {
+          app.log.info("[GEOFENCE_BREACH_CRON] skipped tick — another instance holds the single-flight lock");
+          return;
+        }
 
-        for (const company of companies.rows) {
-          assertTenantContext(company.id, "safety.geofence_breach_cron");
-          const since = COMPANY_WATERMARKS.get(company.id) ?? new Date(Date.now() - 5 * 60 * 1000).toISOString();
-          const until = new Date().toISOString();
-          const stats = await runGeofenceBreachDetectionTick(client, company.id, since, until);
-          COMPANY_WATERMARKS.set(company.id, stats.next_watermark);
-          app.log.info(
-            {
-              operating_company_id: company.id,
-              transitions_checked: stats.transitions_checked,
-              events_inserted: stats.events_inserted,
-              dedup_skipped: stats.dedup_skipped,
-              since,
-              until,
-              next_watermark: stats.next_watermark,
-            },
-            "[GEOFENCE_BREACH_CRON] run complete"
+        try {
+          const companies = await client.query<{ id: string }>(
+            `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
           );
+
+          for (const company of companies.rows) {
+            assertTenantContext(company.id, "safety.geofence_breach_cron");
+            const since = COMPANY_WATERMARKS.get(company.id) ?? new Date(Date.now() - 5 * 60 * 1000).toISOString();
+            const until = new Date().toISOString();
+            const stats = await runGeofenceBreachDetectionTick(client, company.id, since, until);
+            COMPANY_WATERMARKS.set(company.id, stats.next_watermark);
+            app.log.info(
+              {
+                operating_company_id: company.id,
+                transitions_checked: stats.transitions_checked,
+                events_inserted: stats.events_inserted,
+                dedup_skipped: stats.dedup_skipped,
+                since,
+                until,
+                next_watermark: stats.next_watermark,
+              },
+              "[GEOFENCE_BREACH_CRON] run complete"
+            );
+          }
+        } finally {
+          await client.query(`SELECT pg_advisory_unlock(hashtext($1::text))`, [GEOFENCE_CRON_LOCK_KEY]);
         }
       });
     },

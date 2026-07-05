@@ -1,9 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../components/Toast";
 import { BookLoadModalV4 } from "./BookLoadModalV4";
+
+const searchMock = vi.fn();
+
+vi.mock("../../../api/qbo-mdata", () => ({
+  searchQboMasterData: (...args: unknown[]) => searchMock(...args),
+}));
 
 vi.mock("../../../auth/useAuth", () => ({
   useAuth: () => ({
@@ -63,5 +70,53 @@ describe("BookLoadModalV4", () => {
       expect(screen.getByText(/L-20991231-0001/)).toBeTruthy();
     });
     expect(screen.getByText(/● Reserved/i)).toBeTruthy();
+  });
+
+  it("clears the stale customer_id when the picked customer text is edited over (D3-3)", async () => {
+    const user = userEvent.setup();
+    searchMock.mockResolvedValue({
+      results: [
+        {
+          id: "61111111-1111-4111-8111-111111111111",
+          qbo_id: "qb-cust-77",
+          display_name: "LIVE TEST CUSTOMER LLC",
+          active: true,
+          company_name: "LIVE TEST CUSTOMER LLC",
+          primary_email: "ar@example.com",
+          primary_phone: "555-0100",
+        },
+      ],
+    });
+
+    render(
+      wrap(
+        <ToastProvider>
+          <BookLoadModalV4
+            open
+            operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+            onClose={vi.fn()}
+            onCreated={vi.fn()}
+          />
+        </ToastProvider>
+      )
+    );
+
+    const customerInput = screen.getByPlaceholderText(/Select customer/i);
+    await user.click(customerInput);
+    await user.type(customerInput, "LIVE");
+
+    await waitFor(() => expect(searchMock).toHaveBeenCalled(), { timeout: 4000 });
+
+    const option = await screen.findByRole("button", { name: /LIVE TEST CUSTOMER LLC/i });
+    await user.click(option);
+
+    // Precondition: a real customer FK was captured on the hidden customer_id field.
+    const hidden = () => document.querySelector<HTMLInputElement>('input[name="customer_id"]');
+    await waitFor(() => expect(hidden()?.value).toBe("61111111-1111-4111-8111-111111111111"));
+
+    // Typing over the picked customer must drop the old FK so the load can't book under it.
+    await user.type(customerInput, "X");
+
+    await waitFor(() => expect(hidden()?.value).toBe(""));
   });
 });

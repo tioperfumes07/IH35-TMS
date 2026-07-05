@@ -89,10 +89,12 @@ async function detectCoaDrift(client: PoolClient, operatingCompanyId: string): P
     `
       SELECT id::text AS id, account_name
       FROM catalogs.accounts
-      WHERE deactivated_at IS NULL
+      WHERE operating_company_id = $1::uuid
+        AND deactivated_at IS NULL
         AND qbo_account_id IS NULL
         AND COALESCE(qbo_sync_status, '') <> 'local_only'
-    `
+    `,
+    [operatingCompanyId]
   );
   for (const row of missingQbo.rows) {
     if (await insertDrift(client, operatingCompanyId, "chart_of_accounts", {
@@ -112,7 +114,9 @@ async function detectCoaDrift(client: PoolClient, operatingCompanyId: string): P
         AND qa.qbo_id IS NOT NULL
         AND qa.active = true
         AND NOT EXISTS (
-          SELECT 1 FROM catalogs.accounts ca WHERE ca.qbo_account_id = qa.qbo_id
+          SELECT 1 FROM catalogs.accounts ca
+          WHERE ca.qbo_account_id = qa.qbo_id
+            AND ca.operating_company_id = qa.operating_company_id
         )
     `,
     [operatingCompanyId]
@@ -138,7 +142,8 @@ async function detectCoaDrift(client: PoolClient, operatingCompanyId: string): P
       JOIN mdata.qbo_accounts qa
         ON qa.qbo_id = ca.qbo_account_id
        AND qa.operating_company_id = $1::uuid
-      WHERE ca.deactivated_at IS NULL
+      WHERE ca.operating_company_id = $1::uuid
+        AND ca.deactivated_at IS NULL
         AND ca.qbo_account_id IS NOT NULL
         AND ca.account_name IS DISTINCT FROM qa.name
     `,

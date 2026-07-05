@@ -15,13 +15,20 @@ const querySchema = z.object({
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 const createSchema = z.object({
-  part_number: z.string().trim().min(1).max(120),
+  // INV-1: part_number is now a REAL, persisted SKU. Optional on input — when the user leaves the SKU
+  // field blank the INSERT generates a stable "PART-XXXXXXXX" SKU (no more fake id::text SKU).
+  part_number: z.string().trim().min(1).max(120).optional(),
   name: z.string().trim().min(1).max(250),
   vendor_default: z.string().trim().max(250).optional(),
   unit_cost: z.number().nonnegative().optional(),
   qty_on_hand: z.number().int().nonnegative().default(0),
   reorder_threshold: z.number().int().nonnegative().default(0),
   location: z.string().trim().max(120).optional(),
+  // INV-1: previously collected by the create drawer but silently dropped by Zod — now persisted.
+  category: z.string().trim().max(120).optional(),
+  notes: z.string().trim().max(2000).optional(),
+  // forward-compat: the drawer also posts is_active; accept + ignore so it is not a validation_error.
+  is_active: z.boolean().optional(),
 });
 
 const updateSchema = z
@@ -33,6 +40,9 @@ const updateSchema = z
     qty_on_hand: z.number().int().nonnegative().optional(),
     reorder_threshold: z.number().int().nonnegative().optional(),
     location: z.string().trim().max(120).nullable().optional(),
+    // INV-1: category + notes are now editable + persisted.
+    category: z.string().trim().max(120).nullable().optional(),
+    notes: z.string().trim().max(2000).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -44,6 +54,7 @@ type CsvPartRow = {
   unit_cost: number | null;
   qty_on_hand: number;
   location: string | null;
+  category: string | null;
 };
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
@@ -71,6 +82,8 @@ function parsePartsCsv(text: string): CsvPartRow[] {
       unit_cost: get("unit_cost") ? Number(get("unit_cost")) : null,
       qty_on_hand: Number(get("qty_on_hand") || "0"),
       location: get("location") || null,
+      // INV-1: category is an optional CSV column; persisted when present.
+      category: headers.includes("category") ? (get("category") || null) : null,
     };
   });
 }
@@ -96,14 +109,18 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       if (query.data.search) {
         values.push(`%${query.data.search}%`);
         const idx = values.length;
-        filters.push(`(id::text ILIKE $${idx} OR part_description ILIKE $${idx})`);
+        // INV-1: search the real SKU + part_number too (not just the raw id/description).
+        filters.push(`(part_number ILIKE $${idx} OR id::text ILIKE $${idx} OR part_description ILIKE $${idx})`);
       }
       const result = await client.query(
         `
           SELECT
             id,
-            id::text AS part_number,
+            -- INV-1: real, persisted SKU (fallback to a stable derived SKU for any un-backfilled row).
+            COALESCE(part_number, 'PART-' || upper(substr(replace(id::text, '-', ''), 1, 8))) AS part_number,
             part_description AS name,
+            category,
+            notes,
             NULL::text AS vendor_default,
             last_purchase_amount AS unit_cost,
             on_hand_qty AS qty_on_hand,
@@ -161,11 +178,20 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             part_description,
             last_purchase_amount,
             on_hand_qty,
-            location
+            location,
+            part_number,
+            category,
+            notes
           )
-          VALUES ($1,$2,$3,$4,$5)
+          VALUES (
+            $1,$2,$3,$4,$5,
+            -- INV-1: persist the user-entered SKU; generate a stable "PART-XXXXXXXX" one when blank.
+            COALESCE(NULLIF(btrim($6), ''), 'PART-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))),
+            $7,
+            $8
+          )
           RETURNING
-            id, id::text AS part_number, part_description AS name, NULL::text AS vendor_default, last_purchase_amount AS unit_cost, on_hand_qty AS qty_on_hand,
+            id, part_number, part_description AS name, category, notes, NULL::text AS vendor_default, last_purchase_amount AS unit_cost, on_hand_qty AS qty_on_hand,
             0::int AS reorder_threshold, location, 'manual'::text AS source, CASE WHEN part_description LIKE '[VOID] %' THEN updated_at ELSE NULL END AS voided_at, NULL::text AS voided_reason
         `,
         [
@@ -174,11 +200,15 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
           body.data.unit_cost ?? null,
           body.data.qty_on_hand,
           body.data.location ?? null,
+          body.data.part_number ?? null,
+          body.data.category ?? null,
+          body.data.notes ?? null,
         ]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.parts.created", {
         resource_id: result.rows[0].id,
-        part_number: body.data.part_number,
+        part_number: result.rows[0].part_number,
+        category: body.data.category ?? null,
       });
       return result.rows[0];
     });
@@ -210,6 +240,10 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       if ("unit_cost" in body.data) add("last_purchase_amount", body.data.unit_cost ?? null);
       if ("qty_on_hand" in body.data) add("on_hand_qty", body.data.qty_on_hand ?? null);
       if ("location" in body.data) add("location", body.data.location ?? null);
+      // INV-1: part_number/category/notes are now real, editable columns.
+      if ("part_number" in body.data) add("part_number", body.data.part_number ?? null);
+      if ("category" in body.data) add("category", body.data.category ?? null);
+      if ("notes" in body.data) add("notes", body.data.notes ?? null);
       values.push(params.data.id);
       const result = await client.query(
         `UPDATE maintenance.parts_inventory SET ${setParts.join(", ")}, updated_at = now() WHERE id = $${values.length} RETURNING *`,
@@ -226,8 +260,14 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       });
       return {
         id: newRow.id,
-          part_number: String(newRow.id),
+          // INV-1: return the real, persisted SKU (fallback to a stable derived one), not id::text.
+          part_number:
+            newRow.part_number && String(newRow.part_number).trim()
+              ? newRow.part_number
+              : `PART-${String(newRow.id).replace(/-/g, "").slice(0, 8).toUpperCase()}`,
           name: newRow.part_description,
+          category: newRow.category ?? null,
+          notes: newRow.notes ?? null,
           vendor_default: null,
           unit_cost: newRow.last_purchase_amount,
         qty_on_hand: newRow.on_hand_qty,
@@ -308,9 +348,14 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             await client.query(
               `
                 INSERT INTO maintenance.parts_inventory (
-                  operating_company_id, part_description, last_purchase_amount, on_hand_qty, location
+                  operating_company_id, part_description, last_purchase_amount, on_hand_qty, location, part_number, category
                 )
-                VALUES ($1,$2,$3,$4,$5)
+                VALUES (
+                  $1,$2,$3,$4,$5,
+                  -- INV-1: persist the CSV part_number as the real SKU (generate a stable one if blank).
+                  COALESCE(NULLIF(btrim($6), ''), 'PART-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))),
+                  $7
+                )
               `,
               [
                 companyId,
@@ -318,6 +363,8 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
                 row.unit_cost,
                 row.qty_on_hand,
                 row.location,
+                row.part_number,
+                row.category,
               ]
             );
             inserted += 1;

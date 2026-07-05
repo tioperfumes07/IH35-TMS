@@ -6,6 +6,7 @@ import { listFactorReserveBalances, postFactoringFeeExpenseEvent } from "./facto
 import { postFactoringAdvanceEvent, postFactoringReleaseEvent } from "./factoring-posting/poster.service.js";
 import { nextFactoringDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -687,6 +688,10 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/void", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // G9-C3: voiding a factoring advance is an EXECUTOR-only action (Owner|Administrator|Accountant).
+    // Route through the shared governance authz — OUTSIDE any feature flag — so anyone else must FILE a
+    // void/cancel request for approval. Non-executors get the canonical 403 here.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});

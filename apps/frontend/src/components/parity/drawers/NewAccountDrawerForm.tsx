@@ -336,7 +336,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
         <button
           type="submit"
           disabled={saving || ACCOUNT_CREATE_GATED}
-          className="rounded-sm bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 hover:bg-emerald-700"
+          className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 hover:bg-[#0f1729]"
           title={ACCOUNT_CREATE_GATED ? "Account create awaiting financial approval" : undefined}
         >
           {saving ? "Saving…" : ACCOUNT_CREATE_GATED ? "Awaiting approval" : "Save"}

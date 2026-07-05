@@ -203,7 +203,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
       </fieldset>
       <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
         <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
-        <button type="submit" disabled={saving} className="rounded-sm bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-emerald-700">
+        <button type="submit" disabled={saving} className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[#0f1729]">
           {saving ? "Saving…" : "Save"}
         </button>
       </div>

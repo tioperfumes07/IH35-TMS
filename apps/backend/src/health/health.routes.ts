@@ -229,6 +229,46 @@ export function backgroundJobRule(
       return { enabled: true, maxStaleMinutes: 1560 };
     case "accounting.recon_pm_categorization_diff":
       return { enabled: true, maxStaleMinutes: 1560 };
+    // ── G4-HEALTH — MONEY crons (freshness monitoring only; no money logic touched) ──────────────
+    // Each cron calls wrapBackgroundJobTick(<job_name>, …) → records a _system.background_jobs row per
+    // run. Without a rule here the staleness sweep silently skips it (see checkBackgroundJobStaleness),
+    // so a money cron that quietly stops running would NEVER surface on /healthz. Windows = the cron's
+    // schedule + margin. `enabled` mirrors each cron's own env gating so a deliberately-OFF cron does
+    // not false-alarm. Job-name strings must match the literal passed to wrapBackgroundJobTick at the
+    // cron's call site (verified 2026-07-05).
+    case "driver_finance.settlement_auto_pay_cron":
+      // Weekly Friday 06:00 CT (auto-pay.cron.ts). 8-day window = one run + margin.
+      return { enabled: process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON !== "false", maxStaleMinutes: 11520 };
+    case "banking.plaid_daily_sync_cron":
+      // Daily 02:00 CT (plaid-daily-sync.ts) — bank feed. 26h window.
+      return { enabled: process.env.ENABLE_PLAID_DAILY_SYNC_CRON !== "false", maxStaleMinutes: 1560 };
+    case "accounting.bank_recon_auto_match_cron":
+      // Nightly 02:15 CT (bank-recon-auto-match.cron.ts). Default-OFF flag. 26h window.
+      return { enabled: envEnabled("BANK_RECON_AUTO_MATCH_CRON_ENABLED"), maxStaleMinutes: 1560 };
+    case "accounting.collections_sync_cron":
+      // Daily 04:00 CT (collections-sync.cron.ts) — A/R collections. Default-ON. 26h window.
+      return { enabled: process.env.ACCOUNTING_COLLECTIONS_SYNC_ENABLED !== "false", maxStaleMinutes: 1560 };
+    case "fuel.loves_card_import_cron":
+      // Daily 06:00 CT standalone Render cron (run-loves-card-import.ts) — fuel-card expense import. 26h window.
+      return { enabled: true, maxStaleMinutes: 1560 };
+    case "insurance.payment_reminder_cron":
+      // Daily 08:00 CT (payment-reminder.service.ts) — insurance payment schedule. 26h window.
+      return { enabled: true, maxStaleMinutes: 1560 };
+    case "integrations.qbo_inbound_sync":
+      // 15s interval, always armed (index.ts) — pulls QBO changes. 30m window (thousands of ticks/window).
+      return { enabled: true, maxStaleMinutes: 30 };
+    case "integrations.qbo_cdc_poll":
+      // 5m interval, always armed (index.ts) — QBO change-data-capture poll. 30m window.
+      return { enabled: true, maxStaleMinutes: 30 };
+    case "sync.qbo_vendors_push":
+      // 60s interval (qbo-vendors-push.ts). Default-ON scheduler. 15m window.
+      return { enabled: process.env.QBO_VENDORS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
+    case "sync.qbo_customers_push":
+      // 60s interval (qbo-customers-push.ts). Default-ON scheduler. 15m window.
+      return { enabled: process.env.QBO_CUSTOMERS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
+    case "sync.qbo_accounts_push":
+      // 60s interval (qbo-accounts-push.ts). Default-ON scheduler. 15m window.
+      return { enabled: process.env.QBO_ACCOUNTS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
     default:
       return null;
   }

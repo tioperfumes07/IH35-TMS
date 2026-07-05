@@ -45,6 +45,13 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   "INVOICE_AR_GL_POSTING_ENABLED",
   "LEASE_GL_POSTING_ENABLED",
   "SETTLEMENT_GL_POSTING_ENABLED",
+  // H3-1: BLOCK-6 driver loan/advance posting from bank categorize. It posts a BALANCED JE (DEBIT the
+  // driver-advance receivable, CREDIT the source bank) via the existing driver_advance source type, so it
+  // is a real money-posting flag — but its key does NOT match the `*_GL_POSTING*` / `*_POSTING_ENABLED`
+  // pattern, so without enrolling it here it would fall through to the global rollout/default path and a
+  // single global flip could turn posting on for EVERY entity (incl. USMCA / TRK), bypassing the
+  // per-entity kill-switch. Enrolled so enable is ONLY via an explicit per-entity/user override. Default OFF.
+  "BANK_DRIVER_ADVANCE_ENABLED",
   // IMPORT-P0: gates whether TMS pushes journal entries INTO QuickBooks. QBO is the system of record
   // through 12/31/2025 (double books + reconciliation, no sync-back), so this must be per-entity-only —
   // a global flip would start echoing every entity's JEs into QBO. Enable is an explicit per-entity
@@ -93,6 +100,12 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // (TRANSP first) — a global default/rollout enable would start applying deductions for EVERY entity
   // (incl. USMCA / TRK). Per-entity override only; default OFF. Owner-controlled (Jorge flips).
   "SETTLEMENT_DEDUCTION_APPLY_ENABLED",
+  // FINHUB-1: the read-only Finance Hub landing dashboard. It is a per-entity surface
+  // (operating_company_id required; no cross-entity totals) and its backend gate now resolves this
+  // same DB flag as the frontend (kills the prior process.env vs DB split-brain). Enabling it in prod
+  // is a per-entity owner (Jorge) sign-off, so it must be per-entity-only — a global default/rollout
+  // enable would light the hub up for EVERY entity (incl. USMCA / TRK) at once. Default OFF.
+  "FINANCE_HUB_UI_ENABLED",
   // FLAG-SPLIT-BRAIN sweep: read-only finance surfaces whose backend gate now resolves the SAME DB
   // flag the frontend reads (via isEnabled), killing the prior process.env vs DB split-brain. Each is
   // per-entity (operating_company_id required; no cross-entity totals) and enabling it in prod is a

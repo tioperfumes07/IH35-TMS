@@ -112,7 +112,7 @@ export function CarrierBootstrapPage() {
       </section>
 
       {lastResult ? (
-        <section className="rounded-sm border border-green-200 bg-green-50 p-4 text-sm">
+        <section className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm">
           <p className="font-medium text-green-900">Bootstrap complete</p>
           <p className="text-green-800">CoA rows cloned: {lastResult.coa_cloned}</p>
           <p className="text-green-800">Storage prefix: {lastResult.storage_prefix}</p>

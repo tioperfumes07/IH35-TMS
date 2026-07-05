@@ -523,7 +523,7 @@ export function CustomersPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <ActionButton onClick={() => navigate(`/customers/${selectedCustomer.id}`)}>Edit</ActionButton>
-                      <ActionButton className="rounded-sm border border-emerald-700 bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-600" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
+                      <ActionButton className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-white hover:bg-[#0f1729]" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
                         New transaction
                       </ActionButton>
                     </div>
