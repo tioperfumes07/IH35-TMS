@@ -11,7 +11,12 @@ import { findReturningDriverMatches } from "./driver-returning-detection.routes.
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
 import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
 import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
-import { provisionDriverAdvanceSubAccount, provisionDriverEscrowSubAccount } from "../accounting/driver-subaccount-provision.service.js";
+import {
+  provisionDriverAdvanceSubAccount,
+  provisionDriverEscrowSubAccount,
+  upsertDriverAdvanceAccountLink,
+  upsertDriverEscrowAccountLink,
+} from "../accounting/driver-subaccount-provision.service.js";
 import { registerDriverPdfExportRoutes } from "./driver-pdf-export.routes.js";
 import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
 import { registerDriverW8benRoutes } from "./driver-w8ben.routes.js";
@@ -683,8 +688,29 @@ export async function createDriverCanonical(
               driverName: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(),
               actorUserId: authUser.uuid,
             };
-            await provisionDriverAdvanceSubAccount(client, provisionArgs);
-            await provisionDriverEscrowSubAccount(client, provisionArgs);
+            // Provision BOTH sub-accounts AND STORE the returned account ids against the driver so the
+            // driver <-> account link is reachable both directions (no orphan). The provisioners return
+            // accountId for BOTH created and already_exists — so a re-run re-wires an existing account too.
+            const advanceResult = await provisionDriverAdvanceSubAccount(client, provisionArgs);
+            const escrowResult = await provisionDriverEscrowSubAccount(client, {
+              ...provisionArgs,
+              hireDate: (row.hire_date as string | Date | null) ?? b.hire_date ?? null,
+            });
+            if (advanceResult.accountId) {
+              await upsertDriverAdvanceAccountLink(client, {
+                operatingCompanyId: resolvedOperatingCompanyId,
+                driverId: String(row.id),
+                coaAccountId: advanceResult.accountId,
+                actorUserId: authUser.uuid,
+              });
+            }
+            if (escrowResult.accountId) {
+              await upsertDriverEscrowAccountLink(client, {
+                operatingCompanyId: resolvedOperatingCompanyId,
+                driverId: String(row.id),
+                coaAccountId: escrowResult.accountId,
+              });
+            }
           }
         } catch (err) {
           await appendCrudAudit(

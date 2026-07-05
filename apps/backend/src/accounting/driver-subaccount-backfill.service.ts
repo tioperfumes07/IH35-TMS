@@ -5,12 +5,14 @@
 
 import {
   planDriverSubAccount,
+  planDriverEscrowSubAccount,
   driverAdvanceSubAccountName,
   driverEscrowSubAccountName,
   provisionDriverAdvanceSubAccount,
   provisionDriverEscrowSubAccount,
+  upsertDriverAdvanceAccountLink,
+  upsertDriverEscrowAccountLink,
   DRIVER_ADVANCE_PARENT_NAME,
-  DRIVER_ESCROW_PARENT_NAME,
   type SubAccountPlan,
 } from "./driver-subaccount-provision.service.js";
 
@@ -18,7 +20,7 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
-export type BackfillDriver = { driverId: string; driverName: string };
+export type BackfillDriver = { driverId: string; driverName: string; hireDate?: string | Date | null };
 export type SubAccountDecision = "CREATE" | "SKIP-exists" | "SKIP-no-parent";
 export type BackfillRow = {
   driver_id: string;
@@ -44,9 +46,9 @@ function decisionOf(action: SubAccountPlan["action"]): SubAccountDecision {
 }
 
 async function loadDriverRoster(client: DbClient, operatingCompanyId: string): Promise<BackfillDriver[]> {
-  const r = await client.query<{ id: string; first_name: string | null; last_name: string | null }>(
+  const r = await client.query<{ id: string; first_name: string | null; last_name: string | null; hire_date: string | null }>(
     `
-      SELECT id::text, first_name, last_name
+      SELECT id::text, first_name, last_name, hire_date
       FROM mdata.drivers
       WHERE operating_company_id = $1::uuid
         AND deactivated_at IS NULL
@@ -54,7 +56,11 @@ async function loadDriverRoster(client: DbClient, operatingCompanyId: string): P
     `,
     [operatingCompanyId]
   );
-  return r.rows.map((d) => ({ driverId: d.id, driverName: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() }));
+  return r.rows.map((d) => ({
+    driverId: d.id,
+    driverName: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim(),
+    hireDate: d.hire_date,
+  }));
 }
 
 /**
@@ -85,10 +91,8 @@ export async function runDriverSubAccountBackfill(
       subAccountName: driverAdvanceSubAccountName(d.driverName),
       operatingCompanyId: input.operatingCompanyId,
     });
-    const escrowPlan = await planDriverSubAccount(client, {
-      parentName: DRIVER_ESCROW_PARENT_NAME,
-      parentType: "Liability",
-      subAccountName: driverEscrowSubAccountName(d.driverName),
+    const escrowPlan = await planDriverEscrowSubAccount(client, {
+      subAccountName: driverEscrowSubAccountName(d.driverName, d.hireDate ?? null),
       operatingCompanyId: input.operatingCompanyId,
     });
 
@@ -98,11 +102,29 @@ export async function runDriverSubAccountBackfill(
     if (escrowPlan.action === "skip_exists") totals.already_existing += 1;
     if (assetPlan.action === "skip_no_parent" || escrowPlan.action === "skip_no_parent") totals.no_parent += 1;
 
-    // GATED WRITE — only when explicitly apply=true (defaults OFF). Reuses the exact provisioners.
+    // GATED WRITE — only when explicitly apply=true (defaults OFF). Reuses the exact provisioners, then
+    // STORES/WIRES the driver <-> account links (no orphans). Provisioners run unconditionally on apply
+    // (they are idempotent — skip when the account exists but still return its accountId) so an EXISTING
+    // driver whose account exists but whose link was never stored gets its link backfilled too.
     if (apply && input.actorUserId) {
       const provArgs = { operatingCompanyId: input.operatingCompanyId, driverId: d.driverId, driverName: d.driverName, actorUserId: input.actorUserId };
-      if (assetPlan.action === "create") await provisionDriverAdvanceSubAccount(client, provArgs);
-      if (escrowPlan.action === "create") await provisionDriverEscrowSubAccount(client, provArgs);
+      const advRes = await provisionDriverAdvanceSubAccount(client, provArgs);
+      const escRes = await provisionDriverEscrowSubAccount(client, { ...provArgs, hireDate: d.hireDate ?? null });
+      if (advRes.accountId) {
+        await upsertDriverAdvanceAccountLink(client, {
+          operatingCompanyId: input.operatingCompanyId,
+          driverId: d.driverId,
+          coaAccountId: advRes.accountId,
+          actorUserId: input.actorUserId,
+        });
+      }
+      if (escRes.accountId) {
+        await upsertDriverEscrowAccountLink(client, {
+          operatingCompanyId: input.operatingCompanyId,
+          driverId: d.driverId,
+          coaAccountId: escRes.accountId,
+        });
+      }
     }
 
     rows.push({
