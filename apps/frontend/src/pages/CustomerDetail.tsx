@@ -28,6 +28,7 @@ import {
   listCustomerLanes,
   listCustomerQualityEventReasons,
   listCustomerQualityEvents,
+  listCustomers,
   listVendors,
   listCustomerContacts,
   reactivateCustomerContact,
@@ -399,6 +400,21 @@ export function CustomerDetailPage() {
     queryFn: () => getCustomerRelationshipScore(id, operatingCompanyId!),
     enabled: Boolean(id && operatingCompanyId),
   });
+  // D1-4: eligible parents for the profile's parent picker (edit mode) — active, TOP-LEVEL customers in
+  // this company, excluding this customer itself. Loaded only while editing.
+  const parentCandidatesQuery = useQuery({
+    queryKey: ["customer-parent-options", operatingCompanyId],
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId!, limit: 5000 }).then((r) => r.customers),
+    enabled: Boolean(operatingCompanyId && editMode),
+    staleTime: 60_000,
+  });
+  const parentCustomerOptions = useMemo(
+    () =>
+      (parentCandidatesQuery.data ?? [])
+        .filter((c) => !c.parent_customer_id && c.id !== id && c.status !== "inactive" && !c.deactivated_at)
+        .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name })),
+    [parentCandidatesQuery.data, id]
+  );
   const lanesQuery = useQuery({
     queryKey: ["customer-lanes", id, operatingCompanyId, includeInactiveLanes],
     queryFn: () => listCustomerLanes(id, operatingCompanyId!, includeInactiveLanes).then((result) => result.lanes),
@@ -486,6 +502,7 @@ export function CustomerDetailPage() {
       tax_id: customer.tax_id ?? "",
       status: customer.status,
       customer_type: customer.customer_type ?? "",
+      parent_customer_id: customer.parent_customer_id ?? "",
       website: customer.website ?? "",
       office_phone: customer.office_phone ?? "",
       fax_phone: customer.fax_phone ?? "",
@@ -535,6 +552,7 @@ export function CustomerDetailPage() {
         mc_number: hydratedForm.mc_number || null,
         tax_id: hydratedForm.tax_id || null,
         customer_type: hydratedForm.customer_type ? (hydratedForm.customer_type as "broker" | "direct_shipper") : null,
+        parent_customer_id: hydratedForm.parent_customer_id || null, // D1-4: persist / clear parent hard link
         status: hydratedForm.status as Customer["status"],
         status_change_reason: statusChangeReason,
         website: hydratedForm.website || null,
@@ -1032,6 +1050,54 @@ export function CustomerDetailPage() {
                 disabled={!editMode || usStatesQuery.isError}
                 placeholder="Select state"
               />
+            </div>
+          </DataPanel>
+
+          {/* D1-4: Sub-customer / parent hard link + reverse drill-through */}
+          <DataPanel title="Relationships">
+            <div className="mb-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Parent customer</label>
+              {editMode ? (
+                <Combobox
+                  options={parentCustomerOptions}
+                  value={hydratedForm.parent_customer_id || null}
+                  onChange={(nextValue) => setForm((current) => ({ ...current, parent_customer_id: nextValue ?? "" }))}
+                  loading={parentCandidatesQuery.isLoading}
+                  placeholder="Top-level customer (no parent)"
+                />
+              ) : customer.parent_customer_id ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/customers/${customer.parent_customer_id}`)}
+                  className="self-start text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
+                >
+                  {customer.parent_customer_name ?? "View parent"}
+                </button>
+              ) : (
+                <span className="text-sm text-gray-500">Top-level customer (no parent)</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">
+                Sub-customers{customer.sub_customers && customer.sub_customers.length > 0 ? ` (${customer.sub_customers.length})` : ""}
+              </label>
+              {customer.sub_customers && customer.sub_customers.length > 0 ? (
+                <ul className="flex flex-col gap-1">
+                  {customer.sub_customers.map((sub) => (
+                    <li key={sub.id}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/customers/${sub.id}`)}
+                        className="text-left text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
+                      >
+                        {sub.customer_code ? `${sub.name} (${sub.customer_code})` : sub.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-sm text-gray-500">No sub-customers linked.</span>
+              )}
             </div>
           </DataPanel>
 
