@@ -6,17 +6,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useForm, type UseFormGetValues, type UseFormSetValue, type UseFormWatch } from "react-hook-form";
-import { createDispatchLoad, reserveDispatchLoadId } from "../../api/dispatch";
-import { ApiError } from "../../api/client";
-import { useAuth } from "../../auth/useAuth";
-import { Button } from "../Button";
-import { Modal } from "../Modal";
-import { useToast } from "../Toast";
-import { UploadZone } from "../UploadZone";
-import { BookLoadCustomerSection, type BookLoadFormValues } from "../../pages/dispatch/components/BookLoadCustomerSection";
-import { BookLoadEquipmentSection } from "../../pages/dispatch/components/BookLoadEquipmentSection";
-import { BookLoadStopsSection } from "../../pages/dispatch/components/BookLoadStopsSection";
-import { BookLoadValidationSection } from "../../pages/dispatch/components/BookLoadValidationSection";
+import { createDispatchLoad, reserveDispatchLoadId } from "../../../api/dispatch";
+import { ApiError } from "../../../api/client";
+import { useAuth } from "../../../auth/useAuth";
+import { Button } from "../../../components/Button";
+import { Modal } from "../../../components/Modal";
+import { useToast } from "../../../components/Toast";
+import { UploadZone } from "../../../components/UploadZone";
+import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
+import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
+import { BookLoadStopsSection } from "./BookLoadStopsSection";
+import { BookLoadValidationSection } from "./BookLoadValidationSection";
 import { BookLoadV3OptionsSection } from "./book-load-v3/BookLoadV3OptionsSection";
 
 type FormValues = BookLoadFormValues & {
