@@ -20,6 +20,7 @@ import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 import { postSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
+import { upsertDriverEscrowAccountLink, upsertDriverAdvanceAccountLink } from "../../driver-subaccount-provision.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -180,6 +181,20 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       await mkAcct(acct.escrowParent, "Driver Escrow", "Liability", null, acct.escrowGrandparent);
       await mkAcct(acct.advanceSub, "Driver Cash Advance- Mecor Perez", "Asset", null, acct.advanceParent);
       await mkAcct(acct.escrowSub, "Mecor Perez — Driver Escrow (hired unknown)", "Liability", null, acct.escrowParent);
+
+      // Wire the driver -> per-driver sub-account BRIDGES exactly as the #2136 foundation does on hire
+      // (upsertDriverEscrowAccountLink / upsertDriverAdvanceAccountLink). This is what makes the fixture
+      // TRUE to production: resolveDriverOwnAccount(kind="escrow") resolves via accounting.escrow_accounts
+      // FIRST (holder_type='driver', holder_id=<driver>, coa_account_id=<escrow leaf>) — a deterministic,
+      // driver-keyed lookup — and only falls back to the canonical NAME path when no bridge row exists.
+      // The migrated TRANSP chart already carries a top-level "Damage Claim Escrow" (QBO-1150040187) with
+      // no "Driver Escrow" sub-parent; since resolveCanonicalParentAccount picks the OLDEST match, that
+      // seeded grandparent shadowed the fixture's grandparent and the name path returned null ("no
+      // provisioned Driver-Escrow sub-account"). The escrow bridge below is the production resolution path
+      // and sidesteps that shadowing entirely. The symmetric advance link is stored for fidelity (both
+      // links are provisioned on hire; the ASSET sub-account itself resolves by its stable name).
+      await upsertDriverEscrowAccountLink(db, { operatingCompanyId: companyId, driverId, coaAccountId: acct.escrowSub });
+      await upsertDriverAdvanceAccountLink(db, { operatingCompanyId: companyId, driverId, coaAccountId: acct.advanceSub, actorUserId: userId });
 
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
