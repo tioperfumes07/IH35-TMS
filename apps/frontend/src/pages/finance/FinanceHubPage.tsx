@@ -10,9 +10,9 @@ import { formatUsdCents } from "../../lib/money";
 // AF-6 — Finance Hub landing dashboard.
 // READ-ONLY: a single GET aggregates headline KPIs from the existing read-only finance/accounting
 // surfaces; every card drills through to the real screen that owns that data. Nothing here posts,
-// writes, or moves money. Gated behind flag FINANCE_HUB_UI_ENABLED — default_enabled=true in
-// lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no
-// money posting.
+// writes, or moves money. Gated behind flag FINANCE_HUB_UI_ENABLED in lib.feature_flags — default OFF,
+// per-entity-only (owner enables one operating company at a time via an override; a global default can
+// never turn it on). The SAME DB flag gates the backend (via isEnabled), so UI and API stay in lockstep.
 
 const fmtCents = (c: number) => formatUsdCents(c);
 

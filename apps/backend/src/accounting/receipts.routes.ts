@@ -24,6 +24,28 @@ const listQuerySchema = companyQuerySchema.extend({
 
 const detailParamsSchema = z.object({ id: z.string().uuid() });
 
+/** Row shape returned by the receipts LIST query (documents.attachments + expense/bill joins). */
+interface ReceiptListRow {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  filename: string;
+  content_type: string;
+  size_bytes: string;
+  uploaded_at: string;
+  notes: string | null;
+  expense_number: string | null;
+  expense_date: string | null;
+  expense_amount_cents: string | null;
+  expense_memo: string | null;
+  expense_status: string | null;
+  bill_number: string | null;
+  bill_date: string | null;
+  bill_amount_cents: string | null;
+  bill_vendor_name: string | null;
+  bill_status: string | null;
+}
+
 async function registerReceiptsRoutes(app: FastifyInstance) {
   // LIST
   app.get("/api/v1/accounting/receipts", async (req, reply) => {
@@ -102,7 +124,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
         total,
         limit,
         offset,
-        items: listRes.rows.map((r: any) => ({
+        items: listRes.rows.map((r: ReceiptListRow) => ({
           id: r.id as string,
           entity_type: r.entity_type as string,
           entity_id: r.entity_id as string,

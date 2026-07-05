@@ -45,6 +45,29 @@ type Queryable = {
 
 const READ_ONLY = true as const;
 
+// ELD-1: the ELD edit-history feature mirrors Samsara HOS log edits from `samsara.hos_log_edits`.
+// That table's real source + migration are a Jorge-gated follow-up, so on environments where it is
+// not yet provisioned the two SELECTs below would raise 42P01 (`relation "samsara.hos_log_edits"
+// does not exist`) and 500 EVERY request — the whole ELD nav module hard-crashes. Guard the reads
+// with `to_regclass` so, until the table exists, the endpoint returns an honest EMPTY history
+// (source-not-connected) instead of crashing. The feature is preserved, not removed: the instant the
+// gated table lands, these queries run unchanged and real data flows through. Fail-honest, not silent
+// — the empty result is a truthful "no ELD edit source connected yet", not a masked error.
+async function eldEditSourceExists(client: Queryable): Promise<boolean> {
+  const res = await client.query<{ reg: string | null }>(
+    `SELECT to_regclass('samsara.hos_log_edits')::text AS reg`
+  );
+  return Boolean(res.rows[0]?.reg);
+}
+
+function emptyHistory(
+  driverUuid: string,
+  from: string,
+  to: string
+): EldEditHistoryResult {
+  return { driver_uuid: driverUuid, driver_name: null, from, to, edits: [], read_only: READ_ONLY };
+}
+
 function mapRow(row: EldLogEditRow): EldEditHistoryEntry {
   return {
     id: row.id,
@@ -77,6 +100,11 @@ export async function getEditHistory(
   from: string,
   to: string
 ): Promise<EldEditHistoryResult> {
+  // ELD-1: return an honest empty history when the Samsara mirror table is not yet provisioned,
+  // rather than 500-ing the whole ELD module (see eldEditSourceExists).
+  if (!(await eldEditSourceExists(client))) {
+    return emptyHistory(driverUuid, from, to);
+  }
   const res = await client.query<EldLogEditRow>(
     `
       SELECT
@@ -123,6 +151,11 @@ export async function getRecentEditHistory(
   const fromDate = new Date();
   fromDate.setUTCDate(fromDate.getUTCDate() - 30);
   const from = fromDate.toISOString().slice(0, 10);
+
+  // ELD-1: honest empty history when the Samsara mirror table is not yet provisioned (no 500).
+  if (!(await eldEditSourceExists(client))) {
+    return emptyHistory(driverUuid, from, to);
+  }
 
   const res = await client.query<EldLogEditRow>(
     `

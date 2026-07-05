@@ -11,6 +11,20 @@ type Props = {
   operatingCompanyId: string;
 };
 
+// SAFE-1: render the persisted fault / DOT-preventability determinations. Null = not yet assessed.
+function formatAtFault(value: unknown): string {
+  if (value === "yes") return "Yes";
+  if (value === "no") return "No";
+  if (value === "disputed") return "Disputed";
+  return "—";
+}
+
+function formatPreventable(value: unknown): string {
+  if (value === true) return "Preventable";
+  if (value === false) return "Not Preventable";
+  return "—";
+}
+
 function createDraftAccident(): Record<string, unknown> {
   return {
     id: "__create__",
@@ -76,6 +90,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
               <th className="px-2 py-1 text-left">Driver</th>
               <th className="px-2 py-1 text-left">Unit</th>
               <th className="px-2 py-1 text-left">Location</th>
+              <th className="px-2 py-1 text-left">At Fault</th>
+              <th className="px-2 py-1 text-left">Preventable</th>
               <th className="px-2 py-1 text-left">Status</th>
               <th className="px-2 py-1 text-left">Action</th>
             </tr>
@@ -87,6 +103,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.unit_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.location ?? row.description ?? "—")}</td>
+                <td className="px-2 py-1 capitalize">{formatAtFault(row.at_fault)}</td>
+                <td className="px-2 py-1">{formatPreventable(row.preventable)}</td>
                 <td className="px-2 py-1">{String(row.status ?? "open")}</td>
                 <td className="px-2 py-1">
                   <button type="button" className="text-slate-700 underline" onClick={() => openAccident(row)}>
@@ -97,7 +115,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
             ))}
             {listState.isEmpty ? (
               <tr>
-                <td colSpan={6} className="px-2 py-3 text-center text-slate-500">
+                <td colSpan={8} className="px-2 py-3 text-center text-slate-500">
                   No accident reports found.
                 </td>
               </tr>

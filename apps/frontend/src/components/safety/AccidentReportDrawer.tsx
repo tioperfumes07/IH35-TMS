@@ -8,6 +8,7 @@ import {
   setSafetyAccidentStatus,
   spawnSafetyLiability,
   spawnSafetyWo,
+  type AccidentFault,
 } from "../../api/safety";
 import { listDrivers, listUnits, listVendors } from "../../api/mdata";
 import { listDispatchLoads } from "../../api/dispatch";
@@ -53,6 +54,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const [loadId, setLoadId] = useState<string>("");
   const [incidentDate, setIncidentDate] = useState<string>("");
   const [memo, setMemo] = useState<string>("");
+  // SAFE-1: real fault + DOT preventability state (was a dead hardcoded "no"). at_fault holds one of
+  // yes/no/disputed (or "" = not yet assessed → persists as null). preventable is a tri-state select
+  // string ("" = Undetermined→null, "true" = Preventable, "false" = Not Preventable) converted to a
+  // boolean|null on submit (DOT/FMCSA preventability is distinct from fault).
+  const [atFault, setAtFault] = useState<string>("");
+  const [preventable, setPreventable] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
   const accidentId = accident ? String(accident.id ?? "") : "";
@@ -64,6 +71,14 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     setLoadId(accident ? String(accident.load_id ?? "") : "");
     setIncidentDate(accident ? String(accident.accident_at ?? "").slice(0, 10) : "");
     setMemo(accident ? String(accident.notes ?? accident.description ?? "") : "");
+    // SAFE-1: hydrate from the persisted row so editing an existing report shows its real fault +
+    // preventability (never a false default "no"). Unset stays "" = not assessed / undetermined.
+    setAtFault(accident ? String(accident.at_fault ?? "") : "");
+    setPreventable(
+      accident && accident.preventable !== null && accident.preventable !== undefined
+        ? String(Boolean(accident.preventable))
+        : ""
+    );
   }, [accidentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scopeReady = open && Boolean(operatingCompanyId);
@@ -151,6 +166,10 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     load_id: loadId || null,
     accident_at: incidentDate || null,
     description: memo || null,
+    // SAFE-1: send the real determinations. "" = not assessed → null; preventable maps the tri-state
+    // string to boolean|null (Preventable / Not Preventable / Undetermined).
+    at_fault: (atFault || null) as AccidentFault | null,
+    preventable: preventable === "" ? null : preventable === "true",
   };
 
   const saveAccident = () => {
@@ -267,19 +286,36 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             </Field>
 
             <Field label="At Fault">
-              <Combobox
-                options={[
-                  { value: "no", label: "No" },
-                  { value: "yes", label: "Yes" },
-                  { value: "disputed", label: "Disputed" },
-                ]}
-                value={"no"}
-                onChange={() => {}}
-              />
+              <div data-testid="accident-at-fault">
+                <Combobox
+                  options={[
+                    { value: "no", label: "No" },
+                    { value: "yes", label: "Yes" },
+                    { value: "disputed", label: "Disputed" },
+                  ]}
+                  value={atFault || null}
+                  placeholder="Not assessed"
+                  onChange={(next) => setAtFault(next ?? "")}
+                />
+              </div>
+            </Field>
+            <Field label="Preventable (DOT)">
+              <div data-testid="accident-preventable">
+                <Combobox
+                  options={[
+                    { value: "true", label: "Preventable" },
+                    { value: "false", label: "Not Preventable" },
+                  ]}
+                  value={preventable || null}
+                  placeholder="Undetermined"
+                  onChange={(next) => setPreventable(next ?? "")}
+                />
+              </div>
             </Field>
             <Field label="Class">
               <input className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2" readOnly value="Auto class" />
             </Field>
+            <div />
 
             <Field label="Police Report Number">
               <input className="h-8 w-full rounded-sm border border-gray-300 px-2" />

@@ -166,7 +166,33 @@ function extraToRow(e: ExtraItem): Row {
   };
 }
 
-type SortKey = "date" | "id" | "wave" | "status" | "tier";
+// Every data column in the shared block/task table is sortable. "#" is the row ordinal (not a data
+// field) so it stays non-sortable; everything else clicks to sort.
+type SortKey = "date" | "id" | "wave" | "description" | "tier" | "fin" | "status" | "pr" | "review";
+
+// Type-aware, stable row comparator. Dates compare chronologically, PR # numerically, Fin as a
+// boolean, id/wave/tier/status use a numeric-aware locale compare so "P3-T11.10" sorts after
+// "P3-T11.2". Returns raw asc ordering; the caller applies direction + a stable index tiebreak.
+export function compareRows(a: Row, b: Row, key: SortKey): number {
+  switch (key) {
+    case "date": {
+      const toTs = (raw: string | null): number => {
+        if (!raw) return -Infinity;
+        const t = Date.parse(raw.length <= 10 ? `${raw}T12:00:00-05:00` : raw);
+        return Number.isNaN(t) ? -Infinity : t;
+      };
+      return toTs(a.date) - toTs(b.date);
+    }
+    case "pr":
+      return (a.pr ?? -Infinity) - (b.pr ?? -Infinity);
+    case "fin":
+      return (a.fin ? 1 : 0) - (b.fin ? 1 : 0);
+    case "review":
+      return reviewTag(a.review).localeCompare(reviewTag(b.review));
+    default:
+      return String(a[key] ?? "").localeCompare(String(b[key] ?? ""), undefined, { numeric: true });
+  }
+}
 
 export function ProgramBoardPage() {
   const { pushToast } = useToast();
@@ -274,12 +300,15 @@ export function ProgramBoardPage() {
       );
     }
     const dir = sort.dir === "asc" ? 1 : -1;
-    return [...rows].sort((a, b) => {
-      const av = String(a[sort.key] ?? "");
-      const bv = String(b[sort.key] ?? "");
-      return av.localeCompare(bv) * dir;
-    });
-  }, [tab, allRows, ownerRows, dispatchRows, filter, sort]);
+    // Decorate-sort-undecorate so equal rows keep their original order (stable) regardless of engine.
+    return rows
+      .map((r, i) => [r, i] as const)
+      .sort((x, y) => {
+        const c = compareRows(x[0], y[0], sort.key);
+        return c !== 0 ? c * dir : x[1] - y[1];
+      })
+      .map(([r]) => r);
+  }, [tab, allRows, ownerRows, dispatchRows, auditRows, filter, sort]);
 
   function toggleSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
@@ -448,12 +477,12 @@ export function ProgramBoardPage() {
                   <Th label="Date" onClick={() => toggleSort("date")} active={sort.key === "date"} dir={sort.dir} />
                   <Th label="ID" onClick={() => toggleSort("id")} active={sort.key === "id"} dir={sort.dir} />
                   <Th label="Wave / Source" onClick={() => toggleSort("wave")} active={sort.key === "wave"} dir={sort.dir} />
-                  <th className="px-2 py-1.5 font-semibold">Description</th>
+                  <Th label="Description" onClick={() => toggleSort("description")} active={sort.key === "description"} dir={sort.dir} />
                   <Th label="Tier" onClick={() => toggleSort("tier")} active={sort.key === "tier"} dir={sort.dir} />
-                  <th className="px-2 py-1.5 font-semibold">Fin</th>
+                  <Th label="Fin" onClick={() => toggleSort("fin")} active={sort.key === "fin"} dir={sort.dir} />
                   <Th label="Status" onClick={() => toggleSort("status")} active={sort.key === "status"} dir={sort.dir} />
-                  <th className="px-2 py-1.5 font-semibold">PR</th>
-                  {showReview ? <th className="px-2 py-1.5 font-semibold">Review</th> : null}
+                  <Th label="PR" onClick={() => toggleSort("pr")} active={sort.key === "pr"} dir={sort.dir} />
+                  {showReview ? <Th label="Review" onClick={() => toggleSort("review")} active={sort.key === "review"} dir={sort.dir} /> : null}
                 </tr>
               </thead>
               <tbody>

@@ -7,10 +7,13 @@
 // It NEVER posts, writes, or moves money — every read is a SELECT (see finance-hub.service.ts and
 // finance-hub.readonly.test.ts which statically enforce it).
 //
-// GATING: behind the OFF-by-default env flag FINANCE_HUB_UI_ENABLED. When the flag is not exactly
-// "true" the endpoint is UNREACHABLE (404) and the server behaves as if the feature does not exist.
-// The frontend gates the same surface via the lib.feature_flags flag of the same name through
-// useFeatureFlag. Flipping this ON in prod is a separate Jorge sign-off; this ships OFF.
+// GATING (FINHUB-1): behind the OFF-by-default DB feature flag FINANCE_HUB_UI_ENABLED in
+// `lib.feature_flags`, resolved per-entity via the canonical `isEnabled(client, flag, {opco,user})`.
+// This is the SAME flag + SAME resolver the frontend reads through `/api/feature-flags/check`
+// (useFeatureFlag), so the two sides can never disagree (kills the prior process.env vs DB split-brain).
+// When the flag resolves OFF the endpoint is UNREACHABLE (404) and the server behaves as if the feature
+// does not exist. The flag is per-entity-only (see PER_ENTITY_ONLY_FLAG_KEYS): a global default/rollout
+// can never turn it on — enable is an explicit per-entity override, an owner (Jorge) sign-off. Ships OFF.
 //
 // Per-entity: operating_company_id is required, membership is asserted, and the row-level company
 // scope is set before any read. No cross-entity bleed.
@@ -20,14 +23,20 @@ import fp from "fastify-plugin";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { getFinanceHubOverview } from "./finance-hub.service.js";
+import { withCurrentUser } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 export const FINANCE_HUB_UI_FLAG = "FINANCE_HUB_UI_ENABLED";
 
-// Backend gate (process.env per the read-only Finance-Hub contract). Split across two lines so the
-// hold-merge-gate FLAG_FLIP regex does not trip on a single-line env→boolean expression.
-export function isFinanceHubUiEnabled(): boolean {
-  const flagRaw = process.env.FINANCE_HUB_UI_ENABLED ?? "false";
-  return flagRaw === "true";
+// Backend gate: resolve the SAME DB flag the frontend uses, scoped to this operating company + user.
+// No process.env read — the flag lives in lib.feature_flags and is owner-flipped per entity.
+async function isFinanceHubUiEnabled(userUuid: string, operatingCompanyId: string): Promise<boolean> {
+  return withCurrentUser(userUuid, (client) =>
+    isEnabled(client, FINANCE_HUB_UI_FLAG, {
+      operating_company_id: operatingCompanyId,
+      user_uuid: userUuid,
+    })
+  );
 }
 
 // Office roles only — same set as the other read-only finance surfaces (FIN-20 aging).
@@ -37,15 +46,20 @@ function canAccessFinanceHub(role: string): boolean {
 
 export async function registerFinanceHubRoutes(app: FastifyInstance) {
   app.get("/api/v1/finance/hub/overview", async (req, reply) => {
-    // OFF flag → unreachable, unchanged.
-    if (!isFinanceHubUiEnabled()) return reply.code(404).send({ error: "not_found" });
-
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!canAccessFinanceHub(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
+    // Parse first: the per-entity flag resolution needs operating_company_id.
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+
+    // OFF flag → unreachable (404), server behaves as if the feature does not exist. Same DB flag
+    // + resolver as the frontend's /api/feature-flags/check, so backend and UI stay in lockstep.
+    const enabled = await isFinanceHubUiEnabled(user.uuid, query.data.operating_company_id);
+    if (!enabled) return reply.code(404).send({ error: "not_found" });
+
+    if (!canAccessFinanceHub(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const overview = await getFinanceHubOverview({

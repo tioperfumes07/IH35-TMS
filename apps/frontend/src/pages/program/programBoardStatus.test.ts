@@ -1,5 +1,54 @@
 import { describe, expect, it } from "vitest";
-import { isOpenStatus, reviewTag, summarizePending } from "./ProgramBoardPage";
+import { compareRows, isOpenStatus, reviewTag, summarizePending } from "./ProgramBoardPage";
+
+// Minimal Row builder for compareRows tests — overrides only the fields under test.
+function mkRow(over: Partial<Parameters<typeof compareRows>[0]>): Parameters<typeof compareRows>[0] {
+  return {
+    key: over.id ? `block:${over.id}` : "block:x",
+    id: "X",
+    date: null,
+    wave: "",
+    description: "",
+    tier: "",
+    fin: false,
+    status: "PENDING",
+    pr: null,
+    track: "block",
+    ...over,
+  };
+}
+
+// Every data column is sortable and each comparator is type-correct (dates chronological, PR # numeric,
+// Fin boolean, id/tier numeric-aware). A naive string compare would mis-order "#10" vs "#9" and dates.
+describe("compareRows", () => {
+  const asc = (a: Parameters<typeof compareRows>[0], b: Parameters<typeof compareRows>[0], k: Parameters<typeof compareRows>[2]) =>
+    Math.sign(compareRows(a, b, k));
+
+  it("sorts PR numbers numerically, not lexicographically", () => {
+    expect(asc(mkRow({ pr: 9 }), mkRow({ pr: 10 }), "pr")).toBe(-1); // 9 < 10 (string compare would flip this)
+    expect(asc(mkRow({ pr: 100 }), mkRow({ pr: 20 }), "pr")).toBe(1);
+    expect(asc(mkRow({ pr: null }), mkRow({ pr: 1 }), "pr")).toBe(-1); // null sorts first ascending
+  });
+
+  it("sorts dates chronologically", () => {
+    expect(asc(mkRow({ date: "2026-01-02" }), mkRow({ date: "2026-06-30" }), "date")).toBe(-1);
+    expect(asc(mkRow({ date: "2026-06-30" }), mkRow({ date: "2026-01-02" }), "date")).toBe(1);
+    expect(asc(mkRow({ date: null }), mkRow({ date: "2025-01-01" }), "date")).toBe(-1);
+  });
+
+  it("sorts Fin as a boolean (financial rows group together)", () => {
+    expect(asc(mkRow({ fin: false }), mkRow({ fin: true }), "fin")).toBe(-1);
+    expect(asc(mkRow({ fin: true }), mkRow({ fin: true }), "fin")).toBe(0);
+  });
+
+  it("uses numeric-aware string compare for ids so P3-T11.2 sorts before P3-T11.10", () => {
+    expect(asc(mkRow({ id: "P3-T11.2" }), mkRow({ id: "P3-T11.10" }), "id")).toBe(-1);
+  });
+
+  it("sorts the Review tag column", () => {
+    expect(asc(mkRow({ review: "needs-your-preview" }), mkRow({ review: undefined }), "review")).toBe(-1);
+  });
+});
 
 // Owner-Batch review tag defaulting (Jorge 2026-07-03): any row without an explicit tag is proceed-on-row;
 // only an explicit "needs-your-preview" opts into the preview-first path.

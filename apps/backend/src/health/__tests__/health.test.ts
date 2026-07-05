@@ -56,6 +56,71 @@ describe("health routes", () => {
   });
 });
 
+// G4-HEALTH — every MONEY / recon cron that records a _system.background_jobs row MUST have a
+// backgroundJobRule so a silently-stopped cron surfaces on /healthz. This guard fails if a money-cron
+// job_name loses its freshness rule (regression protection).
+describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", () => {
+  const MONEY_CRON_JOB_NAMES = [
+    // recon passes (landed via A1-2)
+    "accounting.recon_am_bank_count",
+    "accounting.recon_pm_categorization_diff",
+    // settlement / driver pay
+    "driver_finance.settlement_auto_pay_cron",
+    // bank feed + bank reconciliation
+    "banking.plaid_daily_sync_cron",
+    "accounting.bank_recon_auto_match_cron",
+    // A/R collections + fuel-card expense import + insurance payments
+    "accounting.collections_sync_cron",
+    "fuel.loves_card_import_cron",
+    "insurance.payment_reminder_cron",
+    // QBO sync (inbound + change-data-capture + entity pushes)
+    "integrations.qbo_inbound_sync",
+    "integrations.qbo_cdc_poll",
+    "sync.qbo_vendors_push",
+    "sync.qbo_customers_push",
+    "sync.qbo_accounts_push",
+  ];
+
+  it("every money cron has a freshness rule with a positive staleness window", () => {
+    for (const jobName of MONEY_CRON_JOB_NAMES) {
+      const rule = backgroundJobRule(jobName, false);
+      expect(rule, `missing freshness rule for money cron "${jobName}"`).not.toBeNull();
+      expect(rule!.maxStaleMinutes, `non-positive window for "${jobName}"`).toBeGreaterThan(0);
+      expect(typeof rule!.enabled, `enabled must be boolean for "${jobName}"`).toBe("boolean");
+    }
+  });
+
+  it("unknown job names have no rule (default null)", () => {
+    expect(backgroundJobRule("does.not.exist", false)).toBeNull();
+  });
+
+  it("settlement auto-pay rule respects its env gating", () => {
+    const prior = process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON;
+    try {
+      delete process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON;
+      expect(backgroundJobRule("driver_finance.settlement_auto_pay_cron", false)?.enabled).toBe(true);
+      process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON = "false";
+      expect(backgroundJobRule("driver_finance.settlement_auto_pay_cron", false)?.enabled).toBe(false);
+    } finally {
+      if (prior === undefined) delete process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON;
+      else process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON = prior;
+    }
+  });
+
+  it("default-OFF bank-recon cron only monitors when explicitly enabled", () => {
+    const prior = process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
+    try {
+      delete process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
+      expect(backgroundJobRule("accounting.bank_recon_auto_match_cron", false)?.enabled).toBe(false);
+      process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED = "true";
+      expect(backgroundJobRule("accounting.bank_recon_auto_match_cron", false)?.enabled).toBe(true);
+    } finally {
+      if (prior === undefined) delete process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
+      else process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED = prior;
+    }
+  });
+});
+
 // A1-1 guard: the QBO master-data mirror-staleness alarm must not self-disable when the
 // sync-enabled flag is OFF — it must fire whenever a QBO realm is connected, and stay silent
 // only when no realm is connected. Regression guard for the self-disabling health gate.

@@ -99,6 +99,7 @@ import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinemen
 import { registerDeadheadOptimizerRoutes } from "./dispatch/deadhead/routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
+import { registerDriverDispatchEligibilityRoutes } from "./dispatch/driver-eligibility.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
@@ -249,6 +250,7 @@ import { registerMaintenanceVehiclesRoutes } from "./maintenance/vehicles.routes
 import { registerMaintenanceDriversRoutes } from "./maintenance/drivers.routes.js";
 import { registerMaintenancePartsRoutes } from "./maintenance/parts.routes.js";
 import { registerMaintenanceDefectsRoutes } from "./maintenance/defects.routes.js";
+import { registerPreFlightDvirRoutes } from "./maintenance/pre-flight-dvir.routes.js";
 import { registerMaintenancePmAutoEngineRoutes } from "./maintenance/pm-auto-engine.service.js";
 import { registerMaintenanceServiceTimelineRoutes } from "./maintenance/service-timeline.service.js";
 import { registerMaintenanceKpiRoutes } from "./maintenance/kpi.routes.js";
@@ -785,6 +787,7 @@ async function main() {
   await registerDeadheadOptimizerRoutes(app);
   await registerIntransitIssuesRoutes(app);
   await registerDispatchArchTabsRoutes(app);
+  await registerDriverDispatchEligibilityRoutes(app);
   await registerDispatchAlertsRoutes(app);
   await registerDispatchPlannerRoutes(app);
   await registerDispatchDetentionRoutes(app);
@@ -954,6 +957,7 @@ async function main() {
   await registerMaintenanceDriversRoutes(app);
   await registerMaintenancePartsRoutes(app);
   await registerMaintenanceDefectsRoutes(app);
+  await registerPreFlightDvirRoutes(app);
   await registerMaintenancePmAutoEngineRoutes(app);
   await registerMaintenanceServiceTimelineRoutes(app);
   await registerMaintenanceKpiRoutes(app);

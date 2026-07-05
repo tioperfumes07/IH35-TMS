@@ -6,9 +6,14 @@ import {
   getRecentEditHistory,
 } from "../viewer.service.js";
 
+// ELD-1: getEditHistory / getRecentEditHistory first probe `to_regclass('samsara.hos_log_edits')`
+// so an un-provisioned mirror returns an empty history instead of a 42P01 500. Tests that expect
+// real rows must therefore mock the existence probe (call 1) THEN the data rows (call 2).
+const SOURCE_PRESENT = { rows: [{ reg: "samsara.hos_log_edits" }] };
+
 describe("ELD audit trail viewer", () => {
   it("returns chronological edit history for a driver and period", async () => {
-    const query = vi.fn().mockResolvedValue({
+    const dataRows = {
       rows: [
         {
           id: "e1",
@@ -33,15 +38,35 @@ describe("ELD audit trail viewer", () => {
           after_state: "Nuevo Laredo, MX",
         },
       ],
-    });
+    };
+    const query = vi.fn().mockResolvedValueOnce(SOURCE_PRESENT).mockResolvedValueOnce(dataRows);
 
     const result = await getEditHistory({ query }, "11111111-1111-1111-1111-111111111111", "d1", "2026-05-01", "2026-05-31");
 
-    expect(query).toHaveBeenCalledOnce();
+    expect(query).toHaveBeenCalledTimes(2);
     expect(result.read_only).toBe(true);
     expect(result.edits).toHaveLength(2);
     expect(result.edits[0]?.field_name).toBe("duty_status");
     expect(result.edits[1]?.field_name).toBe("location");
+  });
+
+  it("returns an honest empty history (no 500) when the Samsara mirror table is not provisioned", async () => {
+    // to_regclass returns NULL → source not connected. The data query must NOT run.
+    const query = vi.fn().mockResolvedValueOnce({ rows: [{ reg: null }] });
+
+    const result = await getEditHistory({ query }, "11111111-1111-1111-1111-111111111111", "d1", "2026-05-01", "2026-05-31");
+
+    expect(query).toHaveBeenCalledOnce(); // only the existence probe; the mirror SELECT was skipped
+    expect(result.read_only).toBe(true);
+    expect(result.edits).toEqual([]);
+    expect(result.driver_uuid).toBe("d1");
+  });
+
+  it("returns empty recent history (no crash) when the mirror table is absent", async () => {
+    const query = vi.fn().mockResolvedValueOnce({ rows: [{ reg: null }] });
+    const result = await getRecentEditHistory({ query }, "22222222-2222-2222-2222-222222222222", "d9", 10);
+    expect(query).toHaveBeenCalledOnce();
+    expect(result.edits).toEqual([]);
   });
 
   it("builds DOT-compliant PDF payload from history", () => {
@@ -78,12 +103,12 @@ describe("ELD audit trail viewer", () => {
   });
 
   it("scopes recent history query with tenant company id", async () => {
-    const query = vi.fn().mockResolvedValue({ rows: [] });
+    const query = vi.fn().mockResolvedValueOnce(SOURCE_PRESENT).mockResolvedValueOnce({ rows: [] });
     await getRecentEditHistory({ query }, "22222222-2222-2222-2222-222222222222", "d9", 10);
-    expect(query).toHaveBeenCalledOnce();
-    const sql = String(query.mock.calls[0]?.[0] ?? "");
+    expect(query).toHaveBeenCalledTimes(2);
+    const sql = String(query.mock.calls[1]?.[0] ?? "");
     expect(sql).toContain("samsara.hos_log_edits");
     expect(sql).toContain("operating_company_id = $1::uuid");
-    expect(query.mock.calls[0]?.[1]).toEqual(["22222222-2222-2222-2222-222222222222", "d9", 10]);
+    expect(query.mock.calls[1]?.[1]).toEqual(["22222222-2222-2222-2222-222222222222", "d9", 10]);
   });
 });
