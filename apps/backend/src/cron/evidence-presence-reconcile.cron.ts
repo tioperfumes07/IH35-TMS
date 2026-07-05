@@ -323,7 +323,7 @@ export type DrDrillEvidenceReport = {
 };
 
 /**
- * DR-DRILL step: prove a restored DB's evidence is actually retrievable from R2. Lists a sample of
+ * DR-DRILL step: prove a restored DB's evidence is actually retrievable from R2 object storage. Lists a sample of
  * evidence rows and HEADs each object; returns a structured, drill-doc-ready report. READ-ONLY — no
  * writes, no alarm (a drill reports; it doesn't page). Callable from scripts/backup-restore-drill.sh
  * via a tiny runner, or from an admin route.
@@ -378,7 +378,7 @@ export async function runDrDrillEvidenceCheck(logger: Logger = consoleLogger): P
 export function initializeEvidencePresenceReconcileCron(app: FastifyInstance): void {
   if (!enabled()) {
     app.log.info(
-      "[evidence-presence] disabled — set EVIDENCE_PRESENCE_RECONCILE_ENABLED=true to activate (read-only monitor).",
+      "[evidence-presence] disabled — activate this read-only monitor by turning EVIDENCE_PRESENCE_RECONCILE_ENABLED on.",
     );
     return;
   }
