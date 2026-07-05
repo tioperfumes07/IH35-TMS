@@ -7,6 +7,8 @@ import {
   fetchHomeWosOpenCount,
   fetchHomeFleetUtilization,
   fetchHomeTodayRevenue,
+  fetchHomeCashPosition,
+  fetchHomeFactoringBalance,
 } from "./home";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -71,5 +73,27 @@ describe("home-widgets FE↔BE response contract", () => {
     vi.spyOn(client, "apiRequest").mockResolvedValue({ revenue_cents: 4_900 } as never);
     const tr = await fetchHomeTodayRevenue("c1");
     expect(tr.revenue_cents).toBe(4_900);
+  });
+
+  it("cash-position: reads backend { totalCents } into balance_cents (not balance_cents)", async () => {
+    // Backend returns { totalCents, byAccount } — reading `balance_cents` zeroed the tile (HOME-2).
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      totalCents: 10_000_000,
+      byAccount: [{ accountName: "Ops", cents: 10_000_000 }],
+    } as never);
+    const cp = await fetchHomeCashPosition("c1");
+    expect(cp.balance_cents).toBe(10_000_000);
+  });
+
+  it("factoring-balance: reads backend { reserveCents } into outstanding_cents (not outstanding_cents)", async () => {
+    // Backend returns { reserveCents, advancedCents, totalCents } — reading `outstanding_cents`
+    // zeroed the tile (HOME-2).
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      reserveCents: 2_500_000,
+      advancedCents: 7_500_000,
+      totalCents: 10_000_000,
+    } as never);
+    const fb = await fetchHomeFactoringBalance("c1");
+    expect(fb.outstanding_cents).toBe(2_500_000);
   });
 });
