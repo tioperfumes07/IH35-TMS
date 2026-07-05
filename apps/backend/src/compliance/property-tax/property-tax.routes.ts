@@ -65,7 +65,7 @@ const createDistrictBody = z.object({
 // the DB (RLS) to Owner/Administrator/Accountant/Manager/Safety.
 export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   // List appraisal districts (reference).
-  app.get("/api/v1/compliance/property-tax/appraisal-districts", async (req, reply) => {
+  app.get("/api/v1/compliance/property-tax/appraisal-districts", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const q = companyQuery.safeParse(req.query ?? {});
@@ -79,7 +79,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   });
 
   // Inline "+ Add new appraisal district".
-  app.post("/api/v1/compliance/property-tax/appraisal-districts", async (req, reply) => {
+  app.post("/api/v1/compliance/property-tax/appraisal-districts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = createDistrictBody.safeParse(req.body ?? {});
@@ -93,7 +93,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   });
 
   // Candidate taxable assets (owned fleet) for the rendering entity.
-  app.get("/api/v1/compliance/property-tax/candidate-assets", async (req, reply) => {
+  app.get("/api/v1/compliance/property-tax/candidate-assets", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const q = companyQuery.safeParse(req.query ?? {});
@@ -107,7 +107,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   });
 
   // List renditions for the entity.
-  app.get("/api/v1/compliance/property-tax/renditions", async (req, reply) => {
+  app.get("/api/v1/compliance/property-tax/renditions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const q = companyQuery.safeParse(req.query ?? {});
@@ -121,7 +121,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   });
 
   // One rendition + its basis lines.
-  app.get("/api/v1/compliance/property-tax/renditions/:id", async (req, reply) => {
+  app.get("/api/v1/compliance/property-tax/renditions/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const q = companyQuery.safeParse(req.query ?? {});
@@ -137,7 +137,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   });
 
   // Create a draft rendition.
-  app.post("/api/v1/compliance/property-tax/renditions", async (req, reply) => {
+  app.post("/api/v1/compliance/property-tax/renditions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = createRenditionBody.safeParse(req.body ?? {});
@@ -157,7 +157,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   });
 
   // Update a rendition (status transition, extension, assessed tax, notes).
-  app.patch("/api/v1/compliance/property-tax/renditions/:id", async (req, reply) => {
+  app.patch("/api/v1/compliance/property-tax/renditions/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = updateRenditionBody.safeParse(req.body ?? {});
@@ -181,7 +181,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   });
 
   // Add a taxable-asset basis line.
-  app.post("/api/v1/compliance/property-tax/renditions/:id/lines", async (req, reply) => {
+  app.post("/api/v1/compliance/property-tax/renditions/:id/lines", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = addLineBody.safeParse(req.body ?? {});
