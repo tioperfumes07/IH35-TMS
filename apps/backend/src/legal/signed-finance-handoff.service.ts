@@ -28,6 +28,19 @@ const DEDUCTION_AUTH_TEMPLATE_CODES = [
   "driver_deduction_authorization",
 ];
 
+// Hire-contract templates. Per the owner lock (2026-07-05): a signed driver HIRING
+// CONTRACT contains a standing written deduction authorization, so signing it IS the
+// deduction consent — no separate deduction-auth e-sign is required. A signed instance
+// of any of these codes satisfies the same FIN-18 consent gate as a standalone
+// deduction authorization. (Mirrors the constant added by PR #2144.)
+export const HIRE_CONTRACT_TEMPLATE_CODES = ["driver_hire_agreement"];
+
+// Any signed driver instance of these codes authorizes settlement/escrow deductions.
+const DEDUCTION_CONSENT_TEMPLATE_CODES = [
+  ...DEDUCTION_AUTH_TEMPLATE_CODES,
+  ...HIRE_CONTRACT_TEMPLATE_CODES,
+];
+
 function isLeaseTemplateCode(code: string): boolean {
   return code.startsWith("lease_") || code === "truck_lease" || code === "lease_to_own";
 }
@@ -86,7 +99,10 @@ export async function applySignedFinanceHandoff(
   const actor = args.actorUserId ?? instance.created_by_user_id;
 
   // --- Deduction authorization consent handoff (FIN-18 consumes the gate) ---
-  if (DEDUCTION_AUTH_TEMPLATE_CODES.includes(instance.template_code) && instance.signer_type === "driver" && instance.signer_entity_id) {
+  // A signed standalone deduction authorization OR a signed driver hiring contract
+  // (which contains the standing written deduction authorization) satisfies the gate.
+  if (DEDUCTION_CONSENT_TEMPLATE_CODES.includes(instance.template_code) && instance.signer_type === "driver" && instance.signer_entity_id) {
+    const viaHireContract = HIRE_CONTRACT_TEMPLATE_CODES.includes(instance.template_code);
     await writeContractInstanceLink(client, {
       operatingCompanyId: args.operatingCompanyId,
       contractInstanceId: instance.id,
@@ -95,7 +111,9 @@ export async function applySignedFinanceHandoff(
       targetTable: "drivers",
       targetId: instance.signer_entity_id,
       actorUserId: actor,
-      notes: "Signed FLSA deduction authorization — consent gate for FIN-18 settlement posting",
+      notes: viaHireContract
+        ? "Signed driver hiring contract — standing deduction authorization; consent gate for FIN-18 settlement posting"
+        : "Signed FLSA deduction authorization — consent gate for FIN-18 settlement posting",
     });
     await appendContractAuditLog(client, {
       operatingCompanyId: args.operatingCompanyId,
@@ -166,7 +184,10 @@ export async function applySignedFinanceHandoff(
 }
 
 // Consent gate consumed by FIN-18: is there an active signed deduction authorization
-// on file for this driver? FIN-18 MUST call this and block any deduction post if false.
+// on file for this driver? This is satisfied by a signed standalone deduction
+// authorization OR a signed driver hiring contract (which carries the standing written
+// deduction authorization per the owner lock). FIN-18 MUST call this and block any
+// deduction post if false.
 export async function hasSignedDeductionAuthorization(
   client: QueryableClient,
   args: { operatingCompanyId: string; driverId: string }
@@ -183,7 +204,7 @@ export async function hasSignedDeductionAuthorization(
         AND ci.template_code = ANY($3)
       LIMIT 1
     `,
-    [args.operatingCompanyId, args.driverId, DEDUCTION_AUTH_TEMPLATE_CODES]
+    [args.operatingCompanyId, args.driverId, DEDUCTION_CONSENT_TEMPLATE_CODES]
   );
   return res.rows.length > 0;
 }
