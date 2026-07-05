@@ -211,48 +211,77 @@ async function ensureDefaultProfiles(
   }
 }
 
-async function computeBankingSummary(client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }, companyId: string, month: string) {
-  const { startDate, endDate } = monthWindow(month);
-  const openingRes = await client.query<{ amount: number }>(
-    `
-      SELECT COALESCE(SUM(COALESCE(bb.current_balance, 0)), 0)::numeric AS amount
-      FROM banking.bank_accounts a
-      LEFT JOIN LATERAL (
-        SELECT b.current_balance
-        FROM banking.bank_account_balances b
-        WHERE b.account_id = a.id
-          AND b.computed_at < $2::date
-        ORDER BY b.computed_at DESC
-        LIMIT 1
-      ) bb ON TRUE
-      WHERE a.operating_company_id = $1
-        AND a.is_dip = true
-        AND COALESCE(a.account_type, '') NOT LIKE 'virtual_%'
-        AND COALESCE(a.tag, '') NOT IN ('Factoring', 'Escrow')
-    `,
-    [companyId, startDate]
-  ).catch(() => ({ rows: [{ amount: 0 }] }));
+/**
+ * MOR (UST Form 425C) court cash lines 19–23. COURT FILING — numbers must tie to the bank statements.
+ *
+ * REAL schema (db/migrations/0072,0073): amount_cents (bigint, Plaid-SIGNED: negative = money IN),
+ * bank_account_id, transaction_date, is_credit. We compute receipts vs disbursements by GROUPING ON
+ * `is_credit` (the canonical direction flag the GL poster trusts) — NEVER the amount_cents sign,
+ * which is the OPPOSITE of a >0 test and would file receipts/disbursements SWAPPED on the court MOR.
+ * Own-transfers between the debtor's own accounts are excluded (mirrors
+ * bank-feed-gl-posting.service.ts:155 — review_state='transfer' / transfer_kind /
+ * destination_bank_account_id) so inter-account moves don't inflate either line.
+ *
+ * FAIL-LOUD: no `.catch(() => zeros)`. A broken query THROWS (the caller returns a structured error)
+ * rather than silently persisting $0 to a bankruptcy filing. Opening cash (line 19) carries forward
+ * from the prior month's filed ending cash (line 23); the first filed month has no prior and anchors
+ * at 0 until an owner-entered opening is set (see REPAIR spec §5.2 — deferred, no migration).
+ *
+ * NOTE on DIP-account scope: `is_dip`/`tag` do NOT exist on banking.bank_accounts (they were phantom).
+ * Factoring/escrow are virtual-only rows that never exist as real bank_accounts, so scope = the
+ * entity's real, non-virtual (`account_type NOT LIKE 'virtual_%'`) accounts. Narrowing to a curated
+ * DIP-account list (form_425c_company_profiles.bank_accounts jsonb) is DEFERRED for Jorge/counsel to
+ * confirm the exact filed accounts (REPAIR spec §5.3, Open Question 1) — do not treat this scope as
+ * legally authoritative without that confirmation.
+ */
+export async function computeBankingSummary(client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }, companyId: string, month: string) {
+  const { startDate, endDate, prevMonthDate } = monthWindow(month);
 
-  const flowRes = await client.query<{ receipts: number; disbursements: number }>(
+  // Line 19 opening cash = prior month's filed ending cash (carry-forward, migration-free).
+  const openingRes = await client.query<{ line_23_ending_cash: string | null }>(
+    `
+      SELECT line_23_ending_cash
+      FROM compliance.form_425c_reports
+      WHERE operating_company_id = $1
+        AND reporting_month = $2::date
+      ORDER BY created_at DESC
+      LIMIT 1
+    `,
+    [companyId, prevMonthDate]
+  );
+
+  const flowRes = await client.query<{ receipts_cents: string; disbursements_cents: string; in_scope_txn_count: string }>(
     `
       SELECT
-        COALESCE(SUM(CASE WHEN bt.amount > 0 THEN bt.amount ELSE 0 END), 0)::numeric AS receipts,
-        COALESCE(SUM(CASE WHEN bt.amount < 0 THEN abs(bt.amount) ELSE 0 END), 0)::numeric AS disbursements
+        COALESCE(SUM(CASE WHEN bt.is_credit THEN abs(bt.amount_cents) END), 0)::bigint     AS receipts_cents,
+        COALESCE(SUM(CASE WHEN NOT bt.is_credit THEN abs(bt.amount_cents) END), 0)::bigint AS disbursements_cents,
+        COUNT(*)::int AS in_scope_txn_count
       FROM banking.bank_transactions bt
-      JOIN banking.bank_accounts a ON a.id = bt.account_id
+      JOIN banking.bank_accounts a ON a.id = bt.bank_account_id
       WHERE bt.operating_company_id = $1
-        AND a.is_dip = true
         AND COALESCE(a.account_type, '') NOT LIKE 'virtual_%'
-        AND COALESCE(a.tag, '') NOT IN ('Factoring', 'Escrow')
-        AND bt.txn_date >= $2::date
-        AND bt.txn_date < $3::date
+        AND bt.transaction_date >= $2::date
+        AND bt.transaction_date <  $3::date
+        AND bt.review_state IS DISTINCT FROM 'transfer'
+        AND bt.transfer_kind IS NULL
+        AND bt.destination_bank_account_id IS NULL
     `,
     [companyId, startDate, endDate]
-  ).catch(() => ({ rows: [{ receipts: 0, disbursements: 0 }] }));
+  );
 
-  const line19 = Number(openingRes.rows[0]?.amount ?? 0);
-  const line20 = Number(flowRes.rows[0]?.receipts ?? 0);
-  const line21 = Number(flowRes.rows[0]?.disbursements ?? 0);
+  const receiptsCents = Math.trunc(Number(flowRes.rows[0]?.receipts_cents ?? 0));
+  const disbursementsCents = Math.trunc(Number(flowRes.rows[0]?.disbursements_cents ?? 0));
+  const inScopeCount = Math.trunc(Number(flowRes.rows[0]?.in_scope_txn_count ?? 0));
+
+  // Distinguish "0 because the month is genuinely dormant" (allowed) from "0 that would only occur if
+  // the query silently failed" — the latter must never reach a court filing.
+  if (inScopeCount > 0 && receiptsCents === 0 && disbursementsCents === 0) {
+    throw new Error("mor_cash_zero_with_activity");
+  }
+
+  const line19 = Number(openingRes.rows[0]?.line_23_ending_cash ?? 0);
+  const line20 = receiptsCents / 100;
+  const line21 = disbursementsCents / 100;
   const line22 = line20 - line21;
   const line23 = line19 + line22;
   return {
@@ -653,61 +682,76 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
     const b = body.data;
 
-    const updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-      const reportRes = await client.query<{ reporting_month: string }>(
-        `
-          SELECT reporting_month::text
-          FROM compliance.form_425c_reports
-          WHERE id = $1
-            AND operating_company_id = $2
-          LIMIT 1
-        `,
-        [params.data.id, b.operating_company_id]
-      );
-      const report = reportRes.rows[0];
-      if (!report) return null;
-      const summary = await computeBankingSummary(client, b.operating_company_id, String(report.reporting_month).slice(0, 7));
-      const res = await client.query(
-        `
-          UPDATE compliance.form_425c_reports
-          SET line_19_opening_cash = $3,
-              line_20_receipts = $4,
-              line_21_disbursements = $5,
-              line_22_net_cash_flow = $6,
-              line_23_ending_cash = $7,
-              banking_imported_at = now(),
-              banking_imported_by_user_id = $8,
-              updated_at = now()
-          WHERE id = $1
-            AND operating_company_id = $2
-          RETURNING *
-        `,
-        [
-          params.data.id,
-          b.operating_company_id,
-          summary.line_19_opening_cash,
-          summary.line_20_receipts,
-          summary.line_21_disbursements,
-          summary.line_22_net_cash_flow,
-          summary.line_23_ending_cash,
+    // FAIL-LOUD: never persist a silently-guessed $0 to a court filing. If the banking source query
+    // throws (e.g. a schema drift), surface a structured 502 and write NOTHING — the withCompanyScope
+    // transaction rolls back, so lines 19–23 are left untouched rather than zeroed. (REPAIR spec §4.)
+    let updated: Record<string, unknown> | null;
+    try {
+      updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+        const reportRes = await client.query<{ reporting_month: string }>(
+          `
+            SELECT reporting_month::text
+            FROM compliance.form_425c_reports
+            WHERE id = $1
+              AND operating_company_id = $2
+            LIMIT 1
+          `,
+          [params.data.id, b.operating_company_id]
+        );
+        const report = reportRes.rows[0];
+        if (!report) return null;
+        const summary = await computeBankingSummary(client, b.operating_company_id, String(report.reporting_month).slice(0, 7));
+        const res = await client.query(
+          `
+            UPDATE compliance.form_425c_reports
+            SET line_19_opening_cash = $3,
+                line_20_receipts = $4,
+                line_21_disbursements = $5,
+                line_22_net_cash_flow = $6,
+                line_23_ending_cash = $7,
+                banking_imported_at = now(),
+                banking_imported_by_user_id = $8,
+                updated_at = now()
+            WHERE id = $1
+              AND operating_company_id = $2
+            RETURNING *
+          `,
+          [
+            params.data.id,
+            b.operating_company_id,
+            summary.line_19_opening_cash,
+            summary.line_20_receipts,
+            summary.line_21_disbursements,
+            summary.line_22_net_cash_flow,
+            summary.line_23_ending_cash,
+            user.uuid,
+          ]
+        );
+        await appendCrudAudit(
+          client,
           user.uuid,
-        ]
-      );
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "compliance.form_425c.banking_imported",
-        {
-          resource_type: "compliance.form_425c_reports",
-          resource_id: params.data.id,
-          operating_company_id: b.operating_company_id,
-          summary,
-        },
-        "info",
-        "BT-3-FORM-425C"
-      );
-      return res.rows[0];
-    });
+          "compliance.form_425c.banking_imported",
+          {
+            resource_type: "compliance.form_425c_reports",
+            resource_id: params.data.id,
+            operating_company_id: b.operating_company_id,
+            summary,
+          },
+          "info",
+          "BT-3-FORM-425C"
+        );
+        return res.rows[0] as Record<string, unknown>;
+      });
+    } catch (err) {
+      const e = err as { code?: string; message?: string };
+      req.log?.error?.({ err: e, reportId: params.data.id }, "form-425c import-banking failed");
+      // Surface the pg error code/message only (never connection strings). Nothing was persisted.
+      return reply.code(502).send({
+        error: "mor_cash_source_error",
+        code: e?.code ?? null,
+        message: e?.message ?? "banking summary query failed",
+      });
+    }
     if (!updated) return reply.code(404).send({ error: "report_not_found" });
     return updated;
   });

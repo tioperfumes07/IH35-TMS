@@ -33,15 +33,29 @@ export async function registerForm425cExhibitsRoutes(app: FastifyInstance) {
     const parsed = buildBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const built = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
-      buildAllExhibits(client, {
-        userId: user.uuid,
-        operating_company_id: parsed.data.operating_company_id,
-        period_start: parsed.data.period_start,
-        period_end: parsed.data.period_end,
-        filing_uuid: parsed.data.filing_uuid,
-      })
-    );
+    // FAIL-LOUD (REPAIR spec §4): the Exhibit A–D bank queries no longer swallow errors to blank rows.
+    // A broken banking-source query must surface as a structured 502 so a blank court exhibit is never
+    // silently produced.
+    let built;
+    try {
+      built = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
+        buildAllExhibits(client, {
+          userId: user.uuid,
+          operating_company_id: parsed.data.operating_company_id,
+          period_start: parsed.data.period_start,
+          period_end: parsed.data.period_end,
+          filing_uuid: parsed.data.filing_uuid,
+        })
+      );
+    } catch (err) {
+      const e = err as { code?: string; message?: string };
+      req.log?.error?.({ err: e }, "form-425c exhibits build failed");
+      return reply.code(502).send({
+        error: "mor_cash_source_error",
+        code: e?.code ?? null,
+        message: e?.message ?? "exhibit banking source query failed",
+      });
+    }
 
     return reply.code(200).send(built);
   });
