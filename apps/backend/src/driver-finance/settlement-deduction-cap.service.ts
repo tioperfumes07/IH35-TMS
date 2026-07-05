@@ -16,9 +16,17 @@ export type ResolvedSettlementMinNet = {
 
 const SOURCE_TAG = "BLOCK-C-DEDUCTION-CAP";
 
+// Net-pay floor default: 5% (owner-locked 2026-07-04, EDITABLE at apply-time).
+// The floor stays fully overridable: per-driver -> per-company -> env (SETTLEMENT_MIN_NET_PCT)
+// -> apply-time override (see applyPendingDeductionsToSettlementWithNetFloor). Changing this
+// constant only moves the *baseline default* from the stale 50% to the locked 5%; it does not
+// hardcode 5%. The matching DB-column DEFAULT (mdata.drivers / org.companies min_net_settlement_pct,
+// migration 202606071910 DEFAULT 50) is a Jorge-gated follow-up migration (see PR body) — NOT edited here.
+const DEFAULT_MIN_NET_PCT = 5;
+
 function envMinNetPct(): number {
-  const raw = Number(process.env.SETTLEMENT_MIN_NET_PCT ?? 50);
-  if (!Number.isFinite(raw)) return 50;
+  const raw = Number(process.env.SETTLEMENT_MIN_NET_PCT ?? DEFAULT_MIN_NET_PCT);
+  if (!Number.isFinite(raw)) return DEFAULT_MIN_NET_PCT;
   return Math.min(100, Math.max(0, raw));
 }
 
@@ -155,6 +163,11 @@ export type ApplyPendingDeductionsResult = {
  * Floor math (decision C-2-A, spec literal): available = gross - floor only.
  * Already-applied abandonment chargebacks are intentionally NOT subtracted from
  * the floor calculation.
+ *
+ * Net-pay floor (owner-locked): default 5%, EDITABLE at apply-time. The floor is
+ * resolved per-driver -> per-company -> env; an optional `overrideFloor` lets the
+ * person closing the settlement pass an explicit floor pct/cents for THIS apply
+ * (reason recorded on the deferral audit). When omitted, the resolved 5% default wins.
  */
 export async function applyPendingDeductionsToSettlementWithNetFloor(
   client: Queryable,
@@ -163,6 +176,12 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
     driverId: string;
     operatingCompanyId: string;
     actorUserId: string;
+    /**
+     * Apply-time floor override (owner/admin editable). When `pct` (integer 0-100)
+     * and/or `cents` is provided, it wins over the resolved per-driver/company/env
+     * floor for this apply only. `reason` is recorded on the audit trail.
+     */
+    overrideFloor?: { pct?: number | null; cents?: number | null; reason?: string | null } | null;
   }
 ): Promise<ApplyPendingDeductionsResult> {
   const empty: ApplyPendingDeductionsResult = {
@@ -192,7 +211,26 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
   );
   const grossCents = Math.max(0, Math.round(Number(grossRes.rows[0]?.gross_cents ?? 0)));
 
-  const minNet = await resolveSettlementMinNet(client, input.driverId, input.operatingCompanyId);
+  const resolvedMinNet = await resolveSettlementMinNet(client, input.driverId, input.operatingCompanyId);
+
+  // Apply-time editable floor: an explicit override (owner/admin) wins over the resolved
+  // per-driver/company/env floor for THIS apply. Clamp to the same [0,100] / >=0 bounds.
+  const ov = input.overrideFloor ?? null;
+  const ovPct =
+    ov && ov.pct !== null && ov.pct !== undefined && Number.isFinite(Number(ov.pct))
+      ? Math.min(100, Math.max(0, Number(ov.pct)))
+      : null;
+  const ovCents =
+    ov && ov.cents !== null && ov.cents !== undefined && Number.isFinite(Number(ov.cents))
+      ? Math.max(0, Math.round(Number(ov.cents)))
+      : null;
+  const minNet = {
+    pct: ovPct ?? resolvedMinNet.pct,
+    cents: ovCents ?? resolvedMinNet.cents,
+    pctSource: (ovPct !== null ? "override" : resolvedMinNet.pctSource) as ResolvedSettlementMinNet["pctSource"] | "override",
+    centsSource: (ovCents !== null ? "override" : resolvedMinNet.centsSource) as ResolvedSettlementMinNet["centsSource"] | "override",
+  };
+
   const floorCents = Math.max(Math.round((grossCents * minNet.pct) / 100), minNet.cents);
   const availableCents = Math.max(0, grossCents - floorCents);
 
@@ -275,6 +313,7 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
           min_net_cents: minNet.cents,
           min_net_pct_source: minNet.pctSource,
           min_net_cents_source: minNet.centsSource,
+          floor_override_reason: ov?.reason ?? null,
         },
         "info",
         SOURCE_TAG

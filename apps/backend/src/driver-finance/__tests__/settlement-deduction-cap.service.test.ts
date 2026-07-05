@@ -83,11 +83,11 @@ describe("resolveSettlementMinNet", () => {
     process.env.SETTLEMENT_MIN_NET_PCT = ORIG_ENV;
   });
 
-  it("env fallback when no columns exist", async () => {
+  it("env fallback defaults to the locked 5% when no columns exist", async () => {
     delete process.env.SETTLEMENT_MIN_NET_PCT;
     const { client } = makeMockClient({ hasDriverCols: false, hasCompanyCols: false });
     const res = await resolveSettlementMinNet(client, IDS.driver, IDS.company);
-    expect(res).toMatchObject({ pct: 50, cents: 0, pctSource: "env", centsSource: "env" });
+    expect(res).toMatchObject({ pct: 5, cents: 0, pctSource: "env", centsSource: "env" });
   });
 
   it("env honors SETTLEMENT_MIN_NET_PCT override", async () => {
@@ -196,6 +196,31 @@ describe("applyPendingDeductionsToSettlementWithNetFloor", () => {
 
     expect(res.floorCents).toBe(90000);
     expect(res.availableCents).toBe(10000);
+    expect(res.appliedCount).toBe(0);
+    expect(res.deferredCount).toBe(1);
+    expect(updatedDeductionIds).toEqual([]);
+  });
+
+  it("apply-time floor override wins over the resolved floor", async () => {
+    // gross 100000c. Resolved company floor is 5% (=5000c available 95000c), but the closer passes an
+    // apply-time override of 60% => floor 60000c, available 40000c. A 50000c deduction must DEFER.
+    const { client, updatedDeductionIds } = makeMockClient({
+      grossCents: 100000,
+      driverRow: { pct: null, cents: null },
+      companyRow: { pct: 5, cents: 0 },
+      pending: [{ id: "d1", amount_cents: 50000, reason: "Advance", deduction_type: "cash_advance_repayment" }],
+    });
+
+    const res = await applyPendingDeductionsToSettlementWithNetFloor(client, {
+      settlementId: IDS.settlement,
+      driverId: IDS.driver,
+      operatingCompanyId: IDS.company,
+      actorUserId: IDS.actor,
+      overrideFloor: { pct: 60, reason: "owner apply-time floor bump" },
+    });
+
+    expect(res.floorCents).toBe(60000);
+    expect(res.availableCents).toBe(40000);
     expect(res.appliedCount).toBe(0);
     expect(res.deferredCount).toBe(1);
     expect(updatedDeductionIds).toEqual([]);
