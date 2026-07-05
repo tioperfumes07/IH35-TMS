@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 import { Argon2id } from "oslo/password";
 import { z } from "zod";
 import { withLuciaBypass } from "./db.js";
-import { lucia } from "./lucia.js";
+import { createSessionCookie } from "./session-provider.js";
 import { createSessionWithLastLogin } from "./session-create.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
 import { enforceOfficePasswordLoginLimits } from "../middleware/rate-limit.js";
@@ -121,7 +121,7 @@ export async function registerOfficeLoginRoutes(app: FastifyInstance) {
     if (!user) return sendUniformLoginFailure(reply);
 
     const session = await createSessionWithLastLogin(user.id, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
+    const sessionCookie = createSessionCookie(session.id);
     setLuciaSessionCookie(reply, sessionCookie);
     await withLuciaBypass(async (client) => {
       await appendCrudAudit(

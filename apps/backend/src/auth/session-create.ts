@@ -1,6 +1,6 @@
 import type pg from "pg";
 import { withLuciaBypass } from "./db.js";
-import { lucia } from "./lucia.js";
+import { createSession } from "./session-provider.js";
 
 export const LAST_LOGIN_UPDATE_SQL =
   "UPDATE identity.users SET last_login_at = now() WHERE id = $1";
@@ -16,7 +16,7 @@ export async function createSessionWithLastLogin(
   userId: string,
   attributes: Record<string, unknown> = {}
 ) {
-  const session = await lucia.createSession(userId, attributes);
+  const session = await createSession(userId, attributes);
   await withLuciaBypass(async (client) => {
     await touchUserLastLoginAt(client, userId);
   });
