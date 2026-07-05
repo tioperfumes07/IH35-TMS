@@ -38,4 +38,19 @@ describe("loads-bulk.routes", () => {
     expect(stateMachine).toContain("allowedTransitions");
     expect(stateMachine).not.toContain("registerDispatchLoadRoutes");
   });
+
+  // G9-M: bulk set_status must reach the dispatch event spine (parity with the per-load endpoint) so a
+  // bulk status change is not invisible to downstream workflow consumers.
+  it("emits load.status_changed on the dispatch spine for bulk set_status", () => {
+    expect(routes).toContain("emitDispatchSpineEvent");
+    expect(routes).toContain('event_type: "load.status_changed"');
+  });
+
+  // G9-M: escrow/settlement-triggering terminal transitions run financial side-effects only on the
+  // per-load endpoint — bulk must refuse them instead of silently skipping the escrow proposal + ping.
+  it("refuses escrow/settlement-triggering terminal transitions in bulk", () => {
+    expect(routes).toContain("PER_LOAD_ONLY_TRANSITIONS");
+    expect(routes).toContain("E_REQUIRES_PER_LOAD");
+    expect(routes).toContain('"abandoned", "driver_walkoff", "driver_no_show"');
+  });
 });
