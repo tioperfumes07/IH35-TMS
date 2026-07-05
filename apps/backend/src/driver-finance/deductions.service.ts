@@ -12,6 +12,12 @@ export type SettlementDeductionSourceType =
   | "damage"
   | "equipment"
   | "fuel"
+  // BLOCK-6b: recoverable-expense bucket types a driver can be charged for (e.g. a fine/toll/citation the
+  // company paid on the driver's behalf and recovers from settlement). The FIN-18 settlement poster derives
+  // the recovery role account generically as `${deduction_type}_recovery`, so these route with no new math.
+  | "fine"
+  | "toll"
+  | "citation"
   | "other";
 
 export type CreateSettlementDeductionInput = {
@@ -34,6 +40,19 @@ export type CreateSettlementDeductionInput = {
    * that source from a load-linked advance pass driver_advances.load_id; non-load sources leave it null.
    */
   loadId?: string | null;
+  /**
+   * Optional deduction bucket (driver_finance.driver_deduction_buckets) this row is charged against.
+   * Recover-from-driver sources (FIN-18 + BLOCK-6b bank-categorize fine) pass the bucket they charged so
+   * the FIN-18 settlement poster applies the deduction against its ledger on post. Non-bucketed sources
+   * (e.g. cash-advance repayment) leave it null.
+   */
+  bucketId?: string | null;
+  /**
+   * Optional originating bank transaction (banking.bank_transactions). BLOCK-6b: a fine the company paid
+   * that is recovered from the driver carries the source bank transaction DIRECTLY for reverse
+   * drill-through (bank txn ⇄ deduction). Non-bank sources leave it null.
+   */
+  sourceBankTransactionId?: string | null;
   createdByUserId: string;
 };
 
@@ -48,6 +67,8 @@ export type SettlementDeductionRow = {
   created_by_user_id: string;
   source_pending_id: string | null;
   load_id: string | null;
+  bucket_id: string | null;
+  source_bank_transaction_id: string | null;
   created_at: string;
 };
 
@@ -62,6 +83,8 @@ const RETURNING_COLUMNS = `
   created_by_user_id,
   source_pending_id,
   load_id,
+  bucket_id,
+  source_bank_transaction_id,
   created_at::text AS created_at
 `;
 
@@ -109,12 +132,15 @@ export async function createSettlementDeduction(
         created_by_user_id,
         source_pending_id,
         load_id,
+        bucket_id,
+        source_bank_transaction_id,
         remaining_balance_cents
       )
       -- A3-2: initialise the carry-forward balance to the full amount on insert (status defaults to
       -- 'pending'). The recovery engine treats NULL as = amount_cents (A3-1 lock); this just makes
-      -- new rows explicit going forward. $4 = amount_cents. $8 = load_id (direct trace, nullable).
-      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $4)
+      -- new rows explicit going forward. $4 = amount_cents. $8 = load_id (direct trace, nullable),
+      -- $9 = bucket_id (recover-from-driver), $10 = source_bank_transaction_id (BLOCK-6b provenance).
+      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9, $10, $4)
       RETURNING ${RETURNING_COLUMNS}
     `,
     [
@@ -126,6 +152,8 @@ export async function createSettlementDeduction(
       input.createdByUserId,
       input.sourcePendingId ?? null,
       input.loadId ?? null,
+      input.bucketId ?? null,
+      input.sourceBankTransactionId ?? null,
     ]
   );
 
@@ -144,6 +172,9 @@ export async function createSettlementDeduction(
       amount_cents: input.amountCents,
       source_type: input.sourceType,
       source_pending_id: input.sourcePendingId ?? null,
+      bucket_id: input.bucketId ?? null,
+      source_bank_transaction_id: input.sourceBankTransactionId ?? null,
+      load_id: input.loadId ?? null,
     },
     "info",
     "PREREQ-B-SETTLEMENT-DEDUCTION-SVC"
