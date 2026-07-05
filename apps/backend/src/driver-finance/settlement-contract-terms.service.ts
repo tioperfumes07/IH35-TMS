@@ -462,10 +462,18 @@ export async function computeLateDeliveryPassthrough(
 }
 
 /**
- * ITEM 4 — All-fines pass-through deduction. For each OPEN safety.fine attributable to this driver
- * (subject_type='driver') that has not yet produced a deduction, create a canonical deduction
- * (deduction_type='fine', load_id from the fine's related_load_id) and link the fine -> deduction (reverse
- * drill). Idempotent via the fine's driver_settlement_deduction_id link.
+ * ITEM 4 — All-fines pass-through deduction, from BOTH canonical fine tables (the contract makes the
+ * driver responsible for external/regulatory fines AND may impose internal company fines):
+ *   • Sub-source 1/2 — safety.civil_fines (EXTERNAL: customs / police / DOT). For each OPEN fine attributed
+ *     to this driver (subject_type='driver', driver_settlement_deduction_id IS NULL), create a canonical
+ *     deduction (load_id from related_load_id) and reverse-link fine -> deduction via
+ *     driver_settlement_deduction_id (idempotent).
+ *   • Sub-source 2/2 — safety.internal_fines (INTERNAL company fines: cleanliness / conduct / equipment).
+ *     For each APPROVED internal fine not yet charged (driver_liability_id IS NULL), create a deduction
+ *     (amount is numeric DOLLARS -> cents; load_id from related_load_id) and reverse-link by stamping
+ *     driver_liability_id = deduction id + status='converted_to_liability' (idempotent).
+ * Every produced line is driver -> load -> fine -> deduction, forward AND reverse. appliedCount/appliedCents
+ * are the COMBINED totals across both sub-sources.
  */
 export async function computeDriverFinePassthrough(
   client: DbClient,
@@ -534,6 +542,82 @@ export async function computeDriverFinePassthrough(
         UPDATE safety.civil_fines
         SET driver_settlement_deduction_id = $2::uuid, updated_at = now()
         WHERE id = $1::uuid AND driver_settlement_deduction_id IS NULL
+      `,
+      [fineId, deduction.id]
+    );
+
+    result.appliedCount += 1;
+    result.appliedCents += amountCents;
+  }
+
+  // ── Sub-source 2/2: INTERNAL company fines (contract: keep truck clean / conduct / equipment → internal
+  //    company fines may apply). safety.internal_fines ALREADY EXISTS (migration 0050). Its `amount` is
+  //    numeric DOLLARS (convert to cents). It has NO deactivated_at/updated_at columns — use voided_at and
+  //    do not set updated_at. Idempotency + reverse link: an APPROVED internal fine that produces a
+  //    deduction is stamped status='converted_to_liability' with driver_liability_id = the deduction id;
+  //    driver_liability_id IS NULL is the not-yet-charged guard so it is never charged twice.
+  const internalRes = await client.query<{
+    id: string;
+    amount: string | number | null;
+    related_load_id: string | null;
+    reason_name: string | null;
+  }>(
+    `
+      SELECT f.id::text, f.amount, f.related_load_id::text, r.reason_name
+      FROM safety.internal_fines f
+      LEFT JOIN catalogs.internal_fine_reasons r ON r.id = f.reason_id
+      WHERE f.operating_company_id = $1::uuid
+        AND f.driver_id = $2::uuid
+        AND f.status = 'approved'
+        AND f.voided_at IS NULL
+        AND f.driver_liability_id IS NULL
+        AND COALESCE(f.amount, 0) > 0
+      ORDER BY f.imposed_date ASC, f.id ASC
+      FOR UPDATE OF f
+    `,
+    [input.operatingCompanyId, input.driverId]
+  );
+
+  for (const fine of internalRes.rows) {
+    const fineId = String(fine.id);
+    const amountCents = Math.round(Number(fine.amount ?? 0) * 100);
+    if (amountCents <= 0) continue;
+    const loadId = fine.related_load_id ? String(fine.related_load_id) : null;
+
+    const contractLineId = await recordContractLine(client, {
+      operatingCompanyId: input.operatingCompanyId,
+      settlementId: input.settlementId,
+      driverId: input.driverId,
+      loadId,
+      lineKind: "fine_passthrough",
+      direction: "deduction",
+      amountCents,
+      sourceTable: "safety.internal_fines",
+      sourceId: fineId,
+      computedBasis: { fine_kind: "internal", reason: fine.reason_name },
+      actorUserId: input.actorUserId,
+    });
+    if (!contractLineId) continue;
+
+    const deduction = await createSettlementDeduction(client, {
+      driverId: input.driverId,
+      operatingCompanyId: input.operatingCompanyId,
+      amountCents,
+      reason: `Internal fine — ${fine.reason_name ?? "company policy"}`,
+      sourceType: "other",
+      loadId,
+      createdByUserId: input.actorUserId,
+    });
+    await backlinkContractLine(client, contractLineId, { deductionId: deduction.id });
+
+    // Reverse link + idempotency: converting the internal fine into a driver liability (the settlement
+    // deduction) stamps driver_liability_id and flips status so it can never be charged again. NOTE:
+    // safety.internal_fines has NO updated_at column — do not set one here.
+    await client.query(
+      `
+        UPDATE safety.internal_fines
+        SET status = 'converted_to_liability', driver_liability_id = $2::uuid
+        WHERE id = $1::uuid AND driver_liability_id IS NULL
       `,
       [fineId, deduction.id]
     );

@@ -277,11 +277,61 @@ describe("computeDriverFinePassthrough", () => {
     expect(calls.some((c) => c.sql.includes("UPDATE") && c.sql.includes("safety.civil_fines") && c.sql.includes("driver_settlement_deduction_id"))).toBe(true);
   });
 
-  it("no open fines => nothing", async () => {
-    const { client, calls } = makeClient([{ match: "FROM safety.civil_fines", rows: [] }]);
+  it("no open fines (neither table) => nothing", async () => {
+    const { client, calls } = makeClient([
+      { match: "FROM safety.civil_fines", rows: [] },
+      { match: "FROM safety.internal_fines", rows: [] },
+    ]);
     const res = await computeDriverFinePassthrough(client, base);
     expect(res.appliedCount).toBe(0);
     expect(insertsInto(calls, "driver_finance.driver_settlement_deductions")).toHaveLength(0);
+  });
+
+  it("approved INTERNAL fine => deduction (dollars->cents) + converted_to_liability reverse-link", async () => {
+    const { client, calls } = makeClient([
+      { match: "FROM safety.civil_fines", rows: [] },
+      {
+        match: "FROM safety.internal_fines",
+        // amount is numeric DOLLARS (250.00) -> 25000 cents; related_load_id carried onto the line.
+        rows: [{ id: "if1", amount: 250.0, related_load_id: "load7", reason_name: "Dirty truck" }],
+      },
+      { match: "INSERT INTO driver_finance.settlement_contract_lines", rows: [{ id: "c9" }] },
+      { match: "INSERT INTO driver_finance.driver_settlement_deductions", rows: [{ id: "ded9", amount_cents: 25000 }] },
+    ]);
+    const res = await computeDriverFinePassthrough(client, base);
+    expect(res.appliedCount).toBe(1);
+    expect(res.appliedCents).toBe(25000);
+    // reverse link + idempotency stamp: UPDATE safety.internal_fines ... converted_to_liability + driver_liability_id
+    expect(
+      calls.some(
+        (c) =>
+          c.sql.includes("UPDATE") &&
+          c.sql.includes("safety.internal_fines") &&
+          c.sql.includes("converted_to_liability") &&
+          c.sql.includes("driver_liability_id")
+      )
+    ).toBe(true);
+    // the contract line carries the load_id (driver->load->fine->deduction connectivity)
+    const lineInsert = calls.find((c) => c.sql.includes("INSERT INTO driver_finance.settlement_contract_lines"));
+    expect(lineInsert?.values).toContain("load7");
+  });
+
+  it("BOTH civil + internal fines => combined totals across both sub-sources", async () => {
+    const { client } = makeClient([
+      {
+        match: "FROM safety.civil_fines",
+        rows: [{ id: "cf1", amount_cents: 15000, violation_description: "overweight", issued_by_authority: "TX DPS", related_load_id: "load9" }],
+      },
+      {
+        match: "FROM safety.internal_fines",
+        rows: [{ id: "if1", amount: 100.0, related_load_id: "load9", reason_name: "Equipment damage" }],
+      },
+      { match: "INSERT INTO driver_finance.settlement_contract_lines", rows: [{ id: "c1" }] },
+      { match: "INSERT INTO driver_finance.driver_settlement_deductions", rows: [{ id: "ded1", amount_cents: 1 }] },
+    ]);
+    const res = await computeDriverFinePassthrough(client, base);
+    expect(res.appliedCount).toBe(2);
+    expect(res.appliedCents).toBe(15000 + 10000);
   });
 });
 

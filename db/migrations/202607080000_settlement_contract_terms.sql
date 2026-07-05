@@ -12,8 +12,9 @@
 --   2. Referral bonus $200 when a referred driver has worked >= 30 days (paid to the REFERRER).
 --   3. Late-delivery pass-through deduction — when a late delivery is the DRIVER'S FAULT, deduct what the
 --      CUSTOMER charged us back for that load (pass-through; carries load_id DIRECTLY).
---   4. All-fines deduction — customs / police / DOT fines attributable to the driver -> a deduction linked
---      to the fine record + load + driver.
+--   4. All-fines deduction — from BOTH canonical fine tables: EXTERNAL/regulatory (safety.civil_fines:
+--      customs / police / DOT) AND INTERNAL company fines (safety.internal_fines: cleanliness / conduct /
+--      equipment) attributable to the driver -> a deduction linked to the fine record + load + driver.
 --   5. Immediate reimbursement — driver out-of-pocket tolls/fuel = a REIMBURSEMENT (pay-out, NOT a
 --      deduction) that can be paid IMMEDIATELY (not only at settlement close).
 --
@@ -27,6 +28,8 @@
 --   * mdata.drivers                         — referral link + reward-paid provenance (columns).
 --   * mdata.loads                           — customer chargeback AMOUNT + driver-fault flag (columns).
 --   * safety.civil_fines                          — reverse link to the driver deduction it produced (column).
+--   * safety.internal_fines                        — READ approved rows + UPDATE to converted_to_liability
+--                                             (existing columns, migration 0050 — NO DDL here; grant only).
 --   * driver_finance.driver_reimbursements  — NEW table (immediate-pay out-of-pocket claims).
 --   * driver_finance.settlement_contract_lines — NEW table (provenance/connectivity backbone: each computed
 --                                             line -> its source record + settlement + created line/deduction).
@@ -289,6 +292,15 @@ BEGIN
     END IF;
     IF to_regclass('safety.civil_fines') IS NOT NULL THEN
       GRANT SELECT, INSERT, UPDATE ON safety.civil_fines TO ih35_app;
+    END IF;
+    -- INTERNAL fines: the contract-terms engine SELECTs approved rows and UPDATEs them to
+    -- status='converted_to_liability' (+ driver_liability_id). No DDL on this table (columns already
+    -- exist, migration 0050); grant idempotently so a fresh-DB replay never 500s at runtime.
+    IF to_regclass('safety.internal_fines') IS NOT NULL THEN
+      GRANT SELECT, UPDATE ON safety.internal_fines TO ih35_app;
+    END IF;
+    IF to_regclass('catalogs.internal_fine_reasons') IS NOT NULL THEN
+      GRANT SELECT ON catalogs.internal_fine_reasons TO ih35_app;
     END IF;
   END IF;
 END $$;
