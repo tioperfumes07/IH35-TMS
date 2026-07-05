@@ -14,6 +14,10 @@
       "reason": "Audit infrastructure itself (B19-V2) — the INSERT into ops.audit_chain_verifications IS the append-only tamper-verification record; it must NOT recursively emit a spine event (that would create an audit-of-the-audit loop). Read-only vs events.event_log."
     },
     {
+      "file": "apps/backend/src/audit/audit-chain-verify.cron.service.ts",
+      "reason": "Audit infrastructure orchestration (G10-C1) — the daily cron tick that invokes verifyEventChain per active company. This file performs NO mutation of its own (SELECT-only: enumerate org.companies + read prior verification staleness); the guard's INSERT regex is a false positive on the phrase 'insert into' in an explanatory code comment. The only real write is the append-only tamper-verification record inside audit-chain-verify.service.ts, which is itself allowlisted for the same audit-of-the-audit-loop reason. A spine emit here would be circular."
+    },
+    {
       "file": "apps/backend/src/identity/company-context.routes.ts",
       "reason": "Session/context switch — not a data mutation, no business event"
     },
