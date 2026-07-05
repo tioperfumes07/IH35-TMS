@@ -196,6 +196,21 @@ const updateWorkOrderSchema = z.object({
   external_vendor_invoice_number: z.string().trim().max(120).nullable().optional(),
   description: z.string().trim().max(2000).optional(),
   bucket: z.enum(["in_house", "external", "roadside"]).optional(),
+  // Non-cost, non-financial header fields the WO edit modal collects. NONE of these feed the
+  // Bill/Expense amount (cost flows only through the line-item endpoints) so they are safe to PATCH
+  // even after an AP document is posted. Columns verified against db/migrations/ (0310 priority,
+  // 202606221100 VMRS/complaint-cause-correction/out_of_service, 202606221200 authorization/service-location/repaired-by).
+  wo_priority: z.enum(["routine", "urgent", "immediate"]).optional(),
+  vmrs_system_code: z.string().trim().max(40).optional(),
+  vmrs_assembly_code: z.string().trim().max(40).optional(),
+  vmrs_component_code: z.string().trim().max(40).optional(),
+  out_of_service: z.boolean().optional(),
+  repair_complaint: z.string().trim().max(2000).optional(),
+  repair_cause: z.string().trim().max(2000).optional(),
+  repair_correction: z.string().trim().max(2000).optional(),
+  authorization_number: z.string().trim().max(120).optional(),
+  service_location_type: z.enum(["shop", "mobile", "roadside"]).optional(),
+  repaired_by: z.enum(["in_house", "outside_vendor"]).optional(),
 });
 
 const transitionSchema = z.object({
@@ -238,6 +253,103 @@ async function relationExists(
 ) {
   const res = await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [relName]);
   return Boolean(res.rows[0]?.ok);
+}
+
+async function columnExists(
+  client: { query: <R = { ok: boolean }>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }> },
+  schema: string,
+  table: string,
+  column: string
+) {
+  const res = await client.query<{ ok: boolean }>(
+    `SELECT 1 AS ok FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3 LIMIT 1`,
+    [schema, table, column]
+  );
+  return Boolean(res.rows[0]);
+}
+
+// ── FINANCIAL GUARD ──────────────────────────────────────────────────────────
+// WO cost lines auto-create a Bill (A/P) or Expense. Once that AP document is POSTED (on the AP
+// ledger) or PAID, editing the WO's cost/line-items would silently diverge the WO from its Bill.
+// We refuse the cost edit and tell the user to void the linked bill first (void-not-delete governance).
+// A still-DRAFT bill (auto-created at WO-create time, not yet posted) is safe to edit.
+export const WO_POSTED_AP_ERROR = "E_WO_POSTED_BILL_LOCK";
+
+export class WoPostedApError extends Error {
+  public readonly detail: { kind: "bill" | "expense"; id: string; status: string | null };
+  constructor(detail: { kind: "bill" | "expense"; id: string; status: string | null }) {
+    super("wo_cost_locked_by_posted_ap");
+    this.name = "WoPostedApError";
+    this.detail = detail;
+  }
+}
+
+export function isWoPostedApError(error: unknown): error is WoPostedApError {
+  return error instanceof WoPostedApError;
+}
+
+type ApGuardClient = {
+  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
+};
+
+// Returns the first POSTED/PAID (non-draft, non-voided) AP document linked to this WO, or null.
+// Draft bills are editable; voided/revoked/cancelled documents no longer bind the WO.
+export async function findPostedApForWo(
+  client: ApGuardClient,
+  companyId: string,
+  woId: string
+): Promise<{ kind: "bill" | "expense"; id: string; status: string | null } | null> {
+  if (await relationExists(client, "accounting.bills")) {
+    const hasRevoked = await columnExists(client, "accounting", "bills", "revoked_at");
+    const bill = await client.query<{ id: string; status: string | null }>(
+      `
+        SELECT id::text AS id, status
+        FROM accounting.bills
+        WHERE operating_company_id = $1::uuid
+          AND linked_work_order_uuid = $2::uuid
+          ${hasRevoked ? "AND revoked_at IS NULL" : ""}
+          AND lower(coalesce(status, '')) NOT IN ('draft', 'void', 'voided', 'cancelled')
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [companyId, woId]
+    );
+    if (bill.rows[0]?.id) return { kind: "bill", id: bill.rows[0].id, status: bill.rows[0].status ?? null };
+  }
+  if (
+    (await relationExists(client, "accounting.expenses")) &&
+    (await columnExists(client, "accounting", "expenses", "linked_work_order_uuid"))
+  ) {
+    const hasRevoked = await columnExists(client, "accounting", "expenses", "revoked_at");
+    const exp = await client.query<{ id: string; status: string | null }>(
+      `
+        SELECT id::text AS id, status
+        FROM accounting.expenses
+        WHERE operating_company_id = $1::uuid
+          AND linked_work_order_uuid = $2::uuid
+          ${hasRevoked ? "AND revoked_at IS NULL" : ""}
+          AND lower(coalesce(status, '')) = 'posted'
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [companyId, woId]
+    );
+    if (exp.rows[0]?.id) return { kind: "expense", id: exp.rows[0].id, status: exp.rows[0].status ?? null };
+  }
+  return null;
+}
+
+function postedApReply(reply: FastifyReply, posted: { kind: "bill" | "expense"; id: string; status: string | null }) {
+  return reply.code(409).send({
+    error: WO_POSTED_AP_ERROR,
+    locked_by: posted.kind,
+    locked_id: posted.id,
+    locked_status: posted.status,
+    message:
+      posted.kind === "bill"
+        ? "This work order already has a posted bill in Accounts Payable. Void the linked bill first, then edit its cost lines."
+        : "This work order already has a posted expense. Void the linked expense first, then edit its cost lines.",
+  });
 }
 
 async function hasLoadRequiredExpenseCategories(
@@ -834,6 +946,17 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (body.bucket && CLOSED_STATUSES.has(String(current.status ?? ""))) {
         return { invalid: true as const, error: "E_BUCKET_IMMUTABLE_WHEN_CLOSED" };
       }
+      // FINANCIAL GUARD: changing the vendor FK after the Bill is posted would orphan the WO from its
+      // AP Bill (the bill was created against COALESCE(external_vendor_id, vendor_id)). Descriptive
+      // header fields (description/priced-neutral notes) stay editable; only the vendor swap is locked.
+      if (
+        body.external_vendor_id !== undefined &&
+        body.external_vendor_id !== null &&
+        String(body.external_vendor_id) !== String(current.external_vendor_id ?? "")
+      ) {
+        const posted = await findPostedApForWo(client, companyId, params.data.id);
+        if (posted) return { postedLock: true as const, posted };
+      }
       const updatedRes = await client.query(
         `
           UPDATE maintenance.work_orders
@@ -843,6 +966,17 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             external_vendor_invoice_number = COALESCE($4, external_vendor_invoice_number),
             description = COALESCE($5, description),
             bucket = COALESCE($6::maintenance.wo_bucket_enum, bucket),
+            wo_priority = COALESCE($7, wo_priority),
+            vmrs_system_code = COALESCE($8, vmrs_system_code),
+            vmrs_assembly_code = COALESCE($9, vmrs_assembly_code),
+            vmrs_component_code = COALESCE($10, vmrs_component_code),
+            out_of_service = COALESCE($11::boolean, out_of_service),
+            repair_complaint = COALESCE($12, repair_complaint),
+            repair_cause = COALESCE($13, repair_cause),
+            repair_correction = COALESCE($14, repair_correction),
+            authorization_number = COALESCE($15, authorization_number),
+            service_location_type = COALESCE($16, service_location_type),
+            repaired_by = COALESCE($17, repaired_by),
             updated_at = now()
           WHERE id = $1
           RETURNING *
@@ -854,6 +988,17 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.external_vendor_invoice_number ?? null,
           body.description ?? null,
           body.bucket ?? null,
+          body.wo_priority ?? null,
+          body.vmrs_system_code ?? null,
+          body.vmrs_assembly_code ?? null,
+          body.vmrs_component_code ?? null,
+          body.out_of_service ?? null,
+          body.repair_complaint ?? null,
+          body.repair_cause ?? null,
+          body.repair_correction ?? null,
+          body.authorization_number ?? null,
+          body.service_location_type ?? null,
+          body.repaired_by ?? null,
         ]
       );
       const updated = updatedRes.rows[0];
@@ -870,6 +1015,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             external_vendor_wo_number: body.external_vendor_wo_number ?? undefined,
             external_vendor_invoice_number: body.external_vendor_invoice_number ?? undefined,
             description: body.description ?? undefined,
+            bucket: body.bucket ?? undefined,
+            wo_priority: body.wo_priority ?? undefined,
+            out_of_service: body.out_of_service ?? undefined,
+            repaired_by: body.repaired_by ?? undefined,
+            service_location_type: body.service_location_type ?? undefined,
+            authorization_number: body.authorization_number ?? undefined,
           },
         },
         "info",
@@ -895,6 +1046,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     });
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
+    if ("postedLock" in result && result.posted) return postedApReply(reply, result.posted);
     if ("invalid" in result) return reply.code(400).send({ error: result.error });
     return result.row;
   });
@@ -1171,6 +1323,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           companyId,
         ]);
         if (wo.rowCount === 0) return undefined;
+        // FINANCIAL GUARD: a WO cost line feeds the linked Bill/Expense. If that AP document is
+        // already posted/paid, adding a cost line would diverge the WO from its Bill — refuse.
+        const posted = await findPostedApForWo(client, companyId, params.data.id);
+        if (posted) throw new WoPostedApError(posted);
         const res = await client.query(
           `
             INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost)
@@ -1183,6 +1339,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         return res.rows[0];
       });
     } catch (error) {
+      if (isWoPostedApError(error)) return postedApReply(reply, error.detail);
       if (isWoInvoiceMismatch(error)) {
         const err = error;
         return reply.code(409).send({
@@ -1226,6 +1383,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     try {
       deleted = await withCompany(user.uuid, companyId, async (client) => {
         if (!(await maintenanceReady(client))) return null;
+        // FINANCIAL GUARD: removing a cost line from a WO whose Bill/Expense is already posted would
+        // diverge the WO from its AP document — refuse and tell the user to void the bill first.
+        const posted = await findPostedApForWo(client, companyId, params.data.id);
+        if (posted) throw new WoPostedApError(posted);
         const res = await client.query(
           `
             DELETE FROM maintenance.work_order_lines li
@@ -1243,6 +1404,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         return ok;
       });
     } catch (error) {
+      if (isWoPostedApError(error)) return postedApReply(reply, error.detail);
       if (isWoInvoiceMismatch(error)) {
         const err = error;
         return reply.code(409).send({

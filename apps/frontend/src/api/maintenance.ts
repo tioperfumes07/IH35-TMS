@@ -512,19 +512,53 @@ export function createWorkOrder(payload: CreateWorkOrderLegacyPayload | CreateWo
   );
 }
 
-export function updateWorkOrder(
-  id: string,
-  companyId: string,
-  payload: {
-    external_vendor_id?: string | null;
-    external_vendor_wo_number?: string | null;
-    external_vendor_invoice_number?: string | null;
-    description?: string;
-  }
-) {
+export type UpdateWorkOrderPayload = {
+  external_vendor_id?: string | null;
+  external_vendor_wo_number?: string | null;
+  external_vendor_invoice_number?: string | null;
+  description?: string;
+  bucket?: "in_house" | "external" | "roadside";
+  // Non-cost, non-financial header fields (safe to PATCH even after the AP bill posts).
+  wo_priority?: "routine" | "urgent" | "immediate";
+  vmrs_system_code?: string;
+  vmrs_assembly_code?: string;
+  vmrs_component_code?: string;
+  out_of_service?: boolean;
+  repair_complaint?: string;
+  repair_cause?: string;
+  repair_correction?: string;
+  authorization_number?: string;
+  service_location_type?: "shop" | "mobile" | "roadside";
+  repaired_by?: "in_house" | "outside_vendor";
+};
+
+export function updateWorkOrder(id: string, companyId: string, payload: UpdateWorkOrderPayload) {
   return apiRequest<WorkOrder>(`/api/v1/maintenance/work-orders/${id}?${query(companyId)}`, {
     method: "PATCH",
     body: payload,
+  });
+}
+
+export type WorkOrderLineItemPayload = {
+  line_type: "parts" | "labor" | "other";
+  description: string;
+  quantity: number;
+  unit_cost: number;
+  amount: number;
+};
+
+// Cost-line edits reuse the EXISTING line-item endpoints. The backend refuses (409
+// E_WO_POSTED_BILL_LOCK) when the WO's linked Bill/Expense is already posted/paid.
+export function addWorkOrderLineItem(id: string, companyId: string, payload: WorkOrderLineItemPayload) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/work-orders/${id}/line-items?${query(companyId)}`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function deleteWorkOrderLineItem(id: string, lineItemId: string, companyId: string) {
+  return apiRequest<void>(`/api/v1/maintenance/work-orders/${id}/line-items/${lineItemId}?${query(companyId)}`, {
+    method: "DELETE",
   });
 }
 

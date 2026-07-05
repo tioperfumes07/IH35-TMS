@@ -2,7 +2,16 @@ import { useEffect, type ReactNode } from "react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { createWorkOrder, suggestExpenseLoad, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
+import {
+  addWorkOrderLineItem,
+  createWorkOrder,
+  deleteWorkOrderLineItem,
+  suggestExpenseLoad,
+  updateWorkOrder,
+  type PaymentTiming,
+  type UpdateWorkOrderPayload,
+  type WorkOrderType,
+} from "../../../api/maintenance";
 import { ApiError } from "../../../api/client";
 import { companyToday } from "../../../lib/businessDate";
 import { Button } from "../../../components/Button";
@@ -188,11 +197,46 @@ export type CreateWOFormValues = {
   }>;
 };
 
+// ── Edit mode ─────────────────────────────────────────────────────────────────
+// D2-3: real Work Order edit. The modal accepts an existing WO; on save it calls the EXISTING
+// updateWorkOrder PATCH (header) + the EXISTING line-item endpoints (cost). No new routes.
+export type EditWorkOrderLine = {
+  id?: string; // present = persisted line (maintenance.work_order_lines); absent = newly added
+  line_type: "parts" | "labor" | "other";
+  description: string;
+  quantity: number;
+  unit_cost: number;
+  amount: number;
+};
+
+export type EditWorkOrderTarget = {
+  id: string;
+  display_id?: string | null;
+  status?: string | null;
+  description?: string | null;
+  bucket?: "in_house" | "external" | "roadside" | null;
+  external_vendor_wo_number?: string | null;
+  external_vendor_invoice_number?: string | null;
+  wo_priority?: "routine" | "urgent" | "immediate" | "" | null;
+  vmrs_system_code?: string | null;
+  vmrs_component_code?: string | null;
+  out_of_service?: boolean | null;
+  repair_complaint?: string | null;
+  repair_cause?: string | null;
+  repair_correction?: string | null;
+  authorization_number?: string | null;
+  service_location_type?: "shop" | "mobile" | "roadside" | "" | null;
+  repaired_by?: "in_house" | "outside_vendor" | "" | null;
+  line_items?: EditWorkOrderLine[];
+};
+
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   initialType?: WorkOrderType;
   initialValues?: Partial<CreateWOFormValues>;
+  // When set, the modal renders in EDIT mode (title "Edit Work Order") for this existing WO.
+  editWorkOrder?: EditWorkOrderTarget | null;
   onClose: () => void;
   onCreated: () => void;
 };
@@ -212,9 +256,15 @@ const DEFAULT_SOURCE_BY_TYPE: Record<WorkOrderType, CreateWOFormValues["source_t
   accident: "AC",
 };
 
-export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "pm", initialValues, onClose, onCreated }: Props) {
+export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "pm", initialValues, editWorkOrder, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
+  const isEdit = Boolean(editWorkOrder);
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
+  // Edit-mode state (declared unconditionally so hook order is stable).
+  const [editHeader, setEditHeader] = useState<UpdateWorkOrderPayload>({});
+  const [editLines, setEditLines] = useState<EditWorkOrderLine[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editBlockMessage, setEditBlockMessage] = useState<string | null>(null);
   const [taxRate, setTaxRate] = useState(8.25);
   // Transaction-side task completion (TASKS-PLANNER-V2). Set after a WO is created so we can offer a
   // "Tasks" completion button that links the new WO (role='result') to an open task.
@@ -300,6 +350,39 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     setBackendLoadError(null);
     setCreatedWO(null);
   }, [form, initialType, initialValues, open]);
+
+  // Edit prefill — hydrate the edit header + cost lines from the existing WO each time it opens.
+  useEffect(() => {
+    if (!open || !editWorkOrder) return;
+    setEditBlockMessage(null);
+    setSavingEdit(false);
+    setEditHeader({
+      description: editWorkOrder.description ?? "",
+      bucket: editWorkOrder.bucket ?? undefined,
+      external_vendor_wo_number: editWorkOrder.external_vendor_wo_number ?? "",
+      external_vendor_invoice_number: editWorkOrder.external_vendor_invoice_number ?? "",
+      wo_priority: (editWorkOrder.wo_priority || undefined) as UpdateWorkOrderPayload["wo_priority"],
+      vmrs_system_code: editWorkOrder.vmrs_system_code ?? "",
+      vmrs_component_code: editWorkOrder.vmrs_component_code ?? "",
+      out_of_service: Boolean(editWorkOrder.out_of_service),
+      repair_complaint: editWorkOrder.repair_complaint ?? "",
+      repair_cause: editWorkOrder.repair_cause ?? "",
+      repair_correction: editWorkOrder.repair_correction ?? "",
+      authorization_number: editWorkOrder.authorization_number ?? "",
+      service_location_type: (editWorkOrder.service_location_type || undefined) as UpdateWorkOrderPayload["service_location_type"],
+      repaired_by: (editWorkOrder.repaired_by || undefined) as UpdateWorkOrderPayload["repaired_by"],
+    });
+    setEditLines(
+      (editWorkOrder.line_items ?? []).map((li) => ({
+        id: li.id,
+        line_type: li.line_type,
+        description: li.description,
+        quantity: Number(li.quantity ?? 0),
+        unit_cost: Number(li.unit_cost ?? 0),
+        amount: Number(li.amount ?? 0),
+      }))
+    );
+  }, [open, editWorkOrder]);
 
   // When the modal is closed after a create, propagate onCreated so the parent list refetches.
   const handleModalClose = () => {
@@ -555,6 +638,259 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
   const classHint = form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`;
 
+  // ── Edit-mode save: EXISTING updateWorkOrder PATCH (header) + EXISTING line-item endpoints (cost) ──
+  const patchEditHeader = (patch: Partial<UpdateWorkOrderPayload>) => setEditHeader((h) => ({ ...h, ...patch }));
+  const patchEditLine = (index: number, patch: Partial<EditWorkOrderLine>) =>
+    setEditLines((rows) =>
+      rows.map((row, i) => {
+        if (i !== index) return row;
+        const next = { ...row, ...patch };
+        // Auto-derive amount from qty × unit cost unless the user is editing amount directly.
+        if (("quantity" in patch || "unit_cost" in patch) && !("amount" in patch)) {
+          next.amount = Math.round(Number(next.quantity || 0) * Number(next.unit_cost || 0) * 100) / 100;
+        }
+        return next;
+      })
+    );
+  const addEditLine = () =>
+    setEditLines((rows) => [...rows, { line_type: "parts", description: "", quantity: 1, unit_cost: 0, amount: 0 }]);
+  const removeEditLine = (index: number) => setEditLines((rows) => rows.filter((_, i) => i !== index));
+  const editLinesTotal = editLines.reduce((s, l) => s + Number(l.amount || 0), 0);
+
+  const submitEdit = async () => {
+    if (!editWorkOrder) return;
+    const woId = editWorkOrder.id;
+    setSavingEdit(true);
+    setEditBlockMessage(null);
+    try {
+      // 1) Header PATCH (non-cost, non-financial fields only). editHeader is prefilled from the WO,
+      //    so re-sending it is idempotent for untouched fields.
+      await updateWorkOrder(woId, operatingCompanyId, editHeader);
+
+      // 2) Cost lines — diff against the persisted lines and route through the line-item endpoints.
+      //    add = POST · remove = DELETE · adjust = DELETE old + POST new (no line-PATCH route exists).
+      const originalById = new Map((editWorkOrder.line_items ?? []).filter((l) => l.id).map((l) => [l.id as string, l]));
+      const currentIds = new Set(editLines.filter((l) => l.id).map((l) => l.id as string));
+      const toDelete: string[] = [];
+      const toAdd: EditWorkOrderLine[] = [];
+      for (const id of originalById.keys()) if (!currentIds.has(id)) toDelete.push(id);
+      const changed = (a: EditWorkOrderLine, b: EditWorkOrderLine) =>
+        a.line_type !== b.line_type ||
+        a.description !== b.description ||
+        Number(a.quantity) !== Number(b.quantity) ||
+        Number(a.unit_cost) !== Number(b.unit_cost) ||
+        Number(a.amount) !== Number(b.amount);
+      for (const line of editLines) {
+        if (!line.id) {
+          toAdd.push(line);
+          continue;
+        }
+        const orig = originalById.get(line.id);
+        if (orig && changed(line, orig)) {
+          toDelete.push(line.id);
+          toAdd.push({ ...line, id: undefined });
+        }
+      }
+      for (const id of toDelete) await deleteWorkOrderLineItem(woId, id, operatingCompanyId);
+      for (const line of toAdd)
+        await addWorkOrderLineItem(woId, operatingCompanyId, {
+          line_type: line.line_type,
+          description: line.description.trim() || "—",
+          quantity: Number(line.quantity) || 0,
+          unit_cost: Number(line.unit_cost) || 0,
+          amount: Number(line.amount) || 0,
+        });
+
+      pushToast("Work order updated", "success");
+      onCreated();
+      onClose();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const payload = error.data as { error?: string; message?: string } | undefined;
+        if (payload?.error === "E_WO_POSTED_BILL_LOCK") {
+          const msg =
+            payload.message ||
+            "This work order has a posted bill in Accounts Payable. Void the linked bill first, then edit its cost lines.";
+          setEditBlockMessage(msg);
+          pushToast(msg, "error");
+          setSavingEdit(false);
+          return;
+        }
+      }
+      pushToast(`Failed to update work order: ${String((error as Error).message || error)}`, "error");
+    }
+    setSavingEdit(false);
+  };
+
+  if (isEdit && editWorkOrder) {
+    const woLabel = editWorkOrder.display_id ?? editWorkOrder.id.slice(0, 8);
+    return (
+      <Modal open={open} onClose={onClose} title="Edit Work Order" sizePreset="lg" wide>
+        <div data-testid="edit-wo-modal" className="space-y-2.5 text-[12.5px] text-sidebar-bg">
+          <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
+            <span>WO #</span>
+            <span className="rounded-sm border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white">{woLabel}</span>
+            <span>·</span>
+            <span className="capitalize">{String(editWorkOrder.status ?? "—")}</span>
+            <span className="ml-auto text-[#8aa0c4]">All changes timestamped &amp; audited</span>
+          </div>
+
+          {editBlockMessage ? (
+            <div data-testid="edit-wo-posted-lock" className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-[12px] text-red-900">
+              {editBlockMessage}
+            </div>
+          ) : null}
+
+          {/* ── Header (non-cost, safe to edit anytime) ── */}
+          <SectionCard badge="A" title="Work order details" right="header — safe to edit anytime" testid="edit-wo-header">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <FieldV5 label="Description">
+                <input
+                  data-testid="edit-wo-description"
+                  value={editHeader.description ?? ""}
+                  onChange={(e) => patchEditHeader({ description: e.target.value })}
+                  className={FLD}
+                />
+              </FieldV5>
+              <FieldV5 label="Priority">
+                <select value={editHeader.wo_priority ?? ""} onChange={(e) => patchEditHeader({ wo_priority: (e.target.value || undefined) as UpdateWorkOrderPayload["wo_priority"] })} className={FLD}>
+                  <option value="">—</option>
+                  <option value="routine">Routine</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="immediate">OOS / Immediate</option>
+                </select>
+              </FieldV5>
+              <FieldV5 label="Bucket">
+                <select value={editHeader.bucket ?? ""} onChange={(e) => patchEditHeader({ bucket: (e.target.value || undefined) as UpdateWorkOrderPayload["bucket"] })} className={FLD}>
+                  <option value="">—</option>
+                  <option value="in_house">In-house</option>
+                  <option value="external">External</option>
+                  <option value="roadside">Roadside</option>
+                </select>
+              </FieldV5>
+              <FieldV5 label="Repaired by">
+                <select value={editHeader.repaired_by ?? ""} onChange={(e) => patchEditHeader({ repaired_by: (e.target.value || undefined) as UpdateWorkOrderPayload["repaired_by"] })} className={FLD}>
+                  <option value="">—</option>
+                  <option value="in_house">In-house</option>
+                  <option value="outside_vendor">Outside vendor</option>
+                </select>
+              </FieldV5>
+              <FieldV5 label="Service location">
+                <select value={editHeader.service_location_type ?? ""} onChange={(e) => patchEditHeader({ service_location_type: (e.target.value || undefined) as UpdateWorkOrderPayload["service_location_type"] })} className={FLD}>
+                  <option value="">—</option>
+                  <option value="shop">Shop</option>
+                  <option value="mobile">Mobile</option>
+                  <option value="roadside">Roadside</option>
+                </select>
+              </FieldV5>
+              <FieldV5 label="Out of service?">
+                <SegYesNo value={Boolean(editHeader.out_of_service)} onChange={(v) => patchEditHeader({ out_of_service: v })} />
+              </FieldV5>
+              <FieldV5 label="Vendor WO #">
+                <input value={editHeader.external_vendor_wo_number ?? ""} onChange={(e) => patchEditHeader({ external_vendor_wo_number: e.target.value })} className={FLD} />
+              </FieldV5>
+              <FieldV5 label="Vendor invoice #">
+                <input value={editHeader.external_vendor_invoice_number ?? ""} onChange={(e) => patchEditHeader({ external_vendor_invoice_number: e.target.value })} className={FLD} />
+              </FieldV5>
+              <FieldV5 label="Authorization #">
+                <input value={editHeader.authorization_number ?? ""} onChange={(e) => patchEditHeader({ authorization_number: e.target.value })} className={FLD} />
+              </FieldV5>
+              <FieldV5 label="System / component (VMRS)">
+                <input value={editHeader.vmrs_system_code ?? ""} onChange={(e) => patchEditHeader({ vmrs_system_code: e.target.value })} className={FLD} />
+              </FieldV5>
+            </div>
+          </SectionCard>
+
+          {/* ── Repair detail ── */}
+          <SectionCard badge="B" title="Repair detail (VMRS)" right="complaint · cause · correction" testid="edit-wo-ccc">
+            <div className="space-y-2">
+              <FieldV5 label="Complaint">
+                <textarea value={editHeader.repair_complaint ?? ""} onChange={(e) => patchEditHeader({ repair_complaint: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-[12.5px] outline-hidden" />
+              </FieldV5>
+              <FieldV5 label="Cause">
+                <textarea value={editHeader.repair_cause ?? ""} onChange={(e) => patchEditHeader({ repair_cause: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-[12.5px] outline-hidden" />
+              </FieldV5>
+              <FieldV5 label="Correction">
+                <textarea value={editHeader.repair_correction ?? ""} onChange={(e) => patchEditHeader({ repair_correction: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-[12.5px] outline-hidden" />
+              </FieldV5>
+            </div>
+          </SectionCard>
+
+          {/* ── Cost lines (routed through the line-item endpoints; posted-bill guarded server-side) ── */}
+          <SectionCard badge="C" title="Cost lines" right="add · adjust · remove — blocked once the bill posts" testid="edit-wo-cost-lines">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-[12px]">
+                <thead className="text-[10.5px] uppercase tracking-wide text-inactive">
+                  <tr>
+                    <th className="px-1.5 py-1">Type</th>
+                    <th className="px-1.5 py-1">Description</th>
+                    <th className="px-1.5 py-1 text-right">Qty</th>
+                    <th className="px-1.5 py-1 text-right">Unit cost</th>
+                    <th className="px-1.5 py-1 text-right">Amount</th>
+                    <th className="px-1.5 py-1" />
+                  </tr>
+                </thead>
+                <tbody data-testid="edit-wo-lines-body">
+                  {editLines.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-1.5 py-3 text-[11px] text-[#94a3b8]">No cost lines. Add one to record parts / labor / other cost.</td>
+                    </tr>
+                  ) : (
+                    editLines.map((line, i) => (
+                      <tr key={line.id ?? `new-${i}`} className="border-t border-[#eef1f5]">
+                        <td className="px-1.5 py-1">
+                          <select value={line.line_type} onChange={(e) => patchEditLine(i, { line_type: e.target.value as EditWorkOrderLine["line_type"] })} className={FLD}>
+                            <option value="parts">Parts</option>
+                            <option value="labor">Labor</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </td>
+                        <td className="px-1.5 py-1">
+                          <input value={line.description} onChange={(e) => patchEditLine(i, { description: e.target.value })} className={FLD} />
+                        </td>
+                        <td className="px-1.5 py-1">
+                          <input type="number" step="1" min="0" value={line.quantity} onChange={(e) => patchEditLine(i, { quantity: Number(e.target.value) })} className={`${FLD} text-right`} />
+                        </td>
+                        <td className="px-1.5 py-1">
+                          <input type="number" step="0.01" min="0" value={line.unit_cost} onChange={(e) => patchEditLine(i, { unit_cost: Number(e.target.value) })} className={`${FLD} text-right`} />
+                        </td>
+                        <td className="px-1.5 py-1">
+                          <input type="number" step="0.01" min="0" value={line.amount} onChange={(e) => patchEditLine(i, { amount: Number(e.target.value) })} className={`${FLD} text-right`} />
+                        </td>
+                        <td className="px-1.5 py-1 text-right">
+                          <button type="button" data-testid={`edit-wo-remove-line-${i}`} onClick={() => removeEditLine(i)} className="rounded-sm border border-[#d6dae1] px-2 py-0.5 text-[11px] text-[#b91c1c]">Remove</button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-[11px] font-semibold text-white">+ Add cost line</button>
+              <span className="ml-auto text-[12px] font-semibold text-sidebar-active">Total ${editLinesTotal.toFixed(2)}</span>
+            </div>
+          </SectionCard>
+
+          {/* Footer */}
+          <div className="flex items-center gap-2 border-t border-[#d6dae1] pt-2.5">
+            <div className="flex-1" />
+            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+            <button
+              type="button"
+              data-testid="edit-wo-save-btn"
+              disabled={savingEdit}
+              onClick={() => void submitEdit()}
+              className="h-8 rounded-md border border-[#15803d] bg-[#16a34a] px-3.5 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {savingEdit ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
   if (createdWO) {
     return (
       <Modal open={open} onClose={handleModalClose} title="Work order created" sizePreset="md">
@@ -579,7 +915,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   }
 
   return (
-    <Modal open={open} onClose={handleModalClose} title="Create / Edit Work Order" sizePreset="lg" wide>
+    <Modal open={open} onClose={handleModalClose} title="Create Work Order" sizePreset="lg" wide>
       <div data-testid="create-wo-render-v5" className="space-y-2.5 text-[12.5px] text-sidebar-bg">
         {/* Subbar — WO # · status · opened timestamp (render: .subbar) */}
         <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
