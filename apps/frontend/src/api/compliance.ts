@@ -94,3 +94,33 @@ export function archiveComplianceRule(id: string, operatingCompanyId: string) {
     { method: "DELETE" }
   );
 }
+
+// Cross-module "Compliance & Filings" aggregator — IFTA / Form 2290 / state permits / IRP / driver
+// compliance (CDL, medical, drug-test, Clearinghouse, MVR) + a placeholder for the not-yet-built
+// business-property-allocation (TX personal property tax rendition). Each program stays in its own
+// module; this is a read-only rollup with drill-through back to each item's home.
+export type FilingStatus = "upcoming" | "due" | "overdue" | "not_yet_tracked";
+
+export type FilingItem = {
+  id: string;
+  program: string;
+  category: string;
+  entity_code: string;
+  detail: string;
+  due_date: string | null;
+  status: FilingStatus;
+  drill_through: string | null;
+  source: "real" | "placeholder";
+};
+
+export type FilingsDashboard = {
+  items: FilingItem[];
+  counts: Record<FilingStatus, number>;
+  generated_at: string;
+};
+
+export function fetchFilingsDashboard(operatingCompanyId: string) {
+  return apiRequest<FilingsDashboard>(
+    `/api/v1/compliance/filings-dashboard?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
