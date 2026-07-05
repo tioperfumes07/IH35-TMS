@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -44,6 +45,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     if (!query.success) {
       return reply.status(400).send({ error: "validation_error", details: query.error.flatten() });
     }
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [query.data.operating_company_id]);
       // BLOCK 2: re-bucket projected income by projected_cash_date only when the master flag is on
@@ -65,6 +67,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     if (!query.success) {
       return reply.status(400).send({ error: "validation_error", details: query.error.flatten() });
     }
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [query.data.operating_company_id]);
       const cashFollowsEta = await isEnabled(client, "CASH_FOLLOWS_ETA_ENABLED", {
@@ -84,6 +87,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     if (!body.success) {
       return reply.status(400).send({ error: "validation_error", details: body.error.flatten() });
     }
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
       const row = await addAdjustment(client, {

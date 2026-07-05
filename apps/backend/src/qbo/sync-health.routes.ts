@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withLuciaBypass } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { getRunnerState } from "../admin/runner-status.store.js";
@@ -31,6 +32,7 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const payload = await withLuciaBypass(async (client) => {
+      await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
 
       const runsExist = await client.query(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
@@ -175,6 +177,7 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
     let payload: Record<string, unknown>;
     try {
       payload = await withLuciaBypass(async (client) => {
+      await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
 
       const alertsExist = await client.query(`SELECT to_regclass('qbo.sync_alerts') IS NOT NULL AS ok`);

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -43,6 +44,8 @@ export async function registerQboBulkLinkRoutes(app: FastifyInstance) {
 
     const errors: Array<{ entity_id: string; error_message: string }> = [];
     let applied = 0;
+
+    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
 
     const runBatch = async () => {
       await withCurrentUser(user.uuid, async (client) => {

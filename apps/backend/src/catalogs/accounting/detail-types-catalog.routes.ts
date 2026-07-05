@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { isCatalogWriteRole } from "../../auth/role-helpers.js";
 import { companyQuerySchema, currentAuthUser, idParamSchema, listQuerySchema, validationError } from "./shared.js";
@@ -46,6 +47,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
   // user id, not app.operating_company_id).
   const scoped = <T>(userUuid: string, opco: string, fn: (client: Parameters<Parameters<typeof withCurrentUser<T>>[1]>[0]) => Promise<T>) =>
     withCurrentUser<T>(userUuid, async (client) => {
+      await assertCompanyMembership(userUuid, opco);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       return fn(client);
     });

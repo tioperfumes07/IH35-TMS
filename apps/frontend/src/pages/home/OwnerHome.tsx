@@ -35,6 +35,7 @@ import { DriverDaySummaryCard } from "../../components/home/DriverDaySummaryCard
 import { QboSyncHealthCard } from "../../components/home/QboSyncHealthCard";
 import { VendorMappingIntegrityCard } from "../../components/home/VendorMappingIntegrityCard";
 import { TodaysAttentionTop5 } from "../../components/home/TodaysAttentionTop5";
+import { ComplianceFilingsDueWidget } from "../../components/home/ComplianceFilingsDueWidget";
 import { HomeFleetRestoreCard } from "./HomeFleetRestoreCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AttentionList } from "./AttentionList";
@@ -471,6 +472,10 @@ export function OwnerHome({ auth }: Props) {
             />
           </div>
         </div>
+      </div>
+
+      <div className="order-7">
+        <ComplianceFilingsDueWidget operatingCompanyId={selectedCompanyId ?? null} />
       </div>
 
       <footer className="order-8 text-xs text-gray-500">

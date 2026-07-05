@@ -12,6 +12,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { Button } from "../../../components/Button";
 import { AccountingKpiBar } from "../../../components/home/AccountingKpiBar";
 import { AccountingPendingApprovalsPanel } from "../../../components/home/AccountingPendingApprovalsPanel";
+import { ComplianceFilingsDueWidget } from "../../../components/home/ComplianceFilingsDueWidget";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatUsdFromCents } from "../HomeKpiCard";
 import "../home-print.css";
@@ -103,6 +104,8 @@ export function AccountingHome({ auth }: Props) {
       </section>
 
       <AccountingPendingApprovalsPanel data={homeQuery.data} isLoading={homeQuery.isLoading} />
+
+      <ComplianceFilingsDueWidget operatingCompanyId={selectedCompanyId ?? null} />
 
       <footer className="text-xs text-gray-500">
         Read-only view · data as of {homeQuery.data?.as_of_date ?? "—"} · Backend:{" "}

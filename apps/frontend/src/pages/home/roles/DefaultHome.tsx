@@ -20,6 +20,7 @@ import { getKpiSummary } from "../../../api/reports";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { Button } from "../../../components/Button";
 import { SectionQuickJump } from "../../../components/home/SectionQuickJump";
+import { ComplianceFilingsDueWidget } from "../../../components/home/ComplianceFilingsDueWidget";
 import { FleetSnapshotPanel } from "../../../components/home/FleetSnapshotPanel";
 import { DriverDaySummaryCard } from "../../../components/home/DriverDaySummaryCard";
 import { QboSyncHealthCard } from "../../../components/home/QboSyncHealthCard";
@@ -451,6 +452,10 @@ export function DefaultHome({ auth }: Props) {
             />
           </div>
         </div>
+      </div>
+
+      <div className="order-7">
+        <ComplianceFilingsDueWidget operatingCompanyId={selectedCompanyId ?? null} />
       </div>
 
       <footer className="order-8 text-xs text-gray-500">
