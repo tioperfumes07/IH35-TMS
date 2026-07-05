@@ -39,7 +39,9 @@ function currentAuthUser(req: any, reply: any) {
 async function loadPreparation(client: any, operatingCompanyId: string, id: string) {
   const res = await client.query(
     `
-      SELECT *
+      SELECT id, operating_company_id, quarter, year, status,
+             miles_aggregated_at, gallons_aggregated_at, tax_calculated_at,
+             csv_generated_at, csv_url, submitted_at, created_at, updated_at
       FROM ifta.quarterly_preparations
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
