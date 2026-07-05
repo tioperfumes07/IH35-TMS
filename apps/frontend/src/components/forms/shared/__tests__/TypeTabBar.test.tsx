@@ -50,9 +50,8 @@ describe("TypeTabBar", () => {
     ]);
   });
 
-  // NOTE (D2-1): the CreateBillModal / CreateExpenseModal render-smoke cases were removed
-  // here. Those modals were non-persisting stubs (no Save / no POST) that were never
-  // mounted in the app; they have been archived to src/components/_archived. The removed
-  // cases also failed on main ("No QueryClient set" — they rendered a useQuery component
-  // without a QueryClientProvider), so this drops 2 pre-existing failures too.
+  // NOTE (D2-1 reversal): CreateBillModal / CreateExpenseModal were un-archived and made
+  // functional (Save → createVendorBill / createExpense, mounted in the maintenance UI).
+  // Their submit behaviour is covered by dedicated tests under
+  // src/pages/maintenance/components/__tests__ rather than render-smoke cases here.
 });

@@ -18,6 +18,7 @@ import {
 } from "../../api/maintenance";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { ActionButton } from "../../components/shared/ActionButton";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
 import { SubTabRow } from "../../components/layout/SubTabRow";
 import { useToast } from "../../components/Toast";
@@ -28,6 +29,8 @@ import { FleetTablePage } from "./FleetTablePage";
 import { MaintenanceSettingsPage } from "./MaintenanceSettingsPage";
 import { ServiceLocationPage } from "./ServiceLocationPage";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
+import { CreateBillModal } from "./components/CreateBillModal";
+import { CreateExpenseModal } from "./components/CreateExpenseModal";
 import { MaintenanceDamageRegisterTab } from "./components/MaintenanceDamageRegisterTab";
 import { DtcAutoWorkOrdersCard } from "./components/DtcAutoWorkOrdersCard";
 import { InTransitIssuesTable } from "./components/InTransitIssuesTable";
@@ -87,6 +90,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const companyId = selectedCompanyId ?? "";
   const [createWoOpen, setCreateWoOpen] = useState(false);
   const [createWoType, setCreateWoType] = useState<WorkOrderType>("pm");
+  const [createBillOpen, setCreateBillOpen] = useState(false);
+  const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
   const [prefillFromIssue, setPrefillFromIssue] = useState<InTransitIssue | null>(null);
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
   const [tab, setTab] = useState<MaintenanceTabId>(initialTab);
@@ -211,6 +216,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         subtitle="Work orders, fleet maintenance, parts inventory, and PM scheduling"
         actions={
           <div className="flex items-center gap-2">
+            <ActionButton type="button" onClick={() => setCreateBillOpen(true)}>
+              + Create Bill
+            </ActionButton>
+            <ActionButton type="button" onClick={() => setCreateExpenseOpen(true)}>
+              + Create Expense
+            </ActionButton>
             <QuickActionsBar
               onCreate={(type) => {
                 setCreateWoType(type);
@@ -453,6 +464,16 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         onClose={() => setSelectedWorkOrderId(null)}
       />
 
+      <CreateBillModal
+        open={createBillOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setCreateBillOpen(false)}
+      />
+      <CreateExpenseModal
+        open={createExpenseOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setCreateExpenseOpen(false)}
+      />
       <CreateWorkOrderModal
         open={createWoOpen}
         operatingCompanyId={companyId}
