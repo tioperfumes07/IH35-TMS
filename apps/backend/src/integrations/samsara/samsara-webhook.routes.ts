@@ -15,6 +15,10 @@ const WEBHOOK_PATHS = [
   "/api/v1/samsara/webhooks",
 ] as const;
 
+// Per-IP rate limit (H4-2): webhook endpoints are unauthenticated ingress; cap request volume so a
+// forged/replayed flood cannot DoS the DB or audit log. Generous enough for Samsara's real event rate.
+const SAMSARA_WEBHOOK_RATE_LIMIT = { max: 240, timeWindow: "1 minute" } as const;
+
 async function handleSamsaraWebhookPost(req: FastifyRequest, reply: FastifyReply) {
   const q = webhookQuerySchema.safeParse(req.query ?? {});
   if (!q.success) {
@@ -35,24 +39,21 @@ async function handleSamsaraWebhookPost(req: FastifyRequest, reply: FastifyReply
     "samsara_webhook_ingress"
   );
 
-  let payloadObj: Record<string, unknown> = {};
-  try {
-    payloadObj = JSON.parse(rawBody.toString("utf8")) as Record<string, unknown>;
-  } catch {
-    payloadObj = { _parse_error: true };
-  }
-  const meta = extractSamsaraWebhookMeta(payloadObj);
-
+  // H4-2 REJECT-BEFORE-PERSIST: verify the Samsara v1 signature + timestamp freshness against the
+  // RAW body BEFORE parsing or writing anything. An unverified request must never have its
+  // attacker-supplied payload persisted to integrations.samsara_webhook_events.
   const secret = await withLuciaBypass((client) =>
     resolveSamsaraWebhookSigningSecret(client, operatingCompanyId)
   );
-  const sigOk = verifySamsaraWebhookSignature(
+  const verify = verifySamsaraWebhookSignature(
     rawBody,
     secret,
     req.headers as Record<string, string | string[] | undefined>
   );
 
-  if (!sigOk) {
+  if (!verify.ok) {
+    // Bounded security audit ONLY — no attacker payload is stored, and it is best-effort so a
+    // failed audit write never turns a rejected request into a 500.
     await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
       await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
@@ -60,22 +61,26 @@ async function handleSamsaraWebhookPost(req: FastifyRequest, reply: FastifyReply
         "warning",
         JSON.stringify({
           operating_company_id: operatingCompanyId,
-          event_type: meta.event_type,
+          reason: verify.reason,
           secret_source: secret ? "configured" : "missing",
+          bytes: rawBody.length,
         }),
         SAMSARA_AUDIT_SOURCE,
       ]);
-      await client.query(
-        `
-          INSERT INTO integrations.samsara_webhook_events (
-            operating_company_id, event_type, samsara_event_id, signature_valid, payload
-          ) VALUES ($1, $2, $3, false, $4::jsonb)
-        `,
-        [operatingCompanyId, meta.event_type || "unknown", meta.samsara_event_id, JSON.stringify(payloadObj)]
-      );
+    }).catch((err) => {
+      req.log.warn({ err, operating_company_id: operatingCompanyId }, "samsara_webhook_reject_audit_failed");
     });
     return reply.code(401).send({ error: "unauthorized" });
   }
+
+  // Signature + freshness verified — now it is safe to parse and persist the payload.
+  let payloadObj: Record<string, unknown> = {};
+  try {
+    payloadObj = JSON.parse(rawBody.toString("utf8")) as Record<string, unknown>;
+  } catch {
+    payloadObj = { _parse_error: true };
+  }
+  const meta = extractSamsaraWebhookMeta(payloadObj);
 
   await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
@@ -115,7 +120,7 @@ export async function registerSamsaraWebhookRoutes(app: FastifyInstance) {
     });
 
     for (const mountPath of WEBHOOK_PATHS) {
-      scoped.post(mountPath, handleSamsaraWebhookPost);
+      scoped.post(mountPath, { config: { rateLimit: SAMSARA_WEBHOOK_RATE_LIMIT } }, handleSamsaraWebhookPost);
     }
   });
 }
