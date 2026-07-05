@@ -110,7 +110,7 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
 
     await user.click(screen.getByTestId("accident-save-btn"));
     await waitFor(() => expect(vi.mocked(safetyApi.createSafetyAccident)).toHaveBeenCalled());
-    expect(vi.mocked(safetyApi.createSafetyAccident).mock.calls[0]?.[0]).toEqual(
+    expect(vi.mocked(safetyApi.createSafetyAccident).mock.lastCall?.[0]).toEqual(
       expect.objectContaining({
         operating_company_id: "co-1",
         driver_id: "driver-uuid-1",
@@ -119,6 +119,53 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
         load_id: "load-uuid-1",
       })
     );
+  });
+
+  it("SAFE-1: At Fault is a live control — its selection persists on create (not a hardcoded 'no')", async () => {
+    const user = userEvent.setup();
+    render(wrap(<AccidentReportDrawer open operatingCompanyId="co-1" accident={draft} createMode onClose={() => {}} onUpdated={() => {}} />));
+    const atFaultWrap = await screen.findByTestId("accident-at-fault");
+    const select = within(atFaultWrap).getByRole("combobox") as HTMLSelectElement;
+    // Default is NOT a forced "no" — an unassessed report starts unselected.
+    expect(select.value).toBe("");
+    await user.selectOptions(select, "disputed");
+    expect(select.value).toBe("disputed");
+
+    await user.click(screen.getByTestId("accident-save-btn"));
+    await waitFor(() => expect(vi.mocked(safetyApi.createSafetyAccident)).toHaveBeenCalled());
+    expect(vi.mocked(safetyApi.createSafetyAccident).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ at_fault: "disputed" })
+    );
+  });
+
+  it("SAFE-1: Preventable (DOT) tri-state maps to boolean|null and persists on create", async () => {
+    const user = userEvent.setup();
+    render(wrap(<AccidentReportDrawer open operatingCompanyId="co-1" accident={draft} createMode onClose={() => {}} onUpdated={() => {}} />));
+    const prevWrap = await screen.findByTestId("accident-preventable");
+    const select = within(prevWrap).getByRole("combobox") as HTMLSelectElement;
+    expect(select.value).toBe(""); // Undetermined by default
+    await user.selectOptions(select, "true");
+    await user.click(screen.getByTestId("accident-save-btn"));
+    await waitFor(() => expect(vi.mocked(safetyApi.createSafetyAccident)).toHaveBeenCalled());
+    expect(vi.mocked(safetyApi.createSafetyAccident).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ preventable: true })
+    );
+  });
+
+  it("SAFE-1: hydrates At Fault + Preventable from an existing persisted report", async () => {
+    const existing: Record<string, unknown> = {
+      id: "accident-1",
+      status: "open",
+      accident_at: "2026-07-03",
+      driver_id: "",
+      at_fault: "yes",
+      preventable: false,
+    };
+    render(wrap(<AccidentReportDrawer open operatingCompanyId="co-1" accident={existing} onClose={() => {}} onUpdated={() => {}} />));
+    const atFaultWrap = await screen.findByTestId("accident-at-fault");
+    expect((within(atFaultWrap).getByRole("combobox") as HTMLSelectElement).value).toBe("yes");
+    const prevWrap = await screen.findByTestId("accident-preventable");
+    expect((within(prevWrap).getByRole("combobox") as HTMLSelectElement).value).toBe("false");
   });
 
   it("never renders Add Photo as a silent dead control (tooltip + gate note before save)", async () => {
