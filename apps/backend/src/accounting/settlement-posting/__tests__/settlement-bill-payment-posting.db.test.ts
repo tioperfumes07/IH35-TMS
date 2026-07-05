@@ -137,7 +137,9 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
         db.query(
           `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, account_subtype, parent_account_id, is_postable)
            VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,true)`,
-          [id, companyId, `${name.slice(0, 6)}${suffix}`, name, type, subtype, parent]
+          // account_number must be unique per (company, account_number) — derive it from the account id
+          // so parent + sub-account never collide (uq_accounts_company_account_number).
+          [id, companyId, `A-${id.slice(0, 8)}`, name, type, subtype, parent]
         );
       await mkAcct(acct.ap, `AP ${suffix}`, "Liability", "AccountsPayable", null);
       await mkAcct(acct.driverPay, "Cost of Labor–Mexico Drivers", "Expense", null, null);
