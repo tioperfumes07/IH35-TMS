@@ -29,9 +29,13 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
   const [values, setValues] = useState<CustomerProfileFormValues>(() =>
     customer ? customerToProfileValues(customer) : emptyCustomerProfileValues()
   );
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    if (open && customer) setValues(customerToProfileValues(customer));
+    if (open && customer) {
+      setValues(customerToProfileValues(customer));
+      setFormError("");
+    }
   }, [open, customer]);
 
   const companyId = operatingCompanyId ?? customer?.operating_company_id ?? "";
@@ -50,9 +54,21 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
         className="space-y-3"
         onSubmit={(event) => {
           event.preventDefault();
+          // D1-5: customer_type must not be cleared on edit — the update endpoint accepts null, so the
+          // client is the only guard. Block empty submit before the request.
+          if (!values.customer_type) {
+            setFormError("Customer type is required.");
+            return;
+          }
+          setFormError("");
           void onSave(profileValuesToUpdatePayload(values));
         }}
       >
+        {formError ? (
+          <div id="customer_type-error" role="alert" className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+            {formError}
+          </div>
+        ) : null}
         <CustomerProfileForm
           values={values}
           onPatch={(patch) => setValues((current) => ({ ...current, ...patch }))}
@@ -65,7 +81,7 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={saving || !values.name.trim()}>
+          <Button type="submit" disabled={saving || !values.name.trim() || !values.customer_type}>
             {saving ? "Saving…" : "Save"}
           </Button>
         </div>

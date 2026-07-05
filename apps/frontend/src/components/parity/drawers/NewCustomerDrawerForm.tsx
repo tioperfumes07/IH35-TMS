@@ -16,6 +16,7 @@ type Props = {
 type FormState = {
   displayName: string;
   companyName: string;
+  customerType: "" | "broker" | "direct_shipper";
   firstName: string;
   lastName: string;
   email: string;
@@ -36,7 +37,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
   const { pushToast } = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>({
-    displayName: "", companyName: "", firstName: "", lastName: "",
+    displayName: "", companyName: "", customerType: "", firstName: "", lastName: "",
     email: "", phone: "", mobile: "", website: "",
     isSubCustomer: false, parentCustomer: "",
     emailConsent: false,
@@ -52,6 +53,16 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
     e.preventDefault();
     const displayName = form.displayName.trim() || `${form.firstName} ${form.lastName}`.trim() || form.companyName.trim();
     if (!displayName) { pushToast("Customer display name is required.", "error"); return; }
+    // D1-5: customer_type is REQUIRED by the create endpoint (POST /api/v1/mdata/customers rejects a
+    // missing type). Block client-side so the user gets an inline message instead of a raw 400, and so
+    // the field's "*" marker is actually enforced.
+    if (!form.customerType) { pushToast("Customer type is required.", "error"); return; }
+    // D1-4: a sub-customer with no parent selected is invalid — the "Parent customer *" marker was never
+    // enforced before (submit went through and the parent was silently dropped). Block submit here.
+    if (form.isSubCustomer && !form.parentCustomer.trim()) {
+      pushToast("Parent customer is required for a sub-customer.", "error");
+      return;
+    }
     setSaving(true);
     try {
       // D1-1: write to the REAL mdata.customers table (POST /api/v1/mdata/customers — the same
@@ -61,6 +72,10 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
       const res = await createCustomer({
         name: displayName,
         operating_company_id: operatingCompanyId,
+        customer_type: form.customerType,
+        // NOTE (D1-4): parent/sub-customer has no mdata.customers column yet (documented in
+        // CustomerProfileForm's "pending backend" note). We validate it above so an orphan sub-customer
+        // can't be created, but the parent link cannot be persisted until a migration adds the column.
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         website: form.website.trim() || undefined,
@@ -96,6 +111,20 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Company name</span>
         <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} />
+      </label>
+      <label className="block">
+        <span className="text-xs font-medium text-gray-700">Customer type *</span>
+        <select
+          name="customer_type"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
+          value={form.customerType}
+          aria-required
+          onChange={(e) => set("customerType", e.target.value)}
+        >
+          <option value="">— Select type —</option>
+          <option value="broker">Broker</option>
+          <option value="direct_shipper">Direct shipper</option>
+        </select>
       </label>
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Display name *</span>

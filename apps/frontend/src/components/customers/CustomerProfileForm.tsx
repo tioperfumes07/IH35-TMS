@@ -277,18 +277,27 @@ function SelectField({
   value,
   onChange,
   options,
+  required = false,
+  name,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: Array<{ value: string; label: string }>;
+  required?: boolean;
+  name?: string;
 }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block text-xs font-semibold text-gray-600">{label}</span>
+      <span className="mb-1 block text-xs font-semibold text-gray-600">
+        {label}
+        {required ? " *" : ""}
+      </span>
       <select
+        name={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        aria-required={required || undefined}
         className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
       >
         {options.map((o) => (
@@ -369,6 +378,8 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
           <TextField label="Customer display name" dataField="legal_name" value={values.name} onChange={(name) => onPatch({ name })} required />
           <SelectField
             label="Customer type"
+            name="customer_type"
+            required
             value={values.customer_type}
             onChange={(customer_type) => onPatch({ customer_type: customer_type as CustomerProfileFormValues["customer_type"] })}
             options={[

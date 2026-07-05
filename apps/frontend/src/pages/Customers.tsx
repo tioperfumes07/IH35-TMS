@@ -216,7 +216,7 @@ export function CustomersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createValues, setCreateValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
   const [createFormError, setCreateFormError] = useState("");
-  const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string }>({});
+  const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string; customer_type?: string }>({});
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
   const { viewMode, setViewMode } = useViewModePref("customers", "master-detail");
 
@@ -226,6 +226,13 @@ export function CustomersPage() {
       if (!legalName) {
         const error = new Error("Customer legal name is required.");
         (error as Error & { code?: string }).code = "legal_name_required";
+        throw error;
+      }
+      // D1-5: customer_type is required by the create endpoint — block client-side so the user gets an
+      // inline field error instead of a generic 400 "Could not save customer."
+      if (!createValues.customer_type) {
+        const error = new Error("Customer type is required.");
+        (error as Error & { code?: string }).code = "customer_type_required";
         throw error;
       }
       return createCustomer(profileValuesToCreatePayload(createValues, companyId));
@@ -244,6 +251,10 @@ export function CustomersPage() {
       setCreateFieldErrors({});
       if ((error as Error & { code?: string }).code === "legal_name_required") {
         setCreateFieldErrors({ legal_name: "Legal name is required" });
+        return;
+      }
+      if ((error as Error & { code?: string }).code === "customer_type_required") {
+        setCreateFieldErrors({ customer_type: "Customer type is required" });
         return;
       }
       const err = error as ApiError;
@@ -688,6 +699,11 @@ export function CustomersPage() {
           {createFieldErrors.legal_name ? (
             <span id="legal_name-error" className="block text-xs text-red-700">
               {createFieldErrors.legal_name}
+            </span>
+          ) : null}
+          {createFieldErrors.customer_type ? (
+            <span id="customer_type-error" className="block text-xs text-red-700">
+              {createFieldErrors.customer_type}
             </span>
           ) : null}
           <CustomerProfileForm
