@@ -13,7 +13,9 @@ import {
 } from "./void.service.js";
 
 type BillStatus = "open" | "partial" | "paid" | "voided";
-type PaymentMethod = "check" | "ach" | "wire" | "cash" | "credit_card";
+// 'other' is a DB-valid method (accounting.bill_payments.payment_method CHECK) used for non-cash
+// bill payments (e.g. the settlement deduction closure — from_bank_account_id NULL, no cash moves).
+type PaymentMethod = "check" | "ach" | "wire" | "cash" | "credit_card" | "other";
 
 type CreateBillInput = {
   operatingCompanyId: string;

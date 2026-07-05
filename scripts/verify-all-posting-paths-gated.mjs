@@ -33,8 +33,14 @@ const errors = [];
 // per-entity gate-resolver helper). A file gating this type must reference at least one of these.
 const MONITORED = {
   expense: ["EXPENSE_GL_POSTING_ENABLED", "EXPENSE_GL_POSTING_FLAG_KEY"],
-  bill: ["BILL_GL_POSTING_ENABLED", "BILL_GL_POSTING_FLAG_KEY"],
-  bill_payment: ["BILL_PAYMENT_GL_POSTING_ENABLED", "BILL_PAYMENT_GL_POSTING_FLAG_KEY", "isBillPaymentGlPostingEnabled"],
+  bill: ["BILL_GL_POSTING_ENABLED", "BILL_GL_POSTING_FLAG_KEY", "SETTLEMENT_GL_POSTING_ENABLED", "SETTLEMENT_GL_POSTING_FLAG_KEY"],
+  bill_payment: [
+    "BILL_PAYMENT_GL_POSTING_ENABLED",
+    "BILL_PAYMENT_GL_POSTING_FLAG_KEY",
+    "isBillPaymentGlPostingEnabled",
+    "SETTLEMENT_GL_POSTING_ENABLED",
+    "SETTLEMENT_GL_POSTING_FLAG_KEY",
+  ],
   customer_payment: ["CUSTOMER_PAYMENT_GL_POSTING_ENABLED", "CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY"],
   invoice: ["INVOICE_AR_GL_POSTING_ENABLED", "INVOICE_AR_GL_POSTING_FLAG_KEY"],
   bank_categorization: ["BANK_FEED_GL_POSTING_ENABLED", "BANK_FEED_GL_POSTING_FLAG_KEY"],

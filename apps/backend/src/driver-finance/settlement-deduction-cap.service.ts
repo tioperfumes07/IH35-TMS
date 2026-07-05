@@ -241,7 +241,15 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
       WHERE operating_company_id = $1
         AND driver_id = $2
         AND applied_to_settlement_id IS NULL
-      ORDER BY created_at ASC, id ASC
+      -- PAY-FIRST-THEN-ESCROW (owner-locked 2026-07-04): recover advances/debts BEFORE withholding
+      -- escrow, so a floor-limited settlement pays down what the driver owes first and only defers
+      -- escrow. Escrow-type deductions (driver_bond / abandonment) sort LAST; ties broken by age.
+      ORDER BY
+        CASE
+          WHEN lower(coalesce(deduction_type, '')) IN ('driver_bond','bond','escrow','escrow_load_abandonment','load_abandonment','abandonment') THEN 2
+          ELSE 0
+        END ASC,
+        created_at ASC, id ASC
       FOR UPDATE
     `,
     [input.operatingCompanyId, input.driverId]
