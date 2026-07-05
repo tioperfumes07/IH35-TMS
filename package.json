@@ -583,6 +583,7 @@
     "verify:no-phantom-entity-columns": "node scripts/verify-no-phantom-entity-columns.mjs",
     "verify:driver-qual-gate": "node scripts/verify-driver-qualification-gate-shared.mjs",
     "verify:cron-observability": "node scripts/verify-cron-observability.mjs",
+    "verify:program-board-repo-root": "node scripts/verify-program-board-repo-root.mjs",
     "verify:user-role-escalation": "node scripts/verify-user-role-escalation-guard.mjs",
     "verify:driver-scheduler-crons-registered": "node scripts/verify-driver-scheduler-crons-registered.mjs",
     "verify:incident-trailer-source": "node scripts/verify-incident-trailer-source.mjs",
