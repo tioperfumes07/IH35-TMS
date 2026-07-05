@@ -1,7 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CreateBillModal } from "../../../../pages/maintenance/components/CreateBillModal";
-import { CreateExpenseModal } from "../../../../pages/maintenance/components/CreateExpenseModal";
 import { BILL_TYPE_TABS, EXPENSE_TYPE_TABS, TypeTabBar } from "../TypeTabBar";
 
 describe("TypeTabBar", () => {
@@ -52,15 +50,9 @@ describe("TypeTabBar", () => {
     ]);
   });
 
-  it("CreateBillModal mounts with Repair Bill active", () => {
-    render(<CreateBillModal open operatingCompanyId="00000000-0000-0000-0000-000000000001" linkedWoDisplayId="WO-T169-IS-01-01-2026-0001-12345" onClose={vi.fn()} />);
-    const btn = screen.getByRole("button", { name: "Repair Bill" }) as HTMLButtonElement;
-    expect(btn.style.borderBottom).toContain("2px solid");
-  });
-
-  it("CreateExpenseModal mounts with Fuel Expense active", () => {
-    render(<CreateExpenseModal open operatingCompanyId="00000000-0000-0000-0000-000000000001" onClose={vi.fn()} />);
-    const btn = screen.getByRole("button", { name: "Fuel Expense" }) as HTMLButtonElement;
-    expect(btn.style.borderBottom).toContain("2px solid");
-  });
+  // NOTE (D2-1): the CreateBillModal / CreateExpenseModal render-smoke cases were removed
+  // here. Those modals were non-persisting stubs (no Save / no POST) that were never
+  // mounted in the app; they have been archived to src/components/_archived. The removed
+  // cases also failed on main ("No QueryClient set" — they rendered a useQuery component
+  // without a QueryClientProvider), so this drops 2 pre-existing failures too.
 });
