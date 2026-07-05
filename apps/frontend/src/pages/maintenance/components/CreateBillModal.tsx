@@ -42,7 +42,7 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, o
   });
   const driversQuery = useQuery({
     queryKey: ["create-bill-modal", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId }),
+    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(open && operatingCompanyId),
   });
   const unitsQuery = useQuery({

@@ -700,6 +700,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             <div className="grid gap-2 md:grid-cols-2">
               <DriverAutocomplete
                 companyId={companyId}
+                limit={200}
                 value={mergeDriverId}
                 onChange={(driverId, driverName) => {
                   setMergeDriverId(driverId);

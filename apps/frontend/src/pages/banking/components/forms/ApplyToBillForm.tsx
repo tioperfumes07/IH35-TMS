@@ -38,7 +38,7 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
   });
   const driversQuery = useQuery({
     queryKey: ["categorize-bill", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId }),
+    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(operatingCompanyId),
   });
   const unitsQuery = useQuery({

@@ -113,7 +113,7 @@ export function UserDetailPage() {
   const driversQuery = useQuery({
     queryKey: ["drivers", "for-dispatcher-safety", selectedCompanyId],
     enabled: Boolean(selectedCompanyId),
-    queryFn: () => listDrivers({ operating_company_id: selectedCompanyId }).then((result) => result.drivers),
+    queryFn: () => listDrivers({ operating_company_id: selectedCompanyId, limit: 200 }).then((result) => result.drivers), // full active set (endpoint default 50 truncates >50)
   });
 
   const safetyEventsQuery = useQuery({

@@ -49,7 +49,7 @@ export function EldAuditTrailViewer() {
   const driversQuery = useQuery({
     queryKey: ["mdata", "drivers", companyId],
     enabled: Boolean(companyId),
-    queryFn: () => listDrivers({ operating_company_id: companyId }),
+    queryFn: () => listDrivers({ operating_company_id: companyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
   });
 
   const historyQuery = useQuery({

@@ -61,7 +61,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
 
   const driversQuery = useQuery({
     queryKey: ["mdata", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active" }),
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(operatingCompanyId),
   });
 

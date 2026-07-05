@@ -90,7 +90,7 @@ export function DrugAlcoholTab() {
   const driversQ = useQuery({
     queryKey: ["drivers", "drug-ui", companyId],
     enabled: Boolean(companyId),
-    queryFn: () => listDrivers({ operating_company_id: companyId, status: "active" }).then((r) => r.drivers),
+    queryFn: () => listDrivers({ operating_company_id: companyId, status: "active", limit: 200 }).then((r) => r.drivers), // full active set (endpoint default 50 truncates >50)
   });
 
   const testsQ = useQuery({
