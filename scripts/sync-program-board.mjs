@@ -36,9 +36,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const EXTRA_REL = "docs/trackers/program-board-extra.json";
 const META_REL = "docs/trackers/program-board-meta.json";
 const INTAKE_REL = "docs/trackers/program-board-intake.json";
+const BLOCKS_REL = "docs/trackers/block-reconciliation-data.json";
 const EXTRA_PATH = path.join(ROOT, EXTRA_REL);
 const META_PATH = path.join(ROOT, META_REL);
 const INTAKE_PATH = path.join(ROOT, INTAKE_REL);
+const BLOCKS_PATH = path.join(ROOT, BLOCKS_REL);
 const XLSX_AUDIT_JSON_FALLBACK = process.env.BOARD_XLSX_JSON || ""; // optional pre-extracted json
 
 // Desktop audit xlsx (canonical descriptive columns). First existing wins.
@@ -62,7 +64,20 @@ const readJSON = (p, dflt = null) => {
     return dflt;
   }
 };
-const writeJSON = (p, obj) => fs.writeFileSync(p, JSON.stringify(obj, null, 2) + "\n");
+// Preserve each target file's existing indentation (block-reconciliation-data.json
+// is generated with 1-space indent; program-board-*.json with 2) so enrichment
+// produces a minimal, review-friendly diff instead of a whole-file reformat.
+function detectIndent(p) {
+  try {
+    const m = fs.readFileSync(p, "utf8").match(/\n([\t ]+)"/);
+    if (m) return m[1][0] === "\t" ? "\t" : m[1].length;
+  } catch {
+    /* new file */
+  }
+  return 2;
+}
+const writeJSON = (p, obj, indent) =>
+  fs.writeFileSync(p, JSON.stringify(obj, null, indent == null ? detectIndent(p) : indent) + "\n");
 
 // Convert an ISO timestamp -> "YYYY-MM-DD HH:MM CT" in America/Chicago.
 function toCT(iso) {
@@ -382,15 +397,204 @@ function requestedCtFor(row, intake) {
   return null;
 }
 
+const prUrlFor = (n) => (n ? `https://github.com/${REPO}/pull/${n}` : null);
+
+// live_state for a row with NO PR (block rows built by evidence, or unbuilt).
+function statusLiveState(row, gated) {
+  if (/^DONE/i.test(row.status || "")) return "merged"; // done-by-evidence -> counts as done
+  if (gated) return "gated";
+  return "pending";
+}
+
+// SHARED per-row lifecycle enrichment — used by BOTH audit findings and
+// block/task rows so a single row shows: requested -> written -> merged ->
+// deployed. Additive: writes only lifecycle fields, never status/financial fields.
+// Returns the derived live_state.
+function enrichRow({ row, track, gated, intake, deploy, getPr, ghOk, prior, priorLc, nowStamp, completedNow, mergedPrMap }) {
+  const n = prNumber(row.pr);
+  const requested_ct = requestedCtFor(row, intake);
+
+  // No PR at all -> status-derived state (still stamp lifecycle fields; additive).
+  if (!n) {
+    const live_state = statusLiveState(row, gated);
+    row.requested_ct = requested_ct || prior.requested_ct || null;
+    row.written_ct = null;
+    row.merged_ct = null;
+    row.merged_at = null;
+    row.deployed_ct = null;
+    row.deploy_no = null;
+    row.pr_url = null;
+    row.live_state = live_state;
+    row.lifecycle = live_state === "merged" ? "merged" : "requested";
+    row.synced_at = nowStamp;
+    return live_state;
+  }
+
+  // Terminal fast-path: already fully enriched + deployed -> reuse prior, skip gh
+  // (bounds steady-state gh calls; deployed is terminal so nothing changes).
+  const terminal = prior.lifecycle === "deployed" && prior.written_ct && prior.deployed_ct;
+
+  let pr = null;
+  if (ghOk && !terminal) pr = getPr(n);
+
+  // Preserve-prior path (terminal, OR gh down but we have a prior snapshot).
+  if (terminal || (!ghOk && prior.live_state)) {
+    row.requested_ct = requested_ct || prior.requested_ct || null;
+    row.written_ct = prior.written_ct || null;
+    row.merged_ct = prior.merged_ct || null;
+    row.merged_at = prior.merged_at || null;
+    row.deployed_ct = prior.deployed_ct || null;
+    row.deploy_no = prior.deploy_no || null;
+    row.pr_url = prior.pr_url || prUrlFor(n);
+    row.live_state = prior.live_state || (prior.deployed_ct ? "deployed" : "merged");
+    row.lifecycle =
+      prior.lifecycle ||
+      lifecycleOf({ requestedCt: row.requested_ct, writtenCt: row.written_ct, mergedCt: row.merged_ct, deployedCt: row.deployed_ct });
+    row.synced_at = nowStamp;
+    return row.live_state;
+  }
+
+  let written_ct = pr?.createdAt ? toCT(pr.createdAt) : prior.written_ct || null;
+  let merged_ct = pr?.mergedAt ? toCT(pr.mergedAt) : prior.merged_ct || null;
+  let merged_at = pr?.mergedAt || prior.merged_at || null;
+
+  // Local merged_prs fallback (Action-safe, no network) for the merge timestamp
+  // when gh is unavailable/rate-limited or didn't resolve it.
+  if (!merged_at && mergedPrMap && mergedPrMap.has(n)) {
+    merged_at = mergedPrMap.get(n);
+    merged_ct = toCT(merged_at);
+  }
+
+  // Build a pr-like object for state/deploy derivation when gh gave nothing but
+  // we know from merged_prs that it merged.
+  let prForState = pr;
+  if (!prForState && merged_at) {
+    prForState = { state: "MERGED", mergedAt: merged_at, mergeCommit: null, url: null, createdAt: null };
+  }
+
+  const pr_url = pr?.url || prior.pr_url || prUrlFor(n);
+  let live_state = deriveLiveState(prForState, gated);
+  const dep = computeDeployed({
+    pr: prForState,
+    liveVersion: deploy.version,
+    priorDeployedCt: prior.deployed_ct,
+    priorDeployNo: prior.deploy_no,
+  });
+  if (dep.deployed) live_state = "deployed";
+
+  const lifecycle = lifecycleOf({
+    requestedCt: requested_ct,
+    writtenCt: written_ct,
+    mergedCt: merged_ct,
+    deployedCt: dep.deployedCt,
+  });
+
+  if ((lifecycle === "deployed" || lifecycle === "merged") && priorLc !== "deployed" && priorLc !== "merged") {
+    completedNow.push({ track, id: row.id, name: row.name, pr: `#${n}`, at: merged_ct || nowCT() });
+  }
+
+  row.requested_ct = requested_ct || null;
+  row.written_ct = written_ct;
+  row.merged_ct = merged_ct;
+  row.merged_at = merged_at;
+  row.deployed_ct = dep.deployedCt;
+  row.deploy_no = dep.deployNo;
+  row.pr_url = pr_url;
+  row.live_state = live_state;
+  row.lifecycle = lifecycle;
+  row.synced_at = nowStamp;
+  return live_state;
+}
+
+// Tally live_state values -> the standard tab shape.
+function tallyLiveStates(rows) {
+  const t = { total: rows.length, done: 0, open: 0, gated: 0, waiting_merge: 0, in_ci: 0, ci_failed: 0, pending: 0, deployed: 0, merged: 0 };
+  for (const r of rows) {
+    switch (r.live_state) {
+      case "deployed": t.deployed++; t.done++; break;
+      case "merged": t.merged++; t.done++; break;
+      case "waiting-merge": t.waiting_merge++; break;
+      case "in-ci": t.in_ci++; break;
+      case "ci-failed": t.ci_failed++; break;
+      case "gated": t.gated++; break;
+      default: t.pending++; break;
+    }
+  }
+  t.open = t.total - t.done;
+  return t;
+}
+
+// ---- module/section derivation --------------------------------------------
+// Audit row module: leading parenthetical of the name, first token before "/".
+//   "1 (Security/Identity) — ..."     -> "Security"
+//   "C1 (Dispatch/Compliance) — ..."  -> "Dispatch"
+function moduleOfAudit(row) {
+  if (row.module) return String(row.module).split("/")[0].trim();
+  const m = String(row.name || "").match(/\(([^)]+)\)/);
+  if (m) {
+    const first = m[1].split("/")[0].trim();
+    if (first) return first;
+  }
+  return "Other";
+}
+// Block row phase/section: the leading id segment (phase token).
+//   "A1-AUDIT-SPINE-LINK-COLUMNS" -> "A1" ; "RECON-01" -> "RECON" ; "P3-T11.17" -> "P3"
+function moduleOfBlock(row) {
+  const id = String(row.id || "").trim();
+  if (!id) return "Other";
+  const seg = id.split(/[-_.]/)[0];
+  return seg || "Other";
+}
+
+const isDoneState = (r) => r.live_state === "deployed" || r.live_state === "merged";
+
+// Extend a plain live-state tally with the richer real-time metrics the owner
+// asked for: financial_pending, by_module, pct_deployed, pct_done.
+function extendedTab(rows, moduleOf) {
+  const base = tallyLiveStates(rows);
+  const financial_pending = rows.filter((r) => r.fin === true && !isDoneState(r)).length;
+  const by_module = {};
+  for (const r of rows) {
+    const m = moduleOf(r) || "Other";
+    const b = by_module[m] || (by_module[m] = { total: 0, done: 0, pending: 0, financial_pending: 0 });
+    b.total++;
+    if (isDoneState(r)) b.done++;
+    else {
+      b.pending++;
+      if (r.fin === true) b.financial_pending++;
+    }
+  }
+  return {
+    ...base,
+    financial_pending,
+    pct_deployed: base.total ? Number((base.deployed / base.total).toFixed(4)) : 0,
+    pct_done: base.total ? Number((base.done / base.total).toFixed(4)) : 0,
+    by_module,
+  };
+}
+
 async function runSync() {
   const extra = readJSON(EXTRA_PATH);
   if (!extra || !Array.isArray(extra.audit_bug_sweep)) {
     console.error(`[sync] cannot read ${EXTRA_REL} audit_bug_sweep[]`);
     process.exit(1);
   }
+  // Block/task rows live in a SEPARATE tracker (rendered by All Tasks / Currently
+  // Pending). Absence is tolerated — block tabs are simply omitted, never a 500.
+  const blockData = readJSON(BLOCKS_PATH);
+  const blockRows = blockData && Array.isArray(blockData.blocks) ? blockData.blocks : [];
+  if (!blockRows.length) console.warn(`[sync] ${BLOCKS_REL} has no blocks[] — block tabs skipped`);
+  // Local merged-PR map (number -> mergedAt): Action-safe fallback, no network.
+  const mergedPrMap = new Map();
+  for (const p of blockData?.merged_prs || []) {
+    if (p && p.number != null && p.mergedAt) mergedPrMap.set(Number(p.number), p.mergedAt);
+  }
+
   const priorMeta = readJSON(META_PATH) || {};
-  const priorRowById = new Map(); // id+name -> prior row snapshot (for persisted deployed_ct)
-  for (const r of extra.audit_bug_sweep) priorRowById.set(`${r.id}::${r.name}`, r);
+  // Prior snapshots (for persisted deployed_ct + delta diffing), keyed by track.
+  const priorRowByKey = new Map();
+  for (const r of extra.audit_bug_sweep) priorRowByKey.set(`audit::${r.id}::${r.name}`, r);
+  for (const r of blockRows) priorRowByKey.set(`block::${r.id}::${r.name}`, r);
 
   const intake = ensureIntake();
   const deploy = await fetchDeployVersion();
@@ -402,7 +606,7 @@ async function runSync() {
     execFileSync("gh", ["auth", "status"], { stdio: ["ignore", "ignore", "ignore"] });
   } catch {
     ghOk = false;
-    console.warn("[sync] `gh` not authenticated — PR lifecycle lookups will be skipped this run.");
+    console.warn("[sync] `gh` not authenticated — using local merged_prs fallback for merge times.");
   }
 
   const prCache = new Map();
@@ -420,117 +624,55 @@ async function runSync() {
   };
 
   const nowStamp = nowISO();
-  let counts = { deployed: 0, merged: 0, waiting: 0, in_ci: 0, ci_failed: 0, pending: 0, gated: 0 };
-
   const completedNow = [];
-  for (const row of extra.audit_bug_sweep) {
-    const gated = /GATED/i.test(row.status || "") || row.tier === "STOP" || row.fin === true;
-    const n = prNumber(row.pr);
-    const prior = priorRowById.get(`${row.id}::${row.name}`) || {};
-    const requested_ct = requestedCtFor(row, intake);
-
-    let pr = null;
-    if (n && ghOk) pr = getPr(n);
-
-    // If gh unavailable but we have a prior snapshot, preserve prior derived fields.
-    if (n && !ghOk && prior.live_state) {
-      row.requested_ct = requested_ct || prior.requested_ct || null;
-      row.synced_at = nowStamp;
-      // keep prior written/merged/deployed/live_state/pr_url/deploy_no
-      row.written_ct = prior.written_ct || null;
-      row.merged_ct = prior.merged_ct || null;
-      row.merged_at = prior.merged_at || null;
-      row.deployed_ct = prior.deployed_ct || null;
-      row.deploy_no = prior.deploy_no || null;
-      row.pr_url = prior.pr_url || null;
-      row.live_state = prior.live_state;
-      row.lifecycle = prior.lifecycle || lifecycleOf({ requestedCt: row.requested_ct, writtenCt: row.written_ct, mergedCt: row.merged_ct, deployedCt: row.deployed_ct });
-    } else {
-      const written_ct = pr?.createdAt ? toCT(pr.createdAt) : prior.written_ct || null;
-      const merged_ct = pr?.mergedAt ? toCT(pr.mergedAt) : prior.merged_ct || null;
-      const merged_at = pr?.mergedAt || prior.merged_at || null;
-      const pr_url = pr?.url || prior.pr_url || (n ? `https://github.com/${REPO}/pull/${n}` : null);
-
-      let live_state = deriveLiveState(pr, gated);
-      const dep = computeDeployed({
-        pr,
-        liveVersion: deploy.version,
-        priorDeployedCt: prior.deployed_ct,
-        priorDeployNo: prior.deploy_no,
-      });
-      if (dep.deployed) live_state = "deployed";
-
-      const lifecycle = lifecycleOf({
-        requestedCt: requested_ct,
-        writtenCt: written_ct,
-        mergedCt: merged_ct,
-        deployedCt: dep.deployedCt,
-      });
-
-      // Track completion transition for deltas (reached merged/deployed since prior).
-      const priorLc = prior.lifecycle || null;
-      if ((lifecycle === "deployed" || lifecycle === "merged") && priorLc !== "deployed" && priorLc !== "merged") {
-        completedNow.push({ id: row.id, name: row.name, pr: row.pr ? `#${n}` : null, at: merged_ct || nowCT() });
-      }
-
-      row.requested_ct = requested_ct || null;
-      row.written_ct = written_ct;
-      row.merged_ct = merged_ct;
-      row.merged_at = merged_at;
-      row.deployed_ct = dep.deployedCt;
-      row.deploy_no = dep.deployNo;
-      row.pr_url = pr_url;
-      row.live_state = live_state;
-      row.lifecycle = lifecycle;
-      row.synced_at = nowStamp;
-    }
-
-    // tally
-    switch (row.live_state) {
-      case "deployed": counts.deployed++; break;
-      case "merged": counts.merged++; break;
-      case "waiting-merge": counts.waiting++; break;
-      case "in-ci": counts.in_ci++; break;
-      case "ci-failed": counts.ci_failed++; break;
-      case "gated": counts.gated++; break;
-      default: counts.pending++; break;
-    }
-  }
-
-  // ---- deltas: added rows vs prior snapshot (by id::name) -------------------
-  const priorIds = new Set(Object.keys(priorMeta._row_index || {}));
   const added = [];
-  for (const row of extra.audit_bug_sweep) {
-    const key = `${row.id}::${row.name}`;
-    if (priorMeta._row_index && !priorIds.has(key)) {
-      added.push({ id: row.id, name: row.name, at: row.requested_ct || nowCT() });
-    }
-  }
+  const priorIndex = priorMeta._row_index || null;
 
-  // ---- tabs totals ---------------------------------------------------------
-  const audit = extra.audit_bug_sweep;
-  const doneCount = audit.filter((r) => r.live_state === "deployed" || r.live_state === "merged").length;
-  const auditTab = {
-    total: audit.length,
-    done: doneCount,
-    open: audit.length - doneCount,
-    gated: counts.gated,
-    waiting_merge: counts.waiting,
-    in_ci: counts.in_ci,
-    ci_failed: counts.ci_failed,
-    pending: counts.pending,
-    deployed: counts.deployed,
-    merged: counts.merged,
+  const processTrack = (rows, track, moduleOf) => {
+    for (const row of rows) {
+      const gated = /GATED/i.test(row.status || "") || row.tier === "STOP" || row.fin === true;
+      const prior = priorRowByKey.get(`${track}::${row.id}::${row.name}`) || {};
+      const priorLc = prior.lifecycle || null;
+      enrichRow({ row, track, gated, intake, deploy, getPr, ghOk, prior, priorLc, nowStamp, completedNow, mergedPrMap });
+      // added-since-prior diff (only when we have a prior index to compare against)
+      if (priorIndex) {
+        const key = `${track}::${row.id}::${row.name}`;
+        if (!(key in priorIndex)) added.push({ track, id: row.id, name: row.name, at: row.requested_ct || nowCT() });
+      }
+    }
   };
 
-  // Other tabs derive from the same board file's other tracks (owner_batch / dispatch_kit).
+  processTrack(extra.audit_bug_sweep, "audit", moduleOfAudit);
+  processTrack(blockRows, "block", moduleOfBlock);
+
+  // ---- per-tab tallies ------------------------------------------------------
+  const audit = extra.audit_bug_sweep;
+  const pendingBlocks = blockRows.filter((r) => !isDoneState(r)); // "Currently Pending" tab
+  const auditTab = extendedTab(audit, moduleOfAudit);
+  const allTab = extendedTab(blockRows, moduleOfBlock);
+  const pendingTab = extendedTab(pendingBlocks, moduleOfBlock);
+
+  // deltas per track (recent = counts since prior snapshot)
+  const auditAdded = added.filter((a) => a.track === "audit").length;
+  const auditCompleted = completedNow.filter((c) => c.track === "audit").length;
+  const blockAdded = added.filter((a) => a.track === "block").length;
+  const blockCompleted = completedNow.filter((c) => c.track === "block").length;
+  auditTab.added_recent = auditAdded;
+  auditTab.completed_recent = auditCompleted;
+  allTab.added_recent = blockAdded;
+  allTab.completed_recent = blockCompleted;
+  pendingTab.added_recent = blockAdded;
+  pendingTab.completed_recent = blockCompleted;
+
+  // Secondary tabs unchanged (owner/dispatch/merged from extra tracks).
   const tabTotals = (arr, doneMatch) => {
     const list = Array.isArray(arr) ? arr : [];
     const done = list.filter((r) => doneMatch(r)).length;
     return { total: list.length, done, open: list.length - done };
   };
   const isDoneStatus = (r) => /^DONE/i.test(r.status || "");
-  const isPendingStatus = (r) => !isDoneStatus(r);
+
+  const financialPendingAll = auditTab.financial_pending + allTab.financial_pending;
 
   const meta = {
     last_synced_ct: nowCT(),
@@ -538,19 +680,23 @@ async function runSync() {
     deploy_version: deploy.version || null,
     deploy_checked_at: deploy.at,
     gh_authenticated: ghOk,
+    totals: {
+      blocks_total: allTab.total,
+      blocks_done: allTab.done,
+      blocks_pending: allTab.open,
+      financial_pending: financialPendingAll,
+      added_since_last: added.length,
+      completed_since_last: completedNow.length,
+      deploy_version: deploy.version || null,
+      last_synced_ct: nowCT(),
+    },
     tabs: {
       audit: auditTab,
-      pending: tabTotals(audit.filter(isPendingStatus), () => false),
+      all: allTab,
+      pending: pendingTab,
       merged: tabTotals(audit.filter(isDoneStatus), () => true),
       owner: tabTotals(extra.owner_batch, isDoneStatus),
       dispatch: tabTotals(extra.dispatch_kit, isDoneStatus),
-      all: {
-        total: audit.length + (extra.owner_batch?.length || 0) + (extra.dispatch_kit?.length || 0),
-        done:
-          doneCount +
-          (extra.owner_batch || []).filter(isDoneStatus).length +
-          (extra.dispatch_kit || []).filter(isDoneStatus).length,
-      },
     },
     deltas: {
       since: priorMeta.last_synced_ct || null,
@@ -558,17 +704,24 @@ async function runSync() {
       completed: completedNow,
     },
     // internal index used to compute `added` on the NEXT run (not for FE display).
-    _row_index: Object.fromEntries(audit.map((r) => [`${r.id}::${r.name}`, r.live_state])),
+    _row_index: {
+      ...Object.fromEntries(audit.map((r) => [`audit::${r.id}::${r.name}`, r.live_state])),
+      ...Object.fromEntries(blockRows.map((r) => [`block::${r.id}::${r.name}`, r.live_state])),
+    },
   };
 
   writeJSON(EXTRA_PATH, extra);
+  if (blockData) writeJSON(BLOCKS_PATH, blockData);
   writeJSON(META_PATH, meta);
 
-  console.log("\n[sync] meta.tabs.audit:", JSON.stringify(auditTab));
-  console.log(
-    `[sync] deltas: +${added.length} added, ${completedNow.length} completed (since ${meta.deltas.since || "n/a"})`
-  );
-  console.log(`[sync] wrote ${EXTRA_REL} + ${META_REL}`);
+  console.log("\n[sync] meta.tabs.audit:", JSON.stringify({ total: auditTab.total, done: auditTab.done, deployed: auditTab.deployed, gated: auditTab.gated, pending: auditTab.pending, financial_pending: auditTab.financial_pending }));
+  console.log("[sync] meta.tabs.all:", JSON.stringify({ total: allTab.total, done: allTab.done, open: allTab.open, gated: allTab.gated, waiting_merge: allTab.waiting_merge, in_ci: allTab.in_ci, pending: allTab.pending, financial_pending: allTab.financial_pending }));
+  console.log("[sync] meta.tabs.pending:", JSON.stringify({ total: pendingTab.total, gated: pendingTab.gated, pending: pendingTab.pending, financial_pending: pendingTab.financial_pending }));
+  console.log("[sync] meta.totals:", JSON.stringify(meta.totals));
+  console.log(`[sync] deltas: +${added.length} added, ${completedNow.length} completed (since ${meta.deltas.since || "n/a"})`);
+  const blkEnriched = blockRows.filter((r) => r.live_state).length;
+  console.log(`[sync] enriched: ${audit.length} audit rows + ${blkEnriched} block rows (${blockRows.filter((r) => prNumber(r.pr)).length} with a PR)`);
+  console.log(`[sync] wrote ${EXTRA_REL} + ${BLOCKS_REL} + ${META_REL}`);
 }
 
 // ============================================================================
