@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareRows, isOpenStatus, reviewTag, summarizePending } from "./ProgramBoardPage";
+import { compareRows, deriveLifecycle, isOpenStatus, lifecycleRank, reviewTag, summarizePending } from "./ProgramBoardPage";
 
 // Minimal Row builder for compareRows tests — overrides only the fields under test.
 function mkRow(over: Partial<Parameters<typeof compareRows>[0]>): Parameters<typeof compareRows>[0] {
@@ -47,6 +47,13 @@ describe("compareRows", () => {
 
   it("sorts the Review tag column", () => {
     expect(asc(mkRow({ review: "needs-your-preview" }), mkRow({ review: undefined }), "review")).toBe(-1);
+  });
+
+  it("sorts the Lifecycle column by pipeline stage, not alphabetically", () => {
+    // written(1) < deployed(3) even though "deployed" < "written" alphabetically
+    expect(asc(mkRow({ lifecycle: "written" }), mkRow({ lifecycle: "deployed" }), "lifecycle")).toBe(-1);
+    // absent lifecycle → derived from timestamps; deployed outranks merged
+    expect(asc(mkRow({ mergedCt: "x" }), mkRow({ deployedCt: "x", mergedCt: "x" }), "lifecycle")).toBe(-1);
   });
 });
 
@@ -102,5 +109,35 @@ describe("summarizePending", () => {
   it("is safe on an empty set", () => {
     const s = summarizePending([]);
     expect(s).toEqual({ pending: 0, gated: 0, needsVerify: 0, done: 0, open: 0, total: 0, pct: 0 });
+  });
+});
+
+// Lifecycle timeline (Jorge's core ask): requested → written → merged → deployed. A row is only fully
+// live once deployed is reached — merged ≠ live.
+describe("lifecycleRank", () => {
+  it("orders the pipeline stages and puts unknown/absent first", () => {
+    expect(lifecycleRank("requested")).toBe(0);
+    expect(lifecycleRank("written")).toBe(1);
+    expect(lifecycleRank("merged")).toBe(2);
+    expect(lifecycleRank("deployed")).toBe(3);
+    expect(lifecycleRank("DEPLOYED")).toBe(3); // case-insensitive
+    expect(lifecycleRank(undefined)).toBe(-1);
+    expect(lifecycleRank("nonsense")).toBe(-1);
+    expect(lifecycleRank("deployed")).toBeGreaterThan(lifecycleRank("merged")); // merged is not yet "done"
+  });
+});
+
+describe("deriveLifecycle", () => {
+  it("prefers an explicit lifecycle when present", () => {
+    expect(deriveLifecycle({ lifecycle: "Merged", deployedCt: "2026-07-05T00:00:00Z" })).toBe("merged");
+  });
+  it("derives the furthest reached stage from the timestamps", () => {
+    expect(deriveLifecycle({ deployedCt: "x", mergedCt: "x", writtenCt: "x", requestedCt: "x" })).toBe("deployed");
+    expect(deriveLifecycle({ mergedCt: "x", writtenCt: "x" })).toBe("merged");
+    expect(deriveLifecycle({ writtenCt: "x" })).toBe("written");
+    expect(deriveLifecycle({ requestedCt: "x" })).toBe("requested");
+  });
+  it("returns undefined when nothing is stamped (graceful absence)", () => {
+    expect(deriveLifecycle({})).toBeUndefined();
   });
 });
