@@ -725,12 +725,15 @@
       "name": "C3 (Observability) \u2014 Sentry only half-live: crons + driver-PWA report to nobody; nothing pages on failure",
       "wave": "CRIT",
       "type": "CRIT",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Init Sentry in cron entrypoints; alert on zero-trusted-entity recon; wire PWA error handlers; a human-paging channel."
+      "notes": "Init Sentry in cron entrypoints; alert on zero-trusted-entity recon; wire PWA error handlers; a human-paging channel.",
+      "pr": 2033,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G10",
@@ -1262,12 +1265,15 @@
       "name": "H6 (Catalogs/UI) \u2014 CoA management list + trailer list cap at 50 (oldest records unreachable)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "[PARTIAL \u2014 some landed #2030; verified 2026-07-04] Add total/has_more, raise/remove the cap (locations/items/classes same at MED)."
+      "notes": "[PARTIAL \u2014 some landed #2030; verified 2026-07-04] Add total/has_more, raise/remove the cap (locations/items/classes same at MED).",
+      "pr": 2030,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G10",
@@ -1839,12 +1845,15 @@
       "name": "2 (Dispatch/Drivers) \u2014 Driver-picker 50-cap in ~14 non-dispatch pickers",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Pass limit:200 (or server-side search) at each call."
+      "notes": "Pass limit:200 (or server-side search) at each call.",
+      "pr": 2038,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "C1",
@@ -1901,7 +1910,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Validate isSubCustomer && !parentCustomer blocks submit and forward the field."
+      "notes": "[PARTIAL \u2014 part landed #2061; remainder gated] Validate isSubCustomer && !parentCustomer blocks submit and forward the field."
     },
     {
       "id": "D2",
@@ -2583,12 +2592,15 @@
       "name": "2 (Compliance/2290) \u2014 Form 2290 deadline off-by-one during August",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Use month>7 (or nearest-future Aug 31)."
+      "notes": "Use month>7 (or nearest-future Aug 31).",
+      "pr": 2036,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "C1",
@@ -2607,12 +2619,15 @@
       "name": "4 (Cross-entity/PII) \u2014 Two bypass reads of drivers by PK only",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add AND operating_company_id = $2."
+      "notes": "Add AND operating_company_id = $2.",
+      "pr": 2037,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "D1",
