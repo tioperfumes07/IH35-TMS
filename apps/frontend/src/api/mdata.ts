@@ -1241,7 +1241,11 @@ export function listUnits(
   if (params.status && params.status !== "All") query.set("status", params.status);
   if (params.search) query.set("search", params.search);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
-  if (params.limit != null) query.set("limit", String(params.limit));
+  // G9-H6: the /mdata/units list defaults to limit=50 server-side, so fleet pickers/rosters that omit a limit
+  // silently drop the OLDEST units + trailers (foundational fleet records vanish). Default to the route's max
+  // (500 — units.routes.ts) so the FULL fleet (trucks from mdata.units + trailers from mdata.equipment via
+  // include=trailers) is selectable; callers that page can still pass an explicit limit/offset.
+  query.set("limit", String(params.limit ?? 500));
   if (params.offset != null) query.set("offset", String(params.offset));
   // include=trailers returns the UNIFIED fleet (trucks from mdata.units + trailers from mdata.equipment),
   // each row tagged kind:"truck"|"trailer" and already deactivated_at-filtered.

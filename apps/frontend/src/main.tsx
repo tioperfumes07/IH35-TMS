@@ -5,10 +5,15 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./components/Toast";
+import { initFrontendSentry } from "./observability/sentry-client";
 import "./index.css";
 import i18n from "./i18n";
 
 void i18n;
+
+// G10-C3: actually initialize Sentry (the init fn existed but was never called). No-ops when
+// VITE_SENTRY_DSN is unset, so local/dev is unaffected.
+void initFrontendSentry();
 
 // GO-LIVE #15 (429): without defaults, every component mount + window-focus refetched, so the same
 // provider GETs (sync-health, qbo, preferences, notifications, identity/me) fired many times per load

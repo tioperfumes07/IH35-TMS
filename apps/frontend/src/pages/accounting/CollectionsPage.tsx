@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
@@ -152,7 +153,15 @@ export function CollectionsPage() {
               </button>
             ))}
             {tasksQuery.isLoading ? <p className="px-3 py-3 text-sm text-gray-500">Loading tasks...</p> : null}
-            {!tasksQuery.isLoading && (tasksQuery.data?.tasks.length ?? 0) === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No tasks match current filters.</p> : null}
+            {!tasksQuery.isLoading && tasksQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load collections tasks"
+                status={0}
+                message={(tasksQuery.error as Error | undefined)?.message}
+                onRetry={() => void tasksQuery.refetch()}
+              />
+            ) : null}
+            {!tasksQuery.isLoading && !tasksQuery.isError && (tasksQuery.data?.tasks.length ?? 0) === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No tasks match current filters.</p> : null}
           </div>
         </section>
 

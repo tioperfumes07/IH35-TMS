@@ -76,7 +76,7 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
         </p>
         {session?.diff_summary ? <p className="mt-1 text-sm text-slate-700">{session.diff_summary}</p> : null}
         {session?.auto_damage_report_uuid ? (
-          <p className="mt-1 text-xs text-amber-700">
+          <p className="mt-1 text-xs text-slate-700">
             Auto damage report: {session.auto_damage_report_uuid}
           </p>
         ) : null}

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { approveAbandonmentChargeback, listAbandonmentChargebacks } from "../../api/abandonment";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -84,7 +85,15 @@ export function AbandonmentQueuePage() {
             })}
           </tbody>
         </table>
-        {!listQuery.isLoading && rows.length === 0 ? <div className="p-4 text-sm text-slate-500">No rows.</div> : null}
+        {!listQuery.isLoading && listQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load abandonment queue"
+            status={0}
+            message={(listQuery.error as Error | undefined)?.message}
+            onRetry={() => void listQuery.refetch()}
+          />
+        ) : null}
+        {!listQuery.isLoading && !listQuery.isError && rows.length === 0 ? <div className="p-4 text-sm text-slate-500">No rows.</div> : null}
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
@@ -80,6 +81,15 @@ export function PaymentDetailPage() {
   });
 
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading payment...</div>;
+  if (detailQuery.isError)
+    return (
+      <ListErrorState
+        title="Couldn't load payment"
+        status={0}
+        message={(detailQuery.error as Error | undefined)?.message}
+        onRetry={() => void detailQuery.refetch()}
+      />
+    );
   if (!payment) return <div className="text-sm text-red-600">Payment not found.</div>;
 
   return (

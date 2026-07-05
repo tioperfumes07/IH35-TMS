@@ -13,9 +13,10 @@ import {
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { sumCents, toCents, computeProjectionTotals } from "./manualProjectionMath";
+import { formatUsdCents } from "../../../lib/money";
 
 function fmtCents(c: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((c || 0) / 100);
+  return formatUsdCents(c);
 }
 
 const REF_KINDS: ForecastRefKind[] = ["account", "unit", "driver", "truck", "trailer"];

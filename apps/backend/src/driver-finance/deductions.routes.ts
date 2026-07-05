@@ -136,9 +136,16 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const existsRes = await client.query(`SELECT to_regclass('driver_finance.escrow_ledger') IS NOT NULL AS ok`);
       if (!Boolean((existsRes.rows[0] as { ok?: boolean } | undefined)?.ok)) return [];
+      // XE-FIN IDOR fix: bind the caller's entity scope explicitly. Without the
+      // operating_company_id predicate, a driver_id belonging to another entity
+      // returned that entity's escrow ledger (cross-entity financial read-leak).
+      // FORCE-RLS on this table already isolates via app.operating_company_id, but
+      // this predicate is defense-in-depth so the read can only ever return the
+      // resolved company's rows. driver_finance.escrow_ledger.operating_company_id
+      // is NOT NULL (migration 202606120600). No posting/GL/amount logic changes.
       const res = await client.query(
-        `SELECT * FROM driver_finance.escrow_ledger WHERE driver_id = $1 ORDER BY posted_at DESC LIMIT 200`,
-        [params.data.id]
+        `SELECT * FROM driver_finance.escrow_ledger WHERE driver_id = $1 AND operating_company_id = $2 ORDER BY posted_at DESC LIMIT 200`,
+        [params.data.id, query.data.operating_company_id]
       );
       return res.rows;
     });

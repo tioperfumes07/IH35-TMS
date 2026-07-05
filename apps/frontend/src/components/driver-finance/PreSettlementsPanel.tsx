@@ -2,9 +2,10 @@ import type { SettlementListRow } from "../../api/driverFinance";
 import { DataPanel } from "../layout/DataPanel";
 import { DataPanelRow } from "../layout/DataPanelRow";
 import { colors } from "../../design/tokens";
+import { formatUsd } from "../../lib/money";
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
+  return formatUsd(value);
 }
 
 type Props = {

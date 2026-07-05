@@ -9,6 +9,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { useListState } from "../../components/list-state";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -99,6 +100,8 @@ export function ProfitPerTruckPage() {
     });
     return copy;
   }, [filteredRows, sortKey, sortDir]);
+
+  const listState = useListState(query, sorted.length === 0);
 
   const perMileChart = useMemo(() => {
     const rows = [...filteredRows];
@@ -361,7 +364,7 @@ export function ProfitPerTruckPage() {
                 ))}
               </tbody>
             </table>
-            {sorted.length === 0 ? (
+            {listState.isEmpty ? (
               <div className="px-3 py-4 text-sm text-gray-500">No trucks match the current filters for this period.</div>
             ) : null}
           </div>

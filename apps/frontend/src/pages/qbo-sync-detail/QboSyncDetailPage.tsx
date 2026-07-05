@@ -10,6 +10,7 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
+import { useListState } from "../../components/list-state";
 
 const KIND_OPTIONS: Array<{ value: "all" | QboSyncEventKind; label: string }> = [
   { value: "all", label: "All kinds" },
@@ -71,6 +72,7 @@ export function QboSyncDetailPage() {
     [eventLogQuery.data?.pages],
   );
   const totalEstimated = eventLogQuery.data?.pages[0]?.total_estimated ?? 0;
+  const listState = useListState(eventLogQuery, events.length === 0);
 
   return (
     <div className="space-y-4 p-4">
@@ -120,7 +122,7 @@ export function QboSyncDetailPage() {
         </div>
 
         {eventLogQuery.isLoading ? <div className="p-3 text-sm text-slate-500">Loading QBO sync events…</div> : null}
-        {!eventLogQuery.isLoading && events.length === 0 ? (
+        {listState.isEmpty ? (
           <div className="p-3 text-sm text-slate-500">No QBO sync events match the selected filters.</div>
         ) : null}
 

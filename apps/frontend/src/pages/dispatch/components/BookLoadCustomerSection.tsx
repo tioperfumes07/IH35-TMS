@@ -50,8 +50,8 @@ export function BookLoadCustomerSection({
   const customerName = watch("customer_name");
 
   return (
-    <section className="rounded-sm border border-amber-200 bg-amber-50 p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-800">A. Customer · Invoice · Charges</h3>
+    <section className="rounded-sm border border-slate-200 bg-slate-100 p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">A. Customer · Invoice · Charges</h3>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-1 md:col-span-2">
           <input type="hidden" {...register("customer_id", { required: "Select a customer from QuickBooks search results" })} />
@@ -79,7 +79,7 @@ export function BookLoadCustomerSection({
               }}
             />
           ) : (
-            <div className="rounded-sm border border-amber-300 bg-white px-2 py-2 text-xs text-amber-900">Company context required for customer lookup.</div>
+            <div className="rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700">Company context required for customer lookup.</div>
           )}
           {customerIdError ? <p className="text-[11px] text-red-600">{customerIdError}</p> : null}
         </div>
@@ -160,7 +160,7 @@ export function BookLoadCustomerSection({
           <div className="mt-2">
             <label className="text-[11px] font-semibold text-gray-600">
               Driver instructions
-              <span className="ml-2 rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">VISIBLE TO DRIVER</span>
+              <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">VISIBLE TO DRIVER</span>
             </label>
             <textarea {...register("driver_instructions_text")} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
           </div>

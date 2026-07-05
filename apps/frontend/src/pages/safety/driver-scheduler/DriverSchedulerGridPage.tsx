@@ -99,9 +99,9 @@ export function DriverSchedulerGridPage() {
                       const lt = cellByDriverDay.get(`${driverId}|${d}`);
                       const bg =
                         lt === "vacation"
-                          ? "bg-emerald-100"
+                          ? "bg-slate-100"
                           : lt === "sick"
-                            ? "bg-yellow-100"
+                            ? "bg-slate-100"
                             : lt === "personal"
                               ? "bg-orange-100"
                               : lt === "wfh"
@@ -123,7 +123,7 @@ export function DriverSchedulerGridPage() {
       ) : null}
 
       {query.data?.pending_requests?.length ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
           <div className="font-semibold">Pending in this window</div>
           <ul className="list-inside list-disc">
             {query.data.pending_requests.map((p) => (

@@ -60,8 +60,8 @@ function formatScore(value: number | null) {
 
 function bandClassName(band: BasicTile["risk_band"]) {
   if (band === "alert") return "text-red-700";
-  if (band === "watch") return "text-amber-700";
-  if (band === "ok") return "text-emerald-700";
+  if (band === "watch") return "text-slate-700";
+  if (band === "ok") return "text-slate-700";
   return "text-slate-500";
 }
 
@@ -153,7 +153,7 @@ export function CSAScorePage() {
             {typeof currentQuery.data?.pull_age_days === "number" ? ` (${currentQuery.data.pull_age_days} days ago)` : ""}
           </div>
           {currentQuery.data?.is_stale ? (
-            <div className="font-semibold text-amber-700">CSA pull is stale (&gt;7 days). Run pull now and check cron.</div>
+            <div className="font-semibold text-slate-700">CSA pull is stale (&gt;7 days). Run pull now and check cron.</div>
           ) : null}
         </div>
         <button

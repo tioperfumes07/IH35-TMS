@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
+import { formatUsdCents } from "../../../lib/money";
 
 // CASHFLOW-1: range must end on the company business date (Central), not the UTC date — otherwise the
 // "To" defaults to tomorrow after ~7 PM Central. See lib/businessDate.
@@ -17,7 +18,7 @@ function sevenDaysAgoIso(): string {
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
   const abs = Math.abs(cents);
-  const dollars = (abs / 100).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const dollars = formatUsdCents(abs);
   if (opts?.sign && cents > 0) return `+${dollars}`;
   if (opts?.sign && cents < 0) return `−${dollars}`;
   return cents < 0 ? `−${dollars}` : dollars;

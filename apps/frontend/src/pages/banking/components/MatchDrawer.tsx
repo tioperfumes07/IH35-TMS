@@ -8,6 +8,8 @@ import {
 } from "../../../api/banking";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useToast } from "../../../components/Toast";
+import { useListState } from "../../../components/list-state";
+import { formatUsdCents } from "../../../lib/money";
 
 // BANKREC-CONFIRM-01 (Tier 2): Confirm is enabled ONLY for an exact-amount match (amount_gap_cents
 // === 0) on a persistable non-bill kind. gap=0 = pure link-and-clear (review_state='matched' +
@@ -33,8 +35,7 @@ const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
 
 function formatMoneyCents(cents: number | null | undefined) {
   if (cents == null || Number.isNaN(Number(cents))) return "—";
-  const n = Number(cents) / 100;
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(n));
+  return formatUsdCents(Math.abs(Number(cents)));
 }
 
 function kindBadge(kind: BankMatchCandidateKind) {
@@ -77,6 +78,9 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
     },
     onSettled: () => setConfirmingId(null),
   });
+
+  // Empty message renders only once the candidates query settles, never mid-fetch.
+  const listState = useListState(candidatesQuery, (candidatesQuery.data?.candidates ?? []).length === 0);
 
   if (!open || !bankTransactionId) return null;
 
@@ -194,7 +198,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
               </div>
             );
           })}
-          {!candidatesQuery.isLoading && candidates.length === 0 ? (
+          {listState.isEmpty ? (
             <p className="text-sm text-slate-600" data-testid="match-candidate-empty">
               No matchable records found in the ±7-day window for this transaction.
             </p>

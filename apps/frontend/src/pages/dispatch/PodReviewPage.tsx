@@ -12,6 +12,7 @@ import {
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useListState } from "../../components/list-state";
 
 function PodRow({
   doc,
@@ -163,6 +164,9 @@ export function PodReviewPage() {
 
   const loadOptions = useMemo(() => loadsQuery.data?.loads ?? [], [loadsQuery.data]);
 
+  // Empty state renders only once the POD query settles (never mid-fetch).
+  const listState = useListState(podsQuery, (podsQuery.data?.documents ?? []).length === 0);
+
   return (
     <div className="p-4" data-testid="dispatch-pod-review-page">
       <PageHeader title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
@@ -225,7 +229,7 @@ export function PodReviewPage() {
             ))}
           </tbody>
         </table>
-        {(podsQuery.data?.documents ?? []).length === 0 ? (
+        {listState.isEmpty ? (
           <p className="p-4 text-sm text-slate-600">No POD documents match the current filters.</p>
         ) : null}
       </div>

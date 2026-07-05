@@ -8,6 +8,8 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { useListState } from "../../components/list-state";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId?: string;
@@ -31,7 +33,7 @@ function lawsuitStatusVariant(status: InsuranceLawsuitStatus): "neutral" | "warn
 }
 
 function formatMoney(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return formatUsdCents(cents);
 }
 
 export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
@@ -49,6 +51,9 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
       }).then((result) => result.lawsuits),
     enabled: Boolean(companyId),
   });
+
+  // Empty message renders only once the lawsuits query settles (no first-fetch flash).
+  const listState = useListState(query, (query.data ?? []).length === 0);
 
   if (!companyId) {
     return (
@@ -75,7 +80,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
       {query.isError ? (
         <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load lawsuits.</div>
       ) : null}
-      {!query.isLoading && rows.length === 0 ? <div className="text-sm text-gray-600">No lawsuits found.</div> : null}
+      {listState.isEmpty ? <div className="text-sm text-gray-600">No lawsuits found.</div> : null}
 
       {rows.length > 0 ? (
         <div className="overflow-x-auto">

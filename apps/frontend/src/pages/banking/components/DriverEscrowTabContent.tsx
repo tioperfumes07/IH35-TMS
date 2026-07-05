@@ -9,6 +9,7 @@ import {
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS } from "../../../lib/formatDate";
 import { RegisterToolbar } from "./RegisterToolbar";
+import { useListState } from "../../../components/list-state";
 
 const ESCROW_VIRTUAL_ACCOUNT_ID = "00000000-0000-0000-0000-000000000056";
 
@@ -77,7 +78,9 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
     return (accountLedgerQuery.data?.register_rows ?? []).map(registerToEscrowRow);
   }, [accountLedgerQuery.data?.register_rows, driverTimelineQuery.data?.timeline, selectedDriverId]);
 
-  const pending = driverBalancesQuery.isLoading || accountLedgerQuery.isLoading || (Boolean(selectedDriverId) && driverTimelineQuery.isLoading);
+  // The empty message renders only once the ledger/timeline query feeding the table settles.
+  const escrowLedgerQuery = selectedDriverId ? driverTimelineQuery : accountLedgerQuery;
+  const listState = useListState(escrowLedgerQuery, tableRows.length === 0);
 
   return (
     <div className="space-y-3">
@@ -160,7 +163,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
                   <td className="px-2 py-1">{String(row.category ?? "escrow")}</td>
                 </tr>
               ))}
-              {!pending && tableRows.length === 0 ? (
+              {listState.isEmpty ? (
                 <tr>
                   <td colSpan={6} className="px-2 py-3 text-center text-xs text-gray-500">
                     No escrow ledger rows found for this filter.

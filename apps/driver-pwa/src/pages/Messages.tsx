@@ -6,11 +6,10 @@ import { listDriverPwaMessages, markDriverPwaMessageRead, replyDriverPwaMessage 
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
+import { formatDateTime } from "../lib/formatDateTime";
 
 function formatWhen(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return formatDateTime(iso);
 }
 
 export function MessagesPage() {

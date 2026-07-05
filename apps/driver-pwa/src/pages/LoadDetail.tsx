@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getLoadDetail } from "../api/loads";
 import { LifecyclePill } from "../components/LifecyclePill";
 import { PwaCard } from "../components/PwaCard";
+import { formatDateTime } from "../lib/formatDateTime";
 
 type TabId = "overview" | "stops" | "documents";
 
@@ -90,8 +91,8 @@ export function LoadDetailPage() {
                 <span className="text-pwa-text-secondary">{t("load.dispatcher")}:</span> {load.dispatcher_name}{" "}
                 {load.dispatcher_phone ? <a className="underline" href={`tel:${load.dispatcher_phone}`}>{load.dispatcher_phone}</a> : null}
               </div>
-              <div><span className="text-pwa-text-secondary">{t("load.scheduled_pickup")}:</span> {new Date(load.pickup_at).toLocaleString()}</div>
-              <div><span className="text-pwa-text-secondary">{t("load.scheduled_delivery")}:</span> {new Date(load.delivery_at).toLocaleString()}</div>
+              <div><span className="text-pwa-text-secondary">{t("load.scheduled_pickup")}:</span> {formatDateTime(load.pickup_at)}</div>
+              <div><span className="text-pwa-text-secondary">{t("load.scheduled_delivery")}:</span> {formatDateTime(load.delivery_at)}</div>
             </div>
           </PwaCard>
         ) : null}
@@ -109,7 +110,7 @@ export function LoadDetailPage() {
                 <div className="text-sm font-semibold capitalize">{stop.type}</div>
                 <div className="text-xs text-pwa-text-secondary">{stop.location_name} · {stop.city}, {stop.state}</div>
                 <div className="mt-1 text-xs text-pwa-text-secondary">
-                  {new Date(stop.scheduled_arrival_at).toLocaleString()} → {new Date(stop.scheduled_departure_at).toLocaleString()}
+                  {formatDateTime(stop.scheduled_arrival_at)} → {formatDateTime(stop.scheduled_departure_at)}
                 </div>
                 <div className="mt-2">
                   <span className="rounded-full border border-pwa-border px-2 py-0.5 text-[10px] uppercase tracking-[0.04em] text-pwa-text-secondary">{t(`stop.${stop.status}`)}</span>

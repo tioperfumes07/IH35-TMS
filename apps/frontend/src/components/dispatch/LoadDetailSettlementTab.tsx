@@ -117,7 +117,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
         <div className="flex flex-col items-end gap-1">
           {statusBadge(settlement.status)}
           {settlement.is_open && (
-            <span className="text-[10px] text-slate-600">Awaiting southbound return to close</span>
+            <span className="text-[10px] text-slate-700">Awaiting southbound return to close</span>
           )}
         </div>
       </div>

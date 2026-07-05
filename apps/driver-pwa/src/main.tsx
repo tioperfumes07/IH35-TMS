@@ -4,8 +4,13 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { ToastProvider } from "./components/Toast";
+import { initDriverPwaSentry } from "./observability/sentry-pwa";
 import "./i18n";
 import "./index.css";
+
+// G10-C3: actually initialize Sentry (the init fn existed but was never called). No-ops when
+// VITE_SENTRY_DSN is unset, so local/dev is unaffected.
+void initDriverPwaSentry();
 
 const queryClient = new QueryClient();
 document.documentElement.style.backgroundColor = "#0F1219";

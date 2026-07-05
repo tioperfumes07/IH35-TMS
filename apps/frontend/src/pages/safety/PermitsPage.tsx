@@ -36,8 +36,8 @@ const US_STATES = [
 
 function severityClass(severity: string) {
   if (severity === "expired") return "bg-red-100 text-red-800";
-  if (severity === "warning") return "bg-amber-100 text-amber-800";
-  if (severity === "ok") return "bg-green-100 text-green-800";
+  if (severity === "warning") return "bg-slate-100 text-slate-700";
+  if (severity === "ok") return "bg-slate-100 text-slate-700";
   return "bg-gray-100 text-gray-700";
 }
 
@@ -161,12 +161,12 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       </div>
 
       <div
-        className="rounded-sm border border-amber-200 bg-amber-50 p-3"
+        className="rounded-sm border border-slate-200 bg-slate-50 p-3"
         data-testid="permits-renewal-dashboard"
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase text-amber-900">Renewal alerts</span>
-          <span className="text-[10px] text-amber-800">
+          <span className="text-xs font-semibold uppercase text-slate-700">Renewal alerts</span>
+          <span className="text-[10px] text-slate-700">
             Alert window: {String((reminder as { days_before_expiry?: number })?.days_before_expiry ?? 30)} days before expiry
           </span>
           <div className="ml-auto flex items-center gap-2">
@@ -176,12 +176,12 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               max={365}
               value={reminderDays}
               onChange={(event) => setReminderDays(event.target.value)}
-              className="w-16 rounded-sm border border-amber-300 px-2 py-1 text-xs"
+              className="w-16 rounded-sm border border-slate-300 px-2 py-1 text-xs"
               data-testid="permits-reminder-days-input"
             />
             <button
               type="button"
-              className="rounded-sm bg-amber-800 px-2 py-1 text-xs font-semibold text-white"
+              className="rounded-sm bg-slate-700 px-2 py-1 text-xs font-semibold text-white"
               disabled={reminderMutation.isPending}
               onClick={() => reminderMutation.mutate()}
             >
@@ -190,17 +190,17 @@ export function PermitsPage({ operatingCompanyId }: Props) {
           </div>
         </div>
         {renewalAlerts.length === 0 ? (
-          <p className="text-xs text-amber-800">No permits due for renewal within the alert window.</p>
+          <p className="text-xs text-slate-700">No permits due for renewal within the alert window.</p>
         ) : (
           <ul className="space-y-1">
             {renewalAlerts.map((row) => (
-              <li key={String(row.id)} className="flex flex-wrap items-center gap-2 text-xs text-amber-900">
+              <li key={String(row.id)} className="flex flex-wrap items-center gap-2 text-xs text-slate-700">
                 <span className={`rounded-sm px-1.5 py-0.5 font-semibold ${severityClass(String(row.renewal_severity ?? ""))}`}>
                   {String(row.days_to_expiry ?? "—")}d
                 </span>
                 <span>{PERMIT_TYPE_LABELS[(row.permit_type as SafetyPermitType) ?? "other"] ?? row.permit_type}</span>
                 <span>{String(row.holder_name || row.permit_number || "—")}</span>
-                <span className="text-amber-700">expires {String(row.expiry_date ?? "—")}</span>
+                <span className="text-slate-700">expires {String(row.expiry_date ?? "—")}</span>
               </li>
             ))}
           </ul>

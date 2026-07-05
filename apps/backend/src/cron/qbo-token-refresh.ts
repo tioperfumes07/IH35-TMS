@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { getConnectionsExpiringWithin, getQboConnectionStatus, refreshAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
+import { companyHasQboConnectionRecord, getConnectionsExpiringWithin, getQboConnectionStatus, refreshAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
@@ -83,6 +83,15 @@ export async function initializeQboTokenRefreshCron(app: FastifyInstance) {
             try {
               const status = await getQboConnectionStatus(companyId);
               if (status.connected) {
+                lastDisconnectAlertAt.delete(companyId);
+                continue;
+              }
+
+              // Skip entities that were NEVER connected (no qbo_connections row at all) — they are not
+              // "disconnected", they are simply not QBO tenants (e.g. parallel-books USMCA). Without this
+              // they get a re-auth reminder email every 15 min forever (the in-memory cooldown resets on
+              // each deploy). Per-company check because qbo_connections RLS is company-scoped, not bypassable.
+              if (!(await companyHasQboConnectionRecord(companyId))) {
                 lastDisconnectAlertAt.delete(companyId);
                 continue;
               }

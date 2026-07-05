@@ -10,6 +10,7 @@ import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
+import { useListState } from "../../components/list-state";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function humanMemo(memo: string | null | undefined): string {
@@ -55,6 +56,9 @@ export function ManualJEListPage() {
 
   const pageRows = entriesQuery.data?.journal_entries ?? [];
   const hasNextPage = pageRows.length === PAGE_SIZE;
+
+  // LIST-EMPTY: surface the empty row only once the entries query settles.
+  const listState = useListState(entriesQuery, pageRows.length === 0);
 
   const voidMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidJournalEntry(id, companyId, reason),
@@ -134,7 +138,7 @@ export function ManualJEListPage() {
                 </td>
               </tr>
             ))}
-            {(entriesQuery.data?.journal_entries ?? []).length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td className="px-3 py-3 text-gray-500" colSpan={7}>
                   No journal entries found.

@@ -33,7 +33,7 @@ type Props = {
 };
 
 const SOURCE_BADGE: Record<StopSource, { label: string; className: string }> = {
-  geofence: { label: "Geofence auto", className: "bg-emerald-100 text-emerald-800" },
+  geofence: { label: "Geofence auto", className: "bg-slate-100 text-slate-700" },
   driver_pwa: { label: "Driver PWA", className: "bg-slate-100 text-slate-700" },
   dispatcher_manual: { label: "Manual", className: "bg-gray-100 text-gray-600" },
 };
@@ -82,7 +82,7 @@ function DwellBar({
     <div className="relative mt-1.5 h-3 w-full overflow-hidden rounded-full bg-gray-100">
       {/* dwell fill */}
       <div
-        className={`absolute left-0 top-0 h-full rounded-full ${overThreshold ? "bg-red-400" : "bg-emerald-400"}`}
+        className={`absolute left-0 top-0 h-full rounded-full ${overThreshold ? "bg-red-400" : "bg-slate-300"}`}
         style={{ width: `${dwellPct}%` }}
       />
       {/* free-time threshold marker */}
@@ -102,10 +102,10 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
 
   return (
     <div
-      className={`relative rounded-sm border p-3 text-sm ${stop.is_layover ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-white"}`}
+      className={`relative rounded-sm border p-3 text-sm ${stop.is_layover ? "border-slate-200 bg-slate-100" : "border-gray-200 bg-white"}`}
     >
       {stop.is_layover && (
-        <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-amber-700">
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-700">
           Layover — dwell &gt; 8 hours
         </div>
       )}
@@ -202,14 +202,14 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
   return (
     <div className="space-y-3">
       {!hasAnyDwell && (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
           No arrival/departure timestamps yet — timeline will populate as the load progresses.
         </div>
       )}
 
       <div className="flex items-center gap-4 text-[10px] text-gray-500">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-8 rounded-full bg-emerald-400" /> Within free time
+          <span className="inline-block h-2 w-8 rounded-full bg-slate-300" /> Within free time
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-8 rounded-full bg-red-400" /> Over free time

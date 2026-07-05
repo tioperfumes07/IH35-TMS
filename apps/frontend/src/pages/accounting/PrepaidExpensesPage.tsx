@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -8,9 +9,9 @@ import {
   getPrepaidExpenses, getPrepaidExpenseDetail, createPrepaidExpense,
   type PrepaidAssetListItem, type PrepaidAssetDetail,
 } from "../../api/prepaid-expenses";
+import { useListState } from "../../components/list-state";
 
-const fmtCents = (c: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
+const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
 const STATUS_COLOR: Record<string, string> = {
@@ -192,11 +193,12 @@ export function PrepaidExpensesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const limit = 50;
 
-  const { data, isLoading, isError } = useQuery({
+  const listQuery = useQuery({
     queryKey: ["prepaid-expenses", operatingCompanyId, statusFilter, offset],
     queryFn: () => getPrepaidExpenses({ operating_company_id: operatingCompanyId, status: statusFilter || undefined, limit, offset }),
     enabled: Boolean(selectedCompanyId),
   });
+  const { data, isLoading, isError } = listQuery;
 
   const { data: detail, isLoading: detailLoading } = useQuery({
     queryKey: ["prepaid-expense-detail", detailId, operatingCompanyId],
@@ -206,6 +208,7 @@ export function PrepaidExpensesPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
+  const listState = useListState(listQuery, items.length === 0);
 
   return (
     <AccountingSubNavWrapper title="Prepaid Expenses" subtitle="Prepaid assets and amortization schedules">
@@ -238,7 +241,7 @@ export function PrepaidExpensesPage() {
         <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
       ) : isError ? (
         <p className="text-sm text-red-600 py-8 text-center">Failed to load prepaid expenses.</p>
-      ) : items.length === 0 ? (
+      ) : listState.isEmpty ? (
         <div className="py-12 text-center">
           <p className="text-sm text-gray-500">No prepaid expenses found.</p>
           <p className="text-xs text-gray-400 mt-1">Create a prepaid asset to track insurance, subscriptions, and other prepaid costs.</p>

@@ -16,6 +16,11 @@ import { RATECON_EXTRACTION_MODEL } from "../ai/models.js";
 export const RATECON_MODEL = RATECON_EXTRACTION_MODEL;
 export const RATECON_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 export const RATECON_MAX_PAGES = 15;
+// Rate-con extraction reads a multi-page PDF end-to-end (base64 document input) before emitting JSON —
+// that legitimately runs 30–60s on a dense broker sheet. The generic 30s Anthropic default was too tight
+// and surfaced as a "timed out" extraction failure; give this call a 90s ceiling (still bounded, still
+// aborts cleanly). Callers can override via options.timeoutMs.
+export const RATECON_EXTRACT_TIMEOUT_MS = 90_000;
 
 export type Confidence = "high" | "medium" | "low";
 
@@ -89,7 +94,16 @@ const USER_INSTRUCTION = [
   "load_reference (string[]), stops (array of {type:'pickup'|'delivery',name,address,city,state,zip,date,",
   "time_window,appointment_required}), equipment, commodity, weight, rate{linehaul_cents,fuel_surcharge_cents,",
   "accessorials:[{label,amount_cents}],total_cents}, payment_terms, notes, and field_confidence (object of",
-  "field->'high'|'medium'|'low'). All *_cents are integer cents. Output ONLY the JSON object.",
+  "field->'high'|'medium'|'low'). All *_cents are integer cents.",
+  // Explicit field-quality rules (the model was leaving city/zip inside `address` and skipping equipment):
+  "For EACH stop, SPLIT the location: put ONLY the street line in `address`; put the city in `city`, the",
+  "two-letter state code in `state`, and the postal/ZIP code in `zip` — NEVER combine city/state/zip into",
+  "`address`. Set `date` as an ISO date (YYYY-MM-DD) when a pickup/delivery date is shown.",
+  "Set `equipment` to the required trailer/equipment type in plain words (e.g. 'reefer', 'dry van',",
+  "'flatbed', 'step deck', 'power only') whenever the document states or implies it.",
+  "List EACH accessorial/charge as its OWN entry in `accessorials` (one object per line item with its label",
+  "and amount) — do NOT sum or merge multiple accessorials into a single entry.",
+  "Output ONLY the JSON object.",
 ].join(" ");
 
 /** Best-effort PDF page count from raw bytes. Reliable for uncompressed page trees; may under-count
@@ -210,7 +224,7 @@ export async function extractRateConPdf(
         },
       ],
     },
-    { apiKey: options?.apiKey, fetchImpl: options?.fetchImpl, timeoutMs: options?.timeoutMs },
+    { apiKey: options?.apiKey, fetchImpl: options?.fetchImpl, timeoutMs: options?.timeoutMs ?? RATECON_EXTRACT_TIMEOUT_MS },
   );
 
   const extraction = parseRateConExtraction(extractText(payload));

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSafetyTrainingRecord, getTrainingCompletions } from "../../api/safety";
@@ -18,8 +19,8 @@ function expiryLabel(expiryDate: string | null | undefined) {
   if (!expiryDate) return { text: "No expiry", tone: "text-slate-500" };
   const days = Math.ceil((new Date(`${expiryDate}T00:00:00`).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
   if (days < 0) return { text: "Expired", tone: "text-red-700" };
-  if (days <= 30) return { text: `Due in ${days}d`, tone: "text-amber-700" };
-  return { text: expiryDate, tone: "text-green-700" };
+  if (days <= 30) return { text: `Due in ${days}d`, tone: "text-slate-700" };
+  return { text: expiryDate, tone: "text-slate-700" };
 }
 
 export function TrainingRecordsPage({ operatingCompanyId }: Props) {
@@ -39,7 +40,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
 
   const driversQuery = useQuery({
     queryKey: ["mdata", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active" }),
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -76,7 +77,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   // Migrated to the shared QBO-parity grid — columns, order, and the per-row expiry status tone
   // are preserved verbatim (§7 additive-only).
   const recordColumns: Array<ParityColumn<TrainingRecordRow>> = [
-    { key: "completed_at", label: "Completed", sortable: true, render: (row) => String(row.completed_at ?? "").slice(0, 10) },
+    { key: "completed_at", label: "Completed", sortable: true, render: (row) => formatDateUS(row.completed_at) },
     {
       key: "driver_id",
       label: "Driver",

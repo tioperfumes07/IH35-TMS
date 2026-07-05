@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
+import { useListState } from "../../components/list-state";
 
 export function LegalPoliciesPage() {
   const navigate = useNavigate();
@@ -23,6 +24,9 @@ export function LegalPoliciesPage() {
 
   const rows = query.data?.templates ?? [];
 
+  // Empty message renders only once the templates query settles (no first-fetch flash).
+  const listState = useListState(query, rows.length === 0);
+
   return (
     <div className="space-y-3">
       <PageHeader title="Legal Policies" subtitle="Policy acknowledgments and governance" />
@@ -30,7 +34,7 @@ export function LegalPoliciesPage() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Policy Templates</div>
         <div className="space-y-2">
-          {rows.length === 0 ? <div className="text-sm text-gray-500">No policy templates found. Create one from Templates.</div> : null}
+          {listState.isEmpty ? <div className="text-sm text-gray-500">No policy templates found. Create one from Templates.</div> : null}
           {rows.map((row) => (
             <div key={row.id} className="flex items-center justify-between rounded-sm border border-gray-200 px-3 py-2">
               <div>

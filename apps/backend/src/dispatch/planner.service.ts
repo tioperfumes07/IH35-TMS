@@ -1,5 +1,6 @@
 import { withCurrentUser } from "../auth/db.js";
 import { getCurrentClocks, getCurrentClocksForDrivers } from "../telematics/hos-clocks.service.js";
+import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -238,7 +239,7 @@ export async function reschedulePlannerLoad(
   driverId?: string
 ): Promise<
   | { ok: true; load: PlannerLoadEvent }
-  | { ok: false; error: "validation_error" | "load_not_found" | "conflict" | "hos_blocked"; details?: Record<string, unknown> }
+  | { ok: false; error: "validation_error" | "load_not_found" | "conflict" | "hos_blocked" | "driver_not_qualified"; details?: Record<string, unknown> }
 > {
   const parsedStart = new Date(startAt);
   if (Number.isNaN(parsedStart.getTime())) {
@@ -257,6 +258,7 @@ export async function reschedulePlannerLoad(
           l.assigned_primary_driver_id::text AS driver_id,
           c.customer_name,
           pu.id::text AS pickup_stop_id,
+          COALESCE((l.quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat,
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at
         FROM mdata.loads l
         JOIN mdata.customers c ON c.id = l.customer_id
@@ -284,6 +286,28 @@ export async function reschedulePlannerLoad(
     const clocks = await getCurrentClocks(client, operatingCompanyId, effectiveDriverId);
     if (clocks.status === "violation") {
       return { ok: false, error: "hos_blocked", details: { hos_status: clocks.status } };
+    }
+
+    // Shared driver-qualification gate (G9-C1 + D3-1): the planner reschedule reassigns the
+    // load's driver but previously enforced only HOS. Block a deactivated / archived /
+    // expired-CDL / expired-medical driver, and the hazmat H-endorsement on a hazmat load.
+    const qualBlock = await assertDriverQualifiedForLoad(client, {
+      driverId: effectiveDriverId,
+      operatingCompanyId,
+      isHazmat: Boolean((load as { is_hazmat?: boolean }).is_hazmat),
+    });
+    if (qualBlock) {
+      return {
+        ok: false,
+        error: "driver_not_qualified",
+        details: {
+          driver_id: qualBlock.driverId,
+          reasons: qualBlock.reasons,
+          cdl_expires_at: qualBlock.cdlExpiresAt,
+          medical_expiry_date: qualBlock.medicalExpiryDate,
+          hazmat_endorsement_expires_at: qualBlock.hazmatEndorsementExpiresAt,
+        },
+      };
     }
 
     const weekStartDate = parseWeekStart(parsedStart.toISOString().slice(0, 10));

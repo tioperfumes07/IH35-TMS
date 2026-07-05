@@ -8,6 +8,8 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { useListState } from "../../components/list-state";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId?: string;
@@ -33,7 +35,7 @@ function claimStatusVariant(status: InsuranceClaimStatus): "neutral" | "warn" | 
 }
 
 function formatMoney(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return formatUsdCents(cents);
 }
 
 export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
@@ -52,6 +54,9 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       }).then((result) => result.claims),
     enabled: Boolean(companyId),
   });
+
+  // Empty message renders only once the claims query settles (no first-fetch flash).
+  const listState = useListState(query, (query.data ?? []).length === 0);
 
   if (!companyId) {
     return (
@@ -76,7 +81,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
 
       {query.isLoading ? <div className="text-sm text-gray-500">Loading claims...</div> : null}
       {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load claims.</div> : null}
-      {!query.isLoading && rows.length === 0 ? <div className="text-sm text-gray-600">No claims found.</div> : null}
+      {listState.isEmpty ? <div className="text-sm text-gray-600">No claims found.</div> : null}
 
       {rows.length > 0 ? (
         <div className="overflow-x-auto">

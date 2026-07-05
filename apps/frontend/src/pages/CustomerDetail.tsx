@@ -3,6 +3,7 @@ import { formatDateUS } from "../lib/formatDate";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
+import { formatUsdCents } from "../lib/money";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -71,6 +72,7 @@ import { MissingRequiredChip } from "../components/compliance/MissingRequiredChi
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { scrubQboArchiveProjectionNotes } from "../lib/qboArchiveNotes";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { useListState } from "../components/list-state";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -238,7 +240,7 @@ function CustomerFinancialOverviewSection(props: {
           {props.summary.ar_aging_buckets.map((b) => (
             <div key={b.bucket} className="flex justify-between">
               <span>{agingLabels[b.bucket] ?? b.bucket}</span>
-              <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(b.open_cents / 100)}</span>
+              <span>{formatUsdCents(b.open_cents)}</span>
             </div>
           ))}
         </div>
@@ -249,7 +251,7 @@ function CustomerFinancialOverviewSection(props: {
             <div key={l.id} className="flex justify-between gap-2 border-b border-gray-100 py-1">
               <span className="truncate">{l.load_number ?? l.id.slice(0, 8)}</span>
               <StatusBadge variant="neutral">{l.status ?? "—"}</StatusBadge>
-              <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(l.rate_total_cents ?? 0) / 100)}</span>
+              <span>{formatUsdCents(Number(l.rate_total_cents ?? 0))}</span>
             </div>
           ))}
           {props.summary.recent_loads.length === 0 ? <p className="text-gray-500">No loads.</p> : null}
@@ -297,10 +299,8 @@ function emptyLaneForm() {
   };
 }
 
-const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-
 function formatCurrencyCents(cents: number | null | undefined) {
-  return usdFormatter.format((Number(cents ?? 0) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 function formatDateShort(value: string | null | undefined) {
@@ -830,7 +830,7 @@ export function CustomerDetailPage() {
 
   const recordCustomerPaymentMutation = useMutation({
     mutationFn: () =>
-      recordCustomerPayment(id, {
+      recordCustomerPayment(id, selectedCompanyId ?? "", {
         date: payDate,
         amount_cents: paymentCents,
         method: payMethod,
@@ -885,6 +885,14 @@ export function CustomerDetailPage() {
     () => tabs.filter((tab) => (tab === "Quality & History" ? canReadQuality : tab === "Documents" ? canViewDocuments : true)),
     [canReadQuality, canViewDocuments]
   );
+
+  // Each list empty message renders only once its query settles, never mid-fetch.
+  const contactsListState = useListState(contactsQuery, contacts.length === 0);
+  const openInvoicesListState = useListState(paymentInvoicesQuery, openInvoicesForPayment.length === 0);
+  const customerPaymentsListState = useListState(customerPaymentsQuery, (customerPaymentsQuery.data?.payments ?? []).length === 0);
+  const recentInvoicesListState = useListState(recentInvoicesQuery, recentInvoices.length === 0);
+  const customerLanesListState = useListState(lanesQuery, customerLanes.length === 0);
+  const fmcsaHistoryListState = useListState(fmcsaHistoryQuery, (fmcsaHistoryQuery.data ?? []).length === 0);
 
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading customer...</div>;
   if (!customer) {
@@ -1591,7 +1599,7 @@ export function CustomerDetailPage() {
               </tbody>
             </table>
           </div>
-          {contacts.length === 0 ? <div className="mt-3 text-sm text-gray-600">No contacts on file. Add via Edit Customer.</div> : null}
+          {contactsListState.isEmpty ? <div className="mt-3 text-sm text-gray-600">No contacts on file. Add via Edit Customer.</div> : null}
         </DataPanel>
       ) : null}
 
@@ -1714,7 +1722,7 @@ export function CustomerDetailPage() {
                   </p>
                   {payManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
                   <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
-                    {openInvoicesForPayment.length === 0 ? <p className="text-gray-500">No open invoices.</p> : null}
+                    {openInvoicesListState.isEmpty ? <p className="text-gray-500">No open invoices.</p> : null}
                     {openInvoicesForPayment.map((inv: Invoice) => (
                       <div key={inv.id} className="flex flex-wrap items-center gap-2 border-b border-gray-100 py-1">
                         {!payAutoApply ? (
@@ -1813,7 +1821,7 @@ export function CustomerDetailPage() {
                         </tr>
                       );
                     })}
-                    {(customerPaymentsQuery.data?.payments ?? []).length === 0 ? (
+                    {customerPaymentsListState.isEmpty ? (
                       <tr>
                         <td colSpan={6} className="px-2 py-3 text-gray-500">
                           No payments recorded.
@@ -1899,7 +1907,7 @@ export function CustomerDetailPage() {
                       <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.amount_open_cents ?? 0) / 100).toFixed(2)}</td>
                     </tr>
                   ))}
-                  {recentInvoices.length === 0 ? (
+                  {recentInvoicesListState.isEmpty ? (
                     <tr>
                       <td className="px-2 py-2 text-gray-500" colSpan={5}>
                         No invoices yet for this customer.
@@ -1958,7 +1966,7 @@ export function CustomerDetailPage() {
                     <td className="px-2 py-1.5 text-gray-700">{lane.origin_city}, {lane.origin_state}</td>
                     <td className="px-2 py-1.5 text-gray-700">{lane.destination_city}, {lane.destination_state}</td>
                     <td className="px-2 py-1.5 text-gray-700">{lane.typical_miles ?? "-"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">${(Number(lane.base_rate_cents ?? 0) / 100).toFixed(2)}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{formatUsdCents(Number(lane.base_rate_cents ?? 0))}</td>
                     <td className="px-2 py-1.5 text-gray-700">{lane.fsc_per_mile_cents == null ? "-" : `$${(lane.fsc_per_mile_cents / 100).toFixed(2)}`}</td>
                     <td className="px-2 py-1.5 text-gray-700">{lane.deactivated_at ? "Inactive" : "Active"}</td>
                     <td className="px-2 py-1.5 text-gray-700">
@@ -1996,7 +2004,7 @@ export function CustomerDetailPage() {
               </tbody>
             </table>
           </div>
-          {customerLanes.length === 0 ? <div className="mt-3 text-sm text-gray-600">Add your first lane to track customer pricing.</div> : null}
+          {customerLanesListState.isEmpty ? <div className="mt-3 text-sm text-gray-600">Add your first lane to track customer pricing.</div> : null}
         </div>
       ) : null}
 
@@ -2340,7 +2348,7 @@ export function CustomerDetailPage() {
               </div>
             </div>
           ))}
-          {(fmcsaHistoryQuery.data ?? []).length === 0 && !fmcsaHistoryQuery.isLoading ? (
+          {fmcsaHistoryListState.isEmpty ? (
             <div className="text-sm text-gray-500">No FMCSA verifications found for this company.</div>
           ) : null}
         </div>

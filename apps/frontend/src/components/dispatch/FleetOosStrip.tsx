@@ -104,30 +104,30 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
 
   return (
     <div
-      className="sticky bottom-0 z-20 mt-3 rounded-sm border border-amber-300 bg-amber-50/95 shadow-xs backdrop-blur-xs"
+      className="sticky bottom-0 z-20 mt-3 rounded-sm border border-slate-200 bg-slate-100/95 shadow-xs backdrop-blur-xs"
       data-testid="dispatch-fleet-oos-strip"
     >
-      <div className="flex items-center justify-between gap-2 border-b border-amber-200 px-3 py-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-900">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
           Fleet OOS / In shop ({unitsQuery.isLoading || severeQuery.isLoading ? "…" : rows.length})
         </span>
-        <span className="text-[10px] text-amber-800">Pinned — full fleet visibility</span>
+        <span className="text-[10px] text-slate-700">Pinned — full fleet visibility</span>
       </div>
       {unitsQuery.isLoading || severeQuery.isLoading ? (
-        <div className="px-3 py-2 text-xs text-amber-800">Loading out-of-service units…</div>
+        <div className="px-3 py-2 text-xs text-slate-700">Loading out-of-service units…</div>
       ) : rows.length === 0 ? (
-        <div className="px-3 py-2 text-xs text-amber-800">All units in service.</div>
+        <div className="px-3 py-2 text-xs text-slate-700">All units in service.</div>
       ) : (
         <div className="flex gap-2 overflow-x-auto px-3 py-2">
           {rows.map((row) => (
             <div
               key={row.unitId}
-              className="min-w-[200px] shrink-0 rounded-sm border border-amber-200 bg-white px-2.5 py-2 text-[11px]"
+              className="min-w-[200px] shrink-0 rounded-sm border border-slate-200 bg-white px-2.5 py-2 text-[11px]"
               data-testid={`fleet-oos-unit-${row.unitNumber}`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-gray-900">{row.unitNumber}</span>
-                <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">
+                <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
                   {row.statusLabel}
                 </span>
               </div>

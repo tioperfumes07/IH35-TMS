@@ -7,14 +7,14 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { MatchDrawer } from "./MatchDrawer";
+import { formatUsdCents } from "../../../lib/money";
 
 export type BankingReviewDataSource = "uncategorized" | "review";
 
 function formatMoneyCents(cents: number | null | undefined) {
   if (cents == null || Number.isNaN(Number(cents))) return "—";
-  const n = Number(cents) / 100;
-  const abs = Math.abs(n);
-  const formatted = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(abs);
+  const n = Number(cents);
+  const formatted = formatUsdCents(Math.abs(n));
   return n < 0 ? `(${formatted})` : formatted;
 }
 

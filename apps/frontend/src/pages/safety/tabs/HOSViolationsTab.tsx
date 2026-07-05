@@ -4,6 +4,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyNow } from "../../../lib/businessDate";
+import { useListState } from "../../../components/list-state";
 
 export function HOSViolationsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -50,6 +51,9 @@ export function HOSViolationsTab() {
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "hos-violations", companyId] });
     },
   });
+
+  // LIST-EMPTY: the empty message renders only after the violations query settles.
+  const listState = useListState(query, (query.data?.hos_violations ?? []).length === 0);
 
   return (
     <div className="space-y-3">
@@ -114,7 +118,7 @@ export function HOSViolationsTab() {
                 </td>
               </tr>
             ))}
-            {(query.data?.hos_violations ?? []).length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
                   No HOS violations found.

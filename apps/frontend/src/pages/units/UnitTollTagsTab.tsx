@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { formatUsd } from "../../lib/money";
 
 type UnitTollTag = {
   uuid: string;
@@ -32,7 +33,7 @@ function formatMoney(value: string | null) {
   if (value == null || value === "") return "—";
   const num = Number(value);
   if (!Number.isFinite(num)) return value;
-  return `$${num.toFixed(2)}`;
+  return formatUsd(num);
 }
 
 export function UnitTollTagsTab({ unitId, companyId }: UnitTollTagsTabProps) {

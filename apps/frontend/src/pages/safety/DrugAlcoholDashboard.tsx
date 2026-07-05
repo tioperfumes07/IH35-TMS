@@ -105,7 +105,7 @@ export function DrugAlcoholDashboard() {
           <div className="text-slate-500">Drug rate</div>
           <div className="mt-1 text-lg font-semibold">
             {rate?.drug_rate_pct ?? 0}%{" "}
-            <span className={rate?.drug_on_track ? "text-emerald-700" : "text-amber-700"}>
+            <span className={rate?.drug_on_track ? "text-slate-700" : "text-slate-700"}>
               (min {rate?.drug_minimum_pct ?? 50}%)
             </span>
           </div>
@@ -114,7 +114,7 @@ export function DrugAlcoholDashboard() {
           <div className="text-slate-500">Alcohol rate</div>
           <div className="mt-1 text-lg font-semibold">
             {rate?.alcohol_rate_pct ?? 0}%{" "}
-            <span className={rate?.alcohol_on_track ? "text-emerald-700" : "text-amber-700"}>
+            <span className={rate?.alcohol_on_track ? "text-slate-700" : "text-slate-700"}>
               (min {rate?.alcohol_minimum_pct ?? 10}%)
             </span>
           </div>

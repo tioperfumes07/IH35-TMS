@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { PageHeader } from "../../components/layout/PageHeader";
+import { ReportsSubNav } from "./ReportsSubNav";
 
 interface Finding {
   uuid: string;
@@ -64,8 +66,13 @@ export function GeofenceReconciliationReport() {
   }, {} as Record<string, Finding[]>);
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Geofence Reconciliation Report</h1>
+    <div className="space-y-4">
+      <ReportsSubNav />
+      <PageHeader
+        backHref="/reports"
+        breadcrumb={["Reports", "Geofence Reconciliation Report"]}
+        title="Geofence Reconciliation Report"
+      />
       <div className="flex items-center gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Report Date</label>

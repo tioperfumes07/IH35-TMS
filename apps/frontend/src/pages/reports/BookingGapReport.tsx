@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { PageHeader } from "../../components/layout/PageHeader";
+import { ReportsSubNav } from "./ReportsSubNav";
 
 interface DispatcherStats {
   dispatcher_id: string | null;
@@ -50,25 +52,31 @@ export function BookingGapReport() {
   const dispatchers = data?.data?.dispatchers ?? [];
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold">Dispatcher Booking Gap</h1>
-        <div className="flex gap-2">
-          {(["week", "month", "quarter"] as Period[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-sm rounded capitalize ${
-                period === p
-                  ? "bg-[#1F2A44] text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="space-y-4">
+      <ReportsSubNav />
+      <PageHeader
+        backHref="/reports"
+        breadcrumb={["Reports", "Dispatcher Booking Gap"]}
+        title="Dispatcher Booking Gap"
+        actions={
+          <div className="flex gap-2">
+            {(["week", "month", "quarter"] as Period[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-sm rounded capitalize ${
+                  period === p
+                    ? "bg-[#1F2A44] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
       <p className="text-sm text-gray-500 mb-4">
         Average time between load delivery and next truck assignment. Lower is better (driver stays

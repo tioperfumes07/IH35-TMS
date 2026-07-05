@@ -405,9 +405,10 @@ export async function decideSettlementDisputeP6(
           SELECT d.email, d.first_name, d.last_name
           FROM mdata.drivers d
           WHERE d.id = $1
+            AND d.operating_company_id = $2
           LIMIT 1
         `,
-        [dispute.driver_id]
+        [dispute.driver_id, input.operating_company_id]
       );
       const driverRow = rowRes.rows[0];
       const email = driverRow?.email ? String(driverRow.email).trim() : "";

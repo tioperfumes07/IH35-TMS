@@ -21,6 +21,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { listAutoDeductionPolicies, type AutoDeductionPolicy } from "../../../hooks/useAutoDeductionPolicies";
 import { Button } from "../../Button";
 import { Modal } from "../../Modal";
+import { formatUsdCents } from "../../../lib/money";
 
 export type FinesDeductionsCardProps = {
   loadId: string;
@@ -29,7 +30,7 @@ export type FinesDeductionsCardProps = {
 };
 
 function formatMoney(cents: number) {
-  return `$${(Number(cents || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(cents);
 }
 
 function formatDateTime(value: string | null | undefined) {
@@ -180,20 +181,20 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       </div>
 
       {/* Pending — confirm / defer per settlement */}
-      <section className="rounded-sm border border-amber-200 bg-white p-3">
-        <h4 className="mb-2 text-xs font-semibold uppercase text-amber-800">Pending review (this load)</h4>
+      <section className="rounded-sm border border-slate-200 bg-white p-3">
+        <h4 className="mb-2 text-xs font-semibold uppercase text-slate-700">Pending review (this load)</h4>
         {!canReviewEscrow && loadPendingRows.length > 0 ? (
-          <p className="mb-2 text-xs text-amber-700">Owner approval required to confirm or defer escrow deductions.</p>
+          <p className="mb-2 text-xs text-slate-700">Owner approval required to confirm or defer escrow deductions.</p>
         ) : null}
         <div className="space-y-2">
           {loadPendingRows.map((row) => (
-            <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber-100 bg-amber-50 px-2 py-1.5 text-xs">
+            <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs">
               <div className="min-w-0 flex-1">
-                <div className="font-semibold text-amber-900">{formatMoney(row.proposed_amount_cents)}</div>
-                <div className="truncate text-amber-800" title={row.proposed_reason}>
+                <div className="font-semibold text-slate-700">{formatMoney(row.proposed_amount_cents)}</div>
+                <div className="truncate text-slate-700" title={row.proposed_reason}>
                   {row.proposed_reason}
                 </div>
-                <div className="text-[10px] text-amber-700">Proposed {formatDateTime(row.proposed_at)} · expires {formatDateTime(row.expires_at)}</div>
+                <div className="text-[10px] text-slate-700">Proposed {formatDateTime(row.proposed_at)} · expires {formatDateTime(row.expires_at)}</div>
               </div>
               {canReviewEscrow ? (
                 <Button
@@ -208,7 +209,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
                   Review
                 </Button>
               ) : (
-                <span className="text-[10px] font-medium uppercase text-amber-700">Pending</span>
+                <span className="text-[10px] font-medium uppercase text-slate-700">Pending</span>
               )}
             </div>
           ))}
@@ -331,7 +332,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               </Button>
               <Button
                 size="sm"
-                className="border-emerald-600! bg-emerald-600! hover:bg-emerald-700!"
+                className="border-slate-200! bg-slate-600! hover:bg-slate-600!"
                 loading={approveMutation.isPending}
                 onClick={() => void approveMutation.mutateAsync()}
               >

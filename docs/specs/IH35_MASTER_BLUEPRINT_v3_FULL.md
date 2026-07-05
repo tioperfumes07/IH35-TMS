@@ -20041,3 +20041,5 @@ Per Part 12 §12.5.3 cutover strategy, the cutover from v2 (existing maintenance
 - **approve** → Part 13 is approved; v3 spec authoring is complete and the corpus enters the build phase per Part 12 §12.5.2 phase sequence
 - **change X** → specifically what to change in Part 13
 - **gap Y** → what's still missing
+
+> **2026-07-04 — Driver-pay / deduction / escrow engine locked.** See `docs/lockdown/00_LOCKED_DECISIONS.md` §9 and `docs/specs/ACCOUNTING-ARCHITECTURE.md` "Driver-pay / deduction / escrow engine — LOCKED owner decisions (2026-07-04)": canonical deduction ledger `driver_finance.driver_settlement_deductions`; net-pay floor 5% editable; recovery pay-first-then-escrow; escrow 60–90d return; deduction auth = hire contract (no driver e-sign); everything links to the load; never delete.

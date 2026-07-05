@@ -12,6 +12,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CatalogEntryModal } from "./CatalogEntryModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useListState } from "../../../components/list-state";
 
 type StatusFilter = "active" | "inactive" | "all";
 
@@ -40,7 +41,7 @@ function parseCodeError(error: unknown) {
 
 function statusPill(isActive: boolean) {
   return isActive
-    ? "inline-flex rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700"
+    ? "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
     : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600";
 }
 
@@ -99,6 +100,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
 
   const rows = listQuery.data?.rows ?? [];
   const total = listQuery.data?.total ?? 0;
+  const listState = useListState(listQuery, rows.length === 0);
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
 
   const breadcrumb = useMemo(
@@ -162,7 +164,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
                 </td>
               </tr>
             ) : null}
-            {!listQuery.isLoading && rows.length === 0 ? (
+            {listState.isEmpty ? (
               <tr>
                 <td className="px-3 py-3 text-slate-500" colSpan={5}>
                   No entries match these filters

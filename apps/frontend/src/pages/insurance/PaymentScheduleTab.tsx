@@ -11,6 +11,8 @@ import { useToast } from "../../components/Toast";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { formatDateUS } from "../../lib/formatDate";
+import { useListState } from "../../components/list-state";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId?: string;
@@ -38,7 +40,7 @@ function statusLabel(status: PaymentScheduleStatus): string {
 }
 
 function formatMoney(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return formatUsdCents(cents);
 }
 
 function canMarkPaid(schedule: InsurancePaymentSchedule): boolean {
@@ -60,6 +62,9 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
       }).then((result) => result.payment_schedules),
     enabled: Boolean(operatingCompanyId),
   });
+
+  // Empty message renders only once the schedule query settles (no first-fetch flash).
+  const listState = useListState(query, (query.data ?? []).length === 0);
 
   const markPaidMutation = useMutation({
     mutationFn: (scheduleId: string) => markInsurancePaymentSchedulePaid(scheduleId, operatingCompanyId!),
@@ -105,7 +110,7 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
       {query.isError ? (
         <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load payment schedule.</div>
       ) : null}
-      {!query.isLoading && rows.length === 0 ? <div className="text-sm text-gray-600">No payment schedule records found.</div> : null}
+      {listState.isEmpty ? <div className="text-sm text-gray-600">No payment schedule records found.</div> : null}
 
       {rows.length > 0 ? (
         <div className="overflow-x-auto">

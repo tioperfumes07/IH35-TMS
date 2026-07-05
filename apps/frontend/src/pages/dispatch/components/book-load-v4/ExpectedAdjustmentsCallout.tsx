@@ -6,11 +6,11 @@ type Props = {
 
 export function ExpectedAdjustmentsCallout({ register }: Props) {
   return (
-    <div className="rounded-sm border border-amber-300 bg-[#FEF3C7] px-3 py-2 text-[11px] text-amber-950">
+    <div className="rounded-sm border border-slate-200 bg-[#FEF3C7] px-3 py-2 text-[11px] text-slate-700">
       <div className="mb-2 font-semibold uppercase tracking-wide">Expected adjustments</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-        <div className="space-y-1 rounded-sm border border-amber-200 bg-white/70 p-2">
-          <div className="text-[10px] font-semibold text-amber-900">Anticipated chargeback</div>
+        <div className="space-y-1 rounded-sm border border-slate-200 bg-white/70 p-2">
+          <div className="text-[10px] font-semibold text-slate-700">Anticipated chargeback</div>
           <input
             type="number"
             min={0}
@@ -25,8 +25,8 @@ export function ExpectedAdjustmentsCallout({ register }: Props) {
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
-        <div className="space-y-1 rounded-sm border border-amber-200 bg-white/70 p-2">
-          <div className="text-[10px] font-semibold text-amber-900">Detention expected</div>
+        <div className="space-y-1 rounded-sm border border-slate-200 bg-white/70 p-2">
+          <div className="text-[10px] font-semibold text-slate-700">Detention expected</div>
           <label className="flex items-center gap-2">
             <input type="checkbox" {...register("detention_expected_y_n")} />
             Yes
@@ -54,8 +54,8 @@ export function ExpectedAdjustmentsCallout({ register }: Props) {
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
-        <div className="space-y-1 rounded-sm border border-amber-200 bg-white/70 p-2">
-          <div className="text-[10px] font-semibold text-amber-900">Late delivery risk</div>
+        <div className="space-y-1 rounded-sm border border-slate-200 bg-white/70 p-2">
+          <div className="text-[10px] font-semibold text-slate-700">Late delivery risk</div>
           <label className="flex items-center gap-2">
             <input type="checkbox" {...register("late_delivery_risk_y_n")} />
             Yes

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { resolveApiUrl } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Button } from "../../components/Button";
@@ -30,20 +30,29 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
       // B1: create against the real maintenance.parts_inventory backend (no /api/v1/inventory/parts route exists).
       // Company id goes in the query string (the POST handler reads it from req.query); map this drawer's
       // field names onto the maintenance createSchema (sku -> part_number, on_hand_qty -> qty_on_hand, etc.).
-      const res = await fetch(resolveApiUrl(`/api/v1/maintenance/parts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          part_number: data.sku.trim() || data.name.trim(),
-          name: data.name.trim(),
-          qty_on_hand: Number(data.on_hand_qty) || 0,
-          reorder_threshold: Number(data.reorder_point) || 0,
-          unit_cost: Number(data.unit_cost) || 0,
-          location: data.location.trim() || undefined,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to create part");
-      return res.json();
+      //
+      // D5-1: route through the shared apiRequest helper instead of a raw fetch(). apiRequest adds
+      // credentials:"include" (the prod API is cross-origin — a raw fetch dropped the session cookie
+      // and 401'd before the body was read → "Failed to create part"), applies the API base URL, and
+      // attaches a POST Idempotency-Key. category/notes/is_active are forwarded (forward-compatible;
+      // the current backend createSchema strips them until columns exist).
+      return apiRequest<{ id: string }>(
+        `/api/v1/maintenance/parts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+        {
+          method: "POST",
+          body: {
+            part_number: data.sku.trim() || data.name.trim(),
+            name: data.name.trim(),
+            category: data.category.trim() || undefined,
+            qty_on_hand: Number(data.on_hand_qty) || 0,
+            reorder_threshold: Number(data.reorder_point) || 0,
+            unit_cost: Number(data.unit_cost) || 0,
+            location: data.location.trim() || undefined,
+            notes: data.notes.trim() || undefined,
+            is_active: data.is_active,
+          },
+        }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory", "parts", operatingCompanyId] });
@@ -158,10 +167,13 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
             />
           </div>
           <label className="flex items-center gap-2">
+            {/* D5-1: the checkbox reads "Make inactive", so a checked box must mean inactive. It was
+                bound directly to is_active (checked => active) — inverted vs its own label. Bind to the
+                negation so the default (is_active:true) renders unchecked. */}
             <input
               type="checkbox"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              checked={!formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: !e.target.checked })}
             />
             <span className="text-sm">Make inactive</span>
           </label>

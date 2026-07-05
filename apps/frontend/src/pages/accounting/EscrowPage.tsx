@@ -2,7 +2,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useListState } from "../../components/list-state";
 
 function money(cents: number) {
   return (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -33,6 +35,8 @@ export function EscrowPage() {
     [accountsQuery.data?.rows, selectedAccountId]
   );
 
+  const listState = useListState(accountsQuery, (accountsQuery.data?.rows ?? []).length === 0);
+
   return (
     <div className="space-y-4 p-4">
       <PageHeader title="Escrow" subtitle="Escrow accounts and posting history" />
@@ -40,6 +44,17 @@ export function EscrowPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
       {accountsQuery.isLoading ? <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">Loading escrow accounts...</div> : null}
+
+      {listState.isError ? (
+        <div className="rounded-sm border border-slate-200 bg-white">
+          <ListErrorState
+            title="Couldn't load escrow accounts"
+            status={0}
+            message={(accountsQuery.error as Error | undefined)?.message}
+            onRetry={() => void accountsQuery.refetch()}
+          />
+        </div>
+      ) : null}
 
       {accountsQuery.data?.rows && accountsQuery.data.rows.length > 0 ? (
         <div className="overflow-auto rounded-sm border border-slate-200 bg-white">
@@ -77,7 +92,7 @@ export function EscrowPage() {
         </div>
       ) : null}
 
-      {accountsQuery.data?.rows && accountsQuery.data.rows.length === 0 ? (
+      {listState.isEmpty ? (
         <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">No escrow accounts found.</div>
       ) : null}
 

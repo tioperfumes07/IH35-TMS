@@ -24,7 +24,7 @@ function normalizeEmail(email: string) {
 const argon2id = new Argon2id();
 
 export async function registerOfficeLoginRoutes(app: FastifyInstance) {
-  app.post("/api/v1/auth/office/email-login", async (req, reply) => {
+  app.post("/api/v1/auth/office/email-login", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = loginBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 

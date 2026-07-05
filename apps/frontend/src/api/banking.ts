@@ -609,21 +609,35 @@ export function applyCategorizationRuleHistorical(id: string, operatingCompanyId
   });
 }
 
-export function getCoaAccounts(operatingCompanyId?: string) {
+type CoaAccountPickerRow = {
+  id: string;
+  account_number: string;
+  account_name: string;
+  account_type?: string;
+  deactivated_at?: string | null;
+};
+
+export async function getCoaAccounts(operatingCompanyId?: string) {
   // catalogs.accounts is per-entity (af1 RLS). Pass the active entity so the correct entity's chart loads
   // (e.g. USMCA's, not the user's default company's). Omitting it falls back to the user's default company.
   const scope = operatingCompanyId ? `&operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
   // account_type is already returned at runtime by /catalogs/accounts; expose it so item pickers can filter
   // income (Income/OtherIncome) vs expense (Expense/CostOfGoodsSold/OtherExpense) accounts (AF-2c).
-  return apiRequest<{
-    accounts: Array<{
-      id: string;
-      account_number: string;
-      account_name: string;
-      account_type?: string;
-      deactivated_at?: string | null;
-    }>;
-  }>(`/api/v1/catalogs/accounts?status=active&limit=200${scope}`);
+  //
+  // G9-H6: the chart has 371 accounts but /catalogs/accounts hard-caps `limit` at 200 (accounts.routes.ts)
+  // and returns no total, so a single call silently drops the OLDEST ~171 accounts (ORDER BY created_at DESC)
+  // — the foundational seed accounts vanish from the picker. Page by offset until a short page so the FULL
+  // chart is selectable. (A larger single limit is impossible here without raising the backend max.)
+  const PAGE = 200;
+  const accounts: CoaAccountPickerRow[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const res = await apiRequest<{ accounts: CoaAccountPickerRow[] }>(
+      `/api/v1/catalogs/accounts?status=active&limit=${PAGE}&offset=${offset}${scope}`
+    );
+    accounts.push(...res.accounts);
+    if (res.accounts.length < PAGE) break;
+  }
+  return { accounts };
 }
 
 export function getQboSyncQueue(

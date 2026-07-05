@@ -39,15 +39,15 @@ export function RateConUploadPanel({
         <span className="text-xs text-slate-500">PDF/image · fills the wizard for you to review (never auto-books)</span>
       </div>
 
-      {error ? <p className="mt-2 text-amber-700">{error}</p> : null}
+      {error ? <p className="mt-2 text-slate-700">{error}</p> : null}
 
       {result ? (
         <div className="mt-2 space-y-1">
           {result.duplicate_of ? (
-            <p className="text-amber-700">This rate con was already used on a load — continue anyway, or cancel.</p>
+            <p className="text-slate-700">This rate con was already used on a load — continue anyway, or cancel.</p>
           ) : null}
           {!result.total_matches_components ? (
-            <p className="text-amber-700">The total doesn’t equal linehaul + fuel + accessorials — verify the rate before booking.</p>
+            <p className="text-slate-700">The total doesn’t equal linehaul + fuel + accessorials — verify the rate before booking.</p>
           ) : null}
           <p className="text-slate-600">Extracted and prefilled. Review every field, especially any flagged low-confidence.</p>
         </div>

@@ -31,7 +31,7 @@ const ADVANCE_TYPES = new Set(["advance", "cash_advance"]);
 const REIMBURSEMENT_TYPES = new Set(["reimbursement"]);
 
 function lineTypeBadge(type: string): string {
-  if (EARNINGS_TYPES.has(type)) return "bg-green-100 text-green-800";
+  if (EARNINGS_TYPES.has(type)) return "bg-slate-100 text-slate-700";
   if (DEDUCTION_TYPES.has(type)) return "bg-red-100 text-red-800";
   if (ADVANCE_TYPES.has(type)) return "bg-orange-100 text-orange-800";
   if (REIMBURSEMENT_TYPES.has(type)) return "bg-slate-100 text-slate-700";
@@ -64,7 +64,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
     const err = billsQuery.error as { status?: number };
     if (err?.status === 501) {
       return (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-sm text-slate-700">
           Driver finance module is not yet configured for this company.
         </div>
       );

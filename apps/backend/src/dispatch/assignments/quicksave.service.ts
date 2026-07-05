@@ -46,13 +46,16 @@ async function assertUnitAvailable(client: PoolClient, unitId: string, operating
 }
 
 async function assertTrailerAvailable(client: PoolClient, trailerId: string, operatingCompanyId: string) {
+  // A trailer is an mdata.equipment id (the canonical book-load resolution, and the FK target of
+  // dispatch.load_assignment_history.new_trailer_id). Validating against mdata.units rejected every real
+  // trailer. Scope by the real ownership/lease columns (COALESCE(currently_leased_to, owner)).
   const res = await client.query<{ id: string }>(
     `
       SELECT id::text
-      FROM mdata.units
+      FROM mdata.equipment
       WHERE id = $1::uuid
-        AND equipment_kind = 'trailer'
-        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+        AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+        AND deactivated_at IS NULL
       LIMIT 1
     `,
     [trailerId, operatingCompanyId]
@@ -189,10 +192,23 @@ export async function reassignTrailer(
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
       await assertTrailerAvailable(client, input.trailer_uuid, input.operating_company_id);
 
-      await client.query(
-        `UPDATE mdata.loads SET assigned_secondary_driver_id = $2, updated_at = now() WHERE id = $1`,
-        [input.load_uuid, input.trailer_uuid]
+      // DISP-1 corruption fix: the trailer is an mdata.equipment id and must NOT be written into
+      // mdata.loads.assigned_secondary_driver_id — that is the CO-DRIVER column (FK -> mdata.drivers,
+      // migration 0034). Writing a trailer/equipment id there is a guaranteed FK violation / data
+      // corruption. mdata.loads has NO trailer column; the only real trailer<->load link is
+      // dispatch.load_assignment_history.new_trailer_id (FK -> mdata.equipment), recorded below.
+      const prevTrailerRes = await client.query<{ new_trailer_id: string | null }>(
+        `
+          SELECT new_trailer_id::text
+          FROM dispatch.load_assignment_history
+          WHERE load_id = $1::uuid
+            AND new_trailer_id IS NOT NULL
+          ORDER BY created_at DESC
+          LIMIT 1
+        `,
+        [input.load_uuid]
       );
+      const previousTrailerId = prevTrailerRes.rows[0]?.new_trailer_id ?? null;
 
       await recordAssignment(client, {
         operating_company_id: input.operating_company_id,
@@ -202,16 +218,16 @@ export async function reassignTrailer(
         new_driver_id: load.assigned_primary_driver_id,
         previous_unit_id: load.assigned_unit_id,
         new_unit_id: load.assigned_unit_id,
-        previous_trailer_id: load.assigned_secondary_driver_id,
+        previous_trailer_id: previousTrailerId,
         new_trailer_id: input.trailer_uuid,
         user_id: userId,
       });
 
       await appendCrudAudit(client, userId, "dispatch.load.assign_trailer", {
-        resource_type: "mdata.loads",
+        resource_type: "dispatch.load_assignment_history",
         resource_id: input.load_uuid,
         operating_company_id: input.operating_company_id,
-        prior_value: load.assigned_secondary_driver_id,
+        prior_value: previousTrailerId,
         new_value: input.trailer_uuid,
       });
 

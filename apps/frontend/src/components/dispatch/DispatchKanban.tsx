@@ -185,11 +185,11 @@ function driverNameLabel(load: DispatchLoadRow): string {
 }
 
 function onTimeChipClass(load: DispatchLoadRow): string {
-  if (load.on_time_prediction === "green") return "bg-emerald-100 text-emerald-800";
-  if (load.on_time_prediction === "amber") return "bg-amber-100 text-amber-800";
+  if (load.on_time_prediction === "green") return "bg-slate-100 text-slate-700";
+  if (load.on_time_prediction === "amber") return "bg-slate-100 text-slate-700";
   if (load.on_time_prediction === "red") return "bg-red-100 text-red-800";
-  if (load.progress_status === "early" || load.progress_status === "on_track") return "bg-emerald-100 text-emerald-800";
-  if (load.progress_status === "behind") return "bg-amber-100 text-amber-800";
+  if (load.progress_status === "early" || load.progress_status === "on_track") return "bg-slate-100 text-slate-700";
+  if (load.progress_status === "behind") return "bg-slate-100 text-slate-700";
   if (load.progress_status === "delayed") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-600";
 }
@@ -340,7 +340,7 @@ function KanbanDispatchCard({
       {dwell ? (
         <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
           <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-slate-700">Dwell {formatMinutes(dwell.dwell)}</span>
-          <span className="rounded-sm bg-emerald-50 px-1.5 py-0.5 text-emerald-800">Free {formatMinutes(dwell.free)}</span>
+          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-slate-700">Free {formatMinutes(dwell.free)}</span>
           <span className={`rounded-sm px-1.5 py-0.5 ${dwell.det != null && dwell.det > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-600"}`}>
             Det {formatMinutes(dwell.det)}
           </span>
@@ -704,15 +704,15 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
 
         {/* Part D — Fleet out-of-service strip, pinned at the bottom of the board. */}
         <section
-          className="sticky bottom-0 mt-2 rounded-sm border border-amber-200 bg-amber-50 p-2"
+          className="sticky bottom-0 mt-2 rounded-sm border border-slate-200 bg-slate-100 p-2"
           data-testid="dispatch-kanban-oos-strip"
         >
           <header className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-800">Fleet out of service</h3>
-            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-amber-700">{outOfServiceLoads.length}</span>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Fleet out of service</h3>
+            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700">{outOfServiceLoads.length}</span>
           </header>
           {outOfServiceLoads.length === 0 ? (
-            <p className="mt-1 text-[11px] italic text-amber-700">
+            <p className="mt-1 text-[11px] italic text-slate-700">
               Full fleet out-of-service feed pending — no units flagged.
             </p>
           ) : (
@@ -722,7 +722,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                   key={load.id}
                   type="button"
                   onClick={() => onLoadClick(load.id)}
-                  className="flex items-center gap-2 rounded-sm border border-amber-300 bg-white px-2 py-1 text-[11px] hover:bg-amber-100"
+                  className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-[11px] hover:bg-slate-100"
                 >
                   <span className="text-red-600" aria-hidden>▲</span>
                   <span className="font-semibold text-gray-900">{driverUnitLabel(load)}</span>

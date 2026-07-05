@@ -13,6 +13,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { useListState } from "../../components/list-state";
+import { ListErrorState } from "../../components/ListErrorState";
 
 const KIND_OPTIONS: ExpenseCategoryMapKind[] = [
   "fuel",
@@ -63,6 +65,8 @@ export function ExpenseCategoryMapPage() {
     queryFn: () => listCoaAccountsForJe(),
     staleTime: 60_000,
   });
+
+  const listState = useListState(mapQuery, (mapQuery.data?.rows ?? []).length === 0);
 
   const accounts = accountsQuery.data?.accounts ?? [];
   const selectedAccount = useMemo(
@@ -142,7 +146,19 @@ export function ExpenseCategoryMapPage() {
                 </td>
               </tr>
             ) : null}
-            {!mapQuery.isLoading && (mapQuery.data?.rows ?? []).length === 0 ? (
+            {listState.isError ? (
+              <tr>
+                <td className="px-3 py-2" colSpan={7}>
+                  <ListErrorState
+                    title="Couldn't load category mappings"
+                    status={0}
+                    message={(mapQuery.error as Error | undefined)?.message}
+                    onRetry={() => void mapQuery.refetch()}
+                  />
+                </td>
+              </tr>
+            ) : null}
+            {listState.isEmpty ? (
               <tr>
                 <td className="px-3 py-3 text-gray-500" colSpan={7}>
                   No mappings found.

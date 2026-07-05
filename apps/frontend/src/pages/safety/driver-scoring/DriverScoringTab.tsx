@@ -17,8 +17,8 @@ function periodBounds(preset: PeriodPreset): { from: string; to: string } {
 
 function scoreClass(score: number | null) {
   if (score == null) return "text-slate-500";
-  if (score >= 85) return "text-emerald-700";
-  if (score >= 70) return "text-amber-700";
+  if (score >= 85) return "text-slate-700";
+  if (score >= 70) return "text-slate-700";
   return "text-red-700";
 }
 

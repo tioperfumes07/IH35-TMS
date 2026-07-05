@@ -336,6 +336,9 @@ import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js"
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeBankReconAutoMatchCron } from "./cron/bank-recon-auto-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
+import { initializeDriverLeaveAdvanceReminderCron } from "./cron/driver-leave-advance-reminder.cron.js";
+import { initializeDriverLeaveBalanceRolloverCron } from "./cron/driver-leave-balance-rollover.cron.js";
+import { initializeDriverLeavePendingEscalationCron } from "./cron/driver-leave-pending-escalation.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { backfillLegalTemplateLibraries } from "./legal/template-library-provision.service.js";
 import { initializeSafetyRemindersCron } from "./safety/reminders.cron.js";
@@ -584,7 +587,22 @@ async function main() {
     allowedHeaders: ["Content-Type", "Authorization", "Idempotency-Key"],
   });
   await app.register(cookie);
-  await app.register(multipart);
+  // Multipart body limits (G3-3 hardening). Without explicit caps @fastify/multipart
+  // defaults fileSize/files to Infinity, so a single request can stream unbounded bytes
+  // and memory-exhaust the process (DoS) — every direct-upload route uses part.toBuffer(),
+  // which buffers the whole file into memory. Caps below are a defense-in-depth transport
+  // ceiling, NOT the business rule: the app's own per-attachment cap is 25 MB
+  // (documents/attachments.service.ts MAX_SIZE_BYTES), so fileSize=50 MB gives 2x headroom
+  // and never truncates a legit evidence photo/short mp4, rate-con/BOL PDF, or CSV/Excel
+  // import while still bounding per-file memory. files=20 covers bulk-attach; fieldSize=1 MB
+  // is ample for the small text fields (company id, etc.) these routes carry.
+  await app.register(multipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50 MB per file
+      files: 20, // max file parts per request
+      fieldSize: 1 * 1024 * 1024, // 1 MB per non-file field value
+    },
+  });
   // Per-route rate limiting (opt-in only: global:false → zero effect on routes that don't set
   // config.rateLimit). Applied to the task-chat write/read routes to prevent comment-spam/DoS.
   await app.register(rateLimit, { global: false });
@@ -1135,6 +1153,16 @@ async function main() {
     app.log.info("[STARTUP] geofence-breach-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-breach-cron failed");
+  }
+
+  try {
+    // P8C-K driver scheduler leave crons — each self-gates OFF unless its env flag is set to "true".
+    initializeDriverLeaveAdvanceReminderCron(app);
+    initializeDriverLeaveBalanceRolloverCron(app);
+    initializeDriverLeavePendingEscalationCron(app);
+    app.log.info("[STARTUP] driver-leave scheduler crons initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] driver-leave scheduler crons failed");
   }
 
   try {

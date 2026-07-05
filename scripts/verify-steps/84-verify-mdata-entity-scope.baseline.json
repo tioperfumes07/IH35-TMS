@@ -186,6 +186,16 @@
       "preview": "` SELECT id::text, operating_company_id::text, 'customer'::text AS entity_type FROM mdata.customers WHERE deactivated_at"
     },
     {
+      "key": "apps/backend/src/cron/driver-leave-advance-reminder.cron.ts#dff9d69f1ecda724fdfd01f138b7ee63692a26b8",
+      "file": "apps/backend/src/cron/driver-leave-advance-reminder.cron.ts",
+      "preview": "` SELECT r.id::text AS leave_request_id, r.operating_company_id::text AS operating_company_id, r.driver_id::text AS driv"
+    },
+    {
+      "key": "apps/backend/src/cron/driver-leave-pending-escalation.cron.ts#5070933a6a31dc9d18a8a45e1b4ccb4b6e66cb6a",
+      "file": "apps/backend/src/cron/driver-leave-pending-escalation.cron.ts",
+      "preview": "` SELECT r.id::text AS leave_request_id, r.operating_company_id::text AS operating_company_id, r.request_number, r.leave"
+    },
+    {
       "key": "apps/backend/src/customers/list.routes.ts#70d72643fa242e4706ddcbd9e84b6efea438a148",
       "file": "apps/backend/src/customers/list.routes.ts",
       "preview": "`SELECT COUNT(*)::int AS total_count FROM mdata.customers ${whereClause}`"
@@ -204,6 +214,11 @@
       "key": "apps/backend/src/dispatch/arch-tabs.service.ts#7947bc3a9dd5b66fe8b83a47acf3208f29052705",
       "file": "apps/backend/src/dispatch/arch-tabs.service.ts",
       "preview": "` SELECT h.id, h.load_id, h.assignment_method, h.reason_code, h.notes, h.assigned_at, l.load_number, CONCAT_WS(' ', pd.f"
+    },
+    {
+      "key": "apps/backend/src/dispatch/assignments/quicksave.service.ts#ba80700d506989960471ffa79dba940f014aa7ca",
+      "file": "apps/backend/src/dispatch/assignments/quicksave.service.ts",
+      "preview": "` SELECT id::text FROM mdata.equipment WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id"
     },
     {
       "key": "apps/backend/src/dispatch/book-load.service.ts#bc77e99806bc2ef5da2e58fa880c00c4c130c9d2",
@@ -226,19 +241,19 @@
       "preview": "`SELECT identity_user_id FROM mdata.drivers WHERE id = $1 LIMIT 1`"
     },
     {
-      "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#540601fae615a9b3d5cfe749f05e4f78d0eb1597",
+      "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#213f50bfb5d83b4dc194577b21fbc191f1b1c65d",
       "file": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
-      "preview": "` SELECT s.id, s.stop_type::text, loc.latitude, loc.longitude FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.loa"
+      "preview": "` SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude FROM mdata."
+    },
+    {
+      "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#2b2bd0cfd9bc7ca4e2adb99886c28480d96eb5e3",
+      "file": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
+      "preview": "` SELECT s.id, s.stop_type::text, l.status::text AS load_status, loc.latitude, loc.longitude FROM mdata.load_stops s JOI"
     },
     {
       "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#6b7feac4860c4f4cc3bbde3afc69b792f3c2728b",
       "file": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
       "preview": "` SELECT s.id, l.operating_company_id::text FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.load_id WHERE s.id = "
-    },
-    {
-      "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#80b74a335b89215100e155b52ebfe8ec475ff4a7",
-      "file": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
-      "preview": "` SELECT s.id, s.stop_type::text, s.status::text, loc.latitude, loc.longitude FROM mdata.load_stops s JOIN mdata.loads l"
     },
     {
       "key": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts#c8ae4cb429c9283f825bddd728309dbfe7ef9994",
@@ -294,6 +309,11 @@
       "key": "apps/backend/src/dispatch/pod.routes.ts#3b7cc6ed2b966322b19986a1f6fbdb83d1d2ff4b",
       "file": "apps/backend/src/dispatch/pod.routes.ts",
       "preview": "` SELECT s.id, s.stop_type::text, l.operating_company_id::text FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.lo"
+    },
+    {
+      "key": "apps/backend/src/dispatch/quick-assign.service.ts#ba80700d506989960471ffa79dba940f014aa7ca",
+      "file": "apps/backend/src/dispatch/quick-assign.service.ts",
+      "preview": "` SELECT id::text FROM mdata.equipment WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id"
     },
     {
       "key": "apps/backend/src/dispatch/trip-pairing-board.service.ts#217f2ceb23d3c51b9ac7959ee596d8a54949998a",
@@ -604,11 +624,6 @@
       "key": "apps/backend/src/lists/oem-parts.brand-match.ts#0ec288bb66ad88fe093efae95c2a1859e118c86f",
       "file": "apps/backend/src/lists/oem-parts.brand-match.ts",
       "preview": "` SELECT DISTINCT UPPER(TRIM(make)) AS brand FROM mdata.units WHERE deactivated_at IS NULL AND make IS NOT NULL AND TRIM"
-    },
-    {
-      "key": "apps/backend/src/maintenance/drivers.routes.ts#046d4c11a6dd9abddba123ce0d36fa2b19f67322",
-      "file": "apps/backend/src/maintenance/drivers.routes.ts",
-      "preview": "`SELECT * FROM mdata.drivers WHERE id = $1 LIMIT 1`"
     },
     {
       "key": "apps/backend/src/maintenance/drivers.routes.ts#75efac5cbcdd042a23ec36fdad981b49f55e3468",

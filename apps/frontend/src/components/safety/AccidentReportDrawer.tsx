@@ -181,7 +181,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </button>
         </div>
         {createMode ? (
-          <div className="mb-2 rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">
+          <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700">
             Office intake uses this form layout. Persisted reports also arrive from the driver mobile app or maintenance work order conversion.
           </div>
         ) : null}

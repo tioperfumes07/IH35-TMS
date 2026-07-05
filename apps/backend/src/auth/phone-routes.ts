@@ -53,7 +53,7 @@ async function appendOutboxTrailEvent(
 }
 
 export async function registerPhoneAuthRoutes(app: FastifyInstance) {
-  app.post("/api/v1/auth/phone/start", async (req, reply) => {
+  app.post("/api/v1/auth/phone/start", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!isTwilioVerifyConfigured() || !getTwilioClient()) {
       return twilioNotConfiguredResponse(reply);
     }
@@ -62,6 +62,9 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
     const { phone, channel } = parsed.data;
+
+    if (!(await enforceAuthPhoneStartLimits(req, reply, phone))) return;
+
     const userExists = await withLuciaBypass(async (client) => {
       const res = await client.query<{ id: string; deactivated_at: string | null }>(
         `SELECT id, deactivated_at FROM identity.users WHERE phone = $1 LIMIT 1`,
@@ -155,7 +158,7 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/auth/phone/verify", async (req, reply) => {
+  app.post("/api/v1/auth/phone/verify", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!isTwilioVerifyConfigured() || !getTwilioClient()) {
       return twilioNotConfiguredResponse(reply);
     }

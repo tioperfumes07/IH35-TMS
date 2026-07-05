@@ -65,6 +65,7 @@ import { SafetyEventsView } from "./drivers/operations/SafetyEventsView";
 import { CommunicationsLogView } from "./drivers/operations/CommunicationsLogView";
 import { PwaEngagementView } from "./drivers/operations/PwaEngagementView";
 import { DocumentsVaultView } from "./drivers/operations/DocumentsVaultView";
+import { useListState } from "../components/list-state";
 
 const tabs = [
   "Profile",
@@ -573,6 +574,14 @@ export function DriverDetailPage() {
     onError: () => pushToast("Failed to void safety event", "error"),
   });
 
+  // Each list empty message renders only once its query settles, never mid-fetch.
+  const qualificationsListState = useListState(qualificationsQuery, (qualificationsQuery.data ?? []).length === 0);
+  const companiesListState = useListState(companiesQuery, (companiesQuery.data ?? []).length === 0);
+  const safetyEventsListState = useListState(safetyEventsQuery, (safetyEventsQuery.data ?? []).length === 0);
+  const qboLinkageListState = useListState(qboLinkageHistoryQuery, (qboLinkageHistoryQuery.data?.rows ?? []).length === 0);
+  const legalMattersListState = useListState(legalMattersForDriverQuery, (legalMattersForDriverQuery.data?.matters ?? []).length === 0);
+  const rateHistoryListState = useListState(historyQuery, selectedLineHistory.length === 0);
+
   if (driverQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading driver...</div>;
   }
@@ -1001,7 +1010,7 @@ export function DriverDetailPage() {
                   <div className="text-[11px] text-gray-500">{String(row.created_at ?? "")}</div>
                 </div>
               ))}
-              {(qboLinkageHistoryQuery.data?.rows ?? []).length === 0 ? (
+              {qboLinkageListState.isEmpty ? (
                 <div className="px-2 py-2 text-xs text-gray-500">No linkage events yet.</div>
               ) : null}
             </div>
@@ -1216,7 +1225,7 @@ export function DriverDetailPage() {
                 ) : null}
               </div>
             ))}
-            {qualifications.length === 0 ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
+            {qualificationsListState.isEmpty ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
           </div>
         </div>
       ) : null}
@@ -1302,7 +1311,7 @@ export function DriverDetailPage() {
                     </div>
                   );
                 })}
-                {safetyEvents.length === 0 && !safetyEventsQuery.isLoading ? (
+                {safetyEventsListState.isEmpty ? (
                   <div className="text-sm text-gray-500">No safety events recorded for this driver.</div>
                 ) : null}
               </div>
@@ -1340,7 +1349,7 @@ export function DriverDetailPage() {
               ))}
             </ul>
           )}
-          {(legalMattersForDriverQuery.data?.matters ?? []).length === 0 && !legalMattersForDriverQuery.isLoading ? (
+          {legalMattersListState.isEmpty ? (
             <p className="text-sm text-gray-500">No linked matters.</p>
           ) : null}
         </div>
@@ -1430,7 +1439,7 @@ export function DriverDetailPage() {
               </div>
             );
           })}
-          {companies.length === 0 ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
+          {companiesListState.isEmpty ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
         </div>
       ) : null}
 
@@ -1774,7 +1783,7 @@ export function DriverDetailPage() {
                   <td className="py-1">{new Date(item.created_at).toLocaleString()}</td>
                 </tr>
               ))}
-              {selectedLineHistory.length === 0 ? (
+              {rateHistoryListState.isEmpty ? (
                 <tr>
                   <td className="py-2 text-gray-500" colSpan={6}>
                     No rate history found.

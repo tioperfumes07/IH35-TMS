@@ -275,7 +275,7 @@ export function TripPairingBoardPage() {
                           {t.settlement_signal === "round_trip" ? (
                             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">Round trip</span>
                           ) : t.settlement_signal === "settlement_open" ? (
-                            <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
                               Up north · settlement open{t.up_north_days != null ? ` · ${t.up_north_days}d` : ""}
                             </span>
                           ) : (

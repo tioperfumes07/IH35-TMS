@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, MoreHorizontal } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
@@ -129,7 +129,6 @@ export function UsersPage() {
   const [search, setSearch] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [roleModalUser, setRoleModalUser] = useState<IdentityUser | null>(null);
-  const [menuUserId, setMenuUserId] = useState<string | null>(null);
   const [inviteRole, setInviteRole] = useState<UserRole | "Viewer">("Manager");
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -199,6 +198,17 @@ export function UsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       pushToast("User deactivated", "info");
+    },
+    onError: (error) => {
+      // Never fail silently — surface the server's reason (no-silent-dead-control rule).
+      let message = "Failed to deactivate user";
+      if (error instanceof ApiError) {
+        const code = (error.data as { error?: string })?.error;
+        if (code === "cannot_deactivate_last_owner") message = "Cannot deactivate the last active Owner";
+        else if (error.status === 403) message = "You do not have permission to deactivate users";
+        else if (code) message = `Deactivate failed: ${code}`;
+      }
+      pushToast(message, "error");
     },
   });
 
@@ -378,6 +388,42 @@ export function UsersPage() {
     setInviteOpen(true);
   };
 
+  // Export the currently-selected users to a real client-side CSV (name/email/role/status/auth/last-login),
+  // mirroring the Blob-download pattern used in DriversListPage. Reads the rows already loaded in the table —
+  // no backend call, correct per-entity RLS because the list itself was fetched through the session.
+  const handleExportSelected = () => {
+    const selectedRows = filteredUsers.filter((row) => userBulk.selectedIds.has(row.id));
+    if (selectedRows.length === 0) {
+      pushToast("No users selected to export", "info");
+      return;
+    }
+    const esc = (value: unknown) => {
+      const s = value == null ? "" : String(value);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = ["Name", "Email", "Role", "Status", "Auth method", "Last login"];
+    const lines = selectedRows.map((row) =>
+      [
+        row.name ?? "",
+        row.email ?? "",
+        ROLE_LABEL[row.role as UserRole] ?? row.role,
+        userStatus(row),
+        row.auth_method ?? "Invite pending",
+        formatLastLoginAt(row.last_login_at),
+      ]
+        .map(esc)
+        .join(",")
+    );
+    const csv = [header.map(esc).join(","), ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = `IH35-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(href);
+  };
+
   return (
     <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-3">
       <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Create User</ActionButton>} />
@@ -408,14 +454,18 @@ export function UsersPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search users"
+          aria-label="Search users"
           className="h-8 w-full min-w-0 max-w-sm rounded-md border border-gray-300 px-2 text-[13px]"
         />
       </div>
 
       <BulkActionBar
         {...userBulk.bulkActionBarProps([
-          { id: "deactivate", label: "Deactivate", destructive: true, action: "deactivate", onClick: () => pushToast("Bulk deactivate users — endpoint pending.", "success") },
-          { id: "export", label: "Export Selected", onClick: () => pushToast("Export users queued.", "success") },
+          // No bulk-deactivate backend endpoint exists (only per-user deactivateUser). Honestly disabled with a
+          // "Coming soon" tooltip instead of firing a fake success toast. Deactivate users one at a time via the
+          // per-row Deactivate button in the Actions column, which is wired to the real endpoint.
+          { id: "deactivate", label: "Deactivate", destructive: true, action: "deactivate", disabled: true, title: "Coming soon — deactivate users individually from the row menu", onClick: () => pushToast("Bulk deactivate is not available yet — use the row menu to deactivate a user.", "info") },
+          { id: "export", label: "Export Selected", title: "Download selected users as CSV", onClick: handleExportSelected },
         ])}
       >
         <TableSelectionHeader
@@ -485,50 +535,46 @@ export function UsersPage() {
           {
             key: "actions",
             label: "Actions",
-            className: "w-20",
-            render: (row) => (
-              <div className="relative">
-                <button
-                  type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-sm border border-gray-300 hover:bg-gray-100"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setMenuUserId((current) => (current === row.id ? null : row.id));
-                  }}
-                >
-                  <MoreHorizontal className="h-3.5 w-3.5" />
-                </button>
-                {menuUserId === row.id ? (
-                  <div className="absolute right-0 z-20 mt-1 w-36 rounded-sm border border-gray-200 bg-white p-1 text-xs shadow-sm">
-                    <button
-                      type="button"
-                      className="block w-full rounded-sm px-2 py-1 text-left hover:bg-gray-100"
-                      onClick={() => {
-                        if (!isOwnerOrAdmin) return;
-                        setRoleModalUser(row);
-                        setRoleChangeRole(row.role);
-                        setMenuUserId(null);
-                      }}
-                    >
-                      Change Role
-                    </button>
-                    <button
-                      type="button"
-                      className="block w-full rounded-sm px-2 py-1 text-left hover:bg-gray-100"
-                      onClick={async () => {
-                        if (!isOwnerOrAdmin) return;
-                        setMenuUserId(null);
-                        const ok = window.confirm("Deactivate this user?");
-                        if (!ok) return;
-                        await deactivateMutation.mutateAsync(row.id);
-                      }}
-                    >
-                      Deactivate
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            ),
+            className: "w-44",
+            render: (row) => {
+              const isDeactivated = Boolean(row.deactivated_at);
+              const permReason = isOwnerOrAdmin ? undefined : "Requires Owner or Administrator role";
+              return (
+                <div className="flex flex-wrap items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    type="button"
+                    disabled={!isOwnerOrAdmin}
+                    title={permReason ?? "Change this user's role"}
+                    aria-label={`Change role for ${row.name}`}
+                    className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setRoleModalUser(row);
+                      setRoleChangeRole(row.role);
+                    }}
+                  >
+                    Change Role
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!isOwnerOrAdmin || isDeactivated || deactivateMutation.isPending}
+                    title={
+                      permReason ?? (isDeactivated ? "User is already deactivated" : "Deactivate this user")
+                    }
+                    aria-label={`Deactivate ${row.name}`}
+                    className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      const ok = window.confirm(`Deactivate ${row.name || "this user"}?`);
+                      if (!ok) return;
+                      deactivateMutation.mutate(row.id);
+                    }}
+                  >
+                    {isDeactivated ? "Deactivated" : "Deactivate"}
+                  </button>
+                </div>
+              );
+            },
           },
         ]}
       />

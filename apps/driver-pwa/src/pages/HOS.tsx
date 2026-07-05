@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMyHosClocks } from "../api/hos";
 import { HosClockCard } from "../components/HosClock";
 import { PwaCard } from "../components/PwaCard";
+import { formatTime } from "../lib/formatDateTime";
 import { useTranslation } from "react-i18next";
 
 function dutyPillClass(status: string) {
@@ -31,7 +32,7 @@ export function HosPage() {
   return (
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-24">
-        <PwaCard title={t("hos.title")} subtitle={t("hos.last_synced", { ts: new Date(data.last_synced_at).toLocaleTimeString() })}>
+        <PwaCard title={t("hos.title")} subtitle={t("hos.last_synced", { ts: formatTime(data.last_synced_at) })}>
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs text-pwa-text-secondary">{t("hos.duty_status_label")}</span>
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] ${dutyPillClass(data.duty_status)}`}>

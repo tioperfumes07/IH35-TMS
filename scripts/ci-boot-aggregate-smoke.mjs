@@ -117,15 +117,23 @@ async function ensureSmokeOwnerUser(client, companyId) {
 }
 
 async function ensureSmokeUnit(client, companyId) {
+  // IN-ENTITY ONLY: pick a unit that belongs to the smoke's operating company (companyId), NOT the
+  // globally-latest unit. Discovery here runs under RLS-bypass (`withLuciaBypass`), so it sees EVERY
+  // entity's units — TRANSP, TRK, and USMCA. But the aggregate endpoint is queried as a TRANSP-scoped
+  // Owner whose RLS hides other entities' rows, so a cross-entity pick (e.g. a freshly-imported USMCA
+  // unit, which sorts newest by updated_at) 404s at the endpoint → smoke exits 1 → every deploy rolls
+  // back. Binding the discovery to companyId keeps the picked unit visible to the endpoint's Owner.
   const existing = await client.query(
     `
       SELECT u.id::text AS unit_id,
              COALESCE(u.currently_leased_to_company_id, u.owner_company_id)::text AS company_id
       FROM mdata.units u
       WHERE u.deactivated_at IS NULL
+        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
       ORDER BY u.updated_at DESC NULLS LAST
       LIMIT 1
-    `
+    `,
+    [companyId]
   );
   if (existing.rows[0]?.unit_id && existing.rows[0]?.company_id) {
     return { unitId: String(existing.rows[0].unit_id), companyId: String(existing.rows[0].company_id) };

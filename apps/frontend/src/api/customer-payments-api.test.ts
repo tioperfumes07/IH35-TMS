@@ -5,25 +5,29 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 describe("customer payments API client", () => {
   beforeEach(() => vi.restoreAllMocks());
 
-  it("recordCustomerPayment POSTs payload", async () => {
+  it("recordCustomerPayment POSTs remapped payload with operating_company_id in query", async () => {
     const spy = vi.spyOn(client, "apiRequest").mockResolvedValue({ id: "p1" } as never);
-    await recordCustomerPayment("cust-1", {
+    await recordCustomerPayment("cust-1", "opco-1", {
       date: "2026-05-01",
       amount_cents: 5000,
       method: "ach",
+      reference: "ref-1",
       applications: [{ invoice_id: "inv-1", amount_cents: 5000 }],
       remaining_to_credit_balance_cents: 0,
     });
-    expect(spy).toHaveBeenCalledWith("/api/v1/customers/cust-1/payments", {
-      method: "POST",
-      body: {
-        date: "2026-05-01",
-        amount_cents: 5000,
-        method: "ach",
-        applications: [{ invoice_id: "inv-1", amount_cents: 5000 }],
-        remaining_to_credit_balance_cents: 0,
-      },
-    });
+    expect(spy).toHaveBeenCalledWith(
+      "/api/v1/customers/cust-1/payments?operating_company_id=opco-1",
+      {
+        method: "POST",
+        body: {
+          received_at: "2026-05-01",
+          amount_cents: 5000,
+          payment_method: "ach",
+          reference_number: "ref-1",
+          applications: [{ invoice_id: "inv-1", amount_cents: 5000 }],
+        },
+      }
+    );
   });
 
   it("listCustomerPayments GETs with limit", async () => {

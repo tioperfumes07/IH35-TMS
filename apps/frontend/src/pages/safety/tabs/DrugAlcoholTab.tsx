@@ -69,7 +69,7 @@ function stageLabel(stage: string) {
 }
 
 function eligibilityBadgeClass(eligible: boolean) {
-  return eligible ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800";
+  return eligible ? "bg-slate-50 text-slate-700" : "bg-red-50 text-red-800";
 }
 
 export function DrugAlcoholTab() {
@@ -90,7 +90,7 @@ export function DrugAlcoholTab() {
   const driversQ = useQuery({
     queryKey: ["drivers", "drug-ui", companyId],
     enabled: Boolean(companyId),
-    queryFn: () => listDrivers({ operating_company_id: companyId, status: "active" }).then((r) => r.drivers),
+    queryFn: () => listDrivers({ operating_company_id: companyId, status: "active", limit: 200 }).then((r) => r.drivers), // full active set (endpoint default 50 truncates >50)
   });
 
   const testsQ = useQuery({
@@ -254,7 +254,7 @@ export function DrugAlcoholTab() {
                 {drugStatusQ.data?.is_blocked ? (
                   <span className="rounded-sm bg-red-50 px-2 py-0.5 text-red-800">Blocked ({drugStatusQ.data.block_reason})</span>
                 ) : (
-                  <span className="rounded-sm bg-emerald-50 px-2 py-0.5 text-emerald-800">Clear</span>
+                  <span className="rounded-sm bg-slate-50 px-2 py-0.5 text-slate-700">Clear</span>
                 )}
               </div>
             </div>
@@ -339,7 +339,7 @@ export function DrugAlcoholTab() {
                     <span
                       key={stage}
                       className={`rounded px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                        active ? "bg-slate-100 text-slate-700" : completed ? "bg-emerald-50 text-emerald-800" : "bg-gray-100 text-gray-600"
+                        active ? "bg-slate-100 text-slate-700" : completed ? "bg-slate-50 text-slate-700" : "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {stageLabel(stage)}
@@ -357,7 +357,7 @@ export function DrugAlcoholTab() {
                   Advance to {stageLabel(nextStage)}
                 </button>
               ) : (
-                <div className="text-xs text-emerald-700">RTD case complete.</div>
+                <div className="text-xs text-slate-700">RTD case complete.</div>
               )}
               <div className="text-[11px] text-slate-600">
                 Follow-up tests: {rtdCase.follow_up_tests_completed}/{rtdCase.follow_up_tests_required ?? "—"}
@@ -395,7 +395,7 @@ export function DrugAlcoholTab() {
           </button>
         </div>
         {bulkEnrollMutation.isSuccess ? (
-          <div className="text-xs text-emerald-700">
+          <div className="text-xs text-slate-700">
             Enrolled {bulkEnrollMutation.data?.enrolled_count ?? 0} newly-added driver(s) into the pool.
           </div>
         ) : null}

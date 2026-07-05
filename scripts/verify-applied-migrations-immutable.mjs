@@ -6,7 +6,11 @@ import crypto from "node:crypto";
 const ROOT = process.cwd();
 const MIGRATIONS_DIR = path.resolve(ROOT, "db/migrations");
 const LEDGER_PATH = path.resolve(MIGRATIONS_DIR, ".ledger.json");
-const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
+// Match BOTH legacy 4-digit (0010_, 0193a_) AND current 12-digit timestamp (202606272100_) migration
+// filenames. The old /^\d{4}[a-z]?_/ silently SKIPPED every timestamp migration, so the immutability
+// check never covered them (A2-3). \d{4,} reads the full prefix; \d{4}[a-z]? still covers 0193a.
+// (matches verify-migration-application-consistency.mjs:65)
+const MIGRATION_FILE_PATTERN = /^\d{4,}[a-z]?_.+\.sql$/i;
 
 function sha256(text) {
   return crypto.createHash("sha256").update(text, "utf8").digest("hex");

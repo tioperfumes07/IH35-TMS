@@ -3,7 +3,7 @@ import { CalendarDays } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { getMySchedule } from "../api/scheduler";
+import { getMyLeaveBalance, getMySchedule } from "../api/scheduler";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
 
@@ -58,6 +58,10 @@ export function SchedulerHomePage() {
     queryKey: ["driver", "scheduler", "range", start, end],
     queryFn: () => getMySchedule(start, end),
   });
+  const balanceQuery = useQuery({
+    queryKey: ["driver", "scheduler", "balance"],
+    queryFn: () => getMyLeaveBalance(),
+  });
 
   const byDate = useMemo(() => {
     const map = new Map<string, { leave_type: string; pending: boolean }>();
@@ -109,6 +113,38 @@ export function SchedulerHomePage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </PwaCard>
+        <PwaCard title={t("scheduler.balance_title")} subtitle={t("scheduler.balance_year", { year: balanceQuery.data?.year ?? new Date().getUTCFullYear() })}>
+          {balanceQuery.isLoading ? (
+            <p className="text-sm text-pwa-text-secondary">{t("common.loading")}</p>
+          ) : balanceQuery.isError ? (
+            <p className="text-sm text-red-400">{t("scheduler.balance_error")}</p>
+          ) : !balanceQuery.data?.balance ? (
+            <p className="text-sm text-pwa-text-secondary">{t("scheduler.balance_none")}</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {(() => {
+                const b = balanceQuery.data.balance!;
+                const cards: Array<{ key: string; allocated: number; used: number }> = [
+                  { key: "vacation", allocated: b.vacation_allocated, used: b.vacation_used },
+                  { key: "sick", allocated: b.sick_allocated, used: b.sick_used },
+                  { key: "personal", allocated: b.personal_allocated, used: b.personal_used },
+                ];
+                return cards.map((c) => {
+                  const remaining = Math.max(0, c.allocated - c.used);
+                  return (
+                    <div key={c.key} className="flex flex-col items-center gap-1 rounded-lg border border-pwa-border bg-pwa-bg px-2 py-3">
+                      <span className="text-xs text-pwa-text-secondary">{t(`scheduler.leave_type.${c.key}`)}</span>
+                      <span className="text-xl font-semibold text-pwa-text-primary">{remaining}</span>
+                      <span className="text-[10px] text-pwa-text-secondary">
+                        {t("scheduler.balance_of_total", { used: c.used, allocated: c.allocated })}
+                      </span>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           )}
         </PwaCard>

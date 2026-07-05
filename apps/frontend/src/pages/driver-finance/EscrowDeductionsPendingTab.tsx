@@ -14,9 +14,10 @@ import { Modal } from "../../components/Modal";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatUsdCents } from "../../lib/money";
 
 function formatMoney(cents: number) {
-  return `$${(Number(cents || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(cents);
 }
 
 function formatDateTime(value: string | null | undefined) {

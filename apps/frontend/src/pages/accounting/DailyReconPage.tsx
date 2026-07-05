@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { fetchDailyRecon, type DailyReconMatchStatus, type DailyReconRow } from "../../api/daily-recon";
-
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+import { useListState } from "../../components/list-state";
+import { formatUsdCents } from "../../lib/money";
 
 const ENTITY_TYPE_OPTIONS = [
   { value: "", label: "All types" },
@@ -35,7 +35,7 @@ const STATUS_BADGES: Record<DailyReconMatchStatus, { label: string; cls: string 
 
 function formatCents(cents: number | null): string {
   if (cents == null) return "—";
-  return money.format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 function entityLabel(type: string): string {
@@ -108,6 +108,7 @@ export function DailyReconPage() {
   });
 
   const data = query.data;
+  const listState = useListState(query, (data?.days.length ?? 0) === 0);
 
   const kpiStrip = data?.gl_posting_active ? (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -200,7 +201,7 @@ export function DailyReconPage() {
           </div>
 
           {/* Days */}
-          {data.days.length === 0 ? (
+          {listState.isEmpty ? (
             <div className="rounded-sm border border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-500">
               No transactions found for the selected filters.
             </div>

@@ -1,0 +1,101 @@
+#!/usr/bin/env node
+/**
+ * verify-driver-scheduler-crons-registered.mjs  (P8C-K)
+ *
+ * Guards the two verified-missing pieces of the Driver Scheduler feature so they cannot silently regress:
+ *   1. The THREE leave crons exist, self-schedule, and are each gated behind a DEFAULT-OFF env flag.
+ *   2. index.ts imports AND calls each cron's initializer at startup.
+ *   3. The driver-facing self-balance route exists, is driver-session scoped (never an arbitrary :driver_id),
+ *      and reuses getLeaveBalance.
+ *   4. The PWA api wrapper getMyLeaveBalance exists and targets the driver balance route.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify:driver-scheduler-crons-registered";
+const failures = [];
+
+function read(rel) {
+  const abs = path.join(ROOT, rel);
+  if (!fs.existsSync(abs)) {
+    failures.push(`missing file: ${rel}`);
+    return "";
+  }
+  return fs.readFileSync(abs, "utf8");
+}
+
+// ── 1. The three cron files ──────────────────────────────────────────────────────
+const CRONS = [
+  {
+    file: "apps/backend/src/cron/driver-leave-advance-reminder.cron.ts",
+    init: "initializeDriverLeaveAdvanceReminderCron",
+    flag: "DRIVER_LEAVE_ADVANCE_REMINDER_CRON_ENABLED",
+  },
+  {
+    file: "apps/backend/src/cron/driver-leave-balance-rollover.cron.ts",
+    init: "initializeDriverLeaveBalanceRolloverCron",
+    flag: "DRIVER_LEAVE_BALANCE_ROLLOVER_CRON_ENABLED",
+  },
+  {
+    file: "apps/backend/src/cron/driver-leave-pending-escalation.cron.ts",
+    init: "initializeDriverLeavePendingEscalationCron",
+    flag: "DRIVER_LEAVE_PENDING_ESCALATION_CRON_ENABLED",
+  },
+];
+
+for (const c of CRONS) {
+  const src = read(c.file);
+  if (!src) continue;
+  if (!src.includes(`export function ${c.init}`)) failures.push(`${c.file}: missing exported ${c.init}`);
+  if (!src.includes("cron.schedule(")) failures.push(`${c.file}: missing cron.schedule()`);
+  if (!src.includes("wrapBackgroundJobTick")) failures.push(`${c.file}: must wrap ticks in wrapBackgroundJobTick`);
+  if (!src.includes("assertTenantContext")) failures.push(`${c.file}: must assertTenantContext (tenant-scoped)`);
+  if (!src.includes("driver_leave_audit_log")) failures.push(`${c.file}: must emit to safety.driver_leave_audit_log`);
+  if (!src.includes(c.flag)) failures.push(`${c.file}: missing env flag ${c.flag}`);
+  // Default-OFF: the flag must default to "false" and require an explicit "true" to arm.
+  const offPattern = new RegExp(`process\\.env\\.${c.flag}\\s*\\?\\?\\s*"false"`);
+  if (!offPattern.test(src)) failures.push(`${c.file}: env flag ${c.flag} must default OFF (?? "false")`);
+  if (!src.includes(`!== "true"`)) failures.push(`${c.file}: gate must arm only when flag === "true"`);
+}
+
+// ── 2. index.ts wiring ───────────────────────────────────────────────────────────
+const index = read("apps/backend/src/index.ts");
+for (const c of CRONS) {
+  if (!index.includes(`from "./cron/${path.basename(c.file, ".ts")}.js"`)) {
+    failures.push(`index.ts: missing import of ${c.file}`);
+  }
+  if (!index.includes(`${c.init}(app)`)) failures.push(`index.ts: must call ${c.init}(app) at startup`);
+}
+
+// ── 3. Driver self-balance route ─────────────────────────────────────────────────
+const routes = read("apps/backend/src/safety/driver-scheduler.routes.ts");
+if (!routes.includes(`"/api/v1/driver/scheduler/balance"`)) {
+  failures.push("routes: missing GET /api/v1/driver/scheduler/balance");
+} else {
+  // Extract the balance handler body and assert driver-session scoping + reuse.
+  const idx = routes.indexOf(`app.get("/api/v1/driver/scheduler/balance"`);
+  const body = routes.slice(idx, idx + 900);
+  if (!body.includes("requireDriverSession")) failures.push("routes: driver balance must use requireDriverSession");
+  if (!body.includes("req.driver!")) failures.push("routes: driver balance must resolve req.driver! (self, not a param)");
+  if (!body.includes("getLeaveBalance")) failures.push("routes: driver balance must reuse getLeaveBalance");
+  if (/req\.params/.test(body)) failures.push("routes: driver balance must NOT read a driver_id from params");
+}
+
+// ── 4. PWA api wrapper ───────────────────────────────────────────────────────────
+const pwaApi = read("apps/driver-pwa/src/api/scheduler.ts");
+if (!pwaApi.includes("export function getMyLeaveBalance")) {
+  failures.push("pwa: missing getMyLeaveBalance wrapper");
+}
+if (!pwaApi.includes("/api/v1/driver/scheduler/balance")) {
+  failures.push("pwa: getMyLeaveBalance must target /api/v1/driver/scheduler/balance");
+}
+
+// ── Report ───────────────────────────────────────────────────────────────────────
+if (failures.length > 0) {
+  console.error(`${LABEL} — FAILED`);
+  for (const f of failures) console.error(`  ✗ ${f}`);
+  process.exit(1);
+}
+console.log(`${LABEL} — OK (3 crons registered + default-OFF gated, driver balance route + PWA wrapper present)`);

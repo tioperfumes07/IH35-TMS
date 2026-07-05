@@ -48,6 +48,12 @@ jobs:
       - name: verify:startup-migration-drift-guard
         run: npm run verify:startup-migration-drift-guard
 
+      - name: verify:migration-filenames
+        run: npm run verify:migration-filenames
+
+      - name: verify:no-hard-delete-load-stops
+        run: npm run verify:no-hard-delete-load-stops
+
       - name: verify:record-expense-driverless-posting
         run: npm run verify:record-expense-driverless-posting
 
@@ -348,3 +354,12 @@ jobs:
 
       - name: verify:money-input-format
         run: npm run verify:money-input-format
+
+      - name: verify:pwa-date-format
+        run: npm run verify:pwa-date-format
+
+      - name: verify:multipart-size-limits
+        run: npm run verify:multipart-size-limits
+
+      - name: verify:program-board-repo-root
+        run: npm run verify:program-board-repo-root

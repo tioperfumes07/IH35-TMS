@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listFactoringAdvances, type FactoringAdvance } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
@@ -137,7 +138,19 @@ export function FactoringListPage() {
                 </td>
               </tr>
             ) : null}
-            {!query.isLoading && rows.length === 0 ? (
+            {!query.isLoading && query.isError ? (
+              <tr>
+                <td className="px-3 py-3" colSpan={8}>
+                  <ListErrorState
+                    title="Couldn't load factoring advances"
+                    status={0}
+                    message={(query.error as Error | undefined)?.message}
+                    onRetry={() => void query.refetch()}
+                  />
+                </td>
+              </tr>
+            ) : null}
+            {!query.isLoading && !query.isError && rows.length === 0 ? (
               <tr>
                 <td className="px-3 py-3 text-gray-500" colSpan={8}>
                   No factoring batches for selected filters.

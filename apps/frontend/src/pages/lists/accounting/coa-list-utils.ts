@@ -1,6 +1,7 @@
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import type { AccountBalanceRow, AccountTypeCatalogEntry } from "../../../api/coa-list";
 import type { PlaidBankAccount } from "../../../api/banking";
+import { formatUsdCents } from "../../../lib/money";
 
 const PL_ACCOUNT_TYPES = new Set(["Income", "Expense", "CostOfGoodsSold", "OtherIncome", "OtherExpense"]);
 
@@ -37,8 +38,7 @@ export function statementTag(statement: "BS" | "P&L"): "BAL" | "P&L" {
 
 export function formatCurrencyFromCents(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return "—";
-  const value = cents / 100;
-  return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 export function resolveSyncBadge(metadata: Record<string, unknown>): CoaSyncBadge {

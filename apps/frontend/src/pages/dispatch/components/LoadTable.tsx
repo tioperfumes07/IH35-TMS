@@ -27,9 +27,9 @@ function statusPill(status: string) {
   const base = "rounded-full px-2 py-0.5 text-[10px] font-semibold";
   if (status.includes("cancel")) return `${base} bg-red-100 text-red-700`;
   if (status.includes("completed")) return `${base} bg-gray-200 text-gray-700`;
-  if (status.includes("delivered")) return `${base} bg-emerald-100 text-emerald-700`;
+  if (status.includes("delivered")) return `${base} bg-slate-100 text-slate-700`;
   if (status.includes("transit")) return `${base} bg-slate-100 text-slate-700`;
-  return `${base} bg-amber-100 text-amber-700`;
+  return `${base} bg-slate-100 text-slate-700`;
 }
 
 export function LoadTable({
@@ -151,7 +151,7 @@ export function LoadTable({
                       </span>
                     </td>
                     <td className="truncate px-2 py-1">{row.trailer_number ?? "-"}</td>
-                    <td className="px-2 py-1 text-amber-700">—</td>
+                    <td className="px-2 py-1 text-slate-700">—</td>
                     <td className="px-2 py-1">dry</td>
                     <td className="truncate px-2 py-1">
                       <span className="inline-flex items-center gap-1">
@@ -162,8 +162,8 @@ export function LoadTable({
                               row.hos_badge_color === "red"
                                 ? "bg-red-500"
                                 : row.hos_badge_color === "yellow"
-                                  ? "bg-amber-500"
-                                  : "bg-green-500"
+                                  ? "bg-slate-600"
+                                  : "bg-slate-600"
                             }`}
                             title={
                               row.hos_is_in_violation

@@ -12,6 +12,7 @@ import {
   voidFactoring,
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -108,6 +109,15 @@ export function FactoringDetailPage() {
   }, [detail]);
 
   if (query.isLoading) return <div className="text-sm text-gray-500">Loading factoring batch...</div>;
+  if (query.isError)
+    return (
+      <ListErrorState
+        title="Couldn't load factoring batch"
+        status={0}
+        message={(query.error as Error | undefined)?.message}
+        onRetry={() => void query.refetch()}
+      />
+    );
   if (!detail) return <div className="text-sm text-red-600">Factoring batch not found.</div>;
 
   return (

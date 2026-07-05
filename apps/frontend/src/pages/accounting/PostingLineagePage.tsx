@@ -5,9 +5,10 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
+import { formatUsdCents } from "../../lib/money";
 
 function formatMoney(cents: number) {
-  return (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 function formatWhen(iso: string) {

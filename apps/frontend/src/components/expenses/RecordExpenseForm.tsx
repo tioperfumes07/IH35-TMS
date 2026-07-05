@@ -50,7 +50,9 @@ export function RecordExpenseForm({
   });
   const paymentAccountsQuery = useQuery({
     queryKey: ["record-expense", "payment-accounts", operatingCompanyId],
-    queryFn: () => listCatalogAccounts({ status: "active", limit: 300 }),
+    // No explicit limit → listCatalogAccounts pages through the FULL chart (backend caps limit at 200; the
+    // chart has 371 accounts), so the oldest payment accounts stay selectable (G9-H6).
+    queryFn: () => listCatalogAccounts({ status: "active" }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });

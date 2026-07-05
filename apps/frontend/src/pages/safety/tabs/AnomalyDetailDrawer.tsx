@@ -192,7 +192,7 @@ export function AnomalyDetailDrawer({
                 </button>
                 <button
                   type="button"
-                  className="rounded-sm bg-amber-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                  className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
                   onClick={() => dismissMutation.mutate()}
                   disabled={dismissMutation.isPending || note.trim().length === 0}
                 >

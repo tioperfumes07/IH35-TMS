@@ -15,7 +15,10 @@ import {
 const SOURCE_TAG = "BT-2-DOCS-SCHEMA-AND-R2";
 const DEFAULT_UPLOAD_EXPIRES_SECONDS = 900;
 const DEFAULT_DOWNLOAD_EXPIRES_SECONDS = 300;
-const SUPPORTED_LINK_ENTITY_TYPES = ["driver", "customer", "vendor", "unit", "equipment"] as const;
+// DOCS-1: `load` was omitted here (though present in the zod enum + the docs.file_links
+// CHECK constraint), so the Load Documents tab could never link/upload a document and
+// rendered empty. mdata.loads is a non-financial master-data table; adding it here is safe.
+const SUPPORTED_LINK_ENTITY_TYPES = ["driver", "customer", "vendor", "unit", "equipment", "load"] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
 const linkParamSchema = z.object({ file_id: z.string().uuid(), link_id: z.string().uuid() });
@@ -42,6 +45,11 @@ const uploadUrlBodySchema = z.object({
   sha256_hash: z.string().trim().regex(/^[A-Fa-f0-9]{64}$/).optional(),
   category_id: z.string().uuid().optional(),
   entity_links: z.array(fileLinkInputSchema).max(25).optional(),
+  // The ACTIVE company the caller is filing under. Without it, resolveOperatingCompanyId falls back to the
+  // lowest-UUID accessible company — which for a multi-company user is NOT the one they're looking at, so a
+  // later read that filters by the active company (e.g. rate-con extract) 404s "file_not_found". When
+  // supplied it is used ONLY after verifying the user can access it.
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const listQuerySchema = z.object({
@@ -179,6 +187,11 @@ async function ensureLinkEntityExists(
     const res = await client.query("SELECT id FROM mdata.equipment WHERE id = $1 LIMIT 1", [entityId]);
     return res.rows.length > 0;
   }
+  if (entityType === "load") {
+    // §4: loads live in mdata.loads with soft-delete via soft_deleted_at.
+    const res = await client.query("SELECT id FROM mdata.loads WHERE id = $1 AND soft_deleted_at IS NULL LIMIT 1", [entityId]);
+    return res.rows.length > 0;
+  }
   return false;
 }
 
@@ -193,7 +206,19 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     const body = parsedBody.data;
     try {
       const result = await withCurrentUser(user.uuid, async (client) => {
-        const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid);
+        // Prefer the caller-supplied active company (so the file is filed where later reads will look for
+        // it), but ONLY if the user can actually access it; otherwise fall back to the resolved default.
+        let operatingCompanyId: string | null;
+        if (body.operating_company_id) {
+          const access = await client.query(
+            `SELECT 1 AS ok WHERE $1::uuid IN (SELECT org.user_accessible_company_ids())`,
+            [body.operating_company_id],
+          );
+          if (!access.rows[0]) throw new Error("operating_company_id_forbidden");
+          operatingCompanyId = body.operating_company_id;
+        } else {
+          operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid);
+        }
         if (!operatingCompanyId) throw new Error("operating_company_id_required");
 
         if (body.category_id) {
@@ -280,6 +305,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
       });
     } catch (error) {
       if ((error as Error).message === "operating_company_id_required") return reply.code(400).send({ error: "operating_company_id_required" });
+      if ((error as Error).message === "operating_company_id_forbidden") return reply.code(403).send({ error: "operating_company_id_forbidden" });
       if ((error as Error).message === "invalid_category_id") return reply.code(400).send({ error: "invalid_category_id" });
       if ((error as Error).message === "entity_type_not_supported_yet") return reply.code(400).send({ error: "entity_type_not_supported_yet" });
       if ((error as Error).message.startsWith("entity_not_found:")) {

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getInboxReporting, type InboxReportingData } from "../../api/driverInboxReporting";
+import { formatUsdCents } from "../../lib/money";
 
 function isoDaysAgo(days: number): string {
   const d = new Date();
@@ -20,7 +21,7 @@ function fmtSeconds(s: number | null): string {
   return `${(s / 3600).toFixed(1)}h`;
 }
 function fmtCents(c: number): string {
-  return `$${(c / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatUsdCents(c);
 }
 function fmtPct(p: number | null): string {
   return p == null ? "—" : `${p}%`;

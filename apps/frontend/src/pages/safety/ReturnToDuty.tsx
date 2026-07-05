@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 async function apiGet(path: string) {
@@ -59,24 +60,24 @@ export function ReturnToDuty() {
           {processes.map((proc) => (
             <li key={String(proc.id)} className="rounded-sm border border-gray-100 p-2">
               <div className="font-medium">Driver {String(proc.driver_id).slice(0, 8)}…</div>
-              <div className="text-slate-600">Status: {String(proc.status)} · Started {String(proc.started_at).slice(0, 10)}</div>
+              <div className="text-slate-600">Status: {String(proc.status)} · Started {formatDateUS(proc.started_at)}</div>
             </li>
           ))}
           {processes.length === 0 ? <li className="text-slate-500">No open RTD processes.</li> : null}
         </ul>
       </div>
 
-      <div className="rounded-sm border border-amber-200 bg-amber-50 p-4 text-xs">
-        <h3 className="text-sm font-semibold text-amber-900">FMCSA Clearinghouse — pending positive reports</h3>
+      <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs">
+        <h3 className="text-sm font-semibold text-slate-700">FMCSA Clearinghouse — pending positive reports</h3>
         <ul className="mt-2 space-y-2">
           {positivePending.map((row) => (
-            <li key={String(row.id)} className="flex items-center justify-between rounded-sm border border-amber-100 bg-white p-2">
+            <li key={String(row.id)} className="flex items-center justify-between rounded-sm border border-slate-100 bg-white p-2">
               <span>
                 Driver {String(row.driver_id).slice(0, 8)}… · {String(row.test_date)}
               </span>
               <button
                 type="button"
-                className="rounded-sm bg-amber-800 px-2 py-1 text-[10px] font-medium text-white disabled:opacity-50"
+                className="rounded-sm bg-slate-700 px-2 py-1 text-[10px] font-medium text-white disabled:opacity-50"
                 disabled={reportMutation.isPending}
                 onClick={() => reportMutation.mutate(String(row.id))}
               >
@@ -84,7 +85,7 @@ export function ReturnToDuty() {
               </button>
             </li>
           ))}
-          {positivePending.length === 0 ? <li className="text-amber-800">All positives reported or none on file.</li> : null}
+          {positivePending.length === 0 ? <li className="text-slate-700">All positives reported or none on file.</li> : null}
         </ul>
       </div>
     </div>

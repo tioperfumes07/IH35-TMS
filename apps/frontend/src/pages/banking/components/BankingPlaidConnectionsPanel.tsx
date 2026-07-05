@@ -20,6 +20,8 @@ import { useToast } from "../../../components/Toast";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { Link } from "react-router-dom";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useListState } from "../../../components/list-state";
+import { formatUsdCents } from "../../../lib/money";
 
 type ItemGroup = { itemId: string; accounts: PlaidBankAccount[] };
 
@@ -36,8 +38,7 @@ function groupByPlaidItem(accounts: PlaidBankAccount[]): ItemGroup[] {
 
 function formatMoney(cents: number, isCredit: boolean) {
   const sign = isCredit ? 1 : -1;
-  const v = (sign * cents) / 100;
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
+  return formatUsdCents(sign * cents);
 }
 
 function categoryLabel(t: PlaidBankTransaction) {
@@ -89,6 +90,8 @@ export function BankingPlaidConnectionsPanel({
     if (showInactive) return groups;
     return groups.filter((g) => g.accounts.some((a) => a.is_active));
   }, [groups, showInactive]);
+  // The no-connections empty message renders only once the accounts query settles, never mid-fetch.
+  const plaidListState = useListState(plaidQuery, groups.length === 0);
 
   const canConnect = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canDisconnect = auth.user?.role === "Owner";
@@ -136,7 +139,7 @@ export function BankingPlaidConnectionsPanel({
       {!plaidQuery.isLoading && groups.length > 0 && visibleGroups.length === 0 ? (
         <p className="text-sm text-gray-600">No active Plaid connections for this company filter. Enable history below.</p>
       ) : null}
-      {!plaidQuery.isLoading && groups.length === 0 ? (
+      {plaidListState.isEmpty ? (
         <p className="text-sm text-gray-600">No bank accounts connected yet. Use <span className="font-medium">Connect Bank</span> above.</p>
       ) : null}
       <div className="space-y-3">
@@ -258,6 +261,8 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
     [accountsQuery.data?.accounts, companyId]
   );
   const rows = txQuery.data?.transactions ?? [];
+  // Empty message renders only once the transactions query settles, never mid-fetch.
+  const txListState = useListState(txQuery, rows.length === 0);
 
   if (!companyId) return null;
 
@@ -343,7 +348,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
           </tbody>
         </table>
       </div>
-      {!txQuery.isLoading && rows.length === 0 ? <p className="mt-2 text-sm text-gray-600">No transactions found.</p> : null}
+      {txListState.isEmpty ? <p className="mt-2 text-sm text-gray-600">No transactions found.</p> : null}
     </div>
   );
 }

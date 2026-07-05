@@ -7,9 +7,10 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { BookLoadModal } from "./components/BookLoadModal";
 import { buildTemplateJsonFromOcrItem } from "./ocr-book-load-prefill";
+import { formatUsdCents } from "../../lib/money";
 
 function formatMoney(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.max(0, cents) / 100);
+  return formatUsdCents(Math.max(0, cents));
 }
 
 function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
@@ -64,7 +65,7 @@ function QueueRow({
       <td className="px-3 py-2">
         {item.status === "ready_review" ? <ExtractedSummary item={item} /> : null}
         {item.status === "pending_ocr" || item.status === "processing" ? (
-          <span className="text-xs text-amber-800">OCR processing…</span>
+          <span className="text-xs text-slate-700">OCR processing…</span>
         ) : null}
       </td>
       <td className="px-3 py-2">

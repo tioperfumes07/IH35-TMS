@@ -217,29 +217,38 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
+      // Entity scope (USMCA cross-entity leak fix): mdata.equipment_log has NO company column and its
+      // RLS is role-scoped, so a bare `WHERE id = $1` lets an Owner read another entity's equipment
+      // history by id. Join mdata.equipment and scope by the owner/leased pair (mirrors the list
+      // endpoint above); resolve the company from the caller's context.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
           SELECT
-            id,
-            equipment_id,
-            event_type,
-            event_at,
-            from_unit_id,
-            to_unit_id,
-            from_location_id,
-            to_location_id,
-            status_before,
-            status_after,
-            notes,
-            created_at,
-            updated_at,
-            created_by_user_id,
-            updated_by_user_id
-          FROM mdata.equipment_log
-          WHERE id = $1
+            el.id,
+            el.equipment_id,
+            el.event_type,
+            el.event_at,
+            el.from_unit_id,
+            el.to_unit_id,
+            el.from_location_id,
+            el.to_location_id,
+            el.status_before,
+            el.status_after,
+            el.notes,
+            el.created_at,
+            el.updated_at,
+            el.created_by_user_id,
+            el.updated_by_user_id
+          FROM mdata.equipment_log el
+          JOIN mdata.equipment e ON e.id = el.equipment_id
+          WHERE el.id = $1
+            AND (e.owner_company_id = $2 OR e.currently_leased_to_company_id = $2)
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, scopedCompanyId]
       );
       const raw = res.rows[0] ?? null;
       return raw ? mapEquipmentLogRow(raw) : null;

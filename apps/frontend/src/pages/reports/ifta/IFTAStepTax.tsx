@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIftaPreparation, runIftaCalculateTax } from "../../../api/ifta";
+import { formatUsd } from "../../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -13,7 +14,7 @@ function fmtNum(value: number, digits = 2) {
 }
 
 function fmtMoney(value: number) {
-  return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  return formatUsd(value);
 }
 
 export function IFTAStepTax({ operatingCompanyId, preparationId, quarter, year }: Props) {
