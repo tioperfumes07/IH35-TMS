@@ -4,6 +4,7 @@
 // client) is wired only when Martin's 2024 close is stable; until then createQboReconSource returns null and
 // the tick records NOTHING for that entity (it never fabricates a QBO side — an empty QBO side would false-flag
 // every TMS row). Runs under lucia bypass (system identity) so the engine's FORCED-RLS inserts are permitted.
+import * as Sentry from "@sentry/node";
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { qboCompanyContext, qboQuery } from "../../integrations/qbo/qbo-client.js";
@@ -132,8 +133,37 @@ export async function runReconTick(pass: "am" | "pm", now: Date = new Date(), wi
           `[recon-cron] ${pass}: QBO source failed for ${c.id} — skipping this entity (no data fabricated):`,
           (err as Error)?.message ?? err,
         );
+        // G10-C3 alert-on-failure: a flagged-ON (trusted) entity that failed its QBO source is a silent recon
+        // hole — report it so an on-call channel can page. Additive; safe no-op when SENTRY_DSN is unset.
+        Sentry.captureException(err, {
+          tags: { subsystem: "accounting-recon", pass, phase: "qbo_source" },
+          extra: { operating_company_id: c.id },
+        });
       }
     }
+
+    // G10-C3 alert-on-failure (zero-trusted-entity): a "trusted entity" is one whose TMS_QBO_RECON_ENABLED flag
+    // is ON — we trust it to reconcile this tick. If one or more entities were flagged ON but NONE actually
+    // reconciled (every trusted entity was source-pending or failed), the recon is silently doing nothing and a
+    // human needs to know. Emit a Sentry event so an on-call channel can page. Additive; safe no-op when
+    // SENTRY_DSN is unset. Not fired when zero entities are flagged ON (that is the intended default-OFF state).
+    const trustedEntities = result.entities_checked - result.skipped_flag_off;
+    if (trustedEntities > 0 && result.entities_run === 0) {
+      Sentry.captureMessage(
+        `[recon-cron] ${pass}: ${trustedEntities} entit${trustedEntities === 1 ? "y" : "ies"} flagged ON for reconciliation but ZERO reconciled this tick (all source-pending/failed) — recon is silently not running.`,
+        {
+          level: "error",
+          tags: { subsystem: "accounting-recon", pass },
+          extra: {
+            trusted_entities: trustedEntities,
+            entities_checked: result.entities_checked,
+            skipped_flag_off: result.skipped_flag_off,
+            skipped_source_pending: result.skipped_source_pending,
+          },
+        },
+      );
+    }
+
     return result;
   });
 }
