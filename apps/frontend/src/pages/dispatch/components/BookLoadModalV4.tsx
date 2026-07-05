@@ -960,6 +960,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                               form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
                               return;
                             }
+                            // D3-3: user typed over the field, diverging from the picked row.
+                            // Clear the picked TMS FK (and its QBO mirror id) so a stale customer_id
+                            // can't silently ride along under a different name — otherwise the load
+                            // books under the WRONG customer. This forces a fresh pick; the `required`
+                            // rule on customer_id blocks submit until the user re-selects a real row.
+                            form.setValue("customer_id", "", { shouldDirty: true, shouldValidate: true });
+                            form.setValue("customer_qbo_id", "", { shouldDirty: true, shouldValidate: false });
                             form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
                           }}
                           onPick={(row) => {
