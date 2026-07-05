@@ -1,21 +1,31 @@
 name: program-board-sync
 
 # Scheduled LIVE SYNC of the Program Board (NON-FINANCIAL, reporting only).
-# Runs `npm run board:sync` which derives per-finding git/deploy lifecycle from
-# `gh` + the prod health endpoint and rewrites:
-#   docs/trackers/program-board-extra.json  (per-row live_state/lifecycle/timestamps)
-#   docs/trackers/program-board-meta.json   (tab totals + deltas)
-# then auto-commits if anything changed.
+# Runs `npm run board:sync:r2` which derives per-finding git/deploy lifecycle from
+# `gh` + the prod health endpoint and writes a LIVE SNAPSHOT to Cloudflare R2:
+#   r2://<bucket>/program-board/live-snapshot.json  (meta + per-row lifecycle)
+# The backend reads that snapshot FIRST (cached ~60s) and overlays it onto the committed
+# repo JSON — so the board refreshes LIVE with NO commit to `main` and NO prod redeploy.
 #
-# ┌──────────────────────────────────────────────────────────────────────────┐
-# │ ⚠ JORGE: THIS IS A STANDING AUTO-COMMIT AUTOMATION — enable/merge to turn  │
-# │   it on. It commits generated JSON to `main` on a schedule (every 20 min). │
-# │   No Desktop xlsx is needed here (that is the separate LOCAL `board:import`).│
-# └──────────────────────────────────────────────────────────────────────────┘
+# ┌──────────────────────────────────────────────────────────────────────────────┐
+# │ WHY R2 (not a commit): the old design committed generated JSON to `main` every  │
+# │   20 min. Every merge to `main` is a prod deploy — that was ~72 prod redeploys   │
+# │   PER DAY for a reporting refresh. Writing to R2 keeps it live WITHOUT deploying. │
+# │                                                                                  │
+# │ WHY still a GitHub Action (not a Render cron): this job needs the `gh` CLI + a    │
+# │   GITHUB_TOKEN to read OPEN-PR CI states (waiting-merge / in-ci / ci-failed).     │
+# │   The Render node runtime has neither, so it can only see merged/deployed state.  │
+# │   The Action is the correct host; the only defect was the commit-to-main, removed.│
+# │                                                                                  │
+# │ ENABLE: set repo secrets R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY  │
+# │   (+ optional R2_BUCKET, default `ih35-tms-evidence`). Until set, the sync logs a  │
+# │   clear "R2 not configured — skipping upload" and the board serves the committed   │
+# │   JSON fallback (never breaks).                                                    │
+# └──────────────────────────────────────────────────────────────────────────────┘
 
 on:
   schedule:
-    - cron: "*/20 * * * *" # every 20 minutes
+    - cron: "*/20 * * * *" # every 20 minutes — writes to R2 only, NO commit, NO deploy
   workflow_dispatch: {}
 
 # Only one sync in flight at a time; let a newer run supersede a queued one.
@@ -23,8 +33,9 @@ concurrency:
   group: program-board-sync
   cancel-in-progress: false
 
+# Read-only: this job no longer pushes to the repo (it writes to R2 instead).
 permissions:
-  contents: write # needed to push the auto-commit
+  contents: read
 
 jobs:
   sync:
@@ -42,22 +53,17 @@ jobs:
         with:
           node-version: "22.x"
 
-      - name: Run live sync
+      - name: Install deps (aws-sdk client for the R2 upload)
+        run: npm ci --no-audit --no-fund
+
+      - name: Run live sync → write snapshot to Cloudflare R2 (NO commit, NO redeploy)
         env:
           # `gh` reads GH_TOKEN; provided automatically by Actions.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run board:sync
-
-      - name: Commit updated board trackers (if changed)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/trackers/program-board-extra.json \
-                  docs/trackers/program-board-meta.json \
-                  docs/trackers/program-board-intake.json
-          if git diff --cached --quiet; then
-            echo "No board changes to commit."
-          else
-            git commit -m "chore(program-board): scheduled live sync [skip ci]"
-            git push origin HEAD:main
-          fi
+          # R2 credentials — set as repo secrets to activate the live upload. Missing → sync warns + skips
+          # the upload (exit 0), board serves the committed fallback.
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: npm run board:sync:r2

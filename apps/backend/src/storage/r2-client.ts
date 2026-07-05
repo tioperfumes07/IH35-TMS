@@ -165,3 +165,23 @@ export async function putObjectBytes(r2Key: string, body: Buffer, contentType: s
     })
   );
 }
+
+/**
+ * Read an object's full text if R2 is configured AND the object exists — otherwise return null.
+ * NEVER throws: used by read-paths that must degrade gracefully to a committed-repo fallback (e.g. the
+ * Program Board live snapshot). Missing R2 config, a missing key, or a transport error all yield null.
+ */
+export async function getObjectTextIfExists(r2Key: string): Promise<string | null> {
+  if (!isR2Configured()) return null;
+  try {
+    const { client, bucket } = ensureConfigured();
+    const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: r2Key }));
+    const body = result.Body as AsyncIterable<Uint8Array> | undefined;
+    if (!body) return null;
+    const chunks: Buffer[] = [];
+    for await (const chunk of body) chunks.push(Buffer.from(chunk));
+    return Buffer.concat(chunks).toString("utf8");
+  } catch {
+    return null;
+  }
+}

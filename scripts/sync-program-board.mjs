@@ -55,6 +55,25 @@ const DESKTOP_XLSX_CANDIDATES = [
 const HEALTH_URL = "https://ih35-tms.onrender.com/api/v1/healthz/shallow";
 const REPO = process.env.BOARD_REPO || "tioperfumes07/IH35-TMS";
 
+// R2 live-snapshot key — the LIVE parts of the board (meta + per-row lifecycle) are written here on a
+// schedule INSTEAD of being committed to `main`, so the board refreshes live with NO prod redeploy. The
+// backend reads this FIRST and overlays it onto the committed repo JSON (fallback). Must match
+// program-board.service.ts R2_LIVE_SNAPSHOT_KEY.
+const R2_LIVE_SNAPSHOT_KEY = "program-board/live-snapshot.json";
+// Lifecycle fields the backend overlays per row — must match program-board.service.ts LIVE_OVERLAY_FIELDS.
+const LIVE_FIELDS = [
+  "requested_ct",
+  "written_ct",
+  "merged_ct",
+  "merged_at",
+  "deployed_ct",
+  "deploy_no",
+  "pr_url",
+  "live_state",
+  "lifecycle",
+  "synced_at",
+];
+
 // ---- small utils ----------------------------------------------------------
 const CT_TZ = "America/Chicago";
 const readJSON = (p, dflt = null) => {
@@ -573,7 +592,65 @@ function extendedTab(rows, moduleOf) {
   };
 }
 
-async function runSync() {
+// ---- R2 live-snapshot output (no repo commit, no redeploy) -----------------
+// Build the LIVE snapshot the backend overlays: whole meta + a per-row map of ONLY the lifecycle fields,
+// keyed `${track}::${id}::${name}` (same key the backend rebuilds). The canonical finding LIST +
+// descriptive fields stay in the committed JSON — we never ship them here.
+function buildLiveSnapshot(extra, blockRows, meta) {
+  const pick = (row) => {
+    const o = {};
+    for (const k of LIVE_FIELDS) if (row[k] !== undefined) o[k] = row[k];
+    return o;
+  };
+  const live = {};
+  for (const r of extra.audit_bug_sweep || []) live[`audit::${r.id}::${r.name}`] = pick(r);
+  for (const r of blockRows) live[`block::${r.id}::${r.name}`] = pick(r);
+  return { generated_at_iso: nowISO(), meta, live };
+}
+
+// Upload the snapshot to R2 using the same @aws-sdk/client-s3 + Cloudflare endpoint the backend uses.
+// Missing R2 creds → warn + skip (exit 0): the board simply keeps serving the committed fallback until
+// the owner sets the R2_* secrets. Returns true on a real upload.
+async function uploadSnapshotToR2(snapshot) {
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const bucket = process.env.R2_BUCKET || "ih35-tms-evidence";
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    const missing = [
+      !accountId && "R2_ACCOUNT_ID",
+      !accessKeyId && "R2_ACCESS_KEY_ID",
+      !secretAccessKey && "R2_SECRET_ACCESS_KEY",
+    ].filter(Boolean);
+    console.warn(
+      `[sync] --to-r2: R2 not configured (missing ${missing.join(", ")}) — SKIPPING upload. ` +
+        `The board keeps serving the committed JSON fallback until these secrets are set.`
+    );
+    return false;
+  }
+  const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
+  const client = new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+  });
+  const body = Buffer.from(JSON.stringify(snapshot));
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: R2_LIVE_SNAPSHOT_KEY,
+      Body: body,
+      ContentType: "application/json",
+    })
+  );
+  console.log(
+    `[sync] --to-r2: uploaded live snapshot -> r2://${bucket}/${R2_LIVE_SNAPSHOT_KEY} ` +
+      `(${body.length} bytes, ${Object.keys(snapshot.live || {}).length} rows). No repo commit, no redeploy.`
+  );
+  return true;
+}
+
+async function runSync({ toR2 = false } = {}) {
   const extra = readJSON(EXTRA_PATH);
   if (!extra || !Array.isArray(extra.audit_bug_sweep)) {
     console.error(`[sync] cannot read ${EXTRA_REL} audit_bug_sweep[]`);
@@ -710,9 +787,19 @@ async function runSync() {
     },
   };
 
-  writeJSON(EXTRA_PATH, extra);
-  if (blockData) writeJSON(BLOCKS_PATH, blockData);
-  writeJSON(META_PATH, meta);
+  if (toR2) {
+    // LIVE-to-R2 mode: NO local repo writes → NO commit → NO prod redeploy. The board reads this snapshot
+    // first and overlays it onto the committed JSON. This is the scheduled refresh path.
+    const snapshot = buildLiveSnapshot(extra, blockRows, meta);
+    await uploadSnapshotToR2(snapshot);
+    console.log("[sync] --to-r2 mode: skipped local repo writes (no commit, no redeploy).");
+  } else {
+    // LOCAL mode: write the committed JSON in place (used locally / when refreshing the baked fallback).
+    writeJSON(EXTRA_PATH, extra);
+    if (blockData) writeJSON(BLOCKS_PATH, blockData);
+    writeJSON(META_PATH, meta);
+    console.log(`[sync] wrote ${EXTRA_REL} + ${BLOCKS_REL} + ${META_REL}`);
+  }
 
   console.log("\n[sync] meta.tabs.audit:", JSON.stringify({ total: auditTab.total, done: auditTab.done, deployed: auditTab.deployed, gated: auditTab.gated, pending: auditTab.pending, financial_pending: auditTab.financial_pending }));
   console.log("[sync] meta.tabs.all:", JSON.stringify({ total: allTab.total, done: allTab.done, open: allTab.open, gated: allTab.gated, waiting_merge: allTab.waiting_merge, in_ci: allTab.in_ci, pending: allTab.pending, financial_pending: allTab.financial_pending }));
@@ -721,16 +808,16 @@ async function runSync() {
   console.log(`[sync] deltas: +${added.length} added, ${completedNow.length} completed (since ${meta.deltas.since || "n/a"})`);
   const blkEnriched = blockRows.filter((r) => r.live_state).length;
   console.log(`[sync] enriched: ${audit.length} audit rows + ${blkEnriched} block rows (${blockRows.filter((r) => prNumber(r.pr)).length} with a PR)`);
-  console.log(`[sync] wrote ${EXTRA_REL} + ${BLOCKS_REL} + ${META_REL}`);
 }
 
 // ============================================================================
 // entry
 // ============================================================================
 const mode = process.argv.includes("--import-xlsx") ? "import" : "sync";
+const toR2 = process.argv.includes("--to-r2"); // write LIVE snapshot to R2 instead of committing repo JSON
 (async () => {
   if (mode === "import") await runImport();
-  else await runSync();
+  else await runSync({ toR2 });
 })().catch((e) => {
   console.error("[fatal]", e);
   process.exit(1);
