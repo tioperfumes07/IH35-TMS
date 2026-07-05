@@ -238,10 +238,17 @@ async function postRunLog(body: ReportRunLogBody) {
   await apiRequest<{ ok: boolean }>("/api/v1/reports/run-log", { method: "POST", body });
 }
 
+// REPORTS-1: the backend now sources these from the canonical aging objects (views.ar_aging /
+// views.ap_aging + the *_aging_as_of functions) and exposes the true 5-bucket split. `current_cents`
+// and `bucket_1_30_cents` are the canonical split; `bucket_0_30_cents` (= current + 1-30) is retained
+// for backward compatibility. Both new fields are optional here so a client stays compatible with an
+// older server during a deploy skew (it falls back to the collapsed 0-30 bucket).
 type ArAgingApiPayload = {
   as_of_date: string;
   totals: {
     total_outstanding_cents: number;
+    current_cents?: number;
+    bucket_1_30_cents?: number;
     bucket_0_30_cents: number;
     bucket_31_60_cents: number;
     bucket_61_90_cents: number;
@@ -251,6 +258,8 @@ type ArAgingApiPayload = {
     customer_id: string;
     customer_name: string;
     total_cents: number;
+    current_cents?: number;
+    bucket_1_30_cents?: number;
     bucket_0_30_cents: number;
     bucket_31_60_cents: number;
     bucket_61_90_cents: number;
@@ -264,6 +273,8 @@ type ApAgingApiPayload = {
   as_of_date: string;
   totals: {
     total_outstanding_cents: number;
+    current_cents?: number;
+    bucket_1_30_cents?: number;
     bucket_0_30_cents: number;
     bucket_31_60_cents: number;
     bucket_61_90_cents: number;
@@ -273,6 +284,8 @@ type ApAgingApiPayload = {
     vendor_id: string;
     vendor_name: string;
     total_cents: number;
+    current_cents?: number;
+    bucket_1_30_cents?: number;
     bucket_0_30_cents: number;
     bucket_31_60_cents: number;
     bucket_61_90_cents: number;
@@ -290,8 +303,10 @@ export async function getArAgingReport(companyId: string, asOfDate: string): Pro
     customer_id: r.customer_id,
     customer_name: r.customer_name,
     open_invoice_count: r.invoice_count,
-    current_cents: 0,
-    bucket_1_30_cents: r.bucket_0_30_cents,
+    // Canonical split when present; fall back to the collapsed 0-30 bucket for older servers so the
+    // combined (current + 1-30) display stays identical.
+    current_cents: r.current_cents ?? 0,
+    bucket_1_30_cents: r.bucket_1_30_cents ?? r.bucket_0_30_cents,
     bucket_31_60_cents: r.bucket_31_60_cents,
     bucket_61_90_cents: r.bucket_61_90_cents,
     bucket_91_plus_cents: r.bucket_91_plus_cents,
@@ -316,8 +331,10 @@ export async function getApAgingReport(companyId: string, asOfDate: string): Pro
     vendor_id: r.vendor_id,
     vendor_name: r.vendor_name,
     open_bill_count: r.bill_count,
-    current_cents: 0,
-    bucket_1_30_cents: r.bucket_0_30_cents,
+    // Canonical split when present; fall back to the collapsed 0-30 bucket for older servers so the
+    // combined (current + 1-30) display stays identical.
+    current_cents: r.current_cents ?? 0,
+    bucket_1_30_cents: r.bucket_1_30_cents ?? r.bucket_0_30_cents,
     bucket_31_60_cents: r.bucket_31_60_cents,
     bucket_61_90_cents: r.bucket_61_90_cents,
     bucket_91_plus_cents: r.bucket_91_plus_cents,
