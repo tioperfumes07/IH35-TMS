@@ -15,7 +15,18 @@ import { isEnabled } from "../../lib/feature-flags/service.js";
 export type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboResult } from "./sync-outbound-accounting.types.js";
 
 const MINOR_VERSION = 70;
-const ACCOUNTING_DEAD_LETTER_AFTER = 5;
+export const ACCOUNTING_DEAD_LETTER_AFTER = 5;
+
+/**
+ * G10-H4 — single source of truth for the outbound-accounting dead-letter cap. Given the queue row's
+ * attempt_count BEFORE the current try, decide whether this failure should terminally dead-letter
+ * (true) instead of being re-queued for another attempt (false). Every failure branch — the known
+ * HTTP errors (422, other 4xx/5xx) AND the generic catch of an unknown/non-transient exception — MUST
+ * gate on this same threshold so no path can retry forever.
+ */
+export function shouldDeadLetterAccountingAttempt(attemptCountBeforeThisTry: number): boolean {
+  return Math.max(0, attemptCountBeforeThisTry) + 1 >= ACCOUNTING_DEAD_LETTER_AFTER;
+}
 
 export function computeAccountingBackoffIsoAfterIncrement(currentAttemptCount: number): string {
   const nextAttempt = Math.max(0, currentAttemptCount) + 1;
@@ -325,6 +336,11 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
   const outerClient = opts.db ?? (await pool.connect());
   const shouldRelease = !opts.db;
 
+  // G10-H4 — captured so the generic catch (below) can apply the SAME dead-letter cap the known
+  // HTTP-error branches use. Set from the loaded queue row's attempt_count; stays 0 if we throw
+  // before the row is read (an infra/transient failure that is correctly left to retry).
+  let attemptCountForCap = 0;
+
   try {
     await outerClient.query("BEGIN");
     await outerClient.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
@@ -372,6 +388,7 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
     }
 
     const attemptBefore = Number(queueRow.attempt_count ?? 0);
+    attemptCountForCap = attemptBefore;
 
     const built = await buildAccountingOutboundPayload(
       outerClient,
@@ -565,8 +582,7 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
         conflict_fields: ["validation"],
         severity: "medium",
       });
-      const nextAttempts = attemptBefore + 1;
-      const dead = nextAttempts >= ACCOUNTING_DEAD_LETTER_AFTER;
+      const dead = shouldDeadLetterAccountingAttempt(attemptBefore);
       await outerClient.query(
         `
           UPDATE integrations.qbo_sync_queue
@@ -591,9 +607,8 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
     const retryOther4xx =
       http.status >= 400 && http.status < 500 && ![401, 409, 422].includes(http.status);
     const retryable = http.status >= 500 || http.status === 429 || http.status === 408 || retryOther4xx;
-    const nextAttempts = attemptBefore + 1;
     const backoffIso = computeAccountingBackoffIsoAfterIncrement(attemptBefore);
-    const dead = nextAttempts >= ACCOUNTING_DEAD_LETTER_AFTER;
+    const dead = shouldDeadLetterAccountingAttempt(attemptBefore);
 
     if (retryable && !dead) {
       await outerClient.query(
@@ -635,22 +650,36 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
   } catch (err) {
     await outerClient.query("ROLLBACK").catch(() => undefined);
     const message = String((err as Error)?.message ?? err);
+    // G10-H4 — an unknown / non-transient exception (payload-build failure, a thrown validation, a
+    // missing-id, a JSON parse error, …) previously ALWAYS reset the row to 'pending' and returned
+    // failed_retry — so it retried FOREVER at 60s intervals and never dead-lettered. Gate this generic
+    // catch on the SAME threshold (shouldDeadLetterAccountingAttempt / ACCOUNTING_DEAD_LETTER_AFTER)
+    // the known HTTP-error branches use, so unknown errors also stop after N attempts and dead-letter.
+    const dead = shouldDeadLetterAccountingAttempt(attemptCountForCap);
     await withLuciaBypass(async (c) => {
       await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
       await c.query(
         `
           UPDATE integrations.qbo_sync_queue
-          SET sync_status = 'pending',
-              next_attempt_at = $2::timestamptz,
-              error_message = $3,
+          SET sync_status = $2,
+              next_attempt_at = CASE WHEN $2 = 'pending' THEN $3::timestamptz ELSE next_attempt_at END,
+              error_message = $4,
               updated_at = now()
           WHERE id = $1::uuid
         `,
-        [opts.queue_row_id, new Date(Date.now() + 60_000).toISOString(), message.slice(0, 500)]
+        [
+          opts.queue_row_id,
+          dead ? "dead_letter" : "pending",
+          new Date(Date.now() + 60_000).toISOString(),
+          message.slice(0, 500),
+        ]
       );
     });
-    await auditOutbound({ ...triplet, phase: "exception", error: message }, "warning");
-    return { outcome: "failed_retry" };
+    await auditOutbound(
+      { ...triplet, phase: dead ? "exception_dead_letter" : "exception", error: message, dead },
+      "warning"
+    );
+    return { outcome: dead ? "failed_dead_letter" : "failed_retry" };
   } finally {
     if (shouldRelease) {
       outerClient.release();
