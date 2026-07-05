@@ -109,6 +109,67 @@ function recognizedToDate(rows: RecognitionRow[]): number {
   return sum;
 }
 
+/** Row shape returned by the revenue-contracts LIST query (money columns cast ::text). */
+interface RevContractListRow {
+  id: string;
+  contract_number: string | null;
+  description: string;
+  source_type: string;
+  customer_uuid: string | null;
+  transaction_price_cents: string;
+  contract_date: string;
+  start_date: string;
+  end_date: string | null;
+  status: string;
+  created_at: string;
+}
+
+/** Row shape returned by the per-contract obligation query used for schedule computation (LIST view). */
+interface RevObligationComputeRow {
+  allocated_price_cents: string;
+  recognition_method: string;
+  recognition_start_date: string | null;
+  recognition_end_date: string | null;
+  periods: number | null;
+  satisfied_at: string | null;
+}
+
+/** Row shape returned by the revenue-contract DETAIL query (rc.* plus ::text aliases). */
+interface RevContractDetailRow {
+  id: string;
+  contract_number: string | null;
+  description: string;
+  source_type: string;
+  source_load_id: string | null;
+  source_invoice_id: string | null;
+  currency_code: string | null;
+  status: string;
+  deferred_revenue_account_id: string | null;
+  price_s: string;
+  contract_date_s: string;
+  start_date_s: string;
+  end_date_s: string | null;
+  customer_uuid_s: string | null;
+  created_at_s: string;
+}
+
+/** Row shape returned by the DETAIL obligation query. */
+interface RevObligationDetailRow {
+  id: string;
+  obligation_number: number;
+  description: string;
+  standalone_selling_price_cents: string;
+  allocated_price_cents: string;
+  recognition_method: string;
+  recognition_start_date: string | null;
+  recognition_end_date: string | null;
+  periods: number | null;
+  satisfied_at: string | null;
+  satisfied_trigger: string | null;
+  revenue_account_id: string | null;
+  status: string;
+}
+
 async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
   // LIST contracts
   app.get("/api/v1/accounting/revenue-contracts", async (req, reply) => {
@@ -152,7 +213,7 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
       );
 
       const items = [];
-      for (const r of listRes.rows as any[]) {
+      for (const r of listRes.rows as RevContractListRow[]) {
         const obRes = await client.query(
           `SELECT allocated_price_cents::text AS allocated_price_cents, recognition_method,
                   recognition_start_date::text AS recognition_start_date,
@@ -163,7 +224,7 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
           [r.id]
         );
         let recognized = 0;
-        for (const o of obRes.rows as any[]) {
+        for (const o of obRes.rows as RevObligationComputeRow[]) {
           const sched = computeRecognitionSchedule({
             allocated_price_cents: Number(o.allocated_price_cents),
             recognition_method: o.recognition_method,
@@ -222,7 +283,7 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
         [pp.data.id, qp.data.operating_company_id]
       );
       if (!cRes.rows[0]) return reply.code(404).send({ error: "not_found" });
-      const c = cRes.rows[0] as any;
+      const c = cRes.rows[0] as RevContractDetailRow;
 
       const obRes = await client.query(
         `SELECT id, obligation_number, description,
@@ -242,7 +303,7 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
       const postEnabled = await isEnabled(client, POST_FLAG);
       let recognizedTotal = 0;
 
-      const obligations = (obRes.rows as any[]).map((o) => {
+      const obligations = (obRes.rows as RevObligationDetailRow[]).map((o) => {
         const sched = computeRecognitionSchedule({
           allocated_price_cents: Number(o.allocated_price_cents),
           recognition_method: o.recognition_method,
