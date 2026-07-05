@@ -1,0 +1,206 @@
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
+import { withCurrentUser } from "../../auth/db.js";
+import { requireAuth } from "../../auth/session-middleware.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import {
+  addRenditionLine,
+  createAppraisalDistrict,
+  createRendition,
+  getRendition,
+  listAppraisalDistricts,
+  listCandidateAssets,
+  listRenditions,
+  updateRendition,
+} from "./property-tax.service.js";
+
+function authUser(req: FastifyRequest, reply: FastifyReply) {
+  if (!requireAuth(req, reply)) return null;
+  return req.user;
+}
+
+const companyQuery = z.object({ operating_company_id: z.string().uuid() });
+
+const createRenditionBody = z.object({
+  operating_company_id: z.string().uuid(),
+  tax_year: z.number().int().min(2000).max(2100),
+  appraisal_district_id: z.string().uuid(),
+  value_basis: z.enum(["historical_cost", "market_value", "depreciated_cost"]).optional(),
+  cad_account_number: z.string().trim().max(120).nullable().optional(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+});
+
+const updateRenditionBody = z.object({
+  operating_company_id: z.string().uuid(),
+  status: z.enum(["draft", "filed", "appealed", "settled"]).optional(),
+  value_basis: z.enum(["historical_cost", "market_value", "depreciated_cost"]).optional(),
+  extension_requested: z.boolean().optional(),
+  extended_due_date: z.string().nullable().optional(),
+  cad_account_number: z.string().trim().max(120).nullable().optional(),
+  assessed_tax_cents: z.number().int().nullable().optional(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+});
+
+const addLineBody = z.object({
+  operating_company_id: z.string().uuid(),
+  unit_id: z.string().uuid().nullable().optional(),
+  equipment_id: z.string().uuid().nullable().optional(),
+  fixed_asset_id: z.string().uuid().nullable().optional(),
+  asset_description: z.string().trim().min(1).max(300),
+  asset_category: z.enum(["tractor", "trailer", "equipment", "office", "other"]).nullable().optional(),
+  acquisition_date: z.string().nullable().optional(),
+  acquisition_cost_cents: z.number().int().nullable().optional(),
+  rendered_value_cents: z.number().int().min(0).optional(),
+});
+
+const createDistrictBody = z.object({
+  operating_company_id: z.string().uuid(),
+  state: z.string().trim().max(4).optional(),
+  county: z.string().trim().min(1).max(120),
+  cad_name: z.string().trim().min(1).max(200),
+});
+
+// Business-Property Allocation — TX property-tax rendition (filing side). Entity-scoped (RLS via
+// app.operating_company_id) + membership-gated. Read is open to any company member; writes are gated at
+// the DB (RLS) to Owner/Administrator/Accountant/Manager/Safety.
+export async function registerPropertyTaxRoutes(app: FastifyInstance) {
+  // List appraisal districts (reference).
+  app.get("/api/v1/compliance/property-tax/appraisal-districts", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const q = companyQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+    await assertCompanyMembership(user.uuid, q.data.operating_company_id);
+    const districts = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [q.data.operating_company_id]);
+      return listAppraisalDistricts(client);
+    });
+    return reply.send({ districts });
+  });
+
+  // Inline "+ Add new appraisal district".
+  app.post("/api/v1/compliance/property-tax/appraisal-districts", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const body = createDistrictBody.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    const district = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      return createAppraisalDistrict(client, { state: body.data.state, county: body.data.county, cad_name: body.data.cad_name });
+    });
+    return reply.code(201).send({ district });
+  });
+
+  // Candidate taxable assets (owned fleet) for the rendering entity.
+  app.get("/api/v1/compliance/property-tax/candidate-assets", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const q = companyQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+    await assertCompanyMembership(user.uuid, q.data.operating_company_id);
+    const assets = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [q.data.operating_company_id]);
+      return listCandidateAssets(client, q.data.operating_company_id);
+    });
+    return reply.send({ assets });
+  });
+
+  // List renditions for the entity.
+  app.get("/api/v1/compliance/property-tax/renditions", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const q = companyQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+    await assertCompanyMembership(user.uuid, q.data.operating_company_id);
+    const renditions = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [q.data.operating_company_id]);
+      return listRenditions(client, q.data.operating_company_id);
+    });
+    return reply.send({ renditions });
+  });
+
+  // One rendition + its basis lines.
+  app.get("/api/v1/compliance/property-tax/renditions/:id", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const q = companyQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+    const { id } = req.params as { id: string };
+    await assertCompanyMembership(user.uuid, q.data.operating_company_id);
+    const result = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [q.data.operating_company_id]);
+      return getRendition(client, q.data.operating_company_id, id);
+    });
+    if (!result) return reply.code(404).send({ error: "not_found" });
+    return reply.send(result);
+  });
+
+  // Create a draft rendition.
+  app.post("/api/v1/compliance/property-tax/renditions", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const body = createRenditionBody.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    const rendition = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      return createRendition(client, body.data.operating_company_id, user.uuid, {
+        tax_year: body.data.tax_year,
+        appraisal_district_id: body.data.appraisal_district_id,
+        value_basis: body.data.value_basis,
+        cad_account_number: body.data.cad_account_number,
+        notes: body.data.notes,
+      });
+    });
+    return reply.code(201).send({ rendition });
+  });
+
+  // Update a rendition (status transition, extension, assessed tax, notes).
+  app.patch("/api/v1/compliance/property-tax/renditions/:id", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const body = updateRenditionBody.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const { id } = req.params as { id: string };
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    const rendition = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      return updateRendition(client, body.data.operating_company_id, user.uuid, id, {
+        status: body.data.status,
+        value_basis: body.data.value_basis,
+        extension_requested: body.data.extension_requested,
+        extended_due_date: body.data.extended_due_date,
+        cad_account_number: body.data.cad_account_number,
+        assessed_tax_cents: body.data.assessed_tax_cents,
+        notes: body.data.notes,
+      });
+    });
+    if (!rendition) return reply.code(404).send({ error: "not_found" });
+    return reply.send({ rendition });
+  });
+
+  // Add a taxable-asset basis line.
+  app.post("/api/v1/compliance/property-tax/renditions/:id/lines", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const body = addLineBody.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const { id } = req.params as { id: string };
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    const line = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      return addRenditionLine(client, body.data.operating_company_id, user.uuid, id, {
+        unit_id: body.data.unit_id,
+        equipment_id: body.data.equipment_id,
+        fixed_asset_id: body.data.fixed_asset_id,
+        asset_description: body.data.asset_description,
+        asset_category: body.data.asset_category,
+        acquisition_date: body.data.acquisition_date,
+        acquisition_cost_cents: body.data.acquisition_cost_cents,
+        rendered_value_cents: body.data.rendered_value_cents,
+      });
+    });
+    return reply.code(201).send({ line });
+  });
+}

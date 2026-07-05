@@ -52,6 +52,14 @@
     {
       "file": "202607070100_bank_categorize_unit_trip_driver_deduction.sql",
       "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-6b \u2014 Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine\u2192driver\u2192settlement, flag OFF)"
+    },
+    {
+      "file": "202607080100_property_tax_rendition_filing.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 TX property-tax rendition filing tables (compliance schema; posts nothing, but a schema change \u2014 never self-merge)"
+    },
+    {
+      "file": "202607080110_property_tax_accrual_posting.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 property-tax accrual/payment GL scaffolding (accounting.*/catalogs.* + COA roles + PROPERTY_TAX_GL_POSTING_ENABLED flag OFF; financial cluster)"
     }
   ]
 }

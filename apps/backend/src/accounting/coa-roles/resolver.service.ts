@@ -26,6 +26,11 @@ export const COA_ROLE_VALUES = [
   "default_interest_expense",
   "factor_reserve_held",
   "factor_fee_expense",
+  // Business-Property Allocation (TX personal-property tax) — per-opco (TRANSP/TRK) mappings in
+  // accounting.chart_of_accounts_roles, migration 202607080110_property_tax_accrual_posting.sql.
+  // ACCRUAL Dr property_tax_expense / Cr property_tax_payable; PAYMENT Dr property_tax_payable / Cr cash.
+  "property_tax_expense",
+  "property_tax_payable",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

@@ -10,6 +10,7 @@
 import { getCurrentQuarterInfo } from "../reports/shared.js";
 import { buildComplianceCredentials } from "./compliance-aggregate.service.js";
 import { upcomingForm2290Deadline } from "./form-2290-generator.js";
+import { upcomingPropertyTaxRenditionDeadline } from "./property-tax/property-tax.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -250,20 +251,66 @@ async function loadMvrItems(client: DbClient, operatingCompanyId: string, entity
   }));
 }
 
-/** GAP (owner-confirmed 2026-07-05, no code/DDL anywhere — design-only in FH-6-TAX-MANAGER-DESIGN.md).
- * Never invent a due date for an unbuilt filing — show it honestly as not-yet-tracked. */
-function businessPropertyTaxPlaceholder(entityCode: string): FilingItem {
-  return {
-    id: "business_property_tax:placeholder",
-    program: "Texas Business Personal Property Tax Rendition",
-    category: "business_property_tax",
-    entity_code: entityCode,
-    detail: "Not yet tracked — no filing workflow built yet (see FH-6 Tax Manager design doc)",
-    due_date: null,
-    status: "not_yet_tracked",
-    drill_through: null,
-    source: "placeholder",
-  };
+// Business-Property Allocation — TX business personal-property tax rendition (NOW BUILT, migration
+// 202607080100). Surfaces every not-yet-filed rendition for the entity plus, if the current tax year has
+// no rendition row yet, a statutory-deadline reminder anchored to April 15 (Tax Code §22.23 — a REAL
+// regulatory calendar, not an invented date). Drill-through → the rendition screen (/compliance/property-tax).
+export async function loadPropertyTaxItems(client: DbClient, operatingCompanyId: string, entityCode: string): Promise<FilingItem[]> {
+  const items: FilingItem[] = [];
+  const res = await client.query<{
+    id: string;
+    tax_year: number;
+    status: string;
+    effective_due_date: string;
+    cad_name: string;
+  }>(
+    `
+      SELECT r.id::text, r.tax_year, r.status,
+             COALESCE(r.extended_due_date, r.due_date)::text AS effective_due_date,
+             d.cad_name
+      FROM compliance.property_tax_renditions r
+      JOIN compliance.appraisal_districts d ON d.id = r.appraisal_district_id
+      WHERE r.operating_company_id = $1::uuid
+        AND r.is_active
+        AND r.status IN ('draft','appealed')       -- 'filed'/'settled' are no longer pending
+      ORDER BY effective_due_date ASC
+      LIMIT 50
+    `,
+    [operatingCompanyId]
+  );
+
+  const yearsWithRow = new Set<number>();
+  for (const r of res.rows) {
+    yearsWithRow.add(r.tax_year);
+    items.push({
+      id: `property_tax:${r.id}`,
+      program: "Texas Business Personal Property Tax Rendition",
+      category: "business_property_tax",
+      entity_code: entityCode,
+      detail: `${r.cad_name} — ${r.tax_year} rendition (${r.status})`,
+      due_date: r.effective_due_date,
+      status: statusFor(r.effective_due_date),
+      drill_through: `/compliance/property-tax/${r.id}`,
+      source: "real",
+    });
+  }
+
+  // If the current statutory tax year has no rendition started yet, prompt one against the April 15 deadline.
+  const { deadline, taxYear } = upcomingPropertyTaxRenditionDeadline();
+  if (!yearsWithRow.has(taxYear)) {
+    items.push({
+      id: `property_tax:${taxYear}:unstarted`,
+      program: "Texas Business Personal Property Tax Rendition",
+      category: "business_property_tax",
+      entity_code: entityCode,
+      detail: `${taxYear} rendition not yet started (Tax Code §22.23, due Apr 15)`,
+      due_date: deadline,
+      status: statusFor(deadline),
+      drill_through: "/compliance/property-tax",
+      source: "real",
+    });
+  }
+  return items;
 }
 
 export async function buildFilingsDashboard(client: DbClient, operatingCompanyId: string): Promise<FilingsDashboard> {
@@ -273,22 +320,24 @@ export async function buildFilingsDashboard(client: DbClient, operatingCompanyId
   );
   const entityCode = companyRes.rows[0]?.code ?? "";
 
-  const [iftaItem, form2290Item, permitItems, irpItems, driverCredItems, clearinghouseItems, mvrItems] = await Promise.all([
-    loadIftaItem(client, operatingCompanyId, entityCode),
-    loadForm2290Item(client, operatingCompanyId, entityCode),
-    loadPermitItems(client, operatingCompanyId, entityCode),
-    loadCredentialItems(client, operatingCompanyId, entityCode, ["irp", "irp_account"], {
-      irp: "IRP Apportioned Registration",
-      irp_account: "IRP Account Renewal",
-    }),
-    loadCredentialItems(client, operatingCompanyId, entityCode, ["cdl", "medical_card", "drug_test_cycle"], {
-      cdl: "Driver CDL Renewal",
-      medical_card: "Driver DOT Medical Certificate",
-      drug_test_cycle: "Driver Drug Test Cycle",
-    }),
-    loadClearinghouseItems(client, operatingCompanyId, entityCode),
-    loadMvrItems(client, operatingCompanyId, entityCode),
-  ]);
+  const [iftaItem, form2290Item, permitItems, irpItems, driverCredItems, clearinghouseItems, mvrItems, propertyTaxItems] =
+    await Promise.all([
+      loadIftaItem(client, operatingCompanyId, entityCode),
+      loadForm2290Item(client, operatingCompanyId, entityCode),
+      loadPermitItems(client, operatingCompanyId, entityCode),
+      loadCredentialItems(client, operatingCompanyId, entityCode, ["irp", "irp_account"], {
+        irp: "IRP Apportioned Registration",
+        irp_account: "IRP Account Renewal",
+      }),
+      loadCredentialItems(client, operatingCompanyId, entityCode, ["cdl", "medical_card", "drug_test_cycle"], {
+        cdl: "Driver CDL Renewal",
+        medical_card: "Driver DOT Medical Certificate",
+        drug_test_cycle: "Driver Drug Test Cycle",
+      }),
+      loadClearinghouseItems(client, operatingCompanyId, entityCode),
+      loadMvrItems(client, operatingCompanyId, entityCode),
+      loadPropertyTaxItems(client, operatingCompanyId, entityCode),
+    ]);
 
   const items: FilingItem[] = [
     ...(iftaItem ? [iftaItem] : []),
@@ -298,7 +347,7 @@ export async function buildFilingsDashboard(client: DbClient, operatingCompanyId
     ...driverCredItems,
     ...clearinghouseItems,
     ...mvrItems,
-    businessPropertyTaxPlaceholder(entityCode),
+    ...propertyTaxItems,
   ];
 
   items.sort((a, b) => {

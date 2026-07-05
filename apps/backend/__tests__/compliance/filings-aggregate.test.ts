@@ -30,7 +30,7 @@ describe("compliance & filings aggregator", () => {
     assert.ok(days !== null && days >= 9 && days <= 11);
   });
 
-  it("aggregates every real source without inventing the business-property-tax gap", () => {
+  it("aggregates every real source including the now-built business-property-tax rendition", () => {
     const src = fs.readFileSync(path.join(here, "../../src/compliance/filings-aggregate.service.ts"), "utf8");
     // Real sources — each program stays in its own module, this file only reads it.
     assert.match(src, /reports\.ifta_filings/);
@@ -39,9 +39,10 @@ describe("compliance & filings aggregator", () => {
     assert.match(src, /buildComplianceCredentials/); // IRP + driver CDL/medical/drug-test
     assert.match(src, /safety\.clearinghouse_query/);
     assert.match(src, /safety\.driver_documents/); // MVR
-    // The one confirmed gap must be an honest placeholder, never a fabricated due date.
-    assert.match(src, /businessPropertyTaxPlaceholder/);
-    assert.match(src, /not_yet_tracked/);
+    // Business-property tax is now a REAL source reading the rendition tables (no more placeholder).
+    assert.match(src, /compliance\.property_tax_renditions/);
+    assert.match(src, /loadPropertyTaxItems/);
+    assert.doesNotMatch(src, /businessPropertyTaxPlaceholder/);
   });
 
   it("registers the aggregator route additively inside the compliance route group", () => {
