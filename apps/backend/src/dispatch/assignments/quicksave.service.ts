@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
+import { assertDriverQualifiedForLoad, DriverNotQualifiedError } from "../driver-qualification.service.js";
 
 type LoadRow = {
   id: string;
@@ -9,12 +10,14 @@ type LoadRow = {
   assigned_unit_id: string | null;
   assigned_secondary_driver_id: string | null;
   load_number: string | null;
+  is_hazmat: boolean;
 };
 
 async function fetchLoadForUpdate(client: PoolClient, loadId: string, operatingCompanyId: string): Promise<LoadRow | null> {
   const res = await client.query<LoadRow>(
     `
-      SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number
+      SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
+             COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
       FROM mdata.loads
       WHERE id = $1
         AND operating_company_id = $2
@@ -255,6 +258,19 @@ export async function reassignDriver(
       const load = await fetchLoadForUpdate(client, input.load_uuid, input.operating_company_id);
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
       await assertDriverActive(client, input.driver_uuid, input.operating_company_id);
+
+      // DISP-2: apply the SHARED driver-qualification gate (G9-C1 + D3-1) on this inline reassign
+      // path too. `assertDriverActive` only checks status + HOS; the DOT credential hard-stops
+      // (deactivated / archived / missing-or-expired CDL / missing-or-expired DOT medical card, and
+      // the hazmat H-endorsement on a hazmat load) live in the shared gate that book-load,
+      // quick-assign and the planner already delegate to. Throwing here rolls back the txn and the
+      // route maps DriverNotQualifiedError → the E_DRIVER_NOT_QUALIFIED 422.
+      const qualBlock = await assertDriverQualifiedForLoad(client, {
+        driverId: input.driver_uuid,
+        operatingCompanyId: input.operating_company_id,
+        isHazmat: load.is_hazmat,
+      });
+      if (qualBlock) throw new DriverNotQualifiedError(qualBlock);
 
       await client.query(
         `UPDATE mdata.loads SET assigned_primary_driver_id = $2, updated_at = now() WHERE id = $1`,

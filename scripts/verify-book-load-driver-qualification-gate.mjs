@@ -64,6 +64,27 @@ if (!dq) {
   if (/\bd\.hazmat_endorsement\b/.test(dq)) failures.push("phantom_driver_hazmat_endorsement_column");
 }
 
+// G9-C1/D3-1/DISP-2: every SIBLING assignment path must delegate its driver credential hard-stops
+// to the shared gate — never re-implement a partial check. If any of these stops calling
+// assertDriverQualifiedForLoad, a terminated / expired-CDL / hazmat-unqualified driver could be
+// assigned through that entry point. DISP-2 closed the last gap (the inline `assign-driver` reassign
+// in assignments/quicksave.service.ts, which previously used only assertDriverActive).
+const siblingQualificationPaths = [
+  "apps/backend/src/dispatch/quick-assign.service.ts",
+  "apps/backend/src/dispatch/planner.service.ts",
+  "apps/backend/src/dispatch/assignments/quicksave.service.ts",
+];
+for (const rel of siblingQualificationPaths) {
+  const src = readIfExists(path.resolve(ROOT, rel));
+  if (!src) {
+    failures.push(`missing_sibling_assignment_path:${rel}`);
+    continue;
+  }
+  if (!src.includes("assertDriverQualifiedForLoad")) {
+    failures.push(`sibling_path_not_delegated_to_shared_gate:${rel}`);
+  }
+}
+
 const validator = readIfExists(validatorPath);
 if (!validator) {
   failures.push("missing_pre_dispatch_validator");
