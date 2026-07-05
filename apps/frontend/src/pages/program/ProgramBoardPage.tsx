@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
@@ -7,6 +7,7 @@ import { useToast } from "../../components/Toast";
 import {
   getProgramBoard,
   postProgramBoardNote,
+  type BoardDeltas,
   type BoardNote,
   type ExtraItem,
   type HoldItem,
@@ -30,6 +31,16 @@ type Row = {
   pr: number | null;
   track: "block" | "owner-batch" | "dispatch-kit" | "audit";
   review?: string; // Owner-Batch review tag (proceed-on-row | needs-your-preview); absent → proceed-on-row
+  // ── Live-data upgrade (audit findings) — all OPTIONAL; the table degrades gracefully when absent ──────
+  severity?: string;
+  module?: string;
+  where?: string;
+  live?: string; // live_state (deployed | merged | waiting-merge | in-ci | ci-failed | pending | gated)
+  requestedCt?: string;
+  writtenCt?: string;
+  mergedCt?: string;
+  deployedCt?: string;
+  lifecycle?: string; // furthest stage reached (requested | written | merged | deployed)
 };
 
 // Owner-Batch review tag: absent/blank/unknown defaults to the standard-pattern "proceed-on-row".
@@ -163,16 +174,65 @@ function extraToRow(e: ExtraItem): Row {
     pr: null,
     track: (e.track as Row["track"]) ?? "owner-batch",
     review: e.review,
+    severity: e.severity,
+    module: e.module,
+    where: e.where,
+    live: e.live_state,
+    requestedCt: e.requested_ct,
+    writtenCt: e.written_ct,
+    mergedCt: e.merged_ct,
+    deployedCt: e.deployed_ct,
+    lifecycle: e.lifecycle,
   };
 }
 
 // Every data column in the shared block/task table is sortable. "#" is the row ordinal (not a data
-// field) so it stays non-sortable; everything else clicks to sort.
-type SortKey = "date" | "id" | "wave" | "description" | "tier" | "fin" | "status" | "pr" | "review";
+// field) so it stays non-sortable; everything else clicks to sort. The audit tab adds live-data
+// columns (severity/module/where/live/lifecycle) — all sortable through the same comparator.
+type SortKey =
+  | "date"
+  | "id"
+  | "wave"
+  | "description"
+  | "tier"
+  | "fin"
+  | "status"
+  | "pr"
+  | "review"
+  | "severity"
+  | "module"
+  | "where"
+  | "live"
+  | "lifecycle";
+
+// ── Lifecycle stage ordering for the sortable Lifecycle column (furthest reached wins) ───────────────
+const LIFECYCLE_ORDER = ["requested", "written", "merged", "deployed"] as const;
+export function lifecycleRank(stage: string | undefined): number {
+  const i = LIFECYCLE_ORDER.indexOf((stage || "").toLowerCase() as (typeof LIFECYCLE_ORDER)[number]);
+  return i; // -1 when unknown/absent → sorts before "requested"
+}
+
+// Derive the furthest reached lifecycle stage from the timestamps when an explicit `lifecycle` is absent.
+// A row is only fully DONE once deployed_ct is set — merged ≠ live (constitution §3.7).
+export function deriveLifecycle(row: {
+  lifecycle?: string;
+  deployedCt?: string;
+  mergedCt?: string;
+  writtenCt?: string;
+  requestedCt?: string;
+}): string | undefined {
+  if (row.lifecycle) return row.lifecycle.toLowerCase();
+  if (row.deployedCt) return "deployed";
+  if (row.mergedCt) return "merged";
+  if (row.writtenCt) return "written";
+  if (row.requestedCt) return "requested";
+  return undefined;
+}
 
 // Type-aware, stable row comparator. Dates compare chronologically, PR # numerically, Fin as a
-// boolean, id/wave/tier/status use a numeric-aware locale compare so "P3-T11.10" sorts after
-// "P3-T11.2". Returns raw asc ordering; the caller applies direction + a stable index tiebreak.
+// boolean, Lifecycle by pipeline stage, and id/wave/tier/status/severity/module/where/live use a
+// numeric-aware locale compare so "P3-T11.10" sorts after "P3-T11.2". Returns raw asc ordering; the
+// caller applies direction + a stable index tiebreak.
 export function compareRows(a: Row, b: Row, key: SortKey): number {
   switch (key) {
     case "date": {
@@ -189,8 +249,34 @@ export function compareRows(a: Row, b: Row, key: SortKey): number {
       return (a.fin ? 1 : 0) - (b.fin ? 1 : 0);
     case "review":
       return reviewTag(a.review).localeCompare(reviewTag(b.review));
+    case "lifecycle":
+      return lifecycleRank(deriveLifecycle(a)) - lifecycleRank(deriveLifecycle(b));
     default:
       return String(a[key] ?? "").localeCompare(String(b[key] ?? ""), undefined, { numeric: true });
+  }
+}
+
+// ── LIVE git-state chip (audit table) — §7 palette only: navy/slate family, DONE green, red for failed ──
+// deployed=green · merged=slate · waiting-merge=navy · in-ci=slate-lt · ci-failed=red · gated=grey · pending=slate
+function liveStateChip(state: string | undefined): { bg: string; fg: string; label: string } {
+  const s = (state || "").toLowerCase();
+  switch (s) {
+    case "deployed":
+      return { bg: "#DCFCE7", fg: "#166534", label: "deployed" }; // green — live on prod
+    case "merged":
+      return { bg: "#E2E8F0", fg: "#334155", label: "merged" }; // slate
+    case "waiting-merge":
+      return { bg: "#1F2A44", fg: "#FFFFFF", label: "waiting-merge" }; // navy — ready
+    case "in-ci":
+      return { bg: "#F1F5F9", fg: "#64748B", label: "in-ci" }; // slate-lt
+    case "ci-failed":
+      return { bg: "#FEE2E2", fg: "#991B1B", label: "ci-failed" }; // red
+    case "gated":
+      return { bg: "#F3F4F6", fg: "#6B7280", label: "gated" }; // grey
+    case "pending":
+      return { bg: "#E2E8F0", fg: "#334155", label: "pending" }; // slate
+    default:
+      return { bg: "#F3F4F6", fg: "#9CA3AF", label: state || "—" };
   }
 }
 
@@ -199,8 +285,15 @@ export function ProgramBoardPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<TabId>("focus");
   const [filter, setFilter] = useState("");
+  // Debounced copy of the filter that drives the row-table filtering (typing stays responsive on 160+ rows).
+  const [debouncedFilter, setDebouncedFilter] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedFilter(filter), 200);
+    return () => clearTimeout(t);
+  }, [filter]);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [deltasOpen, setDeltasOpen] = useState(false);
 
   const { data, isLoading, isError, error, isFetching } = useQuery<ProgramBoard>({
     queryKey: ["program-board"],
@@ -284,19 +377,28 @@ export function ProgramBoardPage() {
     return m;
   }, [questions]);
 
-  const activeRows = useMemo<Row[]>(() => {
-    let rows: Row[];
-    if (tab === "all") rows = allRows;
-    else if (tab === "owner") rows = ownerRows;
-    else if (tab === "dispatch") rows = dispatchRows;
-    else if (tab === "audit") rows = auditRows;
-    else if (tab === "focus" || tab === "pending") rows = allRows.filter((r) => isOpenStatus(r.status));
-    else rows = [];
+  // The tab's FULL (unfiltered) row set — its length is the "of <total>" denominator in the count.
+  const baseRows = useMemo<Row[]>(() => {
+    if (tab === "all") return allRows;
+    if (tab === "owner") return ownerRows;
+    if (tab === "dispatch") return dispatchRows;
+    if (tab === "audit") return auditRows;
+    if (tab === "focus" || tab === "pending") return allRows.filter((r) => isOpenStatus(r.status));
+    return [];
+  }, [tab, allRows, ownerRows, dispatchRows, auditRows]);
 
-    const f = filter.trim().toLowerCase();
+  // Filter FIRST (case-insensitive substring over id/description/module/where/status/PR/severity),
+  // THEN sort via the shared type-aware compareRows — one sort system, composes with the column headers.
+  const activeRows = useMemo<Row[]>(() => {
+    let rows = baseRows;
+    const f = debouncedFilter.trim().toLowerCase();
     if (f) {
       rows = rows.filter((r) =>
-        [r.id, r.wave, r.description, r.status, r.tier].join(" ").toLowerCase().includes(f)
+        [r.id, r.wave, r.description, r.status, r.tier, r.severity, r.module, r.where, r.pr != null ? `#${r.pr}` : ""]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(f)
       );
     }
     const dir = sort.dir === "asc" ? 1 : -1;
@@ -308,17 +410,20 @@ export function ProgramBoardPage() {
         return c !== 0 ? c * dir : x[1] - y[1];
       })
       .map(([r]) => r);
-  }, [tab, allRows, ownerRows, dispatchRows, auditRows, filter, sort]);
+  }, [baseRows, debouncedFilter, sort]);
 
   function toggleSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   }
 
-  // Owner-Batch shows an extra "Review" tag column. Column count drives the empty/expanded-row colSpans
-  // (leading "#" + 8 base columns + optional Review).
+  // Owner-Batch shows an extra "Review" tag column; the Audit tab adds 5 live-data columns
+  // (Severity, Module, Where, Live, Lifecycle). Column count drives the empty/expanded-row colSpans
+  // (leading "#" + 8 base columns + optional Review + optional audit columns).
   const showReview = tab === "owner";
-  const colCount = 9 + (showReview ? 1 : 0);
+  const showAuditCols = tab === "audit";
+  const colCount = 9 + (showReview ? 1 : 0) + (showAuditCols ? 5 : 0);
   const lockedDecisions = data?.locked_decisions ?? [];
+  const deltas = data?.meta?.deltas; // NEW: live-sync additions/completions badge (tolerated absent)
 
   return (
     <div className="space-y-3">
@@ -460,13 +565,18 @@ export function ProgramBoardPage() {
             </div>
           ) : null}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <input
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              placeholder="Filter by id, wave, description, status…"
-              className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
-            />
-            <span className="text-[11px] tabular-nums text-slate-500">{activeRows.length} rows</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder="Filter by id, description, module, where, status, PR, severity…"
+                className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
+              />
+              <DeltasBadge deltas={deltas} open={deltasOpen} onToggle={() => setDeltasOpen((o) => !o)} />
+            </div>
+            <span className="text-[11px] tabular-nums text-slate-500">
+              Showing {activeRows.length} of {baseRows.length}
+            </span>
           </div>
 
           <div className="overflow-x-auto rounded border border-gray-200">
@@ -482,6 +592,15 @@ export function ProgramBoardPage() {
                   <Th label="Fin" onClick={() => toggleSort("fin")} active={sort.key === "fin"} dir={sort.dir} />
                   <Th label="Status" onClick={() => toggleSort("status")} active={sort.key === "status"} dir={sort.dir} />
                   <Th label="PR" onClick={() => toggleSort("pr")} active={sort.key === "pr"} dir={sort.dir} />
+                  {showAuditCols ? (
+                    <>
+                      <Th label="Severity" onClick={() => toggleSort("severity")} active={sort.key === "severity"} dir={sort.dir} />
+                      <Th label="Module" onClick={() => toggleSort("module")} active={sort.key === "module"} dir={sort.dir} />
+                      <Th label="Where" onClick={() => toggleSort("where")} active={sort.key === "where"} dir={sort.dir} />
+                      <Th label="Live" onClick={() => toggleSort("live")} active={sort.key === "live"} dir={sort.dir} />
+                      <Th label="Lifecycle" onClick={() => toggleSort("lifecycle")} active={sort.key === "lifecycle"} dir={sort.dir} />
+                    </>
+                  ) : null}
                   {showReview ? <Th label="Review" onClick={() => toggleSort("review")} active={sort.key === "review"} dir={sort.dir} /> : null}
                 </tr>
               </thead>
@@ -539,6 +658,44 @@ export function ProgramBoardPage() {
                             <span className="text-slate-300">—</span>
                           )}
                         </td>
+                        {showAuditCols ? (
+                          <>
+                            <td className="whitespace-nowrap px-2 py-1.5">
+                              {r.severity ? (
+                                <span className="tabular-nums font-semibold text-slate-600">{r.severity.toUpperCase()}</span>
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </td>
+                            <td className="px-2 py-1.5 text-slate-600">
+                              <span className="block max-w-[150px] truncate" title={r.module || undefined}>
+                                {r.module || "—"}
+                              </span>
+                            </td>
+                            <td className="px-2 py-1.5 text-slate-500">
+                              <span className="block max-w-[190px] truncate font-mono text-[10px]" title={r.where || undefined}>
+                                {r.where || "—"}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-2 py-1.5">
+                              {r.live ? (
+                                (() => {
+                                  const lc = liveStateChip(r.live);
+                                  return (
+                                    <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: lc.bg, color: lc.fg }}>
+                                      {lc.label}
+                                    </span>
+                                  );
+                                })()
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <LifecycleCell row={r} />
+                            </td>
+                          </>
+                        ) : null}
                         {showReview ? (
                           <td className="whitespace-nowrap px-2 py-1.5">
                             {(() => {
@@ -787,6 +944,90 @@ function Th({ label, onClick, active, dir }: { label: string; onClick: () => voi
       {label}
       {active ? <span className="ml-0.5 text-slate-400">{dir === "asc" ? "▲" : "▼"}</span> : null}
     </th>
+  );
+}
+
+// ── Additions/deltas badge — navy pill "+N new · M completed"; click to expand the id list. §7 palette. ──
+// Renders nothing when there are no deltas (meta absent, or nothing new/completed since last sync).
+function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: boolean; onToggle: () => void }) {
+  const added = deltas?.added ?? [];
+  const completed = deltas?.completed ?? [];
+  if (added.length === 0 && completed.length === 0) return null;
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="rounded px-2 py-1 text-[10px] font-semibold tabular-nums"
+        style={{ background: "#1F2A44", color: "#FFFFFF" }}
+        title={deltas?.since ? `Since ${deltas.since}` : undefined}
+      >
+        +{added.length} new · {completed.length} completed
+      </button>
+      {open ? (
+        <div className="absolute left-0 z-20 mt-1 w-72 max-w-[80vw] rounded border border-gray-200 bg-white p-2 text-[11px] shadow-lg">
+          {deltas?.since ? <div className="mb-1 text-[10px] text-slate-400">since {deltas.since}</div> : null}
+          {added.length ? (
+            <div className="mb-1.5">
+              <div className="font-semibold text-slate-600">New ({added.length})</div>
+              <ul className="mt-0.5 space-y-0.5">
+                {added.map((d) => (
+                  <li key={`add-${d.id}`} className="truncate text-slate-700" title={d.name || d.id}>
+                    <span className="font-mono text-[10px] text-slate-500">{d.id}</span>
+                    {d.name ? ` — ${d.name}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {completed.length ? (
+            <div>
+              <div className="font-semibold text-slate-600">Completed ({completed.length})</div>
+              <ul className="mt-0.5 space-y-0.5">
+                {completed.map((d) => (
+                  <li key={`done-${d.id}`} className="truncate text-slate-700" title={d.name || d.id}>
+                    <span className="rounded px-1 text-[9px] font-semibold" style={{ background: "#DCFCE7", color: "#166534" }}>
+                      done
+                    </span>{" "}
+                    <span className="font-mono text-[10px] text-slate-500">{d.id}</span>
+                    {d.pr ? <span className="ml-1 text-slate-500">{d.pr}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ── Lifecycle confirmation cell — Written → Merged → Deployed, each with its Central-Time stamp. ──────
+// Filled (navy ✓) when the stage is reached, hollow (grey ○) with "pending" when not. A row is only fully
+// live once Deployed is stamped (merged ≠ live). No emoji — plain check/hollow glyphs, §7 palette.
+function LifecycleCell({ row }: { row: Row }) {
+  const stages: { label: string; ts?: string }[] = [
+    { label: "Written", ts: row.writtenCt },
+    { label: "Merged", ts: row.mergedCt },
+    { label: "Deployed", ts: row.deployedCt },
+  ];
+  if (!stages.some((s) => s.ts)) return <span className="text-slate-300">—</span>;
+  return (
+    <div className="space-y-0.5">
+      {stages.map((s) => {
+        const done = Boolean(s.ts);
+        return (
+          <div key={s.label} className="flex items-center gap-1 whitespace-nowrap text-[10px]">
+            <span className="font-semibold" style={{ color: done ? "#1F2A44" : "#CBD5E1" }}>
+              {done ? "✓" : "○"} {s.label}
+            </span>
+            <span className="tabular-nums" style={{ color: done ? "#64748B" : "#CBD5E1" }}>
+              {done ? formatDateTimeCt(s.ts ?? null) : "pending"}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
