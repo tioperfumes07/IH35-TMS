@@ -133,6 +133,7 @@ import { registerDriverInboxReportingRoutes } from "./driver-finance/inbox-repor
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
 import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disputes.routes.js";
+import { registerSettlementDisputeRoutes } from "./driver-finance/settlement-dispute.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerReportsScheduledCrudRoutes } from "./reports/scheduled-reports.routes.js";
@@ -814,6 +815,7 @@ async function main() {
   await registerCustomerContractRoutes(app);
   await registerWeeklyCloseRoutes(app);
   await registerSettlementsDisputesRoutes(app);
+  await registerSettlementDisputeRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
   await registerDriverFinanceDriverBillsRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
