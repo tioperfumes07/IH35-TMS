@@ -36,6 +36,10 @@ const RuleSchema = z.object({
 });
 
 const QueueDecisionSchema = z.object({
+  // SECURITY (G2-1): operating_company_id MUST be uuid-validated here. It is used to scope the
+  // update AND is bound into the events.log_event audit-spine call below — an unvalidated value
+  // previously reached that call via string interpolation (SQL injection). Validate at the edge.
+  operating_company_id: z.string().uuid(),
   status: z.enum(["approved", "rejected"]),
   edited_message: z.string().optional(),
 });
@@ -165,7 +169,8 @@ export default async function alertRoutes(fastify: FastifyInstance) {
 
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const input = QueueDecisionSchema.parse(request.body);
-    const ocId = (request.body as { operating_company_id: string }).operating_company_id;
+    // Use the uuid-validated value off the parsed schema (G2-1) — never a raw cast off request.body.
+    const ocId = input.operating_company_id;
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [ocId]);
@@ -182,18 +187,13 @@ export default async function alertRoutes(fastify: FastifyInstance) {
       
       if (result.rows.length === 0) { reply.status(404); return { error: "Queue item not found" }; }
       
-      // Log to event spine
+      // Log to event spine — PARAMETERIZED bind (G2-1). All caller-supplied values ride as $n
+      // placeholders; NEVER string-interpolated into the SQL text (SQL-injection sink).
       try {
-        await (client as Queryable).query(`SELECT events.log_event(
-          '${ocId}',
-          'broker.update_${input.status}',
-          'user',
-          '${user.uuid}',
-          'broker',
-          '${id}',
-          '{"queue_id": "${id}"}',
-          NOW(),
-          'alerts')`)
+        await (client as Queryable).query(
+          `SELECT events.log_event($1, $2, 'user', $3, 'broker', $4, $5::jsonb, NOW(), 'alerts')`,
+          [ocId, `broker.update_${input.status}`, user.uuid, id, JSON.stringify({ queue_id: id })]
+        );
       } catch (e) { /* ignore */ }
       
       return { decision: result.rows[0] };
