@@ -404,6 +404,7 @@ import { registerUrlCanonicalizeMiddleware } from "./middleware/url-canonicalize
 import { registerRequestIdMiddleware } from "./middleware/request-id.js";
 import { registerSecurityHeaders } from "./middleware/security-headers.js";
 import { registerIdempotencyMiddleware } from "./middleware/idempotency.js";
+import { registerCsrfOriginGuard } from "./middleware/csrf-origin-guard.js";
 import { initializeIdempotencyCleanupCron } from "./middleware/idempotency-cleanup.cron.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
@@ -607,6 +608,10 @@ async function main() {
   // config.rateLimit). Applied to the task-chat write/read routes to prevent comment-spam/DoS.
   await app.register(rateLimit, { global: false });
   await registerSessionMiddleware(app);
+  // G3-1 CSRF guard — must be registered BEFORE route plugins so the onRequest hook
+  // propagates into every child context. Only engages on cookie-authenticated,
+  // state-changing requests; webhooks/S2S (no session cookie) and GET/OPTIONS pass through.
+  await registerCsrfOriginGuard(app);
   app.addHook("preHandler", async (req, _reply) => {
     const url = req.raw.url ?? "";
     if (url.startsWith("/api/v1/healthz")) {
