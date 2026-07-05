@@ -2,18 +2,31 @@
 // `npm run reconcile:blocks` regenerates) + the two curated owner tracks (Owner-Batch + Dispatch-Kit)
 // + the two-way notes (agent questions / owner answers+ideas). NON-FINANCIAL internal tooling.
 //
-// Repo JSON is read at REQUEST TIME from process.cwd() so the board auto-updates whenever the reconcile
-// tool regenerates the file (the migration runner + crons already read repo files from cwd at runtime,
-// so the repo ships alongside the compiled backend). If a file is unreadable we degrade to an empty
-// track rather than 500 — the page still renders the tracks we do have.
+// Repo JSON is read at REQUEST TIME so the board auto-updates whenever the reconcile tool regenerates
+// the file (the repo ships alongside the compiled backend). The repo root is resolved from the compiled
+// module location via resolveMonorepoRoot — NOT process.cwd(): in the Render runtime cwd is NOT the repo
+// root, which silently left every extra track (Owner-Batch / Dispatch-Kit / Audit) empty in prod. Every
+// other repo-file reader (migration runner, crons, admin data-import) already uses resolveMonorepoRoot;
+// this one now matches. cwd ascents remain as a fallback. If a file is still unreadable we degrade to an
+// empty track rather than 500 — the page still renders the tracks we do have.
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type pg from "pg";
+import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 
 const CT_ZONE = "America/Chicago";
 
-// ── repo file locations (relative to repo root = process.cwd() at runtime) ──────────────────────────
+// Repo root resolved from THIS compiled module's location (cwd-independent). Falls back to null if the
+// anchor walk fails, in which case readRepoJson still tries cwd-relative candidates.
+let REPO_ROOT: string | null = null;
+try {
+  REPO_ROOT = resolveMonorepoRoot(import.meta.url);
+} catch {
+  REPO_ROOT = null;
+}
+
+// ── repo file locations (relative to the resolved repo root at runtime) ──────────────────────────────
 const RECON_REL = "docs/trackers/block-reconciliation-data.json";
 const EXTRA_REL = "docs/trackers/program-board-extra.json";
 
@@ -139,8 +152,10 @@ function daysSince(input: string | null | undefined): number | null {
 }
 
 function readRepoJson<T>(rel: string, warnings: string[], label: string): T | null {
-  // Try cwd first (repo root at runtime), then a couple of dist-relative ascents as a fallback.
+  // Resolved repo root FIRST (cwd-independent — the reliable path in the Render runtime), then a few
+  // cwd-relative ascents as a fallback for local/dev invocations where cwd is already the repo root.
   const candidates = [
+    ...(REPO_ROOT ? [path.join(REPO_ROOT, rel)] : []),
     path.join(process.cwd(), rel),
     path.join(process.cwd(), "..", rel),
     path.join(process.cwd(), "..", "..", rel),
@@ -152,7 +167,9 @@ function readRepoJson<T>(rel: string, warnings: string[], label: string): T | nu
       // try next candidate
     }
   }
-  warnings.push(`could not read ${label} (${rel}) from process.cwd() — track shown empty`);
+  // Surface the attempted absolute paths so a read failure can't stay invisible (it silently emptied
+  // every extra track in prod before this fix).
+  warnings.push(`could not read ${label} (${rel}) — tried: ${candidates.join(" | ")}`);
   return null;
 }
 
