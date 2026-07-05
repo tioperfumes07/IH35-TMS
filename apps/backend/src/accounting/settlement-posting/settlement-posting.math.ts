@@ -5,8 +5,13 @@
 /** Money flag — DEFAULT OFF. With it OFF the FIN-18 poster writes ZERO journal entries. */
 export const SETTLEMENT_GL_POSTING_FLAG_KEY = "SETTLEMENT_GL_POSTING_ENABLED";
 
-/** Owner-locked default: the driver must retain >= 10% of the GROSS settlement. */
-export const DEFAULT_NET_PAY_FLOOR_PCT = 0.1;
+/**
+ * Owner-LOCKED default (2026-07-04): the driver must retain >= 5% of the GROSS settlement (EDITABLE per
+ * entity/driver). Corrected from the stale 10% — the canonical applier
+ * (settlement-deduction-cap.service.ts) already floors at 5%, and the Bill+BillPayment engine sources
+ * its floor from the applier; this constant is the last-resort default only when no config row exists.
+ */
+export const DEFAULT_NET_PAY_FLOOR_PCT = 0.05;
 
 /** numeric(14,2) dollars (string|number) -> integer cents. NaN-safe. */
 export function dollarsToCents(dollars: number | string | null | undefined): number {
@@ -15,7 +20,7 @@ export function dollarsToCents(dollars: number | string | null | undefined): num
   return Math.round(n * 100);
 }
 
-/** Clamp a configured floor pct into [0,1]; fall back to the 10% default when ABSENT/invalid. */
+/** Clamp a configured floor pct into [0,1]; fall back to the 5% locked default when ABSENT/invalid. */
 export function normalizeFloorPct(floorPct: number | string | null | undefined): number {
   // null/undefined/empty => "not set" => default (Number(null) would coerce to 0 — a different meaning).
   if (floorPct === null || floorPct === undefined || (typeof floorPct === "string" && floorPct.trim() === "")) {
