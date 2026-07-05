@@ -181,7 +181,12 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           entity_type: "bill",
           source_table: "accounting.bills",
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, bill_id: (bill as { id?: string })?.id ?? null, company_id: query.data.operating_company_id },
+          "spine_emit_bill_created_failed"
+        )
+      );
       return reply.code(201).send({ bill });
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_create_failed");
@@ -229,7 +234,12 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           entity_type: "bill",
           source_table: "accounting.bills",
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, bill_id: params.data.id, company_id: query.data.operating_company_id },
+          "spine_emit_bill_paid_failed"
+        )
+      );
       return reply.code(201).send({ payment });
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_payment_failed");
@@ -276,7 +286,12 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           source_table: "accounting.bills",
           payload: { reason: body.data.reason ?? null },
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, bill_id: params.data.id, company_id: query.data.operating_company_id },
+          "spine_emit_bill_voided_failed"
+        )
+      );
       return { ok: true };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_void_failed");
@@ -315,7 +330,12 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           source_table: "accounting.bill_payments",
           payload: { reason: body.data.reason ?? null },
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, bill_payment_id: params.data.id, company_id: query.data.operating_company_id },
+          "spine_emit_bill_payment_voided_failed"
+        )
+      );
       return { ok: true };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_payment_void_failed");

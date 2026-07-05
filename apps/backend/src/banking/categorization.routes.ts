@@ -317,7 +317,12 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         source_table: "banking.bank_transactions",
         payload: { category_kind: body.data.category_kind },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, bank_transaction_id: params.data.id, company_id: companyId },
+        "spine_emit_banking_transaction_categorized_failed"
+      )
+    );
 
     // BLOCK-6 [HOLD] — only when a Driver was tagged do we consult the driver-advance path (so callers
     // that never send driver_id get byte-identical behavior). Behind BANK_DRIVER_ADVANCE_ENABLED (OFF):
@@ -563,7 +568,12 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         entity_type: "bank_transaction",
         source_table: "banking.bank_transactions",
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, bank_transaction_id: params.data.id, company_id: companyId },
+        "spine_emit_banking_transaction_skipped_failed"
+      )
+    );
     return { ok: true };
   });
 
@@ -615,7 +625,12 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         entity_type: "bank_transaction",
         source_table: "banking.bank_transactions",
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, bank_transaction_id: params.data.id, company_id: companyId },
+        "spine_emit_banking_transaction_investigate_flagged_failed"
+      )
+    );
     return { ok: true };
   });
 

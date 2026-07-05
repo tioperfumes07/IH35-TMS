@@ -564,7 +564,16 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             work_order_id: (result as { wo?: { uuid: string } })?.wo?.uuid ?? "",
             payload: { bucket: body.header.bucket, payment_timing: body.header.payment_timing },
           })
-        ).catch(() => undefined);
+        ).catch((err) =>
+          req.log.warn(
+            {
+              err,
+              work_order_id: (result as { wo?: { uuid: string } })?.wo?.uuid ?? null,
+              company_id: body.header.operating_company_id,
+            },
+            "spine_emit_wo_created_failed"
+          )
+        );
         return reply.code(201).send(result);
       } catch (error) {
         if (isWoInvoiceMismatch(error)) {
@@ -983,7 +992,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         event_type: "wo.completed",
         work_order_id: params.data.id,
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn({ err, work_order_id: params.data.id, company_id: companyId }, "spine_emit_wo_completed_failed")
+    );
     return { ok: true, work_order: result.row };
   });
 
@@ -1062,7 +1073,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         work_order_id: params.data.id,
         payload: { new_status: parsed.data.new_status },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, work_order_id: params.data.id, company_id: companyId, new_status: parsed.data.new_status },
+        "spine_emit_wo_status_changed_failed"
+      )
+    );
     if (CLOSED_STATUSES.has(parsed.data.new_status)) {
       await processMaintenanceWorkOrderClose({
         operating_company_id: companyId,
@@ -1127,7 +1143,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         work_order_id: params.data.id,
         payload: { new_status: parsed.data.new_status },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, work_order_id: params.data.id, company_id: companyId, new_status: parsed.data.new_status },
+        "spine_emit_wo_status_changed_failed"
+      )
+    );
     return { ok: true };
   });
 
@@ -1184,7 +1205,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         work_order_id: params.data.id,
         payload: { line_type: parsed.data.line_type },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, work_order_id: params.data.id, company_id: companyId },
+        "spine_emit_wo_line_item_added_failed"
+      )
+    );
     return reply.code(201).send(row);
   });
 
@@ -1239,7 +1265,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         work_order_id: params.data.id,
         payload: { line_item_id: params.data.lid },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, work_order_id: params.data.id, company_id: companyId },
+        "spine_emit_wo_line_item_removed_failed"
+      )
+    );
     return reply.code(204).send();
   });
 }

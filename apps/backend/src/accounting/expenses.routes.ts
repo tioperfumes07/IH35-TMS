@@ -479,7 +479,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           entity_type: "expense",
           source_table: "accounting.expenses",
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, expense_id: (payload as { id?: string })?.id ?? null, company_id: body.operating_company_id },
+          "spine_emit_expense_created_failed"
+        )
+      );
 
       // (P-NOW) GL POSTING — a categorized cash-out (category account + payment account) posts a balanced
       // JE through the EXISTING engine: DR the resolved category account, CR the payment account. Still
@@ -668,7 +673,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           source_table: "accounting.expenses",
           payload: { new_load_id: body.new_load_id },
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, expense_id: params.data.expenseId, company_id: body.operating_company_id },
+          "spine_emit_expense_reattributed_failed"
+        )
+      );
       return reply.code(200).send(payload);
     } catch (error) {
       const code = (error as { code?: string }).code;

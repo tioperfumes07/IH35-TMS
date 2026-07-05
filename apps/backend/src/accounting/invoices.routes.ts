@@ -304,7 +304,16 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         entity_type: "invoice",
         source_table: "accounting.invoices",
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        {
+          err,
+          invoice_id: (created as { data?: { id?: string } })?.data?.id ?? null,
+          company_id: (created as { data?: { operating_company_id?: string } })?.data?.operating_company_id ?? null,
+        },
+        "spine_emit_invoice_created_failed"
+      )
+    );
     return reply.code(created.code).send(created.data);
   });
 
@@ -478,7 +487,12 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         entity_type: "invoice",
         source_table: "accounting.invoices",
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, invoice_id: params.data.id, company_id: query.data.operating_company_id },
+        "spine_emit_invoice_updated_failed"
+      )
+    );
     return result.data;
   });
 
@@ -577,7 +591,12 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         entity_type: "invoice",
         source_table: "accounting.invoices",
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, invoice_id: params.data.id, company_id: query.data.operating_company_id },
+        "spine_emit_invoice_sent_failed"
+      )
+    );
     return result.data;
   });
 
@@ -682,7 +701,12 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         source_table: "accounting.invoices",
         payload: { reason: body.data.reason ?? null },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, invoice_id: params.data.id, company_id: query.data.operating_company_id },
+        "spine_emit_invoice_voided_failed"
+      )
+    );
     return result.data;
   });
 }

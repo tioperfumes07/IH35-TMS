@@ -360,7 +360,16 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         entity_type: "payment",
         source_table: "accounting.payments",
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        {
+          err,
+          payment_id: (result as { data?: { id?: string } })?.data?.id ?? null,
+          company_id: query.data.operating_company_id,
+        },
+        "spine_emit_payment_created_failed"
+      )
+    );
     return reply.code(result.code).send(result.data);
   });
 
@@ -436,7 +445,12 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         source_table: "accounting.payments",
         payload: { void_reason: body.data.void_reason ?? null },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, payment_id: params.data.id, company_id: query.data.operating_company_id },
+        "spine_emit_payment_voided_failed"
+      )
+    );
     return result.data;
   });
 }

@@ -63,7 +63,12 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
           load_id: params.data.id,
           payload: { reason_code: body.data.reason_code },
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, load_id: params.data.id, company_id: body.data.operating_company_id },
+          "spine_emit_load_cancelled_failed"
+        )
+      );
       return result;
     } catch (error) {
       const mapped = mapServiceError(error);
@@ -101,7 +106,12 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
             event_type: "load.cancellation_approved",
             load_id: loadId,
           })
-        ).catch(() => undefined);
+        ).catch((err) =>
+          req.log.warn(
+            { err, load_id: loadId, company_id: body.data.operating_company_id },
+            "spine_emit_load_cancellation_approved_failed"
+          )
+        );
       }
       return result;
     } catch (error) {

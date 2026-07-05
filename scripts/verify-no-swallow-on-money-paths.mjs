@@ -44,11 +44,51 @@ const walk = (dir) => {
 };
 if (fs.existsSync(SRC)) walk(SRC);
 
+// ── SWL-1 extension ────────────────────────────────────────────────────────────────────────────
+// The empty/comment-only catch check above does NOT catch the OTHER swallow shape used on the
+// audit spine: a fire-and-forget promise whose rejection is discarded with `.catch(() => undefined)`
+// (or `() => {}` / `() => null` / `() => void 0`). On a money/dispatch spine emit that means a failed
+// audit event vanishes with NO signal. This check bans a discard-`.catch` chained onto ANY canonical
+// spine-emit helper call, regardless of path (the helper name is the money/dispatch-audit signal).
+// The correct pattern (already used at dispatch/loads.routes.ts): `.catch((err) => req.log.warn(...))`
+// in a route, or `logger.warn(...)` in a service. Archived `.deprecated.ts` routes are unmounted and
+// excluded by convention (their own header notes the `.deprecated` suffix opt-out).
+const SPINE_EMIT = /emit(?:Accounting|Banking|Dispatch|DriverRequest|Maintenance)\w*SpineEvent\s*\(|emitDriverRequestViewedOnce\s*\(/g;
+// A `.catch` whose handler body is a bare swallow (undefined/null/{}/void 0) with no log/throw/report.
+const SWALLOW_CATCH = /\.catch\(\s*(?:async\s*)?\([^)]*\)\s*=>\s*(?:undefined|null|void 0|\{\s*\})\s*\)/;
+const LOGGED = /req\.log|reply\.log|app\.log|logger\.|console\.|throw|captureException|Sentry/;
+
+const walkSpine = (dir) => {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fp = path.join(dir, e.name);
+    if (e.isDirectory()) walkSpine(fp);
+    else if (/\.ts$/.test(e.name) && !/\.(test|spec)\.ts$/.test(e.name) && !/\.deprecated\.ts$/.test(e.name)) {
+      const rel = path.relative(ROOT, fp).replace(/\\/g, "/");
+      const src = fs.readFileSync(fp, "utf8");
+      let m;
+      SPINE_EMIT.lastIndex = 0;
+      while ((m = SPINE_EMIT.exec(src))) {
+        // Window from the emit call to the end of its fire-and-forget wrapper's `.catch(...)`.
+        const window = src.slice(m.index, m.index + 700);
+        const sw = SWALLOW_CATCH.exec(window);
+        if (!sw) continue;
+        // If the same window carries a logging/throwing catch elsewhere, don't false-positive.
+        const catchSeg = window.slice(sw.index, sw.index + sw[0].length);
+        if (LOGGED.test(catchSeg)) continue;
+        const line = src.slice(0, m.index + sw.index).split("\n").length;
+        offenders.push(`${rel}:${line} (spine-emit swallow: ${m[0].replace(/\s*\($/, "")})`);
+      }
+    }
+  }
+};
+if (fs.existsSync(SRC)) walkSpine(SRC);
+
 if (offenders.length) {
-  console.error(`[${LABEL}] FAILED — ${offenders.length} silent (empty/comment-only) catch block(s) on money paths:`);
+  console.error(`[${LABEL}] FAILED — ${offenders.length} silent swallow(s) on money/dispatch paths / spine emits:`);
   for (const o of offenders) console.error(`  ✗ ${o}`);
-  console.error(`\nMoney-path catches must fail loud (rethrow / return explicit error / Sentry.captureException),`);
-  console.error(`not silently swallow. If a swallow is truly intentional, add a "// intentional swallow: <reason>" note.`);
+  console.error(`\nMoney/dispatch-path catches AND spine-emit failures must fail loud or LOG (rethrow /`);
+  console.error(`return explicit error / req.log.warn / logger.warn / Sentry.captureException) — never silently`);
+  console.error(`discard. If a swallow is truly intentional, add a "// intentional swallow: <reason>" note.`);
   process.exit(1);
 }
-console.log(`[${LABEL}] OK — no silent swallows on money paths (posting/settlement/spine-emit).`);
+console.log(`[${LABEL}] OK — no silent swallows on money/dispatch paths or spine emits.`);

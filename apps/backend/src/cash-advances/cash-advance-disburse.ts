@@ -3,6 +3,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isOwnerOrAdmin } from "../bulk/bulk-update.factory.js";
 import { postSourceTransaction } from "../accounting/posting-engine.service.js";
 import { emitDriverRequestSpineEvent } from "../driver-finance/driver-request-spine-emit.js";
+import { logger } from "../observability/structured-logger.js";
 
 type PostingResult = Awaited<ReturnType<typeof postSourceTransaction>>;
 
@@ -142,8 +143,16 @@ export async function disburseDriverAdvanceCore(
         });
       }
     });
-  } catch {
-    // swallow — money already moved; timeline is best-effort post-commit.
+  } catch (err) {
+    // Money already moved; the timeline emit is best-effort post-commit, so a failure must NOT
+    // surface as a disbursement error. But it must NOT vanish silently either (SWL-1) — log it
+    // with context so a lost audit-spine event is visible/alertable.
+    logger.warn("spine_emit_driver_advance_posted_failed", {
+      err: err instanceof Error ? err.message : String(err),
+      company_id: companyId,
+      driver_advance_id: input.advance_id,
+      journal_entry_id: posting.journal_entry_id,
+    });
   }
 
   return { ok: true, advanceId: input.advance_id, postingDate: phase1.postingDate, posting };
