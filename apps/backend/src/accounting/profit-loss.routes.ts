@@ -7,6 +7,7 @@ import { CashBasisSnapshotMissingError, resolveCashBasisRead } from "./cash-basi
 import { transformProfitLossToCashBasis } from "./cash-basis/report-transforms.js";
 import { findClosedPeriodForDate, readPeriodCashBasisSnapshot } from "./cash-basis/snapshot.service.js";
 import { getProfitLossReport } from "./profit-loss.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const profitLossQuerySchema = companyQuerySchema.extend({
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -19,7 +20,7 @@ function canAccessProfitLoss(role: string) {
 }
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 export async function registerProfitLossRoutes(app: FastifyInstance) {

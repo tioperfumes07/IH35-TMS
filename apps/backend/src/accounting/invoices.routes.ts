@@ -11,6 +11,7 @@ import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { auditVoid, canVoid, isVoidEnforcementEnabled, postVoidReversal, type VoidReversalResult } from "./void.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -217,7 +218,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       const customer = customerRes.rows[0] ?? null;
       if (!customer) return { code: 404 as const, error: "customer_not_found" };
 
-      const issueDate = body.data.issue_date ?? new Date().toISOString().slice(0, 10);
+      const issueDate = body.data.issue_date ?? companyBusinessDate();
       const termsDays = Number(customer.days_until_due ?? 30);
       const dueDate = body.data.due_date ?? new Date(new Date(`${issueDate}T00:00:00.000Z`).getTime() + termsDays * 86400000).toISOString().slice(0, 10);
       const displayId = await nextInvoiceDisplayId(client, query.data.operating_company_id, new Date(`${issueDate}T00:00:00.000Z`));

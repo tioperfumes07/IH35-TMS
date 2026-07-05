@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -41,7 +42,7 @@ export async function createExpandedInvoice(client: DbClient, input: ExpandedInv
   const customer = customerRes.rows[0];
   if (!customer) throw new Error("customer_not_found");
 
-  const issueDate = input.issueDate ?? new Date().toISOString().slice(0, 10);
+  const issueDate = input.issueDate ?? companyBusinessDate();
   const termsDays = Number(customer.days_until_due ?? 30);
   const dueDate =
     input.dueDate ?? new Date(new Date(`${issueDate}T00:00:00.000Z`).getTime() + termsDays * 86400000).toISOString().slice(0, 10);

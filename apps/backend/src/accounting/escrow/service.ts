@@ -2,6 +2,7 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { createJournalEntry } from "../journal-entries.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 type EscrowHolderType = "driver" | "vendor" | "factor" | "other";
 type EscrowPurpose = "driver_bond" | "repair_reserve" | "factor_reserve" | "other";
@@ -228,7 +229,7 @@ async function postEscrowTransaction(
 
     const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
     const memoPrefix = input.posting_type === "deposit" ? "Escrow deposit" : input.posting_type === "release" ? "Escrow release" : "Escrow adjustment";
-    const postingDate = new Date().toISOString().slice(0, 10);
+    const postingDate = companyBusinessDate();
     const journalEntry = await createJournalEntry(
       {
         operating_company_id: input.operating_company_id,

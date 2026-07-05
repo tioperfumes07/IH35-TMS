@@ -4,6 +4,8 @@
 // poster share ONE schedule computation (single source of truth — never two diverging copies of the
 // straight-line / declining-balance / convention logic). Money = integer cents.
 
+import { companyBusinessDate } from "../lib/company-business-date.js";
+
 export type AssetForCompute = {
   purchase_price_cents: number;
   salvage_value_cents: number;
@@ -108,7 +110,7 @@ export function computeDepreciationSchedule(a: AssetForCompute): { rows: Schedul
 }
 
 export function asOfToday(rows: ScheduleRow[]): { depr_to_date_cents: number; book_value_now_cents: number } {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyBusinessDate();
   let last: ScheduleRow | null = null;
   for (const r of rows) {
     if (r.period_date <= today) last = r;

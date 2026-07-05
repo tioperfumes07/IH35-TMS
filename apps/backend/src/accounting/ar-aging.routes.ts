@@ -4,6 +4,7 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { getArAgingReport } from "./ar-aging.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const arAgingQuerySchema = companyQuerySchema.extend({
   as_of_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -15,7 +16,7 @@ function canAccessArAging(role: string) {
 }
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 export async function registerArAgingRoutes(app: FastifyInstance) {

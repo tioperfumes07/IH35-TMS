@@ -18,6 +18,7 @@
 import { withCurrentUser } from "../auth/db.js";
 import { getCashFlowReport } from "./cash-flow.service.js";
 import { computeDepreciationSchedule, asOfToday } from "./fixed-assets.math.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export type FinanceHubKpiKind = "money_cents" | "count" | "text";
 
@@ -48,7 +49,7 @@ function money(cents: number): string {
 }
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 function startOfYearIso(): string {
