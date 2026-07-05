@@ -3,35 +3,67 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 
+// REPORTS-1 — the Reports-module A/R aging report is now sourced from the CANONICAL aging objects
+// (the same bucket math the Finance Hub FIN-20 screen and the statement exports trace to), instead of
+// the stale inline copy this route used to carry. Canonical source of truth:
+//   • live (as_of = today)  -> views.ar_aging          (security_invoker, opco-scoped, 5-bucket split)
+//   • historical (as_of<today) -> accounting.ar_aging_as_of(opco, as_of)  (TRUE point-in-time balances)
+// Both expose the same column contract: current | 1-30 | 31-60 | 61-90 | 91+ plus the open total. The
+// old inline SQL (a) re-invented the bucket math and (b) collapsed "current" (not-yet-due) into the
+// first bucket, and (c) for a PAST as_of used today's open balance with shifted boundaries (wrong
+// historical) — the canonical objects fix all three. This route stays READ-ONLY.
+//
+// Wire contract is preserved and made additive: `bucket_0_30_cents` is retained (= current + 1-30) so
+// existing consumers keep working, and `current_cents` + `bucket_1_30_cents` are exposed as the true
+// split.
+
 const arAgingQuerySchema = companyQuerySchema.extend({
   as_of_date: z.string().date().optional(),
   basis: reportBasisSchema,
 });
+
+type ArAgingRow = {
+  customer_id: string;
+  customer_name: string;
+  total_cents: number;
+  current_cents: number;
+  bucket_1_30_cents: number;
+  bucket_0_30_cents: number;
+  bucket_31_60_cents: number;
+  bucket_61_90_cents: number;
+  bucket_91_plus_cents: number;
+  last_payment_date: string | null;
+  invoice_count: number;
+};
 
 type ArAgingPayload = {
   as_of_date: string;
   basis: "cash" | "accrual";
   totals: {
     total_outstanding_cents: number;
+    current_cents: number;
+    bucket_1_30_cents: number;
     bucket_0_30_cents: number;
     bucket_31_60_cents: number;
     bucket_61_90_cents: number;
     bucket_91_plus_cents: number;
   };
-  rows: Array<{
-    customer_id: string;
-    customer_name: string;
-    total_cents: number;
-    bucket_0_30_cents: number;
-    bucket_31_60_cents: number;
-    bucket_61_90_cents: number;
-    bucket_91_plus_cents: number;
-    last_payment_date: string | null;
-    invoice_count: number;
-  }>;
+  rows: ArAgingRow[];
 };
 
 const cache = createTtlCache<ArAgingPayload>();
+
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// A true historical request is a valid YYYY-MM-DD strictly before today. Today (or a future date) stays
+// on the live canonical view; a past date reconstructs open-as-of via accounting.ar_aging_as_of.
+function isHistorical(asOfDate: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(asOfDate) && asOfDate < todayIsoDate();
+}
+
+const num = (v: unknown): number => Number(v ?? 0);
 
 export async function registerReportsArAgingRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/ar-aging", async (req, reply) => {
@@ -40,44 +72,54 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
     const query = arAgingQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const asOf = query.data.as_of_date ?? new Date().toISOString().slice(0, 10);
-    const cacheKey = `${query.data.operating_company_id}:${asOf}`;
+    const asOf = query.data.as_of_date ?? todayIsoDate();
+    const cacheKey = `${query.data.operating_company_id}:${asOf}:${query.data.basis}`;
     const cached = cache.get(cacheKey);
     if (cached) return cached;
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
-          SELECT
-            i.customer_id,
-            c.customer_name AS customer_name,
-            COUNT(*) FILTER (WHERE i.amount_open_cents > 0)::int AS open_invoice_count,
-            COALESCE(SUM(i.amount_open_cents) FILTER (WHERE i.due_date >= ($2::date - INTERVAL '30 days')), 0)::bigint AS bucket_0_30_cents,
-            COALESCE(SUM(i.amount_open_cents) FILTER (WHERE i.due_date < ($2::date - INTERVAL '30 days') AND i.due_date >= ($2::date - INTERVAL '60 days')), 0)::bigint AS bucket_31_60_cents,
-            COALESCE(SUM(i.amount_open_cents) FILTER (WHERE i.due_date < ($2::date - INTERVAL '60 days') AND i.due_date >= ($2::date - INTERVAL '90 days')), 0)::bigint AS bucket_61_90_cents,
-            COALESCE(SUM(i.amount_open_cents) FILTER (WHERE i.due_date < ($2::date - INTERVAL '90 days')), 0)::bigint AS bucket_91_plus_cents,
-            COALESCE(SUM(i.amount_open_cents), 0)::bigint AS total_open_cents
-          FROM accounting.invoices i
-          JOIN mdata.customers c ON c.id = i.customer_id
-          WHERE i.status IN ('sent', 'partial')
-            AND i.voided_at IS NULL
-            AND i.operating_company_id = $1
-          GROUP BY i.customer_id, c.customer_name
-          ORDER BY total_open_cents DESC
-        `,
-        [query.data.operating_company_id, asOf]
-      );
+      const res = isHistorical(asOf)
+        ? await client.query(
+            // TRUE HISTORICAL: open balance reconstructed AS OF asOf (canonical opco-scoped function).
+            `
+              SELECT
+                customer_id::text        AS customer_id,
+                COALESCE(customer_name, '') AS customer_name,
+                open_invoice_count::bigint  AS open_invoice_count,
+                current_cents::bigint       AS current_cents,
+                bucket_1_30_cents::bigint   AS bucket_1_30_cents,
+                bucket_31_60_cents::bigint  AS bucket_31_60_cents,
+                bucket_61_90_cents::bigint  AS bucket_61_90_cents,
+                bucket_91_plus_cents::bigint AS bucket_91_plus_cents,
+                total_open_cents::bigint    AS total_open_cents
+              FROM accounting.ar_aging_as_of($1::uuid, $2::date)
+              WHERE total_open_cents > 0
+              ORDER BY total_open_cents DESC, customer_name ASC
+            `,
+            [query.data.operating_company_id, asOf]
+          )
+        : await client.query(
+            // LIVE: canonical opco-scoped view (security_invoker; buckets computed at CURRENT_DATE).
+            `
+              SELECT
+                customer_id::text        AS customer_id,
+                COALESCE(customer_name, '') AS customer_name,
+                open_invoice_count::bigint  AS open_invoice_count,
+                current_cents::bigint       AS current_cents,
+                bucket_1_30_cents::bigint   AS bucket_1_30_cents,
+                bucket_31_60_cents::bigint  AS bucket_31_60_cents,
+                bucket_61_90_cents::bigint  AS bucket_61_90_cents,
+                bucket_91_plus_cents::bigint AS bucket_91_plus_cents,
+                total_open_cents::bigint    AS total_open_cents
+              FROM views.ar_aging
+              WHERE operating_company_id = $1::uuid
+                AND total_open_cents > 0
+              ORDER BY total_open_cents DESC, customer_name ASC
+            `,
+            [query.data.operating_company_id]
+          );
 
-      const rows = res.rows as Array<{
-        customer_id: string;
-        customer_name: string;
-        open_invoice_count: number;
-        bucket_0_30_cents: bigint;
-        bucket_31_60_cents: bigint;
-        bucket_61_90_cents: bigint;
-        bucket_91_plus_cents: bigint;
-        total_open_cents: bigint;
-      }>;
+      const rawRows = res.rows as Array<Record<string, unknown>>;
 
       const lastPay = await client.query(
         `
@@ -95,21 +137,30 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
       const lastPayRows = lastPay.rows as Array<{ customer_id: string; last_payment_date: string | null }>;
       const lastPayMap = new Map(lastPayRows.map((r) => [r.customer_id, r.last_payment_date]));
 
-      const mappedRows = rows.map((row) => ({
-        customer_id: row.customer_id,
-        customer_name: row.customer_name,
-        total_cents: Number(row.total_open_cents ?? 0),
-        bucket_0_30_cents: Number(row.bucket_0_30_cents ?? 0),
-        bucket_31_60_cents: Number(row.bucket_31_60_cents ?? 0),
-        bucket_61_90_cents: Number(row.bucket_61_90_cents ?? 0),
-        bucket_91_plus_cents: Number(row.bucket_91_plus_cents ?? 0),
-        last_payment_date: lastPayMap.get(row.customer_id) ?? null,
-        invoice_count: Number(row.open_invoice_count ?? 0),
-      }));
+      const rows: ArAgingRow[] = rawRows.map((row) => {
+        const current = num(row.current_cents);
+        const b1_30 = num(row.bucket_1_30_cents);
+        const customerId = String(row.customer_id);
+        return {
+          customer_id: customerId,
+          customer_name: String(row.customer_name ?? ""),
+          total_cents: num(row.total_open_cents),
+          current_cents: current,
+          bucket_1_30_cents: b1_30,
+          bucket_0_30_cents: current + b1_30,
+          bucket_31_60_cents: num(row.bucket_31_60_cents),
+          bucket_61_90_cents: num(row.bucket_61_90_cents),
+          bucket_91_plus_cents: num(row.bucket_91_plus_cents),
+          last_payment_date: lastPayMap.get(customerId) ?? null,
+          invoice_count: num(row.open_invoice_count),
+        };
+      });
 
-      const totals = mappedRows.reduce(
+      const totals = rows.reduce(
         (acc, row) => {
           acc.total_outstanding_cents += row.total_cents;
+          acc.current_cents += row.current_cents;
+          acc.bucket_1_30_cents += row.bucket_1_30_cents;
           acc.bucket_0_30_cents += row.bucket_0_30_cents;
           acc.bucket_31_60_cents += row.bucket_31_60_cents;
           acc.bucket_61_90_cents += row.bucket_61_90_cents;
@@ -118,6 +169,8 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
         },
         {
           total_outstanding_cents: 0,
+          current_cents: 0,
+          bucket_1_30_cents: 0,
           bucket_0_30_cents: 0,
           bucket_31_60_cents: 0,
           bucket_61_90_cents: 0,
@@ -125,7 +178,7 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
         }
       );
 
-      const body: ArAgingPayload = { as_of_date: asOf, totals, rows: mappedRows, basis: query.data.basis };
+      const body: ArAgingPayload = { as_of_date: asOf, totals, rows, basis: query.data.basis };
       return body;
     });
 

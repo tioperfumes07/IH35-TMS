@@ -14,13 +14,16 @@ vi.mock("../shared.js", async () => {
       const client = {
         query: vi.fn(async (sql: string) => {
           if (sql.includes("accounting.payments")) return { rows: [] };
+          // Canonical column shape returned by views.ar_aging / accounting.ar_aging_as_of: the true
+          // 5-bucket split (current separated from 1-30).
           return {
             rows: [
               {
                 customer_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
                 customer_name: "Beta Co",
                 open_invoice_count: 2,
-                bucket_0_30_cents: "10000",
+                current_cents: "7000",
+                bucket_1_30_cents: "3000",
                 bucket_31_60_cents: "5000",
                 bucket_61_90_cents: "0",
                 bucket_91_plus_cents: "0",
@@ -57,6 +60,12 @@ describe("ar aging report routes", () => {
     expect(body.basis).toBe("accrual");
     expect(body.rows).toHaveLength(1);
     expect(body.totals.total_outstanding_cents).toBe(15000);
+    // Canonical current split is surfaced, and the back-compat 0-30 bucket = current + 1-30.
+    expect(body.rows[0].current_cents).toBe(7000);
+    expect(body.rows[0].bucket_1_30_cents).toBe(3000);
+    expect(body.rows[0].bucket_0_30_cents).toBe(10000);
+    expect(body.totals.current_cents).toBe(7000);
+    expect(body.totals.bucket_0_30_cents).toBe(10000);
   });
 
   it("returns empty rows when no open invoices", async () => {
