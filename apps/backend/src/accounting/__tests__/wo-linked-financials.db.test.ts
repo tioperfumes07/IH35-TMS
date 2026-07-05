@@ -56,8 +56,8 @@ describeIntegration("WO↔bill/expense hard FK link (real Postgres)", () => {
     workOrderId = randomUUID();
     await bypass(async () => {
       await db.query(
-        `INSERT INTO maintenance.work_orders (id, operating_company_id, wo_type, status, unit_id, driver_id, display_id)
-         VALUES ($1::uuid, $2::uuid, 'repair', 'open', $3::uuid, $4::uuid, $5)`,
+        `INSERT INTO maintenance.work_orders (id, operating_company_id, wo_type, source_type, unit_sequence, status, unit_id, driver_id, display_id)
+         VALUES ($1::uuid, $2::uuid, 'repair', 'RT', 1, 'open', $3::uuid, $4::uuid, $5)`,
         [workOrderId, companyId, unitId, driverId, `WO-LINK-${suffix}`]
       );
     });
