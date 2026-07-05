@@ -21,6 +21,7 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { ensureLegalTemplateLibrary } from "../template-library.service.js";
+import { LEGAL_TEMPLATE_LIBRARY } from "../templates/legal-template-library.generated.js";
 import { renderDraftContractHtml } from "../draft-preview.service.js";
 import { applySignedOperationalLinks } from "../signed-links.service.js";
 import { applySignedFinanceHandoff, hasSignedDeductionAuthorization } from "../signed-finance-handoff.service.js";
@@ -66,10 +67,11 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
     if (db) await db.end();
   });
 
-  it("seeds 7 active templates idempotently and never mutates status on re-run", async () => {
+  it("seeds the whole library idempotently and never mutates status on re-run", async () => {
     await withBypass(async () => {
+      const LIBRARY_TOTAL = LEGAL_TEMPLATE_LIBRARY.length;
       const first = await ensureLegalTemplateLibrary(db, { operatingCompanyId: companyId, actorUserId: actorId });
-      expect(first.total).toBe(7);
+      expect(first.total).toBe(LIBRARY_TOTAL);
       const active = await db.query(
         `SELECT count(*)::int AS n FROM legal.contract_templates
          WHERE operating_company_id=$1 AND status='active'
@@ -92,7 +94,7 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
       // Re-run: zero new rows.
       const second = await ensureLegalTemplateLibrary(db, { operatingCompanyId: companyId, actorUserId: actorId });
       expect(second.inserted).toBe(0);
-      expect(second.already_present).toBe(7);
+      expect(second.already_present).toBe(LIBRARY_TOTAL);
     });
   });
 
