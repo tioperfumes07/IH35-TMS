@@ -131,9 +131,23 @@ async function alarmOwnerEverywhere(
   app.log.error({ severity, summary, dispatch }, "[spine-heartbeat] ALARM dispatched (00b 3-channel)");
 }
 
-/** TODO: enumerate active operating companies (org.companies WHERE is_active). Skeleton: TRANSP only. */
+/**
+ * Enumerate EVERY active operating company from the org registry so the heartbeat monitors all
+ * entities (TRANSP + TRK + USMCA-at-launch), not just one. Uses the SAME canonical active-company
+ * predicate the other per-company crons use (drivers/document-alerts.cron.ts, index.ts):
+ *   `is_active = true AND deactivated_at IS NULL`.
+ * No hard-coded UUIDs — USMCA is covered automatically the instant it is activated (latent
+ * launch-breaker closed). org.companies is the GLOBAL entity registry (NOT an opco-scoped table),
+ * so no RLS GUC is needed for THIS read; the per-company GUC is set inside probeCompany() for the
+ * RLS-scoped events.event_log read.
+ */
 async function listOperatingCompanies(): Promise<string[]> {
-  return ["91e0bf0a-133f-4ce8-a734-2586cfa66d96"]; // TRANSP
+  return withLuciaBypass(async (client) => {
+    const res = await client.query<{ id: string }>(
+      `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`,
+    );
+    return res.rows.map((r) => r.id);
+  });
 }
 
 export function initializeEventSpineHeartbeatCron(app: FastifyInstance) {
@@ -144,9 +158,19 @@ export function initializeEventSpineHeartbeatCron(app: FastifyInstance) {
 
   setInterval(() => {
     void (async () => {
+      let companies: string[];
       try {
-        const companies = await listOperatingCompanies();
-        for (const oci of companies) {
+        companies = await listOperatingCompanies();
+      } catch (error) {
+        // Enumeration itself failed — nothing to probe this tick. Fail-loud, retry next interval.
+        app.log.warn({ err: error }, "[spine-heartbeat] could not enumerate operating companies");
+        return;
+      }
+
+      // Per-company error isolation: one company's probe failure must NEVER abort the sweep for the
+      // others (a USMCA-launch breaker — a single bad tenant would blind the monitor for ALL tenants).
+      for (const oci of companies) {
+        try {
           const hb = await probeCompany(oci);
 
           // (a) THE silent-failure shape: operational actions happened, but ZERO events landed → CRITICAL.
@@ -163,9 +187,9 @@ export function initializeEventSpineHeartbeatCron(app: FastifyInstance) {
             const summary = { reason: "spine_quiet_gap", ...hb, gap_warn_hours: GAP_WARN_HOURS };
             await appendHeartbeatAudit("warning", summary);
           }
+        } catch (error) {
+          app.log.warn({ err: error, operatingCompanyId: oci }, "[spine-heartbeat] probe failed for company");
         }
-      } catch (error) {
-        app.log.warn({ err: error }, "[spine-heartbeat] probe failed");
       }
     })();
   }, INTERVAL_MS);
