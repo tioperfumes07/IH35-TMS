@@ -77,6 +77,7 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "ops.program_board_notes", why: "[HOLD-FOR-JORGE] forward-ref — Program Board two-way notes table ships in gated migration 202607031200 (not yet applied to prod); read path is try/catch degrade-safe. Remove from debt when that migration merges." },
   { rel: "tasks.task_link", why: "[HOLD-FOR-JORGE] forward-ref — Tasks Planner v2 polymorphic task<->record link table ships in gated migration 202607031700_tasks_connectivity.sql (not yet applied to prod); task link/completion routes are build-and-hold and only exercised after the migration lands. Remove from debt when that migration merges." },
   { rel: "driver_finance.driver_advance_accounts", why: "[HOLD-FOR-JORGE] forward-ref — per-driver cash-advance ASSET account bridge ships in gated migration 202607052300_driver_advance_account_link.sql (not yet applied to prod); the hire-path write is inside a best-effort try/catch (degrade-safe) and the backfill apply path is gated. Remove from debt when that migration merges." },
+  { rel: "accounting.factoring_default_interest_accruals", why: "[HOLD-FOR-JORGE] forward-ref — daily default-interest accrual/idempotency anchor for the factoring default-interest + recourse engine; ships in gated migration 202607060000_factoring_default_interest_accruals.sql (not yet applied to prod). The accrual/poster paths are behind the factoring posting flag (default OFF). Remove from debt when that migration merges." },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 
