@@ -307,16 +307,23 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
 
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       try {
-        const rel = await client.query(`SELECT to_regclass('factoring.company_balances') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { reserveCents: 0, advancedCents: 0, totalCents: 0 };
-
+        // FACTOR-1: read the reserve balance from the real, populated source.
+        // The old read hit a factoring balances table/columns that no migration ever
+        // creates or writes, so the tile was always $0.
+        // views.factoring_summary is the canonical, security_invoker rollup over
+        // accounting.factoring_advances (the invoice-linked factoring workflow, written by
+        // accounting/factoring-advances.routes.ts). reserve_balance is the reserve still held
+        // by the factor (money the carrier is owed — ASC 860 short-term asset); both columns are
+        // in CENTS (SUM of *_cents source columns). Same source used by /factoring/summary and
+        // reports/cash-flow-overview.
         const res = await client.query(
           `
             SELECT
-              COALESCE(SUM(reserve_cents), 0)::text AS reserve,
-              COALESCE(SUM(advanced_cents), 0)::text AS advanced
-            FROM factoring.company_balances
+              COALESCE(reserve_balance, 0)::text AS reserve,
+              COALESCE(mtd_advanced_total, 0)::text AS advanced
+            FROM views.factoring_summary
             WHERE operating_company_id = $1::uuid
+            LIMIT 1
           `,
           [parsed.data.operating_company_id]
         );
