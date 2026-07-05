@@ -86,6 +86,7 @@ export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
           FROM driver_finance.driver_settlements s
           JOIN mdata.drivers d ON d.id = s.driver_id
           WHERE s.operating_company_id = $1
+            AND s.status IS DISTINCT FROM 'cancelled'
             AND s.period_start <= $3::date
             AND s.period_end >= $2::date
             AND ($4::uuid IS NULL OR s.driver_id = $4::uuid)

@@ -43,6 +43,7 @@ export async function registerDriverSettlementSummaryRoutes(app: FastifyInstance
           LEFT JOIN views.driver_settlement_with_debt v ON v.id = s.id
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id
           WHERE s.operating_company_id = $1
+            AND s.status IS DISTINCT FROM 'cancelled'
             AND s.period_start >= $2::date
             AND s.period_end <= $3::date
           ORDER BY s.period_start DESC
