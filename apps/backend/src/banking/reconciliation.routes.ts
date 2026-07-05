@@ -291,7 +291,12 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         source_table: "banking.reconciliation_sessions",
         payload: { bank_account_id: body.data.bank_account_id },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, reconciliation_session_id: created, company_id: accountContext.operating_company_id },
+        "spine_emit_banking_reconciliation_started_failed"
+      )
+    );
     return { session_id: created };
   });
 
@@ -741,7 +746,12 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         source_table: "banking.reconciliation_sessions",
         payload: { variance_cents: varianceCents },
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        { err, reconciliation_session_id: session.id, company_id: query.data.operating_company_id },
+        "spine_emit_banking_reconciliation_completed_failed"
+      )
+    );
     return { ok: true, variance_cents: varianceCents };
   });
 

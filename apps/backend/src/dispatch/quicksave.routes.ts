@@ -78,7 +78,12 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
           load_id: params.data.id,
           payload: { driver_id: body.data.driver_id, unit_id: body.data.unit_id ?? null },
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, load_id: params.data.id, company_id: body.data.operating_company_id },
+          "spine_emit_load_assigned_to_driver_failed"
+        )
+      );
       return result;
     } catch (error) {
       const mapped = mapQuickAssignError(error);
@@ -107,7 +112,12 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
           event_type: "load.quicksave_draft_completed",
           load_id: params.data.id,
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, load_id: params.data.id, company_id: body.data.operating_company_id },
+          "spine_emit_load_quicksave_draft_completed_failed"
+        )
+      );
       return result;
     } catch (error) {
       if (String((error as Error)?.message ?? "") === "E_LOAD_NOT_FOUND") {

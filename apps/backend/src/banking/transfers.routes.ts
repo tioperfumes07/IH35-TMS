@@ -82,7 +82,12 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
           source_table: "banking.transfers",
           payload: { transfer_type: body.data.transfer_type },
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, transfer_id: (transfer as { id?: string })?.id ?? null, company_id: body.data.operating_company_id },
+          "spine_emit_banking_transfer_created_failed"
+        )
+      );
       return reply.code(201).send({ transfer });
     } catch (error) {
       const message = String((error as Error)?.message ?? "transfer_create_failed");
@@ -131,7 +136,12 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
           entity_type: "transfer",
           source_table: "banking.transfers",
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, transfer_id: (transfer as { id?: string })?.id ?? null, company_id: body.data.operating_company_id },
+          "spine_emit_banking_cc_payment_created_failed"
+        )
+      );
       return reply.code(201).send({ transfer });
     } catch (error) {
       const message = String((error as Error)?.message ?? "cc_payment_create_failed");
@@ -207,7 +217,12 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
           source_table: "banking.transfers",
           payload: { reason: body.data.reason ?? null },
         })
-      ).catch(() => undefined);
+      ).catch((err) =>
+        req.log.warn(
+          { err, transfer_id: params.data.id, company_id: query.data.operating_company_id },
+          "spine_emit_banking_transfer_revoked_failed"
+        )
+      );
       return { transfer };
     } catch (error) {
       const message = String((error as Error)?.message ?? "transfer_revoke_failed");

@@ -279,7 +279,16 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         entity_type: "customer_payment",
         source_table: "accounting.payments",
       })
-    ).catch(() => undefined);
+    ).catch((err) =>
+      req.log.warn(
+        {
+          err,
+          customer_payment_id: (result as { data?: { id?: string } })?.data?.id ?? null,
+          company_id: query.data.operating_company_id,
+        },
+        "spine_emit_customer_payment_created_failed"
+      )
+    );
     return reply.code(result.code).send(result.data);
   });
 }
