@@ -2,6 +2,14 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { enqueueTmsBillPushRequested } from "../../qbo/tms-bill-push-chain.service.js";
 import { ExpenseCategoryMapResolutionError, resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
 import { PostingEngineError, postSourceTransaction } from "../posting-engine.service.js";
+import { isEnabled } from "../../lib/feature-flags/service.js";
+
+// GL-posting kill switch for the maintenance / WO-close bill. The bill (A/P row + lines) is always
+// created below, but auto-posting it to the GL is gated PER-ENTITY via lib.feature_flags (isEnabled) —
+// exactly like the dedicated bill-gl-draft.routes.ts post path. Resolved per operating_company_id (never
+// a global process.env read), so flipping posting on for one entity cannot enable it for another. Flag
+// OFF (default) => the bill still exists, GL post is a no-op — matching every other gated poster.
+const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -314,12 +322,20 @@ async function recalcBillTotal(client: DbClient, billId: string) {
 export async function processMaintenanceWorkOrderClose(input: ClosePostingInput): Promise<ClosePostingResult> {
   const dbResult = await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    // Per-entity GL-posting kill switch. Resolved on the same scoped client the bill is written on, so the
+    // flag is evaluated for THIS operating company only. Default OFF => posting_flag_enabled is false and
+    // the bill below is created but never posted (no-op).
+    const posting_flag_enabled = await isEnabled(client, BILL_GL_POSTING_FLAG_KEY, {
+      operating_company_id: input.operating_company_id,
+      user_uuid: input.actor_user_id,
+    });
     const bill = await getOrCreateBillForWorkOrder(client, input);
     if (!bill.bill_id) {
       return {
         bill_id: null,
         bill_action: bill.action,
         should_post: false,
+        posting_flag_enabled,
       };
     }
 
@@ -329,6 +345,7 @@ export async function processMaintenanceWorkOrderClose(input: ClosePostingInput)
         bill_id: bill.bill_id,
         bill_action: "skipped_no_lines" as const,
         should_post: false,
+        posting_flag_enabled,
       };
     }
 
@@ -342,10 +359,12 @@ export async function processMaintenanceWorkOrderClose(input: ClosePostingInput)
       bill_id: bill.bill_id,
       bill_action: bill.action,
       should_post: true,
+      posting_flag_enabled,
     };
   });
 
-  if (!dbResult.bill_id || !dbResult.should_post) {
+  // Kill switch: even when the bill is post-eligible, do NOT touch the GL unless the per-entity flag is ON.
+  if (!dbResult.bill_id || !dbResult.should_post || !dbResult.posting_flag_enabled) {
     return {
       bill_id: dbResult.bill_id,
       bill_action: dbResult.bill_action,

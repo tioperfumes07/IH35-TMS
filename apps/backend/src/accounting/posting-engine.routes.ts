@@ -22,6 +22,20 @@ const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]
 // entity, invoice -> A/R posting via the generic MVP route (and the backfill sweep) is refused/no-op.
 const INVOICE_AR_GL_POSTING_FLAG_KEY = "INVOICE_AR_GL_POSTING_ENABLED";
 
+// KILL-SWITCH PARITY — the generic posting-engine-mvp/post route can post ANY source type, so the
+// per-entity kill switch must be identical regardless of entry point. Previously only 'invoice' was
+// gated here; 'bill' / 'bill_payment' / 'customer_payment' posted with no entity-flag check (bypassing
+// their dedicated route gates). Map each posting source type to its per-entity posting flag and enforce
+// it on this route too. Each key is a POSTING_FLAG_KEY (per-entity gated, default OFF) — a global flip
+// can never enable posting for every entity. 'reversal' is never gated (a posted entry must always be
+// reversible).
+export const POSTING_FLAG_BY_SOURCE_TYPE: Record<"invoice" | "bill" | "bill_payment" | "customer_payment", string> = {
+  invoice: INVOICE_AR_GL_POSTING_FLAG_KEY,
+  bill: "BILL_GL_POSTING_ENABLED",
+  bill_payment: "BILL_PAYMENT_GL_POSTING_ENABLED",
+  customer_payment: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
+};
+
 const postBodySchema = z.object({
   source_transaction_type: z.enum(["invoice", "bill", "customer_payment", "bill_payment"]),
   source_transaction_id: z.string().trim().min(1),
@@ -76,23 +90,22 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     const body = postBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    // CHAIN-06 GAP #1 — kill switch for invoice -> A/R posting. This route posts invoice A/R with only
-    // a role gate today; add the per-entity feature-flag gate so it cannot post to the books unless the
-    // entity's INVOICE_AR_GL_POSTING_ENABLED override is ON. Only the invoice source is gated; bills and
-    // payments keep their existing behavior. Reversal purpose is NOT gated (a posted entry must always be
-    // reversible). When OFF -> 409 posting_disabled, nothing written (no-op).
-    if (body.data.source_transaction_type === "invoice" && (body.data.posting_purpose ?? "initial_post") === "initial_post") {
-      const invoiceArEnabled = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-        isEnabled(client, INVOICE_AR_GL_POSTING_FLAG_KEY, {
+    // KILL-SWITCH PARITY — for every posting source type this route accepts, refuse to post to the books
+    // unless the entity's matching per-entity posting flag is ON. Reversal purpose is NOT gated (a posted
+    // entry must always be reversible). When OFF -> 409 posting_disabled, nothing written (no-op). This
+    // makes the generic MVP route's kill switch identical to each type's dedicated route.
+    if ((body.data.posting_purpose ?? "initial_post") === "initial_post") {
+      const postingFlagKey = POSTING_FLAG_BY_SOURCE_TYPE[body.data.source_transaction_type];
+      const postingEnabled = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        isEnabled(client, postingFlagKey, {
           operating_company_id: query.data.operating_company_id,
           user_uuid: String(user.uuid),
         })
       );
-      if (!invoiceArEnabled) {
+      if (!postingEnabled) {
         return reply.code(409).send({
           error: "posting_disabled",
-          message:
-            "Invoice→A/R posting is disabled for this entity (INVOICE_AR_GL_POSTING_ENABLED per-entity override OFF). Enable the per-entity override on a Neon branch to verify.",
+          message: `${body.data.source_transaction_type}→GL posting is disabled for this entity (${postingFlagKey} per-entity override OFF). Enable the per-entity override on a Neon branch to verify.`,
         });
       }
     }

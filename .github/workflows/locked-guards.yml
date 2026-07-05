@@ -105,6 +105,9 @@ jobs:
       - name: verify:accounting-route-map
         run: npm run verify:accounting-route-map
 
+      - name: verify:all-posting-paths-gated
+        run: npm run verify:all-posting-paths-gated
+
       - name: verify:postgres-ssl-explicit
         run: npm run verify:postgres-ssl-explicit
 
