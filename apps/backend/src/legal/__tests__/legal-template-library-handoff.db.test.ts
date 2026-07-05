@@ -158,6 +158,58 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
     });
   });
 
+  it("signed HIRE CONTRACT satisfies the consent gate + writes the deduction_schedule link", async () => {
+    await withBypass(async () => {
+      // A brand-new driver with NO signed contract yet — the gate MUST be fail-closed.
+      const hireDriverId = randomUUID();
+      const before = await hasSignedDeductionAuthorization(db, { operatingCompanyId: companyId, driverId: hireDriverId });
+      expect(before).toBe(false);
+
+      // Reuse any seeded template row for the FK; template_code carries the hire-contract code
+      // (the hire-contract template itself is a later Legal-module build — this proves the GATE).
+      const tplId = (
+        await db.query(`SELECT id FROM legal.contract_templates WHERE operating_company_id=$1 AND template_code='nda_ebt_confidentiality' LIMIT 1`, [
+          companyId,
+        ])
+      ).rows[0].id;
+      const instId = randomUUID();
+      await db.query(
+        `INSERT INTO legal.contract_instances (id, operating_company_id, template_id, template_code, template_version,
+           signer_type, signer_entity_id, signer_name, language, status, created_by_user_id, updated_by_user_id)
+         VALUES ($1,$2,$3,'driver_hire_contract',1,'driver',$4,'Hired Driver','en','signed_electronically',$5,$5)`,
+        [instId, companyId, tplId, hireDriverId, actorId]
+      );
+      const res = await applySignedFinanceHandoff(db, { operatingCompanyId: companyId, contractInstanceId: instId, actorUserId: actorId });
+      expect(res.handoff).toBe("deduction_schedule");
+
+      const link = await db.query(
+        `SELECT count(*)::int AS n FROM legal.contract_instance_links
+         WHERE contract_instance_id=$1 AND link_type='deduction_schedule' AND target_id=$2`,
+        [instId, hireDriverId]
+      );
+      expect(link.rows[0].n).toBe(1);
+
+      const gate = await hasSignedDeductionAuthorization(db, { operatingCompanyId: companyId, driverId: hireDriverId });
+      expect(gate).toBe(true);
+
+      // A signed NDA (category=employment) must NOT authorize deductions — security intent preserved.
+      const ndaDriverId = randomUUID();
+      const ndaTplId = (
+        await db.query(`SELECT id FROM legal.contract_templates WHERE operating_company_id=$1 AND template_code='nda_ebt_confidentiality' LIMIT 1`, [
+          companyId,
+        ])
+      ).rows[0].id;
+      await db.query(
+        `INSERT INTO legal.contract_instances (id, operating_company_id, template_id, template_code, template_version,
+           signer_type, signer_entity_id, signer_name, language, status, created_by_user_id, updated_by_user_id)
+         VALUES ($1,$2,$3,'nda_ebt_confidentiality',1,'driver',$4,'NDA Only','en','signed_electronically',$5,$5)`,
+        [randomUUID(), companyId, ndaTplId, ndaDriverId, actorId]
+      );
+      const ndaGate = await hasSignedDeductionAuthorization(db, { operatingCompanyId: companyId, driverId: ndaDriverId });
+      expect(ndaGate).toBe(false);
+    });
+  });
+
   it("signed lease writes fixed_asset link + a lease.signed event (no GL)", async () => {
     await withBypass(async () => {
       const tplId = (
