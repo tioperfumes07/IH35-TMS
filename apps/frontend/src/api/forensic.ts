@@ -32,6 +32,9 @@ export type ForensicAnomaly = {
 
 export type QboConnectionStatus = {
   connected: boolean;
+  needs_reauth?: boolean;
+  needs_reauth_at?: string | null;
+  last_refresh_error?: string | null;
   realm_id: string | null;
   refresh_token_expires_at: string | null;
   last_used_at: string | null;

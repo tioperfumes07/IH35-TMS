@@ -36,7 +36,7 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
   });
 
   const samsaraVis = resolveSamsaraVisualStatus(samsaraQuery.data);
-  const qboVis = qboConnectionLabel(qboQuery.data?.connected);
+  const qboVis = qboConnectionLabel(qboQuery.data?.connected, qboQuery.data?.needs_reauth);
   const relayVis = RELAY_NOT_CONFIGURED;
 
   return (
