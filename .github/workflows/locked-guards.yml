@@ -155,6 +155,9 @@ jobs:
 
       - name: verify:cash-flow-auto-opening-excludes-credit
         run: npm run verify:cash-flow-auto-opening-excludes-credit
+
+      - name: verify:factoring-summary-dollars-unit
+        run: npm run verify:factoring-summary-dollars-unit
       - name: verify:booking-driver-names
         run: npm run verify:booking-driver-names
 
