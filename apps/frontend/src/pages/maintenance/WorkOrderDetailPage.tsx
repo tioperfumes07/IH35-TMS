@@ -20,6 +20,8 @@ import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { CreateBillModal } from "./components/CreateBillModal";
+import { CreateExpenseModal } from "./components/CreateExpenseModal";
+import { listWorkOrderLinkedFinancials } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
@@ -184,9 +186,11 @@ export function WorkOrderDetailPage() {
   const [reasonModal, setReasonModal] = useState<{ kind: "cancel" | "void" } | null>(null);
   const [reasonText, setReasonText] = useState("");
   const [createBillOpen, setCreateBillOpen] = useState(false);
+  const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
   const invalidateWo = () => {
     void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", id, companyId] });
     void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-posting-preview", id, companyId] });
+    void queryClient.invalidateQueries({ queryKey: ["accounting", "wo-linked-financials", id, companyId] });
   };
   const cancelMut = useMutation({
     mutationFn: (reason: string) => cancelWorkOrderConsole(String(id), companyId, reason),
@@ -245,6 +249,14 @@ export function WorkOrderDetailPage() {
     queryKey: ["maintenance", "severe-estimates", companyId, "wo-detail"],
     queryFn: () => listSevereRepairEstimates(companyId),
     enabled: Boolean(companyId),
+  });
+  // Reverse drill-through: bills + expenses that FK-reference THIS work order (hard link, migration
+  // 202607050810). The forward half is the FK persisted on create; this is the reverse half.
+  const linkedFinancialsQ = useQuery({
+    queryKey: ["accounting", "wo-linked-financials", id, companyId],
+    queryFn: () => listWorkOrderLinkedFinancials(id!, companyId),
+    enabled: Boolean(id && companyId),
+    retry: false,
   });
 
   const wo = woQ.data;
@@ -402,6 +414,9 @@ export function WorkOrderDetailPage() {
         </Button>
         <Button type="button" variant="secondary" disabled={!id || !companyId} onClick={() => setCreateBillOpen(true)}>
           + Create Bill
+        </Button>
+        <Button type="button" variant="secondary" disabled={!id || !companyId} onClick={() => setCreateExpenseOpen(true)}>
+          + Create Expense
         </Button>
         <Button
           type="button"
@@ -638,6 +653,80 @@ export function WorkOrderDetailPage() {
         </pre>
       </details>
 
+      <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="wo-linked-financials">
+        <div className="mb-2 text-sm font-semibold text-gray-900">Linked Bills / Expenses</div>
+        {linkedFinancialsQ.isLoading ? <div className="text-xs text-gray-500">Loading linked bills &amp; expenses…</div> : null}
+        {linkedFinancialsQ.isError ? (
+          <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+            Linked-financials lookup unavailable in this backend build.
+          </div>
+        ) : null}
+        {linkedFinancialsQ.data ? (
+          (linkedFinancialsQ.data.bills.length === 0 && linkedFinancialsQ.data.expenses.length === 0) ? (
+            <div className="text-xs text-gray-500">No bills or expenses are linked to this work order yet.</div>
+          ) : (
+            <div className="space-y-3">
+              {linkedFinancialsQ.data.bills.length > 0 ? (
+                <div className="overflow-x-auto rounded-sm border border-gray-100">
+                  <table className="min-w-full text-left text-[11px]">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-1">Bill</th>
+                        <th className="px-2 py-1">Date</th>
+                        <th className="px-2 py-1">Status</th>
+                        <th className="px-2 py-1 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {linkedFinancialsQ.data.bills.map((bill) => (
+                        <tr key={bill.id} className="border-t border-gray-100">
+                          <td className="px-2 py-1">
+                            <a className="text-slate-700 underline" href={`/accounting/bills?bill_id=${encodeURIComponent(bill.id)}`}>
+                              {bill.bill_number || bill.id.slice(0, 8)}
+                            </a>
+                          </td>
+                          <td className="px-2 py-1">{bill.bill_date || "—"}</td>
+                          <td className="px-2 py-1">{bill.status || "—"}</td>
+                          <td className="px-2 py-1 text-right">{money.format((bill.amount_cents ?? 0) / 100)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+              {linkedFinancialsQ.data.expenses.length > 0 ? (
+                <div className="overflow-x-auto rounded-sm border border-gray-100">
+                  <table className="min-w-full text-left text-[11px]">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-1">Expense</th>
+                        <th className="px-2 py-1">Date</th>
+                        <th className="px-2 py-1">Status</th>
+                        <th className="px-2 py-1 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {linkedFinancialsQ.data.expenses.map((expense) => (
+                        <tr key={expense.id} className="border-t border-gray-100">
+                          <td className="px-2 py-1">
+                            <a className="text-slate-700 underline" href={`/accounting/expenses?expense_id=${encodeURIComponent(expense.id)}`}>
+                              {expense.id.slice(0, 8)}
+                            </a>
+                          </td>
+                          <td className="px-2 py-1">{expense.transaction_date || "—"}</td>
+                          <td className="px-2 py-1">{expense.status || "—"}</td>
+                          <td className="px-2 py-1 text-right">{money.format((expense.total_amount_cents ?? 0) / 100)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </div>
+          )
+        ) : null}
+      </section>
+
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <TasksTab operatingCompanyId={companyId} targetType="work_order" targetId={id} targetLabel={`Work Order ${woNumber}`} />
       </section>
@@ -646,7 +735,17 @@ export function WorkOrderDetailPage() {
         open={createBillOpen}
         operatingCompanyId={companyId}
         linkedWoDisplayId={woNumber}
+        linkedWoId={id}
         onClose={() => setCreateBillOpen(false)}
+        onCreated={() => invalidateWo()}
+      />
+      <CreateExpenseModal
+        open={createExpenseOpen}
+        operatingCompanyId={companyId}
+        linkedWoDisplayId={woNumber}
+        linkedWoId={id}
+        onClose={() => setCreateExpenseOpen(false)}
+        onCreated={() => invalidateWo()}
       />
       {editTarget ? (
         <CreateWorkOrderModal

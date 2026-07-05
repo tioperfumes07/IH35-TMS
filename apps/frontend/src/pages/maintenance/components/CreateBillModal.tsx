@@ -17,14 +17,18 @@ import { UploadZone } from "../../../components/UploadZone";
 type Props = {
   open: boolean;
   operatingCompanyId: string;
-  /** When present, the created bill's memo carries this WO reference (maintenance linkage). */
+  /** When present, the created bill's memo carries this WO reference (human-readable maintenance linkage). */
   linkedWoDisplayId?: string;
+  /** When present, the created bill persists a HARD FK (accounting.bills.work_order_id) to this WO. */
+  linkedWoId?: string;
+  /** When present (WO context), the created bill persists a HARD FK to this unit. Falls back to the picker. */
+  linkedUnitId?: string;
   onClose: () => void;
   /** Fired after a successful create with the new bill id (e.g. to open a task-link picker). */
   onCreated?: (billId: string | null) => void;
 };
 
-export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, onClose, onCreated }: Props) {
+export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, linkedWoId, linkedUnitId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
@@ -111,6 +115,10 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, o
         // QboCombobox yields a QBO account id; a real catalogs.accounts uuid (contains a dash) is the GL
         // A/P account — mirror the canonical VendorBillForm mapping.
         coa_account_id: accountQboId && accountQboId.includes("-") ? accountQboId : undefined,
+        // HARD cross-module link: persist the WO + unit as real FKs (forward half of the bidirectional
+        // link; reverse half = WO detail "Linked Bills / Expenses"). Unit picker overrides the WO's unit.
+        work_order_id: linkedWoId || undefined,
+        unit_id: unitId || linkedUnitId || undefined,
         attachment_draft_id: draftAttachmentEntityId,
       });
     },

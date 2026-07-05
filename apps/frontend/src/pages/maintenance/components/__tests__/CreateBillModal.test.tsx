@@ -6,6 +6,7 @@ import { ToastProvider } from "../../../../components/Toast";
 import { createVendorBill } from "../../../../api/accounting";
 
 const VENDOR_ID = "11111111-1111-4111-8111-111111111111";
+const WO_ID = "22222222-2222-4222-8222-222222222222";
 
 // Persistence is the point of this modal (D2-1 reversal): assert the Save button actually fires the
 // canonical createVendorBill mutation with a real payload — a static guard that this is NOT a no-op stub.
@@ -56,6 +57,7 @@ function renderModal(onClose = vi.fn()) {
           open={true}
           operatingCompanyId="91e0bf0a-133f-4ce8-a734-2586cfa66d96"
           linkedWoDisplayId="WO-TEST"
+          linkedWoId={WO_ID}
           onClose={onClose}
         />
       </ToastProvider>
@@ -84,7 +86,8 @@ describe("CreateBillModal — persists via the canonical createVendorBill endpoi
     expect(body.vendor_id).toBe(VENDOR_ID);
     expect(body.amount_cents).toBe(10825); // 100 + 8.25% tax
     expect(body.bill_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(body.memo).toContain("WO: WO-TEST"); // maintenance linkage
+    expect(body.memo).toContain("WO: WO-TEST"); // human-readable maintenance linkage
+    expect(body.work_order_id).toBe(WO_ID); // HARD cross-module FK (forward-wired on create)
     expect(typeof body.attachment_draft_id).toBe("string");
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
