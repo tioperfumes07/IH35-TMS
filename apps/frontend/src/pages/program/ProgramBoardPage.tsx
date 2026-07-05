@@ -40,6 +40,7 @@ type Row = {
   writtenCt?: string;
   mergedCt?: string;
   deployedCt?: string;
+  deployNo?: string; // Render deploy short-sha the fix went live in
   lifecycle?: string; // furthest stage reached (requested | written | merged | deployed)
 };
 
@@ -53,11 +54,11 @@ type TabId = "focus" | "all" | "pending" | "owner" | "dispatch" | "audit" | "mer
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "focus", label: "Focus" },
-  { id: "all", label: "All blocks" },
-  { id: "pending", label: "Pending" },
+  { id: "all", label: "All Tasks" },
+  { id: "pending", label: "Currently Pending" },
   { id: "owner", label: "Owner-Batch" },
   { id: "dispatch", label: "Dispatch-Kit" },
-  { id: "audit", label: "Audit & Bug Sweep" },
+  { id: "audit", label: "Bugs & Audits" },
   { id: "merged", label: "Merged PRs" },
   { id: "hold", label: "HOLD-FOR-JORGE" },
   { id: "questions", label: "Questions" },
@@ -182,6 +183,7 @@ function extraToRow(e: ExtraItem): Row {
     writtenCt: e.written_ct,
     mergedCt: e.merged_ct,
     deployedCt: e.deployed_ct,
+    deployNo: e.deploy_no,
     lifecycle: e.lifecycle,
   };
 }
@@ -394,7 +396,24 @@ export function ProgramBoardPage() {
     const f = debouncedFilter.trim().toLowerCase();
     if (f) {
       rows = rows.filter((r) =>
-        [r.id, r.wave, r.description, r.status, r.tier, r.severity, r.module, r.where, r.pr != null ? `#${r.pr}` : ""]
+        [
+          r.id,
+          r.wave,
+          r.description,
+          r.status,
+          r.tier,
+          r.severity,
+          r.module,
+          r.where,
+          r.pr != null ? `#${r.pr}` : "",
+          // lifecycle stamps + Render deploy sha so the owner can filter by them too
+          r.requestedCt,
+          r.writtenCt,
+          r.mergedCt,
+          r.deployedCt,
+          r.deployNo,
+          deriveLifecycle(r),
+        ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase()
@@ -416,12 +435,14 @@ export function ProgramBoardPage() {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   }
 
-  // Owner-Batch shows an extra "Review" tag column; the Audit tab adds 5 live-data columns
-  // (Severity, Module, Where, Live, Lifecycle). Column count drives the empty/expanded-row colSpans
-  // (leading "#" + 8 base columns + optional Review + optional audit columns).
+  // Column visibility. Owner-Batch shows a "Review" tag column; the Bugs & Audits tab adds the four
+  // audit-finding columns (Severity, Module, Where, Live); and the Lifecycle column (uploaded→written→
+  // merged→Render-deployed) shows on the three owner-named tabs: All Tasks, Currently Pending, Bugs &
+  // Audits. Column count drives the empty/expanded-row colSpans (leading "#" + 8 base + the optionals).
   const showReview = tab === "owner";
-  const showAuditCols = tab === "audit";
-  const colCount = 9 + (showReview ? 1 : 0) + (showAuditCols ? 5 : 0);
+  const showAuditCols = tab === "audit"; // severity/module/where/live
+  const showLifecycleCol = tab === "all" || tab === "pending" || tab === "audit";
+  const colCount = 9 + (showReview ? 1 : 0) + (showAuditCols ? 4 : 0) + (showLifecycleCol ? 1 : 0);
   const lockedDecisions = data?.locked_decisions ?? [];
   const deltas = data?.meta?.deltas; // NEW: live-sync additions/completions badge (tolerated absent)
 
@@ -598,8 +619,10 @@ export function ProgramBoardPage() {
                       <Th label="Module" onClick={() => toggleSort("module")} active={sort.key === "module"} dir={sort.dir} />
                       <Th label="Where" onClick={() => toggleSort("where")} active={sort.key === "where"} dir={sort.dir} />
                       <Th label="Live" onClick={() => toggleSort("live")} active={sort.key === "live"} dir={sort.dir} />
-                      <Th label="Lifecycle" onClick={() => toggleSort("lifecycle")} active={sort.key === "lifecycle"} dir={sort.dir} />
                     </>
+                  ) : null}
+                  {showLifecycleCol ? (
+                    <Th label="Lifecycle" onClick={() => toggleSort("lifecycle")} active={sort.key === "lifecycle"} dir={sort.dir} />
                   ) : null}
                   {showReview ? <Th label="Review" onClick={() => toggleSort("review")} active={sort.key === "review"} dir={sort.dir} /> : null}
                 </tr>
@@ -691,10 +714,12 @@ export function ProgramBoardPage() {
                                 <span className="text-slate-300">—</span>
                               )}
                             </td>
-                            <td className="px-2 py-1.5">
-                              <LifecycleCell row={r} />
-                            </td>
                           </>
+                        ) : null}
+                        {showLifecycleCol ? (
+                          <td className="px-2 py-1.5">
+                            <LifecycleCell row={r} />
+                          </td>
                         ) : null}
                         {showReview ? (
                           <td className="whitespace-nowrap px-2 py-1.5">
@@ -1002,29 +1027,41 @@ function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: b
   );
 }
 
-// ── Lifecycle confirmation cell — Written → Merged → Deployed, each with its Central-Time stamp. ──────
-// Filled (navy ✓) when the stage is reached, hollow (grey ○) with "pending" when not. A row is only fully
-// live once Deployed is stamped (merged ≠ live). No emoji — plain check/hollow glyphs, §7 palette.
+// ── Lifecycle confirmation cell — the FULL chain in ONE row, each stage with its real Central-Time stamp:
+//   Uploaded→Coder (requested) · Written · Merged · Render ✓ <deploy_no> (deployed).
+// Filled (navy ✓, Render stage green) when a stage is reached; hollow (grey ○ + "pending") when not.
+// The owner wants both the "uploaded to coder" time and the Render deploy confirmation visible in the same
+// row. A row is only fully live once the Render stage is stamped (merged ≠ live). No emoji — plain ✓/○
+// text glyphs, §7 palette (navy/slate; deployed green).
 function LifecycleCell({ row }: { row: Row }) {
-  const stages: { label: string; ts?: string }[] = [
+  const stages: { label: string; ts?: string; sha?: string; render?: boolean }[] = [
+    { label: "Uploaded→Coder", ts: row.requestedCt },
     { label: "Written", ts: row.writtenCt },
     { label: "Merged", ts: row.mergedCt },
-    { label: "Deployed", ts: row.deployedCt },
+    { label: "Render", ts: row.deployedCt, sha: row.deployNo, render: true },
   ];
   if (!stages.some((s) => s.ts)) return <span className="text-slate-300">—</span>;
   return (
-    <div className="space-y-0.5">
-      {stages.map((s) => {
+    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] leading-tight">
+      {stages.map((s, i) => {
         const done = Boolean(s.ts);
+        // Render stage reads "Render ✓ <sha>"; others read "✓ <label>". Render green when done.
+        const nameColor = done ? (s.render ? "#166534" : "#1F2A44") : "#CBD5E1";
+        const tsColor = done ? "#64748B" : "#CBD5E1";
         return (
-          <div key={s.label} className="flex items-center gap-1 whitespace-nowrap text-[10px]">
-            <span className="font-semibold" style={{ color: done ? "#1F2A44" : "#CBD5E1" }}>
-              {done ? "✓" : "○"} {s.label}
+          <Fragment key={s.label}>
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <span className="font-semibold" style={{ color: nameColor }}>
+                {s.render
+                  ? `${s.label} ${done ? "✓" : "○"}${done && s.sha ? ` ${s.sha}` : ""}`
+                  : `${done ? "✓" : "○"} ${s.label}`}
+              </span>
+              <span className="tabular-nums" style={{ color: tsColor }}>
+                {done ? formatDateTimeCt(s.ts ?? null) : "pending"}
+              </span>
             </span>
-            <span className="tabular-nums" style={{ color: done ? "#64748B" : "#CBD5E1" }}>
-              {done ? formatDateTimeCt(s.ts ?? null) : "pending"}
-            </span>
-          </div>
+            {i < stages.length - 1 ? <span className="text-slate-300">·</span> : null}
+          </Fragment>
         );
       })}
     </div>
