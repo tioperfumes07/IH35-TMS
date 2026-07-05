@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { testAuthHeaders } from "../../test-helpers/auth-fixture.js";
@@ -6,6 +8,27 @@ import { createIntegrationApp } from "../../test-helpers/http-app.js";
 import { registerHomeWidgetRoutes } from "./home-widgets.routes.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+
+// FACTOR-1 static guard: the factoring-balance widget must read its reserve/advanced
+// figures from the real populated source (views.factoring_summary), never from the
+// never-created / never-written factoring.company_balances table.
+describe("home-widgets factoring-balance reserve source (FACTOR-1)", () => {
+  const routesSrc = readFileSync(
+    fileURLToPath(new URL("./home-widgets.routes.ts", import.meta.url)),
+    "utf8"
+  );
+
+  it("reads the reserve figure from the populated views.factoring_summary source", () => {
+    expect(routesSrc).toContain("FROM views.factoring_summary");
+    expect(routesSrc).toMatch(/COALESCE\(reserve_balance, 0\)/);
+  });
+
+  it("does not read the dead factoring.company_balances table / columns", () => {
+    expect(routesSrc).not.toContain("factoring.company_balances");
+    expect(routesSrc).not.toMatch(/SUM\(reserve_cents\)/);
+    expect(routesSrc).not.toMatch(/SUM\(advanced_cents\)/);
+  });
+});
 
 describe("home-widgets.routes (auth gates)", () => {
   let app: FastifyInstance;
