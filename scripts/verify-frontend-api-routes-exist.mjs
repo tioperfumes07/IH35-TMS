@@ -15,11 +15,13 @@
  * Query strings and hashes are ignored. Prefix-registered routers (e.g. `app.register(taskRoutes,
  * { prefix: "/api/v1/tasks" })`) are expanded so their relative literals resolve to full paths.
  *
- * ALLOWLIST: six frontend features currently call routes that are NOT built yet (G10-H3). Three of
- * them MOVE MONEY (customer payment unapply, factoring bank-match apply, driver escrow forfeit) and
- * are GATED financial builds for the owner — they must NOT be built autonomously. The guard lists all
- * six so CI stays green today while keeping the missing contracts visible. Remove an entry from the
- * allowlist when its backend route is built.
+ * ALLOWLIST: frontend features that call routes NOT built yet (G10-H3). The two non-financial reads/
+ * actions from the original six (driver dispatch-eligibility, Pre-Flight DVIR queue/route/severity)
+ * are now BUILT and removed from this list. The remaining entries are all FINANCIAL and are GATED
+ * builds for the owner — they must NOT be built autonomously (three move money; the fourth,
+ * mark-transfer, feeds the QBO accounting outbox and needs a financial-aware transfer-direction
+ * design that the FE dev explicitly deferred). The guard keeps them visible so CI stays green today.
+ * Remove an entry from the allowlist when its backend route is built.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -34,14 +36,18 @@ const BACKEND_DIR = join(ROOT, "apps/backend/src");
  * trailing `**` == "any suffix under this prefix".
  */
 const ALLOWLIST = [
-  // --- 3 MONEY-MOVING routes: GATED financial builds, owner-only. Do NOT build autonomously. ---
+  // --- FINANCIAL routes: GATED builds, owner-only. Do NOT build autonomously. ---
   "/api/v1/customers/:x/payments/:x/unapply", // customer payment un-apply (reverses cash application)
   "/api/v1/banking/reconcile/factoring/apply", // factoring bank-match apply (posts factoring settlement)
   "/api/v1/driver-finance/escrow/:x/forfeit", // driver escrow forfeit (moves held escrow)
-  // --- 3 non-money routes still to be built ---
-  "/api/v1/banking/transactions/:x/mark-transfer", // mark a bank txn as an inter-account transfer
-  "/api/v1/dispatch/drivers/:x/eligibility", // driver dispatch-eligibility check
-  "/api/v1/maintenance/pre-flight-dvir/**", // Pre-Flight DVIR queue/route/severity
+  // mark-transfer categorizes a bank txn as an inter-account transfer AND enqueues a QBO accounting
+  // outbox event (mirrors the shipped POST /transfer). The FE sends { from_account_id, to_account_id }
+  // but the transfer DIRECTION (in/out) must be derived correctly before posting — financial-aware,
+  // deferred per the FE dev's note. Build behind the owner gate, not autonomously.
+  "/api/v1/banking/transactions/:x/mark-transfer",
+  // NOTE (G10-H3 build): the two non-financial routes below were BUILT and removed from this list:
+  //   /api/v1/dispatch/drivers/:x/eligibility  → dispatch/driver-eligibility.routes.ts
+  //   /api/v1/maintenance/pre-flight-dvir/**   → maintenance/pre-flight-dvir.routes.ts
 ];
 
 function walk(dir, out = []) {
