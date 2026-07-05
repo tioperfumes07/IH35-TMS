@@ -423,7 +423,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
 
   // BLOCK-6b — FORWARD drill-through: a categorized bank transaction → its Driver / Unit / Trip(Load) tags
   // and the driver deduction it created (if any). Powers the txn detail "linked to" panel.
-  app.get("/api/v1/banking/transactions/:id/categorization-links", async (req, reply) => {
+  app.get("/api/v1/banking/transactions/:id/categorization-links", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -486,7 +486,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
   // BLOCK-6b — REVERSE drill-through: given a Driver / Unit / Trip(Load), list the bank transactions tagged
   // to it (+ any deduction each created). Powers the driver / unit / load detail "linked bank expenses"
   // panels. Exactly one of driver_id / unit_id / load_id is required.
-  app.get("/api/v1/banking/transactions/by-linkage", async (req, reply) => {
+  app.get("/api/v1/banking/transactions/by-linkage", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
