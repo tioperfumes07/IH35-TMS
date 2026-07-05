@@ -14,6 +14,13 @@ vi.mock("../../posting-engine.service.js", () => ({
   postSourceTransaction: mockPostSourceTransaction,
 }));
 
+// CUSTOMER_PAYMENT_GL_POSTING_ENABLED kill switch — enable it so this test exercises the post path.
+// (The default-OFF no-op behavior is proved in accounting/__tests__/posting-kill-switch-gated.test.ts.)
+vi.mock("../../../lib/feature-flags/service.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return { ...actual, isEnabled: async () => true };
+});
+
 describe("applyPayment idempotency", () => {
   it("treats duplicate target amount as no-op", async () => {
     const query = vi.fn(async (sql: string) => {

@@ -187,6 +187,7 @@
     "verify:hold-merge-gate": "node scripts/verify-hold-merge-gate.mjs",
     "verify:hold-merge-gate:self-test": "node scripts/verify-hold-merge-gate.mjs --self-test",
     "verify:accounting-route-map": "node scripts/verify-accounting-route-map.mjs",
+    "verify:all-posting-paths-gated": "node scripts/verify-all-posting-paths-gated.mjs",
     "verify:accounting-autoload-coverage": "node scripts/verify-accounting-autoload-coverage.mjs",
     "verify:accounting-backbone-schema": "node scripts/verify-accounting-backbone-schema.mjs",
     "verify:posting-engine-mvp-contract": "node scripts/verify-posting-engine-mvp-contract.mjs",

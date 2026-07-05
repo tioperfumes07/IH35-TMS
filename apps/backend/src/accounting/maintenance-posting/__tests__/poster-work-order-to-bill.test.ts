@@ -41,6 +41,13 @@ vi.mock("../../../qbo/tms-bill-push-chain.service.js", () => ({
   enqueueTmsBillPushRequested: mockEnqueueTmsBillPushRequested,
 }));
 
+// BILL_GL_POSTING_ENABLED kill switch — enable it so this test exercises the GL post path.
+// (The default-OFF no-op behavior is proved in accounting/__tests__/posting-kill-switch-gated.test.ts.)
+vi.mock("../../../lib/feature-flags/service.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return { ...actual, isEnabled: async () => true };
+});
+
 describe("maintenance posting work-order to bill", () => {
   it("creates bill + bill line from closed work order and posts bill", async () => {
     mockQuery.mockReset();
