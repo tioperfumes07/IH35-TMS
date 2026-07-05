@@ -10,6 +10,7 @@ import {
   listSevereRepairEstimates,
 } from "../../api/maintenance";
 import { cancelWorkOrderConsole, voidWorkOrderConsole } from "../../api/workOrdersConsole";
+import { CreateWorkOrderModal, type EditWorkOrderLine, type EditWorkOrderTarget } from "./components/CreateWorkOrderModal";
 import { Button } from "../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/forms/TwoSectionLineEditor";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
@@ -170,6 +171,7 @@ export function WorkOrderDetailPage() {
   const companyId = selectedCompanyId ?? "";
   const [selectedAssetId, setSelectedAssetId] = useState("");
   const [lineDraft, setLineDraft] = useState<TwoSectionLine[]>([]);
+  const [editing, setEditing] = useState(false);
 
   // Cancel/Void = Owner/Administrator ONLY, reason REQUIRED (>=3), soft (never deletes). These hit the
   // SAME backend as the WO Console (cancelWorkOrderConsole/voidWorkOrderConsole) — which reverses the
@@ -278,6 +280,58 @@ export function WorkOrderDetailPage() {
     [vehiclesQ.data?.rows]
   );
 
+  // Edit target — map the loaded WO detail into the modal's edit shape (header + persisted cost lines).
+  const editTarget = useMemo<EditWorkOrderTarget | null>(() => {
+    if (!wo || !id) return null;
+    const str = (v: unknown): string | null => (v === null || v === undefined ? null : String(v));
+    const lineItems: EditWorkOrderLine[] = Array.isArray(wo.line_items)
+      ? (wo.line_items as Array<Record<string, unknown>>).map((raw) => ({
+          id: raw.id != null ? String(raw.id) : undefined,
+          line_type: (["parts", "labor", "other"].includes(String(raw.line_type)) ? String(raw.line_type) : "other") as
+            | "parts"
+            | "labor"
+            | "other",
+          description: String(raw.description ?? ""),
+          quantity: toFiniteNumber(raw.quantity, 1),
+          unit_cost: toFiniteNumber(raw.unit_cost, toFiniteNumber(raw.total_cost, 0)),
+          amount: toFiniteNumber(raw.total_cost, toFiniteNumber(raw.amount, 0)),
+        }))
+      : [];
+    return {
+      id,
+      display_id: str(wo.display_id),
+      status: str(wo.status),
+      description: str(wo.description),
+      bucket: (["in_house", "external", "roadside"].includes(String(wo.bucket)) ? String(wo.bucket) : null) as
+        | "in_house"
+        | "external"
+        | "roadside"
+        | null,
+      external_vendor_wo_number: str(wo.external_vendor_wo_number),
+      external_vendor_invoice_number: str(wo.external_vendor_invoice_number),
+      wo_priority: (["routine", "urgent", "immediate"].includes(String(wo.wo_priority)) ? String(wo.wo_priority) : "") as
+        | "routine"
+        | "urgent"
+        | "immediate"
+        | "",
+      vmrs_system_code: str(wo.vmrs_system_code),
+      vmrs_component_code: str(wo.vmrs_component_code),
+      out_of_service: Boolean(wo.out_of_service),
+      repair_complaint: str(wo.repair_complaint),
+      repair_cause: str(wo.repair_cause),
+      repair_correction: str(wo.repair_correction),
+      authorization_number: str(wo.authorization_number),
+      service_location_type: (["shop", "mobile", "roadside"].includes(String(wo.service_location_type))
+        ? String(wo.service_location_type)
+        : "") as "shop" | "mobile" | "roadside" | "",
+      repaired_by: (["in_house", "outside_vendor"].includes(String(wo.repaired_by)) ? String(wo.repaired_by) : "") as
+        | "in_house"
+        | "outside_vendor"
+        | "",
+      line_items: lineItems,
+    };
+  }, [wo, id]);
+
   useEffect(() => {
     if (!wo) return;
     const initialAsset = String(wo.asset_id ?? wo.unit_id ?? "");
@@ -340,7 +394,10 @@ export function WorkOrderDetailPage() {
       ) : null}
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" disabled={invoiceMismatch || !id}>
+        <Button type="button" data-testid="wo-edit-btn" disabled={!editTarget} onClick={() => setEditing(true)}>
+          Edit
+        </Button>
+        <Button type="button" variant="secondary" disabled={invoiceMismatch || !id}>
           Save header
         </Button>
         <Button type="button" variant="secondary" disabled={!id || !companyId} onClick={() => setCreateBillOpen(true)}>
@@ -591,6 +648,17 @@ export function WorkOrderDetailPage() {
         linkedWoDisplayId={woNumber}
         onClose={() => setCreateBillOpen(false)}
       />
+      {editTarget ? (
+        <CreateWorkOrderModal
+          open={editing}
+          operatingCompanyId={companyId}
+          editWorkOrder={editTarget}
+          onClose={() => setEditing(false)}
+          onCreated={() => {
+            invalidateWo();
+          }}
+        />
+      ) : null}
     </div>
   );
 }
