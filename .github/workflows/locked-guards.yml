@@ -354,3 +354,6 @@ jobs:
 
       - name: verify:money-input-format
         run: npm run verify:money-input-format
+
+      - name: verify:pwa-date-format
+        run: npm run verify:pwa-date-format
