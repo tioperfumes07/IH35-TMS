@@ -13,7 +13,7 @@
  *        • the non-cash deduction bill_payment is flagged + NOT independently GL-posted.
  * Runs only in CI (GITHUB_ACTIONS=true) where a migrated Postgres is available.
  */
-import { randomUUID } from "node:crypto";
+import crypto, { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
@@ -22,6 +22,22 @@ import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 import { postSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+
+// createBill/payBill enqueue a QBO sync job which reads an authorized integrations.qbo_connections row
+// and decrypts its access_token (qbo-oauth.service.ts encryptToken/decryptToken: AES-256-GCM, key =
+// sha256(ENCRYPTION_KEY), value = "<iv>.<tag>.<cipher>" base64). No test in this suite exercises that
+// path yet, so ENCRYPTION_KEY is not otherwise required in CI — set a deterministic test-only default
+// (pool:"forks" isolates this per test file) and mirror the exact encryption so the fixture connection's
+// token round-trips through the real decrypt call.
+process.env.ENCRYPTION_KEY ??= "test-only-encryption-key-settlement-bill-payment-posting";
+function encryptTestToken(plain: string): string {
+  const iv = crypto.randomBytes(12);
+  const key = crypto.createHash("sha256").update(process.env.ENCRYPTION_KEY!, "utf8").digest();
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString("base64")}.${tag.toString("base64")}.${encrypted.toString("base64")}`;
+}
 
 describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => {
   let db: pg.Client;
@@ -34,6 +50,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     driverPay: randomUUID(),
     dipCash: randomUUID(),
     advanceParent: randomUUID(),
+    escrowGrandparent: randomUUID(),
     escrowParent: randomUUID(),
     advanceSub: randomUUID(),
     escrowSub: randomUUID(),
@@ -63,6 +80,17 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     try { const r = await db.query(sql, params); await db.query("COMMIT"); return r.rows as T[]; }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
+  }
+  // createBill assigns its OWN id (gen_random_uuid() default) — it is NEVER the same id as the
+  // driver_finance.driver_bills row (billIds, seeded above). The real accounting.bills / bill_payments
+  // ids must be resolved via the connectivity link table (settlement -> driver_bill -> accounting.bill),
+  // keyed by settlementId so it works regardless of which test/afterAll calls it.
+  async function resolveGlBillIds(): Promise<string[]> {
+    const rows = await read<{ accounting_bill_id: string }>(
+      `SELECT accounting_bill_id::text FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id=$1::uuid`,
+      [settlementId]
+    );
+    return rows.map((r) => r.accounting_bill_id);
   }
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
@@ -145,9 +173,13 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       await mkAcct(acct.driverPay, "Cost of Labor–Mexico Drivers", "Expense", null, null);
       await mkAcct(acct.dipCash, `Wells Fargo — DIP ${suffix}`, "Asset", "Checking", null);
       await mkAcct(acct.advanceParent, "Driver Cash Advance", "Asset", null, null);
-      await mkAcct(acct.escrowParent, "Damage Claim Escrow", "Liability", null, null);
+      // Two-level escrow nesting (STOP-DECISION #1, year-agnostic): top-level "Damage Claim Escrow"
+      // grandparent -> year-agnostic "Driver Escrow" sub-parent -> per-driver leaf "<Name> — Driver
+      // Escrow (hired MM/DD/YYYY)". The driver fixture below has no hire_date -> leaf reads "(hired unknown)".
+      await mkAcct(acct.escrowGrandparent, "Damage Claim Escrow", "Liability", null, null);
+      await mkAcct(acct.escrowParent, "Driver Escrow", "Liability", null, acct.escrowGrandparent);
       await mkAcct(acct.advanceSub, "Driver Cash Advance- Mecor Perez", "Asset", null, acct.advanceParent);
-      await mkAcct(acct.escrowSub, "Damage Claim Escrow- Mecor Perez", "Liability", null, acct.escrowParent);
+      await mkAcct(acct.escrowSub, "Mecor Perez — Driver Escrow (hired unknown)", "Liability", null, acct.escrowParent);
 
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
@@ -169,35 +201,67 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
          VALUES ($1::uuid,$2::uuid,'Wells Fargo — DIP','depository',$3::uuid,10000000)`,
         [dipBankId, companyId, acct.dipCash]
       );
+      // createBill/payBill enqueue a QBO sync job (enqueueSyncJob -> getValidAccessToken) even though the
+      // JE-push flag itself stays OFF — an authorized connection must exist per-company or it throws "QBO
+      // not authorized". Seed a long-lived fake connection so the real posting spine can run end-to-end
+      // (matches the pattern other real-Postgres tests avoid by not calling createBill directly).
+      await db.query(
+        `INSERT INTO integrations.qbo_connections
+           (operating_company_id, realm_id, access_token, refresh_token, access_token_expires_at, refresh_token_expires_at, authorized_by_user_id)
+         VALUES ($1::uuid, $2, $3, $4, now() + interval '1 year', now() + interval '1 year', $5::uuid)
+         ON CONFLICT (operating_company_id, realm_id) WHERE revoked_at IS NULL DO NOTHING`,
+        [companyId, `TEST-REALM-${suffix}`, encryptTestToken("test-access-token"), encryptTestToken("test-refresh-token"), userId]
+      );
     });
   });
 
   afterAll(async () => {
     if (!db) return;
     try {
+      // Resolve BEFORE the cleanup transaction (resolveGlBillIds/read run their own BEGIN/COMMIT — must
+      // not nest inside the bypass() transaction below).
+      const glBillIds = settlementId ? await resolveGlBillIds() : [];
       await bypass(async () => {
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id = $1::uuid`, [settlementId]);
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id = $1::uuid`, [settlementId]);
-        await db.query(`DELETE FROM accounting.transaction_source_links WHERE operating_company_id=$1::uuid AND linked_object_type IN ('bill','bill_payment')`, [companyId]);
+        // 'journal_entry' covers the deduction JE's own link row (distinct from the per-bill 'bill'/
+        // 'bill_payment' links) — omitting it left an orphaned transaction_source_links row FK-blocking
+        // the journal_entry_postings delete below on any second run against the same fixture company.
+        await db.query(`DELETE FROM accounting.transaction_source_links WHERE operating_company_id=$1::uuid AND linked_object_type IN ('bill','bill_payment','journal_entry')`, [companyId]);
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE operating_company_id=$1::uuid AND source_transaction_type IN ('bill','bill_payment')`, [companyId]);
         await db.query(`DELETE FROM accounting.posting_batches WHERE operating_company_id=$1::uuid`, [companyId]);
-        await db.query(`DELETE FROM accounting.bill_payments WHERE operating_company_id=$1::uuid AND bill_id = ANY($2::uuid[])`, [companyId, billIds]);
-        await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [billIds]);
+        await db.query(`DELETE FROM accounting.bill_payments WHERE operating_company_id=$1::uuid AND bill_id = ANY($2::uuid[])`, [companyId, glBillIds]);
+        await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [glBillIds]);
         // the deduction JE has no source_transaction_type='bill*'; delete via memo match
         await db.query(`DELETE FROM accounting.journal_entry_postings jep USING accounting.journal_entries je WHERE je.id=jep.journal_entry_uuid AND je.operating_company_id=$1::uuid AND je.memo LIKE $2`, [companyId, `Settlement S-${suffix}%`]);
         await db.query(`DELETE FROM accounting.journal_entries WHERE operating_company_id=$1::uuid AND (memo LIKE $2 OR memo LIKE $3)`, [companyId, `%S-${suffix}%`, `%Bill %`]);
-        await db.query(`DELETE FROM accounting.bills WHERE operating_company_id=$1::uuid AND id = ANY($2::uuid[])`, [companyId, billIds]);
+        await db.query(`DELETE FROM accounting.bills WHERE operating_company_id=$1::uuid AND id = ANY($2::uuid[])`, [companyId, glBillIds]);
         await db.query(`DELETE FROM driver_finance.driver_settlement_deductions WHERE applied_to_settlement_id = $1::uuid`, [settlementId]);
         await db.query(`DELETE FROM driver_finance.driver_bills WHERE operating_company_id=$1::uuid AND driver_id=$2::uuid`, [companyId, driverId]);
         await db.query(`DELETE FROM driver_finance.driver_settlements WHERE id = $1::uuid`, [settlementId]);
+        // mdata.loads has no DELETE RLS policy (FORCE RLS, void-not-delete architecture) — a hard DELETE
+        // here is a guaranteed no-op even under bypass_rls='lucia'; harmless (load_number is uniquely
+        // suffixed per run so it never collides), left as documentation rather than removed.
         await db.query(`DELETE FROM mdata.loads WHERE id = ANY($1::uuid[])`, [loadIds]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = $1::uuid`, [dipBankId]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND role='ap_control'`, [companyId]);
+        // catalogs.account_role_bindings likewise has no DELETE RLS policy -> also a guaranteed no-op.
+        // Its 2 rows (driver_pay_expense/cash_dip) are GLOBAL singletons anyway (UNIQUE on role_key alone)
+        // upserted by the next run's bind() (ON CONFLICT (role_key) DO UPDATE) — never meant to be deleted
+        // per-run. Their target accounts (driverPay/dipCash) are therefore excluded from the accounts
+        // delete below (FK-referenced by this un-deletable row) and are intentionally left as reused
+        // shared fixture accounts, not per-run garbage.
         await db.query(`DELETE FROM catalogs.account_role_bindings WHERE role_key = ANY($1)`, [["driver_pay_expense", "cash_dip"]]);
-        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [Object.values(acct)]);
+        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
+          Object.entries(acct)
+            .filter(([key]) => key !== "driverPay" && key !== "dipCash")
+            .map(([, id]) => id),
+        ]);
         await db.query(`DELETE FROM mdata.drivers WHERE id = $1::uuid`, [driverId]);
         await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
+        await db.query(`DELETE FROM integrations.qbo_sync_queue WHERE operating_company_id=$1::uuid AND entity_id = ANY($2::uuid[])`, [companyId, glBillIds]);
+        await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, `TEST-REALM-${suffix}`]);
       });
     } catch { /* best-effort */ }
     await db.end();
@@ -221,10 +285,13 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     expect(result.deductions_cents).toBe(27500);
     expect(result.net_cents).toBe(124000);
 
-    // 3 accounting.bills numbered by load#, vendor = the driver-vendor, each fully paid.
+    // 3 accounting.bills numbered by load#, vendor = the driver-vendor, each fully paid. createBill
+    // assigns its own id (never = the driver_finance.driver_bills id) — resolve via the gl_bills link.
+    const glBillIds = await resolveGlBillIds();
+    expect(glBillIds.length).toBe(3);
     const bills = await read<{ bill_number: string; vendor_id: string; amount_cents: string; paid_cents: string }>(
       `SELECT bill_number, vendor_id, amount_cents::text, paid_cents::text FROM accounting.bills WHERE id = ANY($1::uuid[]) ORDER BY amount_cents DESC`,
-      [billIds]
+      [glBillIds]
     );
     expect(bills.length).toBe(3);
     expect(new Set(bills.map((b) => b.bill_number))).toEqual(new Set(loadNumbers));
@@ -251,7 +318,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     const cashBps = await read<{ c: string; total: string }>(
       `SELECT count(*)::text AS c, COALESCE(SUM(amount_cents),0)::text AS total FROM accounting.bill_payments
         WHERE bill_id = ANY($1::uuid[]) AND settlement_deduction_noncash = false AND from_bank_account_id = $2::uuid`,
-      [billIds, dipBankId]
+      [glBillIds, dipBankId]
     );
     expect(Number(cashBps[0]!.total)).toBe(124000);
     const dipCredit = await read<{ total: string }>(
@@ -265,7 +332,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     const noncash = await read<{ c: string; total: string }>(
       `SELECT count(*)::text AS c, COALESCE(SUM(amount_cents),0)::text AS total FROM accounting.bill_payments
         WHERE bill_id = ANY($1::uuid[]) AND settlement_deduction_noncash = true`,
-      [billIds]
+      [glBillIds]
     );
     expect(Number(noncash[0]!.total)).toBe(27500);
     const noncashPosted = await read<{ c: string }>(
@@ -299,7 +366,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
   it("(c) idempotent -> second post is already_posted, no duplicate bills", async () => {
     const result = (await postSettlementBillPayment({ operatingCompanyId: companyId, settlementId }, { userId })) as SettlementBillPaymentResult;
     expect(result.result).toBe("already_posted");
-    const billCount = await read<{ c: string }>(`SELECT count(*)::text AS c FROM accounting.bills WHERE id = ANY($1::uuid[])`, [billIds]);
+    const glBillIds = await resolveGlBillIds();
+    const billCount = await read<{ c: string }>(`SELECT count(*)::text AS c FROM accounting.bills WHERE id = ANY($1::uuid[])`, [glBillIds]);
     expect(Number(billCount[0]!.c)).toBe(3);
   });
 });

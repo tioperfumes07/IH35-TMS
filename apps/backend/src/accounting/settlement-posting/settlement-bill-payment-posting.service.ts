@@ -43,9 +43,9 @@ import { postSourceTransaction, reversePostedSourceTransaction } from "../postin
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 import {
   DRIVER_ADVANCE_PARENT_NAME,
-  DRIVER_ESCROW_PARENT_NAME,
   driverAdvanceSubAccountName,
   driverEscrowSubAccountName,
+  planDriverEscrowSubAccount,
   planDriverSubAccount,
 } from "../driver-subaccount-provision.service.js";
 import {
@@ -172,7 +172,8 @@ async function resolveDriverOwnAccount(
   operatingCompanyId: string,
   driverId: string,
   driverName: string,
-  kind: "advance" | "escrow"
+  kind: "advance" | "escrow",
+  hireDate?: string | Date | null
 ): Promise<string | null> {
   // Foundation link (guarded so it is safe before that PR merges).
   if (kind === "escrow") {
@@ -196,12 +197,21 @@ async function resolveDriverOwnAccount(
       );
       if (found.rows[0]?.account_id) return found.rows[0].account_id;
     }
+    // Canonical provisioned per-driver escrow leaf: two-level nesting under the year-agnostic
+    // "Driver Escrow" sub-parent, itself under top-level "Damage Claim Escrow" (STOP-DECISION #1).
+    const subAccountName = driverEscrowSubAccountName(driverName, hireDate ?? null);
+    const plan = await planDriverEscrowSubAccount(client, { subAccountName, operatingCompanyId });
+    if (plan.action === "skip_exists") return plan.existingId;
+    return null;
   }
-  // Canonical provisioned per-driver sub-account, resolved by its stable business name.
-  const parentName = kind === "advance" ? DRIVER_ADVANCE_PARENT_NAME : DRIVER_ESCROW_PARENT_NAME;
-  const parentType = kind === "advance" ? "Asset" : "Liability";
-  const subAccountName = kind === "advance" ? driverAdvanceSubAccountName(driverName) : driverEscrowSubAccountName(driverName);
-  const plan = await planDriverSubAccount(client, { parentName, parentType, subAccountName, operatingCompanyId });
+  // Canonical provisioned per-driver sub-account, resolved by its stable business name (flat, single-level).
+  const subAccountName = driverAdvanceSubAccountName(driverName);
+  const plan = await planDriverSubAccount(client, {
+    parentName: DRIVER_ADVANCE_PARENT_NAME,
+    parentType: "Asset",
+    subAccountName,
+    operatingCompanyId,
+  });
   if (plan.action === "skip_exists") return plan.existingId;
   return null;
 }
@@ -305,13 +315,14 @@ export async function postSettlementBillPayment(
       return { alreadyPosted: true as const, runId: runRow.id };
     }
 
-    // Driver vendor + name.
-    const driverRes = await client.query<{ qbo_vendor_id: string | null; driver_name: string }>(
-      `SELECT qbo_vendor_id, concat_ws(' ', first_name, last_name) AS driver_name
+    // Driver vendor + name (+ hire_date, needed for the escrow leaf's stable name-with-hire-date).
+    const driverRes = await client.query<{ qbo_vendor_id: string | null; driver_name: string; hire_date: string | null }>(
+      `SELECT qbo_vendor_id, concat_ws(' ', first_name, last_name) AS driver_name, hire_date::text AS hire_date
          FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
       [settlement.driver_id, opco]
     );
     const driverName = String(driverRes.rows[0]?.driver_name ?? "").trim();
+    const driverHireDate = driverRes.rows[0]?.hire_date ?? null;
     const driverVendorId = String(driverRes.rows[0]?.qbo_vendor_id ?? settlement.driver_id).trim();
     if (!driverVendorId) {
       throw new SettlementBillPaymentError("DRIVER_VENDOR_MISSING", `No vendor linkage for driver ${settlement.driver_id}`);
@@ -363,7 +374,7 @@ export async function postSettlementBillPayment(
           );
         }
       } else if (target === "escrow") {
-        accountId = await resolveDriverOwnAccount(client, opco, settlement.driver_id, driverName, "escrow");
+        accountId = await resolveDriverOwnAccount(client, opco, settlement.driver_id, driverName, "escrow", driverHireDate);
         if (!accountId) {
           throw new SettlementBillPaymentError(
             "DRIVER_ESCROW_ACCOUNT_MISSING",
