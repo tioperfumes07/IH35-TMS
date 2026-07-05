@@ -10,7 +10,12 @@ import { registerUnitsRoutes } from "./units.routes.js";
 const requireAuthState = { allowed: true };
 
 const { queryMock } = vi.hoisted(() => ({
-  queryMock: vi.fn(async (sql: string) => {
+  queryMock: vi.fn(async (sql: string, values?: unknown[]) => {
+    // resolveOperatingCompanyId membership validation (G1-6): the Owner test user is a member of
+    // the requested operating company, so echo the requested id back as accessible.
+    if (/user_accessible_company_ids/i.test(sql) && /c\.id = \$1/i.test(sql)) {
+      return { rows: [{ id: values?.[0] }] };
+    }
     if (/count/i.test(sql)) return { rows: [{ total_count: 0, count: 0 }] };
     return { rows: [] };
   }),

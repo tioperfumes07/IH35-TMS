@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const listQuerySchema = z.object({
@@ -29,31 +30,6 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
-}
-
-async function resolveOperatingCompanyId(
-  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
-  userId: string,
-  requested?: string
-) {
-  if (requested) return requested;
-  const res = await client.query(
-    `
-      SELECT c.id
-      FROM identity.users u
-      JOIN org.companies c ON c.id = u.default_company_id
-      WHERE u.id = $1
-        AND c.deactivated_at IS NULL
-      UNION
-      SELECT c.id
-      FROM org.companies c
-      WHERE c.id IN (SELECT org.user_accessible_company_ids())
-      ORDER BY id
-      LIMIT 1
-    `,
-    [userId]
-  );
-  return res.rows[0]?.id ?? null;
 }
 
 export async function registerDocsFoundationRoutes(app: FastifyInstance) {

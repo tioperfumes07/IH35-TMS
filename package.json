@@ -315,6 +315,7 @@
     "verify:canonical-audit-table-name": "node scripts/verify-canonical-audit-table-name.mjs",
     "verify:legal-tenant-scope": "node scripts/verify-legal-tenant-scope.mjs",
     "verify:docs-tenant-scope": "node scripts/verify-docs-tenant-scope.mjs",
+    "verify:resolve-opco-membership": "node scripts/verify-resolve-opco-membership.mjs",
     "verify:docs-routes-bootstrapped": "node scripts/verify-docs-routes-bootstrapped.mjs",
     "verify:asset-registry": "node scripts/verify-asset-registry.mjs",
     "verify:allocation-integrity": "node scripts/verify-allocation-integrity.mjs",

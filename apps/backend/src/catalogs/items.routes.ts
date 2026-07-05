@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsItemPushRequested } from "../qbo/tms-item-push-chain.service.js";
@@ -66,31 +67,6 @@ function mapItemConflict(constraint?: string): string {
   if (constraint.includes("item_code")) return "catalog_item_conflict_item_code";
   if (constraint.includes("qbo_item_id")) return "catalog_item_conflict_qbo_item_id";
   return "catalog_item_conflict";
-}
-
-async function resolveOperatingCompanyId(
-  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
-  userId: string,
-  requested?: string,
-) {
-  if (requested) return requested;
-  const res = await client.query(
-    `
-      SELECT c.id
-      FROM identity.users u
-      JOIN org.companies c ON c.id = u.default_company_id
-      WHERE u.id = $1::uuid
-        AND c.deactivated_at IS NULL
-      UNION
-      SELECT c.id
-      FROM org.companies c
-      WHERE c.id IN (SELECT org.user_accessible_company_ids())
-      ORDER BY id
-      LIMIT 1
-    `,
-    [userId],
-  );
-  return res.rows[0]?.id ?? null;
 }
 
 export async function registerItemRoutes(app: FastifyInstance) {
