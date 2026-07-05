@@ -37,6 +37,8 @@ describe("detail-types catalog route (Block 4)", () => {
 
   it("creates a per-entity custom detail type (201, is_system forced false)", async () => {
     queryMock.mockImplementation(async (sql: string) => {
+      // G2-2 opco-membership guard (assertCompanyMembership) runs before set_config; needs a membership row.
+      if (sql.includes("org.user_company_access")) return { rows: [{ "?column?": 1 }], rowCount: 1 };
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("INSERT INTO catalogs.detail_types")) return { rows: [{ id: "new-dt" }] };
       return { rows: [] };
@@ -55,6 +57,8 @@ describe("detail-types catalog route (Block 4)", () => {
 
   it("rejects editing a system (seed-locked) detail type with 409", async () => {
     queryMock.mockImplementation(async (sql: string) => {
+      // G2-2 opco-membership guard (assertCompanyMembership) runs before set_config; needs a membership row.
+      if (sql.includes("org.user_company_access")) return { rows: [{ "?column?": 1 }], rowCount: 1 };
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("SELECT is_system")) return { rows: [{ is_system: true }] };
       return { rows: [] };
