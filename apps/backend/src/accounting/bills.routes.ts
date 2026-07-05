@@ -201,6 +201,10 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     const body = payBillBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
+    // G1-2: assert the caller is a member of the target operating company BEFORE any
+    // money mutation. Without this, a client could pay a bill under a company it does not belong to.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
+
     try {
       const payment = await payBill(
         {
@@ -255,6 +259,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
+    // G1-2: assert the caller is a member of the target operating company BEFORE voiding.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
+
     try {
       await voidBill(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid), {
         role: user.role,
@@ -294,6 +301,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // G1-2: assert the caller is a member of the target operating company BEFORE voiding the payment.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     try {
       await voidBillPayment(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid));
       void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>

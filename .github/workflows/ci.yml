@@ -1008,6 +1008,9 @@ jobs:
       - name: verify:company-membership-assert (cross-tenant authz — tenant-scope wrappers must assert membership)
         run: npm run verify:company-membership-assert
 
+      - name: verify:bills-money-membership-assert (G1-2 — bill pay/void handlers must assert company membership)
+        run: npm run verify:bills-money-membership-assert
+
       - name: verify:users-add-user-submits
         run: npm run verify:users-add-user-submits
 
