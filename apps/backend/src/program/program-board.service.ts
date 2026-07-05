@@ -29,6 +29,8 @@ try {
 // ── repo file locations (relative to the resolved repo root at runtime) ──────────────────────────────
 const RECON_REL = "docs/trackers/block-reconciliation-data.json";
 const EXTRA_REL = "docs/trackers/program-board-extra.json";
+// Live board meta (per-tab totals + deltas + deploy version) maintained by the sync engine.
+const META_REL = "docs/trackers/program-board-meta.json";
 
 // ── types ───────────────────────────────────────────────────────────────────────────────────────────
 export type ReconBlock = {
@@ -56,6 +58,58 @@ export type ExtraItem = {
   track?: "owner-batch" | "dispatch-kit" | "audit";
   // Owner-Batch review tag (owner-populated). "proceed-on-row" | "needs-your-preview"; absent → proceed-on-row.
   review?: string;
+  // Legacy per-row fields already present on some audit rows (kept explicit so `...it` never drops them).
+  pr?: number | string | null;
+  done_ct?: string | null;
+  verified?: boolean | string | null;
+  // ── Enriched audit-finding fields (added by the sync engine; ALL OPTIONAL — FE must tolerate absence).
+  // These are spread through via `...it` into the board payload; they are typed here so nothing strips them.
+  severity?: string; // CRIT / HIGH / MED / LOW (from xlsx Severity)
+  lane?: string; // e.g. "FINANCIAL (STOP)" / "NON-FIN" (from xlsx Lane)
+  module?: string; // module name (from xlsx Module)
+  where?: string; // file:line location (from xlsx "Where (file:line)")
+  guard?: string; // the CI guard that locks the fix (from xlsx Guard)
+  root_cause?: string; // (from xlsx Root cause) — may be long
+  impact?: string; // (from xlsx Impact) — may be long
+  // LIVE git state: deployed | merged | waiting-merge | in-ci | ci-failed | pending | gated
+  live_state?: string;
+  pr_url?: string;
+  merged_at?: string; // ISO
+  deploy_no?: string; // short-sha/version the fix went live in
+  synced_at?: string; // ISO, when live_state was last computed
+  // ── LIFECYCLE TIMELINE (Jorge's core ask): 4-stage written→merged→deployed with REAL CT timestamps.
+  // All OPTIONAL; spread through via `...it`; a row is fully DONE only when deployed_ct is set.
+  requested_ct?: string | null; // intake (work-order pasted) — falls back to registered_on for findings
+  written_ct?: string | null; // PR opened (gh createdAt)
+  merged_ct?: string | null; // PR merged (gh mergedAt)
+  deployed_ct?: string | null; // detected live on prod (health version == merge short-sha)
+  // Derived furthest stage reached: "requested" | "written" | "merged" | "deployed".
+  lifecycle?: string;
+};
+
+// Board meta object — served alongside the board from the sync-engine-maintained
+// docs/trackers/program-board-meta.json (per-tab totals + additions/deltas + live deploy version).
+// EVERYTHING is optional/tolerant: absence yields meta:null + a warning, never a 500.
+export type BoardMetaTab = {
+  total?: number;
+  done?: number;
+  open?: number;
+  gated?: number;
+  waiting_merge?: number;
+  in_ci?: number;
+  pending?: number;
+  [k: string]: number | undefined;
+};
+export type BoardMetaDeltaEntry = { id?: string; name?: string; pr?: string; at?: string };
+export type BoardMeta = {
+  last_synced_ct: string | null;
+  deploy_version: string | null;
+  tabs: Record<string, BoardMetaTab>;
+  deltas: {
+    since: string | null;
+    added: BoardMetaDeltaEntry[];
+    completed: BoardMetaDeltaEntry[];
+  };
 };
 
 // Owner-locked decision surfaced on the board so it isn't buried in a thread.
@@ -115,6 +169,9 @@ export type BoardResponse = {
   merged_pr_total: number;
   hold_for_jorge: HoldItem[];
   locked_decisions: LockedDecision[];
+  // Live board meta (per-tab totals + additions/deltas + deploy version). null when the file is
+  // absent/unparseable (a warning is pushed) — never a 500.
+  meta: BoardMeta | null;
   warnings: string[];
 };
 
@@ -225,6 +282,11 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
     locked_decisions?: LockedDecision[];
   }>(EXTRA_REL, warnings, "program board extra");
 
+  // Live board meta (per-tab totals + deltas + deploy version) — sync-engine maintained. Read via the
+  // same cwd-independent resolveMonorepoRoot path as recon/extra. Absent/unparseable → null + warning
+  // (readRepoJson pushes it); NEVER a 500. The sync engine populates this file for real.
+  const meta = readRepoJson<BoardMeta>(META_REL, warnings, "program board meta");
+
   const dbNotes = await readNotes(client, warnings);
 
   // Seeded agent questions from the curated JSON (read-side, always present). Give them stable synthetic
@@ -298,6 +360,7 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
     merged_pr_total,
     hold_for_jorge: holdAll,
     locked_decisions: extra?.locked_decisions ?? [],
+    meta,
     warnings,
   };
 }

@@ -22,6 +22,10 @@ export const RATECON_MAX_PAGES = 15;
 // aborts cleanly). Callers can override via options.timeoutMs.
 export const RATECON_EXTRACT_TIMEOUT_MS = 90_000;
 
+// RATECON-4 — extraction schema version. Bumped whenever the prompt/field set changes so the persisted
+// dispatch.ratecon_extractions row records which schema produced it (drift/observability).
+export const RATECON_EXTRACTION_VERSION = "ratecon-4";
+
 export type Confidence = "high" | "medium" | "low";
 
 export type RateConStop = {
@@ -34,9 +38,22 @@ export type RateConStop = {
   date: string | null;
   time_window: string | null;
   appointment_required: boolean | null;
+  // RATECON-4 — per-stop references so the wizard's Pickup # / Customer WO # populate from the right stop
+  // (a shipment/PU number printed under a specific stop, not the load-level load_reference blob).
+  pickup_number: string | null;
+  po_number: string | null;
 };
 
 export type RateConAccessorial = { label: string; amount_cents: number };
+
+// RATECON-4 — structured, machine-usable terms parsed from the terms/notes ONLY when explicitly stated.
+// Every field nullable; amounts are integer cents, free hours a plain number. Never inferred/defaulted.
+export type RateConTerms = {
+  detention_rate_per_hour_cents: number | null;
+  detention_free_hours: number | null;
+  layover_per_day_cents: number | null;
+  tonu_fee_cents: number | null;
+};
 
 export type RateConExtraction = {
   broker: {
@@ -46,12 +63,22 @@ export type RateConExtraction = {
     phone: string | null;
     email: string | null;
     contact_name: string | null;
+    // RATECON-4 — after-hours broker contact (RATECON-5 seeds mdata.customer_contacts from these).
+    after_hours_phone: string | null;
+    after_hours_email: string | null;
   };
   load_reference: string[];
   stops: RateConStop[];
   equipment: string | null;
   commodity: string | null;
+  // `weight` kept for backward-compat (free text as printed); `total_weight_lbs` is the structured integer.
   weight: string | null;
+  total_weight_lbs: number | null; // RATECON-4 — integer lbs read from the items table AND the equipment line
+  pieces_count: number | null; // RATECON-4 — e.g. 7
+  pieces_unit: string | null; //  RATECON-4 — e.g. "Reels", "Pallets", "Skids"
+  // RATECON-4 — the explicit "Carrier to send invoice to <email>" instruction, structured (RATECON-5 → ap_email).
+  invoice_to_email: string | null;
+  terms: RateConTerms;
   rate: {
     linehaul_cents: number | null;
     fuel_surcharge_cents: number | null;
@@ -69,6 +96,7 @@ export type RateConExtractResult = {
   page_count: number | null;
   byte_size: number;
   model_id: string;
+  extraction_version: string; // RATECON-4 — which extraction schema/prompt produced this row
 };
 
 export class RateConTooLargeError extends Error {
@@ -90,17 +118,29 @@ export const RATECON_SYSTEM_PROMPT = [
 ].join(" ");
 
 const USER_INSTRUCTION = [
-  "Extract this rate confirmation into JSON with keys: broker{name,mc_number,address,phone,email,contact_name},",
-  "load_reference (string[]), stops (array of {type:'pickup'|'delivery',name,address,city,state,zip,date,",
-  "time_window,appointment_required}), equipment, commodity, weight, rate{linehaul_cents,fuel_surcharge_cents,",
-  "accessorials:[{label,amount_cents}],total_cents}, payment_terms, notes, and field_confidence (object of",
-  "field->'high'|'medium'|'low'). All *_cents are integer cents.",
+  "Extract this rate confirmation into JSON with keys: broker{name,mc_number,address,phone,email,contact_name,",
+  "after_hours_phone,after_hours_email}, load_reference (string[]), stops (array of {type:'pickup'|'delivery',",
+  "name,address,city,state,zip,date,time_window,appointment_required,pickup_number,po_number}), equipment,",
+  "commodity, weight, total_weight_lbs, pieces_count, pieces_unit, invoice_to_email, terms{",
+  "detention_rate_per_hour_cents,detention_free_hours,layover_per_day_cents,tonu_fee_cents},",
+  "rate{linehaul_cents,fuel_surcharge_cents,accessorials:[{label,amount_cents}],total_cents}, payment_terms,",
+  "notes, and field_confidence (object of field->'high'|'medium'|'low'). All *_cents are integer cents.",
   // Explicit field-quality rules (the model was leaving city/zip inside `address` and skipping equipment):
   "For EACH stop, SPLIT the location: put ONLY the street line in `address`; put the city in `city`, the",
   "two-letter state code in `state`, and the postal/ZIP code in `zip` — NEVER combine city/state/zip into",
   "`address`. Set `date` as an ISO date (YYYY-MM-DD) when a pickup/delivery date is shown.",
+  "For each stop, set `pickup_number` to any shipment/pickup/PU number printed for THAT stop and `po_number`",
+  "to any PO number printed for that stop (null if none).",
   "Set `equipment` to the required trailer/equipment type in plain words (e.g. 'reefer', 'dry van',",
   "'flatbed', 'step deck', 'power only') whenever the document states or implies it.",
+  // RATECON-4 — weight was extracting null though the PDF clearly prints it; force the model to hunt both places:
+  "WEIGHT: `total_weight_lbs` MUST be the integer pounds of the load. Read it from the commodity/items table",
+  "AND from the equipment/description line — a value like '26,999 lb' or '27,000 lbs' MUST be captured as the",
+  "integer 26999 or 27000 (strip commas and the 'lb/lbs' unit). Keep the original printed text in `weight`.",
+  "`pieces_count` is the integer piece/unit count and `pieces_unit` its unit word (e.g. 7 and 'Reels').",
+  "`invoice_to_email` is the email in an explicit 'send/submit invoice to <email>' instruction (null if none).",
+  "For `terms`, populate a field ONLY when the document explicitly states it (detention $/hr and free hours,",
+  "layover $/day, TONU/truck-order-not-used fee); leave any unstated term null. Amounts are integer cents.",
   "List EACH accessorial/charge as its OWN entry in `accessorials` (one object per line item with its label",
   "and amount) — do NOT sum or merge multiple accessorials into a single entry.",
   "Output ONLY the JSON object.",
@@ -123,6 +163,19 @@ function toCents(value: unknown): number | null {
   return value;
 }
 
+/** Non-negative integer count (weight lbs, pieces, free hours). Accepts a number or a numeric string like
+ *  "26,999" / "27000 lbs" (strips commas + a trailing unit word) so a model that returns text still lands. */
+function toInt(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) && value >= 0 ? Math.round(value) : null;
+  if (typeof value === "string") {
+    const m = value.replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
+    if (!m) return null;
+    const n = Number(m[0]);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+  }
+  return null;
+}
+
 function str(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const t = value.trim();
@@ -141,6 +194,7 @@ export function parseRateConExtraction(rawText: string): RateConExtraction {
 
   const broker = (p.broker ?? {}) as Record<string, unknown>;
   const rate = (p.rate ?? {}) as Record<string, unknown>;
+  const terms = (p.terms ?? {}) as Record<string, unknown>;
   const rawStops = Array.isArray(p.stops) ? (p.stops as Record<string, unknown>[]) : [];
   const rawAcc = Array.isArray(rate.accessorials) ? (rate.accessorials as Record<string, unknown>[]) : [];
   const rawRefs = Array.isArray(p.load_reference) ? (p.load_reference as unknown[]) : [];
@@ -154,6 +208,8 @@ export function parseRateConExtraction(rawText: string): RateConExtraction {
       phone: str(broker.phone),
       email: str(broker.email),
       contact_name: str(broker.contact_name),
+      after_hours_phone: str(broker.after_hours_phone),
+      after_hours_email: str(broker.after_hours_email),
     },
     load_reference: rawRefs.map((r) => str(r)).filter((r): r is string => r !== null),
     stops: rawStops.map((s) => ({
@@ -166,10 +222,22 @@ export function parseRateConExtraction(rawText: string): RateConExtraction {
       date: str(s.date),
       time_window: str(s.time_window),
       appointment_required: typeof s.appointment_required === "boolean" ? s.appointment_required : null,
+      pickup_number: str(s.pickup_number),
+      po_number: str(s.po_number),
     })),
     equipment: str(p.equipment),
     commodity: str(p.commodity),
     weight: str(p.weight),
+    total_weight_lbs: toInt(p.total_weight_lbs),
+    pieces_count: toInt(p.pieces_count),
+    pieces_unit: str(p.pieces_unit),
+    invoice_to_email: str(p.invoice_to_email),
+    terms: {
+      detention_rate_per_hour_cents: toCents(terms.detention_rate_per_hour_cents),
+      detention_free_hours: toInt(terms.detention_free_hours),
+      layover_per_day_cents: toCents(terms.layover_per_day_cents),
+      tonu_fee_cents: toCents(terms.tonu_fee_cents),
+    },
     rate: {
       linehaul_cents: toCents(rate.linehaul_cents),
       fuel_surcharge_cents: toCents(rate.fuel_surcharge_cents),
@@ -234,5 +302,6 @@ export async function extractRateConPdf(
     page_count: pageCount,
     byte_size: byteSize,
     model_id: model,
+    extraction_version: RATECON_EXTRACTION_VERSION,
   };
 }

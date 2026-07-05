@@ -20,7 +20,7 @@ function variantClasses(variant: ButtonVariant) {
   if (variant === "danger") {
     return "border-crit bg-crit text-white hover:bg-red-700";
   }
-  return "border-[#16A34A] bg-[#16A34A] text-white hover:bg-green-700";
+  return "border-[#1f2a44] bg-[#1f2a44] text-white hover:bg-[#0f1729]";
 }
 
 function sizeClasses(variant: ButtonVariant, size: ButtonSize) {

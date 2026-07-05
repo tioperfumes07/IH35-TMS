@@ -1,0 +1,1862 @@
+{
+  "last_synced_ct": "2026-07-05 12:58 CT",
+  "last_synced_at": "2026-07-05T17:58:47.629Z",
+  "deploy_version": "853e9e8",
+  "deploy_checked_at": "2026-07-05T17:58:47.289Z",
+  "gh_authenticated": true,
+  "totals": {
+    "blocks_total": 524,
+    "blocks_done": 480,
+    "blocks_pending": 44,
+    "financial_pending": 73,
+    "added_since_last": 0,
+    "completed_since_last": 0,
+    "deploy_version": "853e9e8",
+    "last_synced_ct": "2026-07-05 12:58 CT"
+  },
+  "tabs": {
+    "audit": {
+      "total": 160,
+      "done": 86,
+      "open": 74,
+      "gated": 47,
+      "waiting_merge": 0,
+      "in_ci": 3,
+      "ci_failed": 1,
+      "pending": 23,
+      "deployed": 71,
+      "merged": 15,
+      "financial_pending": 47,
+      "pct_deployed": 0.4437,
+      "pct_done": 0.5375,
+      "by_module": {
+        "Security": {
+          "total": 19,
+          "done": 15,
+          "pending": 4,
+          "financial_pending": 1
+        },
+        "Dispatch": {
+          "total": 9,
+          "done": 7,
+          "pending": 2,
+          "financial_pending": 2
+        },
+        "Compliance": {
+          "total": 4,
+          "done": 3,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "Accounting": {
+          "total": 14,
+          "done": 2,
+          "pending": 12,
+          "financial_pending": 12
+        },
+        "Integrations": {
+          "total": 3,
+          "done": 1,
+          "pending": 2,
+          "financial_pending": 1
+        },
+        "Observability": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Reliability": {
+          "total": 10,
+          "done": 7,
+          "pending": 3,
+          "financial_pending": 3
+        },
+        "Finance": {
+          "total": 8,
+          "done": 0,
+          "pending": 8,
+          "financial_pending": 8
+        },
+        "ELD": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Maintenance": {
+          "total": 7,
+          "done": 4,
+          "pending": 3,
+          "financial_pending": 2
+        },
+        "Fleet": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Settlements": {
+          "total": 9,
+          "done": 1,
+          "pending": 8,
+          "financial_pending": 8
+        },
+        "DB": {
+          "total": 6,
+          "done": 4,
+          "pending": 2,
+          "financial_pending": 0
+        },
+        "Cross-entity": {
+          "total": 5,
+          "done": 2,
+          "pending": 3,
+          "financial_pending": 2
+        },
+        "Customers": {
+          "total": 5,
+          "done": 4,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "Inventory": {
+          "total": 2,
+          "done": 1,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "Schema": {
+          "total": 6,
+          "done": 0,
+          "pending": 6,
+          "financial_pending": 3
+        },
+        "USMCA": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "Driver-PWA": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Reports": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Catalogs": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Evidence": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "CI": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "API-contract": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "Data": {
+          "total": 3,
+          "done": 0,
+          "pending": 3,
+          "financial_pending": 0
+        },
+        "Cash-Advance": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Fuel": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "Safety": {
+          "total": 2,
+          "done": 1,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "Legal": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Docs": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Cash-Flow": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Factoring": {
+          "total": 2,
+          "done": 1,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "Home": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Drivers": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "425C": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "Vendors": {
+          "total": 2,
+          "done": 1,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "Connections": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Frontend": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Code-quality": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Samsara": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Performance": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Tests": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "i18n": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Accessibility": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Business-logic": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "Deps": {
+          "total": 2,
+          "done": 0,
+          "pending": 2,
+          "financial_pending": 0
+        },
+        "Infra": {
+          "total": 2,
+          "done": 0,
+          "pending": 2,
+          "financial_pending": 0
+        },
+        "Finance-Hub": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Driver-Hub": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Ops": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Uploads": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Design-lock": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "Vendor": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        }
+      },
+      "added_recent": 0,
+      "completed_recent": 0
+    },
+    "all": {
+      "total": 524,
+      "done": 480,
+      "open": 44,
+      "gated": 41,
+      "waiting_merge": 0,
+      "in_ci": 0,
+      "ci_failed": 0,
+      "pending": 3,
+      "deployed": 341,
+      "merged": 139,
+      "financial_pending": 26,
+      "pct_deployed": 0.6508,
+      "pct_done": 0.916,
+      "by_module": {
+        "AF": {
+          "total": 9,
+          "done": 3,
+          "pending": 6,
+          "financial_pending": 6
+        },
+        "CASH": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "RECON": {
+          "total": 3,
+          "done": 2,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "TBL": {
+          "total": 2,
+          "done": 1,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "BLOCK": {
+          "total": 45,
+          "done": 38,
+          "pending": 7,
+          "financial_pending": 0
+        },
+        "CHAIN": {
+          "total": 8,
+          "done": 3,
+          "pending": 5,
+          "financial_pending": 5
+        },
+        "CONN": {
+          "total": 4,
+          "done": 0,
+          "pending": 4,
+          "financial_pending": 4
+        },
+        "DISP": {
+          "total": 15,
+          "done": 13,
+          "pending": 2,
+          "financial_pending": 0
+        },
+        "ENT": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "FH": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "HOS": {
+          "total": 6,
+          "done": 2,
+          "pending": 4,
+          "financial_pending": 0
+        },
+        "STMT": {
+          "total": 3,
+          "done": 1,
+          "pending": 2,
+          "financial_pending": 2
+        },
+        "USMCA": {
+          "total": 2,
+          "done": 1,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "VENDOR": {
+          "total": 2,
+          "done": 1,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "VISUAL": {
+          "total": 32,
+          "done": 27,
+          "pending": 5,
+          "financial_pending": 5
+        },
+        "VOID": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "C7": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "A1": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "A2": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "A3": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "A4": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "A5": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "A6": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "A7": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "A8": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "A9": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "ACCOUNTING": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "ACCT": {
+          "total": 10,
+          "done": 10,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "AR": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "BANKING": {
+          "total": 4,
+          "done": 4,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "BK7": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "block": {
+          "total": 26,
+          "done": 26,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "BLOCK5": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "BLOCK7": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "BUG": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "C1": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "C2": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "C3": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "C4": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "C6": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "CAP": {
+          "total": 7,
+          "done": 7,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "CHORE": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "CLOSURE": {
+          "total": 13,
+          "done": 13,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "D1": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "DESIGN": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "DISPATCH": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "DOC": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "DOCS": {
+          "total": 26,
+          "done": 26,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "E1": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "FEAT": {
+          "total": 46,
+          "done": 46,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "FINAL": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "FIX": {
+          "total": 32,
+          "done": 32,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "FOLLOWUP": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "GAP": {
+          "total": 70,
+          "done": 70,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "gap": {
+          "total": 57,
+          "done": 57,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "GLOBAL": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "HOTFIX": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "IMPORT": {
+          "total": 3,
+          "done": 3,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "INS": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "ITEM1": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "LOCKDOWN": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "M1": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "M2": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "MANUAL": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "MIGRATION": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "MNT": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "MX": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "NOTIF": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "OB1": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "P0": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "P5": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "PERF": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "PREREQ": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "Q9": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "QBO": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "QSTD": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "REGISTER": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "RPT": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "SAFE": {
+          "total": 3,
+          "done": 3,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "SETTLEMENTS": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "SHADOW": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "SIDEBAR": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "SMOKE": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "STRUCTURAL": {
+          "total": 2,
+          "done": 2,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "SWEEP": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TASKS": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TEST": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER14": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER15": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER20": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER21": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER23": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER26": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER27": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER28": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "TIER29": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "UNIFIED": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "USERS": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "UX": {
+          "total": 5,
+          "done": 5,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W1": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W1A": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W1B": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W2A": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W2B": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W2P": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W3A": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W3B": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W4A": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W4B": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        },
+        "W5": {
+          "total": 1,
+          "done": 1,
+          "pending": 0,
+          "financial_pending": 0
+        }
+      },
+      "added_recent": 0,
+      "completed_recent": 0
+    },
+    "pending": {
+      "total": 44,
+      "done": 0,
+      "open": 44,
+      "gated": 41,
+      "waiting_merge": 0,
+      "in_ci": 0,
+      "ci_failed": 0,
+      "pending": 3,
+      "deployed": 0,
+      "merged": 0,
+      "financial_pending": 26,
+      "pct_deployed": 0,
+      "pct_done": 0,
+      "by_module": {
+        "AF": {
+          "total": 6,
+          "done": 0,
+          "pending": 6,
+          "financial_pending": 6
+        },
+        "CASH": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "RECON": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "TBL": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "BLOCK": {
+          "total": 7,
+          "done": 0,
+          "pending": 7,
+          "financial_pending": 0
+        },
+        "CHAIN": {
+          "total": 5,
+          "done": 0,
+          "pending": 5,
+          "financial_pending": 5
+        },
+        "CONN": {
+          "total": 4,
+          "done": 0,
+          "pending": 4,
+          "financial_pending": 4
+        },
+        "DISP": {
+          "total": 2,
+          "done": 0,
+          "pending": 2,
+          "financial_pending": 0
+        },
+        "ENT": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "FH": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "HOS": {
+          "total": 4,
+          "done": 0,
+          "pending": 4,
+          "financial_pending": 0
+        },
+        "STMT": {
+          "total": 2,
+          "done": 0,
+          "pending": 2,
+          "financial_pending": 2
+        },
+        "USMCA": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 0
+        },
+        "VENDOR": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "VISUAL": {
+          "total": 5,
+          "done": 0,
+          "pending": 5,
+          "financial_pending": 5
+        },
+        "VOID": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        },
+        "C7": {
+          "total": 1,
+          "done": 0,
+          "pending": 1,
+          "financial_pending": 1
+        }
+      },
+      "added_recent": 0,
+      "completed_recent": 0
+    },
+    "merged": {
+      "total": 80,
+      "done": 80,
+      "open": 0
+    },
+    "owner": {
+      "total": 29,
+      "done": 11,
+      "open": 18
+    },
+    "dispatch": {
+      "total": 15,
+      "done": 3,
+      "open": 12
+    }
+  },
+  "deltas": {
+    "since": "2026-07-05 12:57 CT",
+    "added": [],
+    "completed": []
+  },
+  "_row_index": {
+    "audit::G1::1 (Security/Identity) — [LIVE-EXPLOITABLE] Any Administrator can promote themselves to Owner": "deployed",
+    "audit::G9::C1 (Dispatch/Compliance) — Unqualified drivers assignable via quick-assign / quicksave / planner": "deployed",
+    "audit::G9::C2 (Compliance/MOR) — Chapter 11 MOR cash lines are always $0 and omit own-transfer exclusion": "gated",
+    "audit::G9::C3 (Accounting/Governance) — Three financial void endpoints have NO role guard": "gated",
+    "audit::G10::C1 (Compliance/Audit) — Tamper-evident audit chain verifier is never invoked": "deployed",
+    "audit::G10::C2 (Integrations/QBO) — Dead QBO refresh token not surfaced — UI shows 'connected', recon silently stops": "gated",
+    "audit::G10::C3 (Observability) — Sentry only half-live: crons + driver-PWA report to nobody; nothing pages on failure": "deployed",
+    "audit::G10::C4 (Reliability/Queues) — QBO-sync in_flight + email 'sending' rows orphan on any crash (no reaper)": "deployed",
+    "audit::G11::1 (Finance/Deductions) — Deduction-authorization template doesn't exist → every FIN-18 deduction post is blocked": "gated",
+    "audit::G4::IDEM1 (Reliability/Money) — Money routes off the idempotency allow-list → duplicate money on double-click/retry": "gated",
+    "audit::G4::TX1 (Reliability/GL) — Source-row + GL post span two separate transactions → orphaned GL / money-paid-with-no-JE": "gated",
+    "audit::FLAG::LIVE (Accounting/Flags) — CONFIRMED: all 9 GL-posting flags (incl. SETTLEMENT) are ON in prod for all 3 entities": "gated",
+    "audit::H3::1 (Accounting/Flags) — A real GL-posting flag evades the per-entity money kill-switch": "gated",
+    "audit::REPO::PUBLIC (Security/Infra) — GitHub repo tioperfumes07/IH35-TMS is PUBLIC — entire codebase readable on the internet": "pending",
+    "audit::M::ELD-1 (ELD) — ELD is not built — audit trail queries a phantom TABLE (500 on every request); nav module is a stub": "deployed",
+    "audit::M::WOID-1 (Maintenance) — WO-ID generator queries phantom mdata.units.operating_company_id (migrations never create it)": "gated",
+    "audit::M::DISP-1 (Dispatch) — quick-assign/quicksave write a trailer's ID into the co-driver column (FK violation / overwrite)": "deployed",
+    "audit::M::FLEET-1 (Fleet) — Trailer quick-assign updates mdata.equipment WHERE operating_company_id (phantom) → 500": "deployed",
+    "audit::M::SETTLE-1 (Settlements) — A second, UN-flag-gated settlement posting engine posts real Bills+Payments": "gated",
+    "audit::A2::1 (DB/Migrations) — 18 reused migration numbers, no CI guard (already caused an outage)": "deployed",
+    "audit::A2::2 (DB/Grants) — Grant-gap guard is non-blocking AND doesn't watch the schema that broke": "pending",
+    "audit::B1::1 (Accounting/Recon) — QBO reconciliation source pulls only 2 of ~6 bank-hitting txn types": "gated",
+    "audit::C1::1 (Settlements/GL) — load-linkage work landed in an ORPHANED parallel settlement engine": "gated",
+    "audit::C1::2 (Settlements/GL) — settlement->GL deduction linkage severed": "gated",
+    "audit::C2::1 (Cross-entity/QBO) — COA drift-detector reads catalogs.accounts with no entity filter": "gated",
+    "audit::D1::1 (Customers) — Inline 'New Customer' writes to a mirror table no picker reads": "deployed",
+    "audit::D2::1 (Maintenance) — Two maintenance modals save nothing (non-persisting stubs)": "deployed",
+    "audit::D3::1 (Dispatch/Safety) — Hazmat load can be dispatched to an unendorsed driver": "deployed",
+    "audit::D5::1 (Inventory) — Inventory part create is broken in prod (missing credentials)": "deployed",
+    "audit::E1::1 (Schema/QBO) — QBO mirror split-brain: accounting.qbo_* vs mdata.qbo_*": "gated",
+    "audit::E1::3 (Schema/Reports) — Two scheduled-report engines (reports.* vs reporting.*)": "pending",
+    "audit::E1::4 (Schema/Settlements) — Driver settlements spread across 4 schemas": "gated",
+    "audit::E2::1 (DB/Migrations) — Duplicate migration numbers unguarded (root cause of A2-1)": "deployed",
+    "audit::E2::2 (Dispatch/Integrity) — driver_layovers: missing FKs + operating_company_id is TEXT": "gated",
+    "audit::E2::3 (Dispatch/Integrity) — border_crossing_events: missing FKs + TEXT op-co": "gated",
+    "audit::G1::2 (Security/Money) — Bills pay/void trust client company-id with no membership check": "deployed",
+    "audit::G1::3 (Security/Money) — Settlement + cash-advance approvals skip membership check": "deployed",
+    "audit::G2::1 (Security/Audit) — One real SQL-injection via unvalidated operating_company_id in an audit-log call": "deployed",
+    "audit::G5::2 (Reliability/QBO) — DB connection + open transaction held across a QuickBooks HTTP call": "merged",
+    "audit::G6::1 (Accounting/Dates) — Financial 'today' computed in UTC, not Central Time (~40+ sites)": "deployed",
+    "audit::G7::1 (Settlements/Tests) — Driver-settlement payment state machine has no test": "gated",
+    "audit::G7::2 (USMCA/TODO) — Two latent USMCA-launch breakers hiding in TODOs": "pending",
+    "audit::G8::1 (Driver-PWA/i18n) — Driver-app dates render in device locale + timezone, not app language": "deployed",
+    "audit::G9::H1 (Settlements) — Settlement double-pay race (no compare-and-swap)": "gated",
+    "audit::G9::H2 (Settlements) — Duplicate open settlements per driver (no unique index)": "gated",
+    "audit::G9::H4 (Dispatch) — Load status machine advisory; driver-PWA can resurrect a cancelled load": "deployed",
+    "audit::G9::H5 (Reports) — Profit/pay reports double-count and include cancelled/voided rows": "deployed",
+    "audit::G9::H6 (Catalogs/UI) — CoA management list + trailer list cap at 50 (oldest records unreachable)": "deployed",
+    "audit::G10::H1 (Evidence) — load_stops retains a DELETE grant with 8 CASCADE evidence children": "gated",
+    "audit::G10::H2 (CI/Evidence) — The 'no hard-delete load_stops' CI guard is never wired into CI": "deployed",
+    "audit::G10::H3 (API-contract) — Six live UI features call routes that don't exist (404); three move money": "pending",
+    "audit::G10::H5 (Security) — Plaid access token stored in plaintext": "deployed",
+    "audit::G10::H4 (Integrations/QBO) — QBO push generic catch = infinite retry, no dead-letter cap": "deployed",
+    "audit::G11::2 (Finance/Settlements) — Two deduction sub-ledgers that don't reconcile (overpay OR GL hard-block)": "gated",
+    "audit::G11::3 (Finance/Settlements) — Three net-pay-floor implementations with different defaults (10% vs 50%)": "gated",
+    "audit::G11::5 (Finance/Period) — Period-close lock is a single high-water mark with no reopen path": "gated",
+    "audit::SWL::1 (Reliability/Audit) — 61 money/dispatch spine-event emits swallowed with zero breadcrumb": "deployed",
+    "audit::G4::HEALTH (Reliability/Health) — Recon + several money crons have no freshness surface (fail dark)": "merged",
+    "audit::H3::2 (Accounting/Flags) — Three posting flags unprotected + read with no entity context (global-only enable)": "gated",
+    "audit::H2::1 (Security/Deps) — xlsx (SheetJS) prototype-pollution + ReDoS, reachable on uploaded spreadsheets": "gated",
+    "audit::H1::1 (Security/RateLimit) — Public credential + OTP endpoints have no rate limit": "deployed",
+    "audit::H4::2 (Security/Samsara) — Samsara webhook: signature doesn't match vendor scheme + writes attacker payload before reject + no throttle": "merged",
+    "audit::H5::1 (Data/Retention) — Append-only spine tables grow unbounded (no pruning/partition on the real tables)": "pending",
+    "audit::H5::2 (Data/Retention) — Partition scaffolding is orphaned AND expires 2027-12 (latent time-bomb)": "pending",
+    "audit::H6::1 (Reliability/QBO) — QBO OAuth refresh-token rotation race can knock the connection offline": "gated",
+    "audit::H6::2 (Cash-Advance) — Cash-advance number generator: MAX+1, no lock, no unique → silent duplicate IDs": "deployed",
+    "audit::M::FUEL-1 (Fuel) — fuel.fuel_transactions is never written — 7 profitability + IFTA reports read $0 fuel": "ci-failed",
+    "audit::M::DISP-2 (Dispatch) — CDL/medical qualification gate exists only in Book Load — sibling assign paths skip it": "merged",
+    "audit::M::SAFE-1 (Safety) — Accident 'At Fault' is a dead stub with no schema column (+ other unwired accident fields)": "deployed",
+    "audit::M::LEGAL-1 (Legal) — Legal Matters has NO backend role gate — any role can read/write litigation data": "deployed",
+    "audit::M::DOCS-1 (Docs) — Load Documents tab is dead-on-arrival (route blocks 'load' type)": "deployed",
+    "audit::M::LISTS-1 (Cross-entity) — Lists cross-entity WRITE + READ leaks (flag-colors, cancellation-reasons, stub-purge)": "gated",
+    "audit::M::REPORTS-1 (Reports) — AR/AP aging: two implementations, the UI uses the broken one (misclassifies not-yet-due)": "deployed",
+    "audit::M::CASH-1 (Cash-Flow) — Void exclusion is a no-op ('void' vs 'voided') — cancelled bills show as future expense": "deployed",
+    "audit::M::SETTLE-2 (Settlements) — Net-pay floor is 10%/50%/50% across three paths — none matches the CPA-locked 5%": "gated",
+    "audit::M::FACTOR-1 (Factoring) — The reserve figure reads a column NOTHING writes to; FOUR un-reconciled reserve sources": "deployed",
+    "audit::M::INV-1 (Inventory) — Inventory part SKU is fake (returns the row UUID) + create drops category/notes": "in-ci",
+    "audit::M::HOME-1 (Home) — Safety role-home silently 500s → every Safety user sees all-zero KPIs (false 'all clear')": "deployed",
+    "audit::M::DRIVER-1 (Drivers) — Second driver create/edit surface bypasses rehire-match / vendor-linkage / invite": "deployed",
+    "audit::M::DRIVER-2 (Drivers) — mdata.drivers.escrow_balance is a phantom column (read by the escrow visualizer)": "deployed",
+    "audit::M::COMP-1 (Compliance) — IFTA files the WRONG quarter at the point of action": "deployed",
+    "audit::M::MOR-2 (425C/MOR) — MOR/Exhibits use multiple phantom columns → $0; UST quarterly fee understated; exhibits orphaned": "gated",
+    "audit::D1::2 (Vendors) — Vendors split across two disjoint tables": "pending",
+    "audit::E2::4 (Safety/Integrity) — Drug-&-alcohol records can orphan from their driver": "gated",
+    "audit::G6::2 (Vendors) — Vendor create has no dedup guard (customers have one)": "deployed",
+    "audit::FLAG::LEASE (Accounting/Flags) — LEASE_GL_POSTING_ENABLED is ON despite the locked 'never flip until lease engine built' rule": "gated",
+    "audit::H3::3 (Accounting/Flags) — Void flags classified inconsistently between two guards": "gated",
+    "audit::H4::3 (Security/Cost) — AI-cost endpoints have no throttle (direct $ per call)": "deployed",
+    "audit::M::LISTS-2 (Accounting/Catalogs) — 'Merge accounts' only deactivates — it doesn't repoint GL references": "gated",
+    "audit::A1::1 (Connections/QBO) — QBO mirror-staleness alarm self-disables": "merged",
+    "audit::A2::3 (DB/CI) — Immutability guard blind to all 238 timestamp migrations": "merged",
+    "audit::B2::2 (Dispatch/Drivers) — Driver-picker 50-cap in ~14 non-dispatch pickers": "deployed",
+    "audit::C1::3 (Frontend/Routing) — Three live buttons dead-end to Home": "deployed",
+    "audit::C1::4 (Code-quality) — Dead/duplicate components": "deployed",
+    "audit::D1::3 (Customers/Vendors) — Inline drawers silently drop most captured fields": "deployed",
+    "audit::D1::4 (Customers) — Sub-customer 'Parent *' required but never enforced or sent": "in-ci",
+    "audit::D2::2 (Maintenance/G18) — G18 load-FK not enforced on the vendor-Bill path": "merged",
+    "audit::D4::1 (Samsara/Telematics) — Webhook driver-pairing keyed to equipment, not units": "merged",
+    "audit::E1::2 (Schema/Naming) — finance.* schema exists and is live (violates 'never finance.*')": "gated",
+    "audit::E1::5 (Schema/Naming) — maint.* stranded next to maintenance.*": "pending",
+    "audit::E2::5 (Maintenance/Integrity) — Samsara fault-code history can orphan from its unit": "gated",
+    "audit::G1::6 (Security) — resolveOperatingCompanyId returns client value unvalidated": "deployed",
+    "audit::G2::2 (Security) — operating_company_id trusted raw as tenant scope on money/dispatch routes": "pending",
+    "audit::G3::1 (Security) — CSRF gap on file-upload routes (SameSite=None cookie, no CSRF token)": "deployed",
+    "audit::G3::2 (Security) — Plaid webhook signature not bound to body/freshness (replay-able)": "merged",
+    "audit::G3::3 (Security/Reliability) — No multipart file-size limit → memory-exhaustion DoS": "deployed",
+    "audit::G5::3 (Performance) — No frontend code-splitting → mobile LCP over the 4s ceiling on 7/8 routes": "deployed",
+    "audit::G6::3 (Customers) — Customer dedup is case-sensitive, not entity-scoped, race-prone": "deployed",
+    "audit::G6::4 (Accounting) — bills.amount_cents nullable + dual money representation": "gated",
+    "audit::G6::6 (Accounting) — Default payments list returns voided rows": "merged",
+    "audit::G7::3 (Code-quality) — Accounting read-queries cast rows to any (§4 landmine class)": "deployed",
+    "audit::G7::4 (Tests) — 7 end-to-end specs are empty stubs (false-green)": "merged",
+    "audit::G8::2 (i18n) — Two live translation directories → stale-Spanish drift": "deployed",
+    "audit::G8::4 (Accessibility) — Search/filter inputs have no accessible name (~65 files) + no a11y lint": "deployed",
+    "audit::G8::5 (Frontend) — Data pages with no error state render blank/forever-spinner on the live 500s": "deployed",
+    "audit::G9::M (Business-logic) — 8 workflow/status defects (auto-pay statuses, load-number 500, bulk set_status, cancel role, WO void, driver archive dead-end, status accre": "pending",
+    "audit::G10::M (Integrations/Reliability) — 7 MED: unsigned audit hash, row_changes no mutation trigger, stop re-key breaks evidence link, QBO auth swallowed, Twilio double-": "pending",
+    "audit::G11::9 (Finance/Escrow) — Escrow-abandonment deduction may book to the wrong account class": "gated",
+    "audit::G11::10 (Finance/Period) — Month-close checklist is unsatisfiable in normal operation": "gated",
+    "audit::G11::6 (Finance/Recon) — No GL-control-account ↔ sub-ledger tie-out exists": "gated",
+    "audit::G11::7 (Finance/Factoring) — Factoring reserve tracked in two places that never reconcile; asymmetric idempotency": "gated",
+    "audit::SWL::2 (Reliability) — Three silent masks: banking recon suggestions, Finance Hub $0, mirror-integrity 'no drift'": "deployed",
+    "audit::G4::DEPLOY (Reliability/Deploy) — preDeploy smoke hinges on a live prod row + leaves a test Owner in prod": "merged",
+    "audit::H3::4 (Accounting/Flags) — Settlement recovery cutover flag read raw, bypassing the resolver": "gated",
+    "audit::H2::3 (Deps/Auth) — Lucia auth library is deprecated / end-of-maintenance": "pending",
+    "audit::H4::4 (Security) — Office-login account/role enumeration + timing oracle": "deployed",
+    "audit::H4::5 (Security/Perf) — Heavy financial exports + file uploads have no throttle or size cap": "deployed",
+    "audit::H1::2 (Infra/Config) — CORS defaults to the wrong origins for prod (with credentials)": "pending",
+    "audit::H1::3 (Infra/Config) — CSP still report-only + no deploy health-gate + preDeploy auth-bypass touches prod": "pending",
+    "audit::H5::3 (Data/Evidence) — No R2-evidence presence check + DR drill is a stub + 7-day emailed evidence links": "pending",
+    "audit::H6::3 (Reliability/Cron) — Geofence alerts duplicate on overlap + no cron single-flight (horizontal-scale landmine)": "deployed",
+    "audit::H7::1 (Factoring/Vendor) — Faro→RTS: RTS has no public API — factoring integration is Faro-CSV-shaped": "gated",
+    "audit::M::DOCS-2 (Docs/Security) — Entity document uploader has no size/type limits; attachment DELETE is ungated": "deployed",
+    "audit::M::USERS-2 (Security/Users) — Whole user directory readable by ANY authenticated role + 2 admins can mint an Owner": "deployed",
+    "audit::M::SETTLE-3 (Settlements) — The Settlements module's own Dispute tab 404s (route never registered)": "deployed",
+    "audit::M::FINHUB-1 (Finance-Hub) — FINANCE_HUB_UI flag is split-brain (env-var backend / unseeded DB-flag frontend)": "deployed",
+    "audit::M::HOME-2 (Home) — Cash Position + Factoring Balance home tiles always show $0 (response-shape mismatch)": "deployed",
+    "audit::M::DHUB-1 (Driver-Hub) — An entire second cash-advance approve/deny system was built but never registered (404, green tests)": "deployed",
+    "audit::M::RECONCILE-NOTE (Settlements/Meta) — OPEN: agents disagree on the settlement/deduction engine — needs a definitive re-verification": "gated",
+    "audit::A1::2 (Ops/Cron) — Recon crons can fail silently (no health endpoint)": "deployed",
+    "audit::B1::2 (Accounting/COA-roles) — Stale factoring-reserve role still typed Liability": "gated",
+    "audit::B3::1 (Maintenance/WO) — Orphan legacy WO-create endpoint mints malformed WO numbers": "merged",
+    "audit::C2::2 (Cross-entity/Admin) — Launch-readiness counts sum across all entities": "in-ci",
+    "audit::C2::3 (Cross-entity/Samsara) — Position-poll worker reads all entities' units": "merged",
+    "audit::E1::6 (Schema/Naming) — bank.* / geo.* stranded next to banking.* / geofence.*": "pending",
+    "audit::G5::4 (Performance) — N+1 loops in report-refresh jobs + SELECT * on wide accounting tables": "deployed",
+    "audit::A2::4 (DB/CI) — Two more migration guards skip timestamp migrations": "deployed",
+    "audit::A2::5 (DB/Migrations) — A few foundation migrations aren't idempotent": "pending",
+    "audit::B1::3 (Accounting/Bills) — DELETE-then-INSERT on bill_unit_allocation (breaks void-not-delete)": "gated",
+    "audit::B3::2 (Compliance/2290) — Form 2290 deadline off-by-one during August": "deployed",
+    "audit::C1::5 (Uploads) — Upload-orphan trap inside the dead maintenance modals": "merged",
+    "audit::C2::4 (Cross-entity/PII) — Two bypass reads of drivers by PK only": "deployed",
+    "audit::D1::5 (Customers) — customer_type not enforced client-side": "deployed",
+    "audit::D2::3 (Maintenance) — No edit-WO UI; PATCH is dead; 'Edit' label misleads": "deployed",
+    "audit::D3::3 (Dispatch/Customers) — Stale customer_id if you type over a picked customer": "deployed",
+    "audit::D5::4 (Design-lock) — Green-CTA / green-band palette deviations": "pending",
+    "audit::G3::5 (Security) — CSP still report-only; Samsara webhook placeholder sig; error-message echo": "pending",
+    "audit::H2::2 (Deps) — Stale apps/backend/package-lock.json carries 2 unshipped HIGH CVEs": "pending",
+    "audit::H7::2 (Vendor/Runtime) — Minor vendor/runtime hygiene: Plaid dead-env, QBO stale health probe, Node/TS drift": "pending",
+    "audit::B3::3 (Maintenance/Fuel) — Fuel G18 trigger not armed against load hard-delete": "pending",
+    "block::AF-8-payroll-bridge::STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST": "gated",
+    "block::CASH-FLOW-MODULE::": "pending",
+    "block::RECON-00::RECON-00 Design lock: commit the TMS↔QBO Reconciliation Module architecture spec (double-books/no-sync, twice-daily pass": "pending",
+    "block::TBL-STANDARD-universal-table-sweep::TABLE/UX / TASK Standard — Universal table sweep (bespoke → shared DataTable)": "pending",
+    "block::AF-1-entity-coa-fix::STRUCTURAL / TASK 1 — Entity-independence COA audit + fix (the RED FLAG)": "gated",
+    "block::AF-2-qbo-drift::STRUCTURAL / TASK 2 — QBO drift resolution (customers / vendors / COA)": "gated",
+    "block::AF-4-ap-bills-migration::STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)": "gated",
+    "block::AF-5-stub-catalogs::STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)": "gated",
+    "block::AF-7-money-controls::STRUCTURAL / TASK 7 — Money controls: void/reversal + period-close + financial RLS": "gated",
+    "block::BLOCK-01-of-29-TIER1.5-DEPRECIATION::BLOCK-01-of-29-TIER1.5-DEPRECIATION": "gated",
+    "block::BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW::BLOCK-02-of-29-TIER1.5-DRIVER-ESCROW": "gated",
+    "block::BLOCK-03-of-29-TIER1.5-IFTA::BLOCK-03-of-29-TIER1.5-IFTA": "gated",
+    "block::BLOCK-17-of-29-TIER2.5-W2-1099::BLOCK-17-of-29-TIER2.5-W2-1099": "gated",
+    "block::BLOCK-19-of-29-TIER3-AUDIT-HASH::BLOCK-19-of-29-TIER3-AUDIT-HASH": "gated",
+    "block::BLOCK-24-of-29-TIER3.5-1099-ANNUAL::BLOCK-24-of-29-TIER3.5-1099-ANNUAL": "gated",
+    "block::BLOCK-25-of-29-TIER3.5-CONSOLIDATION::BLOCK-25-of-29-TIER3.5-CONSOLIDATION": "gated",
+    "block::CHAIN-04-bill-payment-tieout::ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)": "gated",
+    "block::CHAIN-05-bank-feed-live-proof::ACCOUNTING-CHAIN / TASK 5 — Bank feed: prove categorize → match → post chain LIVE": "gated",
+    "block::CHAIN-06-invoice-ar-chain-proof::ACCOUNTING-CHAIN / TASK 6 — Invoice → A/R → Receive Payment chain proof": "gated",
+    "block::CHAIN-07-settlements-500-fix::ACCOUNTING-CHAIN / TASK 7 — Settlements path 500 + GL tie-out": "gated",
+    "block::CHAIN-08-transp-demo-data-purge::ACCOUNTING-CHAIN / TASK 8 — TRANSP demo/seed data purge (PRE-GO-LIVE, LAST)": "gated",
+    "block::CONN-1-plaid-reconcile-commit::CONNECTIONS / TASK 1 — Plaid bank reconcile-commit (enable the commit)": "gated",
+    "block::CONN-2-factoring-faro::CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet": "gated",
+    "block::CONN-3-relay-internal-bank::CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes": "gated",
+    "block::CONN-4-edi-foundation::CONNECTIONS / TASK 4 — EDI foundation (broker 204 / 214 / 210 / 990)": "gated",
+    "block::DISP-WIZARD-edit-load-patch::DISPATCH / TASK Edit-Load — Edit-Load PATCH wizard (#1196, HELD)": "gated",
+    "block::DISP-WO-work-order-modal::DISPATCH/MAINT / TASK WO — Work Order modal (dead +Create Work Order button)": "gated",
+    "block::ENT-AUDIT::ENTERPRISE/SCALE / TASK — Enterprise/scale hardening audits": "gated",
+    "block::FH-VERIFY-finance-hub-modules::FINANCE HUB / TASK V — Verify FH-1→8 (built-gated/design-done) + flag-plan": "gated",
+    "block::HOS-FANOUT-03-08::HOS / TASK Blocks 03–08 — HOS Tracker fan-out (per-driver-state matrix)": "gated",
+    "block::HOS-MAP-driver-samsara-id::HOS / TASK Mapping — Driver ↔ Samsara ID population (THE verbatim-clocks unlock)": "gated",
+    "block::HOS-PRC-DATA-verbatim-clocks::HOS / TASK PR-C — Verbatim Samsara clocks (DATA SIDE)": "gated",
+    "block::HOS-PRC2-reader-swap::HOS / TASK PR-C2 — Reader swap: board/roster read Samsara certified ELD": "gated",
+    "block::STMT-2-opening-balances::STATEMENTS / TASK 2 — Opening balances (owner-entered)": "gated",
+    "block::STMT-3-1099-425c-consolidation::STATEMENTS / TASK 3 — 1099 + 425C DIP + multi-entity consolidation": "gated",
+    "block::USMCA-LAUNCH-carrier::FOUNDATIONS / TASK USMCA — USMCA carrier launch (July 2026)": "gated",
+    "block::VENDOR-CUSTOMER-QBO-PARITY::Full QBO-parity create panels + profiles (uploaded spec)": "gated",
+    "block::VISUAL-REMAINDER-BACKARROWS::Add §7 back-arrow+breadcrumb to 12 pages missing it": "gated",
+    "block::VISUAL-REMAINDER-BROKEN-EDIT::Fix 3 broken edit/dropdown controls": "gated",
+    "block::VISUAL-REMAINDER-DEADCONTROLS::Wire/make-honest 24 dead-control buttons (fake success toasts)": "gated",
+    "block::VISUAL-REMAINDER-LAYOUT::Fix 8 layout defects (overflow/clip/grid)": "gated",
+    "block::VISUAL-REMAINDER-PAGINATION::Add pagination to 2 capped lists": "gated",
+    "block::VOID-VERIFY-void-everywhere::MONEY CONTROLS / TASK V — Verify Void-Everywhere PRs + flag-plan": "gated",
+    "block::C7-ACCT-SUBNAV-CHROME::Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing r": "gated",
+    "block::RECON-01::RECON-01 Schema + scheduled jobs + exception engine: additive CREATE TABLE accounting.recon_runs + accounting.recon_exce": "deployed",
+    "block::A1-AUDIT-SPINE-LINK-COLUMNS::Additive columns on events.event_log: source_table, source_reference_id, actor_user_id, correlation_id — all NULLABLE, n": "deployed",
+    "block::A2-AUDIT-EMIT-DISPATCH::Dispatch mutations emit spine events via emitDispatchSpineEvent helper calling events.log_event(). Covers: load.created,": "deployed",
+    "block::A3-AUDIT-EMIT-MAINTENANCE::Maintenance WO lifecycle mutations emit spine events via emitMaintenanceSpineEvent helper calling events.log_event(). Co": "deployed",
+    "block::A4-AUDIT-EMIT-ACCOUNTING::Accounting transaction mutations emit spine events via emitAccountingSpineEvent helper calling events.log_event(). Cover": "deployed",
+    "block::A5-AUDIT-EMIT-BANKING::Banking mutations emit spine events via emitBankingSpineEvent helper calling events.log_event(). Covers transfers (creat": "deployed",
+    "block::A6-AUDIT-UNIVERSAL-VIEW::Universal read API over events.event_log at GET /api/v1/audit/events with RLS + pagination. AuditTrailPage at /audit/tra": "deployed",
+    "block::A7-AUDIT-PER-ENTITY-TABS::Add Audit/History tab to entity detail views (Vehicle, Load, Driver, Invoice, Bill, Banking txn, Customer, Vendor) with ": "deployed",
+    "block::A8-AUDIT-REPORTS-SECTION::7 pre-built audit report pages under Reports > Audit. Read-only, RLS+pagination, CSV export. Backend: 7 GET endpoints in": "deployed",
+    "block::A9-AUDIT-CI-EMIT-GUARD::CI gate that fails the build if any mutating route/service lacks a spine audit emit. No migration. Script + allowlist + ": "deployed",
+    "block::ACCOUNTING-UI-POLISH::Register US dates, drop yellow pills, honest toast": "deployed",
+    "block::ACCT-BLOCK-10-ACCOUNT-BALANCES::Block 10/44 — Account Balances View. Adds accounting.fn_account_balances_as_of(p_company_id, p_as_of_date, p_from_date) ": "deployed",
+    "block::ACCT-BLOCK-11-PERIODS-INIT::Accounting Periods Init — ops seed for Jan–Jun 2026 periods for TRANSP (IH 35 Transportation LLC). Adds unique index on ": "deployed",
+    "block::ACCT-CASHFLOW-COMPANY-TZ::Cash-position uses company TZ not UTC": "deployed",
+    "block::ACCT-COA-CANONICALIZATION::Establish catalogs.accounts as the canonical posting COA: reconcile against the accounting.qbo_accounts TRANSP slice, ad": "deployed",
+    "block::ACCT-INTEGRITY-VERIFY-EXTEND::Accounting integrity: verify and extend 4 items (period lock CI, bank-recon cron, accounting probes, CoA role bindings s": "deployed",
+    "block::ACCT-QBOPAR-00-DESIGN-LOCK::CA-00 Design lock: commit QBO-parity COA spec, account-type/detail-type catalog, and two interactive HTML design-law pre": "deployed",
+    "block::ACCT-QBOPAR-01-CATALOG-BACKEND::QBO-parity account type & detail type catalog: migration + seed (15 types / 5 groups) + GET /api/v1/accounting/account-t": "merged",
+    "block::ACCT-QBOPAR-02::Shared ListView component (universal list behaviors): reusable table with sort, filter, gear, pagination, drag-reorder, ": "deployed",
+    "block::ACCT-QBOPAR-03::Chart of Accounts list on ListView: QBO-parity columns, balances, hierarchy, batch archive/merge, gear/filter/export.": "deployed",
+    "block::ACCT-QBOPAR-04::CA-04: New/Edit Account drawer with is_locked flag, opening_balance_as_of, nullable account_number. Migration 2026060802": "deployed",
+    "block::AF-0-rebaseline::STRUCTURAL / TASK 0 — Re-baseline accounting state (truth first, NO code)": "deployed",
+    "block::AF-3-account-registers::STRUCTURAL / TASK 3 — Account registers (QBO-parity, running balance)": "merged",
+    "block::AF-6-finance-hub::STRUCTURAL / TASK 6 — Finance Hub (stub → real dashboard)": "merged",
+    "block::AR-AP-PAYMENT-CONTRACT::AR+AP payment recording 400 contract fix": "deployed",
+    "block::BANKING-CATEGORIZE-C1::Banking categorize Post/Match real contract (unblock 2650 txns)": "deployed",
+    "block::BANKING-CSV-DIRECTION-M6::CSV import money direction (Wells Fargo)": "deployed",
+    "block::BANKING-RECON-DEEPLINK-H4::Reconciliation session opens workspace route": "deployed",
+    "block::BANKING-VIEW-POLISH-L10-H3::Transactions view palette + bulk wiring": "deployed",
+    "block::BK7-INLINE-CREATE-DRAWERS::": "deployed",
+    "block::BLOCK-04-of-29-TIER2-RATE-LIMIT::BLOCK-04-of-29-TIER2-RATE-LIMIT": "merged",
+    "block::BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS::BLOCK-05-of-29-TIER2-CIRCUIT-BREAKERS": "merged",
+    "block::BLOCK-05-TIER2-CIRCUIT-BREAKERS::Circuit breakers on external dependencies (QBO, Samsara, Plaid, OpenAI, etc.)": "deployed",
+    "block::BLOCK-06-of-29-TIER2-OUTBOX-DLQ::BLOCK-06-of-29-TIER2-OUTBOX-DLQ": "merged",
+    "block::BLOCK-07-of-29-TIER2-PAGINATION-AUDIT::BLOCK-07-of-29-TIER2-PAGINATION-AUDIT": "merged",
+    "block::BLOCK-08-of-29-TIER2-LOAD-TEST::BLOCK-08-of-29-TIER2-LOAD-TEST": "merged",
+    "block::BLOCK-08-TIER2-LOAD-TEST::k6 load-test baseline with nightly CI": "deployed",
+    "block::BLOCK-09-of-29-TIER2-E2E-PATHS::BLOCK-09-of-29-TIER2-E2E-PATHS": "merged",
+    "block::BLOCK-09-TIER2-E2E-PATHS::Playwright E2E tests for 10 critical user paths": "deployed",
+    "block::block-10-account-balances::block-10-account-balances": "deployed",
+    "block::BLOCK-10-driver-inactivity::DRIVER LIFECYCLE / TASK 10 — Driver inactivity: 96h alert + 30-day DOT + vacation override": "merged",
+    "block::BLOCK-10-of-29-TIER2-RLS-TEST-GATE::BLOCK-10-of-29-TIER2-RLS-TEST-GATE": "merged",
+    "block::BLOCK-10-TIER2-RLS-TEST-GATE::Cross-tenant RLS gate verification script with fixture generation": "deployed",
+    "block::BLOCK-11-of-29-TIER2-AUDIT-COVERAGE::BLOCK-11-of-29-TIER2-AUDIT-COVERAGE": "merged",
+    "block::BLOCK-12-of-29-TIER2-DESTRUCT-PREFLIGHT::BLOCK-12-of-29-TIER2-DESTRUCT-PREFLIGHT": "merged",
+    "block::BLOCK-13-of-29-TIER2-TUNING-CATALOG::BLOCK-13-of-29-TIER2-TUNING-CATALOG": "merged",
+    "block::BLOCK-13-TIER2-TUNING-CATALOG::Operational tuning catalog — single doc for all tunable parameters with CI guard": "deployed",
+    "block::BLOCK-14-of-29-TIER2.5-MEXICO-OPS::BLOCK-14-of-29-TIER2.5-MEXICO-OPS": "merged",
+    "block::BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP::BLOCK-15-of-29-TIER2.5-MECHANIC-SHOP": "merged",
+    "block::BLOCK-16-COMPLIANCE-DASHBOARD::COMPLIANCE-DASHBOARD": "deployed",
+    "block::BLOCK-16-of-29-TIER2.5-FUEL-CARD::BLOCK-16-of-29-TIER2.5-FUEL-CARD": "merged",
+    "block::BLOCK-18-of-29-TIER3-PII-ENCRYPTION::BLOCK-18-of-29-TIER3-PII-ENCRYPTION": "merged",
+    "block::block-20-cash-basis::block-20-cash-basis": "merged",
+    "block::block-20-frontend-selector::block-20-frontend-selector": "merged",
+    "block::BLOCK-20-of-29-TIER3-SECRETS-ROTATION::BLOCK-20-of-29-TIER3-SECRETS-ROTATION": "merged",
+    "block::block-20-period-close-lock::block-20-period-close-lock": "merged",
+    "block::block-21-expense-category-map::block-21-expense-category-map": "merged",
+    "block::BLOCK-21-of-29-TIER3-DR-DRILL::BLOCK-21-of-29-TIER3-DR-DRILL": "merged",
+    "block::block-22-driver-settlement-engine::block-22-driver-settlement-engine": "merged",
+    "block::BLOCK-22-of-29-TIER3-OPS-RUNBOOKS::BLOCK-22-of-29-TIER3-OPS-RUNBOOKS": "merged",
+    "block::block-23-escrow-posting-flow::block-23-escrow-posting-flow": "merged",
+    "block::BLOCK-23-of-29-TIER3-DEGRADATION::BLOCK-23-of-29-TIER3-DEGRADATION": "merged",
+    "block::block-24-factoring-posting::block-24-factoring-posting": "merged",
+    "block::block-25-factoring-fees-reserves::block-25-factoring-fees-reserves": "merged",
+    "block::block-26-factoring-reconciliation::block-26-factoring-reconciliation": "merged",
+    "block::BLOCK-26-of-29-TIER4-PARTITION::BLOCK-26-of-29-TIER4-PARTITION": "merged",
+    "block::block-27-fuel-expense-posting::block-27-fuel-expense-posting": "deployed",
+    "block::BLOCK-27-of-29-TIER4-CANARY::BLOCK-27-of-29-TIER4-CANARY": "merged",
+    "block::block-28-maintenance-ap-posting::block-28-maintenance-ap-posting": "deployed",
+    "block::BLOCK-28-of-29-TIER4-VENDOR-LOCKIN::BLOCK-28-of-29-TIER4-VENDOR-LOCKIN": "merged",
+    "block::block-29-bank-reconciliation-engine::block-29-bank-reconciliation-engine": "deployed",
+    "block::BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS::BLOCK-29-of-29-TIER4-KNOWN-LIMITATIONS": "merged",
+    "block::block-30-bank-reconciliation-ui::block-30-bank-reconciliation-ui": "merged",
+    "block::block-31-sales-tax-handling::block-31-sales-tax-handling": "merged",
+    "block::block-33-invoice-line-revenue-mapping::block-33-invoice-line-revenue-mapping": "deployed",
+    "block::block-34-payment-application::block-34-payment-application": "merged",
+    "block::block-35-chart-of-accounts-roles::block-35-chart-of-accounts-roles": "merged",
+    "block::block-36-multi-entity-accounting::block-36-multi-entity-accounting": "merged",
+    "block::block-37-qbo-sync-repair-pipeline::block-37-qbo-sync-repair-pipeline": "merged",
+    "block::block-40-accounting-audit-trail::block-40-accounting-audit-trail": "merged",
+    "block::block-41-posting-lineage-ui::block-41-posting-lineage-ui": "merged",
+    "block::block-43-live-db-schema-verification::block-43-live-db-schema-verification": "merged",
+    "block::BLOCK-C-DEDUCTION-CAP::Settlement deduction cap — net floor (50% gross + absolute cents) with all-or-nothing roll-over of pending deductions at": "deployed",
+    "block::BLOCK-C-MIGRATION-RENAME::Rename Block C migration to 12-digit runner-compatible filename so db:migrate applies min_net_settlement columns in prod": "deployed",
+    "block::block-cf-cash-forecast::block-cf-cash-forecast": "merged",
+    "block::block-cmc-month-close-wizard::block-cmc-month-close-wizard": "merged",
+    "block::BLOCK-D-INSURANCE-RENEWAL::Insurance policy renewal (clone-forward). POST /api/v1/insurance/policies/:id/renew clones the source policy (tenant_id,": "deployed",
+    "block::BLOCK-E-INSURANCE-FLEET::Insurance Fleet Add/Remove — add/remove trucks/trailers from an active policy mid-term. POST /insurance/policies/:id/uni": "deployed",
+    "block::BLOCK-F-INSURANCE-CANCELLATION::Insurance policy cancellation + unearned-premium refund with Decision C hardened soft-skip. POST /api/v1/insurance/polic": "deployed",
+    "block::BLOCK-G-COI-PDF::Certificate of Insurance PDF — GET /api/v1/insurance/policies/:id/coi returns Puppeteer-rendered PDF; frontend Download ": "deployed",
+    "block::BLOCK-H-DETENTION-NOTIFY::Block H — On detention request approval (PATCH /api/v1/dispatch/detention/requests/:id/approve), after the billing bridg": "deployed",
+    "block::BLOCK-I-CI-DIST-FIX::": "deployed",
+    "block::BLOCK-J-MASTER-DATA-GRANT::": "deployed",
+    "block::block-ppc-period-comparison::block-ppc-period-comparison": "merged",
+    "block::BLOCK5-INSURANCE-FORWARD-FIX::Forward-fix for the #687 double-bill vulnerability: require Idempotency-Key on /insurance/policies, partial-UNIQUE bill_": "deployed",
+    "block::BLOCK7-DRIVER-HUB-REQUESTS::Driver Hub Requests — Manager/Owner approve/deny cash advance requests; approve creates a settlement deduction via creat": "deployed",
+    "block::BUG-ADD-USER-INERT::Fix inert Add User button: SaveDropdown disabled by silent returningDetection state; fix BE default_company_id; add regr": "deployed",
+    "block::C1-PRE-SETTLEMENTS::Settlement data model (read side). Schema settlement, tables settlement/settlement_line/settlement_deduction. RLS+NULLIF": "deployed",
+    "block::C2-FACTORING-PROFILE::Enrich factoring.factor with fully configurable tiered fee + reserve schedules (fee_schedule jsonb, reserve_schedule jso": "deployed",
+    "block::C3-CUSTOMER-CONTRACT-UPLOAD::Upload + store customer contracts. Append-only. Supersede by new version. Audit-linked. Reuses existing docs/R2 storage.": "deployed",
+    "block::C4-CUST-VEND-REBUILD-RECLASSIFY::Additive reclassification columns on mdata.customers + mdata.vendors, append-only entity_reclassification_log table, rec": "deployed",
+    "block::C6-HOME-DASHBOARD::QBO-style home dashboard at /app/homepage. Read-only aggregation. Sidebar HOME item wired to /app/homepage. No financial": "merged",
+    "block::CAP-AUTOSTATUS::SAMSARA CAP (GAP-55..64) / TASK — Auto load-status switch": "merged",
+    "block::CAP-CARGOTEMP::SAMSARA CAP (GAP-55..64) / TASK — Cargo-temp monitoring": "merged",
+    "block::CAP-ENGINEWO::SAMSARA CAP (GAP-55..64) / TASK — Engine-fault auto Work Order": "merged",
+    "block::CAP-FUELFRAUD::SAMSARA CAP (GAP-55..64) / TASK — Fuel-fraud detection": "merged",
+    "block::CAP-GPS::SAMSARA CAP (GAP-55..64) / TASK — GPS-per-load tracking": "merged",
+    "block::CAP-PREDICTIVE::SAMSARA CAP (GAP-55..64) / TASK — Tire/brake predictive": "merged",
+    "block::CAP-SCORING::SAMSARA CAP (GAP-55..64) / TASK — Driver scoring": "merged",
+    "block::CHAIN-01-vendor-picker-fix::ACCOUNTING-CHAIN / TASK 1 — Vendor picker on Create Bill returns empty": "merged",
+    "block::CHAIN-02-account-register-params::ACCOUNTING-CHAIN / TASK 2 — Account register not passing its params (400)": "merged",
+    "block::CHAIN-03-create-bill-gl-autopost::ACCOUNTING-CHAIN / TASK 3 — Create Bill → GL auto-post (design + draft-only proof)": "merged",
+    "block::CHORE-MASTER-TRACKER-MD::Establish the in-repo living master tracker. docs/trackers/MASTER_PROGRESS_REPORT.md is the Markdown SOURCE OF TRUTH (fu": "deployed",
+    "block::CHORE-UNVERIFIED-ROWS-RECONCILE::Reconcile every UNVERIFIED tracker row against the GitHub merged-PR record (871 PRs). Confirmed: CA-04 = DONE #815; GAP-": "deployed",
+    "block::CLOSURE-10-MAINT-PARTS-CATALOG::Maintenance parts master catalog by brand for owned fleet": "deployed",
+    "block::CLOSURE-11-MAINT-SERVICES-CATALOG::Maintenance services catalog + ETA defaults from Samsara": "deployed",
+    "block::CLOSURE-12-CYCLE5-PAYROLL-INTEGRATION::Cycle 5 TMS↔QBO payroll integration page": "deployed",
+    "block::CLOSURE-13-USMCA-JULY-LAUNCH::USMCA July 2026 launch activation runbook + toggle sequence": "deployed",
+    "block::CLOSURE-16-DEEP-AUDIT-C::Deep audit C — 11 canonical reports + 3 E2E QBO workflows": "deployed",
+    "block::CLOSURE-17-ON-HOLD-TRIAGE::ON HOLD blocks triage — A23-11, A23-14, B19, B20 scope review": "deployed",
+    "block::CLOSURE-18-PERF-AUDIT::Performance audit — bundle size + page load + API latency budgets": "deployed",
+    "block::CLOSURE-19-SEC-AUDIT::Security audit — RLS + auth + secrets + dependency CVEs": "deployed",
+    "block::CLOSURE-20-A11Y-AUDIT::Accessibility audit — WCAG 2.1 AA compliance pass": "deployed",
+    "block::CLOSURE-21-MONITORING-SETUP::Production monitoring + alerting (Sentry + deep health + uptime)": "deployed",
+    "block::CLOSURE-23-DR-BACKUP-AUDIT::Disaster recovery + backup verification + restore drill": "deployed",
+    "block::CLOSURE-24-OPERATOR-ONBOARDING::Operator onboarding flow + sample data + walkthroughs": "deployed",
+    "block::CLOSURE-25-RUNBOOKS::Per-block manifest + artifact CI guard for runbooks": "deployed",
+    "block::D1-SETTLEMENTS-APPROVAL-PDF::Settlements approval workspace + driver/company PDF. Trip-number auto-link engine, per-line approve/reject, escrow runni": "deployed",
+    "block::DESIGN-STD-NAVY-PAGE-BANNER::Create NavyPageSubNav as the software-wide navy banner standard. Swap SettlementsPage onto it. Lock approved tokens in C": "deployed",
+    "block::DISP-DRAWER-WIRE::Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs": "deployed",
+    "block::DISP-FACTORING-PACKET::DISP-FACTORING-PACKET — Factoring queue + FARO Reserve Tracker + FactoringTab drawer child (LANE B Block 7)": "deployed",
+    "block::DISP-FINES-DEDUCT::Block 13 — Driver fines → auto-deduction policies + drawer confirm/defer card": "deployed",
+    "block::DISP-KANBAN-dispatch-kanban-board::DISPATCH / TASK Dispatch Kanban board — Dispatch Kanban board": "merged",
+    "block::DISP-KANBAN-STATES::Block 3 — True Kanban operational states (7 columns + Completed/Cancelled terminal)": "deployed",
+    "block::DISP-LIST-TABLE-ASSIGN::Block 5 — List(simple+risk) vs Table(detailed) + Assignment bands with unassigned-on-top": "deployed",
+    "block::DISP-OVERVIEW::Block 1 — Dispatch Overview command center (default view)": "deployed",
+    "block::DISP-OVERVIEW-dispatch-overview::DISPATCH / TASK Dispatch Overview — Dispatch Overview": "merged",
+    "block::DISP-PLANNERS::DISP-PLANNERS": "merged",
+    "block::DISP-PROFIT-load-profitability::DISPATCH / TASK Load Profitability — Load Profitability": "merged",
+    "block::DISP-PROFITABILITY::Trip Profitability view + SettlementProfitabilityCard drawer child + loadProfit util": "deployed",
+    "block::DISP-QUEUES-NAV::DISP-QUEUES-NAV Block 2 — top-bar queue navigation with live count badges and Dispatch › view breadcrumb.": "deployed",
+    "block::DISP-ROUNDTRIPS::Block 4 — Round Trips view + OOS strip pinned bottom of every dispatch view": "deployed",
+    "block::DISPATCH-LIVE-ETA::Dispatch live ETA columns — driver status, Samsara ETA, on-time prediction": "deployed",
+    "block::DOC-CATALOGS-ACCOUNTS-FK-INVENTORY::Authoritative FK re-key inventory for catalogs.accounts (29 cols/20 tables) — AF-1 input.": "deployed",
+    "block::DOC-CATALOGS-CLASSES-FK-INVENTORY::catalogs.classes per-entity FK inventory — companion to AF-1.": "deployed",
+    "block::DOCS-AUDIT-LINKAGE-SPECS::Architecture specs for the A1–A9 audit linkage phase and Settlements page spec. Also adds an honest docs/ exemption to C": "deployed",
+    "block::DOCS-B9-ESCROW-DESIGN::Docs-only design spec for the gated B9 driver-escrow-deduction build (Section D #1). Captures Jorge's 9 LOCKED rules ($2": "deployed",
+    "block::DOCS-DISPATCH-LANE-ENFORCEMENT-V2::Lock dispatch lane enforcement document — allowed_files per block, disjoint-lane rules, stop-the-line gate policy.": "deployed",
+    "block::DOCS-FACTORING-ACCOUNTING-STRUCTURE::Factoring accounting structure proposal + bookkeeper worksheet v1.1 update (cash_dip WF, factor_advances_receivable FARO": "deployed",
+    "block::DOCS-FH1-FIXED-ASSETS-DEPRECIATION::Docs-only design spec for Finance Hub FH-1 (Fixed Assets + Depreciation) — the foundation block. Closes the QBO gap: QBO": "deployed",
+    "block::DOCS-FH1-LEASING-FOLLOWUP::Docs-only follow-up to FH-1 (already merged) adding the inter-company leasing relationship per locked decision #5. Adds ": "deployed",
+    "block::DOCS-FH2-LOAN-WIZARD::Docs-only design spec for Finance Hub FH-2 (Loan Wizard, 'create everything'). Closes the QBO gap (loan-for-asset setup ": "deployed",
+    "block::DOCS-FH3-AMORTIZATION-ENGINE::Docs-only design spec for Finance Hub FH-3 (Amortization Schedule Engine). Closes the QBO gap (QBO has no built-in amort": "deployed",
+    "block::DOCS-FH4-FINANCE-CALCULATOR::Docs-only design spec for Finance Hub FH-4 (Finance Calculator). PURE CALCULATION, no posting, no GL, no money path. Mod": "deployed",
+    "block::DOCS-FH5-BANKRUPTCY-MODELER::Docs-only design spec for Finance Hub FH-5 (Bankruptcy Calculator/Modeler) -- most complex + sensitive, build last. TRAN": "deployed",
+    "block::DOCS-FH5-POSTING-LOCKED::Docs-only follow-up to the merged FH-5 Bankruptcy Modeler spec, applying Jorge's LOCKED posting decision (2026-06-14): P": "deployed",
+    "block::DOCS-FH6-TAX-MANAGER::Docs-only design spec for Finance Hub FH-6 (Tax Manager) + FH-6a (property-tax rendition). Per-year tax register for Jor": "deployed",
+    "block::DOCS-FH7-UNIT-ALLOCATION::Docs-only design spec for Finance Hub FH-7 (shared Unit Allocation control). Cross-cutting, NOT tax-only: a reusable con": "deployed",
+    "block::DOCS-FH8-LEASE-CONTRACT::Docs-only design spec for Finance Hub FH-8 (Lease Contract + Unit Picker, Legal<->Finance, reuses FH-7). Lease agreement": "deployed",
+    "block::DOCS-FINANCE-ANSWERED-QS-FOLLOWUP::Docs-only follow-up applying Jorge's answered questions (Finance Build Package-4, 11-ANSWERED-QUESTIONS) to two already-": "deployed",
+    "block::DOCS-GEOFENCE-INSURANCE-SPEC::Lock dispatch geofence timing model (WF-043) + insurance blueprint + CI guard spec — no app code changed.": "deployed",
+    "block::DOCS-MILEAGE-LIFECYCLE-CORRECTION::Docs-only correction to MILEAGE-MODEL-DESIGN.md per Jorge's locked lifecycle (03-MILEAGE-LIFECYCLE-LOCKED). Adds §1A 'Lo": "deployed",
+    "block::DOCS-MILEAGE-MODEL-ANSWERS::Docs-only follow-up to the merged mileage design (#943). Replaces MILEAGE-MODEL-DESIGN.md §6 'Open questions' with Jorge": "deployed",
+    "block::DOCS-MILEAGE-MODEL-DESIGN::Docs-only design/grounding spec for the mileage build blocks — no code, no DDL, no migration, no money path. Authors doc": "deployed",
+    "block::DOCS-PERMISSIONS-DESIGN::Docs-only design spec for the foundational Roles & Permissions block (Jorge-approved UI lock 01-PERMISSIONS-LOCKED). Qui": "deployed",
+    "block::DOCS-QBO-PARITY-CAPTURE-V2::Capture master progress report + QBO-parity v2/v3 specs + Visuals-First specs to repo (docs-only) so nothing is lost.": "deployed",
+    "block::DOCS-RECON-TRACKER-ESCROW-RESEARCH-0614::Docs-only, no code/DDL. (1) Reconcile MASTER_PROGRESS_REPORT.md against a full read-only recon of the entire block set v": "deployed",
+    "block::DOCS-RELAY-INTERNAL-BANK-DESIGN::Docs-only design spec for the gated Relay internal-bank + diesel-code build (Section D #2). Captures Jorge's exact Relay": "deployed",
+    "block::DOCS-RLS-COVERAGE-AUDIT::Safe-additive Block 9 — RLS coverage audit (docs-only, GUARD #33 / Wave-5 Block N). docs/specs/RLS-COVERAGE-AUDIT.md: re": "deployed",
+    "block::DOCS-ROLE-BINDINGS-WORKSHEET::Bookkeeper approval worksheet for chart-of-accounts role bindings used by the IH35-TMS posting engine.": "deployed",
+    "block::DOCS-VOID-EVERYWHERE-DESIGN::Docs-only design spec for the VOID-EVERYWHERE cross-cutting block (finance build package construction block #1, BUILD FI": "deployed",
+    "block::E1-SMOKE-SERVICE-TOKEN-AUTH::Service-token auth middleware for service-to-service/cron HTTP calls. Daily smoke probe (read-only critical path checks)": "deployed",
+    "block::FEAT-ACCOUNT-REGISTER-D5::D5 / CA-05 + CA-06: read-only per-account register (running-balance ledger over the chart of accounts) + audit-history t": "deployed",
+    "block::FEAT-B1-EXPENSE-CATEGORY-MAP-SEED::B1: populate accounting.expense_category_account_map (10 category->account mappings x active operating companies TRANSP+": "deployed",
+    "block::FEAT-B2-POSTING-ENGINE-CASH-ADVANCE::B2: teach the posting engine the cash_advance source type so an approved advance posts a real, balanced, traceable journ": "deployed",
+    "block::FEAT-B3-EMPLOYEE-LOAN-LEDGER::B3: wire the missing GL posting for the employee-loan / cash-advance disbursement on the existing 0138 driver_finance le": "deployed",
+    "block::FEAT-B4-DRIVER-REQUEST-AUDIT-TIMELINE::B4: append-only driver-request accountability timeline on the existing immutable spine (events.event_log). Captures requ": "deployed",
+    "block::FEAT-B5-CASH-ADVANCE-APPROVE-CASCADE::B5 (capstone): rework approveCashAdvanceRequest into the link+post cascade orchestrating B2/B3/B4. On approval the advan": "deployed",
+    "block::FEAT-B6-DRIVER-INBOX-UI::B6 Driver Inbox UI inside Driver Hub Home. (1) Approve action uses the OFFICE cascade API (/cash-advance-requests/:id/ap": "deployed",
+    "block::FEAT-CLASSES-BULK-EDIT::Safe-additive Block 7 — classes bulk-edit (additive, no migration, no money path). Backend: new POST /api/v1/catalogs/cl": "deployed",
+    "block::FEAT-DISP-CASHFLOW-LINK::DISP-CASHFLOW-LINK — verify factoring advances, settlement payouts, detention revenue, and factoring fees are represente": "deployed",
+    "block::FEAT-DISP-DRAWER-WIRE::Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs": "deployed",
+    "block::FEAT-DISPATCH-PLANNERS-SPLIT-NAV::Safe-additive Block 1 (C-1) — Dispatch Planners split control. The 'Planning' parent was an intentional click-to-toggle ": "deployed",
+    "block::FEAT-DOCS-UPLOAD-UI::Safe-additive Block 4 — docs-upload UI on the Documents page (frontend-only, additive, no money path, no migration). The": "deployed",
+    "block::FEAT-DRIVER-ESCROW-SUBACCOUNT-V2::Per-driver ESCROW (liability) sub-account auto-provision — the liability half, STOP-DECISION #1 resolved (asset side mer": "deployed",
+    "block::FEAT-DRIVER-HUB-ROUTE-WIRE::P5a — wire existing DriverHubPage to /driver-hub route (additive; mirrors /cash-flow)": "deployed",
+    "block::FEAT-DRIVER-INBOX-REPORTING::Safe-additive Block 6 (B7) — read-only driver-inbox reporting. New GET /api/v1/driver-finance/inbox-reporting?operating_": "deployed",
+    "block::FEAT-DRIVER-SUBACCOUNT-ASSET-PROVISION::Per-driver ASSET sub-account auto-provision (the part NOT gated on STOP-DECISION #1). On driver-profile creation (POST /": "deployed",
+    "block::FEAT-DRIVER-SUBACCOUNT-BULK-BACKFILL-DRYRUN::Bulk backfill DRY-RUN for the per-driver asset + escrow sub-accounts (the per-hire path is #933 asset / #934 escrow). Ex": "deployed",
+    "block::FEAT-EXPENSES-PHASE1-5-BUILD::GAP-EXPENSES Phase 1.5 -- expense_lines cents reconciliation + the hard 'balances or fails hard' total=sum invariant, la": "deployed",
+    "block::FEAT-EXPENSES-PHASE1-FOUNDATION::GAP-EXPENSES-MODULE-COMPLETION Phase 1 (A1-staged foundation). Authors the dormant parent header accounting.expenses so ": "deployed",
+    "block::FEAT-EXPENSES-PHASE2-STEP3-POSTING-BUILD::GAP-EXPENSES Phase 2 Step 3 (TIER 1) — expense → GL posting engine + reversing-JE void, ALL behind EXPENSE_GL_POSTING_EN": "deployed",
+    "block::FEAT-EXPENSES-PHASE2-UNCATEGORIZED-SEED::GAP-EXPENSES Phase 2 Step 2 — the safe foundation seed (NO posting logic). Migration 202606151500 seeds one global 'Unca": "deployed",
+    "block::FEAT-FH-2-LOAN-WIZARD::FH-2 Loan Wizard — Finance Hub centerpiece, PREVIEW/COMPUTE-ONLY (Tier 3). One form computes the full preview-first draf": "deployed",
+    "block::FEAT-FH-3-AMORTIZATION::FH-3 Amortization Schedule Engine (Tier 3). Create loans + generate/store amortization schedules. New schema finance.* (": "deployed",
+    "block::FEAT-FH-4-CALCULATOR::FH-4 Finance Calculator (Tier 3). PURE modeling-only: monthly payment, total interest, payoff date, amortization preview": "deployed",
+    "block::FEAT-FH1-FIXED-ASSETS-DATA-MODEL::FH-1 Fixed Assets + Depreciation — Step 1: the asset-register DATA MODEL only (NO posting, NO cron). TIER 3 (FH-module b": "deployed",
+    "block::FEAT-HELP-ARTICLE-STUBS::Safe-additive Block 5 — help-article scaffold stubs (frontend-only docs, no money path, no migration). Help is frontend-": "deployed",
+    "block::FEAT-HIDE-STUB-NAV-PAGES::Safe-additive Block 8 — hide stub/placeholder pages from nav (frontend-only, reversible, no code deleted). Per GUARD ans": "deployed",
+    "block::FEAT-INSURANCE-POLICY-WIZARD::Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea": "deployed",
+    "block::FEAT-INVENTORY-PARTS-404-FIX::B1: fix the /inventory Parts & Stock page that called a non-existent /api/v1/inventory/parts endpoint (404). Frontend-on": "deployed",
+    "block::FEAT-PERIODS-INIT-TRK-2025-H2::AI-4: extend the accounting-period seed to full p4-periods-balances coverage (2025 + 2026, TRANSP + TRK). 202606080210 s": "deployed",
+    "block::FEAT-QBO-PARITY-A1-TABLE-GRAMMAR::A1 — shared ParityTable grammar (density + gear column-toggle + advanced pager + select/batch). Additive new component; ": "deployed",
+    "block::FEAT-QBO-PARITY-A3-SIZING::A3 — sizing tokens + ParityDrawer (~576px right-drawer shell for create/edit). Additive new files; no existing files tou": "deployed",
+    "block::FEAT-QBO-PARITY-DOCS::QBO-PARITY-UI-SYSTEM (PART D) — design-law spec + architecture/blueprint/locked-decisions docs (docs-only)": "deployed",
+    "block::FEAT-REEFER-HOURS-POLL-CRON::Block F — reefer hours 15-minute poller cron (additive backend, no money path). The ingest (ingestReeferHoursFromSamsara": "deployed",
+    "block::FEAT-SETTLEMENT-DEDUCTION-LEDGER-DDL::A3-1: additive ledger columns on driver_finance.driver_settlement_deductions (the KEEP ledger). Adds remaining_balance_c": "deployed",
+    "block::FEAT-SETTLEMENT-RECOVERY-CAPPED-PAYROLL::A3-2: the net-floor-capped, partial-to-floor advance-recovery ENGINE for driver settlements. Adds a PURE engine (payroll": "deployed",
+    "block::FEAT-SETTLEMENT-RECOVERY-CAPPED-WIRING::A3-2 live-path WIRING (engine merged in #929). Wires computeSettlement to the capped engine behind SETTLEMENT_CAPPED_REC": "deployed",
+    "block::FEAT-SETTLEMENT-RECOVERY-GL-JE::A3-2 GL — FALLBACK paired JE (Option B locked; verify-first proved the single multi-line bill is not clean — createBill ": "deployed",
+    "block::FEAT-SETTLEMENT-SHADOW-RUN::A3-3: read-only / compute-only shadow comparison of OLD blunt recovery vs NEW capped-ledger recovery, per real settlemen": "deployed",
+    "block::FEAT-SIDEBAR-V2-REORG-25::SIDEBAR-V2-REORG-25: 25-item Owner sidebar + 3 new modules (Tasks, Finance, Inventory shells)": "deployed",
+    "block::FEAT-TASK-BOARD-CREATE-TASK-UI::Block B — Create-Task UI (additive, frontend-only, no money path). The Task Board displayed tasks but had no create acti": "deployed",
+    "block::FEAT-TRACKER-EXPORT-GITHUB-TABS::Exporter Option C — add the GitHub/computed tabs to scripts/export-tracker-xlsx.mjs so v27 has all 10 v26 tabs in order.": "deployed",
+    "block::FEAT-V0-SIDEBAR-DRIVER-HUB::V0 (partial) — add DRIVER HUB sidebar entry adjacent to DRIVERS (additive insert; cash-flow nav deferred to Sidebar-V2).": "deployed",
+    "block::FEAT-V2-A2-REFERENCE-SELECT::A2 keystone — ReferenceSelect: Combobox + always-visible '+ Add new' -> QuickCreateEntityModal (nested-create-returns-se": "deployed",
+    "block::FEAT-VOID-EVERYWHERE-PR1::VOID-EVERYWHERE PR-1 (foundation, gated default OFF). Adds the shared void engine wired to Invoices + Journal Entries. M": "deployed",
+    "block::FEAT-VOID-EVERYWHERE-PR2::VOID-EVERYWHERE PR-2 (gated, default OFF, NO migration). Extends the PR-1 shared void engine to Bills -- the AP mirror o": "deployed",
+    "block::FINAL-ADDITIONS-PAGE::Final Additions launch punch-list page": "deployed",
+    "block::FIX-AT-RISK-LOADS-SD-CITY::at-risk-loads 500 (Postgres 42703) — project city/state in the sd delivery-stop lateral + projection-drift regression gu": "deployed",
+    "block::FIX-AUDIT-KPI-DRIFTS::Reconcile 8 KPI drifts production vs app. All 8 canonical KPIs already fixed in main: canonical-kpis.ts, KPI_SOURCES_OF_": "deployed",
+    "block::FIX-AUDIT-NESTED-MODALS::Fix nested-box modal pattern (double-frame headers). WorkOrderDetailModal + CustomerDrillModal already clean. Added doub": "deployed",
+    "block::FIX-AUDIT-PROD-STUBS::Remove 13+ production stub strings. Fixed DriversTable.tsx '(stub)' toast. CI guard (verify-no-prod-stubs.mjs) already i": "deployed",
+    "block::FIX-AUDIT-TEST-DATA-LEAK::Archive TEST/seed rows from prod listings. Infrastructure already in place (migrations 0320/0367/0369/0396, EXCLUDE_ARCH": "deployed",
+    "block::FIX-AUDIT-TRIGGER-DRIFT::": "merged",
+    "block::FIX-CANARY-SMOKE-DURABLE::Simplify smoke.sh to health-only: drop SMOKE_TEST_TOKEN/EMAIL/PASSWORD/COMPANY_ID — auth is Google OAuth/Lucia, no servi": "merged",
+    "block::FIX-CI-YML-CONFLICT-MARKERS::Remove git conflict markers committed to ci.yml during W1B/W2B/W2P squash merges. YAML validated.": "deployed",
+    "block::FIX-COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE::BUGFIX COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE — the #1015 seed created catalogs.accounts #6999 'Uncategorized Expenses'": "deployed",
+    "block::FIX-DEPLOY-MIGRATION-DRIFT::Re-home wave SQL migrations from apps/backend/migrations/ (never scanned by db-migrate.mjs) into db/migrations/ with tim": "deployed",
+    "block::FIX-DISPATCH-DRIVER-PICKER-50-CAP::Book Load driver picker 50-cap — load full active set (limit:200) so drivers past newest 50 appear (Mecor). Also #1529 i": "deployed",
+    "block::FIX-DISPATCH-SUBNAV-ROUTING::Block V — wire 5 dispatch secondary tabs to distinct routes": "deployed",
+    "block::FIX-DOUBLE-STRINGIFY-SWEEP-NONMONEY::Final double-stringify sweep (sibling of the task-create #970 and money-path #971 fixes) — the remaining NON-money api c": "deployed",
+    "block::FIX-DRIVERS-FULL-NAME-PHANTOM::mdata.drivers.full_name phantom across 5 endpoints (42703) → CONCAT_WS(first,last); +db-test guard.": "deployed",
+    "block::FIX-FINANCE-DOUBLE-STRINGIFY-SWEEP::Money-path double-stringify sweep (sibling of FIX-TASK-CREATE-DOUBLE-STRINGIFY). Same root cause: these api clients pre-": "deployed",
+    "block::FIX-FUEL-SUBNAV-ROUTING::Block U — wire 8 fuel sub-nav tabs to distinct routes": "deployed",
+    "block::FIX-GUARD-M2-FK-DETECTION::Fix verify:m2-integrity-position-history FK detection: use pg_constraint (role-independent catalog) instead of informati": "deployed",
+    "block::FIX-INSURANCE-POLICY-UNIT-IS-ACTIVE::Insurance create/units 500 fix. insurance.policy_unit has NO is_active column (active state = removed_at IS NULL; verifi": "deployed",
+    "block::FIX-LEGAL-FLEET-VEHICLE-TYPE-PHANTOM::Legal lease-to-own /fleet 500 — phantom u.unit_type → vehicle_type.": "deployed",
+    "block::FIX-MAINTENANCE-SERVICES-ETA-PHANTOM::services/eta 500 — 3 phantom mdata.units cols → telematics.vehicle_latest_position + maintenance.pm_schedules.": "deployed",
+    "block::FIX-P8-AUDIT-NESTED-MODALS::Fix nested-box modal pattern (double-frame headers). WorkOrderDetailModal + CustomerDrillModal already clean in main. Ad": "deployed",
+    "block::FIX-PER-TRUCK-CPM-PERMITS-CTE::per-truck-cpm permits CTE 500 fix — repoint phantom CTE to the real unit relation; +static CI guard.": "deployed",
+    "block::FIX-PICKERS-50-CAP-UNITS-VENDORS-CUSTOMERS::50-cap class — unit/vendor/customer client pickers load full active set (limit forwarded in mdata.ts).": "deployed",
+    "block::FIX-REMOVE-LEFT-SIDEBAR-HOVER-DROPDOWN::Finance-build block 17: remove the LEFT main sidebar hover/fly-out dropdown (outstanding cleanup; locked sidebar design ": "deployed",
+    "block::FIX-REQUIRED-CHECKS-GATE::": "merged",
+    "block::FIX-RLS-BILL-EXPENSE-LINES::Accounting audit security fix: enable + force RLS with company-isolation policies on accounting.bill_lines, accounting.e": "deployed",
+    "block::FIX-SAFETY-NAV-COUNT::Restore SAFETY_CANONICAL_TAB_COUNT reference in HomePage after home router refactor": "deployed",
+    "block::FIX-SAMSARA-WEBHOOKS-INVESTIGATION::Samsara webhooks investigation + restoration. Route mounted at dual paths, HMAC-SHA256 signature verifier present, per-t": "deployed",
+    "block::FIX-STEP3-POSTING-BALANCED-JE-PROOF::Step 3 (expense → GL posting) balanced-JE proof + two posting-engine robustness fixes uncovered while obtaining it. (1) ": "deployed",
+    "block::FIX-TASK-CREATE-DOUBLE-STRINGIFY::Prod 400 fix: task-create POST sent a double-stringified body ('\"{...}\"') so the server rejected with 400 'expected obje": "deployed",
+    "block::FIX-TEST-JSDOM-ENV-MISSING::Fix 64 failing tests in dispatch-coming-soon-triage and lists-routing — missing @vitest-environment jsdom + jest-dom mat": "deployed",
+    "block::FIX-URL-NORMALIZE::Block H — underscore URL redirect to hyphen canonical paths": "deployed",
+    "block::FOLLOWUP-SPECS-2026-06-07::Follow-up block specs from June 6-7 sprint: insurance renewals, deduction cap, detention notifications, CI fixes, and Dr": "deployed",
+    "block::GAP-10-DELTA-CANCELLATIONS-REPORT::Load cancellations analytics report (group by reason, driver, customer, date)": "deployed",
+    "block::GAP-11-DELTA-UPLOAD-EXPENSE::Wire UploadZone into expense create form (match bill/invoice attachment pattern)": "deployed",
+    "block::GAP-14-PRE-DISPATCH-VALIDATION::": "deployed",
+    "block::gap-14-validation-pre-dispatch::gap-14-validation-pre-dispatch": "merged",
+    "block::GAP-18-DRIVER-COMM-TIMELINE::": "deployed",
+    "block::GAP-19-DETENTION-INVOICE::GAP-19 Detention billable manager-approval gate — approve bridges detention into linehaul invoice (reuses bridgeDetentio": "deployed",
+    "block::GAP-20::": "deployed",
+    "block::gap-20-recurring-bills::gap-20-recurring-bills": "merged",
+    "block::GAP-23::4-tier Samsara cache hierarchy with scheduled warmer": "deployed",
+    "block::gap-23-samsara-cache-tiers::gap-23-samsara-cache-tiers": "merged",
+    "block::GAP-24-FRESHNESS-INDICATOR::Samsara freshness indicator pill (L1-L4, green/amber/red)": "deployed",
+    "block::GAP-25::Active Driver Set 15-min Recompute": "deployed",
+    "block::gap-25-active-driver-set::gap-25-active-driver-set": "merged",
+    "block::GAP-26::Border 1000m Geofences + Customs Clearance Time": "deployed",
+    "block::gap-26-border-crossings::gap-26-border-crossings": "merged",
+    "block::GAP-27::Daily Geofence Reconciliation Report": "deployed",
+    "block::gap-27-geofence-reconciliation::gap-27-geofence-reconciliation": "merged",
+    "block::GAP-28::Layover Time Computation (>8h Gap)": "deployed",
+    "block::gap-28-layover-detection::gap-28-layover-detection": "merged",
+    "block::GAP-29::Booking-Gap Time per Dispatcher Analytics": "deployed",
+    "block::gap-29-booking-gap-analytics::gap-29-booking-gap-analytics": "merged",
+    "block::GAP-30::Late-arrival rate analytics per driver/customer/lane": "deployed",
+    "block::gap-30-late-arrival-analytics::gap-30-late-arrival-analytics": "merged",
+    "block::GAP-31::Multi-stop extra rate per stop (WF-053)": "deployed",
+    "block::gap-31-multi-stop-extra-rates::gap-31-multi-stop-extra-rates": "merged",
+    "block::GAP-32::Customer free-time detention catalog": "deployed",
+    "block::gap-32-customer-free-time-detention::gap-32-customer-free-time-detention": "merged",
+    "block::GAP-34::G22 Driver PWA dispatch view (pickup/delivery cards + doc upload)": "deployed",
+    "block::gap-34-driver-pwa-dispatch::gap-34-driver-pwa-dispatch": "merged",
+    "block::GAP-36::Driver PWA full incident reporting (WF-048)": "deployed",
+    "block::gap-36-driver-pwa-incident-full::gap-36-driver-pwa-incident-full": "merged",
+    "block::GAP-37::G14 Equipment dual-confirm transfer (WF-047)": "deployed",
+    "block::gap-37-equipment-dual-confirm-transfer::gap-37-equipment-dual-confirm-transfer": "merged",
+    "block::GAP-38-DAMAGE-INSURANCE-CONTINUITY::Damage report continuity chain + WF-027 insurance auto-claim linkage (additive; UI on locked shared surface deferred for": "deployed",
+    "block::GAP-39::G17 Geofencing full backend state machine": "deployed",
+    "block::gap-39-geofence-state-machine::gap-39-geofence-state-machine": "merged",
+    "block::GAP-40::Damage photo EXIF chain-of-custody (WF-058)": "deployed",
+    "block::gap-40-damage-photo-exif-chain::gap-40-damage-photo-exif-chain": "merged",
+    "block::GAP-41::9 Reports Hub categories with hover-dropdown WF-061": "deployed",
+    "block::gap-41-reports-hub-9-categories::gap-41-reports-hub-9-categories": "merged",
+    "block::GAP-42::IFTA 4-step quarterly preparer + Owner-only WF-064": "deployed",
+    "block::gap-42-ifta-quarterly-preparer::gap-42-ifta-quarterly-preparer": "merged",
+    "block::GAP-43::6 scheduled reports auto-emailed per Q8": "deployed",
+    "block::gap-43-scheduled-reports::gap-43-scheduled-reports": "merged",
+    "block::GAP-44::Form 425C Exhibits A-F auto-build for TRANSP monthly DIP filings": "deployed",
+    "block::gap-44-form-425c-exhibits::gap-44-form-425c-exhibits": "merged",
+    "block::GAP-45::Cash flow + per-truck CPM route fix (P6-C1)": "deployed",
+    "block::gap-45-cash-flow-cpm-routes::gap-45-cash-flow-cpm-routes": "merged",
+    "block::GAP-46::Integrity anomaly detection alert engine": "deployed",
+    "block::gap-46-anomaly-detection::gap-46-anomaly-detection": "merged",
+    "block::GAP-47::Dispatch auth gates WF-044/050/038": "deployed",
+    "block::gap-47-dispatch-auth-gates::gap-47-dispatch-auth-gates": "merged",
+    "block::GAP-48::GAP-48 Driver Operations Depth — 12 read-only operational sub-views on a new Operations tab": "deployed",
+    "block::gap-48-driver-operations-depth::gap-48-driver-operations-depth": "merged",
+    "block::GAP-49::Maintenance Pre-Flight DVIR Severity Tagging (major vs minor vs observation) — WF-050 / 49 CFR §396.11": "deployed",
+    "block::gap-49-dvir-severity-tagging::gap-49-dvir-severity-tagging": "merged",
+    "block::GAP-50::AI Photo Comparison Pre/Post Trip Damage Detection": "deployed",
+    "block::gap-50-ai-photo-comparison::gap-50-ai-photo-comparison": "merged",
+    "block::GAP-51::Data sovereignty DS-1..7 suite": "deployed",
+    "block::GAP-52::CAP-15 Driver QBO vendor mapping integrity": "deployed",
+    "block::gap-52-driver-vendor-mapping-integrity::gap-52-driver-vendor-mapping-integrity": "merged",
+    "block::GAP-53::Bank account multi-company drift fix": "deployed",
+    "block::gap-53-bank-multi-company-drift::gap-53-bank-multi-company-drift": "merged",
+    "block::GAP-54::WF-051 250-foot arrival prompt correction": "deployed",
+    "block::gap-54-wf-051-250-foot-correction::gap-54-wf-051-250-foot-correction": "merged",
+    "block::GAP-55::CAP-1 Real-time GPS every active load": "deployed",
+    "block::gap-55-cap-1-live-gps::gap-55-cap-1-live-gps": "merged",
+    "block::GAP-56::CAP-4 Auto status switching on vehicle movement": "deployed",
+    "block::gap-56-cap-4-auto-status-switch::gap-56-cap-4-auto-status-switch": "merged",
+    "block::GAP-57::CAP-5 Dispatch board on-track behind delayed tri-signal": "deployed",
+    "block::gap-57-cap-5-tri-signal::gap-57-cap-5-tri-signal": "merged",
+    "block::GAP-58::CAP-8 Engine diagnostic fault auto work order": "deployed",
+    "block::gap-58-cap-8-engine-fault-auto-wo::gap-58-cap-8-engine-fault-auto-wo": "merged",
+    "block::GAP-59::CAP-9 Vehicle-Driver Pairing At Time of Event — Samsara pairing lookup for WO/accident/fuel attribution": "deployed",
+    "block::gap-59-cap-9-vehicle-driver-pairing::gap-59-cap-9-vehicle-driver-pairing": "merged",
+    "block::GAP-60::CAP-10 Driver Scoring Page Safety": "deployed",
+    "block::gap-60-cap-10-driver-scoring::gap-60-cap-10-driver-scoring": "merged",
+    "block::GAP-61::CAP-11 Fuel card real-time fraud alerts": "deployed",
+    "block::gap-61-cap-11-fuel-fraud-alerts::gap-61-cap-11-fuel-fraud-alerts": "merged",
+    "block::GAP-62-CAP-12-TIRE-TREAD::CAP-12 tire tread wear tracking and replacement projections": "deployed",
+    "block::GAP-63::CAP-13 Brake Wear Predictive Maintenance — lining thickness tracking + replacement projections": "deployed",
+    "block::gap-63-cap-13-brake-wear::gap-63-cap-13-brake-wear": "merged",
+    "block::GAP-64::CAP-14 cargo temp/humidity sensors": "deployed",
+    "block::gap-64-cap-14-cargo-sensors::gap-64-cap-14-cargo-sensors": "merged",
+    "block::gap-65-owner-todays-attention::gap-65-owner-todays-attention": "merged",
+    "block::GAP-66-DISPATCHER-HOME::Dispatcher Home role-specific view": "deployed",
+    "block::gap-66-dispatcher-home-view::gap-66-dispatcher-home-view": "merged",
+    "block::GAP-67-ACCOUNTING-HOME::Accounting Home role-specific view (read-only display)": "deployed",
+    "block::gap-67-accounting-home-view::gap-67-accounting-home-view": "merged",
+    "block::GAP-68-SAFETY-OFFICER-HOME::Safety Officer home role-specific view": "deployed",
+    "block::gap-68-safety-officer-home-view::gap-68-safety-officer-home-view": "merged",
+    "block::GAP-69-DRIVER-MANAGER-HOME::Driver Manager home role-specific view": "deployed",
+    "block::gap-69-driver-manager-home-view::gap-69-driver-manager-home-view": "merged",
+    "block::GAP-7::": "deployed",
+    "block::gap-7-severe-repair-oos-estimate::gap-7-severe-repair-oos-estimate": "merged",
+    "block::GAP-70::EDI Integration Foundation (204/214/210/990)": "deployed",
+    "block::gap-70-edi-foundation::gap-70-edi-foundation": "merged",
+    "block::GAP-71::Driver Retention Predictive Model": "deployed",
+    "block::gap-71-driver-retention-model::gap-71-driver-retention-model": "merged",
+    "block::GAP-72::Customer Relationship Score + Health": "deployed",
+    "block::gap-72-customer-relationship-score::gap-72-customer-relationship-score": "merged",
+    "block::GAP-76::Deadhead mile optimizer — ranked next-load suggestions": "deployed",
+    "block::gap-76-deadhead-optimizer::gap-76-deadhead-optimizer": "merged",
+    "block::GAP-8::G26 assignments inline quicksave (unit/trailer/driver)": "deployed",
+    "block::gap-8-assignments-quicksave::gap-8-assignments-quicksave": "merged",
+    "block::gap-81-drug-alcohol-program::gap-81-drug-alcohol-program": "merged",
+    "block::gap-82-cert-expiry-tracking::gap-82-cert-expiry-tracking": "merged",
+    "block::GAP-82-MEDICAL-CARD-TRACKING::Medical card + CDL expiry tracking and alerts": "deployed",
+    "block::gap-83-eld-audit-trail::gap-83-eld-audit-trail": "merged",
+    "block::GAP-83-ELD-AUDIT-VIEWER::ELD audit trail read-only viewer": "deployed",
+    "block::GAP-84-DOT-INSPECTION-GAP-CLOSE::DOT inspection clean-rate endpoint, score badge, and CI verify guard": "deployed",
+    "block::GAP-85-PERMIT-TOLL-TRACKING::Permit + toll tag tracking per unit with expiry alerts": "deployed",
+    "block::gap-85-permits-toll-tags::gap-85-permits-toll-tags": "merged",
+    "block::GAP-86-INSURANCE-BILL-CREATOR::Insurance multi-vehicle policy creator + bill schedule write via createBill()": "deployed",
+    "block::gap-86-insurance-module::gap-86-insurance-module": "merged",
+    "block::GAP-86-POLICY-WIZARD::Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea": "deployed",
+    "block::gap-87-audit-log-viewer::gap-87-audit-log-viewer": "merged",
+    "block::gap-89-cmd-k-quick-switcher::gap-89-cmd-k-quick-switcher": "merged",
+    "block::GAP-89-UNIVERSAL-SEARCH-CMD-K::Universal Cmd-K quick switcher search": "deployed",
+    "block::GAP-91-MOBILE-RESPONSIVE-AUDIT::Mobile responsive audit + PWA touch UI polish": "deployed",
+    "block::GAP-92-FEATURE-FLAG-SYSTEM::Per-tenant and per-user feature flag system": "deployed",
+    "block::gap-92-feature-flags::gap-92-feature-flags": "merged",
+    "block::GAP-CI-WIRE-PREPUSH-GUARDS::Wire all static pre-push locked guards into GitHub Actions CI so git push --no-verify cannot silently break a locked rul": "deployed",
+    "block::GAP-DOUBLE-ENTRY-DB-ENFORCEMENT::Double-entry DB enforcement guard: CI script asserting balance trigger exists + DB integration test + existing-data veri": "deployed",
+    "block::GAP-E-PLANNER-TASKS-ROUTES::Fix two dead routes: add /dispatch/planners index redirect to /loads; remove stale /tasks ComingSoonPage stub so real Ta": "deployed",
+    "block::GAP-IDEMP-KEYS::Insurance policy create wizard (GAP-86) + HTTP idempotency keys (GAP-IDEMP): combined scope for insurance wizard PR whic": "deployed",
+    "block::GAP-PREMERGE-GATES-EXPAND::Promote three post-merge feedback checks to required pre-merge CI gates (GAP-81 failure class)": "deployed",
+    "block::GLOBAL-SORT-RULE::Lock Global Sort Rule as a UI contract (docs/specs/GLOBAL-SORT-RULE.md) and wire CI guard (scripts/verify-global-sort-ru": "deployed",
+    "block::HOS-BUG-DRIVERASSIGN::HOS / TASK Bug — deployed_with_driver 400 (invalid stat type)": "merged",
+    "block::HOS-VIEWER-DONE::HOS / TASK Viewer — Driver picker + ELD log  [DONE — tracked complete]": "merged",
+    "block::HOTFIX-0327-MIGRATION-ROLE::Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)": "deployed",
+    "block::IMPORT-0::IMPORT-0 QBO Reports API client (TrialBalance + GeneralLedger, v2 response shape) + exact-cents parsers + monthly date c": "deployed",
+    "block::IMPORT-P0::IMPORT-P0 JE→QBO push kill-switch + masterdata echo guard. HARD PREREQUISITE: no import run (opening balance or GL detai": "deployed",
+    "block::IMPORT-P0b::IMPORT-P0b — entity-push kill-switch: gate every TMS→QBO write of invoice/bill/customer/vendor/account/item so nothing r": "deployed",
+    "block::INS-MODULE::INSURANCE / TASK — Insurance module build-out": "merged",
+    "block::ITEM1-TWO-SIDED-ITEM::Two-sided item model: sell side (income account, defaults to Service income) + buy side (expense account + preferred ven": "deployed",
+    "block::LOCKDOWN-ENFORCEMENT-GUARDS::Anti-regression CI guards — sidebar 23-target additive check, cash-flow module pending gate, insurance atomic financial ": "deployed",
+    "block::M1-POSITIONED-PARTS::Positioned-parts picker for work orders. position_set catalog, part_position_assignment linking, picker UI with SVG map ": "deployed",
+    "block::M2-INTEGRITY-POSITION-HISTORY::Position History tracking for Integrity/Positioned-Parts. Immutable audit trail of part installations/removals/replaceme": "deployed",
+    "block::MANUAL-JE-CONTRACT::Manual JE create/void 400 contract fix": "deployed",
+    "block::MIGRATION-RUNNER-HARDEN::Migration runner hardening - fail loud on unrecognized migration filenames to prevent silent skips": "deployed",
+    "block::MNT-SHOP::MAINTENANCE / TASK — Mechanic-shop / Work-Order module": "merged",
+    "block::MX-OPS::MEXICO OPS / TASK — Mexico cross-border operations": "merged",
+    "block::NOTIF-A::Loud foreground alerts + escalation-until-ack + enhanced web push for per-load dispatch chat. Non-financial, Tier-3. No ": "deployed",
+    "block::OB1-NAV-HEADER-UNIFY::Replace legacy 38-item hover-dropdown AccountingSubNav with unified 12-tab clean nav bar. All accounting pages automatic": "deployed",
+    "block::P0-BLOCK-3-DRIVER-LOAD-HISTORY::Driver per-load history tab: surface dispatch.load_assignment_history in DriverDetailPage via new LoadHistoryTab compone": "deployed",
+    "block::P5-T6-BANKING-TRANSFER::Banking transfer between accounts (P5-T6) — fix broken test (missing jsdom env + jest-dom matchers); all surface already": "deployed",
+    "block::PERF-BUDGET-RAISE::Raise fe bundle perf budget": "deployed",
+    "block::PREREQ-A-SCHEMA-GRANT-GATE::": "deployed",
+    "block::PREREQ-B-SETTLEMENT-DEDUCTION-SVC::createSettlementDeduction() service — unblocks Driver Hub Requests approve→deduction (Block 7)": "deployed",
+    "block::Q9-TZ-timezone-library::FOUNDATIONS / TASK Q9 — Timezone library (lat/lng→IANA primary + override)": "merged",
+    "block::QBO-BANK-WRITEBACK-GATE-M7::bank_transaction QBO write-back kill-switch": "deployed",
+    "block::QBO-SYNC-DRIFT-401-FIX::QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch).": "deployed",
+    "block::QSTD-00::Make Jorge's quality standard the first standing law (Rule #0). Adds docs/specs/QUALITY-STANDARD-LOCKED.md (verbatim), w": "deployed",
+    "block::RECON-02::RECON-02 UI tabs: extend the FIN-23 surface at /accounting/qbo-reconcile with Runs + Exceptions tabs (ParityTable gramma": "deployed",
+    "block::REGISTER-SOURCE-COL::Register Source column shows source": "deployed",
+    "block::RPT-MODULE::REPORTS / TASK — Reports module build-out": "merged",
+    "block::SAFE-W3::SAFETY/PWA / TASK — Safety/PWA wave W3": "merged",
+    "block::SAFE-W4::SAFETY/PWA / TASK — Safety/PWA wave W4": "merged",
+    "block::SAFE-W5::SAFETY/PWA / TASK — Safety/PWA wave W5": "merged",
+    "block::SETTLEMENTS-SIDEBAR-RENAME-MOVE::Rename Payroll sidebar entry to Settlements, reposition between Cash Flow and Accounting. Non-financial label+order chan": "deployed",
+    "block::SHADOW-ROUTE-REDIRECTS::Replace 5 alias-shadow routes (ComingSoonPage) with proper Navigate redirects to their real pages. Leave honest stubs (/": "deployed",
+    "block::SIDEBAR-DRIVER-HUB::": "deployed",
+    "block::SIDEBAR-INSURANCE::Add Insurance sidebar entry after Drivers in sidebar-config.ts; add /insurance redirect route; bump PASS-8 module count ": "deployed",
+    "block::SMOKE-TOKEN-AUTH::Switch smoke auth to bearer token; disable dead PR-preview trigger; Layer-2-only ship; inherit BUG-ADD-USER-INERT fix": "deployed",
+    "block::STMT-1-balance-sheet-cash-flow::STATEMENTS / TASK 1 — Balance Sheet + Cash Flow statements": "merged",
+    "block::STRUCTURAL-MANIFEST-SPLIT::Each block writes its own .block-ready/<block-id>.json; zero manifest merge conflicts in parallel lanes": "deployed",
+    "block::STRUCTURAL-MIGRATION-TIMESTAMPS::New migrations use timestamp format (20260607_120000_name.sql) to eliminate parallel-lane sequence collisions": "deployed",
+    "block::SWEEP-FIX-17-27::Consolidated fixes for the modules 17-27 sweep defects. PR A ships the code fixes with regression tests; PR B (owner-gat": "deployed",
+    "block::TASKS-PLANNER-REDESIGN-V3::Rebuild Task Board into a full employee×day planner grid. Migration adds progress_pct + task_type table. Backend adds /t": "deployed",
+    "block::TBL-STANDARD-INSURANCE-POLICIES::TBL-STANDARD surface 1 — migrate Insurance Policies list to the shared DataTable.": "deployed",
+    "block::TEST-COPY-TO-ACCOUNTING-LINES-BILL-BRANCH::Follow-up to GAP-EXPENSES Phase 1.5 (#1008): add the bill-branch regression guard GUARD's checklist item (d) flagged as ": "deployed",
+    "block::TIER14-MEXICO-OPS::Block 14 — Mexico Operations Module: cross-border loads, mx_permits, mx_tolls_ledger, B1 drivers": "deployed",
+    "block::TIER15-MECHANIC-SHOP::Block 15 — Internal Mechanic Shop: internal_labor_log, parts decrement, JE posting": "deployed",
+    "block::TIER20-SECRETS-ROTATION::Block 20 — Secrets Rotation: runbook covering all 10+ secrets with rotation procedures": "deployed",
+    "block::TIER21-DR-DRILL::Block 21 — DR Restore Drill: first drill completed, RTO 25min, RPO <30sec, quarterly calendar set": "deployed",
+    "block::TIER23-DEGRADATION::Block 23 — Degradation Matrix: all 10 deps documented, 3 simulated failures drilled": "deployed",
+    "block::TIER26-PARTITION::Block 26 — Partition Hot Tables: audit_log partitioned by month, maintenance cron, archival function": "deployed",
+    "block::TIER27-CANARY::Block 27 — Canary Deploy: runbook + canary-smoke.yml CI workflow + rollback trigger documented": "deployed",
+    "block::TIER28-VENDOR-LOCKIN::Block 28 — Vendor Lock-in Analysis: 11 vendors documented with severity scoring": "deployed",
+    "block::TIER29-KNOWN-LIMITATIONS::Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories": "deployed",
+    "block::UNIFIED-TXN-REGISTER::Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register.": "deployed",
+    "block::USERS-DEACTIVATE::Users deactivate discoverable + non-silent": "deployed",
+    "block::USMCA-MASTERDATA-IMPORT::Import driver profiles (83) + trucks (93) + trailers (91) into USMCA entity for testing. Applied to prod 2026-07-03 via ": "deployed",
+    "block::UX-A-table-alignment-DONE::TABLE/UX / TASK A — Global table alignment  [DONE on shared, needs TBL-STANDARD for universal]": "merged",
+    "block::UX-B-dispatch-location-column::TABLE/UX / TASK B — Dispatch Location column": "merged",
+    "block::UX-C-fleet-location::TABLE/UX / TASK C — Fleet Location column": "merged",
+    "block::UX-D-hos-cycle-drawer::TABLE/UX / TASK D — HOS Tracker driver-row cycle drawer": "merged",
+    "block::UX-E-compliance-hos-location::TABLE/UX / TASK E — Clickable sweep + Compliance HOS Location column": "merged",
+    "block::VENDOR-PROFILE-EDIT-BOX::Vendor profile Edit-at-top + flatten category box": "deployed",
+    "block::VISUAL-ACCOUNTING::§7 visual sweep for accounting — 91 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-AUDIT-PUNCHLIST::Full-app visual audit punch-list doc": "deployed",
+    "block::VISUAL-BANKING::§7 visual sweep for banking — 31 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-CASH-FLOW::§7 visual sweep for cash-flow — 3 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-COMPLIANCE::§7 visual sweep for compliance — 20 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-CUSTOMERS::§7 visual sweep for customers — 11 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-DISPATCH::§7 visual sweep for dispatch — 190 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-DOCS::§7 visual sweep for docs — 4 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-DRIVER-HUB::§7 visual sweep for driver-hub — 4 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-DRIVERS::§7 visual sweep for drivers — 58 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-ELD::§7 visual sweep for eld — 2 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-FACTORING::§7 visual sweep for factoring — 9 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-FINANCE::§7 visual sweep for finance — 1 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-FLEET::§7 visual sweep for fleet — 1 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-FORM-425::§7 visual sweep for form_425 — 7 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-FUEL::§7 visual sweep for fuel — 8 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-HOME::§7 visual sweep for home — 24 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-INSURANCE::§7 visual sweep for insurance — 14 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-INVENTORY::§7 visual sweep for inventory — 1 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-LEGAL::§7 visual sweep for legal — 9 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-LISTS::§7 visual sweep for lists — 19 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-REPORTS::§7 visual sweep for reports — 19 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-SAFETY::§7 visual sweep for safety — 75 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-SETTLEMENTS::§7 visual sweep for settlements — 13 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-TASKS::§7 visual sweep for tasks — 18 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-USERS::§7 visual sweep for users — 4 palette/date/box/vocab fixes": "deployed",
+    "block::VISUAL-VENDORS::§7 visual sweep for vendors — 8 palette/date/box/vocab fixes": "deployed",
+    "block::W1-EVENT-LOG-SPINE::Immutable timestamped event spine — events.event_log table + logEvent() helper. All downstream Waves (2-5) write to this": "merged",
+    "block::W1A-EVENT-LOG-IMMUTABLE::Event log append-only enforcement + hash chain": "deployed",
+    "block::W1B-TASKS-MODULE::Employee×day task planner grid — tasks.task schema, status workflow, spine writes, 5-tab categories, REST routes": "deployed",
+    "block::W2A-PROFITABILITY-ENGINE::ONE profitability engine, THREE groupings: By Lane / By Type / By Customer / By Load. Revenue/mile, cost/mile, margin. R": "deployed",
+    "block::W2B-ALERT-RULES-PROFILES::THREE QBO alert profile pages: App, Driver (force_ack + force_alarm), Broker (auto_send vs hold_for_review). Config only": "deployed",
+    "block::W2P-PLANNER-REDESIGN::Rebuild existing planner pages with universal grid: narrow day cols, gridlines YES/shading NO, day headers, ~27-30px row": "deployed",
+    "block::W3A-GEOFENCE-ENGINE::Geofence engine: schema geofence (fence, event). Enter/exit debounced via geofence-state-watcher. Spine writes via event": "deployed",
+    "block::W3B-FORCED-DRIVER-ACK::Blocking driver acknowledgment modal in Driver PWA. Dispatches alerts to drivers, re-alarms until acked, timestamps all ": "deployed",
+    "block::W4A-SIGNED-SAFETY-DOCS::Safety docs sent to driver → driver reads → e-signs. Signed records immutable (RAISE on UPDATE/DELETE). Send/read/sign e": "deployed",
+    "block::W4B-BROKER-AUTO-UPDATE::Auto-email broker load status updates. Gated: all sends go to hold-for-review queue by default. Auto-send is OFF unless ": "deployed",
+    "block::W5-TIME-UTILIZATION::Per-driver + per-truck minute ledger. READ-ONLY reporting (no financial writes). Surfaces UNACCOUNTED time. $/productive": "deployed"
+  }
+}

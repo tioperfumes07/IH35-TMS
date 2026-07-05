@@ -175,6 +175,6 @@ describe("DriversPage list status tabs", () => {
     renderDriversAt("/drivers");
     const addDriverButton = await screen.findByRole("button", { name: "+ Create Driver" });
     expect(addDriverButton).toHaveTextContent("+ Create Driver");
-    expect(addDriverButton.className).toContain("bg-[#16A34A]");
+    expect(addDriverButton.className).toContain("bg-[#1f2a44]");
   });
 });

@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withLuciaBypass } from "./db.js";
-import { lucia } from "./lucia.js";
+import { createSession, invalidateSession, createSessionCookie } from "./session-provider.js";
 import { touchUserLastLoginAt } from "./session-create.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
 
@@ -75,7 +75,7 @@ export async function registerInviteAuthRoutes(app: FastifyInstance) {
       const user = userRes.rows[0] ?? null;
       if (!user) return { error: "invalid_or_expired_invite" as const };
 
-      const session = await lucia.createSession(invite.identity_user_id, {});
+      const session = await createSession(invite.identity_user_id, {});
       await touchUserLastLoginAt(client, invite.identity_user_id);
       const markUsedRes = await client.query(
         `
@@ -89,7 +89,7 @@ export async function registerInviteAuthRoutes(app: FastifyInstance) {
         [invite.id, session.id]
       );
       if (markUsedRes.rows.length === 0) {
-        await lucia.invalidateSession(session.id);
+        await invalidateSession(session.id);
         return { error: "invalid_or_expired_invite" as const };
       }
 
@@ -116,7 +116,7 @@ export async function registerInviteAuthRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: "invalid_or_expired_invite" });
     }
 
-    const sessionCookie = lucia.createSessionCookie(redemption.session.id);
+    const sessionCookie = createSessionCookie(redemption.session.id);
     setLuciaSessionCookie(reply, sessionCookie);
     return reply.code(200).send({
       ok: true,
